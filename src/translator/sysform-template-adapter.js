@@ -1,13 +1,22 @@
 import { basename } from "node:path";
 import { DSL_VERSION } from "../dsl/schema.js";
+import { auditFunctionWhitelist, functionWhitelistErrors } from "./function-whitelist.js";
+import { buildDesignerFirstForm } from "./sysform-designer-layout.js";
+import { parseMetadataXml } from "./sysform-metadata.js";
+import { cleanText, decodeEntities, parseFdValues } from "./xml-utils.js";
 
 export function translateSysFormTemplateXml(xml, options = {}) {
   const template = parseSysFormTemplateXml(xml);
   const metadata = parseMetadataXml(template.fdMetadataXml || "");
+  const warnings = [];
+  const form = buildDesignerFirstForm(template.fdDesignerHtml || "", metadata, warnings);
   const title = extractDesignerTitle(template.fdDesignerHtml || "") ||
     template.fdName ||
     basename(options.sourcePath || "SysFormTemplate.xml").replace(/_SysFormTemplate\.xml$/i, "");
-  const warnings = [];
+  const errors = [];
+  const functionWhitelist = options.functionWhitelist
+    ? auditFunctionWhitelist(template.fdDesignerHtml || "", options.functionWhitelist, { path: "/fdDesignerHtml" })
+    : undefined;
 
   if (!template.fdDesignerHtml) {
     warnings.push({
@@ -25,6 +34,10 @@ export function translateSysFormTemplateXml(xml, options = {}) {
     });
   }
 
+  if (functionWhitelist?.violations.length) {
+    errors.push(...functionWhitelistErrors(functionWhitelist, "/fdDesignerHtml"));
+  }
+
   return {
     version: DSL_VERSION,
     source: {
@@ -39,18 +52,18 @@ export function translateSysFormTemplateXml(xml, options = {}) {
       name: title,
       categoryPath: options.categoryPath || ""
     },
-    form: {
-      fields: metadata.fields
-    },
+    form,
     review: {
-      warnings
+      warnings,
+      ...(errors.length ? { errors } : {}),
+      ...(functionWhitelist ? { functionWhitelist } : {})
     }
   };
 }
 
 export function parseSysFormTemplateXml(xml = "") {
   const values = {};
-  const putPattern = /<void\s+method=["']put["']>\s*<string>([\s\S]*?)<\/string>\s*<string>([\s\S]*?)<\/string>\s*<\/void>/g;
+  const putPattern = /<void\s+method=["']put["']>\s*<string>([^<]*?)<\/string>\s*<string>([\s\S]*?)<\/string>\s*<\/void>/g;
   for (const match of xml.matchAll(putPattern)) {
     const key = decodeEntities(match[1]);
     if (values[key] === undefined) {
@@ -58,60 +71,6 @@ export function parseSysFormTemplateXml(xml = "") {
     }
   }
   return values;
-}
-
-export function parseMetadataXml(metadataXml = "") {
-  const xml = decodeEntities(metadataXml);
-  const fields = [];
-  const tableRanges = [];
-
-  for (const tableMatch of xml.matchAll(/<extendSubTableProperty\b([^>]*)>([\s\S]*?)<\/extendSubTableProperty>/gi)) {
-    tableRanges.push([tableMatch.index, tableMatch.index + tableMatch[0].length]);
-    const attrs = parseXmlAttributes(tableMatch[1]);
-    const columns = extractSimpleProperties(tableMatch[2]).map(metadataFieldToDslField);
-    fields.push({
-      id: attrs.name,
-      title: attrs.label || attrs.name,
-      type: "detailTable",
-      required: attrs.notNull === "true",
-      columns
-    });
-  }
-
-  const mainXml = removeRanges(xml, tableRanges);
-  for (const property of extractSimpleProperties(mainXml)) {
-    fields.push(metadataFieldToDslField(property));
-  }
-
-  return { fields };
-}
-
-function extractSimpleProperties(xml = "") {
-  return [...xml.matchAll(/<extend(Simple|Element)Property\b([^/>]*?)\/>/gi)]
-    .map((match) => ({
-      ...parseXmlAttributes(match[2]),
-      kind: match[1] === "Element" ? "element" : "simple"
-    }))
-    .filter((item) => item.name);
-}
-
-function metadataFieldToDslField(property) {
-  const options = parseOptions(property.enumValues);
-  return {
-    id: property.name,
-    title: property.label || property.name,
-    type: inferDslFieldType(property, options),
-    required: property.notNull === "true",
-    ...(options.length ? { options } : {})
-  };
-}
-
-function inferDslFieldType(property, options) {
-  if (options.length) return "singleSelect";
-  const type = String(property.type || property.dataType || "").toLowerCase();
-  if (["double", "float", "integer", "long", "number", "bigdecimal"].includes(type)) return "number";
-  if (type.includes("date")) return "date";
-  return "text";
 }
 
 function extractDesignerTitle(html = "") {
@@ -125,68 +84,4 @@ function extractDesignerTitle(html = "") {
     if (values.b === "true" && values.content) return cleanText(values.content);
   }
   return "";
-}
-
-function parseFdValues(value = "") {
-  const result = {};
-  for (const match of decodeEntities(value).matchAll(/([\w$]+)\s*:\s*"([^"]*)"/g)) {
-    result[match[1]] = decodeEntities(match[2]);
-  }
-  return result;
-}
-
-function parseOptions(value = "") {
-  const text = decodeEntities(value).replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
-  if (!text) return [];
-  return text
-    .split(/\n|;/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .map((item) => {
-      const [label, optionValue] = item.includes("|") ? item.split("|", 2) : [item, item];
-      return { label: cleanText(label), value: cleanText(optionValue) };
-    })
-    .filter((item) => item.label && item.value);
-}
-
-function parseXmlAttributes(text = "") {
-  const result = {};
-  for (const match of text.matchAll(/([\w:-]+)\s*=\s*(["'])([\s\S]*?)\2/g)) {
-    result[match[1]] = decodeEntities(match[3]);
-  }
-  return result;
-}
-
-function removeRanges(text, ranges) {
-  if (!ranges.length) return text;
-  let result = "";
-  let cursor = 0;
-  for (const [start, end] of ranges.sort((a, b) => a[0] - b[0])) {
-    result += text.slice(cursor, start);
-    cursor = end;
-  }
-  return result + text.slice(cursor);
-}
-
-function cleanText(value = "") {
-  return decodeEntities(value)
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<[^>]*>/g, "")
-    .replace(/[ \t\f\v]+/g, " ")
-    .replace(/\s*\n\s*/g, "\n")
-    .trim();
-}
-
-function decodeEntities(value = "") {
-  return String(value)
-    .replace(/&quot;/g, "\"")
-    .replace(/&apos;/g, "'")
-    .replace(/&amp;#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&amp;#(\d+);/g, (_, code) => String.fromCodePoint(Number.parseInt(code, 10)))
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number.parseInt(code, 10)))
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&");
 }

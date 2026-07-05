@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>class</string>
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string>
+  </void>
+  <void method="put">
+   <string>fdId</string>
+   <string>route-validation-sysform-id</string>
+  </void>
+  <void method="put">
+   <string>fdTemplateEdition</string>
+   <string>1</string>
+  </void>
+  <void method="put">
+   <string>fdName</string>
+   <string>示例流程表单</string>
+  </void>
+  <void method="put">
+   <string>fdModelName</string>
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string>
+  </void>
+  <void method="put">
+   <string>fdModelId</string>
+   <string>route-validation-template-id</string>
+  </void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_subject&quot;,content:&quot;主题&quot;}&apos;&gt;主题&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_subject&quot;,label:&quot;主题&quot;,required:&quot;true&quot;}&apos;&gt;&lt;input id=&quot;fd_subject&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_org&quot;,content:&quot;申请单位&quot;}&apos;&gt;申请单位&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;3&quot;&gt;&lt;label fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_org&quot;,label:&quot;申请单位&quot;,required:&quot;true&quot;}&apos;&gt;&lt;/label&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_type&quot;,content:&quot;类型&quot;}&apos;&gt;类型&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1,2,3&quot;&gt;&lt;select fd_type=&quot;inputSelect&quot; fd_values=&apos;{id:&quot;fd_type&quot;,label:&quot;类型&quot;,items:&quot;类型A|A&amp;#10;类型B|B&quot;}&apos;&gt;&lt;/select&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_detail&quot;,content:&quot;明细&quot;}&apos;&gt;明细&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;1,2,3&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail&quot;,label:&quot;明细&quot;}&apos;&gt;&lt;/table&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail&quot; label=&quot;明细&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_name&quot; label=&quot;名称&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_amount&quot; label=&quot;数量&quot; type=&quot;Integer&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_subject&quot; label=&quot;主题&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendElementProperty name=&quot;fd_org&quot; label=&quot;申请单位&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_type&quot; label=&quot;类型&quot; enumValues=&quot;类型A|A&amp;#10;类型B|B&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

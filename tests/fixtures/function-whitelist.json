@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Com_AddEventListener",
+    "description": "onLoad event hook",
+    "mkFunction": "onLoad"
+  },
+  {
+    "name": "DocList_AddRow",
+    "description": "add detail row",
+    "mkFunction": "MKXFORM.addRow(表单ID, rowValue)"
+  },
+  {
+    "name": "XFom_RestValidationElements",
+    "description": "refresh field validation",
+    "mkFunction": "MKXFORM.validateFields()"
+  },
+  {
+    "name": "document.getElementById",
+    "description": "DOM lookup",
+    "mkFunction": "document.getElementById"
+  }
+]

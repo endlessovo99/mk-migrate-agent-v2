@@ -4,6 +4,7 @@ import { dirname } from "node:path";
 import { validateMigrationDsl } from "../dsl/schema.js";
 import { buildDryRunPlan } from "../executor/dry-run.js";
 import { executeDsl } from "../executor/execute.js";
+import { loadFunctionWhitelist } from "../translator/function-whitelist.js";
 import { translateSourceFile } from "../translator/index.js";
 
 const commands = new Map([
@@ -40,7 +41,10 @@ function runTranslate(argv) {
   const sourcePath = args.positionals[0];
   if (!sourcePath) throw new Error("translate requires a source path");
 
-  const dsl = translateSourceFile(sourcePath);
+  const whitelistPath = args["function-whitelist"] || process.env.MK_FUNCTION_WHITELIST_PATH;
+  const dsl = translateSourceFile(sourcePath, {
+    functionWhitelist: loadFunctionWhitelist(whitelistPath)
+  });
   const validation = validateMigrationDsl(dsl);
   const output = {
     ok: validation.ok,
@@ -77,7 +81,9 @@ async function runExecute(argv) {
   const inputPath = args.positionals[0];
   if (!inputPath) throw new Error("execute requires a DSL path");
   printJson(await executeDsl(readJson(inputPath), {
-    confirmWrite: args["confirm-write"] === true
+    confirmWrite: args["confirm-write"] === true,
+    targetCategoryId: args["target-category-id"],
+    baseUrl: args["base-url"]
   }));
 }
 
@@ -120,10 +126,10 @@ function printJson(value) {
 
 function printUsage() {
   console.error("Usage:");
-  console.error("  node src/cli/main.js translate <source.json> [--out dsl.json]");
+  console.error("  node src/cli/main.js translate <source-dir|sysform.xml> [--function-whitelist whitelist.xls] [--out dsl.json]");
   console.error("  node src/cli/main.js validate <dsl.json>");
   console.error("  node src/cli/main.js dry-run <dsl.json>");
-  console.error("  node src/cli/main.js execute <dsl.json> --confirm-write");
+  console.error("  NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js execute <dsl.json> --confirm-write --target-category-id <fdId>");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

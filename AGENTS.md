@@ -4,13 +4,21 @@ This repo is a v2 route-validation rebuild. Keep it narrow.
 
 ## Product Boundary
 
-The product is a migration execution tool. Agent work stops at DSL generation or DSL repair and must not directly execute NewOA writes.
+The product is a migration execution tool. Agent work may implement DSL generation, DSL repair, dry-run planning, and the narrow NewOA SIT executor path described by route-validation fixtures.
+
+NewOA writes are allowed only for the executor implementation path when all of these are true:
+
+- The target is `https://p-sit.onewo.com`.
+- The template is a new `MK_TEST_` draft template.
+- The caller provides explicit write confirmation and a target category `fdId`.
+- Credentials are provided through environment variables.
+- Default tests use fake clients and do not access NewOA.
 
 ## Engineering Rules
 
 - Keep CLI and modules small.
 - Prefer API-first execution.
-- Treat browser automation as login/fallback infrastructure only.
+- Do not use browser automation for the v2 executor path.
 - Do not port broad v1 modules wholesale.
 - Add features only when a fixture and a route-validation test exist.
 - Preserve DSL as the only public boundary between translation and execution.
@@ -19,7 +27,7 @@ The product is a migration execution tool. Agent work stops at DSL generation or
 
 - No frontend.
 - No batch.
-- No legacy Landray/K2 source compatibility.
-- The only current source input is `*_SysFormTemplate.xml`.
+- No source formats outside the current XML route-validation scope.
+- Current source input is either `*_SysFormTemplate.xml` or a paired directory with `*_SysFormTemplate.xml` and `*_LbpmProcessDefinition.xml`.
 - No PI/Agent execution.
 - No production writes without explicit confirmation.

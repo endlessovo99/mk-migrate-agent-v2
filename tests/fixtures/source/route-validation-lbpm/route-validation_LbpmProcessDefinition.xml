@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>fdKey</string>
+   <string>reviewMainDoc</string>
+  </void>
+  <void method="put">
+   <string>class</string>
+   <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string>
+  </void>
+  <void method="put">
+   <string>fdContent</string>
+   <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-validation-template-id&amp;amp;lbpmTmpId=route-validation-lbpm-template-id&quot; fdId=&quot;route-validation-process-id&quot; linesIndex=&quot;3&quot; nodesIndex=&quot;4&quot; notifyType=&quot;todo&quot;&gt;
+&lt;nodes&gt;
+&lt;startNode id=&quot;N1&quot; name=&quot;开始节点&quot; x=&quot;100&quot; y=&quot;40&quot;/&gt;
+&lt;draftNode id=&quot;N2&quot; name=&quot;起草节点&quot; mustModifyHandlerNodeIds=&quot;N3&quot; x=&quot;100&quot; y=&quot;100&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;handler-1&quot; handlerNames=&quot;审批人&quot; handlerSelectType=&quot;org&quot; id=&quot;N3&quot; ignoreOnHandlerEmpty=&quot;false&quot; name=&quot;审批节点&quot; processType=&quot;0&quot; x=&quot;100&quot; y=&quot;160&quot;/&gt;
+&lt;endNode id=&quot;N4&quot; name=&quot;结束节点&quot; x=&quot;100&quot; y=&quot;220&quot;/&gt;
+&lt;/nodes&gt;
+&lt;lines&gt;
+&lt;line endNodeId=&quot;N2&quot; endPosition=&quot;1&quot; id=&quot;L1&quot; points=&quot;100,60;100,80&quot; startNodeId=&quot;N1&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line condition=&quot;$fd_type$ == &amp;quot;A&amp;quot;&quot; disCondition=&quot;$类型$ == &amp;quot;类型A&amp;quot;&quot; endNodeId=&quot;N3&quot; endPosition=&quot;1&quot; id=&quot;L2&quot; name=&quot;类型A&quot; points=&quot;100,120;100,140&quot; priority=&quot;0&quot; startNodeId=&quot;N2&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N4&quot; endPosition=&quot;1&quot; id=&quot;L3&quot; points=&quot;100,180;100,200&quot; startNodeId=&quot;N3&quot; startPosition=&quot;3&quot;/&gt;
+&lt;/lines&gt;
+&lt;/process&gt;</string>
+  </void>
+  <void method="put">
+   <string>nodeDefinitions</string>
+   <object class="java.util.ArrayList">
+    <void method="add">
+     <object class="java.util.HashMap">
+      <void method="put">
+       <string>fdContent</string>
+       <string>&lt;reviewNode canModifyFlow=&quot;false&quot; handlerIds=&quot;handler-1&quot; handlerNames=&quot;审批人&quot; id=&quot;N3&quot; name=&quot;审批节点&quot;&gt;
+&lt;operations refId=&quot;op-review&quot;/&gt;
+&lt;/reviewNode&gt;</string>
+      </void>
+     </object>
+    </void>
+   </object>
+  </void>
+ </object>
+</java>

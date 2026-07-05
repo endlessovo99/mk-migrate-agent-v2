@@ -4,6 +4,15 @@ export function buildDryRunPlan(input) {
   const validation = validateMigrationDsl(input);
   const templateName = input?.template?.name || "";
   const fields = Array.isArray(input?.form?.fields) ? input.form.fields : [];
+  const layoutRows = Array.isArray(input?.form?.layout?.rows) ? input.form.layout.rows : [];
+  const workflow = input?.workflow;
+  const workflowSteps = workflow ? [{
+    id: "map-workflow",
+    action: "map-dsl-workflow-to-newoa-payload",
+    status: validation.ok ? "planned" : "blocked",
+    nodes: Array.isArray(workflow.nodes) ? workflow.nodes.length : 0,
+    edges: Array.isArray(workflow.edges) ? workflow.edges.length : 0
+  }] : [];
 
   return {
     ok: validation.ok,
@@ -29,8 +38,10 @@ export function buildDryRunPlan(input) {
         id: "map-fields",
         action: "map-dsl-fields-to-newoa-payload",
         status: validation.ok ? "planned" : "blocked",
-        count: fields.length
+        count: fields.length,
+        layoutRows: layoutRows.length
       },
+      ...workflowSteps,
       {
         id: "save-template-draft",
         action: "api.save-template-draft",

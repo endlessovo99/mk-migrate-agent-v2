@@ -5,33 +5,37 @@
 The first version is deliberately narrow:
 
 ```text
-SysFormTemplate XML -> DSL -> validate -> dry-run -> API-first execute spike
+SysFormTemplate/LbpmProcessDefinition XML -> DSL -> validate -> dry-run -> API-first execute
 ```
 
 This repo is not a full replacement for `mk-migrate-agent` yet. The old repo remains the knowledge base for NewOA API behavior, payload shapes, readback checks, and historical fixtures.
 
 ## Current scope
 
-- Single source shape only: `*_SysFormTemplate.xml`.
+- Supported source shapes: a single `*_SysFormTemplate.xml`, or a paired source directory with one `*_SysFormTemplate.xml` and one `*_LbpmProcessDefinition.xml`.
 - DSL is the only public boundary between translation and execution.
 - No frontend.
 - No batch execution.
 - No PI/Agent execution path.
-- No legacy Landray/K2 source compatibility.
-- API-first execution; browser automation is only allowed for login or fallback spikes.
+- API-first execution; browser automation is not used by the v2 executor.
+- NewOA writes are locked to SIT and require explicit confirmation, credentials, and a target category `fdId`.
 
 ## Commands
 
 ```bash
 npm test
 
-node src/cli/main.js translate tests/fixtures/source/sysform-fixture-id_SysFormTemplate.xml --out .tmp/sample.dsl.json
+node src/cli/main.js translate tests/fixtures/source/route-validation-lbpm --out .tmp/sample.dsl.json
 node src/cli/main.js validate .tmp/sample.dsl.json
 node src/cli/main.js dry-run .tmp/sample.dsl.json
-node src/cli/main.js execute .tmp/sample.dsl.json --confirm-write
+NEWOA_USERNAME=01025344 \
+NEWOA_ENCRYPTED_PASSWORD='...' \
+node src/cli/main.js execute .tmp/sample.dsl.json \
+  --confirm-write \
+  --target-category-id '<NewOA category fdId>'
 ```
 
-`execute` is intentionally a guarded placeholder until the NewOA API write spike is proven.
+`execute` creates a new `MK_TEST_...` template in NewOA SIT, saves it as draft, reads it back, and reports the created `fdId`. Warning-only DSL (`needs_manual`) is executable; DSL errors and safety errors block before login.
 
 ## Repository shape
 
@@ -39,7 +43,7 @@ node src/cli/main.js execute .tmp/sample.dsl.json --confirm-write
 src/cli/          # thin command-line entry
 src/dsl/          # DSL schema and validation
 src/translator/   # source adapter: SysFormTemplate XML -> DSL
-src/executor/     # DSL -> dry-run plan / API execution spike
+src/executor/     # DSL -> dry-run plan / API-first NewOA execution
 tests/fixtures/   # minimal route-validation samples
 docs/adr/         # architecture decisions
 docs/operations/  # operating notes
