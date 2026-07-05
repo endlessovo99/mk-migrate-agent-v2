@@ -1,0 +1,20 @@
+{
+  "name": "mk-migrate-agent-v2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Route-validation rebuild for NewOA/MK migration execution.",
+  "bin": {
+    "mk-migrate-v2": "./src/cli/main.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "translate": "node src/cli/main.js translate",
+    "validate": "node src/cli/main.js validate",
+    "dry-run": "node src/cli/main.js dry-run",
+    "execute": "node src/cli/main.js execute"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

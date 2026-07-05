@@ -1,0 +1,30 @@
+{
+  "version": "2.0-draft",
+  "source": {
+    "kind": "new-source-json",
+    "path": "tests/fixtures/new-source.sample.json"
+  },
+  "template": {
+    "name": "MK_TEST_V2_SAMPLE",
+    "categoryPath": "测试/公共流程"
+  },
+  "form": {
+    "fields": [
+      {
+        "id": "fd_subject",
+        "title": "主题",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "fd_amount",
+        "title": "金额",
+        "type": "number",
+        "required": false
+      }
+    ]
+  },
+  "review": {
+    "warnings": []
+  }
+}
