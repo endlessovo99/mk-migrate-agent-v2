@@ -13,8 +13,12 @@ The migration document produced by the translator and consumed by the executor. 
 _Avoid_: executor input, browser script
 
 **Translator**:
-The source-specific component that turns the single supported source shape into DSL.
+The source-specific component that turns SysFormTemplate XML into DSL.
 _Avoid_: executor, API writer
+
+**SysFormTemplate XML**:
+The current v2 source file shape. It is the only supported source input for the route-validation version, not a legacy compatibility format.
+_Avoid_: legacy XML source, old source format
 
 **Executor**:
 The source-agnostic component that validates DSL, builds a dry-run plan, performs confirmed API-first writes, and verifies readback.

@@ -19,6 +19,7 @@ The product is a migration execution tool. Agent work stops at DSL generation or
 
 - No frontend.
 - No batch.
-- No legacy source compatibility.
+- No legacy Landray/K2 source compatibility.
+- The only current source input is `*_SysFormTemplate.xml`.
 - No PI/Agent execution.
 - No production writes without explicit confirmation.

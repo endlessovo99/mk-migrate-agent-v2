@@ -1,17 +1,22 @@
-# Source Format
+# Source Format: SysFormTemplate XML
 
-The real v2 source format is not locked yet.
+The v2 route-validation source format is `*_SysFormTemplate.xml`.
 
-For repo bootstrapping, `tests/fixtures/new-source.sample.json` provides a small placeholder source shape:
+The file is a Java XMLDecoder export for `com.landray.kmss.sys.xform.base.model.SysFormTemplate`. The first adapter intentionally reads only the minimum fields needed for route validation:
 
-```json
-{
-  "templateName": "MK_TEST_V2_SAMPLE",
-  "categoryPath": "测试/公共流程",
-  "fields": [
-    { "id": "fd_subject", "title": "主题", "type": "text", "required": true }
-  ]
-}
+- `fdId`
+- `fdTemplateEdition`
+- `fdModelName`
+- `fdModelId`
+- `fdDesignerHtml`
+- `fdMetadataXml`
+
+`fdMetadataXml` is currently the source of field definitions. `fdDesignerHtml` is currently used to infer the template title. A later adapter pass should use `fdDesignerHtml` for layout order, hidden/source-only fields, and rule references.
+
+Bootstrap fixture:
+
+```text
+tests/fixtures/source/sysform-fixture-id_SysFormTemplate.xml
 ```
 
-Replace this with the real latest source file as soon as one sample is available. Do not add legacy source compatibility while doing that replacement.
+Do not add Landray/K2 compatibility while hardening this adapter.

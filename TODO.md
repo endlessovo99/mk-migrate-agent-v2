@@ -10,13 +10,16 @@ This TODO is ordered for a route-validation v2, not a full product rebuild.
 - [x] Add initial DSL validation and dry-run tests.
 - [x] Record the v2 architectural boundary in ADR form.
 
-## Milestone 1: Real Source Intake
+## Milestone 1: SysFormTemplate XML Intake
 
-- [ ] Add one real latest-format source file under `tests/fixtures/source/`.
-- [ ] Document the exact source shape in `docs/operations/source-format.md`.
-- [ ] Replace the sample JSON adapter with the real source adapter.
-- [ ] Keep the adapter narrow: support only the current source shape.
+- [x] Add one SysFormTemplate XML fixture under `tests/fixtures/source/`.
+- [x] Document the source shape in `docs/operations/source-format.md`.
+- [x] Replace the sample JSON adapter with a SysFormTemplate XML adapter.
+- [x] Keep the adapter narrow: support only `*_SysFormTemplate.xml`.
 - [ ] Add parser diagnostics for missing template name, missing fields, unsupported field types, and ambiguous options.
+- [ ] Replace the bootstrap fixture with a real production-like sample from the current source export.
+- [ ] Parse `fdDesignerHtml` layout order instead of relying only on `fdMetadataXml`.
+- [ ] Preserve hidden/source-only fields for rule references without treating them as visible controls.
 
 ## Milestone 2: DSL Contract
 
@@ -52,7 +55,7 @@ This TODO is ordered for a route-validation v2, not a full product rebuild.
 
 ## Explicit Non-Goals For Now
 
-- [ ] Do not support legacy Landray/K2/SysFormTemplate sources.
+- [ ] Do not support legacy Landray/K2 sources.
 - [ ] Do not build a React workbench.
 - [ ] Do not port v1 Tool Test Page.
 - [ ] Do not add PI/Agent execution.

@@ -11,7 +11,8 @@ export const FIELD_TYPES = new Set([
   "radio",
   "checkbox",
   "attachment",
-  "description"
+  "description",
+  "detailTable"
 ]);
 
 export function validateMigrationDsl(input) {
@@ -102,6 +103,42 @@ function validateFields(fields, diagnostics) {
           }
         });
       }
+    }
+
+    if (field.type === "detailTable") {
+      validateDetailColumns(field.columns, diagnostics, `${path}/columns`);
+    }
+  });
+}
+
+function validateDetailColumns(columns, diagnostics, path) {
+  if (!Array.isArray(columns) || columns.length === 0) {
+    diagnostics.push(error("dsl.detail_table.columns_required", "Detail table fields must contain at least one column.", path));
+    return;
+  }
+
+  const ids = new Set();
+  columns.forEach((column, index) => {
+    const columnPath = `${path}/${index}`;
+    if (!isRecord(column)) {
+      diagnostics.push(error("dsl.detail_table.column_type", "Detail table column must be a JSON object.", columnPath));
+      return;
+    }
+    if (!nonEmptyString(column.id)) {
+      diagnostics.push(error("dsl.detail_table.column_id_required", "Detail table column id is required.", `${columnPath}/id`));
+    } else if (ids.has(column.id)) {
+      diagnostics.push(error("dsl.detail_table.column_id_duplicate", "Detail table column id must be unique within the table.", `${columnPath}/id`, { id: column.id }));
+    } else {
+      ids.add(column.id);
+    }
+    if (!nonEmptyString(column.title)) {
+      diagnostics.push(error("dsl.detail_table.column_title_required", "Detail table column title is required.", `${columnPath}/title`));
+    }
+    if (!FIELD_TYPES.has(column.type) || column.type === "detailTable") {
+      diagnostics.push(error("dsl.detail_table.column_type_unsupported", "Detail table column type is not supported.", `${columnPath}/type`, {
+        current: column.type,
+        supported: Array.from(FIELD_TYPES).filter((type) => type !== "detailTable")
+      }));
     }
   });
 }

@@ -1,12 +1,24 @@
-import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { validateMigrationDsl } from "../../src/dsl/schema.js";
 
 describe("validateMigrationDsl", () => {
   it("accepts the sample DSL", () => {
-    const dsl = JSON.parse(readFileSync("tests/fixtures/migration-dsl.sample.json", "utf8"));
-    const result = validateMigrationDsl(dsl);
+    const result = validateMigrationDsl({
+      version: "2.0-draft",
+      template: { name: "MK_TEST_V2_SAMPLE" },
+      form: {
+        fields: [
+          { id: "fd_subject", title: "主题", type: "text", required: true },
+          {
+            id: "fd_detail",
+            title: "明细",
+            type: "detailTable",
+            columns: [{ id: "fd_name", title: "名称", type: "text" }]
+          }
+        ]
+      }
+    });
 
     assert.equal(result.ok, true);
     assert.equal(result.status, "ok");
