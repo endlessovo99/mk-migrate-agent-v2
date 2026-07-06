@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { validateMigrationDsl } from "../../src/dsl/schema.js";
 import { loadFunctionWhitelist } from "../../src/translator/function-whitelist.js";
 import { parseSysFormTemplateXml, translateSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
 
@@ -12,7 +11,6 @@ describe("translateSysFormTemplateXml", () => {
     const sourcePath = "tests/fixtures/source/route-validation-lbpm/route-validation_SysFormTemplate.xml";
     const xml = readFileSync(sourcePath, "utf8");
     const dsl = translateSysFormTemplateXml(xml, { sourcePath });
-    const validation = validateMigrationDsl(dsl);
     const byId = new Map(dsl.form.fields.map((field) => [field.id, field]));
 
     assert.equal(dsl.source.kind, "sysform-template-xml");
@@ -41,7 +39,6 @@ describe("translateSysFormTemplateXml", () => {
       ["fd_name", "xform-input"],
       ["fd_amount", "xform-number"]
     ]);
-    assert.equal(validation.ok, true);
   });
 
   it("uses designer controls as canonical fields and preserves row-column layout", () => {
@@ -72,10 +69,8 @@ describe("translateSysFormTemplateXml", () => {
     `;
     const xml = sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml });
     const dsl = translateSysFormTemplateXml(xml, { sourcePath: "designer-first_SysFormTemplate.xml" });
-    const validation = validateMigrationDsl(dsl);
     const byId = new Map(dsl.form.fields.map((field) => [field.id, field]));
 
-    assert.equal(validation.ok, true);
     assert.deepEqual(dsl.form.fields.map((field) => field.id), ["fd_subject", "fd_sqdw", "fd_fjmx"]);
     assert.equal(byId.get("fd_sqdw")?.source?.designerId, "fd_sqdw");
     assert.equal(byId.get("fd_sqdw")?.source?.metadataId, "fd_meta_org");
@@ -251,13 +246,10 @@ describe("translateSysFormTemplateXml", () => {
       </java>
     `;
     const dsl = translateSysFormTemplateXml(xml, { functionWhitelist: whitelist });
-    const validation = validateMigrationDsl(dsl);
 
-    assert.equal(validation.ok, false);
-    assert.equal(validation.status, "invalid");
     assert.equal(dsl.review.functionWhitelist.matched[0].name, "DocList_AddRow");
     assert.equal(dsl.review.functionWhitelist.violations[0].name, "UnknownLegacyFunction");
-    assert.equal(validation.diagnostics.find((item) => item.code === "source.function_not_whitelisted")?.level, "error");
+    assert.equal(dsl.review.errors.find((item) => item.code === "source.function_not_whitelisted")?.details.functionName, "UnknownLegacyFunction");
   });
 });
 

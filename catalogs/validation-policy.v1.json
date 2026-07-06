@@ -1,0 +1,24 @@
+{
+  "id": "migration-validation-policy",
+  "version": "2026-07-06.v1",
+  "blocking": [
+    "unknown_component",
+    "unknown_props",
+    "wrong_prop_type",
+    "illegal_prop_value",
+    "unsupported_function",
+    "invalid_workflow_dag",
+    "draft_or_untrusted_execution_input",
+    "blocked_review_decision",
+    "pending_review_in_executable_area",
+    "invalid_source_reference"
+  ],
+  "warnings": [
+    "needs_manual",
+    "trust_check_status_missing",
+    "workflow_participants_empty",
+    "display_only_condition",
+    "semantic_gap",
+    "source_data_quality"
+  ]
+}

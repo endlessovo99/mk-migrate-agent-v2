@@ -1,0 +1,370 @@
+{
+  "id": "mk-components",
+  "version": "2026-07-06.v1",
+  "components": [
+    {
+      "componentId": "xform-input",
+      "kind": "field",
+      "label": "单行文本",
+      "description": "NewOA/MK single-line text field.",
+      "usage": "Use for short free-text source controls.",
+      "negativeUsage": "Do not use for multiline text, attachments, options, or detail-table containers.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-input", "mobile": "@elem/xform-m-input" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "placeholder": { "type": "string" }
+        }
+      },
+      "defaultPolicy": { "executorDefaults": ["placeholder"] },
+      "omitPolicy": { "omitWhenAbsent": [] }
+    },
+    {
+      "componentId": "xform-textarea",
+      "kind": "field",
+      "label": "多行文本",
+      "description": "NewOA/MK multiline text field.",
+      "usage": "Use for textarea-like source controls. Only carry maxLength or height when the source or review explicitly provides them.",
+      "negativeUsage": "Do not invent maxLength: 0 or a default height.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-textarea", "mobile": "@elem/xform-m-textarea" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "placeholder": { "type": "string" },
+          "maxLength": { "type": "integer", "minimum": 1 },
+          "height": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0 },
+              { "type": "string", "minLength": 1 }
+            ]
+          }
+        }
+      },
+      "defaultPolicy": { "executorDefaults": ["placeholder"] },
+      "omitPolicy": { "omitWhenAbsent": ["maxLength", "height"], "forbiddenDefaults": { "maxLength": 0 } }
+    },
+    {
+      "componentId": "xform-radio",
+      "kind": "field",
+      "label": "单选",
+      "description": "NewOA/MK radio field.",
+      "usage": "Use for source radio controls with finite options.",
+      "negativeUsage": "Do not use for multiple selection.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-radio", "mobile": "@elem/xform-m-radio" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "options": { "$ref": "#/$defs/options" }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": ["options"] }
+    },
+    {
+      "componentId": "xform-checkbox",
+      "kind": "field",
+      "label": "复选",
+      "description": "NewOA/MK checkbox field.",
+      "usage": "Use for source checkbox controls.",
+      "negativeUsage": "Do not use for single select dropdowns.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-checkbox", "mobile": "@elem/xform-m-checkbox" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "options": { "$ref": "#/$defs/options" }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": ["options"] }
+    },
+    {
+      "componentId": "xform-select",
+      "kind": "field",
+      "label": "下拉单选",
+      "description": "NewOA/MK single-select dropdown field.",
+      "usage": "Use for source select controls that choose one option.",
+      "negativeUsage": "Do not use when the source clearly supports multiple values.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-select", "mobile": "@elem/xform-m-select" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "options": { "$ref": "#/$defs/options" }
+        }
+      },
+      "defaultPolicy": { "executorDefaults": ["multi:false"] },
+      "omitPolicy": { "omitWhenAbsent": ["options"] }
+    },
+    {
+      "componentId": "xform-select~multi",
+      "kind": "field",
+      "label": "下拉多选",
+      "description": "NewOA/MK multi-select dropdown field.",
+      "usage": "Use only when source semantics allow multiple values.",
+      "negativeUsage": "Do not use for radio or normal single-select controls.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-select", "mobile": "@elem/xform-m-select" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "options": { "$ref": "#/$defs/options" }
+        }
+      },
+      "defaultPolicy": { "executorDefaults": ["multi:true"] },
+      "omitPolicy": { "omitWhenAbsent": ["options"] }
+    },
+    {
+      "componentId": "xform-datetime",
+      "kind": "field",
+      "label": "日期时间",
+      "description": "NewOA/MK date or date-time field.",
+      "usage": "Use for source date/date-time controls.",
+      "negativeUsage": "Do not use for plain text dates unless review accepts the mapping.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-datetime", "mobile": "@elem/xform-m-datetime" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "displayPattern": { "type": "string" }
+        }
+      },
+      "defaultPolicy": { "executorDefaults": ["displayPattern"] },
+      "omitPolicy": { "omitWhenAbsent": [] }
+    },
+    {
+      "componentId": "xform-number",
+      "kind": "field",
+      "label": "数字",
+      "description": "NewOA/MK numeric field.",
+      "usage": "Use for source numeric metadata.",
+      "negativeUsage": "Do not use for arbitrary text with numeric-looking labels.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-number", "mobile": "@elem/xform-m-number" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "precision": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": ["precision"] }
+    },
+    {
+      "componentId": "xform-address",
+      "kind": "field",
+      "label": "组织选择",
+      "description": "NewOA/MK organization/person selector.",
+      "usage": "Use for source organization element controls.",
+      "negativeUsage": "Do not use for normal text unless source metadata identifies organization semantics.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-address", "mobile": "@elem/xform-m-address" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "orgTypes": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT", "ORG_TYPE_ORG"] }
+          }
+        }
+      },
+      "defaultPolicy": { "executorDefaults": ["orgTypes"] },
+      "omitPolicy": { "omitWhenAbsent": ["orgTypes"] }
+    },
+    {
+      "componentId": "xform-attach",
+      "kind": "field",
+      "label": "附件",
+      "description": "NewOA/MK attachment field.",
+      "usage": "Use for source attachment controls.",
+      "negativeUsage": "Do not use for URL text or file-name text fields.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-attach", "mobile": "@elem/xform-m-attach" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "maxCount": { "type": "integer", "minimum": 0 },
+          "singleMaxSize": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "defaultPolicy": { "executorDefaults": ["attachmentDefaults"] },
+      "omitPolicy": { "omitWhenAbsent": ["maxCount", "singleMaxSize"] }
+    },
+    {
+      "componentId": "xform-description",
+      "kind": "field",
+      "label": "说明文本",
+      "description": "NewOA/MK description display component.",
+      "usage": "Use for non-input description controls.",
+      "negativeUsage": "Do not use for fields that must store user-entered data.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-description", "mobile": "@elem/xform-m-description" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "content": { "type": "string" }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": ["content"] }
+    },
+    {
+      "componentId": "xform-detail-table",
+      "kind": "field",
+      "label": "明细表",
+      "description": "NewOA/MK detail table container.",
+      "usage": "Use for source detail-table controls. Place it through mkTree instead of embedding it in layout cells.",
+      "negativeUsage": "Do not use as a normal field or column component.",
+      "allowedScopes": ["detailTable"],
+      "target": { "desktop": "@elem/xform-detail-table", "mobile": "@elem/xform-m-detail-table" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "defaultRowNumber": { "type": "integer", "minimum": 0 },
+          "showNumber": { "type": "boolean" }
+        }
+      },
+      "defaultPolicy": { "executorDefaults": ["detailTableDefaults"] },
+      "omitPolicy": { "omitWhenAbsent": ["defaultRowNumber", "showNumber"] }
+    },
+    {
+      "componentId": "xform-flex-1-1-layout",
+      "kind": "layout",
+      "label": "一列布局",
+      "description": "One-column row layout.",
+      "usage": "Use for a source row that renders as one visible MK layout cell.",
+      "negativeUsage": "Do not use for detail-table column definitions.",
+      "allowedScopes": ["layout"],
+      "target": { "desktop": "@elem/xform-flex-1-1-layout" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "columns": { "type": "integer", "enum": [1] },
+          "sourceColumns": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": ["sourceColumns"] }
+    },
+    {
+      "componentId": "xform-flex-1-2-layout",
+      "kind": "layout",
+      "label": "两列布局",
+      "description": "Two-column row layout.",
+      "usage": "Use for a source row that renders as two visible MK layout cells.",
+      "negativeUsage": "Do not use for one-, three-, or four-cell rows.",
+      "allowedScopes": ["layout"],
+      "target": { "desktop": "@elem/xform-flex-1-2-layout" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "columns": { "type": "integer", "enum": [2] },
+          "sourceColumns": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": ["sourceColumns"] }
+    },
+    {
+      "componentId": "xform-flex-1-3-layout",
+      "kind": "layout",
+      "label": "三列布局",
+      "description": "Three-column row layout.",
+      "usage": "Use for a source row that renders as three visible MK layout cells.",
+      "negativeUsage": "Do not use for non-three-cell rows.",
+      "allowedScopes": ["layout"],
+      "target": { "desktop": "@elem/xform-flex-1-3-layout" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "columns": { "type": "integer", "enum": [3] },
+          "sourceColumns": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": ["sourceColumns"] }
+    },
+    {
+      "componentId": "xform-flex-1-4-layout",
+      "kind": "layout",
+      "label": "四列布局",
+      "description": "Four-column row layout.",
+      "usage": "Use for a source row that renders as four visible MK layout cells.",
+      "negativeUsage": "Do not use for non-four-cell rows.",
+      "allowedScopes": ["layout"],
+      "target": { "desktop": "@elem/xform-flex-1-4-layout" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "columns": { "type": "integer", "enum": [4] },
+          "sourceColumns": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": ["sourceColumns"] }
+    },
+    {
+      "componentId": "xform-multi-row-table-layout",
+      "kind": "layout",
+      "label": "多行表格布局",
+      "description": "Table-like layout component reserved for rows that must stay grouped.",
+      "usage": "Use when Agent review explicitly preserves a source multi-row table grouping.",
+      "negativeUsage": "Do not use as the default layout for ordinary rows.",
+      "allowedScopes": ["layout"],
+      "target": { "desktop": "@elem/xform-table-layout" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rows": { "type": "integer", "minimum": 1 },
+          "columns": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": [] }
+    }
+  ],
+  "$defs": {
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "value"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "value": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

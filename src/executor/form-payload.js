@@ -85,7 +85,7 @@ export function summarizeFormFromTemplate(template) {
 
 export function summarizeDslForm(form = {}) {
   const fields = Array.isArray(form.fields) ? form.fields : [];
-  const rows = Array.isArray(form.layout?.rows) ? form.layout.rows : [];
+  const rows = Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : [];
 
   return {
     fieldCount: fields.length,
@@ -93,13 +93,13 @@ export function summarizeDslForm(form = {}) {
       id: field.id,
       title: field.title,
       type: field.type,
-      component: field.mk?.component,
+      component: field.componentId,
       columns: Array.isArray(field.columns)
         ? field.columns.map((column) => ({
             id: column.id,
             title: column.title,
             type: column.type,
-            component: column.mk?.component
+            component: column.componentId
           }))
         : []
     })),
@@ -107,10 +107,11 @@ export function summarizeDslForm(form = {}) {
     layoutRowCount: rows.length,
     layoutRows: rows.map((row) => ({
       id: row.id,
-      fields: (row.cells || []).flatMap((cell) => cellFieldIds(cell)),
-      cells: (row.cells || []).map((cell) => ({
-        fieldId: cell.fieldId || cellFieldIds(cell)[0],
-        fieldIds: cellFieldIds(cell),
+      componentId: row.componentId,
+      fields: (row.children || []).flatMap((cell) => childRefIds(cell)),
+      cells: (row.children || []).map((cell) => ({
+        fieldId: childRefIds(cell)[0],
+        fieldIds: childRefIds(cell),
         column: cell.column,
         colspan: cell.colspan
       }))
@@ -219,15 +220,15 @@ function fieldAttribute(field, tableName, tableType, spec) {
     "$$tableName": tableName
   };
 
-  if (field.required) controlProps.required = true;
-  if (field.options?.length) {
-    controlProps.options = field.options.map((option) => ({
+  if (field.props?.required) controlProps.required = true;
+  if (field.props?.options?.length) {
+    controlProps.options = field.props.options.map((option) => ({
       label: option.label ?? option.text ?? option.value,
       value: option.value ?? option.label ?? option.text
     }));
   }
   if (spec.attrType === "select") {
-    controlProps.multi = field.mk?.component === "xform-select~multi";
+    controlProps.multi = field.componentId === "xform-select~multi";
   }
   if (spec.attrType === "attachment") {
     Object.assign(controlProps, {
@@ -272,39 +273,11 @@ function fieldAttribute(field, tableName, tableType, spec) {
 }
 
 function textareaHeightFromDsl(field) {
-  return normalizeHeight(
-    field.height ??
-      field.ui?.height ??
-      field.mk?.height ??
-      field.source?.designerValues?.height ??
-      field.source?.designerValues?.style ??
-      field.source?.style
-  );
+  return normalizeHeight(field.props?.height);
 }
 
 function textareaMaxLengthFromDsl(field) {
-  const candidates = [
-    field.maxLength,
-    field.maxlength,
-    field.length,
-    field.validation?.maxLength,
-    field.validation?.maxlength,
-    field.ui?.maxLength,
-    field.ui?.maxlength,
-    field.mk?.maxLength,
-    field.mk?.maxlength,
-    field.source?.designerValues?.maxLength,
-    field.source?.designerValues?.maxlength,
-    field.source?.metadataAttributes?.maxLength,
-    field.source?.metadataAttributes?.maxlength,
-    field.source?.metadataAttributes?.length
-  ];
-
-  for (const candidate of candidates) {
-    const maxLength = normalizeMaxLength(candidate);
-    if (maxLength !== undefined) return maxLength;
-  }
-  return undefined;
+  return normalizeMaxLength(field.props?.maxLength);
 }
 
 function normalizeMaxLength(value) {
@@ -420,7 +393,7 @@ function buildViewModel(config, template, mainModel, form, detailModelsByField) 
 }
 
 function buildViewConfig(mainModel, form, detailModelsByField) {
-  const desktopRows = buildRows(form.layout?.rows || [], detailModelsByField);
+  const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField);
   const mainContainer = {
     key: "main",
     type: "main",
@@ -455,7 +428,7 @@ function buildRows(rows, detailModelsByField) {
 }
 
 function buildLayoutGridRow(row, detailModelsByField) {
-  const cells = row.cells || [];
+  const cells = row.children || [];
   const layoutId = `layout~${stableShortId(row.id)}`;
   const gridId = `@elem/layout-grid~${stableShortId(`${row.id}:grid`)}`;
   const displayColumns = displayColumnCount(row);
@@ -466,8 +439,9 @@ function buildLayoutGridRow(row, detailModelsByField) {
     controlProps: {
       id: layoutId,
       migrationRowId: row.id,
-      migrationLayoutType: `@elem/xform-flex-1-${displayColumns}-layout`,
-      migrationSourceColumns: row.columns || cells.length || 1,
+      migrationLayoutComponentId: row.componentId,
+      migrationLayoutType: `@elem/${row.componentId}`,
+      migrationSourceColumns: row.props?.sourceColumns || cells.length || 1,
       migrationDisplayColumns: displayColumns
     },
     children: [
@@ -487,12 +461,15 @@ function buildLayoutGridRow(row, detailModelsByField) {
 }
 
 function buildGridItem(row, cell, index, detailModelsByField) {
-  const itemId = `@elem/layout-grid.GridItem~${stableShortId(`${row.id}:${cell.id || cell.fieldId || index}`)}`;
-  const detailModel = detailModelsByField.get(cell.fieldId);
+  const refIds = childRefIds(cell);
+  const firstRefId = refIds[0];
+  const itemId = `@elem/layout-grid.GridItem~${stableShortId(`${row.id}:${cell.id || firstRefId || index}`)}`;
+  const detailModel = detailModelsByField.get(firstRefId);
   const fieldRef = {
-    key: detailModel?.fdTableName || cell.fieldId,
-    migrationFieldId: cell.fieldId,
-    migrationFieldIds: cellFieldIds(cell),
+    key: detailModel?.fdTableName || firstRefId,
+    migrationFieldId: firstRefId,
+    migrationFieldIds: refIds,
+    migrationRefType: cell.refType,
     migrationColumn: cell.column,
     migrationColspan: cell.colspan,
     ...(detailModel
@@ -509,8 +486,9 @@ function buildGridItem(row, cell, index, detailModelsByField) {
       id: itemId,
       style: { backgroundColor: "" },
       migrationRowId: row.id,
-      migrationFieldId: cell.fieldId,
-      migrationFieldIds: cellFieldIds(cell),
+      migrationFieldId: firstRefId,
+      migrationFieldIds: refIds,
+      migrationRefType: cell.refType,
       migrationColumn: cell.column,
       migrationColspan: cell.colspan
     },
@@ -519,13 +497,14 @@ function buildGridItem(row, cell, index, detailModelsByField) {
 }
 
 function displayColumnCount(row) {
-  const cells = row.cells || [];
+  const cells = row.children || [];
+  if (Number.isInteger(row.props?.columns)) return row.props.columns;
   if (cells.length <= 1) return 1;
   return Math.max(1, Math.min(4, cells.length));
 }
 
 function buildFieldAuth(mainModel, detailModels, form) {
-  const required = new Set((form.fields || []).filter((field) => field.required).map((field) => field.id));
+  const required = new Set((form.fields || []).filter((field) => field.props?.required).map((field) => field.id));
   return Object.fromEntries(
     [...(mainModel.fdFields || []), ...detailModels.flatMap((model) => model.fdFields || [])]
       .map((field) => [field.fdName, {
@@ -695,7 +674,7 @@ function componentForFdType(type) {
 }
 
 function componentSpec(field) {
-  const component = field.mk?.component;
+  const component = field.componentId;
   if (component === "xform-address") {
     return spec("address", "address", "orgElementDict", "address", "@elem/xform-address", "@elem/xform-m-address");
   }
@@ -733,6 +712,13 @@ function spec(fdType, fdDataType, fdDictType, attrType, desktop, mobile) {
 function cellFieldIds(cell) {
   if (Array.isArray(cell.fieldIds) && cell.fieldIds.length) return cell.fieldIds;
   return cell.fieldId ? [cell.fieldId] : [];
+}
+
+function childRefIds(child) {
+  if (Array.isArray(child.refIds) && child.refIds.length) return child.refIds;
+  if (child.refId) return [child.refId];
+  if (Array.isArray(child.fieldIds) && child.fieldIds.length) return child.fieldIds;
+  return child.fieldId ? [child.fieldId] : [];
 }
 
 function tableNameFor(value) {

@@ -85,18 +85,18 @@ export function summarizeDslWorkflow(workflow = {}) {
     processId: workflow.process?.id || "",
     nodeCount: nodes.length,
     edgeCount: edges.length,
-    conditionEdgeCount: edges.filter((edge) => Boolean(edge.condition || edge.displayCondition)).length,
+    conditionEdgeCount: edges.filter((edge) => Boolean(edgeConditionText(edge))).length,
     invalidEdgeCount: 0,
     nodes: nodes.map((node) => ({
       id: node.id,
       type: node.type,
-      mappedType: mapNodeType(node.type)
+      mappedType: node.type
     })),
     edges: edges.map((edge) => ({
       id: edge.id,
       source: edge.source,
       target: edge.target,
-      hasCondition: Boolean(edge.condition || edge.displayCondition)
+      hasCondition: Boolean(edgeConditionText(edge))
     }))
   };
 }
@@ -122,6 +122,9 @@ export function workflowMappingDiagnostics(workflow) {
 
 function mapNodeType(type = "") {
   const normalized = String(type).toLowerCase();
+  if (["generalstart", "generalend", "draft", "review", "send", "robot", "conditionbranch"].includes(normalized)) {
+    return type;
+  }
   if (normalized.includes("start")) return "generalStart";
   if (normalized.includes("send") || normalized.includes("cc")) return "send";
   if (normalized.includes("end")) return "generalEnd";
@@ -250,7 +253,7 @@ function buildArtificialNode(node, type) {
     cooperateType: attrs.processType || "2",
     ignoreOnSameIdentity: normalizeSameIdentity(attrs.ignoreOnHandlerSame),
     nodeNotifyTypeMethod: [],
-    handlers: handlersFromAttributes(attrs),
+    handlers: handlersFromParticipants(node.participants, attrs),
     fdScene: { fdMode: 0 },
     language: { nameCn: name, nameUs: type === "send" ? "Approval Node" : "Approval Node" },
     ...commentAuthority(),
@@ -278,12 +281,12 @@ function buildRobotNode(node, index) {
 function buildConditionBranchNode(node, outgoingEdges) {
   const attrs = sourceAttributes(node);
   const rules = outgoingEdges
-    .filter((edge) => edge.condition || edge.displayCondition || edge.name)
+    .filter((edge) => edgeConditionText(edge) || edge.name)
     .map((edge, index) => ({
       lineId: edge.id,
       priority: parseInteger(edge.priority || edge.attributes?.priority, index + 1),
-      formula: edge.condition || edge.displayCondition || edge.name || "true",
-      formulaName: edge.displayCondition || edge.condition || edge.name || "true",
+      formula: edgeConditionText(edge) || edge.name || "true",
+      formulaName: edge.condition?.displayText || edge.displayCondition || edgeConditionText(edge) || edge.name || "true",
       formulaType: "rule",
       lineName: edge.name || edge.id,
       mode: "simple",
@@ -340,7 +343,8 @@ function baseNode(node, index, type, element, width, height) {
 }
 
 function buildEdgeElement(edge, index) {
-  const formula = edge.condition || edge.displayCondition || "";
+  const formula = edgeConditionText(edge);
+  const displayText = edge.condition?.displayText || edge.displayCondition || formula;
   const element = {
     type: "sequenceFlow",
     id: edge.id || `E${index + 1}`,
@@ -360,8 +364,11 @@ function buildEdgeElement(edge, index) {
       source: edge.source,
       target: edge.target,
       name: edge.name || "",
-      condition: edge.condition || "",
-      displayCondition: edge.displayCondition || "",
+      sourceRef: edge.sourceRef || "",
+      condition: edge.condition?.sourceText || edge.condition || "",
+      displayCondition: edge.condition?.displayText || edge.displayCondition || "",
+      targetText: edge.condition?.targetText || "",
+      translationStatus: edge.condition?.translationStatus || "",
       sourcePosition: edge.sourcePosition || edge.attributes?.startPosition || "",
       targetPosition: edge.targetPosition || edge.attributes?.endPosition || "",
       points: edge.points || edge.attributes?.points || "",
@@ -372,8 +379,8 @@ function buildEdgeElement(edge, index) {
   };
   if (formula) {
     element.priority = parseInteger(edge.priority || edge.attributes?.priority, index + 1);
-    element.formula = edge.condition || edge.displayCondition;
-    element.formulaName = edge.displayCondition || edge.condition || "";
+    element.formula = formula;
+    element.formulaName = displayText || "";
     element.formulaType = "rule";
     element.defaultTrend = false;
     element.language = { nameCn: edge.name || "" };
@@ -408,6 +415,37 @@ function handlersFromAttributes(attrs) {
     members: splitHandlers(attrs.handlerIds, attrs.handlerNames),
     element: "users"
   };
+}
+
+function handlersFromParticipants(participants, attrs) {
+  if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
+    return {
+      id: "handlers",
+      type: "org",
+      source: "1",
+      ruleKey: "",
+      ruleName: "",
+      members: participants.members.map((member) => ({
+        id: member.id,
+        name: member.name || member.id,
+        element: member.element || "user",
+        type: member.type === "dept" ? "2" : "1"
+      })),
+      element: "users"
+    };
+  }
+  if (participants?.mode === "initiator_select") {
+    return {
+      id: "handlers",
+      type: "org",
+      source: "drafter",
+      ruleKey: "initiator_select",
+      ruleName: "发起人选择",
+      members: [],
+      element: "users"
+    };
+  }
+  return handlersFromAttributes(attrs);
 }
 
 function splitHandlers(handlerIds = "", handlerNames = "") {
@@ -457,7 +495,9 @@ function sourceAttributes(node) {
 function migrationNodeSource(node) {
   return {
     id: node.id,
-    type: node.type,
+    type: node.sourceType || node.type,
+    targetType: node.type,
+    sourceRef: node.sourceRef || "",
     name: node.name || "",
     attributes: node.attributes || {},
     definition: summarizeDefinition(node.definition),
@@ -490,6 +530,13 @@ function normalizeSameIdentity(value) {
 
 function hasEdgeCondition(edge) {
   return Boolean(edge.formula || edge.condition || edge.displayCondition || edge.formulaName);
+}
+
+function edgeConditionText(edge) {
+  if (edge?.condition && typeof edge.condition === "object") {
+    return edge.condition.targetText || edge.condition.sourceText || edge.condition.displayText || "";
+  }
+  return edge?.condition || edge?.displayCondition || "";
 }
 
 function summarizeDefinition(definition) {

@@ -16,28 +16,53 @@ The v2 route-validation source format is either:
 
 `fdDesignerHtml` is the primary source for visible field controls and row/column layout. `fdMetadataXml` enriches designer controls with type, required state, options, organization-field metadata, and detail-table columns. Metadata-only fields do not create visible MK controls in the first executor version.
 
-The DSL form section contains both field definitions and layout:
+`clean` writes a source-only `source-draft.json`. It contains source controls, detail tables, source layout rows/cells, workflow DAG nodes/edges, source attributes, and source issues. It must not contain target `componentId`, `mkType`, or `@elem/*` target identifiers.
+
+`draft` writes a non-executable `dsl-draft.json` with `trust.level = "draft"` and `trust.executable = false`. It contains target candidates, but execution remains blocked until an external Codex Agent review produces trusted `migration.dsl.json`.
+
+The trusted DSL form section contains both field definitions and explicit target layout:
 
 ```json
 {
+  "trust": {
+    "level": "trusted",
+    "executable": true
+  },
   "form": {
     "fields": [
       {
         "id": "fd_subject",
         "title": "主题",
-        "type": "text"
+        "type": "text",
+        "componentId": "xform-input",
+        "props": {
+          "required": true
+        },
+        "sourceProps": {
+          "designerType": "inputText"
+        },
+        "sourceRef": "source.form.control.fd_subject"
       }
     ],
     "layout": {
-      "source": "fdDesignerHtml",
-      "rows": [
+      "sourceGrid": {
+        "source": "fdDesignerHtml",
+        "rows": []
+      },
+      "mkTree": [
         {
-          "id": "row-0",
-          "cells": [
+          "id": "layout.row-0",
+          "componentId": "xform-flex-1-1-layout",
+          "props": {
+            "columns": 1
+          },
+          "sourceRef": "source.form.layout.row.row-0",
+          "children": [
             {
-              "id": "row-0-cell-1",
-              "fieldId": "fd_subject",
-              "fieldIds": ["fd_subject"],
+              "id": "layout.row-0-cell-1",
+              "refType": "field",
+              "refIds": ["fd_subject"],
+              "sourceRef": "source.form.layout.cell.row-0-cell-1",
               "column": 1,
               "colspan": 1
             }
@@ -49,37 +74,20 @@ The DSL form section contains both field definitions and layout:
 }
 ```
 
-`form.fields[].id` is the canonical designer control id from `fdDesignerHtml`. If `fdMetadataXml` uses a different id for the same title/type, the metadata id is preserved under `field.source.metadataId` and translation emits a warning.
+`form.fields[].id` is the canonical designer control id from `fdDesignerHtml`. If `fdMetadataXml` uses a different id for the same title/type, the metadata id is preserved in source audit data and translation emits a warning.
 
-Every translated form field and detail-table column must include target MK component metadata:
-
-```json
-{
-  "id": "fd_subject",
-  "title": "主题",
-  "type": "text",
-  "mk": {
-    "component": "xform-input",
-    "group": "basic",
-    "itemTid": "xform-ide-sidebar-tabPane-control-@elem-xform-input",
-    "sourceComponent": "@elem/xform-input"
-  }
-}
-```
-
-`type` is the migration DSL semantic type. `mk.component` and `mk.itemTid` are the target NewOA/MK component identifiers consumed by execution.
+Every translated form field and detail-table column must include target `componentId + props + sourceProps + sourceRef`. `props` are executable and validated against `catalogs/mk-components.v1.json`. `sourceProps` are audit-only; the executor must not consume them. Unknown props are errors. Textarea `height` and `maxLength` remain omitted unless explicitly present in executable `props`; `maxLength: 0` is invalid.
 
 `LbpmProcessDefinition.xml` is a Java XMLDecoder export for `com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition`. The adapter extracts the active `fdContent` process XML, parses nodes and lines into a directed acyclic graph, preserves each node and line's original attributes, and writes the result to `workflow` in DSL.
 
-When translating SysForm designer scripts, provide the Shanghai Electric function whitelist workbook:
+Function validation uses `catalogs/functions.v1.json` as the versioned whitelist. Source function calls outside the catalog are emitted as source issues and become blocking errors before execution. External files passed with `--function-whitelist` are filtered through the versioned catalog.
 
 ```bash
-node src/cli/main.js translate <source-dir> \
-  --function-whitelist /path/to/上海电气使用函数清单与MK函数对应.xls \
-  --out dsl.json
+node src/cli/main.js clean <source-dir> --out source-draft.json
+node src/cli/main.js draft source-draft.json --out dsl-draft.json
+node src/cli/main.js trust source-draft.json dsl-draft.json --external-agent-reviewed --out migration.dsl.json
+node src/cli/main.js check execute migration.dsl.json
 ```
-
-`MK_FUNCTION_WHITELIST_PATH` can be used instead of the CLI flag. The whitelist must contain `函数名` and `对应的MK函数` columns. Source function calls outside the whitelist are emitted as `review.errors` and make DSL validation fail.
 
 Route-validation fixture:
 
@@ -94,7 +102,7 @@ Execution uses the NewOA SIT API route only:
 ```bash
 NEWOA_USERNAME=01025344 \
 NEWOA_ENCRYPTED_PASSWORD='...' \
-node src/cli/main.js execute dsl.json \
+node src/cli/main.js execute migration.dsl.json \
   --confirm-write \
   --target-category-id '<NewOA category fdId>'
 ```

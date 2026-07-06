@@ -1,0 +1,41 @@
+{
+  "id": "mk-functions",
+  "version": "2026-07-06.v1",
+  "functions": [
+    {
+      "name": "Com_AddEventListener",
+      "description": "Source script event binding.",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "DocList_AddRow",
+      "description": "Source detail-table add-row helper.",
+      "mkFunction": "MKXFORM.addRow"
+    },
+    {
+      "name": "DocList_DeleteRow_ClearLast",
+      "description": "Source detail-table delete-row helper used by route-validation fixtures.",
+      "mkFunction": "MKXFORM.deleteRow"
+    },
+    {
+      "name": "XFom_RestValidationElements",
+      "description": "Source designer validation refresh helper.",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "__xformDispatch",
+      "description": "Source designer event dispatch helper.",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "document.getElementById",
+      "description": "DOM lookup used in source designer scripts.",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "document.getElementsByName",
+      "description": "DOM lookup used in source designer scripts.",
+      "mkFunction": "review_required"
+    }
+  ]
+}

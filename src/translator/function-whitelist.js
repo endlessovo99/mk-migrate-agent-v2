@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { extname } from "node:path";
+import { FUNCTION_CATALOG } from "../dsl/catalogs.js";
 
 const IGNORED_FUNCTIONS = new Set([
   "$",
@@ -68,9 +69,7 @@ const KEYWORDS = new Set([
 ]);
 
 export function loadFunctionWhitelist(path) {
-  if (!path) return undefined;
-  const extension = extname(path).toLowerCase();
-  const entries = extension === ".json" ? loadJsonWhitelist(path) : loadWorkbookWhitelist(path);
+  const entries = FUNCTION_CATALOG.functions;
   const byName = new Map();
 
   for (const entry of entries) {
@@ -79,7 +78,9 @@ export function loadFunctionWhitelist(path) {
   }
 
   return {
-    sourcePath: path,
+    sourcePath: `${FUNCTION_CATALOG.id}@${FUNCTION_CATALOG.version}`,
+    externalSourcePath: path || "",
+    version: FUNCTION_CATALOG.version,
     entries: [...byName.values()],
     byName
   };

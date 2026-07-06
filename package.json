@@ -9,7 +9,10 @@
   },
   "scripts": {
     "test": "node --test",
+    "clean": "node src/cli/main.js clean",
+    "draft": "node src/cli/main.js draft",
     "translate": "node src/cli/main.js translate",
+    "check": "node src/cli/main.js check",
     "validate": "node src/cli/main.js validate",
     "dry-run": "node src/cli/main.js dry-run",
     "execute": "node src/cli/main.js execute"

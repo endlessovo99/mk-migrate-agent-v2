@@ -1,17 +1,10 @@
-export const MK_COMPONENTS = new Map([
-  ["xform-input", mkMeta("xform-input")],
-  ["xform-textarea", mkMeta("xform-textarea")],
-  ["xform-radio", mkMeta("xform-radio")],
-  ["xform-checkbox", mkMeta("xform-checkbox")],
-  ["xform-select", mkMeta("xform-select")],
-  ["xform-select~multi", mkMeta("xform-select~multi")],
-  ["xform-datetime", mkMeta("xform-datetime")],
-  ["xform-number", mkMeta("xform-number")],
-  ["xform-address", mkMeta("xform-address")],
-  ["xform-attach", mkMeta("xform-attach")],
-  ["xform-description", mkMeta("xform-description")],
-  ["xform-detail-table", mkMeta("xform-detail-table")]
-]);
+import { COMPONENTS_BY_ID } from "./catalogs.js";
+
+export const MK_COMPONENTS = new Map(
+  [...COMPONENTS_BY_ID.values()]
+    .filter((component) => component.kind === "field")
+    .map((component) => [component.componentId, mkMeta(component.componentId)])
+);
 
 export function mkForFieldType(fieldType) {
   const component = {

@@ -12,6 +12,8 @@ export async function executeDsl(input, options = {}) {
       ok: false,
       status: "invalid",
       diagnostics: plan.diagnostics,
+      validationPolicy: input?.validationPolicy,
+      catalogs: input?.catalogs,
       plan
     };
   }
@@ -73,7 +75,10 @@ export async function executeDsl(input, options = {}) {
         ok: false,
         status: "readback_failed",
         stage: "readback",
+        failedAt: "readback",
         templateId,
+        createdFdIds: [templateId].filter(Boolean),
+        cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
         diagnostics,
         apiStages,
         plan,
@@ -85,6 +90,9 @@ export async function executeDsl(input, options = {}) {
       ok: true,
       status: diagnostics.some((diagnostic) => diagnostic.level === "warning") ? "written_with_warnings" : "written",
       templateId,
+      createdFdIds: [templateId].filter(Boolean),
+      validationPolicy: input?.validationPolicy,
+      catalogs: input?.catalogs,
       diagnostics,
       apiStages,
       plan,
@@ -98,7 +106,12 @@ export async function executeDsl(input, options = {}) {
       ok: false,
       status: "failed",
       stage: error?.stage || inferFailureStage(error),
+      failedAt: error?.stage || inferFailureStage(error),
       templateId: templateId || undefined,
+      createdFdIds: [templateId].filter(Boolean),
+      cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
+      validationPolicy: input?.validationPolicy,
+      catalogs: input?.catalogs,
       diagnostics: [
         ...diagnostics,
         {

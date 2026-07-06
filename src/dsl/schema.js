@@ -1,6 +1,10 @@
-import { MK_COMPONENTS } from "./mk-components.js";
+import {
+  validateCatalogVersions,
+  validateComponentProps,
+  validateFunctionCatalogAudit
+} from "./catalogs.js";
 
-export const DSL_VERSION = "2.0-draft";
+export const DSL_VERSION = "2.0-migration";
 
 export const FIELD_TYPES = new Set([
   "text",
@@ -17,9 +21,10 @@ export const FIELD_TYPES = new Set([
   "detailTable"
 ]);
 
-export function validateMigrationDsl(input) {
+export function validateMigrationDsl(input, options = {}) {
   const diagnostics = [];
   const root = isRecord(input) ? input : {};
+  const mode = options.mode || "any";
 
   if (!isRecord(input)) {
     diagnostics.push(error("dsl.root_type", "DSL must be a JSON object.", "/"));
@@ -32,45 +37,14 @@ export function validateMigrationDsl(input) {
     }));
   }
 
-  const template = isRecord(root.template) ? root.template : {};
-  if (!nonEmptyString(template.name)) {
-    diagnostics.push(error("dsl.template.name_required", "template.name is required.", "/template/name"));
-  }
-
-  const form = isRecord(root.form) ? root.form : {};
-  let fieldIds = new Set();
-  if (!Array.isArray(form.fields) || form.fields.length === 0) {
-    diagnostics.push(error("dsl.form.fields_required", "form.fields must contain at least one field.", "/form/fields"));
-  } else {
-    fieldIds = validateFields(form.fields, diagnostics);
-  }
-
-  validateFormLayout(form.layout, fieldIds, diagnostics);
-
-  const warnings = Array.isArray(root.review?.warnings) ? root.review.warnings : [];
-  for (const warning of warnings) {
-    diagnostics.push({
-      level: "warning",
-      code: warning.code || "dsl.review.warning",
-      message: warning.message || "DSL contains a review warning.",
-      path: warning.path || "/review/warnings",
-      details: warning.details
-    });
-  }
-
-  const reviewErrors = Array.isArray(root.review?.errors) ? root.review.errors : [];
-  for (const reviewError of reviewErrors) {
-    diagnostics.push({
-      level: "error",
-      code: reviewError.code || "dsl.review.error",
-      message: reviewError.message || "DSL contains a review error.",
-      path: reviewError.path || "/review/errors",
-      details: reviewError.details
-    });
-  }
-
+  validateArtifact(root, diagnostics, mode);
+  validateTrust(root, diagnostics, mode);
+  validateCatalogVersions(root, diagnostics);
+  validateTemplate(root.template, diagnostics);
+  const formContext = validateForm(root.form, diagnostics);
+  validateReview(root.review, diagnostics, root.trust?.level);
   if (root.workflow !== undefined) {
-    validateWorkflow(root.workflow, diagnostics);
+    validateWorkflow(root.workflow, diagnostics, { mode, fieldIds: formContext.fieldIds });
   }
 
   const hasErrors = diagnostics.some((item) => item.level === "error");
@@ -84,50 +58,105 @@ export function validateMigrationDsl(input) {
   };
 }
 
+function validateArtifact(root, diagnostics, mode) {
+  if (!["dsl-draft", "migration-dsl"].includes(root.artifact)) {
+    diagnostics.push(error("dsl.artifact_invalid", "DSL artifact must be dsl-draft or migration-dsl.", "/artifact", {
+      actual: root.artifact
+    }));
+    return;
+  }
+  if (mode === "draft" && root.artifact !== "dsl-draft") {
+    diagnostics.push(error("dsl.artifact_draft_required", "check draft requires a dsl-draft artifact.", "/artifact"));
+  }
+  if (mode === "execute" && root.artifact !== "migration-dsl") {
+    diagnostics.push(error("dsl.artifact_trusted_required", "Execution accepts only trusted migration.dsl.json artifacts.", "/artifact"));
+  }
+}
+
+function validateTrust(root, diagnostics, mode) {
+  const trust = isRecord(root.trust) ? root.trust : {};
+  if (!isRecord(root.trust)) {
+    diagnostics.push(error("dsl.trust_required", "trust metadata is required.", "/trust"));
+    return;
+  }
+
+  if (mode === "draft") {
+    if (trust.level !== "draft") {
+      diagnostics.push(error("dsl.trust.draft_level_required", "dsl-draft must set trust.level = draft.", "/trust/level"));
+    }
+    if (trust.executable !== false) {
+      diagnostics.push(error("dsl.trust.draft_not_executable", "dsl-draft must set trust.executable = false.", "/trust/executable"));
+    }
+    return;
+  }
+
+  if (mode === "execute") {
+    if (trust.level !== "trusted") {
+      diagnostics.push(error("dsl.trust.trusted_required", "Execution accepts only trust.level = trusted.", "/trust/level", {
+        actual: trust.level
+      }));
+    }
+    if (trust.executable !== true) {
+      diagnostics.push(error("dsl.trust.executable_required", "Execution accepts only trust.executable = true.", "/trust/executable", {
+        actual: trust.executable
+      }));
+    }
+    if (trust.reviewer?.type !== "agent") {
+      diagnostics.push(error("dsl.trust.reviewer_agent_required", "Trusted DSL must record reviewer.type = agent.", "/trust/reviewer/type"));
+    }
+    if (!nonEmptyString(trust.reviewer?.name) || !nonEmptyString(trust.reviewer?.mode)) {
+      diagnostics.push(error("dsl.trust.reviewer_external_required", "Trusted DSL must record external Agent reviewer name and mode.", "/trust/reviewer"));
+    }
+    if (trust.trustCheck?.status !== "passed") {
+      diagnostics.push(warning("trust.trust_check_status_missing", "trust.trustCheck.status is not passed; first version treats this as a warning.", "/trust/trustCheck/status", {
+        actual: trust.trustCheck?.status
+      }));
+    }
+    return;
+  }
+
+  if (trust.level === "draft" && trust.executable !== false) {
+    diagnostics.push(error("dsl.trust.draft_not_executable", "Draft DSL must not be executable.", "/trust/executable"));
+  }
+  if (trust.level === "trusted" && trust.executable !== true) {
+    diagnostics.push(error("dsl.trust.trusted_executable_required", "Trusted DSL must be executable.", "/trust/executable"));
+  }
+}
+
+function validateTemplate(template, diagnostics) {
+  if (!isRecord(template)) {
+    diagnostics.push(error("dsl.template_required", "template is required.", "/template"));
+    return;
+  }
+  if (!nonEmptyString(template.name)) {
+    diagnostics.push(error("dsl.template.name_required", "template.name is required.", "/template/name"));
+  }
+}
+
+function validateForm(form, diagnostics) {
+  if (!isRecord(form)) {
+    diagnostics.push(error("dsl.form_required", "form is required.", "/form"));
+    return { fieldIds: new Set(), detailTableIds: new Set(), layoutNodeIds: new Set() };
+  }
+
+  const fieldIds = validateFields(form.fields, diagnostics);
+  const detailTableIds = new Set((form.fields || []).filter((field) => field?.type === "detailTable").map((field) => field.id));
+  const layoutNodeIds = validateFormLayout(form.layout, { fieldIds, detailTableIds }, diagnostics);
+  return { fieldIds, detailTableIds, layoutNodeIds };
+}
+
 function validateFields(fields, diagnostics) {
   const ids = new Set();
 
+  if (!Array.isArray(fields) || fields.length === 0) {
+    diagnostics.push(error("dsl.form.fields_required", "form.fields must contain at least one field.", "/form/fields"));
+    return ids;
+  }
+
   fields.forEach((field, index) => {
     const path = `/form/fields/${index}`;
-    if (!isRecord(field)) {
-      diagnostics.push(error("dsl.field.type", "Field must be a JSON object.", path));
-      return;
-    }
-
-    if (!nonEmptyString(field.id)) {
-      diagnostics.push(error("dsl.field.id_required", "Field id is required.", `${path}/id`));
-    } else if (ids.has(field.id)) {
-      diagnostics.push(error("dsl.field.id_duplicate", "Field id must be unique.", `${path}/id`, { id: field.id }));
-    } else {
-      ids.add(field.id);
-    }
-
-    if (!nonEmptyString(field.title)) {
-      diagnostics.push(error("dsl.field.title_required", "Field title is required.", `${path}/title`));
-    }
-
-    if (!FIELD_TYPES.has(field.type)) {
-      diagnostics.push(error("dsl.field.type_unsupported", "Field type is not supported by the v2 draft DSL.", `${path}/type`, {
-        current: field.type,
-        supported: Array.from(FIELD_TYPES)
-      }));
-    }
-
-    validateMkComponent(field.mk, diagnostics, `${path}/mk`);
-
-    if (field.options !== undefined) {
-      if (!Array.isArray(field.options)) {
-        diagnostics.push(error("dsl.field.options_type", "Field options must be an array.", `${path}/options`));
-      } else if (["singleSelect", "multiSelect", "radio", "checkbox"].includes(field.type)) {
-        field.options.forEach((option, optionIndex) => {
-          if (!nonEmptyString(option?.label) || !nonEmptyString(option?.value)) {
-            diagnostics.push(error("dsl.field.option_invalid", "Option label and value are required.", `${path}/options/${optionIndex}`));
-          }
-        });
-      }
-    }
-
-    if (field.type === "detailTable") {
+    validateFieldLike(field, diagnostics, path, ids, field?.type === "detailTable" ? "detailTable" : "field");
+    if (field?.type === "detailTable") {
       validateDetailColumns(field.columns, diagnostics, `${path}/columns`);
     }
   });
@@ -135,95 +164,195 @@ function validateFields(fields, diagnostics) {
   return ids;
 }
 
-function validateFormLayout(layout, fieldIds, diagnostics) {
+function validateFieldLike(field, diagnostics, path, ids, scope) {
+  if (!isRecord(field)) {
+    diagnostics.push(error("dsl.field.type", "Field must be a JSON object.", path));
+    return;
+  }
+
+  if (!nonEmptyString(field.id)) {
+    diagnostics.push(error("dsl.field.id_required", "Field id is required.", `${path}/id`));
+  } else if (ids?.has(field.id)) {
+    diagnostics.push(error("dsl.field.id_duplicate", "Field id must be unique.", `${path}/id`, { id: field.id }));
+  } else {
+    ids?.add(field.id);
+  }
+
+  if (!nonEmptyString(field.title)) {
+    diagnostics.push(error("dsl.field.title_required", "Field title is required.", `${path}/title`));
+  }
+
+  if (!FIELD_TYPES.has(field.type)) {
+    diagnostics.push(error("dsl.field.type_unsupported", "Field type is not supported by the migration DSL.", `${path}/type`, {
+      current: field.type,
+      supported: Array.from(FIELD_TYPES)
+    }));
+  }
+
+  validateComponentProps({
+    componentId: field.componentId,
+    props: field.props,
+    scope,
+    path
+  }, diagnostics);
+
+  if (!isRecord(field.sourceProps)) {
+    diagnostics.push(error("dsl.field.source_props_required", "sourceProps is required for audit and must be an object.", `${path}/sourceProps`));
+  }
+  if (!nonEmptyString(field.sourceRef) && field.generated !== true) {
+    diagnostics.push(error("dsl.field.source_ref_required", "Field sourceRef is required unless generated is true.", `${path}/sourceRef`));
+  }
+  if (field.generated === true && !nonEmptyString(field.reason)) {
+    diagnostics.push(error("dsl.field.generated_reason_required", "Generated fields must include a reason.", `${path}/reason`));
+  }
+}
+
+function validateDetailColumns(columns, diagnostics, path) {
+  if (!Array.isArray(columns) || columns.length === 0) {
+    diagnostics.push(error("dsl.detail_table.columns_required", "Detail table fields must contain at least one column.", path));
+    return;
+  }
+
+  const ids = new Set();
+  columns.forEach((column, index) => {
+    const columnPath = `${path}/${index}`;
+    if (column?.type === "detailTable") {
+      diagnostics.push(error("dsl.detail_table.column_type_unsupported", "Detail table columns cannot be detail tables.", `${columnPath}/type`));
+    }
+    validateFieldLike(column, diagnostics, columnPath, ids, "detailColumn");
+  });
+}
+
+function validateFormLayout(layout, refs, diagnostics) {
+  const layoutNodeIds = new Set();
   if (!isRecord(layout)) {
     diagnostics.push(error("dsl.form.layout_required", "form.layout is required.", "/form/layout"));
+    return layoutNodeIds;
+  }
+
+  if (!isRecord(layout.sourceGrid)) {
+    diagnostics.push(error("dsl.form.layout.source_grid_required", "form.layout.sourceGrid is required.", "/form/layout/sourceGrid"));
+  }
+
+  if (!Array.isArray(layout.mkTree) || layout.mkTree.length === 0) {
+    diagnostics.push(error("dsl.form.layout.mk_tree_required", "form.layout.mkTree must contain explicit MK layout nodes.", "/form/layout/mkTree"));
+    return layoutNodeIds;
+  }
+
+  layout.mkTree.forEach((node, index) => validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds));
+  return layoutNodeIds;
+}
+
+function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
+  const path = `/form/layout/mkTree/${index}`;
+  if (!isRecord(node)) {
+    diagnostics.push(error("dsl.form.layout.mk_tree.node_type", "mkTree node must be an object.", path));
+    return;
+  }
+  if (!nonEmptyString(node.id)) {
+    diagnostics.push(error("dsl.form.layout.mk_tree.node_id_required", "mkTree node id is required.", `${path}/id`));
+  } else if (layoutNodeIds.has(node.id)) {
+    diagnostics.push(error("dsl.form.layout.mk_tree.node_id_duplicate", "mkTree node id must be unique.", `${path}/id`, { id: node.id }));
+  } else {
+    layoutNodeIds.add(node.id);
+  }
+
+  const component = validateComponentProps({
+    componentId: node.componentId,
+    props: node.props,
+    scope: "layout",
+    path
+  }, diagnostics);
+  if (component && component.kind !== "layout") {
+    diagnostics.push(error("dsl.form.layout.component_kind_invalid", "mkTree node componentId must be a layout component.", `${path}/componentId`));
+  }
+
+  if (!nonEmptyString(node.sourceRef) && node.generated !== true) {
+    diagnostics.push(error("dsl.form.layout.source_ref_required", "mkTree node sourceRef is required unless generated is true.", `${path}/sourceRef`));
+  }
+
+  if (!Array.isArray(node.children) || node.children.length === 0) {
+    diagnostics.push(error("dsl.form.layout.children_required", "mkTree layout nodes must contain children references.", `${path}/children`));
     return;
   }
 
-  if (!nonEmptyString(layout.source)) {
-    diagnostics.push(error("dsl.form.layout.source_required", "form.layout.source is required.", "/form/layout/source"));
-  }
-
-  if (!Array.isArray(layout.rows) || layout.rows.length === 0) {
-    diagnostics.push(error("dsl.form.layout.rows_required", "form.layout.rows must contain at least one row.", "/form/layout/rows"));
-    return;
-  }
-
-  const rowIds = new Set();
-  layout.rows.forEach((row, rowIndex) => {
-    const rowPath = `/form/layout/rows/${rowIndex}`;
-    if (!isRecord(row)) {
-      diagnostics.push(error("dsl.form.layout.row_type", "Layout row must be a JSON object.", rowPath));
+  node.children.forEach((child, childIndex) => {
+    const childPath = `${path}/children/${childIndex}`;
+    if (!isRecord(child)) {
+      diagnostics.push(error("dsl.form.layout.child_type", "mkTree child must be an object.", childPath));
       return;
     }
-    if (!nonEmptyString(row.id)) {
-      diagnostics.push(error("dsl.form.layout.row_id_required", "Layout row id is required.", `${rowPath}/id`));
-    } else if (rowIds.has(row.id)) {
-      diagnostics.push(error("dsl.form.layout.row_id_duplicate", "Layout row id must be unique.", `${rowPath}/id`, { id: row.id }));
-    } else {
-      rowIds.add(row.id);
+    if (!["field", "detailTable", "layout"].includes(child.refType)) {
+      diagnostics.push(error("dsl.form.layout.child_ref_type_invalid", "mkTree child refType must be field, detailTable, or layout.", `${childPath}/refType`));
     }
-
-    if (!Array.isArray(row.cells) || row.cells.length === 0) {
-      diagnostics.push(error("dsl.form.layout.cells_required", "Layout row must contain at least one cell.", `${rowPath}/cells`));
-      return;
+    const refIds = Array.isArray(child.refIds) ? child.refIds : [child.refId].filter(Boolean);
+    if (!refIds.length) {
+      diagnostics.push(error("dsl.form.layout.child_ref_required", "mkTree child must reference at least one field, detail table, or layout node.", `${childPath}/refIds`));
     }
-
-    const cellIds = new Set();
-    row.cells.forEach((cell, cellIndex) => {
-      const cellPath = `${rowPath}/cells/${cellIndex}`;
-      if (!isRecord(cell)) {
-        diagnostics.push(error("dsl.form.layout.cell_type", "Layout cell must be a JSON object.", cellPath));
+    refIds.forEach((refId, refIndex) => {
+      const refPath = Array.isArray(child.refIds) ? `${childPath}/refIds/${refIndex}` : `${childPath}/refId`;
+      if (!nonEmptyString(refId)) {
+        diagnostics.push(error("dsl.form.layout.child_ref_required", "mkTree child reference must be a non-empty string.", refPath));
         return;
       }
-      if (!nonEmptyString(cell.id)) {
-        diagnostics.push(error("dsl.form.layout.cell_id_required", "Layout cell id is required.", `${cellPath}/id`));
-      } else if (cellIds.has(cell.id)) {
-        diagnostics.push(error("dsl.form.layout.cell_id_duplicate", "Layout cell id must be unique within a row.", `${cellPath}/id`, { id: cell.id }));
-      } else {
-        cellIds.add(cell.id);
+      if (child.refType === "field" && !refs.fieldIds.has(refId)) {
+        diagnostics.push(error("dsl.form.layout.field_missing", "mkTree child field reference must exist in form.fields.", refPath, { refId }));
       }
-      validateLayoutCellFields(cell, fieldIds, diagnostics, cellPath);
-      if (!Number.isInteger(cell.column) || cell.column < 0) {
-        diagnostics.push(error("dsl.form.layout.column_invalid", "Layout cell column must be a non-negative integer.", `${cellPath}/column`));
-      }
-      if (!Number.isInteger(cell.colspan) || cell.colspan < 1) {
-        diagnostics.push(error("dsl.form.layout.colspan_invalid", "Layout cell colspan must be a positive integer.", `${cellPath}/colspan`));
+      if (child.refType === "detailTable" && !refs.detailTableIds.has(refId)) {
+        diagnostics.push(error("dsl.form.layout.detail_table_missing", "mkTree child detail-table reference must exist in form.fields.", refPath, { refId }));
       }
     });
   });
 }
 
-function validateLayoutCellFields(cell, fieldIds, diagnostics, path) {
-  const references = Array.isArray(cell.fieldIds) ? cell.fieldIds : [cell.fieldId];
-  if (!references.length || references.every((fieldId) => !nonEmptyString(fieldId))) {
-    diagnostics.push(error("dsl.form.layout.field_required", "Layout cell must contain fieldId or fieldIds.", `${path}/fieldId`));
-    return;
+function validateReview(review, diagnostics, trustLevel) {
+  if (!isRecord(review)) return;
+
+  const warnings = Array.isArray(review.warnings) ? review.warnings : [];
+  for (const warningItem of warnings) {
+    diagnostics.push(warning(
+      warningItem.code || "dsl.review.warning",
+      warningItem.message || "DSL contains a review warning.",
+      warningItem.path || "/review/warnings",
+      warningItem.details
+    ));
   }
 
-  references.forEach((fieldId, index) => {
-    const fieldPath = Array.isArray(cell.fieldIds) ? `${path}/fieldIds/${index}` : `${path}/fieldId`;
-    if (!nonEmptyString(fieldId)) {
-      diagnostics.push(error("dsl.form.layout.field_required", "Layout cell field reference is required.", fieldPath));
-      return;
-    }
-    if (!fieldIds.has(fieldId)) {
-      diagnostics.push(error("dsl.form.layout.field_missing", "Layout cell field reference must reference a form field.", fieldPath, {
-        fieldId
-      }));
-    }
-  });
+  const errors = Array.isArray(review.errors) ? review.errors : [];
+  for (const reviewError of errors) {
+    diagnostics.push(error(
+      reviewError.code || "dsl.review.error",
+      reviewError.message || "DSL contains a review error.",
+      reviewError.path || "/review/errors",
+      reviewError.details
+    ));
+  }
 
-  if (cell.fieldId !== undefined && Array.isArray(cell.fieldIds) && cell.fieldIds[0] !== cell.fieldId) {
-    diagnostics.push(error("dsl.form.layout.field_id_mismatch", "Layout cell fieldId must match the first fieldIds entry.", `${path}/fieldId`, {
-      fieldId: cell.fieldId,
-      firstFieldId: cell.fieldIds[0]
-    }));
+  validateFunctionCatalogAudit(review.functionWhitelist, diagnostics);
+
+  if (trustLevel !== "trusted" && Array.isArray(review.decisions) && review.decisions.length) {
+    diagnostics.push(error("dsl.review.decisions_not_allowed_in_draft", "review.decisions[] is allowed only in trusted DSL.", "/review/decisions"));
+  }
+  if (trustLevel === "trusted") {
+    if (!Array.isArray(review.decisions)) {
+      diagnostics.push(error("dsl.review.decisions_required", "Trusted DSL must contain review.decisions[].", "/review/decisions"));
+    } else {
+      review.decisions.forEach((decision, index) => {
+        const path = `/review/decisions/${index}`;
+        if (decision?.status === "blocked") {
+          diagnostics.push(error("dsl.review.decision_blocked", "Blocked review decisions fail execution checks.", `${path}/status`));
+        }
+        for (const key of ["status", "decisionType", "rationale", "result"]) {
+          if (!nonEmptyString(decision?.[key])) {
+            diagnostics.push(error("dsl.review.decision_field_required", `review.decisions[].${key} is required.`, `${path}/${key}`));
+          }
+        }
+      });
+    }
   }
 }
 
-function validateWorkflow(workflow, diagnostics) {
+function validateWorkflow(workflow, diagnostics, context) {
   if (!isRecord(workflow)) {
     diagnostics.push(error("dsl.workflow.type", "workflow must be a JSON object.", "/workflow"));
     return;
@@ -236,17 +365,19 @@ function validateWorkflow(workflow, diagnostics) {
     diagnostics.push(error("dsl.workflow.process.id_required", "workflow.process.id is required.", "/workflow/process/id"));
   }
 
-  const nodeIds = validateWorkflowNodes(workflow.nodes, diagnostics);
-  const edges = validateWorkflowEdges(workflow.edges, nodeIds, diagnostics);
-  validateTopologicalOrder(workflow.topologicalOrder, nodeIds, edges, diagnostics);
+  const nodeMap = validateWorkflowNodes(workflow.nodes, diagnostics, context);
+  const edges = validateWorkflowEdges(workflow.edges, nodeMap, diagnostics);
+  validateTopologicalOrder(workflow.topologicalOrder, nodeMap, edges, diagnostics);
+  validateWorkflowConnectivity(nodeMap, edges, diagnostics);
+  validateWorkflowConditions(edges, diagnostics, context);
 }
 
-function validateWorkflowNodes(nodes, diagnostics) {
-  const ids = new Set();
+function validateWorkflowNodes(nodes, diagnostics, context) {
+  const nodeMap = new Map();
 
   if (!Array.isArray(nodes) || nodes.length === 0) {
     diagnostics.push(error("dsl.workflow.nodes_required", "workflow.nodes must contain at least one node.", "/workflow/nodes"));
-    return ids;
+    return nodeMap;
   }
 
   nodes.forEach((node, index) => {
@@ -258,25 +389,52 @@ function validateWorkflowNodes(nodes, diagnostics) {
 
     if (!nonEmptyString(node.id)) {
       diagnostics.push(error("dsl.workflow.node.id_required", "Workflow node id is required.", `${path}/id`));
-    } else if (ids.has(node.id)) {
+    } else if (nodeMap.has(node.id)) {
       diagnostics.push(error("dsl.workflow.node.id_duplicate", "Workflow node id must be unique.", `${path}/id`, { id: node.id }));
     } else {
-      ids.add(node.id);
+      nodeMap.set(node.id, node);
     }
 
-    if (!nonEmptyString(node.type)) {
-      diagnostics.push(error("dsl.workflow.node.type_required", "Workflow node type is required.", `${path}/type`));
+    if (!["generalStart", "draft", "review", "send", "robot", "conditionBranch", "generalEnd"].includes(node.type)) {
+      diagnostics.push(error("dsl.workflow.node.type_unsupported", "Workflow node type must be explicit NewOA execution semantics.", `${path}/type`, {
+        current: node.type
+      }));
     }
-
-    if (!isRecord(node.attributes)) {
-      diagnostics.push(error("dsl.workflow.node.attributes_required", "Workflow node attributes must preserve source attributes.", `${path}/attributes`));
+    if (!["startEvent", "manualTask", "exclusiveGateway", "robot", "endEvent"].includes(node.element)) {
+      diagnostics.push(error("dsl.workflow.node.element_unsupported", "Workflow node element must be explicit NewOA graph semantics.", `${path}/element`, {
+        current: node.element
+      }));
+    }
+    if (!nonEmptyString(node.sourceRef) && node.generated !== true) {
+      diagnostics.push(error("dsl.workflow.node.source_ref_required", "Workflow node sourceRef is required unless generated is true.", `${path}/sourceRef`));
+    }
+    validateParticipants(node.participants, diagnostics, `${path}/participants`);
+    if (context.mode === "execute" && node.translationStatus === "pending_review") {
+      diagnostics.push(error("dsl.workflow.node.pending_review", "Executable workflow nodes cannot remain pending_review.", `${path}/translationStatus`));
     }
   });
 
-  return ids;
+  return nodeMap;
 }
 
-function validateWorkflowEdges(edges, nodeIds, diagnostics) {
+function validateParticipants(participants, diagnostics, path) {
+  if (!isRecord(participants)) return;
+  if (participants.mode === "empty") {
+    diagnostics.push(warning("workflow.participants.empty", "Workflow participants are empty because the source did not specify executable participants.", path, {
+      reason: participants.reason
+    }));
+    return;
+  }
+  if (participants.mode === "initiator_select" && !nonEmptyString(participants.sourceSemantics)) {
+    diagnostics.push(error("workflow.participants.initiator_select_without_source", "initiator_select is allowed only when source semantics explicitly mention initiator/drafter selection.", `${path}/sourceSemantics`));
+    return;
+  }
+  if (participants.mode === "explicit" && !Array.isArray(participants.members)) {
+    diagnostics.push(error("workflow.participants.members_required", "Explicit participants require members[].", `${path}/members`));
+  }
+}
+
+function validateWorkflowEdges(edges, nodeMap, diagnostics) {
   const ids = new Set();
   const validEdges = [];
 
@@ -302,21 +460,21 @@ function validateWorkflowEdges(edges, nodeIds, diagnostics) {
 
     if (!nonEmptyString(edge.source)) {
       diagnostics.push(error("dsl.workflow.edge.source_required", "Workflow edge source is required.", `${path}/source`));
-    } else if (!nodeIds.has(edge.source)) {
+    } else if (!nodeMap.has(edge.source)) {
       diagnostics.push(error("dsl.workflow.edge.source_missing", "Workflow edge source must reference an existing node.", `${path}/source`, { source: edge.source }));
     }
 
     if (!nonEmptyString(edge.target)) {
       diagnostics.push(error("dsl.workflow.edge.target_required", "Workflow edge target is required.", `${path}/target`));
-    } else if (!nodeIds.has(edge.target)) {
+    } else if (!nodeMap.has(edge.target)) {
       diagnostics.push(error("dsl.workflow.edge.target_missing", "Workflow edge target must reference an existing node.", `${path}/target`, { target: edge.target }));
     }
 
-    if (!isRecord(edge.attributes)) {
-      diagnostics.push(error("dsl.workflow.edge.attributes_required", "Workflow edge attributes must preserve source attributes.", `${path}/attributes`));
+    if (!nonEmptyString(edge.sourceRef) && edge.generated !== true) {
+      diagnostics.push(error("dsl.workflow.edge.source_ref_required", "Workflow edge sourceRef is required unless generated is true.", `${path}/sourceRef`));
     }
 
-    if (nodeIds.has(edge.source) && nodeIds.has(edge.target)) {
+    if (nodeMap.has(edge.source) && nodeMap.has(edge.target)) {
       validEdges.push(edge);
     }
   });
@@ -324,7 +482,7 @@ function validateWorkflowEdges(edges, nodeIds, diagnostics) {
   return validEdges;
 }
 
-function validateTopologicalOrder(order, nodeIds, edges, diagnostics) {
+function validateTopologicalOrder(order, nodeMap, edges, diagnostics) {
   if (!Array.isArray(order)) {
     diagnostics.push(error("dsl.workflow.topological_order_required", "workflow.topologicalOrder is required.", "/workflow/topologicalOrder"));
     return;
@@ -340,16 +498,16 @@ function validateTopologicalOrder(order, nodeIds, edges, diagnostics) {
       diagnostics.push(error("dsl.workflow.topological_order.duplicate", "workflow.topologicalOrder must not contain duplicate ids.", `/workflow/topologicalOrder/${index}`, { id: nodeId }));
       return;
     }
-    if (!nodeIds.has(nodeId)) {
+    if (!nodeMap.has(nodeId)) {
       diagnostics.push(error("dsl.workflow.topological_order.unknown_node", "workflow.topologicalOrder must only contain workflow node ids.", `/workflow/topologicalOrder/${index}`, { id: nodeId }));
       return;
     }
     positions.set(nodeId, index);
   });
 
-  if (positions.size !== nodeIds.size) {
+  if (positions.size !== nodeMap.size) {
     diagnostics.push(error("dsl.workflow.topological_order.incomplete", "workflow.topologicalOrder must include every workflow node exactly once.", "/workflow/topologicalOrder", {
-      expected: nodeIds.size,
+      expected: nodeMap.size,
       current: positions.size
     }));
   }
@@ -361,94 +519,95 @@ function validateTopologicalOrder(order, nodeIds, edges, diagnostics) {
         source: edge.source,
         target: edge.target
       }));
-      return;
     }
   }
 }
 
-function validateDetailColumns(columns, diagnostics, path) {
-  if (!Array.isArray(columns) || columns.length === 0) {
-    diagnostics.push(error("dsl.detail_table.columns_required", "Detail table fields must contain at least one column.", path));
-    return;
+function validateWorkflowConnectivity(nodeMap, edges, diagnostics) {
+  if (!nodeMap.size) return;
+  const starts = [...nodeMap.values()].filter((node) => node.type === "generalStart");
+  const ends = [...nodeMap.values()].filter((node) => node.type === "generalEnd");
+  if (starts.length !== 1) {
+    diagnostics.push(error("dsl.workflow.start_node_required", "Workflow must contain exactly one start node.", "/workflow/nodes", { count: starts.length }));
   }
+  if (ends.length !== 1) {
+    diagnostics.push(error("dsl.workflow.end_node_required", "Workflow must contain exactly one end node.", "/workflow/nodes", { count: ends.length }));
+  }
+  if (starts.length !== 1 || ends.length !== 1) return;
 
-  const ids = new Set();
-  columns.forEach((column, index) => {
-    const columnPath = `${path}/${index}`;
-    if (!isRecord(column)) {
-      diagnostics.push(error("dsl.detail_table.column_type", "Detail table column must be a JSON object.", columnPath));
+  const outgoing = groupEdges(edges, "source", "target");
+  const incoming = groupEdges(edges, "target", "source");
+  const reachableFromStart = visit(starts[0].id, outgoing);
+  const canReachEnd = visit(ends[0].id, incoming);
+
+  for (const nodeId of nodeMap.keys()) {
+    if (!reachableFromStart.has(nodeId)) {
+      diagnostics.push(error("dsl.workflow.node_unreachable_from_start", "All workflow nodes must be reachable from start.", "/workflow/nodes", { nodeId }));
+    }
+    if (!canReachEnd.has(nodeId)) {
+      diagnostics.push(error("dsl.workflow.node_cannot_reach_end", "All workflow nodes must be able to reach end.", "/workflow/nodes", { nodeId }));
+    }
+  }
+}
+
+function validateWorkflowConditions(edges, diagnostics, context) {
+  edges.forEach((edge, index) => {
+    const condition = edge.condition;
+    if (!isRecord(condition)) return;
+    const hasCondition = Boolean(condition.sourceText || condition.displayText || condition.targetText);
+    if (!hasCondition) return;
+    if (condition.translationStatus === "pending_review") {
+      if (context.mode !== "execute") return;
+      diagnostics.push(error("dsl.workflow.condition_pending_review", "Executable workflow conditions cannot remain pending_review.", `/workflow/edges/${index}/condition/translationStatus`));
       return;
     }
-    if (!nonEmptyString(column.id)) {
-      diagnostics.push(error("dsl.detail_table.column_id_required", "Detail table column id is required.", `${columnPath}/id`));
-    } else if (ids.has(column.id)) {
-      diagnostics.push(error("dsl.detail_table.column_id_duplicate", "Detail table column id must be unique within the table.", `${columnPath}/id`, { id: column.id }));
-    } else {
-      ids.add(column.id);
+    if (condition.critical === true && condition.translationStatus !== "executable") {
+      diagnostics.push(error("dsl.workflow.condition_not_executable", "Critical executable conditions require translationStatus = executable.", `/workflow/edges/${index}/condition/translationStatus`));
+      return;
     }
-    if (!nonEmptyString(column.title)) {
-      diagnostics.push(error("dsl.detail_table.column_title_required", "Detail table column title is required.", `${columnPath}/title`));
+    if (condition.translationStatus === "display_only") {
+      diagnostics.push(warning("workflow.condition.display_only", "Workflow condition is preserved for display/review but is not guaranteed executable.", `/workflow/edges/${index}/condition`, {
+        edgeId: edge.id
+      }));
+      return;
     }
-    if (!FIELD_TYPES.has(column.type) || column.type === "detailTable") {
-      diagnostics.push(error("dsl.detail_table.column_type_unsupported", "Detail table column type is not supported.", `${columnPath}/type`, {
-        current: column.type,
-        supported: Array.from(FIELD_TYPES).filter((type) => type !== "detailTable")
+    if (condition.translationStatus !== "executable") {
+      diagnostics.push(error("dsl.workflow.condition_status_invalid", "Workflow condition translationStatus must be executable, display_only, or pending_review.", `/workflow/edges/${index}/condition/translationStatus`, {
+        actual: condition.translationStatus
       }));
     }
-    validateMkComponent(column.mk, diagnostics, `${columnPath}/mk`);
   });
 }
 
-function validateMkComponent(mk, diagnostics, path) {
-  if (!isRecord(mk)) {
-    diagnostics.push(error("dsl.field.mk_required", "Field mk component metadata is required.", path));
-    return;
+function groupEdges(edges, key, valueKey) {
+  const grouped = new Map();
+  for (const edge of edges) {
+    if (!grouped.has(edge[key])) grouped.set(edge[key], []);
+    grouped.get(edge[key]).push(edge[valueKey]);
   }
+  return grouped;
+}
 
-  if (!nonEmptyString(mk.component)) {
-    diagnostics.push(error("dsl.field.mk.component_required", "Field mk.component is required.", `${path}/component`));
-    return;
+function visit(start, graph) {
+  const seen = new Set();
+  const queue = [start];
+  for (let index = 0; index < queue.length; index += 1) {
+    const nodeId = queue[index];
+    if (seen.has(nodeId)) continue;
+    seen.add(nodeId);
+    for (const next of graph.get(nodeId) || []) {
+      if (!seen.has(next)) queue.push(next);
+    }
   }
-
-  const expected = MK_COMPONENTS.get(mk.component);
-  if (!expected) {
-    diagnostics.push(error("dsl.field.mk.component_unsupported", "Field mk.component is not supported.", `${path}/component`, {
-      current: mk.component,
-      supported: [...MK_COMPONENTS.keys()]
-    }));
-    return;
-  }
-
-  if (mk.group !== expected.group) {
-    diagnostics.push(error("dsl.field.mk.group_mismatch", "Field mk.group must match the MK component mapping.", `${path}/group`, {
-      current: mk.group,
-      expected: expected.group
-    }));
-  }
-
-  if (mk.itemTid !== expected.itemTid) {
-    diagnostics.push(error("dsl.field.mk.item_tid_mismatch", "Field mk.itemTid must match the MK component mapping.", `${path}/itemTid`, {
-      current: mk.itemTid,
-      expected: expected.itemTid
-    }));
-  }
-
-  if (mk.sourceComponent !== expected.sourceComponent) {
-    diagnostics.push(error("dsl.field.mk.source_component_mismatch", "Field mk.sourceComponent must match the MK component mapping.", `${path}/sourceComponent`, {
-      current: mk.sourceComponent,
-      expected: expected.sourceComponent
-    }));
-  }
+  return seen;
 }
 
 function error(code, message, path, details) {
-  return {
-    level: "error",
-    code,
-    message,
-    path,
-    details
-  };
+  return { level: "error", code, message, path, details };
+}
+
+function warning(code, message, path, details) {
+  return { level: "warning", code, message, path, details };
 }
 
 function isRecord(value) {
