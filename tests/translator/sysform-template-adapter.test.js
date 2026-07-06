@@ -181,6 +181,23 @@ describe("translateSysFormTemplateXml", () => {
     );
   });
 
+  it("extracts designer JSP snippets as MK script candidates", () => {
+    const xml = readFileSync(
+      "tests/fixtures/source/19bb55286bd93a6081a33e44c3791374/19bb557531db577cfc0bbb248719d041_SysFormTemplate.xml",
+      "utf8"
+    );
+    const dsl = translateSysFormTemplateXml(xml, { sourcePath: "19bb557531db577cfc0bbb248719d041_SysFormTemplate.xml" });
+
+    assert.equal(dsl.scripts.fragments.length, 8);
+    assert.equal(dsl.scripts.sources.length, 2);
+    assert.deepEqual([...new Set(dsl.scripts.sources.map((source) => source.sourceKey))], ["fdDesignerHtml"]);
+    assert.equal(dsl.scripts.fragments.some((fragment) => fragment.id === "fd_37157731108fc2"), true);
+    assert.equal(
+      dsl.scripts.sources[0].functionAudit.matched.some((item) => item.name === "GetXFormFieldById"),
+      true
+    );
+  });
+
   it("does not flag explicit business detail table titles", () => {
     const designerHtml = `
       <table fd_type="standardTable">

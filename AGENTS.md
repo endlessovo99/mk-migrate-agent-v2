@@ -19,6 +19,7 @@ NewOA writes are allowed only for the executor implementation path when all of t
 - Keep CLI and modules small.
 - Prefer API-first execution.
 - Do not use browser automation for the v2 executor path.
+- Do not reference, invoke, copy from, or use the `onewo-k2-newoa-migration` skill as guidance for this project.
 - Do not port broad v1 modules wholesale.
 - Add features only when a fixture and a route-validation test exist.
 - Preserve DSL as the only public boundary between translation and execution.

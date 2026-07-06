@@ -1,5 +1,6 @@
 import { catalogRefs, validationPolicyRef } from "../dsl/catalogs.js";
 import { SOURCE_DRAFT_VERSION } from "./source-draft.js";
+import { draftMkScriptsFromSourceScripts } from "./sysform-jsp-scripts.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -33,6 +34,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceRef: sourceDraft.source?.sourceId || sourceDraft.source?.path || ""
     },
     form,
+    scripts: draftMkScriptsFromSourceScripts(sourceDraft.scripts),
     workflow: sourceDraft.workflow ? draftWorkflow(sourceDraft.workflow) : undefined,
     review: {
       warnings: sourceIssuesToWarnings(sourceDraft.issues || []),

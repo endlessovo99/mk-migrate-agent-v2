@@ -14,11 +14,25 @@ describe("source directory stages", () => {
     assert.equal(sourceDraft.source.sourceId, "19bb55286bd93a6081a33e44c3791374");
     assert.equal(sourceDraft.form.controls.length, 11);
     assert.equal(sourceDraft.form.detailTables.length, 4);
+    assert.equal(sourceDraft.scripts.fragments.length, 8);
+    assert.equal(sourceDraft.scripts.sources.length, 2);
     assert.equal(sourceDraft.workflow.nodes.length, 28);
     assert.equal(sourceDraft.workflow.edges.length, 30);
     assert.equal(text.includes("componentId"), false);
     assert.equal(text.includes("mkType"), false);
     assert.equal(text.includes("@elem/"), false);
+  });
+
+  it("drafts JSP source scripts into MK script actions for review", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const action = dslDraft.scripts.actions[0];
+
+    assert.equal(dslDraft.scripts.actions.length, 2);
+    assert.equal(action.event, "onLoad");
+    assert.equal(action.translationStatus, "needs_review");
+    assert.equal(action.function.includes("function onLoad(context)"), true);
+    assert.equal(action.functionMappings.some((mapping) => mapping.source === "GetXFormFieldById"), true);
   });
 
   it("drafts source facts into a non-executable dsl-draft with explicit mkTree", () => {

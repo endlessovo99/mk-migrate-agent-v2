@@ -1,40 +1,296 @@
 {
   "id": "mk-functions",
-  "version": "2026-07-06.v1",
+  "version": "2026-07-06.v2",
+  "source": "上海电气使用函数清单与MK函数对应.xls",
   "functions": [
     {
-      "name": "Com_AddEventListener",
-      "description": "Source script event binding.",
-      "mkFunction": "review_required"
+      "name": "GetXFormFieldById",
+      "description": "自定义表单根据控件ID获取对象",
+      "mkFunction": "MKXFORM.$('控件ID')"
     },
     {
-      "name": "DocList_AddRow",
-      "description": "Source detail-table add-row helper.",
-      "mkFunction": "MKXFORM.addRow"
+      "name": "AttachXFormValueChangeEventById",
+      "description": "自定义表单通过控件ID绑定监听值变化方法，仅当ID标识的控件发生值变化时进行调用",
+      "mkFunction": "需要转换为控件字段动作：onChange值发生变化见右侧图片"
     },
     {
-      "name": "DocList_DeleteRow_ClearLast",
-      "description": "Source detail-table delete-row helper used by route-validation fixtures.",
-      "mkFunction": "MKXFORM.deleteRow"
+      "name": "GetXFormFieldValueById",
+      "description": "自定义表单根据控件ID获取对象值",
+      "mkFunction": "var value = MKXFORM.getValue('控件ID', { detailRowIndex: 明细表行号, nestRowIndex: 子明细表行号 })"
+    },
+    {
+      "name": "SetXFormFieldValueById",
+      "description": "自定义表单根据控件ID设置对象值",
+      "mkFunction": "MKXFORM.setValue('控件ID','控件值')"
+    },
+    {
+      "name": "XFormOnValueChangeFuns.push",
+      "description": "添加监听函数，此队列中的函数将在表单值发生变化时被调用",
+      "mkFunction": "同AttachXFormValueChangeEventById"
     },
     {
       "name": "XFom_RestValidationElements",
-      "description": "Source designer validation refresh helper.",
-      "mkFunction": "review_required"
+      "description": "解决表单动态添加或删除后校验问题",
+      "mkFunction": "MKXFORM.getFieldAttr(控件ID)获取字段当前的只读/必填属性\nMKXFORM.setFieldAttr(控件ID, 1)改变单个字段显示属性(只读/必填等）1：只读，2：可编辑，3：必填， 4：隐藏字段标签及内容，5：显示，6：非必填\n MKXFORM.validateFields().then(value => {\n    // 校验返回结果\n})触发表单强制校验"
+    },
+    {
+      "name": "GetXFormSameRowFieldById",
+      "description": "获取明细表中通行的表单域",
+      "mkFunction": "MKXFORM.checkDetailRow(表单ID, [])"
     },
     {
       "name": "__xformDispatch",
-      "description": "Source designer event dispatch helper.",
-      "mkFunction": "review_required"
+      "description": "功能：自定义表单统一值发生变化分发函数（外部不调用）\n 参数：\n value        ：发生值变化的控件的当前值\n domElement   ：当前发生值变化的控件Dom对象（可能是数组）",
+      "mkFunction": "无，转换为字段值变化动作，则会进行函数调用，可无需统一分发"
+    },
+    {
+      "name": "GetXFormFieldByLabel",
+      "description": "自定义表单根据显示文字获取对象",
+      "mkFunction": "无，只可以根据控件ID获取"
+    },
+    {
+      "name": "Com_AddEventListener",
+      "description": "往某个对象中添加一个事件Com_AddEventListener(obj, eventType, func)obj：对象，如：window、document等、\teventType：事件名称，不以on开始，比如：\"load\"、\"mouseover\"、\tfunc：需要执行的函数",
+      "mkFunction": "对应表单动作，onLoad加载完毕"
+    },
+    {
+      "name": "Com_Parameter.event.submit.push",
+      "description": "提交前插入函数，return false阻断提交",
+      "mkFunction": "对应表单提交前动作、onBeforeSubmit提交前事件"
+    },
+    {
+      "name": "DocList_AddRow",
+      "description": "添加行",
+      "mkFunction": "MKXFORM.addRow(表单ID, rowValue)"
+    },
+    {
+      "name": "DocListFunc_ReplaceIndex",
+      "description": "明细行替换对应属性",
+      "mkFunction": "MKXFORM.updateRow(表单ID, rowNum, rowValue)"
+    },
+    {
+      "name": "DocList_DeleteRow_ClearLast",
+      "description": "增加删除到最后一行后，生成一空行的函数。",
+      "mkFunction": "MKXFORM.addRow(表单ID, rowValue) 值全设置为空"
+    },
+    {
+      "name": "DocListFunc_RefreshIndex",
+      "description": "刷新明细索引",
+      "mkFunction": "MKXFORM.reload(表单ID)"
     },
     {
       "name": "document.getElementById",
-      "description": "DOM lookup used in source designer scripts.",
-      "mkFunction": "review_required"
+      "description": "DOM操作",
+      "mkFunction": "document.getElementById"
     },
     {
       "name": "document.getElementsByName",
-      "description": "DOM lookup used in source designer scripts.",
+      "description": "DOM操作",
+      "mkFunction": "document.getElementsByName"
+    },
+    {
+      "name": "document.getElementsByTagName",
+      "description": "DOM操作",
+      "mkFunction": "document.getElementsByTagName"
+    },
+    {
+      "name": "document.getElementsByClassName",
+      "description": "DOM操作",
+      "mkFunction": "document.getElementsByClassName"
+    },
+    {
+      "name": "Data_GetOrgPersonBeanNameByKey",
+      "description": "根据关键字在指定的组织架构中查找数据",
+      "mkFunction": "/**\n* 调用组织架构函数接口，接口名称：{sys-org:sysorg.getElementDatas.desc}\n* @param config 请求参数配置\n* @param callback 回调函数\n* 说明：\n* 请求参数配置 config, functionCode 为函数的编码（即:函数标识\n*\n* 回调函数 callback\n* 1. 参数error，当请求出错是会返回错误信息\n* 2. 参数res，请求数据\n* {\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"fdId\":{\"type\":\"string\",\"id\":\"fdId\",\"description\":\"{sys-org:sysorg.person.fdId}\"},\"fdName\":{\"type\":\"string\",\"id\":\"fdName\",\"description\":\"{sys-org:sysorg.person.fdName}\"},\"fdOrgType\":{\"type\":\"integer\",\"id\":\"fdOrgType\",\"description\":\"{sys-org:sysorg.fdOrgType}\"}}}}\n*/\nMKXFORM.callOrg({\n  id: \"sysorg.getElementDatas\",\n  param: {\"address\":[{\"fdId\":\"15f8165c9524792842872204d97a2a18w0\"}]}\n}, function(error, res){\n  console.log(res)\n})"
+    },
+    {
+      "name": "Data_GetOrgElementBeanNameByKey",
+      "description": "根据关键字在指定的组织架构中查找数据",
+      "mkFunction": "同上"
+    },
+    {
+      "name": "kmssdata.AddBeanData",
+      "description": "根据javabean的名字，采用AJAX方式获取数据，并将返回的数据添加到数据对象中 var kmssData=new KMSSData(); kmssData.AddBeanData(\"kmLeaveTypeDialog&fdId=\"+strValue);",
+      "mkFunction": "异步请求   MKXFORM.ajax({\n  method: '',\n  url: ''\n}, function (error, res) {\n\n})"
+    },
+    {
+      "name": "common_dom_row_set_show_required_reset",
+      "description": "隐藏所有相同名字的控件对应的每行内容,并设置为非必填\n主要用于明细表",
+      "mkFunction": "/**\n* 改变明细表单个字段显示属性(只读/必填等)。\n* @param id 控件ID，可在数据模型中选中，格式[表ID.控件ID]\n* @param value 1：只读，2：可编辑，3：必填， 4：隐藏字段标签及内容，5：显示，6：非必填\n*/\nMKXFORM.setDetailFieldAttr(控件ID, 1)"
+    },
+    {
+      "name": "set_required",
+      "description": "设置必填",
+      "mkFunction": "/**\n* 改变单个字段显示属性(只读/必填等)\n* @param id 控件ID，可在数据模型中选中，格式[表ID.控件ID]\n* @param value 1：只读，2：可编辑，3：必填， 4：隐藏字段标签及内容，5：显示，6：非必填\n*/\nMKXFORM.setFieldAttr(控件ID, 1)"
+    },
+    {
+      "name": "set_not_required",
+      "description": "设置非必填",
+      "mkFunction": "同上"
+    },
+    {
+      "name": "common_not_required",
+      "description": "设置控件为非必填项",
+      "mkFunction": "同上"
+    },
+    {
+      "name": "common_required",
+      "description": "设置控件为必填项",
+      "mkFunction": "同上"
+    },
+    {
+      "name": "Designer_Control_JSP_ShowEditFrame",
+      "description": "初始化编辑器容器和Tab键快捷键，将JSP代码和名称填充至编辑框，显示弹窗并定位",
+      "mkFunction": "无"
+    },
+    {
+      "name": "parsingExcelContent",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "setReviewTemplateId",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "submitSaveFlagFuc",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "single_row_set",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "showApplyType",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "changeStarOrLevel",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "changeTypeEnabled",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "getFormFieldValue",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "loadSaveFlagFuc",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "formCheck",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "switchContainer",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "getControlWrapper",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "changeEnabledView",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "changeHotelEnabled",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "changeBank",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "getFormSelectText",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "controlDisplay",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "controlDisplay2",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "showInitView",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "setSubjectTitle",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "showReturnRepair",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "geoTaxRowShow",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "theSubjectTitle",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "showSalesOpt",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "showSalesFiles",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "showSalesYuL",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "convertCurrency",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "monDif",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "bigNum",
+      "description": "自定义函数",
+      "mkFunction": "review_required"
+    },
+    {
+      "name": "filesucess",
+      "description": "自定义函数",
       "mkFunction": "review_required"
     }
   ]

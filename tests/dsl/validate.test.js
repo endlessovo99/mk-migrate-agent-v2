@@ -105,6 +105,23 @@ describe("validateMigrationDsl", () => {
     assert.equal(missingField.diagnostics.some((item) => item.code === "dsl.form.layout.field_missing"), true);
   });
 
+  it("requires JSP script actions to be reviewed before execution", () => {
+    const result = validateMigrationDsl(sampleTrustedDsl({
+      scripts: {
+        actions: [{
+          id: "fd_jsp.script.1",
+          name: "onLoad",
+          event: "onLoad",
+          function: "function onLoad(context) {}",
+          translationStatus: "needs_review"
+        }]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.needs_review"), true);
+  });
+
   it("rejects invalid workflow DAGs and initiator selection without source semantics", () => {
     const result = validateMigrationDsl(sampleTrustedDsl({
       workflow: {

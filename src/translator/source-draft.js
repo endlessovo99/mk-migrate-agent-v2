@@ -50,6 +50,7 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
       detailTables,
       layout: sourceLayoutFromLegacyLayout(legacyDsl.form?.layout, detailTableIds)
     },
+    scripts: sourceScriptsFromLegacy(legacyDsl.scripts),
     workflow,
     issues: sourceIssuesFromReview(legacyDsl.review)
   });
@@ -232,6 +233,24 @@ function sourceWorkflowFromLegacyWorkflow(workflow) {
     nodes,
     edges,
     topologicalOrder: workflow.topologicalOrder || []
+  };
+}
+
+function sourceScriptsFromLegacy(scripts) {
+  if (!scripts || !Array.isArray(scripts.sources) || scripts.sources.length === 0) return undefined;
+  return {
+    source: scripts.source || "sysform-jsp",
+    displayJsp: scripts.displayJsp,
+    fragments: scripts.fragments || [],
+    sources: scripts.sources.map((source) => pruneUndefined({
+      id: source.id,
+      sourceRef: source.sourceRef,
+      sourceKey: source.sourceKey,
+      sourceType: source.sourceType,
+      fragmentId: source.fragmentId,
+      javascript: source.javascript,
+      functionAudit: source.functionAudit
+    }))
   };
 }
 

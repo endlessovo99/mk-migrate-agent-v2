@@ -5,6 +5,14 @@ export function buildDryRunPlan(input) {
   const templateName = input?.template?.name || "";
   const fields = Array.isArray(input?.form?.fields) ? input.form.fields : [];
   const layoutRows = Array.isArray(input?.form?.layout?.mkTree) ? input.form.layout.mkTree : [];
+  const scriptActions = Array.isArray(input?.scripts?.actions) ? input.scripts.actions : [];
+  const scriptSteps = scriptActions.length ? [{
+    id: "map-form-scripts",
+    action: "map-jsp-scripts-to-newoa-control-actions",
+    status: validation.ok ? "planned" : "blocked",
+    actions: scriptActions.length,
+    events: scriptActions.map((action) => action.event || action.name).filter(Boolean)
+  }] : [];
   const workflow = input?.workflow;
   const workflowSteps = workflow ? [{
     id: "map-workflow",
@@ -45,6 +53,7 @@ export function buildDryRunPlan(input) {
         fieldCount: fields.length,
         layoutRows: layoutRows.length
       },
+      ...scriptSteps,
       ...workflowSteps,
       {
         id: "save-template-draft",

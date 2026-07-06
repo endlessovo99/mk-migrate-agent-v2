@@ -18,17 +18,22 @@ export function applyFormPayload(template, dsl) {
   );
 
   const fieldAuth = buildFieldAuth(mainModel, detailModels, form);
+  const existingFormAttr = parseJsonObject(config.attribute?.formAttr || "{}");
+  const controlAction = buildControlAction(existingFormAttr.controlAction, dsl.scripts);
   const formAttr = {
     subjectRule: {
       script: "${data.biz.fdSubject}",
       type: "Eval",
       vo: { content: "$标题$", mode: "formula" }
     },
-    formRule: { pattern: {} },
-    dataUnique: {},
-    controlAction: {},
+    formRule: existingFormAttr.formRule || { pattern: {} },
+    dataUnique: existingFormAttr.dataUnique || {},
+    controlAction,
     currentTableName: mainModel.fdTableName,
-    migrationDsl: { form: summary }
+    migrationDsl: {
+      form: summary,
+      scripts: summarizeDslScripts(dsl.scripts)
+    }
   };
 
   const nextConfig = {
@@ -49,7 +54,8 @@ export function applyFormPayload(template, dsl) {
     error: config.error || "{}",
     migrationDsl: {
       ...(config.migrationDsl || {}),
-      form: summary
+      form: summary,
+      scripts: summarizeDslScripts(dsl.scripts)
     }
   };
 
@@ -79,7 +85,8 @@ export function summarizeFormFromTemplate(template) {
     fields,
     detailTableCount: detailFields.length,
     layoutRowCount: layoutRows.length,
-    layoutRows
+    layoutRows,
+    scripts: summarizeScriptsFromConfig(config)
   };
 }
 
@@ -117,6 +124,62 @@ export function summarizeDslForm(form = {}) {
       }))
     }))
   };
+}
+
+function summarizeDslScripts(scripts = {}) {
+  const actions = Array.isArray(scripts.actions) ? scripts.actions : [];
+  return {
+    actionCount: actions.length,
+    events: actions.map((action) => action.event || action.name).filter(Boolean),
+    translationStatuses: actions.map((action) => action.translationStatus).filter(Boolean)
+  };
+}
+
+function summarizeScriptsFromConfig(config = {}) {
+  const formAttr = parseJsonObject(config.attribute?.formAttr || "{}");
+  const controlAction = formAttr.controlAction || {};
+  const global = controlAction.global || {};
+  const events = Object.keys(global).filter((event) => Array.isArray(global[event]) && global[event].length);
+  return {
+    actionCount: events.reduce((count, event) => count + global[event].length, 0),
+    events,
+    javascriptLength: typeof controlAction.javascript === "string" ? controlAction.javascript.length : 0
+  };
+}
+
+function buildControlAction(existing, scripts = {}) {
+  const next = {
+    control: existing?.control || {},
+    global: existing?.global || {}
+  };
+  const actions = Array.isArray(scripts.actions) ? scripts.actions : [];
+
+  if (!actions.length) {
+    if (existing?.javascript) next.javascript = existing.javascript;
+    return next;
+  }
+
+  const grouped = new Map();
+  for (const action of actions) {
+    const event = action.event || action.name;
+    if (!event || typeof action.function !== "string" || !action.function.trim()) continue;
+    if (!grouped.has(event)) grouped.set(event, []);
+    grouped.get(event).push({
+      name: action.name || event,
+      function: action.function,
+      id: action.id || stableHexId(`${event}:${action.function}`).slice(0, 18)
+    });
+  }
+
+  for (const [event, eventActions] of grouped) {
+    next.global[event] = eventActions;
+  }
+
+  next.javascript = actions
+    .map((action) => action.function)
+    .filter((fn) => typeof fn === "string" && fn.trim())
+    .join("\n\n");
+  return next;
 }
 
 function buildMainModel(template, xform, config, form) {

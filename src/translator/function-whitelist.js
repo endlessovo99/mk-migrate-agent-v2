@@ -69,7 +69,7 @@ const KEYWORDS = new Set([
 ]);
 
 export function loadFunctionWhitelist(path) {
-  const entries = FUNCTION_CATALOG.functions;
+  const entries = path ? loadExternalWhitelist(path) : FUNCTION_CATALOG.functions;
   const byName = new Map();
 
   for (const entry of entries) {
@@ -78,12 +78,19 @@ export function loadFunctionWhitelist(path) {
   }
 
   return {
-    sourcePath: `${FUNCTION_CATALOG.id}@${FUNCTION_CATALOG.version}`,
+    sourcePath: path || `${FUNCTION_CATALOG.id}@${FUNCTION_CATALOG.version}`,
     externalSourcePath: path || "",
     version: FUNCTION_CATALOG.version,
     entries: [...byName.values()],
     byName
   };
+}
+
+function loadExternalWhitelist(path) {
+  const ext = extname(path).toLowerCase();
+  if (ext === ".json") return loadJsonWhitelist(path);
+  if ([".xls", ".xlsx", ".xlsm"].includes(ext)) return loadWorkbookWhitelist(path);
+  throw new Error("function whitelist must be a .json, .xls, .xlsx, or .xlsm file");
 }
 
 export function auditFunctionWhitelist(text, whitelist, options = {}) {

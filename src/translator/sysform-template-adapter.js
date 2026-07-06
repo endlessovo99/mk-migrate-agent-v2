@@ -2,6 +2,7 @@ import { basename } from "node:path";
 import { DSL_VERSION } from "../dsl/schema.js";
 import { auditFunctionWhitelist, functionWhitelistErrors } from "./function-whitelist.js";
 import { buildDesignerFirstForm } from "./sysform-designer-layout.js";
+import { extractSysFormJspScripts } from "./sysform-jsp-scripts.js";
 import { parseMetadataXml } from "./sysform-metadata.js";
 import { cleanText, decodeEntities, parseFdValues } from "./xml-utils.js";
 
@@ -17,6 +18,7 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   const functionWhitelist = options.functionWhitelist
     ? auditFunctionWhitelist(template.fdDesignerHtml || "", options.functionWhitelist, { path: "/fdDesignerHtml" })
     : undefined;
+  const scripts = extractSysFormJspScripts(template, { functionWhitelist: options.functionWhitelist });
 
   if (!template.fdDesignerHtml) {
     warnings.push({
@@ -37,6 +39,11 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   if (functionWhitelist?.violations.length) {
     errors.push(...functionWhitelistErrors(functionWhitelist, "/fdDesignerHtml"));
   }
+  for (const source of scripts?.sources || []) {
+    if (source.functionAudit?.violations?.length) {
+      errors.push(...functionWhitelistErrors(source.functionAudit, source.sourceRef));
+    }
+  }
 
   return {
     version: DSL_VERSION,
@@ -53,6 +60,7 @@ export function translateSysFormTemplateXml(xml, options = {}) {
       categoryPath: options.categoryPath || ""
     },
     form,
+    scripts,
     review: {
       warnings,
       ...(errors.length ? { errors } : {}),

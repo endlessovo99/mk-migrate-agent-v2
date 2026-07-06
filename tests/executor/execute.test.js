@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { executeDsl } from "../../src/executor/execute.js";
-import { applyFormPayload } from "../../src/executor/form-payload.js";
+import { applyFormPayload, summarizeFormFromTemplate } from "../../src/executor/form-payload.js";
 import { sampleDraftDsl, sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("executeDsl", () => {
@@ -223,6 +223,37 @@ describe("executeDsl", () => {
     assert.equal(Object.hasOwn(sourceOnly, "height"), false);
     assert.equal(Object.hasOwn(sourceOnly, "maxLength"), false);
     assert.equal(Object.hasOwn(sourceOnlyField, "fdLength"), false);
+  });
+
+  it("writes translated JSP scripts into MK xform control actions", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_jsp.script.1",
+          name: "onLoad",
+          event: "onLoad",
+          function: "function onLoad(context) {\n  var value = MKXFORM.getValue('fd_subject')\n}",
+          translationStatus: "mapped",
+          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+          functionMappings: [{
+            source: "GetXFormFieldValueById",
+            target: "MKXFORM.getValue('控件ID')",
+            reviewRequired: false
+          }]
+        }]
+      }
+    });
+    const payload = applyFormPayload(baseTemplate(), dsl);
+    const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
+    const formAttr = JSON.parse(config.attribute.formAttr);
+
+    assert.equal(formAttr.controlAction.global.onLoad.length, 1);
+    assert.equal(formAttr.controlAction.global.onLoad[0].function.includes("MKXFORM.getValue('fd_subject')"), true);
+    assert.equal(formAttr.controlAction.javascript.includes("function onLoad(context)"), true);
+    assert.equal(config.migrationDsl.scripts.actionCount, 1);
+    assert.deepEqual(summarizeFormFromTemplate(payload).scripts.events, ["onLoad"]);
   });
 });
 

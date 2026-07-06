@@ -42,6 +42,7 @@ export function validateMigrationDsl(input, options = {}) {
   validateCatalogVersions(root, diagnostics);
   validateTemplate(root.template, diagnostics);
   const formContext = validateForm(root.form, diagnostics);
+  validateScripts(root.scripts, diagnostics, { mode });
   validateReview(root.review, diagnostics, root.trust?.level);
   if (root.workflow !== undefined) {
     validateWorkflow(root.workflow, diagnostics, { mode, fieldIds: formContext.fieldIds });
@@ -350,6 +351,45 @@ function validateReview(review, diagnostics, trustLevel) {
       });
     }
   }
+}
+
+function validateScripts(scripts, diagnostics, context) {
+  if (scripts === undefined) return;
+  if (!isRecord(scripts)) {
+    diagnostics.push(error("dsl.scripts.type", "scripts must be a JSON object.", "/scripts"));
+    return;
+  }
+
+  if (!Array.isArray(scripts.actions)) {
+    diagnostics.push(error("dsl.scripts.actions_required", "scripts.actions must be an array when scripts are present.", "/scripts/actions"));
+    return;
+  }
+
+  scripts.actions.forEach((action, index) => {
+    const path = `/scripts/actions/${index}`;
+    if (!isRecord(action)) {
+      diagnostics.push(error("dsl.scripts.action.type", "Script action must be a JSON object.", path));
+      return;
+    }
+    for (const key of ["id", "name", "event", "function", "translationStatus"]) {
+      if (!nonEmptyString(action[key])) {
+        diagnostics.push(error("dsl.scripts.action_field_required", `scripts.actions[].${key} is required.`, `${path}/${key}`));
+      }
+    }
+    if (!["onLoad", "onBeforeSubmit", "onChange"].includes(action.event)) {
+      diagnostics.push(error("dsl.scripts.event_unsupported", "Script action event must be onLoad, onBeforeSubmit, or onChange.", `${path}/event`, {
+        actual: action.event
+      }));
+    }
+    if (!["mapped", "needs_review", "manual"].includes(action.translationStatus)) {
+      diagnostics.push(error("dsl.scripts.translation_status_invalid", "Script action translationStatus must be mapped, needs_review, or manual.", `${path}/translationStatus`, {
+        actual: action.translationStatus
+      }));
+    }
+    if (context.mode === "execute" && action.translationStatus === "needs_review") {
+      diagnostics.push(error("dsl.scripts.needs_review", "Executable DSL cannot contain script actions that still need review.", `${path}/translationStatus`));
+    }
+  });
 }
 
 function validateWorkflow(workflow, diagnostics, context) {

@@ -29,4 +29,24 @@ describe("buildDryRunPlan", () => {
     assert.equal(plan.diagnostics.some((item) => item.code === "dsl.trust.trusted_required"), true);
     assert.equal(plan.steps.find((step) => step.id === "resolve-template")?.status, "blocked");
   });
+
+  it("plans JSP script control actions when trusted scripts are present", () => {
+    const plan = buildDryRunPlan(sampleTrustedDsl({
+      scripts: {
+        actions: [{
+          id: "fd_jsp.script.1",
+          name: "onLoad",
+          event: "onLoad",
+          function: "function onLoad(context) {}",
+          translationStatus: "mapped"
+        }]
+      }
+    }));
+    const scriptStep = plan.steps.find((step) => step.id === "map-form-scripts");
+
+    assert.equal(plan.ok, true);
+    assert.equal(scriptStep.status, "planned");
+    assert.equal(scriptStep.actions, 1);
+    assert.deepEqual(scriptStep.events, ["onLoad"]);
+  });
 });
