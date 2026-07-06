@@ -38,10 +38,14 @@ export function createTrustedMigrationDsl(sourceDraft, dslDraft, options = {}) {
       dslDraft: options.dslDraftDigest || ""
     }
   };
-  trusted.review = {
-    warnings: trusted.review?.warnings || [],
-    decisions: normalizeDecisions(options.decisions || [])
-  };
+  trusted.review = pruneUndefined({
+    warnings: [
+      ...(trusted.review?.warnings || []),
+      ...(options.reviewWarnings || [])
+    ],
+    decisions: normalizeDecisions(options.decisions || []),
+    agentReview: options.agentReview
+  });
 
   return trusted;
 }
@@ -223,6 +227,16 @@ function finalize(kind, diagnostics) {
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value || {}));
+}
+
+function pruneUndefined(value) {
+  if (Array.isArray(value)) return value.map(pruneUndefined);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, entry]) => entry !== undefined)
+      .map(([key, entry]) => [key, pruneUndefined(entry)])
+  );
 }
 
 function error(code, message, path, details) {

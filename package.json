@@ -15,7 +15,8 @@
     "check": "node src/cli/main.js check",
     "validate": "node src/cli/main.js validate",
     "dry-run": "node src/cli/main.js dry-run",
-    "execute": "node src/cli/main.js execute"
+    "execute": "node src/cli/main.js execute",
+    "test:agent-review:live": "node scripts/agent-review-live-smoke.js"
   },
   "engines": {
     "node": ">=20"

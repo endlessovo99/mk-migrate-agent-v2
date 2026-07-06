@@ -476,6 +476,7 @@ function validateReview(review, diagnostics, trustLevel) {
   }
 
   validateFunctionCatalogAudit(review.functionWhitelist, diagnostics);
+  validateAgentReview(review.agentReview, diagnostics);
 
   if (trustLevel !== "trusted" && Array.isArray(review.decisions) && review.decisions.length) {
     diagnostics.push(error("dsl.review.decisions_not_allowed_in_draft", "review.decisions[] is allowed only in trusted DSL.", "/review/decisions"));
@@ -495,6 +496,31 @@ function validateReview(review, diagnostics, trustLevel) {
           }
         }
       });
+    }
+  }
+}
+
+function validateAgentReview(agentReview, diagnostics) {
+  if (agentReview === undefined) return;
+  if (!isRecord(agentReview)) {
+    diagnostics.push(error("dsl.review.agent_review_type", "review.agentReview must be an object when present.", "/review/agentReview"));
+    return;
+  }
+
+  for (const key of ["provider", "baseUrl", "model", "promptVersion", "reviewedAt", "summary"]) {
+    if (!nonEmptyString(agentReview[key])) {
+      diagnostics.push(error("dsl.review.agent_review_field_required", `review.agentReview.${key} is required.`, `/review/agentReview/${key}`));
+    }
+  }
+  for (const key of ["patchCount", "diagnosticCount"]) {
+    if (!Number.isInteger(agentReview[key]) || agentReview[key] < 0) {
+      diagnostics.push(error("dsl.review.agent_review_count_invalid", `review.agentReview.${key} must be a non-negative integer.`, `/review/agentReview/${key}`));
+    }
+  }
+  const forbiddenSecretKeys = ["apiKey", "OPENAI_API_KEY", "authorization", "headers", "credentials"];
+  for (const key of forbiddenSecretKeys) {
+    if (Object.hasOwn(agentReview, key)) {
+      diagnostics.push(error("dsl.review.agent_review_secret_forbidden", "review.agentReview must not include API keys or credential-bearing request data.", `/review/agentReview/${key}`));
     }
   }
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { runAgentReview } from "../agent-review/index.js";
 import { checkDraft, checkExecute } from "../dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../dsl/trust.js";
 import { buildDryRunPlan } from "../executor/dry-run.js";
@@ -12,6 +13,7 @@ const commands = new Map([
   ["clean", runClean],
   ["draft", runDraft],
   ["translate", runTranslate],
+  ["agent-review", runAgentReviewCommand],
   ["trust", runTrust],
   ["check", runCheck],
   ["validate", runValidate],
@@ -19,7 +21,7 @@ const commands = new Map([
   ["execute", runExecute]
 ]);
 
-export async function main(argv = []) {
+export async function main(argv = [], options = {}) {
   const [commandName, ...rest] = argv;
   const command = commands.get(commandName);
 
@@ -30,7 +32,7 @@ export async function main(argv = []) {
   }
 
   try {
-    await command(rest);
+    await command(rest, options);
   } catch (error) {
     process.exitCode = 1;
     printJson({
@@ -105,6 +107,39 @@ function runTrust(argv) {
     ...check,
     artifact: trusted.artifact,
     dsl: trusted
+  });
+}
+
+async function runAgentReviewCommand(argv, options = {}) {
+  const args = parseArgs(argv);
+  const sourceDraftPath = args.positionals[0];
+  const dslDraftPath = args.positionals[1];
+  if (!sourceDraftPath || !dslDraftPath) {
+    throw new Error("agent-review requires <source-draft.json> <dsl-draft.json>");
+  }
+  if (!args.out) {
+    throw new Error("agent-review requires --out <migration.dsl.json>");
+  }
+
+  const result = await runAgentReview(readJson(sourceDraftPath), readJson(dslDraftPath), {
+    provider: options.agentReviewProvider,
+    providerOptions: options.agentReviewProviderOptions,
+    reviewedAt: options.reviewedAt
+  });
+
+  if (!result.ok) {
+    if (args["report-out"]) writeJson(args["report-out"], result.report);
+    printJson(args["report-out"] ? { ...result.report, reportWrote: args["report-out"] } : result.report);
+    process.exitCode = 1;
+    return;
+  }
+
+  writeJson(args.out, result.dsl);
+  if (args["report-out"]) writeJson(args["report-out"], result.report);
+  printJson({
+    ...result.report,
+    wrote: args.out,
+    reportWrote: args["report-out"]
   });
 }
 
@@ -223,6 +258,7 @@ function printUsage() {
   console.error("  node src/cli/main.js clean <source-dir|sysform.xml> [--out source-draft.json]");
   console.error("  node src/cli/main.js draft <source-draft.json> [--out dsl-draft.json]");
   console.error("  node src/cli/main.js translate <source-dir|sysform.xml> [--out dsl-draft.json]");
+  console.error("  OPENAI_BASE_URL=... OPENAI_API_KEY=... OPENAI_MODEL=... node src/cli/main.js agent-review <source-draft.json> <dsl-draft.json> --out migration.dsl.json [--report-out agent-review.report.json]");
   console.error("  node src/cli/main.js trust <source-draft.json> <dsl-draft.json> --external-agent-reviewed [--reviewer-name name] [--out migration.dsl.json]");
   console.error("  node src/cli/main.js check draft <dsl-draft.json>");
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");

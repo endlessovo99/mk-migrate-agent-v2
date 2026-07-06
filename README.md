@@ -8,7 +8,7 @@ The first version is deliberately narrow:
 SysFormTemplate/LbpmProcessDefinition XML
   -> clean source-draft.json
   -> draft dsl-draft.json
-  -> external Codex Agent trust migration.dsl.json
+  -> agent-review migration.dsl.json
   -> check execute -> dry-run -> API-first execute
 ```
 
@@ -33,11 +33,11 @@ node src/cli/main.js clean tests/fixtures/source/route-validation-lbpm --out .tm
 node src/cli/main.js draft .tmp/sample/source-draft.json --out .tmp/sample/dsl-draft.json
 node src/cli/main.js check draft .tmp/sample/dsl-draft.json
 
-# Records that an external Codex Agent reviewed the source draft, draft DSL, catalogs, and policy.
-node src/cli/main.js trust .tmp/sample/source-draft.json .tmp/sample/dsl-draft.json \
-  --external-agent-reviewed \
-  --reviewer-name codex \
-  --out .tmp/sample/migration.dsl.json
+# Explicit AI review stage. The model returns restricted patches; local code validates and applies them.
+source .temp/newoa.env
+node src/cli/main.js agent-review .tmp/sample/source-draft.json .tmp/sample/dsl-draft.json \
+  --out .tmp/sample/migration.dsl.json \
+  --report-out .tmp/sample/agent-review.report.json
 
 node src/cli/main.js check trust .tmp/sample/source-draft.json .tmp/sample/migration.dsl.json
 node src/cli/main.js check execute .tmp/sample/migration.dsl.json
@@ -49,7 +49,18 @@ node src/cli/main.js execute .tmp/sample/migration.dsl.json \
   --target-category-id '<NewOA category fdId>'
 ```
 
-`translate` remains a compatibility shortcut for `clean` plus `draft`, so it writes a non-executable `dsl-draft.json`. `dry-run` and `execute` accept only trusted `migration.dsl.json` with `trust.level = trusted` and `trust.executable = true`.
+`translate` remains a deterministic compatibility shortcut for `clean` plus `draft`. It does not call AI and writes a non-executable `dsl-draft.json`. `agent-review` is the only AI-backed stage. `dry-run` and `execute` accept only trusted `migration.dsl.json` with `trust.level = trusted` and `trust.executable = true`.
+
+`agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Keep local secrets in an ignored file such as `.temp/newoa.env`, then source it explicitly before review or live smoke:
+
+```bash
+source .temp/newoa.env
+npm run test:agent-review:live
+```
+
+Default `npm test` is offline and uses fake review providers only. The live smoke is separate, uses the real provider, and writes sanitized artifacts under `.tmp/agent-review-live/`.
+
+The AI reviewer returns JSON patches, not a complete DSL. First-version patches are limited to form field/detail-column `title`, `type`, `componentId`, and `props` paths. Workflow review is diagnostic-only: warning diagnostics may remain in trusted DSL, while error or blocked diagnostics prevent `migration.dsl.json` from being written.
 
 `execute` creates a new `MK_TEST_...` template in NewOA SIT, saves it as draft, reads it back, and reports the created `fdId`. Warning-only trusted DSL (`needs_manual`) is executable; DSL errors and safety errors block before login. If creation succeeds and a later stage fails, the report keeps the partial fdId and does not auto-rollback.
 

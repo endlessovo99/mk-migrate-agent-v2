@@ -18,7 +18,7 @@ The v2 route-validation source format is either:
 
 `clean` writes a source-only `source-draft.json`. It contains source controls, detail tables, source layout rows/cells, workflow DAG nodes/edges, source attributes, and source issues. It must not contain target `componentId`, `mkType`, or `@elem/*` target identifiers.
 
-`draft` writes a non-executable `dsl-draft.json` with `trust.level = "draft"` and `trust.executable = false`. It contains target candidates, but execution remains blocked until an external Codex Agent review produces trusted `migration.dsl.json`.
+`draft` writes a non-executable `dsl-draft.json` with `trust.level = "draft"` and `trust.executable = false`. It contains target candidates, but execution remains blocked until explicit `agent-review` produces trusted `migration.dsl.json`.
 
 The trusted DSL form section contains both field definitions and explicit target layout:
 
@@ -85,9 +85,11 @@ Function validation uses `catalogs/functions.v1.json` as the versioned whitelist
 ```bash
 node src/cli/main.js clean <source-dir> --out source-draft.json
 node src/cli/main.js draft source-draft.json --out dsl-draft.json
-node src/cli/main.js trust source-draft.json dsl-draft.json --external-agent-reviewed --out migration.dsl.json
+node src/cli/main.js agent-review source-draft.json dsl-draft.json --out migration.dsl.json --report-out agent-review.report.json
 node src/cli/main.js check execute migration.dsl.json
 ```
+
+See `docs/operations/agent-review.md` for the OpenAI provider env, patch contract, warning/error behavior, and live smoke command.
 
 Route-validation fixture:
 
