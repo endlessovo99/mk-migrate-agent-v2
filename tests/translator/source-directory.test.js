@@ -35,6 +35,47 @@ describe("source directory stages", () => {
     assert.equal(action.functionMappings.some((mapping) => mapping.source === "GetXFormFieldById"), true);
   });
 
+  it("drafts fixture row markers and structured native form linkage rules", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const markerRefs = Object.fromEntries(
+      dslDraft.form.layout.mkTree
+        .filter((row) => Array.isArray(row.sourceMarkers) && row.sourceMarkers.length)
+        .flatMap((row) => row.sourceMarkers.map((marker) => [marker, row.children.flatMap((cell) => cell.refIds)]))
+    );
+
+    assert.deepEqual(markerRefs.fd_it_row, ["fd_371228ebe5dec2"]);
+    assert.deepEqual(markerRefs.fd_proverty_row, ["fd_3712295cc683f8"]);
+    assert.deepEqual(markerRefs.fd_weixiu_row, ["fd_371229609fc872"]);
+    assert.deepEqual(markerRefs.fd_weibao_row, ["fd_371229626e4df0"]);
+    assert.deepEqual(markerRefs.fd_weibao_content_row, ["fd_37122b9411ac06"]);
+    assert.deepEqual(markerRefs.fd_budget_from_row, ["fd_37122b6404ad44"]);
+    assert.deepEqual(markerRefs.fd_over_budget_row, ["fd_37122b7cb12b7e"]);
+
+    const linkage = dslDraft.formRules.linkage;
+    assert.equal(linkage.length, 6);
+    assert.equal(dslDraft.formRules.validations.length, 0);
+    assert.equal(dslDraft.formRules.impliedRequired.length, 0);
+    assert.equal(linkage.every((rule) => rule.translationStatus === "executable"), true);
+
+    const byId = new Map(linkage.map((rule) => [rule.id, rule]));
+    assert.deepEqual(byId.get("linkage.fd_371229d0cbd2cc.contains.sb")?.when, [{
+      field: "fd_371229d0cbd2cc",
+      op: "contains",
+      value: "sb"
+    }]);
+    assert.deepEqual(byId.get("linkage.fd_371229d0cbd2cc.contains.wb")?.effects.map((effect) => [effect.type, effect.target, effect.value]), [
+      ["visible", "fd_weibao_row", true],
+      ["required", "fd_weibao_row", true],
+      ["visible", "fd_weibao_content_row", true],
+      ["required", "fd_weibao_content_row", true]
+    ]);
+    assert.deepEqual(byId.get("linkage.fd_37122a14d44caa.contains.ysn")?.else.map((effect) => [effect.type, effect.target, effect.value]), [
+      ["visible", "fd_budget_from_row", false],
+      ["required", "fd_budget_from_row", false]
+    ]);
+  });
+
   it("drafts source facts into a non-executable dsl-draft with explicit mkTree", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/route-validation-lbpm");
     const dslDraft = draftSourceDraft(sourceDraft);

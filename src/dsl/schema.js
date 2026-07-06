@@ -3,6 +3,15 @@ import {
   validateComponentProps,
   validateFunctionCatalogAudit
 } from "./catalogs.js";
+import {
+  FORM_RULE_EFFECT_TYPES,
+  FORM_RULE_LOGIC,
+  FORM_RULE_OPERATORS,
+  FORM_RULE_TRIGGERS,
+  buildFormRuleRefIndex,
+  resolveDirectRef,
+  resolveEffectTarget
+} from "./form-rules.js";
 
 export const DSL_VERSION = "2.0-migration";
 
@@ -42,6 +51,7 @@ export function validateMigrationDsl(input, options = {}) {
   validateCatalogVersions(root, diagnostics);
   validateTemplate(root.template, diagnostics);
   const formContext = validateForm(root.form, diagnostics);
+  validateFormRules(root.formRules, diagnostics, { mode, form: root.form });
   validateScripts(root.scripts, diagnostics, { mode });
   validateReview(root.review, diagnostics, root.trust?.level);
   if (root.workflow !== undefined) {
@@ -303,6 +313,142 @@ function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
         diagnostics.push(error("dsl.form.layout.detail_table_missing", "mkTree child detail-table reference must exist in form.fields.", refPath, { refId }));
       }
     });
+  });
+}
+
+function validateFormRules(formRules, diagnostics, context) {
+  if (formRules === undefined) return;
+  if (!isRecord(formRules)) {
+    diagnostics.push(error("dsl.form_rules.type", "formRules must be a JSON object.", "/formRules"));
+    return;
+  }
+
+  if (!Array.isArray(formRules.linkage)) {
+    diagnostics.push(error("dsl.form_rules.linkage_required", "formRules.linkage must be an array.", "/formRules/linkage"));
+    return;
+  }
+  if (formRules.validations !== undefined && !Array.isArray(formRules.validations)) {
+    diagnostics.push(error("dsl.form_rules.validations_type", "formRules.validations must be an array when present.", "/formRules/validations"));
+  }
+  if (formRules.impliedRequired !== undefined && !Array.isArray(formRules.impliedRequired)) {
+    diagnostics.push(error("dsl.form_rules.implied_required_type", "formRules.impliedRequired must be an array when present.", "/formRules/impliedRequired"));
+  }
+  if (formRules.review !== undefined && !isRecord(formRules.review)) {
+    diagnostics.push(error("dsl.form_rules.review_type", "formRules.review must be an object when present.", "/formRules/review"));
+  }
+
+  const refIndex = buildFormRuleRefIndex(context.form || {});
+  formRules.linkage.forEach((rule, ruleIndex) => validateLinkageRule(rule, ruleIndex, diagnostics, {
+    ...context,
+    refIndex
+  }));
+}
+
+function validateLinkageRule(rule, ruleIndex, diagnostics, context) {
+  const path = `/formRules/linkage/${ruleIndex}`;
+  if (!isRecord(rule)) {
+    diagnostics.push(error("dsl.form_rules.linkage.type", "formRules.linkage[] must be an object.", path));
+    return;
+  }
+
+  if (!nonEmptyString(rule.id)) {
+    diagnostics.push(error("dsl.form_rules.linkage.id_required", "formRules.linkage[].id is required.", `${path}/id`));
+  }
+  if (!FORM_RULE_TRIGGERS.has(rule.trigger)) {
+    diagnostics.push(error("dsl.form_rules.linkage.trigger_unsupported", "formRules.linkage[].trigger must be change or load.", `${path}/trigger`, {
+      actual: rule.trigger
+    }));
+  }
+  if (rule.source !== undefined && !nonEmptyString(rule.source)) {
+    diagnostics.push(error("dsl.form_rules.linkage.source_type", "formRules.linkage[].source must be a non-empty string when present.", `${path}/source`));
+  }
+  if (!FORM_RULE_LOGIC.has(rule.logic)) {
+    diagnostics.push(error("dsl.form_rules.linkage.logic_unsupported", "formRules.linkage[].logic must be \"and\" or \"or\".", `${path}/logic`, {
+      actual: rule.logic
+    }));
+  }
+  if (!["executable", "needs_review", "manual"].includes(rule.translationStatus)) {
+    diagnostics.push(error("dsl.form_rules.linkage.status_unsupported", "formRules.linkage[].translationStatus must be executable, needs_review, or manual.", `${path}/translationStatus`, {
+      actual: rule.translationStatus
+    }));
+  }
+  if (context.mode === "execute" && rule.translationStatus !== "executable") {
+    diagnostics.push(error("dsl.form_rules.linkage_not_executable", "Executable DSL cannot contain formRules.linkage entries that still need review.", `${path}/translationStatus`));
+  }
+
+  validateLinkageConditions(rule.when, `${path}/when`, diagnostics, context, rule);
+  validateLinkageEffects(rule.effects, `${path}/effects`, diagnostics, context, rule);
+  if (rule.else !== undefined) {
+    validateLinkageEffects(rule.else, `${path}/else`, diagnostics, context, rule);
+  }
+}
+
+function validateLinkageConditions(when, path, diagnostics, context, rule) {
+  if (!Array.isArray(when) || when.length === 0) {
+    diagnostics.push(error("dsl.form_rules.when_required", "Executable formRules.linkage entries require non-empty when[].", path));
+    return;
+  }
+
+  when.forEach((condition, conditionIndex) => {
+    const conditionPath = `${path}/${conditionIndex}`;
+    if (!isRecord(condition)) {
+      diagnostics.push(error("dsl.form_rules.when.type", "formRules.linkage[].when[] must be an object.", conditionPath));
+      return;
+    }
+    if (!nonEmptyString(condition.field)) {
+      diagnostics.push(error("dsl.form_rules.when.field_required", "formRules.linkage[].when[].field is required.", `${conditionPath}/field`));
+    } else if (context.mode === "execute" && rule.translationStatus === "executable" && !resolveDirectRef(context.refIndex, condition.field)) {
+      diagnostics.push(error("dsl.form_rules.condition_field_unresolved", "Executable formRules.linkage condition field must resolve to a form field or detail column.", `${conditionPath}/field`, {
+        ref: condition.field,
+        ruleId: rule.id
+      }));
+    }
+    if (!FORM_RULE_OPERATORS.has(condition.op)) {
+      diagnostics.push(error("dsl.form_rules.when.op_unsupported", "formRules.linkage[].when[].op is not supported.", `${conditionPath}/op`, {
+        actual: condition.op,
+        supported: Array.from(FORM_RULE_OPERATORS)
+      }));
+    }
+    if (!["empty", "notEmpty"].includes(condition.op) && condition.value === undefined) {
+      diagnostics.push(error("dsl.form_rules.when.value_required", "formRules.linkage[].when[].value is required for this op.", `${conditionPath}/value`, {
+        op: condition.op
+      }));
+    }
+  });
+}
+
+function validateLinkageEffects(effects, path, diagnostics, context, rule) {
+  if (!Array.isArray(effects) || effects.length === 0) {
+    diagnostics.push(error("dsl.form_rules.effects_required", "formRules.linkage effect branches must be non-empty arrays.", path));
+    return;
+  }
+
+  effects.forEach((effect, effectIndex) => {
+    const effectPath = `${path}/${effectIndex}`;
+    if (!isRecord(effect)) {
+      diagnostics.push(error("dsl.form_rules.effect.type", "formRules.linkage effects must be objects.", effectPath));
+      return;
+    }
+    if (!FORM_RULE_EFFECT_TYPES.has(effect.type)) {
+      diagnostics.push(error("dsl.form_rules.effect.type_unsupported", "formRules.linkage effects support only visible and required.", `${effectPath}/type`, {
+        actual: effect.type
+      }));
+    }
+    if (!nonEmptyString(effect.target)) {
+      diagnostics.push(error("dsl.form_rules.effect.target_required", "formRules.linkage effects require target.", `${effectPath}/target`));
+    } else if (context.mode === "execute" && rule.translationStatus === "executable") {
+      const resolved = resolveEffectTarget(context.refIndex, effect.target);
+      if (!resolved || resolved.unresolved?.length || !resolved.targets.length) {
+        diagnostics.push(error("dsl.form_rules.effect_target_unresolved", "Executable formRules.linkage effect target must resolve through direct fields or mkTree.sourceMarkers.", `${effectPath}/target`, {
+          ref: effect.target,
+          ruleId: rule.id,
+          unresolved: resolved?.unresolved
+        }));
+      }
+    }
+    if (typeof effect.value !== "boolean") {
+      diagnostics.push(error("dsl.form_rules.effect.value_required", "formRules.linkage effects require boolean value.", `${effectPath}/value`));
+    }
   });
 }
 

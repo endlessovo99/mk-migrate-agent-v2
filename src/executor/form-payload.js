@@ -1,3 +1,9 @@
+import {
+  buildNativeFormRuleConfig,
+  mergeNativeFormRules,
+  summarizeNativeFormRuleConfig
+} from "./form-rules.js";
+
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
   const form = dsl.form || {};
@@ -10,9 +16,10 @@ export function applyFormPayload(template, dsl) {
 
   const xform = next.mechanisms["sys-xform"];
   const config = parseJsonObject(xform.fdConfig || "{}");
-  const summary = summarizeDslForm(form);
+  const summary = summarizeDslForm(form, dsl.formRules);
   const mainModel = buildMainModel(next, xform, config, form);
   const detailModels = buildDetailModels(next, form);
+  const dataModels = [mainModel, ...detailModels];
   const detailModelsByField = new Map(
     detailModels.map((model) => [model.dynamicProps?.detailFieldName, model]).filter(([fieldId]) => Boolean(fieldId))
   );
@@ -20,19 +27,21 @@ export function applyFormPayload(template, dsl) {
   const fieldAuth = buildFieldAuth(mainModel, detailModels, form);
   const existingFormAttr = parseJsonObject(config.attribute?.formAttr || "{}");
   const controlAction = buildControlAction(existingFormAttr.controlAction, dsl.scripts);
+  const nativeFormRules = buildNativeFormRuleConfig(dsl.formRules, form, dataModels);
   const formAttr = {
     subjectRule: {
       script: "${data.biz.fdSubject}",
       type: "Eval",
       vo: { content: "$标题$", mode: "formula" }
     },
-    formRule: existingFormAttr.formRule || { pattern: {} },
+    formRule: mergeNativeFormRules(existingFormAttr.formRule || { pattern: {} }, nativeFormRules),
     dataUnique: existingFormAttr.dataUnique || {},
     controlAction,
     currentTableName: mainModel.fdTableName,
     migrationDsl: {
       form: summary,
-      scripts: summarizeDslScripts(dsl.scripts)
+      scripts: summarizeDslScripts(dsl.scripts),
+      formRules: nativeFormRules.summary
     }
   };
 
@@ -43,7 +52,7 @@ export function applyFormPayload(template, dsl) {
       ...(config.attribute || {}),
       formAttr: JSON.stringify(formAttr)
     },
-    dataModel: [mainModel, ...detailModels],
+    dataModel: dataModels,
     viewModel: [buildViewModel(config, next, mainModel, form, detailModelsByField)],
     lang: config.lang || "{}",
     extendMap: {
@@ -55,7 +64,8 @@ export function applyFormPayload(template, dsl) {
     migrationDsl: {
       ...(config.migrationDsl || {}),
       form: summary,
-      scripts: summarizeDslScripts(dsl.scripts)
+      scripts: summarizeDslScripts(dsl.scripts),
+      formRules: nativeFormRules.summary
     }
   };
 
@@ -80,19 +90,27 @@ export function summarizeFormFromTemplate(template) {
   ];
   const layoutRows = extractLayoutRows(config, detailModels);
 
+  const formAttr = parseJsonObject(config.attribute?.formAttr || "{}");
+
   return {
     fieldCount: fields.length,
     fields,
     detailTableCount: detailFields.length,
     layoutRowCount: layoutRows.length,
     layoutRows,
-    scripts: summarizeScriptsFromConfig(config)
+    scripts: summarizeScriptsFromConfig(config),
+    formRules: summarizeNativeFormRuleConfig(formAttr.formRule || {})
   };
 }
 
-export function summarizeDslForm(form = {}) {
+export function summarizeDslForm(form = {}, formRules = {}) {
   const fields = Array.isArray(form.fields) ? form.fields : [];
   const rows = Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : [];
+  const sourceRules = Array.isArray(formRules?.linkage) ? formRules.linkage : [];
+  const branchRuleCount = (type) => sourceRules.reduce((count, rule) => {
+    const branches = [rule.effects, rule.else].filter(Array.isArray);
+    return count + branches.filter((effects) => effects.some((effect) => effect?.type === type)).length;
+  }, 0);
 
   return {
     fieldCount: fields.length,
@@ -122,7 +140,12 @@ export function summarizeDslForm(form = {}) {
         column: cell.column,
         colspan: cell.colspan
       }))
-    }))
+    })),
+    formRules: {
+      sourceRuleCount: sourceRules.length,
+      displayRuleCount: branchRuleCount("visible"),
+      requireRuleCount: branchRuleCount("required")
+    }
   };
 }
 

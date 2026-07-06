@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 import { translateLbpmProcessDefinitionXml } from "./lbpm-process-definition-adapter.js";
+import { sourceFormRulesFromLegacyScripts } from "./sysform-form-rules.js";
 import { translateSysFormTemplateXml } from "./sysform-template-adapter.js";
 
 export const SOURCE_DRAFT_VERSION = "2.0-source-draft";
@@ -50,6 +51,7 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
       detailTables,
       layout: sourceLayoutFromLegacyLayout(legacyDsl.form?.layout, detailTableIds)
     },
+    formRules: sourceFormRulesFromLegacyScripts(legacyDsl.scripts),
     scripts: sourceScriptsFromLegacy(legacyDsl.scripts),
     workflow,
     issues: sourceIssuesFromReview(legacyDsl.review)
@@ -176,6 +178,7 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
       id: row.id || `row-${rowIndex}`,
       sourceRef: sourceRef("form.layout.row", row.id || `row-${rowIndex}`),
       sourceRow: row.sourceRow ?? String(rowIndex),
+      sourceMarkers: Array.isArray(row.sourceMarkers) && row.sourceMarkers.length ? row.sourceMarkers : undefined,
       columns: row.columns,
       cells: (row.cells || []).map((cell, cellIndex) => {
         const refs = cellFieldIds(cell).map((fieldId) => ({

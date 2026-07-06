@@ -64,6 +64,7 @@ function parseDesignerLayout(html, warnings) {
 
   rows.forEach((rowHtml, rowIndex) => {
     const cells = [];
+    const sourceMarkers = extractRowMarkers(rowHtml);
     const sourceCells = splitDirectChildCells(rowHtml);
 
     sourceCells.forEach((cell, cellIndex) => {
@@ -91,6 +92,7 @@ function parseDesignerLayout(html, warnings) {
       layoutRows.push({
         id: `row-${rowIndex}`,
         sourceRow: String(rowIndex),
+        ...(sourceMarkers.length ? { sourceMarkers } : {}),
         columns: Math.max(...cells.map((cell) => cell.column + cell.colspan), 1),
         cells
       });
@@ -230,6 +232,24 @@ function extractDesignerFieldControls(html) {
   }
 
   return controls;
+}
+
+function extractRowMarkers(html) {
+  const decoded = decodeEntities(html);
+  const markers = [];
+  const seen = new Set();
+  const inputPattern = /<input\b(?=[^>]*\btype\s*=\s*(?:"hidden"|'hidden'|hidden)\b)[^>]*>/gi;
+
+  for (const match of decoded.matchAll(inputPattern)) {
+    const id = attrValue(match[0], "id");
+    const name = attrValue(match[0], "name");
+    const marker = id || name;
+    if (!marker || !/_row$/i.test(marker) || seen.has(marker)) continue;
+    seen.add(marker);
+    markers.push(marker);
+  }
+
+  return markers;
 }
 
 function designerFieldFromControl(fdType, values, attrs) {

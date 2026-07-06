@@ -1,4 +1,5 @@
 import { checkExecute } from "../dsl/checks.js";
+import { summarizeFormRules } from "../dsl/form-rules.js";
 
 export function buildDryRunPlan(input) {
   const validation = checkExecute(input);
@@ -6,6 +7,13 @@ export function buildDryRunPlan(input) {
   const fields = Array.isArray(input?.form?.fields) ? input.form.fields : [];
   const layoutRows = Array.isArray(input?.form?.layout?.mkTree) ? input.form.layout.mkTree : [];
   const scriptActions = Array.isArray(input?.scripts?.actions) ? input.scripts.actions : [];
+  const formRuleSummary = summarizeFormRules(input?.formRules);
+  const formRuleSteps = formRuleSummary.sourceRuleCount ? [{
+    id: "map-form-rules",
+    action: "map-formRules-linkage-to-newoa-native-formRule",
+    status: validation.ok ? "planned" : "blocked",
+    ...formRuleSummary
+  }] : [];
   const scriptSteps = scriptActions.length ? [{
     id: "map-form-scripts",
     action: "map-jsp-scripts-to-newoa-control-actions",
@@ -53,6 +61,7 @@ export function buildDryRunPlan(input) {
         fieldCount: fields.length,
         layoutRows: layoutRows.length
       },
+      ...formRuleSteps,
       ...scriptSteps,
       ...workflowSteps,
       {

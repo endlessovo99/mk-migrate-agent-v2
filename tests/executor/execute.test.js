@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { executeDsl } from "../../src/executor/execute.js";
 import { applyFormPayload, summarizeFormFromTemplate } from "../../src/executor/form-payload.js";
-import { sampleDraftDsl, sampleTrustedDsl } from "../helpers/sample-dsl.js";
+import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("executeDsl", () => {
   it("writes one draft template through an injected NewOA client and verifies readback", async () => {
@@ -120,6 +120,37 @@ describe("executeDsl", () => {
     assert.equal(result.ok, false);
     assert.equal(result.status, "invalid");
     assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "dsl.trust.trusted_required"), true);
+    assert.deepEqual(client.calls, []);
+  });
+
+  it("rejects unresolved form rule targets before any NewOA login or write call", async () => {
+    const client = new FakeNewoaClient();
+    const result = await executeDsl(sampleTrustedDsl({
+      workflow: undefined,
+      formRules: {
+        linkage: [{
+          id: "linkage.missing.target",
+          trigger: "change",
+          source: "fd_subject",
+          logic: "and",
+          when: [{ field: "fd_subject", op: "contains", value: "A" }],
+          effects: [{ type: "visible", target: "fd_missing_row", value: true }],
+          else: [{ type: "visible", target: "fd_missing_row", value: false }],
+          translationStatus: "executable"
+        }],
+        validations: [],
+        impliedRequired: [],
+        review: {}
+      }
+    }), {
+      client,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.status, "invalid");
+    assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "dsl.form_rules.effect_target_unresolved"), true);
     assert.deepEqual(client.calls, []);
   });
 
@@ -255,6 +286,43 @@ describe("executeDsl", () => {
     assert.equal(config.migrationDsl.scripts.actionCount, 1);
     assert.deepEqual(summarizeFormFromTemplate(payload).scripts.events, ["onLoad"]);
   });
+
+  it("writes native MK formRule display and require entries through the fake client", async () => {
+    const client = new FakeNewoaClient();
+    const result = await withNewoaEnv(() => executeDsl(sampleTrustedDslWithFormRules(), {
+      client,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    }));
+
+    assert.equal(result.ok, true);
+    const updatePayload = client.calls.find((call) => call.name === "updateTemplate").payload;
+    const config = JSON.parse(updatePayload.mechanisms["sys-xform"].fdConfig);
+    const formAttr = JSON.parse(config.attribute.formAttr);
+    const displayRules = formAttr.formRule.display;
+    const requireRules = formAttr.formRule.require;
+
+    assert.equal(displayRules.length, 2);
+    assert.equal(requireRules.length, 2);
+    assert.deepEqual(displayRules.map((rule) => rule.result[0].displayFlag), ["display", "hide"]);
+    assert.deepEqual(requireRules.map((rule) => rule.result[0].required), ["required", "non-required"]);
+    assert.deepEqual([...new Set(displayRules.flatMap((rule) => rule.result.map((item) => item.fieldName)))], ["fd_name"]);
+    assert.equal(JSON.stringify(formAttr.formRule).includes("fd_detail_row"), false);
+    assert.equal(result.readback.form.formRules.displayRuleCount, 2);
+    assert.equal(result.readback.form.formRules.requireRuleCount, 2);
+  });
+
+  it("preserves manual form rules while replacing generated native rules", () => {
+    const payload = applyFormPayload(baseTemplateWithExistingFormRules(), sampleTrustedDslWithFormRules());
+    const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
+    const formRule = JSON.parse(config.attribute.formAttr).formRule;
+
+    assert.deepEqual(formRule.pattern, { enabled: true });
+    assert.equal(formRule.display.some((rule) => rule.ruleName === "manual-display"), true);
+    assert.equal(formRule.display.some((rule) => rule.ruleName === "mk-migrate-agent-v2:old-generated"), false);
+    assert.equal(formRule.display.length, 3);
+    assert.equal(formRule.require.length, 3);
+  });
 });
 
 function fieldControlProps(fields, fieldName) {
@@ -275,6 +343,62 @@ function baseTemplate() {
       }
     }
   };
+}
+
+function baseTemplateWithExistingFormRules() {
+  const template = baseTemplate();
+  template.mechanisms["sys-xform"].fdConfig = JSON.stringify({
+    attribute: {
+      formAttr: JSON.stringify({
+        formRule: {
+          pattern: { enabled: true },
+          display: [
+            { ruleName: "manual-display", result: [], meta: { author: "human" } },
+            { ruleName: "mk-migrate-agent-v2:old-generated", result: [], meta: { generatedBy: "mk-migrate-agent-v2" } }
+          ],
+          require: [
+            { ruleName: "manual-require", result: [], meta: { author: "human" } },
+            { ruleName: "mk-migrate-agent-v2:old-generated", result: [], meta: { generatedBy: "mk-migrate-agent-v2" } }
+          ]
+        }
+      })
+    }
+  });
+  return template;
+}
+
+function sampleTrustedDslWithFormRules() {
+  const form = sampleForm();
+  form.layout.mkTree[1] = {
+    ...form.layout.mkTree[1],
+    sourceMarkers: ["fd_detail_row"]
+  };
+
+  return sampleTrustedDsl({
+    form,
+    workflow: undefined,
+    formRules: {
+      linkage: [{
+        id: "linkage.subject.detail",
+        trigger: "change",
+        source: "fd_subject",
+        logic: "and",
+        when: [{ field: "fd_subject", op: "contains", value: "A" }],
+        effects: [
+          { type: "visible", target: "fd_detail_row", value: true },
+          { type: "required", target: "fd_detail_row", value: true }
+        ],
+        else: [
+          { type: "visible", target: "fd_detail_row", value: false },
+          { type: "required", target: "fd_detail_row", value: false }
+        ],
+        translationStatus: "executable"
+      }],
+      validations: [],
+      impliedRequired: [],
+      review: {}
+    }
+  });
 }
 
 class FakeNewoaClient {

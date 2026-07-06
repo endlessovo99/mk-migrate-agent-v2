@@ -122,6 +122,42 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.needs_review"), true);
   });
 
+  it("rejects executable form linkage rules with unresolved condition fields or effect targets", () => {
+    const result = validateMigrationDsl(sampleTrustedDsl({
+      formRules: {
+        linkage: [
+          {
+            id: "linkage.missing.condition",
+            trigger: "change",
+            source: "fd_missing",
+            logic: "and",
+            when: [{ field: "fd_missing", op: "contains", value: "A" }],
+            effects: [{ type: "visible", target: "fd_subject", value: true }],
+            else: [{ type: "visible", target: "fd_subject", value: false }],
+            translationStatus: "executable"
+          },
+          {
+            id: "linkage.missing.target",
+            trigger: "change",
+            source: "fd_subject",
+            logic: "and",
+            when: [{ field: "fd_subject", op: "eq", value: "A" }],
+            effects: [{ type: "required", target: "fd_missing_row", value: true }],
+            else: [{ type: "required", target: "fd_missing_row", value: false }],
+            translationStatus: "executable"
+          }
+        ],
+        validations: [],
+        impliedRequired: [],
+        review: {}
+      }
+    }), { mode: "execute" });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.form_rules.condition_field_unresolved"), true);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.form_rules.effect_target_unresolved"), true);
+  });
+
   it("rejects invalid workflow DAGs and initiator selection without source semantics", () => {
     const result = validateMigrationDsl(sampleTrustedDsl({
       workflow: {

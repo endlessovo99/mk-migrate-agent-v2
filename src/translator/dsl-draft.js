@@ -34,6 +34,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceRef: sourceDraft.source?.sourceId || sourceDraft.source?.path || ""
     },
     form,
+    formRules: draftFormRules(sourceDraft.formRules),
     scripts: draftMkScriptsFromSourceScripts(sourceDraft.scripts),
     workflow: sourceDraft.workflow ? draftWorkflow(sourceDraft.workflow) : undefined,
     review: {
@@ -141,6 +142,7 @@ function draftMkTree(layout, detailTableIds) {
         sourceColumns: row.columns || cells.length || 1
       },
       sourceRef: row.sourceRef || `source.form.layout.row.${row.id || `row-${rowIndex}`}`,
+      sourceMarkers: Array.isArray(row.sourceMarkers) && row.sourceMarkers.length ? row.sourceMarkers : undefined,
       children: cells.map((cell, cellIndex) => {
         const references = Array.isArray(cell.references) ? cell.references : [];
         return {
@@ -154,6 +156,41 @@ function draftMkTree(layout, detailTableIds) {
       })
     };
   });
+}
+
+function draftFormRules(sourceFormRules) {
+  const linkage = Array.isArray(sourceFormRules?.linkage) ? sourceFormRules.linkage : [];
+  if (!linkage.length) return undefined;
+  return {
+    linkage: linkage.map((rule) => pruneUndefined({
+      id: rule.id,
+      trigger: rule.trigger || "change",
+      source: rule.source,
+      logic: rule.logic || "and",
+      when: Array.isArray(rule.when) ? rule.when.map((condition) => ({
+        field: condition.field,
+        op: condition.op,
+        value: condition.value
+      })) : [],
+      effects: draftRuleEffects(rule.effects),
+      else: draftRuleEffects(rule.else),
+      meta: rule.meta,
+      translationStatus: rule.translationStatus || "executable"
+    })),
+    validations: [],
+    impliedRequired: [],
+    review: sourceFormRules.review || {}
+  };
+}
+
+function draftRuleEffects(effects) {
+  return Array.isArray(effects)
+    ? effects.map((effect) => ({
+        type: effect.type,
+        target: effect.target,
+        value: effect.value
+      }))
+    : undefined;
 }
 
 function draftWorkflow(sourceWorkflow) {

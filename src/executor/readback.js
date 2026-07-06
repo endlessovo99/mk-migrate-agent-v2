@@ -38,6 +38,7 @@ function compareFormSummary(expected, actual, diagnostics) {
     }));
   }
   compareLayoutRows(expected.layoutRows || [], actual.layoutRows || [], diagnostics);
+  compareFormRuleSummary(expected.formRules, actual.formRules, diagnostics);
 
   const actualFields = new Map((actual.fields || []).map((field) => [field.id, field]));
   for (const expectedField of expected.fields || []) {
@@ -60,6 +61,18 @@ function compareFormSummary(expected, actual, diagnostics) {
         fieldId: expectedField.id,
         expected: (expectedField.columns || []).length,
         actual: (actualField.columns || []).length
+      }));
+    }
+  }
+}
+
+function compareFormRuleSummary(expected = {}, actual = {}, diagnostics) {
+  if (!expected.sourceRuleCount) return;
+  for (const key of ["displayRuleCount", "requireRuleCount"]) {
+    if ((actual[key] || 0) < expected[key]) {
+      diagnostics.push(error(`readback.form_rules.${key}_missing`, "Readback form rules do not include the expected generated native rule count.", `/readback/form/formRules/${key}`, {
+        expectedAtLeast: expected[key],
+        actual: actual[key] || 0
       }));
     }
   }
