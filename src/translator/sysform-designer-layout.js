@@ -17,6 +17,7 @@ export function buildDesignerFirstForm(html, metadata, warnings) {
       message: "SysFormTemplate fdDesignerHtml did not expose field controls; using metadata-only fallback layout.",
       path: "/fdDesignerHtml"
     });
+    warnSuspiciousDetailTableTitles(metadata.fields, warnings);
     return {
       fields: metadata.fields,
       layout: fallbackLayout(metadata.fields, "fdMetadataXml")
@@ -47,6 +48,7 @@ export function buildDesignerFirstForm(html, metadata, warnings) {
     });
   }
 
+  warnSuspiciousDetailTableTitles(fields, warnings);
   return {
     fields,
     layout: designer.layout
@@ -168,6 +170,31 @@ function enrichDesignerField(field, metadataField, warnings) {
   }
 
   return next;
+}
+
+function warnSuspiciousDetailTableTitles(fields, warnings) {
+  fields.forEach((field, index) => {
+    if (field.type !== "detailTable" || !isSuspiciousDetailTableTitle(field.title)) return;
+    warnings.push({
+      code: "source.sysform.detail_table_title_suspicious",
+      message: `Detail table ${field.id} uses placeholder-like title ${field.title}; agent review may rename it.`,
+      path: `/form/fields/${index}/title`,
+      details: {
+        id: field.id,
+        title: field.title,
+        columnTitles: (field.columns || []).map((column) => column.title).filter(Boolean)
+      }
+    });
+  });
+}
+
+function isSuspiciousDetailTableTitle(title) {
+  const normalized = normalizeMatchText(title);
+  if (!normalized) return false;
+  if (/^明细表\d+$/i.test(normalized)) return true;
+  if (/^(detailtable|details?table|table)\d*$/i.test(normalized)) return true;
+  if (/^[a-z][a-z0-9_]*table$/i.test(normalized)) return true;
+  return false;
 }
 
 function matchMetadataField(field, metadataById, metadataByTitle) {

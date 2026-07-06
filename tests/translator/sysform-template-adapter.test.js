@@ -160,6 +160,57 @@ describe("translateSysFormTemplateXml", () => {
     assert.equal(dsl.form.layout.rows[0].cells[0].fieldId, "fd_first");
   });
 
+  it("flags placeholder detail table titles for agent review", () => {
+    const xml = readFileSync(
+      "tests/fixtures/source/19bb55286bd93a6081a33e44c3791374/19bb557531db577cfc0bbb248719d041_SysFormTemplate.xml",
+      "utf8"
+    );
+    const dsl = translateSysFormTemplateXml(xml, { sourcePath: "19bb557531db577cfc0bbb248719d041_SysFormTemplate.xml" });
+    const detailTitles = new Map(dsl.form.fields.filter((field) => field.type === "detailTable").map((field) => [field.id, field.title]));
+    const suspiciousWarnings = dsl.review.warnings
+      .filter((warning) => warning.code === "source.sysform.detail_table_title_suspicious");
+
+    assert.equal(detailTitles.get("fd_371228ebe5dec2"), "itTable");
+    assert.equal(detailTitles.get("fd_3712295cc683f8"), "明细表4");
+    assert.equal(detailTitles.get("fd_371229609fc872"), "明细表5");
+    assert.equal(detailTitles.get("fd_371229626e4df0"), "weibaoTable");
+    assert.deepEqual(suspiciousWarnings.map((warning) => warning.details.id), [
+      "fd_371228ebe5dec2",
+      "fd_3712295cc683f8",
+      "fd_371229609fc872",
+      "fd_371229626e4df0"
+    ]);
+    assert.deepEqual(
+      suspiciousWarnings.find((warning) => warning.details.id === "fd_371229609fc872")?.details.columnTitles,
+      ["维修设备名称", "维修规格", "使用人2", "维修固资编号", "维修设备编号"]
+    );
+  });
+
+  it("does not flag explicit business detail table titles", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr><td row="0" column="0"><table fd_type="detailsTable" fd_values='{id:"fd_fee",label:"费用明细"}'></table></td></tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSubTableProperty name="fd_fee" label="费用明细">
+          <extendSimpleProperty name="fd_amount" label="金额" type="Double"/>
+        </extendSubTableProperty>
+      </metadata>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }));
+    const detailTable = dsl.form.fields.find((field) => field.id === "fd_fee");
+
+    assert.equal(detailTable?.title, "费用明细");
+    assert.equal(
+      dsl.review.warnings.some((warning) => warning.code === "source.sysform.detail_table_title_suspicious"),
+      false
+    );
+  });
+
   it("does not cross non-string put values while reading fdDesignerHtml", () => {
     const xml = `
       <java>

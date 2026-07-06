@@ -36,6 +36,32 @@ describe("function whitelist", () => {
     ]);
   });
 
+  it("ignores local helper functions, string literals, comments, and common instance methods", () => {
+    const calls = extractFunctionCalls(`
+      function localHelper() {
+        document.getElementsByName("extendDataFormInfo.value(fd_detail.0.fd_field)");
+        document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.0.fd_field)&amp;quot;);
+        value.indexOf("sb");
+        item.setAttribute("validate", "required number min(0)");
+        item.setAttribute("validate", "required number min(0) scaleLength(0)");
+        // CommentedLegacyFunction();
+      }
+      localHelper();
+      const anotherHelper = function() {
+        document.getElementById("target");
+      };
+      anotherHelper();
+      Designer_Control_Right_SetModeCellValue(this);
+      UnknownLegacyFunction();
+    `);
+
+    assert.deepEqual(calls.map((call) => call.name), [
+      "document.getElementById",
+      "document.getElementsByName",
+      "UnknownLegacyFunction"
+    ]);
+  });
+
   it("reports only calls outside the whitelist", () => {
     const whitelist = loadFunctionWhitelist(whitelistPath);
     const audit = auditFunctionWhitelist(`

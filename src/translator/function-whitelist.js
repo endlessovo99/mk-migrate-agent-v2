@@ -27,7 +27,32 @@ const IGNORED_FUNCTIONS = new Set([
   "url",
   "Com_IncludeFile",
   "DocList_Info.push",
-  "DocList_MoveRow"
+  "DocList_MoveRow",
+  "extendDataFormInfo.value",
+  "min",
+  "scaleLength"
+]);
+
+const IGNORED_FUNCTION_PREFIXES = [
+  "Designer_Control_Right_"
+];
+
+const IGNORED_METHOD_NAMES = new Set([
+  "setAttribute",
+  "getAttribute",
+  "removeAttribute",
+  "indexOf",
+  "lastIndexOf",
+  "substring",
+  "substr",
+  "slice",
+  "split",
+  "replace",
+  "trim",
+  "toLowerCase",
+  "toUpperCase",
+  "charAt",
+  "charCodeAt"
 ]);
 
 const KEYWORDS = new Set([
@@ -111,15 +136,24 @@ export function functionWhitelistErrors(audit, path = "/review/functionWhitelist
 
 export function extractFunctionCalls(text = "") {
   const decoded = decodeEntities(String(text));
+  const searchable = maskStringsAndComments(decoded);
+  const localFunctions = new Set([
+    ...extractLocalFunctionNames(decoded),
+    ...extractLocalFunctionNames(searchable)
+  ]);
   const calls = new Map();
   const pattern = /([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*\(/g;
 
-  for (const match of decoded.matchAll(pattern)) {
-    const previous = decoded[match.index - 1] || "";
+  for (const match of searchable.matchAll(pattern)) {
+    const previous = searchable[match.index - 1] || "";
     const name = match[1];
     if (previous === ".") continue;
     if (KEYWORDS.has(name)) continue;
     if (IGNORED_FUNCTIONS.has(name)) continue;
+    if (localFunctions.has(name)) continue;
+    if (isFunctionDeclaration(searchable, match.index)) continue;
+    if (isIgnoredFunctionPrefix(name)) continue;
+    if (isIgnoredInstanceMethod(name)) continue;
 
     const occurrence = {
       index: match.index,
@@ -136,6 +170,100 @@ export function extractFunctionCalls(text = "") {
   }
 
   return [...calls.values()].sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function extractLocalFunctionNames(text) {
+  const names = new Set();
+  for (const match of text.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)) {
+    names.add(match[1]);
+  }
+  for (const match of text.matchAll(/\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*function\b/g)) {
+    names.add(match[1]);
+  }
+  return names;
+}
+
+function isFunctionDeclaration(text, index) {
+  return /\bfunction\s+$/.test(text.slice(Math.max(0, index - 20), index));
+}
+
+function isIgnoredFunctionPrefix(name) {
+  return IGNORED_FUNCTION_PREFIXES.some((prefix) => name.startsWith(prefix));
+}
+
+function isIgnoredInstanceMethod(name) {
+  if (!name.includes(".")) return false;
+  const methodName = name.slice(name.lastIndexOf(".") + 1);
+  return IGNORED_METHOD_NAMES.has(methodName);
+}
+
+function maskStringsAndComments(text) {
+  let result = "";
+  let index = 0;
+  let mode = "";
+  let quote = "";
+
+  while (index < text.length) {
+    const char = text[index];
+    const next = text[index + 1];
+
+    if (!mode && char === "/" && next === "/") {
+      mode = "lineComment";
+      result += "  ";
+      index += 2;
+      continue;
+    }
+    if (!mode && char === "/" && next === "*") {
+      mode = "blockComment";
+      result += "  ";
+      index += 2;
+      continue;
+    }
+    if (!mode && (char === "\"" || char === "'" || char === "`")) {
+      mode = "string";
+      quote = char;
+      result += " ";
+      index += 1;
+      continue;
+    }
+
+    if (mode === "lineComment") {
+      result += char === "\n" ? "\n" : " ";
+      if (char === "\n") mode = "";
+      index += 1;
+      continue;
+    }
+    if (mode === "blockComment") {
+      if (char === "*" && next === "/") {
+        result += "  ";
+        index += 2;
+        mode = "";
+        continue;
+      }
+      result += char === "\n" ? "\n" : " ";
+      index += 1;
+      continue;
+    }
+    if (mode === "string") {
+      if (char === "\\" && index + 1 < text.length) {
+        result += "  ";
+        index += 2;
+        continue;
+      }
+      result += char === "\n" ? "\n" : " ";
+      if (char === quote) {
+        mode = "";
+        quote = "";
+      }
+      index += 1;
+      continue;
+    }
+
+    result += char;
+    index += 1;
+  }
+
+  return result;
 }
 
 function loadJsonWhitelist(path) {
@@ -258,6 +386,11 @@ function clean(value = "") {
 
 function decodeEntities(value = "") {
   return String(value)
+    .replace(/&amp;quot;/g, "\"")
+    .replace(/&amp;apos;/g, "'")
+    .replace(/&amp;lt;/g, "<")
+    .replace(/&amp;gt;/g, ">")
+    .replace(/&amp;nbsp;/g, " ")
     .replace(/&quot;/g, "\"")
     .replace(/&apos;/g, "'")
     .replace(/&amp;#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))

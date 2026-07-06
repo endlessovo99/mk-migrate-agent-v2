@@ -108,11 +108,32 @@ function compareWorkflowSummary(expected, actual, diagnostics) {
     diagnostics.push(error("readback.workflow.missing", "Readback workflow content is missing.", "/readback/workflow"));
     return;
   }
-  for (const key of ["nodeCount", "edgeCount", "conditionEdgeCount"]) {
+  for (const key of ["nodeCount", "edgeCount", "conditionEdgeCount", "invalidEdgeCount"]) {
     if (expected[key] !== actual[key]) {
       diagnostics.push(error(`readback.workflow.${key}_mismatch`, "Readback workflow structure does not match DSL.", `/readback/workflow/${key}`, {
         expected: expected[key],
         actual: actual[key]
+      }));
+    }
+  }
+  compareWorkflowEdges(expected.edges || [], actual.edges || [], diagnostics);
+}
+
+function compareWorkflowEdges(expectedEdges, actualEdges, diagnostics) {
+  const actualById = new Map(actualEdges.map((edge) => [edge.id, edge]));
+  for (const expectedEdge of expectedEdges) {
+    const actualEdge = actualById.get(expectedEdge.id);
+    if (!actualEdge) {
+      diagnostics.push(error("readback.workflow.edge_missing", "Readback workflow is missing a DSL edge.", "/readback/workflow/edges", {
+        edgeId: expectedEdge.id
+      }));
+      continue;
+    }
+    if (actualEdge.source !== expectedEdge.source || actualEdge.target !== expectedEdge.target) {
+      diagnostics.push(error("readback.workflow.edge_endpoint_mismatch", "Readback workflow edge endpoints do not match DSL.", "/readback/workflow/edges", {
+        edgeId: expectedEdge.id,
+        expected: { source: expectedEdge.source, target: expectedEdge.target },
+        actual: { source: actualEdge.source, target: actualEdge.target }
       }));
     }
   }

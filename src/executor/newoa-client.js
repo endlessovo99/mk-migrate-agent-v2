@@ -39,6 +39,24 @@ export class NewoaClient {
     return result.body;
   }
 
+  async initTemplate() {
+    const body = await this.postKmReview("kmReviewTemplate/init", {});
+    if (!body?.data) {
+      throw new Error("template init response did not include data");
+    }
+    return body.data;
+  }
+
+  async generateTableName() {
+    const body = await this.postKmReview("kmReviewTemplate/generateTableName", {});
+    return body?.data || "";
+  }
+
+  async loadParentCategory(fdId) {
+    const body = await this.postKmReview("kmReviewCategory/loadParentCategoryVO", { fdId });
+    return body?.data || {};
+  }
+
   async addTemplate(payload) {
     const body = await this.postKmReview("kmReviewTemplate/add", payload);
     const template = body?.data || {};

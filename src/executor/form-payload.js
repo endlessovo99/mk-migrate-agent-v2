@@ -11,26 +11,49 @@ export function applyFormPayload(template, dsl) {
   const xform = next.mechanisms["sys-xform"];
   const config = parseJsonObject(xform.fdConfig || "{}");
   const summary = summarizeDslForm(form);
+  const mainModel = buildMainModel(next, xform, config, form);
+  const detailModels = buildDetailModels(next, form);
+  const detailModelsByField = new Map(
+    detailModels.map((model) => [model.dynamicProps?.detailFieldName, model]).filter(([fieldId]) => Boolean(fieldId))
+  );
 
-  config.id ||= xform.fdId || next.fdId;
-  config.name ||= xform.fdName || next.fdName;
-  config.entityName ||= "com.landray.km.review.core.entity.KmReviewTemplate";
-  config.entityCode ||= "km-review";
-  config.migrationDsl = {
-    ...(config.migrationDsl || {}),
-    form: summary
+  const fieldAuth = buildFieldAuth(mainModel, detailModels, form);
+  const formAttr = {
+    subjectRule: {
+      script: "${data.biz.fdSubject}",
+      type: "Eval",
+      vo: { content: "$标题$", mode: "formula" }
+    },
+    formRule: { pattern: {} },
+    dataUnique: {},
+    controlAction: {},
+    currentTableName: mainModel.fdTableName,
+    migrationDsl: { form: summary }
   };
-  config.dataModel = buildDataModel(next, form);
-  config.viewModel = buildViewModel(form);
-  config.attribute = config.attribute || {};
-  config.attribute.formAttr = JSON.stringify({
-    ...(parseJsonObject(config.attribute.formAttr || "{}")),
+
+  const nextConfig = {
+    authFilter: config.authFilter || { detailAuthDefine: {} },
+    auth: buildAuth(mainModel.fdTableName, fieldAuth),
+    attribute: {
+      ...(config.attribute || {}),
+      formAttr: JSON.stringify(formAttr)
+    },
+    dataModel: [mainModel, ...detailModels],
+    viewModel: [buildViewModel(config, next, mainModel, form, detailModelsByField)],
+    lang: config.lang || "{}",
+    extendMap: {
+      ...(config.extendMap || {}),
+      dataModelError: JSON.stringify({ errors: [] })
+    },
+    sign: config.sign || { formula: {} },
+    error: config.error || "{}",
     migrationDsl: {
+      ...(config.migrationDsl || {}),
       form: summary
     }
-  });
+  };
 
-  xform.fdConfig = JSON.stringify(config);
+  xform.fdConfig = JSON.stringify(nextConfig);
   xform.fdFormDefineType = 1;
   xform.fdStatus = "draft";
   xform.mechanisms = xform.mechanisms || {};
@@ -41,33 +64,20 @@ export function applyFormPayload(template, dsl) {
 export function summarizeFormFromTemplate(template) {
   const xform = template?.mechanisms?.["sys-xform"];
   const config = parseJsonObject(xform?.fdConfig || "{}");
-  const mainModel = Array.isArray(config.dataModel)
-    ? config.dataModel.find((model) => model?.fdType === "main") || config.dataModel[0]
-    : undefined;
-  const detailModelsByField = new Map(
-    (Array.isArray(config.dataModel) ? config.dataModel : [])
-      .filter((model) => model?.fdType === "detail")
-      .map((model) => [model.dynamicProps?.detailFieldName, model])
-      .filter(([fieldName]) => Boolean(fieldName))
-  );
-  const fields = (mainModel?.fdFields || []).map((field) => ({
-    id: field.fdName,
-    title: field.fdLabel,
-    type: field.fdType,
-    component: field.component,
-    columns: (detailModelsByField.get(field.fdName)?.fdFields || []).map((column) => ({
-      id: column.fdName,
-      title: column.fdLabel,
-      type: column.fdType,
-      component: column.component
-    }))
-  }));
-  const layoutRows = extractLayoutRows(config);
+  const models = Array.isArray(config.dataModel) ? config.dataModel : [];
+  const mainModel = models.find((model) => model?.fdType === "main") || models[0];
+  const detailModels = models.filter((model) => model?.fdType === "detail");
+  const detailFields = detailModels.map((model) => detailModelToSummaryField(model));
+  const fields = [
+    ...((mainModel?.fdFields || []).filter((field) => !field.fdIsSystem).map(dataFieldToSummaryField)),
+    ...detailFields
+  ];
+  const layoutRows = extractLayoutRows(config, detailModels);
 
   return {
     fieldCount: fields.length,
     fields,
-    detailTableCount: fields.filter((field) => field.type === "detailTable").length,
+    detailTableCount: detailFields.length,
     layoutRowCount: layoutRows.length,
     layoutRows
   };
@@ -108,79 +118,616 @@ export function summarizeDslForm(form = {}) {
   };
 }
 
-function buildDataModel(template, form) {
-  const fields = Array.isArray(form.fields) ? form.fields : [];
-  const mainFields = fields.map((field) => fieldToDataField(field));
-  const detailModels = fields
-    .filter((field) => field.type === "detailTable")
-    .map((field) => ({
-      fdName: field.title,
-      fdType: "detail",
-      fdTableName: tableNameFor(field.id),
-      dynamicProps: {
-        detailFieldName: field.id
-      },
-      fdFields: (field.columns || []).map((column) => fieldToDataField(column))
-    }));
+function buildMainModel(template, xform, config, form) {
+  const existing = (Array.isArray(config.dataModel) ? config.dataModel : []).find((model) => model?.fdType === "main") || {};
+  const main = {
+    ...clone(existing),
+    fdId: template.fdId,
+    fdName: template.fdName || "NewOA Migration Template",
+    fdTableName: xform.fdTableName || template.fdTableName || existing.fdTableName || tableNameFor(template.fdId || "main"),
+    fdType: "main",
+    dynamicProps: existing.dynamicProps || {},
+    fdXForm: { fdId: template.fdId, fdName: template.fdName },
+    fdOuterMapping: false,
+    needDelete: false,
+    deletePhysicalTable: false
+  };
+  main.fdTableNameAlias = main.fdTableName;
 
-  return [
-    {
-      fdName: template.fdName || "NewOA Migration Template",
-      fdType: "main",
-      fdTableName: template.fdTableName || tableNameFor(template.fdId || "main"),
-      fdFields: mainFields
+  const systemFields = (existing.fdFields || []).filter((field) => field.fdIsSystem);
+  const normalFields = (form.fields || []).filter((field) => field.type !== "detailTable");
+  main.fdFields = [
+    ...systemFields,
+    ...normalFields.map((field, index) => canonicalField(field, template, main, systemFields.length + index + 1, "main"))
+  ];
+  return main;
+}
+
+function buildDetailModels(template, form) {
+  return (form.fields || [])
+    .filter((field) => field.type === "detailTable")
+    .map((field) => {
+      const tableName = tableNameFor(field.id);
+      const model = {
+        fdId: stableHexId(`${template.fdId}:detail:${field.id}`),
+        dynamicProps: { detailFieldName: field.id },
+        fdName: field.title,
+        fdTableName: tableName,
+        fdTableNameAlias: tableName,
+        fdType: "detail",
+        fdFields: [],
+        fdXForm: { fdId: template.fdId, fdName: template.fdName },
+        fdOuterMapping: false,
+        needDelete: false,
+        deletePhysicalTable: false,
+        fdFontExtendData: "{\"passValue\":false}"
+      };
+      model.fdFields = [
+        ...(field.columns || []).map((column, index) => canonicalField(column, template, model, index + 1, "detail")),
+        ...detailSystemFields(model)
+      ];
+      model.fdAttribute = JSON.stringify(detailModelAttribute(field, model));
+      return model;
+    });
+}
+
+function canonicalField(field, template, model, order, tableType) {
+  const spec = componentSpec(field);
+  const fdLength = fieldLengthFromDsl(field, spec);
+  return {
+    fdId: stableHexId(`${template.fdId}:${model.fdTableName}:${field.id}:${order}`),
+    fdLabel: field.title,
+    fdName: field.id,
+    fdColumn: `fd_${field.id}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48),
+    fdType: spec.fdType,
+    fdAttribute: JSON.stringify(fieldAttribute(field, model.fdTableName, tableType, spec)),
+    fdFontExtendData: "{}",
+    fdDataType: spec.fdDataType,
+    fdDictType: spec.fdDictType,
+    ...(fdLength !== undefined ? { fdLength } : {}),
+    fdIsStored: true,
+    fdIsIndex: false,
+    fdIsSystem: false,
+    fdIsDataTask: false,
+    fdDisplay: true,
+    fdOuterMapping: false,
+    fdState: "notEffective",
+    fdDataModel: { fdId: model.fdId, fdName: model.fdName },
+    fdMechanismType: tableType === "detail" ? "KmReviewDetail" : "SYS-XFORM",
+    fdOrder: order
+  };
+}
+
+function fieldLengthFromDsl(field, spec) {
+  if (spec.attrType === "textarea") {
+    return textareaMaxLengthFromDsl(field);
+  }
+  return 200;
+}
+
+function fieldAttribute(field, tableName, tableType, spec) {
+  const controlId = `${spec.desktop}~${stableShortId(field.id)}`;
+  const controlProps = {
+    id: controlId,
+    desktop: { type: spec.desktop },
+    mobile: { type: spec.mobile },
+    name: field.id,
+    uuid: field.id,
+    title: field.title,
+    span: 24,
+    "$$tableType": tableType,
+    "$$tableName": tableName
+  };
+
+  if (field.required) controlProps.required = true;
+  if (field.options?.length) {
+    controlProps.options = field.options.map((option) => ({
+      label: option.label ?? option.text ?? option.value,
+      value: option.value ?? option.label ?? option.text
+    }));
+  }
+  if (spec.attrType === "select") {
+    controlProps.multi = field.mk?.component === "xform-select~multi";
+  }
+  if (spec.attrType === "attachment") {
+    Object.assign(controlProps, {
+      showText: false,
+      maxCount: 0,
+      singleMaxSize: 5242880,
+      itemDisplayConfig: ["showCreated", "showCreator", "showOrder", "showSize"],
+      maxLength: 200,
+      anonymous: false
+    });
+  }
+  if (spec.attrType === "textarea") {
+    Object.assign(controlProps, { placeholder: "请输入" });
+    const maxLength = textareaMaxLengthFromDsl(field);
+    if (maxLength !== undefined) {
+      controlProps.maxLength = maxLength;
+    }
+    const height = textareaHeightFromDsl(field);
+    if (height !== undefined) {
+      controlProps.height = height;
+    }
+  }
+  if (spec.attrType === "timestamp") {
+    Object.assign(controlProps, { placeholder: "请选择", displayPattern: "yyyy-MM-dd HH:mm" });
+  }
+  if (spec.attrType === "address") {
+    controlProps.org = { types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"] };
+  }
+
+  return {
+    uuid: field.id,
+    config: {
+      key: controlId,
+      type: spec.attrType,
+      controlProps,
+      kind: "control",
+      label: field.title,
+      labelProps: { desktop: {}, title: field.title, mobile: {} }
     },
-    ...detailModels
+    env: ["xform"]
+  };
+}
+
+function textareaHeightFromDsl(field) {
+  return normalizeHeight(
+    field.height ??
+      field.ui?.height ??
+      field.mk?.height ??
+      field.source?.designerValues?.height ??
+      field.source?.designerValues?.style ??
+      field.source?.style
+  );
+}
+
+function textareaMaxLengthFromDsl(field) {
+  const candidates = [
+    field.maxLength,
+    field.maxlength,
+    field.length,
+    field.validation?.maxLength,
+    field.validation?.maxlength,
+    field.ui?.maxLength,
+    field.ui?.maxlength,
+    field.mk?.maxLength,
+    field.mk?.maxlength,
+    field.source?.designerValues?.maxLength,
+    field.source?.designerValues?.maxlength,
+    field.source?.metadataAttributes?.maxLength,
+    field.source?.metadataAttributes?.maxlength,
+    field.source?.metadataAttributes?.length
+  ];
+
+  for (const candidate of candidates) {
+    const maxLength = normalizeMaxLength(candidate);
+    if (maxLength !== undefined) return maxLength;
+  }
+  return undefined;
+}
+
+function normalizeMaxLength(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "number") return Number.isInteger(value) && value > 0 ? value : undefined;
+  const text = String(value).trim();
+  if (!text) return undefined;
+  if (!/^\d+$/.test(text)) return undefined;
+  const length = Number(text);
+  return Number.isSafeInteger(length) && length > 0 ? length : undefined;
+}
+
+function normalizeHeight(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : undefined;
+  const text = String(value).trim();
+  if (!text) return undefined;
+  const styleHeight = text.match(/(?:^|;)\s*height\s*:\s*([^;]+)/i)?.[1]?.trim();
+  if (styleHeight) return normalizeHeight(styleHeight);
+  const numericHeight = text.match(/^(\d+(?:\.\d+)?)(?:px)?$/i);
+  if (numericHeight) return Number(numericHeight[1]);
+  return text;
+}
+
+function detailModelAttribute(field, model) {
+  const controlId = `@elem/xform-detail-table~${stableShortId(field.id)}`;
+  return {
+    uuid: model.fdTableName,
+    config: {
+      key: controlId,
+      type: "detail",
+      controlProps: {
+        passValue: false,
+        mode: "table",
+        defaultRowNumber: 1,
+        showNumber: true,
+        showFieldName: true,
+        showRowSelection: true,
+        showTopActionBar: true,
+        pcSetting: ["pagination"],
+        defaultPageSize: 10,
+        detailAlign: [
+          { key: "alignItems", value: "left" },
+          { key: "alignHeader", value: "left" }
+        ],
+        mobileRender: ["simple"],
+        alignTitle: "left",
+        nest: false,
+        id: controlId,
+        desktop: { type: "@elem/xform-detail-table" },
+        mobile: { type: "@elem/xform-m-detail-table" },
+        name: model.fdTableName,
+        uuid: model.fdTableName,
+        title: field.title,
+        "$$detailTableFieldName": field.id,
+        "$$tableType": "detail",
+        "$$tableName": model.fdTableName,
+        canChangeSpan: false,
+        pcNestSetting: ["toggle"],
+        printLayoutType: "table"
+      },
+      kind: "container",
+      label: field.title,
+      labelProps: { desktop: {}, mobile: {} }
+    }
+  };
+}
+
+function detailSystemFields(model) {
+  return [
+    systemDetailField(model, "fd_id", "主键ID", "SYS-XFORM.fd_id", "varchar", false),
+    systemDetailField(model, "fd_main_id", "主文档ID", "SYS-XFORM.fd_main_id", "varchar", true),
+    systemDetailField(model, "fd_order", "行号", "SYS-XFORM.fd_order", "number", false)
   ];
 }
 
-function buildViewModel(form) {
-  const rows = Array.isArray(form.layout?.rows) ? form.layout.rows : [];
-  return [{
-    fdName: "默认视图",
-    fdConfig: JSON.stringify({
-      view: {
-        render: {
-          desktop: {
-            children: rows.map((row) => ({
-              id: row.id,
-              cells: normalizeLayoutCells(row.cells || [])
-            }))
-          },
-          mobile: {
-            children: rows.map((row) => ({
-              id: row.id,
-              cells: normalizeLayoutCells(row.cells || [])
-            }))
-          }
-        }
+function systemDetailField(model, name, label, labelLangKey, type, isIndex) {
+  return {
+    fdId: stableHexId(`${model.fdId}:${name}`),
+    fdLabel: label,
+    fdLabelLangKey: labelLangKey,
+    fdName: name,
+    fdColumn: name,
+    fdType: type,
+    fdDataType: type,
+    fdDictType: "simpleDict",
+    fdLength: 36,
+    fdIsStored: true,
+    fdIsIndex: isIndex,
+    fdIsSystem: true,
+    fdIsDataTask: false,
+    fdDisplay: false,
+    fdOuterMapping: false,
+    fdState: "notEffective",
+    fdDataModel: { fdId: model.fdId, fdName: model.fdName },
+    fdMechanismType: "SYS-XFORM"
+  };
+}
+
+function buildViewModel(config, template, mainModel, form, detailModelsByField) {
+  const existing = Array.isArray(config.viewModel) ? config.viewModel[0] || {} : {};
+  return {
+    ...existing,
+    fdName: "默认",
+    fdCode: existing.fdCode || "default",
+    fdStatus: "draft",
+    fdLockMode: existing.fdLockMode || "none",
+    fdXForm: { fdId: template.fdId, fdName: template.fdName },
+    fdOrder: existing.fdOrder || 1,
+    needDelete: false,
+    fdConfig: JSON.stringify(buildViewConfig(mainModel, form, detailModelsByField))
+  };
+}
+
+function buildViewConfig(mainModel, form, detailModelsByField) {
+  const desktopRows = buildRows(form.layout?.rows || [], detailModelsByField);
+  const mainContainer = {
+    key: "main",
+    type: "main",
+    kind: "container",
+    controlProps: { importBtn: null, onDesktopImport: null, id: "main" },
+    children: desktopRows
+  };
+  return {
+    view: {
+      render: {
+        desktop: [appearanceNode(mainModel.fdTableName, clone(mainContainer))],
+        mobile: [appearanceNode(mainModel.fdTableName, clone(mainContainer))]
       }
-    })
+    },
+    theme: {},
+    controlStyle: {}
+  };
+}
+
+function appearanceNode(tableName, mainContainer) {
+  return {
+    key: "@elem/xform-appearance",
+    type: "@elem/xform-appearance",
+    kind: "container",
+    controlProps: { "$$tableName": tableName },
+    children: [mainContainer]
+  };
+}
+
+function buildRows(rows, detailModelsByField) {
+  return rows.map((row) => buildLayoutGridRow(row, detailModelsByField));
+}
+
+function buildLayoutGridRow(row, detailModelsByField) {
+  const cells = row.cells || [];
+  const layoutId = `layout~${stableShortId(row.id)}`;
+  const gridId = `@elem/layout-grid~${stableShortId(`${row.id}:grid`)}`;
+  const displayColumns = displayColumnCount(row);
+  return {
+    key: layoutId,
+    type: "layout",
+    kind: "container",
+    controlProps: {
+      id: layoutId,
+      migrationRowId: row.id,
+      migrationLayoutType: `@elem/xform-flex-1-${displayColumns}-layout`,
+      migrationSourceColumns: row.columns || cells.length || 1,
+      migrationDisplayColumns: displayColumns
+    },
+    children: [
+      {
+        key: gridId,
+        type: "@elem/layout-grid",
+        kind: "container",
+        controlProps: {
+          columns: displayColumns,
+          rows: 1,
+          id: gridId
+        },
+        children: cells.map((cell, index) => buildGridItem(row, cell, index, detailModelsByField))
+      }
+    ]
+  };
+}
+
+function buildGridItem(row, cell, index, detailModelsByField) {
+  const itemId = `@elem/layout-grid.GridItem~${stableShortId(`${row.id}:${cell.id || cell.fieldId || index}`)}`;
+  const detailModel = detailModelsByField.get(cell.fieldId);
+  const fieldRef = {
+    key: detailModel?.fdTableName || cell.fieldId,
+    migrationFieldId: cell.fieldId,
+    migrationFieldIds: cellFieldIds(cell),
+    migrationColumn: cell.column,
+    migrationColspan: cell.colspan,
+    ...(detailModel
+      ? { children: detailModel.fdFields.filter((field) => !field.fdIsSystem).map((field) => ({ key: field.fdName })) }
+      : {})
+  };
+  return {
+    key: itemId,
+    type: "@elem/layout-grid.GridItem",
+    kind: "container",
+    controlProps: {
+      column: index + 1,
+      row: 1,
+      id: itemId,
+      style: { backgroundColor: "" },
+      migrationRowId: row.id,
+      migrationFieldId: cell.fieldId,
+      migrationFieldIds: cellFieldIds(cell),
+      migrationColumn: cell.column,
+      migrationColspan: cell.colspan
+    },
+    children: [fieldRef]
+  };
+}
+
+function displayColumnCount(row) {
+  const cells = row.cells || [];
+  if (cells.length <= 1) return 1;
+  return Math.max(1, Math.min(4, cells.length));
+}
+
+function buildFieldAuth(mainModel, detailModels, form) {
+  const required = new Set((form.fields || []).filter((field) => field.required).map((field) => field.id));
+  return Object.fromEntries(
+    [...(mainModel.fdFields || []), ...detailModels.flatMap((model) => model.fdFields || [])]
+      .map((field) => [field.fdName, {
+        visible: true,
+        editable: !field.fdIsSystem,
+        required: required.has(field.fdName),
+        hide: false
+      }])
+  );
+}
+
+function buildAuth(tableName, fieldAuth) {
+  const viewFields = Object.fromEntries(Object.keys(fieldAuth).map((fieldName) => [fieldName, {
+    visible: true,
+    hide: false
+  }]));
+  return [{
+    fdName: ":publicLang.sysFormAuth",
+    authOrg: [],
+    fdIsAvailable: true,
+    add: { [tableName]: { fields: fieldAuth } },
+    edit: { [tableName]: { fields: fieldAuth } },
+    view: { [tableName]: { fields: viewFields } }
   }];
 }
 
-function extractLayoutRows(config) {
+function extractLayoutRows(config, detailModels) {
   const scene = Array.isArray(config.viewModel) ? config.viewModel[0] : undefined;
   const sceneConfig = parseJsonObject(scene?.fdConfig || "{}");
-  const rows = sceneConfig.view?.render?.desktop?.children || [];
-  return rows.map((row) => ({
-    id: row.id,
-    fields: (row.cells || []).flatMap((cell) => cellFieldIds(cell)),
-    cells: (row.cells || []).map((cell) => ({
-      fieldId: cell.fieldId || cellFieldIds(cell)[0],
-      fieldIds: cellFieldIds(cell),
-      column: cell.column,
-      colspan: cell.colspan
-    }))
-  }));
+  const simpleRows = sceneConfig.view?.render?.desktop?.children;
+  if (Array.isArray(simpleRows)) {
+    return simpleRows.map((row) => ({
+      id: row.id,
+      fields: (row.cells || []).flatMap((cell) => cellFieldIds(cell)),
+      cells: (row.cells || []).map((cell) => ({
+        fieldId: cell.fieldId || cellFieldIds(cell)[0],
+        fieldIds: cellFieldIds(cell),
+        column: cell.column,
+        colspan: cell.colspan
+      }))
+    }));
+  }
+
+  const detailFieldByTable = new Map(detailModels.map((model) => [model.fdTableName, detailFieldIdForModel(model)]));
+  const desktopRoots = sceneConfig.view?.render?.desktop;
+  const root = Array.isArray(desktopRoots) ? desktopRoots[0] : undefined;
+  const main = (root?.children || []).find((child) => child?.key === "main") || root?.children?.[0];
+  return (main?.children || [])
+    .map((row, rowIndex) => layoutNodeToSummaryRow(row, rowIndex, detailFieldByTable))
+    .filter(Boolean);
 }
 
-function normalizeLayoutCells(cells) {
-  return cells.map((cell) => ({
-    ...cell,
-    fieldId: cell.fieldId || cellFieldIds(cell)[0],
-    fieldIds: cellFieldIds(cell)
-  }));
+function layoutNodeToSummaryRow(row, rowIndex, detailFieldByTable) {
+  if (row?.type === "@elem/xform-row") {
+    return {
+      id: row.controlProps?.migrationRowId || row.key || `row-${rowIndex}`,
+      layoutType: row.type,
+      fields: (row.children || []).flatMap((child) => childFieldIds(child, detailFieldByTable)),
+      cells: (row.children || []).map((child, cellIndex) => {
+        const fieldIds = childFieldIds(child, detailFieldByTable);
+        return {
+          fieldId: fieldIds[0],
+          fieldIds,
+          column: child.migrationColumn ?? cellIndex,
+          colspan: child.migrationColspan ?? 1
+        };
+      })
+    };
+  }
+
+  if (row?.type !== "layout") return undefined;
+  const grid = (row.children || []).find((child) => child?.type === "@elem/layout-grid");
+  if (!grid) return undefined;
+  const gridItems = (grid.children || [])
+    .filter((child) => child?.type === "@elem/layout-grid.GridItem")
+    .slice()
+    .sort((left, right) => {
+      const leftRow = Number(left.controlProps?.row || 1);
+      const rightRow = Number(right.controlProps?.row || 1);
+      if (leftRow !== rightRow) return leftRow - rightRow;
+      return Number(left.controlProps?.column || 1) - Number(right.controlProps?.column || 1);
+    });
+  return {
+    id: row.controlProps?.migrationRowId || row.key || `row-${rowIndex}`,
+    layoutType: row.controlProps?.migrationLayoutType || "layout",
+    fields: gridItems.flatMap((item) => childFieldIds(gridItemFieldRef(item), detailFieldByTable)),
+    cells: gridItems.map((item, cellIndex) => {
+      const child = gridItemFieldRef(item);
+      const fieldIds = childFieldIds(child, detailFieldByTable);
+      return {
+        fieldId: fieldIds[0],
+        fieldIds,
+        column: item.controlProps?.migrationColumn ?? child?.migrationColumn ?? cellIndex,
+        colspan: item.controlProps?.migrationColspan ?? child?.migrationColspan ?? 1
+      };
+    })
+  };
+}
+
+function gridItemFieldRef(item) {
+  return (item?.children || [])[0] || {};
+}
+
+function childFieldIds(child, detailFieldByTable) {
+  if (Array.isArray(child.migrationFieldIds) && child.migrationFieldIds.length) return child.migrationFieldIds;
+  if (child.migrationFieldId) return [child.migrationFieldId];
+  if (detailFieldByTable.has(child.key)) return [detailFieldByTable.get(child.key)];
+  return child.key ? [child.key] : [];
+}
+
+function detailModelToSummaryField(model) {
+  return {
+    id: detailFieldIdForModel(model),
+    title: model.fdName,
+    type: "detailTable",
+    component: "xform-detail-table",
+    columns: (model.fdFields || []).filter((field) => !field.fdIsSystem).map(dataFieldToSummaryField)
+  };
+}
+
+function dataFieldToSummaryField(field) {
+  return {
+    id: field.fdName,
+    title: field.fdLabel,
+    type: field.fdType,
+    component: componentFromDataField(field),
+    columns: []
+  };
+}
+
+function detailFieldIdForModel(model) {
+  if (model.dynamicProps?.detailFieldName) return model.dynamicProps.detailFieldName;
+  const attribute = parseJsonObject(model.fdAttribute || "{}");
+  return attribute.config?.controlProps?.["$$detailTableFieldName"] || model.fdTableName || model.fdName;
+}
+
+function componentFromDataField(field) {
+  const attribute = parseJsonObject(field.fdAttribute || "{}");
+  const desktopType = attribute.config?.controlProps?.desktop?.type;
+  return {
+    "@elem/xform-input": "xform-input",
+    "@elem/xform-textarea": "xform-textarea",
+    "@elem/xform-radio": "xform-radio",
+    "@elem/xform-checkbox": "xform-checkbox",
+    "@elem/xform-select": "xform-select",
+    "@elem/xform-datetime": "xform-datetime",
+    "@elem/xform-number": "xform-number",
+    "@elem/xform-address": "xform-address",
+    "@elem/xform-attach": "xform-attach",
+    "@elem/xform-description": "xform-description"
+  }[desktopType] || field.component || componentForFdType(field.fdType);
+}
+
+function componentForFdType(type) {
+  return {
+    text: "xform-input",
+    textarea: "xform-textarea",
+    radio: "xform-radio",
+    checkbox: "xform-checkbox",
+    select: "xform-select",
+    timestamp: "xform-datetime",
+    number: "xform-number",
+    address: "xform-address",
+    attachment: "xform-attach",
+    desc: "xform-description"
+  }[type] || "xform-input";
+}
+
+function componentSpec(field) {
+  const component = field.mk?.component;
+  if (component === "xform-address") {
+    return spec("address", "address", "orgElementDict", "address", "@elem/xform-address", "@elem/xform-m-address");
+  }
+  if (component === "xform-radio") {
+    return spec("radio", "varchar", "simpleDict", "radio", "@elem/xform-radio", "@elem/xform-m-radio");
+  }
+  if (component === "xform-select" || component === "xform-select~multi") {
+    return spec("select", "varchar", "simpleDict", "select", "@elem/xform-select", "@elem/xform-m-select");
+  }
+  if (component === "xform-checkbox") {
+    return spec("checkbox", "varchar", "simpleDict", "checkbox", "@elem/xform-checkbox", "@elem/xform-m-checkbox");
+  }
+  if (component === "xform-textarea") {
+    return spec("textarea", "clob", "simpleDict", "textarea", "@elem/xform-textarea", "@elem/xform-m-textarea");
+  }
+  if (component === "xform-datetime") {
+    return spec("timestamp", "timestamp", "dateDict", "timestamp", "@elem/xform-datetime", "@elem/xform-m-datetime");
+  }
+  if (component === "xform-number") {
+    return spec("number", "number", "numberDict", "number", "@elem/xform-number", "@elem/xform-m-number");
+  }
+  if (component === "xform-attach") {
+    return spec("attachment", "varchar", "attachmentDict", "attachment", "@elem/xform-attach", "@elem/xform-m-attach");
+  }
+  if (component === "xform-description") {
+    return spec("desc", "varchar", "simpleDict", "desc", "@elem/xform-description", "@elem/xform-m-description");
+  }
+  return spec("text", "varchar", "simpleDict", "text", "@elem/xform-input", "@elem/xform-m-input");
+}
+
+function spec(fdType, fdDataType, fdDictType, attrType, desktop, mobile) {
+  return { fdType, fdDataType, fdDictType, attrType, desktop, mobile };
 }
 
 function cellFieldIds(cell) {
@@ -188,27 +735,32 @@ function cellFieldIds(cell) {
   return cell.fieldId ? [cell.fieldId] : [];
 }
 
-function fieldToDataField(field) {
-  return {
-    fdName: field.id,
-    fdLabel: field.title,
-    fdType: field.type,
-    fdDataType: dataTypeFor(field),
-    fdRequired: field.required === true,
-    component: field.mk?.component,
-    options: field.options || []
-  };
-}
-
-function dataTypeFor(field) {
-  if (field.type === "number") return "decimal";
-  if (field.type === "date" || field.type === "dateTime") return "timestamp";
-  if (field.type === "detailTable") return "json";
-  return "varchar";
-}
-
 function tableNameFor(value) {
-  return `mk_${String(value || "table").replace(/[^\w]+/g, "_").slice(0, 48)}`;
+  return `mk_model_${String(value || "table").replace(/[^a-zA-Z0-9_]+/g, "_").slice(0, 32)}`;
+}
+
+function stableShortId(value) {
+  return stableHexId(value).slice(0, 10);
+}
+
+function stableHexId(value) {
+  let h1 = 0x811c9dc5;
+  let h2 = 0x811c9dc5;
+  for (const char of String(value)) {
+    const code = char.charCodeAt(0);
+    h1 ^= code;
+    h1 = Math.imul(h1, 0x01000193) >>> 0;
+    h2 ^= code + 0x9e37;
+    h2 = Math.imul(h2, 0x85ebca6b) >>> 0;
+  }
+
+  let output = "";
+  while (output.length < 32) {
+    h1 = Math.imul(h1 ^ (h1 >>> 13), 0x5bd1e995) >>> 0;
+    h2 = Math.imul(h2 ^ (h2 >>> 15), 0x27d4eb2d) >>> 0;
+    output += h1.toString(16).padStart(8, "0") + h2.toString(16).padStart(8, "0");
+  }
+  return output.slice(0, 32);
 }
 
 function parseJsonObject(value) {
