@@ -109,6 +109,9 @@ function propsFromSource(source) {
     props.options = source.options.map((option) => ({ label: option.label, value: option.value }));
   }
 
+  const defaultValue = legacyDefaultValueFromSource(source);
+  if (defaultValue) props.defaultValue = defaultValue;
+
   if (componentForSourceType(source.sourceType, source) === "xform-textarea") {
     const maxLength = positiveInteger(
       source.sourceProps?.designerValues?.maxLength ??
@@ -127,6 +130,78 @@ function propsFromSource(source) {
   }
 
   return props;
+}
+
+function legacyDefaultValueFromSource(source) {
+  const candidates = [
+    source.sourceProps?.metadataAttributes?.defaultValue,
+    source.sourceProps?.designerValues?.defaultValue,
+    source.sourceProps?.designerValues?.formula
+  ];
+
+  for (const candidate of candidates) {
+    const defaultValue = parseLegacyContextDefaultExpression(candidate, source);
+    if (defaultValue) return defaultValue;
+  }
+
+  return undefined;
+}
+
+function parseLegacyContextDefaultExpression(value, source) {
+  const expression = normalizeLegacyExpression(value);
+  if (!expression) return undefined;
+
+  if (isLegacyAddressSource(source) && /^ORG_TYPE_PERSON$/i.test(expression)) {
+    return { kind: "context", source: "creator" };
+  }
+
+  if (isLegacyAddressSource(source) && /^ORG_TYPE_DEPT$/i.test(expression)) {
+    return { kind: "context", source: "creatorDept" };
+  }
+
+  if (/^\$(?:docCreator|申请人)\$\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
+    return { kind: "context", source: "creator", property: "fdName" };
+  }
+
+  if (/^\$(?:fdDepartment|部门)\$\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
+    return { kind: "context", source: "creatorDept", property: "fdName" };
+  }
+
+  if (/^\$组织架构\.当前用户\$\s*\(\s*\)\s*\.\s*getFdName\s*\(\s*\)$/.test(expression)) {
+    return { kind: "context", source: "creator", property: "fdName" };
+  }
+
+  if (/^OrgFunction\s*\.\s*getCurrentUser\s*\(\s*\)\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
+    return { kind: "context", source: "creator", property: "fdName" };
+  }
+
+  if (/^OrgFunction\s*\.\s*getCurrentDept\s*\(\s*\)\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
+    return { kind: "context", source: "creatorDept", property: "fdName" };
+  }
+
+  if (/^OrgFunction\s*\.\s*getCurrentUser\s*\(\s*\)$/i.test(expression)) {
+    return { kind: "context", source: "creator" };
+  }
+
+  if (/^OrgFunction\s*\.\s*getCurrentDept\s*\(\s*\)$/i.test(expression)) {
+    return { kind: "context", source: "creatorDept" };
+  }
+
+  return undefined;
+}
+
+function isLegacyAddressSource(source) {
+  return source.sourceProps?.designerType === "address" || source.sourceProps?.metadataKind === "element";
+}
+
+function normalizeLegacyExpression(value) {
+  if (value === undefined || value === null) return "";
+  return String(value)
+    .replace(/&quot;/g, "\"")
+    .replace(/&apos;/g, "'")
+    .replace(/&#36;/g, "$")
+    .replace(/&amp;/g, "&")
+    .trim();
 }
 
 function draftMkTree(layout, detailTableIds) {

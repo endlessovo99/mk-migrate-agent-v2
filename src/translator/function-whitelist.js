@@ -144,7 +144,7 @@ export function functionWhitelistErrors(audit, path = "/review/functionWhitelist
 
 export function extractFunctionCalls(text = "") {
   const decoded = decodeEntities(String(text));
-  const searchable = maskStringsAndComments(decoded);
+  const searchable = maskLegacyFormulaExpressions(maskStringsAndComments(decoded));
   const localFunctions = new Set([
     ...extractLocalFunctionNames(decoded),
     ...extractLocalFunctionNames(searchable)
@@ -203,6 +203,10 @@ function isIgnoredInstanceMethod(name) {
   if (!name.includes(".")) return false;
   const methodName = name.slice(name.lastIndexOf(".") + 1);
   return IGNORED_METHOD_NAMES.has(methodName);
+}
+
+function maskLegacyFormulaExpressions(text) {
+  return text.replace(/\$[^$\r\n<>]*\$(?:[ \t]*\([ \t]*\))?(?:[ \t]*\.[ \t]*[A-Za-z_$][\w$]*[ \t]*\([ \t]*\))*/g, (match) => " ".repeat(match.length));
 }
 
 function maskStringsAndComments(text) {

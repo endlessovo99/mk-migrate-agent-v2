@@ -279,6 +279,63 @@ describe("executeDsl", () => {
     assert.equal(Object.hasOwn(sourceOnlyField, "fdLength"), false);
   });
 
+  it("writes creator context defaults as MK formula defaults", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: undefined,
+      form: {
+        fields: [
+          { id: "fd_creator_text", title: "起草人姓名-文本", type: "text", componentId: "xform-input", props: { defaultValue: { kind: "context", source: "creator", property: "fdName" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_text" },
+          { id: "fd_creator_dept_text", title: "起草部门-文本", type: "text", componentId: "xform-input", props: { defaultValue: { kind: "context", source: "creatorDept", property: "fdName" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_dept_text" },
+          { id: "fd_creator_address", title: "起草人地址本", type: "text", componentId: "xform-address", props: { defaultValue: { kind: "context", source: "creator" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_address" },
+          { id: "fd_creator_dept_address", title: "起草部门地址本", type: "text", componentId: "xform-address", props: { defaultValue: { kind: "context", source: "creatorDept" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_dept_address" }
+        ],
+        layout: {
+          sourceGrid: { rows: [] },
+          mkTree: [{
+            id: "layout.row-0",
+            componentId: "xform-flex-1-4-layout",
+            props: { columns: 4 },
+            sourceRef: "source.form.layout.row.row-0",
+            children: [
+              { id: "c1", refType: "field", refIds: ["fd_creator_text"], sourceRef: "source.form.layout.cell.c1", column: 0, colspan: 1 },
+              { id: "c2", refType: "field", refIds: ["fd_creator_dept_text"], sourceRef: "source.form.layout.cell.c2", column: 1, colspan: 1 },
+              { id: "c3", refType: "field", refIds: ["fd_creator_address"], sourceRef: "source.form.layout.cell.c3", column: 2, colspan: 1 },
+              { id: "c4", refType: "field", refIds: ["fd_creator_dept_address"], sourceRef: "source.form.layout.cell.c4", column: 3, colspan: 1 }
+            ]
+          }]
+        }
+      }
+    });
+    const payload = applyFormPayload(baseTemplate(), dsl);
+    const fields = JSON.parse(payload.mechanisms["sys-xform"].fdConfig)
+      .dataModel.find((model) => model.fdType === "main").fdFields;
+    const creatorText = fieldControlProps(fields, "fd_creator_text");
+    const creatorDeptText = fieldControlProps(fields, "fd_creator_dept_text");
+    const creatorAddress = fieldControlProps(fields, "fd_creator_address");
+    const creatorDeptAddress = fieldControlProps(fields, "fd_creator_dept_address");
+
+    assert.equal(creatorText.defaultValueType, "formula");
+    assert.equal(creatorText.defaultValueFormulaVO.script, "${data.biz.fdCreator.fdName}");
+    assert.deepEqual(creatorText.defaultValueFormulaVO.varIds, ["fdCreator.fdName"]);
+    assert.equal(creatorText.defaultValueFormulaVO.vo.content, "$测试模板.创建人.名称$");
+    assert.equal(creatorDeptText.defaultValueFormulaVO.script, "${data.biz.fdCreatorDept.fdName}");
+    assert.deepEqual(creatorDeptText.defaultValueFormulaVO.varIds, ["fdCreatorDept.fdName"]);
+    assert.equal(creatorDeptText.defaultValueFormulaVO.vo.content, "$测试模板.创建者部门.名称$");
+
+    assert.deepEqual(creatorAddress.org.orgTypeArr, ["8"]);
+    assert.equal(creatorAddress.org.defaultValueType, "formula");
+    assert.equal(creatorAddress.defaultValueFormulaVO.script, "${data.biz.fdCreator}");
+    assert.deepEqual(creatorAddress.defaultValueFormulaVO.varIds, ["fdCreator"]);
+    assert.equal(creatorAddress.defaultValueFormulaVO.vo.content, "$测试模板.创建人$");
+    assert.deepEqual(creatorDeptAddress.org.orgTypeArr, ["2"]);
+    assert.equal(creatorDeptAddress.defaultValueFormulaVO.script, "${data.biz.fdCreatorDept}");
+    assert.equal(creatorDeptAddress.defaultValueFormulaVO.vo.content, "$测试模板.创建者部门$");
+
+    assert.equal(fieldFontExtendData(fields, "fd_creator_text").defaultValueFormulaVO.script, "${data.biz.fdCreator.fdName}");
+    assert.deepEqual(fieldFontExtendData(fields, "fd_creator_address").orgTypeArr, ["8"]);
+    assert.deepEqual(fieldFontExtendData(fields, "fd_creator_dept_address").relation, []);
+  });
+
   it("writes translated JSP scripts into MK xform control actions", () => {
     const dsl = sampleTrustedDsl({
       workflow: undefined,
@@ -370,6 +427,10 @@ function sampleParallelGatewayWorkflow() {
 
 function fieldControlProps(fields, fieldName) {
   return JSON.parse(fields.find((field) => field.fdName === fieldName).fdAttribute).config.controlProps;
+}
+
+function fieldFontExtendData(fields, fieldName) {
+  return JSON.parse(fields.find((field) => field.fdName === fieldName).fdFontExtendData);
 }
 
 function baseTemplate() {

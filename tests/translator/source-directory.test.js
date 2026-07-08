@@ -93,6 +93,30 @@ describe("source directory stages", () => {
     assert.equal(table.columns.some((column) => column.id === "fdId"), false);
   });
 
+  it("maps legacy creator default expressions into DSL context defaults", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const fieldsById = new Map(dslDraft.form.fields.map((field) => [field.id, field]));
+    const processTable = fieldsById.get("fd_3a0a0a2ce4c5c4");
+    const processUser = processTable.columns.find((column) => column.id === "fd_3a0a0a3fc896f2");
+
+    assert.equal(sourceDraft.issues.some((issue) => issue.code === "source.function_not_whitelisted" && issue.evidence?.functionName === "$.getFdName"), false);
+    assert.deepEqual(fieldsById.get("fd_325c0266a887c4").props.defaultValue, {
+      kind: "context",
+      source: "creator",
+      property: "fdName"
+    });
+    assert.deepEqual(fieldsById.get("fd_36b983442aa544").props.defaultValue, {
+      kind: "context",
+      source: "creatorDept",
+      property: "fdName"
+    });
+    assert.deepEqual(processUser.props.defaultValue, {
+      kind: "context",
+      source: "creator"
+    });
+  });
+
   it("drafts source facts into a non-executable dsl-draft with explicit mkTree", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/route-validation-lbpm");
     const dslDraft = draftSourceDraft(sourceDraft);

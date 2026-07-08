@@ -64,6 +64,19 @@ describe("function whitelist", () => {
     ]);
   });
 
+  it("ignores legacy Landray context default expressions", () => {
+    const calls = extractFunctionCalls(`
+      <INPUT value=$申请人$.getFdName()>
+      <INPUT value=$部门$.getFdName()>
+      <INPUT value=$docCreator$.getFdName()>
+      <INPUT value=$fdDepartment$.getFdName()>
+      <INPUT value=$组织架构.当前用户$().getFdName()>
+      UnknownLegacyFunction();
+    `);
+
+    assert.deepEqual(calls.map((call) => call.name), ["UnknownLegacyFunction"]);
+  });
+
   it("reports only calls outside the whitelist", () => {
     const whitelist = loadFunctionWhitelist(whitelistPath);
     const audit = auditFunctionWhitelist(`

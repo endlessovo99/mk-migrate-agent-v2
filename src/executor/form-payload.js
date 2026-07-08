@@ -267,8 +267,8 @@ function canonicalField(field, template, model, order, tableType) {
     fdName: field.id,
     fdColumn: `fd_${field.id}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48),
     fdType: spec.fdType,
-    fdAttribute: JSON.stringify(fieldAttribute(field, model.fdTableName, tableType, spec)),
-    fdFontExtendData: "{}",
+    fdAttribute: JSON.stringify(fieldAttribute(field, template, model.fdTableName, tableType, spec)),
+    fdFontExtendData: JSON.stringify(fieldFontExtendData(field, template, spec)),
     fdDataType: spec.fdDataType,
     fdDictType: spec.fdDictType,
     ...(fdLength !== undefined ? { fdLength } : {}),
@@ -292,7 +292,7 @@ function fieldLengthFromDsl(field, spec) {
   return 200;
 }
 
-function fieldAttribute(field, tableName, tableType, spec) {
+function fieldAttribute(field, template, tableName, tableType, spec) {
   const controlId = `${spec.desktop}~${stableShortId(field.id)}`;
   const controlProps = {
     id: controlId,
@@ -344,6 +344,8 @@ function fieldAttribute(field, tableName, tableType, spec) {
     controlProps.org = { types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"] };
   }
 
+  applyContextDefaultToControlProps(controlProps, field, template, spec);
+
   return {
     uuid: field.id,
     config: {
@@ -355,6 +357,103 @@ function fieldAttribute(field, tableName, tableType, spec) {
       labelProps: { desktop: {}, title: field.title, mobile: {} }
     },
     env: ["xform"]
+  };
+}
+
+function applyContextDefaultToControlProps(controlProps, field, template, spec) {
+  const contextDefault = contextDefaultFormula(field, template, spec);
+  if (!contextDefault) return;
+
+  if (spec.attrType === "address") {
+    Object.assign(controlProps, {
+      multi: false,
+      preSelectType: "fixed",
+      defaultValueFormulaVO: contextDefault.formula,
+      showOrgType: 0,
+      maxLength: 0,
+      "$$allowCustomValue": true
+    });
+    controlProps.org = {
+      ...(controlProps.org || {}),
+      orgTypeArr: contextDefault.orgTypeArr,
+      defaultValueType: "formula"
+    };
+    return;
+  }
+
+  if (spec.attrType === "text") {
+    controlProps.defaultValueType = "formula";
+    controlProps.defaultValueFormulaVO = contextDefault.formula;
+    controlProps.maxLength = controlProps.maxLength || 200;
+  }
+}
+
+function fieldFontExtendData(field, template, spec) {
+  const contextDefault = contextDefaultFormula(field, template, spec);
+  if (!contextDefault) return {};
+
+  if (spec.attrType === "address") {
+    return {
+      orgTypeArr: contextDefault.orgTypeArr,
+      defaultValueType: "formula",
+      multi: false,
+      defaultValueFormulaVO: contextDefault.formula,
+      ...(contextDefault.source === "creatorDept" ? { relation: [] } : {})
+    };
+  }
+
+  if (spec.attrType === "text") {
+    return {
+      passValue: false,
+      trace: false,
+      encrypt: false,
+      defaultValueType: "formula",
+      encryptDefinition: {},
+      recalculate: false,
+      defaultValueFormulaVO: contextDefault.formula
+    };
+  }
+
+  return {};
+}
+
+function contextDefaultFormula(field, template, spec) {
+  const defaultValue = normalizeContextDefault(field.props?.defaultValue);
+  if (!defaultValue) return undefined;
+  if (!["address", "text"].includes(spec.attrType)) return undefined;
+
+  const property = spec.attrType === "text" ? defaultValue.property : undefined;
+  if (spec.attrType === "text" && property !== "fdName") return undefined;
+
+  const sourceField = defaultValue.source === "creator" ? "fdCreator" : "fdCreatorDept";
+  const scriptPath = property === "fdName" ? `${sourceField}.fdName` : sourceField;
+  const sourceLabel = defaultValue.source === "creator" ? "创建人" : "创建者部门";
+  const propertyLabel = property === "fdName" ? ".名称" : "";
+  const templateName = String(template?.fdName || "表单").trim() || "表单";
+
+  return {
+    source: defaultValue.source,
+    orgTypeArr: defaultValue.source === "creator" ? ["8"] : ["2"],
+    formula: {
+      type: "Eval",
+      script: `\${data.biz.${scriptPath}}`,
+      vo: {
+        mode: "formula",
+        content: `$${templateName}.${sourceLabel}${propertyLabel}$`
+      },
+      varIds: [scriptPath]
+    }
+  };
+}
+
+function normalizeContextDefault(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  if (value.kind !== "context") return undefined;
+  if (!["creator", "creatorDept"].includes(value.source)) return undefined;
+  if (value.property !== undefined && value.property !== "fdName") return undefined;
+  return {
+    source: value.source,
+    property: value.property
   };
 }
 

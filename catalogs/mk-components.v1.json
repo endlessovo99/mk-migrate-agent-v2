@@ -16,7 +16,8 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
-          "placeholder": { "type": "string" }
+          "placeholder": { "type": "string" },
+          "defaultValue": { "$ref": "#/$defs/contextDefaultValue" }
         }
       },
       "defaultPolicy": { "executorDefaults": ["placeholder"] },
@@ -186,7 +187,8 @@
           "orgTypes": {
             "type": "array",
             "items": { "type": "string", "enum": ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT", "ORG_TYPE_ORG"] }
-          }
+          },
+          "defaultValue": { "$ref": "#/$defs/contextDefaultValue" }
         }
       },
       "defaultPolicy": { "executorDefaults": ["orgTypes"] },
@@ -364,6 +366,16 @@
           "label": { "type": "string", "minLength": 1 },
           "value": { "type": "string", "minLength": 1 }
         }
+      }
+    },
+    "contextDefaultValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["context"] },
+        "source": { "type": "string", "enum": ["creator", "creatorDept"] },
+        "property": { "type": "string", "enum": ["fdName"] }
       }
     }
   }
