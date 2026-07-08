@@ -30,6 +30,9 @@ export const FIELD_TYPES = new Set([
   "detailTable"
 ]);
 
+const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "robot", "conditionBranch", "split", "join", "generalEnd"]);
+const WORKFLOW_NODE_ELEMENTS = new Set(["startEvent", "manualTask", "exclusiveGateway", "parallelGateway", "robot", "endEvent"]);
+
 export function validateMigrationDsl(input, options = {}) {
   const diagnostics = [];
   const root = isRecord(input) ? input : {};
@@ -582,6 +585,7 @@ function validateWorkflow(workflow, diagnostics, context) {
   validateTopologicalOrder(workflow.topologicalOrder, nodeMap, edges, diagnostics);
   validateWorkflowConnectivity(nodeMap, edges, diagnostics);
   validateWorkflowConditions(edges, diagnostics, context);
+  validateParallelGateways(workflow.nodes, nodeMap, diagnostics);
 }
 
 function validateWorkflowNodes(nodes, diagnostics, context) {
@@ -607,13 +611,18 @@ function validateWorkflowNodes(nodes, diagnostics, context) {
       nodeMap.set(node.id, node);
     }
 
-    if (!["generalStart", "draft", "review", "send", "robot", "conditionBranch", "generalEnd"].includes(node.type)) {
+    if (!WORKFLOW_NODE_TYPES.has(node.type)) {
       diagnostics.push(error("dsl.workflow.node.type_unsupported", "Workflow node type must be explicit NewOA execution semantics.", `${path}/type`, {
         current: node.type
       }));
     }
-    if (!["startEvent", "manualTask", "exclusiveGateway", "robot", "endEvent"].includes(node.element)) {
+    if (!WORKFLOW_NODE_ELEMENTS.has(node.element)) {
       diagnostics.push(error("dsl.workflow.node.element_unsupported", "Workflow node element must be explicit NewOA graph semantics.", `${path}/element`, {
+        current: node.element
+      }));
+    }
+    if (["split", "join"].includes(node.type) && node.element !== "parallelGateway") {
+      diagnostics.push(error("dsl.workflow.parallel_gateway.element_required", "Parallel split/join nodes must use element = parallelGateway.", `${path}/element`, {
         current: node.element
       }));
     }
@@ -627,6 +636,51 @@ function validateWorkflowNodes(nodes, diagnostics, context) {
   });
 
   return nodeMap;
+}
+
+function validateParallelGateways(nodes, nodeMap, diagnostics) {
+  if (!Array.isArray(nodes)) return;
+
+  nodes.forEach((node, index) => {
+    if (!isRecord(node) || !["split", "join"].includes(node.type)) return;
+    if (node.translationStatus !== "executable") return;
+
+    const path = `/workflow/nodes/${index}`;
+    const attrs = workflowNodeAttributes(node);
+    const relatedIds = splitRelatedNodeIds(attrs.relatedNodeIds);
+    if (relatedIds.length !== 1) {
+      diagnostics.push(error("dsl.workflow.parallel_gateway.related_single_required", "Executable parallel gateways require exactly one relatedNodeIds value.", `${path}/attributes/relatedNodeIds`, {
+        current: attrs.relatedNodeIds
+      }));
+      return;
+    }
+
+    const related = nodeMap.get(relatedIds[0]);
+    const expectedRelatedType = node.type === "split" ? "join" : "split";
+    if (!related || related.type !== expectedRelatedType) {
+      diagnostics.push(error("dsl.workflow.parallel_gateway.related_type_mismatch", "Executable parallel gateways must point to the opposite split/join node.", `${path}/attributes/relatedNodeIds`, {
+        relatedNodeId: relatedIds[0],
+        expectedType: expectedRelatedType,
+        actualType: related?.type
+      }));
+      return;
+    }
+
+    const relatedBackIds = splitRelatedNodeIds(workflowNodeAttributes(related).relatedNodeIds);
+    if (relatedBackIds.length !== 1 || relatedBackIds[0] !== node.id) {
+      diagnostics.push(error("dsl.workflow.parallel_gateway.related_not_reciprocal", "Executable parallel gateway pairs must reference each other.", `${path}/attributes/relatedNodeIds`, {
+        relatedNodeId: related.id,
+        relatedBackIds
+      }));
+    }
+
+    const modeKey = node.type === "split" ? "splitType" : "joinType";
+    if (!isAllParallelMode(attrs[modeKey])) {
+      diagnostics.push(error("dsl.workflow.parallel_gateway.mode_unsupported", "Only all parallel split/join gateways are executable in this version.", `${path}/definition/attributes/${modeKey}`, {
+        current: attrs[modeKey]
+      }));
+    }
+  });
 }
 
 function validateParticipants(participants, diagnostics, path) {
@@ -789,6 +843,22 @@ function validateWorkflowConditions(edges, diagnostics, context) {
       }));
     }
   });
+}
+
+function workflowNodeAttributes(node) {
+  return {
+    ...(node?.attributes || {}),
+    ...(node?.definition?.attributes || {})
+  };
+}
+
+function splitRelatedNodeIds(value = "") {
+  return String(value || "").split(/[;,，\s]+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function isAllParallelMode(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "all" || normalized === "1";
 }
 
 function groupEdges(edges, key, valueKey) {

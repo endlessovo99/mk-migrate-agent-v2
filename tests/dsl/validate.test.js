@@ -175,4 +175,42 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "dsl.workflow.node_cannot_reach_end"), true);
     assert.equal(result.diagnostics.some((item) => item.code === "workflow.participants.initiator_select_without_source"), true);
   });
+
+  it("accepts executable all parallel split and join gateways", () => {
+    const result = validateMigrationDsl(sampleTrustedDsl({
+      workflow: sampleParallelGatewayWorkflow()
+    }), { mode: "execute" });
+
+    assert.equal(result.ok, true);
+  });
+
+  it("rejects executable parallel gateways without a single reciprocal related node", () => {
+    const workflow = sampleParallelGatewayWorkflow();
+    workflow.nodes.find((node) => node.id === "N2").attributes.relatedNodeIds = "N4;N5";
+    workflow.nodes.find((node) => node.id === "N2").definition.attributes.relatedNodeIds = "N4;N5";
+    const result = validateMigrationDsl(sampleTrustedDsl({ workflow }), { mode: "execute" });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.workflow.parallel_gateway.related_single_required"), true);
+  });
 });
+
+function sampleParallelGatewayWorkflow() {
+  return {
+    process: { id: "process-parallel" },
+    nodes: [
+      { id: "N1", type: "generalStart", element: "startEvent", name: "开始", sourceType: "startNode", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+      { id: "N2", type: "split", element: "parallelGateway", name: "并行分支", sourceType: "splitNode", sourceRef: "source.workflow.node.N2", attributes: { relatedNodeIds: "N4" }, definition: { attributes: { splitType: "all", relatedNodeIds: "N4" } }, translationStatus: "executable" },
+      { id: "N3", type: "review", element: "manualTask", name: "审批", sourceType: "reviewNode", sourceRef: "source.workflow.node.N3", attributes: { handlerIds: "handler-1", handlerNames: "审批人" }, participants: { mode: "explicit", members: [{ id: "handler-1", name: "审批人", type: "user_or_org" }] }, translationStatus: "executable" },
+      { id: "N4", type: "join", element: "parallelGateway", name: "并行分支", sourceType: "joinNode", sourceRef: "source.workflow.node.N4", attributes: { relatedNodeIds: "N2" }, definition: { attributes: { joinType: "all", relatedNodeIds: "N2" } }, translationStatus: "executable" },
+      { id: "N5", type: "generalEnd", element: "endEvent", name: "结束", sourceType: "endNode", sourceRef: "source.workflow.node.N5", attributes: {}, translationStatus: "executable" }
+    ],
+    edges: [
+      { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+      { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } },
+      { id: "L3", source: "N3", target: "N4", sourceRef: "source.workflow.edge.L3", condition: { translationStatus: "executable" } },
+      { id: "L4", source: "N4", target: "N5", sourceRef: "source.workflow.edge.L4", condition: { translationStatus: "executable" } }
+    ],
+    topologicalOrder: ["N1", "N2", "N3", "N4", "N5"]
+  };
+}

@@ -226,8 +226,11 @@ function extractDesignerFieldControls(html) {
 
   for (const match of html.matchAll(controlPattern)) {
     const fdType = match[4];
+    if (String(fdType || "").toLowerCase() === "textlabel") continue;
     const values = parseFdValues(attrValue(match[2], "fd_values"));
-    const field = designerFieldFromControl(fdType, values, match[2]);
+    const field = designerFieldFromControl(fdType, values, match[2], {
+      html: matchingElementFragment(html, match)
+    });
     if (field) controls.push(field);
   }
 
@@ -252,7 +255,7 @@ function extractRowMarkers(html) {
   return markers;
 }
 
-function designerFieldFromControl(fdType, values, attrs) {
+function designerFieldFromControl(fdType, values, attrs, context = {}) {
   const normalized = String(fdType || "").toLowerCase();
   if (normalized === "textlabel") return undefined;
 
@@ -265,11 +268,21 @@ function designerFieldFromControl(fdType, values, attrs) {
   const source = {
     designerId: id,
     designerType: fdType,
-    designerValues: values
+    designerValues: values,
+    designerTableName: attrValue(attrs, "tableName") || undefined,
+    designerShowStatus: attrValue(attrs, "showStatus") || undefined
   };
 
   if (normalized === "detailstable") {
-    return { id, title, type: "detailTable", required, mk: mkForFieldType("detailTable"), source, columns: [] };
+    return {
+      id,
+      title,
+      type: "detailTable",
+      required,
+      mk: mkForFieldType("detailTable"),
+      source,
+      columns: extractDesignerDetailTableColumns(context.html || "", id)
+    };
   }
   if (["textarea", "rtf"].includes(normalized)) {
     return { id, title, type: "longText", required, mk: mkForFieldType("longText"), source };
@@ -297,6 +310,51 @@ function designerFieldFromControl(fdType, values, attrs) {
   }
 
   return undefined;
+}
+
+function extractDesignerDetailTableColumns(tableHtml, tableId) {
+  if (!tableHtml) return [];
+
+  const columns = [];
+  const seen = new Set();
+  for (const row of splitDirectChildRows(extractFirstTbodyContent(tableHtml) || tableHtml)) {
+    for (const cell of splitDirectChildCells(row)) {
+      if (isNonDataDetailCell(cell.attrs)) continue;
+      for (const control of extractDesignerFieldControls(cell.body)) {
+        if (!isDetailColumnControl(control, tableId) || seen.has(control.id)) continue;
+        seen.add(control.id);
+        columns.push(control);
+      }
+    }
+  }
+  return columns;
+}
+
+function isNonDataDetailCell(attrs) {
+  const colType = String(attrs.colType || attrs.coltype || "").toLowerCase();
+  return ["notitle", "notemplate", "nofoot", "emptycell"].includes(colType);
+}
+
+function isDetailColumnControl(control, tableId) {
+  if (!control || control.type === "detailTable") return false;
+  if (!control.title || control.title === control.id) return false;
+  if ((control.source?.designerValues?.showStatus || control.source?.designerShowStatus) === "noShow") return false;
+  const tableName = control.source?.designerValues?.tableName || control.source?.designerTableName;
+  if (tableName && tableName !== tableId) return false;
+  return true;
+}
+
+function matchingElementFragment(html, match) {
+  const tagName = match[1];
+  const start = match.index;
+  const openEnd = start + match[0].length;
+  if (isVoidLikeTag(tagName)) return match[0];
+  const end = findMatchingCloseTag(html, openEnd, tagName);
+  return end > openEnd ? html.slice(start, end + `</${tagName}>`.length) : match[0];
+}
+
+function isVoidLikeTag(tagName = "") {
+  return ["input", "br", "hr", "img", "meta", "link"].includes(String(tagName).toLowerCase());
 }
 
 function fallbackLayout(fields, source) {

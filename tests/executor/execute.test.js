@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { executeDsl } from "../../src/executor/execute.js";
 import { applyFormPayload, summarizeFormFromTemplate } from "../../src/executor/form-payload.js";
+import { buildWorkflowContent } from "../../src/executor/workflow-payload.js";
 import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("executeDsl", () => {
@@ -57,6 +58,28 @@ describe("executeDsl", () => {
     assert.equal(sequence.migrationSource.sourceRef, "source.workflow.edge.L1");
     assert.equal(result.readback.form.fieldCount, 3);
     assert.equal(result.readback.workflow.invalidEdgeCount, 0);
+  });
+
+  it("writes all parallel split and join gateways into MK workflow content", () => {
+    const content = buildWorkflowContent(sampleParallelGatewayWorkflow());
+    const split = content.elements.find((element) => element.id === "N2");
+    const join = content.elements.find((element) => element.id === "N4");
+    const splitFlow = content.elements.find((element) => element.id === "L2");
+
+    assert.equal(split.type, "split");
+    assert.equal(split.element, "parallelGateway");
+    assert.equal(split.splitType, "1");
+    assert.equal(split.gatewayDirection, "diverging");
+    assert.equal(split.scope, "branch");
+    assert.equal(split.relateId, "N4");
+    assert.equal(join.type, "join");
+    assert.equal(join.element, "parallelGateway");
+    assert.equal(join.joinType, "1");
+    assert.equal(join.gatewayDirection, "converging");
+    assert.equal(join.hidden, true);
+    assert.equal(join.relateId, "N2");
+    assert.equal(splitFlow.sourceRef, "N2");
+    assert.equal(splitFlow.targetRef, "N3");
   });
 
   it("fails readback when persisted designer structure loses layout cells and keeps the partial fdId", async () => {
@@ -324,6 +347,26 @@ describe("executeDsl", () => {
     assert.equal(formRule.require.length, 3);
   });
 });
+
+function sampleParallelGatewayWorkflow() {
+  return {
+    process: { id: "process-parallel" },
+    nodes: [
+      { id: "N1", type: "generalStart", element: "startEvent", name: "开始", sourceType: "startNode", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+      { id: "N2", type: "split", element: "parallelGateway", name: "并行分支", sourceType: "splitNode", sourceRef: "source.workflow.node.N2", attributes: { relatedNodeIds: "N4" }, definition: { attributes: { splitType: "all", relatedNodeIds: "N4" } }, translationStatus: "executable" },
+      { id: "N3", type: "review", element: "manualTask", name: "审批", sourceType: "reviewNode", sourceRef: "source.workflow.node.N3", attributes: { handlerIds: "handler-1", handlerNames: "审批人" }, participants: { mode: "explicit", members: [{ id: "handler-1", name: "审批人", type: "user_or_org" }] }, translationStatus: "executable" },
+      { id: "N4", type: "join", element: "parallelGateway", name: "并行分支", sourceType: "joinNode", sourceRef: "source.workflow.node.N4", attributes: { relatedNodeIds: "N2" }, definition: { attributes: { joinType: "all", relatedNodeIds: "N2" } }, translationStatus: "executable" },
+      { id: "N5", type: "generalEnd", element: "endEvent", name: "结束", sourceType: "endNode", sourceRef: "source.workflow.node.N5", attributes: {}, translationStatus: "executable" }
+    ],
+    edges: [
+      { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+      { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } },
+      { id: "L3", source: "N3", target: "N4", sourceRef: "source.workflow.edge.L3", condition: { translationStatus: "executable" } },
+      { id: "L4", source: "N4", target: "N5", sourceRef: "source.workflow.edge.L4", condition: { translationStatus: "executable" } }
+    ],
+    topologicalOrder: ["N1", "N2", "N3", "N4", "N5"]
+  };
+}
 
 function fieldControlProps(fields, fieldName) {
   return JSON.parse(fields.find((field) => field.fdName === fieldName).fdAttribute).config.controlProps;

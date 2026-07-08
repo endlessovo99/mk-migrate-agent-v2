@@ -194,10 +194,11 @@ function draftRuleEffects(effects) {
 }
 
 function draftWorkflow(sourceWorkflow) {
+  const nodeById = new Map((sourceWorkflow.nodes || []).map((node) => [node.id, node]));
   return {
     process: sourceWorkflow.process || {},
     nodes: (sourceWorkflow.nodes || []).map((node) => {
-      const nodeType = mapWorkflowNodeType(node.sourceType);
+      const nodeType = mapWorkflowNodeType(node, nodeById);
       return pruneUndefined({
         id: node.id,
         type: nodeType.type,
@@ -207,7 +208,7 @@ function draftWorkflow(sourceWorkflow) {
         sourceRef: node.sourceRef,
         attributes: node.attributes || {},
         definition: node.definition,
-        participants: participantsFromSourceNode(node),
+        participants: nodeType.participants === false ? undefined : participantsFromSourceNode(node),
         translationStatus: nodeType.needsReview ? "pending_review" : "executable"
       });
     }),
@@ -260,8 +261,11 @@ function participantsFromSourceNode(node) {
   };
 }
 
-function mapWorkflowNodeType(sourceType = "") {
+function mapWorkflowNodeType(node = {}, nodeById = new Map()) {
+  const sourceType = node.sourceType || "";
   const normalized = String(sourceType).toLowerCase();
+  if (normalized.includes("split")) return parallelGatewayNodeType(node, nodeById, "split");
+  if (normalized.includes("join")) return parallelGatewayNodeType(node, nodeById, "join");
   if (normalized.includes("start")) return { type: "generalStart", element: "startEvent" };
   if (normalized.includes("draft")) return { type: "draft", element: "manualTask" };
   if (normalized.includes("send") || normalized.includes("cc")) return { type: "send", element: "manualTask" };
@@ -272,6 +276,52 @@ function mapWorkflowNodeType(sourceType = "") {
     return { type: "review", element: "manualTask" };
   }
   return { type: "review", element: "manualTask", needsReview: true };
+}
+
+function parallelGatewayNodeType(node, nodeById, type) {
+  return {
+    type,
+    element: "parallelGateway",
+    participants: false,
+    needsReview: !isExecutableAllParallelGateway(node, nodeById, type)
+  };
+}
+
+function isExecutableAllParallelGateway(node, nodeById, type) {
+  const attrs = sourceNodeAttributes(node);
+  const relatedIds = splitRelatedNodeIds(attrs.relatedNodeIds);
+  if (relatedIds.length !== 1) return false;
+
+  const related = nodeById.get(relatedIds[0]);
+  if (!related) return false;
+
+  const relatedType = String(related.sourceType || "").toLowerCase();
+  const expectedRelatedType = type === "split" ? "join" : "split";
+  if (!relatedType.includes(expectedRelatedType)) return false;
+
+  const modeKey = type === "split" ? "splitType" : "joinType";
+  const relatedModeKey = type === "split" ? "joinType" : "splitType";
+  if (!isAllParallelMode(attrs[modeKey])) return false;
+  if (!isAllParallelMode(sourceNodeAttributes(related)[relatedModeKey])) return false;
+
+  const relatedBackIds = splitRelatedNodeIds(sourceNodeAttributes(related).relatedNodeIds);
+  return relatedBackIds.length === 1 && relatedBackIds[0] === node.id;
+}
+
+function sourceNodeAttributes(node) {
+  return {
+    ...(node?.attributes || {}),
+    ...(node?.definition?.attributes || {})
+  };
+}
+
+function isAllParallelMode(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "all" || normalized === "1";
+}
+
+function splitRelatedNodeIds(value = "") {
+  return String(value || "").split(/[;,，\s]+/).map((item) => item.trim()).filter(Boolean);
 }
 
 function componentForSourceType(type, source) {

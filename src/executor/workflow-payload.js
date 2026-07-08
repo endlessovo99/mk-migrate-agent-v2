@@ -23,7 +23,8 @@ export function buildWorkflowContent(workflow) {
   const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
   const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
   const outgoingEdges = groupEdgesBySource(edges);
-  const nodeElements = nodes.map((node, index) => buildNodeElement(node, index, outgoingEdges.get(node.id) || []));
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const nodeElements = nodes.map((node, index) => buildNodeElement(node, index, outgoingEdges.get(node.id) || [], nodeById));
   const edgeElements = edges.map((edge, index) => buildEdgeElement(edge, index));
 
   return {
@@ -122,10 +123,12 @@ export function workflowMappingDiagnostics(workflow) {
 
 function mapNodeType(type = "") {
   const normalized = String(type).toLowerCase();
-  if (["generalstart", "generalend", "draft", "review", "send", "robot", "conditionbranch"].includes(normalized)) {
+  if (["generalstart", "generalend", "draft", "review", "send", "robot", "conditionbranch", "split", "join"].includes(normalized)) {
     return type;
   }
   if (normalized.includes("start")) return "generalStart";
+  if (normalized.includes("split")) return "split";
+  if (normalized.includes("join")) return "join";
   if (normalized.includes("send") || normalized.includes("cc")) return "send";
   if (normalized.includes("end")) return "generalEnd";
   if (normalized.includes("draft")) return "draft";
@@ -144,6 +147,9 @@ function isKnownNodeType(type = "") {
     normalized.includes("draft") ||
     normalized.includes("review") ||
     normalized.includes("send") ||
+    normalized.includes("split") ||
+    normalized.includes("join") ||
+    normalized.includes("parallel") ||
     normalized.includes("robot") ||
     normalized.includes("manual") ||
     normalized.includes("task") ||
@@ -157,17 +163,20 @@ function mapNodeElement(type = "") {
   if (mapped === "generalStart") return "startEvent";
   if (mapped === "generalEnd") return "endEvent";
   if (mapped === "conditionBranch") return "exclusiveGateway";
+  if (mapped === "split" || mapped === "join") return "parallelGateway";
   if (mapped === "robot") return "robot";
   return "manualTask";
 }
 
-function buildNodeElement(node, index, outgoingEdges) {
+function buildNodeElement(node, index, outgoingEdges, nodeById) {
   const mappedType = mapNodeType(node.type);
   const builders = {
     generalStart: buildStartNode,
     generalEnd: buildEndNode,
     draft: buildDraftNode,
     conditionBranch: (value) => buildConditionBranchNode(value, outgoingEdges),
+    split: (value, valueIndex) => buildParallelGatewayNode(value, valueIndex, "split", nodeById),
+    join: (value, valueIndex) => buildParallelGatewayNode(value, valueIndex, "join", nodeById),
     send: (value) => buildArtificialNode(value, "send"),
     robot: buildRobotNode,
     review: (value) => buildArtificialNode(value, "review")
@@ -323,6 +332,43 @@ function buildConditionBranchNode(node, outgoingEdges) {
     });
   }
   return element;
+}
+
+function buildParallelGatewayNode(node, index, type, nodeById) {
+  const attrs = sourceAttributes(node);
+  const relatedId = singleRelatedNodeId(attrs) || node.id;
+  const relatedNode = nodeById.get(relatedId);
+  const name = node.name || attrs.name || "并行分支";
+  const element = {
+    ...baseNode(node, index, type, "parallelGateway", 34, 34),
+    language: { nameCn: name, nameUs: "Parallel Branch" },
+    simpleName: name,
+    number: node.id,
+    relateId: relatedId,
+    gatewayDirection: type === "split" ? "diverging" : "converging"
+  };
+
+  if (type === "split") {
+    return {
+      ...element,
+      splitType: "1",
+      scope: "branch",
+      relation: relatedNode ? {
+        name: relatedNode.name || name,
+        simpleName: relatedNode.name || name,
+        type: "join",
+        element: "parallelGateway",
+        hidden: true,
+        bounds: boundsFor(relatedNode, index, 34, 34)
+      } : undefined
+    };
+  }
+
+  return {
+    ...element,
+    joinType: "1",
+    hidden: true
+  };
 }
 
 function baseNode(node, index, type, element, width, height) {
@@ -490,6 +536,15 @@ function sourceAttributes(node) {
     ...(node?.attributes || {}),
     ...(node?.definition?.attributes || {})
   };
+}
+
+function singleRelatedNodeId(attrs) {
+  const ids = splitRelatedNodeIds(attrs.relatedNodeIds || attrs.relateId);
+  return ids.length === 1 ? ids[0] : "";
+}
+
+function splitRelatedNodeIds(value = "") {
+  return String(value || "").split(/[;,，\s]+/).map((item) => item.trim()).filter(Boolean);
 }
 
 function migrationNodeSource(node) {
