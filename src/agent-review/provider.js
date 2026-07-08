@@ -1,4 +1,4 @@
-import { buildAgentReviewPrompt } from "./prompt.js";
+import { buildAgentReviewPrompt, buildAgentReviewRepairPrompt } from "./prompt.js";
 
 export class OpenAIResponsesReviewProvider {
   constructor(options = {}) {
@@ -15,6 +15,19 @@ export class OpenAIResponsesReviewProvider {
   }
 
   async review({ sourceDraft, dslDraft }) {
+    return this.submitPrompt(buildAgentReviewPrompt(sourceDraft, dslDraft), "agent-review.provider");
+  }
+
+  async repairReviewResponse({ sourceDraft, dslDraft, rawText, diagnostics, rejectedPatches, attempt }) {
+    return this.submitPrompt(buildAgentReviewRepairPrompt(sourceDraft, dslDraft, {
+      rawText,
+      diagnostics,
+      rejectedPatches,
+      attempt
+    }), "agent-review.provider-repair");
+  }
+
+  async submitPrompt(prompt, stage) {
     const config = this.readConfig();
     if (!config.ok) return config;
 
@@ -26,7 +39,6 @@ export class OpenAIResponsesReviewProvider {
       });
     }
 
-    const prompt = buildAgentReviewPrompt(sourceDraft, dslDraft);
     const endpoint = `${config.baseUrl.replace(/\/+$/, "")}/v1/responses`;
     const body = {
       model: config.model,
@@ -98,7 +110,7 @@ export class OpenAIResponsesReviewProvider {
     return {
       ok: true,
       status: "received",
-      stage: "agent-review.provider",
+      stage,
       ...this.metadata(),
       promptVersion: prompt.promptVersion,
       rawText: redactSecrets(outputText, config.apiKey),

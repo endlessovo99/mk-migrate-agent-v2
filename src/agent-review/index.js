@@ -12,6 +12,8 @@ const DIAGNOSTIC_LEVELS = new Set(["info", "warning", "error", "blocked"]);
 export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
   const provider = options.provider || new OpenAIResponsesReviewProvider(options.providerOptions);
   const metadata = providerMetadata(provider);
+  const maxRepairAttempts = options.maxRepairAttempts ?? 1;
+  const repairHistory = [];
   const inputDiagnostics = validateInputs(sourceDraft, dslDraft);
   if (inputDiagnostics.length) {
     return blockedResult({
@@ -31,58 +33,49 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
   }
 
   const reviewedAt = options.reviewedAt || new Date().toISOString();
-  const promptVersion = providerResult.promptVersion || AGENT_REVIEW_PROMPT_VERSION;
-  const parsed = parseAgentReviewResponse(providerResult.rawText);
-  if (!parsed.ok) {
+  let activeProviderResult = providerResult;
+  let review = evaluateProviderReviewResult(sourceDraft, dslDraft, activeProviderResult, metadata);
+
+  for (let attempt = 1; !review.ok && review.repairable && attempt <= maxRepairAttempts; attempt += 1) {
+    if (typeof provider.repairReviewResponse !== "function") break;
+    repairHistory.push(repairHistoryEntry(review, attempt));
+    const repairProviderResult = await provider.repairReviewResponse({
+      sourceDraft,
+      dslDraft,
+      rawText: activeProviderResult.rawText,
+      diagnostics: review.diagnostics,
+      rejectedPatches: review.rejectedPatches || [],
+      attempt
+    });
+
+    if (!repairProviderResult.ok) {
+      return blockedResult({
+        ...metadata,
+        ...repairProviderResult,
+        diagnostics: repairProviderResult.diagnostics || [],
+        repairAttempts: repairHistory.length,
+        repairHistory
+      });
+    }
+
+    activeProviderResult = repairProviderResult;
+    review = evaluateProviderReviewResult(sourceDraft, dslDraft, activeProviderResult, metadata);
+  }
+
+  if (!review.ok) {
     return blockedResult({
-      ...metadata,
-      ...providerResult,
-      stage: "agent-review.response-parse",
-      diagnostics: parsed.diagnostics,
-      rawResponsePreview: providerResult.rawText || providerResult.rawResponsePreview
+      ...review.blockedInput,
+      repairAttempts: repairHistory.length,
+      repairHistory
     });
   }
 
-  const diagnosticCheck = evaluateReviewDiagnostics(parsed.response.diagnostics);
-  if (diagnosticCheck.blocking.length) {
-    return blockedResult({
-      ...metadata,
-      ...providerResult,
-      stage: "agent-review.diagnostics",
-      diagnostics: diagnosticCheck.blocking,
-      rawResponsePreview: providerResult.rawResponsePreview
-    });
-  }
-
-  const patchResult = applyEvidenceBackedPatches(dslDraft, parsed.response.patches, {
-    sourceRefs: collectSourceRefs(sourceDraft)
-  });
-  if (!patchResult.ok) {
-    return blockedResult({
-      ...metadata,
-      ...providerResult,
-      stage: "agent-review.patch-validation",
-      diagnostics: patchResult.diagnostics,
-      rejectedPatches: patchResult.rejectedPatches,
-      rawResponsePreview: providerResult.rawResponsePreview
-    });
-  }
-
-  const draftCheck = checkDraft(patchResult.dslDraft);
-  if (!draftCheck.ok) {
-    return blockedResult({
-      ...metadata,
-      ...providerResult,
-      stage: "agent-review.dsl-validation",
-      diagnostics: draftCheck.diagnostics,
-      rawResponsePreview: providerResult.rawResponsePreview
-    });
-  }
+  const { diagnosticCheck, parsed, patchResult, promptVersion } = review;
 
   const agentReview = {
-    provider: providerResult.provider || metadata.provider || "openai",
-    baseUrl: providerResult.baseUrl || metadata.baseUrl || "",
-    model: providerResult.model || metadata.model || "",
+    provider: activeProviderResult.provider || metadata.provider || "openai",
+    baseUrl: activeProviderResult.baseUrl || metadata.baseUrl || "",
+    model: activeProviderResult.model || metadata.model || "",
     promptVersion,
     reviewedAt,
     summary: parsed.response.summary,
@@ -102,10 +95,12 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
   if (!trustCheck.ok) {
     return blockedResult({
       ...metadata,
-      ...providerResult,
+      ...activeProviderResult,
       stage: "agent-review.trust-validation",
       diagnostics: trustCheck.diagnostics,
-      rawResponsePreview: providerResult.rawResponsePreview
+      rawResponsePreview: activeProviderResult.rawResponsePreview,
+      repairAttempts: repairHistory.length,
+      repairHistory
     });
   }
 
@@ -121,7 +116,9 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
     artifact: trusted.artifact,
     diagnostics: trustCheck.diagnostics,
     acceptedPatchCount: patchResult.acceptedPatches.length,
-    diagnosticCount: parsed.response.diagnostics.length
+    diagnosticCount: parsed.response.diagnostics.length,
+    repairAttempts: repairHistory.length,
+    repairHistory
   };
 
   return {
@@ -129,6 +126,79 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
     status: trustCheck.status,
     dsl: trusted,
     report
+  };
+}
+
+function evaluateProviderReviewResult(sourceDraft, dslDraft, providerResult, metadata) {
+  const promptVersion = providerResult.promptVersion || AGENT_REVIEW_PROMPT_VERSION;
+  const parsed = parseAgentReviewResponse(providerResult.rawText);
+  if (!parsed.ok) {
+    return failedReview({
+      ...metadata,
+      ...providerResult,
+      stage: "agent-review.response-parse",
+      diagnostics: parsed.diagnostics,
+      rawResponsePreview: providerResult.rawText || providerResult.rawResponsePreview,
+      repairable: true
+    });
+  }
+
+  const diagnosticCheck = evaluateReviewDiagnostics(parsed.response.diagnostics);
+  if (diagnosticCheck.blocking.length) {
+    return failedReview({
+      ...metadata,
+      ...providerResult,
+      stage: "agent-review.diagnostics",
+      diagnostics: diagnosticCheck.blocking,
+      rawResponsePreview: providerResult.rawResponsePreview,
+      repairable: false
+    });
+  }
+
+  const patchResult = applyEvidenceBackedPatches(dslDraft, parsed.response.patches, {
+    sourceRefs: collectSourceRefs(sourceDraft)
+  });
+  if (!patchResult.ok) {
+    return failedReview({
+      ...metadata,
+      ...providerResult,
+      stage: "agent-review.patch-validation",
+      diagnostics: patchResult.diagnostics,
+      rejectedPatches: patchResult.rejectedPatches,
+      rawResponsePreview: providerResult.rawResponsePreview,
+      repairable: true
+    });
+  }
+
+  const draftCheck = checkDraft(patchResult.dslDraft);
+  if (!draftCheck.ok) {
+    return failedReview({
+      ...metadata,
+      ...providerResult,
+      stage: "agent-review.dsl-validation",
+      diagnostics: draftCheck.diagnostics,
+      rawResponsePreview: providerResult.rawResponsePreview,
+      repairable: false
+    });
+  }
+
+  return {
+    ok: true,
+    promptVersion,
+    parsed,
+    diagnosticCheck,
+    patchResult
+  };
+}
+
+function failedReview(input) {
+  return {
+    ok: false,
+    repairable: input.repairable === true,
+    stage: input.stage,
+    diagnostics: input.diagnostics || [],
+    rejectedPatches: input.rejectedPatches,
+    blockedInput: input
   };
 }
 
@@ -341,9 +411,9 @@ function validatePatchValue(patch, target, path) {
     return [error("agent.patch.value_props_required", "props patches require an object value.", `${path}/value`)];
   }
   if (target.property === "props") {
-    const unsupportedProps = Object.keys(patch.value).filter((key) => !["required", "options", "maxLength", "height"].includes(key));
+    const unsupportedProps = Object.keys(patch.value).filter((key) => !["required", "options", "maxLength"].includes(key));
     if (unsupportedProps.length) {
-      return [error("agent.patch.value_props_unsupported", "Agent Review v1 may patch only required, options, maxLength, and height props.", `${path}/value`, {
+      return [error("agent.patch.value_props_unsupported", "Agent Review v1 may patch only required, options, and maxLength props.", `${path}/value`, {
         unsupportedProps
       })];
     }
@@ -457,7 +527,9 @@ function blockedResult(input) {
       promptVersion: input.promptVersion,
       diagnostics: input.diagnostics || [],
       rejectedPatches: input.rejectedPatches,
-      rawResponsePreview: input.rawResponsePreview ? redactSecrets(input.rawResponsePreview) : undefined
+      rawResponsePreview: input.rawResponsePreview ? redactSecrets(input.rawResponsePreview) : undefined,
+      repairAttempts: input.repairAttempts,
+      repairHistory: input.repairHistory
     })
   };
 }
@@ -477,6 +549,15 @@ function patchSummary(patch, index, diagnostics) {
     confidence: patch?.confidence,
     codes: diagnostics.map((diagnostic) => diagnostic.code)
   };
+}
+
+function repairHistoryEntry(review, attempt) {
+  return pruneUndefined({
+    attempt,
+    stage: review.stage,
+    diagnostics: review.diagnostics,
+    rejectedPatches: review.rejectedPatches
+  });
 }
 
 function confidenceThreshold(property) {

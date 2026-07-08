@@ -1,4 +1,5 @@
 import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitelist.js";
+import { analyzeLegacyScriptFormRules } from "./sysform-form-rules.js";
 import { attrValue, decodeEntities } from "./xml-utils.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
@@ -100,8 +101,10 @@ function mkActionFromSource(source, index) {
   const event = eventFromSource(source.javascript);
   const functionName = event === "onBeforeSubmit" ? "onBeforeSubmit" : "onLoad";
   const functionMappings = functionMappingsFromAudit(source.functionAudit);
+  const coverage = scriptCoverageFromSource(source);
   const translationStatus = functionMappings.some((mapping) => mapping.reviewRequired) ||
-    source.functionAudit?.violations?.length
+    source.functionAudit?.violations?.length ||
+    coverage.residuals.length
     ? "needs_review"
     : "mapped";
   const fn = buildMkFunction(functionName, source.javascript, functionMappings, source.functionAudit?.violations || []);
@@ -113,9 +116,20 @@ function mkActionFromSource(source, index) {
     function: fn,
     sourceRefs: [source.sourceRef].filter(Boolean),
     translationStatus,
+    coverage: coverage.nativeRules.length || coverage.residuals.length ? coverage : undefined,
     functionMappings,
     unmappedFunctions: (source.functionAudit?.violations || []).map((violation) => violation.name)
   });
+}
+
+function scriptCoverageFromSource(source) {
+  const analysis = analyzeLegacyScriptFormRules(source);
+  const nativeRules = analysis.linkage.map((rule) => rule.id);
+  return {
+    status: analysis.residuals.length ? (nativeRules.length ? "partial" : "uncovered") : (nativeRules.length ? "covered" : "none"),
+    nativeRules,
+    residuals: analysis.residuals
+  };
 }
 
 function eventFromSource(source = "") {

@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-07-06.v1",
+  "version": "2026-07-08.v1",
   "components": [
     {
       "componentId": "xform-input",
@@ -28,8 +28,8 @@
       "kind": "field",
       "label": "多行文本",
       "description": "NewOA/MK multiline text field.",
-      "usage": "Use for textarea-like source controls. Only carry maxLength or height when the source or review explicitly provides them.",
-      "negativeUsage": "Do not invent maxLength: 0 or a default height.",
+      "usage": "Use for textarea-like source controls. Carry maxLength only when the source or review explicitly provides it.",
+      "negativeUsage": "Do not carry source height; use the native MK textarea height.",
       "allowedScopes": ["field", "detailColumn"],
       "target": { "desktop": "@elem/xform-textarea", "mobile": "@elem/xform-m-textarea" },
       "propsSchema": {
@@ -38,17 +38,11 @@
         "properties": {
           "required": { "type": "boolean" },
           "placeholder": { "type": "string" },
-          "maxLength": { "type": "integer", "minimum": 1 },
-          "height": {
-            "anyOf": [
-              { "type": "number", "exclusiveMinimum": 0 },
-              { "type": "string", "minLength": 1 }
-            ]
-          }
+          "maxLength": { "type": "integer", "minimum": 1 }
         }
       },
       "defaultPolicy": { "executorDefaults": ["placeholder"] },
-      "omitPolicy": { "omitWhenAbsent": ["maxLength", "height"], "forbiddenDefaults": { "maxLength": 0 } }
+      "omitPolicy": { "omitWhenAbsent": ["maxLength"], "forbiddenDefaults": { "maxLength": 0 } }
     },
     {
       "componentId": "xform-radio",

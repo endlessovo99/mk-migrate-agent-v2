@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { checkDraft } from "../../src/dsl/checks.js";
+import { checkDraft, checkExecute } from "../../src/dsl/checks.js";
+import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
 import { cleanSourceFile, draftSourceDraft, translateSourceFile } from "../../src/translator/index.js";
 import { sampleSourceDraft } from "../helpers/sample-dsl.js";
@@ -115,6 +116,80 @@ describe("source directory stages", () => {
       kind: "context",
       source: "creator"
     });
+  });
+
+  it("keeps hidden designer helper fields out of generated form components", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const hiddenHelperIds = ["fd_3a0a08a742981e", "fd_is_qtfy", "fd_is_fwq"];
+    const sourceControlIds = sourceDraft.form.controls.map((control) => control.id);
+    const dslFieldIds = dslDraft.form.fields.map((field) => field.id);
+    const layoutRefs = dslDraft.form.layout.mkTree.flatMap((row) => row.children.flatMap((cell) => cell.refIds));
+    const qtfyRow = dslDraft.form.layout.mkTree.find((row) => row.sourceMarkers?.includes("qtfy_row"));
+    const fwqRow = dslDraft.form.layout.mkTree.find((row) => row.sourceMarkers?.includes("fwq_row"));
+    const fwqDescription = dslDraft.form.fields.find((field) => field.id === "fwq_row__description");
+
+    hiddenHelperIds.forEach((id) => {
+      assert.equal(sourceControlIds.includes(id), false);
+      assert.equal(dslFieldIds.includes(id), false);
+      assert.equal(layoutRefs.includes(id), false);
+    });
+    assert.deepEqual(qtfyRow.children.flatMap((cell) => cell.refIds), ["fd_3a0a0903d3f91a"]);
+    assert.deepEqual(fwqRow.children.flatMap((cell) => cell.refIds), ["fwq_row__description"]);
+    assert.equal(fwqDescription.type, "description");
+    assert.equal(fwqDescription.props.content.includes("废木质品"), true);
+  });
+
+  it("partially extracts native JSP row rules while keeping residual scripts blocking execution", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const rule = dslDraft.formRules.linkage.find((item) => item.id === "linkage.fd_376d6cbc433bfe.contains.A");
+    const actionsById = new Map(dslDraft.scripts.actions.map((action) => [action.id, action]));
+
+    assert.deepEqual(rule.effects.map((effect) => [effect.type, effect.target, effect.value]), [
+      ["visible", "qtfy_row", true],
+      ["required", "qtfy_row", true],
+      ["visible", "scq_row", true],
+      ["required", "scq_row", true],
+      ["visible", "fwq_row", true],
+      ["required", "fwq_row", true]
+    ]);
+    assert.deepEqual(rule.else.map((effect) => [effect.type, effect.target, effect.value]), [
+      ["visible", "qtfy_row", false],
+      ["required", "qtfy_row", false],
+      ["visible", "scq_row", false],
+      ["required", "scq_row", false],
+      ["visible", "fwq_row", false],
+      ["required", "fwq_row", false]
+    ]);
+
+    const rowRuleAction = actionsById.get("fd_3a0a0882cb93b0.script.1");
+    assert.equal(rowRuleAction.translationStatus, "needs_review");
+    assert.equal(rowRuleAction.coverage.status, "partial");
+    assert.deepEqual(rowRuleAction.coverage.nativeRules, ["linkage.fd_376d6cbc433bfe.contains.A"]);
+    assert.deepEqual(rowRuleAction.coverage.residuals.map((residual) => [residual.code, residual.target]), [
+      ["script.residual.field_value_assignment", "fd_is_qtfy"],
+      ["script.residual.field_value_assignment", "fd_is_qtfy"],
+      ["script.residual.field_value_assignment", "fd_is_scq"],
+      ["script.residual.field_value_assignment", "fd_is_scq"],
+      ["script.residual.field_value_assignment", "fd_is_fwq"],
+      ["script.residual.field_value_assignment", "fd_is_fwq"]
+    ]);
+
+    assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2").coverage.status, "uncovered");
+    assert.deepEqual(actionsById.get("fd_3a0a08bd180e76.script.1").coverage.residuals.map((residual) => [residual.code, residual.target || residual.trigger]), [
+      ["script.residual.field_value_assignment", "fd_is_htz"],
+      ["script.residual.named_value_change_callback", "fd_seal_type"]
+    ]);
+
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "test-reviewer",
+      checkedAt: "2026-07-08T00:00:00.000Z"
+    });
+    const executeCheck = checkExecute(trusted);
+    assert.equal(executeCheck.ok, false);
+    assert.equal(executeCheck.diagnostics.filter((item) => item.code === "dsl.scripts.needs_review").length, 3);
   });
 
   it("drafts source facts into a non-executable dsl-draft with explicit mkTree", () => {

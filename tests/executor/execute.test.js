@@ -1,8 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { executeDsl } from "../../src/executor/execute.js";
 import { applyFormPayload, summarizeFormFromTemplate } from "../../src/executor/form-payload.js";
 import { buildWorkflowContent } from "../../src/executor/workflow-payload.js";
+import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("executeDsl", () => {
@@ -224,7 +226,7 @@ describe("executeDsl", () => {
     assert.deepEqual(client.calls, []);
   });
 
-  it("uses textarea height and max length only from executable props, not sourceProps", () => {
+  it("omits textarea height while keeping max length only from executable props", () => {
     const dsl = sampleTrustedDsl({
       form: {
         fields: [
@@ -271,12 +273,51 @@ describe("executeDsl", () => {
     const withPropsField = fields.find((field) => field.fdName === "fd_with_props");
     const sourceOnlyField = fields.find((field) => field.fdName === "fd_source_only");
 
-    assert.equal(withProps.height, 80);
+    assert.equal(Object.hasOwn(withProps, "height"), false);
     assert.equal(withProps.maxLength, 512);
     assert.equal(withPropsField.fdLength, 512);
     assert.equal(Object.hasOwn(sourceOnly, "height"), false);
     assert.equal(Object.hasOwn(sourceOnly, "maxLength"), false);
     assert.equal(Object.hasOwn(sourceOnlyField, "fdLength"), false);
+  });
+
+  it("writes fixture fields with registered MK control types and no textarea heights", () => {
+    const trusted = trustedDslFromFixture("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
+    const dslFields = trusted.form.fields.flatMap((field) => field.type === "detailTable" ? field.columns || [] : [field]);
+    const payload = applyFormPayload(baseTemplate(), trusted);
+    const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
+    const fields = config.dataModel
+      .flatMap((model) => model.fdFields || [])
+      .filter((field) => !field.fdIsSystem);
+    const attributes = fields.map((field) => ({
+      name: field.fdName,
+      attribute: JSON.parse(field.fdAttribute)
+    }));
+
+    assert.deepEqual(
+      dslFields
+        .filter((field) => Object.hasOwn(field.props || {}, "height"))
+        .map((field) => [field.id, field.props.height]),
+      []
+    );
+    assert.deepEqual(
+      attributes
+        .filter(({ attribute }) => Object.hasOwn(attribute.config?.controlProps || {}, "height"))
+        .map(({ name, attribute }) => [name, attribute.config.controlProps.height]),
+      []
+    );
+    assert.deepEqual(
+      attributes
+        .filter(({ attribute }) => !String(attribute.config?.type || "").startsWith("@elem/xform-"))
+        .map(({ name, attribute }) => [name, attribute.config?.type]),
+      []
+    );
+    assert.deepEqual(
+      attributes
+        .filter(({ attribute }) => attribute.config?.type !== attribute.config?.controlProps?.desktop?.type)
+        .map(({ name, attribute }) => [name, attribute.config?.type, attribute.config?.controlProps?.desktop?.type]),
+      []
+    );
   });
 
   it("writes creator context defaults as MK formula defaults", () => {
@@ -426,7 +467,11 @@ function sampleParallelGatewayWorkflow() {
 }
 
 function fieldControlProps(fields, fieldName) {
-  return JSON.parse(fields.find((field) => field.fdName === fieldName).fdAttribute).config.controlProps;
+  return fieldAttribute(fields, fieldName).config.controlProps;
+}
+
+function fieldAttribute(fields, fieldName) {
+  return JSON.parse(fields.find((field) => field.fdName === fieldName).fdAttribute);
 }
 
 function fieldFontExtendData(fields, fieldName) {
@@ -469,6 +514,16 @@ function baseTemplateWithExistingFormRules() {
     }
   });
   return template;
+}
+
+function trustedDslFromFixture(path) {
+  const sourceDraft = cleanSourceFile(path);
+  const dslDraft = draftSourceDraft(sourceDraft);
+  return createTrustedMigrationDsl(sourceDraft, dslDraft, {
+    externalAgentReviewed: true,
+    reviewerName: "test-reviewer",
+    checkedAt: "2026-07-08T00:00:00.000Z"
+  });
 }
 
 function sampleTrustedDslWithFormRules() {

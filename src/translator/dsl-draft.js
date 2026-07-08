@@ -112,6 +112,11 @@ function propsFromSource(source) {
   const defaultValue = legacyDefaultValueFromSource(source);
   if (defaultValue) props.defaultValue = defaultValue;
 
+  if (componentForSourceType(source.sourceType, source) === "xform-description") {
+    const content = source.sourceProps?.designerValues?.content || source.title;
+    if (content) props.content = content;
+  }
+
   if (componentForSourceType(source.sourceType, source) === "xform-textarea") {
     const maxLength = positiveInteger(
       source.sourceProps?.designerValues?.maxLength ??
@@ -122,11 +127,6 @@ function propsFromSource(source) {
     );
     if (maxLength !== undefined) props.maxLength = maxLength;
 
-    const height = normalizeHeight(
-      source.sourceProps?.designerValues?.height ??
-        source.sourceProps?.designerValues?.style
-    );
-    if (height !== undefined) props.height = height;
   }
 
   return props;
@@ -463,18 +463,6 @@ function positiveInteger(value) {
   if (value === undefined || value === null) return undefined;
   const number = typeof value === "number" ? value : Number.parseInt(String(value).trim(), 10);
   return Number.isSafeInteger(number) && number > 0 ? number : undefined;
-}
-
-function normalizeHeight(value) {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : undefined;
-  const text = String(value).trim();
-  if (!text) return undefined;
-  const styleHeight = text.match(/(?:^|;)\s*height\s*:\s*([^;]+)/i)?.[1]?.trim();
-  if (styleHeight) return normalizeHeight(styleHeight);
-  const numericHeight = text.match(/^(\d+(?:\.\d+)?)(?:px)?$/i);
-  if (numericHeight) return Number(numericHeight[1]);
-  return text;
 }
 
 function splitList(value = "") {

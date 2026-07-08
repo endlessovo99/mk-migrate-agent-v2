@@ -18,9 +18,10 @@ export function buildDesignerFirstForm(html, metadata, warnings) {
       path: "/fdDesignerHtml"
     });
     warnSuspiciousDetailTableTitles(metadata.fields, warnings);
+    const visibleMetadataFields = metadata.fields.filter((field) => !isHiddenMetadataField(field));
     return {
-      fields: metadata.fields,
-      layout: fallbackLayout(metadata.fields, "fdMetadataXml")
+      fields: visibleMetadataFields,
+      layout: fallbackLayout(visibleMetadataFields, "fdMetadataXml")
     };
   }
 
@@ -37,6 +38,7 @@ export function buildDesignerFirstForm(html, metadata, warnings) {
 
   for (const metadataField of metadata.fields) {
     if (matchedMetadataIds.has(metadataField.id)) continue;
+    if (isHiddenMetadataField(metadataField)) continue;
     warnings.push({
       code: "source.sysform.metadata_field_unmatched",
       message: `Metadata field ${metadataField.id} (${metadataField.title}) did not match a designer control and will not create a visible MK control.`,
@@ -66,6 +68,10 @@ function parseDesignerLayout(html, warnings) {
     const cells = [];
     const sourceMarkers = extractRowMarkers(rowHtml);
     const sourceCells = splitDirectChildCells(rowHtml);
+    const sourceColumns = sourceCells.reduce((max, cell, cellIndex) => {
+      const column = parseColumnSpec(cell.attrs.column, cellIndex);
+      return Math.max(max, column.column + column.colspan);
+    }, 1);
 
     sourceCells.forEach((cell, cellIndex) => {
       const controls = extractLayoutCellControls(cell.body);
@@ -88,12 +94,27 @@ function parseDesignerLayout(html, warnings) {
       });
     });
 
+    if (!cells.length && sourceMarkers.length) {
+      const description = descriptionFieldFromMarkedRow(rowHtml, sourceMarkers[0]);
+      if (description && !fieldIds.has(description.id)) {
+        fieldIds.add(description.id);
+        fields.push(description);
+        cells.push({
+          id: `row-${rowIndex}-cell-0`,
+          fieldId: description.id,
+          fieldIds: [description.id],
+          column: 0,
+          colspan: sourceColumns
+        });
+      }
+    }
+
     if (cells.length) {
       layoutRows.push({
         id: `row-${rowIndex}`,
         sourceRow: String(rowIndex),
         ...(sourceMarkers.length ? { sourceMarkers } : {}),
-        columns: Math.max(...cells.map((cell) => cell.column + cell.colspan), 1),
+        columns: Math.max(sourceColumns, ...cells.map((cell) => cell.column + cell.colspan), 1),
         cells
       });
     }
@@ -228,8 +249,10 @@ function extractDesignerFieldControls(html) {
     const fdType = match[4];
     if (String(fdType || "").toLowerCase() === "textlabel") continue;
     const values = parseFdValues(attrValue(match[2], "fd_values"));
+    const fragment = matchingElementFragment(html, match);
+    if (isHiddenDesignerControl(values, match[2], fragment)) continue;
     const field = designerFieldFromControl(fdType, values, match[2], {
-      html: matchingElementFragment(html, match)
+      html: fragment
     });
     if (field) controls.push(field);
   }
@@ -253,6 +276,44 @@ function extractRowMarkers(html) {
   }
 
   return markers;
+}
+
+function descriptionFieldFromMarkedRow(html, marker) {
+  const labels = [];
+  const decoded = decodeEntities(html);
+  for (const match of decoded.matchAll(/<label\b[^>]*>([\s\S]*?)<\/label>/gi)) {
+    const text = cleanDescriptionLabelText(match[1]);
+    if (text) labels.push(text);
+  }
+  const content = labels.join("\n").trim();
+  if (!content) return undefined;
+  const title = labels[0].replace(/[:：]\s*$/, "") || marker;
+  const id = `${marker}__description`.replace(/[^A-Za-z0-9_]/g, "_");
+  return {
+    id,
+    title,
+    type: "description",
+    required: false,
+    mk: mkForFieldType("description"),
+    source: {
+      designerId: id,
+      designerType: "textLabel",
+      designerValues: {
+        id,
+        label: title,
+        content
+      }
+    }
+  };
+}
+
+function cleanDescriptionLabelText(value) {
+  return cleanText(value)
+    .split("\n")
+    .map((line) => line.replace(/^['"]?>\s*/, "").trim())
+    .filter(Boolean)
+    .join("\n")
+    .trim();
 }
 
 function designerFieldFromControl(fdType, values, attrs, context = {}) {
@@ -342,6 +403,31 @@ function isDetailColumnControl(control, tableId) {
   const tableName = control.source?.designerValues?.tableName || control.source?.designerTableName;
   if (tableName && tableName !== tableId) return false;
   return true;
+}
+
+function isHiddenDesignerControl(values = {}, attrs = "", fragment = "") {
+  if (isFalseLike(values.canShow) || isFalseLike(attrValue(attrs, "canShow"))) return true;
+  if (isNoShow(values.showStatus) || isNoShow(attrValue(attrs, "showStatus"))) return true;
+  if (hasDisplayNone(values.style) || hasDisplayNone(attrValue(attrs, "style"))) return true;
+  if (/\bclass\s*=\s*(["'])[^"']*\binputhidden\b/i.test(fragment)) return true;
+  return false;
+}
+
+function isHiddenMetadataField(field = {}) {
+  const attrs = field.source?.metadataAttributes || {};
+  return isFalseLike(attrs.canDisplay) || isFalseLike(attrs.canShow) || isNoShow(attrs.showStatus);
+}
+
+function isFalseLike(value) {
+  return String(value ?? "").trim().toLowerCase() === "false";
+}
+
+function isNoShow(value) {
+  return String(value ?? "").trim().toLowerCase() === "noshow";
+}
+
+function hasDisplayNone(value) {
+  return /(?:^|;)\s*display\s*:\s*none\b/i.test(String(value ?? ""));
 }
 
 function matchingElementFragment(html, match) {

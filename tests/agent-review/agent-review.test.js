@@ -122,6 +122,43 @@ describe("agent-review", () => {
     assert.equal(result.report.diagnostics.some((item) => item.code === "agent.patch.low_confidence"), true);
   });
 
+  it("repairs invalid patch responses once and records retry history", async () => {
+    const sourceDraft = sampleSourceDraft();
+    const dslDraft = sampleDraftDsl();
+    const provider = new FakeReviewProvider(reviewResponse({
+      patches: [{
+        op: "replace",
+        path: "/form/fields/99/title",
+        value: "IT设备明细",
+        sourceRefs: ["source.form.detailTable.fd_detail"],
+        evidence: [],
+        confidence: 0.86,
+        rationale: "The title looked placeholder-like."
+      }]
+    }), {
+      repairRawText: reviewResponse({
+        patches: [titlePatch("/form/fields/2/title", "IT设备明细", "source.form.detailTable.fd_detail")]
+      })
+    });
+
+    const result = await runAgentReview(sourceDraft, dslDraft, {
+      provider,
+      reviewedAt: "2026-07-06T00:00:00.000Z"
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(provider.repairCalls.length, 1);
+    assert.equal(provider.repairCalls[0].attempt, 1);
+    assert.equal(provider.repairCalls[0].diagnostics.some((item) => item.code === "agent.patch.path_missing"), true);
+    assert.equal(provider.repairCalls[0].diagnostics.some((item) => item.code === "agent.patch.evidence_required"), true);
+    assert.equal(result.dsl.form.fields[2].title, "IT设备明细");
+    assert.equal(result.dsl.review.agentReview.patchCount, 1);
+    assert.equal(result.report.repairAttempts, 1);
+    assert.equal(result.report.repairHistory.length, 1);
+    assert.equal(result.report.repairHistory[0].stage, "agent-review.patch-validation");
+    assert.equal(result.report.repairHistory[0].rejectedPatches[0].path, "/form/fields/99/title");
+  });
+
   it("applies metadata-backed props patches and keeps workflow diagnostics warning-only", async () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/route-validation-lbpm");
     const dslDraft = draftSourceDraft(sourceDraft);
@@ -241,13 +278,34 @@ describe("agent-review", () => {
     assert.equal(text.includes("itTable"), true);
     assert.equal(text.includes("/workflow"), true);
     assert.equal(text.includes("/form/fields/*/columns/*/props"), true);
+    assert.equal(prompt.context.patchTargetSummary.fieldCount > 0, true);
+    assert.match(prompt.context.patchTargetSummary.validFieldIndexRange, /^0\.\.\d+$/);
+    assert.equal(prompt.context.allowedConcretePatchPaths.includes("/form/fields/0/title"), true);
+    assert.equal(prompt.context.allowedConcretePatchPaths.some((path) => /\/columns\/0\/title$/.test(path)), true);
   });
 });
 
 class FakeReviewProvider {
-  constructor(rawText) {
+  constructor(rawText, options = {}) {
     this.rawText = rawText;
     this.called = false;
+    this.repairCalls = [];
+    if (options.repairRawText !== undefined) {
+      this.repairReviewResponse = async (input) => {
+        this.repairCalls.push(input);
+        return {
+          ok: true,
+          status: "received",
+          stage: "agent-review.provider-repair",
+          provider: "openai",
+          baseUrl: "fake://agent-review",
+          model: "fake-model",
+          promptVersion: "test-prompt",
+          rawText: options.repairRawText,
+          rawResponsePreview: options.repairRawText.slice(0, 2000)
+        };
+      };
+    }
   }
 
   metadata() {

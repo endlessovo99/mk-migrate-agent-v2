@@ -3,6 +3,7 @@ import {
   mergeNativeFormRules,
   summarizeNativeFormRuleConfig
 } from "./form-rules.js";
+import { COMPONENTS_BY_ID } from "../dsl/catalogs.js";
 
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
@@ -332,16 +333,15 @@ function fieldAttribute(field, template, tableName, tableType, spec) {
     if (maxLength !== undefined) {
       controlProps.maxLength = maxLength;
     }
-    const height = textareaHeightFromDsl(field);
-    if (height !== undefined) {
-      controlProps.height = height;
-    }
   }
   if (spec.attrType === "timestamp") {
     Object.assign(controlProps, { placeholder: "请选择", displayPattern: "yyyy-MM-dd HH:mm" });
   }
   if (spec.attrType === "address") {
     controlProps.org = { types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"] };
+  }
+  if (spec.attrType === "desc") {
+    controlProps.content = field.props?.content || field.title;
   }
 
   applyContextDefaultToControlProps(controlProps, field, template, spec);
@@ -350,7 +350,7 @@ function fieldAttribute(field, template, tableName, tableType, spec) {
     uuid: field.id,
     config: {
       key: controlId,
-      type: spec.attrType,
+      type: spec.desktop,
       controlProps,
       kind: "control",
       label: field.title,
@@ -457,10 +457,6 @@ function normalizeContextDefault(value) {
   };
 }
 
-function textareaHeightFromDsl(field) {
-  return normalizeHeight(field.props?.height);
-}
-
 function textareaMaxLengthFromDsl(field) {
   return normalizeMaxLength(field.props?.maxLength);
 }
@@ -475,25 +471,14 @@ function normalizeMaxLength(value) {
   return Number.isSafeInteger(length) && length > 0 ? length : undefined;
 }
 
-function normalizeHeight(value) {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : undefined;
-  const text = String(value).trim();
-  if (!text) return undefined;
-  const styleHeight = text.match(/(?:^|;)\s*height\s*:\s*([^;]+)/i)?.[1]?.trim();
-  if (styleHeight) return normalizeHeight(styleHeight);
-  const numericHeight = text.match(/^(\d+(?:\.\d+)?)(?:px)?$/i);
-  if (numericHeight) return Number(numericHeight[1]);
-  return text;
-}
-
 function detailModelAttribute(field, model) {
-  const controlId = `@elem/xform-detail-table~${stableShortId(field.id)}`;
+  const target = componentTarget("xform-detail-table", "@elem/xform-detail-table", "@elem/xform-m-detail-table");
+  const controlId = `${target.desktop}~${stableShortId(field.id)}`;
   return {
     uuid: model.fdTableName,
     config: {
       key: controlId,
-      type: "detail",
+      type: target.desktop,
       controlProps: {
         passValue: false,
         mode: "table",
@@ -512,8 +497,8 @@ function detailModelAttribute(field, model) {
         alignTitle: "left",
         nest: false,
         id: controlId,
-        desktop: { type: "@elem/xform-detail-table" },
-        mobile: { type: "@elem/xform-m-detail-table" },
+        desktop: { type: target.desktop },
+        mobile: { type: target.mobile },
         name: model.fdTableName,
         uuid: model.fdTableName,
         title: field.title,
@@ -861,33 +846,46 @@ function componentForFdType(type) {
 function componentSpec(field) {
   const component = field.componentId;
   if (component === "xform-address") {
-    return spec("address", "address", "orgElementDict", "address", "@elem/xform-address", "@elem/xform-m-address");
+    return specForComponent(component, "address", "address", "orgElementDict", "address", "@elem/xform-address", "@elem/xform-m-address");
   }
   if (component === "xform-radio") {
-    return spec("radio", "varchar", "simpleDict", "radio", "@elem/xform-radio", "@elem/xform-m-radio");
+    return specForComponent(component, "radio", "varchar", "simpleDict", "radio", "@elem/xform-radio", "@elem/xform-m-radio");
   }
   if (component === "xform-select" || component === "xform-select~multi") {
-    return spec("select", "varchar", "simpleDict", "select", "@elem/xform-select", "@elem/xform-m-select");
+    return specForComponent(component, "select", "varchar", "simpleDict", "select", "@elem/xform-select", "@elem/xform-m-select");
   }
   if (component === "xform-checkbox") {
-    return spec("checkbox", "varchar", "simpleDict", "checkbox", "@elem/xform-checkbox", "@elem/xform-m-checkbox");
+    return specForComponent(component, "checkbox", "varchar", "simpleDict", "checkbox", "@elem/xform-checkbox", "@elem/xform-m-checkbox");
   }
   if (component === "xform-textarea") {
-    return spec("textarea", "clob", "simpleDict", "textarea", "@elem/xform-textarea", "@elem/xform-m-textarea");
+    return specForComponent(component, "textarea", "clob", "simpleDict", "textarea", "@elem/xform-textarea", "@elem/xform-m-textarea");
   }
   if (component === "xform-datetime") {
-    return spec("timestamp", "timestamp", "dateDict", "timestamp", "@elem/xform-datetime", "@elem/xform-m-datetime");
+    return specForComponent(component, "timestamp", "timestamp", "dateDict", "timestamp", "@elem/xform-datetime", "@elem/xform-m-datetime");
   }
   if (component === "xform-number") {
-    return spec("number", "number", "numberDict", "number", "@elem/xform-number", "@elem/xform-m-number");
+    return specForComponent(component, "number", "number", "numberDict", "number", "@elem/xform-number", "@elem/xform-m-number");
   }
   if (component === "xform-attach") {
-    return spec("attachment", "varchar", "attachmentDict", "attachment", "@elem/xform-attach", "@elem/xform-m-attach");
+    return specForComponent(component, "attachment", "varchar", "attachmentDict", "attachment", "@elem/xform-attach", "@elem/xform-m-attach");
   }
   if (component === "xform-description") {
-    return spec("desc", "varchar", "simpleDict", "desc", "@elem/xform-description", "@elem/xform-m-description");
+    return specForComponent(component, "desc", "varchar", "simpleDict", "desc", "@elem/xform-description", "@elem/xform-m-description");
   }
-  return spec("text", "varchar", "simpleDict", "text", "@elem/xform-input", "@elem/xform-m-input");
+  return specForComponent("xform-input", "text", "varchar", "simpleDict", "text", "@elem/xform-input", "@elem/xform-m-input");
+}
+
+function specForComponent(componentId, fdType, fdDataType, fdDictType, attrType, fallbackDesktop, fallbackMobile) {
+  const target = componentTarget(componentId, fallbackDesktop, fallbackMobile);
+  return spec(fdType, fdDataType, fdDictType, attrType, target.desktop, target.mobile);
+}
+
+function componentTarget(componentId, fallbackDesktop, fallbackMobile) {
+  const target = COMPONENTS_BY_ID.get(componentId)?.target || {};
+  return {
+    desktop: target.desktop || fallbackDesktop,
+    mobile: target.mobile || fallbackMobile
+  };
 }
 
 function spec(fdType, fdDataType, fdDictType, attrType, desktop, mobile) {

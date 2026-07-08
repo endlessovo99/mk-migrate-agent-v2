@@ -64,7 +64,7 @@ First-version patches support only `op = "replace"` on these form DSL paths:
 
 Workflow, trust, executor safety, source artifact, credentials, environment, and config paths are rejected. Workflow is diagnostic-only in v1.
 
-Title patches require `confidence >= 0.7`. Type, component, and props patches require `confidence >= 0.85`. Props patches are limited to `required`, `options`, `maxLength`, and `height` and must be supported by source evidence.
+Title patches require `confidence >= 0.7`. Type, component, and props patches require `confidence >= 0.85`. Props patches are limited to `required`, `options`, and `maxLength` and must be supported by source evidence.
 
 Warning-only diagnostics can still produce trusted executable DSL. Error or blocked diagnostics, malformed JSON, unsafe patch paths, low confidence, missing evidence/source refs/rationale, or failed DSL/trust validation block output. On blocked review, `--out` is not written; `--report-out` receives a sanitized blocked report.
 

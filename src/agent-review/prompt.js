@@ -14,6 +14,9 @@ export const ALLOWED_PATCH_PATHS = [
 ];
 
 export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
+  const concretePatchTargets = buildConcretePatchTargets(dslDraft);
+  const allowedConcretePatchPaths = concretePatchTargets.flatMap((target) => target.allowedPatchPaths);
+
   return {
     promptVersion: AGENT_REVIEW_PROMPT_VERSION,
     system: [
@@ -21,8 +24,9 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       "Return only strict JSON with exactly these top-level keys: summary, patches, diagnostics.",
       "Do not return a complete DSL.",
       "Only propose evidence-backed replace patches for allowed form DSL paths.",
+      "Patch paths must be copied exactly from allowedConcretePatchPaths. Do not invent array indexes or paths.",
       "Workflow is diagnostic-only in this version. Never patch workflow, trust, executor safety, source artifact, credentials, environment, or config paths.",
-      "Every patch must include op, path, value, sourceRefs, evidence, confidence, and rationale.",
+      "Every patch must include op, path, value, sourceRefs, evidence, confidence, and rationale. evidence must be a non-empty string array.",
       "Every diagnostic must include level, code, path, and message. Use diagnostics: [] when there are no diagnostics.",
       "The summary must be a non-empty string.",
       "Use sourceRef strings from the provided source draft. Do not use raw XML or invent source evidence.",
@@ -36,9 +40,13 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       responseContract: {
         topLevelKeys: ["summary", "patches", "diagnostics"],
         patchKeys: ["op", "path", "value", "sourceRefs", "evidence", "confidence", "rationale"],
-        supportedPatchOps: ["replace"]
+        supportedPatchOps: ["replace"],
+        validPatchExample: validPatchExample(concretePatchTargets)
       },
       allowedPatchPaths: ALLOWED_PATCH_PATHS,
+      patchTargetSummary: patchTargetSummary(dslDraft, concretePatchTargets, allowedConcretePatchPaths),
+      allowedConcretePatchPaths,
+      concretePatchTargets,
       prohibitedPatchScopes: [
         "/workflow",
         "/trust",
@@ -60,7 +68,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
           "detail table titles",
           "detail column titles",
           "metadata-supported field or column type/componentId corrections",
-          "props.required, props.options, props.maxLength, and props.height when evidenced by source facts"
+          "props.required, props.options, and props.maxLength when evidenced by source facts"
         ],
         mayNotPatch: [
           "workflow nodes",
@@ -91,6 +99,119 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       componentCatalog: componentCatalogSummary(),
       validationPolicy: validationPolicySummary()
     }
+  };
+}
+
+export function buildAgentReviewRepairPrompt(sourceDraft, dslDraft, repair = {}) {
+  const base = buildAgentReviewPrompt(sourceDraft, dslDraft);
+  return {
+    promptVersion: base.promptVersion,
+    system: [
+      base.system,
+      "",
+      "You are repairing a previous invalid agent-review JSON response.",
+      "Return a complete replacement JSON response with exactly summary, patches, and diagnostics.",
+      "Prefer fixing format, evidence, and concrete path issues only when the source evidence is clear.",
+      "If a previous patch cannot be repaired with clear evidence and a concrete allowed path, remove that patch.",
+      "The repaired response must pass the same local validator. Do not explain outside JSON."
+    ].join("\n"),
+    context: {
+      ...base.context,
+      task: "Repair the previous agent-review response so it satisfies the response contract and concrete patch path rules.",
+      repair: {
+        attempt: repair.attempt,
+        previousDiagnostics: repair.diagnostics || [],
+        previousRejectedPatches: repair.rejectedPatches || [],
+        previousResponsePreview: previewText(repair.rawText)
+      }
+    }
+  };
+}
+
+function buildConcretePatchTargets(dslDraft) {
+  const fields = Array.isArray(dslDraft?.form?.fields) ? dslDraft.form.fields : [];
+  const targets = [];
+  const patchProperties = ["title", "type", "componentId", "props"];
+
+  fields.forEach((field, fieldIndex) => {
+    const pathBase = `/form/fields/${fieldIndex}`;
+    targets.push(targetSummary({
+      scope: "field",
+      index: fieldIndex,
+      pathBase,
+      value: field,
+      allowedPatchPaths: patchProperties.map((property) => `${pathBase}/${property}`)
+    }));
+
+    const columns = Array.isArray(field?.columns) ? field.columns : [];
+    columns.forEach((column, columnIndex) => {
+      const columnPathBase = `${pathBase}/columns/${columnIndex}`;
+      targets.push(targetSummary({
+        scope: "column",
+        fieldIndex,
+        columnIndex,
+        parentFieldId: field.id,
+        pathBase: columnPathBase,
+        value: column,
+        allowedPatchPaths: patchProperties.map((property) => `${columnPathBase}/${property}`)
+      }));
+    });
+  });
+
+  return targets;
+}
+
+function targetSummary({ scope, index, fieldIndex, columnIndex, parentFieldId, pathBase, value, allowedPatchPaths }) {
+  return pruneUndefined({
+    scope,
+    index,
+    fieldIndex,
+    columnIndex,
+    parentFieldId,
+    pathBase,
+    id: value?.id,
+    title: value?.title,
+    type: value?.type,
+    componentId: value?.componentId,
+    sourceRef: value?.sourceRef,
+    allowedPatchPaths
+  });
+}
+
+function patchTargetSummary(dslDraft, concretePatchTargets, allowedConcretePatchPaths) {
+  const fields = Array.isArray(dslDraft?.form?.fields) ? dslDraft.form.fields : [];
+  const detailColumnCount = fields.reduce((sum, field) => sum + (Array.isArray(field?.columns) ? field.columns.length : 0), 0);
+  return {
+    fieldCount: fields.length,
+    validFieldIndexRange: fields.length ? `0..${fields.length - 1}` : "",
+    detailColumnCount,
+    concreteTargetCount: concretePatchTargets.length,
+    concretePatchPathCount: allowedConcretePatchPaths.length
+  };
+}
+
+function validPatchExample(concretePatchTargets) {
+  const target = concretePatchTargets.find((item) => item.sourceRef) || concretePatchTargets[0];
+  if (!target) {
+    return {
+      op: "replace",
+      path: "/form/fields/0/title",
+      value: "业务字段标题",
+      sourceRefs: ["copy-a-sourceRef-from-sourceDraft"],
+      evidence: ["copy a specific source fact that supports this patch"],
+      confidence: 0.9,
+      rationale: "Use only paths from allowedConcretePatchPaths and sourceRefs from sourceDraft."
+    };
+  }
+
+  return {
+    op: "replace",
+    path: `${target.pathBase}/title`,
+    value: target.title || "业务字段标题",
+    sourceRefs: [target.sourceRef].filter(Boolean),
+    evidence: [`${target.sourceRef || target.pathBase} provides explicit source evidence for this patch`],
+    confidence: 0.9,
+    rationale: "The source evidence is explicit and the target path is listed in allowedConcretePatchPaths."
   };
 }
 
@@ -158,4 +279,19 @@ function summarizeWorkflowCondition(edge) {
 
 function isRecord(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function previewText(value = "") {
+  const text = String(value || "");
+  return text.length > 6000 ? `${text.slice(0, 6000)}...` : text;
+}
+
+function pruneUndefined(value) {
+  if (Array.isArray(value)) return value.map(pruneUndefined);
+  if (!isRecord(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, child]) => child !== undefined)
+      .map(([key, child]) => [key, pruneUndefined(child)])
+  );
 }
