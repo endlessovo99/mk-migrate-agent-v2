@@ -37,6 +37,31 @@ describe("source directory stages", () => {
     assert.equal(action.functionMappings.some((mapping) => mapping.source === "GetXFormFieldById"), true);
   });
 
+  it("drafts simple form-field formula workflow participants as executable handlers", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const nodesById = new Map(dslDraft.workflow.nodes.map((node) => [node.id, node]));
+
+    assert.deepEqual(nodesById.get("N29").participants, {
+      mode: "form_field",
+      fieldId: "fd_371229badb4b1a",
+      fieldTitle: "部门固资管理员",
+      sourceExpression: "$fd_371229badb4b1a$",
+      sourceNameExpression: "$部门固资管理员$"
+    });
+    assert.equal(nodesById.get("N32").participants.mode, "form_field");
+    assert.equal(nodesById.get("N16").participants.mode, "form_field");
+    assert.deepEqual(nodesById.get("N53").participants, {
+      mode: "role_line",
+      fieldId: "fd_371229badb4b1a",
+      fieldTitle: "部门固资管理员",
+      companyRole: "公司级相关领导",
+      departmentRole: "部门相关领导",
+      sourceExpression: "$组织架构.解释角色线$($fd_371229badb4b1a$, \"公司级相关领导\", \"部门相关领导\")",
+      sourceNameExpression: "$组织架构.解释角色线$($部门固资管理员$, \"公司级相关领导\", \"部门相关领导\")"
+    });
+  });
+
   it("drafts fixture row markers and structured native form linkage rules", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);

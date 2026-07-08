@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { executeDsl } from "../../src/executor/execute.js";
 import { applyFormPayload, summarizeFormFromTemplate } from "../../src/executor/form-payload.js";
-import { buildWorkflowContent } from "../../src/executor/workflow-payload.js";
+import { applyWorkflowPayload, buildWorkflowContent } from "../../src/executor/workflow-payload.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
@@ -82,6 +82,310 @@ describe("executeDsl", () => {
     assert.equal(join.relateId, "N2");
     assert.equal(splitFlow.sourceRef, "N2");
     assert.equal(splitFlow.targetRef, "N3");
+  });
+
+  it("writes form-field formula participants as dynamic handler formulas", () => {
+    const form = sampleForm();
+    form.fields.push({
+      id: "fd_handler",
+      title: "处理人字段",
+      type: "text",
+      componentId: "xform-address",
+      props: {},
+      sourceProps: { designerType: "address" },
+      sourceRef: "source.form.control.fd_handler"
+    });
+    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+      form,
+      workflow: {
+        process: { id: "process-form-field-handler" },
+        nodes: [
+          { id: "N1", type: "generalStart", element: "startEvent", name: "开始", sourceType: "startNode", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+          {
+            id: "N2",
+            type: "review",
+            element: "manualTask",
+            name: "字段处理人审批",
+            sourceType: "reviewNode",
+            sourceRef: "source.workflow.node.N2",
+            attributes: { handlerIds: "$fd_handler$", handlerNames: "$处理人字段$", handlerSelectType: "formula" },
+            participants: {
+              mode: "form_field",
+              fieldId: "fd_handler",
+              fieldTitle: "处理人字段",
+              sourceExpression: "$fd_handler$",
+              sourceNameExpression: "$处理人字段$"
+            },
+            translationStatus: "executable"
+          },
+          { id: "N3", type: "generalEnd", element: "endEvent", name: "结束", sourceType: "endNode", sourceRef: "source.workflow.node.N3", attributes: {}, translationStatus: "executable" }
+        ],
+        edges: [
+          { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+          { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } }
+        ],
+        topologicalOrder: ["N1", "N2", "N3"]
+      }
+    }));
+    const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
+    const node = content.elements.find((element) => element.id === "N2");
+
+    assert.equal(node.handlerSelectType, "formula");
+    assert.equal(node.handlerIds, "$fd_handler$");
+    assert.equal(node.handlerNames, "$处理人字段$");
+    assert.equal(node.handlers.id, "handlers");
+    assert.equal(node.handlers.type, "formula");
+    assert.equal(node.handlers.source, "2");
+    assert.equal(node.handlers.element, "users");
+    assert.deepEqual(node.handlers.members, []);
+    assert.equal(node.handlers.ruleMode, "simple");
+    assert.equal(node.handlers.formulaType, "formula");
+    assert.equal(node.handlers.ruleName, "$处理人字段$");
+    assert.equal(node.handlers.ruleKey.type, "Eval");
+    assert.equal(node.handlers.ruleKey.script, "${data.template-id-fd_handler}");
+    assert.deepEqual(node.handlers.ruleKey.varIds, ["template-id-fd_handler"]);
+    assert.equal(node.handlers.ruleKey.vo.content, "$处理人字段$");
+    assert.equal(node.handlers.ruleKey.mode, "simple");
+    assert.equal(node.handlers.ruleKey.formulaName, "$处理人字段$");
+  });
+
+  it("writes role-line formula participants as dynamic handler formulas", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const content = buildWorkflowContent(dslDraft.workflow, {
+      templateId: "template-id",
+      form: dslDraft.form
+    });
+    const node = content.elements.find((element) => element.id === "N53");
+
+    assert.equal(node.name, "申请部门相关领导");
+    assert.equal(node.handlerSelectType, "formula");
+    assert.equal(node.handlers.type, "formula");
+    assert.equal(node.handlers.source, "2");
+    assert.equal(node.handlers.ruleName, "$组织架构.解释角色线$($部门固资管理员$, \"公司级相关领导\", \"部门相关领导\")");
+    assert.equal(node.handlers.ruleKey.type, "Eval");
+    assert.equal(
+      node.handlers.ruleKey.script,
+      "$组织架构.解释角色线$(${data.template-id-fd_371229badb4b1a}, \"公司级相关领导\", \"部门相关领导\")"
+    );
+    assert.deepEqual(node.handlers.ruleKey.varIds, ["template-id-fd_371229badb4b1a"]);
+    assert.equal(
+      node.handlers.ruleKey.vo.content,
+      "$组织架构.解释角色线$($部门固资管理员$, \"公司级相关领导\", \"部门相关领导\")"
+    );
+    assert.deepEqual(node.handlers.members, []);
+  });
+
+  it("writes conditional branch routes through the MK formula designer config", () => {
+    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+      form: sampleConditionBranchForm(),
+      workflow: sampleConditionBranchWorkflow()
+    }));
+    const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
+    const branch = content.elements.find((element) => element.id === "N410");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const formulaRoute = conditionValue.formulas.find((route) => route.lineId === "L541");
+    const orRoute = conditionValue.formulas.find((route) => route.lineId === "L546");
+    const defaultRoute = conditionValue.formulas.find((route) => route.lineId === "L544");
+    const sequence = content.elements.find((element) => element.id === "L541");
+    const orSequence = content.elements.find((element) => element.id === "L546");
+    const defaultSequence = content.elements.find((element) => element.id === "L544");
+    const sequenceFormula = JSON.parse(sequence.formula);
+    const orSequenceFormula = JSON.parse(orSequence.formula);
+
+    assert.equal(branch.conditionType, "1");
+    assert.equal(conditionValue.rules, undefined);
+    assert.equal(conditionValue.ruleConfig, undefined);
+    assert.equal(formulaRoute.type, "formulas");
+    assert.equal(formulaRoute.formulaName, "");
+    assert.deepEqual(formulaRoute.conditionSimpleData, formulaRoute.formula);
+    assert.deepEqual(formulaRoute.formulaConfig, formulaRoute.formula);
+    assert.equal(formulaRoute.formula.type, "Batch");
+    assert.equal(formulaRoute.formula.result.value, "(${data.$VAR.L541_fd_seller})");
+    assert.equal(formulaRoute.formula.vars[0].value, "${data.template-id-fd_seller} == \"1689\"");
+    assert.deepEqual(formulaRoute.formula.vo, {
+      mode: "simple",
+      modeType: "simpleRule",
+      data: {
+        key: "ROOT",
+        fdKey: "L541_ROOT",
+        leavel: "1",
+        fdList: [{
+          fdKey: "L541_group",
+          fdType: "OR",
+          leavel: "1",
+          parentLeavel: "1-1",
+          parentKey: "L541_ROOT",
+          metaType: "GROUP",
+          fdList: [{
+            fdKey: "L541_fd_seller",
+            metaType: "RULE",
+            parentKey: "L541_group",
+            parentLeavel: "1-1",
+            leavel: "3",
+            fdVarValue: "template-id-fd_seller",
+            fdDataType: "string",
+            fdLabel: "$合同卖方$",
+            vo: { type: "string", required: false, description: "合同卖方", maxLength: 200 },
+            fdSymbol: "==",
+            fdValue: "1689"
+          }]
+        }]
+      }
+    });
+    assert.equal(orRoute.lineName, "辽宁、东营");
+    assert.equal(orRoute.formula.result.value, "(${data.$VAR.L546_fd_seller_1} || ${data.$VAR.L546_fd_seller_2})");
+    assert.deepEqual(orRoute.formula.vars.map((item) => item.value), [
+      "${data.template-id-fd_seller} == \"1694\"",
+      "${data.template-id-fd_seller} == \"1695\""
+    ]);
+    assert.deepEqual(orRoute.formula.vo.data.fdList[0].fdList.map((rule) => ({
+      fdKey: rule.fdKey,
+      fdVarValue: rule.fdVarValue,
+      fdLabel: rule.fdLabel,
+      fdSymbol: rule.fdSymbol,
+      fdValue: rule.fdValue,
+      parentKey: rule.parentKey
+    })), [
+      {
+        fdKey: "L546_fd_seller_1",
+        fdVarValue: "template-id-fd_seller",
+        fdLabel: "$合同卖方$",
+        fdSymbol: "==",
+        fdValue: "1694",
+        parentKey: "L546_group"
+      },
+      {
+        fdKey: "L546_fd_seller_2",
+        fdVarValue: "template-id-fd_seller",
+        fdLabel: "$合同卖方$",
+        fdSymbol: "==",
+        fdValue: "1695",
+        parentKey: "L546_group"
+      }
+    ]);
+    assert.equal(defaultRoute.defaultTrend, true);
+    assert.equal(sequence.formulaType, "formula");
+    assert.equal(sequence.formulaName, "");
+    assert.deepEqual(sequenceFormula, formulaRoute.formula);
+    assert.equal(orSequence.formulaType, "formula");
+    assert.deepEqual(orSequenceFormula, orRoute.formula);
+    assert.equal(defaultSequence.defaultTrend, true);
+    assert.equal(defaultSequence.formulaType, "formula");
+    assert.equal(defaultSequence.formula, "");
+    assert.equal(defaultSequence.style, "sequenceFlow;marker");
+  });
+
+  it("writes field-left equals conditional branch routes through formula config", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.edges[1] = {
+      ...workflow.edges[1],
+      condition: {
+        sourceText: "$fd_seller$ .equals(\"1689\") ",
+        displayText: "$合同卖方$ .equals(\"1689\") ",
+        targetText: "$fd_seller$ .equals(\"1689\") ",
+        translationStatus: "display_only"
+      }
+    };
+    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+      form: sampleConditionBranchForm(),
+      workflow
+    }));
+    const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
+    const branch = content.elements.find((element) => element.id === "N410");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const route = conditionValue.formulas.find((item) => item.lineId === "L541");
+    const sequence = content.elements.find((element) => element.id === "L541");
+
+    assert.equal(route.formulaName, "");
+    assert.deepEqual(route.conditionSimpleData, route.formula);
+    assert.deepEqual(route.formulaConfig, route.formula);
+    assert.equal(route.formula.vars[0].value, "${data.template-id-fd_seller} == \"1689\"");
+    assert.equal(route.formula.vo.data.fdList[0].fdList[0].fdVarValue, "template-id-fd_seller");
+    assert.equal(route.formula.vo.data.fdList[0].fdList[0].fdValue, "1689");
+    assert.equal(sequence.formulaType, "formula");
+    assert.deepEqual(JSON.parse(sequence.formula), route.formula);
+  });
+
+  it("keeps unparsed conditional branch routes as raw rule fallbacks", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    const rawCondition = "$字符串.包含$($fd_seller$, \"欧洲\")";
+    workflow.edges[1] = {
+      ...workflow.edges[1],
+      condition: {
+        sourceText: rawCondition,
+        displayText: "$合同卖方$ 包含 \"欧洲\"",
+        targetText: rawCondition,
+        translationStatus: "display_only"
+      }
+    };
+    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+      form: sampleConditionBranchForm(),
+      workflow
+    }));
+    const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
+    const branch = content.elements.find((element) => element.id === "N410");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const route = conditionValue.formulas.find((item) => item.lineId === "L541");
+    const sequence = content.elements.find((element) => element.id === "L541");
+
+    assert.equal(route.formula, rawCondition);
+    assert.equal(route.formulaName, "$合同卖方$ 包含 \"欧洲\"");
+    assert.equal(route.formulaConfig, undefined);
+    assert.equal(route.conditionSimpleData, undefined);
+    assert.equal(sequence.formulaType, "rule");
+    assert.equal(sequence.formula, rawCondition);
+    assert.equal(sequence.formulaName, "$合同卖方$ 包含 \"欧洲\"");
+  });
+
+  it("writes tautological other routes as not-empty alternate routes for the branch field", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.edges.splice(1, 0, {
+      id: "L542",
+      source: "N410",
+      target: "N412",
+      name: "其他",
+      sourceRef: "source.workflow.edge.L542",
+      condition: {
+        sourceText: "1 == 1",
+        displayText: "1 == 1",
+        targetText: "1 == 1",
+        translationStatus: "display_only"
+      },
+      attributes: { priority: "21" }
+    });
+    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+      form: sampleConditionBranchForm(),
+      workflow
+    }));
+    const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
+    const branch = content.elements.find((element) => element.id === "N410");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const route = conditionValue.formulas.find((item) => item.lineId === "L542");
+    const sequence = content.elements.find((element) => element.id === "L542");
+    const routeFormula = route.formula;
+    const rule = routeFormula.vo.data.fdList[0].fdList[0];
+
+    assert.equal(branch.default, "L542");
+    assert.equal(branch.conditionId, "L542");
+    assert.equal(route.defaultTrend, true);
+    assert.equal(route.formulaName, "");
+    assert.deepEqual(route.conditionSimpleData, route.formula);
+    assert.deepEqual(route.formulaConfig, route.formula);
+    assert.equal(routeFormula.type, "Batch");
+    assert.equal(routeFormula.result.value, "(!${data.$VAR.L542_fd_seller_notempty})");
+    assert.equal(routeFormula.vars[0].type, "Function");
+    assert.equal(routeFormula.vars[0].value, "global.isEmpty");
+    assert.equal(routeFormula.vars[0].arguments[0].value, "template-id-fd_seller");
+    assert.equal(rule.fdVarValue, "template-id-fd_seller");
+    assert.equal(rule.fdLabel, "$合同卖方$");
+    assert.equal(rule.fdSymbol, "notempty");
+    assert.equal(rule.fdFunctionId, "global.isEmpty");
+    assert.equal(sequence.defaultTrend, true);
+    assert.equal(sequence.formulaType, "formula");
+    assert.equal(sequence.formulaName, "");
+    assert.deepEqual(JSON.parse(sequence.formula), routeFormula);
+    assert.equal(sequence.style, "sequenceFlow;marker");
   });
 
   it("fails readback when persisted designer structure loses layout cells and keeps the partial fdId", async () => {
@@ -463,6 +767,73 @@ function sampleParallelGatewayWorkflow() {
       { id: "L4", source: "N4", target: "N5", sourceRef: "source.workflow.edge.L4", condition: { translationStatus: "executable" } }
     ],
     topologicalOrder: ["N1", "N2", "N3", "N4", "N5"]
+  };
+}
+
+function sampleConditionBranchForm() {
+  const form = sampleForm();
+  form.fields = [
+    ...form.fields,
+    {
+      id: "fd_seller",
+      title: "合同卖方",
+      type: "text",
+      componentId: "xform-input",
+      props: {},
+      sourceProps: { designerType: "inputText" },
+      sourceRef: "source.form.control.fd_seller"
+    }
+  ];
+  return form;
+}
+
+function sampleConditionBranchWorkflow() {
+  return {
+    process: { id: "process-branch" },
+    nodes: [
+      { id: "N1", type: "generalStart", element: "startEvent", name: "开始", sourceType: "startNode", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+      { id: "N410", type: "conditionBranch", element: "exclusiveGateway", name: "合同卖方", sourceType: "autoBranchNode", sourceRef: "source.workflow.node.N410", attributes: { id: "N410", name: "合同卖方" }, translationStatus: "executable" },
+      { id: "N411", type: "review", element: "manualTask", name: "海南", sourceType: "reviewNode", sourceRef: "source.workflow.node.N411", attributes: { handlerIds: "handler-hainan", handlerNames: "海南审批人" }, participants: { mode: "explicit", members: [{ id: "handler-hainan", name: "海南审批人", type: "user_or_org" }] }, translationStatus: "executable" },
+      { id: "N413", type: "review", element: "manualTask", name: "辽宁、东营", sourceType: "reviewNode", sourceRef: "source.workflow.node.N413", attributes: { handlerIds: "handler-liaoning-dongying", handlerNames: "辽宁东营审批人" }, participants: { mode: "explicit", members: [{ id: "handler-liaoning-dongying", name: "辽宁东营审批人", type: "user_or_org" }] }, translationStatus: "executable" },
+      { id: "N412", type: "review", element: "manualTask", name: "默认", sourceType: "reviewNode", sourceRef: "source.workflow.node.N412", attributes: { handlerIds: "handler-default", handlerNames: "默认审批人" }, participants: { mode: "explicit", members: [{ id: "handler-default", name: "默认审批人", type: "user_or_org" }] }, translationStatus: "executable" },
+      { id: "N999", type: "generalEnd", element: "endEvent", name: "结束", sourceType: "endNode", sourceRef: "source.workflow.node.N999", attributes: {}, translationStatus: "executable" }
+    ],
+    edges: [
+      { id: "L1", source: "N1", target: "N410", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+      {
+        id: "L541",
+        source: "N410",
+        target: "N411",
+        name: "海南",
+        sourceRef: "source.workflow.edge.L541",
+        condition: {
+          sourceText: "\"1689\" .equals( $fd_seller$ )",
+          displayText: "$合同卖方$ == \"1689\"",
+          targetText: "\"1689\" .equals( $fd_seller$ )",
+          translationStatus: "executable"
+        },
+        attributes: { priority: "6" }
+      },
+      {
+        id: "L546",
+        source: "N410",
+        target: "N413",
+        name: "辽宁、东营",
+        sourceRef: "source.workflow.edge.L546",
+        condition: {
+          sourceText: "\"1694\" .equals( $fd_seller$) || \"1695\" .equals( $fd_seller$)",
+          displayText: "\"1694\" .equals( $合同卖方$) || \"1695\" .equals( $合同卖方$)",
+          targetText: "\"1694\" .equals( $fd_seller$) || \"1695\" .equals( $fd_seller$)",
+          translationStatus: "executable"
+        },
+        attributes: { priority: "3" }
+      },
+      { id: "L544", source: "N410", target: "N412", name: "默认", sourceRef: "source.workflow.edge.L544", condition: { translationStatus: "executable" }, attributes: { priority: "24" } },
+      { id: "L545", source: "N411", target: "N999", sourceRef: "source.workflow.edge.L545", condition: { translationStatus: "executable" } },
+      { id: "L547", source: "N413", target: "N999", sourceRef: "source.workflow.edge.L547", condition: { translationStatus: "executable" } },
+      { id: "L548", source: "N412", target: "N999", sourceRef: "source.workflow.edge.L548", condition: { translationStatus: "executable" } }
+    ],
+    topologicalOrder: ["N1", "N410", "N411", "N413", "N412", "N999"]
   };
 }
 

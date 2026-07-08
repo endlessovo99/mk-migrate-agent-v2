@@ -312,6 +312,11 @@ function participantsFromSourceNode(node) {
   const attrs = node.attributes || {};
   const handlerIds = splitList(attrs.handlerIds);
   const handlerNames = splitList(attrs.handlerNames);
+  const formFieldParticipant = formFieldParticipantFromFormulaHandler(attrs, handlerIds, handlerNames);
+  if (formFieldParticipant) return formFieldParticipant;
+  const roleLineParticipant = roleLineParticipantFromFormulaHandler(attrs, handlerIds, handlerNames);
+  if (roleLineParticipant) return roleLineParticipant;
+
   if (handlerIds.length && !handlerIds.some((id) => id.startsWith("$"))) {
     return {
       mode: "explicit",
@@ -334,6 +339,112 @@ function participantsFromSourceNode(node) {
     mode: "empty",
     reason: "source did not specify executable participants"
   };
+}
+
+function formFieldParticipantFromFormulaHandler(attrs, handlerIds, handlerNames) {
+  if (attrs.handlerSelectType !== "formula") return undefined;
+  if (handlerIds.length !== 1) return undefined;
+
+  const fieldId = simpleDollarExpressionValue(handlerIds[0]);
+  if (!fieldId || !fieldId.startsWith("fd_")) return undefined;
+
+  const fieldTitle = simpleDollarExpressionValue(handlerNames[0]) || fieldId;
+  return {
+    mode: "form_field",
+    fieldId,
+    fieldTitle,
+    sourceExpression: handlerIds[0],
+    sourceNameExpression: handlerNames[0] || ""
+  };
+}
+
+function roleLineParticipantFromFormulaHandler(attrs, handlerIds, handlerNames) {
+  if (attrs.handlerSelectType !== "formula") return undefined;
+  if (handlerIds.length !== 1) return undefined;
+
+  const parsed = parseRoleLineFormula(handlerIds[0]);
+  if (!parsed || !parsed.subject.startsWith("fd_")) return undefined;
+
+  const nameParsed = parseRoleLineFormula(handlerNames[0]);
+  const fieldTitle = nameParsed?.subject && !nameParsed.subject.startsWith("fd_")
+    ? nameParsed.subject
+    : parsed.subject;
+
+  return {
+    mode: "role_line",
+    fieldId: parsed.subject,
+    fieldTitle,
+    companyRole: parsed.companyRole,
+    departmentRole: parsed.departmentRole,
+    sourceExpression: handlerIds[0],
+    sourceNameExpression: handlerNames[0] || ""
+  };
+}
+
+function parseRoleLineFormula(value) {
+  const text = normalizeLegacyExpression(value);
+  const match = text.match(/^\$组织架构\.解释角色线\$\s*\((.*)\)$/);
+  if (!match) return undefined;
+
+  const args = splitFunctionArguments(match[1]);
+  if (args.length < 3) return undefined;
+
+  const subject = simpleDollarExpressionValue(args[0]);
+  if (!subject) return undefined;
+
+  return {
+    subject,
+    companyRole: unquoteLegacyArgument(args[1]),
+    departmentRole: unquoteLegacyArgument(args[2])
+  };
+}
+
+function splitFunctionArguments(value) {
+  const args = [];
+  const text = String(value || "");
+  let quote = "";
+  let depth = 0;
+  let start = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const previous = text[index - 1];
+    if (quote) {
+      if (char === quote && previous !== "\\") quote = "";
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === "(") {
+      depth += 1;
+      continue;
+    }
+    if (char === ")") {
+      depth = Math.max(0, depth - 1);
+      continue;
+    }
+    if (char === "," && depth === 0) {
+      args.push(text.slice(start, index).trim());
+      start = index + 1;
+    }
+  }
+
+  args.push(text.slice(start).trim());
+  return args.filter(Boolean);
+}
+
+function unquoteLegacyArgument(value) {
+  const text = normalizeLegacyExpression(value);
+  const match = text.match(/^["']([\s\S]*)["']$/);
+  return match ? match[1].replace(/\\"/g, "\"").replace(/\\'/g, "'") : text;
+}
+
+function simpleDollarExpressionValue(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/^\$([^$()]+)\$$/);
+  return match ? match[1].trim() : "";
 }
 
 function mapWorkflowNodeType(node = {}, nodeById = new Map()) {

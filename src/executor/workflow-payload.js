@@ -9,7 +9,10 @@ export function applyWorkflowPayload(template, dsl) {
 
   const lbpm = next.mechanisms.lbpmTemplate[0] || {};
   next.mechanisms.lbpmTemplate[0] = lbpm;
-  lbpm.fdContent = JSON.stringify(buildWorkflowContent(dsl.workflow));
+  lbpm.fdContent = JSON.stringify(buildWorkflowContent(dsl.workflow, {
+    templateId: next.fdId || next.mechanisms["sys-xform"]?.fdId || "",
+    form: dsl.form
+  }));
   lbpm.fdStatus = "draft";
   lbpm.fdPublishType ||= "instant";
   lbpm.isDraft = true;
@@ -19,13 +22,26 @@ export function applyWorkflowPayload(template, dsl) {
   return next;
 }
 
-export function buildWorkflowContent(workflow) {
+export function buildWorkflowContent(workflow, context = {}) {
   const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
   const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
   const outgoingEdges = groupEdgesBySource(edges);
+  const workflowContext = {
+    ...context,
+    formFieldById: context.formFieldById || buildFormFieldIndex(context.form),
+    formFieldsByTitle: context.formFieldsByTitle || buildFormFieldTitleIndex(context.form)
+  };
+  const branchRoutes = buildBranchRoutes(nodes, outgoingEdges, workflowContext);
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const nodeElements = nodes.map((node, index) => buildNodeElement(node, index, outgoingEdges.get(node.id) || [], nodeById));
-  const edgeElements = edges.map((edge, index) => buildEdgeElement(edge, index));
+  const nodeElements = nodes.map((node, index) => buildNodeElement(
+    node,
+    index,
+    outgoingEdges.get(node.id) || [],
+    nodeById,
+    branchRoutes.bySource.get(node.id) || [],
+    workflowContext
+  ));
+  const edgeElements = edges.map((edge, index) => buildEdgeElement(edge, index, branchRoutes.byEdge.get(edge.id)));
 
   return {
     name: workflow.process?.name || workflow.process?.id || "流程模板",
@@ -168,18 +184,18 @@ function mapNodeElement(type = "") {
   return "manualTask";
 }
 
-function buildNodeElement(node, index, outgoingEdges, nodeById) {
+function buildNodeElement(node, index, outgoingEdges, nodeById, branchRoutes, context = {}) {
   const mappedType = mapNodeType(node.type);
   const builders = {
     generalStart: buildStartNode,
     generalEnd: buildEndNode,
     draft: buildDraftNode,
-    conditionBranch: (value) => buildConditionBranchNode(value, outgoingEdges),
+    conditionBranch: (value) => buildConditionBranchNode(value, branchRoutes),
     split: (value, valueIndex) => buildParallelGatewayNode(value, valueIndex, "split", nodeById),
     join: (value, valueIndex) => buildParallelGatewayNode(value, valueIndex, "join", nodeById),
-    send: (value) => buildArtificialNode(value, "send"),
+    send: (value) => buildArtificialNode(value, "send", context),
     robot: buildRobotNode,
-    review: (value) => buildArtificialNode(value, "review")
+    review: (value) => buildArtificialNode(value, "review", context)
   };
   const builder = builders[mappedType] || builders.review;
   return builder(node, index);
@@ -232,7 +248,7 @@ function buildDraftNode(node, index) {
   };
 }
 
-function buildArtificialNode(node, type) {
+function buildArtificialNode(node, type, context = {}) {
   const attrs = sourceAttributes(node);
   const name = node.name || attrs.name || (type === "send" ? "抄送" : "审批节点");
   return {
@@ -261,8 +277,13 @@ function buildArtificialNode(node, type) {
     relateId: node.id,
     cooperateType: attrs.processType || "2",
     ignoreOnSameIdentity: normalizeSameIdentity(attrs.ignoreOnHandlerSame),
+    handlerIds: attrs.handlerIds,
+    handlerNames: attrs.handlerNames,
+    handlerSelectType: attrs.handlerSelectType,
+    recalculateHandler: attrs.recalculateHandler,
+    ignoreOnHandlerEmpty: attrs.ignoreOnHandlerEmpty,
     nodeNotifyTypeMethod: [],
-    handlers: handlersFromParticipants(node.participants, attrs),
+    handlers: handlersFromParticipants(node.participants, attrs, context),
     fdScene: { fdMode: 0 },
     language: { nameCn: name, nameUs: type === "send" ? "Approval Node" : "Approval Node" },
     ...commentAuthority(),
@@ -287,24 +308,12 @@ function buildRobotNode(node, index) {
   };
 }
 
-function buildConditionBranchNode(node, outgoingEdges) {
+function buildConditionBranchNode(node, routes) {
   const attrs = sourceAttributes(node);
-  const rules = outgoingEdges
-    .filter((edge) => edgeConditionText(edge) || edge.name)
-    .map((edge, index) => ({
-      lineId: edge.id,
-      priority: parseInteger(edge.priority || edge.attributes?.priority, index + 1),
-      formula: edgeConditionText(edge) || edge.name || "true",
-      formulaName: edge.condition?.displayText || edge.displayCondition || edgeConditionText(edge) || edge.name || "true",
-      formulaType: "rule",
-      lineName: edge.name || edge.id,
-      mode: "simple",
-      type: "rules"
-    }));
-  const defaultEdge = rules[rules.length - 1];
+  const defaultRoute = routes.find((route) => route.defaultTrend) || routes[routes.length - 1];
   const element = {
     ...baseNode(node, 0, "conditionBranch", "exclusiveGateway", 34, 34),
-    conditionType: "2",
+    conditionType: "1",
     simpleName: node.name || attrs.name || "条件分支",
     number: node.id,
     relateId: node.id,
@@ -312,23 +321,12 @@ function buildConditionBranchNode(node, outgoingEdges) {
     operations: [],
     language: { nameCn: node.name || "条件分支", nameUs: "Conditional Branch" }
   };
-  if (rules.length) {
-    element.resultSetMapping = JSON.stringify(rules.map((rule) => ({ id: rule.lineId, resultCode: rule.formula })));
-    element.default = defaultEdge.lineId;
-    element.conditionId = defaultEdge.lineId;
+  if (routes.length) {
+    element.resultSetMapping = JSON.stringify(routes.map((route) => ({ id: route.lineId, resultCode: route.resultCode })));
+    element.default = defaultRoute.lineId;
+    element.conditionId = defaultRoute.lineId;
     element.conditionValue = JSON.stringify({
-      rules,
-      ruleConfig: {
-        vo: { mode: "rule" },
-        type: "Batch",
-        vars: [],
-        result: {
-          vo: { fdDataType: "any", fdType: "any", enableArray: false },
-          type: "Null",
-          value: null,
-          resultType: { type: "any" }
-        }
-      }
+      formulas: routes.map((route) => route.conditionValue)
     });
   }
   return element;
@@ -388,7 +386,7 @@ function baseNode(node, index, type, element, width, height) {
   };
 }
 
-function buildEdgeElement(edge, index) {
+function buildEdgeElement(edge, index, branchRoute) {
   const formula = edgeConditionText(edge);
   const displayText = edge.condition?.displayText || edge.displayCondition || formula;
   const element = {
@@ -399,7 +397,7 @@ function buildEdgeElement(edge, index) {
     targetRef: edge.target,
     name: edge.name || "",
     wayPoints: parseWayPoints(edge.points || edge.attributes?.points),
-    style: "sequenceFlow",
+    style: branchRoute?.defaultTrend ? "sequenceFlow;marker" : "sequenceFlow",
     openDataAuthority: false,
     operations: [],
     timeoutStrategies: "[]",
@@ -423,6 +421,16 @@ function buildEdgeElement(edge, index) {
       sourceXml: edge.sourceXml || ""
     }
   };
+  if (branchRoute) {
+    const hasFormulaConfig = Boolean(branchRoute.formulaConfig);
+    element.priority = branchRoute.priority;
+    element.formulaName = hasFormulaConfig ? "" : displayText || branchRoute.resultCode || "";
+    element.formulaType = hasFormulaConfig ? "formula" : branchRoute.resultCode ? "rule" : "formula";
+    element.defaultTrend = branchRoute.defaultTrend;
+    element.language = { nameCn: edge.name || "" };
+    element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : branchRoute.resultCode || "";
+    return element;
+  }
   if (formula) {
     element.priority = parseInteger(edge.priority || edge.attributes?.priority, index + 1);
     element.formula = formula;
@@ -432,6 +440,401 @@ function buildEdgeElement(edge, index) {
     element.language = { nameCn: edge.name || "" };
   }
   return element;
+}
+
+function buildBranchRoutes(nodes, outgoingEdges, context) {
+  const bySource = new Map();
+  const byEdge = new Map();
+
+  for (const node of nodes) {
+    if (mapNodeType(node.type) !== "conditionBranch") continue;
+
+    const routes = (outgoingEdges.get(node.id) || [])
+      .filter((edge) => edgeConditionText(edge) || edge.name)
+      .map((edge, index) => buildBranchRoute(node, edge, index, context));
+    const defaultRoute = routes.find((route) => route.defaultCandidate) || routes[routes.length - 1];
+    if (defaultRoute) defaultRoute.defaultTrend = true;
+    for (const route of routes) {
+      route.conditionValue.defaultTrend = route.defaultTrend;
+      byEdge.set(route.lineId, route);
+    }
+    bySource.set(node.id, routes);
+  }
+
+  return { bySource, byEdge };
+}
+
+function buildBranchRoute(node, edge, index, context) {
+  const resultCode = edgeConditionText(edge);
+  const defaultCandidate = isOtherTautologyRoute(edge);
+  const formulaConfig = defaultCandidate
+    ? buildOtherDefaultFormulaDesignerConfig(node, edge, context) || buildFormulaDesignerConfig(edge, context)
+    : buildFormulaDesignerConfig(edge, context);
+  const conditionValue = {
+    lineId: edge.id,
+    lineName: edge.name || edge.id,
+    priority: parseInteger(edge.priority || edge.attributes?.priority, index + 1),
+    formula: formulaConfig || resultCode || "",
+    formulaName: formulaConfig ? "" : edge.condition?.displayText || edge.displayCondition || resultCode || "",
+    mode: "simple",
+    defaultTrend: false,
+    type: "formulas"
+  };
+
+  if (formulaConfig) {
+    conditionValue.conditionSimpleData = formulaConfig;
+    conditionValue.formulaConfig = formulaConfig;
+  }
+
+  return {
+    lineId: edge.id,
+    lineName: edge.name || edge.id,
+    priority: conditionValue.priority,
+    resultCode,
+    formulaConfig,
+    defaultTrend: false,
+    defaultCandidate,
+    conditionValue
+  };
+}
+
+function buildOtherDefaultFormulaDesignerConfig(node, edge, context) {
+  const field = branchFieldForNode(node, context);
+  if (!field || !context.templateId) return undefined;
+
+  return buildNotEmptyFormulaDesignerConfig(edge, field, context);
+}
+
+function buildNotEmptyFormulaDesignerConfig(edge, field, context) {
+  const templateId = context.templateId || "";
+  const fieldId = field.id;
+  const variableKey = formulaVariableKey(edge.id, `${fieldId}_notempty`);
+  const groupKey = formulaVariableKey(edge.id, "group");
+  const rootKey = formulaVariableKey(edge.id, "ROOT");
+  const fdVarValue = `${templateId}-${fieldId}`;
+  const fieldLabel = field.title || fieldId;
+  const fieldType = formulaFieldType(field);
+
+  return {
+    result: {
+      resultType: { type: "boolean" },
+      type: "Eval",
+      value: `(!\${data.$VAR.${variableKey}})`
+    },
+    type: "Batch",
+    vars: [{
+      key: variableKey,
+      resultType: { type: "boolean" },
+      type: "Function",
+      value: "global.isEmpty",
+      arguments: [{
+        key: "value",
+        resultType: { type: "any" },
+        type: "Var",
+        value: fdVarValue
+      }]
+    }],
+    vo: {
+      mode: "simple",
+      modeType: "simpleRule",
+      data: {
+        key: "ROOT",
+        fdKey: rootKey,
+        leavel: "1",
+        fdList: [{
+          fdKey: groupKey,
+          fdType: "OR",
+          leavel: "1",
+          parentLeavel: "1-1",
+          parentKey: rootKey,
+          metaType: "GROUP",
+          fdList: [{
+            fdKey: variableKey,
+            metaType: "RULE",
+            parentKey: groupKey,
+            parentLeavel: "1-1",
+            leavel: "3",
+            fdValue: "",
+            fdVarValue,
+            fdDataType: fieldType,
+            fdLabel: `$${fieldLabel}$`,
+            vo: formulaFieldVo(field, fieldType),
+            fdSymbol: "notempty",
+            fdFunctionId: "global.isEmpty"
+          }]
+        }]
+      }
+    }
+  };
+}
+
+function isOtherTautologyRoute(edge) {
+  return String(edge?.name || "").trim() === "其他" && isTautologyCondition(edgeConditionText(edge));
+}
+
+function isTautologyCondition(condition) {
+  return /^(?:1\s*={2,3}\s*1|true)$/i.test(String(condition || "").trim());
+}
+
+function branchFieldForNode(node, context) {
+  const names = [
+    node?.name,
+    node?.attributes?.name,
+    node?.definition?.attributes?.name
+  ].map(normalizeBranchFieldName).filter(Boolean);
+
+  for (const name of names) {
+    const candidates = context.formFieldsByTitle?.get(name) || [];
+    if (candidates.length === 1) return candidates[0];
+  }
+
+  for (const name of names) {
+    const stripped = name.replace(/\d+$/g, "");
+    if (!stripped || stripped === name) continue;
+    const candidates = context.formFieldsByTitle?.get(stripped) || [];
+    if (candidates.length === 1) return candidates[0];
+  }
+
+  return undefined;
+}
+
+function buildFormulaDesignerConfig(edge, context) {
+  const parsed = parseEqualityConditionExpression(edgeConditionText(edge));
+  if (!parsed) return undefined;
+
+  const templateId = context.templateId || "";
+  const groupKey = formulaVariableKey(edge.id, "group");
+  const rootKey = formulaVariableKey(edge.id, "ROOT");
+  if (!templateId) return undefined;
+
+  const terms = parsed.terms.map((term, index) => {
+    const field = context.formFieldById?.get(term.field);
+    const fieldId = field?.id || term.field;
+    if (!fieldId) return undefined;
+    const variableKey = formulaVariableKey(
+      edge.id,
+      parsed.terms.length === 1 ? fieldId : `${fieldId}_${index + 1}`
+    );
+    const fdVarValue = `${templateId}-${fieldId}`;
+    const fieldLabel = field?.title || fieldId;
+    const fieldType = formulaFieldType(field);
+    return {
+      variableKey,
+      varConfig: {
+        key: variableKey,
+        resultType: { type: "boolean" },
+        type: "Eval",
+        value: `\${data.${fdVarValue}} ${term.operator} ${JSON.stringify(term.value)}`
+      },
+      rule: {
+        fdKey: variableKey,
+        metaType: "RULE",
+        parentKey: groupKey,
+        parentLeavel: "1-1",
+        leavel: "3",
+        fdVarValue,
+        fdDataType: fieldType,
+        fdLabel: `$${fieldLabel}$`,
+        vo: formulaFieldVo(field, fieldType),
+        fdSymbol: term.operator,
+        fdValue: term.value
+      }
+    };
+  });
+
+  if (terms.some((term) => !term)) return undefined;
+
+  return {
+    result: {
+      resultType: { type: "boolean" },
+      type: "Eval",
+      value: `(${terms.map((term) => `\${data.$VAR.${term.variableKey}}`).join(` ${parsed.operator} `)})`
+    },
+    type: "Batch",
+    vars: terms.map((term) => term.varConfig),
+    vo: {
+      mode: "simple",
+      modeType: "simpleRule",
+      data: {
+        key: "ROOT",
+        fdKey: rootKey,
+        leavel: "1",
+        fdList: [{
+          fdKey: groupKey,
+          fdType: parsed.groupType,
+          leavel: "1",
+          parentLeavel: "1-1",
+          parentKey: rootKey,
+          metaType: "GROUP",
+          fdList: terms.map((term) => term.rule)
+        }]
+      }
+    }
+  };
+}
+
+function parseEqualityConditionExpression(condition) {
+  const text = String(condition || "").trim();
+  if (!text) return undefined;
+
+  const orParts = splitLogicalExpression(text, "||");
+  if (orParts.length > 1) {
+    const terms = orParts.map(parseSimpleEqualityCondition);
+    if (terms.every(Boolean)) return { terms, operator: "||", groupType: "OR" };
+    return undefined;
+  }
+
+  const parsed = parseSimpleEqualityCondition(text);
+  return parsed ? { terms: [parsed], operator: "||", groupType: "OR" } : undefined;
+}
+
+function parseSimpleEqualityCondition(condition) {
+  const text = String(condition || "").trim();
+  if (!text) return undefined;
+
+  const legacyEquals = text.match(/^["']([^"']*)["']\s*\.\s*equals\s*\(\s*\$([^$]+)\$\s*\)$/);
+  if (legacyEquals) {
+    return { value: legacyEquals[1], field: legacyEquals[2].trim(), operator: "==" };
+  }
+
+  const fieldMethodEquals = text.match(/^\$([^$]+)\$\s*\.\s*equals\s*\(\s*["']([^"']*)["']\s*\)$/);
+  if (fieldMethodEquals) {
+    return { field: fieldMethodEquals[1].trim(), value: fieldMethodEquals[2], operator: "==" };
+  }
+
+  const fieldLeftEquals = text.match(/^\$([^$]+)\$\s*={2,3}\s*["']([^"']*)["']$/);
+  if (fieldLeftEquals) {
+    return { field: fieldLeftEquals[1].trim(), value: fieldLeftEquals[2], operator: "==" };
+  }
+
+  const valueLeftEquals = text.match(/^["']([^"']*)["']\s*={2,3}\s*\$([^$]+)\$$/);
+  if (valueLeftEquals) {
+    return { value: valueLeftEquals[1], field: valueLeftEquals[2].trim(), operator: "==" };
+  }
+
+  return undefined;
+}
+
+function splitLogicalExpression(text, operator) {
+  const parts = [];
+  let quote = "";
+  let depth = 0;
+  let start = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const previous = text[index - 1];
+    if (quote) {
+      if (char === quote && previous !== "\\") quote = "";
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === "(") {
+      depth += 1;
+      continue;
+    }
+    if (char === ")") {
+      depth = Math.max(0, depth - 1);
+      continue;
+    }
+    if (depth === 0 && text.startsWith(operator, index)) {
+      parts.push(text.slice(start, index).trim());
+      index += operator.length - 1;
+      start = index + 1;
+    }
+  }
+
+  parts.push(text.slice(start).trim());
+  return parts.filter(Boolean);
+}
+
+function buildFormFieldIndex(form = {}) {
+  const byId = new Map();
+  for (const field of form.fields || []) {
+    if (field?.id) byId.set(field.id, field);
+    for (const column of field?.columns || []) {
+      if (column?.id) byId.set(column.id, column);
+    }
+  }
+  return byId;
+}
+
+function buildFormFieldTitleIndex(form = {}) {
+  const byTitle = new Map();
+  for (const field of form.fields || []) {
+    addFormFieldTitle(byTitle, field);
+    for (const column of field?.columns || []) addFormFieldTitle(byTitle, column);
+  }
+  return byTitle;
+}
+
+function addFormFieldTitle(byTitle, field) {
+  const title = normalizeBranchFieldName(field?.title);
+  if (!title) return;
+  if (!byTitle.has(title)) byTitle.set(title, []);
+  byTitle.get(title).push(field);
+}
+
+function normalizeBranchFieldName(value) {
+  return String(value || "").trim().replace(/\s+/g, "");
+}
+
+function formulaVariableKey(edgeId, value) {
+  const key = `${edgeId}_${value}`.replace(/[^a-zA-Z0-9_]/g, "_").replace(/_+/g, "_");
+  return /^[A-Za-z_]/.test(key) ? key : `v_${key}`;
+}
+
+function formulaFieldType(field) {
+  const type = String(field?.type || "").toLowerCase();
+  if (["number", "decimal", "double", "currency", "integer"].includes(type)) return "number";
+  if (type.includes("date")) return "date";
+  if (type.includes("boolean")) return "boolean";
+  return "string";
+}
+
+function formulaFieldVo(field, fieldType) {
+  if (fieldType === "number") {
+    return {
+      type: "number",
+      required: Boolean(field?.props?.required),
+      description: field?.title || field?.id || ""
+    };
+  }
+
+  if (fieldType === "date") {
+    return {
+      type: "date",
+      required: Boolean(field?.props?.required),
+      description: field?.title || field?.id || ""
+    };
+  }
+
+  if (fieldType === "boolean") {
+    return {
+      type: "boolean",
+      required: Boolean(field?.props?.required),
+      description: field?.title || field?.id || ""
+    };
+  }
+
+  return {
+    type: "string",
+    required: Boolean(field?.props?.required),
+    description: field?.title || field?.id || "",
+    maxLength: normalizeMaxLength(field?.props?.maxLength) || 200
+  };
+}
+
+function normalizeMaxLength(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "number") return Number.isInteger(value) && value > 0 ? value : undefined;
+  const text = String(value).trim();
+  if (!text || !/^\d+$/.test(text)) return undefined;
+  const length = Number(text);
+  return Number.isSafeInteger(length) && length > 0 ? length : undefined;
 }
 
 function boundsFor(node, index, width, height) {
@@ -463,7 +866,7 @@ function handlersFromAttributes(attrs) {
   };
 }
 
-function handlersFromParticipants(participants, attrs) {
+function handlersFromParticipants(participants, attrs, context = {}) {
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return {
       id: "handlers",
@@ -480,6 +883,44 @@ function handlersFromParticipants(participants, attrs) {
       element: "users"
     };
   }
+  if (participants?.mode === "form_field") {
+    const ruleKey = formFieldHandlerRuleKey(participants, context);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey,
+      ruleName: ruleKey.formulaName,
+      ruleMode: "simple",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        sourceExpression: participants.sourceExpression || "",
+        sourceNameExpression: participants.sourceNameExpression || ""
+      }
+    };
+  }
+  if (participants?.mode === "role_line") {
+    const ruleKey = roleLineHandlerRuleKey(participants, context);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey,
+      ruleName: ruleKey.formulaName,
+      ruleMode: "simple",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        sourceExpression: participants.sourceExpression || "",
+        sourceNameExpression: participants.sourceNameExpression || "",
+        companyRole: participants.companyRole || "",
+        departmentRole: participants.departmentRole || ""
+      }
+    };
+  }
   if (participants?.mode === "initiator_select") {
     return {
       id: "handlers",
@@ -492,6 +933,47 @@ function handlersFromParticipants(participants, attrs) {
     };
   }
   return handlersFromAttributes(attrs);
+}
+
+function roleLineHandlerRuleKey(participants, context = {}) {
+  const fieldId = participants.fieldId || "";
+  const field = context.formFieldById?.get(fieldId);
+  const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
+  const fieldTitle = participants.fieldTitle || field?.title || fieldId;
+  const formulaName = participants.sourceNameExpression ||
+    `$组织架构.解释角色线$($${fieldTitle}$, ${JSON.stringify(participants.companyRole || "")}, ${JSON.stringify(participants.departmentRole || "")})`;
+  const fieldRef = `\${data.${fdVarValue}}`;
+
+  return {
+    type: "Eval",
+    script: `$组织架构.解释角色线$(${fieldRef}, ${JSON.stringify(participants.companyRole || "")}, ${JSON.stringify(participants.departmentRole || "")})`,
+    varIds: [fdVarValue],
+    vo: {
+      mode: "formula",
+      content: formulaName
+    },
+    mode: "simple",
+    formulaName
+  };
+}
+
+function formFieldHandlerRuleKey(participants, context = {}) {
+  const fieldId = participants.fieldId || "";
+  const field = context.formFieldById?.get(fieldId);
+  const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
+  const formulaName = participants.sourceNameExpression || `$${participants.fieldTitle || field?.title || fieldId}$`;
+
+  return {
+    type: "Eval",
+    script: `\${data.${fdVarValue}}`,
+    varIds: [fdVarValue],
+    vo: {
+      mode: "formula",
+      content: formulaName
+    },
+    mode: "simple",
+    formulaName
+  };
 }
 
 function splitHandlers(handlerIds = "", handlerNames = "") {

@@ -176,6 +176,98 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "workflow.participants.initiator_select_without_source"), true);
   });
 
+  it("accepts form-field workflow participants only when the field exists", () => {
+    const workflow = {
+      process: { id: "process-form-field-handler" },
+      nodes: [
+        { id: "N1", type: "generalStart", element: "startEvent", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+        {
+          id: "N2",
+          type: "review",
+          element: "manualTask",
+          sourceRef: "source.workflow.node.N2",
+          attributes: { handlerIds: "$fd_subject$", handlerNames: "$主题$", handlerSelectType: "formula" },
+          participants: {
+            mode: "form_field",
+            fieldId: "fd_subject",
+            fieldTitle: "主题",
+            sourceExpression: "$fd_subject$",
+            sourceNameExpression: "$主题$"
+          },
+          translationStatus: "executable"
+        },
+        { id: "N3", type: "generalEnd", element: "endEvent", sourceRef: "source.workflow.node.N3", attributes: {}, translationStatus: "executable" }
+      ],
+      edges: [
+        { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+        { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } }
+      ],
+      topologicalOrder: ["N1", "N2", "N3"]
+    };
+    const accepted = validateMigrationDsl(sampleTrustedDsl({ workflow }), { mode: "execute" });
+    const rejected = validateMigrationDsl(sampleTrustedDsl({
+      workflow: {
+        ...workflow,
+        nodes: workflow.nodes.map((node) => node.id === "N2"
+          ? { ...node, participants: { ...node.participants, fieldId: "fd_missing", sourceExpression: "$fd_missing$" } }
+          : node)
+      }
+    }), { mode: "execute" });
+
+    assert.equal(accepted.ok, true);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "workflow.participants.form_field_missing"), true);
+  });
+
+  it("accepts role-line workflow participants only when the field exists", () => {
+    const workflow = {
+      process: { id: "process-role-line-handler" },
+      nodes: [
+        { id: "N1", type: "generalStart", element: "startEvent", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+        {
+          id: "N2",
+          type: "review",
+          element: "manualTask",
+          sourceRef: "source.workflow.node.N2",
+          attributes: {
+            handlerIds: "$组织架构.解释角色线$($fd_subject$, \"公司级部门领导\", \"部门领导\")",
+            handlerNames: "$组织架构.解释角色线$($主题$, \"公司级部门领导\", \"部门领导\")",
+            handlerSelectType: "formula"
+          },
+          participants: {
+            mode: "role_line",
+            fieldId: "fd_subject",
+            fieldTitle: "主题",
+            companyRole: "公司级部门领导",
+            departmentRole: "部门领导",
+            sourceExpression: "$组织架构.解释角色线$($fd_subject$, \"公司级部门领导\", \"部门领导\")",
+            sourceNameExpression: "$组织架构.解释角色线$($主题$, \"公司级部门领导\", \"部门领导\")"
+          },
+          translationStatus: "executable"
+        },
+        { id: "N3", type: "generalEnd", element: "endEvent", sourceRef: "source.workflow.node.N3", attributes: {}, translationStatus: "executable" }
+      ],
+      edges: [
+        { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+        { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } }
+      ],
+      topologicalOrder: ["N1", "N2", "N3"]
+    };
+    const accepted = validateMigrationDsl(sampleTrustedDsl({ workflow }), { mode: "execute" });
+    const rejected = validateMigrationDsl(sampleTrustedDsl({
+      workflow: {
+        ...workflow,
+        nodes: workflow.nodes.map((node) => node.id === "N2"
+          ? { ...node, participants: { ...node.participants, fieldId: "fd_missing", sourceExpression: "$组织架构.解释角色线$($fd_missing$, \"公司级部门领导\", \"部门领导\")" } }
+          : node)
+      }
+    }), { mode: "execute" });
+
+    assert.equal(accepted.ok, true);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "workflow.participants.role_line_field_missing"), true);
+  });
+
   it("accepts executable all parallel split and join gateways", () => {
     const result = validateMigrationDsl(sampleTrustedDsl({
       workflow: sampleParallelGatewayWorkflow()
