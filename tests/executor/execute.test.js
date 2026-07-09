@@ -307,7 +307,7 @@ describe("executeDsl", () => {
     assert.deepEqual(JSON.parse(sequence.formula), route.formula);
   });
 
-  it("keeps unparsed conditional branch routes as raw rule fallbacks", () => {
+  it("writes contains conditional branch routes through formula config", () => {
     const workflow = sampleConditionBranchWorkflow();
     const rawCondition = "$字符串.包含$($fd_seller$, \"欧洲\")";
     workflow.edges[1] = {
@@ -329,13 +329,298 @@ describe("executeDsl", () => {
     const route = conditionValue.formulas.find((item) => item.lineId === "L541");
     const sequence = content.elements.find((element) => element.id === "L541");
 
-    assert.equal(route.formula, rawCondition);
-    assert.equal(route.formulaName, "$合同卖方$ 包含 \"欧洲\"");
-    assert.equal(route.formulaConfig, undefined);
-    assert.equal(route.conditionSimpleData, undefined);
-    assert.equal(sequence.formulaType, "rule");
-    assert.equal(sequence.formula, rawCondition);
-    assert.equal(sequence.formulaName, "$合同卖方$ 包含 \"欧洲\"");
+    assert.equal(route.formulaName, "");
+    assert.deepEqual(route.conditionSimpleData, route.formula);
+    assert.deepEqual(route.formulaConfig, route.formula);
+    assert.equal(route.formula.vars[0].type, "Function");
+    assert.equal(route.formula.vars[0].value, "global.contains");
+    assert.deepEqual(route.formula.vars[0].arguments, [
+      {
+        key: "X",
+        resultType: { type: "any" },
+        type: "Var",
+        value: "template-id-fd_seller"
+      },
+      {
+        key: "Y",
+        resultType: { type: "any" },
+        type: "Fixed",
+        value: "欧洲"
+      }
+    ]);
+    assert.equal(route.formula.vo.data.fdList[0].fdList[0].fdVarValue, "template-id-fd_seller");
+    assert.equal(route.formula.vo.data.fdList[0].fdList[0].fdSymbol, "contain");
+    assert.equal(route.formula.vo.data.fdList[0].fdList[0].fdFunctionId, "global.contains");
+    assert.equal(route.formula.vo.data.fdList[0].fdList[0].fdValue, "欧洲");
+    assert.equal(sequence.formulaType, "formula");
+    assert.deepEqual(JSON.parse(sequence.formula), route.formula);
+    assert.equal(sequence.formulaName, "");
+  });
+
+  it("writes NewOA simple condition option shapes for editable branch rules", () => {
+    const routeForCondition = (rawCondition) => {
+      const workflow = sampleConditionBranchWorkflow();
+      workflow.edges[1] = {
+        ...workflow.edges[1],
+        condition: {
+          sourceText: rawCondition,
+          displayText: rawCondition,
+          targetText: rawCondition,
+          translationStatus: "display_only"
+        }
+      };
+      const content = buildWorkflowContent(workflow, {
+        templateId: "template-id",
+        form: sampleConditionBranchForm()
+      });
+      const branch = content.elements.find((element) => element.id === "N410");
+      return JSON.parse(branch.conditionValue).formulas.find((item) => item.lineId === "L541").formula;
+    };
+
+    const equals = routeForCondition("$fd_seller$ == \"1689\"");
+    assert.equal(equals.vars[0].type, "Eval");
+    assert.equal(equals.vars[0].value, "${data.template-id-fd_seller} == \"1689\"");
+    assert.equal(equals.vo.data.fdList[0].fdList[0].fdSymbol, "==");
+
+    const notEquals = routeForCondition("$fd_seller$ != \"1689\"");
+    assert.equal(notEquals.vars[0].type, "Eval");
+    assert.equal(notEquals.vars[0].value, "${data.template-id-fd_seller} u0021= \"1689\"");
+    assert.equal(notEquals.vo.data.fdList[0].fdList[0].fdSymbol, "!=");
+
+    const contains = routeForCondition("$字符串.包含$($fd_seller$, \"欧洲\")");
+    assert.equal(contains.vars[0].type, "Function");
+    assert.equal(contains.vars[0].value, "global.contains");
+    assert.equal(contains.result.value, "(${data.$VAR.L541_fd_seller})");
+    assert.equal(contains.vo.data.fdList[0].fdList[0].fdSymbol, "contain");
+    assert.equal(contains.vo.data.fdList[0].fdList[0].fdFunctionId, "global.contains");
+
+    const notContains = routeForCondition("!$字符串.包含$($fd_seller$, \"欧洲\")");
+    assert.equal(notContains.vars[0].type, "Function");
+    assert.equal(notContains.vars[0].value, "global.contains");
+    assert.equal(notContains.result.value, "(u0021${data.$VAR.L541_fd_seller})");
+    assert.equal(notContains.vo.data.fdList[0].fdList[0].fdSymbol, "notcontain");
+    assert.equal(notContains.vo.data.fdList[0].fdList[0].fdFunctionId, "global.contains");
+
+    const empty = routeForCondition("$字符串.为空$($fd_seller$)");
+    assert.equal(empty.vars[0].type, "Function");
+    assert.equal(empty.vars[0].value, "global.isEmpty");
+    assert.equal(empty.result.value, "(${data.$VAR.L541_fd_seller})");
+    assert.equal(empty.vo.data.fdList[0].fdList[0].fdSymbol, "empty");
+    assert.equal(empty.vo.data.fdList[0].fdList[0].fdFunctionId, "global.isEmpty");
+
+    const notEmpty = routeForCondition("!$字符串.为空$($fd_seller$)");
+    assert.equal(notEmpty.vars[0].type, "Function");
+    assert.equal(notEmpty.vars[0].value, "global.isEmpty");
+    assert.equal(notEmpty.result.value, "(u0021${data.$VAR.L541_fd_seller})");
+    assert.equal(notEmpty.vo.data.fdList[0].fdList[0].fdSymbol, "notempty");
+    assert.equal(notEmpty.vo.data.fdList[0].fdList[0].fdFunctionId, "global.isEmpty");
+  });
+
+  it("writes N437 contains department routes into editable simple conditions", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "test-reviewer",
+      checkedAt: "2026-07-09T00:00:00.000Z"
+    });
+    const content = buildWorkflowContent(trusted.workflow, {
+      templateId: "template-id",
+      form: trusted.form
+    });
+    const branch = content.elements.find((element) => element.id === "N437");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const planRoute = conditionValue.formulas.find((item) => item.lineId === "L571");
+    const otherRoute = conditionValue.formulas.find((item) => item.lineId === "L570");
+    const planRule = planRoute.formula.vo.data.fdList[0].fdList[0];
+    const otherRule = otherRoute.formula.vo.data.fdList[0].fdList[0];
+
+    assert.deepEqual(planRoute.conditionSimpleData, planRoute.formula);
+    assert.deepEqual(planRoute.formulaConfig, planRoute.formula);
+    assert.equal(planRule.fdVarValue, "template-id-fd_36b983442aa544");
+    assert.equal(planRule.fdLabel, "$申请部门$");
+    assert.equal(planRule.fdSymbol, "contain");
+    assert.equal(planRule.fdFunctionId, "global.contains");
+    assert.equal(planRule.fdValue, "计划项目");
+    assert.equal(planRoute.formula.vars[0].type, "Function");
+    assert.equal(planRoute.formula.vars[0].value, "global.contains");
+    assert.deepEqual(otherRoute.conditionSimpleData, otherRoute.formula);
+    assert.equal(otherRoute.formula.result.value, "(u0021${data.$VAR.L570_fd_36b983442aa544})");
+    assert.equal(otherRule.fdSymbol, "notcontain");
+    assert.equal(otherRule.fdFunctionId, "global.contains");
+    assert.equal(otherRule.fdValue, "计划项目");
+  });
+
+  it("writes N415 other seller route with editable not-equals predicates", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "test-reviewer",
+      checkedAt: "2026-07-09T00:00:00.000Z"
+    });
+    const content = buildWorkflowContent(trusted.workflow, {
+      templateId: "template-id",
+      form: trusted.form
+    });
+    const branch = content.elements.find((element) => element.id === "N415");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const route = conditionValue.formulas.find((item) => item.lineId === "L548");
+    const sequence = content.elements.find((element) => element.id === "L548");
+    const routeFormula = route.formula;
+    const rootGroup = routeFormula.vo.data.fdList[0];
+
+    assert.equal(route.lineName, "其他");
+    assert.equal(route.defaultTrend, true);
+    assert.equal(route.formulaName, "");
+    assert.deepEqual(route.conditionSimpleData, route.formula);
+    assert.deepEqual(route.formulaConfig, route.formula);
+    assert.equal(routeFormula.result.value, "(${data.$VAR.L548_fd_3580be5d4717ea_1} && ${data.$VAR.L548_fd_3580be5d4717ea_2})");
+    assert.equal(rootGroup.fdType, "AND");
+    assert.deepEqual(rootGroup.fdList.map((rule) => ({
+      fdVarValue: rule.fdVarValue,
+      fdLabel: rule.fdLabel,
+      fdSymbol: rule.fdSymbol,
+      fdValue: rule.fdValue,
+      parentKey: rule.parentKey
+    })), [
+      {
+        fdVarValue: "template-id-fd_3580be5d4717ea",
+        fdLabel: "$合同卖方$",
+        fdSymbol: "!=",
+        fdValue: "1683",
+        parentKey: "L548_group"
+      },
+      {
+        fdVarValue: "template-id-fd_3580be5d4717ea",
+        fdLabel: "$合同卖方$",
+        fdSymbol: "!=",
+        fdValue: "1684",
+        parentKey: "L548_group"
+      }
+    ]);
+    assert.equal(sequence.formulaType, "formula");
+    assert.equal(sequence.formulaName, "");
+    assert.deepEqual(JSON.parse(sequence.formula), routeFormula);
+  });
+
+  it("writes N257 mixed and/or routes into editable simple conditions", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "test-reviewer",
+      checkedAt: "2026-07-09T00:00:00.000Z"
+    });
+    const content = buildWorkflowContent(trusted.workflow, {
+      templateId: "template-id",
+      form: trusted.form
+    });
+    const branch = content.elements.find((element) => element.id === "N257");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const route = conditionValue.formulas.find((item) => item.lineId === "L406");
+    const sequence = content.elements.find((element) => element.id === "L406");
+    const routeFormula = route.formula;
+    const rootGroup = routeFormula.vo.data.fdList[0];
+    const incomeRule = rootGroup.fdList[0];
+    const businessGroup = rootGroup.fdList[1];
+
+    assert.equal(route.lineName, "已确认过收入仅开票---整体对外销售、材料销售及其他");
+    assert.deepEqual(route.conditionSimpleData, route.formula);
+    assert.deepEqual(route.formulaConfig, route.formula);
+    assert.equal(route.formulaName, "");
+    assert.equal(routeFormula.result.value, "(${data.$VAR.L406_fd_36d39121a4bbb2_1} && (${data.$VAR.L406_fd_376d6cbc433bfe_2} || ${data.$VAR.L406_fd_376d6cbc433bfe_3} || ${data.$VAR.L406_fd_376d6cbc433bfe_4}))");
+    assert.equal(rootGroup.fdType, "AND");
+    assert.equal(incomeRule.fdVarValue, "template-id-fd_36d39121a4bbb2");
+    assert.equal(incomeRule.fdLabel, "$是否确认收入$");
+    assert.equal(incomeRule.fdSymbol, "==");
+    assert.equal(incomeRule.fdValue, "E");
+    assert.equal(businessGroup.fdType, "OR");
+    assert.deepEqual(businessGroup.fdList.map((rule) => ({
+      fdVarValue: rule.fdVarValue,
+      fdLabel: rule.fdLabel,
+      fdSymbol: rule.fdSymbol,
+      fdValue: rule.fdValue,
+      parentKey: rule.parentKey
+    })), [
+      {
+        fdVarValue: "template-id-fd_376d6cbc433bfe",
+        fdLabel: "$业务类型$",
+        fdSymbol: "==",
+        fdValue: "B",
+        parentKey: "L406_group_2"
+      },
+      {
+        fdVarValue: "template-id-fd_376d6cbc433bfe",
+        fdLabel: "$业务类型$",
+        fdSymbol: "==",
+        fdValue: "F",
+        parentKey: "L406_group_2"
+      },
+      {
+        fdVarValue: "template-id-fd_376d6cbc433bfe",
+        fdLabel: "$业务类型$",
+        fdSymbol: "==",
+        fdValue: "G",
+        parentKey: "L406_group_2"
+      }
+    ]);
+    assert.equal(sequence.formulaType, "formula");
+    assert.equal(sequence.formulaName, "");
+    assert.deepEqual(JSON.parse(sequence.formula), routeFormula);
+  });
+
+  it("writes every fixture branch condition into editable formula configs", () => {
+    const { content, trusted } = buildRouteValidationWorkflowContent();
+    const edgeById = new Map(trusted.workflow.edges.map((edge) => [edge.id, edge]));
+    const sequenceById = new Map(content.elements.filter((element) => element.type === "sequenceFlow").map((edge) => [edge.id, edge]));
+    const rawRoutes = [];
+
+    for (const branch of content.elements.filter((element) => element.type === "conditionBranch")) {
+      const conditionValue = JSON.parse(branch.conditionValue || "{}");
+      for (const route of conditionValue.formulas || []) {
+        const edge = edgeById.get(route.lineId);
+        const sequence = sequenceById.get(route.lineId);
+        const condition = edgeConditionTextForTest(edge);
+        if (!condition || isTautologyConditionForTest(condition)) continue;
+        if (!isEditableFormulaRouteForTest(route, sequence)) {
+          rawRoutes.push({
+            branchId: branch.id,
+            lineId: route.lineId,
+            lineName: route.lineName,
+            condition
+          });
+        }
+      }
+    }
+
+    assert.deepEqual(rawRoutes, []);
+  });
+
+  it("marks every fixture route named other as fallback", () => {
+    const { content } = buildRouteValidationWorkflowContent();
+    const sequenceById = new Map(content.elements.filter((element) => element.type === "sequenceFlow").map((edge) => [edge.id, edge]));
+    const nonFallbackOtherRoutes = [];
+
+    for (const branch of content.elements.filter((element) => element.type === "conditionBranch")) {
+      const conditionValue = JSON.parse(branch.conditionValue || "{}");
+      for (const route of conditionValue.formulas || []) {
+        if (String(route.lineName || "").trim() !== "其他") continue;
+        const sequence = sequenceById.get(route.lineId);
+        if (route.defaultTrend !== true || sequence?.defaultTrend !== true || sequence?.style !== "sequenceFlow;marker") {
+          nonFallbackOtherRoutes.push({
+            branchId: branch.id,
+            lineId: route.lineId,
+            lineName: route.lineName,
+            routeDefaultTrend: route.defaultTrend,
+            sequenceDefaultTrend: sequence?.defaultTrend,
+            style: sequence?.style
+          });
+        }
+      }
+    }
+
+    assert.deepEqual(nonFallbackOtherRoutes, []);
   });
 
   it("writes tautological other routes as not-empty alternate routes for the branch field", () => {
@@ -373,7 +658,7 @@ describe("executeDsl", () => {
     assert.deepEqual(route.conditionSimpleData, route.formula);
     assert.deepEqual(route.formulaConfig, route.formula);
     assert.equal(routeFormula.type, "Batch");
-    assert.equal(routeFormula.result.value, "(!${data.$VAR.L542_fd_seller_notempty})");
+    assert.equal(routeFormula.result.value, "(u0021${data.$VAR.L542_fd_seller_notempty})");
     assert.equal(routeFormula.vars[0].type, "Function");
     assert.equal(routeFormula.vars[0].value, "global.isEmpty");
     assert.equal(routeFormula.vars[0].arguments[0].value, "template-id-fd_seller");
@@ -891,6 +1176,46 @@ describe("executeDsl", () => {
     assert.equal(formRule.require.length, 3);
   });
 });
+
+function buildRouteValidationWorkflowContent() {
+  const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
+  const dslDraft = draftSourceDraft(sourceDraft);
+  const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+    externalAgentReviewed: true,
+    reviewerName: "test-reviewer",
+    checkedAt: "2026-07-09T00:00:00.000Z"
+  });
+  return {
+    trusted,
+    content: buildWorkflowContent(trusted.workflow, {
+      templateId: "template-id",
+      form: trusted.form
+    })
+  };
+}
+
+function isEditableFormulaRouteForTest(route, sequence) {
+  return Boolean(
+    route.conditionSimpleData &&
+    route.formulaConfig &&
+    route.formula &&
+    typeof route.formula === "object" &&
+    sequence?.formulaType === "formula" &&
+    String(sequence?.formula || "").trim().startsWith("{")
+  );
+}
+
+function edgeConditionTextForTest(edge) {
+  if (!edge) return "";
+  if (edge.condition && typeof edge.condition === "object") {
+    return edge.condition.targetText || edge.condition.sourceText || edge.condition.displayText || "";
+  }
+  return edge.condition || edge.displayCondition || "";
+}
+
+function isTautologyConditionForTest(condition) {
+  return /^(?:1\s*={2,3}\s*1|true)$/i.test(String(condition || "").trim());
+}
 
 function sampleParallelGatewayWorkflow() {
   return {

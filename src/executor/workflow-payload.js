@@ -452,8 +452,12 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
     const routes = (outgoingEdges.get(node.id) || [])
       .filter((edge) => edgeConditionText(edge) || edge.name)
       .map((edge, index) => buildBranchRoute(node, edge, index, context));
-    const defaultRoute = routes.find((route) => route.defaultCandidate) || routes[routes.length - 1];
-    if (defaultRoute) defaultRoute.defaultTrend = true;
+    const fallbackRoutes = routes.filter((route) => route.defaultCandidate);
+    if (fallbackRoutes.length) {
+      for (const route of fallbackRoutes) route.defaultTrend = true;
+    } else if (routes.length) {
+      routes[routes.length - 1].defaultTrend = true;
+    }
     for (const route of routes) {
       route.conditionValue.defaultTrend = route.defaultTrend;
       byEdge.set(route.lineId, route);
@@ -466,8 +470,9 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
 
 function buildBranchRoute(node, edge, index, context) {
   const resultCode = edgeConditionText(edge);
-  const defaultCandidate = isOtherTautologyRoute(edge);
-  const formulaConfig = defaultCandidate
+  const defaultCandidate = isOtherRoute(edge);
+  const useSyntheticOtherCondition = isOtherTautologyRoute(edge);
+  const formulaConfig = useSyntheticOtherCondition
     ? buildOtherDefaultFormulaDesignerConfig(node, edge, context) || buildFormulaDesignerConfig(edge, context)
     : buildFormulaDesignerConfig(edge, context);
   const conditionValue = {
@@ -519,7 +524,7 @@ function buildNotEmptyFormulaDesignerConfig(edge, field, context) {
     result: {
       resultType: { type: "boolean" },
       type: "Eval",
-      value: `(!\${data.$VAR.${variableKey}})`
+      value: `(u0021\${data.$VAR.${variableKey}})`
     },
     type: "Batch",
     vars: [{
@@ -568,8 +573,12 @@ function buildNotEmptyFormulaDesignerConfig(edge, field, context) {
   };
 }
 
+function isOtherRoute(edge) {
+  return String(edge?.name || "").trim() === "其他";
+}
+
 function isOtherTautologyRoute(edge) {
-  return String(edge?.name || "").trim() === "其他" && isTautologyCondition(edgeConditionText(edge));
+  return isOtherRoute(edge) && isTautologyCondition(edgeConditionText(edge));
 }
 
 function isTautologyCondition(condition) {
@@ -599,56 +608,53 @@ function branchFieldForNode(node, context) {
 }
 
 function buildFormulaDesignerConfig(edge, context) {
-  const parsed = parseEqualityConditionExpression(edgeConditionText(edge));
-  if (!parsed) return undefined;
+  const parsedAst = parseConditionExpression(edgeConditionText(edge));
+  if (!parsedAst) return undefined;
 
   const templateId = context.templateId || "";
-  const groupKey = formulaVariableKey(edge.id, "group");
   const rootKey = formulaVariableKey(edge.id, "ROOT");
   if (!templateId) return undefined;
 
-  const terms = parsed.terms.map((term, index) => {
+  const sourceTerms = collectConditionTerms(parsedAst);
+  const terms = sourceTerms.map((term, index) => {
     const field = context.formFieldById?.get(term.field);
     const fieldId = field?.id || term.field;
     if (!fieldId) return undefined;
     const variableKey = formulaVariableKey(
       edge.id,
-      parsed.terms.length === 1 ? fieldId : `${fieldId}_${index + 1}`
+      sourceTerms.length === 1 ? fieldId : `${fieldId}_${index + 1}`
     );
     const fdVarValue = `${templateId}-${fieldId}`;
     const fieldLabel = field?.title || fieldId;
     const fieldType = formulaFieldType(field);
+    const rule = {
+      fdKey: variableKey,
+      metaType: "RULE",
+      fdVarValue,
+      fdDataType: fieldType,
+      fdLabel: `$${fieldLabel}$`,
+      vo: formulaFieldVo(field, fieldType),
+      fdSymbol: term.symbol
+    };
+    if (term.value !== undefined) rule.fdValue = term.value;
+    if (term.functionId) rule.fdFunctionId = term.functionId;
+
     return {
       variableKey,
-      varConfig: {
-        key: variableKey,
-        resultType: { type: "boolean" },
-        type: "Eval",
-        value: `\${data.${fdVarValue}} ${term.operator} ${JSON.stringify(term.value)}`
-      },
-      rule: {
-        fdKey: variableKey,
-        metaType: "RULE",
-        parentKey: groupKey,
-        parentLeavel: "1-1",
-        leavel: "3",
-        fdVarValue,
-        fdDataType: fieldType,
-        fdLabel: `$${fieldLabel}$`,
-        vo: formulaFieldVo(field, fieldType),
-        fdSymbol: term.operator,
-        fdValue: term.value
-      }
+      negateResult: Boolean(term.negateResult),
+      varConfig: termVarConfig(term, variableKey, fdVarValue),
+      rule
     };
   });
 
   if (terms.some((term) => !term)) return undefined;
+  const conditionAst = attachConditionTerms(parsedAst, terms);
 
   return {
     result: {
       resultType: { type: "boolean" },
       type: "Eval",
-      value: `(${terms.map((term) => `\${data.$VAR.${term.variableKey}}`).join(` ${parsed.operator} `)})`
+      value: conditionResultExpression(conditionAst)
     },
     type: "Batch",
     vars: terms.map((term) => term.varConfig),
@@ -659,60 +665,320 @@ function buildFormulaDesignerConfig(edge, context) {
         key: "ROOT",
         fdKey: rootKey,
         leavel: "1",
-        fdList: [{
-          fdKey: groupKey,
-          fdType: parsed.groupType,
-          leavel: "1",
-          parentLeavel: "1-1",
+        fdList: [conditionVoGroup(conditionAst, {
+          edgeId: edge.id,
           parentKey: rootKey,
-          metaType: "GROUP",
-          fdList: terms.map((term) => term.rule)
-        }]
+          parentLeavel: "1-1",
+          groupPath: "",
+          level: 1
+        })]
       }
     }
   };
 }
 
-function parseEqualityConditionExpression(condition) {
-  const text = String(condition || "").trim();
+function parseConditionExpression(condition) {
+  const text = stripEnclosingParentheses(String(condition || "").trim());
   if (!text) return undefined;
+
+  const negatedGroup = parseNegatedGroup(text);
+  if (negatedGroup) return negatedGroup;
 
   const orParts = splitLogicalExpression(text, "||");
   if (orParts.length > 1) {
-    const terms = orParts.map(parseSimpleEqualityCondition);
-    if (terms.every(Boolean)) return { terms, operator: "||", groupType: "OR" };
+    const children = orParts.map(parseConditionExpression);
+    if (children.every(Boolean)) return { type: "group", children, operator: "||", groupType: "OR" };
     return undefined;
   }
 
-  const parsed = parseSimpleEqualityCondition(text);
-  return parsed ? { terms: [parsed], operator: "||", groupType: "OR" } : undefined;
+  const andParts = splitLogicalExpression(text, "&&");
+  if (andParts.length > 1) {
+    const children = andParts.map(parseConditionExpression);
+    if (children.every(Boolean)) return { type: "group", children, operator: "&&", groupType: "AND" };
+    return undefined;
+  }
+
+  const parsed = parseSimpleCondition(text);
+  return parsed ? { type: "term", term: parsed } : undefined;
 }
 
-function parseSimpleEqualityCondition(condition) {
+function parseSimpleCondition(condition) {
   const text = String(condition || "").trim();
   if (!text) return undefined;
 
+  const contains = text.match(/^(!\s*)?\$(?:字符串|列表)\.包含\$\(\s*\$([^$]+)\$\s*,\s*(["'])([\s\S]*?)\3\s*\)$/);
+  if (contains) {
+    const negated = Boolean(contains[1]);
+    return {
+      field: contains[2].trim(),
+      value: contains[4],
+      symbol: negated ? "notcontain" : "contain",
+      expressionType: "contains",
+      functionId: "global.contains",
+      negateResult: negated
+    };
+  }
+
   const legacyEquals = text.match(/^["']([^"']*)["']\s*\.\s*equals\s*\(\s*\$([^$]+)\$\s*\)$/);
   if (legacyEquals) {
-    return { value: legacyEquals[1], field: legacyEquals[2].trim(), operator: "==" };
+    return { value: legacyEquals[1], field: legacyEquals[2].trim(), symbol: "==", expressionType: "==" };
   }
 
   const fieldMethodEquals = text.match(/^\$([^$]+)\$\s*\.\s*equals\s*\(\s*["']([^"']*)["']\s*\)$/);
   if (fieldMethodEquals) {
-    return { field: fieldMethodEquals[1].trim(), value: fieldMethodEquals[2], operator: "==" };
+    return { field: fieldMethodEquals[1].trim(), value: fieldMethodEquals[2], symbol: "==", expressionType: "==" };
   }
 
   const fieldLeftEquals = text.match(/^\$([^$]+)\$\s*={2,3}\s*["']([^"']*)["']$/);
   if (fieldLeftEquals) {
-    return { field: fieldLeftEquals[1].trim(), value: fieldLeftEquals[2], operator: "==" };
+    return { field: fieldLeftEquals[1].trim(), value: fieldLeftEquals[2], symbol: "==", expressionType: "==" };
+  }
+
+  const fieldLeftNotEquals = text.match(/^\$([^$]+)\$\s*!={1,2}\s*["']([^"']*)["']$/);
+  if (fieldLeftNotEquals) {
+    return {
+      field: fieldLeftNotEquals[1].trim(),
+      value: fieldLeftNotEquals[2],
+      symbol: "!=",
+      expressionType: "!="
+    };
   }
 
   const valueLeftEquals = text.match(/^["']([^"']*)["']\s*={2,3}\s*\$([^$]+)\$$/);
   if (valueLeftEquals) {
-    return { value: valueLeftEquals[1], field: valueLeftEquals[2].trim(), operator: "==" };
+    return { value: valueLeftEquals[1], field: valueLeftEquals[2].trim(), symbol: "==", expressionType: "==" };
+  }
+
+  const valueLeftNotEquals = text.match(/^["']([^"']*)["']\s*!={1,2}\s*\$([^$]+)\$$/);
+  if (valueLeftNotEquals) {
+    return {
+      value: valueLeftNotEquals[1],
+      field: valueLeftNotEquals[2].trim(),
+      symbol: "!=",
+      expressionType: "!="
+    };
+  }
+
+  const emptyFunction = text.match(/^(!\s*)?\$字符串\.为空\$\(\s*\$([^$]+)\$\s*\)$/);
+  if (emptyFunction) {
+    const negated = Boolean(emptyFunction[1]);
+    return {
+      field: emptyFunction[2].trim(),
+      symbol: negated ? "notempty" : "empty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: negated
+    };
   }
 
   return undefined;
+}
+
+function parseNegatedGroup(text) {
+  if (!text.startsWith("!")) return undefined;
+  const rest = text.slice(1).trim();
+  if (!isFullyWrappedInParentheses(rest)) return undefined;
+  const parsed = parseConditionExpression(rest);
+  return parsed ? negateConditionAst(parsed) : undefined;
+}
+
+function negateConditionAst(ast) {
+  if (ast.type === "term") {
+    return {
+      type: "term",
+      term: negateConditionTerm(ast.term)
+    };
+  }
+
+  const operator = ast.operator === "&&" ? "||" : "&&";
+  return {
+    type: "group",
+    children: ast.children.map(negateConditionAst),
+    operator,
+    groupType: operator === "&&" ? "AND" : "OR"
+  };
+}
+
+function negateConditionTerm(term) {
+  if (term.expressionType === "contains") {
+    const negated = !term.negateResult;
+    return {
+      ...term,
+      symbol: negated ? "notcontain" : "contain",
+      negateResult: negated
+    };
+  }
+
+  if (term.expressionType === "empty") {
+    const negated = !term.negateResult;
+    return {
+      ...term,
+      symbol: negated ? "notempty" : "empty",
+      negateResult: negated
+    };
+  }
+
+  if (term.expressionType === "!=") {
+    return {
+      ...term,
+      symbol: "==",
+      expressionType: "=="
+    };
+  }
+
+  return {
+    ...term,
+    symbol: "!=",
+    expressionType: "!="
+  };
+}
+
+function termVarConfig(term, variableKey, fdVarValue) {
+  if (term.expressionType === "contains") {
+    return {
+      key: variableKey,
+      resultType: { type: "boolean" },
+      type: "Function",
+      value: "global.contains",
+      arguments: [
+        {
+          key: "X",
+          resultType: { type: "any" },
+          type: "Var",
+          value: fdVarValue
+        },
+        {
+          key: "Y",
+          resultType: { type: "any" },
+          type: "Fixed",
+          value: term.value
+        }
+      ]
+    };
+  }
+
+  if (term.expressionType === "empty") {
+    return {
+      key: variableKey,
+      resultType: { type: "boolean" },
+      type: "Function",
+      value: "global.isEmpty",
+      arguments: [{
+        key: "value",
+        resultType: { type: "any" },
+        type: "Var",
+        value: fdVarValue
+      }]
+    };
+  }
+
+  return {
+    key: variableKey,
+    resultType: { type: "boolean" },
+    type: "Eval",
+    value: termExpression(term, fdVarValue)
+  };
+}
+
+function termExpression(term, fdVarValue) {
+  const dataRef = `\${data.${fdVarValue}}`;
+  const value = JSON.stringify(term.value);
+  if (term.expressionType === "!=") return `${dataRef} u0021= ${value}`;
+  return `${dataRef} == ${value}`;
+}
+
+function termResultExpression(term) {
+  const valueRef = `\${data.$VAR.${term.variableKey}}`;
+  return term.negateResult ? `u0021${valueRef}` : valueRef;
+}
+
+function conditionResultExpression(ast) {
+  if (ast.type === "term") return `(${termResultExpression(ast.term)})`;
+  return `(${ast.children.map((child) => {
+    const value = child.type === "term" ? termResultExpression(child.term) : conditionResultExpression(child);
+    return value;
+  }).join(` ${ast.operator} `)})`;
+}
+
+function collectConditionTerms(ast) {
+  if (ast.type === "term") return [ast.term];
+  return ast.children.flatMap(collectConditionTerms);
+}
+
+function attachConditionTerms(ast, terms, state = { index: 0 }) {
+  if (ast.type === "term") {
+    const term = terms[state.index];
+    state.index += 1;
+    return {
+      type: "term",
+      term
+    };
+  }
+
+  return {
+    ...ast,
+    children: ast.children.map((child) => attachConditionTerms(child, terms, state))
+  };
+}
+
+function conditionVoGroup(ast, options) {
+  const groupKey = formulaVariableKey(options.edgeId, options.groupPath ? `group_${options.groupPath}` : "group");
+  const children = ast.type === "group" ? ast.children : [ast];
+  return {
+    fdKey: groupKey,
+    fdType: ast.type === "group" ? ast.groupType : "OR",
+    leavel: String(options.level || 1),
+    parentLeavel: options.parentLeavel,
+    parentKey: options.parentKey,
+    metaType: "GROUP",
+    fdList: children.map((child, index) => conditionVoNode(child, {
+      edgeId: options.edgeId,
+      parentKey: groupKey,
+      parentLeavel: options.groupPath ? `1-${options.groupPath}` : "1-1",
+      groupPath: options.groupPath ? `${options.groupPath}_${index + 1}` : String(index + 1),
+      level: (options.level || 1) + 1
+    }))
+  };
+}
+
+function conditionVoNode(ast, options) {
+  if (ast.type === "group") return conditionVoGroup(ast, options);
+  return {
+    ...ast.term.rule,
+    parentKey: options.parentKey,
+    parentLeavel: options.parentLeavel,
+    leavel: "3"
+  };
+}
+
+function stripEnclosingParentheses(text) {
+  let result = text;
+  while (isFullyWrappedInParentheses(result)) {
+    result = result.slice(1, -1).trim();
+  }
+  return result;
+}
+
+function isFullyWrappedInParentheses(text) {
+  if (!text.startsWith("(") || !text.endsWith(")")) return false;
+  let quote = "";
+  let depth = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const previous = text[index - 1];
+    if (quote) {
+      if (char === quote && previous !== "\\") quote = "";
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === "(") depth += 1;
+    if (char === ")") depth -= 1;
+    if (depth === 0 && index < text.length - 1) return false;
+  }
+  return depth === 0;
 }
 
 function splitLogicalExpression(text, operator) {
