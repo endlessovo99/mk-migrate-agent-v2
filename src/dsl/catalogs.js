@@ -5,11 +5,13 @@ import { fileURLToPath } from "node:url";
 const rootDir = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 
 export const COMPONENT_CATALOG = loadCatalog("catalogs/mk-components.v1.json");
+export const CONTROL_EVENTS_CATALOG = loadCatalog("catalogs/mk-control-events.v1.json");
 export const FUNCTION_CATALOG = loadCatalog("catalogs/functions.v1.json");
 export const VALIDATION_POLICY = loadCatalog("catalogs/validation-policy.v1.json");
 
 export const CATALOG_VERSIONS = {
   components: COMPONENT_CATALOG.version,
+  controlEvents: CONTROL_EVENTS_CATALOG.version,
   functions: FUNCTION_CATALOG.version
 };
 
@@ -17,6 +19,10 @@ export const VALIDATION_POLICY_VERSION = VALIDATION_POLICY.version;
 
 export const COMPONENTS_BY_ID = new Map(
   COMPONENT_CATALOG.components.map((component) => [component.componentId, component])
+);
+
+export const CONTROL_EVENTS_BY_COMPONENT = new Map(
+  CONTROL_EVENTS_CATALOG.components.map((component) => [component.componentId, component])
 );
 
 export const FUNCTIONS_BY_NAME = new Map(
@@ -37,6 +43,13 @@ export function functionCatalogRef() {
   };
 }
 
+export function controlEventsCatalogRef() {
+  return {
+    id: CONTROL_EVENTS_CATALOG.id,
+    version: CONTROL_EVENTS_CATALOG.version
+  };
+}
+
 export function validationPolicyRef() {
   return {
     id: VALIDATION_POLICY.id,
@@ -47,6 +60,7 @@ export function validationPolicyRef() {
 export function catalogRefs() {
   return {
     components: componentCatalogRef(),
+    controlEvents: controlEventsCatalogRef(),
     functions: functionCatalogRef()
   };
 }
@@ -63,6 +77,13 @@ export function validateCatalogVersions(root, diagnostics, path = "") {
     diagnostics.push(error("catalog.functions.version_mismatch", "DSL function catalog version must match the runtime catalog.", `${path}/catalogs/functions/version`, {
       expected: FUNCTION_CATALOG.version,
       actual: root?.catalogs?.functions?.version
+    }));
+  }
+
+  if (root?.catalogs?.controlEvents && root.catalogs.controlEvents.version !== CONTROL_EVENTS_CATALOG.version) {
+    diagnostics.push(error("catalog.control_events.version_mismatch", "DSL control-events catalog version must match the runtime catalog.", `${path}/catalogs/controlEvents/version`, {
+      expected: CONTROL_EVENTS_CATALOG.version,
+      actual: root.catalogs.controlEvents.version
     }));
   }
 

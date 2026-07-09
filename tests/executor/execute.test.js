@@ -585,6 +585,44 @@ describe("executeDsl", () => {
     assert.equal(Object.hasOwn(sourceOnlyField, "fdLength"), false);
   });
 
+  it("preserves xform-subject as the native subject control in form payloads", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: undefined,
+      form: {
+        fields: [{
+          id: "fd_subject",
+          title: "主题",
+          type: "text",
+          componentId: "xform-subject",
+          props: { required: true },
+          sourceProps: { designerType: "subject" },
+          sourceRef: "source.form.control.fd_subject"
+        }],
+        layout: {
+          sourceGrid: { rows: [] },
+          mkTree: [{
+            id: "layout.row-0",
+            componentId: "xform-flex-1-1-layout",
+            props: { columns: 1 },
+            sourceRef: "source.form.layout.row.row-0",
+            children: [{ id: "c1", refType: "field", refIds: ["fd_subject"], sourceRef: "source.form.layout.cell.c1", column: 0, colspan: 1 }]
+          }]
+        }
+      }
+    });
+    const payload = applyFormPayload(baseTemplate(), dsl);
+    const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
+    const subject = config.dataModel.find((model) => model.fdType === "main").fdFields.find((field) => field.fdName === "fd_subject");
+    const attribute = JSON.parse(subject.fdAttribute);
+    const summary = summarizeFormFromTemplate(payload);
+
+    assert.equal(subject.fdType, "subject");
+    assert.equal(attribute.config.type, "@elem/xform-subject");
+    assert.equal(attribute.config.controlProps.desktop.type, "@elem/xform-subject");
+    assert.equal(attribute.config.controlProps.mobile.type, "@elem/xform-m-subject");
+    assert.equal(summary.fields.find((field) => field.id === "fd_subject").component, "xform-subject");
+  });
+
   it("writes fixture fields with registered MK control types and no textarea heights", () => {
     const trusted = trustedDslFromFixture("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslFields = trusted.form.fields.flatMap((field) => field.type === "detailTable" ? field.columns || [] : [field]);

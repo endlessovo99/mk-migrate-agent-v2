@@ -24,6 +24,27 @@
       "omitPolicy": { "omitWhenAbsent": [] }
     },
     {
+      "componentId": "xform-subject",
+      "kind": "field",
+      "label": "主题",
+      "description": "NewOA/MK built-in subject/title field.",
+      "usage": "Use only for the native template subject field when the route-validation fixture explicitly preserves it.",
+      "negativeUsage": "Do not use as a generic single-line text field; prefer xform-input for ordinary short text.",
+      "allowedScopes": ["field"],
+      "target": { "desktop": "@elem/xform-subject", "mobile": "@elem/xform-m-subject" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "placeholder": { "type": "string" },
+          "defaultValue": { "$ref": "#/$defs/contextDefaultValue" }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": [] }
+    },
+    {
       "componentId": "xform-textarea",
       "kind": "field",
       "label": "多行文本",

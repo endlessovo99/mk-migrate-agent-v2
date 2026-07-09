@@ -49,6 +49,32 @@ describe("buildDryRunPlan", () => {
     assert.equal(scriptStep.status, "planned");
     assert.equal(scriptStep.actions, 1);
     assert.deepEqual(scriptStep.events, ["onLoad"]);
+    assert.deepEqual(scriptStep.support, { supported: 0, unsupported: 0, unknown: 0 });
+  });
+
+  it("reports control script support in the dry-run plan", () => {
+    const plan = buildDryRunPlan(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "fd_subject.onFocus",
+          name: "onFocus",
+          event: "onFocus",
+          scope: "control",
+          controlId: "fd_subject",
+          function: "function onFocus() {\n  MKXFORM.setValue('fd_amount', 'focused')\n}",
+          translationStatus: "mapped",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    }));
+    const scriptStep = plan.steps.find((step) => step.id === "map-form-scripts");
+
+    assert.equal(plan.ok, true);
+    assert.deepEqual(scriptStep.support, { supported: 1, unsupported: 0, unknown: 0 });
+    assert.deepEqual(scriptStep.components, ["xform-input"]);
+    assert.equal(scriptStep.detailActions, 0);
   });
 
   it("plans native MK display and require form rules", () => {

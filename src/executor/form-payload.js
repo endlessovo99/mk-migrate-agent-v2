@@ -861,6 +861,7 @@ function componentFromDataField(field) {
     "@elem/xform-number": "xform-number",
     "@elem/xform-address": "xform-address",
     "@elem/xform-attach": "xform-attach",
+    "@elem/xform-subject": "xform-subject",
     "@elem/xform-description": "xform-description"
   }[desktopType] || field.component || componentForFdType(field.fdType);
 }
@@ -876,12 +877,16 @@ function componentForFdType(type) {
     number: "xform-number",
     address: "xform-address",
     attachment: "xform-attach",
+    subject: "xform-subject",
     desc: "xform-description"
   }[type] || "xform-input";
 }
 
 function componentSpec(field) {
   const component = field.componentId;
+  if (component === "xform-subject") {
+    return specForComponent(component, "subject", "varchar", "simpleDict", "subject", "@elem/xform-subject", "@elem/xform-m-subject");
+  }
   if (component === "xform-address") {
     return specForComponent(component, "address", "address", "orgElementDict", "address", "@elem/xform-address", "@elem/xform-m-address");
   }

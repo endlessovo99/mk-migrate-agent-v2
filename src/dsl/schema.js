@@ -13,7 +13,6 @@ import {
   resolveEffectTarget
 } from "./form-rules.js";
 import {
-  SCRIPT_CONTROL_EVENTS,
   SCRIPT_EVENTS,
   SCRIPT_GLOBAL_EVENTS,
   SCRIPT_SCOPES,
@@ -22,6 +21,7 @@ import {
   handlesDraftContext,
   hasExplicitBeforeSubmitReturn,
   parseNamedFunctionParams,
+  resolveControlEventSupport,
   resolveScriptControlTarget,
   scriptTargetApiSummary
 } from "./scripts.js";
@@ -568,7 +568,7 @@ function validateScripts(scripts, diagnostics, context) {
       diagnostics.push(error("dsl.scripts.action_field_required", "scripts.actions[].function is required unless translationStatus is omitted.", `${path}/function`));
     }
     if (!SCRIPT_EVENTS.has(action.event)) {
-      diagnostics.push(error("dsl.scripts.event_unsupported", "Script action event must be onLoad, onBeforeSubmit, onAfterSubmit, or onChange.", `${path}/event`, {
+      diagnostics.push(error("dsl.scripts.event_unsupported", "Script action event is not in the MK control-events catalog.", `${path}/event`, {
         actual: action.event
       }));
     }
@@ -617,16 +617,33 @@ function validateScriptActionTarget(action, path, diagnostics, context) {
   }
 
   if (action.scope === "control") {
-    if (!SCRIPT_CONTROL_EVENTS.has(action.event)) {
-      diagnostics.push(error("dsl.scripts.control_event_invalid", "Control script actions support only onChange.", `${path}/event`, {
-        actual: action.event
-      }));
-    }
     const target = resolveScriptControlTarget(context.form, action);
     if (!target.ok) {
       diagnostics.push(error(`dsl.scripts.${target.code}`, target.message, `${path}/controlId`, {
         controlId: target.controlId,
         tableId: target.tableId
+      }));
+      return;
+    }
+
+    const support = resolveControlEventSupport(target, action.event);
+    if (support.status === "unsupported") {
+      diagnostics.push(error("dsl.scripts.control_event_unsupported", "Control script action event is not supported by the target MK component.", `${path}/event`, {
+        actual: action.event,
+        componentId: support.componentId,
+        supportedEvents: support.supportedEvents,
+        scope: support.scope,
+        reason: support.reason
+      }));
+    }
+    if (support.status === "unknown") {
+      const diagnostic = context.mode === "execute" ? error : warning;
+      diagnostics.push(diagnostic("dsl.scripts.control_event_unknown", "Control script action event support is not verified for the target MK component.", `${path}/event`, {
+        actual: action.event,
+        componentId: support.componentId,
+        supportedEvents: support.supportedEvents,
+        scope: support.scope,
+        reason: support.reason
       }));
     }
   }

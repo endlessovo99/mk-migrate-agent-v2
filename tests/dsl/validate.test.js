@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { validateMigrationDsl } from "../../src/dsl/schema.js";
-import { sampleDraftDsl, sampleTrustedDsl } from "../helpers/sample-dsl.js";
+import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("validateMigrationDsl", () => {
   it("accepts the sample trusted migration DSL", () => {
@@ -160,7 +160,7 @@ describe("validateMigrationDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.scripts.dom_api_forbidden"), true);
   });
 
-  it("accepts detail-table onChange scripts that use row-scoped MK style APIs", () => {
+  it("warns for detail-table onChange scripts until detail-column event support is verified", () => {
     const result = validateMigrationDsl(sampleTrustedDsl({
       workflow: undefined,
       scripts: {
@@ -177,10 +177,55 @@ describe("validateMigrationDsl", () => {
           functionMappings: []
         }]
       }
-    }), { mode: "execute" });
+    }), { mode: "any" });
 
     assert.equal(result.ok, true);
-    assert.deepEqual(result.diagnostics, []);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.control_event_unknown" && item.level === "warning"), true);
+  });
+
+  it("validates control script events against the MK control-events catalog", () => {
+    const accepted = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      form: selectForm(),
+      scripts: {
+        actions: [
+          mappedAction({ id: "fd_subject.onFocus", name: "onFocus", event: "onFocus", controlId: "fd_subject", function: "function onFocus() {\n  MKXFORM.setValue('fd_amount', 'focused')\n}" }),
+          mappedAction({ id: "fd_amount.onBlur", name: "onBlur", event: "onBlur", controlId: "fd_amount", function: "function onBlur() {\n  MKXFORM.setValue('fd_subject', 'blurred')\n}" }),
+          mappedAction({ id: "fd_select.onSelect", name: "onSelect", event: "onSelect", controlId: "fd_select", function: "function onSelect() {\n  MKXFORM.setValue('fd_subject', 'selected')\n}" }),
+          mappedAction({ id: "fd_select.onDelect", name: "onDelect", event: "onDelect", controlId: "fd_select", function: "function onDelect() {\n  MKXFORM.setValue('fd_subject', 'deleted')\n}" })
+        ]
+      }
+    }), { mode: "execute" });
+
+    const rejectedSubject = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      form: subjectForm(),
+      scripts: {
+        actions: [mappedAction({ id: "fd_subject.onChange", event: "onChange", controlId: "fd_subject" })]
+      }
+    }), { mode: "execute" });
+
+    const rejectedDetailUnknown = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({ id: "fd_detail.fd_name.onChange", tableId: "fd_detail", controlId: "fd_name" })]
+      }
+    }), { mode: "execute" });
+
+    const draftDetailUnknown = validateMigrationDsl(sampleDraftDsl({
+      scripts: {
+        actions: [mappedAction({ id: "fd_detail.fd_name.onChange", tableId: "fd_detail", controlId: "fd_name" })]
+      }
+    }), { mode: "draft" });
+
+    assert.equal(accepted.ok, true);
+    assert.deepEqual(accepted.diagnostics, []);
+    assert.equal(rejectedSubject.ok, false);
+    assert.equal(rejectedSubject.diagnostics.some((item) => item.code === "dsl.scripts.control_event_unsupported"), true);
+    assert.equal(rejectedDetailUnknown.ok, false);
+    assert.equal(rejectedDetailUnknown.diagnostics.some((item) => item.code === "dsl.scripts.control_event_unknown" && item.level === "error"), true);
+    assert.equal(draftDetailUnknown.ok, true);
+    assert.equal(draftDetailUnknown.diagnostics.some((item) => item.code === "dsl.scripts.control_event_unknown" && item.level === "warning"), true);
   });
 
   it("requires before-submit scripts to handle draft saves and return explicitly", () => {
@@ -388,4 +433,56 @@ function sampleParallelGatewayWorkflow() {
     ],
     topologicalOrder: ["N1", "N2", "N3", "N4", "N5"]
   };
+}
+
+function mappedAction(overrides = {}) {
+  const event = overrides.event || "onChange";
+  const name = overrides.name || event;
+  const fallbackFunction = overrides.tableId
+    ? `function ${name}(value, rowNum) {\n  MKXFORM.setValue('fd_amount', value)\n}`
+    : `function ${name}(value) {\n  MKXFORM.setValue('fd_amount', value)\n}`;
+  return {
+    id: overrides.id || `${overrides.controlId || "fd_subject"}.${event}`,
+    name,
+    event,
+    scope: "control",
+    controlId: overrides.controlId || "fd_subject",
+    tableId: overrides.tableId,
+    function: overrides.function || fallbackFunction,
+    translationStatus: "mapped",
+    coverage: { status: "none", nativeRules: [], residuals: [] },
+    functionMappings: []
+  };
+}
+
+function selectForm() {
+  const form = sampleForm();
+  form.fields.splice(2, 0, {
+    id: "fd_select",
+    title: "选项",
+    type: "singleSelect",
+    componentId: "xform-select",
+    props: {},
+    sourceProps: { designerType: "select" },
+    sourceRef: "source.form.control.fd_select"
+  });
+  form.layout.mkTree[0].children.push({
+    id: "layout.row-0-cell-2",
+    refType: "field",
+    refIds: ["fd_select"],
+    sourceRef: "source.form.layout.cell.row-0-cell-2",
+    column: 2,
+    colspan: 1
+  });
+  return form;
+}
+
+function subjectForm() {
+  const form = sampleForm();
+  form.fields[0] = {
+    ...form.fields[0],
+    componentId: "xform-subject",
+    sourceProps: { designerType: "subject" }
+  };
+  return form;
 }

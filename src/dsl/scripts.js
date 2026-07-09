@@ -1,6 +1,10 @@
-export const SCRIPT_EVENTS = new Set(["onLoad", "onBeforeSubmit", "onAfterSubmit", "onChange"]);
-export const SCRIPT_GLOBAL_EVENTS = new Set(["onLoad", "onBeforeSubmit", "onAfterSubmit"]);
-export const SCRIPT_CONTROL_EVENTS = new Set(["onChange"]);
+import { CONTROL_EVENTS_BY_COMPONENT, CONTROL_EVENTS_CATALOG } from "./catalogs.js";
+
+export const SCRIPT_EVENTS = new Set(Object.keys(CONTROL_EVENTS_CATALOG.events || {}));
+export const SCRIPT_GLOBAL_EVENTS = new Set(CONTROL_EVENTS_CATALOG.global?.events || []);
+export const SCRIPT_CONTROL_EVENTS = new Set(
+  [...CONTROL_EVENTS_BY_COMPONENT.values()].flatMap((component) => component.events || [])
+);
 export const SCRIPT_SCOPES = new Set(["global", "control"]);
 export const SCRIPT_TRANSLATION_STATUSES = new Set(["mapped", "needs_review", "manual", "omitted"]);
 
@@ -166,6 +170,97 @@ export function resolveScriptControlTarget(form = {}, action = {}) {
   };
 }
 
+export function resolveControlEventSupport(target, event) {
+  const componentId = target?.field?.componentId;
+  if (!componentId) {
+    return {
+      status: "unknown",
+      componentId,
+      event,
+      reason: "target componentId is missing"
+    };
+  }
+
+  const entry = CONTROL_EVENTS_BY_COMPONENT.get(componentId);
+  if (!entry) {
+    return {
+      status: "unknown",
+      componentId,
+      event,
+      reason: "component is not present in the control-events catalog"
+    };
+  }
+
+  if (target?.kind === "detail") {
+    if (entry.detailColumn === true) {
+      return eventSupported(entry, event, "detailColumn");
+    }
+    if (entry.detailColumn === false) {
+      return {
+        status: "unsupported",
+        componentId,
+        event,
+        scope: "detailColumn",
+        supportedEvents: entry.events || [],
+        reason: "component catalog marks detail-column control actions unsupported"
+      };
+    }
+    return {
+      status: "unknown",
+      componentId,
+      event,
+      scope: "detailColumn",
+      supportedEvents: entry.events || [],
+      reason: "detail-column event support has not been verified"
+    };
+  }
+
+  return eventSupported(entry, event, "field");
+}
+
+export function summarizeScriptActionSupport(actions = [], form = {}) {
+  const counts = { supported: 0, unsupported: 0, unknown: 0 };
+  const components = new Set();
+  const details = [];
+
+  for (const action of Array.isArray(actions) ? actions : []) {
+    if (action?.scope !== "control") continue;
+    const target = resolveScriptControlTarget(form, action);
+    if (!target.ok) {
+      counts.unknown += 1;
+      details.push({
+        id: action.id,
+        event: action.event || action.name,
+        status: "unknown",
+        reason: target.code,
+        controlId: action.controlId,
+        tableId: action.tableId
+      });
+      continue;
+    }
+    const support = resolveControlEventSupport(target, action.event || action.name);
+    counts[support.status] = (counts[support.status] || 0) + 1;
+    if (support.componentId) components.add(support.componentId);
+    details.push({
+      id: action.id,
+      event: action.event || action.name,
+      status: support.status,
+      componentId: support.componentId,
+      controlId: action.controlId,
+      tableId: action.tableId,
+      scope: support.scope,
+      reason: support.reason
+    });
+  }
+
+  return {
+    counts,
+    components: [...components],
+    detailActions: details.filter((item) => item.tableId).length,
+    details
+  };
+}
+
 export function analyzeScriptFunction(text = "") {
   const source = String(text || "");
   const masked = maskStringsAndComments(source);
@@ -210,6 +305,31 @@ export function scriptTargetApiSummary() {
   return {
     allowedPrefixes: ["MKXFORM."],
     allowedFunctions: [...ALLOWED_SCRIPT_TARGET_FUNCTIONS]
+  };
+}
+
+function eventSupported(entry, event, scope) {
+  const supportedEvents = entry.events || [];
+  if (supportedEvents.includes(event)) {
+    return {
+      status: "supported",
+      componentId: entry.componentId,
+      event,
+      scope,
+      supportedEvents,
+      evidence: entry.evidence
+    };
+  }
+  return {
+    status: entry.status === "unknown" ? "unknown" : "unsupported",
+    componentId: entry.componentId,
+    event,
+    scope,
+    supportedEvents,
+    evidence: entry.evidence,
+    reason: supportedEvents.length
+      ? "event is not listed for this component"
+      : "component has no supported control events"
   };
 }
 
