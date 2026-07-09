@@ -29,8 +29,17 @@ const targetCategoryId = args["target-category-id"] || process.env.NEWOA_TARGET_
 const executeFixtureId = args["execute-fixture"] || DEFAULT_FIXTURES.find((fixture) => fixture.mode === "execute").id;
 const partialActionLimit = positiveInteger(args["partial-action-limit"] || process.env.AGENT_REVIEW_PARTIAL_ACTION_LIMIT, 8);
 const reviewRetryCount = positiveInteger(args["review-retries"] || process.env.AGENT_REVIEW_LIVE_RETRIES, 2);
-const fixtures = DEFAULT_FIXTURES;
+const requestedFixtures = stringList(args.fixture || args.fixtures);
+const fixtures = requestedFixtures.length
+  ? DEFAULT_FIXTURES.filter((fixture) => requestedFixtures.includes(fixture.id))
+  : DEFAULT_FIXTURES;
 const summaries = [];
+
+if (requestedFixtures.length && fixtures.length !== requestedFixtures.length) {
+  const known = new Set(DEFAULT_FIXTURES.map((fixture) => fixture.id));
+  const unknown = requestedFixtures.filter((id) => !known.has(id));
+  throw new Error(`Unknown fixture id(s): ${unknown.join(", ")}`);
+}
 
 mkdirSync(outputDir, { recursive: true });
 
@@ -308,6 +317,14 @@ function partialActionRank(action, nativeRuleRefs) {
 function positiveInteger(value, fallback) {
   const parsed = Number.parseInt(value, 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function stringList(value) {
+  if (!value || value === true) return [];
+  return String(value)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function clone(value) {
