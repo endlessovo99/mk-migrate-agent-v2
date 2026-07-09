@@ -45,6 +45,12 @@
       "semantic": "Legacy DOM lookup or mutation.",
       "translationGuidance": "Do not emit DOM calls. Infer the business intent only if the surrounding code clearly maps to targetApi or native formRules.",
       "safeWhen": "The DOM usage is only incidental to value/visibility/required behavior that can be expressed by MKXFORM APIs."
+    },
+    {
+      "name": "legacy table validation helpers",
+      "semantic": "Template-local helper functions such as setXxxTableValidate/setXxxTableNoValidate often toggle required validation for a group of controls or a layout row when a business category is selected.",
+      "translationGuidance": "Do not translate helper names by string shape. Inspect the action-local call site, row markers, formRules, and detail-table fields. If native formRules already express the same visible/required effects, the helper may be coverage evidence; otherwise keep residual diagnostics or generate targetApi only when the full helper behavior is visible and safe.",
+      "safeWhen": "The helper's only business effect is visible/required state that is represented by native formRules or MKXFORM.setFieldAttr/setDetailFieldAttr, and row add/delete DOM hooks are not required for data correctness."
     }
   ],
   "targetApiCapabilities": [
@@ -69,6 +75,16 @@
       "notes": "Use for detail table field attributes when the target id is table.field or otherwise evidenced."
     },
     {
+      "name": "MKXFORM.updateControl",
+      "semantic": "Update a control value, including a row-scoped detail control when called with a table.field placeholder and rowNum.",
+      "notes": "Good fit for same-row hidden helper fields that carry business state."
+    },
+    {
+      "name": "MKXFORM.setDetailFieldItemAttr",
+      "semantic": "Set a single detail-row field item's attribute, such as required or not-required.",
+      "notes": "Use with rowNum when the legacy source toggles validate=required for one row's detail field."
+    },
+    {
       "name": "MKXFORM.updateControlStyle",
       "semantic": "Update detail-row control visual style.",
       "notes": "Use for row-scoped detail visibility when the action has rowNum and a resolved detail control target."
@@ -80,12 +96,20 @@
       "description": "If dslDraft.formRules.linkage with matching meta.sourceJsp fully covers the action behavior, patch function to empty string, translationStatus to omitted, functionMappings to native formRules evidence, and coverage.status to covered with residuals empty."
     },
     {
+      "id": "native-covered-action-closure",
+      "description": "If the draft script action already carries coverage.status=covered, non-empty coverage.nativeRules, and empty coverage.residuals, treat that as scoped native coverage evidence from deterministic fact extraction. Close the action as omitted/covered; do not re-open it because the same JSP file contains DOM helpers, validation helper definitions, or other callbacks."
+    },
+    {
       "id": "semantic-js-coverage",
       "description": "If targetApi JavaScript covers all source behavior, patch function, translationStatus mapped, functionMappings with semantic-translation/function-catalog/native-rule basis, and coverage.status translated with residuals empty."
     },
     {
       "id": "partial-diagnostic",
       "description": "If only part of the behavior is safe, do not patch to mapped. Leave needs_review/manual and emit diagnostics naming safe pieces and unresolved residuals."
+    },
+    {
+      "id": "action-local-residual-accounting",
+      "description": "Evaluate coverage against the action-local source excerpt first. Other helper definitions or other callbacks in the same JSP file are background evidence only; they become residuals for the current action only when the action-local source invokes them and their behavior is not covered by native formRules or targetApi JavaScript."
     }
   ],
   "forbiddenPatterns": [
@@ -147,13 +171,13 @@
     },
     {
       "id": "native-rule-already-covers",
-      "sourceBehavior": "Value-change callback toggles a row and matching dslDraft.formRules.linkage already covers all effects.",
+      "sourceBehavior": "Value-change callback toggles row visibility/required state, and the draft action already has coverage.status covered with nativeRules and no residuals.",
       "safePatchShape": {
         "function": "",
         "translationStatus": "omitted",
         "functionMappings": [
           {
-            "source": "legacy row visibility/required callback",
+            "source": "legacy JSP row visibility/required behavior",
             "target": "native formRules.linkage",
             "basis": "native-form-rule",
             "reviewRequired": false
@@ -164,7 +188,51 @@
           "nativeRules": ["linkage.<field>.<op>.<value>"],
           "residuals": []
         }
-      }
+      },
+      "residualGuidance": "Do not keep this action needs_review only because the same JSP source file or helper library contains DOM traversal or table validation helpers. The action's existing covered/no-residual coverage fact is the closure signal."
+    },
+    {
+      "id": "detail-row-visibility-onchange",
+      "sourceBehavior": "A detail-table onChange callback receives the changed purchase type and shows a same-row replacement-asset field only when the value is gh; the source also writes a same-row hidden helper value and toggles validate=required.",
+      "safePatchShape": {
+        "function": "function onChange(value, rowNum, parentRowNum) {\n  var showReplacementAsset = value === 'gh'\n  MKXFORM.updateControlStyle('${table:fd_detail}.fd_replacement_asset', rowNum, { display: showReplacementAsset ? 'block' : 'none' })\n}",
+        "translationStatus": "mapped",
+        "functionMappings": [
+          {
+            "source": "detail-row DOM display toggle",
+            "target": "detail column onChange + MKXFORM.updateControlStyle",
+            "basis": "semantic-translation",
+            "reviewRequired": false
+          }
+        ],
+        "coverage": {
+          "status": "translated",
+          "nativeRules": [],
+          "residuals": []
+        }
+      },
+      "strongerPatchShapeWhenHiddenAndRequiredArePresent": {
+        "function": "function onChange(value, rowNum, parentRowNum) {\n  var selectedValue = Array.isArray(value) ? value[0] : value\n  var isReplacement = selectedValue === 'gh'\n  var targetField = '${table:fd_detail}.fd_replacement_asset'\n  var hiddenField = '${table:fd_detail}.fd_isout_val'\n  MKXFORM.updateControl(hiddenField, rowNum, isReplacement ? 'true' : '')\n  MKXFORM.updateControlStyle(targetField, rowNum, { display: isReplacement ? 'block' : 'none' })\n  MKXFORM.setDetailFieldItemAttr(targetField, rowNum, isReplacement ? 3 : 6)\n}",
+        "functionMappings": [
+          {
+            "source": "detail-row DOM hidden value/display/required behavior",
+            "target": "MKXFORM.updateControl + MKXFORM.updateControlStyle + MKXFORM.setDetailFieldItemAttr",
+            "basis": "semantic-translation",
+            "reviewRequired": false
+          }
+        ],
+        "coverage": {
+          "status": "translated",
+          "nativeRules": [],
+          "residuals": []
+        }
+      },
+      "eventBindingGuidance": "If the DSL action already has event=onChange and matching tableId/controlId, legacy onclick/setAttribute/__xformDispatch code is event-binding scaffolding, not business residual."
+    },
+    {
+      "id": "complex-onload-with-residuals",
+      "sourceBehavior": "onLoad initializes visible/required row states but also walks inputs/images, rewrites add/delete onclick handlers, and calls validation helpers whose full effects are not visible or covered.",
+      "safeOutcome": "Do not patch the entire action to mapped. Either emit diagnostics or patch only if the action-local source plus formRules prove those DOM lifecycle effects are redundant and all business-visible behavior is covered."
     },
     {
       "id": "unsafe-dom-workaround",

@@ -193,7 +193,7 @@ function evaluateProviderReviewResult(sourceDraft, dslDraft, providerResult, met
       stage: "agent-review.dsl-validation",
       diagnostics: draftCheck.diagnostics,
       rawResponsePreview: providerResult.rawResponsePreview,
-      repairable: false
+      repairable: true
     });
   }
 

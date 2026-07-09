@@ -58,7 +58,7 @@ source .tmp/newoa.env
 npm run test:agent-review:live -- --target-category-id '<NewOA category fdId>'
 ```
 
-Default `npm test` is offline and uses fake review providers only. The live smoke is separate, uses the real provider, writes one `MK_TEST_...` draft template to NewOA SIT for the execute fixture, and writes sanitized artifacts under `.tmp/agent-review-live/`. The partial-translation fixture is reviewed as a script-only slice so the real Agent validates JSP-to-JS behavior without sending unrelated workflow payload.
+Default `npm test` is offline and uses fake review providers only. The live smoke is separate, uses the real provider, and writes sanitized artifacts under `.tmp/agent-review-live/`. Its default JSP fixtures validate layered Agent behavior without forcing unsafe NewOA writes: 19bb must map the detail-row behavior, omit native-covered row rules, and keep the complex onLoad blocked; 16add is reviewed as a script-only slice; 160de must produce useful diagnostics. A NewOA SIT write happens only when an execute fixture produces trusted DSL and a target category fdId is supplied.
 
 The AI reviewer returns JSON patches, not a complete DSL. First-version patches are limited to form field/detail-column `title`, `type`, `componentId`, and `props` paths plus existing `scripts.actions[]` `function`, `translationStatus`, `functionMappings`, and `coverage` paths. Generated MK JavaScript coverage is recorded as `coverage.status = "translated"`; review-grade target APIs require explicit `functionMappings` before execution. Workflow review is diagnostic-only: warning diagnostics may remain in trusted DSL, while error or blocked diagnostics prevent `migration.dsl.json` from being written.
 

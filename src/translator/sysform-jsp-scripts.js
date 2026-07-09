@@ -307,8 +307,12 @@ function extractDetailControlDisplayCandidates(source) {
       triggerControlId: parts.trigger.controlId,
       targetControlId: parts.target.controlId,
       hiddenControlId: parts.hiddenControlId,
-      targetApiCandidates: ["MKXFORM.updateControlStyle"],
-      evidence: "Legacy DOM display toggle appears to show/hide a detail-row control from a same-row purchase type value."
+      targetApiCandidates: [
+        "MKXFORM.updateControl",
+        "MKXFORM.updateControlStyle",
+        "MKXFORM.setDetailFieldItemAttr"
+      ],
+      evidence: "Legacy DOM display toggle appears to write same-row hidden state, show/hide a detail-row control, and toggle required validation from a same-row purchase type value."
     }]
   }];
 }
@@ -394,7 +398,12 @@ function extractWindowLoadCandidates(source) {
           triggerControlId: detailDisplay.trigger.controlId,
           targetControlId: detailDisplay.target.controlId,
           hiddenControlId: detailDisplay.hiddenControlId,
-          targetApiCandidates: ["MKXFORM.getValue", "MKXFORM.updateControlStyle"],
+          targetApiCandidates: [
+            "MKXFORM.getValue",
+            "MKXFORM.updateControl",
+            "MKXFORM.updateControlStyle",
+            "MKXFORM.setDetailFieldItemAttr"
+          ],
           evidence: "Legacy window-load code initializes same-row detail control display from existing row values."
         }]
       } : {})

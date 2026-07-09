@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { runAgentReview } from "../src/agent-review/index.js";
 import { executeDsl } from "../src/executor/execute.js";
@@ -8,8 +8,8 @@ import { cleanSourceFile, draftSourceDraft } from "../src/translator/index.js";
 const DEFAULT_FIXTURES = [
   {
     id: "19bb55286bd93a6081a33e44c3791374",
-    mode: "execute",
-    description: "trusted DSL plus NewOA SIT write"
+    mode: "layered-translation",
+    description: "real Agent should map detail-row behavior, omit native-covered row rules, and keep complex onLoad blocked"
   },
   {
     id: "16add0fe7fea9a568c7f4514527a7829",
@@ -26,7 +26,7 @@ const DEFAULT_FIXTURES = [
 const args = parseArgs(process.argv.slice(2));
 const outputDir = args["out-dir"] || ".tmp/agent-review-live";
 const targetCategoryId = args["target-category-id"] || process.env.NEWOA_TARGET_CATEGORY_ID || "";
-const executeFixtureId = args["execute-fixture"] || DEFAULT_FIXTURES.find((fixture) => fixture.mode === "execute").id;
+const executeFixtureId = args["execute-fixture"] || DEFAULT_FIXTURES.find((fixture) => fixture.mode === "execute")?.id || "";
 const partialActionLimit = positiveInteger(args["partial-action-limit"] || process.env.AGENT_REVIEW_PARTIAL_ACTION_LIMIT, 8);
 const reviewRetryCount = positiveInteger(args["review-retries"] || process.env.AGENT_REVIEW_LIVE_RETRIES, 2);
 const requestedFixtures = stringList(args.fixture || args.fixtures);
@@ -47,6 +47,7 @@ for (const fixture of fixtures) {
   const sourcePath = `tests/fixtures/source/${fixture.id}`;
   const fixtureDir = join(outputDir, fixture.id);
   mkdirSync(fixtureDir, { recursive: true });
+  clearFixtureOutputs(fixtureDir);
 
   const sourceDraft = cleanSourceFile(sourcePath);
   const dslDraft = draftSourceDraft(sourceDraft);
@@ -124,6 +125,23 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function clearFixtureOutputs(fixtureDir) {
+  for (const fileName of [
+    "source-draft.json",
+    "dsl-draft.json",
+    "review-source-draft.json",
+    "review-dsl-draft.json",
+    "review-slice.json",
+    "agent-review.report.json",
+    "migration.dsl.json",
+    "reviewed-dsl-draft.json",
+    "execute.report.json",
+    "summary.json"
+  ]) {
+    rmSync(join(fixtureDir, fileName), { force: true });
+  }
+}
+
 function printJson(value) {
   console.log(JSON.stringify(value, null, 2));
 }
@@ -176,6 +194,50 @@ function evaluateCriteria(fixture, context) {
     return improved
       ? { ok: true, reason: resolvedImproved ? "real Agent increased translated or native-covered script actions" : "real Agent produced partial JSP coverage progress" }
       : { ok: false, reason: "real Agent did not improve JSP script coverage" };
+  }
+
+  if (fixture.mode === "layered-translation") {
+    if (["agent-review.network", "agent-review.env", "agent-review.input"].includes(result.report?.stage)) {
+      return { ok: false, reason: `real Agent failed before usable review output at ${result.report?.stage}` };
+    }
+    const reviewedDsl = result.ok ? result.dsl : result.dslDraft;
+    const actions = Array.isArray(reviewedDsl?.scripts?.actions) ? reviewedDsl.scripts.actions : [];
+    const detailAction = actions[0];
+    const nativeContentAction = actions[1];
+    const nativeBudgetAction = actions[2];
+    const onLoadAction = actions[3];
+    const detailMapped = detailAction?.translationStatus === "mapped" &&
+      detailAction?.coverage?.status === "translated";
+    const nativeClosed = [nativeContentAction, nativeBudgetAction].every((action) =>
+      action?.translationStatus === "omitted" &&
+      action?.coverage?.status === "covered" &&
+      Array.isArray(action.coverage.nativeRules) &&
+      action.coverage.nativeRules.length > 0 &&
+      Array.isArray(action.coverage.residuals) &&
+      action.coverage.residuals.length === 0 &&
+      action.function === ""
+    );
+    const onLoadStillBlocked = onLoadAction?.event === "onLoad" &&
+      onLoadAction?.translationStatus === "needs_review" &&
+      onLoadAction?.coverage?.status === "uncovered";
+    if (detailMapped && nativeClosed && onLoadStillBlocked) {
+      return { ok: true, reason: "real Agent mapped action 0, closed actions 1/2 as native-covered, and kept complex onLoad blocked" };
+    }
+    return {
+      ok: false,
+      reason: "real Agent did not preserve the expected layered JSP translation outcome",
+      details: {
+        detailMapped,
+        nativeClosed,
+        onLoadStillBlocked,
+        statuses: actions.map((action, index) => ({
+          index,
+          event: action.event,
+          translationStatus: action.translationStatus,
+          coverageStatus: action.coverage?.status
+        }))
+      }
+    };
   }
 
   if (fixture.mode === "diagnostic") {

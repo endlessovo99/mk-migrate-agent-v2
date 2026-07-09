@@ -79,8 +79,8 @@ npm test
 The live smoke is separate and expects env to already be present:
 
 ```bash
-source .temp/newoa.env
+source .tmp/newoa.env
 npm run test:agent-review:live
 ```
 
-The smoke does not source `.temp/newoa.env` by itself. With env present, it calls the real `/v1/responses` endpoint, writes artifacts under `.tmp/agent-review-live/`, and validates whether the provider produced a trusted DSL or a clear blocked report.
+The smoke does not source `.tmp/newoa.env` by itself. With env present, it calls the real `/v1/responses` endpoint, writes artifacts under `.tmp/agent-review-live/`, and validates whether the provider produced the expected layered JSP review outcome or a clear blocked report. NewOA SIT writes are attempted only for fixtures configured in `execute` mode that produce trusted DSL and have a target category fdId.

@@ -173,8 +173,13 @@ describe("validateMigrationDsl", () => {
           scope: "global",
           function: "function onAfterSubmit() {\n  MKXFORM.setValue('fd_subject', 'done')\n}",
           translationStatus: "mapped",
-          coverage: { status: "none", nativeRules: [], residuals: [] },
-          functionMappings: []
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "SetXFormFieldValueById",
+            target: "MKXFORM.setValue",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
         }]
       }
     }), { mode: "execute" });
@@ -189,8 +194,13 @@ describe("validateMigrationDsl", () => {
           controlId: "fd_subject",
           function: "function onChange(value) {\n  document.getElementById('fd_subject').value = value\n}",
           translationStatus: "mapped",
-          coverage: { status: "none", nativeRules: [], residuals: [] },
-          functionMappings: []
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "DOM value assignment",
+            target: "blocked DOM usage",
+            basis: "semantic-translation",
+            reviewRequired: true
+          }]
         }]
       }
     }), { mode: "execute" });
@@ -213,8 +223,13 @@ describe("validateMigrationDsl", () => {
           controlId: "fd_name",
           function: "function onChange(value, rowNum, parentRowNum) {\n  MKXFORM.updateControlStyle(\"${table:fd_detail}.fd_name\", rowNum, { display: value === \"gh\" ? \"block\" : \"none\" })\n}",
           translationStatus: "mapped",
-          coverage: { status: "none", nativeRules: [], residuals: [] },
-          functionMappings: []
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "detail-row DOM display toggle",
+            target: "MKXFORM.updateControlStyle",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
         }]
       }
     }), { mode: "any" });
@@ -314,6 +329,25 @@ describe("validateMigrationDsl", () => {
     );
   });
 
+  it("requires coverage and mapping evidence for every mapped script", () => {
+    const result = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.safe_api_without_evidence",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  MKXFORM.setValue('fd_amount', value)\n}",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: []
+        })]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.mapped_coverage_status_invalid"), true);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.mapped_function_mappings_required"), true);
+  });
+
   it("requires translated coverage and mappings for review-grade target APIs", () => {
     const accepted = validateMigrationDsl(sampleTrustedDsl({
       workflow: undefined,
@@ -348,7 +382,14 @@ describe("validateMigrationDsl", () => {
     assert.equal(accepted.ok, true);
     assert.deepEqual(accepted.diagnostics, []);
     assert.equal(rejected.ok, false);
-    assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.scripts.review_target_api_evidence_required"), true);
+    assert.equal(
+      rejected.diagnostics.some((item) =>
+        item.code === "dsl.scripts.review_target_api_evidence_required" ||
+        item.code === "dsl.scripts.mapped_function_mappings_required" ||
+        item.code === "dsl.scripts.mapped_coverage_status_invalid"
+      ),
+      true
+    );
   });
 
   it("rejects blocked and unknown MKXFORM target APIs in mapped scripts", () => {
@@ -390,8 +431,13 @@ describe("validateMigrationDsl", () => {
           scope: "global",
           function: "function onBeforeSubmit(context) {\n  MKXFORM.validateFields()\n}",
           translationStatus: "mapped",
-          coverage: { status: "none", nativeRules: [], residuals: [] },
-          functionMappings: []
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "before submit validation",
+            target: "MKXFORM.validateFields",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
         }]
       }
     }), { mode: "execute" });
@@ -641,8 +687,13 @@ function mappedAction(overrides = {}) {
     tableId: overrides.tableId,
     function: overrides.function || fallbackFunction,
     translationStatus: "mapped",
-    coverage: overrides.coverage || { status: "none", nativeRules: [], residuals: [] },
-    functionMappings: overrides.functionMappings || []
+    coverage: overrides.coverage || { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: overrides.functionMappings || [{
+      source: "legacy script behavior",
+      target: "MKXFORM.setValue",
+      basis: "semantic-translation",
+      reviewRequired: false
+    }]
   };
 }
 

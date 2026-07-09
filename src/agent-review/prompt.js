@@ -41,6 +41,10 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       "Script patches require confidence >= 0.85 and must preserve the deterministic action boundary. Do not create, delete, or retarget script actions.",
       "Translate JSP scripts semantically using jspTranslationPlaybook, functionCatalog, source evidence, formRules evidence, and targetApi. Pattern matching is evidence extraction only, not the translation authority.",
       "Trusted mapped scripts must not use document/window DOM APIs.",
+      "Use dslDraft.scripts.actions[].actionSource as the action-local JSP excerpt. Treat sourceDraft.scripts.sources[].javascriptWindows as background context; do not charge helper definitions or other callbacks to a specific action unless the action-local excerpt invokes them and their behavior is not otherwise covered.",
+      "Use reviewOpportunities only as evidence scaffolding. They are not deterministic translation results; accept them only when action-local source, formRules, targetApi, and playbook coverage standards agree.",
+      "Native-covered closure rule: when a script action already has coverage.status=\"covered\", coverage.nativeRules is non-empty, and coverage.residuals is empty, close that action as native-covered omitted. Patch function:\"\", translationStatus:\"omitted\", functionMappings to native-form-rule evidence, and preserve the existing covered coverage/nativeRules/residuals. Do not invent residuals from DOM/helper noise for these already-covered actions.",
+      "For detail-row visibility candidates, legacy onclick/setAttribute/__xformDispatch snippets are event-binding scaffolding when the DSL action already has event=onChange and matching tableId/controlId. Do not treat that scaffolding as residual; translate the action-local business function body instead.",
       "Use sourceDraft.scripts.sources[].javascriptWindows as layered source excerpts. When javascriptLength exceeds the excerpt length, do not assume the excerpt is the complete source.",
       "Non-whitelisted EKP functions are not automatically blocking. First infer their intent from source evidence and surrounding script context, then translate safely to targetApi JavaScript when confidence is high.",
       "If a non-whitelisted function cannot be safely inferred, leave the action needs_review or manual and explain the unresolved function in diagnostics.",
@@ -167,7 +171,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       dslDraft: {
         form: dslFormSummary(dslDraft?.form),
         formRules: formRulesSummary(dslDraft?.formRules),
-        scripts: scriptActionReviewSummary(dslDraft?.scripts),
+        scripts: scriptActionReviewSummary(dslDraft?.scripts, dslDraft?.formRules),
         review: {
           warnings: dslDraft?.review?.warnings || [],
           reviewCandidates: dslDraft?.review?.reviewCandidates || []
@@ -545,7 +549,7 @@ function focusedSourceRefsForScripts(scripts = {}) {
   return refs;
 }
 
-function scriptActionReviewSummary(scripts = {}) {
+function scriptActionReviewSummary(scripts = {}, formRules = {}) {
   const actions = Array.isArray(scripts?.actions) ? scripts.actions : [];
   const focusedIndexes = new Set(
     actions
@@ -574,11 +578,190 @@ function scriptActionReviewSummary(scripts = {}) {
         coverage: coverageSummary(action.coverage, focused ? 4 : 0),
         functionMappings: functionMappingSummary(action.functionMappings, focused ? 8 : 0),
         semanticHints: action.semanticHints,
+        reviewOpportunities: focused ? reviewOpportunitiesForAction(action, formRules, index) : undefined,
+        actionSource: focused ? actionSourceSummary(action, 6200) : actionSourceSummary(action, 520),
         unmappedFunctions: focused ? action.unmappedFunctions : undefined,
         functionLength: String(action.function || "").length,
         functionPreview: previewText(action.function, focused ? 2200 : 180)
       };
     })
+  });
+}
+
+function actionSourceSummary(action = {}, limit = 1200) {
+  const source = legacySourceFromGeneratedFunction(action.function);
+  if (!source) return undefined;
+  return pruneUndefined({
+    excerptLength: Math.min(source.length, limit),
+    originalLength: source.length,
+    truncated: source.length > limit,
+    excerpt: previewText(source, limit),
+    fieldIds: uniqueStrings([...source.matchAll(/\bfd_[A-Za-z0-9_]+\b/g)].map((match) => match[0])).slice(0, 32),
+    rowMarkers: rowMarkersFromText(source).slice(0, 32),
+    legacyCalls: legacyCallsFromText(source).slice(0, 16)
+  });
+}
+
+function legacySourceFromGeneratedFunction(functionText = "") {
+  const text = String(functionText || "");
+  const marker = "Source JSP JavaScript:";
+  const markerIndex = text.indexOf(marker);
+  if (markerIndex < 0) return "";
+  return text
+    .slice(markerIndex + marker.length)
+    .split("\n")
+    .map((line) => {
+      const match = line.match(/^\s*\/\/ ?(.*)$/);
+      return match ? match[1] : "";
+    })
+    .join("\n")
+    .trim();
+}
+
+function rowMarkersFromText(text = "") {
+  const markers = [];
+  const pattern = /common_dom_row_set_show_required_reset\(\s*(["'])([^"']+)\1\s*,\s*(true|false)\s*,\s*(true|false)\s*,\s*(true|false)\s*\)/g;
+  for (const match of String(text || "").matchAll(pattern)) {
+    markers.push({
+      rowId: match[2],
+      visible: match[3] === "true",
+      required: match[4] === "true",
+      reset: match[5] === "true",
+      evidence: oneLine(match[0])
+    });
+  }
+  return markers;
+}
+
+function legacyCallsFromText(text = "") {
+  const names = [
+    "AttachXFormValueChangeEventById",
+    "Com_AddEventListener",
+    "GetXFormFieldById",
+    "GetXFormFieldValueById",
+    "SetXFormFieldValueById",
+    "common_dom_row_set_show_required_reset",
+    "document.getElementById",
+    "document.getElementsByName",
+    "document.getElementsByTagName"
+  ];
+  return names
+    .map((name) => ({
+      name,
+      occurrenceCount: countOccurrences(text, name),
+      firstSnippet: snippetAround(text, String(text || "").indexOf(name), 180)
+    }))
+    .filter((item) => item.occurrenceCount > 0);
+}
+
+function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex) {
+  const opportunities = [];
+  const coverage = action.coverage || {};
+  const residuals = Array.isArray(coverage.residuals) ? coverage.residuals : [];
+  if (coverage.status === "covered" && Array.isArray(coverage.nativeRules) && coverage.nativeRules.length && residuals.length === 0) {
+    opportunities.push({
+      kind: "native_coverage_candidate",
+      actionIndex,
+      candidatePatchPaths: [
+        `/scripts/actions/${actionIndex}/function`,
+        `/scripts/actions/${actionIndex}/translationStatus`,
+        `/scripts/actions/${actionIndex}/functionMappings`,
+        `/scripts/actions/${actionIndex}/coverage`
+      ],
+      nativeRules: nativeRuleSummaries(formRules, coverage.nativeRules),
+      requiredDecision: "Patch this action to omitted/native-covered. The draft coverage fact already says native formRules fully cover this action: status=covered, nativeRules non-empty, residuals empty.",
+      requiredPatchShape: {
+        function: "",
+        translationStatus: "omitted",
+        functionMappings: [{
+          source: "legacy JSP row visibility/required behavior",
+          target: "native formRules.linkage",
+          basis: "native-form-rule",
+          reviewRequired: false
+        }],
+        coverage: {
+          status: "covered",
+          nativeRules: coverage.nativeRules,
+          residuals: []
+        }
+      },
+      residualPolicy: "Do not keep this action needs_review because of DOM/helper calls in the same JSP source file or callback scaffolding. Only actions whose coverage is partial/uncovered/none need new residual adjudication."
+    });
+  }
+
+  for (const hint of action.semanticHints || []) {
+    if (hint.kind === "detail_row_visibility") {
+      opportunities.push({
+        kind: "detail_row_visibility_candidate",
+        actionIndex,
+        targetApis: hint.targetApiCandidates || ["MKXFORM.updateControl", "MKXFORM.updateControlStyle", "MKXFORM.setDetailFieldItemAttr"],
+        tableId: hint.triggerTableId,
+        triggerControlId: hint.triggerControlId,
+        targetControlId: hint.targetControlId,
+        hiddenControlId: hint.hiddenControlId,
+        requiredBusinessSemantics: [
+          "Normalize the onChange value and compare it with the legacy trigger value gh.",
+          "Write same-row hidden helper state when hiddenControlId is present.",
+          "Show/hide the same-row targetControlId.",
+          "Set required/not-required state for the same-row targetControlId when the source validate attribute toggles required."
+        ],
+        eventScaffoldingPolicy: "Ignore legacy onclick/setAttribute/__xformDispatch event-binding scaffolding after verifying the DSL action already preserves event=onChange, tableId, and controlId.",
+        safeDecision: "If the complete action-local business function body is visible, map to onChange(value,rowNum,parentRowNum), use ${table:<tableId>}.<controlId> placeholders, and cover hidden state, display, and required-state semantics with targetApi.",
+        suggestedPatchShape: {
+          function: `function onChange(value, rowNum, parentRowNum) {
+  var selectedValue = Array.isArray(value) ? value[0] : value
+  var isReplacement = selectedValue === 'gh'
+  var targetField = '\${table:${hint.triggerTableId || "fd_detail"}}.${hint.targetControlId || "fd_target"}'
+  var hiddenField = '\${table:${hint.triggerTableId || "fd_detail"}}.${hint.hiddenControlId || "fd_hidden"}'
+  MKXFORM.updateControl(hiddenField, rowNum, isReplacement ? 'true' : '')
+  MKXFORM.updateControlStyle(targetField, rowNum, { display: isReplacement ? 'block' : 'none' })
+  MKXFORM.setDetailFieldItemAttr(targetField, rowNum, isReplacement ? 3 : 6)
+}`,
+          translationStatus: "mapped",
+          functionMappings: [{
+            source: "detail-row DOM hidden value/display/required behavior",
+            target: "MKXFORM.updateControl + MKXFORM.updateControlStyle + MKXFORM.setDetailFieldItemAttr",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }],
+          coverage: { status: "translated", nativeRules: [], residuals: [] }
+        },
+        coverageDecision: "Use coverage.status translated with empty residuals when hidden helper write, display toggle, and required toggle are represented with targetApi; do not add residuals for event-binding scaffolding already represented by the DSL action boundary."
+      });
+    }
+    if (hint.kind === "detail_row_load_initialization") {
+      opportunities.push({
+        kind: "detail_row_load_initialization_candidate",
+        actionIndex,
+        targetApis: hint.targetApiCandidates || ["MKXFORM.getValue", "MKXFORM.updateControlStyle"],
+        tableId: hint.triggerTableId,
+        triggerControlId: hint.triggerControlId,
+        targetControlId: hint.targetControlId,
+        hiddenControlId: hint.hiddenControlId,
+        safeDecision: "If the action-local onLoad source is fully understood, initialize row marker visibility/required state with MKXFORM.setFieldAttr and initialize detail-row target visibility by reading MKXFORM.getValue('${table:<tableId>}') and using rowNum in MKXFORM.updateControlStyle.",
+        unsafeDecision: "Keep needs_review when the onLoad body includes DOM lifecycle, row add/delete hooks, validation routines, or selected-value reconstruction that cannot be fully expressed with targetApi and native formRules."
+      });
+    }
+  }
+
+  return opportunities.length ? opportunities : undefined;
+}
+
+function nativeRuleSummaries(formRules = {}, ruleIds = []) {
+  const rules = Array.isArray(formRules?.linkage) ? formRules.linkage : [];
+  const byId = new Map(rules.map((rule) => [rule.id, rule]));
+  return ruleIds.map((id) => {
+    const rule = byId.get(id);
+    return pruneUndefined({
+      id,
+      trigger: rule?.trigger,
+      source: rule?.source,
+      when: rule?.when,
+      effects: rule?.effects,
+      else: rule?.else,
+      translationStatus: rule?.translationStatus,
+      meta: rule?.meta
+    });
   });
 }
 
@@ -655,6 +838,33 @@ function pushWindow(windows, text, label, start, end) {
     end: normalizedEnd,
     text: text.slice(normalizedStart, normalizedEnd)
   });
+}
+
+function countOccurrences(text = "", needle = "") {
+  if (!needle) return 0;
+  let count = 0;
+  let cursor = 0;
+  const source = String(text || "");
+  while (true) {
+    const index = source.indexOf(needle, cursor);
+    if (index < 0) return count;
+    count += 1;
+    cursor = index + needle.length;
+  }
+}
+
+function snippetAround(text = "", index = 0, radius = 160) {
+  if (!Number.isInteger(index) || index < 0) return undefined;
+  const source = String(text || "");
+  return oneLine(source.slice(Math.max(0, index - radius), Math.min(source.length, index + radius)));
+}
+
+function uniqueStrings(values = []) {
+  return [...new Set(values.filter((value) => typeof value === "string" && value.trim()))];
+}
+
+function oneLine(value = "") {
+  return String(value || "").replace(/\s+/g, " ").trim();
 }
 
 function compactFunctionAudit(functionAudit = {}) {

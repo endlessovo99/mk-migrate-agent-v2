@@ -39,7 +39,14 @@ describe("buildDryRunPlan", () => {
           event: "onLoad",
           scope: "global",
           function: "function onLoad(context) {}",
-          translationStatus: "mapped"
+          translationStatus: "mapped",
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "window load",
+            target: "onLoad",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
         }]
       }
     }));
@@ -64,8 +71,13 @@ describe("buildDryRunPlan", () => {
           controlId: "fd_subject",
           function: "function onFocus() {\n  MKXFORM.setValue('fd_amount', 'focused')\n}",
           translationStatus: "mapped",
-          coverage: { status: "none", nativeRules: [], residuals: [] },
-          functionMappings: []
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "focus behavior",
+            target: "MKXFORM.setValue",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
         }]
       }
     }));

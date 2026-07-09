@@ -1073,6 +1073,7 @@ describe("executeDsl", () => {
           scope: "global",
           function: "function onLoad(context) {\n  var value = MKXFORM.getValue('fd_subject')\n}",
           translationStatus: "mapped",
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
           sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
           functionMappings: [{
             source: "GetXFormFieldValueById",
@@ -1106,7 +1107,7 @@ describe("executeDsl", () => {
           controlId: "fd_amount",
           function: "function onChange(value) {\n  MKXFORM.setValue('fd_subject', String(value || ''))\n}",
           translationStatus: "mapped",
-          coverage: { status: "none", nativeRules: [], residuals: [] },
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
           functionMappings: [{
             source: "AttachXFormValueChangeEventById",
             target: "control onChange",
@@ -1144,7 +1145,7 @@ describe("executeDsl", () => {
           controlId: "fd_name",
           function: "function onChange(value, rowNum, parentRowNum) {\n  MKXFORM.updateControlStyle(\"${table:fd_detail}.fd_name\", rowNum, { display: value === \"gh\" ? \"block\" : \"none\" })\n}",
           translationStatus: "mapped",
-          coverage: { status: "none", nativeRules: [], residuals: [] },
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
           functionMappings: [{
             source: "detail-row DOM display toggle",
             target: "detail column onChange + MKXFORM.updateControlStyle",
@@ -1182,8 +1183,13 @@ describe("executeDsl", () => {
           scope: "global",
           function: "function onLoad() {\n  var rows = MKXFORM.getValue(\"${table:fd_detail}\") || []\n  console.log(rows.length)\n}",
           translationStatus: "mapped",
-          coverage: { status: "none", nativeRules: [], residuals: [] },
-          functionMappings: []
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "detail table load inspection",
+            target: "MKXFORM.getValue",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
         }]
       }
     });

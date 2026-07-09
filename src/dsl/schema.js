@@ -596,7 +596,8 @@ function validateScripts(scripts, diagnostics, context) {
         actual: action.translationStatus
       }));
     }
-    if (action.translationStatus === "mapped" && Array.isArray(action.coverage?.residuals) && action.coverage.residuals.length) {
+    const coverageResiduals = Array.isArray(action.coverage?.residuals) ? action.coverage.residuals : [];
+    if (action.translationStatus === "mapped" && coverageResiduals.length) {
       diagnostics.push(error("dsl.scripts.mapped_with_residuals", "Mapped script actions cannot retain untranslated coverage residuals.", `${path}/coverage/residuals`));
     }
     if (action.coverage?.status !== undefined && !SCRIPT_COVERAGE_STATUSES.has(action.coverage.status)) {
@@ -604,10 +605,13 @@ function validateScripts(scripts, diagnostics, context) {
         actual: action.coverage.status
       }));
     }
-    if (action.translationStatus === "mapped" && ["partial", "uncovered"].includes(action.coverage?.status)) {
-      diagnostics.push(error("dsl.scripts.mapped_coverage_status_invalid", "Mapped script actions must mark uncovered source behavior as translated or covered before execution.", `${path}/coverage/status`, {
+    if (action.translationStatus === "mapped" && !["translated", "covered"].includes(action.coverage?.status)) {
+      diagnostics.push(error("dsl.scripts.mapped_coverage_status_invalid", "Mapped script actions must mark source behavior as translated or covered before execution.", `${path}/coverage/status`, {
         actual: action.coverage?.status
       }));
+    }
+    if (action.translationStatus === "mapped" && (!Array.isArray(action.functionMappings) || action.functionMappings.length === 0)) {
+      diagnostics.push(error("dsl.scripts.mapped_function_mappings_required", "Mapped script actions must record at least one functionMappings[] evidence entry.", `${path}/functionMappings`));
     }
     if (action.translationStatus === "omitted" && action.coverage?.status !== "covered") {
       diagnostics.push(error("dsl.scripts.omitted_not_covered", "Omitted script actions must be fully covered by native formRules.", `${path}/coverage/status`, {
