@@ -10,10 +10,14 @@ export function extractSysFormJspScripts(template = {}, options = {}) {
   const displayScriptSources = designerScriptSources.length
     ? []
     : extractDisplayJspScripts(template.fdDisplayJsp || "");
-  const sources = [...designerScriptSources, ...displayScriptSources].map((source) => ({
-    ...source,
-    functionAudit: auditFunctionWhitelist(source.javascript, whitelist, { path: source.sourceRef })
-  }));
+  const sources = [...designerScriptSources, ...displayScriptSources].map((source) => {
+    const functionAudit = auditFunctionWhitelist(source.javascript, whitelist, { path: source.sourceRef });
+    return {
+      ...source,
+      functionAudit,
+      semanticFacts: extractLegacyScriptSemanticFacts(source.javascript, functionAudit)
+    };
+  });
 
   if (!designerFragments.length && !sources.length && !template.fdDisplayJsp) return undefined;
 
@@ -44,7 +48,7 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
       warnings.push(target);
       return;
     }
-    actions.push(omitCoveredHiddenHelperAction(action, candidate, options));
+    actions.push(action);
   });
   return {
     source: sourceScripts.source || "sysform-jsp",
@@ -52,78 +56,6 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
     warnings,
     javascript: actions.map((action) => action.function).filter(Boolean).join("\n\n")
   };
-}
-
-function omitCoveredHiddenHelperAction(action, candidate, options = {}) {
-  const nativeRules = coveredNativeRules(action, candidate, options);
-  if (!nativeRules.length) return action;
-
-  return {
-    ...action,
-    function: "",
-    translationStatus: "omitted",
-    coverage: {
-      status: "covered",
-      nativeRules,
-      residuals: []
-    },
-    functionMappings: [
-      ...(action.functionMappings || []),
-      {
-        source: "legacy hidden helper row script",
-        target: "native formRules.linkage",
-        description: "Visible/required row behavior is represented by native formRules; hidden helper field state is not generated in MK.",
-        basis: "deterministic-pattern",
-        reviewRequired: false
-      }
-    ]
-  };
-}
-
-function coveredNativeRules(action, candidate, options = {}) {
-  const residuals = action.coverage?.residuals || [];
-  if (!residuals.length) return [];
-
-  if (
-    action.coverage?.nativeRules?.length &&
-    residuals.every((residual) => residual.type === "fieldValueAssignment" && !formHasField(options.form, residual.target))
-  ) {
-    return action.coverage.nativeRules;
-  }
-
-  if (
-    action.event === "onLoad" &&
-    residuals.every((residual) => residual.type === "windowLoadListener")
-  ) {
-    const helperIds = fieldIdsFromLegacyScript(candidate.javascript);
-    const rowTargets = rowTargetsFromLegacyRowReset(candidate.javascript);
-    if (!helperIds.length || !rowTargets.length) return [];
-    if (helperIds.some((id) => formHasField(options.form, id))) return [];
-    return nativeRulesCoveringRows(options.formRules, rowTargets);
-  }
-
-  return [];
-}
-
-function fieldIdsFromLegacyScript(text = "") {
-  return [...String(text || "").matchAll(/GetXFormFieldById\(\s*(["'])([^"']+)\1\s*\)/g)]
-    .map((match) => match[2]);
-}
-
-function rowTargetsFromLegacyRowReset(text = "") {
-  return [...String(text || "").matchAll(/common_dom_row_set_show_required_reset\(\s*(["'])([^"']+)\1/g)]
-    .map((match) => match[2]);
-}
-
-function nativeRulesCoveringRows(formRules = {}, rowTargets = []) {
-  const matchingRules = (formRules.linkage || []).filter((rule) => {
-    const effectTargets = [
-      ...(rule.effects || []),
-      ...(rule.else || [])
-    ].map((effect) => effect.target);
-    return rowTargets.every((target) => effectTargets.includes(target));
-  });
-  return matchingRules.length ? matchingRules.map((rule) => rule.id) : [];
 }
 
 function scriptTargetWarning(action, form) {
@@ -140,13 +72,72 @@ function scriptTargetWarning(action, form) {
   };
 }
 
-function formHasField(form = {}, fieldId) {
-  if (!fieldId) return false;
-  for (const field of form.fields || []) {
-    if (field.id === fieldId) return true;
-    if ((field.columns || []).some((column) => column.id === fieldId)) return true;
+function extractLegacyScriptSemanticFacts(javascript = "", functionAudit = {}) {
+  const text = String(javascript || "");
+  return pruneUndefined({
+    legacyFunctionCalls: legacyFunctionCallsFromAudit(functionAudit),
+    fieldIds: uniqueStrings([...text.matchAll(/\bfd_[A-Za-z0-9_]+\b/g)].map((match) => match[0])),
+    rowMarkers: rowMarkersFromLegacyScript(text),
+    eventBindings: eventBindingsFromLegacyScript(text)
+  });
+}
+
+function legacyFunctionCallsFromAudit(functionAudit = {}) {
+  return [...(functionAudit.matched || []), ...(functionAudit.violations || [])]
+    .map((item) => {
+      const occurrences = Array.isArray(item.occurrences) ? item.occurrences : [];
+      return pruneUndefined({
+        name: item.name,
+        intent: item.intent,
+        translationKind: item.translationKind,
+        safety: item.safety,
+        targetApis: item.targetApis,
+        occurrenceCount: occurrences.length,
+        firstIndex: occurrences[0]?.index,
+        firstSnippet: occurrences[0]?.snippet
+      });
+    });
+}
+
+function rowMarkersFromLegacyScript(text = "") {
+  const markers = [];
+  const pattern = /common_dom_row_set_show_required_reset\(\s*(["'])([^"']+)\1\s*,\s*(true|false)\s*,\s*(true|false)\s*,\s*(true|false)\s*\)/g;
+  for (const match of String(text || "").matchAll(pattern)) {
+    markers.push({
+      rowId: match[2],
+      visible: match[3] === "true",
+      required: match[4] === "true",
+      reset: match[5] === "true",
+      index: match.index,
+      evidence: oneLine(match[0])
+    });
   }
-  return false;
+  return markers;
+}
+
+function eventBindingsFromLegacyScript(text = "") {
+  const bindings = [];
+  const valueChange = /AttachXFormValueChangeEventById\(\s*(["'])([^"']+)\1\s*,/g;
+  for (const match of String(text || "").matchAll(valueChange)) {
+    bindings.push({
+      legacyApi: "AttachXFormValueChangeEventById",
+      event: "onChange",
+      controlId: match[2],
+      index: match.index,
+      evidence: oneLine(String(text || "").slice(match.index, Math.min(String(text || "").length, match.index + 180)))
+    });
+  }
+
+  const load = /Com_AddEventListener\(\s*window\s*,\s*(["'])load\1/g;
+  for (const match of String(text || "").matchAll(load)) {
+    bindings.push({
+      legacyApi: "Com_AddEventListener",
+      event: "onLoad",
+      index: match.index,
+      evidence: oneLine(String(text || "").slice(match.index, Math.min(String(text || "").length, match.index + 180)))
+    });
+  }
+  return bindings;
 }
 
 function extractDesignerJspFragments(html = "") {
@@ -213,7 +204,7 @@ function mkActionFromCandidate(candidate, index) {
     javascript: candidate.javascript,
     sourceRef: candidate.source.sourceRef
   });
-  const translationStatus = candidate.translationStatus || (coverage.status === "covered" ? "omitted" : "needs_review");
+  const translationStatus = candidate.translationStatus || "needs_review";
   const fn = translationStatus === "omitted"
     ? ""
     : candidate.function || buildMkFunction(candidate, functionMappings, candidate.source.functionAudit?.violations || []);
@@ -230,6 +221,7 @@ function mkActionFromCandidate(candidate, index) {
     translationStatus,
     coverage,
     functionMappings,
+    semanticHints: candidate.semanticHints,
     unmappedFunctions: (candidate.source.functionAudit?.violations || []).map((violation) => violation.name)
   });
 }
@@ -309,15 +301,14 @@ function extractDetailControlDisplayCandidates(source) {
     controlId: parts.trigger.controlId,
     dedupeKey: `detail-control-display:${parts.trigger.tableId}.${parts.trigger.controlId}:${parts.target.controlId}`,
     javascript: [parts.functionText, binding].filter(Boolean).join("\n\n"),
-    function: buildDetailControlDisplayFunction(parts.trigger.tableId, parts.target.controlId),
-    translationStatus: "mapped",
-    coverage: { status: "none", nativeRules: [], residuals: [] },
-    functionMappings: [{
-      source: "detail-row DOM display toggle",
-      target: "detail column onChange + MKXFORM.updateControlStyle",
-      description: `Show ${parts.target.controlId} in the same ${parts.trigger.tableId} row when ${parts.trigger.controlId} is gh; hide it otherwise.`,
-      basis: "deterministic-pattern",
-      reviewRequired: false
+    semanticHints: [{
+      kind: "detail_row_visibility",
+      triggerTableId: parts.trigger.tableId,
+      triggerControlId: parts.trigger.controlId,
+      targetControlId: parts.target.controlId,
+      hiddenControlId: parts.hiddenControlId,
+      targetApiCandidates: ["MKXFORM.updateControlStyle"],
+      evidence: "Legacy DOM display toggle appears to show/hide a detail-row control from a same-row purchase type value."
     }]
   }];
 }
@@ -381,36 +372,6 @@ function detailFieldReferences(text) {
   return references;
 }
 
-function buildDetailControlDisplayFunction(tableId, targetControlId) {
-  const controlId = "${table:" + tableId + "}." + targetControlId;
-  return [
-    "function onChange(value, rowNum, parentRowNum) {",
-    "  var showReplacementAsset = value === \"gh\"",
-    `  MKXFORM.updateControlStyle("${controlId}", rowNum, { display: showReplacementAsset ? "block" : "none" })`,
-    "}"
-  ].join("\n");
-}
-
-function buildDetailControlLoadFunction(tableId, triggerControlId, targetControlId, hiddenControlId) {
-  const tableControlId = "${table:" + tableId + "}";
-  const targetRuntimeId = "${table:" + tableId + "}." + targetControlId;
-  const hiddenLine = hiddenControlId
-    ? `    var hiddenValue = row && row["${hiddenControlId}"]`
-    : "    var hiddenValue = \"\"";
-  return [
-    "function onLoad() {",
-    `  var tableValue = MKXFORM.getValue("${tableControlId}") || []`,
-    "  var rows = Array.isArray(tableValue) ? tableValue : (tableValue && Array.isArray(tableValue.value) ? tableValue.value : [])",
-    "  rows.forEach(function(row, rowNum) {",
-    `    var buyType = row && row["${triggerControlId}"]`,
-    hiddenLine,
-    "    var showReplacementAsset = buyType === \"gh\" || hiddenValue === \"true\"",
-    `    MKXFORM.updateControlStyle("${targetRuntimeId}", rowNum, { display: showReplacementAsset ? "block" : "none" })`,
-    "  })",
-    "}"
-  ].join("\n");
-}
-
 function extractWindowLoadCandidates(source) {
   const text = source.javascript || "";
   const candidates = [];
@@ -427,20 +388,14 @@ function extractWindowLoadCandidates(source) {
       scope: "global",
       javascript: text.slice(match.index, end).trim(),
       ...(detailDisplay ? {
-        function: buildDetailControlLoadFunction(
-          detailDisplay.trigger.tableId,
-          detailDisplay.trigger.controlId,
-          detailDisplay.target.controlId,
-          detailDisplay.hiddenControlId
-        ),
-        translationStatus: "mapped",
-        coverage: { status: "none", nativeRules: [], residuals: [] },
-        functionMappings: [{
-          source: "window-load detail row DOM initialization",
-          target: "onLoad + MKXFORM.getValue + MKXFORM.updateControlStyle",
-          description: `Initialize ${detailDisplay.target.controlId} display for existing ${detailDisplay.trigger.tableId} rows without DOM event binding.`,
-          basis: "deterministic-pattern",
-          reviewRequired: false
+        semanticHints: [{
+          kind: "detail_row_load_initialization",
+          triggerTableId: detailDisplay.trigger.tableId,
+          triggerControlId: detailDisplay.trigger.controlId,
+          targetControlId: detailDisplay.target.controlId,
+          hiddenControlId: detailDisplay.hiddenControlId,
+          targetApiCandidates: ["MKXFORM.getValue", "MKXFORM.updateControlStyle"],
+          evidence: "Legacy window-load code initializes same-row detail control display from existing row values."
         }]
       } : {})
     });
@@ -701,6 +656,10 @@ function oneLine(value = "") {
 
 function stableActionId(value = "") {
   return String(value).replace(/[^A-Za-z0-9_.-]/g, "_");
+}
+
+function uniqueStrings(values = []) {
+  return [...new Set(values.filter((value) => typeof value === "string" && value.trim()))];
 }
 
 function pruneUndefined(value) {

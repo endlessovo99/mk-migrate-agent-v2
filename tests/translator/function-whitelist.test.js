@@ -12,7 +12,7 @@ describe("function whitelist", () => {
   it("loads whitelist mappings from JSON", () => {
     const whitelist = loadFunctionWhitelist(whitelistPath);
 
-    assert.equal(whitelist.version, "2026-07-06.v2");
+    assert.equal(whitelist.version, "2026-07-09.v3");
     assert.equal(whitelist.externalSourcePath, whitelistPath);
     assert.equal(whitelist.entries.length, 4);
     assert.equal(whitelist.byName.get("DocList_AddRow")?.mkFunction, "MKXFORM.addRow(表单ID, rowValue)");

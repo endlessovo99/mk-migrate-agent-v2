@@ -34,7 +34,7 @@ node src/cli/main.js draft .tmp/sample/source-draft.json --out .tmp/sample/dsl-d
 node src/cli/main.js check draft .tmp/sample/dsl-draft.json
 
 # Explicit AI review stage. The model returns restricted patches; local code validates and applies them.
-source .temp/newoa.env
+source .tmp/newoa.env
 node src/cli/main.js agent-review .tmp/sample/source-draft.json .tmp/sample/dsl-draft.json \
   --out .tmp/sample/migration.dsl.json \
   --report-out .tmp/sample/agent-review.report.json
@@ -51,16 +51,16 @@ node src/cli/main.js execute .tmp/sample/migration.dsl.json \
 
 `translate` remains a deterministic compatibility shortcut for `clean` plus `draft`. It does not call AI and writes a non-executable `dsl-draft.json`. `agent-review` is the only AI-backed stage. `dry-run` and `execute` accept only trusted `migration.dsl.json` with `trust.level = trusted` and `trust.executable = true`.
 
-`agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Keep local secrets in an ignored file such as `.temp/newoa.env`, then source it explicitly before review or live smoke:
+`agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Keep local secrets in an ignored file such as `.tmp/newoa.env`, then source it explicitly before review or live smoke:
 
 ```bash
-source .temp/newoa.env
-npm run test:agent-review:live
+source .tmp/newoa.env
+npm run test:agent-review:live -- --target-category-id '<NewOA category fdId>'
 ```
 
-Default `npm test` is offline and uses fake review providers only. The live smoke is separate, uses the real provider, and writes sanitized artifacts under `.tmp/agent-review-live/`.
+Default `npm test` is offline and uses fake review providers only. The live smoke is separate, uses the real provider, writes one `MK_TEST_...` draft template to NewOA SIT for the execute fixture, and writes sanitized artifacts under `.tmp/agent-review-live/`. The partial-translation fixture is reviewed as a script-only slice so the real Agent validates JSP-to-JS behavior without sending unrelated workflow payload.
 
-The AI reviewer returns JSON patches, not a complete DSL. First-version patches are limited to form field/detail-column `title`, `type`, `componentId`, and `props` paths. Workflow review is diagnostic-only: warning diagnostics may remain in trusted DSL, while error or blocked diagnostics prevent `migration.dsl.json` from being written.
+The AI reviewer returns JSON patches, not a complete DSL. First-version patches are limited to form field/detail-column `title`, `type`, `componentId`, and `props` paths plus existing `scripts.actions[]` `function`, `translationStatus`, `functionMappings`, and `coverage` paths. Generated MK JavaScript coverage is recorded as `coverage.status = "translated"`; review-grade target APIs require explicit `functionMappings` before execution. Workflow review is diagnostic-only: warning diagnostics may remain in trusted DSL, while error or blocked diagnostics prevent `migration.dsl.json` from being written.
 
 `execute` creates a new `MK_TEST_...` template in NewOA SIT, saves it as draft, reads it back, and reports the created `fdId`. Warning-only trusted DSL (`needs_manual`) is executable; DSL errors and safety errors block before login. If creation succeeds and a later stage fails, the report keeps the partial fdId and does not auto-rollback.
 

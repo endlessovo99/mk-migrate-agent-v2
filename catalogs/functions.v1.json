@@ -1,297 +1,635 @@
 {
   "id": "mk-functions",
-  "version": "2026-07-06.v2",
+  "version": "2026-07-09.v3",
   "source": "上海电气使用函数清单与MK函数对应.xls",
   "functions": [
     {
       "name": "GetXFormFieldById",
       "description": "自定义表单根据控件ID获取对象",
-      "mkFunction": "MKXFORM.$('控件ID')"
+      "mkFunction": "MKXFORM.$('控件ID')",
+      "intent": "get_field_control",
+      "targetApis": [
+        "MKXFORM.$"
+      ],
+      "translationKind": "direct",
+      "safety": "safe",
+      "notes": "Use only when a control object is required; prefer MKXFORM.getValue/setValue for value access."
     },
     {
       "name": "AttachXFormValueChangeEventById",
       "description": "自定义表单通过控件ID绑定监听值变化方法，仅当ID标识的控件发生值变化时进行调用",
-      "mkFunction": "需要转换为控件字段动作：onChange值发生变化见右侧图片"
+      "mkFunction": "需要转换为控件字段动作：onChange值发生变化见右侧图片",
+      "intent": "bind_value_change",
+      "targetApis": [],
+      "translationKind": "action_boundary",
+      "safety": "safe",
+      "notes": "Translator should keep the deterministic control action boundary and translate the callback body into the existing onChange action."
     },
     {
       "name": "GetXFormFieldValueById",
       "description": "自定义表单根据控件ID获取对象值",
-      "mkFunction": "var value = MKXFORM.getValue('控件ID', { detailRowIndex: 明细表行号, nestRowIndex: 子明细表行号 })"
+      "mkFunction": "var value = MKXFORM.getValue('控件ID', { detailRowIndex: 明细表行号, nestRowIndex: 子明细表行号 })",
+      "intent": "get_field_value",
+      "targetApis": [
+        "MKXFORM.getValue"
+      ],
+      "translationKind": "direct",
+      "safety": "safe",
+      "notes": "Main-field reads map directly; detail table reads require row context and ${table:<sourceDetailTableId>} placeholders."
     },
     {
       "name": "SetXFormFieldValueById",
       "description": "自定义表单根据控件ID设置对象值",
-      "mkFunction": "MKXFORM.setValue('控件ID','控件值')"
+      "mkFunction": "MKXFORM.setValue('控件ID','控件值')",
+      "intent": "set_field_value",
+      "targetApis": [
+        "MKXFORM.setValue"
+      ],
+      "translationKind": "direct",
+      "safety": "safe",
+      "notes": "Main-field writes map directly; detail table writes require row-scoped APIs."
     },
     {
       "name": "XFormOnValueChangeFuns.push",
       "description": "添加监听函数，此队列中的函数将在表单值发生变化时被调用",
-      "mkFunction": "同AttachXFormValueChangeEventById"
+      "mkFunction": "同AttachXFormValueChangeEventById",
+      "intent": "bind_global_value_change",
+      "targetApis": [],
+      "translationKind": "action_boundary",
+      "safety": "review",
+      "notes": "Requires source context to map to one or more MK control actions."
     },
     {
       "name": "XFom_RestValidationElements",
       "description": "解决表单动态添加或删除后校验问题",
-      "mkFunction": "MKXFORM.getFieldAttr(控件ID)获取字段当前的只读/必填属性\nMKXFORM.setFieldAttr(控件ID, 1)改变单个字段显示属性(只读/必填等）1：只读，2：可编辑，3：必填， 4：隐藏字段标签及内容，5：显示，6：非必填\n MKXFORM.validateFields().then(value => {\n    // 校验返回结果\n})触发表单强制校验"
+      "mkFunction": "MKXFORM.getFieldAttr(控件ID)获取字段当前的只读/必填属性\nMKXFORM.setFieldAttr(控件ID, 1)改变单个字段显示属性(只读/必填等）1：只读，2：可编辑，3：必填， 4：隐藏字段标签及内容，5：显示，6：非必填\n MKXFORM.validateFields().then(value => {\n    // 校验返回结果\n})触发表单强制校验",
+      "intent": "refresh_validation",
+      "targetApis": [
+        "MKXFORM.getFieldAttr",
+        "MKXFORM.setFieldAttr",
+        "MKXFORM.validateFields"
+      ],
+      "translationKind": "direct_or_native_rule",
+      "safety": "safe",
+      "notes": "Prefer native required/editable/visible rules when the source behavior is structural."
     },
     {
       "name": "GetXFormSameRowFieldById",
       "description": "获取明细表中通行的表单域",
-      "mkFunction": "MKXFORM.checkDetailRow(表单ID, [])"
+      "mkFunction": "MKXFORM.checkDetailRow(表单ID, [])",
+      "intent": "get_same_detail_row_field",
+      "targetApis": [
+        "MKXFORM.checkDetailRow",
+        "MKXFORM.getControlValue"
+      ],
+      "translationKind": "detail_row_context",
+      "safety": "review",
+      "notes": "Requires tableId, controlId, and rowNum evidence."
     },
     {
       "name": "__xformDispatch",
       "description": "功能：自定义表单统一值发生变化分发函数（外部不调用）\n 参数：\n value        ：发生值变化的控件的当前值\n domElement   ：当前发生值变化的控件Dom对象（可能是数组）",
-      "mkFunction": "无，转换为字段值变化动作，则会进行函数调用，可无需统一分发"
+      "mkFunction": "无，转换为字段值变化动作，则会进行函数调用，可无需统一分发",
+      "intent": "legacy_value_change_dispatch",
+      "targetApis": [],
+      "translationKind": "omitted_when_action_boundary_exists",
+      "safety": "safe",
+      "notes": "No target helper is needed when value-change callbacks are translated as MK control actions."
     },
     {
       "name": "GetXFormFieldByLabel",
       "description": "自定义表单根据显示文字获取对象",
-      "mkFunction": "无，只可以根据控件ID获取"
+      "mkFunction": "无，只可以根据控件ID获取",
+      "intent": "get_field_by_label",
+      "targetApis": [],
+      "translationKind": "unsupported",
+      "safety": "blocked",
+      "notes": "MK target API uses stable control IDs, not labels."
     },
     {
       "name": "Com_AddEventListener",
       "description": "往某个对象中添加一个事件Com_AddEventListener(obj, eventType, func)obj：对象，如：window、document等、\teventType：事件名称，不以on开始，比如：\"load\"、\"mouseover\"、\tfunc：需要执行的函数",
-      "mkFunction": "对应表单动作，onLoad加载完毕"
+      "mkFunction": "对应表单动作，onLoad加载完毕",
+      "intent": "bind_runtime_event",
+      "targetApis": [],
+      "translationKind": "event_hook",
+      "safety": "review",
+      "notes": "Only window load is currently mapped to onLoad; DOM events remain manual."
     },
     {
       "name": "Com_Parameter.event.submit.push",
       "description": "提交前插入函数，return false阻断提交",
-      "mkFunction": "对应表单提交前动作、onBeforeSubmit提交前事件"
+      "mkFunction": "对应表单提交前动作、onBeforeSubmit提交前事件",
+      "intent": "before_submit_guard",
+      "targetApis": [],
+      "translationKind": "event_hook",
+      "safety": "review",
+      "notes": "Translate into onBeforeSubmit(context), handle context.isDraft, and return true/false or Promise<boolean>."
     },
     {
       "name": "DocList_AddRow",
       "description": "添加行",
-      "mkFunction": "MKXFORM.addRow(表单ID, rowValue)"
+      "mkFunction": "MKXFORM.addRow(表单ID, rowValue)",
+      "intent": "add_detail_row",
+      "targetApis": [
+        "MKXFORM.addRow"
+      ],
+      "translationKind": "direct",
+      "safety": "safe",
+      "notes": "Requires source detail table id and rowValue mapping."
     },
     {
       "name": "DocListFunc_ReplaceIndex",
       "description": "明细行替换对应属性",
-      "mkFunction": "MKXFORM.updateRow(表单ID, rowNum, rowValue)"
+      "mkFunction": "MKXFORM.updateRow(表单ID, rowNum, rowValue)",
+      "intent": "update_detail_row",
+      "targetApis": [
+        "MKXFORM.updateRow"
+      ],
+      "translationKind": "direct",
+      "safety": "safe",
+      "notes": "Requires source detail table id, rowNum, and rowValue mapping."
     },
     {
       "name": "DocList_DeleteRow_ClearLast",
       "description": "增加删除到最后一行后，生成一空行的函数。",
-      "mkFunction": "MKXFORM.addRow(表单ID, rowValue) 值全设置为空"
+      "mkFunction": "MKXFORM.addRow(表单ID, rowValue) 值全设置为空",
+      "intent": "clear_last_detail_row",
+      "targetApis": [
+        "MKXFORM.addRow",
+        "MKXFORM.updateRow"
+      ],
+      "translationKind": "detail_row_context",
+      "safety": "review",
+      "notes": "Preserve the legacy empty-row behavior only when row semantics are clear."
     },
     {
       "name": "DocListFunc_RefreshIndex",
       "description": "刷新明细索引",
-      "mkFunction": "MKXFORM.reload(表单ID)"
+      "mkFunction": "MKXFORM.reload(表单ID)",
+      "intent": "reload_detail_table",
+      "targetApis": [
+        "MKXFORM.reload"
+      ],
+      "translationKind": "direct",
+      "safety": "safe",
+      "notes": "Requires source detail table id."
     },
     {
       "name": "document.getElementById",
       "description": "DOM操作",
-      "mkFunction": "document.getElementById"
+      "mkFunction": "document.getElementById",
+      "intent": "dom_lookup",
+      "targetApis": [],
+      "translationKind": "dom_rewrite_required",
+      "safety": "blocked",
+      "notes": "Mapped scripts must use MKXFORM APIs instead of direct DOM access."
     },
     {
       "name": "document.getElementsByName",
       "description": "DOM操作",
-      "mkFunction": "document.getElementsByName"
+      "mkFunction": "document.getElementsByName",
+      "intent": "dom_lookup",
+      "targetApis": [],
+      "translationKind": "dom_rewrite_required",
+      "safety": "blocked",
+      "notes": "Mapped scripts must use MKXFORM APIs instead of direct DOM access."
     },
     {
       "name": "document.getElementsByTagName",
       "description": "DOM操作",
-      "mkFunction": "document.getElementsByTagName"
+      "mkFunction": "document.getElementsByTagName",
+      "intent": "dom_lookup",
+      "targetApis": [],
+      "translationKind": "dom_rewrite_required",
+      "safety": "blocked",
+      "notes": "Mapped scripts must use MKXFORM APIs instead of direct DOM access."
     },
     {
       "name": "document.getElementsByClassName",
       "description": "DOM操作",
-      "mkFunction": "document.getElementsByClassName"
+      "mkFunction": "document.getElementsByClassName",
+      "intent": "dom_lookup",
+      "targetApis": [],
+      "translationKind": "dom_rewrite_required",
+      "safety": "blocked",
+      "notes": "Mapped scripts must use MKXFORM APIs instead of direct DOM access."
     },
     {
       "name": "Data_GetOrgPersonBeanNameByKey",
       "description": "根据关键字在指定的组织架构中查找数据",
-      "mkFunction": "/**\n* 调用组织架构函数接口，接口名称：{sys-org:sysorg.getElementDatas.desc}\n* @param config 请求参数配置\n* @param callback 回调函数\n* 说明：\n* 请求参数配置 config, functionCode 为函数的编码（即:函数标识\n*\n* 回调函数 callback\n* 1. 参数error，当请求出错是会返回错误信息\n* 2. 参数res，请求数据\n* {\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"fdId\":{\"type\":\"string\",\"id\":\"fdId\",\"description\":\"{sys-org:sysorg.person.fdId}\"},\"fdName\":{\"type\":\"string\",\"id\":\"fdName\",\"description\":\"{sys-org:sysorg.person.fdName}\"},\"fdOrgType\":{\"type\":\"integer\",\"id\":\"fdOrgType\",\"description\":\"{sys-org:sysorg.fdOrgType}\"}}}}\n*/\nMKXFORM.callOrg({\n  id: \"sysorg.getElementDatas\",\n  param: {\"address\":[{\"fdId\":\"15f8165c9524792842872204d97a2a18w0\"}]}\n}, function(error, res){\n  console.log(res)\n})"
+      "mkFunction": "/**\n* 调用组织架构函数接口，接口名称：{sys-org:sysorg.getElementDatas.desc}\n* @param config 请求参数配置\n* @param callback 回调函数\n* 说明：\n* 请求参数配置 config, functionCode 为函数的编码（即:函数标识\n*\n* 回调函数 callback\n* 1. 参数error，当请求出错是会返回错误信息\n* 2. 参数res，请求数据\n* {\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"fdId\":{\"type\":\"string\",\"id\":\"fdId\",\"description\":\"{sys-org:sysorg.person.fdId}\"},\"fdName\":{\"type\":\"string\",\"id\":\"fdName\",\"description\":\"{sys-org:sysorg.person.fdName}\"},\"fdOrgType\":{\"type\":\"integer\",\"id\":\"fdOrgType\",\"description\":\"{sys-org:sysorg.fdOrgType}\"}}}}\n*/\nMKXFORM.callOrg({\n  id: \"sysorg.getElementDatas\",\n  param: {\"address\":[{\"fdId\":\"15f8165c9524792842872204d97a2a18w0\"}]}\n}, function(error, res){\n  console.log(res)\n})",
+      "intent": "mapped_legacy_function",
+      "targetApis": [
+        "MKXFORM.callOrg"
+      ],
+      "translationKind": "direct",
+      "safety": "safe",
+      "notes": "Direct mapping still requires argument and target-id validation."
     },
     {
       "name": "Data_GetOrgElementBeanNameByKey",
       "description": "根据关键字在指定的组织架构中查找数据",
-      "mkFunction": "同上"
+      "mkFunction": "同上",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "kmssdata.AddBeanData",
       "description": "根据javabean的名字，采用AJAX方式获取数据，并将返回的数据添加到数据对象中 var kmssData=new KMSSData(); kmssData.AddBeanData(\"kmLeaveTypeDialog&fdId=\"+strValue);",
-      "mkFunction": "异步请求   MKXFORM.ajax({\n  method: '',\n  url: ''\n}, function (error, res) {\n\n})"
+      "mkFunction": "异步请求   MKXFORM.ajax({\n  method: '',\n  url: ''\n}, function (error, res) {\n\n})",
+      "intent": "mapped_legacy_function",
+      "targetApis": [
+        "MKXFORM.ajax"
+      ],
+      "translationKind": "direct",
+      "safety": "safe",
+      "notes": "Direct mapping still requires argument and target-id validation."
     },
     {
       "name": "common_dom_row_set_show_required_reset",
       "description": "隐藏所有相同名字的控件对应的每行内容,并设置为非必填\n主要用于明细表",
-      "mkFunction": "/**\n* 改变明细表单个字段显示属性(只读/必填等)。\n* @param id 控件ID，可在数据模型中选中，格式[表ID.控件ID]\n* @param value 1：只读，2：可编辑，3：必填， 4：隐藏字段标签及内容，5：显示，6：非必填\n*/\nMKXFORM.setDetailFieldAttr(控件ID, 1)"
+      "mkFunction": "/**\n* 改变明细表单个字段显示属性(只读/必填等)。\n* @param id 控件ID，可在数据模型中选中，格式[表ID.控件ID]\n* @param value 1：只读，2：可编辑，3：必填， 4：隐藏字段标签及内容，5：显示，6：非必填\n*/\nMKXFORM.setDetailFieldAttr(控件ID, 1)",
+      "intent": "set_row_visibility_required",
+      "targetApis": [
+        "MKXFORM.setDetailFieldAttr",
+        "MKXFORM.setFieldAttr",
+        "MKXFORM.updateControlStyle"
+      ],
+      "translationKind": "native_rule_or_style",
+      "safety": "review",
+      "notes": "Prefer formRules.linkage when the row condition is structural; otherwise generate MK field attr/style calls only with clear target ids."
     },
     {
       "name": "set_required",
       "description": "设置必填",
-      "mkFunction": "/**\n* 改变单个字段显示属性(只读/必填等)\n* @param id 控件ID，可在数据模型中选中，格式[表ID.控件ID]\n* @param value 1：只读，2：可编辑，3：必填， 4：隐藏字段标签及内容，5：显示，6：非必填\n*/\nMKXFORM.setFieldAttr(控件ID, 1)"
+      "mkFunction": "/**\n* 改变单个字段显示属性(只读/必填等)\n* @param id 控件ID，可在数据模型中选中，格式[表ID.控件ID]\n* @param value 1：只读，2：可编辑，3：必填， 4：隐藏字段标签及内容，5：显示，6：非必填\n*/\nMKXFORM.setFieldAttr(控件ID, 1)",
+      "intent": "set_required",
+      "targetApis": [
+        "MKXFORM.setFieldAttr"
+      ],
+      "translationKind": "direct_or_native_rule",
+      "safety": "safe",
+      "notes": "Prefer native required rules when possible."
     },
     {
       "name": "set_not_required",
       "description": "设置非必填",
-      "mkFunction": "同上"
+      "mkFunction": "同上",
+      "intent": "set_not_required",
+      "targetApis": [
+        "MKXFORM.setFieldAttr"
+      ],
+      "translationKind": "direct_or_native_rule",
+      "safety": "safe",
+      "notes": "Prefer native required rules when possible."
     },
     {
       "name": "common_not_required",
       "description": "设置控件为非必填项",
-      "mkFunction": "同上"
+      "mkFunction": "同上",
+      "intent": "set_not_required",
+      "targetApis": [
+        "MKXFORM.setFieldAttr"
+      ],
+      "translationKind": "direct_or_native_rule",
+      "safety": "safe",
+      "notes": "Prefer native required rules when possible."
     },
     {
       "name": "common_required",
       "description": "设置控件为必填项",
-      "mkFunction": "同上"
+      "mkFunction": "同上",
+      "intent": "set_required",
+      "targetApis": [
+        "MKXFORM.setFieldAttr"
+      ],
+      "translationKind": "direct_or_native_rule",
+      "safety": "safe",
+      "notes": "Prefer native required rules when possible."
     },
     {
       "name": "Designer_Control_JSP_ShowEditFrame",
       "description": "初始化编辑器容器和Tab键快捷键，将JSP代码和名称填充至编辑框，显示弹窗并定位",
-      "mkFunction": "无"
+      "mkFunction": "无",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "parsingExcelContent",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "setReviewTemplateId",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "submitSaveFlagFuc",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "single_row_set",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "showApplyType",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "changeStarOrLevel",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "changeTypeEnabled",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "getFormFieldValue",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "get_field_value",
+      "targetApis": [
+        "MKXFORM.getValue"
+      ],
+      "translationKind": "semantic_equivalent",
+      "safety": "review",
+      "notes": "Custom helper usually wraps legacy field value lookup; confirm argument semantics before mapping."
     },
     {
       "name": "loadSaveFlagFuc",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "formCheck",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "switchContainer",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "getControlWrapper",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "changeEnabledView",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "changeHotelEnabled",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "changeBank",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "getFormSelectText",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "controlDisplay",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "toggle_detail_control_display",
+      "targetApis": [
+        "MKXFORM.updateControlStyle"
+      ],
+      "translationKind": "deterministic_pattern_or_review",
+      "safety": "review",
+      "notes": "Existing translator handles one known detail display pattern; other variants require review."
     },
     {
       "name": "controlDisplay2",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "toggle_detail_control_display",
+      "targetApis": [
+        "MKXFORM.updateControlStyle"
+      ],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source-specific target id and row context."
     },
     {
       "name": "showInitView",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "initialize_visibility",
+      "targetApis": [
+        "MKXFORM.getValue",
+        "MKXFORM.updateControlStyle",
+        "MKXFORM.setFieldAttr"
+      ],
+      "translationKind": "on_load_review",
+      "safety": "review",
+      "notes": "Translate only when all target rows/fields can be resolved."
     },
     {
       "name": "setSubjectTitle",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "showReturnRepair",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "geoTaxRowShow",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "theSubjectTitle",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "showSalesOpt",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "showSalesFiles",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "showSalesYuL",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     },
     {
       "name": "convertCurrency",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "local_currency_formatter",
+      "targetApis": [],
+      "translationKind": "local_helper",
+      "safety": "safe",
+      "notes": "Can remain as a local pure helper if it uses only cataloged JavaScript methods."
     },
     {
       "name": "monDif",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "local_numeric_helper",
+      "targetApis": [],
+      "translationKind": "local_helper",
+      "safety": "safe",
+      "notes": "Can remain as a local pure helper if it uses only cataloged JavaScript methods."
     },
     {
       "name": "bigNum",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "local_numeric_helper",
+      "targetApis": [],
+      "translationKind": "local_helper",
+      "safety": "safe",
+      "notes": "Can remain as a local pure helper if it uses only cataloged JavaScript methods."
     },
     {
       "name": "filesucess",
       "description": "自定义函数",
-      "mkFunction": "review_required"
+      "mkFunction": "review_required",
+      "intent": "custom_legacy_function",
+      "targetApis": [],
+      "translationKind": "review",
+      "safety": "review",
+      "notes": "Requires source context and target API evidence before mapping."
     }
   ]
 }

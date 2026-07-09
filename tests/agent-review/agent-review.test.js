@@ -259,6 +259,15 @@ describe("agent-review", () => {
             evidence: ["Function catalog maps SetXFormFieldValueById to MKXFORM.setValue."],
             confidence: 0.91,
             rationale: "Records the catalog-backed translation."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/coverage",
+            value: { status: "translated", nativeRules: [], residuals: [] },
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["The MKXFORM.setValue call covers the only source value assignment."],
+            confidence: 0.91,
+            rationale: "No residual JSP behavior remains after translation to MK JavaScript."
           }
         ]
       })),
@@ -268,7 +277,156 @@ describe("agent-review", () => {
     assert.equal(result.ok, true);
     assert.equal(result.dsl.scripts.actions[0].translationStatus, "mapped");
     assert.equal(result.dsl.scripts.actions[0].function.includes("MKXFORM.setValue"), true);
+    assert.equal(result.dsl.scripts.actions[0].coverage.status, "translated");
     assert.equal(result.report.scriptTranslation.byStatus.mapped, 1);
+  });
+
+  it("rejects downgrades to protected deterministic script actions", async () => {
+    const sourceDraft = sampleSourceDraft({
+      scripts: {
+        source: "sysform-jsp",
+        sources: [{
+          id: "fd_jsp.script.1",
+          sourceRef: "source.form.jsp.fd_jsp.script.1",
+          javascript: "SetXFormFieldValueById('fd_subject', 'done')",
+          functionAudit: { matched: [], violations: [] }
+        }]
+      }
+    });
+    const dslDraft = sampleDraftDsl({
+      workflow: undefined,
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_jsp.script.1.event.1",
+          name: "onLoad",
+          event: "onLoad",
+          scope: "global",
+          function: "function onLoad() {\n  MKXFORM.setValue('fd_subject', 'done')\n}",
+          translationStatus: "mapped",
+          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "window-load value assignment",
+            target: "onLoad + MKXFORM.setValue",
+            basis: "deterministic-pattern",
+            reviewRequired: false
+          }]
+        }]
+      }
+    });
+    const result = await runAgentReview(sourceDraft, dslDraft, {
+      provider: new FakeReviewProvider(reviewResponse({
+        patches: [
+          {
+            op: "replace",
+            path: "/scripts/actions/0/translationStatus",
+            value: "needs_review",
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["The model was uncertain about the mapped action."],
+            confidence: 0.91,
+            rationale: "Downgrade instead of leaving the deterministic mapping unchanged."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/coverage",
+            value: { status: "partial", nativeRules: [], residuals: ["uncertain residual"] },
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["The model was uncertain about the mapped coverage."],
+            confidence: 0.91,
+            rationale: "Downgrade protected coverage instead of leaving it unchanged."
+          }
+        ]
+      }))
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.report.stage, "agent-review.patch-validation");
+    assert.equal(result.report.diagnostics.some((item) => item.code === "agent.patch.script_status_downgrade_forbidden"), true);
+    assert.equal(result.report.diagnostics.some((item) => item.code === "agent.patch.script_coverage_downgrade_forbidden"), true);
+  });
+
+  it("allows native-covered script actions to be omitted with empty function text", async () => {
+    const sourceDraft = sampleSourceDraft({
+      scripts: {
+        source: "sysform-jsp",
+        sources: [{
+          id: "fd_jsp.script.1",
+          sourceRef: "source.form.jsp.fd_jsp.script.1",
+          javascript: "AttachXFormValueChangeEventById('fd_amount', function(value){ common_dom_row_set_show_required_reset('fd_subject_row', true, true, false) })",
+          functionAudit: { matched: [], violations: [] }
+        }]
+      }
+    });
+    const dslDraft = sampleDraftDsl({
+      workflow: undefined,
+      formRules: {
+        linkage: [{
+          id: "linkage.fd_amount.contains.A",
+          trigger: "change",
+          source: "fd_amount",
+          logic: "and",
+          when: [{ field: "fd_amount", op: "contains", value: "A" }],
+          effects: [{ type: "visible", target: "fd_subject", value: true }],
+          else: [{ type: "visible", target: "fd_subject", value: false }],
+          meta: { sourceJsp: "source.form.jsp.fd_jsp.script.1" },
+          translationStatus: "executable"
+        }]
+      },
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_jsp.script.1.event.1",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          controlId: "fd_amount",
+          function: "function onChange(value) {\n  // review required\n}",
+          translationStatus: "needs_review",
+          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+          coverage: { status: "uncovered", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    });
+    const result = await runAgentReview(sourceDraft, dslDraft, {
+      provider: new FakeReviewProvider(reviewResponse({
+        patches: [
+          {
+            op: "replace",
+            path: "/scripts/actions/0/function",
+            value: "",
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["The matching native formRule linkage.fd_amount.contains.A covers the source visibility behavior."],
+            confidence: 0.91,
+            rationale: "No JavaScript is needed when the native rule covers the source behavior."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/translationStatus",
+            value: "omitted",
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["The action sourceRef matches formRules.linkage meta.sourceJsp."],
+            confidence: 0.91,
+            rationale: "Mark the script omitted because it is native-covered."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/coverage",
+            value: { status: "covered", nativeRules: ["linkage.fd_amount.contains.A"], residuals: [] },
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["The native rule has executable translationStatus and matching sourceJsp evidence."],
+            confidence: 0.91,
+            rationale: "Record the native rule that covers the source JSP behavior."
+          }
+        ]
+      }))
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.dsl.scripts.actions[0].translationStatus, "omitted");
+    assert.equal(result.dsl.scripts.actions[0].function, "");
+    assert.equal(result.dsl.scripts.actions[0].coverage.status, "covered");
   });
 
   it("blocks error diagnostics from the model before trusted output", async () => {
@@ -369,6 +527,13 @@ describe("agent-review", () => {
     assert.equal(prompt.system.includes("Non-whitelisted EKP functions are not automatically blocking"), true);
     assert.equal(prompt.context.scriptTranslationPolicy.nonWhitelistedFunctions.defaultHandling, "attempt_semantic_translation");
     assert.equal(prompt.context.scriptTranslationPolicy.nonWhitelistedFunctions.blockingByDefault, false);
+    assert.equal(prompt.system.includes("formRules.linkage"), true);
+    assert.equal(prompt.context.dslDraft.formRules.linkageCount > 0, true);
+    assert.equal(prompt.system.includes("Pattern matching is evidence extraction only"), true);
+    assert.equal(prompt.context.jspTranslationPlaybook.id, "jsp-translation-playbook");
+    assert.equal(prompt.context.jspTranslationPlaybook.fewShotExamples.some((example) => example.id === "row-load-guarded-by-value"), true);
+    assert.equal(prompt.context.scriptTranslationPolicy.commonDomRowPattern, undefined);
+    assert.equal(prompt.context.sourceDraft.scripts.sources.some((source) => source.semanticFacts?.rowMarkers?.length), true);
   });
 });
 

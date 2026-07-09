@@ -236,6 +236,18 @@ describe("validateMigrationDsl", () => {
         ]
       }
     }), { mode: "execute" });
+    const acceptedDetailSelect = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      form: detailSelectForm(),
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_detail.fd_choice.onChange",
+          tableId: "fd_detail",
+          controlId: "fd_choice",
+          coverage: { status: "translated", nativeRules: [], residuals: [] }
+        })]
+      }
+    }), { mode: "execute" });
 
     const rejectedSubject = validateMigrationDsl(sampleTrustedDsl({
       workflow: undefined,
@@ -260,6 +272,8 @@ describe("validateMigrationDsl", () => {
 
     assert.equal(accepted.ok, true);
     assert.deepEqual(accepted.diagnostics, []);
+    assert.equal(acceptedDetailSelect.ok, true);
+    assert.deepEqual(acceptedDetailSelect.diagnostics, []);
     assert.equal(rejectedSubject.ok, false);
     assert.equal(rejectedSubject.diagnostics.some((item) => item.code === "dsl.scripts.control_event_unsupported"), true);
     assert.equal(rejectedDetailUnknown.ok, false);
@@ -298,6 +312,71 @@ describe("validateMigrationDsl", () => {
       rejected.diagnostics.some((item) => item.details?.calls?.some((call) => call.name === "localStorage.getItem")),
       true
     );
+  });
+
+  it("requires translated coverage and mappings for review-grade target APIs", () => {
+    const accepted = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.message",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  if (!value) MKXFORM.message.success('请输入主题')\n}",
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "alert",
+            target: "MKXFORM.message.success",
+            basis: "target-api-catalog",
+            reviewRequired: true
+          }]
+        })]
+      }
+    }), { mode: "execute" });
+    const rejected = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.message.no_evidence",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  if (!value) MKXFORM.message.success('请输入主题')\n}",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: []
+        })]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(accepted.ok, true);
+    assert.deepEqual(accepted.diagnostics, []);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.scripts.review_target_api_evidence_required"), true);
+  });
+
+  it("rejects blocked and unknown MKXFORM target APIs in mapped scripts", () => {
+    const blocked = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.execute_operation",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  MKXFORM.executeOperation({})\n}"
+        })]
+      }
+    }), { mode: "execute" });
+    const unknown = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.unknown_api",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  MKXFORM.notInCatalog(value)\n}"
+        })]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(blocked.ok, false);
+    assert.equal(blocked.diagnostics.some((item) => item.code === "dsl.scripts.target_api_unsupported"), true);
+    assert.equal(unknown.ok, false);
+    assert.equal(unknown.diagnostics.some((item) => item.code === "dsl.scripts.target_api_unsupported"), true);
   });
 
   it("requires before-submit scripts to handle draft saves and return explicitly", () => {
@@ -562,8 +641,8 @@ function mappedAction(overrides = {}) {
     tableId: overrides.tableId,
     function: overrides.function || fallbackFunction,
     translationStatus: "mapped",
-    coverage: { status: "none", nativeRules: [], residuals: [] },
-    functionMappings: []
+    coverage: overrides.coverage || { status: "none", nativeRules: [], residuals: [] },
+    functionMappings: overrides.functionMappings || []
   };
 }
 
@@ -585,6 +664,20 @@ function selectForm() {
     sourceRef: "source.form.layout.cell.row-0-cell-2",
     column: 2,
     colspan: 1
+  });
+  return form;
+}
+
+function detailSelectForm() {
+  const form = sampleForm();
+  form.fields[2].columns.push({
+    id: "fd_choice",
+    title: "选项",
+    type: "singleSelect",
+    componentId: "xform-select",
+    props: {},
+    sourceProps: { designerType: "select" },
+    sourceRef: "source.form.detailTable.fd_detail.column.fd_choice"
   });
   return form;
 }

@@ -43,6 +43,7 @@ export const FIELD_TYPES = new Set([
   "detailTable"
 ]);
 
+const SCRIPT_COVERAGE_STATUSES = new Set(["none", "partial", "uncovered", "covered", "translated"]);
 const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "robot", "conditionBranch", "split", "join", "generalEnd"]);
 const WORKFLOW_NODE_ELEMENTS = new Set(["startEvent", "manualTask", "exclusiveGateway", "parallelGateway", "robot", "endEvent"]);
 
@@ -598,6 +599,16 @@ function validateScripts(scripts, diagnostics, context) {
     if (action.translationStatus === "mapped" && Array.isArray(action.coverage?.residuals) && action.coverage.residuals.length) {
       diagnostics.push(error("dsl.scripts.mapped_with_residuals", "Mapped script actions cannot retain untranslated coverage residuals.", `${path}/coverage/residuals`));
     }
+    if (action.coverage?.status !== undefined && !SCRIPT_COVERAGE_STATUSES.has(action.coverage.status)) {
+      diagnostics.push(error("dsl.scripts.coverage_status_invalid", "Script coverage.status must be none, partial, uncovered, covered, or translated.", `${path}/coverage/status`, {
+        actual: action.coverage.status
+      }));
+    }
+    if (action.translationStatus === "mapped" && ["partial", "uncovered"].includes(action.coverage?.status)) {
+      diagnostics.push(error("dsl.scripts.mapped_coverage_status_invalid", "Mapped script actions must mark uncovered source behavior as translated or covered before execution.", `${path}/coverage/status`, {
+        actual: action.coverage?.status
+      }));
+    }
     if (action.translationStatus === "omitted" && action.coverage?.status !== "covered") {
       diagnostics.push(error("dsl.scripts.omitted_not_covered", "Omitted script actions must be fully covered by native formRules.", `${path}/coverage/status`, {
         actual: action.coverage?.status
@@ -728,8 +739,21 @@ function validateScriptActionFunction(action, path, diagnostics, context) {
     }
     if (analysis.disallowedTargetCalls.length) {
       diagnostics.push(error("dsl.scripts.target_api_unsupported", "Mapped script actions may call only target APIs from the script target catalog.", `${path}/function`, {
-        calls: analysis.disallowedTargetCalls,
+        calls: analysis.disallowedTargetCalls.map((call) => ({
+          name: call.name,
+          safety: call.targetApi?.safety,
+          reason: call.targetApi?.reason,
+          snippet: call.snippet
+        })),
         targetApi: scriptTargetApiSummary()
+      }));
+    }
+    if (analysis.reviewTargetCalls.length && !hasReviewTargetEvidence(action)) {
+      const diagnostic = context.mode === "execute" ? error : warning;
+      diagnostics.push(diagnostic("dsl.scripts.review_target_api_evidence_required", "Review-grade target APIs require functionMappings and coverage.status translated or covered before executable mapping.", `${path}/function`, {
+        calls: analysis.reviewTargetCalls.map((call) => call.name),
+        coverageStatus: action.coverage?.status,
+        functionMappingCount: Array.isArray(action.functionMappings) ? action.functionMappings.length : 0
       }));
     }
     if (analysis.disallowedCalls.length) {
@@ -738,6 +762,15 @@ function validateScriptActionFunction(action, path, diagnostics, context) {
       }));
     }
   }
+}
+
+function hasReviewTargetEvidence(action) {
+  const coverageStatus = action.coverage?.status;
+  const residuals = Array.isArray(action.coverage?.residuals) ? action.coverage.residuals : [];
+  return ["translated", "covered"].includes(coverageStatus) &&
+    residuals.length === 0 &&
+    Array.isArray(action.functionMappings) &&
+    action.functionMappings.length > 0;
 }
 
 function validateWorkflow(workflow, diagnostics, context) {

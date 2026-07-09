@@ -38,24 +38,23 @@ describe("source directory stages", () => {
     assert.equal(action.scope, "control");
     assert.equal(action.event, "onChange");
     assert.equal(action.controlId, "fd_371229d0cbd2cc");
-    assert.equal(action.translationStatus, "omitted");
+    assert.equal(action.translationStatus, "needs_review");
     assert.equal(action.coverage.status, "covered");
-    assert.equal(action.function, "");
     assert.equal(action.functionMappings.some((mapping) => mapping.source === "GetXFormFieldById"), true);
 
     assert.equal(detailAction.scope, "control");
     assert.equal(detailAction.event, "onChange");
     assert.equal(detailAction.tableId, "fd_371228ebe5dec2");
     assert.equal(detailAction.controlId, "fd_371576f83b26d8");
-    assert.equal(detailAction.translationStatus, "mapped");
-    assert.equal(detailAction.function.includes("MKXFORM.updateControlStyle(\"${table:fd_371228ebe5dec2}.fd_37157738c61224\", rowNum"), true);
+    assert.equal(detailAction.translationStatus, "needs_review");
+    assert.equal(detailAction.semanticHints.some((hint) => hint.kind === "detail_row_visibility"), true);
     assert.deepEqual(detailAction.coverage, { status: "none", nativeRules: [], residuals: [] });
 
     assert.equal(loadAction.scope, "global");
-    assert.equal(loadAction.translationStatus, "mapped");
-    assert.equal(loadAction.function.includes("MKXFORM.getValue(\"${table:fd_371228ebe5dec2}\""), true);
-    assert.equal(loadAction.function.includes("MKXFORM.updateControlStyle(\"${table:fd_371228ebe5dec2}.fd_37157738c61224\", rowNum"), true);
-    assert.deepEqual(loadAction.coverage, { status: "none", nativeRules: [], residuals: [] });
+    assert.equal(loadAction.translationStatus, "needs_review");
+    assert.equal(loadAction.semanticHints.some((hint) => hint.kind === "detail_row_load_initialization"), true);
+    assert.equal(loadAction.coverage.status, "uncovered");
+    assert.equal(sourceDraft.scripts.sources.some((source) => source.semanticFacts?.legacyFunctionCalls?.length), true);
   });
 
   it("drafts simple form-field formula workflow participants as executable handlers", () => {
@@ -186,7 +185,7 @@ describe("source directory stages", () => {
     assert.equal(fwqDescription.props.content.includes("废木质品"), true);
   });
 
-  it("omits hidden-helper JSP row scripts after extracting native row rules", () => {
+  it("keeps hidden-helper JSP row scripts reviewable after extracting native row rule evidence", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const rule = dslDraft.formRules.linkage.find((item) => item.id === "linkage.fd_376d6cbc433bfe.contains.A");
@@ -210,21 +209,17 @@ describe("source directory stages", () => {
     ]);
 
     const rowRuleAction = actionsById.get("fd_3a0a0882cb93b0.script.1.event.1");
-    assert.equal(rowRuleAction.translationStatus, "omitted");
+    assert.equal(rowRuleAction.translationStatus, "needs_review");
     assert.equal(rowRuleAction.scope, "control");
     assert.equal(rowRuleAction.event, "onChange");
     assert.equal(rowRuleAction.controlId, "fd_376d6cbc433bfe");
-    assert.equal(rowRuleAction.coverage.status, "covered");
+    assert.equal(rowRuleAction.coverage.status, "partial");
     assert.deepEqual(rowRuleAction.coverage.nativeRules, ["linkage.fd_376d6cbc433bfe.contains.A"]);
-    assert.deepEqual(rowRuleAction.coverage.residuals, []);
+    assert.equal(rowRuleAction.coverage.residuals.length > 0, true);
 
-    assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").translationStatus, "omitted");
-    assert.deepEqual(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").coverage, {
-      status: "covered",
-      nativeRules: ["linkage.fd_376d6cbc433bfe.contains.A"],
-      residuals: []
-    });
-    assert.equal(dslDraft.scripts.actions.every((action) => action.translationStatus === "omitted"), true);
+    assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").translationStatus, "needs_review");
+    assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").coverage.status, "uncovered");
+    assert.equal(dslDraft.scripts.actions.every((action) => action.translationStatus === "needs_review"), true);
     assert.equal(actionsById.has("fd_3a0a08bd180e76.script.1.event.1"), false);
     assert.equal(
       dslDraft.scripts.warnings.some((warning) =>
@@ -241,7 +236,7 @@ describe("source directory stages", () => {
       checkedAt: "2026-07-08T00:00:00.000Z"
     });
     const executeCheck = checkExecute(trusted);
-    assert.equal(executeCheck.diagnostics.filter((item) => item.code === "dsl.scripts.needs_review").length, 0);
+    assert.equal(executeCheck.diagnostics.filter((item) => item.code === "dsl.scripts.needs_review").length > 0, true);
   });
 
   it("drafts source facts into a non-executable dsl-draft with explicit mkTree", () => {

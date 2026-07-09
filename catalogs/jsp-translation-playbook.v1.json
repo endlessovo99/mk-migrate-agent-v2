@@ -1,0 +1,175 @@
+{
+  "id": "jsp-translation-playbook",
+  "version": "2026-07-09.v1",
+  "goal": "Guide the Agent to semantically translate legacy EKP/JSP form scripts into restricted NewOA/MK DSL script patches. Deterministic code extracts evidence only; the Agent decides whether a patch is safe.",
+  "principles": [
+    "Translate behavior, not source syntax. Legacy function names and regex-like shapes are evidence, not completion criteria.",
+    "Use form/source/dsl context, targetApi capabilities, function catalog semantics, row markers, and native formRules evidence together.",
+    "Prefer native formRules coverage when it fully covers behavior; otherwise generate small MKXFORM JavaScript using targetApi.",
+    "Keep unsupported, ambiguous, side-effect-heavy, or DOM-dependent behavior as needs_review/manual diagnostics.",
+    "Never emit DOM APIs in mapped output."
+  ],
+  "legacyApis": [
+    {
+      "name": "AttachXFormValueChangeEventById",
+      "semantic": "Registers behavior that runs when a control value changes.",
+      "translationGuidance": "Use the existing DSL action whose event is onChange and whose controlId/tableId matches the registered control. Do not create a new action.",
+      "safeWhen": "The callback body can be expressed by native formRules or targetApi JavaScript inside that action."
+    },
+    {
+      "name": "Com_AddEventListener(window, \"load\", fn)",
+      "semantic": "Registers form-load initialization behavior.",
+      "translationGuidance": "Use the existing onLoad DSL action. Translate only initialization behavior that is fully represented in the source window and targetApi.",
+      "safeWhen": "The source window contains a complete callback body and no unresolved residual behavior remains."
+    },
+    {
+      "name": "GetXFormFieldValueById",
+      "semantic": "Reads a legacy form field value. Many legacy snippets read the first array item with [0].",
+      "translationGuidance": "Use MKXFORM.getValue(fieldId). Normalize array or scalar values before comparisons.",
+      "safeWhen": "The field id resolves in the DSL form or is explicitly preserved as source evidence for review."
+    },
+    {
+      "name": "SetXFormFieldValueById",
+      "semantic": "Writes a legacy form field value.",
+      "translationGuidance": "Use MKXFORM.setValue(fieldId, value) when the target field resolves and the value expression is safe.",
+      "safeWhen": "No DOM object writes or hidden helper-only state are required."
+    },
+    {
+      "name": "common_dom_row_set_show_required_reset",
+      "semantic": "Controls row or field visibility and required state; arguments usually mean rowId, visible, required, reset.",
+      "translationGuidance": "If native formRules already cover the same row behavior, patch the action to omitted with coverage.status covered. If JavaScript must cover it, use MKXFORM.setFieldAttr(rowId, 5/4 for show/hide and 3/6 for required/not-required).",
+      "safeWhen": "The referenced row marker is present in layout sourceMarkers or otherwise resolves through form/layout evidence, reset is false or harmless, and no other behavior remains."
+    },
+    {
+      "name": "document.getElementById / getElementsByName / getElementsByTagName",
+      "semantic": "Legacy DOM lookup or mutation.",
+      "translationGuidance": "Do not emit DOM calls. Infer the business intent only if the surrounding code clearly maps to targetApi or native formRules.",
+      "safeWhen": "The DOM usage is only incidental to value/visibility/required behavior that can be expressed by MKXFORM APIs."
+    }
+  ],
+  "targetApiCapabilities": [
+    {
+      "name": "MKXFORM.getValue",
+      "semantic": "Read field or detail value.",
+      "notes": "Normalize array/object/scalar values before comparing when legacy code used [0]."
+    },
+    {
+      "name": "MKXFORM.setValue",
+      "semantic": "Set a field value.",
+      "notes": "Use only for resolved target fields and safe value expressions."
+    },
+    {
+      "name": "MKXFORM.setFieldAttr",
+      "semantic": "Set a main-field or row marker attribute: 3 required, 4 hide, 5 show, 6 not required.",
+      "notes": "Good fit for legacy row visibility/required behavior when row markers are present."
+    },
+    {
+      "name": "MKXFORM.setDetailFieldAttr",
+      "semantic": "Set detail field attributes.",
+      "notes": "Use for detail table field attributes when the target id is table.field or otherwise evidenced."
+    },
+    {
+      "name": "MKXFORM.updateControlStyle",
+      "semantic": "Update detail-row control visual style.",
+      "notes": "Use for row-scoped detail visibility when the action has rowNum and a resolved detail control target."
+    }
+  ],
+  "allowedPatterns": [
+    {
+      "id": "native-form-rule-coverage",
+      "description": "If dslDraft.formRules.linkage with matching meta.sourceJsp fully covers the action behavior, patch function to empty string, translationStatus to omitted, functionMappings to native formRules evidence, and coverage.status to covered with residuals empty."
+    },
+    {
+      "id": "semantic-js-coverage",
+      "description": "If targetApi JavaScript covers all source behavior, patch function, translationStatus mapped, functionMappings with semantic-translation/function-catalog/native-rule basis, and coverage.status translated with residuals empty."
+    },
+    {
+      "id": "partial-diagnostic",
+      "description": "If only part of the behavior is safe, do not patch to mapped. Leave needs_review/manual and emit diagnostics naming safe pieces and unresolved residuals."
+    }
+  ],
+  "forbiddenPatterns": [
+    "document/window/querySelector/getElementById/getElementsByName/getElementsByTagName in mapped output",
+    "style/className/classList/setAttribute/getAttribute/removeAttribute in mapped output",
+    "new actions, deleted actions, changed action scope/controlId/tableId/event",
+    "coverage translated/covered when residual behavior remains",
+    "unknown or blocked MKXFORM target APIs"
+  ],
+  "coverageStandards": {
+    "translated": "Generated MK JavaScript covers all source behavior for this action; residuals must be empty.",
+    "covered": "Native formRules cover all source behavior; function must be empty and residuals must be empty.",
+    "partial": "Native rules cover some behavior but residual JSP behavior remains.",
+    "uncovered": "Source behavior remains untranslated.",
+    "none": "No source behavior was identified for coverage accounting."
+  },
+  "fewShotExamples": [
+    {
+      "id": "row-load-hidden-by-default",
+      "sourceBehavior": "onLoad callback only calls common_dom_row_set_show_required_reset(\"fd_jsx_row\", false, false, false).",
+      "safePatchShape": {
+        "function": "function onLoad() {\n  MKXFORM.setFieldAttr('fd_jsx_row', 4)\n  MKXFORM.setFieldAttr('fd_jsx_row', 6)\n}",
+        "translationStatus": "mapped",
+        "functionMappings": [
+          {
+            "source": "common_dom_row_set_show_required_reset",
+            "target": "MKXFORM.setFieldAttr",
+            "basis": "semantic-translation",
+            "reviewRequired": false
+          }
+        ],
+        "coverage": {
+          "status": "translated",
+          "nativeRules": [],
+          "residuals": []
+        }
+      }
+    },
+    {
+      "id": "row-load-guarded-by-value",
+      "sourceBehavior": "onLoad reads GetXFormFieldValueById(\"fd_cglx1\")[0] and shows/requires fd_jsx_row only when the value equals D.",
+      "safePatchShape": {
+        "function": "function onLoad() {\n  var rawValue = MKXFORM.getValue('fd_cglx1')\n  var value = Array.isArray(rawValue) ? rawValue[0] : rawValue\n  var show = value === 'D'\n  MKXFORM.setFieldAttr('fd_jsx_row', show ? 5 : 4)\n  MKXFORM.setFieldAttr('fd_jsx_row', show ? 3 : 6)\n}",
+        "translationStatus": "mapped",
+        "functionMappings": [
+          {
+            "source": "GetXFormFieldValueById + common_dom_row_set_show_required_reset",
+            "target": "MKXFORM.getValue + MKXFORM.setFieldAttr",
+            "basis": "semantic-translation",
+            "reviewRequired": false
+          }
+        ],
+        "coverage": {
+          "status": "translated",
+          "nativeRules": [],
+          "residuals": []
+        }
+      }
+    },
+    {
+      "id": "native-rule-already-covers",
+      "sourceBehavior": "Value-change callback toggles a row and matching dslDraft.formRules.linkage already covers all effects.",
+      "safePatchShape": {
+        "function": "",
+        "translationStatus": "omitted",
+        "functionMappings": [
+          {
+            "source": "legacy row visibility/required callback",
+            "target": "native formRules.linkage",
+            "basis": "native-form-rule",
+            "reviewRequired": false
+          }
+        ],
+        "coverage": {
+          "status": "covered",
+          "nativeRules": ["linkage.<field>.<op>.<value>"],
+          "residuals": []
+        }
+      }
+    },
+    {
+      "id": "unsafe-dom-workaround",
+      "sourceBehavior": "Source walks all img/span/input elements to bind clicks or patch temporary-save display quirks.",
+      "safeOutcome": "Do not patch to mapped. Leave needs_review/manual and emit diagnostics explaining unsupported DOM lifecycle behavior."
+    }
+  ]
+}

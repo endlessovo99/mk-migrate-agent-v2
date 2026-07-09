@@ -1,6 +1,6 @@
 {
   "id": "mk-control-events",
-  "version": "2026-07-09.v1",
+  "version": "2026-07-09.v2",
   "events": {
     "onLoad": { "label": "加载完毕", "scope": "global" },
     "onBeforeSubmit": { "label": "提交前事件", "scope": "global" },
@@ -28,8 +28,8 @@
     { "componentId": "xform-textarea", "scope": "field", "status": "supported", "events": ["onChange", "onFocus", "onBlur"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"], "onFocus": [], "onBlur": [] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 多行文本1." },
     { "componentId": "xform-radio", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 单选框1." },
     { "componentId": "xform-checkbox", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 多选框1." },
-    { "componentId": "xform-select", "scope": "field", "status": "supported", "events": ["onChange", "onSelect", "onDelect"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"], "onSelect": [], "onDelect": [] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 单选下拉框1. Event name onDelect is recorded as displayed by MK." },
-    { "componentId": "xform-select~multi", "scope": "field", "status": "supported", "events": ["onChange", "onSelect", "onDelect"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"], "onSelect": [], "onDelect": [] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 多选下拉框1. Event name onDelect is recorded as displayed by MK." },
+    { "componentId": "xform-select", "scope": "field", "status": "supported", "events": ["onChange", "onSelect", "onDelect"], "detailColumn": true, "handlerParams": { "onChange": ["value"], "onSelect": [], "onDelect": [] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 单选下拉框1. Route-validation fixture 19bb55286bd93a6081a33e44c3791374 exercises detail-column xform-select onChange. Event name onDelect is recorded as displayed by MK." },
+    { "componentId": "xform-select~multi", "scope": "field", "status": "supported", "events": ["onChange", "onSelect", "onDelect"], "detailColumn": true, "handlerParams": { "onChange": ["value"], "onSelect": [], "onDelect": [] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 多选下拉框1. Select detail-column action support follows the same MK selector family. Event name onDelect is recorded as displayed by MK." },
     { "componentId": "xform-datetime", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 日期1." },
     { "componentId": "xform-timepicker", "scope": "field", "status": "supported", "events": ["onChange", "onOk"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"], "onOk": [] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 时间1 after v1-gap recheck." },
     { "componentId": "xform-number", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 数值1." },

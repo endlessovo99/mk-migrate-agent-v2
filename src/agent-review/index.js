@@ -8,6 +8,7 @@ import { AGENT_REVIEW_PROMPT_VERSION } from "./prompt.js";
 const TOP_LEVEL_KEYS = new Set(["summary", "patches", "diagnostics"]);
 const PATCH_KEYS = ["op", "path", "value", "sourceRefs", "evidence", "confidence", "rationale"];
 const DIAGNOSTIC_LEVELS = new Set(["info", "warning", "error", "blocked"]);
+const SCRIPT_COVERAGE_STATUSES = new Set(["none", "partial", "uncovered", "covered", "translated"]);
 
 export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
   const provider = options.provider || new OpenAIResponsesReviewProvider(options.providerOptions);
@@ -94,15 +95,27 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
   });
   const trustCheck = checkTrust(sourceDraft, trusted);
   if (!trustCheck.ok) {
-    return blockedResult({
-      ...metadata,
-      ...activeProviderResult,
-      stage: "agent-review.trust-validation",
-      diagnostics: trustCheck.diagnostics,
-      rawResponsePreview: activeProviderResult.rawResponsePreview,
-      repairAttempts: repairHistory.length,
-      repairHistory
-    });
+    return {
+      ok: false,
+      status: "blocked",
+      dslDraft: patchResult.dslDraft,
+      report: pruneUndefined({
+        ok: false,
+        status: "blocked",
+        stage: "agent-review.trust-validation",
+        provider: activeProviderResult.provider || metadata.provider || "openai",
+        baseUrl: activeProviderResult.baseUrl || metadata.baseUrl || "",
+        model: activeProviderResult.model || metadata.model || "",
+        promptVersion,
+        diagnostics: trustCheck.diagnostics,
+        acceptedPatchCount: patchResult.acceptedPatches.length,
+        diagnosticCount: parsed.response.diagnostics.length,
+        scriptTranslation: summarizeScriptTranslation(patchResult.dslDraft.scripts),
+        rawResponsePreview: activeProviderResult.rawResponsePreview ? redactSecrets(activeProviderResult.rawResponsePreview) : undefined,
+        repairAttempts: repairHistory.length,
+        repairHistory
+      })
+    };
   }
 
   const report = {
@@ -339,12 +352,13 @@ function validatePatch(patch, index, dslDraft, sourceRefs, seenPaths) {
   }
 
   const target = parseAllowedPatchPath(patch.path);
+  const currentTarget = target.ok ? getByPointer(dslDraft, patch.path) : { exists: false };
   if (!target.ok) {
     diagnostics.push(error("agent.patch.path_disallowed", "Agent patch path is outside the allowed form/script DSL patch scope.", `${path}/path`, {
       path: patch.path,
       allowed: "form field/detail-column title, type, componentId, props paths and scripts.actions function, translationStatus, functionMappings, coverage paths only"
     }));
-  } else if (!getByPointer(dslDraft, patch.path).exists) {
+  } else if (!currentTarget.exists) {
     diagnostics.push(error("agent.patch.path_missing", "Agent patch path does not exist in the DSL draft.", `${path}/path`, {
       path: patch.path
     }));
@@ -384,7 +398,7 @@ function validatePatch(patch, index, dslDraft, sourceRefs, seenPaths) {
   }
 
   if (target.ok) {
-    diagnostics.push(...validatePatchValue(patch, target, path));
+    diagnostics.push(...validatePatchValue(patch, target, path, currentTarget.value, dslDraft));
   }
 
   return {
@@ -393,9 +407,9 @@ function validatePatch(patch, index, dslDraft, sourceRefs, seenPaths) {
   };
 }
 
-function validatePatchValue(patch, target, path) {
+function validatePatchValue(patch, target, path, currentValue, dslDraft) {
   if (target.scope === "scriptAction") {
-    return validateScriptPatchValue(patch, target, path);
+    return validateScriptPatchValue(patch, target, path, currentValue, dslDraft);
   }
   if (target.property === "title" && !nonEmptyString(patch.value)) {
     return [error("agent.patch.value_title_required", "Title patches require a non-empty string value.", `${path}/value`)];
@@ -426,13 +440,27 @@ function validatePatchValue(patch, target, path) {
   return [];
 }
 
-function validateScriptPatchValue(patch, target, path) {
-  if (target.property === "function" && !nonEmptyString(patch.value)) {
-    return [error("agent.patch.value_script_function_required", "Script function patches require a non-empty string value.", `${path}/value`)];
+function validateScriptPatchValue(patch, target, path, currentValue, dslDraft) {
+  const action = getScriptAction(dslDraft, target.actionIndex);
+  const protection = protectedScriptActionReason(action);
+  if (target.property === "function" && typeof patch.value !== "string") {
+    return [error("agent.patch.value_script_function_required", "Script function patches require a string value. Empty strings are valid only when the final action is omitted.", `${path}/value`)];
   }
   if (target.property === "translationStatus" && !["mapped", "needs_review", "manual", "omitted"].includes(patch.value)) {
     return [error("agent.patch.value_script_status_invalid", "Script translationStatus patches require mapped, needs_review, manual, or omitted.", `${path}/value`, {
       actual: patch.value
+    })];
+  }
+  if (
+    target.property === "translationStatus" &&
+    protection &&
+    ["needs_review", "manual"].includes(patch.value)
+  ) {
+    return [error("agent.patch.script_status_downgrade_forbidden", "Agent Review must not downgrade a protected deterministic or native-covered script action; leave it unchanged and emit a diagnostic if confidence is insufficient.", `${path}/value`, {
+      current: currentValue,
+      proposed: patch.value,
+      actionIndex: target.actionIndex,
+      protection
     })];
   }
   if (target.property === "functionMappings" && !Array.isArray(patch.value)) {
@@ -441,7 +469,58 @@ function validateScriptPatchValue(patch, target, path) {
   if (target.property === "coverage" && !isRecord(patch.value)) {
     return [error("agent.patch.value_coverage_required", "Script coverage patches require an object value.", `${path}/value`)];
   }
+  if (target.property === "coverage") {
+    const diagnostics = [];
+    if (!SCRIPT_COVERAGE_STATUSES.has(patch.value.status)) {
+      diagnostics.push(error("agent.patch.value_coverage_status_invalid", "Script coverage.status patches require none, partial, uncovered, covered, or translated.", `${path}/value/status`, {
+        actual: patch.value.status
+      }));
+    } else if (
+      protection &&
+      (["partial", "uncovered"].includes(patch.value.status) ||
+        (Array.isArray(patch.value.residuals) && patch.value.residuals.length > 0))
+    ) {
+      diagnostics.push(error("agent.patch.script_coverage_downgrade_forbidden", "Agent Review must not downgrade coverage for a protected deterministic or native-covered script action; leave it unchanged and emit a diagnostic if confidence is insufficient.", `${path}/value/status`, {
+        current: action?.coverage?.status,
+        proposed: patch.value.status,
+        actionIndex: target.actionIndex,
+        protection,
+        residualCount: Array.isArray(patch.value.residuals) ? patch.value.residuals.length : undefined
+      }));
+    }
+    if (patch.value.nativeRules !== undefined && !Array.isArray(patch.value.nativeRules)) {
+      diagnostics.push(error("agent.patch.value_coverage_native_rules_invalid", "Script coverage.nativeRules must be an array when present.", `${path}/value/nativeRules`));
+    }
+    if (patch.value.residuals !== undefined && !Array.isArray(patch.value.residuals)) {
+      diagnostics.push(error("agent.patch.value_coverage_residuals_invalid", "Script coverage.residuals must be an array when present.", `${path}/value/residuals`));
+    }
+    return diagnostics;
+  }
   return [];
+}
+
+function getScriptAction(dslDraft, actionIndex) {
+  if (!Number.isInteger(actionIndex)) return undefined;
+  const actions = dslDraft?.scripts?.actions;
+  return Array.isArray(actions) ? actions[actionIndex] : undefined;
+}
+
+function protectedScriptActionReason(action) {
+  if (!isRecord(action)) return undefined;
+  if (action.translationStatus === "omitted" && action.coverage?.status === "covered") {
+    return "native-covered";
+  }
+  const mappings = Array.isArray(action.functionMappings) ? action.functionMappings : [];
+  const hasDeterministicPattern = mappings.some((mapping) => (
+    mapping?.basis === "deterministic-pattern" &&
+    mapping?.reviewRequired === false
+  ));
+  const residuals = action.coverage?.residuals;
+  const residualFree = Array.isArray(residuals) && residuals.length === 0;
+  if (action.translationStatus === "mapped" && hasDeterministicPattern && residualFree) {
+    return "deterministic-pattern";
+  }
+  return undefined;
 }
 
 function parseAllowedPatchPath(path) {
@@ -469,7 +548,7 @@ function parseAllowedPatchPath(path) {
     isArrayIndex(parts[2]) &&
     isScriptPatchProperty(parts[3])
   ) {
-    return { ok: true, scope: "scriptAction", property: parts[3] };
+    return { ok: true, scope: "scriptAction", actionIndex: Number(parts[2]), property: parts[3] };
   }
   return { ok: false };
 }

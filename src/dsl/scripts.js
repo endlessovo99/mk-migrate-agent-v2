@@ -1,4 +1,11 @@
 import { CONTROL_EVENTS_BY_COMPONENT, CONTROL_EVENTS_CATALOG, JS_METHOD_CATALOG } from "./catalogs.js";
+import {
+  isExecutableTargetApi,
+  resolveTargetApiCall,
+  TARGET_API_BY_NAME,
+  TARGET_API_SAFETY,
+  targetApiCatalogSummary
+} from "./target-api-catalog.js";
 
 export const SCRIPT_EVENTS = new Set(Object.keys(CONTROL_EVENTS_CATALOG.events || {}));
 export const SCRIPT_GLOBAL_EVENTS = new Set(CONTROL_EVENTS_CATALOG.global?.events || []);
@@ -8,22 +15,11 @@ export const SCRIPT_CONTROL_EVENTS = new Set(
 export const SCRIPT_SCOPES = new Set(["global", "control"]);
 export const SCRIPT_TRANSLATION_STATUSES = new Set(["mapped", "needs_review", "manual", "omitted"]);
 
-export const ALLOWED_SCRIPT_TARGET_FUNCTIONS = new Set([
-  "MKXFORM.$",
-  "MKXFORM.getValue",
-  "MKXFORM.setValue",
-  "MKXFORM.getFieldAttr",
-  "MKXFORM.setFieldAttr",
-  "MKXFORM.setDetailFieldAttr",
-  "MKXFORM.updateControlStyle",
-  "MKXFORM.validateFields",
-  "MKXFORM.checkDetailRow",
-  "MKXFORM.addRow",
-  "MKXFORM.updateRow",
-  "MKXFORM.reload",
-  "MKXFORM.ajax",
-  "MKXFORM.callOrg"
-]);
+export const ALLOWED_SCRIPT_TARGET_FUNCTIONS = new Set(
+  [...TARGET_API_BY_NAME.values()]
+    .filter((api) => api.safety === TARGET_API_SAFETY.safe || api.safety === TARGET_API_SAFETY.review)
+    .map((api) => api.name)
+);
 
 const ALLOWED_BUILTIN_CALLS = catalogNameSet(JS_METHOD_CATALOG.globals);
 const ALLOWED_STATIC_METHODS = catalogNameSet(JS_METHOD_CATALOG.staticMethods);
@@ -205,15 +201,29 @@ export function analyzeScriptFunction(text = "") {
   const localFunctions = extractLocalFunctionNames(masked);
   const calls = extractCalls(masked, source, localFunctions);
   const domUsages = extractDomUsages(masked, source);
-  const disallowedTargetCalls = calls
+  const targetCalls = calls
     .filter((call) => call.name.startsWith("MKXFORM."))
-    .filter((call) => !ALLOWED_SCRIPT_TARGET_FUNCTIONS.has(call.name));
-  const disallowedCalls = calls.filter((call) => !isAllowedCall(call.name, localFunctions));
+    .map((call) => ({
+      ...call,
+      targetApi: resolveTargetApiCall(call.name)
+    }));
+  const disallowedTargetCalls = targetCalls
+    .filter((call) =>
+      call.targetApi.safety === TARGET_API_SAFETY.blocked ||
+      call.targetApi.safety === TARGET_API_SAFETY.unknown
+    );
+  const reviewTargetCalls = targetCalls
+    .filter((call) => call.targetApi.safety === TARGET_API_SAFETY.review);
+  const disallowedCalls = calls
+    .filter((call) => !call.name.startsWith("MKXFORM."))
+    .filter((call) => !isAllowedCall(call.name, localFunctions));
 
   return {
     calls,
+    targetCalls,
     domUsages,
     disallowedTargetCalls,
+    reviewTargetCalls,
     disallowedCalls
   };
 }
@@ -242,7 +252,8 @@ export function handlesDraftContext(text = "") {
 export function scriptTargetApiSummary() {
   return {
     allowedPrefixes: ["MKXFORM."],
-    allowedFunctions: [...ALLOWED_SCRIPT_TARGET_FUNCTIONS],
+    catalog: targetApiCatalogSummary(),
+    allowedFunctions: [...ALLOWED_SCRIPT_TARGET_FUNCTIONS].sort(),
     jsMethodsCatalog: {
       id: JS_METHOD_CATALOG.id,
       version: JS_METHOD_CATALOG.version,
@@ -328,7 +339,7 @@ function extractDomUsages(masked, source) {
 
 function isAllowedCall(name, localFunctions) {
   if (localFunctions.has(name)) return true;
-  if (name.startsWith("MKXFORM.")) return ALLOWED_SCRIPT_TARGET_FUNCTIONS.has(name);
+  if (name.startsWith("MKXFORM.")) return isExecutableTargetApi(name);
   if (name.includes(".") && ALLOWED_INSTANCE_METHODS.has(name.slice(name.lastIndexOf(".") + 1))) return true;
   if (ALLOWED_BUILTIN_CALLS.has(name)) return true;
   return ALLOWED_STATIC_METHODS.has(name);

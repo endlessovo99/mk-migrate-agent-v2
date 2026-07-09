@@ -297,7 +297,8 @@ function sourceScriptsFromLegacy(scripts) {
       sourceType: source.sourceType,
       fragmentId: source.fragmentId,
       javascript: source.javascript,
-      functionAudit: source.functionAudit
+      functionAudit: source.functionAudit,
+      semanticFacts: source.semanticFacts
     }))
   };
 }

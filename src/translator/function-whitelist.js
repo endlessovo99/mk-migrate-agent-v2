@@ -1,9 +1,15 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { extname } from "node:path";
-import { FUNCTION_CATALOG } from "../dsl/catalogs.js";
+import { FUNCTION_CATALOG, JS_METHOD_CATALOG } from "../dsl/catalogs.js";
+
+const JS_GLOBAL_FUNCTIONS = catalogNameSet(JS_METHOD_CATALOG.globals);
+const JS_STATIC_METHODS = catalogNameSet(JS_METHOD_CATALOG.staticMethods);
+const JS_INSTANCE_METHODS = catalogNameSet(JS_METHOD_CATALOG.instanceMethods);
 
 const IGNORED_FUNCTIONS = new Set([
+  ...JS_GLOBAL_FUNCTIONS,
+  ...JS_STATIC_METHODS,
   "$",
   "jQuery",
   "setTimeout",
@@ -39,6 +45,7 @@ const IGNORED_FUNCTION_PREFIXES = [
 ];
 
 const IGNORED_METHOD_NAMES = new Set([
+  ...JS_INSTANCE_METHODS,
   "setAttribute",
   "getAttribute",
   "removeAttribute",
@@ -56,6 +63,15 @@ const IGNORED_METHOD_NAMES = new Set([
   "charCodeAt"
 ]);
 
+function catalogNameSet(entries = []) {
+  return new Set(
+    (Array.isArray(entries) ? entries : [])
+      .filter((entry) => entry?.status === "supported")
+      .map((entry) => entry.name)
+      .filter(Boolean)
+  );
+}
+
 const KEYWORDS = new Set([
   "if",
   "for",
@@ -65,7 +81,10 @@ const KEYWORDS = new Set([
   "function",
   "return",
   "typeof",
-  "new"
+  "new",
+  "var",
+  "let",
+  "const"
 ]);
 
 export function loadFunctionWhitelist(path) {
