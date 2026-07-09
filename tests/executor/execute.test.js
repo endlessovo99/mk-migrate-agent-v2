@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { executeDsl } from "../../src/executor/execute.js";
 import { applyFormPayload, summarizeFormFromTemplate } from "../../src/executor/form-payload.js";
+import { verifyReadback } from "../../src/executor/readback.js";
 import { applyWorkflowPayload, buildWorkflowContent } from "../../src/executor/workflow-payload.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
@@ -963,6 +964,55 @@ describe("executeDsl", () => {
     assert.equal(attribute.config.controlProps.desktop.type, "@elem/xform-subject");
     assert.equal(attribute.config.controlProps.mobile.type, "@elem/xform-m-subject");
     assert.equal(summary.fields.find((field) => field.id === "fd_subject").component, "xform-subject");
+  });
+
+  it("summarizes persisted select controls with multi flag as multi-select readback", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: undefined,
+      form: {
+        fields: [{
+          id: "fd_multi_select",
+          title: "多选字段",
+          type: "multiSelect",
+          componentId: "xform-select~multi",
+          props: {
+            required: true,
+            options: [
+              { label: "选项 A", value: "A" },
+              { label: "选项 B", value: "B" }
+            ]
+          },
+          sourceProps: { designerType: "multiSelect" },
+          sourceRef: "source.form.control.fd_multi_select"
+        }],
+        layout: {
+          sourceGrid: { rows: [] },
+          mkTree: [{
+            id: "layout.row-0",
+            componentId: "xform-flex-1-1-layout",
+            props: { columns: 1 },
+            sourceRef: "source.form.layout.row.row-0",
+            children: [{
+              id: "c1",
+              refType: "field",
+              refIds: ["fd_multi_select"],
+              sourceRef: "source.form.layout.cell.c1",
+              column: 0,
+              colspan: 1
+            }]
+          }]
+        }
+      }
+    });
+    const payload = applyWorkflowPayload(applyFormPayload(baseTemplate(), dsl), dsl);
+    const readback = verifyReadback(dsl, payload);
+
+    assert.equal(readback.form.fields.find((field) => field.id === "fd_multi_select").component, "xform-select~multi");
+    assert.equal(
+      readback.diagnostics.some((diagnostic) => diagnostic.code === "readback.form.component_mismatch"),
+      false
+    );
+    assert.equal(readback.ok, true);
   });
 
   it("writes fixture fields with registered MK control types and no textarea heights", () => {

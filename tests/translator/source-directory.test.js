@@ -82,6 +82,26 @@ describe("source directory stages", () => {
     });
   });
 
+  it("keeps subprocess workflow nodes pending review instead of counting them as process starts", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/1922c92a772710632f41c544ea59bc7e");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const check = checkDraft(dslDraft);
+    const nodesById = new Map(dslDraft.workflow.nodes.map((node) => [node.id, node]));
+
+    assert.deepEqual(
+      dslDraft.workflow.nodes
+        .filter((node) => node.element === "startEvent")
+        .map((node) => [node.id, node.sourceType]),
+      [["N1", "startNode"]]
+    );
+    assert.equal(nodesById.get("N20").sourceType, "startSubProcessNode");
+    assert.equal(nodesById.get("N20").translationStatus, "pending_review");
+    assert.equal(nodesById.get("N23").sourceType, "recoverSubProcessNode");
+    assert.equal(nodesById.get("N23").translationStatus, "pending_review");
+    assert.equal(check.diagnostics.some((diagnostic) => diagnostic.code === "dsl.workflow.start_node_required"), false);
+    assert.equal(check.ok, true);
+  });
+
   it("drafts fixture row markers and structured native form linkage rules", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
@@ -137,6 +157,24 @@ describe("source directory stages", () => {
       ["fd_3a0a0a5e1860c6", "重量（单位KG）", "text", true]
     ]);
     assert.equal(table.columns.some((column) => column.id === "fdId"), false);
+  });
+
+  it("keeps designer detail columns when matching metadata table has no columns", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/14979d75e8985408a56b2a64c60a072a");
+    const table = sourceDraft.form.detailTables.find((item) => item.id === "fd_3246294b5671a0");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const dslTable = dslDraft.form.fields.find((item) => item.id === "fd_3246294b5671a0");
+    const check = checkDraft(dslDraft);
+
+    assert.deepEqual(table.columns.map((column) => [column.id, column.title, column.sourceType, column.required]), [
+      ["fd_detail_name", "文件名称", "text", true],
+      ["fd_detail_copy", "份数", "text", true]
+    ]);
+    assert.deepEqual(dslTable.columns.map((column) => [column.id, column.title, column.type, column.props.required]), [
+      ["fd_detail_name", "文件名称", "text", true],
+      ["fd_detail_copy", "份数", "text", true]
+    ]);
+    assert.equal(check.diagnostics.some((diagnostic) => diagnostic.code === "dsl.detail_table.columns_required"), false);
   });
 
   it("maps legacy creator default expressions into DSL context defaults", () => {

@@ -850,13 +850,15 @@ function detailFieldIdForModel(model) {
 
 function componentFromDataField(field) {
   const attribute = parseJsonObject(field.fdAttribute || "{}");
-  const desktopType = attribute.config?.controlProps?.desktop?.type;
-  return {
+  const controlProps = attribute.config?.controlProps || {};
+  const desktopType = controlProps.desktop?.type || attribute.config?.type;
+  const component = {
     "@elem/xform-input": "xform-input",
     "@elem/xform-textarea": "xform-textarea",
     "@elem/xform-radio": "xform-radio",
     "@elem/xform-checkbox": "xform-checkbox",
     "@elem/xform-select": "xform-select",
+    "@elem/xform-select~multi": "xform-select~multi",
     "@elem/xform-datetime": "xform-datetime",
     "@elem/xform-number": "xform-number",
     "@elem/xform-address": "xform-address",
@@ -864,6 +866,8 @@ function componentFromDataField(field) {
     "@elem/xform-subject": "xform-subject",
     "@elem/xform-description": "xform-description"
   }[desktopType] || field.component || componentForFdType(field.fdType);
+  if (component === "xform-select" && controlProps.multi === true) return "xform-select~multi";
+  return component;
 }
 
 function componentForFdType(type) {

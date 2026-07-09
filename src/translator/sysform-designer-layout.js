@@ -189,7 +189,9 @@ function enrichDesignerField(field, metadataField, warnings) {
   }
 
   if (field.type === "detailTable") {
-    next.columns = Array.isArray(metadataField.columns) ? metadataField.columns : field.columns;
+    next.columns = Array.isArray(metadataField.columns) && metadataField.columns.length
+      ? metadataField.columns
+      : field.columns;
   }
 
   return next;

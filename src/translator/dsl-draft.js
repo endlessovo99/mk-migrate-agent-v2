@@ -471,6 +471,7 @@ function simpleDollarExpressionValue(value) {
 function mapWorkflowNodeType(node = {}, nodeById = new Map()) {
   const sourceType = node.sourceType || "";
   const normalized = String(sourceType).toLowerCase();
+  if (normalized.includes("subprocess")) return { type: "review", element: "manualTask", needsReview: true };
   if (normalized.includes("split")) return parallelGatewayNodeType(node, nodeById, "split");
   if (normalized.includes("join")) return parallelGatewayNodeType(node, nodeById, "join");
   if (normalized.includes("start")) return { type: "generalStart", element: "startEvent" };
