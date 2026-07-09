@@ -419,6 +419,46 @@ describe("validateMigrationDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "workflow.participants.form_field_missing"), true);
   });
 
+  it("validates node data authority field references and flags", () => {
+    const acceptedDsl = sampleTrustedDsl();
+    acceptedDsl.workflow.nodes[0] = {
+      ...acceptedDsl.workflow.nodes[0],
+      dataAuthority: {
+        enabled: true,
+        fields: {
+          fd_name: {
+            visible: true,
+            editable: false,
+            required: false,
+            sourceMode: "view",
+            sourceRef: "source.form.dataAuthority.fdDisplayJsp.xform-right-1.N1.fd_name"
+          }
+        }
+      }
+    };
+    const rejectedDsl = sampleTrustedDsl();
+    rejectedDsl.workflow.nodes[0] = {
+      ...rejectedDsl.workflow.nodes[0],
+      dataAuthority: {
+        enabled: true,
+        fields: {
+          fd_missing: {
+            visible: true,
+            editable: false
+          }
+        }
+      }
+    };
+
+    const accepted = validateMigrationDsl(acceptedDsl, { mode: "execute" });
+    const rejected = validateMigrationDsl(rejectedDsl, { mode: "execute" });
+
+    assert.equal(accepted.ok, true);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.workflow.data_authority.field_missing"), true);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.workflow.data_authority.flag_required"), true);
+  });
+
   it("accepts role-line workflow participants only when the field exists", () => {
     const workflow = {
       process: { id: "process-role-line-handler" },

@@ -289,7 +289,7 @@ describe("source directory stages", () => {
     assert.equal(join.translationStatus, "pending_review");
   });
 
-  it("carries source errors into dsl-draft validation errors", () => {
+  it("allows non-whitelisted source functions through draft as warnings", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/route-validation-lbpm");
     sourceDraft.issues.push({
       level: "error",
@@ -301,8 +301,37 @@ describe("source directory stages", () => {
     const dslDraft = draftSourceDraft(sourceDraft);
     const check = checkDraft(dslDraft);
 
-    assert.equal(check.ok, false);
-    assert.equal(check.diagnostics.some((item) => item.code === "source.function_not_whitelisted"), true);
+    assert.equal(check.ok, true);
+    assert.equal(check.diagnostics.some((item) => item.level === "warning" && item.code === "source.function_not_whitelisted"), true);
+  });
+
+  it("drafts legacy right sections into node field data authority", () => {
+    const expectedFields = [
+      "fd_3ea698a0fa7c78",
+      "fd_3ea698a261c666",
+      "fd_3ea8c4b09da4fe",
+      "fd_3ea8c511ffc138",
+      "fd_3ea8c5326b3754",
+      "fd_3ea8c5b2213ef2"
+    ];
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/16a8c7e6740bd9caad821ba447dbf330");
+    const sourceNode = sourceDraft.workflow.nodes.find((node) => node.id === "N2");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const node = dslDraft.workflow.nodes.find((item) => item.id === "N2");
+
+    assert.deepEqual(Object.keys(sourceNode.dataAuthority.fields).sort(), expectedFields);
+    assert.deepEqual(Object.keys(node.dataAuthority.fields).sort(), expectedFields);
+    assert.deepEqual(node.dataAuthority.fields.fd_3ea698a261c666, {
+      visible: false,
+      editable: false,
+      required: false,
+      sourceMode: "hidden",
+      sourceRef: "source.form.dataAuthority.fdDesignerHtml.fd_3ea8c5f174dbe6.N2.fd_3ea698a261c666"
+    });
+    assert.equal(
+      sourceDraft.issues.some((issue) => issue.code?.startsWith("source.form_right.")),
+      false
+    );
   });
 
   it("keeps translate as a clean-plus-draft compatibility shortcut that dry-run rejects", () => {

@@ -366,6 +366,9 @@ describe("agent-review", () => {
     assert.equal(prompt.context.allowedConcretePatchPaths.includes("/form/fields/0/title"), true);
     assert.equal(prompt.context.allowedConcretePatchPaths.some((path) => /\/columns\/0\/title$/.test(path)), true);
     assert.equal(prompt.context.allowedConcretePatchPaths.some((path) => /^\/scripts\/actions\/0\/function$/.test(path)), true);
+    assert.equal(prompt.system.includes("Non-whitelisted EKP functions are not automatically blocking"), true);
+    assert.equal(prompt.context.scriptTranslationPolicy.nonWhitelistedFunctions.defaultHandling, "attempt_semantic_translation");
+    assert.equal(prompt.context.scriptTranslationPolicy.nonWhitelistedFunctions.blockingByDefault, false);
   });
 });
 

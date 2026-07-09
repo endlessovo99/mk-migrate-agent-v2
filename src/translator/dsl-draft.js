@@ -284,6 +284,7 @@ function draftWorkflow(sourceWorkflow) {
         sourceRef: node.sourceRef,
         attributes: node.attributes || {},
         definition: node.definition,
+        dataAuthority: draftDataAuthority(node.dataAuthority),
         participants: nodeType.participants === false ? undefined : participantsFromSourceNode(node),
         translationStatus: nodeType.needsReview ? "pending_review" : "executable"
       });
@@ -306,6 +307,25 @@ function draftWorkflow(sourceWorkflow) {
       };
     }),
     topologicalOrder: sourceWorkflow.topologicalOrder || []
+  };
+}
+
+function draftDataAuthority(dataAuthority) {
+  if (!dataAuthority || typeof dataAuthority !== "object") return undefined;
+  const fields = Object.fromEntries(
+    Object.entries(dataAuthority.fields || {}).map(([fieldId, value]) => [fieldId, pruneUndefined({
+      visible: value.visible,
+      editable: value.editable,
+      required: value.required,
+      sourceMode: value.sourceMode,
+      sourceRef: value.sourceRef
+    })])
+  );
+
+  if (!Object.keys(fields).length) return undefined;
+  return {
+    enabled: dataAuthority.enabled !== false,
+    fields
   };
 }
 
@@ -536,7 +556,7 @@ function normalizeFieldType(type) {
 
 function sourceIssuesToWarnings(issues) {
   return issues
-    .filter((issue) => issue.level !== "error")
+    .filter((issue) => issue.level !== "error" || isNonBlockingSourceIssue(issue))
     .map((issue) => ({
       code: issue.code,
       message: issue.message,
@@ -547,7 +567,7 @@ function sourceIssuesToWarnings(issues) {
 
 function sourceIssuesToErrors(issues) {
   const errors = issues
-    .filter((issue) => issue.level === "error")
+    .filter((issue) => issue.level === "error" && !isNonBlockingSourceIssue(issue))
     .map((issue) => ({
       code: issue.code,
       message: issue.message,
@@ -559,7 +579,7 @@ function sourceIssuesToErrors(issues) {
 
 function reviewCandidatesFromIssues(issues) {
   return issues
-    .filter((issue) => issue.level !== "error")
+    .filter((issue) => issue.level !== "error" || isNonBlockingSourceIssue(issue))
     .map((issue, index) => ({
       id: `candidate-${index + 1}`,
       status: "pending_review",
@@ -569,6 +589,10 @@ function reviewCandidatesFromIssues(issues) {
       rationale: issue.message,
       result: "review_required"
     }));
+}
+
+function isNonBlockingSourceIssue(issue) {
+  return issue?.code === "source.function_not_whitelisted";
 }
 
 function positiveInteger(value) {

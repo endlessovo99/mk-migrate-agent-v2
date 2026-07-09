@@ -36,7 +36,10 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
   const detailTableIds = new Set(fields.filter((field) => field.type === "detailTable").map((field) => field.id));
   const normalControls = fields.filter((field) => field.type !== "detailTable").map(sourceControlFromField);
   const detailTables = fields.filter((field) => field.type === "detailTable").map(sourceDetailTableFromField);
-  const workflow = legacyDsl.workflow ? sourceWorkflowFromLegacyWorkflow(legacyDsl.workflow) : undefined;
+  const workflow = legacyDsl.workflow ? sourceWorkflowFromLegacyWorkflow(legacyDsl.workflow, {
+    nodeDataAuthorities: legacyDsl.form?.nodeDataAuthorities,
+    fields
+  }) : undefined;
 
   return pruneUndefined({
     version: SOURCE_DRAFT_VERSION,
@@ -203,7 +206,9 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
   };
 }
 
-function sourceWorkflowFromLegacyWorkflow(workflow) {
+function sourceWorkflowFromLegacyWorkflow(workflow, context = {}) {
+  const requiredFields = buildRequiredFieldIndex(context.fields || []);
+  const nodeDataAuthorities = context.nodeDataAuthorities || {};
   const nodes = (workflow.nodes || []).map((node) => ({
     id: node.id,
     sourceRef: sourceRef("workflow.node", node.id),
@@ -214,6 +219,7 @@ function sourceWorkflowFromLegacyWorkflow(workflow) {
       sourceType: node.definition.type,
       attributes: node.definition.attributes || {}
     } : undefined,
+    dataAuthority: sourceNodeDataAuthority(nodeDataAuthorities[node.id], requiredFields),
     incoming: (workflow.edges || []).filter((edge) => edge.target === node.id).map((edge) => edge.id),
     outgoing: (workflow.edges || []).filter((edge) => edge.source === node.id).map((edge) => edge.id),
     evidence: { id: node.id, name: node.name || "", sourceType: node.type }
@@ -239,6 +245,45 @@ function sourceWorkflowFromLegacyWorkflow(workflow) {
   };
 }
 
+function sourceNodeDataAuthority(authority, requiredFields) {
+  const fields = authority?.fields || {};
+  const entries = Object.entries(fields).map(([fieldId, entry]) => {
+    const required = requiredFields.has(fieldId);
+    return [fieldId, pruneUndefined({
+      ...authorityFlags(entry.mode, required),
+      sourceMode: entry.mode,
+      sourceRef: entry.sourceRef
+    })];
+  });
+
+  if (!entries.length) return undefined;
+  return {
+    enabled: true,
+    fields: Object.fromEntries(entries)
+  };
+}
+
+function authorityFlags(mode, fieldRequired) {
+  if (mode === "hidden") return { visible: false, editable: false, required: false };
+  if (mode === "view") return { visible: true, editable: false, required: false };
+  return { visible: true, editable: true, required: Boolean(fieldRequired) };
+}
+
+function buildRequiredFieldIndex(fields) {
+  const required = new Set();
+  for (const field of fields || []) {
+    if (!field) continue;
+    if (field.type === "detailTable") {
+      for (const column of field.columns || []) {
+        if (column?.id && column.required) required.add(column.id);
+      }
+      continue;
+    }
+    if (field.id && field.required) required.add(field.id);
+  }
+  return required;
+}
+
 function sourceScriptsFromLegacy(scripts) {
   if (!scripts || !Array.isArray(scripts.sources) || scripts.sources.length === 0) return undefined;
   return {
@@ -260,8 +305,13 @@ function sourceScriptsFromLegacy(scripts) {
 function sourceIssuesFromReview(review = {}) {
   const warnings = (review.warnings || []).map((warning) => sourceIssueFromDiagnostic("warning", warning));
   const errors = (review.errors || []).map((item) => sourceIssueFromDiagnostic("error", item));
+  const existingFunctionViolationKeys = new Set(
+    [...warnings, ...errors]
+      .filter((issue) => issue.code === "source.function_not_whitelisted")
+      .map(functionViolationKey)
+  );
   const functionViolations = (review.functionWhitelist?.violations || []).map((violation) => ({
-    level: "error",
+    level: "warning",
     code: "source.function_not_whitelisted",
     message: `Source function ${violation.name} is not in the function catalog.`,
     sourcePath: review.functionWhitelist.path || "/fdDesignerHtml",
@@ -269,9 +319,13 @@ function sourceIssuesFromReview(review = {}) {
       functionName: violation.name,
       occurrences: violation.occurrences || []
     }
-  }));
+  })).filter((issue) => !existingFunctionViolationKeys.has(functionViolationKey(issue)));
 
   return [...warnings, ...errors, ...functionViolations];
+}
+
+function functionViolationKey(issue) {
+  return `${issue.sourcePath || ""}:${issue.evidence?.functionName || ""}`;
 }
 
 function sourceIssueFromDiagnostic(level, diagnostic) {

@@ -244,7 +244,7 @@ describe("translateSysFormTemplateXml", () => {
     assert.equal(template.fdDesignerHtml_extension, undefined);
   });
 
-  it("marks DSL invalid when designer scripts call functions outside the whitelist", () => {
+  it("keeps non-whitelisted designer script functions as review warnings", () => {
     const whitelist = loadFunctionWhitelist(whitelistPath);
     const xml = `
       <java>
@@ -266,7 +266,8 @@ describe("translateSysFormTemplateXml", () => {
 
     assert.equal(dsl.review.functionWhitelist.matched[0].name, "DocList_AddRow");
     assert.equal(dsl.review.functionWhitelist.violations[0].name, "UnknownLegacyFunction");
-    assert.equal(dsl.review.errors.find((item) => item.code === "source.function_not_whitelisted")?.details.functionName, "UnknownLegacyFunction");
+    assert.equal(dsl.review.warnings.find((item) => item.code === "source.function_not_whitelisted")?.details.functionName, "UnknownLegacyFunction");
+    assert.equal(dsl.review.errors, undefined);
   });
 });
 

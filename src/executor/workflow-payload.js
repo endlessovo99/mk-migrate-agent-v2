@@ -18,6 +18,10 @@ export function applyWorkflowPayload(template, dsl) {
   lbpm.isDraft = true;
   lbpm.fdReaders = next.fdReaders || lbpm.fdReaders || [];
   lbpm.fdEditors = next.fdEditors || lbpm.fdEditors || [];
+  const templateFormAuths = buildTemplateFormAuths(dsl.workflow);
+  if (Object.keys(templateFormAuths).length) {
+    lbpm.fdTemplateFormAuths = templateFormAuths;
+  }
 
   return next;
 }
@@ -116,6 +120,28 @@ export function summarizeDslWorkflow(workflow = {}) {
       hasCondition: Boolean(edgeConditionText(edge))
     }))
   };
+}
+
+function buildTemplateFormAuths(workflow = {}) {
+  const auths = {};
+  for (const node of workflow.nodes || []) {
+    if (!hasDataAuthority(node)) continue;
+    auths[node.id] = Object.fromEntries(
+      Object.entries(node.dataAuthority.fields || {}).map(([fieldId, value]) => [fieldId, {
+        isShow: Boolean(value.visible),
+        isEdit: Boolean(value.editable),
+        isRequire: Boolean(value.required)
+      }])
+    );
+  }
+  return auths;
+}
+
+function hasDataAuthority(node) {
+  return Boolean(
+    node?.dataAuthority?.enabled !== false &&
+      Object.keys(node?.dataAuthority?.fields || {}).length
+  );
 }
 
 export function workflowMappingDiagnostics(workflow) {
@@ -301,11 +327,43 @@ function buildRobotNode(node, index) {
     scope: "advanced",
     number: node.id,
     relateId: node.id,
-    robotType: attrs.unid || "com.landray.paas.lbpm.support.node.robot.control.RobotNodePauseAndWakeServiceImpl",
-    robotConfig: attrs.content || "{}",
+    robotType: robotTypeFromAttributes(attrs, node),
+    robotConfig: robotConfigFromAttributes(attrs),
     events: [],
     language: { nameCn: node.name || "机器人节点", nameUs: "Robot Node" }
   };
+}
+
+function robotTypeFromAttributes(attrs, node) {
+  if (attrs.robotType && typeof attrs.robotType === "object" && !Array.isArray(attrs.robotType)) {
+    return attrs.robotType;
+  }
+
+  const sourceUnid = normalizeText(attrs.unid);
+  const key = legacyRobotKey(sourceUnid) || normalizeText(attrs.robotKey) || "legacyRobot";
+  const name = normalizeText(attrs.robotName) || normalizeText(attrs.name) || node.name || key;
+  const robotType = {
+    key,
+    name,
+    controlId: "LBPMExtendComponent"
+  };
+
+  if (sourceUnid) {
+    robotType.sourceUnid = sourceUnid;
+    robotType.unid = sourceUnid;
+  }
+
+  return robotType;
+}
+
+function robotConfigFromAttributes(attrs) {
+  const content = normalizeText(attrs.content);
+  return content || "{}";
+}
+
+function legacyRobotKey(sourceUnid) {
+  const match = sourceUnid.match(/@Robot@(.+)$/);
+  return match ? match[1] : sourceUnid;
 }
 
 function buildConditionBranchNode(node, routes) {
@@ -377,7 +435,7 @@ function baseNode(node, index, type, element, width, height) {
     element,
     name,
     bounds: boundsFor(node, index, width, height),
-    openDataAuthority: false,
+    openDataAuthority: hasDataAuthority(node),
     operations: [],
     timeoutStrategies: "[]",
     config: "{}",
@@ -1284,6 +1342,10 @@ function sourceAttributes(node) {
     ...(node?.attributes || {}),
     ...(node?.definition?.attributes || {})
   };
+}
+
+function normalizeText(value) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function singleRelatedNodeId(attrs) {

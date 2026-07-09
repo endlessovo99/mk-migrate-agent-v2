@@ -38,6 +38,8 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       "Title patches require confidence >= 0.7. Type, componentId, and props patches require confidence >= 0.85.",
       "Script patches require confidence >= 0.85 and must preserve the deterministic action boundary. Do not create, delete, or retarget script actions.",
       "Translate JSP scripts using the provided functionCatalog and targetApi. Trusted mapped scripts must not use document/window DOM APIs.",
+      "Non-whitelisted EKP functions are not automatically blocking. First infer their intent from source evidence and surrounding script context, then translate safely to targetApi JavaScript when confidence is high.",
+      "If a non-whitelisted function cannot be safely inferred, leave the action needs_review or manual and explain the unresolved function in diagnostics.",
       "AttachXFormValueChangeEventById must translate to the existing control-scope onChange action candidate for that control.",
       "Detail-table control scripts use tableId plus controlId; preserve rowNum for row-scoped APIs.",
       "When a detail-table function refers to a runtime control id, use ${table:<sourceDetailTableId>}.<controlId>; the executor resolves this placeholder to mk_model_fd_... at write time.",
@@ -124,6 +126,19 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
         beforeSubmit: {
           draftGuardRequired: true,
           explicitBooleanOrPromiseReturnRequired: true
+        },
+        nonWhitelistedFunctions: {
+          defaultHandling: "attempt_semantic_translation",
+          blockingByDefault: false,
+          inferenceSources: [
+            "source script body",
+            "source form controls and detail tables",
+            "dsl script action boundary",
+            "functionCatalog mappings for nearby calls",
+            "targetApi capabilities"
+          ],
+          safeOutcome: "Patch function, translationStatus=mapped, functionMappings, and coverage only when the translated JavaScript uses targetApi and passes local execution validation.",
+          unsafeOutcome: "Keep translationStatus as needs_review or manual and emit diagnostics naming unresolved functions and why targetApi translation was not safe."
         }
       },
       functionCatalog: functionCatalogSummary(),

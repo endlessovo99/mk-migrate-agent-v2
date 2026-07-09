@@ -4,6 +4,7 @@ import { auditFunctionWhitelist, functionWhitelistErrors } from "./function-whit
 import { buildDesignerFirstForm } from "./sysform-designer-layout.js";
 import { extractSysFormJspScripts } from "./sysform-jsp-scripts.js";
 import { parseMetadataXml } from "./sysform-metadata.js";
+import { extractSysFormNodeDataAuthorities } from "./sysform-rights.js";
 import { cleanText, decodeEntities, parseFdValues } from "./xml-utils.js";
 
 export function translateSysFormTemplateXml(xml, options = {}) {
@@ -11,6 +12,10 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   const metadata = parseMetadataXml(template.fdMetadataXml || "");
   const warnings = [];
   const form = buildDesignerFirstForm(template.fdDesignerHtml || "", metadata, warnings);
+  const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template);
+  if (Object.keys(nodeDataAuthorities.nodeDataAuthorities || {}).length) {
+    form.nodeDataAuthorities = nodeDataAuthorities.nodeDataAuthorities;
+  }
   const title = extractDesignerTitle(template.fdDesignerHtml || "") ||
     template.fdName ||
     basename(options.sourcePath || "SysFormTemplate.xml").replace(/_SysFormTemplate\.xml$/i, "");
@@ -37,11 +42,12 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   }
 
   if (functionWhitelist?.violations.length) {
-    errors.push(...functionWhitelistErrors(functionWhitelist, "/fdDesignerHtml"));
+    warnings.push(...functionWhitelistErrors(functionWhitelist, "/fdDesignerHtml"));
   }
+  errors.push(...nodeDataAuthorities.errors);
   for (const source of scripts?.sources || []) {
     if (source.functionAudit?.violations?.length) {
-      errors.push(...functionWhitelistErrors(source.functionAudit, source.sourceRef));
+      warnings.push(...functionWhitelistErrors(source.functionAudit, source.sourceRef));
     }
   }
 

@@ -176,6 +176,63 @@ describe("executeDsl", () => {
     assert.deepEqual(node.handlers.members, []);
   });
 
+  it("writes legacy robot nodes with selectable robot type and preserved config", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "test-reviewer",
+      checkedAt: "2026-07-09T00:00:00.000Z"
+    });
+    const content = buildWorkflowContent(trusted.workflow, {
+      templateId: "template-id",
+      form: trusted.form
+    });
+    const node = content.elements.find((element) => element.id === "N65");
+
+    assert.equal(node.type, "robot");
+    assert.equal(node.element, "robot");
+    assert.equal(node.robotType.controlId, "LBPMExtendComponent");
+    assert.equal(node.robotType.key, "restRobotNode");
+    assert.equal(node.robotType.sourceUnid, "*@Robot@restRobotNode");
+
+    const robotConfig = JSON.parse(node.robotConfig);
+    assert.equal(
+      robotConfig.restfulUrl,
+      "https://owork.shanghai-electric.com/api/workflow/hooks/Njc5MDhkYTEyNDdlM2E2OTUwMjYxY2Fi"
+    );
+    assert.equal(robotConfig.successParam.successFieldName, "success");
+    assert.equal(
+      robotConfig.formParams.find((param) => param.fieldName === "repDeviceId").fieldText,
+      "$明细表5.维修设备编号$"
+    );
+  });
+
+  it("writes legacy right sections into NewOA template form auths", () => {
+    const expectedFields = [
+      "fd_3ea698a0fa7c78",
+      "fd_3ea698a261c666",
+      "fd_3ea8c4b09da4fe",
+      "fd_3ea8c511ffc138",
+      "fd_3ea8c5326b3754",
+      "fd_3ea8c5b2213ef2"
+    ];
+    const trusted = trustedDslFromFixture("tests/fixtures/source/16a8c7e6740bd9caad821ba447dbf330");
+    const payload = applyWorkflowPayload(baseTemplate(), trusted);
+    const lbpm = payload.mechanisms.lbpmTemplate[0];
+    const auth = lbpm.fdTemplateFormAuths.N2;
+    const content = JSON.parse(lbpm.fdContent);
+
+    assert.deepEqual(Object.keys(auth).sort(), expectedFields);
+    assert.deepEqual(auth.fd_3ea698a261c666, {
+      isShow: false,
+      isEdit: false,
+      isRequire: false
+    });
+    assert.equal(content.elements.find((element) => element.id === "N2").openDataAuthority, true);
+    assert.equal(content.elements.find((element) => element.id === "N1").openDataAuthority, false);
+  });
+
   it("writes conditional branch routes through the MK formula designer config", () => {
     const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
       form: sampleConditionBranchForm(),

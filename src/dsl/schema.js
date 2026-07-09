@@ -71,7 +71,11 @@ export function validateMigrationDsl(input, options = {}) {
   validateScripts(root.scripts, diagnostics, { mode, form: root.form });
   validateReview(root.review, diagnostics, root.trust?.level);
   if (root.workflow !== undefined) {
-    validateWorkflow(root.workflow, diagnostics, { mode, fieldIds: formContext.fieldIds });
+    validateWorkflow(root.workflow, diagnostics, {
+      mode,
+      fieldIds: formContext.fieldIds,
+      dataAuthorityFieldIds: formContext.dataAuthorityFieldIds
+    });
   }
 
   const hasErrors = diagnostics.some((item) => item.level === "error");
@@ -163,13 +167,14 @@ function validateTemplate(template, diagnostics) {
 function validateForm(form, diagnostics) {
   if (!isRecord(form)) {
     diagnostics.push(error("dsl.form_required", "form is required.", "/form"));
-    return { fieldIds: new Set(), detailTableIds: new Set(), layoutNodeIds: new Set() };
+    return { fieldIds: new Set(), dataAuthorityFieldIds: new Set(), detailTableIds: new Set(), layoutNodeIds: new Set() };
   }
 
   const fieldIds = validateFields(form.fields, diagnostics);
+  const dataAuthorityFieldIds = collectDataAuthorityFieldIds(form.fields);
   const detailTableIds = new Set((form.fields || []).filter((field) => field?.type === "detailTable").map((field) => field.id));
   const layoutNodeIds = validateFormLayout(form.layout, { fieldIds, detailTableIds }, diagnostics);
-  return { fieldIds, detailTableIds, layoutNodeIds };
+  return { fieldIds, dataAuthorityFieldIds, detailTableIds, layoutNodeIds };
 }
 
 function validateFields(fields, diagnostics) {
@@ -248,6 +253,19 @@ function validateDetailColumns(columns, diagnostics, path) {
     }
     validateFieldLike(column, diagnostics, columnPath, ids, "detailColumn");
   });
+}
+
+function collectDataAuthorityFieldIds(fields) {
+  const ids = new Set();
+  for (const field of fields || []) {
+    if (!isRecord(field)) continue;
+    if (nonEmptyString(field.id)) ids.add(field.id);
+    if (field.type !== "detailTable") continue;
+    for (const column of field.columns || []) {
+      if (nonEmptyString(column?.id)) ids.add(column.id);
+    }
+  }
+  return ids;
 }
 
 function validateFormLayout(layout, refs, diagnostics) {
@@ -785,12 +803,68 @@ function validateWorkflowNodes(nodes, diagnostics, context) {
       diagnostics.push(error("dsl.workflow.node.source_ref_required", "Workflow node sourceRef is required unless generated is true.", `${path}/sourceRef`));
     }
     validateParticipants(node.participants, diagnostics, `${path}/participants`, context);
+    validateNodeDataAuthority(node.dataAuthority, diagnostics, `${path}/dataAuthority`, context);
     if (context.mode === "execute" && node.translationStatus === "pending_review") {
       diagnostics.push(error("dsl.workflow.node.pending_review", "Executable workflow nodes cannot remain pending_review.", `${path}/translationStatus`));
     }
   });
 
   return nodeMap;
+}
+
+function validateNodeDataAuthority(dataAuthority, diagnostics, path, context) {
+  if (dataAuthority === undefined) return;
+  if (!isRecord(dataAuthority)) {
+    diagnostics.push(error("dsl.workflow.data_authority.type", "Node dataAuthority must be a JSON object.", path));
+    return;
+  }
+  if (dataAuthority.enabled !== undefined && typeof dataAuthority.enabled !== "boolean") {
+    diagnostics.push(error("dsl.workflow.data_authority.enabled_type", "Node dataAuthority.enabled must be a boolean.", `${path}/enabled`));
+  }
+
+  const fields = dataAuthority.fields;
+  if (!isRecord(fields)) {
+    if (dataAuthority.enabled !== false) {
+      diagnostics.push(error("dsl.workflow.data_authority.fields_required", "Enabled node dataAuthority requires fields.", `${path}/fields`));
+    }
+    return;
+  }
+  if (dataAuthority.enabled !== false && Object.keys(fields).length === 0) {
+    diagnostics.push(error("dsl.workflow.data_authority.fields_required", "Enabled node dataAuthority requires at least one field.", `${path}/fields`));
+  }
+
+  for (const [fieldId, value] of Object.entries(fields)) {
+    const fieldPath = `${path}/fields/${escapePointer(fieldId)}`;
+    if (!nonEmptyString(fieldId)) {
+      diagnostics.push(error("dsl.workflow.data_authority.field_id_required", "Node dataAuthority field keys must be non-empty field ids.", fieldPath));
+    } else if (
+      context.mode === "execute" &&
+      context.dataAuthorityFieldIds instanceof Set &&
+      !context.dataAuthorityFieldIds.has(fieldId)
+    ) {
+      diagnostics.push(error("dsl.workflow.data_authority.field_missing", "Executable node dataAuthority field must reference an existing form field or detail column.", fieldPath, {
+        fieldId
+      }));
+    }
+
+    if (!isRecord(value)) {
+      diagnostics.push(error("dsl.workflow.data_authority.field_type", "Node dataAuthority field entry must be a JSON object.", fieldPath));
+      continue;
+    }
+    for (const key of ["visible", "editable", "required"]) {
+      if (typeof value[key] !== "boolean") {
+        diagnostics.push(error("dsl.workflow.data_authority.flag_required", `Node dataAuthority field ${key} must be a boolean.`, `${fieldPath}/${key}`));
+      }
+    }
+    if (value.sourceMode !== undefined && !["hidden", "view", "edit"].includes(value.sourceMode)) {
+      diagnostics.push(error("dsl.workflow.data_authority.source_mode_invalid", "Node dataAuthority sourceMode must be hidden, view, or edit when present.", `${fieldPath}/sourceMode`, {
+        actual: value.sourceMode
+      }));
+    }
+    if (value.sourceRef !== undefined && !nonEmptyString(value.sourceRef)) {
+      diagnostics.push(error("dsl.workflow.data_authority.source_ref_type", "Node dataAuthority sourceRef must be a non-empty string when present.", `${fieldPath}/sourceRef`));
+    }
+  }
 }
 
 function validateParallelGateways(nodes, nodeMap, diagnostics) {
@@ -1083,4 +1157,8 @@ function isRecord(value) {
 
 function nonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function escapePointer(value) {
+  return String(value).replace(/~/g, "~0").replace(/\//g, "~1");
 }
