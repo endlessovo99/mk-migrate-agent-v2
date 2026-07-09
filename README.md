@@ -77,6 +77,18 @@ docs/adr/         # architecture decisions
 docs/operations/  # operating notes
 ```
 
+## Catalog maintenance
+
+The executable DSL is checked against versioned catalogs under `catalogs/`. When MK/NewOA support changes, update the focused catalog instead of widening validation in code:
+
+- `mk-components.v1.json`: target MK form/layout components and executable props.
+- `mk-control-events.v1.json`: target control/global script events by MK component and scope.
+- `mk-js-snippets.v1.json`: browser-verified MK editor JS snippets, including `MKXFORM.*` usage examples by snippet category.
+- `js-methods.v1.json`: base JavaScript globals, static methods, and instance methods allowed inside translated MK form scripts.
+- `functions.v1.json`: legacy source JSP functions and their MK migration intent.
+
+For `js-methods.v1.json`, add only methods with auditable evidence from route-validation fixtures, exported MK examples, MK documentation, or existing function catalog examples. Include a short `evidence` and `notes` entry, bump the catalog version, and add an offline DSL validation test with one accepted call and one unsupported call. Keep DOM APIs, browser storage, dynamic code execution, and network primitives out of this catalog unless a separate design explicitly expands the trust boundary.
+
 ## Decision checkpoint
 
 The first milestone succeeds only when one real paired source XML directory can produce source draft, DSL draft, trusted migration DSL, check reports, dry-run report, and then, behind the explicit SIT write gates, a verified `MK_TEST_` draft template through NewOA API.

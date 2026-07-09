@@ -7,12 +7,14 @@ const rootDir = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 export const COMPONENT_CATALOG = loadCatalog("catalogs/mk-components.v1.json");
 export const CONTROL_EVENTS_CATALOG = loadCatalog("catalogs/mk-control-events.v1.json");
 export const FUNCTION_CATALOG = loadCatalog("catalogs/functions.v1.json");
+export const JS_METHOD_CATALOG = loadCatalog("catalogs/js-methods.v1.json");
 export const VALIDATION_POLICY = loadCatalog("catalogs/validation-policy.v1.json");
 
 export const CATALOG_VERSIONS = {
   components: COMPONENT_CATALOG.version,
   controlEvents: CONTROL_EVENTS_CATALOG.version,
-  functions: FUNCTION_CATALOG.version
+  functions: FUNCTION_CATALOG.version,
+  jsMethods: JS_METHOD_CATALOG.version
 };
 
 export const VALIDATION_POLICY_VERSION = VALIDATION_POLICY.version;
@@ -50,6 +52,13 @@ export function controlEventsCatalogRef() {
   };
 }
 
+export function jsMethodCatalogRef() {
+  return {
+    id: JS_METHOD_CATALOG.id,
+    version: JS_METHOD_CATALOG.version
+  };
+}
+
 export function validationPolicyRef() {
   return {
     id: VALIDATION_POLICY.id,
@@ -61,7 +70,8 @@ export function catalogRefs() {
   return {
     components: componentCatalogRef(),
     controlEvents: controlEventsCatalogRef(),
-    functions: functionCatalogRef()
+    functions: functionCatalogRef(),
+    jsMethods: jsMethodCatalogRef()
   };
 }
 
@@ -84,6 +94,13 @@ export function validateCatalogVersions(root, diagnostics, path = "") {
     diagnostics.push(error("catalog.control_events.version_mismatch", "DSL control-events catalog version must match the runtime catalog.", `${path}/catalogs/controlEvents/version`, {
       expected: CONTROL_EVENTS_CATALOG.version,
       actual: root.catalogs.controlEvents.version
+    }));
+  }
+
+  if (root?.catalogs?.jsMethods && root.catalogs.jsMethods.version !== JS_METHOD_CATALOG.version) {
+    diagnostics.push(error("catalog.js_methods.version_mismatch", "DSL JS-method catalog version must match the runtime catalog.", `${path}/catalogs/jsMethods/version`, {
+      expected: JS_METHOD_CATALOG.version,
+      actual: root.catalogs.jsMethods.version
     }));
   }
 

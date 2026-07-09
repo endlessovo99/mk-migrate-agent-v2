@@ -268,6 +268,38 @@ describe("validateMigrationDsl", () => {
     assert.equal(draftDetailUnknown.diagnostics.some((item) => item.code === "dsl.scripts.control_event_unknown" && item.level === "warning"), true);
   });
 
+  it("validates mapped script calls against the MK JS-method catalog", () => {
+    const accepted = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.catalogedJs",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  var text = String(value).trim()\n  MKXFORM.setValue('fd_amount', JSON.stringify({ value: text }))\n}"
+        })]
+      }
+    }), { mode: "execute" });
+    const rejected = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.unsupportedJs",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  var cached = localStorage.getItem('fd_subject')\n  MKXFORM.setValue('fd_amount', cached || value)\n}"
+        })]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(accepted.ok, true);
+    assert.deepEqual(accepted.diagnostics, []);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.scripts.call_unsupported"), true);
+    assert.equal(
+      rejected.diagnostics.some((item) => item.details?.calls?.some((call) => call.name === "localStorage.getItem")),
+      true
+    );
+  });
+
   it("requires before-submit scripts to handle draft saves and return explicitly", () => {
     const result = validateMigrationDsl(sampleTrustedDsl({
       workflow: undefined,

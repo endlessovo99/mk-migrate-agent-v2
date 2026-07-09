@@ -715,7 +715,7 @@ function validateScriptActionFunction(action, path, diagnostics, context) {
       }));
     }
     if (analysis.disallowedCalls.length) {
-      diagnostics.push(error("dsl.scripts.call_unsupported", "Mapped script actions may call only local helpers, safe JavaScript built-ins, and whitelisted MKXFORM APIs.", `${path}/function`, {
+      diagnostics.push(error("dsl.scripts.call_unsupported", "Mapped script actions may call only local helpers, cataloged JavaScript methods, and whitelisted MKXFORM APIs.", `${path}/function`, {
         calls: analysis.disallowedCalls
       }));
     }

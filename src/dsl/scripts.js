@@ -1,4 +1,4 @@
-import { CONTROL_EVENTS_BY_COMPONENT, CONTROL_EVENTS_CATALOG } from "./catalogs.js";
+import { CONTROL_EVENTS_BY_COMPONENT, CONTROL_EVENTS_CATALOG, JS_METHOD_CATALOG } from "./catalogs.js";
 
 export const SCRIPT_EVENTS = new Set(Object.keys(CONTROL_EVENTS_CATALOG.events || {}));
 export const SCRIPT_GLOBAL_EVENTS = new Set(CONTROL_EVENTS_CATALOG.global?.events || []);
@@ -25,71 +25,9 @@ export const ALLOWED_SCRIPT_TARGET_FUNCTIONS = new Set([
   "MKXFORM.callOrg"
 ]);
 
-const ALLOWED_BUILTIN_CALLS = new Set([
-  "parseInt",
-  "parseFloat",
-  "isNaN",
-  "isFinite",
-  "Number",
-  "String",
-  "Boolean",
-  "Date",
-  "Promise",
-  "resolve",
-  "reject",
-  "setTimeout",
-  "clearTimeout",
-  "encodeURIComponent",
-  "decodeURIComponent"
-]);
-
-const ALLOWED_BUILTIN_PREFIXES = [
-  "Array.",
-  "Object.",
-  "JSON.",
-  "Math.",
-  "Number.",
-  "String.",
-  "Promise.",
-  "console."
-];
-
-const ALLOWED_INSTANCE_METHODS = new Set([
-  "at",
-  "concat",
-  "endsWith",
-  "every",
-  "filter",
-  "find",
-  "findIndex",
-  "flat",
-  "flatMap",
-  "forEach",
-  "includes",
-  "indexOf",
-  "join",
-  "lastIndexOf",
-  "map",
-  "match",
-  "padStart",
-  "padEnd",
-  "pop",
-  "push",
-  "reduce",
-  "replace",
-  "slice",
-  "some",
-  "sort",
-  "split",
-  "startsWith",
-  "substring",
-  "substr",
-  "toFixed",
-  "toLowerCase",
-  "toString",
-  "toUpperCase",
-  "trim"
-]);
+const ALLOWED_BUILTIN_CALLS = catalogNameSet(JS_METHOD_CATALOG.globals);
+const ALLOWED_STATIC_METHODS = catalogNameSet(JS_METHOD_CATALOG.staticMethods);
+const ALLOWED_INSTANCE_METHODS = catalogNameSet(JS_METHOD_CATALOG.instanceMethods);
 
 export function buildScriptTargetIndex(form = {}) {
   const mainFields = new Map();
@@ -304,7 +242,14 @@ export function handlesDraftContext(text = "") {
 export function scriptTargetApiSummary() {
   return {
     allowedPrefixes: ["MKXFORM."],
-    allowedFunctions: [...ALLOWED_SCRIPT_TARGET_FUNCTIONS]
+    allowedFunctions: [...ALLOWED_SCRIPT_TARGET_FUNCTIONS],
+    jsMethodsCatalog: {
+      id: JS_METHOD_CATALOG.id,
+      version: JS_METHOD_CATALOG.version,
+      globals: [...ALLOWED_BUILTIN_CALLS],
+      staticMethods: [...ALLOWED_STATIC_METHODS],
+      instanceMethods: [...ALLOWED_INSTANCE_METHODS]
+    }
   };
 }
 
@@ -386,7 +331,16 @@ function isAllowedCall(name, localFunctions) {
   if (name.startsWith("MKXFORM.")) return ALLOWED_SCRIPT_TARGET_FUNCTIONS.has(name);
   if (name.includes(".") && ALLOWED_INSTANCE_METHODS.has(name.slice(name.lastIndexOf(".") + 1))) return true;
   if (ALLOWED_BUILTIN_CALLS.has(name)) return true;
-  return ALLOWED_BUILTIN_PREFIXES.some((prefix) => name.startsWith(prefix));
+  return ALLOWED_STATIC_METHODS.has(name);
+}
+
+function catalogNameSet(entries = []) {
+  return new Set(
+    (Array.isArray(entries) ? entries : [])
+      .filter((entry) => entry?.status === "supported")
+      .map((entry) => entry.name)
+      .filter(Boolean)
+  );
 }
 
 function isFunctionDeclaration(text, index) {
