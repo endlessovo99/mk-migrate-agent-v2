@@ -28,13 +28,34 @@ describe("source directory stages", () => {
   it("drafts JSP source scripts into MK script actions for review", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
-    const action = dslDraft.scripts.actions[0];
+    const action = dslDraft.scripts.actions.find((item) => item.controlId === "fd_371229d0cbd2cc");
+    const detailAction = dslDraft.scripts.actions.find((item) =>
+      item.tableId === "fd_371228ebe5dec2" && item.controlId === "fd_371576f83b26d8"
+    );
+    const loadAction = dslDraft.scripts.actions.find((item) => item.event === "onLoad");
 
-    assert.equal(dslDraft.scripts.actions.length, 2);
-    assert.equal(action.event, "onLoad");
-    assert.equal(action.translationStatus, "needs_review");
-    assert.equal(action.function.includes("function onLoad(context)"), true);
+    assert.equal(dslDraft.scripts.actions.length, 4);
+    assert.equal(action.scope, "control");
+    assert.equal(action.event, "onChange");
+    assert.equal(action.controlId, "fd_371229d0cbd2cc");
+    assert.equal(action.translationStatus, "omitted");
+    assert.equal(action.coverage.status, "covered");
+    assert.equal(action.function, "");
     assert.equal(action.functionMappings.some((mapping) => mapping.source === "GetXFormFieldById"), true);
+
+    assert.equal(detailAction.scope, "control");
+    assert.equal(detailAction.event, "onChange");
+    assert.equal(detailAction.tableId, "fd_371228ebe5dec2");
+    assert.equal(detailAction.controlId, "fd_371576f83b26d8");
+    assert.equal(detailAction.translationStatus, "mapped");
+    assert.equal(detailAction.function.includes("MKXFORM.updateControlStyle(\"${table:fd_371228ebe5dec2}.fd_37157738c61224\", rowNum"), true);
+    assert.deepEqual(detailAction.coverage, { status: "none", nativeRules: [], residuals: [] });
+
+    assert.equal(loadAction.scope, "global");
+    assert.equal(loadAction.translationStatus, "mapped");
+    assert.equal(loadAction.function.includes("MKXFORM.getValue(\"${table:fd_371228ebe5dec2}\""), true);
+    assert.equal(loadAction.function.includes("MKXFORM.updateControlStyle(\"${table:fd_371228ebe5dec2}.fd_37157738c61224\", rowNum"), true);
+    assert.deepEqual(loadAction.coverage, { status: "none", nativeRules: [], residuals: [] });
   });
 
   it("drafts simple form-field formula workflow participants as executable handlers", () => {
@@ -188,21 +209,20 @@ describe("source directory stages", () => {
       ["required", "fwq_row", false]
     ]);
 
-    const rowRuleAction = actionsById.get("fd_3a0a0882cb93b0.script.1");
+    const rowRuleAction = actionsById.get("fd_3a0a0882cb93b0.script.1.event.1");
     assert.equal(rowRuleAction.translationStatus, "needs_review");
+    assert.equal(rowRuleAction.scope, "control");
+    assert.equal(rowRuleAction.event, "onChange");
+    assert.equal(rowRuleAction.controlId, "fd_376d6cbc433bfe");
     assert.equal(rowRuleAction.coverage.status, "partial");
     assert.deepEqual(rowRuleAction.coverage.nativeRules, ["linkage.fd_376d6cbc433bfe.contains.A"]);
     assert.deepEqual(rowRuleAction.coverage.residuals.map((residual) => [residual.code, residual.target]), [
       ["script.residual.field_value_assignment", "fd_is_qtfy"],
-      ["script.residual.field_value_assignment", "fd_is_qtfy"],
-      ["script.residual.field_value_assignment", "fd_is_scq"],
-      ["script.residual.field_value_assignment", "fd_is_scq"],
-      ["script.residual.field_value_assignment", "fd_is_fwq"],
-      ["script.residual.field_value_assignment", "fd_is_fwq"]
+      ["script.residual.field_value_assignment", "fd_is_qtfy"]
     ]);
 
-    assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2").coverage.status, "uncovered");
-    assert.deepEqual(actionsById.get("fd_3a0a08bd180e76.script.1").coverage.residuals.map((residual) => [residual.code, residual.target || residual.trigger]), [
+    assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").coverage.status, "uncovered");
+    assert.deepEqual(actionsById.get("fd_3a0a08bd180e76.script.1.event.1").coverage.residuals.map((residual) => [residual.code, residual.target || residual.trigger]), [
       ["script.residual.field_value_assignment", "fd_is_htz"],
       ["script.residual.named_value_change_callback", "fd_seal_type"]
     ]);
@@ -214,7 +234,7 @@ describe("source directory stages", () => {
     });
     const executeCheck = checkExecute(trusted);
     assert.equal(executeCheck.ok, false);
-    assert.equal(executeCheck.diagnostics.filter((item) => item.code === "dsl.scripts.needs_review").length, 3);
+    assert.equal(executeCheck.diagnostics.filter((item) => item.code === "dsl.scripts.needs_review").length, 7);
   });
 
   it("drafts source facts into a non-executable dsl-draft with explicit mkTree", () => {

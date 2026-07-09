@@ -37,6 +37,7 @@ describe("buildDryRunPlan", () => {
           id: "fd_jsp.script.1",
           name: "onLoad",
           event: "onLoad",
+          scope: "global",
           function: "function onLoad(context) {}",
           translationStatus: "mapped"
         }]

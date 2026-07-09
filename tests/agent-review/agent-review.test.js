@@ -188,6 +188,89 @@ describe("agent-review", () => {
     assert.equal(result.dsl.review.warnings.some((item) => item.code === "agent.workflow.condition_display_only"), true);
   });
 
+  it("applies guarded script translation patches", async () => {
+    const sourceDraft = sampleSourceDraft({
+      scripts: {
+        source: "sysform-jsp",
+        sources: [{
+          id: "fd_jsp.script.1",
+          sourceRef: "source.form.jsp.fd_jsp.script.1",
+          javascript: "Com_AddEventListener(window, \"load\", function(){ SetXFormFieldValueById('fd_subject', 'done') })",
+          functionAudit: {
+            matched: [{
+              name: "SetXFormFieldValueById",
+              description: "set field value",
+              mkFunction: "MKXFORM.setValue('控件ID','控件值')",
+              occurrences: []
+            }],
+            violations: []
+          }
+        }]
+      }
+    });
+    const dslDraft = sampleDraftDsl({
+      workflow: undefined,
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_jsp.script.1.event.1",
+          name: "onLoad",
+          event: "onLoad",
+          scope: "global",
+          function: "function onLoad() {\n  // review required\n}",
+          translationStatus: "needs_review",
+          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+          coverage: { status: "uncovered", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    });
+    const result = await runAgentReview(sourceDraft, dslDraft, {
+      provider: new FakeReviewProvider(reviewResponse({
+        patches: [
+          {
+            op: "replace",
+            path: "/scripts/actions/0/function",
+            value: "function onLoad() {\n  MKXFORM.setValue('fd_subject', 'done')\n}",
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["Source script sets fd_subject during window load."],
+            confidence: 0.91,
+            rationale: "SetXFormFieldValueById maps to MKXFORM.setValue in the function catalog."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/translationStatus",
+            value: "mapped",
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["The translated function uses only whitelisted MKXFORM APIs."],
+            confidence: 0.91,
+            rationale: "No residual source behavior remains after direct value assignment translation."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/functionMappings",
+            value: [{
+              source: "SetXFormFieldValueById",
+              target: "MKXFORM.setValue",
+              basis: "function-catalog",
+              reviewRequired: false
+            }],
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["Function catalog maps SetXFormFieldValueById to MKXFORM.setValue."],
+            confidence: 0.91,
+            rationale: "Records the catalog-backed translation."
+          }
+        ]
+      })),
+      reviewedAt: "2026-07-06T00:00:00.000Z"
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.dsl.scripts.actions[0].translationStatus, "mapped");
+    assert.equal(result.dsl.scripts.actions[0].function.includes("MKXFORM.setValue"), true);
+    assert.equal(result.report.scriptTranslation.byStatus.mapped, 1);
+  });
+
   it("blocks error diagnostics from the model before trusted output", async () => {
     const result = await runAgentReview(sampleSourceDraft(), sampleDraftDsl(), {
       provider: new FakeReviewProvider(reviewResponse({
@@ -282,6 +365,7 @@ describe("agent-review", () => {
     assert.match(prompt.context.patchTargetSummary.validFieldIndexRange, /^0\.\.\d+$/);
     assert.equal(prompt.context.allowedConcretePatchPaths.includes("/form/fields/0/title"), true);
     assert.equal(prompt.context.allowedConcretePatchPaths.some((path) => /\/columns\/0\/title$/.test(path)), true);
+    assert.equal(prompt.context.allowedConcretePatchPaths.some((path) => /^\/scripts\/actions\/0\/function$/.test(path)), true);
   });
 });
 

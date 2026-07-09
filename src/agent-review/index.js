@@ -80,7 +80,8 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
     reviewedAt,
     summary: parsed.response.summary,
     patchCount: parsed.response.patches.length,
-    diagnosticCount: parsed.response.diagnostics.length
+    diagnosticCount: parsed.response.diagnostics.length,
+    scriptTranslation: summarizeScriptTranslation(patchResult.dslDraft.scripts)
   };
 
   const trusted = createTrustedMigrationDsl(sourceDraft, patchResult.dslDraft, {
@@ -117,6 +118,7 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
     diagnostics: trustCheck.diagnostics,
     acceptedPatchCount: patchResult.acceptedPatches.length,
     diagnosticCount: parsed.response.diagnostics.length,
+    scriptTranslation: agentReview.scriptTranslation,
     repairAttempts: repairHistory.length,
     repairHistory
   };
@@ -338,9 +340,9 @@ function validatePatch(patch, index, dslDraft, sourceRefs, seenPaths) {
 
   const target = parseAllowedPatchPath(patch.path);
   if (!target.ok) {
-    diagnostics.push(error("agent.patch.path_disallowed", "Agent patch path is outside the allowed form DSL patch scope.", `${path}/path`, {
+    diagnostics.push(error("agent.patch.path_disallowed", "Agent patch path is outside the allowed form/script DSL patch scope.", `${path}/path`, {
       path: patch.path,
-      allowed: "form field/detail-column title, type, componentId, and props paths only"
+      allowed: "form field/detail-column title, type, componentId, props paths and scripts.actions function, translationStatus, functionMappings, coverage paths only"
     }));
   } else if (!getByPointer(dslDraft, patch.path).exists) {
     diagnostics.push(error("agent.patch.path_missing", "Agent patch path does not exist in the DSL draft.", `${path}/path`, {
@@ -392,6 +394,9 @@ function validatePatch(patch, index, dslDraft, sourceRefs, seenPaths) {
 }
 
 function validatePatchValue(patch, target, path) {
+  if (target.scope === "scriptAction") {
+    return validateScriptPatchValue(patch, target, path);
+  }
   if (target.property === "title" && !nonEmptyString(patch.value)) {
     return [error("agent.patch.value_title_required", "Title patches require a non-empty string value.", `${path}/value`)];
   }
@@ -421,6 +426,24 @@ function validatePatchValue(patch, target, path) {
   return [];
 }
 
+function validateScriptPatchValue(patch, target, path) {
+  if (target.property === "function" && !nonEmptyString(patch.value)) {
+    return [error("agent.patch.value_script_function_required", "Script function patches require a non-empty string value.", `${path}/value`)];
+  }
+  if (target.property === "translationStatus" && !["mapped", "needs_review", "manual", "omitted"].includes(patch.value)) {
+    return [error("agent.patch.value_script_status_invalid", "Script translationStatus patches require mapped, needs_review, manual, or omitted.", `${path}/value`, {
+      actual: patch.value
+    })];
+  }
+  if (target.property === "functionMappings" && !Array.isArray(patch.value)) {
+    return [error("agent.patch.value_function_mappings_required", "Script functionMappings patches require an array value.", `${path}/value`)];
+  }
+  if (target.property === "coverage" && !isRecord(patch.value)) {
+    return [error("agent.patch.value_coverage_required", "Script coverage patches require an object value.", `${path}/value`)];
+  }
+  return [];
+}
+
 function parseAllowedPatchPath(path) {
   if (!nonEmptyString(path)) return { ok: false };
   const parts = parsePointer(path);
@@ -438,6 +461,15 @@ function parseAllowedPatchPath(path) {
     isPatchProperty(parts[5])
   ) {
     return { ok: true, scope: "column", property: parts[5] };
+  }
+  if (
+    parts.length === 4 &&
+    parts[0] === "scripts" &&
+    parts[1] === "actions" &&
+    isArrayIndex(parts[2]) &&
+    isScriptPatchProperty(parts[3])
+  ) {
+    return { ok: true, scope: "scriptAction", property: parts[3] };
   }
   return { ok: false };
 }
@@ -560,6 +592,28 @@ function repairHistoryEntry(review, attempt) {
   });
 }
 
+function summarizeScriptTranslation(scripts = {}) {
+  const actions = Array.isArray(scripts.actions) ? scripts.actions : [];
+  const byStatus = {};
+  const byScope = {};
+  const byEvent = {};
+  for (const action of actions) {
+    increment(byStatus, action.translationStatus || "unknown");
+    increment(byScope, action.scope || "unknown");
+    increment(byEvent, action.event || action.name || "unknown");
+  }
+  return {
+    actionCount: actions.length,
+    byStatus,
+    byScope,
+    byEvent
+  };
+}
+
+function increment(target, key) {
+  target[key] = (target[key] || 0) + 1;
+}
+
 function confidenceThreshold(property) {
   return property === "title" ? 0.7 : 0.85;
 }
@@ -598,6 +652,10 @@ function parsePointer(pointer) {
 
 function isPatchProperty(value) {
   return ["title", "type", "componentId", "props"].includes(value);
+}
+
+function isScriptPatchProperty(value) {
+  return ["function", "translationStatus", "functionMappings", "coverage"].includes(value);
 }
 
 function isArrayIndex(value) {

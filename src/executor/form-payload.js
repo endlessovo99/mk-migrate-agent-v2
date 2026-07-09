@@ -27,7 +27,10 @@ export function applyFormPayload(template, dsl) {
 
   const fieldAuth = buildFieldAuth(mainModel, detailModels, form);
   const existingFormAttr = parseJsonObject(config.attribute?.formAttr || "{}");
-  const controlAction = buildControlAction(existingFormAttr.controlAction, dsl.scripts);
+  const controlAction = buildControlAction(existingFormAttr.controlAction, dsl.scripts, {
+    mainModel,
+    detailModelsByField
+  });
   const nativeFormRules = buildNativeFormRuleConfig(dsl.formRules, form, dataModels);
   const formAttr = {
     subjectRule: {
@@ -155,6 +158,7 @@ function summarizeDslScripts(scripts = {}) {
   return {
     actionCount: actions.length,
     events: actions.map((action) => action.event || action.name).filter(Boolean),
+    scopes: actions.map((action) => action.scope).filter(Boolean),
     translationStatuses: actions.map((action) => action.translationStatus).filter(Boolean)
   };
 }
@@ -163,15 +167,22 @@ function summarizeScriptsFromConfig(config = {}) {
   const formAttr = parseJsonObject(config.attribute?.formAttr || "{}");
   const controlAction = formAttr.controlAction || {};
   const global = controlAction.global || {};
+  const control = controlAction.control || {};
   const events = Object.keys(global).filter((event) => Array.isArray(global[event]) && global[event].length);
+  const controlEvents = Object.entries(control)
+    .flatMap(([controlKey, actionByEvent]) => Object.entries(actionByEvent || {})
+      .filter(([, actions]) => Array.isArray(actions) && actions.length)
+      .map(([event, actions]) => ({ controlKey, event, count: actions.length })));
   return {
-    actionCount: events.reduce((count, event) => count + global[event].length, 0),
+    actionCount: events.reduce((count, event) => count + global[event].length, 0) +
+      controlEvents.reduce((count, item) => count + item.count, 0),
     events,
+    controlEvents,
     javascriptLength: typeof controlAction.javascript === "string" ? controlAction.javascript.length : 0
   };
 }
 
-function buildControlAction(existing, scripts = {}) {
+function buildControlAction(existing, scripts = {}, context = {}) {
   const next = {
     control: existing?.control || {},
     global: existing?.global || {}
@@ -185,25 +196,51 @@ function buildControlAction(existing, scripts = {}) {
 
   const grouped = new Map();
   for (const action of actions) {
+    if (action.translationStatus === "omitted") continue;
     const event = action.event || action.name;
     if (!event || typeof action.function !== "string" || !action.function.trim()) continue;
-    if (!grouped.has(event)) grouped.set(event, []);
-    grouped.get(event).push({
+    const scope = action.scope || "global";
+    const key = scope === "control"
+      ? controlActionKey(action, context)
+      : event;
+    if (!key) continue;
+    const groupedKey = `${scope}:${key}:${event}`;
+    if (!grouped.has(groupedKey)) grouped.set(groupedKey, { scope, key, event, actions: [] });
+    const renderedFunction = renderScriptFunction(action.function, context);
+    grouped.get(groupedKey).actions.push({
       name: action.name || event,
-      function: action.function,
-      id: action.id || stableHexId(`${event}:${action.function}`).slice(0, 18)
+      function: renderedFunction,
+      id: action.id || stableHexId(`${event}:${renderedFunction}`).slice(0, 18)
     });
   }
 
-  for (const [event, eventActions] of grouped) {
-    next.global[event] = eventActions;
+  for (const item of grouped.values()) {
+    if (item.scope === "control") {
+      next.control[item.key] = {
+        ...(next.control[item.key] || {}),
+        [item.event]: item.actions
+      };
+      continue;
+    }
+    next.global[item.event] = item.actions;
   }
-
-  next.javascript = actions
-    .map((action) => action.function)
-    .filter((fn) => typeof fn === "string" && fn.trim())
-    .join("\n\n");
   return next;
+}
+
+function controlActionKey(action, context) {
+  const model = action.tableId
+    ? context.detailModelsByField?.get(action.tableId)
+    : context.mainModel;
+  if (!model?.fdTableName || !action.controlId) return "";
+  return `${model.fdTableName}.${action.controlId}`;
+}
+
+function renderScriptFunction(source, context = {}) {
+  return String(source || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
+    const sourceTableId = String(tableId || "").trim();
+    const model = context.detailModelsByField?.get(sourceTableId);
+    return model?.fdTableName || sourceTableId;
+  });
 }
 
 function buildMainModel(template, xform, config, form) {

@@ -690,6 +690,7 @@ describe("executeDsl", () => {
           id: "fd_jsp.script.1",
           name: "onLoad",
           event: "onLoad",
+          scope: "global",
           function: "function onLoad(context) {\n  var value = MKXFORM.getValue('fd_subject')\n}",
           translationStatus: "mapped",
           sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
@@ -707,9 +708,112 @@ describe("executeDsl", () => {
 
     assert.equal(formAttr.controlAction.global.onLoad.length, 1);
     assert.equal(formAttr.controlAction.global.onLoad[0].function.includes("MKXFORM.getValue('fd_subject')"), true);
-    assert.equal(formAttr.controlAction.javascript.includes("function onLoad(context)"), true);
+    assert.equal(formAttr.controlAction.javascript, undefined);
     assert.equal(config.migrationDsl.scripts.actionCount, 1);
     assert.deepEqual(summarizeFormFromTemplate(payload).scripts.events, ["onLoad"]);
+  });
+
+  it("writes translated control onChange scripts into field control actions", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_amount.onChange.1",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          controlId: "fd_amount",
+          function: "function onChange(value) {\n  MKXFORM.setValue('fd_subject', String(value || ''))\n}",
+          translationStatus: "mapped",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "AttachXFormValueChangeEventById",
+            target: "control onChange",
+            basis: "function-catalog"
+          }]
+        }]
+      }
+    });
+    const payload = applyFormPayload(baseTemplate(), dsl);
+    const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
+    const formAttr = JSON.parse(config.attribute.formAttr);
+    const mainModel = config.dataModel.find((model) => model.fdType === "main");
+    const controlKey = `${mainModel.fdTableName}.fd_amount`;
+
+    assert.equal(formAttr.controlAction.control[controlKey].onChange.length, 1);
+    assert.equal(formAttr.controlAction.control[controlKey].onChange[0].function.includes("MKXFORM.setValue('fd_subject'"), true);
+    assert.deepEqual(summarizeFormFromTemplate(payload).scripts.controlEvents, [{
+      controlKey,
+      event: "onChange",
+      count: 1
+    }]);
+  });
+
+  it("writes translated detail control onChange scripts with MK detail table names", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_detail.fd_name.onChange.1",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          tableId: "fd_detail",
+          controlId: "fd_name",
+          function: "function onChange(value, rowNum, parentRowNum) {\n  MKXFORM.updateControlStyle(\"${table:fd_detail}.fd_name\", rowNum, { display: value === \"gh\" ? \"block\" : \"none\" })\n}",
+          translationStatus: "mapped",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "detail-row DOM display toggle",
+            target: "detail column onChange + MKXFORM.updateControlStyle",
+            basis: "deterministic-pattern"
+          }]
+        }]
+      }
+    });
+    const payload = applyFormPayload(baseTemplate(), dsl);
+    const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
+    const formAttr = JSON.parse(config.attribute.formAttr);
+    const detailModel = config.dataModel.find((model) => model.fdType === "detail" && model.dynamicProps?.detailFieldName === "fd_detail");
+    const controlKey = `${detailModel.fdTableName}.fd_name`;
+    const action = formAttr.controlAction.control[controlKey].onChange[0];
+
+    assert.equal(detailModel.fdTableName, "mk_model_fd_detail");
+    assert.equal(action.function.includes("MKXFORM.updateControlStyle(\"mk_model_fd_detail.fd_name\", rowNum"), true);
+    assert.equal(action.function.includes("${table:"), false);
+    assert.deepEqual(summarizeFormFromTemplate(payload).scripts.controlEvents, [{
+      controlKey,
+      event: "onChange",
+      count: 1
+    }]);
+  });
+
+  it("renders source detail table placeholders inside global script functions", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_detail.onLoad.1",
+          name: "onLoad",
+          event: "onLoad",
+          scope: "global",
+          function: "function onLoad() {\n  var rows = MKXFORM.getValue(\"${table:fd_detail}\") || []\n  console.log(rows.length)\n}",
+          translationStatus: "mapped",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    });
+    const payload = applyFormPayload(baseTemplate(), dsl);
+    const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
+    const formAttr = JSON.parse(config.attribute.formAttr);
+    const action = formAttr.controlAction.global.onLoad[0];
+
+    assert.equal(action.function.includes("MKXFORM.getValue(\"mk_model_fd_detail\")"), true);
+    assert.equal(action.function.includes("${table:"), false);
   });
 
   it("writes native MK formRule display and require entries through the fake client", async () => {

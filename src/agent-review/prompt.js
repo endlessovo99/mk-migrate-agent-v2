@@ -1,4 +1,5 @@
-import { COMPONENT_CATALOG, VALIDATION_POLICY } from "../dsl/catalogs.js";
+import { COMPONENT_CATALOG, FUNCTION_CATALOG, VALIDATION_POLICY } from "../dsl/catalogs.js";
+import { scriptTargetApiSummary } from "../dsl/scripts.js";
 
 export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.form-patch.v1";
 
@@ -10,7 +11,11 @@ export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/columns/*/title",
   "/form/fields/*/columns/*/type",
   "/form/fields/*/columns/*/componentId",
-  "/form/fields/*/columns/*/props"
+  "/form/fields/*/columns/*/props",
+  "/scripts/actions/*/function",
+  "/scripts/actions/*/translationStatus",
+  "/scripts/actions/*/functionMappings",
+  "/scripts/actions/*/coverage"
 ];
 
 export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
@@ -23,7 +28,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       "You review a NewOA/MK migration DSL draft after deterministic translation.",
       "Return only strict JSON with exactly these top-level keys: summary, patches, diagnostics.",
       "Do not return a complete DSL.",
-      "Only propose evidence-backed replace patches for allowed form DSL paths.",
+      "Only propose evidence-backed replace patches for allowed form and script DSL paths.",
       "Patch paths must be copied exactly from allowedConcretePatchPaths. Do not invent array indexes or paths.",
       "Workflow is diagnostic-only in this version. Never patch workflow, trust, executor safety, source artifact, credentials, environment, or config paths.",
       "Every patch must include op, path, value, sourceRefs, evidence, confidence, and rationale. evidence must be a non-empty string array.",
@@ -31,6 +36,13 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       "The summary must be a non-empty string.",
       "Use sourceRef strings from the provided source draft. Do not use raw XML or invent source evidence.",
       "Title patches require confidence >= 0.7. Type, componentId, and props patches require confidence >= 0.85.",
+      "Script patches require confidence >= 0.85 and must preserve the deterministic action boundary. Do not create, delete, or retarget script actions.",
+      "Translate JSP scripts using the provided functionCatalog and targetApi. Trusted mapped scripts must not use document/window DOM APIs.",
+      "AttachXFormValueChangeEventById must translate to the existing control-scope onChange action candidate for that control.",
+      "Detail-table control scripts use tableId plus controlId; preserve rowNum for row-scoped APIs.",
+      "When a detail-table function refers to a runtime control id, use ${table:<sourceDetailTableId>}.<controlId>; the executor resolves this placeholder to mk_model_fd_... at write time.",
+      "If native formRules already cover a JSP visibility/required rule, do not duplicate that rule in generated JavaScript.",
+      "onBeforeSubmit must explicitly handle context.isDraft and return true, false, or Promise<boolean>.",
       "If a workflow concern is found, emit a diagnostic instead of a patch.",
       "If no safe patches are needed, return exactly this shape with your own non-empty summary: {\"summary\":\"Reviewed form DSL; no safe patches proposed.\",\"patches\":[],\"diagnostics\":[]}"
     ].join("\n"),
@@ -80,16 +92,53 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
         ],
         suspiciousTitleExamples: ["itTable", "明细表4", "明细表5", "weibaoTable", "quantity", "fee", "buyCat"]
       },
+      scriptTranslationPolicy: {
+        mayPatch: [
+          "scripts.actions[].function",
+          "scripts.actions[].translationStatus",
+          "scripts.actions[].functionMappings",
+          "scripts.actions[].coverage"
+        ],
+        mayNotPatch: [
+          "scripts.actions[].scope",
+          "scripts.actions[].event",
+          "scripts.actions[].controlId",
+          "scripts.actions[].tableId",
+          "scripts.actions[] array shape or order"
+        ],
+        statuses: {
+          mapped: "fully translated and locally executable",
+          needs_review: "AI attempted or source remains ambiguous; blocks execution",
+          manual: "requires human-authored JavaScript; blocks execution",
+          omitted: "source fragment is fully covered by native formRules and no JavaScript should run"
+        },
+        targetApi: scriptTargetApiSummary(),
+        forbiddenTargetOutput: [
+          "document.*",
+          "window.document",
+          "getElementById/getElementsByName/getElementsByTagName/getElementsByClassName",
+          "querySelector/querySelectorAll",
+          "setAttribute/getAttribute/removeAttribute",
+          "style/className/classList DOM mutation"
+        ],
+        beforeSubmit: {
+          draftGuardRequired: true,
+          explicitBooleanOrPromiseReturnRequired: true
+        }
+      },
+      functionCatalog: functionCatalogSummary(),
       sourceDraft: {
         form: {
           controls: sourceDraft?.form?.controls || [],
           detailTables: sourceDraft?.form?.detailTables || [],
           layout: sourceDraft?.form?.layout || {}
         },
+        scripts: scriptSourceSummary(sourceDraft?.scripts),
         workflowSummary: summarizeWorkflow(sourceDraft?.workflow)
       },
       dslDraft: {
         form: dslDraft?.form || {},
+        scripts: dslDraft?.scripts || {},
         review: {
           warnings: dslDraft?.review?.warnings || [],
           reviewCandidates: dslDraft?.review?.reviewCandidates || []
@@ -130,8 +179,10 @@ export function buildAgentReviewRepairPrompt(sourceDraft, dslDraft, repair = {})
 
 function buildConcretePatchTargets(dslDraft) {
   const fields = Array.isArray(dslDraft?.form?.fields) ? dslDraft.form.fields : [];
+  const scriptActions = Array.isArray(dslDraft?.scripts?.actions) ? dslDraft.scripts.actions : [];
   const targets = [];
   const patchProperties = ["title", "type", "componentId", "props"];
+  const scriptPatchProperties = ["function", "translationStatus", "functionMappings", "coverage"];
 
   fields.forEach((field, fieldIndex) => {
     const pathBase = `/form/fields/${fieldIndex}`;
@@ -158,6 +209,17 @@ function buildConcretePatchTargets(dslDraft) {
     });
   });
 
+  scriptActions.forEach((action, actionIndex) => {
+    const pathBase = `/scripts/actions/${actionIndex}`;
+    targets.push(targetSummary({
+      scope: "scriptAction",
+      index: actionIndex,
+      pathBase,
+      value: action,
+      allowedPatchPaths: scriptPatchProperties.map((property) => `${pathBase}/${property}`)
+    }));
+  });
+
   return targets;
 }
 
@@ -174,17 +236,25 @@ function targetSummary({ scope, index, fieldIndex, columnIndex, parentFieldId, p
     type: value?.type,
     componentId: value?.componentId,
     sourceRef: value?.sourceRef,
+    event: value?.event,
+    actionScope: value?.scope,
+    controlId: value?.controlId,
+    tableId: value?.tableId,
+    translationStatus: value?.translationStatus,
+    sourceRefs: value?.sourceRefs,
     allowedPatchPaths
   });
 }
 
 function patchTargetSummary(dslDraft, concretePatchTargets, allowedConcretePatchPaths) {
   const fields = Array.isArray(dslDraft?.form?.fields) ? dslDraft.form.fields : [];
+  const scriptActions = Array.isArray(dslDraft?.scripts?.actions) ? dslDraft.scripts.actions : [];
   const detailColumnCount = fields.reduce((sum, field) => sum + (Array.isArray(field?.columns) ? field.columns.length : 0), 0);
   return {
     fieldCount: fields.length,
     validFieldIndexRange: fields.length ? `0..${fields.length - 1}` : "",
     detailColumnCount,
+    scriptActionCount: scriptActions.length,
     concreteTargetCount: concretePatchTargets.length,
     concretePatchPathCount: allowedConcretePatchPaths.length
   };
@@ -225,6 +295,43 @@ function componentCatalogSummary() {
       allowedScopes: component.allowedScopes,
       props: Object.keys(component.propsSchema?.properties || {})
     }));
+}
+
+function functionCatalogSummary() {
+  return {
+    id: FUNCTION_CATALOG.id,
+    version: FUNCTION_CATALOG.version,
+    source: FUNCTION_CATALOG.source,
+    functions: FUNCTION_CATALOG.functions.map((fn) => ({
+      name: fn.name,
+      description: fn.description || "",
+      mkFunction: fn.mkFunction || ""
+    }))
+  };
+}
+
+function scriptSourceSummary(scripts = {}) {
+  if (!scripts) return {};
+  return pruneUndefined({
+    source: scripts.source,
+    displayJsp: scripts.displayJsp,
+    fragments: (scripts.fragments || []).map((fragment) => ({
+      id: fragment.id,
+      sourceRef: fragment.sourceRef,
+      sourceKey: fragment.sourceKey,
+      sourceType: fragment.sourceType,
+      length: fragment.length
+    })),
+    sources: (scripts.sources || []).map((source) => ({
+      id: source.id,
+      sourceRef: source.sourceRef,
+      sourceKey: source.sourceKey,
+      sourceType: source.sourceType,
+      fragmentId: source.fragmentId,
+      javascript: source.javascript,
+      functionAudit: source.functionAudit
+    }))
+  });
 }
 
 function validationPolicySummary() {

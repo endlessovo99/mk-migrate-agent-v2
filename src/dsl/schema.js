@@ -12,6 +12,19 @@ import {
   resolveDirectRef,
   resolveEffectTarget
 } from "./form-rules.js";
+import {
+  SCRIPT_CONTROL_EVENTS,
+  SCRIPT_EVENTS,
+  SCRIPT_GLOBAL_EVENTS,
+  SCRIPT_SCOPES,
+  SCRIPT_TRANSLATION_STATUSES,
+  analyzeScriptFunction,
+  handlesDraftContext,
+  hasExplicitBeforeSubmitReturn,
+  parseNamedFunctionParams,
+  resolveScriptControlTarget,
+  scriptTargetApiSummary
+} from "./scripts.js";
 
 export const DSL_VERSION = "2.0-migration";
 
@@ -55,7 +68,7 @@ export function validateMigrationDsl(input, options = {}) {
   validateTemplate(root.template, diagnostics);
   const formContext = validateForm(root.form, diagnostics);
   validateFormRules(root.formRules, diagnostics, { mode, form: root.form });
-  validateScripts(root.scripts, diagnostics, { mode });
+  validateScripts(root.scripts, diagnostics, { mode, form: root.form });
   validateReview(root.review, diagnostics, root.trust?.level);
   if (root.workflow !== undefined) {
     validateWorkflow(root.workflow, diagnostics, { mode, fieldIds: formContext.fieldIds });
@@ -546,25 +559,142 @@ function validateScripts(scripts, diagnostics, context) {
       diagnostics.push(error("dsl.scripts.action.type", "Script action must be a JSON object.", path));
       return;
     }
-    for (const key of ["id", "name", "event", "function", "translationStatus"]) {
+    for (const key of ["id", "name", "event", "translationStatus", "scope"]) {
       if (!nonEmptyString(action[key])) {
         diagnostics.push(error("dsl.scripts.action_field_required", `scripts.actions[].${key} is required.`, `${path}/${key}`));
       }
     }
-    if (!["onLoad", "onBeforeSubmit", "onChange"].includes(action.event)) {
-      diagnostics.push(error("dsl.scripts.event_unsupported", "Script action event must be onLoad, onBeforeSubmit, or onChange.", `${path}/event`, {
+    if (action.translationStatus !== "omitted" && !nonEmptyString(action.function)) {
+      diagnostics.push(error("dsl.scripts.action_field_required", "scripts.actions[].function is required unless translationStatus is omitted.", `${path}/function`));
+    }
+    if (!SCRIPT_EVENTS.has(action.event)) {
+      diagnostics.push(error("dsl.scripts.event_unsupported", "Script action event must be onLoad, onBeforeSubmit, onAfterSubmit, or onChange.", `${path}/event`, {
         actual: action.event
       }));
     }
-    if (!["mapped", "needs_review", "manual"].includes(action.translationStatus)) {
-      diagnostics.push(error("dsl.scripts.translation_status_invalid", "Script action translationStatus must be mapped, needs_review, or manual.", `${path}/translationStatus`, {
+    if (!SCRIPT_TRANSLATION_STATUSES.has(action.translationStatus)) {
+      diagnostics.push(error("dsl.scripts.translation_status_invalid", "Script action translationStatus must be mapped, needs_review, manual, or omitted.", `${path}/translationStatus`, {
         actual: action.translationStatus
       }));
     }
-    if (context.mode === "execute" && action.translationStatus === "needs_review") {
-      diagnostics.push(error("dsl.scripts.needs_review", "Executable DSL cannot contain script actions that still need review.", `${path}/translationStatus`));
+    if (action.translationStatus === "mapped" && Array.isArray(action.coverage?.residuals) && action.coverage.residuals.length) {
+      diagnostics.push(error("dsl.scripts.mapped_with_residuals", "Mapped script actions cannot retain untranslated coverage residuals.", `${path}/coverage/residuals`));
+    }
+    if (action.translationStatus === "omitted" && action.coverage?.status !== "covered") {
+      diagnostics.push(error("dsl.scripts.omitted_not_covered", "Omitted script actions must be fully covered by native formRules.", `${path}/coverage/status`, {
+        actual: action.coverage?.status
+      }));
+    }
+    if (!SCRIPT_SCOPES.has(action.scope)) {
+      diagnostics.push(error("dsl.scripts.scope_invalid", "Script action scope must be global or control.", `${path}/scope`, {
+        actual: action.scope
+      }));
+    }
+    validateScriptActionTarget(action, path, diagnostics, context);
+    validateScriptActionFunction(action, path, diagnostics, context);
+    if (context.mode === "execute" && ["needs_review", "manual"].includes(action.translationStatus)) {
+      diagnostics.push(error("dsl.scripts.needs_review", "Executable DSL cannot contain script actions that still need review or manual handling.", `${path}/translationStatus`, {
+        actual: action.translationStatus
+      }));
     }
   });
+}
+
+function validateScriptActionTarget(action, path, diagnostics, context) {
+  if (action.scope === "global") {
+    if (!SCRIPT_GLOBAL_EVENTS.has(action.event)) {
+      diagnostics.push(error("dsl.scripts.global_event_invalid", "Global script actions support only onLoad, onBeforeSubmit, and onAfterSubmit.", `${path}/event`, {
+        actual: action.event
+      }));
+    }
+    if (action.controlId !== undefined) {
+      diagnostics.push(error("dsl.scripts.global_control_forbidden", "Global script actions must not set controlId.", `${path}/controlId`));
+    }
+    if (action.tableId !== undefined) {
+      diagnostics.push(error("dsl.scripts.global_table_forbidden", "Global script actions must not set tableId.", `${path}/tableId`));
+    }
+    return;
+  }
+
+  if (action.scope === "control") {
+    if (!SCRIPT_CONTROL_EVENTS.has(action.event)) {
+      diagnostics.push(error("dsl.scripts.control_event_invalid", "Control script actions support only onChange.", `${path}/event`, {
+        actual: action.event
+      }));
+    }
+    const target = resolveScriptControlTarget(context.form, action);
+    if (!target.ok) {
+      diagnostics.push(error(`dsl.scripts.${target.code}`, target.message, `${path}/controlId`, {
+        controlId: target.controlId,
+        tableId: target.tableId
+      }));
+    }
+  }
+}
+
+function validateScriptActionFunction(action, path, diagnostics, context) {
+  if (action.translationStatus === "omitted") {
+    if (nonEmptyString(action.function)) {
+      diagnostics.push(error("dsl.scripts.omitted_function_forbidden", "Omitted script actions must not carry executable function text.", `${path}/function`));
+    }
+    return;
+  }
+  if (!nonEmptyString(action.function)) return;
+
+  try {
+    // Syntax-only check; function declarations inside the body are not executed.
+    // eslint-disable-next-line no-new-func
+    new Function(action.function);
+  } catch (syntaxError) {
+    diagnostics.push(error("dsl.scripts.function_syntax_invalid", "Script action function must be valid JavaScript.", `${path}/function`, {
+      message: syntaxError instanceof Error ? syntaxError.message : String(syntaxError)
+    }));
+    return;
+  }
+
+  const expectedName = action.name || action.event;
+  const params = parseNamedFunctionParams(action.function, expectedName);
+  if (!params) {
+    diagnostics.push(error("dsl.scripts.function_name_missing", "Script function must declare the action name.", `${path}/function`, {
+      expectedName
+    }));
+  }
+  if (action.event === "onChange") {
+    if (!params?.length || params[0] !== "value") {
+      diagnostics.push(error("dsl.scripts.on_change_value_param_required", "onChange functions must declare value as the first parameter.", `${path}/function`));
+    }
+    if (action.tableId && (!params || params[1] !== "rowNum")) {
+      diagnostics.push(error("dsl.scripts.on_change_row_param_required", "Detail-table onChange functions must declare rowNum as the second parameter.", `${path}/function`));
+    }
+  }
+  if (action.event === "onBeforeSubmit") {
+    if (!hasExplicitBeforeSubmitReturn(action.function)) {
+      diagnostics.push(error("dsl.scripts.before_submit_return_required", "onBeforeSubmit must explicitly return true, false, or Promise<boolean>.", `${path}/function`));
+    }
+    if (!handlesDraftContext(action.function)) {
+      diagnostics.push(error("dsl.scripts.before_submit_draft_guard_required", "onBeforeSubmit must explicitly handle context.isDraft.", `${path}/function`));
+    }
+  }
+
+  if (context.mode === "execute" || action.translationStatus === "mapped") {
+    const analysis = analyzeScriptFunction(action.function);
+    if (analysis.domUsages.length) {
+      diagnostics.push(error("dsl.scripts.dom_api_forbidden", "Mapped script actions must use MK component APIs instead of direct DOM APIs.", `${path}/function`, {
+        usages: analysis.domUsages
+      }));
+    }
+    if (analysis.disallowedTargetCalls.length) {
+      diagnostics.push(error("dsl.scripts.target_api_unsupported", "Mapped script actions may call only target APIs from the script target catalog.", `${path}/function`, {
+        calls: analysis.disallowedTargetCalls,
+        targetApi: scriptTargetApiSummary()
+      }));
+    }
+    if (analysis.disallowedCalls.length) {
+      diagnostics.push(error("dsl.scripts.call_unsupported", "Mapped script actions may call only local helpers, safe JavaScript built-ins, and whitelisted MKXFORM APIs.", `${path}/function`, {
+        calls: analysis.disallowedCalls
+      }));
+    }
+  }
 }
 
 function validateWorkflow(workflow, diagnostics, context) {

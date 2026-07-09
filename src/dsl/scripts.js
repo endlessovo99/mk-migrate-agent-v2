@@ -1,0 +1,349 @@
+export const SCRIPT_EVENTS = new Set(["onLoad", "onBeforeSubmit", "onAfterSubmit", "onChange"]);
+export const SCRIPT_GLOBAL_EVENTS = new Set(["onLoad", "onBeforeSubmit", "onAfterSubmit"]);
+export const SCRIPT_CONTROL_EVENTS = new Set(["onChange"]);
+export const SCRIPT_SCOPES = new Set(["global", "control"]);
+export const SCRIPT_TRANSLATION_STATUSES = new Set(["mapped", "needs_review", "manual", "omitted"]);
+
+export const ALLOWED_SCRIPT_TARGET_FUNCTIONS = new Set([
+  "MKXFORM.$",
+  "MKXFORM.getValue",
+  "MKXFORM.setValue",
+  "MKXFORM.getFieldAttr",
+  "MKXFORM.setFieldAttr",
+  "MKXFORM.setDetailFieldAttr",
+  "MKXFORM.updateControlStyle",
+  "MKXFORM.validateFields",
+  "MKXFORM.checkDetailRow",
+  "MKXFORM.addRow",
+  "MKXFORM.updateRow",
+  "MKXFORM.reload",
+  "MKXFORM.ajax",
+  "MKXFORM.callOrg"
+]);
+
+const ALLOWED_BUILTIN_CALLS = new Set([
+  "parseInt",
+  "parseFloat",
+  "isNaN",
+  "isFinite",
+  "Number",
+  "String",
+  "Boolean",
+  "Date",
+  "Promise",
+  "resolve",
+  "reject",
+  "setTimeout",
+  "clearTimeout",
+  "encodeURIComponent",
+  "decodeURIComponent"
+]);
+
+const ALLOWED_BUILTIN_PREFIXES = [
+  "Array.",
+  "Object.",
+  "JSON.",
+  "Math.",
+  "Number.",
+  "String.",
+  "Promise.",
+  "console."
+];
+
+const ALLOWED_INSTANCE_METHODS = new Set([
+  "at",
+  "concat",
+  "endsWith",
+  "every",
+  "filter",
+  "find",
+  "findIndex",
+  "flat",
+  "flatMap",
+  "forEach",
+  "includes",
+  "indexOf",
+  "join",
+  "lastIndexOf",
+  "map",
+  "match",
+  "padStart",
+  "padEnd",
+  "pop",
+  "push",
+  "reduce",
+  "replace",
+  "slice",
+  "some",
+  "sort",
+  "split",
+  "startsWith",
+  "substring",
+  "substr",
+  "toFixed",
+  "toLowerCase",
+  "toString",
+  "toUpperCase",
+  "trim"
+]);
+
+export function buildScriptTargetIndex(form = {}) {
+  const mainFields = new Map();
+  const detailTables = new Map();
+  const detailColumns = new Map();
+  const detailColumnIds = new Set();
+
+  for (const field of Array.isArray(form.fields) ? form.fields : []) {
+    if (!field?.id) continue;
+    if (field.type === "detailTable") {
+      detailTables.set(field.id, field);
+      for (const column of Array.isArray(field.columns) ? field.columns : []) {
+        if (!column?.id) continue;
+        detailColumnIds.add(column.id);
+        detailColumns.set(`${field.id}.${column.id}`, { table: field, column });
+      }
+      continue;
+    }
+    mainFields.set(field.id, field);
+  }
+
+  return { mainFields, detailTables, detailColumns, detailColumnIds };
+}
+
+export function resolveScriptControlTarget(form = {}, action = {}) {
+  const index = buildScriptTargetIndex(form);
+  const controlId = action.controlId;
+  const tableId = action.tableId;
+
+  if (!controlId) {
+    return { ok: false, code: "missing_control", message: "Control script actions require controlId." };
+  }
+
+  if (tableId) {
+    const target = index.detailColumns.get(`${tableId}.${controlId}`);
+    if (!target) {
+      return {
+        ok: false,
+        code: "detail_control_unresolved",
+        message: "Control script tableId/controlId must resolve to a detail table column.",
+        tableId,
+        controlId
+      };
+    }
+    return {
+      ok: true,
+      kind: "detail",
+      tableId,
+      controlId,
+      table: target.table,
+      field: target.column
+    };
+  }
+
+  if (index.mainFields.has(controlId)) {
+    return {
+      ok: true,
+      kind: "main",
+      controlId,
+      field: index.mainFields.get(controlId)
+    };
+  }
+
+  if (index.detailColumnIds.has(controlId)) {
+    return {
+      ok: false,
+      code: "detail_control_table_required",
+      message: "Detail column control script actions must include tableId.",
+      controlId
+    };
+  }
+
+  return {
+    ok: false,
+    code: "control_unresolved",
+    message: "Control script controlId must resolve to a form field.",
+    controlId
+  };
+}
+
+export function analyzeScriptFunction(text = "") {
+  const source = String(text || "");
+  const masked = maskStringsAndComments(source);
+  const localFunctions = extractLocalFunctionNames(masked);
+  const calls = extractCalls(masked, source, localFunctions);
+  const domUsages = extractDomUsages(masked, source);
+  const disallowedTargetCalls = calls
+    .filter((call) => call.name.startsWith("MKXFORM."))
+    .filter((call) => !ALLOWED_SCRIPT_TARGET_FUNCTIONS.has(call.name));
+  const disallowedCalls = calls.filter((call) => !isAllowedCall(call.name, localFunctions));
+
+  return {
+    calls,
+    domUsages,
+    disallowedTargetCalls,
+    disallowedCalls
+  };
+}
+
+export function parseNamedFunctionParams(text = "", name = "") {
+  if (!name) return undefined;
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = String(text || "").match(new RegExp(`\\bfunction\\s+${escaped}\\s*\\(([^)]*)\\)`));
+  if (!match) return undefined;
+  return match[1]
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function hasExplicitBeforeSubmitReturn(text = "") {
+  return /\breturn\s+(?:true|false)\b/.test(text) ||
+    /\breturn\s+new\s+Promise\s*\(/.test(text) ||
+    /\breturn\s+Promise\./.test(text);
+}
+
+export function handlesDraftContext(text = "") {
+  return /\bcontext\s*(?:&&\s*)?(?:\.\s*isDraft|\[\s*["']isDraft["']\s*\])/.test(text);
+}
+
+export function scriptTargetApiSummary() {
+  return {
+    allowedPrefixes: ["MKXFORM."],
+    allowedFunctions: [...ALLOWED_SCRIPT_TARGET_FUNCTIONS]
+  };
+}
+
+function extractCalls(masked, source, localFunctions) {
+  const calls = [];
+  const pattern = /([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*\(/g;
+  for (const match of masked.matchAll(pattern)) {
+    const name = match[1];
+    const previous = masked[match.index - 1] || "";
+    if (previous === ".") continue;
+    if (["if", "for", "while", "switch", "catch", "function", "return", "typeof", "new"].includes(name)) continue;
+    if (isFunctionDeclaration(masked, match.index)) continue;
+    calls.push({ name, index: match.index, snippet: snippetAt(source, match.index) });
+  }
+  return calls.filter((call) => !localFunctions.has(call.name));
+}
+
+function extractLocalFunctionNames(text = "") {
+  const names = new Set();
+  for (const match of text.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)) {
+    names.add(match[1]);
+  }
+  for (const match of text.matchAll(/\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*function\b/g)) {
+    names.add(match[1]);
+  }
+  return names;
+}
+
+function extractDomUsages(masked, source) {
+  const patterns = [
+    /\bdocument\s*\./g,
+    /\bwindow\s*\.\s*document\b/g,
+    /\b(?:getElementById|getElementsByName|getElementsByTagName|getElementsByClassName|querySelector|querySelectorAll)\s*\(/g,
+    /\.\s*(?:setAttribute|getAttribute|removeAttribute)\s*\(/g,
+    /\.\s*(?:style|className|classList)\b/g,
+    /\bHTML[A-Za-z]*Element\b/g
+  ];
+  const usages = [];
+  for (const pattern of patterns) {
+    for (const match of masked.matchAll(pattern)) {
+      usages.push({
+        pattern: pattern.source,
+        index: match.index,
+        snippet: snippetAt(source, match.index)
+      });
+    }
+  }
+  usages.sort((left, right) => left.index - right.index);
+  return usages;
+}
+
+function isAllowedCall(name, localFunctions) {
+  if (localFunctions.has(name)) return true;
+  if (name.startsWith("MKXFORM.")) return ALLOWED_SCRIPT_TARGET_FUNCTIONS.has(name);
+  if (name.includes(".") && ALLOWED_INSTANCE_METHODS.has(name.slice(name.lastIndexOf(".") + 1))) return true;
+  if (ALLOWED_BUILTIN_CALLS.has(name)) return true;
+  return ALLOWED_BUILTIN_PREFIXES.some((prefix) => name.startsWith(prefix));
+}
+
+function isFunctionDeclaration(text, index) {
+  return /\bfunction\s+$/.test(text.slice(Math.max(0, index - 20), index));
+}
+
+function maskStringsAndComments(text) {
+  let result = "";
+  let index = 0;
+  let mode = "";
+  let quote = "";
+
+  while (index < text.length) {
+    const char = text[index];
+    const next = text[index + 1];
+
+    if (!mode && char === "/" && next === "/") {
+      mode = "line-comment";
+      result += "  ";
+      index += 2;
+      continue;
+    }
+    if (!mode && char === "/" && next === "*") {
+      mode = "block-comment";
+      result += "  ";
+      index += 2;
+      continue;
+    }
+    if (!mode && ["\"", "'", "`"].includes(char)) {
+      mode = "string";
+      quote = char;
+      result += " ";
+      index += 1;
+      continue;
+    }
+
+    if (mode === "line-comment") {
+      result += char === "\n" ? "\n" : " ";
+      if (char === "\n") mode = "";
+      index += 1;
+      continue;
+    }
+    if (mode === "block-comment") {
+      result += char === "\n" ? "\n" : " ";
+      if (char === "*" && next === "/") {
+        result += " ";
+        index += 2;
+        mode = "";
+      } else {
+        index += 1;
+      }
+      continue;
+    }
+    if (mode === "string") {
+      if (char === "\\" && index + 1 < text.length) {
+        result += "  ";
+        index += 2;
+        continue;
+      }
+      result += char === "\n" ? "\n" : " ";
+      if (char === quote) {
+        mode = "";
+        quote = "";
+      }
+      index += 1;
+      continue;
+    }
+
+    result += char;
+    index += 1;
+  }
+
+  return result;
+}
+
+function snippetAt(text, index) {
+  const start = Math.max(0, index - 60);
+  const end = Math.min(text.length, index + 140);
+  return text.slice(start, end).replace(/\s+/g, " ").trim();
+}

@@ -122,6 +122,89 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.needs_review"), true);
   });
 
+  it("accepts supported global after-submit scripts and blocks DOM-based mapped scripts", () => {
+    const accepted = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "after-submit.1",
+          name: "onAfterSubmit",
+          event: "onAfterSubmit",
+          scope: "global",
+          function: "function onAfterSubmit() {\n  MKXFORM.setValue('fd_subject', 'done')\n}",
+          translationStatus: "mapped",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    }), { mode: "execute" });
+    const rejected = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "change.1",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  document.getElementById('fd_subject').value = value\n}",
+          translationStatus: "mapped",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(accepted.ok, true);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.scripts.dom_api_forbidden"), true);
+  });
+
+  it("accepts detail-table onChange scripts that use row-scoped MK style APIs", () => {
+    const result = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "fd_detail.fd_name.onChange.1",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          tableId: "fd_detail",
+          controlId: "fd_name",
+          function: "function onChange(value, rowNum, parentRowNum) {\n  MKXFORM.updateControlStyle(\"${table:fd_detail}.fd_name\", rowNum, { display: value === \"gh\" ? \"block\" : \"none\" })\n}",
+          translationStatus: "mapped",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("requires before-submit scripts to handle draft saves and return explicitly", () => {
+    const result = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "before-submit.1",
+          name: "onBeforeSubmit",
+          event: "onBeforeSubmit",
+          scope: "global",
+          function: "function onBeforeSubmit(context) {\n  MKXFORM.validateFields()\n}",
+          translationStatus: "mapped",
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.before_submit_return_required"), true);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.before_submit_draft_guard_required"), true);
+  });
+
   it("rejects executable form linkage rules with unresolved condition fields or effect targets", () => {
     const result = validateMigrationDsl(sampleTrustedDsl({
       formRules: {
