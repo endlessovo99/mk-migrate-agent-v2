@@ -186,7 +186,7 @@ describe("source directory stages", () => {
     assert.equal(fwqDescription.props.content.includes("废木质品"), true);
   });
 
-  it("partially extracts native JSP row rules while keeping residual scripts blocking execution", () => {
+  it("omits hidden-helper JSP row scripts after extracting native row rules", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const rule = dslDraft.formRules.linkage.find((item) => item.id === "linkage.fd_376d6cbc433bfe.contains.A");
@@ -210,22 +210,30 @@ describe("source directory stages", () => {
     ]);
 
     const rowRuleAction = actionsById.get("fd_3a0a0882cb93b0.script.1.event.1");
-    assert.equal(rowRuleAction.translationStatus, "needs_review");
+    assert.equal(rowRuleAction.translationStatus, "omitted");
     assert.equal(rowRuleAction.scope, "control");
     assert.equal(rowRuleAction.event, "onChange");
     assert.equal(rowRuleAction.controlId, "fd_376d6cbc433bfe");
-    assert.equal(rowRuleAction.coverage.status, "partial");
+    assert.equal(rowRuleAction.coverage.status, "covered");
     assert.deepEqual(rowRuleAction.coverage.nativeRules, ["linkage.fd_376d6cbc433bfe.contains.A"]);
-    assert.deepEqual(rowRuleAction.coverage.residuals.map((residual) => [residual.code, residual.target]), [
-      ["script.residual.field_value_assignment", "fd_is_qtfy"],
-      ["script.residual.field_value_assignment", "fd_is_qtfy"]
-    ]);
+    assert.deepEqual(rowRuleAction.coverage.residuals, []);
 
-    assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").coverage.status, "uncovered");
-    assert.deepEqual(actionsById.get("fd_3a0a08bd180e76.script.1.event.1").coverage.residuals.map((residual) => [residual.code, residual.target || residual.trigger]), [
-      ["script.residual.field_value_assignment", "fd_is_htz"],
-      ["script.residual.named_value_change_callback", "fd_seal_type"]
-    ]);
+    assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").translationStatus, "omitted");
+    assert.deepEqual(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").coverage, {
+      status: "covered",
+      nativeRules: ["linkage.fd_376d6cbc433bfe.contains.A"],
+      residuals: []
+    });
+    assert.equal(dslDraft.scripts.actions.every((action) => action.translationStatus === "omitted"), true);
+    assert.equal(actionsById.has("fd_3a0a08bd180e76.script.1.event.1"), false);
+    assert.equal(
+      dslDraft.scripts.warnings.some((warning) =>
+        warning.code === "script.control_unresolved" &&
+        warning.controlId === "fd_seal_type" &&
+        warning.sourceRefs.includes("source.form.jsp.fd_3a0a08bd180e76.script.1")
+      ),
+      true
+    );
 
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
       externalAgentReviewed: true,
@@ -233,8 +241,7 @@ describe("source directory stages", () => {
       checkedAt: "2026-07-08T00:00:00.000Z"
     });
     const executeCheck = checkExecute(trusted);
-    assert.equal(executeCheck.ok, false);
-    assert.equal(executeCheck.diagnostics.filter((item) => item.code === "dsl.scripts.needs_review").length, 7);
+    assert.equal(executeCheck.diagnostics.filter((item) => item.code === "dsl.scripts.needs_review").length, 0);
   });
 
   it("drafts source facts into a non-executable dsl-draft with explicit mkTree", () => {

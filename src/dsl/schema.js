@@ -622,8 +622,16 @@ function validateScriptActionTarget(action, path, diagnostics, context) {
         actual: action.event
       }));
     }
+    if (action.translationStatus === "omitted") return;
     const target = resolveScriptControlTarget(context.form, action);
     if (!target.ok) {
+      if (context.mode !== "execute" && ["needs_review", "manual"].includes(action.translationStatus)) {
+        diagnostics.push(warning(`dsl.scripts.${target.code}_pending_review`, target.message, `${path}/controlId`, {
+          controlId: target.controlId,
+          tableId: target.tableId
+        }));
+        return;
+      }
       diagnostics.push(error(`dsl.scripts.${target.code}`, target.message, `${path}/controlId`, {
         controlId: target.controlId,
         tableId: target.tableId

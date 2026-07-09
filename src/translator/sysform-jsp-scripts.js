@@ -1,4 +1,5 @@
 import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitelist.js";
+import { resolveScriptControlTarget } from "../dsl/scripts.js";
 import { analyzeLegacyScriptFormRules } from "./sysform-form-rules.js";
 import { attrValue, decodeEntities } from "./xml-utils.js";
 
@@ -28,19 +29,124 @@ export function extractSysFormJspScripts(template = {}, options = {}) {
   });
 }
 
-export function draftMkScriptsFromSourceScripts(sourceScripts = {}) {
+export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}) {
   const sources = Array.isArray(sourceScripts.sources) ? sourceScripts.sources : [];
   if (!sources.length) return undefined;
 
   const candidates = dedupeCandidatesByKey(sources
     .flatMap((source, sourceIndex) => eventCandidatesFromSource(source, sourceIndex)));
-  const actions = candidates
-    .map((candidate, index) => mkActionFromCandidate(candidate, index));
+  const actions = [];
+  const warnings = [];
+  candidates.forEach((candidate, index) => {
+    const action = mkActionFromCandidate(candidate, index);
+    const target = scriptTargetWarning(action, options.form);
+    if (target) {
+      warnings.push(target);
+      return;
+    }
+    actions.push(omitCoveredHiddenHelperAction(action, candidate, options));
+  });
   return {
     source: sourceScripts.source || "sysform-jsp",
     actions,
+    warnings,
     javascript: actions.map((action) => action.function).filter(Boolean).join("\n\n")
   };
+}
+
+function omitCoveredHiddenHelperAction(action, candidate, options = {}) {
+  const nativeRules = coveredNativeRules(action, candidate, options);
+  if (!nativeRules.length) return action;
+
+  return {
+    ...action,
+    function: "",
+    translationStatus: "omitted",
+    coverage: {
+      status: "covered",
+      nativeRules,
+      residuals: []
+    },
+    functionMappings: [
+      ...(action.functionMappings || []),
+      {
+        source: "legacy hidden helper row script",
+        target: "native formRules.linkage",
+        description: "Visible/required row behavior is represented by native formRules; hidden helper field state is not generated in MK.",
+        basis: "deterministic-pattern",
+        reviewRequired: false
+      }
+    ]
+  };
+}
+
+function coveredNativeRules(action, candidate, options = {}) {
+  const residuals = action.coverage?.residuals || [];
+  if (!residuals.length) return [];
+
+  if (
+    action.coverage?.nativeRules?.length &&
+    residuals.every((residual) => residual.type === "fieldValueAssignment" && !formHasField(options.form, residual.target))
+  ) {
+    return action.coverage.nativeRules;
+  }
+
+  if (
+    action.event === "onLoad" &&
+    residuals.every((residual) => residual.type === "windowLoadListener")
+  ) {
+    const helperIds = fieldIdsFromLegacyScript(candidate.javascript);
+    const rowTargets = rowTargetsFromLegacyRowReset(candidate.javascript);
+    if (!helperIds.length || !rowTargets.length) return [];
+    if (helperIds.some((id) => formHasField(options.form, id))) return [];
+    return nativeRulesCoveringRows(options.formRules, rowTargets);
+  }
+
+  return [];
+}
+
+function fieldIdsFromLegacyScript(text = "") {
+  return [...String(text || "").matchAll(/GetXFormFieldById\(\s*(["'])([^"']+)\1\s*\)/g)]
+    .map((match) => match[2]);
+}
+
+function rowTargetsFromLegacyRowReset(text = "") {
+  return [...String(text || "").matchAll(/common_dom_row_set_show_required_reset\(\s*(["'])([^"']+)\1/g)]
+    .map((match) => match[2]);
+}
+
+function nativeRulesCoveringRows(formRules = {}, rowTargets = []) {
+  const matchingRules = (formRules.linkage || []).filter((rule) => {
+    const effectTargets = [
+      ...(rule.effects || []),
+      ...(rule.else || [])
+    ].map((effect) => effect.target);
+    return rowTargets.every((target) => effectTargets.includes(target));
+  });
+  return matchingRules.length ? matchingRules.map((rule) => rule.id) : [];
+}
+
+function scriptTargetWarning(action, form) {
+  if (!form || action.scope !== "control") return undefined;
+  const target = resolveScriptControlTarget(form, action);
+  if (target.ok) return undefined;
+  return {
+    level: "warning",
+    code: `script.${target.code}`,
+    message: "JSP control script target does not exist in the generated form and was not drafted as an executable action.",
+    sourceRefs: action.sourceRefs || [],
+    controlId: target.controlId,
+    tableId: target.tableId
+  };
+}
+
+function formHasField(form = {}, fieldId) {
+  if (!fieldId) return false;
+  for (const field of form.fields || []) {
+    if (field.id === fieldId) return true;
+    if ((field.columns || []).some((column) => column.id === fieldId)) return true;
+  }
+  return false;
 }
 
 function extractDesignerJspFragments(html = "") {

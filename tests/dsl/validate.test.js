@@ -122,6 +122,46 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.needs_review"), true);
   });
 
+  it("keeps unresolved pending script targets reviewable in draft only", () => {
+    const pendingAction = {
+      id: "fd_jsp.script.1",
+      name: "onChange",
+      event: "onChange",
+      scope: "control",
+      controlId: "fd_missing",
+      function: "function onChange(value) {}",
+      translationStatus: "needs_review",
+      coverage: { status: "uncovered", nativeRules: [], residuals: [] },
+      functionMappings: []
+    };
+    const draft = validateMigrationDsl(sampleDraftDsl({
+      workflow: undefined,
+      scripts: { actions: [pendingAction] }
+    }), { mode: "draft" });
+    const executable = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: { actions: [pendingAction] }
+    }), { mode: "execute" });
+    const omitted = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          ...pendingAction,
+          function: "",
+          translationStatus: "omitted",
+          coverage: { status: "covered", nativeRules: ["linkage.fd_subject.contains.A"], residuals: [] }
+        }]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(draft.ok, true);
+    assert.equal(draft.diagnostics.some((item) => item.code === "dsl.scripts.control_unresolved_pending_review"), true);
+    assert.equal(executable.ok, false);
+    assert.equal(executable.diagnostics.some((item) => item.code === "dsl.scripts.control_unresolved"), true);
+    assert.equal(executable.diagnostics.some((item) => item.code === "dsl.scripts.needs_review"), true);
+    assert.equal(omitted.ok, true);
+  });
+
   it("accepts supported global after-submit scripts and blocks DOM-based mapped scripts", () => {
     const accepted = validateMigrationDsl(sampleTrustedDsl({
       workflow: undefined,

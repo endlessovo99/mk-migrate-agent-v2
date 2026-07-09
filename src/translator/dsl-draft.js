@@ -10,6 +10,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   }
 
   const form = draftForm(sourceDraft.form || {});
+  const formRules = draftFormRules(sourceDraft.formRules);
 
   return pruneUndefined({
     version: MIGRATION_DSL_VERSION,
@@ -34,8 +35,8 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceRef: sourceDraft.source?.sourceId || sourceDraft.source?.path || ""
     },
     form,
-    formRules: draftFormRules(sourceDraft.formRules),
-    scripts: draftMkScriptsFromSourceScripts(sourceDraft.scripts),
+    formRules,
+    scripts: draftMkScriptsFromSourceScripts(sourceDraft.scripts, { form, formRules }),
     workflow: sourceDraft.workflow ? draftWorkflow(sourceDraft.workflow) : undefined,
     review: {
       warnings: sourceIssuesToWarnings(sourceDraft.issues || []),
