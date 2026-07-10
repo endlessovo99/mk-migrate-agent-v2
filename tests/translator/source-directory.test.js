@@ -7,6 +7,7 @@ import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleSourceDraft } from "../helpers/sample-dsl.js";
 
 const moduleFormSource = "tests/fixtures/source/module-form-evidence/module-form-evidence_SysFormTemplate.xml";
+const moduleDetailColumnsSource = "tests/fixtures/source/module-detail-columns-evidence/module-detail-columns-evidence_SysFormTemplate.xml";
 const moduleRightsSource = "tests/fixtures/source/module-rights-evidence";
 
 describe("source directory stages", () => {
@@ -165,8 +166,8 @@ describe("source directory stages", () => {
     assert.equal(table.columns.some((column) => column.id === "fdId"), false);
   });
 
-  it("keeps current root metadata detail columns through drafting", () => {
-    const sourceDraft = cleanSourceFile(moduleFormSource);
+  it("keeps designer detail columns when matching metadata table has no columns", () => {
+    const sourceDraft = cleanSourceFile(moduleDetailColumnsSource);
     const table = sourceDraft.form.detailTables.find((item) => item.id === "fd_detail");
     const dslDraft = draftSourceDraft(sourceDraft);
     const dslTable = dslDraft.form.fields.find((item) => item.id === "fd_detail");
