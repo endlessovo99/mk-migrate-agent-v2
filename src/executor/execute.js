@@ -18,6 +18,7 @@ export async function executeDsl(input, options = {}) {
     };
   }
 
+  const credentials = options.credentials || {};
   const safety = validateSafety(options);
   if (safety.length) {
     return blocked(plan, safety);
@@ -26,14 +27,12 @@ export async function executeDsl(input, options = {}) {
   const baseUrl = assertAllowedBaseUrl(options.baseUrl || NEWOA_SIT_BASE_URL);
   const client = options.client || new NewoaClient({ baseUrl, fetchImpl: options.fetchImpl });
   const diagnostics = [...plan.diagnostics];
-  const username = process.env.NEWOA_USERNAME;
-  const encryptedPassword = process.env.NEWOA_ENCRYPTED_PASSWORD;
   const apiStages = [];
   let templateId = "";
 
   try {
     apiStages.push({ name: "login", status: "started" });
-    await client.login({ username, encryptedPassword });
+    await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
     apiStages.push({ name: "init", status: "started" });
     const baseTemplate = await client.initTemplate();
@@ -117,7 +116,7 @@ export async function executeDsl(input, options = {}) {
         {
           level: "error",
           code: "execute.newoa_api_failed",
-          message: error instanceof Error ? error.message : String(error),
+          message: redactCredentialValues(error instanceof Error ? error.message : String(error), credentials),
           path: "/execute"
         }
       ],
@@ -145,7 +144,7 @@ function validateSafety(options) {
       path: "/targetCategoryId"
     });
   }
-  if (!nonEmptyString(process.env.NEWOA_USERNAME)) {
+  if (!nonEmptyString(options.credentials?.username)) {
     diagnostics.push({
       level: "error",
       code: "safety.username_required",
@@ -153,7 +152,7 @@ function validateSafety(options) {
       path: "/credentials/username"
     });
   }
-  if (!nonEmptyString(process.env.NEWOA_ENCRYPTED_PASSWORD)) {
+  if (!nonEmptyString(options.credentials?.encryptedPassword)) {
     diagnostics.push({
       level: "error",
       code: "safety.encrypted_password_required",
@@ -290,6 +289,17 @@ function inferFailureStage(error) {
 
 function nonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function redactCredentialValues(value, credentials = {}) {
+  let result = String(value);
+  const secrets = [credentials.username, credentials.encryptedPassword]
+    .filter(nonEmptyString)
+    .sort((left, right) => right.length - left.length);
+  for (const secret of secrets) {
+    result = result.split(secret).join("[REDACTED]");
+  }
+  return result;
 }
 
 function clone(value) {

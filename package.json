@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "node --test",
+    "test:local-corpus": "MK_LOCAL_CORPUS_TESTS=1 node --test",
     "clean": "node src/cli/main.js clean",
     "draft": "node src/cli/main.js draft",
     "translate": "node src/cli/main.js translate",

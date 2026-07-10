@@ -8,6 +8,14 @@ This context defines the language for the v2 NewOA/MK migration route-validation
 A deliberately narrow implementation used to prove the new source-to-NewOA path before rebuilding product features.
 _Avoid_: full replacement, complete platform
 
+**Route-validation harness**:
+An offline verification path for a named supported migration route case, used to prove behavior without external writes.
+_Avoid_: fixture catalog, production executor, batch runner
+
+**Route case**:
+A named migration scenario that starts from a supported XML input and follows the route-validation path to its expected terminal stage.
+_Avoid_: raw fixture, handcrafted DSL scenario, batch item
+
 **DSL**:
 The migration document produced by the translator and consumed by the executor. It is the only public boundary artifact.
 _Avoid_: executor input, browser script

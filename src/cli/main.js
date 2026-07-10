@@ -190,14 +190,20 @@ function runDryRun(argv) {
   printJson(args.out ? { ...plan, wrote: args.out } : plan);
 }
 
-async function runExecute(argv) {
+async function runExecute(argv, options = {}) {
   const args = parseArgs(argv);
   const inputPath = args.positionals[0];
   if (!inputPath) throw new Error("execute requires a trusted migration DSL path");
-  const report = await executeDsl(readJson(inputPath), {
+  const env = options.env || process.env;
+  const execute = options.executeDsl || executeDsl;
+  const report = await execute(readJson(inputPath), {
     confirmWrite: args["confirm-write"] === true,
     targetCategoryId: args["target-category-id"],
-    baseUrl: args["base-url"]
+    baseUrl: args["base-url"],
+    credentials: {
+      username: env.NEWOA_USERNAME,
+      encryptedPassword: env.NEWOA_ENCRYPTED_PASSWORD
+    }
   });
   if (args.out) writeJson(args.out, report);
   printJson(args.out ? { ...report, wrote: args.out } : report);

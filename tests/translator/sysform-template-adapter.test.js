@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { loadFunctionWhitelist } from "../../src/translator/function-whitelist.js";
 import { parseSysFormTemplateXml, translateSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
+import { localCorpusIt } from "../helpers/local-corpus.js";
 
 const whitelistPath = "tests/fixtures/function-whitelist.json";
 
@@ -155,7 +156,7 @@ describe("translateSysFormTemplateXml", () => {
     assert.equal(dsl.form.layout.rows[0].cells[0].fieldId, "fd_first");
   });
 
-  it("flags placeholder detail table titles for agent review", () => {
+  localCorpusIt("flags placeholder detail table titles for agent review", () => {
     const xml = readFileSync(
       "tests/fixtures/source/19bb55286bd93a6081a33e44c3791374/19bb557531db577cfc0bbb248719d041_SysFormTemplate.xml",
       "utf8"
@@ -181,7 +182,7 @@ describe("translateSysFormTemplateXml", () => {
     );
   });
 
-  it("extracts designer JSP snippets as MK script candidates", () => {
+  localCorpusIt("extracts designer JSP snippets as MK script candidates", () => {
     const xml = readFileSync(
       "tests/fixtures/source/19bb55286bd93a6081a33e44c3791374/19bb557531db577cfc0bbb248719d041_SysFormTemplate.xml",
       "utf8"

@@ -77,7 +77,11 @@ for (const fixture of fixtures) {
   if (fixture.id === executeFixtureId && result.ok && targetCategoryId) {
     executeReport = await executeDsl(result.dsl, {
       confirmWrite: true,
-      targetCategoryId
+      targetCategoryId,
+      credentials: {
+        username: process.env.NEWOA_USERNAME,
+        encryptedPassword: process.env.NEWOA_ENCRYPTED_PASSWORD
+      }
     });
     writeJson(join(fixtureDir, "execute.report.json"), executeReport);
   }

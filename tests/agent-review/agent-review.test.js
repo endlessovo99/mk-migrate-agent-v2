@@ -8,6 +8,7 @@ import { OpenAIResponsesReviewProvider } from "../../src/agent-review/provider.j
 import { main } from "../../src/cli/main.js";
 import { checkTrust } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleDraftDsl, sampleForm, sampleSourceDraft } from "../helpers/sample-dsl.js";
 
 describe("agent-review", () => {
@@ -770,7 +771,7 @@ describe("agent-review", () => {
     assert.equal(JSON.parse(readFileSync(outPath, "utf8")).artifact, "dsl-draft");
   });
 
-  it("builds prompt context from structured source facts without raw XML", () => {
+  localCorpusIt("builds prompt context from structured source facts without raw XML", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const prompt = buildAgentReviewPrompt(sourceDraft, dslDraft);

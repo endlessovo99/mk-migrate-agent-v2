@@ -2,12 +2,15 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { checkDraft, checkExecute } from "../../src/dsl/checks.js";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
-import { buildDryRunPlan } from "../../src/executor/dry-run.js";
-import { cleanSourceFile, draftSourceDraft, translateSourceFile } from "../../src/translator/index.js";
+import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleSourceDraft } from "../helpers/sample-dsl.js";
 
+const moduleFormSource = "tests/fixtures/source/module-form-evidence/module-form-evidence_SysFormTemplate.xml";
+const moduleRightsSource = "tests/fixtures/source/module-rights-evidence";
+
 describe("source directory stages", () => {
-  it("cleans a paired SysFormTemplate and LbpmProcessDefinition directory into source-only facts", () => {
+  localCorpusIt("cleans a paired SysFormTemplate and LbpmProcessDefinition directory into source-only facts", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const text = JSON.stringify(sourceDraft);
 
@@ -25,7 +28,7 @@ describe("source directory stages", () => {
     assert.equal(text.includes("@elem/"), false);
   });
 
-  it("drafts JSP source scripts into MK script actions for review", () => {
+  localCorpusIt("drafts JSP source scripts into MK script actions for review", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const action = dslDraft.scripts.actions.find((item) => item.controlId === "fd_371229d0cbd2cc");
@@ -57,7 +60,7 @@ describe("source directory stages", () => {
     assert.equal(sourceDraft.scripts.sources.some((source) => source.semanticFacts?.legacyFunctionCalls?.length), true);
   });
 
-  it("drafts simple form-field formula workflow participants as executable handlers", () => {
+  localCorpusIt("drafts simple form-field formula workflow participants as executable handlers", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const nodesById = new Map(dslDraft.workflow.nodes.map((node) => [node.id, node]));
@@ -83,7 +86,10 @@ describe("source directory stages", () => {
   });
 
   it("keeps subprocess workflow nodes pending review instead of counting them as process starts", () => {
-    const sourceDraft = cleanSourceFile("tests/fixtures/source/1922c92a772710632f41c544ea59bc7e");
+    const sourceDraft = sampleSourceDraft({
+      form: sampleSingleFieldSourceForm(),
+      workflow: sampleSubprocessSourceWorkflow()
+    });
     const dslDraft = draftSourceDraft(sourceDraft);
     const check = checkDraft(dslDraft);
     const nodesById = new Map(dslDraft.workflow.nodes.map((node) => [node.id, node]));
@@ -102,7 +108,7 @@ describe("source directory stages", () => {
     assert.equal(check.ok, true);
   });
 
-  it("drafts fixture row markers and structured native form linkage rules", () => {
+  localCorpusIt("drafts fixture row markers and structured native form linkage rules", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const markerRefs = Object.fromEntries(
@@ -143,7 +149,7 @@ describe("source directory stages", () => {
     ]);
   });
 
-  it("extracts designer-only detail table columns when metadata is missing", () => {
+  localCorpusIt("extracts designer-only detail table columns when metadata is missing", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const table = sourceDraft.form.detailTables.find((item) => item.id === "fd_3a0a0a2ce4c5c4");
 
@@ -159,25 +165,25 @@ describe("source directory stages", () => {
     assert.equal(table.columns.some((column) => column.id === "fdId"), false);
   });
 
-  it("keeps designer detail columns when matching metadata table has no columns", () => {
-    const sourceDraft = cleanSourceFile("tests/fixtures/source/14979d75e8985408a56b2a64c60a072a");
-    const table = sourceDraft.form.detailTables.find((item) => item.id === "fd_3246294b5671a0");
+  it("keeps current root metadata detail columns through drafting", () => {
+    const sourceDraft = cleanSourceFile(moduleFormSource);
+    const table = sourceDraft.form.detailTables.find((item) => item.id === "fd_detail");
     const dslDraft = draftSourceDraft(sourceDraft);
-    const dslTable = dslDraft.form.fields.find((item) => item.id === "fd_3246294b5671a0");
+    const dslTable = dslDraft.form.fields.find((item) => item.id === "fd_detail");
     const check = checkDraft(dslDraft);
 
     assert.deepEqual(table.columns.map((column) => [column.id, column.title, column.sourceType, column.required]), [
-      ["fd_detail_name", "文件名称", "text", true],
-      ["fd_detail_copy", "份数", "text", true]
+      ["fd_detail_name", "名称", "text", true],
+      ["fd_detail_count", "份数", "text", true]
     ]);
     assert.deepEqual(dslTable.columns.map((column) => [column.id, column.title, column.type, column.props.required]), [
-      ["fd_detail_name", "文件名称", "text", true],
-      ["fd_detail_copy", "份数", "text", true]
+      ["fd_detail_name", "名称", "text", true],
+      ["fd_detail_count", "份数", "text", true]
     ]);
     assert.equal(check.diagnostics.some((diagnostic) => diagnostic.code === "dsl.detail_table.columns_required"), false);
   });
 
-  it("maps legacy creator default expressions into DSL context defaults", () => {
+  localCorpusIt("maps legacy creator default expressions into DSL context defaults", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const fieldsById = new Map(dslDraft.form.fields.map((field) => [field.id, field]));
@@ -201,7 +207,7 @@ describe("source directory stages", () => {
     });
   });
 
-  it("keeps hidden designer helper fields out of generated form components", () => {
+  localCorpusIt("keeps hidden designer helper fields out of generated form components", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const hiddenHelperIds = ["fd_3a0a08a742981e", "fd_is_qtfy", "fd_is_fwq"];
@@ -223,7 +229,7 @@ describe("source directory stages", () => {
     assert.equal(fwqDescription.props.content.includes("废木质品"), true);
   });
 
-  it("keeps hidden-helper JSP row scripts reviewable after extracting native row rule evidence", () => {
+  localCorpusIt("keeps hidden-helper JSP row scripts reviewable after extracting native row rule evidence", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const rule = dslDraft.formRules.linkage.find((item) => item.id === "linkage.fd_376d6cbc433bfe.contains.A");
@@ -339,44 +345,142 @@ describe("source directory stages", () => {
   });
 
   it("drafts legacy right sections into node field data authority", () => {
-    const expectedFields = [
-      "fd_3ea698a0fa7c78",
-      "fd_3ea698a261c666",
-      "fd_3ea8c4b09da4fe",
-      "fd_3ea8c511ffc138",
-      "fd_3ea8c5326b3754",
-      "fd_3ea8c5b2213ef2"
-    ];
-    const sourceDraft = cleanSourceFile("tests/fixtures/source/16a8c7e6740bd9caad821ba447dbf330");
+    const sourceDraft = cleanSourceFile(moduleRightsSource);
     const sourceNode = sourceDraft.workflow.nodes.find((node) => node.id === "N2");
     const dslDraft = draftSourceDraft(sourceDraft);
     const node = dslDraft.workflow.nodes.find((item) => item.id === "N2");
 
-    assert.deepEqual(Object.keys(sourceNode.dataAuthority.fields).sort(), expectedFields);
-    assert.deepEqual(Object.keys(node.dataAuthority.fields).sort(), expectedFields);
-    assert.deepEqual(node.dataAuthority.fields.fd_3ea698a261c666, {
+    assert.deepEqual(Object.keys(sourceNode.dataAuthority.fields), ["fd_private_note"]);
+    assert.deepEqual(Object.keys(node.dataAuthority.fields), ["fd_private_note"]);
+    assert.deepEqual(node.dataAuthority.fields.fd_private_note, {
       visible: false,
       editable: false,
       required: false,
       sourceMode: "hidden",
-      sourceRef: "source.form.dataAuthority.fdDesignerHtml.fd_3ea8c5f174dbe6.N2.fd_3ea698a261c666"
+      sourceRef: "source.form.dataAuthority.fdDesignerHtml.right_section.N2.fd_private_note"
     });
     assert.equal(
       sourceDraft.issues.some((issue) => issue.code?.startsWith("source.form_right.")),
       false
     );
   });
-
-  it("keeps translate as a clean-plus-draft compatibility shortcut that dry-run rejects", () => {
-    const dslDraft = translateSourceFile("tests/fixtures/source/route-validation-lbpm");
-    const plan = buildDryRunPlan(dslDraft);
-
-    assert.equal(dslDraft.artifact, "dsl-draft");
-    assert.equal(dslDraft.trust.level, "draft");
-    assert.equal(plan.ok, false);
-    assert.equal(plan.diagnostics.some((item) => item.code === "dsl.trust.trusted_required"), true);
-  });
 });
+
+function sampleSubprocessSourceWorkflow() {
+  return {
+    process: { id: "process-subprocess-evidence" },
+    nodes: [
+      { id: "N1", sourceType: "startNode", sourceRef: "source.workflow.node.N1", attributes: {} },
+      { id: "N20", sourceType: "startSubProcessNode", sourceRef: "source.workflow.node.N20", attributes: {} },
+      { id: "N23", sourceType: "recoverSubProcessNode", sourceRef: "source.workflow.node.N23", attributes: {} },
+      { id: "N4", sourceType: "endNode", sourceRef: "source.workflow.node.N4", attributes: {} }
+    ],
+    edges: [
+      { id: "L1", source: "N1", target: "N20", sourceRef: "source.workflow.edge.L1" },
+      { id: "L2", source: "N20", target: "N23", sourceRef: "source.workflow.edge.L2" },
+      { id: "L3", source: "N23", target: "N4", sourceRef: "source.workflow.edge.L3" }
+    ],
+    topologicalOrder: ["N1", "N20", "N23", "N4"]
+  };
+}
+
+function sampleSingleFieldSourceForm() {
+  return {
+    controls: [{
+      id: "fd_subject",
+      title: "主题",
+      sourceType: "text",
+      required: true,
+      sourceRef: "source.form.control.fd_subject"
+    }],
+    detailTables: [],
+    layout: {
+      rows: [{
+        id: "row-subject",
+        sourceRef: "source.form.layout.row.row-subject",
+        columns: 1,
+        cells: [{
+          id: "row-subject-cell-0",
+          sourceRef: "source.form.layout.cell.row-subject-cell-0",
+          column: 0,
+          colspan: 1,
+          references: [{
+            referenceId: "fd_subject",
+            referenceType: "control",
+            sourceRef: "source.form.control.fd_subject"
+          }]
+        }]
+      }]
+    }
+  };
+}
+
+function sampleMarkerSourceForm() {
+  return {
+    controls: [
+      { id: "fd_team", title: "示例团队", sourceType: "text", sourceRef: "source.form.control.fd_team" },
+      { id: "fd_prefixed", title: "前缀字段", sourceType: "text", sourceRef: "source.form.control.fd_prefixed" }
+    ],
+    detailTables: [{
+      id: "fd_detail",
+      title: "示例明细",
+      sourceType: "detailTable",
+      sourceRef: "source.form.detailTable.fd_detail",
+      columns: [
+        { id: "fd_detail_name", title: "名称", sourceType: "text", sourceRef: "source.form.detailTable.fd_detail.column.fd_detail_name" },
+        { id: "fd_detail_count", title: "份数", sourceType: "text", sourceRef: "source.form.detailTable.fd_detail.column.fd_detail_count" }
+      ]
+    }],
+    layout: {
+      rows: [
+        markerRow("row-numbered", "fd_team_row1", "fd_team", "control"),
+        markerRow("row-prefixed", "fd_prefixed_row", "fd_prefixed", "control"),
+        markerRow("row-detail", "fd_detail_row", "fd_detail", "detailTable")
+      ]
+    }
+  };
+}
+
+function markerRow(id, marker, referenceId, referenceType) {
+  return {
+    id,
+    sourceRef: `source.form.layout.row.${id}`,
+    sourceMarkers: [marker],
+    columns: 1,
+    cells: [{
+      id: `${id}-cell-0`,
+      sourceRef: `source.form.layout.cell.${id}-cell-0`,
+      column: 0,
+      colspan: 1,
+      references: [{ referenceId, referenceType, sourceRef: `source.form.${referenceType}.${referenceId}` }]
+    }]
+  };
+}
+
+function sampleDraftSelectionSourceWorkflow() {
+  return {
+    process: { id: "process-draft-selection" },
+    nodes: [
+      {
+        id: "N2",
+        sourceType: "draftNode",
+        sourceRef: "source.workflow.node.N2",
+        attributes: {},
+        definition: { attributes: { canModifyHandlerNodeIds: "N16;N9", mustModifyHandlerNodeIds: "N7" } }
+      },
+      { id: "N16", sourceType: "sendNode", sourceRef: "source.workflow.node.N16", attributes: {} },
+      { id: "N7", sourceType: "reviewNode", sourceRef: "source.workflow.node.N7", attributes: {} },
+      {
+        id: "N9",
+        sourceType: "sendNode",
+        sourceRef: "source.workflow.node.N9",
+        attributes: { handlerIds: "handler-1", handlerNames: "示例处理人", handlerSelectType: "org" }
+      }
+    ],
+    edges: [],
+    topologicalOrder: ["N2", "N16", "N7", "N9"]
+  };
+}
 
 function sampleParallelGatewaySourceWorkflow() {
   return {

@@ -6,17 +6,62 @@ import { applyFormPayload, summarizeFormFromTemplate } from "../../src/executor/
 import { verifyReadback } from "../../src/executor/readback.js";
 import { applyWorkflowPayload, buildWorkflowContent } from "../../src/executor/workflow-payload.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
+const TEST_CREDENTIALS = Object.freeze({
+  username: "route-test-user",
+  encryptedPassword: "route-test-encrypted-password"
+});
+
 describe("executeDsl", () => {
-  it("writes one draft template through an injected NewOA client and verifies readback", async () => {
-    const client = new FakeNewoaClient();
-    const result = await withNewoaEnv(() => executeDsl(sampleTrustedDsl(), {
+  it("uses caller-provided credentials without recording them", async () => {
+    const client = new FakeNewoaClient({ expectedCredentials: TEST_CREDENTIALS });
+    const result = await executeDsl(sampleTrustedDsl(), {
       client,
+      credentials: TEST_CREDENTIALS,
       confirmWrite: true,
       targetCategoryId: "category-1",
       now: new Date("2026-07-05T01:02:03.000Z")
-    }));
+    });
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(client.calls[0], { name: "login", payload: {} });
+    assert.equal(JSON.stringify({ calls: client.calls, result }).includes(TEST_CREDENTIALS.username), false);
+    assert.equal(JSON.stringify({ calls: client.calls, result }).includes(TEST_CREDENTIALS.encryptedPassword), false);
+  });
+
+  it("redacts caller credentials from adapter failure reports", async () => {
+    const loginError = new Error(`login rejected ${TEST_CREDENTIALS.username} ${TEST_CREDENTIALS.encryptedPassword}`);
+    loginError.stage = "login";
+    const client = new FakeNewoaClient({
+      expectedCredentials: TEST_CREDENTIALS,
+      loginError
+    });
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+    const serialized = JSON.stringify(result);
+
+    assert.equal(result.ok, false);
+    assert.equal(result.stage, "login");
+    assert.equal(serialized.includes(TEST_CREDENTIALS.username), false);
+    assert.equal(serialized.includes(TEST_CREDENTIALS.encryptedPassword), false);
+    assert.equal(result.diagnostics.at(-1).message, "login rejected [REDACTED] [REDACTED]");
+  });
+
+  it("writes one draft template through an injected NewOA client and verifies readback", async () => {
+    const client = new FakeNewoaClient();
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      now: new Date("2026-07-05T01:02:03.000Z")
+    });
 
     assert.equal(result.ok, true);
     assert.equal(result.status, "written");
@@ -150,7 +195,7 @@ describe("executeDsl", () => {
     assert.equal(node.handlers.ruleKey.formulaName, "$处理人字段$");
   });
 
-  it("writes role-line formula participants as dynamic handler formulas", () => {
+  localCorpusIt("writes role-line formula participants as dynamic handler formulas", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const content = buildWorkflowContent(dslDraft.workflow, {
@@ -177,7 +222,7 @@ describe("executeDsl", () => {
     assert.deepEqual(node.handlers.members, []);
   });
 
-  it("writes legacy robot nodes with selectable robot type and preserved config", () => {
+  localCorpusIt("writes legacy robot nodes with selectable robot type and preserved config", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
@@ -210,22 +255,15 @@ describe("executeDsl", () => {
   });
 
   it("writes legacy right sections into NewOA template form auths", () => {
-    const expectedFields = [
-      "fd_3ea698a0fa7c78",
-      "fd_3ea698a261c666",
-      "fd_3ea8c4b09da4fe",
-      "fd_3ea8c511ffc138",
-      "fd_3ea8c5326b3754",
-      "fd_3ea8c5b2213ef2"
-    ];
-    const trusted = trustedDslFromFixture("tests/fixtures/source/16a8c7e6740bd9caad821ba447dbf330");
+    const expectedFields = ["fd_private_note"];
+    const trusted = trustedDslFromFixture("tests/fixtures/source/module-rights-evidence");
     const payload = applyWorkflowPayload(baseTemplate(), trusted);
     const lbpm = payload.mechanisms.lbpmTemplate[0];
     const auth = lbpm.fdTemplateFormAuths.N2;
     const content = JSON.parse(lbpm.fdContent);
 
     assert.deepEqual(Object.keys(auth).sort(), expectedFields);
-    assert.deepEqual(auth.fd_3ea698a261c666, {
+    assert.deepEqual(auth.fd_private_note, {
       isShow: false,
       isEdit: false,
       isRequire: false
@@ -474,7 +512,7 @@ describe("executeDsl", () => {
     assert.equal(notEmpty.vo.data.fdList[0].fdList[0].fdFunctionId, "global.isEmpty");
   });
 
-  it("writes N437 contains department routes into editable simple conditions", () => {
+  localCorpusIt("writes N437 contains department routes into editable simple conditions", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
@@ -509,7 +547,7 @@ describe("executeDsl", () => {
     assert.equal(otherRule.fdValue, "计划项目");
   });
 
-  it("writes N415 other seller route with editable not-equals predicates", () => {
+  localCorpusIt("writes N415 other seller route with editable not-equals predicates", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
@@ -562,7 +600,7 @@ describe("executeDsl", () => {
     assert.deepEqual(JSON.parse(sequence.formula), routeFormula);
   });
 
-  it("writes N257 mixed and/or routes into editable simple conditions", () => {
+  localCorpusIt("writes N257 mixed and/or routes into editable simple conditions", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
@@ -628,7 +666,7 @@ describe("executeDsl", () => {
     assert.deepEqual(JSON.parse(sequence.formula), routeFormula);
   });
 
-  it("writes every fixture branch condition into editable formula configs", () => {
+  localCorpusIt("writes every fixture branch condition into editable formula configs", () => {
     const { content, trusted } = buildRouteValidationWorkflowContent();
     const edgeById = new Map(trusted.workflow.edges.map((edge) => [edge.id, edge]));
     const sequenceById = new Map(content.elements.filter((element) => element.type === "sequenceFlow").map((edge) => [edge.id, edge]));
@@ -655,7 +693,7 @@ describe("executeDsl", () => {
     assert.deepEqual(rawRoutes, []);
   });
 
-  it("marks every fixture route named other as fallback", () => {
+  localCorpusIt("marks every fixture route named other as fallback", () => {
     const { content } = buildRouteValidationWorkflowContent();
     const sequenceById = new Map(content.elements.filter((element) => element.type === "sequenceFlow").map((edge) => [edge.id, edge]));
     const nonFallbackOtherRoutes = [];
@@ -744,11 +782,12 @@ describe("executeDsl", () => {
       }
     });
 
-    const result = await withNewoaEnv(() => executeDsl(sampleTrustedDsl(), {
+    const result = await executeDsl(sampleTrustedDsl(), {
       client,
+      credentials: TEST_CREDENTIALS,
       confirmWrite: true,
       targetCategoryId: "category-1"
-    }));
+    });
 
     assert.equal(result.ok, false);
     assert.equal(result.status, "readback_failed");
@@ -769,11 +808,12 @@ describe("executeDsl", () => {
       }
     });
 
-    const result = await withNewoaEnv(() => executeDsl(sampleTrustedDsl(), {
+    const result = await executeDsl(sampleTrustedDsl(), {
       client,
+      credentials: TEST_CREDENTIALS,
       confirmWrite: true,
       targetCategoryId: "category-1"
-    }));
+    });
 
     assert.equal(result.ok, false);
     assert.equal(result.status, "readback_failed");
@@ -783,11 +823,12 @@ describe("executeDsl", () => {
 
   it("rejects draft inputs before any NewOA login or write call", async () => {
     const client = new FakeNewoaClient();
-    const result = await withNewoaEnv(() => executeDsl(sampleDraftDsl(), {
+    const result = await executeDsl(sampleDraftDsl(), {
       client,
+      credentials: TEST_CREDENTIALS,
       confirmWrite: true,
       targetCategoryId: "category-1"
-    }));
+    });
 
     assert.equal(result.ok, false);
     assert.equal(result.status, "invalid");
@@ -833,11 +874,12 @@ describe("executeDsl", () => {
         decisions: []
       }
     });
-    const result = await withNewoaEnv(() => executeDsl(dsl, {
+    const result = await executeDsl(dsl, {
       client: new FakeNewoaClient(),
+      credentials: TEST_CREDENTIALS,
       confirmWrite: true,
       targetCategoryId: "category-1"
-    }));
+    });
 
     assert.equal(result.ok, true);
     assert.equal(result.status, "written_with_warnings");
@@ -860,12 +902,13 @@ describe("executeDsl", () => {
 
   it("blocks before login when the base URL is not NewOA SIT", async () => {
     const client = new FakeNewoaClient();
-    const result = await withNewoaEnv(() => executeDsl(sampleTrustedDsl(), {
+    const result = await executeDsl(sampleTrustedDsl(), {
       client,
+      credentials: TEST_CREDENTIALS,
       confirmWrite: true,
       targetCategoryId: "category-1",
       baseUrl: "https://p.onewo.com"
-    }));
+    });
 
     assert.equal(result.ok, false);
     assert.equal(result.status, "blocked");
@@ -1015,7 +1058,7 @@ describe("executeDsl", () => {
     assert.equal(readback.ok, true);
   });
 
-  it("writes fixture fields with registered MK control types and no textarea heights", () => {
+  localCorpusIt("writes fixture fields with registered MK control types and no textarea heights", () => {
     const trusted = trustedDslFromFixture("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslFields = trusted.form.fields.flatMap((field) => field.type === "detailTable" ? field.columns || [] : [field]);
     const payload = applyFormPayload(baseTemplate(), trusted);
@@ -1254,11 +1297,12 @@ describe("executeDsl", () => {
 
   it("writes native MK formRule display and require entries through the fake client", async () => {
     const client = new FakeNewoaClient();
-    const result = await withNewoaEnv(() => executeDsl(sampleTrustedDslWithFormRules(), {
+    const result = await executeDsl(sampleTrustedDslWithFormRules(), {
       client,
+      credentials: TEST_CREDENTIALS,
       confirmWrite: true,
       targetCategoryId: "category-1"
-    }));
+    });
 
     assert.equal(result.ok, true);
     const updatePayload = client.calls.find((call) => call.name === "updateTemplate").payload;
@@ -1516,10 +1560,16 @@ class FakeNewoaClient {
     this.calls = [];
     this.savedTemplate = undefined;
     this.corruptReadback = options.corruptReadback;
+    this.expectedCredentials = options.expectedCredentials;
+    this.loginError = options.loginError;
   }
 
   async login(credentials) {
-    this.calls.push({ name: "login", payload: { username: credentials.username } });
+    if (this.expectedCredentials) {
+      assert.deepEqual(credentials, this.expectedCredentials);
+    }
+    this.calls.push({ name: "login", payload: {} });
+    if (this.loginError) throw this.loginError;
     return { ok: true };
   }
 
@@ -1575,25 +1625,4 @@ class FakeNewoaClient {
     this.savedTemplate = payload;
     return { fdId: payload.fdId };
   }
-}
-
-async function withNewoaEnv(fn) {
-  const previousUsername = process.env.NEWOA_USERNAME;
-  const previousPassword = process.env.NEWOA_ENCRYPTED_PASSWORD;
-  process.env.NEWOA_USERNAME = "01025344";
-  process.env.NEWOA_ENCRYPTED_PASSWORD = "encrypted-password";
-  try {
-    return await fn();
-  } finally {
-    restoreEnv("NEWOA_USERNAME", previousUsername);
-    restoreEnv("NEWOA_ENCRYPTED_PASSWORD", previousPassword);
-  }
-}
-
-function restoreEnv(name, value) {
-  if (value === undefined) {
-    delete process.env[name];
-    return;
-  }
-  process.env[name] = value;
 }

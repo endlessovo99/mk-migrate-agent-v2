@@ -3,7 +3,7 @@ import { summarizeDslWorkflow, summarizeWorkflowFromTemplate } from "./workflow-
 
 export function verifyReadback(dsl, template) {
   const diagnostics = [];
-  const expectedForm = summarizeDslForm(dsl.form || {});
+  const expectedForm = summarizeDslForm(dsl.form || {}, dsl.formRules);
   const actualForm = summarizeFormFromTemplate(template);
   compareFormSummary(expectedForm, actualForm, diagnostics);
 
