@@ -6,7 +6,6 @@ import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js
 import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleSourceDraft } from "../helpers/sample-dsl.js";
 
-const moduleFormSource = "tests/fixtures/source/module-form-evidence/module-form-evidence_SysFormTemplate.xml";
 const moduleDetailColumnsSource = "tests/fixtures/source/module-detail-columns-evidence/module-detail-columns-evidence_SysFormTemplate.xml";
 const moduleRightsSource = "tests/fixtures/source/module-rights-evidence";
 
@@ -413,73 +412,6 @@ function sampleSingleFieldSourceForm() {
         }]
       }]
     }
-  };
-}
-
-function sampleMarkerSourceForm() {
-  return {
-    controls: [
-      { id: "fd_team", title: "示例团队", sourceType: "text", sourceRef: "source.form.control.fd_team" },
-      { id: "fd_prefixed", title: "前缀字段", sourceType: "text", sourceRef: "source.form.control.fd_prefixed" }
-    ],
-    detailTables: [{
-      id: "fd_detail",
-      title: "示例明细",
-      sourceType: "detailTable",
-      sourceRef: "source.form.detailTable.fd_detail",
-      columns: [
-        { id: "fd_detail_name", title: "名称", sourceType: "text", sourceRef: "source.form.detailTable.fd_detail.column.fd_detail_name" },
-        { id: "fd_detail_count", title: "份数", sourceType: "text", sourceRef: "source.form.detailTable.fd_detail.column.fd_detail_count" }
-      ]
-    }],
-    layout: {
-      rows: [
-        markerRow("row-numbered", "fd_team_row1", "fd_team", "control"),
-        markerRow("row-prefixed", "fd_prefixed_row", "fd_prefixed", "control"),
-        markerRow("row-detail", "fd_detail_row", "fd_detail", "detailTable")
-      ]
-    }
-  };
-}
-
-function markerRow(id, marker, referenceId, referenceType) {
-  return {
-    id,
-    sourceRef: `source.form.layout.row.${id}`,
-    sourceMarkers: [marker],
-    columns: 1,
-    cells: [{
-      id: `${id}-cell-0`,
-      sourceRef: `source.form.layout.cell.${id}-cell-0`,
-      column: 0,
-      colspan: 1,
-      references: [{ referenceId, referenceType, sourceRef: `source.form.${referenceType}.${referenceId}` }]
-    }]
-  };
-}
-
-function sampleDraftSelectionSourceWorkflow() {
-  return {
-    process: { id: "process-draft-selection" },
-    nodes: [
-      {
-        id: "N2",
-        sourceType: "draftNode",
-        sourceRef: "source.workflow.node.N2",
-        attributes: {},
-        definition: { attributes: { canModifyHandlerNodeIds: "N16;N9", mustModifyHandlerNodeIds: "N7" } }
-      },
-      { id: "N16", sourceType: "sendNode", sourceRef: "source.workflow.node.N16", attributes: {} },
-      { id: "N7", sourceType: "reviewNode", sourceRef: "source.workflow.node.N7", attributes: {} },
-      {
-        id: "N9",
-        sourceType: "sendNode",
-        sourceRef: "source.workflow.node.N9",
-        attributes: { handlerIds: "handler-1", handlerNames: "示例处理人", handlerSelectType: "org" }
-      }
-    ],
-    edges: [],
-    topologicalOrder: ["N2", "N16", "N7", "N9"]
   };
 }
 
