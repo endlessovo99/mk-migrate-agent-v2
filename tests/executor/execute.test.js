@@ -2,9 +2,13 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { executeDsl } from "../../src/executor/execute.js";
-import { applyFormPayload, summarizeFormFromTemplate } from "../../src/executor/form-payload.js";
-import { verifyReadback } from "../../src/executor/readback.js";
-import { applyWorkflowPayload, buildWorkflowContent } from "../../src/executor/workflow-payload.js";
+import {
+  buildWorkflowContent,
+  buildWorkflowDraftPayload,
+  projectTemplate,
+  summarizeProjectedForm,
+  verifyTemplate
+} from "../helpers/persistence.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
@@ -53,7 +57,7 @@ describe("executeDsl", () => {
     assert.equal(result.diagnostics.at(-1).message, "login rejected [REDACTED] [REDACTED]");
   });
 
-  it("writes one draft template through an injected NewOA client and verifies readback", async () => {
+  it("writes an initial same-id workflow draft and verifies readback", async () => {
     const client = new FakeNewoaClient();
     const result = await executeDsl(sampleTrustedDsl(), {
       client,
@@ -75,8 +79,12 @@ describe("executeDsl", () => {
       "addTemplate",
       "getTemplate",
       "updateTemplate",
+      "saveWorkflowDraft",
+      "getWorkflowTemplateDetail",
       "getTemplate"
     ]);
+    assert.equal(result.apiStages.some((stage) => stage.name === "saveWorkflowDraft" && stage.status === "ok"), true);
+    assert.equal(result.apiStages.some((stage) => stage.name === "getWorkflowTemplateDetail" && stage.status === "ok"), true);
 
     const addPayload = client.calls.find((call) => call.name === "addTemplate").payload;
     assert.equal(addPayload.fdName.startsWith("MK_TEST_示例流程_20260705010203"), true);
@@ -104,8 +112,164 @@ describe("executeDsl", () => {
     assert.equal(sequence.sourceRef, "N1");
     assert.equal(sequence.targetRef, "N2");
     assert.equal(sequence.migrationSource.sourceRef, "source.workflow.edge.L1");
+    const workflowDraftPayload = client.calls.find((call) => call.name === "saveWorkflowDraft").payload;
+    assert.equal(workflowDraftPayload.fdId, "lbpm-template-id");
+    assert.equal(workflowDraftPayload.isDraft, true);
+    assert.equal(JSON.parse(workflowDraftPayload.fdContent).elements.length, 3);
+    assert.deepEqual(
+      client.calls.find((call) => call.name === "getWorkflowTemplateDetail").payload,
+      { templateId: "lbpm-template-id", definitionId: "" }
+    );
+    const workflowDraftStage = result.apiStages.find((stage) => stage.name === "saveWorkflowDraft");
+    assert.equal(workflowDraftStage.draftId, "lbpm-template-id");
+    assert.equal(workflowDraftStage.definitionId, undefined);
+    const workflowDetailStage = result.apiStages.find((stage) => stage.name === "getWorkflowTemplateDetail");
+    assert.equal(workflowDetailStage.draftId, "lbpm-template-id");
+    assert.equal(workflowDetailStage.definitionId, undefined);
     assert.equal(result.readback.form.fieldCount, 3);
     assert.equal(result.readback.workflow.invalidEdgeCount, 0);
+  });
+
+  it("keeps form-only execution off the LBPM definition save path", async () => {
+    const client = new FakeNewoaClient();
+    const dsl = sampleTrustedDsl();
+    delete dsl.workflow;
+    const result = await executeDsl(dsl, {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(client.calls.some((call) => call.name === "saveWorkflowDraft"), false);
+    assert.equal(client.calls.some((call) => call.name === "getWorkflowTemplateDetail"), false);
+    assert.equal(result.apiStages.some((stage) => stage.name === "saveWorkflowDraft"), false);
+    assert.equal(result.apiStages.some((stage) => stage.name === "getWorkflowTemplateDetail"), false);
+  });
+
+  it("fails the workflow draft stage when publish returns no draft id", async () => {
+    const client = new FakeNewoaClient({ workflowDraftResult: {} });
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.stage, "saveWorkflowDraft");
+    assert.equal(result.apiStages.find((stage) => stage.name === "saveWorkflowDraft").status, "failed");
+    assert.equal(client.calls.some((call) => call.name === "getWorkflowTemplateDetail"), false);
+  });
+
+  it("reads a distinct workflow draft definition when publish returns a separate id", async () => {
+    const client = new FakeNewoaClient({ workflowDraftResult: { fdId: "workflow-definition-id" } });
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(
+      client.calls.find((call) => call.name === "getWorkflowTemplateDetail").payload,
+      { templateId: "lbpm-template-id", definitionId: "workflow-definition-id" }
+    );
+    const saveStage = result.apiStages.find((stage) => stage.name === "saveWorkflowDraft");
+    assert.equal(saveStage.draftId, "workflow-definition-id");
+    assert.equal(saveStage.definitionId, "workflow-definition-id");
+  });
+
+  it("fails workflow readback when details returns no definition id", async () => {
+    const client = new FakeNewoaClient({
+      workflowDraftResult: { fdId: "workflow-definition-id" },
+      corruptWorkflowReadback(detail) {
+        const next = structuredClone(detail);
+        delete next.fdDefinitionId;
+        return next;
+      }
+    });
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.stage, "getWorkflowTemplateDetail");
+    assert.equal(result.apiStages.find((stage) => stage.name === "getWorkflowTemplateDetail").status, "failed");
+  });
+
+  it("fails workflow readback when details returns a different definition id", async () => {
+    const client = new FakeNewoaClient({
+      workflowDraftResult: { fdId: "workflow-definition-id" },
+      corruptWorkflowReadback(detail) {
+        return { ...detail, fdDefinitionId: "different-definition-id" };
+      }
+    });
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.stage, "getWorkflowTemplateDetail");
+  });
+
+  it("fails workflow readback when details belongs to a different workflow template", async () => {
+    const client = new FakeNewoaClient({
+      corruptWorkflowReadback(detail) {
+        return { ...detail, fdId: "different-lbpm-template-id" };
+      }
+    });
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.stage, "getWorkflowTemplateDetail");
+  });
+
+  it("fails workflow readback when details returns no designer content", async () => {
+    const client = new FakeNewoaClient({
+      corruptWorkflowReadback(detail) {
+        return { ...detail, fdContent: "" };
+      }
+    });
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.stage, "getWorkflowTemplateDetail");
+  });
+
+  it("fails workflow readback unless details confirms both draft markers", async () => {
+    for (const corruptWorkflowReadback of [
+      (detail) => ({ ...detail, isDraft: false }),
+      (detail) => ({ ...detail, fdStatus: "published" })
+    ]) {
+      const result = await executeDsl(sampleTrustedDsl(), {
+        client: new FakeNewoaClient({ corruptWorkflowReadback }),
+        credentials: TEST_CREDENTIALS,
+        confirmWrite: true,
+        targetCategoryId: "category-1"
+      });
+
+      assert.equal(result.ok, false);
+      assert.equal(result.stage, "getWorkflowTemplateDetail");
+    }
   });
 
   it("writes all parallel split and join gateways into MK workflow content", () => {
@@ -130,6 +294,141 @@ describe("executeDsl", () => {
     assert.equal(splitFlow.targetRef, "N3");
   });
 
+  it("writes send nodes with the native NewOA CC shape", () => {
+    const workflow = {
+      process: { id: "process-send" },
+      nodes: [
+        { id: "N1", type: "generalStart", element: "startEvent", name: "开始", attributes: {} },
+        { id: "N2", type: "send", element: "manualTask", name: "抄送财务", attributes: {} },
+        { id: "N3", type: "generalEnd", element: "endEvent", name: "结束", attributes: {} }
+      ],
+      edges: [
+        { id: "L1", source: "N1", target: "N2" },
+        { id: "L2", source: "N2", target: "N3" }
+      ]
+    };
+
+    const content = buildWorkflowContent(workflow);
+    const send = content.elements.find((element) => element.id === "N2");
+
+    assert.equal(send.modifyProcessAuthority, "0");
+    assert.equal(send.systemNotifyType, "2");
+    assert.equal(send.language.nameUs, "CC node");
+  });
+
+  it("keeps the native LBPM draft envelope required by the designer", () => {
+    const template = {
+      fdId: "km-review-template-id",
+      fdName: "top-level form template",
+      mechanisms: {
+        lbpmTemplate: [{
+          fdId: "lbpm-template-id",
+          fdName: "workflow template",
+          fdEntityId: "km-review-template-id",
+          fdContentType: "json",
+          fdDisableBpmInit: false,
+          fdFormCategory: { fdFormCategoryId: "category-1" },
+          fdRunType: "1",
+          fdSystemCode: "INNER_SYSTEM",
+          fdTemplateForms: [{ fdFormKey: "km-review-template-id" }],
+          fdContent: "{\"elements\":[]}",
+          fdStatus: "published",
+          fdDefinitionId: "stale-definition-id",
+          latestDefinitionStatus: 9,
+          serverOnlyValue: "must-not-leak"
+        }]
+      }
+    };
+
+    const payload = buildWorkflowDraftPayload(template);
+
+    assert.deepEqual(Object.keys(payload).sort(), [
+      "fdContent",
+      "fdContentType",
+      "fdDisableBpmInit",
+      "fdEntityId",
+      "fdFormCategory",
+      "fdId",
+      "fdName",
+      "fdRunType",
+      "fdSystemCode",
+      "fdTemplateForms",
+      "isDraft"
+    ]);
+    assert.equal(payload.fdId, "lbpm-template-id");
+    assert.deepEqual(payload.fdFormCategory, { fdFormCategoryId: "category-1" });
+    assert.equal(payload.fdContentType, "json");
+    assert.equal(payload.fdDisableBpmInit, false);
+    assert.equal(payload.fdRunType, "1");
+    assert.equal(payload.fdSystemCode, "INNER_SYSTEM");
+    assert.equal(payload.isDraft, true);
+    assert.equal(template.mechanisms.lbpmTemplate[0].isDraft, undefined);
+  });
+
+  it("defaults the native LBPM envelope before workflow draft serialization", () => {
+    const projected = projectTemplate(sampleTrustedDsl(), baseTemplate());
+    const lbpm = projected.mechanisms.lbpmTemplate[0];
+
+    assert.equal(lbpm.fdContentType, "json");
+    assert.equal(lbpm.fdSystemCode, "INNER_SYSTEM");
+    assert.equal(lbpm.fdRunType, "1");
+    assert.equal(lbpm.fdDisableBpmInit, false);
+    assert.deepEqual(lbpm.fdFormCategory, { fdFormCategoryId: "category-id" });
+  });
+
+  it("backs designer submit settings with fdContent without overriding mechanism fields", () => {
+    const content = {
+      elements: [],
+      events: [{ id: "content-event" }],
+      operSubmitValidators: [{ id: "validator-1" }],
+      aiCheckConfig: [{ id: "ai-check-1" }],
+      signalCatchers: [{ id: "signal-1" }],
+      notifyDrafterOnEnd: "false",
+      notifyParticipantOnEnd: "true",
+      notifyDrafterOnException: "false",
+      notifyAdminOnException: "true",
+      notifyCurrentHandlerOnDraftRetract: "false",
+      adminFormAuth: "{\"view\":true}",
+      processEndIsCirculated: "true",
+      rejectDenyRetract: "false",
+      canCirculationIdentity: "draft",
+      fdHighLights: { N1: true },
+      groupChat: { isEnabled: true },
+      flowType: "0"
+    };
+    const payload = buildWorkflowDraftPayload({
+      mechanisms: {
+        lbpmTemplate: [{
+          fdId: "lbpm-template-id",
+          fdContent: JSON.stringify(content),
+          events: [{ id: "mechanism-event" }]
+        }]
+      }
+    });
+
+    assert.deepEqual(payload.events, [{ id: "mechanism-event" }]);
+    for (const key of [
+      "operSubmitValidators",
+      "aiCheckConfig",
+      "signalCatchers",
+      "notifyDrafterOnEnd",
+      "notifyParticipantOnEnd",
+      "notifyDrafterOnException",
+      "notifyAdminOnException",
+      "notifyCurrentHandlerOnDraftRetract",
+      "adminFormAuth",
+      "processEndIsCirculated",
+      "rejectDenyRetract",
+      "canCirculationIdentity",
+      "fdHighLights",
+      "groupChat"
+    ]) {
+      assert.deepEqual(payload[key], content[key], key);
+    }
+    assert.equal(payload.fdFlowType, "0");
+    assert.equal(payload.fdContent, JSON.stringify(content));
+  });
+
   it("writes form-field formula participants as dynamic handler formulas", () => {
     const form = sampleForm();
     form.fields.push({
@@ -141,7 +440,7 @@ describe("executeDsl", () => {
       sourceProps: { designerType: "address" },
       sourceRef: "source.form.control.fd_handler"
     });
-    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+    const payload = projectTemplate(sampleTrustedDsl({
       form,
       workflow: {
         process: { id: "process-form-field-handler" },
@@ -172,7 +471,7 @@ describe("executeDsl", () => {
         ],
         topologicalOrder: ["N1", "N2", "N3"]
       }
-    }));
+    }, baseTemplate(), baseTemplate()));
     const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
     const node = content.elements.find((element) => element.id === "N2");
 
@@ -193,6 +492,121 @@ describe("executeDsl", () => {
     assert.equal(node.handlers.ruleKey.vo.content, "$处理人字段$");
     assert.equal(node.handlers.ruleKey.mode, "simple");
     assert.equal(node.handlers.ruleKey.formulaName, "$处理人字段$");
+  });
+
+  it("maps explicit participant org types to the current native member shape", () => {
+    const workflow = sampleInitiatorSelectWorkflow();
+    const node = workflow.nodes.find((item) => item.id === "N9");
+    node.participants.members = [
+      { id: "person-1", name: "人员", sourceOrgType: "8", type: "3", element: "org" },
+      { id: "post-1", name: "岗位", fdOrgType: 4, type: "1", element: "post" },
+      { id: "other-1", name: "其他组织", sourceOrgType: "2", type: "1", element: "org" },
+      { id: "legacy-2", name: "兼容岗位", type: "2", element: "post" }
+    ];
+
+    const content = buildWorkflowContent(workflow);
+    const members = content.elements.find((element) => element.id === "N9").handlers.members;
+
+    assert.deepEqual(members.map((member) => ({ id: member.id, element: member.element, type: member.type })), [
+      { id: "person-1", element: "user", type: "1" },
+      { id: "post-1", element: "user", type: "2" },
+      { id: "other-1", element: "user", type: "3" },
+      { id: "legacy-2", element: "user", type: "2" }
+    ]);
+  });
+
+  it("writes and verifies the native alternative-handler candidate range", () => {
+    const workflow = sampleInitiatorSelectWorkflow();
+    const n16 = workflow.nodes.find((node) => node.id === "N16");
+    n16.participants.alternativeMembers = [
+      { id: "person-1", name: "人员", sourceOrgType: "8" },
+      { id: "post-1", name: "岗位", fdOrgType: 4 },
+      { id: "other-1", name: "其他组织", sourceOrgType: "2" }
+    ];
+    n16.participants.useAlternativeOnly = true;
+    const n7 = workflow.nodes.find((node) => node.id === "N7");
+    n7.participants.alternativeMembers = [{ id: "legacy-post", name: "兼容岗位", type: "2" }];
+    n7.participants.useAlternativeOnly = false;
+    const trusted = sampleTrustedDsl({ workflow });
+    const template = projectTemplate(trusted, baseTemplate());
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    const persistedN16 = content.elements.find((element) => element.id === "N16");
+    const persistedN7 = content.elements.find((element) => element.id === "N7");
+
+    assert.deepEqual(persistedN16.alternativeHandlers, {
+      id: "alternativeHandlers",
+      element: "users",
+      type: "org",
+      source: "1",
+      ruleKey: "",
+      ruleName: "",
+      members: [
+        { id: "person-1", name: "人员", element: "user", type: "1" },
+        { id: "post-1", name: "岗位", element: "user", type: "2" },
+        { id: "other-1", name: "其他组织", element: "user", type: "3" }
+      ]
+    });
+    assert.equal(persistedN16.isUseAlternativeHandlerOnly, "true");
+    assert.equal(persistedN7.isUseAlternativeHandlerOnly, "false");
+    assert.equal(verifyTemplate(trusted, template).ok, true);
+
+    persistedN16.alternativeHandlers.members.pop();
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+    const rejected = verifyTemplate(trusted, template);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"), true);
+  });
+
+  it("writes draft-selected participants and verifies them on readback", () => {
+    const trusted = sampleTrustedDsl({ workflow: sampleInitiatorSelectWorkflow() });
+    const content = buildWorkflowContent(trusted.workflow, {
+      templateId: "template-id",
+      form: trusted.form
+    });
+    const n16 = content.elements.find((element) => element.id === "N16");
+    const n7 = content.elements.find((element) => element.id === "N7");
+    const n9 = content.elements.find((element) => element.id === "N9");
+
+    const draft = content.elements.find((element) => element.id === "N2");
+    assert.equal(draft.mustModifyHandlerNodes, "N16,N7");
+    assert.equal(n16.handlers.source, "1");
+    assert.equal(n16.handlers.ruleKey, "");
+    assert.equal(n16.handlers.ruleName, "");
+    assert.deepEqual(n16.handlers.members, []);
+    assert.equal(n7.handlers.source, "1");
+    assert.equal(n9.handlers.source, "1");
+    assert.equal(n9.handlers.members.length > 0, true);
+
+    const template = projectTemplate(trusted, baseTemplate());
+    const verified = verifyTemplate(trusted, template);
+    assert.equal(verified.ok, true);
+    assert.deepEqual(verified.workflow.initiatorSelectNodeIds, ["N16", "N7"]);
+
+    const readbackContent = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    readbackContent.elements.find((element) => element.id === "N2").mustModifyHandlerNodes = "N7";
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(readbackContent);
+    const rejected = verifyTemplate(trusted, template);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"), true);
+  });
+
+  it("persists draft-selection linkage from any workflow node with comma delimiters", () => {
+    const workflow = sampleInitiatorSelectWorkflow();
+    workflow.nodes.find((node) => node.id === "N1").attributes.mustModifyHandlerNodeIds = "N16; N7，N16";
+    delete workflow.nodes.find((node) => node.id === "N2").attributes.mustModifyHandlerNodeIds;
+    const trusted = sampleTrustedDsl({ workflow });
+    const template = projectTemplate(trusted, baseTemplate());
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+
+    assert.equal(content.elements.find((element) => element.id === "N1").mustModifyHandlerNodes, "N16,N7");
+    assert.equal(content.elements.find((element) => element.id === "N2").mustModifyHandlerNodes, undefined);
+    assert.equal(verifyTemplate(trusted, template).ok, true);
+
+    content.elements.find((element) => element.id === "N1").mustModifyHandlerNodes = "N7";
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+    const rejected = verifyTemplate(trusted, template);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"), true);
   });
 
   localCorpusIt("writes role-line formula participants as dynamic handler formulas", () => {
@@ -257,7 +671,7 @@ describe("executeDsl", () => {
   it("writes legacy right sections into NewOA template form auths", () => {
     const expectedFields = ["fd_private_note"];
     const trusted = trustedDslFromFixture("tests/fixtures/source/module-rights-evidence");
-    const payload = applyWorkflowPayload(baseTemplate(), trusted);
+    const payload = projectTemplate(trusted, baseTemplate());
     const lbpm = payload.mechanisms.lbpmTemplate[0];
     const auth = lbpm.fdTemplateFormAuths.N2;
     const content = JSON.parse(lbpm.fdContent);
@@ -273,10 +687,10 @@ describe("executeDsl", () => {
   });
 
   it("writes conditional branch routes through the MK formula designer config", () => {
-    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+    const payload = projectTemplate(sampleTrustedDsl({
       form: sampleConditionBranchForm(),
       workflow: sampleConditionBranchWorkflow()
-    }));
+    }), baseTemplate());
     const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
     const branch = content.elements.find((element) => element.id === "N410");
     const conditionValue = JSON.parse(branch.conditionValue);
@@ -372,6 +786,40 @@ describe("executeDsl", () => {
     assert.equal(defaultSequence.style, "sequenceFlow;marker");
   });
 
+  it("does not invent a default branch from an other label or final route position", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    const finalRoute = workflow.edges.find((edge) => edge.id === "L544");
+    finalRoute.name = "其他";
+    delete finalRoute.attributes.isDefault;
+
+    const content = buildWorkflowContent(workflow, {
+      templateId: "template-id",
+      form: sampleConditionBranchForm()
+    });
+    const branch = content.elements.find((element) => element.id === "N410");
+    const routes = JSON.parse(branch.conditionValue).formulas;
+    const sequences = content.elements.filter((element) => element.type === "sequenceFlow" && element.sourceRef === "N410");
+
+    assert.equal(branch.default, undefined);
+    assert.equal(branch.conditionId, undefined);
+    assert.equal(routes.every((route) => route.defaultTrend === false), true);
+    assert.equal(sequences.every((edge) => edge.defaultTrend === false && edge.style === "sequenceFlow"), true);
+  });
+
+  localCorpusIt("marks only the four true default routes in source 167 and keeps N384 on L1028", () => {
+    const trusted = trustedDslFromFixture("tests/fixtures/source/1670297c984b45009eb5b1e444d9957d");
+    const content = buildWorkflowContent(trusted.workflow, {
+      templateId: "template-id",
+      form: trusted.form
+    });
+    const defaultSequences = content.elements.filter((element) => element.type === "sequenceFlow" && element.defaultTrend === true);
+    const n384 = content.elements.find((element) => element.id === "N384");
+
+    assert.equal(defaultSequences.length, 4);
+    assert.equal(n384.default, "L1028");
+    assert.equal(n384.conditionId, "L1028");
+  });
+
   it("writes field-left equals conditional branch routes through formula config", () => {
     const workflow = sampleConditionBranchWorkflow();
     workflow.edges[1] = {
@@ -383,10 +831,10 @@ describe("executeDsl", () => {
         translationStatus: "display_only"
       }
     };
-    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+    const payload = projectTemplate(sampleTrustedDsl({
       form: sampleConditionBranchForm(),
       workflow
-    }));
+    }, baseTemplate()));
     const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
     const branch = content.elements.find((element) => element.id === "N410");
     const conditionValue = JSON.parse(branch.conditionValue);
@@ -415,10 +863,10 @@ describe("executeDsl", () => {
         translationStatus: "display_only"
       }
     };
-    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+    const payload = projectTemplate(sampleTrustedDsl({
       form: sampleConditionBranchForm(),
       workflow
-    }));
+    }, baseTemplate()));
     const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
     const branch = content.elements.find((element) => element.id === "N410");
     const conditionValue = JSON.parse(branch.conditionValue);
@@ -480,7 +928,7 @@ describe("executeDsl", () => {
 
     const notEquals = routeForCondition("$fd_seller$ != \"1689\"");
     assert.equal(notEquals.vars[0].type, "Eval");
-    assert.equal(notEquals.vars[0].value, "${data.template-id-fd_seller} u0021= \"1689\"");
+    assert.equal(notEquals.vars[0].value, "${data.template-id-fd_seller} != \"1689\"");
     assert.equal(notEquals.vo.data.fdList[0].fdList[0].fdSymbol, "!=");
 
     const contains = routeForCondition("$字符串.包含$($fd_seller$, \"欧洲\")");
@@ -493,7 +941,7 @@ describe("executeDsl", () => {
     const notContains = routeForCondition("!$字符串.包含$($fd_seller$, \"欧洲\")");
     assert.equal(notContains.vars[0].type, "Function");
     assert.equal(notContains.vars[0].value, "global.contains");
-    assert.equal(notContains.result.value, "(u0021${data.$VAR.L541_fd_seller})");
+    assert.equal(notContains.result.value, "(!${data.$VAR.L541_fd_seller})");
     assert.equal(notContains.vo.data.fdList[0].fdList[0].fdSymbol, "notcontain");
     assert.equal(notContains.vo.data.fdList[0].fdList[0].fdFunctionId, "global.contains");
 
@@ -507,7 +955,7 @@ describe("executeDsl", () => {
     const notEmpty = routeForCondition("!$字符串.为空$($fd_seller$)");
     assert.equal(notEmpty.vars[0].type, "Function");
     assert.equal(notEmpty.vars[0].value, "global.isEmpty");
-    assert.equal(notEmpty.result.value, "(u0021${data.$VAR.L541_fd_seller})");
+    assert.equal(notEmpty.result.value, "(!${data.$VAR.L541_fd_seller})");
     assert.equal(notEmpty.vo.data.fdList[0].fdList[0].fdSymbol, "notempty");
     assert.equal(notEmpty.vo.data.fdList[0].fdList[0].fdFunctionId, "global.isEmpty");
   });
@@ -541,7 +989,7 @@ describe("executeDsl", () => {
     assert.equal(planRoute.formula.vars[0].type, "Function");
     assert.equal(planRoute.formula.vars[0].value, "global.contains");
     assert.deepEqual(otherRoute.conditionSimpleData, otherRoute.formula);
-    assert.equal(otherRoute.formula.result.value, "(u0021${data.$VAR.L570_fd_36b983442aa544})");
+    assert.equal(otherRoute.formula.result.value, "(!${data.$VAR.L570_fd_36b983442aa544})");
     assert.equal(otherRule.fdSymbol, "notcontain");
     assert.equal(otherRule.fdFunctionId, "global.contains");
     assert.equal(otherRule.fdValue, "计划项目");
@@ -567,7 +1015,7 @@ describe("executeDsl", () => {
     const rootGroup = routeFormula.vo.data.fdList[0];
 
     assert.equal(route.lineName, "其他");
-    assert.equal(route.defaultTrend, true);
+    assert.equal(route.defaultTrend, false);
     assert.equal(route.formulaName, "");
     assert.deepEqual(route.conditionSimpleData, route.formula);
     assert.deepEqual(route.formulaConfig, route.formula);
@@ -693,22 +1141,28 @@ describe("executeDsl", () => {
     assert.deepEqual(rawRoutes, []);
   });
 
-  localCorpusIt("marks every fixture route named other as fallback", () => {
-    const { content } = buildRouteValidationWorkflowContent();
+  localCorpusIt("marks only explicit or tautological fixture routes as defaults", () => {
+    const { content, trusted } = buildRouteValidationWorkflowContent();
+    const edgeById = new Map(trusted.workflow.edges.map((edge) => [edge.id, edge]));
     const sequenceById = new Map(content.elements.filter((element) => element.type === "sequenceFlow").map((edge) => [edge.id, edge]));
-    const nonFallbackOtherRoutes = [];
+    const invalidDefaultRoutes = [];
 
     for (const branch of content.elements.filter((element) => element.type === "conditionBranch")) {
       const conditionValue = JSON.parse(branch.conditionValue || "{}");
       for (const route of conditionValue.formulas || []) {
-        if (String(route.lineName || "").trim() !== "其他") continue;
+        if (route.defaultTrend !== true) continue;
+        const edge = edgeById.get(route.lineId);
         const sequence = sequenceById.get(route.lineId);
-        if (route.defaultTrend !== true || sequence?.defaultTrend !== true || sequence?.style !== "sequenceFlow;marker") {
-          nonFallbackOtherRoutes.push({
+        const isExplicit = edge?.isDefault === true || edge?.attributes?.isDefault === true ||
+          edge?.isDefault === "true" || edge?.attributes?.isDefault === "true";
+        const isTautology = isTautologyConditionForTest(edgeConditionTextForTest(edge));
+        if ((!isExplicit && !isTautology) || sequence?.defaultTrend !== true || sequence?.style !== "sequenceFlow;marker") {
+          invalidDefaultRoutes.push({
             branchId: branch.id,
             lineId: route.lineId,
             lineName: route.lineName,
-            routeDefaultTrend: route.defaultTrend,
+            isExplicit,
+            isTautology,
             sequenceDefaultTrend: sequence?.defaultTrend,
             style: sequence?.style
           });
@@ -716,11 +1170,12 @@ describe("executeDsl", () => {
       }
     }
 
-    assert.deepEqual(nonFallbackOtherRoutes, []);
+    assert.deepEqual(invalidDefaultRoutes, []);
   });
 
   it("writes tautological other routes as not-empty alternate routes for the branch field", () => {
     const workflow = sampleConditionBranchWorkflow();
+    delete workflow.edges.find((edge) => edge.id === "L544").attributes.isDefault;
     workflow.edges.splice(1, 0, {
       id: "L542",
       source: "N410",
@@ -735,10 +1190,10 @@ describe("executeDsl", () => {
       },
       attributes: { priority: "21" }
     });
-    const payload = applyWorkflowPayload(baseTemplate(), sampleTrustedDsl({
+    const payload = projectTemplate(sampleTrustedDsl({
       form: sampleConditionBranchForm(),
       workflow
-    }));
+    }, baseTemplate()));
     const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
     const branch = content.elements.find((element) => element.id === "N410");
     const conditionValue = JSON.parse(branch.conditionValue);
@@ -754,7 +1209,7 @@ describe("executeDsl", () => {
     assert.deepEqual(route.conditionSimpleData, route.formula);
     assert.deepEqual(route.formulaConfig, route.formula);
     assert.equal(routeFormula.type, "Batch");
-    assert.equal(routeFormula.result.value, "(u0021${data.$VAR.L542_fd_seller_notempty})");
+    assert.equal(routeFormula.result.value, "(!${data.$VAR.L542_fd_seller_notempty})");
     assert.equal(routeFormula.vars[0].type, "Function");
     assert.equal(routeFormula.vars[0].value, "global.isEmpty");
     assert.equal(routeFormula.vars[0].arguments[0].value, "template-id-fd_seller");
@@ -799,11 +1254,11 @@ describe("executeDsl", () => {
 
   it("fails readback when persisted workflow edges lose connected endpoints", async () => {
     const client = new FakeNewoaClient({
-      corruptReadback(template) {
+      corruptWorkflowReadback(template) {
         const next = JSON.parse(JSON.stringify(template));
-        const content = JSON.parse(next.mechanisms.lbpmTemplate[0].fdContent);
+        const content = JSON.parse(next.fdContent);
         content.elements.find((element) => element.id === "L1").targetRef = "missing-node";
-        next.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+        next.fdContent = JSON.stringify(content);
         return next;
       }
     });
@@ -817,7 +1272,6 @@ describe("executeDsl", () => {
 
     assert.equal(result.ok, false);
     assert.equal(result.status, "readback_failed");
-    assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "readback.workflow.invalidEdgeCount_mismatch"), true);
     assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "readback.workflow.edge_endpoint_mismatch"), true);
   });
 
@@ -955,7 +1409,7 @@ describe("executeDsl", () => {
       },
       workflow: undefined
     });
-    const payload = applyFormPayload(baseTemplate(), dsl);
+    const payload = projectTemplate(dsl, baseTemplate());
     const fields = JSON.parse(payload.mechanisms["sys-xform"].fdConfig)
       .dataModel.find((model) => model.fdType === "main").fdFields;
     const withProps = fieldControlProps(fields, "fd_with_props");
@@ -996,11 +1450,11 @@ describe("executeDsl", () => {
         }
       }
     });
-    const payload = applyFormPayload(baseTemplate(), dsl);
+    const payload = projectTemplate(dsl, baseTemplate());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
     const subject = config.dataModel.find((model) => model.fdType === "main").fdFields.find((field) => field.fdName === "fd_subject");
     const attribute = JSON.parse(subject.fdAttribute);
-    const summary = summarizeFormFromTemplate(payload);
+    const summary = summarizeProjectedForm(payload);
 
     assert.equal(subject.fdType, "subject");
     assert.equal(attribute.config.type, "@elem/xform-subject");
@@ -1047,8 +1501,8 @@ describe("executeDsl", () => {
         }
       }
     });
-    const payload = applyWorkflowPayload(applyFormPayload(baseTemplate(), dsl), dsl);
-    const readback = verifyReadback(dsl, payload);
+    const payload = projectTemplate(dsl, baseTemplate());
+    const readback = verifyTemplate(dsl, payload);
 
     assert.equal(readback.form.fields.find((field) => field.id === "fd_multi_select").component, "xform-select~multi");
     assert.equal(
@@ -1061,7 +1515,7 @@ describe("executeDsl", () => {
   localCorpusIt("writes fixture fields with registered MK control types and no textarea heights", () => {
     const trusted = trustedDslFromFixture("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslFields = trusted.form.fields.flatMap((field) => field.type === "detailTable" ? field.columns || [] : [field]);
-    const payload = applyFormPayload(baseTemplate(), trusted);
+    const payload = projectTemplate(trusted, baseTemplate());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
     const fields = config.dataModel
       .flatMap((model) => model.fdFields || [])
@@ -1124,7 +1578,18 @@ describe("executeDsl", () => {
         }
       }
     });
-    const payload = applyFormPayload(baseTemplate(), dsl);
+    const creatorBase = {
+      ...baseTemplate(),
+      fdName: "MK_TEST_测试模板",
+      mechanisms: {
+        ...baseTemplate().mechanisms,
+        "sys-xform": {
+          ...baseTemplate().mechanisms["sys-xform"],
+          fdName: "MK_TEST_测试模板"
+        }
+      }
+    };
+    const payload = projectTemplate(dsl, creatorBase);
     const fields = JSON.parse(payload.mechanisms["sys-xform"].fdConfig)
       .dataModel.find((model) => model.fdType === "main").fdFields;
     const creatorText = fieldControlProps(fields, "fd_creator_text");
@@ -1135,19 +1600,19 @@ describe("executeDsl", () => {
     assert.equal(creatorText.defaultValueType, "formula");
     assert.equal(creatorText.defaultValueFormulaVO.script, "${data.biz.fdCreator.fdName}");
     assert.deepEqual(creatorText.defaultValueFormulaVO.varIds, ["fdCreator.fdName"]);
-    assert.equal(creatorText.defaultValueFormulaVO.vo.content, "$测试模板.创建人.名称$");
+    assert.equal(creatorText.defaultValueFormulaVO.vo.content, "$MK_TEST_测试模板.创建人.名称$");
     assert.equal(creatorDeptText.defaultValueFormulaVO.script, "${data.biz.fdCreatorDept.fdName}");
     assert.deepEqual(creatorDeptText.defaultValueFormulaVO.varIds, ["fdCreatorDept.fdName"]);
-    assert.equal(creatorDeptText.defaultValueFormulaVO.vo.content, "$测试模板.创建者部门.名称$");
+    assert.equal(creatorDeptText.defaultValueFormulaVO.vo.content, "$MK_TEST_测试模板.创建者部门.名称$");
 
     assert.deepEqual(creatorAddress.org.orgTypeArr, ["8"]);
     assert.equal(creatorAddress.org.defaultValueType, "formula");
     assert.equal(creatorAddress.defaultValueFormulaVO.script, "${data.biz.fdCreator}");
     assert.deepEqual(creatorAddress.defaultValueFormulaVO.varIds, ["fdCreator"]);
-    assert.equal(creatorAddress.defaultValueFormulaVO.vo.content, "$测试模板.创建人$");
+    assert.equal(creatorAddress.defaultValueFormulaVO.vo.content, "$MK_TEST_测试模板.创建人$");
     assert.deepEqual(creatorDeptAddress.org.orgTypeArr, ["2"]);
     assert.equal(creatorDeptAddress.defaultValueFormulaVO.script, "${data.biz.fdCreatorDept}");
-    assert.equal(creatorDeptAddress.defaultValueFormulaVO.vo.content, "$测试模板.创建者部门$");
+    assert.equal(creatorDeptAddress.defaultValueFormulaVO.vo.content, "$MK_TEST_测试模板.创建者部门$");
 
     assert.equal(fieldFontExtendData(fields, "fd_creator_text").defaultValueFormulaVO.script, "${data.biz.fdCreator.fdName}");
     assert.deepEqual(fieldFontExtendData(fields, "fd_creator_address").orgTypeArr, ["8"]);
@@ -1176,7 +1641,7 @@ describe("executeDsl", () => {
         }]
       }
     });
-    const payload = applyFormPayload(baseTemplate(), dsl);
+    const payload = projectTemplate(dsl, baseTemplate());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
     const formAttr = JSON.parse(config.attribute.formAttr);
 
@@ -1184,7 +1649,7 @@ describe("executeDsl", () => {
     assert.equal(formAttr.controlAction.global.onLoad[0].function.includes("MKXFORM.getValue('fd_subject')"), true);
     assert.equal(formAttr.controlAction.javascript, undefined);
     assert.equal(config.migrationDsl.scripts.actionCount, 1);
-    assert.deepEqual(summarizeFormFromTemplate(payload).scripts.events, ["onLoad"]);
+    assert.deepEqual(summarizeProjectedForm(payload).scripts.events, ["onLoad"]);
   });
 
   it("writes translated control onChange scripts into field control actions", () => {
@@ -1209,7 +1674,7 @@ describe("executeDsl", () => {
         }]
       }
     });
-    const payload = applyFormPayload(baseTemplate(), dsl);
+    const payload = projectTemplate(dsl, baseTemplate());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
     const formAttr = JSON.parse(config.attribute.formAttr);
     const mainModel = config.dataModel.find((model) => model.fdType === "main");
@@ -1217,11 +1682,55 @@ describe("executeDsl", () => {
 
     assert.equal(formAttr.controlAction.control[controlKey].onChange.length, 1);
     assert.equal(formAttr.controlAction.control[controlKey].onChange[0].function.includes("MKXFORM.setValue('fd_subject'"), true);
-    assert.deepEqual(summarizeFormFromTemplate(payload).scripts.controlEvents, [{
+    assert.deepEqual(summarizeProjectedForm(payload).scripts.controlEvents, [{
       controlKey,
       event: "onChange",
       count: 1
     }]);
+  });
+
+  it("persists onChange actions with deterministic unique names without changing control bindings", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: null,
+      scripts: {
+        actions: [
+          mappedControlChangeAction("amount-change-1", "fd_amount", "first", { viewStatusIn: ["add", "edit"] }),
+          mappedControlChangeAction("amount-change-2", "fd_amount", "second"),
+          mappedControlChangeAction("subject-change-1", "fd_subject", "third")
+        ]
+      }
+    });
+    const payload = projectTemplate(dsl, baseTemplate());
+    const repeatedPayload = projectTemplate(dsl, baseTemplate());
+    const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
+    const repeatedConfig = JSON.parse(repeatedPayload.mechanisms["sys-xform"].fdConfig);
+    const formAttr = JSON.parse(config.attribute.formAttr);
+    const repeatedFormAttr = JSON.parse(repeatedConfig.attribute.formAttr);
+    const mainModel = config.dataModel.find((model) => model.fdType === "main");
+    const amountKey = `${mainModel.fdTableName}.fd_amount`;
+    const subjectKey = `${mainModel.fdTableName}.fd_subject`;
+    const amountActions = formAttr.controlAction.control[amountKey].onChange;
+    const subjectActions = formAttr.controlAction.control[subjectKey].onChange;
+
+    assert.deepEqual(amountActions.map((action) => [action.id, action.name]), [
+      ["amount-change-1", "onChange_1"],
+      ["amount-change-2", "onChange_2"]
+    ]);
+    assert.deepEqual(subjectActions.map((action) => [action.id, action.name]), [
+      ["subject-change-1", "onChange_3"]
+    ]);
+    assert.equal(amountActions[0].function.startsWith("function onChange_1(value)"), true);
+    assert.equal(amountActions[1].function.startsWith("function onChange_2(value)"), true);
+    assert.equal(subjectActions[0].function.startsWith("function onChange_3(value)"), true);
+    assert.deepEqual(amountActions[0].migrationRunWhen, { viewStatusIn: ["add", "edit"] });
+    assert.equal(amountActions[0].function.includes("/* mk-migrate:view-status=add,edit */"), true);
+    assert.deepEqual(
+      Object.values(repeatedFormAttr.controlAction.control)
+        .flatMap((events) => events.onChange || [])
+        .map((action) => action.name),
+      ["onChange_1", "onChange_2", "onChange_3"]
+    );
+    assert.equal(verifyTemplate(dsl, payload).ok, true);
   });
 
   it("writes translated detail control onChange scripts with MK detail table names", () => {
@@ -1247,7 +1756,7 @@ describe("executeDsl", () => {
         }]
       }
     });
-    const payload = applyFormPayload(baseTemplate(), dsl);
+    const payload = projectTemplate(dsl, baseTemplate());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
     const formAttr = JSON.parse(config.attribute.formAttr);
     const detailModel = config.dataModel.find((model) => model.fdType === "detail" && model.dynamicProps?.detailFieldName === "fd_detail");
@@ -1257,7 +1766,7 @@ describe("executeDsl", () => {
     assert.equal(detailModel.fdTableName, "mk_model_fd_detail");
     assert.equal(action.function.includes("MKXFORM.updateControlStyle(\"mk_model_fd_detail.fd_name\", rowNum"), true);
     assert.equal(action.function.includes("${table:"), false);
-    assert.deepEqual(summarizeFormFromTemplate(payload).scripts.controlEvents, [{
+    assert.deepEqual(summarizeProjectedForm(payload).scripts.controlEvents, [{
       controlKey,
       event: "onChange",
       count: 1
@@ -1286,7 +1795,7 @@ describe("executeDsl", () => {
         }]
       }
     });
-    const payload = applyFormPayload(baseTemplate(), dsl);
+    const payload = projectTemplate(dsl, baseTemplate());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
     const formAttr = JSON.parse(config.attribute.formAttr);
     const action = formAttr.controlAction.global.onLoad[0];
@@ -1322,7 +1831,7 @@ describe("executeDsl", () => {
   });
 
   it("preserves manual form rules while replacing generated native rules", () => {
-    const payload = applyFormPayload(baseTemplateWithExistingFormRules(), sampleTrustedDslWithFormRules());
+    const payload = projectTemplate(sampleTrustedDslWithFormRules(), baseTemplateWithExistingFormRules());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
     const formRule = JSON.parse(config.attribute.formAttr).formRule;
 
@@ -1374,6 +1883,26 @@ function isTautologyConditionForTest(condition) {
   return /^(?:1\s*={2,3}\s*1|true)$/i.test(String(condition || "").trim());
 }
 
+function mappedControlChangeAction(id, controlId, value, runWhen) {
+  return {
+    id,
+    name: "onChange",
+    event: "onChange",
+    scope: "control",
+    controlId,
+    function: `function onChange(value) {\n  MKXFORM.setValue('fd_subject', '${value}')\n}`,
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: "AttachXFormValueChangeEventById",
+      target: "control onChange",
+      basis: "semantic-translation",
+      reviewRequired: false
+    }],
+    ...(runWhen ? { runWhen } : {})
+  };
+}
+
 function sampleParallelGatewayWorkflow() {
   return {
     process: { id: "process-parallel" },
@@ -1391,6 +1920,70 @@ function sampleParallelGatewayWorkflow() {
       { id: "L4", source: "N4", target: "N5", sourceRef: "source.workflow.edge.L4", condition: { translationStatus: "executable" } }
     ],
     topologicalOrder: ["N1", "N2", "N3", "N4", "N5"]
+  };
+}
+
+function sampleInitiatorSelectWorkflow() {
+  return {
+    process: { id: "process-initiator-select" },
+    nodes: [
+      { id: "N1", type: "generalStart", element: "startEvent", name: "开始", sourceType: "startNode", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+      {
+        id: "N2",
+        type: "draft",
+        element: "manualTask",
+        name: "起草",
+        sourceType: "draftNode",
+        sourceRef: "source.workflow.node.N2",
+        attributes: { mustModifyHandlerNodeIds: "N16;N7" },
+        translationStatus: "executable"
+      },
+      {
+        id: "N16",
+        type: "review",
+        element: "manualTask",
+        name: "发起人选择一",
+        sourceType: "reviewNode",
+        sourceRef: "source.workflow.node.N16",
+        attributes: {},
+        participants: { mode: "initiator_select", sourceSemantics: "draft node selects N16" },
+        translationStatus: "executable"
+      },
+      {
+        id: "N7",
+        type: "review",
+        element: "manualTask",
+        name: "发起人选择二",
+        sourceType: "reviewNode",
+        sourceRef: "source.workflow.node.N7",
+        attributes: {},
+        participants: { mode: "initiator_select", sourceSemantics: "draft node selects N7" },
+        translationStatus: "executable"
+      },
+      {
+        id: "N9",
+        type: "review",
+        element: "manualTask",
+        name: "固定审批人",
+        sourceType: "reviewNode",
+        sourceRef: "source.workflow.node.N9",
+        attributes: { handlerIds: "route-reviewer", handlerNames: "Route Reviewer" },
+        participants: {
+          mode: "explicit",
+          members: [{ id: "route-reviewer", name: "Route Reviewer", type: "user_or_org" }]
+        },
+        translationStatus: "executable"
+      },
+      { id: "N4", type: "generalEnd", element: "endEvent", name: "结束", sourceType: "endNode", sourceRef: "source.workflow.node.N4", attributes: {}, translationStatus: "executable" }
+    ],
+    edges: [
+      { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+      { id: "L2", source: "N2", target: "N16", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } },
+      { id: "L3", source: "N16", target: "N7", sourceRef: "source.workflow.edge.L3", condition: { translationStatus: "executable" } },
+      { id: "L4", source: "N7", target: "N9", sourceRef: "source.workflow.edge.L4", condition: { translationStatus: "executable" } },
+      { id: "L5", source: "N9", target: "N4", sourceRef: "source.workflow.edge.L5", condition: { translationStatus: "executable" } }
+    ],
+    topologicalOrder: ["N1", "N2", "N16", "N7", "N9", "N4"]
   };
 }
 
@@ -1452,7 +2045,7 @@ function sampleConditionBranchWorkflow() {
         },
         attributes: { priority: "3" }
       },
-      { id: "L544", source: "N410", target: "N412", name: "默认", sourceRef: "source.workflow.edge.L544", condition: { translationStatus: "executable" }, attributes: { priority: "24" } },
+      { id: "L544", source: "N410", target: "N412", name: "默认", sourceRef: "source.workflow.edge.L544", condition: { translationStatus: "executable" }, attributes: { priority: "24", isDefault: true } },
       { id: "L545", source: "N411", target: "N999", sourceRef: "source.workflow.edge.L545", condition: { translationStatus: "executable" } },
       { id: "L547", source: "N413", target: "N999", sourceRef: "source.workflow.edge.L547", condition: { translationStatus: "executable" } },
       { id: "L548", source: "N412", target: "N999", sourceRef: "source.workflow.edge.L548", condition: { translationStatus: "executable" } }
@@ -1559,7 +2152,10 @@ class FakeNewoaClient {
   constructor(options = {}) {
     this.calls = [];
     this.savedTemplate = undefined;
+    this.savedWorkflowDraft = undefined;
     this.corruptReadback = options.corruptReadback;
+    this.corruptWorkflowReadback = options.corruptWorkflowReadback;
+    this.workflowDraftResult = options.workflowDraftResult ?? { fdId: "lbpm-template-id" };
     this.expectedCredentials = options.expectedCredentials;
     this.loginError = options.loginError;
   }
@@ -1615,7 +2211,18 @@ class FakeNewoaClient {
       fdName: "created",
       mechanisms: {
         "sys-xform": { fdId, fdName: "created", fdConfig: "{}" },
-        lbpmTemplate: [{ fdContent: "{}" }]
+        lbpmTemplate: [{
+          fdId: "lbpm-template-id",
+          fdName: "created",
+          fdTemplateCode: "template_created",
+          fdEntityId: fdId,
+          fdEntityKey: "KmReviewMain",
+          fdEntityName: "com.landray.km.review.core.entity.KmReviewTemplate",
+          fdMainEntityName: "com.landray.km.review.core.entity.KmReviewMain",
+          fdModuleCode: "km-review",
+          fdTemplateForms: [],
+          fdContent: "{}"
+        }]
       }
     };
   }
@@ -1624,5 +2231,27 @@ class FakeNewoaClient {
     this.calls.push({ name: "updateTemplate", payload });
     this.savedTemplate = payload;
     return { fdId: payload.fdId };
+  }
+
+  async saveWorkflowDraft(payload) {
+    this.calls.push({ name: "saveWorkflowDraft", payload });
+    this.savedWorkflowDraft = payload;
+    return structuredClone(this.workflowDraftResult);
+  }
+
+  async getWorkflowTemplateDetail(payload) {
+    this.calls.push({ name: "getWorkflowTemplateDetail", payload });
+    const persistedDraftId = this.workflowDraftResult.fdDefinitionId ||
+      this.workflowDraftResult.definitionId ||
+      this.workflowDraftResult.fdId;
+    const detail = {
+      ...this.savedWorkflowDraft,
+      isDraft: true,
+      fdStatus: "draft"
+    };
+    if (persistedDraftId !== this.savedWorkflowDraft.fdId) {
+      detail.fdDefinitionId = persistedDraftId;
+    }
+    return this.corruptWorkflowReadback ? this.corruptWorkflowReadback(detail) : detail;
   }
 }

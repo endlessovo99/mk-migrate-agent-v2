@@ -136,7 +136,7 @@ export function resolveEffectTarget(index, ref) {
   }
 
   const normalized = normalizeRef(ref);
-  const marker = normalized ? index.markerRefs.get(normalized) : undefined;
+  const marker = findMarkerRef(index, normalized);
   if (!marker) return undefined;
 
   const targets = [];
@@ -170,6 +170,26 @@ export function resolveEffectTarget(index, ref) {
 
 export function normalizeRef(ref) {
   return typeof ref === "string" && ref.trim() ? ref.trim() : undefined;
+}
+
+function findMarkerRef(index, ref) {
+  for (const candidate of markerRefCandidates(ref)) {
+    const marker = index.markerRefs.get(candidate);
+    if (marker) return marker;
+  }
+  return undefined;
+}
+
+function markerRefCandidates(ref) {
+  const normalized = normalizeRef(ref);
+  if (!normalized) return [];
+  const candidates = [normalized];
+  if (normalized.startsWith("fd_")) {
+    candidates.push(normalized.slice(3));
+  } else {
+    candidates.push(`fd_${normalized}`);
+  }
+  return candidates;
 }
 
 function expandDslTarget(target) {

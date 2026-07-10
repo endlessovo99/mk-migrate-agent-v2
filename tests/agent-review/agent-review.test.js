@@ -21,6 +21,7 @@ describe("agent-review", () => {
 
     const result = await runAgentReview(sourceDraft, dslDraft, {
       provider,
+      reviewerName: "codex-test-reviewer",
       reviewedAt: "2026-07-06T00:00:00.000Z"
     });
     const trust = checkTrust(sourceDraft, result.dsl);
@@ -29,6 +30,7 @@ describe("agent-review", () => {
     assert.equal(result.dsl.artifact, "migration-dsl");
     assert.equal(result.dsl.trust.level, "trusted");
     assert.equal(result.dsl.trust.executable, true);
+    assert.equal(result.dsl.trust.reviewer.name, "codex-test-reviewer");
     assert.equal(result.dsl.form.fields[2].title, "IT设备明细");
     assert.equal(result.dsl.review.decisions.length, 1);
     assert.equal(result.dsl.review.decisions[0].targetRefs[0], "/form/fields/2/title");
@@ -724,7 +726,60 @@ describe("agent-review", () => {
     assert.equal(result.ok, false);
     assert.equal(fetchCalled, false);
     assert.equal(result.report.stage, "agent-review.env");
-    assert.equal(result.report.diagnostics.some((item) => item.code === "agent.provider.env_missing"), true);
+    const diagnostic = result.report.diagnostics.find((item) => item.code === "agent.provider.env_missing");
+    assert.ok(diagnostic);
+    assert.deepEqual(diagnostic.details.missing, ["OPENAI_BASE_URL", "OPENAI_API_KEY"]);
+  });
+
+  it("uses gpt-5.6-luna for initial and repair Responses requests regardless of OPENAI_MODEL", async () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/route-validation-lbpm");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const requests = [];
+    const provider = new OpenAIResponsesReviewProvider({
+      env: {
+        OPENAI_BASE_URL: "https://example.test/",
+        OPENAI_API_KEY: "sk-test-secret",
+        OPENAI_MODEL: "conflicting-env-model"
+      },
+      fetchImpl: async (url, options) => {
+        requests.push({ url, body: JSON.parse(options.body) });
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            output_text: reviewResponse({ patches: [] })
+          })
+        };
+      }
+    });
+
+    const initial = await provider.review({ sourceDraft, dslDraft });
+    const repaired = await provider.repairReviewResponse({
+      sourceDraft,
+      dslDraft,
+      rawText: "{not json",
+      diagnostics: [{
+        level: "error",
+        code: "agent.response.invalid_json",
+        path: "/response",
+        message: "Agent review response must be valid JSON."
+      }],
+      rejectedPatches: [],
+      attempt: 1
+    });
+
+    assert.equal(initial.ok, true);
+    assert.equal(repaired.ok, true);
+    assert.deepEqual(requests.map((request) => request.url), [
+      "https://example.test/v1/responses",
+      "https://example.test/v1/responses"
+    ]);
+    assert.deepEqual(requests.map((request) => request.body.model), [
+      "gpt-5.6-luna",
+      "gpt-5.6-luna"
+    ]);
+    assert.equal(initial.model, "gpt-5.6-luna");
+    assert.equal(repaired.model, "gpt-5.6-luna");
   });
 
   it("does not leak OPENAI_API_KEY into reports when provider errors include it", async () => {
@@ -791,7 +846,13 @@ describe("agent-review", () => {
     assert.equal(prompt.context.scriptTranslationPolicy.nonWhitelistedFunctions.defaultHandling, "attempt_semantic_translation");
     assert.equal(prompt.context.scriptTranslationPolicy.nonWhitelistedFunctions.blockingByDefault, false);
     assert.equal(prompt.system.includes("formRules.linkage"), true);
-    assert.equal(prompt.context.dslDraft.formRules.linkageCount > 0, true);
+    assert.equal(prompt.context.dslDraft.formRules.linkageCount, 0);
+    assert.equal(
+      prompt.context.dslDraft.scripts.actions.some((action) =>
+        action.runWhen?.viewStatusIn?.join(",") === "add,edit"
+      ),
+      true
+    );
     assert.equal(prompt.system.includes("Pattern matching is evidence extraction only"), true);
     assert.equal(prompt.context.jspTranslationPlaybook.id, "jsp-translation-playbook");
     assert.equal(prompt.context.jspTranslationPlaybook.fewShotExamples.some((example) => example.id === "row-load-guarded-by-value"), true);

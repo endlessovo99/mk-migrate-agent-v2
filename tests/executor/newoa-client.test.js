@@ -18,7 +18,17 @@ describe("NewoaClient", () => {
       jsonResponse({ success: true, data: { fdFormCategoryId: "category-1", fdName: "测试分类" } }),
       jsonResponse({ success: true, data: { id: "created-1", fdName: "MK_TEST_示例" } }),
       jsonResponse({ success: true, data: { fdId: "created-1", fdName: "MK_TEST_示例" } }),
-      jsonResponse({ success: true, data: { fdId: "created-1" } })
+      jsonResponse({ success: true, data: { fdId: "created-1" } }),
+      jsonResponse({ success: true, data: { fdId: "lbpm-template-1" } }),
+      jsonResponse({
+        success: true,
+        data: {
+          fdId: "lbpm-template-1",
+          isDraft: true,
+          fdStatus: "draft",
+          fdContent: "{\"elements\":[]}"
+        }
+      })
     ];
     const fetchImpl = async (url, options) => {
       calls.push({ url, options });
@@ -41,6 +51,16 @@ describe("NewoaClient", () => {
     const created = await client.addTemplate(addPayload);
     const detail = await client.getTemplate("created-1");
     const updated = await client.updateTemplate(updatePayload);
+    const workflowDraftPayload = {
+      fdId: "lbpm-template-1",
+      fdContent: "{\"elements\":[]}",
+      isDraft: true
+    };
+    const savedWorkflowDraft = await client.saveWorkflowDraft(workflowDraftPayload);
+    const workflowDetail = await client.getWorkflowTemplateDetail({
+      templateId: "lbpm-template-1",
+      definitionId: ""
+    });
 
     assert.equal(responses.length, 0);
     assert.deepEqual(calls.map((call) => call.url), [
@@ -50,7 +70,9 @@ describe("NewoaClient", () => {
       `${NEWOA_SIT_BASE_URL}/data/km-review/kmReviewCategory/loadParentCategoryVO`,
       `${NEWOA_SIT_BASE_URL}/data/km-review/kmReviewTemplate/add`,
       `${NEWOA_SIT_BASE_URL}/data/km-review/kmReviewTemplate/get`,
-      `${NEWOA_SIT_BASE_URL}/data/km-review/kmReviewTemplate/update`
+      `${NEWOA_SIT_BASE_URL}/data/km-review/kmReviewTemplate/update`,
+      `${NEWOA_SIT_BASE_URL}/data/sys-lbpm/lbpmTemplate/publish`,
+      `${NEWOA_SIT_BASE_URL}/data/sys-lbpm/lbpmTemplate/details`
     ]);
     assert.equal(calls.every((call) => call.options.method === "POST"), true);
 
@@ -73,7 +95,9 @@ describe("NewoaClient", () => {
       { fdId: "category-1" },
       addPayload,
       { fdId: "created-1", mechanisms: { load: "*" } },
-      updatePayload
+      updatePayload,
+      workflowDraftPayload,
+      { templateId: "lbpm-template-1", definitionId: "" }
     ]);
     assert.deepEqual(initialized, { fdId: "init-1" });
     assert.equal(tableName, "mk_table_1");
@@ -81,6 +105,13 @@ describe("NewoaClient", () => {
     assert.deepEqual(created, { id: "created-1", fdName: "MK_TEST_示例", fdId: "created-1" });
     assert.deepEqual(detail, { fdId: "created-1", fdName: "MK_TEST_示例" });
     assert.deepEqual(updated, { fdId: "created-1" });
+    assert.deepEqual(savedWorkflowDraft, { fdId: "lbpm-template-1" });
+    assert.deepEqual(workflowDetail, {
+      fdId: "lbpm-template-1",
+      isDraft: true,
+      fdStatus: "draft",
+      fdContent: "{\"elements\":[]}"
+    });
   });
 
   it("reports stable stages for injected-fetch failures", async () => {
@@ -111,6 +142,47 @@ describe("NewoaClient", () => {
         return true;
       }
     );
+
+    const workflowDraftClient = new NewoaClient({
+      fetchImpl: async () => jsonResponse({ success: false, msg: "draft broken" })
+    });
+    await assert.rejects(
+      () => workflowDraftClient.saveWorkflowDraft({ fdId: "lbpm-1", fdContent: "{}", isDraft: true }),
+      (error) => {
+        assert.equal(error.stage, "saveWorkflowDraft");
+        return true;
+      }
+    );
+
+    const workflowDetailClient = new NewoaClient({
+      fetchImpl: async () => jsonResponse({ success: false, msg: "detail broken" })
+    });
+    await assert.rejects(
+      () => workflowDetailClient.getWorkflowTemplateDetail({ templateId: "lbpm-1", definitionId: "definition-1" }),
+      (error) => {
+        assert.equal(error.stage, "getWorkflowTemplateDetail");
+        return true;
+      }
+    );
+  });
+
+  it("refuses publish mode at the workflow draft boundary", async () => {
+    let fetchCalled = false;
+    const client = new NewoaClient({
+      fetchImpl: async () => {
+        fetchCalled = true;
+        return jsonResponse({ success: true, data: {} });
+      }
+    });
+
+    await assert.rejects(
+      () => client.saveWorkflowDraft({ fdId: "lbpm-1", fdContent: "{}", isDraft: false }),
+      (error) => {
+        assert.equal(error.stage, "saveWorkflowDraft");
+        return true;
+      }
+    );
+    assert.equal(fetchCalled, false);
   });
 
   it("accepts only the NewOA SIT origin at the execution safety seam", () => {

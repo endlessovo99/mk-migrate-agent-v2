@@ -2,8 +2,8 @@ import {
   buildNativeFormRuleConfig,
   mergeNativeFormRules,
   summarizeNativeFormRuleConfig
-} from "./form-rules.js";
-import { COMPONENTS_BY_ID } from "../dsl/catalogs.js";
+} from "./form-rules-writer.js";
+import { COMPONENTS_BY_ID } from "../../dsl/catalogs.js";
 
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
@@ -123,12 +123,15 @@ export function summarizeDslForm(form = {}, formRules = {}) {
       title: field.title,
       type: field.type,
       component: field.componentId,
+      required: field.props?.required === true,
+      dataOnly: field.dataOnly === true,
       columns: Array.isArray(field.columns)
         ? field.columns.map((column) => ({
             id: column.id,
             title: column.title,
             type: column.type,
-            component: column.componentId
+            component: column.componentId,
+            required: column.props?.required === true
           }))
         : []
     })),
@@ -153,17 +156,27 @@ export function summarizeDslForm(form = {}, formRules = {}) {
   };
 }
 
-function summarizeDslScripts(scripts = {}) {
+export function summarizeDslScripts(scripts = {}) {
   const actions = Array.isArray(scripts.actions) ? scripts.actions : [];
   return {
     actionCount: actions.length,
     events: actions.map((action) => action.event || action.name).filter(Boolean),
     scopes: actions.map((action) => action.scope).filter(Boolean),
-    translationStatuses: actions.map((action) => action.translationStatus).filter(Boolean)
+    translationStatuses: actions.map((action) => action.translationStatus).filter(Boolean),
+    actions: actions
+      .filter((action) => action.translationStatus !== "omitted")
+      .map((action) => ({
+        id: action.id,
+        event: action.event || action.name,
+        scope: action.scope || "global",
+        controlId: action.controlId,
+        tableId: action.tableId,
+        runWhen: action.runWhen
+      }))
   };
 }
 
-function summarizeScriptsFromConfig(config = {}) {
+export function summarizeScriptsFromConfig(config = {}) {
   const formAttr = parseJsonObject(config.attribute?.formAttr || "{}");
   const controlAction = formAttr.controlAction || {};
   const global = controlAction.global || {};
@@ -173,12 +186,62 @@ function summarizeScriptsFromConfig(config = {}) {
     .flatMap(([controlKey, actionByEvent]) => Object.entries(actionByEvent || {})
       .filter(([, actions]) => Array.isArray(actions) && actions.length)
       .map(([event, actions]) => ({ controlKey, event, count: actions.length })));
+  const actions = [
+    ...Object.entries(global).flatMap(([event, entries]) =>
+      (Array.isArray(entries) ? entries : []).flatMap((action) => persistedActionSummaries(action, {
+        event,
+        scope: "global"
+      }))
+    ),
+    ...Object.entries(control).flatMap(([controlKey, actionByEvent]) =>
+      Object.entries(actionByEvent || {}).flatMap(([event, entries]) =>
+        (Array.isArray(entries) ? entries : []).flatMap((action) => persistedActionSummaries(action, {
+          event,
+          scope: "control",
+          controlKey
+        }))
+      )
+    )
+  ];
+  const persistedActionCount = events.reduce((count, event) => count + global[event].length, 0) +
+    controlEvents.reduce((count, item) => count + item.count, 0);
   return {
-    actionCount: events.reduce((count, event) => count + global[event].length, 0) +
-      controlEvents.reduce((count, item) => count + item.count, 0),
+    actionCount: actions.length,
+    persistedActionCount,
     events,
     controlEvents,
-    javascriptLength: typeof controlAction.javascript === "string" ? controlAction.javascript.length : 0
+    javascriptLength: typeof controlAction.javascript === "string" ? controlAction.javascript.length : 0,
+    actions
+  };
+}
+
+function persistedActionSummaries(action = {}, context = {}) {
+  const migrationActions = Array.isArray(action.migrationActions) ? action.migrationActions : [];
+  if (!migrationActions.length) return [persistedActionSummary(action, context)];
+
+  return migrationActions.flatMap((migrationAction) => {
+    const functionText = dispatcherActionFunction(action.function, migrationAction.name);
+    if (!migrationAction.id || !functionText) return [];
+    return [persistedActionSummary({
+      id: migrationAction.id,
+      function: functionText,
+      migrationRunWhen: migrationAction.migrationRunWhen
+    }, context)];
+  });
+}
+
+function persistedActionSummary(action = {}, context = {}) {
+  const markerStatuses = viewStatusMarkerFromFunction(action.function);
+  return {
+    id: action.id,
+    event: context.event,
+    scope: context.scope,
+    controlKey: context.controlKey,
+    runWhen: action.migrationRunWhen,
+    guardViewStatusIn: markerStatuses,
+    hasCanonicalGuard: markerStatuses
+      ? hasCanonicalViewStatusGuard(action.function, markerStatuses, context.event)
+      : false
   };
 }
 
@@ -195,6 +258,7 @@ function buildControlAction(existing, scripts = {}, context = {}) {
   }
 
   const grouped = new Map();
+  let onChangeIndex = 0;
   for (const action of actions) {
     if (action.translationStatus === "omitted") continue;
     const event = action.event || action.name;
@@ -206,25 +270,101 @@ function buildControlAction(existing, scripts = {}, context = {}) {
     if (!key) continue;
     const groupedKey = `${scope}:${key}:${event}`;
     if (!grouped.has(groupedKey)) grouped.set(groupedKey, { scope, key, event, actions: [] });
-    const renderedFunction = renderScriptFunction(action.function, context);
+    const renderedFunction = renderScriptFunction(action.function, context, action);
+    let persistedName = action.name || event;
+    if (event === "onChange") {
+      onChangeIndex += 1;
+      persistedName = `onChange_${onChangeIndex}`;
+    }
+    const persistedFunction = event === "onChange"
+      ? renameFunctionDeclaration(renderedFunction, action.name || event, persistedName)
+      : renderedFunction;
     grouped.get(groupedKey).actions.push({
-      name: action.name || event,
-      function: renderedFunction,
-      id: action.id || stableHexId(`${event}:${renderedFunction}`).slice(0, 18)
+      name: persistedName,
+      function: persistedFunction,
+      id: action.id || stableHexId(`${event}:${renderedFunction}`).slice(0, 18),
+      ...(action.runWhen ? { migrationRunWhen: clone(action.runWhen) } : {})
     });
   }
 
   for (const item of grouped.values()) {
+    const persistedActions = item.scope === "global" && item.event === "onLoad"
+      ? [buildOnLoadDispatcher(item.actions)]
+      : item.actions;
     if (item.scope === "control") {
       next.control[item.key] = {
         ...(next.control[item.key] || {}),
-        [item.event]: item.actions
+        [item.event]: persistedActions
       };
       continue;
     }
-    next.global[item.event] = item.actions;
+    next.global[item.event] = persistedActions;
   }
   return next;
+}
+
+function buildOnLoadDispatcher(actions) {
+  const handlers = actions.map((action, index) => {
+    const name = `onLoad_${index + 1}`;
+    return {
+      action,
+      name,
+      function: renameFunctionDeclaration(action.function, action.name, name)
+    };
+  });
+  const definitions = handlers.map((handler) => [
+    `  ${dispatcherActionStartMarker(handler.name)}`,
+    indentLines(handler.function, "  "),
+    `  ${dispatcherActionEndMarker(handler.name)}`
+  ].join("\n"));
+  const calls = handlers.map((handler) => `  ${handler.name}(context);`);
+  const migrationActions = handlers.map((handler) => ({
+    id: handler.action.id,
+    name: handler.name,
+    ...(handler.action.migrationRunWhen
+      ? { migrationRunWhen: clone(handler.action.migrationRunWhen) }
+      : {})
+  }));
+  return {
+    name: "onLoad",
+    function: `function onLoad(context) {\n${definitions.join("\n\n")}\n\n${calls.join("\n")}\n}`,
+    id: `onLoad_dispatcher_${stableShortId(migrationActions.map((action) => action.id).join("|"))}`,
+    migrationActions
+  };
+}
+
+function renameFunctionDeclaration(source, currentName, nextName) {
+  const declaration = new RegExp(`\\bfunction\\s+${escapeRegExp(currentName)}(?=\\s*\\()`);
+  if (!declaration.test(source)) {
+    throw new Error(`cannot rename persisted script function ${currentName || "<missing>"}`);
+  }
+  return String(source).replace(declaration, `function ${nextName}`);
+}
+
+function indentLines(value, indent) {
+  return String(value).split("\n").map((line) => `${indent}${line}`).join("\n");
+}
+
+function dispatcherActionStartMarker(name) {
+  return `/* mk-migrate:action-start=${name} */`;
+}
+
+function dispatcherActionEndMarker(name) {
+  return `/* mk-migrate:action-end=${name} */`;
+}
+
+function dispatcherActionFunction(source, name) {
+  if (!name) return "";
+  const startMarker = dispatcherActionStartMarker(name);
+  const endMarker = dispatcherActionEndMarker(name);
+  const start = String(source || "").indexOf(startMarker);
+  if (start < 0) return "";
+  const contentStart = start + startMarker.length;
+  const end = String(source || "").indexOf(endMarker, contentStart);
+  if (end < 0) return "";
+  const functionText = String(source || "").slice(contentStart, end).trim();
+  const declaration = new RegExp(`\\bfunction\\s+${escapeRegExp(name)}\\s*\\(`);
+  return declaration.test(functionText) ? functionText : "";
 }
 
 function controlActionKey(action, context) {
@@ -235,12 +375,50 @@ function controlActionKey(action, context) {
   return `${model.fdTableName}.${action.controlId}`;
 }
 
-function renderScriptFunction(source, context = {}) {
-  return String(source || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
+function renderScriptFunction(source, context = {}, action = {}) {
+  const rendered = String(source || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
     const sourceTableId = String(tableId || "").trim();
     const model = context.detailModelsByField?.get(sourceTableId);
     return model?.fdTableName || sourceTableId;
   });
+  return injectViewStatusGuard(rendered, action);
+}
+
+function injectViewStatusGuard(source, action = {}) {
+  const statuses = action.runWhen?.viewStatusIn;
+  if (!Array.isArray(statuses) || !statuses.length) return source;
+  const marker = viewStatusMarker(statuses);
+  const condition = viewStatusGuardCondition(statuses);
+  const fallback = (action.event || action.name) === "onBeforeSubmit" ? "return true" : "return";
+  if (source.includes(marker) && source.includes(`if (${condition}) ${fallback}`)) return source;
+
+  const functionName = escapeRegExp(action.name || action.event || "");
+  const declaration = new RegExp(`function\\s+${functionName}\\s*\\([^)]*\\)\\s*\\{`);
+  const match = declaration.exec(source);
+  if (!match) {
+    throw new Error(`cannot inject view-status guard: named function ${action.name || action.event || "<missing>"} was not found`);
+  }
+  const insertAt = match.index + match[0].length;
+  const guard = `\n  ${marker}\n  if (${condition}) ${fallback};`;
+  return `${source.slice(0, insertAt)}${guard}${source.slice(insertAt)}`;
+}
+
+function viewStatusMarker(statuses) {
+  return `/* mk-migrate:view-status=${statuses.join(",")} */`;
+}
+
+function viewStatusGuardCondition(statuses) {
+  return statuses.map((status) => `MKXFORM.viewStatus !== ${JSON.stringify(status)}`).join(" && ");
+}
+
+function viewStatusMarkerFromFunction(source = "") {
+  const match = String(source).match(/\/\*\s*mk-migrate:view-status=([^*]+?)\s*\*\//);
+  return match ? match[1].split(",").map((status) => status.trim()).filter(Boolean) : undefined;
+}
+
+function hasCanonicalViewStatusGuard(source, statuses, event) {
+  const fallback = event === "onBeforeSubmit" ? "return true" : "return";
+  return String(source).includes(`if (${viewStatusGuardCondition(statuses)}) ${fallback}`);
 }
 
 function buildMainModel(template, xform, config, form) {
@@ -314,7 +492,7 @@ function canonicalField(field, template, model, order, tableType) {
     fdIsIndex: false,
     fdIsSystem: false,
     fdIsDataTask: false,
-    fdDisplay: true,
+    fdDisplay: field.dataOnly !== true,
     fdOuterMapping: false,
     fdState: "notEffective",
     fdDataModel: { fdId: model.fdId, fdName: model.fdName },
@@ -683,15 +861,19 @@ function buildGridItem(row, cell, index, detailModelsByField) {
       ? { children: detailModel.fdFields.filter((field) => !field.fdIsSystem).map((field) => ({ key: field.fdName })) }
       : {})
   };
+  const column = Number.isInteger(cell.column) ? cell.column : index;
+  const colspan = Number.isInteger(cell.colspan) ? cell.colspan : 1;
   return {
     key: itemId,
     type: "@elem/layout-grid.GridItem",
     kind: "container",
     controlProps: {
-      column: index + 1,
+      column: column + 1,
+      colSpan: colspan,
       row: 1,
       id: itemId,
       style: { backgroundColor: "" },
+      // Audit-only markers; observers must not treat these as verification evidence.
       migrationRowId: row.id,
       migrationFieldId: firstRefId,
       migrationFieldIds: refIds,
@@ -828,6 +1010,7 @@ function detailModelToSummaryField(model) {
     title: model.fdName,
     type: "detailTable",
     component: "xform-detail-table",
+    required: false,
     columns: (model.fdFields || []).filter((field) => !field.fdIsSystem).map(dataFieldToSummaryField)
   };
 }
@@ -838,8 +1021,23 @@ function dataFieldToSummaryField(field) {
     title: field.fdLabel,
     type: field.fdType,
     component: componentFromDataField(field),
+    required: nativeRequiredState(field.fdAttribute),
+    dataOnly: field.fdDisplay === false,
     columns: []
   };
+}
+
+function nativeRequiredState(fdAttribute) {
+  if (typeof fdAttribute !== "string" || !fdAttribute.trim()) return undefined;
+  try {
+    const attribute = JSON.parse(fdAttribute);
+    const controlProps = attribute?.config?.controlProps;
+    if (!controlProps || typeof controlProps !== "object" || Array.isArray(controlProps)) return undefined;
+    if (!Object.hasOwn(controlProps, "required")) return false;
+    return typeof controlProps.required === "boolean" ? controlProps.required : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function detailFieldIdForModel(model) {
@@ -948,6 +1146,10 @@ function childRefIds(child) {
   if (child.refId) return [child.refId];
   if (Array.isArray(child.fieldIds) && child.fieldIds.length) return child.fieldIds;
   return child.fieldId ? [child.fieldId] : [];
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function tableNameFor(value) {

@@ -1,7 +1,7 @@
 import { integrityError } from "./integrity.js";
 
 export const REVIEW_SCENARIOS = Object.freeze(["accept", "warning"]);
-export const NEWOA_SCENARIOS = Object.freeze(["persist", "lose-layout-on-readback", "fail-at-update"]);
+export const NEWOA_SCENARIOS = Object.freeze(["persist", "lose-layout-on-readback", "lose-required-on-readback", "fail-at-update"]);
 
 const SUCCESS_OPERATIONS = Object.freeze([
   "login",
@@ -11,6 +11,13 @@ const SUCCESS_OPERATIONS = Object.freeze([
   "add",
   "get-before-update",
   "update",
+  "get-readback"
+]);
+
+const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
+  ...SUCCESS_OPERATIONS.slice(0, -1),
+  "save-workflow-draft",
+  "get-workflow-detail",
   "get-readback"
 ]);
 
@@ -46,7 +53,7 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         reviewStatus: "needs_manual",
         dryRunStatus: "needs_manual",
         executionStatus: "written_with_warnings",
-        operations: SUCCESS_OPERATIONS
+        operations: WORKFLOW_SUCCESS_OPERATIONS
       }
     },
     {
@@ -93,6 +100,23 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       expected: {
         reviewStatus: "needs_manual",
         dryRunStatus: "needs_manual",
+        executionStatus: "readback_failed",
+        executionStage: "readback",
+        operations: WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "required-readback-loss",
+      source: {
+        kind: "form-only",
+        relativePath: "form-only/route-form-only_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "lose-required-on-readback",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
         executionStatus: "readback_failed",
         executionStage: "readback",
         operations: SUCCESS_OPERATIONS

@@ -1,8 +1,6 @@
 import { buildDryRunPlan } from "./dry-run.js";
-import { applyFormPayload } from "./form-payload.js";
 import { assertAllowedBaseUrl, NewoaClient, NEWOA_SIT_BASE_URL } from "./newoa-client.js";
-import { verifyReadback } from "./readback.js";
-import { applyWorkflowPayload, workflowMappingDiagnostics } from "./workflow-payload.js";
+import { preparePersistedTemplate, buildWorkflowDraftPayload } from "./persistence.js";
 
 export async function executeDsl(input, options = {}) {
   const plan = buildDryRunPlan(input);
@@ -45,28 +43,106 @@ export async function executeDsl(input, options = {}) {
     const parentCategory = await client.loadParentCategory(options.targetCategoryId);
     apiStages[apiStages.length - 1].status = "ok";
     apiStages.push({ name: "add", status: "started" });
-    const created = await client.addTemplate(buildCreatePayload(baseTemplate, input, options, {
+    const createPayload = buildCreatePayload(baseTemplate, input, options, {
       fdTableName,
       parentCategory
-    }));
+    });
+    const created = await client.addTemplate(createPayload);
     templateId = created.fdId;
     apiStages[apiStages.length - 1].status = "ok";
     apiStages[apiStages.length - 1].templateId = templateId;
     apiStages.push({ name: "get", status: "started", templateId });
     const detail = await client.getTemplate(templateId);
     apiStages[apiStages.length - 1].status = "ok";
-    diagnostics.push(...workflowMappingDiagnostics(input.workflow));
-    const savePayload = applyWorkflowPayload(applyFormPayload({
-      ...detail,
-      fdCategory: { fdId: options.targetCategoryId }
-    }, input), input);
+
+    const envelope = {
+      templateId,
+      templateName: createPayload.fdName,
+      categoryId: options.targetCategoryId,
+      tableName: fdTableName || detail.fdTableName || detail.mechanisms?.["sys-xform"]?.fdTableName || "",
+      lifecycle: {
+        draft: true,
+        unpublished: true,
+        fdStatus: detail.fdStatus ?? 0,
+        xformStatus: "draft",
+        lbpmStatus: "draft",
+        lbpmIsDraft: true
+      },
+      bindings: {
+        formFdId: templateId,
+        workflowFdId: detail.mechanisms?.lbpmTemplate?.[0]?.fdId || ""
+      }
+    };
+
+    let prepared;
+    try {
+      prepared = preparePersistedTemplate({
+        dsl: input,
+        envelope,
+        baseTemplate: detail
+      });
+    } catch (error) {
+      return projectionFailure({
+        plan,
+        diagnostics,
+        apiStages,
+        templateId,
+        credentials,
+        error
+      });
+    }
+
+    if (!prepared.ok) {
+      return {
+        ok: false,
+        status: "failed",
+        stage: "projection",
+        failedAt: "projection",
+        templateId,
+        createdFdIds: [templateId].filter(Boolean),
+        cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
+        diagnostics: [...diagnostics, ...prepared.diagnostics],
+        apiStages,
+        plan
+      };
+    }
+
+    const savePayload = prepared.update;
     apiStages.push({ name: "update", status: "started", templateId });
     await client.updateTemplate(savePayload);
     apiStages[apiStages.length - 1].status = "ok";
+    let workflowTemplateDetail;
+    if (input.workflow) {
+      const workflowTemplateId = savePayload.mechanisms?.lbpmTemplate?.[0]?.fdId || "";
+      apiStages.push({ name: "saveWorkflowDraft", status: "started", templateId: workflowTemplateId });
+      const savedWorkflowDraft = await client.saveWorkflowDraft(buildWorkflowDraftPayload(savePayload));
+      const draftId = requireWorkflowDraftId(savedWorkflowDraft);
+      const definitionId = draftId === workflowTemplateId ? "" : draftId;
+      apiStages[apiStages.length - 1].status = "ok";
+      apiStages[apiStages.length - 1].draftId = draftId;
+      if (definitionId) apiStages[apiStages.length - 1].definitionId = definitionId;
+      apiStages.push({
+        name: "getWorkflowTemplateDetail",
+        status: "started",
+        templateId: workflowTemplateId,
+        draftId,
+        ...(definitionId ? { definitionId } : {})
+      });
+      workflowTemplateDetail = await client.getWorkflowTemplateDetail({
+        templateId: workflowTemplateId,
+        definitionId
+      });
+      assertWorkflowTemplateDetail(workflowTemplateDetail, workflowTemplateId, definitionId);
+      apiStages[apiStages.length - 1].status = "ok";
+    }
     apiStages.push({ name: "readback", status: "started", templateId });
     const readbackTemplate = await client.getTemplate(templateId);
     apiStages[apiStages.length - 1].status = "ok";
-    const readback = verifyReadback(input, readbackTemplate);
+    const readback = prepared.verify(
+      workflowTemplateDetail
+        ? attachWorkflowReadback(readbackTemplate, workflowTemplateDetail)
+        : readbackTemplate
+    );
     diagnostics.push(...readback.diagnostics);
 
     if (!readback.ok) {
@@ -124,6 +200,29 @@ export async function executeDsl(input, options = {}) {
       plan
     };
   }
+}
+
+function projectionFailure({ plan, diagnostics, apiStages, templateId, credentials, error }) {
+  return {
+    ok: false,
+    status: "failed",
+    stage: "projection",
+    failedAt: "projection",
+    templateId,
+    createdFdIds: [templateId].filter(Boolean),
+    cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
+    diagnostics: [
+      ...diagnostics,
+      {
+        level: "error",
+        code: "projection.internal_error",
+        message: redactCredentialValues(error instanceof Error ? error.message : String(error), credentials),
+        path: "/projection"
+      }
+    ],
+    apiStages,
+    plan
+  };
 }
 
 function validateSafety(options) {
@@ -220,7 +319,10 @@ function prepareDraftLbpmTemplate(payload, { targetCategoryId, parentCategory })
   lbpm.fdReaders = payload.fdReaders || lbpm.fdReaders || [];
   lbpm.fdEditors = payload.fdEditors || lbpm.fdEditors || [];
   lbpm.fdTemplateCode = payload.fdCode;
+  lbpm.fdContentType ||= "json";
   lbpm.fdSystemCode = "INNER_SYSTEM";
+  lbpm.fdRunType ??= "1";
+  lbpm.fdDisableBpmInit ??= false;
   lbpm.fdSystemName = "MK-PaaS内部系统";
   lbpm.fdModuleCode = "km-review";
   lbpm.fdStatus = lbpm.fdStatus || "draft";
@@ -300,6 +402,77 @@ function redactCredentialValues(value, credentials = {}) {
     result = result.split(secret).join("[REDACTED]");
   }
   return result;
+}
+
+function requireWorkflowDraftId(result) {
+  const draftId = result?.fdDefinitionId ||
+    result?.definitionId ||
+    result?.fdId ||
+    result?.data?.fdDefinitionId ||
+    result?.data?.definitionId ||
+    result?.data?.fdId ||
+    "";
+  if (!nonEmptyString(draftId)) {
+    throw stagedError(
+      "saveWorkflowDraft",
+      "Workflow draft save response did not include a draft id."
+    );
+  }
+  return draftId;
+}
+
+function assertWorkflowTemplateDetail(detail, workflowTemplateId, definitionId) {
+  if (!nonEmptyString(detail?.fdId)) {
+    throw stagedError(
+      "getWorkflowTemplateDetail",
+      "Workflow detail readback did not include the LBPM template id."
+    );
+  }
+  if (detail.fdId !== workflowTemplateId) {
+    throw stagedError(
+      "getWorkflowTemplateDetail",
+      "Workflow detail readback belongs to a different LBPM template."
+    );
+  }
+  if (detail.isDraft !== true || detail.fdStatus !== "draft") {
+    throw stagedError(
+      "getWorkflowTemplateDetail",
+      "Workflow detail readback is not a draft."
+    );
+  }
+  if (definitionId) {
+    if (!nonEmptyString(detail?.fdDefinitionId)) {
+      throw stagedError(
+        "getWorkflowTemplateDetail",
+        "Workflow detail readback did not include fdDefinitionId."
+      );
+    }
+    if (detail.fdDefinitionId !== definitionId) {
+      throw stagedError(
+        "getWorkflowTemplateDetail",
+        "Workflow detail readback returned a different definition id."
+      );
+    }
+  }
+  if (!nonEmptyString(detail.fdContent)) {
+    throw stagedError(
+      "getWorkflowTemplateDetail",
+      "Workflow detail readback did not include designer content."
+    );
+  }
+}
+
+function stagedError(stage, message) {
+  const error = new Error(message);
+  error.stage = stage;
+  return error;
+}
+
+function attachWorkflowReadback(template, workflowTemplateDetail) {
+  const next = clone(template);
+  next.mechanisms = next.mechanisms || {};
+  next.mechanisms.lbpmTemplate = [clone(workflowTemplateDetail)];
+  return next;
 }
 
 function clone(value) {

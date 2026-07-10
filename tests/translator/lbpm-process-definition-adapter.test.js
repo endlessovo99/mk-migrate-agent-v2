@@ -63,4 +63,105 @@ describe("translateLbpmProcessDefinitionXml", () => {
     assert.equal(graph.edges[0].condition, "$amount$ < 10");
     assert.equal(graph.edges[0].displayCondition, "$金额$ > 10");
   });
+
+  it("associates current root node-definition handlers without losing organization evidence", () => {
+    const xml = handlerEntityFixture();
+    const result = translateLbpmProcessDefinitionXml(xml);
+    const reviewNode = result.workflow.nodes.find((node) => node.id === "N2");
+
+    assert.deepEqual(reviewNode.handlerEntities, [{
+      id: "legacy-post-id",
+      name: "部门负责人岗位",
+      orgType: 4,
+      class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+      parent: "示例部门",
+      index: 0
+    }]);
+    assert.deepEqual(reviewNode.optionalHandlerEntities, [{
+      id: "legacy-person-id",
+      name: "示例人员",
+      orgType: 8,
+      class: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+      parent: "示例部门",
+      index: 1,
+      loginName: "000001"
+    }]);
+    assert.deepEqual(result.workflow.process.privilegerEntities, [{
+      id: "legacy-privileger-id",
+      name: "流程管理员岗位",
+      orgType: 4,
+      class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+      parent: "流程管理部",
+      index: 0
+    }]);
+  });
 });
+
+function handlerEntityFixture() {
+  const process = '<process fdId="handler-process"><nodes><startNode id="N1" name="开始"/><reviewNode id="N2" name="审批" handlerIds="stale-person-id" handlerNames="旧人员缓存"/><endNode id="N3" name="结束"/></nodes><lines><line id="L1" startNodeId="N1" endNodeId="N2"/><line id="L2" startNodeId="N2" endNodeId="N3"/></lines></process>';
+  return `
+    <java>
+      <object class="java.util.HashMap">
+        <void method="put">
+          <string>nodeDefinitionHandlers</string>
+          <object class="java.util.ArrayList">
+            ${handlerEntry("00", "privilegerIds", 0, {
+              id: "legacy-privileger-id",
+              name: "流程管理员岗位",
+              orgType: 4,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "流程管理部"
+            })}
+            ${handlerEntry("N2", "handlerIds", 0, {
+              id: "legacy-post-id",
+              name: "部门负责人岗位",
+              orgType: 4,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N2", "optHandlerIds", 1, {
+              id: "legacy-person-id",
+              name: "示例人员",
+              orgType: 8,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+              parent: "示例部门",
+              loginName: "000001"
+            })}
+          </object>
+        </void>
+        <void method="put"><string>fdContent</string><string>${encodeXml(process)}</string></void>
+      </object>
+    </java>
+  `;
+}
+
+function handlerEntry(factId, attribute, index, handler) {
+  return `
+    <void method="add">
+      <object class="java.util.HashMap">
+        <void method="put"><string>fdFactId</string><string>${factId}</string></void>
+        <void method="put"><string>fdAttribute</string><string>${attribute}</string></void>
+        <void method="put"><string>fdIndex</string><int>${index}</int></void>
+        <void method="put">
+          <string>fdHandler</string>
+          <object class="java.util.HashMap">
+            <void method="put"><string>fdId</string><string>${handler.id}</string></void>
+            <void method="put"><string>fdName</string><string>${handler.name}</string></void>
+            <void method="put"><string>fdOrgType</string><int>${handler.orgType}</int></void>
+            <void method="put"><string>class</string><string>${handler.className}</string></void>
+            <void method="put"><string>hbmParent.fdName</string><string>${handler.parent}</string></void>
+            ${handler.loginName ? `<void method="put"><string>fdLoginName</string><string>${handler.loginName}</string></void>` : ""}
+          </object>
+        </void>
+      </object>
+    </void>
+  `;
+}
+
+function encodeXml(value) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;");
+}

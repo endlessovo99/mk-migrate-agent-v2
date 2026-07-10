@@ -10,11 +10,12 @@ clean -> draft -> agent-review -> migration.dsl.json -> check/dry-run/execute
 
 ## Provider Configuration
 
-`agent-review` uses an OpenAI-compatible Responses API provider and reads configuration only from environment variables:
+`agent-review` uses an OpenAI-compatible Responses API provider and reads its connection configuration from environment variables:
 
 - `OPENAI_BASE_URL`
 - `OPENAI_API_KEY`
-- `OPENAI_MODEL`
+
+Initial review and repair requests always use `gpt-5.6-luna`. The model cannot be overridden, and a failed request does not fall back to another model.
 
 The provider calls:
 
@@ -27,7 +28,6 @@ Do not pass the API key through CLI arguments. Keep local values in an ignored f
 ```bash
 export OPENAI_BASE_URL='http://154.9.255.164:8317'
 export OPENAI_API_KEY='sk-...'
-export OPENAI_MODEL='gpt-5.5'
 ```
 
 Source it explicitly when you want a real provider call:

@@ -31,6 +31,21 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "dsl.template.name_required"), true);
   });
 
+  it("rejects field and detail-column ids longer than the MK 25-character limit", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.fields[0].id = "fd_attention_row__description";
+    dsl.form.fields[2].columns[0].id = "fd_detail_column_name_over_limit";
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostics = result.diagnostics.filter((item) => item.code === "dsl.field.id_too_long");
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(diagnostics.map((item) => item.details.id), [
+      "fd_attention_row__description",
+      "fd_detail_column_name_over_limit"
+    ]);
+    assert.equal(diagnostics.every((item) => item.details.maxLength === 25), true);
+  });
+
   it("rejects unknown components, unknown props, invalid prop values, and unsupported functions", () => {
     const dsl = sampleTrustedDsl({
       form: {

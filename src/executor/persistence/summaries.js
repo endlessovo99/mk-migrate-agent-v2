@@ -1,0 +1,95 @@
+export function buildFormSummary(observedForm, observedRules, observedScripts) {
+  const fields = (observedForm?.fields || []).map((field) => ({
+    id: field.id,
+    title: field.title,
+    type: field.type,
+    component: field.component,
+    required: field.props?.required === true,
+    dataOnly: field.dataOnly === true,
+    columns: (field.columns || []).map((column) => ({
+      id: column.id,
+      title: column.title,
+      type: column.type,
+      component: column.component,
+      required: column.props?.required === true
+    }))
+  }));
+  const layoutRows = (observedForm?.layoutRows || []).map((row) => ({
+    id: row.id,
+    fields: (row.cells || []).flatMap((cell) => cell.fieldIds || []),
+    cells: (row.cells || []).map((cell) => ({
+      fieldId: (cell.fieldIds || [])[0],
+      fieldIds: cell.fieldIds || [],
+      column: cell.column,
+      colspan: cell.colspan
+    }))
+  }));
+  const rules = observedRules?.rules || [];
+  const displayRules = rules.filter((rule) => rule.kind === "display");
+  const requireRules = rules.filter((rule) => rule.kind === "require");
+  const actions = observedScripts?.actions || [];
+
+  return {
+    fieldCount: fields.length,
+    fields,
+    detailTableCount: fields.filter((field) => field.type === "detailTable").length,
+    layoutRowCount: layoutRows.length,
+    layoutRows,
+    scripts: {
+      actionCount: actions.length,
+      persistedActionCount: actions.length,
+      events: [...new Set(actions.map((action) => action.event).filter(Boolean))],
+      controlEvents: actions
+        .filter((action) => action.scope === "control")
+        .map((action) => ({
+          controlKey: action.controlKey,
+          event: action.event,
+          count: 1
+        })),
+      javascriptLength: 0,
+      actions: actions.map((action) => ({
+        id: action.id,
+        event: action.event,
+        scope: action.scope,
+        controlKey: action.controlKey,
+        runWhen: action.runWhen,
+        guardViewStatusIn: action.runWhen?.viewStatusIn,
+        hasCanonicalGuard: action.hasCanonicalGuard === true
+      }))
+    },
+    formRules: {
+      displayRuleCount: displayRules.length,
+      requireRuleCount: requireRules.length,
+      displayRules,
+      requireRules
+    }
+  };
+}
+
+export function buildWorkflowSummary(observedWorkflow) {
+  if (!observedWorkflow) return undefined;
+  const nodes = observedWorkflow.nodes || [];
+  const edges = observedWorkflow.edges || [];
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  return {
+    nodeCount: nodes.length,
+    edgeCount: edges.length,
+    conditionEdgeCount: edges.filter((edge) => Boolean(edge.condition?.text)).length,
+    invalidEdgeCount: edges.filter((edge) => !edge.source || !edge.target || !nodeIds.has(edge.source) || !nodeIds.has(edge.target)).length,
+    initiatorSelectNodeIds: nodes
+      .filter((node) => node.participants?.mode === "initiator_select")
+      .map((node) => node.id)
+      .sort(),
+    nodes: nodes.map((node) => ({
+      id: node.id,
+      type: node.type,
+      element: node.element
+    })),
+    edges: edges.map((edge) => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      hasCondition: Boolean(edge.condition?.text)
+    }))
+  };
+}

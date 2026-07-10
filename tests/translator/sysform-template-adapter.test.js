@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { loadFunctionWhitelist } from "../../src/translator/function-whitelist.js";
+import { sourceFormRulesFromLegacyScripts } from "../../src/translator/sysform-form-rules.js";
+import { draftMkScriptsFromSourceScripts } from "../../src/translator/sysform-jsp-scripts.js";
 import { parseSysFormTemplateXml, translateSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
 
@@ -192,11 +194,56 @@ describe("translateSysFormTemplateXml", () => {
     assert.equal(dsl.scripts.fragments.length, 8);
     assert.equal(dsl.scripts.sources.length, 2);
     assert.deepEqual([...new Set(dsl.scripts.sources.map((source) => source.sourceKey))], ["fdDesignerHtml"]);
+    assert.equal(dsl.scripts.sources[0].displayGate, "xform:editShow");
+    assert.equal(dsl.scripts.sources[1].displayGate, undefined);
     assert.equal(dsl.scripts.fragments.some((fragment) => fragment.id === "fd_37157731108fc2"), true);
     assert.equal(
       dsl.scripts.sources[0].functionAudit.matched.some((item) => item.name === "GetXFormFieldById"),
       true
     );
+    const formRules = sourceFormRulesFromLegacyScripts(dsl.scripts);
+    assert.equal(formRules.linkage.length, 6);
+    assert.equal(formRules.linkage.every((rule) => rule.meta.displayGate === "xform:editShow"), true);
+
+    const detailActions = draftMkScriptsFromSourceScripts(dsl.scripts).actions.filter((action) =>
+      action.tableId === "fd_371228ebe5dec2" && action.controlId === "fd_371576f83b26d8"
+    );
+    assert.equal(detailActions.length, 2);
+    assert.deepEqual(detailActions.map((action) => action.runWhen), [
+      { viewStatusIn: ["add", "edit"] },
+      undefined
+    ]);
+  });
+
+  it("preserves edit, view, and ungated JSP display contexts on drafted actions", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr><td row="0" column="0"><div fd_type="inputText" fd_values='{id:"fd_subject",label:"主题"}'></div></td></tr>
+        </tbody>
+      </table>
+      <div id="fd_gate_jsp" fd_type="jsp">
+        <input type="hidden" value='<xform:editShow><script>var editOnly = true;</script></xform:editShow><xform:viewShow><script>var viewOnly = true;</script></xform:viewShow><script>var allModes = true;</script>'/>
+      </div>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="fd_subject" label="主题" type="String"/>
+      </metadata>
+    `;
+    const translated = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }));
+    const drafted = draftMkScriptsFromSourceScripts(translated.scripts);
+
+    assert.deepEqual(translated.scripts.sources.map((source) => source.displayGate), [
+      "xform:editShow",
+      "xform:viewShow",
+      undefined
+    ]);
+    assert.deepEqual(drafted.actions.map((action) => action.runWhen), [
+      { viewStatusIn: ["add", "edit"] },
+      { viewStatusIn: ["view"] },
+      undefined
+    ]);
   });
 
   it("does not flag explicit business detail table titles", () => {
@@ -243,6 +290,98 @@ describe("translateSysFormTemplateXml", () => {
 
     assert.equal(template.fdDesignerHtml.includes("测试表单"), true);
     assert.equal(template.fdDesignerHtml_extension, undefined);
+  });
+
+  it("reads only direct string puts from the outermost root HashMap", () => {
+    const xml = `
+      <java>
+        <object class="java.util.HashMap">
+          <void method="put"><string>fdId</string><string>root-template-id</string></void>
+          <void method="put">
+            <string>fdCreator</string>
+            <object class="com.example.Person">
+              <void method="put"><string>fdId</string><string>nested-person-id</string></void>
+            </object>
+          </void>
+          <void method="put">
+            <string>fdHistory</string>
+            <object class="java.util.ArrayList">
+              <void method="add">
+                <object class="java.util.HashMap">
+                  <void method="put"><string>fdMetadataXml</string><string>old-metadata</string></void>
+                </object>
+              </void>
+            </object>
+          </void>
+          <void method="put"><string>fdMetadataXml</string><string>current-metadata</string></void>
+        </object>
+      </java>
+    `;
+
+    assert.deepEqual(parseSysFormTemplateXml(xml), {
+      fdId: "root-template-id",
+      fdMetadataXml: "current-metadata"
+    });
+
+    const nestedOnly = `
+      <java>
+        <object class="com.example.Wrapper">
+          <void property="value">
+            <object class="java.util.HashMap">
+              <void method="put"><string>fdId</string><string>nested-map-id</string></void>
+            </object>
+          </void>
+        </object>
+      </java>
+    `;
+    assert.deepEqual(parseSysFormTemplateXml(nestedOnly), {});
+
+    const nestedUnderVoid = `
+      <java>
+        <void property="value">
+          <object class="java.util.HashMap">
+            <void method="put"><string>fdId</string><string>nested-under-void-id</string></void>
+          </object>
+        </void>
+      </java>
+    `;
+    assert.deepEqual(parseSysFormTemplateXml(nestedUnderVoid), {});
+  });
+
+  it("keeps metadata-backed hidden persisted fields as data-only fields outside layout", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr><td row="0" column="0"><div fd_type="inputText" fd_values='{id:"fd_visible",label:"可见字段"}'></div></td></tr>
+          <tr><td row="1" column="0"><div fd_type="inputText" fd_values='{id:"fd_metadata_hidden",label:"元数据隐藏字段"}'></div></td></tr>
+          <tr><td row="2" column="0"><div class="inputhidden" fd_type="inputText" fd_values='{id:"fd_designer_hidden",label:"设计器隐藏字段"}'></div></td></tr>
+          <tr><td row="3" column="0"><div fd_type="inputText" fd_values='{id:"fd_designer_only",label:"无元数据隐藏字段",canShow:"false"}'></div></td></tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="fd_visible" label="可见字段" type="String"/>
+        <extendSimpleProperty name="fd_metadata_hidden" label="元数据隐藏字段" type="String" canDisplay="false"/>
+        <extendSimpleProperty name="fd_designer_hidden" label="设计器隐藏字段" type="String"/>
+        <extendSubTableProperty name="fd_hidden_detail" label="隐藏列明细">
+          <extendSimpleProperty name="fd_hidden_column" label="隐藏明细列" type="String" canDisplay="false"/>
+        </extendSubTableProperty>
+      </metadata>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }));
+
+    assert.deepEqual(dsl.form.fields.map((field) => field.id), ["fd_visible"]);
+    assert.deepEqual(dsl.form.dataFields.map((field) => [field.id, field.dataOnly]), [
+      ["fd_metadata_hidden", true],
+      ["fd_designer_hidden", true]
+    ]);
+    assert.deepEqual(
+      dsl.form.layout.rows.flatMap((row) => row.cells.flatMap((cell) => cell.fieldIds)),
+      ["fd_visible"]
+    );
+    assert.equal(dsl.form.dataFields.some((field) => field.id === "fd_designer_only"), false);
+    assert.equal(dsl.form.dataFields.some((field) => field.id === "fd_hidden_column"), false);
   });
 
   it("keeps non-whitelisted designer script functions as review warnings", () => {

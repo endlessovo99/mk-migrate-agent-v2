@@ -1,6 +1,6 @@
 {
   "id": "mk-js-snippets",
-  "version": "2026-07-09.v2",
+  "version": "2026-07-10.v3",
   "source": {
     "page": "https://p-sit.onewo.com/web/#/manage/km-review/kmReviewTemplate/edit/1jt2nnqicw57ew6u3lw3kvk33k99v1cd2qw0/designer",
     "pageTitle": "模板编辑(万物云空间科技服务股份有限公司)",
@@ -33,6 +33,12 @@
           "name": "viewStatus",
           "title": "视图状态",
           "purpose": "判断当前表单处于新建、编辑、查看等视图状态，用于按页面状态分支处理。",
+          "observedValues": {
+            "add": "起草",
+            "edit": "编辑",
+            "view": "查看"
+          },
+          "observation": "Runtime values verified from an onLoad sample using MKXFORM.viewStatus.",
           "clicked": true,
           "treeNodeFound": true,
           "insertedCode": "MKXFORM.viewStatus",

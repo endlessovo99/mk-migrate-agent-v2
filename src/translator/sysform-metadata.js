@@ -27,10 +27,16 @@ export function parseMetadataXml(metadataXml = "") {
 
   const mainXml = removeRanges(xml, tableRanges);
   for (const property of extractSimpleProperties(mainXml)) {
-    fields.push(metadataFieldToDslField(property));
+    fields.push(metadataFieldToDslField(property, { classifyDataOnly: true }));
   }
 
   return { fields };
+}
+
+export function isDataOnlyMetadataField(field = {}) {
+  if (field.type === "detailTable") return false;
+  if (field.dataOnly === true) return true;
+  return isHiddenMetadataAttributes(field.source?.metadataAttributes || {});
 }
 
 function extractSimpleProperties(xml = "") {
@@ -42,9 +48,10 @@ function extractSimpleProperties(xml = "") {
     .filter((item) => item.name);
 }
 
-function metadataFieldToDslField(property) {
-  const options = parseOptions(property.enumValues);
-  const type = inferDslFieldType(property, options);
+function metadataFieldToDslField(property, settings = {}) {
+  const fieldOptions = parseOptions(property.enumValues);
+  const type = inferDslFieldType(property, fieldOptions);
+  const dataOnly = settings.classifyDataOnly && isHiddenMetadataAttributes(property);
   return {
     id: property.name,
     title: property.label || property.name,
@@ -56,8 +63,21 @@ function metadataFieldToDslField(property) {
       metadataKind: property.kind,
       metadataAttributes: property
     },
-    ...(options.length ? { options } : {})
+    ...(dataOnly ? { dataOnly: true } : {}),
+    ...(fieldOptions.length ? { options: fieldOptions } : {})
   };
+}
+
+function isHiddenMetadataAttributes(attrs = {}) {
+  return isFalseLike(attrs.canDisplay) || isFalseLike(attrs.canShow) || isNoShow(attrs.showStatus);
+}
+
+function isFalseLike(value) {
+  return String(value ?? "").trim().toLowerCase() === "false";
+}
+
+function isNoShow(value) {
+  return String(value ?? "").trim().toLowerCase() === "noshow";
 }
 
 function mkForMetadataField(property, type) {

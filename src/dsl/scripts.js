@@ -79,11 +79,20 @@ export function resolveScriptControlTarget(form = {}, action = {}) {
   }
 
   if (index.mainFields.has(controlId)) {
+    const field = index.mainFields.get(controlId);
+    if (field.dataOnly === true) {
+      return {
+        ok: false,
+        code: "data_only_control_action_forbidden",
+        message: "Data-only fields exist in the data model but cannot host control event actions.",
+        controlId
+      };
+    }
     return {
       ok: true,
       kind: "main",
       controlId,
-      field: index.mainFields.get(controlId)
+      field
     };
   }
 

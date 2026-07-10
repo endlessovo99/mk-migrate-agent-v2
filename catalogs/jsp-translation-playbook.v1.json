@@ -1,11 +1,12 @@
 {
   "id": "jsp-translation-playbook",
-  "version": "2026-07-09.v1",
+  "version": "2026-07-10.v3",
   "goal": "Guide the Agent to semantically translate legacy EKP/JSP form scripts into restricted NewOA/MK DSL script patches. Deterministic code extracts evidence only; the Agent decides whether a patch is safe.",
   "principles": [
     "Translate behavior, not source syntax. Legacy function names and regex-like shapes are evidence, not completion criteria.",
     "Use form/source/dsl context, targetApi capabilities, function catalog semantics, row markers, and native formRules evidence together.",
-    "Prefer native formRules coverage when it fully covers behavior; otherwise generate small MKXFORM JavaScript using targetApi.",
+    "Prefer verified native formRules or static form-property coverage when it fully covers behavior; otherwise generate small MKXFORM JavaScript using targetApi.",
+    "Never replace editShow/viewShow gated behavior with ungated native formRules; preserve the source-derived runWhen and translate the complete gated action body.",
     "Keep unsupported, ambiguous, side-effect-heavy, or DOM-dependent behavior as needs_review/manual diagnostics.",
     "Never emit DOM APIs in mapped output."
   ],
@@ -29,10 +30,16 @@
       "safeWhen": "The field id resolves in the DSL form or is explicitly preserved as source evidence for review."
     },
     {
+      "name": "GetXFormFieldById(...)[0].value",
+      "semantic": "Reads or writes a legacy field through its DOM-like wrapper, including metadata-backed hidden helper state.",
+      "translationGuidance": "When the field id resolves to a visible or dataOnly DSL field, translate reads to MKXFORM.getValue(fieldId) and assignments to MKXFORM.setValue(fieldId, value). Do not preserve the wrapper or direct .value access.",
+      "safeWhen": "The field id resolves in form.fields, the value expression is understood, and no unrelated DOM mutation remains. dataOnly fields are valid value targets but cannot host control events."
+    },
+    {
       "name": "SetXFormFieldValueById",
       "semantic": "Writes a legacy form field value.",
       "translationGuidance": "Use MKXFORM.setValue(fieldId, value) when the target field resolves and the value expression is safe.",
-      "safeWhen": "No DOM object writes or hidden helper-only state are required."
+      "safeWhen": "The target resolves to a visible or dataOnly DSL field and no unrelated DOM mutation is required."
     },
     {
       "name": "common_dom_row_set_show_required_reset",
@@ -100,6 +107,10 @@
       "description": "If the draft script action already carries coverage.status=covered, non-empty coverage.nativeRules, and empty coverage.residuals, treat that as scoped native coverage evidence from deterministic fact extraction. Close the action as omitted/covered; do not re-open it because the same JSP file contains DOM helpers, validation helper definitions, or other callbacks."
     },
     {
+      "id": "static-form-property-coverage",
+      "description": "If an ungated action only assigns a form property already present in the DSL, preserve coverage.staticProps as exact fieldId/prop/value evidence, use no nativeRules, and close the action as omitted with an empty function and no residuals."
+    },
+    {
       "id": "semantic-js-coverage",
       "description": "If targetApi JavaScript covers all source behavior, patch function, translationStatus mapped, functionMappings with semantic-translation/function-catalog/native-rule basis, and coverage.status translated with residuals empty."
     },
@@ -121,7 +132,7 @@
   ],
   "coverageStandards": {
     "translated": "Generated MK JavaScript covers all source behavior for this action; residuals must be empty.",
-    "covered": "Native formRules cover all source behavior; function must be empty and residuals must be empty.",
+    "covered": "Verified native formRules or static form properties cover all source behavior; function must be empty and residuals must be empty.",
     "partial": "Native rules cover some behavior but residual JSP behavior remains.",
     "uncovered": "Source behavior remains untranslated.",
     "none": "No source behavior was identified for coverage accounting."

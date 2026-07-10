@@ -9,6 +9,13 @@ export function applyWorkflowPayload(template, dsl) {
 
   const lbpm = next.mechanisms.lbpmTemplate[0] || {};
   next.mechanisms.lbpmTemplate[0] = lbpm;
+  lbpm.fdContentType ||= "json";
+  lbpm.fdSystemCode ||= "INNER_SYSTEM";
+  lbpm.fdRunType ??= "1";
+  lbpm.fdDisableBpmInit ??= false;
+  if (!lbpm.fdFormCategory && next.fdCategory?.fdId) {
+    lbpm.fdFormCategory = { fdFormCategoryId: next.fdCategory.fdId };
+  }
   lbpm.fdContent = JSON.stringify(buildWorkflowContent(dsl.workflow, {
     templateId: next.fdId || next.mechanisms["sys-xform"]?.fdId || "",
     form: dsl.form
@@ -26,6 +33,123 @@ export function applyWorkflowPayload(template, dsl) {
   return next;
 }
 
+const WORKFLOW_DRAFT_FIELDS = Object.freeze([
+  "fdId",
+  "fdName",
+  "dynamicProps",
+  "fdTemplateCode",
+  "fdCategory",
+  "fdLabelContent",
+  "fdNotifyCategoryCode",
+  "fdDesc",
+  "fdOrder",
+  "fdEditors",
+  "fdReaders",
+  "fdEnable",
+  "fdPcEnable",
+  "fdEntityId",
+  "fdEntityKey",
+  "fdEntityName",
+  "fdContentType",
+  "fdSystemCode",
+  "fdRunType",
+  "fdDisableBpmInit",
+  "fdFormCategory",
+  "fdMobileEnable",
+  "fdMessageNotifyType",
+  "summaryFields",
+  "scheduleStrategy",
+  "fdTemplateTip",
+  "fdDirectorList",
+  "fdTempVariables",
+  "fdTempVariableMappings",
+  "businessMethodList",
+  "fdTemplateForms",
+  "events",
+  "operSubmitValidators",
+  "aiCheckConfig",
+  "fdIntelliApprovalRuleList",
+  "signalCatchers",
+  "fdReviewMailContent",
+  "fdAllowInit",
+  "fdTemplateFormAuths",
+  "fdTimeoutStrategiesOfNode",
+  "fdTimeoutStrategiesOfProcess",
+  "fdFlowType",
+  "notifyDrafterOnEnd",
+  "notifyDrafterOnException",
+  "notifyAdminOnException",
+  "notifyCurrentHandlerOnDraftRetract",
+  "notifyParticipantOnEnd",
+  "maxTransferTimes",
+  "fdCommonId",
+  "fdCommonSubject",
+  "privilegeData",
+  "adminFormAuth",
+  "identityRepeatSkipType",
+  "operatorBackList",
+  "operatorScope",
+  "processEndIsCirculated",
+  "rejectDenyRetract",
+  "canCirculationIdentity",
+  "expandPostToPerson",
+  "circulationScope",
+  "urgeCoolingTimeLimit",
+  "fdHighLights",
+  "groupChat",
+  "triggerBpmnNodeIds",
+  "fdDetailsSystemCode",
+  "fdModuleCode",
+  "fdUseModuleDefault",
+  "fdModuleTempId",
+  "fdMainEntityName",
+  "dataAuths",
+  "extra",
+  "fdContent"
+]);
+
+const WORKFLOW_CONTENT_BACKED_DRAFT_FIELDS = Object.freeze([
+  ["events", "events"],
+  ["operSubmitValidators", "operSubmitValidators"],
+  ["aiCheckConfig", "aiCheckConfig"],
+  ["signalCatchers", "signalCatchers"],
+  ["notifyDrafterOnEnd", "notifyDrafterOnEnd"],
+  ["notifyParticipantOnEnd", "notifyParticipantOnEnd"],
+  ["notifyDrafterOnException", "notifyDrafterOnException"],
+  ["notifyAdminOnException", "notifyAdminOnException"],
+  ["notifyCurrentHandlerOnDraftRetract", "notifyCurrentHandlerOnDraftRetract"],
+  ["adminFormAuth", "adminFormAuth"],
+  ["processEndIsCirculated", "processEndIsCirculated"],
+  ["rejectDenyRetract", "rejectDenyRetract"],
+  ["canCirculationIdentity", "canCirculationIdentity"],
+  ["fdHighLights", "fdHighLights"],
+  ["groupChat", "groupChat"],
+  ["fdFlowType", "flowType"]
+]);
+
+export function buildWorkflowDraftPayload(template) {
+  const lbpm = clone(template?.mechanisms?.lbpmTemplate?.[0]);
+  if (!nonEmptyString(lbpm.fdId)) {
+    throw workflowDraftError("Workflow draft save requires the LBPM mechanism fdId.");
+  }
+  if (!nonEmptyString(lbpm.fdContent)) {
+    throw workflowDraftError("Workflow draft save requires serialized designer content.");
+  }
+
+  const payload = {};
+  for (const key of WORKFLOW_DRAFT_FIELDS) {
+    if (lbpm[key] !== undefined) payload[key] = lbpm[key];
+  }
+  const content = parseJsonObject(lbpm.fdContent);
+  for (const [payloadKey, contentKey] of WORKFLOW_CONTENT_BACKED_DRAFT_FIELDS) {
+    if (payload[payloadKey] === undefined && content[contentKey] !== undefined) {
+      payload[payloadKey] = content[contentKey];
+    }
+  }
+  payload.isDraft = true;
+  return payload;
+}
+
 export function buildWorkflowContent(workflow, context = {}) {
   const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
   const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
@@ -33,7 +157,8 @@ export function buildWorkflowContent(workflow, context = {}) {
   const workflowContext = {
     ...context,
     formFieldById: context.formFieldById || buildFormFieldIndex(context.form),
-    formFieldsByTitle: context.formFieldsByTitle || buildFormFieldTitleIndex(context.form)
+    formFieldsByTitle: context.formFieldsByTitle || buildFormFieldTitleIndex(context.form),
+    initiatorSelectTargetNodeIds: collectMustModifyHandlerTargetNodeIds(nodes)
   };
   const branchRoutes = buildBranchRoutes(nodes, outgoingEdges, workflowContext);
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
@@ -85,6 +210,7 @@ export function summarizeWorkflowFromTemplate(template) {
     edgeCount: edges.length,
     conditionEdgeCount: edges.filter((element) => hasEdgeCondition(element)).length,
     invalidEdgeCount: edges.filter((edge) => !edge.sourceRef || !edge.targetRef || !nodeIds.has(edge.sourceRef) || !nodeIds.has(edge.targetRef)).length,
+    initiatorSelectNodeIds: [...collectPersistedMustModifyHandlerTargetNodeIds(nodes)].sort(),
     nodes: nodes.map((node) => ({
       id: node.id,
       type: node.type,
@@ -108,6 +234,7 @@ export function summarizeDslWorkflow(workflow = {}) {
     edgeCount: edges.length,
     conditionEdgeCount: edges.filter((edge) => Boolean(edgeConditionText(edge))).length,
     invalidEdgeCount: 0,
+    initiatorSelectNodeIds: [...collectMustModifyHandlerTargetNodeIds(nodes)].sort(),
     nodes: nodes.map((node) => ({
       id: node.id,
       type: node.type,
@@ -144,19 +271,30 @@ function hasDataAuthority(node) {
   );
 }
 
+const EXECUTABLE_NODE_TYPES = new Set([
+  "generalStart",
+  "generalEnd",
+  "draft",
+  "review",
+  "send",
+  "robot",
+  "conditionBranch",
+  "split",
+  "join"
+]);
+
 export function workflowMappingDiagnostics(workflow) {
   const diagnostics = [];
   for (const node of workflow?.nodes || []) {
-    if (isKnownNodeType(node.type)) continue;
+    if (EXECUTABLE_NODE_TYPES.has(node.type)) continue;
     diagnostics.push({
-      level: "warning",
-      code: "workflow.node_type_mapped_to_review",
-      message: `Workflow node ${node.id} has unsupported type ${node.type}; mapped to review.`,
+      level: "error",
+      code: "projection.workflow.node_type_unsupported",
+      message: `Workflow node ${node.id} has unsupported type ${node.type}; Executor does not heuristically remap node types.`,
       path: "/workflow/nodes",
       details: {
         nodeId: node.id,
-        sourceType: node.type,
-        mappedType: "review"
+        sourceType: node.type
       }
     });
   }
@@ -164,40 +302,13 @@ export function workflowMappingDiagnostics(workflow) {
 }
 
 function mapNodeType(type = "") {
-  const normalized = String(type).toLowerCase();
-  if (["generalstart", "generalend", "draft", "review", "send", "robot", "conditionbranch", "split", "join"].includes(normalized)) {
-    return type;
+  if (!EXECUTABLE_NODE_TYPES.has(type)) {
+    const error = new Error(`Unsupported workflow node type for projection: ${type}`);
+    error.code = "projection.workflow.node_type_unsupported";
+    error.details = { type };
+    throw error;
   }
-  if (normalized.includes("start")) return "generalStart";
-  if (normalized.includes("split")) return "split";
-  if (normalized.includes("join")) return "join";
-  if (normalized.includes("send") || normalized.includes("cc")) return "send";
-  if (normalized.includes("end")) return "generalEnd";
-  if (normalized.includes("draft")) return "draft";
-  if (normalized.includes("robot")) return "robot";
-  if (normalized.includes("gateway") || normalized.includes("branch")) return "conditionBranch";
-  if (normalized.includes("review") || normalized.includes("manual") || normalized.includes("task") || normalized.includes("approval")) {
-    return "review";
-  }
-  return "review";
-}
-
-function isKnownNodeType(type = "") {
-  const normalized = String(type).toLowerCase();
-  return normalized.includes("start") ||
-    normalized.includes("end") ||
-    normalized.includes("draft") ||
-    normalized.includes("review") ||
-    normalized.includes("send") ||
-    normalized.includes("split") ||
-    normalized.includes("join") ||
-    normalized.includes("parallel") ||
-    normalized.includes("robot") ||
-    normalized.includes("manual") ||
-    normalized.includes("task") ||
-    normalized.includes("approval") ||
-    normalized.includes("gateway") ||
-    normalized.includes("branch");
+  return type;
 }
 
 function mapNodeElement(type = "") {
@@ -242,10 +353,8 @@ function buildEndNode(node, index) {
 }
 
 function buildDraftNode(node, index) {
-  const attrs = sourceAttributes(node);
   return {
     ...baseNode(node, index, "draft", "manualTask", 160, 40),
-    mustModifyHandlerNodes: attrs.mustModifyHandlerNodeIds || "",
     formKey: "default",
     formName: "默认表单",
     operationRefId: "custom",
@@ -277,6 +386,7 @@ function buildDraftNode(node, index) {
 function buildArtificialNode(node, type, context = {}) {
   const attrs = sourceAttributes(node);
   const name = node.name || attrs.name || (type === "send" ? "抄送" : "审批节点");
+  const isSend = type === "send";
   return {
     ...baseNode(node, 0, type, "manualTask", 160, 40),
     name,
@@ -286,7 +396,7 @@ function buildArtificialNode(node, type, context = {}) {
     operationRefId: "default",
     openModifyProcessAuthority: "true",
     openNodeAuthority: "true",
-    modifyProcessAuthority: "1",
+    modifyProcessAuthority: isSend ? "0" : "1",
     nodeAuthority: "2",
     allowUploadAttachments: "true",
     canModifyCommentViewPermission: "false",
@@ -309,9 +419,13 @@ function buildArtificialNode(node, type, context = {}) {
     recalculateHandler: attrs.recalculateHandler,
     ignoreOnHandlerEmpty: attrs.ignoreOnHandlerEmpty,
     nodeNotifyTypeMethod: [],
-    handlers: handlersFromParticipants(node.participants, attrs, context),
+    handlers: handlersFromParticipants(node.participants, attrs, {
+      ...context,
+      initiatorSelectTarget: context.initiatorSelectTargetNodeIds?.has(node.id) === true
+    }),
+    ...(isSend ? { systemNotifyType: "2" } : {}),
     fdScene: { fdMode: 0 },
-    language: { nameCn: name, nameUs: type === "send" ? "Approval Node" : "Approval Node" },
+    language: { nameCn: name, nameUs: isSend ? "CC node" : "Approval Node" },
     ...commentAuthority(),
     nodeNotifyType: "{\"system\":\"todo\"}",
     nodeNotifyContentType: "system"
@@ -368,7 +482,7 @@ function legacyRobotKey(sourceUnid) {
 
 function buildConditionBranchNode(node, routes) {
   const attrs = sourceAttributes(node);
-  const defaultRoute = routes.find((route) => route.defaultTrend) || routes[routes.length - 1];
+  const defaultRoute = routes.find((route) => route.defaultTrend);
   const element = {
     ...baseNode(node, 0, "conditionBranch", "exclusiveGateway", 34, 34),
     conditionType: "1",
@@ -381,8 +495,10 @@ function buildConditionBranchNode(node, routes) {
   };
   if (routes.length) {
     element.resultSetMapping = JSON.stringify(routes.map((route) => ({ id: route.lineId, resultCode: route.resultCode })));
-    element.default = defaultRoute.lineId;
-    element.conditionId = defaultRoute.lineId;
+    if (defaultRoute) {
+      element.default = defaultRoute.lineId;
+      element.conditionId = defaultRoute.lineId;
+    }
     element.conditionValue = JSON.stringify({
       formulas: routes.map((route) => route.conditionValue)
     });
@@ -429,6 +545,7 @@ function buildParallelGatewayNode(node, index, type, nodeById) {
 
 function baseNode(node, index, type, element, width, height) {
   const name = node.name || node.id;
+  const mustModifyHandlerNodes = normalizeRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds);
   return {
     type,
     id: node.id,
@@ -440,7 +557,8 @@ function baseNode(node, index, type, element, width, height) {
     timeoutStrategies: "[]",
     config: "{}",
     componentOriginalValue: "{}",
-    migrationSource: migrationNodeSource(node)
+    migrationSource: migrationNodeSource(node),
+    ...(mustModifyHandlerNodes ? { mustModifyHandlerNodes } : {})
   };
 }
 
@@ -508,14 +626,11 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
     if (mapNodeType(node.type) !== "conditionBranch") continue;
 
     const routes = (outgoingEdges.get(node.id) || [])
-      .filter((edge) => edgeConditionText(edge) || edge.name)
+      .filter((edge) => edgeConditionText(edge) || edge.name || isExplicitDefaultRoute(edge))
       .map((edge, index) => buildBranchRoute(node, edge, index, context));
-    const fallbackRoutes = routes.filter((route) => route.defaultCandidate);
-    if (fallbackRoutes.length) {
-      for (const route of fallbackRoutes) route.defaultTrend = true;
-    } else if (routes.length) {
-      routes[routes.length - 1].defaultTrend = true;
-    }
+    const defaultRoute = routes.find((route) => route.explicitDefault) ||
+      routes.find((route) => route.tautologicalDefault);
+    if (defaultRoute) defaultRoute.defaultTrend = true;
     for (const route of routes) {
       route.conditionValue.defaultTrend = route.defaultTrend;
       byEdge.set(route.lineId, route);
@@ -528,7 +643,8 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
 
 function buildBranchRoute(node, edge, index, context) {
   const resultCode = edgeConditionText(edge);
-  const defaultCandidate = isOtherRoute(edge);
+  const explicitDefault = isExplicitDefaultRoute(edge);
+  const tautologicalDefault = isTautologyCondition(resultCode);
   const useSyntheticOtherCondition = isOtherTautologyRoute(edge);
   const formulaConfig = useSyntheticOtherCondition
     ? buildOtherDefaultFormulaDesignerConfig(node, edge, context) || buildFormulaDesignerConfig(edge, context)
@@ -556,7 +672,8 @@ function buildBranchRoute(node, edge, index, context) {
     resultCode,
     formulaConfig,
     defaultTrend: false,
-    defaultCandidate,
+    explicitDefault,
+    tautologicalDefault,
     conditionValue
   };
 }
@@ -582,7 +699,7 @@ function buildNotEmptyFormulaDesignerConfig(edge, field, context) {
     result: {
       resultType: { type: "boolean" },
       type: "Eval",
-      value: `(u0021\${data.$VAR.${variableKey}})`
+      value: `(!\${data.$VAR.${variableKey}})`
     },
     type: "Batch",
     vars: [{
@@ -633,6 +750,11 @@ function buildNotEmptyFormulaDesignerConfig(edge, field, context) {
 
 function isOtherRoute(edge) {
   return String(edge?.name || "").trim() === "其他";
+}
+
+function isExplicitDefaultRoute(edge) {
+  return [true, "true", 1, "1"].includes(edge?.isDefault) ||
+    [true, "true", 1, "1"].includes(edge?.attributes?.isDefault);
 }
 
 function isOtherTautologyRoute(edge) {
@@ -941,13 +1063,13 @@ function termVarConfig(term, variableKey, fdVarValue) {
 function termExpression(term, fdVarValue) {
   const dataRef = `\${data.${fdVarValue}}`;
   const value = JSON.stringify(term.value);
-  if (term.expressionType === "!=") return `${dataRef} u0021= ${value}`;
+  if (term.expressionType === "!=") return `${dataRef} != ${value}`;
   return `${dataRef} == ${value}`;
 }
 
 function termResultExpression(term) {
   const valueRef = `\${data.$VAR.${term.variableKey}}`;
-  return term.negateResult ? `u0021${valueRef}` : valueRef;
+  return term.negateResult ? `!${valueRef}` : valueRef;
 }
 
 function conditionResultExpression(ast) {
@@ -1191,6 +1313,9 @@ function handlersFromAttributes(attrs) {
 }
 
 function handlersFromParticipants(participants, attrs, context = {}) {
+  if (context.initiatorSelectTarget === true) {
+    return emptyOrgHandlers();
+  }
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return {
       id: "handlers",
@@ -1201,8 +1326,8 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       members: participants.members.map((member) => ({
         id: member.id,
         name: member.name || member.id,
-        element: member.element || "user",
-        type: member.type === "dept" ? "2" : "1"
+        element: "user",
+        type: nativeExplicitMemberType(member)
       })),
       element: "users"
     };
@@ -1246,17 +1371,37 @@ function handlersFromParticipants(participants, attrs, context = {}) {
     };
   }
   if (participants?.mode === "initiator_select") {
-    return {
-      id: "handlers",
-      type: "org",
-      source: "drafter",
-      ruleKey: "initiator_select",
-      ruleName: "发起人选择",
-      members: [],
-      element: "users"
-    };
+    return emptyOrgHandlers();
   }
   return handlersFromAttributes(attrs);
+}
+
+function nativeExplicitMemberType(member = {}) {
+  const sourceOrgType = member.sourceOrgType ?? member.fdOrgType;
+  if (sourceOrgType !== undefined && sourceOrgType !== null && String(sourceOrgType).trim() !== "") {
+    const normalized = String(sourceOrgType).trim().toLowerCase();
+    if (normalized === "8" || normalized === "person" || normalized === "user") return "1";
+    if (normalized === "4" || normalized === "post" || normalized === "position") return "2";
+    return "3";
+  }
+
+  const existingType = String(member.type || "").trim().toLowerCase();
+  if (["1", "8", "person", "user"].includes(existingType)) return "1";
+  if (["2", "4", "post", "position", "dept"].includes(existingType)) return "2";
+  if (existingType === "3") return "3";
+  return "3";
+}
+
+function emptyOrgHandlers() {
+  return {
+    id: "handlers",
+    type: "org",
+    source: "1",
+    ruleKey: "",
+    ruleName: "",
+    members: [],
+    element: "users"
+  };
 }
 
 function roleLineHandlerRuleKey(participants, context = {}) {
@@ -1357,6 +1502,30 @@ function splitRelatedNodeIds(value = "") {
   return String(value || "").split(/[;,，\s]+/).map((item) => item.trim()).filter(Boolean);
 }
 
+function normalizeRelatedNodeIds(value = "") {
+  return [...new Set(splitRelatedNodeIds(value))].join(",");
+}
+
+function collectMustModifyHandlerTargetNodeIds(nodes = []) {
+  const targetNodeIds = new Set();
+  for (const node of nodes) {
+    for (const targetNodeId of splitRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds)) {
+      targetNodeIds.add(targetNodeId);
+    }
+  }
+  return targetNodeIds;
+}
+
+function collectPersistedMustModifyHandlerTargetNodeIds(nodes = []) {
+  const targetNodeIds = new Set();
+  for (const node of nodes) {
+    for (const targetNodeId of splitRelatedNodeIds(node?.mustModifyHandlerNodes)) {
+      targetNodeIds.add(targetNodeId);
+    }
+  }
+  return targetNodeIds;
+}
+
 function migrationNodeSource(node) {
   return {
     id: node.id,
@@ -1421,6 +1590,16 @@ function parseJsonObject(value) {
   } catch {
     return {};
   }
+}
+
+function nonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function workflowDraftError(message) {
+  const error = new Error(message);
+  error.stage = "saveWorkflowDraft";
+  return error;
 }
 
 function clone(value) {

@@ -6,6 +6,8 @@ export function buildDryRunPlan(input) {
   const validation = checkExecute(input);
   const templateName = input?.template?.name || "";
   const fields = Array.isArray(input?.form?.fields) ? input.form.fields : [];
+  const dataOnlyFieldCount = fields.filter((field) => field?.dataOnly === true).length;
+  const renderedFieldCount = fields.length - dataOnlyFieldCount;
   const layoutRows = Array.isArray(input?.form?.layout?.mkTree) ? input.form.layout.mkTree : [];
   const scriptActions = Array.isArray(input?.scripts?.actions) ? input.scripts.actions : [];
   const scriptSupport = summarizeScriptActionSupport(scriptActions, input?.form);
@@ -64,6 +66,8 @@ export function buildDryRunPlan(input) {
         action: "map-trusted-mkTree-to-newoa-form-payload",
         status: validation.ok ? "planned" : "blocked",
         fieldCount: fields.length,
+        dataOnlyFieldCount,
+        renderedFieldCount,
         layoutRows: layoutRows.length
       },
       ...formRuleSteps,
@@ -80,6 +84,8 @@ export function buildDryRunPlan(input) {
         action: "api.readback-template",
         status: validation.ok ? "planned" : "blocked",
         expectedFieldCount: fields.length,
+        expectedDataOnlyFieldCount: dataOnlyFieldCount,
+        expectedRenderedFieldCount: renderedFieldCount,
         expectedLayoutRows: layoutRows.length
       }
     ]

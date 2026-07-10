@@ -33,12 +33,15 @@ export function cleanSourceFile(path, options = {}) {
 export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
   const source = legacyDsl.source || {};
   const fields = Array.isArray(legacyDsl.form?.fields) ? legacyDsl.form.fields : [];
+  const dataFields = Array.isArray(legacyDsl.form?.dataFields) ? legacyDsl.form.dataFields : [];
+  const allFields = [...fields, ...dataFields];
   const detailTableIds = new Set(fields.filter((field) => field.type === "detailTable").map((field) => field.id));
   const normalControls = fields.filter((field) => field.type !== "detailTable").map(sourceControlFromField);
+  const sourceDataFields = dataFields.map(sourceDataFieldFromField);
   const detailTables = fields.filter((field) => field.type === "detailTable").map(sourceDetailTableFromField);
   const workflow = legacyDsl.workflow ? sourceWorkflowFromLegacyWorkflow(legacyDsl.workflow, {
     nodeDataAuthorities: legacyDsl.form?.nodeDataAuthorities,
-    fields
+    fields: allFields
   }) : undefined;
 
   return pruneUndefined({
@@ -51,6 +54,7 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
     },
     form: {
       controls: normalControls,
+      dataFields: sourceDataFields,
       detailTables,
       layout: sourceLayoutFromLegacyLayout(legacyDsl.form?.layout, detailTableIds)
     },
@@ -58,6 +62,20 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
     scripts: sourceScriptsFromLegacy(legacyDsl.scripts),
     workflow,
     issues: sourceIssuesFromReview(legacyDsl.review)
+  });
+}
+
+function sourceDataFieldFromField(field) {
+  return pruneUndefined({
+    id: field.id,
+    sourceRef: sourceRef("form.dataField", field.id),
+    title: field.title,
+    sourceType: field.type,
+    required: Boolean(field.required),
+    dataOnly: true,
+    options: cloneOptions(field.options),
+    sourceProps: sourcePropsFromField(field),
+    evidence: evidenceForField(field)
   });
 }
 
@@ -296,6 +314,7 @@ function sourceScriptsFromLegacy(scripts) {
       sourceKey: source.sourceKey,
       sourceType: source.sourceType,
       fragmentId: source.fragmentId,
+      displayGate: source.displayGate,
       javascript: source.javascript,
       functionAudit: source.functionAudit,
       semanticFacts: source.semanticFacts

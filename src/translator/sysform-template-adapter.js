@@ -5,7 +5,7 @@ import { buildDesignerFirstForm } from "./sysform-designer-layout.js";
 import { extractSysFormJspScripts } from "./sysform-jsp-scripts.js";
 import { parseMetadataXml } from "./sysform-metadata.js";
 import { extractSysFormNodeDataAuthorities } from "./sysform-rights.js";
-import { cleanText, decodeEntities, parseFdValues } from "./xml-utils.js";
+import { cleanText, decodeEntities, parseFdValues, parseRootHashMapStringPuts } from "./xml-utils.js";
 
 export function translateSysFormTemplateXml(xml, options = {}) {
   const template = parseSysFormTemplateXml(xml);
@@ -76,15 +76,7 @@ export function translateSysFormTemplateXml(xml, options = {}) {
 }
 
 export function parseSysFormTemplateXml(xml = "") {
-  const values = {};
-  const putPattern = /<void\s+method=["']put["']>\s*<string>([^<]*?)<\/string>\s*<string>([\s\S]*?)<\/string>\s*<\/void>/g;
-  for (const match of xml.matchAll(putPattern)) {
-    const key = decodeEntities(match[1]);
-    if (values[key] === undefined) {
-      values[key] = decodeEntities(match[2]);
-    }
-  }
-  return values;
+  return parseRootHashMapStringPuts(xml);
 }
 
 function extractDesignerTitle(html = "") {

@@ -42,7 +42,7 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
   const actions = [];
   const warnings = [];
   candidates.forEach((candidate, index) => {
-    const action = mkActionFromCandidate(candidate, index);
+    const action = mkActionFromCandidate(candidate, index, options);
     const target = scriptTargetWarning(action, options.form);
     if (target) {
       warnings.push(target);
@@ -165,31 +165,57 @@ function extractDesignerJspFragments(html = "") {
 }
 
 function scriptSourcesFromFragment(fragment) {
-  return extractScriptBlocks(fragment.content).map((javascript, index) => ({
+  return extractScriptBlocks(fragment.content).map((script, index) => ({
     id: `${fragment.id}.script.${index + 1}`,
     sourceRef: `${fragment.sourceRef}.script.${index + 1}`,
     sourceKey: fragment.sourceKey,
     sourceType: fragment.sourceType,
     fragmentId: fragment.id,
-    javascript
+    ...script
   }));
 }
 
 function extractDisplayJspScripts(jsp = "") {
-  return extractScriptBlocks(decodeDeep(jsp)).map((javascript, index) => ({
+  return extractScriptBlocks(decodeDeep(jsp)).map((script, index) => ({
     id: `fdDisplayJsp.script.${index + 1}`,
     sourceRef: `source.form.jsp.fdDisplayJsp.script.${index + 1}`,
     sourceKey: "fdDisplayJsp",
     sourceType: "display-jsp",
-    javascript
+    ...script
   }));
 }
 
 function extractScriptBlocks(text = "") {
   const decoded = decodeDeep(text);
-  return [...decoded.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
-    .map((match) => decodeDeep(match[1]).replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim())
-    .filter(Boolean);
+  const displayGates = [];
+  const scripts = [];
+  const tokenPattern = /<\/?xform:(editShow|viewShow)\b[^>]*>|<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+
+  for (const match of decoded.matchAll(tokenPattern)) {
+    if (match[2] !== undefined) {
+      const javascript = decodeDeep(match[2]).replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+      if (!javascript) continue;
+      scripts.push(pruneUndefined({
+        javascript,
+        displayGate: displayGates.at(-1)
+      }));
+      continue;
+    }
+
+    const displayGate = normalizeDisplayGate(match[1]);
+    if (/^<\//.test(match[0])) {
+      const index = displayGates.lastIndexOf(displayGate);
+      if (index >= 0) displayGates.splice(index, 1);
+    } else {
+      displayGates.push(displayGate);
+    }
+  }
+
+  return scripts;
+}
+
+function normalizeDisplayGate(value = "") {
+  return String(value).toLowerCase() === "viewshow" ? "xform:viewShow" : "xform:editShow";
 }
 
 function hiddenInputValue(html = "") {
@@ -197,13 +223,15 @@ function hiddenInputValue(html = "") {
   return match ? match[2] : "";
 }
 
-function mkActionFromCandidate(candidate, index) {
+function mkActionFromCandidate(candidate, index, options = {}) {
   const functionName = candidate.event;
   const functionMappings = candidate.functionMappings || functionMappingsFromAudit(candidate.source.functionAudit);
-  const coverage = candidate.coverage || scriptCoverageFromSource({
+  const coverage = scriptCoverageForExecutableFormRules(candidate.coverage || scriptCoverageFromSource({
     javascript: candidate.javascript,
-    sourceRef: candidate.source.sourceRef
-  });
+    sourceRef: candidate.source.sourceRef,
+    displayGate: candidate.source.displayGate,
+    form: options.form
+  }), options.formRules);
   const translationStatus = candidate.translationStatus || "needs_review";
   const fn = translationStatus === "omitted"
     ? ""
@@ -216,6 +244,7 @@ function mkActionFromCandidate(candidate, index) {
     scope: candidate.scope,
     controlId: candidate.controlId,
     tableId: candidate.tableId,
+    runWhen: runWhenFromDisplayGate(candidate.source.displayGate),
     function: fn,
     sourceRefs: [candidate.source.sourceRef].filter(Boolean),
     translationStatus,
@@ -226,17 +255,128 @@ function mkActionFromCandidate(candidate, index) {
   });
 }
 
-function scriptCoverageFromSource(source) {
-  const analysis = analyzeLegacyScriptFormRules(source);
-  const nativeRules = analysis.linkage.map((rule) => rule.id);
+function scriptCoverageForExecutableFormRules(coverage, formRules) {
+  const nativeRules = Array.isArray(coverage?.nativeRules) ? coverage.nativeRules : [];
+  if (!nativeRules.length || !Array.isArray(formRules?.linkage)) return coverage;
+
+  const rulesByEvidenceId = new Map();
+  for (const rule of formRules.linkage) {
+    for (const evidenceId of uniqueStrings([rule.id, ...(rule.meta?.sourceRuleIds || [])])) {
+      rulesByEvidenceId.set(evidenceId, rule);
+    }
+  }
+
+  const executableNativeRules = [];
+  const reviewNativeRules = [];
+  for (const evidenceId of nativeRules) {
+    const rule = rulesByEvidenceId.get(evidenceId);
+    if (rule?.translationStatus === "executable") {
+      executableNativeRules.push(rule.id);
+    } else {
+      reviewNativeRules.push(rule?.id || evidenceId);
+    }
+  }
+  const canonicalExecutableRules = uniqueStrings(executableNativeRules);
+  const canonicalReviewRules = uniqueStrings(reviewNativeRules);
+  if (!canonicalReviewRules.length) {
+    return {
+      ...coverage,
+      nativeRules: canonicalExecutableRules
+    };
+  }
+
+  const residuals = [
+    ...(Array.isArray(coverage.residuals) ? coverage.residuals : []),
+    ...canonicalReviewRules.map((ruleId) => scriptResidual({
+      code: "script.residual.form_rule_needs_review",
+      type: "formRuleNeedsReview",
+      message: `Native form rule ${ruleId} still needs review and cannot be counted as executable script coverage.`,
+      evidence: ruleId
+    }))
+  ];
+
   return {
-    status: analysis.residuals.length ? (nativeRules.length ? "partial" : "uncovered") : (nativeRules.length ? "covered" : "none"),
-    nativeRules,
-    residuals: analysis.residuals
+    ...coverage,
+    status: residuals.length ? (canonicalExecutableRules.length ? "partial" : "uncovered") : (canonicalExecutableRules.length ? "covered" : "none"),
+    nativeRules: canonicalExecutableRules,
+    residuals
   };
 }
 
+function scriptResidual(input) {
+  return pruneUndefined({
+    code: input.code,
+    type: input.type,
+    message: input.message,
+    target: input.target,
+    trigger: input.trigger,
+    callback: input.callback,
+    evidence: input.evidence
+  });
+}
+
+function scriptCoverageFromSource(source) {
+  const staticProps = source.displayGate
+    ? []
+    : staticRequiredCoverage(source.javascript, source.form);
+  if (staticProps.length) {
+    return {
+      status: "covered",
+      nativeRules: [],
+      staticProps,
+      residuals: []
+    };
+  }
+
+  const analysis = analyzeLegacyScriptFormRules(source);
+  const nativeEligible = source.displayGate !== "xform:viewShow";
+  const gatedRules = nativeEligible ? [] : analysis.linkage;
+  const nativeRules = nativeEligible ? analysis.linkage.map((rule) => rule.id) : [];
+  const residuals = [
+    ...analysis.residuals,
+    ...gatedRules.map((rule) => ({
+      code: "script.residual.gated_native_form_rule",
+      type: "gatedNativeFormRule",
+      message: `Native form rule ${rule.id} is not emitted because ${source.displayGate} behavior must remain view-status gated.`,
+      sourceRef: source.sourceRef,
+      evidence: rule.id
+    }))
+  ];
+  return {
+    status: residuals.length ? (nativeRules.length ? "partial" : "uncovered") : (nativeRules.length ? "covered" : "none"),
+    nativeRules,
+    residuals
+  };
+}
+
+function staticRequiredCoverage(javascript, form) {
+  const load = String(javascript || "").match(
+    /^\s*Com_AddEventListener\(\s*window\s*,\s*(["'])load\1\s*,\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\}\s*\)\s*;?\s*$/
+  );
+  if (!load) return [];
+
+  const required = load[2].match(
+    /^\s*\$\(\s*(["'])\[name=(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\2\]\1\s*\)\s*\.attr\(\s*(["'])validate\4\s*,\s*(["'])required\5\s*\)\s*;?\s*$/
+  );
+  if (!required) return [];
+
+  const fieldId = required[3];
+  const field = (Array.isArray(form?.fields) ? form.fields : [])
+    .find((candidate) => candidate?.id === fieldId && candidate?.type !== "detailTable");
+  if (field?.props?.required !== true) return [];
+
+  return [{ fieldId, prop: "required", value: true }];
+}
+
+function runWhenFromDisplayGate(displayGate) {
+  if (displayGate === "xform:editShow") return { viewStatusIn: ["add", "edit"] };
+  if (displayGate === "xform:viewShow") return { viewStatusIn: ["view"] };
+  return undefined;
+}
+
 function eventCandidatesFromSource(source, sourceIndex) {
+  if (!hasExecutableJavascript(source.javascript)) return [];
+
   const candidates = [
     ...extractValueChangeCandidates(source),
     ...extractDetailControlDisplayCandidates(source),
@@ -251,6 +391,45 @@ function eventCandidatesFromSource(source, sourceIndex) {
     id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
     source
   }));
+}
+
+function hasExecutableJavascript(value = "") {
+  const text = String(value);
+  let lineComment = false;
+  let blockComment = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+
+    if (lineComment) {
+      if (char === "\n") lineComment = false;
+      continue;
+    }
+    if (blockComment) {
+      if (char === "*" && next === "/") {
+        blockComment = false;
+        index += 1;
+      }
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      lineComment = true;
+      index += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      blockComment = true;
+      index += 1;
+      continue;
+    }
+    if (["\"", "'", "`"].includes(char)) {
+      return true;
+    }
+    if (!/\s/.test(char)) return true;
+  }
+
+  return false;
 }
 
 function extractValueChangeCandidates(source) {
@@ -634,8 +813,9 @@ function dedupeCandidatesByKey(candidates) {
       result.push(candidate);
       continue;
     }
-    if (seen.has(candidate.dedupeKey)) continue;
-    seen.add(candidate.dedupeKey);
+    const key = `${candidate.dedupeKey}:${candidate.source?.displayGate || "ungated"}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     result.push(candidate);
   }
   return result;

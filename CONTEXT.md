@@ -36,6 +36,14 @@ _Avoid_: standalone workflow source, legacy flow source
 The source-agnostic component that validates DSL, builds a dry-run plan, performs confirmed API-first NewOA SIT test-template writes, and verifies readback.
 _Avoid_: source parser, translator
 
+**Persisted invariant**:
+A DSL-required semantic property that must survive in NewOA's native persisted template structure.
+_Avoid_: raw payload field, migration audit marker, runtime behavior
+
+**Readback verification**:
+The comparison of persisted invariants expected from the complete trusted DSL with persisted invariants observed from NewOA's native template structure. It does not prove designer or runtime behavior.
+_Avoid_: response echo check, runtime smoke test, browser verification
+
 **NewOA SIT executor path**:
 The only current write path. It creates a new `MK_TEST_` draft template through NewOA APIs, saves form/workflow structure, reads back, and reports the created `fdId`.
 _Avoid_: production execution, update existing template, publish

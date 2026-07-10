@@ -26,6 +26,10 @@
    <string>route-form-only-template</string>
   </void>
   <void method="put">
+   <string>fdDisplayJsp</string>
+   <string>&lt;script&gt;Com_AddEventListener(window, "load", function(){ $(&quot;[name='extendDataFormInfo.value(fd_subject)']&quot;).attr("validate", "required"); });&lt;/script&gt;</string>
+  </void>
+  <void method="put">
    <string>fdDesignerHtml</string>
    <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
     &lt;tr&gt;

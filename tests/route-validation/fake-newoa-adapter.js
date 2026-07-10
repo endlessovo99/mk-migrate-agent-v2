@@ -3,6 +3,7 @@ import { integrityError } from "./integrity.js";
 import { appendTranscriptEntry, sanitizedTranscript } from "./transcript.js";
 
 const CREATED_TEMPLATE_ID = "route-created-template";
+const CREATED_WORKFLOW_TEMPLATE_ID = "route-created-workflow-template";
 
 export class FakeNewoaAdapter {
   constructor(scenario) {
@@ -12,6 +13,7 @@ export class FakeNewoaAdapter {
     this.scenario = scenario;
     this.entries = [];
     this.template = undefined;
+    this.workflowDraft = undefined;
     this.updated = false;
   }
 
@@ -52,6 +54,8 @@ export class FakeNewoaAdapter {
   async addTemplate(payload) {
     this.template = clone(payload);
     this.template.fdId = CREATED_TEMPLATE_ID;
+    const lbpm = this.template.mechanisms?.lbpmTemplate?.[0];
+    if (lbpm) lbpm.fdId = CREATED_WORKFLOW_TEMPLATE_ID;
     this.record({ operation: "add", templateId: CREATED_TEMPLATE_ID, draft: true });
     return { fdId: CREATED_TEMPLATE_ID, fdName: payload.fdName };
   }
@@ -66,6 +70,9 @@ export class FakeNewoaAdapter {
     if (this.updated && this.scenario === "lose-layout-on-readback") {
       return loseLayoutCell(template);
     }
+    if (this.updated && this.scenario === "lose-required-on-readback") {
+      return loseRequiredField(template, "fd_subject");
+    }
     return template;
   }
 
@@ -79,6 +86,30 @@ export class FakeNewoaAdapter {
     this.template = clone(payload);
     this.updated = true;
     return { fdId: payload.fdId || CREATED_TEMPLATE_ID };
+  }
+
+  async saveWorkflowDraft(payload) {
+    this.record({
+      operation: "save-workflow-draft",
+      templateId: payload.fdId,
+      draft: payload.isDraft === true
+    });
+    this.workflowDraft = clone(payload);
+    return { fdId: CREATED_WORKFLOW_TEMPLATE_ID };
+  }
+
+  async getWorkflowTemplateDetail({ templateId, definitionId }) {
+    this.record({
+      operation: "get-workflow-detail",
+      templateId,
+      definitionId
+    });
+    return {
+      ...clone(this.workflowDraft),
+      fdId: CREATED_WORKFLOW_TEMPLATE_ID,
+      isDraft: true,
+      fdStatus: "draft"
+    };
   }
 
   transcript() {
@@ -104,6 +135,21 @@ function loseLayoutCell(template) {
   }
   grid.children = grid.children.slice(0, -1);
   config.viewModel[0].fdConfig = JSON.stringify(view);
+  xform.fdConfig = JSON.stringify(config);
+  return template;
+}
+
+function loseRequiredField(template, fieldId) {
+  const xform = template?.mechanisms?.["sys-xform"];
+  const config = parseJsonObject(xform?.fdConfig);
+  const main = (config.dataModel || []).find((model) => model?.fdType === "main");
+  const field = (main?.fdFields || []).find((candidate) => candidate?.fdName === fieldId);
+  const attribute = parseJsonObject(field?.fdAttribute);
+  if (attribute.config?.controlProps?.required !== true) {
+    throw integrityError("route.scenario.not_applied", "The required-loss scenario could not find a persisted required field.");
+  }
+  delete attribute.config.controlProps.required;
+  field.fdAttribute = JSON.stringify(attribute);
   xform.fdConfig = JSON.stringify(config);
   return template;
 }

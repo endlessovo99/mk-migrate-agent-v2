@@ -87,7 +87,7 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
 
   const trusted = createTrustedMigrationDsl(sourceDraft, patchResult.dslDraft, {
     externalAgentReviewed: true,
-    reviewerName: "openai-responses-agent",
+    reviewerName: options.reviewerName || "openai-responses-agent",
     checkedAt: reviewedAt,
     decisions: patchResult.decisions,
     agentReview,
@@ -491,6 +491,12 @@ function validateScriptPatchValue(patch, target, path, currentValue, dslDraft) {
     if (patch.value.nativeRules !== undefined && !Array.isArray(patch.value.nativeRules)) {
       diagnostics.push(error("agent.patch.value_coverage_native_rules_invalid", "Script coverage.nativeRules must be an array when present.", `${path}/value/nativeRules`));
     }
+    diagnostics.push(...validateStaticPropPatchCoverage(
+      patch.value.staticProps,
+      dslDraft?.form,
+      `${path}/value/staticProps`,
+      action?.coverage?.staticProps
+    ));
     if (patch.value.residuals !== undefined && !Array.isArray(patch.value.residuals)) {
       diagnostics.push(error("agent.patch.value_coverage_residuals_invalid", "Script coverage.residuals must be an array when present.", `${path}/value/residuals`));
     }
@@ -505,10 +511,68 @@ function getScriptAction(dslDraft, actionIndex) {
   return Array.isArray(actions) ? actions[actionIndex] : undefined;
 }
 
+function validateStaticPropPatchCoverage(staticProps, form, path, currentStaticProps) {
+  const hasCurrentStaticProps = Array.isArray(currentStaticProps) && currentStaticProps.length > 0;
+  if (staticProps === undefined) {
+    return hasCurrentStaticProps
+      ? [staticPropsChangedError(path, currentStaticProps, staticProps)]
+      : [];
+  }
+  if (!Array.isArray(staticProps)) {
+    return [error("agent.patch.static_props_type", "Script coverage.staticProps patches must be arrays.", path)];
+  }
+
+  const diagnostics = [];
+  if (
+    hasCurrentStaticProps &&
+    JSON.stringify(staticProps) !== JSON.stringify(currentStaticProps)
+  ) {
+    diagnostics.push(staticPropsChangedError(path, currentStaticProps, staticProps));
+  }
+  staticProps.forEach((entry, index) => {
+    const entryPath = `${path}/${index}`;
+    if (!isRecord(entry)) {
+      diagnostics.push(error("agent.patch.static_prop_type", "Static-property coverage entries must be objects.", entryPath));
+      return;
+    }
+    if (entry.prop !== "required" || entry.value !== true) {
+      diagnostics.push(error("agent.patch.static_prop_unsupported", "Agent Review static coverage currently supports only { prop: \"required\", value: true }.", entryPath, {
+        prop: entry.prop,
+        value: entry.value
+      }));
+      return;
+    }
+    const field = (Array.isArray(form?.fields) ? form.fields : [])
+      .find((candidate) => candidate?.id === entry.fieldId && candidate?.type !== "detailTable");
+    if (!field) {
+      diagnostics.push(error("agent.patch.static_prop_field_missing", "Static-property coverage must reference an existing ordinary form field.", `${entryPath}/fieldId`, {
+        fieldId: entry.fieldId
+      }));
+      return;
+    }
+    if (field.props?.required !== true) {
+      diagnostics.push(error("agent.patch.static_prop_not_satisfied", "Static required coverage must reference a field whose current DSL props.required is true.", entryPath, {
+        fieldId: entry.fieldId,
+        actual: field.props?.required
+      }));
+    }
+  });
+  return diagnostics;
+}
+
+function staticPropsChangedError(path, current, proposed) {
+  return error("agent.patch.static_props_changed", "Agent Review must preserve deterministic static-property coverage evidence exactly.", path, {
+    current,
+    proposed
+  });
+}
+
 function protectedScriptActionReason(action) {
   if (!isRecord(action)) return undefined;
   if (action.translationStatus === "omitted" && action.coverage?.status === "covered") {
-    return "native-covered";
+    return Array.isArray(action.coverage?.staticProps) && action.coverage.staticProps.length
+      ? "static-property-covered"
+      : "native-covered";
   }
   const mappings = Array.isArray(action.functionMappings) ? action.functionMappings : [];
   const hasDeterministicPattern = mappings.some((mapping) => (

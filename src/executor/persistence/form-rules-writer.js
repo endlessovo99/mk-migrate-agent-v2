@@ -3,7 +3,7 @@ import {
   resolveDirectRef,
   resolveEffectTarget,
   summarizeFormRules
-} from "../dsl/form-rules.js";
+} from "../../dsl/form-rules.js";
 
 const GENERATED_BY = "mk-migrate-agent-v2";
 const GENERATED_RULE_PREFIX = "mk-migrate-agent-v2:";
@@ -29,7 +29,8 @@ const INVERT_OPERATOR_MAP = {
 };
 
 export function buildNativeFormRuleConfig(formRules, form, dataModels) {
-  const linkage = Array.isArray(formRules?.linkage) ? formRules.linkage : [];
+  const linkage = (Array.isArray(formRules?.linkage) ? formRules.linkage : [])
+    .filter((rule) => rule?.translationStatus === "executable");
   const formIndex = buildFormRuleRefIndex(form || {});
   const nativeIndex = buildNativeFieldIndex(dataModels);
   const display = [];
@@ -45,7 +46,7 @@ export function buildNativeFormRuleConfig(formRules, form, dataModels) {
 
     if (Array.isArray(rule.else) && rule.else.length) {
       const elseConditions = buildConditionItems(invertClauses(when), formIndex, nativeIndex, `${ruleId}:else`);
-      const elseBranch = buildBranch(rule, ruleId, "else", elseConditions, rule.else, formIndex, nativeIndex);
+      const elseBranch = buildBranch({ ...rule, logic: invertLogic(rule.logic) }, ruleId, "else", elseConditions, rule.else, formIndex, nativeIndex);
       display.push(...elseBranch.display);
       require.push(...elseBranch.require);
     }
@@ -54,7 +55,7 @@ export function buildNativeFormRuleConfig(formRules, form, dataModels) {
   return {
     display,
     require,
-    summary: summarizeFormRules(formRules)
+    summary: summarizeFormRules({ ...(formRules || {}), linkage })
   };
 }
 
@@ -247,6 +248,10 @@ function invertClauses(clauses) {
     ...clause,
     op: INVERT_OPERATOR_MAP[clause.op] || clause.op
   }));
+}
+
+function invertLogic(logic) {
+  return logic === "or" ? "and" : logic === "and" ? "or" : logic;
 }
 
 function mergeGeneratedRules(existing, generated) {

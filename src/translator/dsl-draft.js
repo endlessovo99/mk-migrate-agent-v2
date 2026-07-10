@@ -1,4 +1,5 @@
 import { catalogRefs, validationPolicyRef } from "../dsl/catalogs.js";
+import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../dsl/form-rules.js";
 import { SOURCE_DRAFT_VERSION } from "./source-draft.js";
 import { draftMkScriptsFromSourceScripts } from "./sysform-jsp-scripts.js";
 
@@ -10,7 +11,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   }
 
   const form = draftForm(sourceDraft.form || {});
-  const formRules = draftFormRules(sourceDraft.formRules);
+  const formRules = draftFormRules(sourceDraft.formRules, form);
 
   return pruneUndefined({
     version: MIGRATION_DSL_VERSION,
@@ -53,9 +54,11 @@ export function draftSourceDraft(sourceDraft, options = {}) {
 function draftForm(sourceForm) {
   const controls = Array.isArray(sourceForm.controls) ? sourceForm.controls : [];
   const detailTables = Array.isArray(sourceForm.detailTables) ? sourceForm.detailTables : [];
+  const dataFields = Array.isArray(sourceForm.dataFields) ? sourceForm.dataFields : [];
   const fields = [
     ...controls.map(draftFieldFromSourceControl),
-    ...detailTables.map(draftDetailTableFromSource)
+    ...detailTables.map(draftDetailTableFromSource),
+    ...dataFields.map(draftDataFieldFromSource)
   ];
 
   return {
@@ -64,6 +67,13 @@ function draftForm(sourceForm) {
       sourceGrid: sourceForm.layout || { source: "fdDesignerHtml", rows: [] },
       mkTree: draftMkTree(sourceForm.layout || {}, new Set(detailTables.map((table) => table.id)))
     }
+  };
+}
+
+function draftDataFieldFromSource(field) {
+  return {
+    ...draftFieldFromSourceControl(field),
+    dataOnly: true
   };
 }
 
@@ -234,29 +244,170 @@ function draftMkTree(layout, detailTableIds) {
   });
 }
 
-function draftFormRules(sourceFormRules) {
+function draftFormRules(sourceFormRules, form) {
   const linkage = Array.isArray(sourceFormRules?.linkage) ? sourceFormRules.linkage : [];
   if (!linkage.length) return undefined;
+  const refIndex = buildFormRuleRefIndex(form || {});
+  const targetIssues = [];
+  const classifiedLinkage = linkage.map((rule) => {
+    const ruleTargetIssues = formRuleTargetIssues(rule, refIndex);
+    targetIssues.push(...ruleTargetIssues);
+    return draftLinkageRule(rule, ruleTargetIssues);
+  });
+  const excludedLinkage = classifiedLinkage.filter(hasTargetIssue);
+  const draftedLinkage = mergeEquivalentOrRules(classifiedLinkage.filter((rule) => !hasTargetIssue(rule)));
+  const mergedRules = draftedLinkage
+    .filter((rule) => (rule.meta?.sourceRuleIds || []).length > 1)
+    .map((rule) => ({ ruleId: rule.id, sourceRuleIds: rule.meta.sourceRuleIds }));
+
   return {
-    linkage: linkage.map((rule) => pruneUndefined({
-      id: rule.id,
-      trigger: rule.trigger || "change",
-      source: rule.source,
-      logic: rule.logic || "and",
-      when: Array.isArray(rule.when) ? rule.when.map((condition) => ({
-        field: condition.field,
-        op: condition.op,
-        value: condition.value
-      })) : [],
-      effects: draftRuleEffects(rule.effects),
-      else: draftRuleEffects(rule.else),
-      meta: rule.meta,
-      translationStatus: rule.translationStatus || "executable"
-    })),
+    linkage: draftedLinkage,
     validations: [],
     impliedRequired: [],
-    review: sourceFormRules.review || {}
+    review: pruneUndefined({
+      ...(sourceFormRules.review || {}),
+      targetIssues: targetIssues.length ? targetIssues : undefined,
+      excludedRules: excludedLinkage.length ? excludedLinkage.map(excludedRuleSummary) : undefined,
+      mergedRules: mergedRules.length ? mergedRules : undefined
+    })
   };
+}
+
+function hasTargetIssue(rule) {
+  return (rule.review?.targetIssues || []).length > 0;
+}
+
+function excludedRuleSummary(rule) {
+  const issues = rule.review?.targetIssues || [];
+  const targets = uniqueStrings(issues.map((issue) => issue.target));
+  return pruneUndefined({
+    ruleId: rule.id,
+    code: issues[0]?.code,
+    target: targets.length === 1 ? targets[0] : undefined,
+    targets: targets.length > 1 ? targets : undefined,
+    detailTableRefs: uniqueStrings(issues.flatMap((issue) => issue.detailTableRefs || [])),
+    sourceJsp: rule.meta?.sourceJsp,
+    displayGate: rule.meta?.displayGate,
+    message: issues[0]?.message
+  });
+}
+
+function mergeEquivalentOrRules(rules) {
+  const groups = new Map();
+  for (const rule of rules) {
+    const key = JSON.stringify({
+      trigger: rule.trigger,
+      displayGate: rule.meta?.displayGate,
+      runWhen: rule.meta?.runWhen,
+      effects: rule.effects,
+      else: rule.else,
+      translationStatus: rule.translationStatus
+    });
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(rule);
+  }
+
+  return [...groups.values()].map((group) => {
+    if (group.length === 1) return group[0];
+    const first = group[0];
+    const sourceJsps = uniqueStrings(group.flatMap((rule) => [
+      rule.meta?.sourceJsp,
+      ...(rule.meta?.sourceJsps || [])
+    ]));
+    const sourceRuleIds = uniqueStrings(group.flatMap((rule) => [
+      rule.id,
+      ...(rule.meta?.sourceRuleIds || [])
+    ]));
+    const sources = uniqueStrings(group.map((rule) => rule.source));
+    const targetIssues = group.flatMap((rule) => rule.review?.targetIssues || []);
+    return pruneUndefined({
+      ...first,
+      id: `${first.id}.merged`,
+      source: sources.length === 1 ? sources[0] : undefined,
+      logic: "or",
+      when: dedupeConditions(group.flatMap((rule) => rule.when || [])),
+      meta: {
+        ...(first.meta || {}),
+        sourceJsp: sourceJsps[0],
+        sourceJsps,
+        sourceRuleIds
+      },
+      review: targetIssues.length ? { targetIssues } : undefined
+    });
+  });
+}
+
+function dedupeConditions(conditions) {
+  const seen = new Set();
+  return conditions.filter((condition) => {
+    const key = JSON.stringify(condition);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function draftLinkageRule(rule, targetIssues = []) {
+  const translationStatus = targetIssues.length && (rule.translationStatus || "executable") === "executable"
+    ? "needs_review"
+    : rule.translationStatus || "executable";
+
+  return pruneUndefined({
+    id: rule.id,
+    trigger: rule.trigger || "change",
+    source: rule.source,
+    logic: rule.logic || "and",
+    when: Array.isArray(rule.when) ? rule.when.map((condition) => ({
+      field: condition.field,
+      op: condition.op,
+      value: condition.value
+    })) : [],
+    effects: draftRuleEffects(rule.effects),
+    else: draftRuleEffects(rule.else),
+    meta: rule.meta,
+    review: targetIssues.length ? { targetIssues } : undefined,
+    translationStatus
+  });
+}
+
+function formRuleTargetIssues(rule, refIndex) {
+  const result = [];
+  for (const [branch, effects] of [["effects", rule.effects], ["else", rule.else]]) {
+    for (const [effectIndex, effect] of (Array.isArray(effects) ? effects : []).entries()) {
+      if (!effect?.target) continue;
+      const resolved = resolveEffectTarget(refIndex, effect.target);
+      if (!resolved || resolved.unresolved?.length || !resolved.targets?.length) {
+        result.push(pruneUndefined({
+          code: "form_rule.target_unresolved",
+          ruleId: rule.id,
+          branch,
+          effectIndex,
+          target: effect.target,
+          type: effect.type,
+          unresolved: resolved?.unresolved,
+          message: "Form rule row target does not resolve to a direct field or mkTree.sourceMarkers entry."
+        }));
+        continue;
+      }
+
+      const detailTableRefs = resolved.source === "rowMarker"
+        ? (resolved.marker?.refIds || []).filter((refId) => resolveDirectRef(refIndex, refId)?.kind === "detailTable")
+        : [];
+      if (detailTableRefs.length) {
+        result.push({
+          code: "form_rule.target_detail_table",
+          ruleId: rule.id,
+          branch,
+          effectIndex,
+          target: effect.target,
+          type: effect.type,
+          detailTableRefs,
+          message: "Native form rules currently expand detail-table row markers to columns and cannot represent whole-container visibility or required semantics."
+        });
+      }
+    }
+  }
+  return result;
 }
 
 function draftRuleEffects(effects) {
@@ -270,10 +421,12 @@ function draftRuleEffects(effects) {
 }
 
 function draftWorkflow(sourceWorkflow) {
-  const nodeById = new Map((sourceWorkflow.nodes || []).map((node) => [node.id, node]));
+  const sourceNodes = sourceWorkflow.nodes || [];
+  const nodeById = new Map(sourceNodes.map((node) => [node.id, node]));
+  const draftParticipantSelections = participantSelectionsFromDraftNodes(sourceNodes);
   return {
     process: sourceWorkflow.process || {},
-    nodes: (sourceWorkflow.nodes || []).map((node) => {
+    nodes: sourceNodes.map((node) => {
       const nodeType = mapWorkflowNodeType(node, nodeById);
       return pruneUndefined({
         id: node.id,
@@ -285,7 +438,9 @@ function draftWorkflow(sourceWorkflow) {
         attributes: node.attributes || {},
         definition: node.definition,
         dataAuthority: draftDataAuthority(node.dataAuthority),
-        participants: nodeType.participants === false ? undefined : participantsFromSourceNode(node),
+        participants: nodeType.participants === false
+          ? undefined
+          : participantsFromSourceNode(node, draftParticipantSelections.get(node.id)),
         translationStatus: nodeType.needsReview ? "pending_review" : "executable"
       });
     }),
@@ -310,6 +465,25 @@ function draftWorkflow(sourceWorkflow) {
   };
 }
 
+function participantSelectionsFromDraftNodes(nodes) {
+  const selections = new Map();
+  for (const node of nodes) {
+    if (!String(node.sourceType || "").toLowerCase().includes("draft")) continue;
+    const attrs = sourceNodeAttributes(node);
+    for (const attribute of ["mustModifyHandlerNodeIds", "canModifyHandlerNodeIds"]) {
+      for (const targetNodeId of splitRelatedNodeIds(attrs[attribute])) {
+        if (selections.has(targetNodeId)) continue;
+        selections.set(targetNodeId, {
+          sourceNodeId: node.id,
+          attribute,
+          targetNodeId
+        });
+      }
+    }
+  }
+  return selections;
+}
+
 function draftDataAuthority(dataAuthority) {
   if (!dataAuthority || typeof dataAuthority !== "object") return undefined;
   const fields = Object.fromEntries(
@@ -329,7 +503,7 @@ function draftDataAuthority(dataAuthority) {
   };
 }
 
-function participantsFromSourceNode(node) {
+function participantsFromSourceNode(node, draftSelection) {
   const attrs = node.attributes || {};
   const handlerIds = splitList(attrs.handlerIds);
   const handlerNames = splitList(attrs.handlerNames);
@@ -353,6 +527,13 @@ function participantsFromSourceNode(node) {
     return {
       mode: "initiator_select",
       sourceSemantics: "source handler expression references drafter/initiator selection"
+    };
+  }
+
+  if (draftSelection && handlerIds.length === 0) {
+    return {
+      mode: "initiator_select",
+      sourceSemantics: `draft node ${draftSelection.sourceNodeId} ${draftSelection.attribute} includes ${draftSelection.targetNodeId}`
     };
   }
 
@@ -604,6 +785,10 @@ function positiveInteger(value) {
 
 function splitList(value = "") {
   return String(value || "").split(";").map((item) => item.trim()).filter(Boolean);
+}
+
+function uniqueStrings(values = []) {
+  return [...new Set(values.filter((value) => typeof value === "string" && value.trim()))];
 }
 
 function pruneUndefined(value) {

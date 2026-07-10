@@ -46,6 +46,7 @@ export const FIELD_TYPES = new Set([
 const SCRIPT_COVERAGE_STATUSES = new Set(["none", "partial", "uncovered", "covered", "translated"]);
 const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "robot", "conditionBranch", "split", "join", "generalEnd"]);
 const WORKFLOW_NODE_ELEMENTS = new Set(["startEvent", "manualTask", "exclusiveGateway", "parallelGateway", "robot", "endEvent"]);
+const MK_FIELD_ID_MAX_LENGTH = 25;
 
 export function validateMigrationDsl(input, options = {}) {
   const diagnostics = [];
@@ -69,7 +70,7 @@ export function validateMigrationDsl(input, options = {}) {
   validateTemplate(root.template, diagnostics);
   const formContext = validateForm(root.form, diagnostics);
   validateFormRules(root.formRules, diagnostics, { mode, form: root.form });
-  validateScripts(root.scripts, diagnostics, { mode, form: root.form });
+  validateScripts(root.scripts, diagnostics, { mode, form: root.form, formRules: root.formRules });
   validateReview(root.review, diagnostics, root.trust?.level);
   if (root.workflow !== undefined) {
     validateWorkflow(root.workflow, diagnostics, {
@@ -172,9 +173,15 @@ function validateForm(form, diagnostics) {
   }
 
   const fieldIds = validateFields(form.fields, diagnostics);
+  const dataOnlyFieldIds = new Set(
+    (Array.isArray(form.fields) ? form.fields : [])
+      .filter((field) => field?.type !== "detailTable" && field?.dataOnly === true)
+      .map((field) => field.id)
+      .filter(nonEmptyString)
+  );
   const dataAuthorityFieldIds = collectDataAuthorityFieldIds(form.fields);
   const detailTableIds = new Set((form.fields || []).filter((field) => field?.type === "detailTable").map((field) => field.id));
-  const layoutNodeIds = validateFormLayout(form.layout, { fieldIds, detailTableIds }, diagnostics);
+  const layoutNodeIds = validateFormLayout(form.layout, { fieldIds, detailTableIds, dataOnlyFieldIds }, diagnostics);
   return { fieldIds, dataAuthorityFieldIds, detailTableIds, layoutNodeIds };
 }
 
@@ -205,10 +212,19 @@ function validateFieldLike(field, diagnostics, path, ids, scope) {
 
   if (!nonEmptyString(field.id)) {
     diagnostics.push(error("dsl.field.id_required", "Field id is required.", `${path}/id`));
-  } else if (ids?.has(field.id)) {
-    diagnostics.push(error("dsl.field.id_duplicate", "Field id must be unique.", `${path}/id`, { id: field.id }));
   } else {
-    ids?.add(field.id);
+    if (field.id.length > MK_FIELD_ID_MAX_LENGTH) {
+      diagnostics.push(error("dsl.field.id_too_long", `Field id must not exceed ${MK_FIELD_ID_MAX_LENGTH} characters for MK.`, `${path}/id`, {
+        id: field.id,
+        length: field.id.length,
+        maxLength: MK_FIELD_ID_MAX_LENGTH
+      }));
+    }
+    if (ids?.has(field.id)) {
+      diagnostics.push(error("dsl.field.id_duplicate", "Field id must be unique.", `${path}/id`, { id: field.id }));
+    } else {
+      ids?.add(field.id);
+    }
   }
 
   if (!nonEmptyString(field.title)) {
@@ -237,6 +253,17 @@ function validateFieldLike(field, diagnostics, path, ids, scope) {
   }
   if (field.generated === true && !nonEmptyString(field.reason)) {
     diagnostics.push(error("dsl.field.generated_reason_required", "Generated fields must include a reason.", `${path}/reason`));
+  }
+  if (field.dataOnly !== undefined && typeof field.dataOnly !== "boolean") {
+    diagnostics.push(error("dsl.field.data_only_type", "Field dataOnly must be a boolean when present.", `${path}/dataOnly`));
+  }
+  if (field.dataOnly === true && scope !== "field") {
+    diagnostics.push(error("dsl.field.data_only_scope", "dataOnly is supported only on ordinary main-form fields.", `${path}/dataOnly`, {
+      scope
+    }));
+  }
+  if (field.dataOnly === true && field.props?.required === true) {
+    diagnostics.push(error("dsl.field.data_only_required_forbidden", "Data-only fields cannot be required because they have no rendered input control.", `${path}/props/required`));
   }
 }
 
@@ -343,6 +370,9 @@ function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
       }
       if (child.refType === "field" && !refs.fieldIds.has(refId)) {
         diagnostics.push(error("dsl.form.layout.field_missing", "mkTree child field reference must exist in form.fields.", refPath, { refId }));
+      }
+      if (child.refType === "field" && refs.dataOnlyFieldIds.has(refId)) {
+        diagnostics.push(error("dsl.form.layout.data_only_field_rendered", "Data-only fields must not be referenced by form.layout.mkTree.", refPath, { refId }));
       }
       if (child.refType === "detailTable" && !refs.detailTableIds.has(refId)) {
         diagnostics.push(error("dsl.form.layout.detail_table_missing", "mkTree child detail-table reference must exist in form.fields.", refPath, { refId }));
@@ -479,6 +509,12 @@ function validateLinkageEffects(effects, path, diagnostics, context, rule) {
           ruleId: rule.id,
           unresolved: resolved?.unresolved
         }));
+      } else if (resolved.targets.some((target) => target.field?.dataOnly === true)) {
+        diagnostics.push(error("dsl.form_rules.data_only_effect_forbidden", "Visible/required form-rule effects cannot target data-only fields.", `${effectPath}/target`, {
+          ref: effect.target,
+          ruleId: rule.id,
+          dataOnlyFieldIds: resolved.targets.filter((target) => target.field?.dataOnly === true).map((target) => target.id)
+        }));
       }
     }
     if (typeof effect.value !== "boolean") {
@@ -605,6 +641,7 @@ function validateScripts(scripts, diagnostics, context) {
         actual: action.coverage.status
       }));
     }
+    validateStaticPropCoverage(action.coverage?.staticProps, context.form, `${path}/coverage/staticProps`, diagnostics);
     if (action.translationStatus === "mapped" && !["translated", "covered"].includes(action.coverage?.status)) {
       diagnostics.push(error("dsl.scripts.mapped_coverage_status_invalid", "Mapped script actions must mark source behavior as translated or covered before execution.", `${path}/coverage/status`, {
         actual: action.coverage?.status
@@ -614,9 +651,20 @@ function validateScripts(scripts, diagnostics, context) {
       diagnostics.push(error("dsl.scripts.mapped_function_mappings_required", "Mapped script actions must record at least one functionMappings[] evidence entry.", `${path}/functionMappings`));
     }
     if (action.translationStatus === "omitted" && action.coverage?.status !== "covered") {
-      diagnostics.push(error("dsl.scripts.omitted_not_covered", "Omitted script actions must be fully covered by native formRules.", `${path}/coverage/status`, {
+      diagnostics.push(error("dsl.scripts.omitted_not_covered", "Omitted script actions must be fully covered by native formRules or static form properties.", `${path}/coverage/status`, {
         actual: action.coverage?.status
       }));
+    }
+    if (
+      action.translationStatus === "omitted" &&
+      action.coverage?.staticProps !== undefined &&
+      !hasCompleteOmissionCoverage(action, context)
+    ) {
+      diagnostics.push(error("dsl.scripts.omitted_coverage_incomplete", "Omitted script actions require complete, residual-free native-rule or static-property coverage evidence.", `${path}/coverage`));
+    }
+    validateScriptRunWhen(action, path, diagnostics);
+    if (action.translationStatus === "omitted" && action.runWhen !== undefined && !hasCompleteExecutableNativeCoverage(action, context.formRules)) {
+      diagnostics.push(error("dsl.scripts.gated_omission_forbidden", "View-gated script actions may be omitted only when the empty action body is fully covered by referenced executable native form rules with no residuals.", `${path}/translationStatus`));
     }
     if (!SCRIPT_SCOPES.has(action.scope)) {
       diagnostics.push(error("dsl.scripts.scope_invalid", "Script action scope must be global or control.", `${path}/scope`, {
@@ -631,6 +679,100 @@ function validateScripts(scripts, diagnostics, context) {
       }));
     }
   });
+}
+
+function hasCompleteOmissionCoverage(action, context) {
+  if (nonEmptyString(action.function)) return false;
+  if (action.coverage?.status !== "covered") return false;
+  if (!Array.isArray(action.coverage?.residuals) || action.coverage.residuals.length) return false;
+  const nativeRules = Array.isArray(action.coverage?.nativeRules) ? action.coverage.nativeRules : [];
+  const staticProps = Array.isArray(action.coverage?.staticProps) ? action.coverage.staticProps : [];
+  return nativeRules.length + staticProps.length > 0 &&
+    nativeRulesAreExecutable(nativeRules, context.formRules) &&
+    staticProps.every((entry) => staticPropCoverageSatisfied(entry, context.form));
+}
+
+function hasCompleteExecutableNativeCoverage(action, formRules) {
+  if (nonEmptyString(action.function)) return false;
+  if (action.coverage?.status !== "covered") return false;
+  if (!Array.isArray(action.coverage?.residuals) || action.coverage.residuals.length) return false;
+  const nativeRules = Array.isArray(action.coverage?.nativeRules) ? action.coverage.nativeRules : [];
+  if (!nativeRules.length) return false;
+  return nativeRulesAreExecutable(nativeRules, formRules);
+}
+
+function nativeRulesAreExecutable(nativeRules, formRules) {
+  const executableRuleIds = new Set(
+    (Array.isArray(formRules?.linkage) ? formRules.linkage : [])
+      .filter((rule) => rule?.translationStatus === "executable" && nonEmptyString(rule.id))
+      .map((rule) => rule.id)
+  );
+  return nativeRules.every((ruleId) => executableRuleIds.has(ruleId));
+}
+
+function validateStaticPropCoverage(staticProps, form, path, diagnostics) {
+  if (staticProps === undefined) return;
+  if (!Array.isArray(staticProps)) {
+    diagnostics.push(error("dsl.scripts.static_props_type", "Script coverage.staticProps must be an array when present.", path));
+    return;
+  }
+
+  staticProps.forEach((entry, index) => {
+    const entryPath = `${path}/${index}`;
+    if (!isRecord(entry)) {
+      diagnostics.push(error("dsl.scripts.static_prop_type", "Script static-property coverage entries must be objects.", entryPath));
+      return;
+    }
+    if (entry.prop !== "required" || entry.value !== true) {
+      diagnostics.push(error("dsl.scripts.static_prop_unsupported", "Static script coverage currently supports only { prop: \"required\", value: true }.", entryPath, {
+        prop: entry.prop,
+        value: entry.value
+      }));
+      return;
+    }
+    const field = findStaticCoverageField(form, entry.fieldId);
+    if (!field) {
+      diagnostics.push(error("dsl.scripts.static_prop_field_missing", "Static script coverage must reference an existing ordinary form field.", `${entryPath}/fieldId`, {
+        fieldId: entry.fieldId
+      }));
+      return;
+    }
+    if (field.props?.required !== true) {
+      diagnostics.push(error("dsl.scripts.static_prop_not_satisfied", "Static script coverage requires the referenced field to keep props.required=true.", entryPath, {
+        fieldId: entry.fieldId,
+        actual: field.props?.required
+      }));
+    }
+  });
+}
+
+function staticPropCoverageSatisfied(entry, form) {
+  return isRecord(entry) &&
+    entry.prop === "required" &&
+    entry.value === true &&
+    findStaticCoverageField(form, entry.fieldId)?.props?.required === true;
+}
+
+function findStaticCoverageField(form, fieldId) {
+  if (!nonEmptyString(fieldId)) return undefined;
+  return (Array.isArray(form?.fields) ? form.fields : [])
+    .find((field) => field?.id === fieldId && field?.type !== "detailTable");
+}
+
+function validateScriptRunWhen(action, path, diagnostics) {
+  if (action.runWhen === undefined) return;
+  const runWhen = action.runWhen;
+  const keys = isRecord(runWhen) ? Object.keys(runWhen) : [];
+  const statuses = isRecord(runWhen) ? runWhen.viewStatusIn : undefined;
+  const canonical = Array.isArray(statuses) && (
+    JSON.stringify(statuses) === JSON.stringify(["add", "edit"]) ||
+    JSON.stringify(statuses) === JSON.stringify(["view"])
+  );
+  if (!isRecord(runWhen) || keys.length !== 1 || keys[0] !== "viewStatusIn" || !canonical) {
+    diagnostics.push(error("dsl.scripts.run_when_invalid", "scripts.actions[].runWhen must be exactly { viewStatusIn: [\"add\", \"edit\"] } or { viewStatusIn: [\"view\"] }.", `${path}/runWhen`, {
+      actual: runWhen
+    }));
+  }
 }
 
 function validateScriptActionTarget(action, path, diagnostics, context) {

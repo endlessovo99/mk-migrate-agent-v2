@@ -1,4 +1,6 @@
+import { createHash } from "node:crypto";
 import { mkForComponent, mkForFieldType } from "../dsl/mk-components.js";
+import { isDataOnlyMetadataField } from "./sysform-metadata.js";
 import {
   attrValue,
   cleanText,
@@ -11,34 +13,53 @@ import {
 
 export function buildDesignerFirstForm(html, metadata, warnings) {
   const designer = parseDesignerLayout(html, warnings);
+  const metadataFields = Array.isArray(metadata?.fields) ? metadata.fields : [];
+  const designerById = new Map(
+    [...designer.fields, ...designer.hiddenFields].map((field) => [field.id, field])
+  );
+  const hiddenDesignerIds = new Set(
+    designer.hiddenFields
+      .filter((field) => field.type !== "detailTable")
+      .map((field) => field.id)
+  );
+  const dataOnlyMetadataFields = metadataFields.filter((field) =>
+    field.type !== "detailTable" &&
+    (isDataOnlyMetadataField(field) || hiddenDesignerIds.has(field.id))
+  );
+  const dataOnlyIds = new Set(dataOnlyMetadataFields.map((field) => field.id));
+  const dataFields = dataOnlyMetadataFields.map((field) =>
+    dataOnlyFieldFromMetadata(field, designerById.get(field.id), warnings)
+  );
+  const visibleMetadataFields = metadataFields.filter((field) => !dataOnlyIds.has(field.id));
+
   if (!designer.fields.length) {
     warnings.push({
       code: "source.sysform.designer_layout_missing",
       message: "SysFormTemplate fdDesignerHtml did not expose field controls; using metadata-only fallback layout.",
       path: "/fdDesignerHtml"
     });
-    warnSuspiciousDetailTableTitles(metadata.fields, warnings);
-    const visibleMetadataFields = metadata.fields.filter((field) => !isHiddenMetadataField(field));
+    warnSuspiciousDetailTableTitles(visibleMetadataFields, warnings);
     return {
       fields: visibleMetadataFields,
+      dataFields,
       layout: fallbackLayout(visibleMetadataFields, "fdMetadataXml")
     };
   }
 
-  const metadataById = new Map(metadata.fields.map((field) => [field.id, field]));
-  const metadataByTitle = groupBy(metadata.fields, (field) => normalizeMatchText(field.title));
-  const matchedMetadataIds = new Set();
+  const metadataById = new Map(visibleMetadataFields.map((field) => [field.id, field]));
+  const metadataByTitle = groupBy(visibleMetadataFields, (field) => normalizeMatchText(field.title));
+  const matchedMetadataIds = new Set(dataOnlyIds);
   const fields = [];
 
   for (const field of designer.fields) {
+    if (dataOnlyIds.has(field.id)) continue;
     const metadataField = matchMetadataField(field, metadataById, metadataByTitle);
     if (metadataField) matchedMetadataIds.add(metadataField.id);
     fields.push(enrichDesignerField(field, metadataField, warnings));
   }
 
-  for (const metadataField of metadata.fields) {
+  for (const metadataField of visibleMetadataFields) {
     if (matchedMetadataIds.has(metadataField.id)) continue;
-    if (isHiddenMetadataField(metadataField)) continue;
     warnings.push({
       code: "source.sysform.metadata_field_unmatched",
       message: `Metadata field ${metadataField.id} (${metadataField.title}) did not match a designer control and will not create a visible MK control.`,
@@ -53,7 +74,18 @@ export function buildDesignerFirstForm(html, metadata, warnings) {
   warnSuspiciousDetailTableTitles(fields, warnings);
   return {
     fields,
-    layout: designer.layout
+    dataFields,
+    layout: removeDataOnlyFieldsFromLayout(designer.layout, dataOnlyIds)
+  };
+}
+
+function dataOnlyFieldFromMetadata(metadataField, designerField, warnings) {
+  const field = designerField
+    ? enrichDesignerField(designerField, metadataField, warnings)
+    : metadataField;
+  return {
+    ...field,
+    dataOnly: true
   };
 }
 
@@ -62,6 +94,8 @@ function parseDesignerLayout(html, warnings) {
   const rows = splitMainFormRows(decoded);
   const fields = [];
   const fieldIds = new Set();
+  const hiddenFields = [];
+  const hiddenFieldIds = new Set();
   const layoutRows = [];
 
   rows.forEach((rowHtml, rowIndex) => {
@@ -78,11 +112,19 @@ function parseDesignerLayout(html, warnings) {
       if (!controls.length) return;
       const cellFieldIds = [];
       for (const control of controls) {
+        if (control.source?.designerHidden) {
+          if (!hiddenFieldIds.has(control.id)) {
+            hiddenFieldIds.add(control.id);
+            hiddenFields.push(control);
+          }
+          continue;
+        }
         cellFieldIds.push(control.id);
         if (fieldIds.has(control.id)) continue;
         fieldIds.add(control.id);
         fields.push(control);
       }
+      if (!cellFieldIds.length) return;
 
       const column = parseColumnSpec(cell.attrs.column, cellIndex);
       cells.push({
@@ -95,7 +137,7 @@ function parseDesignerLayout(html, warnings) {
     });
 
     if (!cells.length && sourceMarkers.length) {
-      const description = descriptionFieldFromMarkedRow(rowHtml, sourceMarkers[0]);
+      const description = descriptionFieldFromMarkedRow(rowHtml, sourceMarkers[0], fieldIds);
       if (description && !fieldIds.has(description.id)) {
         fieldIds.add(description.id);
         fields.push(description);
@@ -130,6 +172,7 @@ function parseDesignerLayout(html, warnings) {
 
   return {
     fields,
+    hiddenFields,
     layout: {
       source: "fdDesignerHtml",
       rows: layoutRows
@@ -238,12 +281,12 @@ function metadataCompatibleWithDesigner(metadataField, designerField) {
 }
 
 function extractLayoutCellControls(html) {
-  const controls = extractDesignerFieldControls(html);
+  const controls = extractDesignerFieldControls(html, { includeHidden: true });
   const detailTables = controls.filter((control) => control.type === "detailTable");
   return detailTables.length ? detailTables : controls;
 }
 
-function extractDesignerFieldControls(html) {
+function extractDesignerFieldControls(html, options = {}) {
   const controls = [];
   const controlPattern = /<([a-zA-Z][\w:-]*)\b([^>]*\bfd_type\s*=\s*(["'])([^"']+)\3[^>]*)>/gi;
 
@@ -252,9 +295,11 @@ function extractDesignerFieldControls(html) {
     if (String(fdType || "").toLowerCase() === "textlabel") continue;
     const values = parseFdValues(attrValue(match[2], "fd_values"));
     const fragment = matchingElementFragment(html, match);
-    if (isHiddenDesignerControl(values, match[2], fragment)) continue;
+    const hidden = isHiddenDesignerControl(values, match[2], fragment);
+    if (hidden && !options.includeHidden) continue;
     const field = designerFieldFromControl(fdType, values, match[2], {
-      html: fragment
+      html: fragment,
+      hidden
     });
     if (field) controls.push(field);
   }
@@ -272,7 +317,7 @@ function extractRowMarkers(html) {
     const id = attrValue(match[0], "id");
     const name = attrValue(match[0], "name");
     const marker = id || name;
-    if (!marker || !/_row$/i.test(marker) || seen.has(marker)) continue;
+    if (!marker || !isLegacyRowMarker(marker) || seen.has(marker)) continue;
     seen.add(marker);
     markers.push(marker);
   }
@@ -280,17 +325,22 @@ function extractRowMarkers(html) {
   return markers;
 }
 
-function descriptionFieldFromMarkedRow(html, marker) {
+function isLegacyRowMarker(value) {
+  return /_row\d*$/i.test(String(value || ""));
+}
+
+function descriptionFieldFromMarkedRow(html, marker, usedFieldIds = new Set()) {
   const labels = [];
   const decoded = decodeEntities(html);
   for (const match of decoded.matchAll(/<label\b[^>]*>([\s\S]*?)<\/label>/gi)) {
+    if (containsHiddenInput(match[1])) continue;
     const text = cleanDescriptionLabelText(match[1]);
     if (text) labels.push(text);
   }
   const content = labels.join("\n").trim();
   if (!content) return undefined;
   const title = labels[0].replace(/[:：]\s*$/, "") || marker;
-  const id = `${marker}__description`.replace(/[^A-Za-z0-9_]/g, "_");
+  const id = descriptionFieldId(decoded, marker, usedFieldIds);
   return {
     id,
     title,
@@ -307,6 +357,26 @@ function descriptionFieldFromMarkedRow(html, marker) {
       }
     }
   };
+}
+
+function descriptionFieldId(html, marker, usedFieldIds) {
+  const legacyId = `${marker}__description`.replace(/[^A-Za-z0-9_]/g, "_");
+  if (legacyId.length <= 25 && !usedFieldIds.has(legacyId)) return legacyId;
+
+  for (const match of html.matchAll(/<div\b([^>]*)>/gi)) {
+    if (attrValue(match[1], "fd_type").toLowerCase() !== "textlabel") continue;
+    const values = parseFdValues(attrValue(match[1], "fd_values"));
+    const designerId = values.id || attrValue(match[1], "id");
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(designerId) && designerId.length <= 25 && !usedFieldIds.has(designerId)) {
+      return designerId;
+    }
+  }
+
+  return `fd_desc_${createHash("sha256").update(legacyId).digest("hex").slice(0, 12)}`;
+}
+
+function containsHiddenInput(value = "") {
+  return /<input\b(?=[^>]*\btype\s*=\s*(?:"hidden"|'hidden'|hidden)\b)[^>]*>/i.test(value);
 }
 
 function cleanDescriptionLabelText(value) {
@@ -333,7 +403,8 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
     designerType: fdType,
     designerValues: values,
     designerTableName: attrValue(attrs, "tableName") || undefined,
-    designerShowStatus: attrValue(attrs, "showStatus") || undefined
+    designerShowStatus: attrValue(attrs, "showStatus") || undefined,
+    ...(context.hidden ? { designerHidden: true } : {})
   };
 
   if (normalized === "detailstable") {
@@ -415,11 +486,6 @@ function isHiddenDesignerControl(values = {}, attrs = "", fragment = "") {
   return false;
 }
 
-function isHiddenMetadataField(field = {}) {
-  const attrs = field.source?.metadataAttributes || {};
-  return isFalseLike(attrs.canDisplay) || isFalseLike(attrs.canShow) || isNoShow(attrs.showStatus);
-}
-
 function isFalseLike(value) {
   return String(value ?? "").trim().toLowerCase() === "false";
 }
@@ -460,6 +526,27 @@ function fallbackLayout(fields, source) {
         colspan: 1
       }]
     }))
+  };
+}
+
+function removeDataOnlyFieldsFromLayout(layout, dataOnlyIds) {
+  if (!dataOnlyIds.size) return layout;
+  return {
+    ...layout,
+    rows: (layout.rows || []).map((row) => {
+      const cells = (row.cells || []).map((cell) => {
+        const fieldIds = (cell.fieldIds || [cell.fieldId]).filter((fieldId) =>
+          fieldId && !dataOnlyIds.has(fieldId)
+        );
+        if (!fieldIds.length) return undefined;
+        return {
+          ...cell,
+          fieldId: fieldIds[0],
+          fieldIds
+        };
+      }).filter(Boolean);
+      return cells.length ? { ...row, cells } : undefined;
+    }).filter(Boolean)
   };
 }
 

@@ -14,7 +14,9 @@ The v2 route-validation source format is either:
 - `fdDesignerHtml`
 - `fdMetadataXml`
 
-`fdDesignerHtml` is the primary source for visible field controls and row/column layout. `fdMetadataXml` enriches designer controls with type, required state, options, organization-field metadata, and detail-table columns. Metadata-only fields do not create visible MK controls in the first executor version.
+Only direct `put` entries on the outermost root `java.util.HashMap` are current template data. Nested creator objects, lists, and historical template maps are never searched or used as fallback values.
+
+`fdDesignerHtml` is the primary source for visible field controls and row/column layout. `fdMetadataXml` enriches designer controls with type, required state, options, organization-field metadata, and detail-table columns. A metadata-backed hidden main field is preserved as `source-draft.form.dataFields[]` and becomes `form.fields[].dataOnly = true`: it is stored with `fdDisplay = false`, remains available to `MKXFORM.getValue/setValue`, and must never appear in `mkTree` or a control-event target. Designer-only hidden markers without matching metadata are not materialized.
 
 `clean` writes a source-only `source-draft.json`. It contains source controls, detail tables, source layout rows/cells, workflow DAG nodes/edges, source attributes, and source issues. It must not contain target `componentId`, `mkType`, or `@elem/*` target identifiers.
 
@@ -78,6 +80,8 @@ The trusted DSL form section contains both field definitions and explicit target
 
 Every translated form field and detail-table column must include target `componentId + props + sourceProps + sourceRef`. `props` are executable and validated against `catalogs/mk-components.v1.json`. `sourceProps` are audit-only; the executor must not consume them. Unknown props are errors. Textarea `height` is never carried into DSL or execution payloads; `maxLength` remains omitted unless explicitly present in executable `props`; `maxLength: 0` is invalid.
 
+JSP scripts inside `<xform:editShow>` and `<xform:viewShow>` retain immutable execution context as `scripts.actions[].runWhen`. The only generated forms are `{ "viewStatusIn": ["add", "edit"] }` and `{ "viewStatusIn": ["view"] }`, based on verified `MKXFORM.viewStatus` runtime values. Agent review translates only the business body; the executor injects and readback-verifies the canonical guard.
+
 `LbpmProcessDefinition.xml` is a Java XMLDecoder export for `com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition`. The adapter extracts the active `fdContent` process XML, parses nodes and lines into a directed acyclic graph, preserves each node and line's original attributes, and writes the result to `workflow` in DSL.
 
 Function validation uses `catalogs/functions.v1.json` as the versioned whitelist. Source function calls outside the catalog are emitted as source issues and become blocking errors before execution. External files passed with `--function-whitelist` are filtered through the versioned catalog.
@@ -95,6 +99,7 @@ Route-validation fixture:
 
 ```text
 tests/fixtures/source/route-validation-lbpm/
+tests/fixtures/source/route-hidden-data-field/
 ```
 
 Do not add source formats outside the current XML route-validation scope while hardening this adapter.

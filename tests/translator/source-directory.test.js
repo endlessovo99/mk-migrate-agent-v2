@@ -1,11 +1,13 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { checkDraft, checkExecute } from "../../src/dsl/checks.js";
+import { buildFormRuleRefIndex, resolveEffectTarget } from "../../src/dsl/form-rules.js";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleSourceDraft } from "../helpers/sample-dsl.js";
 
+const moduleFormSource = "tests/fixtures/source/module-form-evidence/module-form-evidence_SysFormTemplate.xml";
 const moduleDetailColumnsSource = "tests/fixtures/source/module-detail-columns-evidence/module-detail-columns-evidence_SysFormTemplate.xml";
 const moduleRightsSource = "tests/fixtures/source/module-rights-evidence";
 
@@ -21,6 +23,8 @@ describe("source directory stages", () => {
     assert.equal(sourceDraft.form.detailTables.length, 4);
     assert.equal(sourceDraft.scripts.fragments.length, 8);
     assert.equal(sourceDraft.scripts.sources.length, 2);
+    assert.equal(sourceDraft.scripts.sources[0].displayGate, "xform:editShow");
+    assert.equal(sourceDraft.scripts.sources[1].displayGate, undefined);
     assert.equal(sourceDraft.workflow.nodes.length, 28);
     assert.equal(sourceDraft.workflow.edges.length, 30);
     assert.equal(text.includes("componentId"), false);
@@ -32,32 +36,62 @@ describe("source directory stages", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const action = dslDraft.scripts.actions.find((item) => item.controlId === "fd_371229d0cbd2cc");
-    const detailAction = dslDraft.scripts.actions.find((item) =>
+    const detailActions = dslDraft.scripts.actions.filter((item) =>
       item.tableId === "fd_371228ebe5dec2" && item.controlId === "fd_371576f83b26d8"
     );
     const loadAction = dslDraft.scripts.actions.find((item) => item.event === "onLoad");
 
-    assert.equal(dslDraft.scripts.actions.length, 4);
+    assert.equal(dslDraft.scripts.actions.length, 5);
     assert.equal(action.scope, "control");
     assert.equal(action.event, "onChange");
     assert.equal(action.controlId, "fd_371229d0cbd2cc");
     assert.equal(action.translationStatus, "needs_review");
-    assert.equal(action.coverage.status, "covered");
+    assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
+    assert.equal(action.coverage.status, "uncovered");
+    assert.deepEqual(action.coverage.nativeRules, []);
     assert.equal(action.functionMappings.some((mapping) => mapping.source === "GetXFormFieldById"), true);
 
-    assert.equal(detailAction.scope, "control");
-    assert.equal(detailAction.event, "onChange");
-    assert.equal(detailAction.tableId, "fd_371228ebe5dec2");
-    assert.equal(detailAction.controlId, "fd_371576f83b26d8");
-    assert.equal(detailAction.translationStatus, "needs_review");
-    assert.equal(detailAction.semanticHints.some((hint) => hint.kind === "detail_row_visibility"), true);
-    assert.deepEqual(detailAction.coverage, { status: "none", nativeRules: [], residuals: [] });
+    assert.equal(detailActions.length, 2);
+    assert.equal(detailActions.every((item) => item.scope === "control" && item.event === "onChange"), true);
+    assert.equal(detailActions.every((item) => item.translationStatus === "needs_review"), true);
+    assert.equal(detailActions.every((item) => item.semanticHints.some((hint) => hint.kind === "detail_row_visibility")), true);
+    assert.deepEqual(detailActions.map((item) => item.runWhen), [
+      { viewStatusIn: ["add", "edit"] },
+      undefined
+    ]);
 
     assert.equal(loadAction.scope, "global");
+    assert.equal(loadAction.runWhen, undefined);
     assert.equal(loadAction.translationStatus, "needs_review");
     assert.equal(loadAction.semanticHints.some((hint) => hint.kind === "detail_row_load_initialization"), true);
     assert.equal(loadAction.coverage.status, "uncovered");
     assert.equal(sourceDraft.scripts.sources.some((source) => source.semanticFacts?.legacyFunctionCalls?.length), true);
+  });
+
+  it("appends source data fields to the DSL without adding layout references", () => {
+    const sourceDraft = sampleSourceDraft({
+      form: {
+        dataFields: [{
+          id: "fd_hidden_state",
+          title: "隐藏状态",
+          sourceType: "text",
+          sourceRef: "source.form.dataField.fd_hidden_state",
+          sourceProps: { metadataAttributes: { canDisplay: "false" } }
+        }]
+      }
+    });
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const dataField = dslDraft.form.fields.at(-1);
+
+    assert.equal(dataField.id, "fd_hidden_state");
+    assert.equal(dataField.dataOnly, true);
+    assert.equal(dataField.componentId, "xform-input");
+    assert.equal(
+      dslDraft.form.layout.mkTree.some((row) =>
+        row.children.some((cell) => cell.refIds.includes("fd_hidden_state"))
+      ),
+      false
+    );
   });
 
   localCorpusIt("drafts simple form-field formula workflow participants as executable handlers", () => {
@@ -108,7 +142,45 @@ describe("source directory stages", () => {
     assert.equal(check.ok, true);
   });
 
-  localCorpusIt("drafts fixture row markers and structured native form linkage rules", () => {
+  localCorpusIt("drafts current handler entities and preserves every non-draft participant selector", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/1670297c984b45009eb5b1e444d9957d");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const sourceNodes = new Map(sourceDraft.workflow.nodes.map((node) => [node.id, node]));
+    const draftNodes = new Map(dslDraft.workflow.nodes.map((node) => [node.id, node]));
+
+    for (const nodeId of ["N800", "N654"]) {
+      assert.equal(sourceNodes.get(nodeId).attributes.handlerIds, "14912dbf4d1b75dc8e6334142da9205a");
+      assert.deepEqual(sourceNodes.get(nodeId).handlerEntities, [{
+        id: "18ccd439cda358f3c9fcb99495691efb",
+        name: "风电工程服务分公司_分管领导",
+        orgType: 4,
+        class: "com.landray.kmss.sys.organization.model.SysOrgElement",
+        parent: "风电工程服务公司领导",
+        index: 0
+      }]);
+      assert.deepEqual(draftNodes.get(nodeId).participants.members, [{
+        name: "风电工程服务分公司_分管领导",
+        type: "user_or_org",
+        sourceId: "18ccd439cda358f3c9fcb99495691efb",
+        sourceOrgType: 4,
+        sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
+        sourceParentName: "风电工程服务公司领导"
+      }]);
+    }
+
+    const selectorIds = ["N385", "N810", "N811", "N62"];
+    for (const targetNodeId of ["N71", "N812", "N813"]) {
+      const node = draftNodes.get(targetNodeId);
+      assert.equal(node.participants.mode, "initiator_select");
+      assert.deepEqual(node.participantSelections.map((selection) => selection.sourceNodeId), selectorIds);
+      assert.equal(node.participantSelections.every((selection) =>
+        selection.attribute === "mustModifyHandlerNodeIds" && selection.targetNodeId === targetNodeId
+      ), true);
+      assert.equal(selectorIds.every((selectorId) => node.participants.sourceSemantics.includes(selectorId)), true);
+    }
+  });
+
+  localCorpusIt("preserves edit-gate evidence while excluding detail-table linkage from native form rules", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const markerRefs = Object.fromEntries(
@@ -125,41 +197,145 @@ describe("source directory stages", () => {
     assert.deepEqual(markerRefs.fd_budget_from_row, ["fd_37122b6404ad44"]);
     assert.deepEqual(markerRefs.fd_over_budget_row, ["fd_37122b7cb12b7e"]);
 
-    const linkage = dslDraft.formRules.linkage;
-    assert.equal(linkage.length, 6);
-    assert.equal(dslDraft.formRules.validations.length, 0);
-    assert.equal(dslDraft.formRules.impliedRequired.length, 0);
-    assert.equal(linkage.every((rule) => rule.translationStatus === "executable"), true);
+    assert.equal(sourceDraft.formRules.linkage.length, 6);
+    assert.equal(dslDraft.formRules.linkage.length, 2);
+    assert.equal(dslDraft.formRules.review.excludedRules.length, 4);
+    assert.equal(sourceDraft.formRules.linkage.every((rule) => rule.meta.displayGate === "xform:editShow"), true);
+    assert.equal(
+      dslDraft.scripts.actions
+        .filter((action) => action.sourceRefs.includes("source.form.jsp.fd_37157731108fc2.script.1"))
+        .every((action) => action.runWhen?.viewStatusIn.join(",") === "add,edit"),
+      true
+    );
+  });
 
-    const byId = new Map(linkage.map((rule) => [rule.id, rule]));
-    assert.deepEqual(byId.get("linkage.fd_371229d0cbd2cc.contains.sb")?.when, [{
-      field: "fd_371229d0cbd2cc",
-      op: "contains",
-      value: "sb"
-    }]);
-    assert.deepEqual(byId.get("linkage.fd_371229d0cbd2cc.contains.wb")?.effects.map((effect) => [effect.type, effect.target, effect.value]), [
-      ["visible", "fd_weibao_row", true],
-      ["required", "fd_weibao_row", true],
-      ["visible", "fd_weibao_content_row", true],
-      ["required", "fd_weibao_content_row", true]
-    ]);
-    assert.deepEqual(byId.get("linkage.fd_37122a14d44caa.contains.ysn")?.else.map((effect) => [effect.type, effect.target, effect.value]), [
-      ["visible", "fd_budget_from_row", false],
-      ["required", "fd_budget_from_row", false]
+  it("resolves numbered and legacy-prefixed row markers used by native form linkage rules", () => {
+    const dslDraft = draftSourceDraft(sampleSourceDraft({ form: sampleMarkerSourceForm() }));
+    const markerRefs = Object.fromEntries(
+      dslDraft.form.layout.mkTree
+        .filter((row) => Array.isArray(row.sourceMarkers) && row.sourceMarkers.length)
+        .flatMap((row) => row.sourceMarkers.map((marker) => [marker, row.children.flatMap((cell) => cell.refIds)]))
+    );
+
+    assert.deepEqual(markerRefs.fd_team_row1, ["fd_team"]);
+
+    const refIndex = buildFormRuleRefIndex(dslDraft.form);
+    assert.deepEqual(resolveEffectTarget(refIndex, "prefixed_row")?.targets.map((target) => target.id), ["fd_prefixed"]);
+    assert.deepEqual(resolveEffectTarget(refIndex, "detail_row")?.targets.map((target) => target.id), [
+      "fd_detail_name",
+      "fd_detail_count"
     ]);
   });
 
-  localCorpusIt("extracts designer-only detail table columns when metadata is missing", () => {
+  it("keeps generated description field ids within the MK 25-character limit", () => {
+    const dslDraft = draftSourceDraft(cleanSourceFile(moduleFormSource));
+    const attentionRow = dslDraft.form.layout.mkTree.find((row) => row.sourceMarkers?.includes("fd_attention_row"));
+    const attentionDescription = dslDraft.form.fields.find((field) => field.type === "description" && field.title === "备注");
+    const allFieldIds = dslDraft.form.fields.flatMap((field) => [field.id, ...(field.columns || []).map((column) => column.id)]);
+
+    assert.equal(dslDraft.form.fields.some((field) => field.id === "fd_attention_row__description"), false);
+    assert.equal(attentionDescription?.title, "备注");
+    assert.equal(attentionDescription?.id.startsWith("fd_desc_"), true);
+    assert.deepEqual(attentionRow.children.flatMap((cell) => cell.refIds), [attentionDescription.id]);
+    assert.equal(allFieldIds.every((id) => id.length <= 25), true);
+  });
+
+  it("maps draft-node handler selection semantics onto empty workflow participants", () => {
+    const dslDraft = draftSourceDraft(sampleSourceDraft({ workflow: sampleDraftSelectionSourceWorkflow() }));
+    const nodes = new Map(dslDraft.workflow.nodes.map((node) => [node.id, node]));
+
+    assert.deepEqual(nodes.get("N16").participants, {
+      mode: "initiator_select",
+      sourceSemantics: "draft node N2 canModifyHandlerNodeIds includes N16"
+    });
+    assert.deepEqual(nodes.get("N7").participants, {
+      mode: "initiator_select",
+      sourceSemantics: "draft node N2 mustModifyHandlerNodeIds includes N7"
+    });
+    assert.equal(nodes.get("N9").participants.mode, "explicit");
+    assert.equal(nodes.get("N9").participants.members.length > 0, true);
+  });
+
+  it("does not replace unsupported formula participants with draft-selection fallback", () => {
+    const dslDraft = draftSourceDraft(sampleSourceDraft({
+      workflow: {
+        process: { id: "process-handler-formula" },
+        nodes: [
+          {
+            id: "N1",
+            sourceType: "draftNode",
+            sourceRef: "source.workflow.node.N1",
+            attributes: {},
+            definition: { attributes: { canModifyHandlerNodeIds: "N2" } }
+          },
+          {
+            id: "N2",
+            sourceType: "reviewNode",
+            sourceRef: "source.workflow.node.N2",
+            attributes: { handlerIds: "$unsupported(formula)$", handlerSelectType: "formula" }
+          },
+          {
+            id: "N3",
+            sourceType: "endNode",
+            sourceRef: "source.workflow.node.N3",
+            attributes: {}
+          }
+        ],
+        edges: [
+          { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1" },
+          { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2" }
+        ],
+        topologicalOrder: ["N1", "N2", "N3"]
+      }
+    }));
+
+    assert.equal(dslDraft.workflow.nodes.find((node) => node.id === "N2").participants.mode, "empty");
+  });
+
+  it("does not draft script actions for comment-only JSP sources", () => {
+    const sourceDraft = cleanSourceFile(moduleFormSource);
+    const dslDraft = draftSourceDraft(sourceDraft);
+
+    assert.equal(
+      sourceDraft.scripts.sources.some((source) => source.sourceRef === "source.form.jsp.fd_comment_jsp.script.1"),
+      true
+    );
+    assert.equal(dslDraft.form.fields.some((field) => field.id === "fd_blank_row__description"), false);
+    assert.equal(dslDraft.form.layout.mkTree.some((row) => row.sourceMarkers?.includes("fd_blank_row")), false);
+    assert.equal(
+      dslDraft.scripts.actions.some((action) =>
+        action.sourceRefs.includes("source.form.jsp.fd_comment_jsp.script.1")
+      ),
+      false
+    );
+  });
+
+  it("keeps edit-gated linkage scripts with unmarked row targets in script review", () => {
+    const dslDraft = draftSourceDraft(cleanSourceFile(moduleFormSource));
+    const action = dslDraft.scripts.actions.find((item) => item.controlId === "fd_trigger");
+    const draftCheck = checkDraft(dslDraft);
+
+    assert.deepEqual(dslDraft.formRules.linkage, []);
+    assert.equal(dslDraft.formRules.review.excludedRules.length, 1);
+    assert.equal(dslDraft.formRules.review.excludedRules[0].code, "form_rule.target_unresolved");
+    assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
+    assert.deepEqual(action.coverage.nativeRules, []);
+    assert.equal(action.coverage.status, "uncovered");
+    assert.equal(action.coverage.residuals.some((item) => item.code === "script.residual.form_rule_needs_review"), true);
+    assert.equal(draftCheck.ok, true);
+  });
+
+  localCorpusIt("uses current root metadata for detail table columns", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const table = sourceDraft.form.detailTables.find((item) => item.id === "fd_3a0a0a2ce4c5c4");
 
     assert.deepEqual(table.columns.map((column) => [column.id, column.title, column.sourceType, column.required]), [
       ["fd_3a0a0a3fc896f2", "处理人", "text", true],
       ["fd_3a0a0a43fa1baa", "处理人工号", "text", true],
-      ["fd_3a0a0a480caa8a", "处理日期", "dateTime", true],
-      ["fd_3a0a0a4d03a53e", "接收单位", "longText", true],
+      ["fd_3a0a0a480caa8a", "处理日期", "date", true],
+      ["fd_3a0a0a4d03a53e", "接收单位", "text", true],
       ["fd_3a0a0a52600a74", "固废类别", "singleSelect", true],
-      ["fd_3a0a0a572fb3a6", "固废名称", "longText", true],
+      ["fd_3a0a0a572fb3a6", "固废名称", "text", true],
       ["fd_3a0a0a5e1860c6", "重量（单位KG）", "text", true]
     ]);
     assert.equal(table.columns.some((column) => column.id === "fdId"), false);
@@ -207,12 +383,13 @@ describe("source directory stages", () => {
     });
   });
 
-  localCorpusIt("keeps hidden designer helper fields out of generated form components", () => {
+  localCorpusIt("keeps hidden persisted helper fields data-only and out of layout", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
-    const hiddenHelperIds = ["fd_3a0a08a742981e", "fd_is_qtfy", "fd_is_fwq"];
+    const hiddenHelperIds = ["fd_3a0a08a742981e", "fd_is_qtfy", "fd_is_scq", "fd_is_fwq"];
     const sourceControlIds = sourceDraft.form.controls.map((control) => control.id);
-    const dslFieldIds = dslDraft.form.fields.map((field) => field.id);
+    const sourceDataFieldIds = sourceDraft.form.dataFields.map((field) => field.id);
+    const dslFieldsById = new Map(dslDraft.form.fields.map((field) => [field.id, field]));
     const layoutRefs = dslDraft.form.layout.mkTree.flatMap((row) => row.children.flatMap((cell) => cell.refIds));
     const qtfyRow = dslDraft.form.layout.mkTree.find((row) => row.sourceMarkers?.includes("qtfy_row"));
     const fwqRow = dslDraft.form.layout.mkTree.find((row) => row.sourceMarkers?.includes("fwq_row"));
@@ -220,7 +397,8 @@ describe("source directory stages", () => {
 
     hiddenHelperIds.forEach((id) => {
       assert.equal(sourceControlIds.includes(id), false);
-      assert.equal(dslFieldIds.includes(id), false);
+      assert.equal(sourceDataFieldIds.includes(id), true);
+      assert.equal(dslFieldsById.get(id)?.dataOnly, true);
       assert.equal(layoutRefs.includes(id), false);
     });
     assert.deepEqual(qtfyRow.children.flatMap((cell) => cell.refIds), ["fd_3a0a0903d3f91a"]);
@@ -229,39 +407,27 @@ describe("source directory stages", () => {
     assert.equal(fwqDescription.props.content.includes("废木质品"), true);
   });
 
-  localCorpusIt("keeps hidden-helper JSP row scripts reviewable after extracting native row rule evidence", () => {
+  localCorpusIt("keeps hidden-helper JSP row scripts reviewable when their native rule is excluded", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
-    const rule = dslDraft.formRules.linkage.find((item) => item.id === "linkage.fd_376d6cbc433bfe.contains.A");
     const actionsById = new Map(dslDraft.scripts.actions.map((action) => [action.id, action]));
 
-    assert.deepEqual(rule.effects.map((effect) => [effect.type, effect.target, effect.value]), [
-      ["visible", "qtfy_row", true],
-      ["required", "qtfy_row", true],
-      ["visible", "scq_row", true],
-      ["required", "scq_row", true],
-      ["visible", "fwq_row", true],
-      ["required", "fwq_row", true]
-    ]);
-    assert.deepEqual(rule.else.map((effect) => [effect.type, effect.target, effect.value]), [
-      ["visible", "qtfy_row", false],
-      ["required", "qtfy_row", false],
-      ["visible", "scq_row", false],
-      ["required", "scq_row", false],
-      ["visible", "fwq_row", false],
-      ["required", "fwq_row", false]
-    ]);
+    assert.equal(sourceDraft.formRules.linkage.length, 1);
+    assert.deepEqual(dslDraft.formRules.linkage, []);
+    assert.equal(dslDraft.formRules.review.excludedRules.length, 1);
 
     const rowRuleAction = actionsById.get("fd_3a0a0882cb93b0.script.1.event.1");
     assert.equal(rowRuleAction.translationStatus, "needs_review");
     assert.equal(rowRuleAction.scope, "control");
     assert.equal(rowRuleAction.event, "onChange");
     assert.equal(rowRuleAction.controlId, "fd_376d6cbc433bfe");
-    assert.equal(rowRuleAction.coverage.status, "partial");
-    assert.deepEqual(rowRuleAction.coverage.nativeRules, ["linkage.fd_376d6cbc433bfe.contains.A"]);
-    assert.equal(rowRuleAction.coverage.residuals.length > 0, true);
+    assert.deepEqual(rowRuleAction.runWhen, { viewStatusIn: ["add", "edit"] });
+    assert.equal(rowRuleAction.coverage.status, "uncovered");
+    assert.deepEqual(rowRuleAction.coverage.nativeRules, []);
+    assert.equal(rowRuleAction.coverage.residuals.some((item) => item.code === "script.residual.form_rule_needs_review"), true);
 
     assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").translationStatus, "needs_review");
+    assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").runWhen, undefined);
     assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").coverage.status, "uncovered");
     assert.equal(dslDraft.scripts.actions.every((action) => action.translationStatus === "needs_review"), true);
     assert.equal(actionsById.has("fd_3a0a08bd180e76.script.1.event.1"), false);
@@ -412,6 +578,73 @@ function sampleSingleFieldSourceForm() {
         }]
       }]
     }
+  };
+}
+
+function sampleMarkerSourceForm() {
+  return {
+    controls: [
+      { id: "fd_team", title: "示例团队", sourceType: "text", sourceRef: "source.form.control.fd_team" },
+      { id: "fd_prefixed", title: "前缀字段", sourceType: "text", sourceRef: "source.form.control.fd_prefixed" }
+    ],
+    detailTables: [{
+      id: "fd_detail",
+      title: "示例明细",
+      sourceType: "detailTable",
+      sourceRef: "source.form.detailTable.fd_detail",
+      columns: [
+        { id: "fd_detail_name", title: "名称", sourceType: "text", sourceRef: "source.form.detailTable.fd_detail.column.fd_detail_name" },
+        { id: "fd_detail_count", title: "份数", sourceType: "text", sourceRef: "source.form.detailTable.fd_detail.column.fd_detail_count" }
+      ]
+    }],
+    layout: {
+      rows: [
+        markerRow("row-numbered", "fd_team_row1", "fd_team", "control"),
+        markerRow("row-prefixed", "fd_prefixed_row", "fd_prefixed", "control"),
+        markerRow("row-detail", "fd_detail_row", "fd_detail", "detailTable")
+      ]
+    }
+  };
+}
+
+function markerRow(id, marker, referenceId, referenceType) {
+  return {
+    id,
+    sourceRef: `source.form.layout.row.${id}`,
+    sourceMarkers: [marker],
+    columns: 1,
+    cells: [{
+      id: `${id}-cell-0`,
+      sourceRef: `source.form.layout.cell.${id}-cell-0`,
+      column: 0,
+      colspan: 1,
+      references: [{ referenceId, referenceType, sourceRef: `source.form.${referenceType}.${referenceId}` }]
+    }]
+  };
+}
+
+function sampleDraftSelectionSourceWorkflow() {
+  return {
+    process: { id: "process-draft-selection" },
+    nodes: [
+      {
+        id: "N2",
+        sourceType: "draftNode",
+        sourceRef: "source.workflow.node.N2",
+        attributes: {},
+        definition: { attributes: { canModifyHandlerNodeIds: "N16;N9", mustModifyHandlerNodeIds: "N7" } }
+      },
+      { id: "N16", sourceType: "sendNode", sourceRef: "source.workflow.node.N16", attributes: {} },
+      { id: "N7", sourceType: "reviewNode", sourceRef: "source.workflow.node.N7", attributes: {} },
+      {
+        id: "N9",
+        sourceType: "sendNode",
+        sourceRef: "source.workflow.node.N9",
+        attributes: { handlerIds: "handler-1", handlerNames: "示例处理人", handlerSelectType: "org" }
+      }
+    ],
+    edges: [],
+    topologicalOrder: ["N2", "N16", "N7", "N9"]
   };
 }
 

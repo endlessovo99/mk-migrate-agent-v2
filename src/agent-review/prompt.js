@@ -39,23 +39,30 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       "Use sourceRef strings from the provided source draft. Do not use raw XML or invent source evidence.",
       "Title patches require confidence >= 0.7. Type, componentId, and props patches require confidence >= 0.85.",
       "Script patches require confidence >= 0.85 and must preserve the deterministic action boundary. Do not create, delete, or retarget script actions.",
+      "scripts.actions[].runWhen is immutable source-derived execution context. Never patch, remove, or reproduce it inside the reviewed business function; the executor injects the canonical MKXFORM.viewStatus guard.",
+      "Gated native coverage may remove only the action-local behavior covered by executable formRules; it does not remove or weaken the immutable runWhen audit context.",
+      "Keep runWhen on any residual JavaScript, and translate only residual behavior such as marker setValue or effects not represented by native/static coverage.",
+      "Do not duplicate visible or required effects already covered by native formRules in residual JavaScript.",
+      "A gated action may be omitted only when its function is empty, coverage.status=\"covered\", coverage.nativeRules references executable rules, coverage.residuals is empty, and native coverage fully covers the action-local behavior; preserve runWhen as audit evidence.",
       "Translate JSP scripts semantically using jspTranslationPlaybook, functionCatalog, source evidence, formRules evidence, and targetApi. Pattern matching is evidence extraction only, not the translation authority.",
       "Trusted mapped scripts must not use document/window DOM APIs.",
       "Use dslDraft.scripts.actions[].actionSource as the action-local JSP excerpt. Treat sourceDraft.scripts.sources[].javascriptWindows as background context; do not charge helper definitions or other callbacks to a specific action unless the action-local excerpt invokes them and their behavior is not otherwise covered.",
       "Use reviewOpportunities only as evidence scaffolding. They are not deterministic translation results; accept them only when action-local source, formRules, targetApi, and playbook coverage standards agree.",
-      "Native-covered closure rule: when a script action already has coverage.status=\"covered\", coverage.nativeRules is non-empty, and coverage.residuals is empty, close that action as native-covered omitted. Patch function:\"\", translationStatus:\"omitted\", functionMappings to native-form-rule evidence, and preserve the existing covered coverage/nativeRules/residuals. Do not invent residuals from DOM/helper noise for these already-covered actions.",
+      "Native-covered closure rule: when action-local behavior is fully covered, coverage.status=\"covered\", coverage.nativeRules references executable rules, and coverage.residuals is empty, close that action as native-covered omitted while preserving runWhen audit evidence. Patch function:\"\", translationStatus:\"omitted\", functionMappings to native-form-rule evidence, and preserve covered coverage/nativeRules/residuals. Do not invent residuals from DOM/helper noise for these already-covered actions.",
+      "Static-property closure rule: when an ungated action only sets a form property already present in the DSL, coverage.staticProps records the exact {fieldId,prop,value} evidence. If coverage.status=\"covered\" and residuals is empty, patch function:\"\", translationStatus:\"omitted\", functionMappings with basis static-form-prop, and preserve nativeRules:[], staticProps, and residuals:[]; never invent a formRule id.",
       "For detail-row visibility candidates, legacy onclick/setAttribute/__xformDispatch snippets are event-binding scaffolding when the DSL action already has event=onChange and matching tableId/controlId. Do not treat that scaffolding as residual; translate the action-local business function body instead.",
       "Use sourceDraft.scripts.sources[].javascriptWindows as layered source excerpts. When javascriptLength exceeds the excerpt length, do not assume the excerpt is the complete source.",
       "Non-whitelisted EKP functions are not automatically blocking. First infer their intent from source evidence and surrounding script context, then translate safely to targetApi JavaScript when confidence is high.",
       "If a non-whitelisted function cannot be safely inferred, leave the action needs_review or manual and explain the unresolved function in diagnostics.",
-      "Do not downgrade deterministic mapped or native-covered omitted script actions to needs_review or manual. If confidence is insufficient, leave the action unchanged and emit a warning diagnostic.",
+      "Do not downgrade deterministic mapped or coverage-backed omitted script actions to needs_review or manual. If confidence is insufficient, leave the action unchanged and emit a warning diagnostic.",
       "Legacy APIs listed in jspTranslationPlaybook are semantic examples and guidance; still verify each patch against the concrete source/action context.",
       "Detail-table control scripts use tableId plus controlId; preserve rowNum for row-scoped APIs.",
       "When a detail-table function refers to a runtime control id, use ${table:<sourceDetailTableId>}.<controlId>; the executor resolves this placeholder to mk_model_fd_... at write time.",
       "If native formRules already cover a JSP visibility/required rule, do not duplicate that rule in generated JavaScript.",
-      "If native formRules.linkage entries with meta.sourceJsp matching the action sourceRefs fully cover the JSP behavior, patch the action to function:\"\", translationStatus:\"omitted\", and coverage:{status:\"covered\",nativeRules:[rule ids],residuals:[]}.",
-      "When generated JavaScript covers source JSP behavior, patch coverage to {status:\"translated\", nativeRules:[], residuals:[]} unless native formRules cover it.",
-      "Do not patch coverage for existing deterministic mapped or native-covered omitted actions to partial, uncovered, or residual-bearing coverage.",
+      "If native formRules.linkage entries with meta.sourceJsp or meta.sourceJsps matching the action sourceRefs fully cover the action-local JSP behavior, patch the action to function:\"\", translationStatus:\"omitted\", and coverage:{status:\"covered\",nativeRules:[executable rule ids],residuals:[]}; preserve runWhen.",
+      "When native formRules cover only part of an action, retain mapped residual JavaScript for uncovered setValue or other behavior, preserve runWhen, exclude covered visible/required calls, and close coverage with the executable native rule ids plus no remaining residuals.",
+      "When generated JavaScript alone covers source JSP behavior, patch coverage to {status:\"translated\", nativeRules:[], residuals:[]}.",
+      "Do not patch coverage for existing deterministic mapped or coverage-backed omitted actions to partial, uncovered, or residual-bearing coverage.",
       "Review-grade targetApi calls may be used only when the action has explicit functionMappings, coverage.status is translated or covered, and residuals are empty.",
       "onBeforeSubmit must explicitly handle context.isDraft and return true, false, or Promise<boolean>.",
       "If a workflow concern is found, emit a diagnostic instead of a patch.",
@@ -119,19 +126,20 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
           "scripts.actions[].event",
           "scripts.actions[].controlId",
           "scripts.actions[].tableId",
+          "scripts.actions[].runWhen",
           "scripts.actions[] array shape or order"
         ],
         statuses: {
           mapped: "fully translated and locally executable",
           needs_review: "AI attempted or source remains ambiguous; blocks execution",
           manual: "requires human-authored JavaScript; blocks execution",
-          omitted: "source fragment is fully covered by native formRules and no JavaScript should run"
+          omitted: "source fragment is fully covered by native formRules or verified static form properties and no JavaScript should run"
         },
         coverageStatuses: {
           none: "no source behavior was identified for coverage accounting",
           partial: "native rules cover some behavior but residual JSP behavior remains",
           uncovered: "source behavior remains untranslated",
-          covered: "native formRules cover all source behavior and no JavaScript should run",
+          covered: "native formRules or verified static form properties cover all source behavior and no JavaScript should run",
           translated: "generated MK JavaScript covers all source JSP behavior"
         },
         targetApi: scriptTargetApiSummary(),
@@ -365,12 +373,15 @@ function jspTranslationPlaybookSummary() {
 
 function sourceFormSummary(form = {}) {
   const controls = Array.isArray(form?.controls) ? form.controls : [];
+  const dataFields = Array.isArray(form?.dataFields) ? form.dataFields : [];
   const detailTables = Array.isArray(form?.detailTables) ? form.detailTables : [];
   return {
     controlCount: controls.length,
+    dataFieldCount: dataFields.length,
     detailTableCount: detailTables.length,
     layout: layoutSummary(form?.layout),
     controls: controls.map(sourceControlSummary),
+    dataFields: dataFields.map(sourceControlSummary),
     detailTables: detailTables.map((table) => ({
       id: table.id,
       title: table.title,
@@ -389,6 +400,7 @@ function sourceControlSummary(control = {}) {
     sourceRef: control.sourceRef,
     sourceType: control.sourceType,
     required: control.required,
+    dataOnly: control.dataOnly,
     sourceProps: compactSourceProps(control.sourceProps),
     evidence: control.evidence
   });
@@ -409,6 +421,7 @@ function dslFieldSummary(field = {}) {
     title: field.title,
     type: field.type,
     componentId: field.componentId,
+    dataOnly: field.dataOnly,
     props: field.props,
     sourceRef: field.sourceRef,
     sourceProps: compactSourceProps(field.sourceProps),
@@ -439,7 +452,10 @@ function compactSourceProps(sourceProps = {}) {
       "type",
       "defaultValue",
       "formula",
-      "kind"
+      "kind",
+      "canDisplay",
+      "canShow",
+      "showStatus"
     ])
   });
 }
@@ -507,6 +523,7 @@ function scriptSourceSummary(scripts = {}, focusedRefs) {
         sourceKey: source.sourceKey,
         sourceType: source.sourceType,
         fragmentId: source.fragmentId,
+        displayGate: source.displayGate,
         javascriptLength: String(source.javascript || "").length,
         javascriptWindows: focused ? sourceJavascriptWindows(source) : undefined,
         functionAudit: focused ? compactFunctionAudit(source.functionAudit) : compactFunctionAuditNames(source.functionAudit),
@@ -573,6 +590,7 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}) {
         scope: action.scope,
         controlId: action.controlId,
         tableId: action.tableId,
+        runWhen: action.runWhen,
         sourceRefs: action.sourceRefs,
         translationStatus: action.translationStatus,
         coverage: coverageSummary(action.coverage, focused ? 4 : 0),
@@ -658,6 +676,38 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex) 
   const opportunities = [];
   const coverage = action.coverage || {};
   const residuals = Array.isArray(coverage.residuals) ? coverage.residuals : [];
+  const staticProps = Array.isArray(coverage.staticProps) ? coverage.staticProps : [];
+  if (action.runWhen === undefined && coverage.status === "covered" && staticProps.length && residuals.length === 0) {
+    opportunities.push({
+      kind: "static_property_coverage_candidate",
+      actionIndex,
+      candidatePatchPaths: [
+        `/scripts/actions/${actionIndex}/function`,
+        `/scripts/actions/${actionIndex}/translationStatus`,
+        `/scripts/actions/${actionIndex}/functionMappings`,
+        `/scripts/actions/${actionIndex}/coverage`
+      ],
+      staticProps,
+      requiredDecision: "Patch this action to omitted because verified static form properties fully cover the action-local behavior; do not invent a native formRule id.",
+      requiredPatchShape: {
+        function: "",
+        translationStatus: "omitted",
+        functionMappings: [{
+          source: "legacy JSP static form-property assignment",
+          target: "form.fields[].props",
+          basis: "static-form-prop",
+          reviewRequired: false
+        }],
+        coverage: {
+          status: "covered",
+          nativeRules: [],
+          staticProps,
+          residuals: []
+        }
+      },
+      residualPolicy: "Keep the action needs_review if its source body performs anything beyond the listed static properties."
+    });
+  }
   if (coverage.status === "covered" && Array.isArray(coverage.nativeRules) && coverage.nativeRules.length && residuals.length === 0) {
     opportunities.push({
       kind: "native_coverage_candidate",
@@ -927,6 +977,7 @@ function coverageSummary(coverage = {}, maxResiduals = 1) {
   return pruneUndefined({
     status: coverage.status,
     nativeRules: Array.isArray(coverage.nativeRules) ? coverage.nativeRules.slice(0, 8) : coverage.nativeRules,
+    staticProps: Array.isArray(coverage.staticProps) ? coverage.staticProps.slice(0, 8) : coverage.staticProps,
     residuals: Array.isArray(coverage.residuals)
       ? coverage.residuals.slice(0, maxResiduals).map(compactResidual)
       : coverage.residuals,

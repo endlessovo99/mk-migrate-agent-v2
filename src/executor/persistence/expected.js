@@ -1,0 +1,580 @@
+import { COMPONENTS_BY_ID } from "../../dsl/catalogs.js";
+import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../../dsl/form-rules.js";
+import { EXECUTABLE_WORKFLOW_NODE_TYPE_SET, INVARIANT_VERSION } from "./invariants.js";
+import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "./normalize.js";
+import { projectionError } from "./diagnostics.js";
+
+export function buildExpectedInvariants(dsl, envelope) {
+  const diagnostics = [];
+  const envelopeExpected = buildExpectedEnvelope(envelope, diagnostics);
+  const formExpected = buildExpectedForm(dsl?.form || {}, diagnostics);
+  const rulesExpected = buildExpectedRules(dsl?.formRules, dsl?.form || {}, diagnostics);
+  const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, diagnostics);
+  const workflowExpected = dsl?.workflow
+    ? buildExpectedWorkflow(dsl.workflow, diagnostics)
+    : { expected: false };
+
+  if (diagnostics.length) {
+    return { ok: false, diagnostics };
+  }
+
+  return {
+    ok: true,
+    expected: {
+      invariantVersion: INVARIANT_VERSION,
+      envelope: envelopeExpected,
+      form: formExpected,
+      rules: rulesExpected,
+      scripts: scriptsExpected,
+      workflow: workflowExpected
+    }
+  };
+}
+
+function buildExpectedEnvelope(envelope = {}, diagnostics) {
+  const required = [
+    ["templateId", envelope.templateId],
+    ["templateName", envelope.templateName],
+    ["categoryId", envelope.categoryId],
+    ["tableName", envelope.tableName]
+  ];
+  for (const [key, value] of required) {
+    if (!nonEmptyString(value)) {
+      diagnostics.push(projectionError(
+        "projection.envelope.missing",
+        `Persistence envelope is missing ${key}.`,
+        { field: key }
+      ));
+    }
+  }
+  if (envelope.templateName && !String(envelope.templateName).startsWith("MK_TEST_")) {
+    diagnostics.push(projectionError(
+      "projection.envelope.template_name_prefix",
+      "Persistence envelope templateName must use the MK_TEST_ prefix.",
+      { templateName: envelope.templateName }
+    ));
+  }
+
+  return {
+    templateId: normalizeScalar(envelope.templateId),
+    templateName: normalizeScalar(envelope.templateName),
+    categoryId: normalizeScalar(envelope.categoryId),
+    tableName: normalizeScalar(envelope.tableName),
+    lifecycle: {
+      draft: envelope.lifecycle?.draft !== false,
+      unpublished: envelope.lifecycle?.unpublished !== false,
+      fdStatus: envelope.lifecycle?.fdStatus ?? 0,
+      xformStatus: envelope.lifecycle?.xformStatus || "draft",
+      lbpmStatus: envelope.lifecycle?.lbpmStatus || "draft",
+      lbpmIsDraft: envelope.lifecycle?.lbpmIsDraft !== false
+    },
+    bindings: {
+      formFdId: normalizeScalar(envelope.bindings?.formFdId || envelope.templateId),
+      workflowFdId: normalizeScalar(envelope.bindings?.workflowFdId || "")
+    }
+  };
+}
+
+function buildExpectedForm(form, diagnostics) {
+  const fields = Array.isArray(form.fields) ? form.fields : [];
+  const rows = Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : [];
+  const fieldIds = new Set();
+
+  const expectedFields = fields.map((field, index) => {
+    if (!nonEmptyString(field?.id)) {
+      diagnostics.push(projectionError(
+        "projection.form.field_id_missing",
+        "DSL form field is missing an id.",
+        { index }
+      ));
+      return null;
+    }
+    if (fieldIds.has(field.id)) {
+      diagnostics.push(projectionError(
+        "projection.form.field_id_duplicate",
+        "DSL form field id is duplicated.",
+        { fieldId: field.id }
+      ));
+    }
+    fieldIds.add(field.id);
+    if (field.type === "detailTable") {
+      return {
+        id: field.id,
+        title: normalizeScalar(field.title),
+        type: "detailTable",
+        component: field.componentId,
+        dataOnly: false,
+        props: executableProps(field),
+        columns: (Array.isArray(field.columns) ? field.columns : []).map((column, columnIndex) => {
+          if (!nonEmptyString(column?.id)) {
+            diagnostics.push(projectionError(
+              "projection.form.column_id_missing",
+              "DSL detail column is missing an id.",
+              { fieldId: field.id, index: columnIndex }
+            ));
+            return null;
+          }
+          return {
+            id: column.id,
+            title: normalizeScalar(column.title),
+            type: column.type,
+            component: column.componentId,
+            props: executableProps(column)
+          };
+        }).filter(Boolean)
+      };
+    }
+    return {
+      id: field.id,
+      title: normalizeScalar(field.title),
+      type: field.type,
+      component: field.componentId,
+      dataOnly: field.dataOnly === true,
+      props: executableProps(field),
+      columns: []
+    };
+  }).filter(Boolean);
+
+  const layoutRows = rows.map((row, rowIndex) => {
+    if (!nonEmptyString(row?.id)) {
+      diagnostics.push(projectionError(
+        "projection.form.layout_row_id_missing",
+        "DSL layout row is missing an id.",
+        { index: rowIndex }
+      ));
+      return null;
+    }
+    return {
+      id: row.id,
+      cells: (Array.isArray(row.children) ? row.children : []).map((cell, cellIndex) => {
+        const fieldIdsForCell = childRefIds(cell);
+        if (!fieldIdsForCell.length) {
+          diagnostics.push(projectionError(
+            "projection.form.layout_cell_empty",
+            "DSL layout cell has no field references.",
+            { rowId: row.id, index: cellIndex }
+          ));
+        }
+        return {
+          id: cell.id || `${row.id}-cell-${cellIndex}`,
+          fieldIds: fieldIdsForCell,
+          column: cell.column,
+          colspan: cell.colspan
+        };
+      })
+    };
+  }).filter(Boolean);
+
+  return {
+    fields: expectedFields,
+    layoutRows
+  };
+}
+
+function executableProps(field = {}) {
+  const props = {};
+  if (field.props?.required === true) props.required = true;
+  if (Array.isArray(field.props?.options) && field.props.options.length) {
+    props.options = field.props.options.map((option) => ({
+      label: normalizeScalar(option.label ?? option.text ?? option.value),
+      value: normalizeScalar(option.value ?? option.label ?? option.text)
+    }));
+  }
+  if (field.componentId === "xform-select~multi") props.multi = true;
+  if (field.props?.content !== undefined) props.content = normalizeScalar(field.props.content);
+  if (field.props?.maxLength !== undefined) props.maxLength = field.props.maxLength;
+  const catalog = COMPONENTS_BY_ID.get(field.componentId);
+  if (catalog?.componentId) props.componentId = catalog.componentId;
+  return props;
+}
+
+function buildExpectedRules(formRules = {}, form = {}, diagnostics) {
+  const linkage = (Array.isArray(formRules?.linkage) ? formRules.linkage : [])
+    .filter((rule) => rule?.translationStatus === "executable");
+  const formIndex = buildFormRuleRefIndex(form || {});
+  const rules = [];
+
+  for (const [index, rule] of linkage.entries()) {
+    const ruleId = rule.id || `linkage-${index + 1}`;
+    const when = Array.isArray(rule.when) ? rule.when : [];
+    pushRuleSemantics(rules, {
+      ruleId,
+      branch: "when",
+      logic: rule.logic === "or" ? "or" : "and",
+      when,
+      effects: Array.isArray(rule.effects) ? rule.effects : [],
+      formIndex
+    }, diagnostics);
+    if (Array.isArray(rule.else) && rule.else.length) {
+      pushRuleSemantics(rules, {
+        ruleId,
+        branch: "else",
+        logic: rule.logic === "or" ? "and" : "or",
+        when: invertClauses(when),
+        effects: rule.else,
+        formIndex
+      }, diagnostics);
+    }
+  }
+
+  return { rules };
+}
+
+function pushRuleSemantics(rules, { ruleId, branch, logic, when, effects, formIndex }, diagnostics) {
+  const displayEffects = [];
+  const requireEffects = [];
+  for (const effect of effects) {
+    const targets = resolveEffectFieldNames(formIndex, effect.target, diagnostics, ruleId);
+    for (const target of targets) {
+      if (effect?.type === "visible") {
+        displayEffects.push({
+          target,
+          visible: effect.value !== false
+        });
+      }
+      if (effect?.type === "required") {
+        requireEffects.push({
+          target,
+          required: effect.value !== false
+        });
+      }
+    }
+  }
+  const conditions = when.map((clause) => ({
+    field: resolveConditionFieldName(formIndex, clause.field),
+    op: normalizeScalar(clause.op),
+    value: normalizeRuleValue(clause.value)
+  }));
+  if (displayEffects.length) {
+    rules.push({
+      kind: "display",
+      ruleId,
+      branch,
+      logic,
+      conditions,
+      effects: displayEffects
+    });
+  }
+  if (requireEffects.length) {
+    rules.push({
+      kind: "require",
+      ruleId,
+      branch,
+      logic,
+      conditions,
+      effects: requireEffects
+    });
+  }
+}
+
+function resolveEffectFieldNames(formIndex, ref, diagnostics, ruleId) {
+  const resolved = resolveEffectTarget(formIndex, ref);
+  if (!resolved || resolved.unresolved?.length) {
+    diagnostics.push(projectionError(
+      "projection.form_rules.target_unresolved",
+      "Executable form rule effect target could not be resolved.",
+      { ruleId, target: ref, unresolved: resolved?.unresolved || [ref] }
+    ));
+    return [];
+  }
+  return resolved.targets.map((target) => normalizeScalar(target.id));
+}
+
+function resolveConditionFieldName(formIndex, ref) {
+  const direct = resolveDirectRef(formIndex, ref);
+  return normalizeScalar(direct?.id || ref);
+}
+
+function invertClauses(clauses) {
+  const invert = {
+    eq: "ne",
+    ne: "eq",
+    contains: "notContains",
+    notContains: "contains",
+    in: "notContains",
+    empty: "notEmpty",
+    notEmpty: "empty"
+  };
+  return clauses.map((clause) => ({
+    ...clause,
+    op: invert[clause.op] || clause.op
+  }));
+}
+
+function normalizeRuleValue(value) {
+  if (Array.isArray(value)) return value.map((item) => normalizeScalar(item));
+  return normalizeScalar(value);
+}
+
+function buildExpectedScripts(scripts = {}, form = {}, diagnostics) {
+  const actions = [];
+  const detailTableNames = Object.fromEntries(
+    (Array.isArray(form?.fields) ? form.fields : [])
+      .filter((field) => field?.type === "detailTable")
+      .map((field) => [field.id, tableNameFor(field.id)])
+  );
+  for (const action of Array.isArray(scripts?.actions) ? scripts.actions : []) {
+    if (action?.translationStatus === "omitted") {
+      actions.push({
+        id: action.id,
+        omitted: true
+      });
+      continue;
+    }
+    if (!nonEmptyString(action?.id)) {
+      diagnostics.push(projectionError(
+        "projection.scripts.action_id_missing",
+        "DSL script action is missing an id."
+      ));
+      continue;
+    }
+    if (typeof action.function !== "string" || !action.function.trim()) {
+      diagnostics.push(projectionError(
+        "projection.scripts.action_body_missing",
+        "DSL script action is missing a function body.",
+        { actionId: action.id }
+      ));
+      continue;
+    }
+    const event = action.event || action.name;
+    const renderedBody = renderExpectedScriptBody(action.function, detailTableNames);
+    actions.push({
+      id: action.id,
+      omitted: false,
+      event,
+      scope: action.scope || "global",
+      controlId: action.controlId || undefined,
+      tableId: action.tableId || undefined,
+      runWhen: action.runWhen ? clone(action.runWhen) : undefined,
+      bodyDigest: digestText(canonicalizeScriptBody(renderedBody)),
+      hasCanonicalGuardExpectation: Boolean(action.runWhen?.viewStatusIn?.length)
+    });
+  }
+  return { actions };
+}
+
+function renderExpectedScriptBody(source, detailTableNames = {}) {
+  return String(source || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
+    const sourceTableId = String(tableId || "").trim();
+    return detailTableNames[sourceTableId] || sourceTableId;
+  });
+}
+
+function tableNameFor(id) {
+  return `mk_model_${String(id || "table").replace(/[^a-zA-Z0-9_]+/g, "_").slice(0, 32)}`;
+}
+
+function buildExpectedWorkflow(workflow, diagnostics) {
+  const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
+  const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
+  const initiatorSelectTargetNodeIds = collectMustModifyHandlerTargetNodeIds(nodes);
+  const defaultEdgeIds = collectDefaultEdgeIds(nodes, edges);
+  const expectedNodes = nodes.map((node, index) => {
+    if (!nonEmptyString(node?.id)) {
+      diagnostics.push(projectionError(
+        "projection.workflow.node_id_missing",
+        "DSL workflow node is missing an id.",
+        { index }
+      ));
+      return null;
+    }
+    if (!EXECUTABLE_WORKFLOW_NODE_TYPE_SET.has(node.type)) {
+      diagnostics.push(projectionError(
+        "projection.workflow.node_type_unsupported",
+        `Workflow node type is not an executable NewOA type: ${node.type}`,
+        { nodeId: node.id, type: node.type }
+      ));
+      return null;
+    }
+    return {
+      id: node.id,
+      name: normalizeScalar(node.name),
+      type: node.type,
+      element: node.element || defaultElementForType(node.type),
+      mustModifyHandlerNodeIds: splitRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds),
+      participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id)),
+      dataAuthority: summarizeDataAuthority(node)
+    };
+  }).filter(Boolean);
+
+  const expectedEdges = edges.map((edge, index) => {
+    if (!nonEmptyString(edge?.id)) {
+      diagnostics.push(projectionError(
+        "projection.workflow.edge_id_missing",
+        "DSL workflow edge is missing an id.",
+        { index }
+      ));
+      return null;
+    }
+    return {
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      isDefault: defaultEdgeIds.has(edge.id),
+      branch: normalizeScalar(edge.attributes?.branch || edge.branch || ""),
+      condition: summarizeCondition(edge)
+    };
+  }).filter(Boolean);
+
+  return {
+    expected: true,
+    readable: true,
+    nodes: expectedNodes,
+    edges: expectedEdges
+  };
+}
+
+function collectDefaultEdgeIds(nodes = [], edges = []) {
+  const conditionBranchNodeIds = new Set(
+    nodes.filter((node) => node?.type === "conditionBranch").map((node) => node.id)
+  );
+  const edgesBySource = new Map();
+  for (const edge of edges) {
+    if (!conditionBranchNodeIds.has(edge?.source)) continue;
+    if (!edgesBySource.has(edge.source)) edgesBySource.set(edge.source, []);
+    edgesBySource.get(edge.source).push(edge);
+  }
+
+  const defaultEdgeIds = new Set();
+  for (const sourceEdges of edgesBySource.values()) {
+    const defaultEdge = sourceEdges.find(isExplicitDefaultEdge) ||
+      sourceEdges.find((edge) => isTautologyCondition(edgeConditionText(edge)));
+    if (defaultEdge?.id) defaultEdgeIds.add(defaultEdge.id);
+  }
+  return defaultEdgeIds;
+}
+
+function isExplicitDefaultEdge(edge) {
+  return [true, "true", 1, "1"].includes(edge?.isDefault) ||
+    [true, "true", 1, "1"].includes(edge?.attributes?.isDefault);
+}
+
+function isTautologyCondition(condition) {
+  return /^(?:1\s*={2,3}\s*1|true)$/i.test(String(condition || "").trim());
+}
+
+function edgeConditionText(edge) {
+  if (edge?.condition && typeof edge.condition === "object") {
+    return edge.condition.targetText || edge.condition.sourceText || edge.condition.displayText || "";
+  }
+  return edge?.condition || edge?.displayCondition || "";
+}
+
+function summarizeParticipants(node, initiatorSelectTarget) {
+  if (initiatorSelectTarget) {
+    return {
+      mode: "initiator_select",
+      handlersSource: "1",
+      handlersRuleKey: "",
+      memberIds: []
+    };
+  }
+  if (!node?.participants) return undefined;
+  if (node.participants.mode === "initiator_select") {
+    return undefined;
+  }
+  if (node.participants.mode === "form_field") {
+    return {
+      mode: "form_field",
+      fieldId: node.participants.fieldId
+    };
+  }
+  if (node.participants.mode === "explicit") {
+    return {
+      mode: "explicit",
+      memberIds: (node.participants.members || []).map((member) => member.id).sort()
+    };
+  }
+  // empty / unsupported participant modes are not error-level persisted invariants
+  return undefined;
+}
+
+function collectMustModifyHandlerTargetNodeIds(nodes = []) {
+  const targetNodeIds = new Set();
+  for (const node of nodes) {
+    for (const targetNodeId of splitRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds)) {
+      targetNodeIds.add(targetNodeId);
+    }
+  }
+  return targetNodeIds;
+}
+
+function sourceAttributes(node) {
+  return {
+    ...(node?.attributes || {}),
+    ...(node?.definition?.attributes || {})
+  };
+}
+
+function splitRelatedNodeIds(value = "") {
+  return [...new Set(
+    String(value || "").split(/[;,，\s]+/).map((item) => item.trim()).filter(Boolean)
+  )];
+}
+
+function summarizeDataAuthority(node) {
+  if (!node?.dataAuthority?.fields || node.dataAuthority.enabled === false) return undefined;
+  return {
+    enabled: node.dataAuthority.enabled !== false,
+    fields: Object.fromEntries(
+      Object.entries(node.dataAuthority.fields).map(([fieldId, value]) => [fieldId, {
+        visible: normalizeBoolean(value.visible),
+        editable: normalizeBoolean(value.editable),
+        required: normalizeBoolean(value.required)
+      }])
+    )
+  };
+}
+
+function summarizeCondition(edge) {
+  const text = edge?.condition?.targetText ||
+    edge?.condition?.displayText ||
+    edge?.condition?.sourceText ||
+    "";
+  if (!String(text).trim()) return undefined;
+  return {
+    text: normalizeScalar(text),
+    translationStatus: edge.condition?.translationStatus
+  };
+}
+
+function defaultElementForType(type) {
+  if (type === "generalStart") return "startEvent";
+  if (type === "generalEnd") return "endEvent";
+  if (type === "conditionBranch") return "exclusiveGateway";
+  if (type === "split" || type === "join") return "parallelGateway";
+  if (type === "robot") return "robot";
+  return "manualTask";
+}
+
+function canonicalizeScriptBody(source) {
+  return String(source || "")
+    .replace(/\/\*\s*mk-migrate:[^*]+?\*\//g, "")
+    .replace(/\bif\s*\(\s*MKXFORM\.viewStatus\s*!==[\s\S]*?\)\s*(return true|return)\s*;?/g, "")
+    .replace(/\bfunction\s+[A-Za-z0-9_]+\s*\(/g, "function __fn(")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function childRefIds(cell = {}) {
+  if (Array.isArray(cell.refIds) && cell.refIds.length) return cell.refIds.filter(Boolean);
+  if (cell.refId) return [cell.refId];
+  return [];
+}
+
+function nonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+export function expectedRuleFingerprint(rule) {
+  return stableStringify({
+    kind: rule.kind,
+    logic: rule.logic,
+    conditions: rule.conditions,
+    effects: rule.effects
+  });
+}

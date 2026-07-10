@@ -8,6 +8,8 @@ const ENTRY_KEYS_BY_OPERATION = new Map([
   ["add", new Set(["operation", "templateId", "draft"])],
   ["get-before-update", new Set(["operation", "templateId"])],
   ["update", new Set(["operation", "templateId"])],
+  ["save-workflow-draft", new Set(["operation", "templateId", "draft"])],
+  ["get-workflow-detail", new Set(["operation", "templateId", "definitionId"])],
   ["get-readback", new Set(["operation", "templateId"])]
 ]);
 const FORBIDDEN_KEY = /authorization|cookie|credential|password|secret|token|username/i;
@@ -25,6 +27,9 @@ export function appendTranscriptEntry(transcript, entry) {
     if (Object.hasOwn(entry, key) && !nonEmptyString(entry[key])) {
       throw integrityError("route.transcript.invalid", `Transcript ${key} must be a non-empty string.`);
     }
+  }
+  if (Object.hasOwn(entry, "definitionId") && typeof entry.definitionId !== "string") {
+    throw integrityError("route.transcript.invalid", "Transcript definitionId must be a string.");
   }
   if (Object.hasOwn(entry, "draft") && typeof entry.draft !== "boolean") {
     throw integrityError("route.transcript.invalid", "Transcript draft must be a boolean.");

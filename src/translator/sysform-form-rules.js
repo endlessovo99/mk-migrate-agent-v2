@@ -3,6 +3,7 @@ export function sourceFormRulesFromLegacyScripts(scripts) {
   const linkageById = new Map();
 
   for (const source of sources) {
+    if (source.displayGate === "xform:viewShow") continue;
     for (const rule of analyzeLegacyScriptFormRules(source).linkage) {
       mergeLinkageRule(linkageById, rule);
     }
@@ -25,28 +26,26 @@ export function analyzeLegacyScriptFormRules(source) {
 
   for (const callback of callbacks) {
     for (const block of extractTopLevelIfElseBlocks(callback.body)) {
-      const value = conditionLiteralValue(block.condition);
-      if (!value) continue;
+      const condition = conditionSpec(block.condition, callback.source);
+      if (!condition) continue;
 
       const effects = extractDirectRowEffects(block.thenBody);
       const elseEffects = extractDirectRowEffects(block.elseBody);
       if (!effects.length || !elseEffects.length) continue;
 
       mergeLinkageRule(linkageById, {
-        id: `linkage.${callback.source}.contains.${stableIdPart(value)}`,
+        id: `linkage.${callback.source}.${condition.idPart}`,
         trigger: "change",
         source: callback.source,
-        logic: "and",
-        when: [{
-          field: callback.source,
-          op: "contains",
-          value
-        }],
+        logic: condition.logic,
+        when: condition.when,
         effects,
         else: elseEffects,
-        meta: {
-          sourceJsp: source.sourceRef
-        },
+        meta: pruneUndefined({
+          sourceJsp: source.sourceRef,
+          displayGate: source.displayGate,
+          runWhen: runWhenFromDisplayGate(source.displayGate)
+        }),
         translationStatus: "executable"
       });
     }
@@ -276,13 +275,42 @@ function findNextTopLevelIf(text, start) {
   return -1;
 }
 
-function conditionLiteralValue(condition) {
-  const contains = String(condition || "").match(/\.indexOf\(\s*(["'])([^"']+)\1\s*\)\s*(?:>=\s*0|>\s*-1|!==?\s*-1)/);
-  if (contains) return contains[2];
-  const equality = String(condition || "").match(/(?:^|[^\w$])[\w$]+\s*={2,3}\s*(["'])([^"']+)\1/);
-  if (equality) return equality[2];
-  const reversed = String(condition || "").match(/(["'])([^"']+)\1\s*={2,3}\s*[\w$]+/);
-  return reversed?.[2] || "";
+function conditionSpec(condition, field) {
+  const text = String(condition || "");
+  const regexTest = text.match(/\/\[([^\]]+)\]\/[gimsuy]*\.test\(\s*[A-Za-z_$][\w$]*\s*\)/);
+  if (regexTest && /^[A-Za-z0-9]+$/.test(regexTest[1])) {
+    const values = uniqueStrings([...regexTest[1]]);
+    return {
+      idPart: `eq.${values.map(stableIdPart).join("_")}`,
+      logic: values.length > 1 ? "or" : "and",
+      when: values.map((value) => ({ field, op: "eq", value }))
+    };
+  }
+
+  const contains = text.match(/\.indexOf\(\s*(["'])([^"']+)\1\s*\)\s*(?:>=\s*0|>\s*-1|!==?\s*-1)/);
+  if (contains) {
+    return {
+      idPart: `contains.${stableIdPart(contains[2])}`,
+      logic: "and",
+      when: [{ field, op: "contains", value: contains[2] }]
+    };
+  }
+
+  const equality = text.match(/(?:^|[^\w$])[\w$]+\s*={2,3}\s*(["'])([^"']+)\1/);
+  const reversed = text.match(/(["'])([^"']+)\1\s*={2,3}\s*[\w$]+/);
+  const value = equality?.[2] || reversed?.[2];
+  if (!value) return undefined;
+  return {
+    idPart: `eq.${stableIdPart(value)}`,
+    logic: "and",
+    when: [{ field, op: "eq", value }]
+  };
+}
+
+function runWhenFromDisplayGate(displayGate) {
+  if (displayGate === "xform:editShow") return { viewStatusIn: ["add", "edit"] };
+  if (displayGate === "xform:viewShow") return { viewStatusIn: ["view"] };
+  return undefined;
 }
 
 function extractDirectRowEffects(body) {

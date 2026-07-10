@@ -88,8 +88,48 @@ export class NewoaClient {
     return body?.data || { fdId: payload.fdId };
   }
 
+  async saveWorkflowDraft(payload) {
+    if (payload?.isDraft !== true) {
+      throw clientStageError("saveWorkflowDraft", "Workflow definition writes must remain draft saves.");
+    }
+    let body;
+    try {
+      body = await this.postSysLbpm("lbpmTemplate/publish", payload);
+    } catch (error) {
+      throw assignClientStage(error, "saveWorkflowDraft");
+    }
+    return body?.data || {};
+  }
+
+  async getWorkflowTemplateDetail({ templateId, definitionId = "" }) {
+    let body;
+    try {
+      body = await this.postSysLbpm("lbpmTemplate/details", {
+        templateId,
+        definitionId
+      });
+    } catch (error) {
+      throw assignClientStage(error, "getWorkflowTemplateDetail");
+    }
+    if (!body?.data || typeof body.data !== "object") {
+      throw clientStageError(
+        "getWorkflowTemplateDetail",
+        "workflow template detail response did not include data"
+      );
+    }
+    return body.data;
+  }
+
   async postKmReview(apiPath, payload) {
-    const response = await this.fetch(`${this.baseUrl}/data/km-review/${apiPath}`, {
+    return this.postJson("km-review", apiPath, payload);
+  }
+
+  async postSysLbpm(apiPath, payload) {
+    return this.postJson("sys-lbpm", apiPath, payload);
+  }
+
+  async postJson(moduleCode, apiPath, payload) {
+    const response = await this.fetch(`${this.baseUrl}/data/${moduleCode}/${apiPath}`, {
       method: "POST",
       headers: {
         accept: "application/json, text/plain, */*",
@@ -157,4 +197,18 @@ function tokenFromBody(body) {
     body?.data?.access_token ||
     body?.data?.accessToken ||
     "";
+}
+
+function assignClientStage(error, stage) {
+  if (error && typeof error === "object") {
+    error.stage = stage;
+    return error;
+  }
+  return clientStageError(stage, String(error));
+}
+
+function clientStageError(stage, message) {
+  const error = new Error(message);
+  error.stage = stage;
+  return error;
 }

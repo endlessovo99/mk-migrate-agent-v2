@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>fdHistory</string>
+   <object class="java.util.ArrayList">
+    <void method="add">
+     <object class="java.util.HashMap">
+      <void method="put"><string>fdId</string><string>historical-sysform-id</string></void>
+      <void method="put"><string>fdName</string><string>历史版本表单</string></void>
+      <void method="put"><string>fdModelId</string><string>historical-template-id</string></void>
+      <void method="put">
+       <string>fdDesignerHtml</string>
+       <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_stale&quot;,label:&quot;历史字段&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string>
+      </void>
+      <void method="put">
+       <string>fdMetadataXml</string>
+       <string>&lt;metadata&gt;&lt;extendSimpleProperty name=&quot;fd_stale&quot; label=&quot;历史字段&quot; type=&quot;String&quot;/&gt;&lt;/metadata&gt;</string>
+      </void>
+     </object>
+    </void>
+   </object>
+  </void>
+  <void method="put"><string>class</string><string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string></void>
+  <void method="put"><string>fdId</string><string>route-hidden-current-sysform-id</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>2</string></void>
+  <void method="put"><string>fdName</string><string>隐藏字段与视图门控</string></void>
+  <void method="put"><string>fdModelName</string><string>com.landray.kmss.km.review.model.KmReviewTemplate</string></void>
+  <void method="put"><string>fdModelId</string><string>route-hidden-current-template-id</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;input type=&quot;hidden&quot; id=&quot;mode_row&quot;/&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_mode&quot;,content:&quot;模式&quot;}&apos;&gt;模式&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_mode&quot;,label:&quot;模式&quot;,items:&quot;模式A|A&amp;#10;模式B|B&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr style=&quot;display:none&quot;&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_shift&quot;,label:&quot;脚本状态&quot;,canShow:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;fd_shift&quot; class=&quot;inputhidden&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_transient_marker&quot;,label:&quot;无元数据标记&quot;,canShow:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;fd_transient_marker&quot; class=&quot;inputhidden&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div id=&quot;fd_gate_jsp&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;AttachXFormValueChangeEventById(&quot;fd_mode&quot;, function(value){ var shift = GetXFormFieldById(&quot;fd_shift&quot;)[0]; shift.value = value; if (value.indexOf(&quot;A&quot;) &gt;= 0) { common_dom_row_set_show_required_reset(&quot;mode_row&quot;, true, false, false); } else { common_dom_row_set_show_required_reset(&quot;mode_row&quot;, false, false, false); } });&lt;/script&gt;&lt;/xform:editShow&gt;&lt;xform:viewShow&gt;&lt;script&gt;Com_AddEventListener(window, &quot;load&quot;, function(){ var shift = GetXFormFieldById(&quot;fd_shift&quot;)[0]; });&lt;/script&gt;&lt;/xform:viewShow&gt;&apos;/&gt;&lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_mode&quot; label=&quot;模式&quot; type=&quot;String&quot; enumValues=&quot;模式A|A&amp;#10;模式B|B&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_shift&quot; label=&quot;脚本状态&quot; type=&quot;String&quot; canDisplay=&quot;false&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>
