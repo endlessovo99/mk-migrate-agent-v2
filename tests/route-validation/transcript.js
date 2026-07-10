@@ -2,6 +2,7 @@ import { integrityError } from "./integrity.js";
 
 const ENTRY_KEYS_BY_OPERATION = new Map([
   ["login", new Set(["operation"])],
+  ["get-element-info", new Set(["operation", "targets"])],
   ["init", new Set(["operation"])],
   ["generate-table-name", new Set(["operation"])],
   ["load-parent-category", new Set(["operation", "categoryId"])],
@@ -33,6 +34,13 @@ export function appendTranscriptEntry(transcript, entry) {
   }
   if (Object.hasOwn(entry, "draft") && typeof entry.draft !== "boolean") {
     throw integrityError("route.transcript.invalid", "Transcript draft must be a boolean.");
+  }
+  if (Object.hasOwn(entry, "targets") && (
+    !Array.isArray(entry.targets) ||
+    entry.targets.length === 0 ||
+    entry.targets.some((target) => !nonEmptyString(target))
+  )) {
+    throw integrityError("route.transcript.invalid", "Transcript targets must contain non-empty strings.");
   }
   transcript.push(structuredClone(entry));
 }

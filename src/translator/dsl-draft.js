@@ -423,7 +423,7 @@ function draftRuleEffects(effects) {
 function draftWorkflow(sourceWorkflow) {
   const sourceNodes = sourceWorkflow.nodes || [];
   const nodeById = new Map(sourceNodes.map((node) => [node.id, node]));
-  const draftParticipantSelections = participantSelectionsFromDraftNodes(sourceNodes);
+  const participantSelections = participantSelectionsFromWorkflowNodes(sourceNodes);
   return {
     process: sourceWorkflow.process || {},
     nodes: sourceNodes.map((node) => {
@@ -437,10 +437,13 @@ function draftWorkflow(sourceWorkflow) {
         sourceRef: node.sourceRef,
         attributes: node.attributes || {},
         definition: node.definition,
+        handlerEntities: node.handlerEntities,
+        optionalHandlerEntities: node.optionalHandlerEntities,
         dataAuthority: draftDataAuthority(node.dataAuthority),
+        participantSelections: participantSelections.get(node.id),
         participants: nodeType.participants === false
           ? undefined
-          : participantsFromSourceNode(node, draftParticipantSelections.get(node.id)),
+          : participantsFromSourceNode(node, participantSelections.get(node.id)),
         translationStatus: nodeType.needsReview ? "pending_review" : "executable"
       });
     }),
@@ -465,16 +468,16 @@ function draftWorkflow(sourceWorkflow) {
   };
 }
 
-function participantSelectionsFromDraftNodes(nodes) {
+function participantSelectionsFromWorkflowNodes(nodes) {
   const selections = new Map();
   for (const node of nodes) {
-    if (!String(node.sourceType || "").toLowerCase().includes("draft")) continue;
     const attrs = sourceNodeAttributes(node);
     for (const attribute of ["mustModifyHandlerNodeIds", "canModifyHandlerNodeIds"]) {
       for (const targetNodeId of splitRelatedNodeIds(attrs[attribute])) {
-        if (selections.has(targetNodeId)) continue;
-        selections.set(targetNodeId, {
+        if (!selections.has(targetNodeId)) selections.set(targetNodeId, []);
+        selections.get(targetNodeId).push({
           sourceNodeId: node.id,
+          sourceNodeType: node.sourceType,
           attribute,
           targetNodeId
         });
@@ -503,44 +506,88 @@ function draftDataAuthority(dataAuthority) {
   };
 }
 
-function participantsFromSourceNode(node, draftSelection) {
-  const attrs = node.attributes || {};
+function participantsFromSourceNode(node, participantSelections) {
+  const attrs = sourceNodeAttributes(node);
   const handlerIds = splitList(attrs.handlerIds);
   const handlerNames = splitList(attrs.handlerNames);
+  const handlerMembers = participantMembersFromHandlerEntities(node.handlerEntities);
+  const alternativeMembers = participantMembersFromHandlerEntities(node.optionalHandlerEntities);
+  const participantEvidence = {
+    alternativeMembers: alternativeMembers.length ? alternativeMembers : undefined,
+    useAlternativeOnly: alternativeMembers.length ? booleanAttribute(attrs, "useOptHandlerOnly") : undefined
+  };
+
+  if (handlerMembers.length) {
+    return pruneUndefined({
+      mode: "explicit",
+      members: handlerMembers,
+      ...participantEvidence
+    });
+  }
+
   const formFieldParticipant = formFieldParticipantFromFormulaHandler(attrs, handlerIds, handlerNames);
-  if (formFieldParticipant) return formFieldParticipant;
+  if (formFieldParticipant) return pruneUndefined({ ...formFieldParticipant, ...participantEvidence });
   const roleLineParticipant = roleLineParticipantFromFormulaHandler(attrs, handlerIds, handlerNames);
-  if (roleLineParticipant) return roleLineParticipant;
+  if (roleLineParticipant) return pruneUndefined({ ...roleLineParticipant, ...participantEvidence });
 
   if (handlerIds.length && !handlerIds.some((id) => id.startsWith("$"))) {
-    return {
+    return pruneUndefined({
       mode: "explicit",
       members: handlerIds.map((id, index) => ({
         id,
         name: handlerNames[index] || id,
         type: "user_or_org"
-      }))
-    };
+      })),
+      ...participantEvidence
+    });
   }
 
   if (handlerIds.some((id) => /\b(drafter|initiator|creator)\b/i.test(id))) {
-    return {
+    return pruneUndefined({
       mode: "initiator_select",
-      sourceSemantics: "source handler expression references drafter/initiator selection"
-    };
+      sourceSemantics: "source handler expression references drafter/initiator selection",
+      ...participantEvidence
+    });
   }
 
-  if (draftSelection && handlerIds.length === 0) {
-    return {
+  if (Array.isArray(participantSelections) && participantSelections.length && handlerIds.length === 0) {
+    return pruneUndefined({
       mode: "initiator_select",
-      sourceSemantics: `draft node ${draftSelection.sourceNodeId} ${draftSelection.attribute} includes ${draftSelection.targetNodeId}`
-    };
+      sourceSemantics: participantSelections.map(participantSelectionSemantics).join("; "),
+      ...participantEvidence
+    });
   }
 
-  return {
+  return pruneUndefined({
     mode: "empty",
-    reason: "source did not specify executable participants"
-  };
+    reason: "source did not specify executable participants",
+    ...participantEvidence
+  });
+}
+
+function participantMembersFromHandlerEntities(entities) {
+  if (!Array.isArray(entities)) return [];
+  return entities.map((entity) => pruneUndefined({
+    name: entity.name || entity.id,
+    type: "user_or_org",
+    sourceId: entity.id,
+    sourceOrgType: entity.orgType,
+    sourceOrgClass: entity.class,
+    sourceParentName: entity.parent,
+    sourceLoginName: entity.loginName
+  }));
+}
+
+function participantSelectionSemantics(selection) {
+  const nodeKind = String(selection.sourceNodeType || "").toLowerCase().includes("draft")
+    ? "draft node"
+    : "workflow node";
+  return `${nodeKind} ${selection.sourceNodeId} ${selection.attribute} includes ${selection.targetNodeId}`;
+}
+
+function booleanAttribute(attributes, key) {
+  if (!Object.prototype.hasOwnProperty.call(attributes, key)) return undefined;
+  return String(attributes[key]).trim().toLowerCase() === "true";
 }
 
 function formFieldParticipantFromFormulaHandler(attrs, handlerIds, handlerNames) {

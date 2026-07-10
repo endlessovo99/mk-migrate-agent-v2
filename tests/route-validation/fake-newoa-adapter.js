@@ -22,6 +22,15 @@ export class FakeNewoaAdapter {
     return { ok: true };
   }
 
+  async getElementInfo(targets) {
+    this.record({ operation: "get-element-info", targets: clone(targets) });
+    return targets.map((fdId) => ({
+      fdId,
+      fdName: fdId === "route-reviewer" ? "Route Reviewer" : fdId,
+      fdOrgType: 8
+    }));
+  }
+
   async initTemplate() {
     this.record({ operation: "init" });
     return {

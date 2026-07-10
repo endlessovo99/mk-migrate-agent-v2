@@ -369,6 +369,9 @@ function buildExpectedWorkflow(workflow, diagnostics) {
   const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
   const initiatorSelectTargetNodeIds = collectMustModifyHandlerTargetNodeIds(nodes);
   const defaultEdgeIds = collectDefaultEdgeIds(nodes, edges);
+  const conditionBranchNodeIds = new Set(
+    nodes.filter((node) => node?.type === "conditionBranch").map((node) => node.id)
+  );
   const expectedNodes = nodes.map((node, index) => {
     if (!nonEmptyString(node?.id)) {
       diagnostics.push(projectionError(
@@ -393,6 +396,8 @@ function buildExpectedWorkflow(workflow, diagnostics) {
       element: node.element || defaultElementForType(node.type),
       mustModifyHandlerNodeIds: splitRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds),
       participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id)),
+      alternativeParticipants: summarizeAlternativeParticipants(node.participants),
+      sendConfig: summarizeSendConfig(node),
       dataAuthority: summarizeDataAuthority(node)
     };
   }).filter(Boolean);
@@ -412,7 +417,9 @@ function buildExpectedWorkflow(workflow, diagnostics) {
       target: edge.target,
       isDefault: defaultEdgeIds.has(edge.id),
       branch: normalizeScalar(edge.attributes?.branch || edge.branch || ""),
-      condition: summarizeCondition(edge)
+      condition: defaultEdgeIds.has(edge.id)
+        ? undefined
+        : summarizeCondition(edge, conditionBranchNodeIds.has(edge.source))
     };
   }).filter(Boolean);
 
@@ -464,9 +471,12 @@ function summarizeParticipants(node, initiatorSelectTarget) {
   if (initiatorSelectTarget) {
     return {
       mode: "initiator_select",
+      handlersType: "org",
       handlersSource: "1",
       handlersRuleKey: "",
-      memberIds: []
+      handlersRuleName: "",
+      handlersElement: "users",
+      members: []
     };
   }
   if (!node?.participants) return undefined;
@@ -482,11 +492,63 @@ function summarizeParticipants(node, initiatorSelectTarget) {
   if (node.participants.mode === "explicit") {
     return {
       mode: "explicit",
-      memberIds: (node.participants.members || []).map((member) => member.id).sort()
+      handlersType: "org",
+      handlersSource: "1",
+      handlersRuleKey: "",
+      handlersRuleName: "",
+      handlersElement: "users",
+      members: (node.participants.members || [])
+        .map((member) => ({
+          id: normalizeScalar(member.id),
+          element: "user",
+          type: expectedNativeMemberType(member)
+        }))
+        .sort((left, right) => String(left.id).localeCompare(String(right.id)))
     };
   }
   // empty / unsupported participant modes are not error-level persisted invariants
   return undefined;
+}
+
+function summarizeAlternativeParticipants(participants) {
+  const hasAlternativeConfig = Array.isArray(participants?.alternativeMembers) ||
+    participants?.useAlternativeOnly !== undefined;
+  if (!hasAlternativeConfig) return undefined;
+
+  return {
+    handlersType: "org",
+    handlersSource: "1",
+    handlersRuleKey: "",
+    handlersRuleName: "",
+    handlersElement: "users",
+    useAlternativeOnly: nativeBoolean(participants?.useAlternativeOnly),
+    members: (participants?.alternativeMembers || [])
+      .map((member) => ({
+        id: normalizeScalar(member.id),
+        element: "user",
+        type: expectedNativeMemberType(member)
+      }))
+      .sort((left, right) => String(left.id).localeCompare(String(right.id)))
+  };
+}
+
+function expectedNativeMemberType(member = {}) {
+  const sourceOrgType = member.targetOrgType ?? member.sourceOrgType ?? member.fdOrgType;
+  if (sourceOrgType !== undefined && sourceOrgType !== null && String(sourceOrgType).trim() !== "") {
+    const normalized = String(sourceOrgType).trim().toLowerCase();
+    if (normalized === "8" || normalized === "person" || normalized === "user") return "1";
+    if (normalized === "4" || normalized === "post" || normalized === "position") return "2";
+    return "3";
+  }
+  const existingType = String(member.type || "").trim().toLowerCase();
+  if (["1", "8", "person", "user"].includes(existingType)) return "1";
+  if (["2", "4", "post", "position", "dept"].includes(existingType)) return "2";
+  return "3";
+}
+
+function nativeBoolean(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return value === true || value === 1 || normalized === "true" || normalized === "1";
 }
 
 function collectMustModifyHandlerTargetNodeIds(nodes = []) {
@@ -526,15 +588,27 @@ function summarizeDataAuthority(node) {
   };
 }
 
-function summarizeCondition(edge) {
-  const text = edge?.condition?.targetText ||
-    edge?.condition?.displayText ||
-    edge?.condition?.sourceText ||
-    "";
-  if (!String(text).trim()) return undefined;
+function summarizeSendConfig(node) {
+  if (node?.type !== "send") return undefined;
   return {
-    text: normalizeScalar(text),
-    translationStatus: edge.condition?.translationStatus
+    modifyProcessAuthority: "0",
+    systemNotifyType: "2",
+    languageNameUs: "CC node"
+  };
+}
+
+function summarizeCondition(edge, conditionBranch) {
+  const sourceText = edge?.condition?.sourceText ||
+    (typeof edge?.condition === "string" ? edge.condition : "") ||
+    edge?.condition?.targetText ||
+    edge?.condition?.displayText ||
+    edge?.displayCondition ||
+    "";
+  if (!String(sourceText).trim()) return undefined;
+  return {
+    sourceText: normalizeScalar(sourceText),
+    nativeRequired: true,
+    nativeKind: conditionBranch ? "batch_formula" : "rule"
   };
 }
 

@@ -422,6 +422,24 @@ function compareWorkflow(expected, actual, diagnostics) {
         }));
       }
     }
+    if (node.alternativeParticipants &&
+      stableStringify(node.alternativeParticipants) !== stableStringify(actualNode.alternativeParticipants || {})) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.participant_mismatch", "Readback workflow alternative-handler candidate range mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.alternativeParticipants`,
+        path: `/readback/workflow/nodes/${node.id}/alternativeParticipants`,
+        expected: node.alternativeParticipants,
+        actual: actualNode.alternativeParticipants
+      }));
+    }
+    if (node.sendConfig &&
+      stableStringify(node.sendConfig) !== stableStringify(actualNode.sendConfig || {})) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.send_config_mismatch", "Readback workflow send-node configuration mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.sendConfig`,
+        path: `/readback/workflow/nodes/${node.id}/sendConfig`,
+        expected: node.sendConfig,
+        actual: actualNode.sendConfig
+      }));
+    }
     if (node.dataAuthority) {
       if (stableStringify(node.dataAuthority) !== stableStringify(actualNode.dataAuthority || {})) {
         diagnostics.push(mismatch("workflow", "readback.workflow.data_authority_mismatch", "Readback workflow data authority mismatch.", {
@@ -471,11 +489,14 @@ function compareWorkflow(expected, actual, diagnostics) {
         actual: actualEdge.isDefault
       }));
     }
-    if (edge.condition?.text) {
+    if (edge.condition?.nativeRequired) {
+      compareNativeEdgeCondition(edge, actualEdge, diagnostics);
+    } else if (edge.condition?.text) {
       const actualText = actualEdge.condition?.text || "";
-      if (!actualText || !String(actualText).includes(String(edge.condition.text)) && actualText !== edge.condition.text) {
-        // tolerate formatting differences by exact match first; if different, still error for supported conditions
-        if (normalizeScalar(actualText) !== normalizeScalar(edge.condition.text)) {
+      if (actualEdge.condition?.nativeStatus === "ok" && actualEdge.condition?.nativeKind === "batch_formula") {
+        // Source text is projected into NewOA formula designer JSON; text is not persisted on the edge.
+      } else if (!actualText || normalizeScalar(actualText) !== normalizeScalar(edge.condition.text)) {
+        if (!String(actualText).includes(String(edge.condition.text))) {
           diagnostics.push(mismatch("workflow", "readback.workflow.edge_condition_mismatch", "Readback workflow edge condition mismatch.", {
             invariantKey: `workflow.edges.${edge.id}.condition`,
             path: `/readback/workflow/edges/${edge.id}/condition`,
@@ -505,6 +526,71 @@ function assertEqual(diagnostics, partition, code, invariantKey, expected, actua
     expected,
     actual
   }));
+}
+
+function compareNativeEdgeCondition(edge, actualEdge, diagnostics) {
+  const actual = actualEdge.condition;
+  const expectedKind = edge.condition.nativeKind;
+  if (!actual || actual.nativeStatus === "missing") {
+    diagnostics.push(mismatch("workflow", "readback.workflow.edge_condition_native_missing", "Readback workflow edge is missing its native condition formula.", {
+      invariantKey: `workflow.edges.${edge.id}.condition.native`,
+      path: `/readback/workflow/edges/${edge.id}/condition`,
+      expected: { nativeRequired: true, nativeKind: expectedKind },
+      actual: actual || null
+    }));
+    return;
+  }
+  if (actual.nativeStatus === "corrupt") {
+    diagnostics.push(mismatch("workflow", "readback.workflow.edge_condition_native_corrupt", "Readback workflow edge native condition formula is corrupt.", {
+      invariantKey: `workflow.edges.${edge.id}.condition.native`,
+      path: `/readback/workflow/edges/${edge.id}/condition`,
+      expected: { nativeRequired: true, nativeKind: expectedKind },
+      actual
+    }));
+    return;
+  }
+  if (actual.nativeStatus !== "ok") {
+    diagnostics.push(mismatch("workflow", "readback.workflow.edge_condition_native_corrupt", "Readback workflow edge native condition status is invalid.", {
+      invariantKey: `workflow.edges.${edge.id}.condition.native`,
+      path: `/readback/workflow/edges/${edge.id}/condition`,
+      expected: { nativeStatus: "ok", nativeKind: expectedKind },
+      actual
+    }));
+    return;
+  }
+  if (actual.hasForbiddenLiteral) {
+    diagnostics.push(mismatch("workflow", "readback.workflow.edge_condition_native_forbidden_literal", "Readback workflow edge native condition contains a forbidden literal.", {
+      invariantKey: `workflow.edges.${edge.id}.condition.native`,
+      path: `/readback/workflow/edges/${edge.id}/condition`,
+      expected: { forbiddenLiteral: false },
+      actual: { hasForbiddenLiteral: true }
+    }));
+    return;
+  }
+  if (expectedKind && actual.nativeKind && expectedKind !== actual.nativeKind) {
+    diagnostics.push(mismatch("workflow", "readback.workflow.edge_condition_native_corrupt", "Readback workflow edge native condition kind mismatch.", {
+      invariantKey: `workflow.edges.${edge.id}.condition.nativeKind`,
+      path: `/readback/workflow/edges/${edge.id}/condition`,
+      expected: expectedKind,
+      actual: actual.nativeKind
+    }));
+    return;
+  }
+
+  const expectedSourceText = normalizeScalar(edge.condition.sourceText || "");
+  const actualSourceText = normalizeScalar(actual.provenance?.sourceText || "");
+  if (expectedSourceText && actualSourceText && expectedSourceText !== actualSourceText) {
+    diagnostics.push(diagnostic({
+      level: "warning",
+      code: "readback.workflow.edge_condition_provenance_mismatch",
+      message: "Readback workflow edge condition provenance text differs from the DSL source text.",
+      partition: "workflow",
+      invariantKey: `workflow.edges.${edge.id}.condition.provenance`,
+      path: `/readback/workflow/edges/${edge.id}/condition/provenance`,
+      expected: expectedSourceText,
+      actual: actualSourceText
+    }));
+  }
 }
 
 function mismatch(partition, code, message, options = {}) {

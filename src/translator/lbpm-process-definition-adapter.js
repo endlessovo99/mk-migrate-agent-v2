@@ -1,8 +1,11 @@
+import { parseRootHashMapValue } from "./xml-utils.js";
+
 export function translateLbpmProcessDefinitionXml(xml, options = {}) {
   const contents = extractFdContents(xml);
   const processXml = findProcessContent(contents);
   const nodeDefinitions = parseNodeDefinitionContents(contents);
-  const process = parseProcessXml(processXml, nodeDefinitions);
+  const handlerIndex = indexNodeDefinitionHandlers(parseRootHashMapValue(xml, "nodeDefinitionHandlers"));
+  const process = parseProcessXml(processXml, nodeDefinitions, handlerIndex);
   const graph = buildDirectedAcyclicGraph(process);
 
   return {
@@ -22,7 +25,8 @@ export function translateLbpmProcessDefinitionXml(xml, options = {}) {
         lbpmTemplateId: process.lbpmTemplateId,
         modelName: process.modelName,
         modelKey: process.modelKey,
-        attributes: process.attributes
+        attributes: process.attributes,
+        privilegerEntities: process.privilegerEntities
       },
       nodes: graph.nodes,
       edges: graph.edges,
@@ -33,7 +37,8 @@ export function translateLbpmProcessDefinitionXml(xml, options = {}) {
 
 export function parseLbpmProcessDefinitionXml(xml) {
   const contents = extractFdContents(xml);
-  return buildDirectedAcyclicGraph(parseProcessXml(findProcessContent(contents), parseNodeDefinitionContents(contents)));
+  const handlerIndex = indexNodeDefinitionHandlers(parseRootHashMapValue(xml, "nodeDefinitionHandlers"));
+  return buildDirectedAcyclicGraph(parseProcessXml(findProcessContent(contents), parseNodeDefinitionContents(contents), handlerIndex));
 }
 
 function extractFdContents(xml = "") {
@@ -73,7 +78,7 @@ function parseNodeDefinitionContents(contents) {
   return definitions;
 }
 
-function parseProcessXml(processXml, nodeDefinitions = new Map()) {
+function parseProcessXml(processXml, nodeDefinitions = new Map(), handlerIndex = new Map()) {
   const processMatch = processXml.match(/<process\b([^>]*)>/i);
   if (!processMatch) {
     throw new Error("LbpmProcessDefinition fdContent does not contain a process element");
@@ -95,7 +100,7 @@ function parseProcessXml(processXml, nodeDefinitions = new Map()) {
     }
 
     if (tag.endsWith("Node")) {
-      nodes.push(nodeFromAttributes(tag, tagAttributes, nodeDefinitions.get(tagAttributes.id), token.sourceXml));
+      nodes.push(nodeFromAttributes(tag, tagAttributes, nodeDefinitions.get(tagAttributes.id), token.sourceXml, handlerIndex));
     }
   }
 
@@ -106,6 +111,7 @@ function parseProcessXml(processXml, nodeDefinitions = new Map()) {
     modelName: description.modelName || "",
     modelKey: description.modelKey || "",
     attributes,
+    privilegerEntities: handlerEntitiesFor(handlerIndex, "00", "privilegerIds", attributes.privilegerNames),
     nodes,
     edges
   };
@@ -210,7 +216,7 @@ function buildDirectedAcyclicGraph(process) {
   };
 }
 
-function nodeFromAttributes(type, attributes, definition, sourceXml) {
+function nodeFromAttributes(type, attributes, definition, sourceXml, handlerIndex) {
   const node = {
     id: attributes.id || "",
     type,
@@ -223,7 +229,70 @@ function nodeFromAttributes(type, attributes, definition, sourceXml) {
     node.definition = definition;
   }
 
+  const handlerEntities = handlerEntitiesFor(handlerIndex, node.id, "handlerIds", attributes.handlerNames);
+  const optionalHandlerEntities = handlerEntitiesFor(handlerIndex, node.id, "optHandlerIds", attributes.optHandlerNames);
+  if (handlerEntities.length) node.handlerEntities = handlerEntities;
+  if (optionalHandlerEntities.length) node.optionalHandlerEntities = optionalHandlerEntities;
+
   return node;
+}
+
+function indexNodeDefinitionHandlers(value) {
+  const index = new Map();
+  if (!Array.isArray(value)) return index;
+
+  for (const record of value) {
+    if (!record || typeof record !== "object") continue;
+    const factId = String(record.fdFactId || "").trim();
+    const attribute = String(record.fdAttribute || "").trim();
+    const handler = record.fdHandler;
+    if (!factId || !attribute || !handler || typeof handler !== "object") continue;
+
+    const entity = compactObject({
+      id: stringValue(handler.fdId),
+      name: stringValue(handler.fdName),
+      orgType: numberValue(handler.fdOrgType),
+      class: stringValue(handler.class),
+      parent: stringValue(handler["hbmParent.fdName"]),
+      index: numberValue(record.fdIndex),
+      loginName: stringValue(handler.fdLoginName)
+    });
+    const key = handlerIndexKey(factId, attribute);
+    if (!index.has(key)) index.set(key, []);
+    index.get(key).push(entity);
+  }
+
+  for (const entities of index.values()) {
+    entities.sort((left, right) => (left.index ?? Number.MAX_SAFE_INTEGER) - (right.index ?? Number.MAX_SAFE_INTEGER));
+  }
+  return index;
+}
+
+function handlerEntitiesFor(index, factId, attribute, fallbackNames = "") {
+  const names = String(fallbackNames || "").split(";").map((name) => name.trim());
+  return (index.get(handlerIndexKey(factId, attribute)) || []).map((entity) => ({
+    ...entity,
+    name: entity.name || names[entity.index] || entity.loginName || entity.id
+  }));
+}
+
+function handlerIndexKey(factId, attribute) {
+  return `${factId}\u0000${attribute}`;
+}
+
+function stringValue(value) {
+  return typeof value === "string" ? value : "";
+}
+
+function numberValue(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (value === undefined || value === null || String(value).trim() === "") return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+function compactObject(value) {
+  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== ""));
 }
 
 function edgeFromAttributes(attributes, sourceXml) {

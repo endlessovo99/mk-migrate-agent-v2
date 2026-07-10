@@ -556,6 +556,9 @@ function observeWorkflow(lbpm) {
   const elements = elementsResult.value;
   const nodes = elements.filter((element) => element && element.type !== "sequenceFlow");
   const edges = elements.filter((element) => element && element.type === "sequenceFlow");
+  const conditionBranchNodeIds = new Set(
+    nodes.filter((node) => node?.type === "conditionBranch").map((node) => node.id)
+  );
   const initiatorSelectTargetNodeIds = collectMustModifyHandlerTargetNodeIds(nodes);
   const formAuths = lbpm.fdTemplateFormAuths && typeof lbpm.fdTemplateFormAuths === "object"
     ? lbpm.fdTemplateFormAuths
@@ -570,6 +573,8 @@ function observeWorkflow(lbpm) {
       element: normalizeScalar(node.element),
       mustModifyHandlerNodeIds: splitRelatedNodeIds(node.mustModifyHandlerNodes),
       participants: observeParticipants(node, initiatorSelectTargetNodeIds.has(node.id)),
+      alternativeParticipants: observeAlternativeParticipants(node),
+      sendConfig: observeSendConfig(node),
       dataAuthority: observeDataAuthority(formAuths[node.id]),
       // presentation-only fields intentionally omitted from error comparison
       x: node.x,
@@ -579,9 +584,11 @@ function observeWorkflow(lbpm) {
       id: normalizeScalar(edge.id),
       source: normalizeScalar(edge.sourceRef),
       target: normalizeScalar(edge.targetRef),
-      isDefault: edge.isDefault === true || edge.attributes?.isDefault === true,
+      isDefault: nativeBoolean(edge.defaultTrend) ||
+        nativeBoolean(edge.isDefault) ||
+        nativeBoolean(edge.attributes?.isDefault),
       branch: normalizeScalar(edge.branch || edge.attributes?.branch || ""),
-      condition: observeEdgeCondition(edge),
+      condition: observeEdgeCondition(edge, conditionBranchNodeIds.has(edge.sourceRef)),
       waypoints: edge.waypoints
     }))
   };
@@ -598,9 +605,12 @@ function observeParticipants(node, initiatorSelectTarget) {
   if (initiatorSelectTarget) {
     return {
       mode: "initiator_select",
+      handlersType: normalizeScalar(handlers?.type),
       handlersSource: normalizeScalar(handlers?.source),
       handlersRuleKey: normalizeScalar(handlers?.ruleKey),
-      memberIds: (handlers?.members || []).map((member) => member.id || member.fdId).filter(Boolean).sort()
+      handlersRuleName: normalizeScalar(handlers?.ruleName),
+      handlersElement: normalizeScalar(handlers?.element),
+      members: observeNativeMembers(handlers?.members)
     };
   }
   if (!handlers || typeof handlers !== "object") return undefined;
@@ -612,12 +622,57 @@ function observeParticipants(node, initiatorSelectTarget) {
   if (handlers.source === "1" || Array.isArray(handlers.members)) {
     return {
       mode: "explicit",
-      memberIds: (handlers.members || []).map((member) => member.id || member.fdId).filter(Boolean).sort()
+      handlersType: normalizeScalar(handlers.type),
+      handlersSource: normalizeScalar(handlers.source),
+      handlersRuleKey: normalizeScalar(handlers.ruleKey),
+      handlersRuleName: normalizeScalar(handlers.ruleName),
+      handlersElement: normalizeScalar(handlers.element),
+      members: observeNativeMembers(handlers.members)
     };
   }
   return {
     mode: normalizeScalar(handlers.source || handlers.type || "")
   };
+}
+
+function observeNativeMembers(members) {
+  return (members || [])
+    .map((member) => ({
+      id: normalizeScalar(member.id || member.fdId),
+      element: normalizeScalar(member.element),
+      type: normalizeScalar(member.type)
+    }))
+    .filter((member) => member.id)
+    .sort((left, right) => String(left.id).localeCompare(String(right.id)));
+}
+
+function observeAlternativeParticipants(node) {
+  const handlers = node?.alternativeHandlers;
+  const hasAlternativeConfig = handlers && typeof handlers === "object" ||
+    node?.isUseAlternativeHandlerOnly !== undefined;
+  if (!hasAlternativeConfig) return undefined;
+
+  return {
+    handlersType: normalizeScalar(handlers?.type),
+    handlersSource: normalizeScalar(handlers?.source),
+    handlersRuleKey: normalizeScalar(handlers?.ruleKey),
+    handlersRuleName: normalizeScalar(handlers?.ruleName),
+    handlersElement: normalizeScalar(handlers?.element),
+    useAlternativeOnly: nativeBoolean(node?.isUseAlternativeHandlerOnly),
+    members: (handlers?.members || [])
+      .map((member) => ({
+        id: normalizeScalar(member.id || member.fdId),
+        element: normalizeScalar(member.element),
+        type: normalizeScalar(member.type)
+      }))
+      .filter((member) => member.id)
+      .sort((left, right) => String(left.id).localeCompare(String(right.id)))
+  };
+}
+
+function nativeBoolean(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return value === true || value === 1 || normalized === "true" || normalized === "1";
 }
 
 function collectMustModifyHandlerTargetNodeIds(nodes = []) {
@@ -650,13 +705,133 @@ function observeDataAuthority(auth) {
   };
 }
 
-function observeEdgeCondition(edge) {
+function observeSendConfig(node) {
+  if (normalizeScalar(node?.type) !== "send") return undefined;
+  return {
+    modifyProcessAuthority: normalizeScalar(node.modifyProcessAuthority),
+    systemNotifyType: normalizeScalar(node.systemNotifyType),
+    languageNameUs: normalizeScalar(node.language?.nameUs)
+  };
+}
+
+function observeEdgeCondition(edge, conditionBranch = false) {
+  const formulaRaw = edge?.formula;
+  const formulaText = typeof formulaRaw === "string"
+    ? formulaRaw
+    : formulaRaw && typeof formulaRaw === "object"
+      ? stableStringify(formulaRaw)
+      : "";
+  const trimmedFormula = formulaText.trim();
+  const looksLikeBatch = conditionBranch ||
+    edge?.formulaType === "formula" ||
+    trimmedFormula.startsWith("{") ||
+    trimmedFormula.startsWith("[");
+
+  if (looksLikeBatch) {
+    if (!trimmedFormula) {
+      return withConditionProvenance(edge, { nativeKind: "batch_formula", nativeStatus: "missing" });
+    }
+    if (conditionBranch && edge?.formulaType !== "formula") {
+      return withConditionProvenance(edge, {
+        nativeKind: "batch_formula",
+        nativeStatus: "corrupt",
+        reason: "condition_branch_formula_type",
+        hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+      });
+    }
+    let parsed;
+    try {
+      parsed = typeof formulaRaw === "string" ? JSON.parse(trimmedFormula) : formulaRaw;
+    } catch {
+      return withConditionProvenance(edge, {
+        nativeKind: "batch_formula",
+        nativeStatus: "corrupt",
+        reason: "invalid_json",
+        hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+      });
+    }
+    if (!isValidBatchConditionFormula(parsed)) {
+      return withConditionProvenance(edge, {
+        nativeKind: "batch_formula",
+        nativeStatus: "corrupt",
+        reason: "invalid_batch_shape",
+        hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+      });
+    }
+    return withConditionProvenance(edge, {
+      nativeKind: "batch_formula",
+      nativeStatus: "ok",
+      hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula),
+      formulaDigest: digestText(normalizeScalar(trimmedFormula))
+    });
+  }
+
+  if (edge?.formulaType === "rule" || edge?.formula !== undefined) {
+    if (!trimmedFormula) {
+      return withConditionProvenance(edge, { nativeKind: "rule", nativeStatus: "missing" });
+    }
+    if (edge?.formulaType !== "rule") {
+      return withConditionProvenance(edge, {
+        nativeKind: "rule",
+        nativeStatus: "corrupt",
+        reason: "rule_formula_type",
+        hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+      });
+    }
+    return withConditionProvenance(edge, {
+      nativeKind: "rule",
+      nativeStatus: "ok",
+      text: normalizeScalar(trimmedFormula),
+      hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+    });
+  }
+
   const text = edge?.condition ||
     edge?.attributes?.condition ||
     edge?.outgoingCondition ||
+    edge?.formulaName ||
     "";
   if (!String(text).trim()) return undefined;
-  return { text: normalizeScalar(typeof text === "string" ? text : stableStringify(text)) };
+  return withConditionProvenance(edge, {
+    nativeKind: "rule",
+    nativeStatus: "missing",
+    text: normalizeScalar(typeof text === "string" ? text : stableStringify(text)),
+    hasForbiddenLiteral: hasForbiddenConditionLiteral(text)
+  });
+}
+
+function isValidBatchConditionFormula(value) {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      value.type === "Batch" &&
+      Array.isArray(value.vars) &&
+      value.result &&
+      typeof value.result === "object" &&
+      !Array.isArray(value.result) &&
+      value.vo &&
+      typeof value.vo === "object" &&
+      !Array.isArray(value.vo)
+  );
+}
+
+function withConditionProvenance(edge, native) {
+  const migrationSource = edge?.migrationSource;
+  if (!migrationSource || typeof migrationSource !== "object" || Array.isArray(migrationSource)) {
+    return native;
+  }
+  const provenance = {
+    sourceText: normalizeScalar(migrationSource.condition || ""),
+    targetText: normalizeScalar(migrationSource.targetText || ""),
+    displayText: normalizeScalar(migrationSource.displayCondition || "")
+  };
+  if (!Object.values(provenance).some((value) => String(value).trim())) return native;
+  return { ...native, provenance };
+}
+
+function hasForbiddenConditionLiteral(value) {
+  return /\bu0021\b/i.test(String(value || ""));
 }
 
 function isPlatformSystemField(field, tableType) {

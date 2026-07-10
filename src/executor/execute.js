@@ -1,5 +1,6 @@
 import { buildDryRunPlan } from "./dry-run.js";
 import { assertAllowedBaseUrl, NewoaClient, NEWOA_SIT_BASE_URL } from "./newoa-client.js";
+import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { preparePersistedTemplate, buildWorkflowDraftPayload } from "./persistence.js";
 
 export async function executeDsl(input, options = {}) {
@@ -27,11 +28,18 @@ export async function executeDsl(input, options = {}) {
   const diagnostics = [...plan.diagnostics];
   const apiStages = [];
   let templateId = "";
+  let executableDsl = input;
 
   try {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    apiStages.push({ name: "resolveWorkflowParticipants", status: "started" });
+    const participantResolution = await resolveWorkflowParticipants(input, { client });
+    executableDsl = participantResolution.dsl;
+    apiStages[apiStages.length - 1].status = "ok";
+    apiStages[apiStages.length - 1].resolvedCount = participantResolution.resolvedCount;
+    apiStages[apiStages.length - 1].identityCount = participantResolution.identityCount;
     apiStages.push({ name: "init", status: "started" });
     const baseTemplate = await client.initTemplate();
     apiStages[apiStages.length - 1].status = "ok";
@@ -43,7 +51,7 @@ export async function executeDsl(input, options = {}) {
     const parentCategory = await client.loadParentCategory(options.targetCategoryId);
     apiStages[apiStages.length - 1].status = "ok";
     apiStages.push({ name: "add", status: "started" });
-    const createPayload = buildCreatePayload(baseTemplate, input, options, {
+    const createPayload = buildCreatePayload(baseTemplate, executableDsl, options, {
       fdTableName,
       parentCategory
     });
@@ -77,7 +85,7 @@ export async function executeDsl(input, options = {}) {
     let prepared;
     try {
       prepared = preparePersistedTemplate({
-        dsl: input,
+        dsl: executableDsl,
         envelope,
         baseTemplate: detail
       });
@@ -112,31 +120,31 @@ export async function executeDsl(input, options = {}) {
     await client.updateTemplate(savePayload);
     apiStages[apiStages.length - 1].status = "ok";
     let workflowTemplateDetail;
-    if (input.workflow) {
-      const workflowTemplateId = savePayload.mechanisms?.lbpmTemplate?.[0]?.fdId || "";
+    const workflowTemplateId = savePayload.mechanisms?.lbpmTemplate?.[0]?.fdId || "";
+    if (executableDsl.workflow) {
       apiStages.push({ name: "saveWorkflowDraft", status: "started", templateId: workflowTemplateId });
       const savedWorkflowDraft = await client.saveWorkflowDraft(buildWorkflowDraftPayload(savePayload));
       const draftId = requireWorkflowDraftId(savedWorkflowDraft);
-      const definitionId = draftId === workflowTemplateId ? "" : draftId;
       apiStages[apiStages.length - 1].status = "ok";
       apiStages[apiStages.length - 1].draftId = draftId;
-      if (definitionId) apiStages[apiStages.length - 1].definitionId = definitionId;
       apiStages.push({
         name: "getWorkflowTemplateDetail",
         status: "started",
         templateId: workflowTemplateId,
-        draftId,
-        ...(definitionId ? { definitionId } : {})
+        draftId
       });
       workflowTemplateDetail = await client.getWorkflowTemplateDetail({
         templateId: workflowTemplateId,
-        definitionId
+        definitionId: ""
       });
-      assertWorkflowTemplateDetail(workflowTemplateDetail, workflowTemplateId, definitionId);
+      assertWorkflowTemplateDetail(workflowTemplateDetail, workflowTemplateId, options.targetCategoryId);
       apiStages[apiStages.length - 1].status = "ok";
     }
     apiStages.push({ name: "readback", status: "started", templateId });
     const readbackTemplate = await client.getTemplate(templateId);
+    if (workflowTemplateDetail) {
+      assertCurrentWorkflowTopLinkage(readbackTemplate, workflowTemplateDetail, workflowTemplateId);
+    }
     apiStages[apiStages.length - 1].status = "ok";
     const readback = prepared.verify(
       workflowTemplateDetail
@@ -191,9 +199,12 @@ export async function executeDsl(input, options = {}) {
         ...diagnostics,
         {
           level: "error",
-          code: "execute.newoa_api_failed",
+          code: error?.code || "execute.newoa_api_failed",
           message: redactCredentialValues(error instanceof Error ? error.message : String(error), credentials),
-          path: "/execute"
+          path: error?.stage === "resolveWorkflowParticipants" ? "/workflow/participants" : "/execute",
+          ...(Array.isArray(error?.issues)
+            ? { details: { issues: redactParticipantIssues(error.issues, credentials) } }
+            : {})
         }
       ],
       apiStages,
@@ -404,6 +415,15 @@ function redactCredentialValues(value, credentials = {}) {
   return result;
 }
 
+function redactParticipantIssues(issues, credentials) {
+  return issues.map((issue) => ({
+    ...issue,
+    ...(issue?.message
+      ? { message: redactCredentialValues(issue.message, credentials) }
+      : {})
+  }));
+}
+
 function requireWorkflowDraftId(result) {
   const draftId = result?.fdDefinitionId ||
     result?.definitionId ||
@@ -421,7 +441,7 @@ function requireWorkflowDraftId(result) {
   return draftId;
 }
 
-function assertWorkflowTemplateDetail(detail, workflowTemplateId, definitionId) {
+function assertWorkflowTemplateDetail(detail, workflowTemplateId, targetCategoryId) {
   if (!nonEmptyString(detail?.fdId)) {
     throw stagedError(
       "getWorkflowTemplateDetail",
@@ -440,17 +460,18 @@ function assertWorkflowTemplateDetail(detail, workflowTemplateId, definitionId) 
       "Workflow detail readback is not a draft."
     );
   }
-  if (definitionId) {
-    if (!nonEmptyString(detail?.fdDefinitionId)) {
+  const envelopeChecks = [
+    [detail.fdContentType === "json", "fdContentType=json"],
+    [detail.fdSystemCode === "INNER_SYSTEM", "fdSystemCode=INNER_SYSTEM"],
+    [String(detail.fdRunType) === "1", "fdRunType=1"],
+    [detail.fdDisableBpmInit === false, "fdDisableBpmInit=false"],
+    [detail.fdFormCategory?.fdFormCategoryId === targetCategoryId, "the requested fdFormCategory"]
+  ];
+  for (const [matches, expectation] of envelopeChecks) {
+    if (!matches) {
       throw stagedError(
         "getWorkflowTemplateDetail",
-        "Workflow detail readback did not include fdDefinitionId."
-      );
-    }
-    if (detail.fdDefinitionId !== definitionId) {
-      throw stagedError(
-        "getWorkflowTemplateDetail",
-        "Workflow detail readback returned a different definition id."
+        `Workflow detail readback did not preserve ${expectation}.`
       );
     }
   }
@@ -460,6 +481,44 @@ function assertWorkflowTemplateDetail(detail, workflowTemplateId, definitionId) 
       "Workflow detail readback did not include designer content."
     );
   }
+}
+
+function assertCurrentWorkflowTopLinkage(template, workflowDetail, workflowTemplateId) {
+  const topWorkflow = template?.mechanisms?.lbpmTemplate?.[0];
+  if (!nonEmptyString(topWorkflow?.fdId) || topWorkflow.fdId !== workflowTemplateId) {
+    throw stagedError(
+      "readback",
+      "Top-level template readback is not linked to the current LBPM template."
+    );
+  }
+  if (!nonEmptyString(topWorkflow.fdContent)) {
+    throw stagedError(
+      "readback",
+      "Top-level template readback did not include current workflow designer content."
+    );
+  }
+  if (canonicalWorkflowContent(topWorkflow.fdContent) !== canonicalWorkflowContent(workflowDetail.fdContent)) {
+    throw stagedError(
+      "readback",
+      "Top-level template workflow content differs from the current LBPM detail."
+    );
+  }
+}
+
+function canonicalWorkflowContent(value) {
+  try {
+    return JSON.stringify(sortJsonValue(JSON.parse(value)));
+  } catch {
+    throw stagedError("readback", "Current workflow designer content is not valid JSON.");
+  }
+}
+
+function sortJsonValue(value) {
+  if (Array.isArray(value)) return value.map(sortJsonValue);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.keys(value).sort().map((key) => [key, sortJsonValue(value[key])])
+  );
 }
 
 function stagedError(stage, message) {

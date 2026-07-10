@@ -233,6 +233,8 @@ function sourceWorkflowFromLegacyWorkflow(workflow, context = {}) {
     sourceType: node.type,
     name: node.name || "",
     attributes: node.attributes || {},
+    handlerEntities: node.handlerEntities,
+    optionalHandlerEntities: node.optionalHandlerEntities,
     definition: node.definition ? {
       sourceType: node.definition.type,
       attributes: node.definition.attributes || {}

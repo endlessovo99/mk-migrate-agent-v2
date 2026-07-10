@@ -163,7 +163,7 @@ describe("executeDsl", () => {
     assert.equal(client.calls.some((call) => call.name === "getWorkflowTemplateDetail"), false);
   });
 
-  it("reads a distinct workflow draft definition when publish returns a separate id", async () => {
+  it("reads only the current workflow detail when publish returns a separate audit id", async () => {
     const client = new FakeNewoaClient({ workflowDraftResult: { fdId: "workflow-definition-id" } });
     const result = await executeDsl(sampleTrustedDsl(), {
       client,
@@ -175,14 +175,14 @@ describe("executeDsl", () => {
     assert.equal(result.ok, true);
     assert.deepEqual(
       client.calls.find((call) => call.name === "getWorkflowTemplateDetail").payload,
-      { templateId: "lbpm-template-id", definitionId: "workflow-definition-id" }
+      { templateId: "lbpm-template-id", definitionId: "" }
     );
     const saveStage = result.apiStages.find((stage) => stage.name === "saveWorkflowDraft");
     assert.equal(saveStage.draftId, "workflow-definition-id");
-    assert.equal(saveStage.definitionId, "workflow-definition-id");
+    assert.equal(saveStage.definitionId, undefined);
   });
 
-  it("fails workflow readback when details returns no definition id", async () => {
+  it("accepts current workflow readback without a historical definition id", async () => {
     const client = new FakeNewoaClient({
       workflowDraftResult: { fdId: "workflow-definition-id" },
       corruptWorkflowReadback(detail) {
@@ -198,12 +198,11 @@ describe("executeDsl", () => {
       targetCategoryId: "category-1"
     });
 
-    assert.equal(result.ok, false);
-    assert.equal(result.stage, "getWorkflowTemplateDetail");
-    assert.equal(result.apiStages.find((stage) => stage.name === "getWorkflowTemplateDetail").status, "failed");
+    assert.equal(result.ok, true);
+    assert.equal(result.apiStages.find((stage) => stage.name === "getWorkflowTemplateDetail").status, "ok");
   });
 
-  it("fails workflow readback when details returns a different definition id", async () => {
+  it("ignores historical definition metadata on a current-only workflow readback", async () => {
     const client = new FakeNewoaClient({
       workflowDraftResult: { fdId: "workflow-definition-id" },
       corruptWorkflowReadback(detail) {
@@ -217,8 +216,7 @@ describe("executeDsl", () => {
       targetCategoryId: "category-1"
     });
 
-    assert.equal(result.ok, false);
-    assert.equal(result.stage, "getWorkflowTemplateDetail");
+    assert.equal(result.ok, true);
   });
 
   it("fails workflow readback when details belongs to a different workflow template", async () => {
@@ -255,6 +253,39 @@ describe("executeDsl", () => {
     assert.equal(result.stage, "getWorkflowTemplateDetail");
   });
 
+  for (const [label, corruptReadback] of [
+    ["different top-level workflow id", (template) => {
+      template.mechanisms.lbpmTemplate[0].fdId = "different-lbpm-template-id";
+      return template;
+    }],
+    ["missing top-level workflow id", (template) => {
+      delete template.mechanisms.lbpmTemplate[0].fdId;
+      return template;
+    }],
+    ["missing top-level workflow content", (template) => {
+      template.mechanisms.lbpmTemplate[0].fdContent = "";
+      return template;
+    }],
+    ["stale top-level workflow content", (template) => {
+      template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify({ elements: [] });
+      return template;
+    }]
+  ]) {
+    it(`fails current readback on ${label}`, async () => {
+      const client = new FakeNewoaClient({ corruptReadback });
+      const result = await executeDsl(sampleTrustedDsl(), {
+        client,
+        credentials: TEST_CREDENTIALS,
+        confirmWrite: true,
+        targetCategoryId: "category-1"
+      });
+
+      assert.equal(result.ok, false);
+      assert.equal(result.stage, "readback");
+      assert.equal(result.apiStages.find((stage) => stage.name === "readback").status, "failed");
+    });
+  }
+
   it("fails workflow readback unless details confirms both draft markers", async () => {
     for (const corruptWorkflowReadback of [
       (detail) => ({ ...detail, isDraft: false }),
@@ -271,6 +302,31 @@ describe("executeDsl", () => {
       assert.equal(result.stage, "getWorkflowTemplateDetail");
     }
   });
+
+  for (const [label, corruptWorkflowReadback] of [
+    ["fdContentType", (detail) => ({ ...detail, fdContentType: "xml" })],
+    ["fdSystemCode", (detail) => ({ ...detail, fdSystemCode: "OTHER_SYSTEM" })],
+    ["fdRunType", (detail) => ({ ...detail, fdRunType: "2" })],
+    ["fdDisableBpmInit", (detail) => ({ ...detail, fdDisableBpmInit: true })],
+    ["fdFormCategory", (detail) => ({
+      ...detail,
+      fdFormCategory: { ...(detail.fdFormCategory || {}), fdFormCategoryId: "wrong-category-id" }
+    })]
+  ]) {
+    it(`fails current workflow readback when ${label} is not native`, async () => {
+      const client = new FakeNewoaClient({ corruptWorkflowReadback });
+      const result = await executeDsl(sampleTrustedDsl(), {
+        client,
+        credentials: TEST_CREDENTIALS,
+        confirmWrite: true,
+        targetCategoryId: "category-1"
+      });
+
+      assert.equal(result.ok, false);
+      assert.equal(result.stage, "getWorkflowTemplateDetail");
+      assert.equal(result.apiStages.find((stage) => stage.name === "getWorkflowTemplateDetail").status, "failed");
+    });
+  }
 
   it("writes all parallel split and join gateways into MK workflow content", () => {
     const content = buildWorkflowContent(sampleParallelGatewayWorkflow());
@@ -515,6 +571,33 @@ describe("executeDsl", () => {
     ]);
   });
 
+  it("rejects readback when an explicit post is persisted as a person", () => {
+    const workflow = sampleInitiatorSelectWorkflow();
+    const explicitNode = workflow.nodes.find((node) => node.id === "N9");
+    explicitNode.participants.members = [{
+      id: "post-1",
+      name: "审批岗位",
+      sourceOrgType: 4,
+      type: "user_or_org"
+    }];
+    const trusted = sampleTrustedDsl({ workflow });
+    const template = projectTemplate(trusted, baseTemplate());
+
+    const initialVerification = verifyTemplate(trusted, template);
+    assert.equal(initialVerification.ok, true, JSON.stringify(initialVerification.diagnostics));
+
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    content.elements.find((element) => element.id === "N9").handlers.members[0].type = "1";
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+    const rejected = verifyTemplate(trusted, template);
+
+    assert.equal(rejected.ok, false);
+    assert.equal(
+      rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"),
+      true
+    );
+  });
+
   it("writes and verifies the native alternative-handler candidate range", () => {
     const workflow = sampleInitiatorSelectWorkflow();
     const n16 = workflow.nodes.find((node) => node.id === "N16");
@@ -555,6 +638,18 @@ describe("executeDsl", () => {
     const rejected = verifyTemplate(trusted, template);
     assert.equal(rejected.ok, false);
     assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"), true);
+
+    const flagTemplate = projectTemplate(trusted, baseTemplate());
+    const flagContent = JSON.parse(flagTemplate.mechanisms.lbpmTemplate[0].fdContent);
+    flagContent.elements.find((element) => element.id === "N16").isUseAlternativeHandlerOnly = "false";
+    flagTemplate.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(flagContent);
+    assert.equal(verifyTemplate(trusted, flagTemplate).ok, false);
+
+    const shapeTemplate = projectTemplate(trusted, baseTemplate());
+    const shapeContent = JSON.parse(shapeTemplate.mechanisms.lbpmTemplate[0].fdContent);
+    shapeContent.elements.find((element) => element.id === "N16").alternativeHandlers.type = "formula";
+    shapeTemplate.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(shapeContent);
+    assert.equal(verifyTemplate(trusted, shapeTemplate).ok, false);
   });
 
   it("writes draft-selected participants and verifies them on readback", () => {
@@ -784,6 +879,29 @@ describe("executeDsl", () => {
     assert.equal(defaultSequence.formulaType, "formula");
     assert.equal(defaultSequence.formula, "");
     assert.equal(defaultSequence.style, "sequenceFlow;marker");
+  });
+
+  it("verifies the persisted NewOA defaultTrend field independently on readback", () => {
+    const trusted = sampleTrustedDsl({
+      form: sampleConditionBranchForm(),
+      workflow: sampleConditionBranchWorkflow()
+    });
+    const template = projectTemplate(trusted, baseTemplate());
+
+    const initialVerification = verifyTemplate(trusted, template);
+    assert.equal(initialVerification.ok, true, JSON.stringify(initialVerification.diagnostics));
+
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    const defaultSequence = content.elements.find((element) => element.id === "L544");
+    defaultSequence.defaultTrend = false;
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+
+    const rejected = verifyTemplate(trusted, template);
+    assert.equal(rejected.ok, false);
+    assert.equal(
+      rejected.diagnostics.some((item) => item.code === "readback.workflow.edge_default_mismatch"),
+      true
+    );
   });
 
   it("does not invent a default branch from an other label or final route position", () => {
@@ -1254,6 +1372,14 @@ describe("executeDsl", () => {
 
   it("fails readback when persisted workflow edges lose connected endpoints", async () => {
     const client = new FakeNewoaClient({
+      corruptReadback(template) {
+        const next = JSON.parse(JSON.stringify(template));
+        const workflow = next.mechanisms.lbpmTemplate[0];
+        const content = JSON.parse(workflow.fdContent);
+        content.elements.find((element) => element.id === "L1").targetRef = "missing-node";
+        workflow.fdContent = JSON.stringify(content);
+        return next;
+      },
       corruptWorkflowReadback(template) {
         const next = JSON.parse(JSON.stringify(template));
         const content = JSON.parse(next.fdContent);
@@ -2241,17 +2367,11 @@ class FakeNewoaClient {
 
   async getWorkflowTemplateDetail(payload) {
     this.calls.push({ name: "getWorkflowTemplateDetail", payload });
-    const persistedDraftId = this.workflowDraftResult.fdDefinitionId ||
-      this.workflowDraftResult.definitionId ||
-      this.workflowDraftResult.fdId;
     const detail = {
       ...this.savedWorkflowDraft,
       isDraft: true,
       fdStatus: "draft"
     };
-    if (persistedDraftId !== this.savedWorkflowDraft.fdId) {
-      detail.fdDefinitionId = persistedDraftId;
-    }
     return this.corruptWorkflowReadback ? this.corruptWorkflowReadback(detail) : detail;
   }
 }

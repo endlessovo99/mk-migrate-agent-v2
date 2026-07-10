@@ -413,16 +413,18 @@ function buildArtificialNode(node, type, context = {}) {
     relateId: node.id,
     cooperateType: attrs.processType || "2",
     ignoreOnSameIdentity: normalizeSameIdentity(attrs.ignoreOnHandlerSame),
-    handlerIds: attrs.handlerIds,
-    handlerNames: attrs.handlerNames,
-    handlerSelectType: attrs.handlerSelectType,
+    handlerIds: attrs.handlerIds || node.participants?.sourceExpression || "",
+    handlerNames: attrs.handlerNames || node.participants?.sourceNameExpression || "",
+    handlerSelectType: node.participants?.mode === "form_field" || node.participants?.mode === "role_line"
+      ? "formula"
+      : attrs.handlerSelectType,
     recalculateHandler: attrs.recalculateHandler,
-    ignoreOnHandlerEmpty: attrs.ignoreOnHandlerEmpty,
     nodeNotifyTypeMethod: [],
     handlers: handlersFromParticipants(node.participants, attrs, {
       ...context,
       initiatorSelectTarget: context.initiatorSelectTargetNodeIds?.has(node.id) === true
     }),
+    ...alternativeHandlerFields(node.participants),
     ...(isSend ? { systemNotifyType: "2" } : {}),
     fdScene: { fdMode: 0 },
     language: { nameCn: name, nameUs: isSend ? "CC node" : "Approval Node" },
@@ -1377,7 +1379,7 @@ function handlersFromParticipants(participants, attrs, context = {}) {
 }
 
 function nativeExplicitMemberType(member = {}) {
-  const sourceOrgType = member.sourceOrgType ?? member.fdOrgType;
+  const sourceOrgType = member.targetOrgType ?? member.sourceOrgType ?? member.fdOrgType;
   if (sourceOrgType !== undefined && sourceOrgType !== null && String(sourceOrgType).trim() !== "") {
     const normalized = String(sourceOrgType).trim().toLowerCase();
     if (normalized === "8" || normalized === "person" || normalized === "user") return "1";
@@ -1390,6 +1392,37 @@ function nativeExplicitMemberType(member = {}) {
   if (["2", "4", "post", "position", "dept"].includes(existingType)) return "2";
   if (existingType === "3") return "3";
   return "3";
+}
+
+function alternativeHandlerFields(participants) {
+  const hasAlternativeConfig = Array.isArray(participants?.alternativeMembers) ||
+    participants?.useAlternativeOnly !== undefined;
+  if (!hasAlternativeConfig) return {};
+
+  return {
+    alternativeHandlers: {
+      id: "alternativeHandlers",
+      element: "users",
+      type: "org",
+      source: "1",
+      ruleKey: "",
+      ruleName: "",
+      members: (participants?.alternativeMembers || []).map((member) => ({
+        id: member.id,
+        name: member.name || member.id,
+        element: "user",
+        type: nativeExplicitMemberType(member)
+      }))
+    },
+    isUseAlternativeHandlerOnly: nativeBooleanString(participants?.useAlternativeOnly)
+  };
+}
+
+function nativeBooleanString(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return value === true || value === 1 || normalized === "true" || normalized === "1"
+    ? "true"
+    : "false";
 }
 
 function emptyOrgHandlers() {

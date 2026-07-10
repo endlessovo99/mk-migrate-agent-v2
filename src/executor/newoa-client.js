@@ -57,6 +57,42 @@ export class NewoaClient {
     return body?.data || {};
   }
 
+  async searchOrg(key) {
+    const normalizedKey = String(key || "").trim();
+    if (!normalizedKey) {
+      throw clientStageError("sysOrgAddress/searchOrg", "organization search requires a non-empty key");
+    }
+    const body = await this.postJson("sys-org", "sysOrgAddress/searchOrg", {
+      key: normalizedKey,
+      orgType: 287,
+      paramAvailable: 1,
+      searchMode: "ACCURATE"
+    });
+    if (!Array.isArray(body?.data)) {
+      throw clientStageError("sysOrgAddress/searchOrg", "organization search response did not include an array");
+    }
+    return body.data;
+  }
+
+  async getElementInfo(targets) {
+    const normalizedTargets = [...new Set(
+      (Array.isArray(targets) ? targets : [targets])
+        .map((target) => String(target || "").trim())
+        .filter(Boolean)
+    )];
+    if (normalizedTargets.length === 0) {
+      throw clientStageError("sysOrgElementQuery/getElementInfo", "organization element validation requires targets");
+    }
+    const body = await this.postJson("sys-org", "sysOrgElementQuery/getElementInfo", {
+      targets: normalizedTargets,
+      colums: ["fdId", "fdName", "fdOrgType"]
+    });
+    if (!Array.isArray(body?.data)) {
+      throw clientStageError("sysOrgElementQuery/getElementInfo", "organization element validation response did not include an array");
+    }
+    return body.data;
+  }
+
   async addTemplate(payload) {
     const body = await this.postKmReview("kmReviewTemplate/add", payload);
     const template = body?.data || {};

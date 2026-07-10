@@ -148,6 +148,9 @@ describe("source directory stages", () => {
     const sourceNodes = new Map(sourceDraft.workflow.nodes.map((node) => [node.id, node]));
     const draftNodes = new Map(dslDraft.workflow.nodes.map((node) => [node.id, node]));
 
+    assert.equal([...sourceNodes.values()].reduce((count, node) => count + (node.handlerEntities?.length || 0), 0), 146);
+    assert.equal([...sourceNodes.values()].reduce((count, node) => count + (node.optionalHandlerEntities?.length || 0), 0), 180);
+
     for (const nodeId of ["N800", "N654"]) {
       assert.equal(sourceNodes.get(nodeId).attributes.handlerIds, "14912dbf4d1b75dc8e6334142da9205a");
       assert.deepEqual(sourceNodes.get(nodeId).handlerEntities, [{
@@ -158,6 +161,7 @@ describe("source directory stages", () => {
         parent: "风电工程服务公司领导",
         index: 0
       }]);
+      assert.deepEqual(draftNodes.get(nodeId).handlerEntities, sourceNodes.get(nodeId).handlerEntities);
       assert.deepEqual(draftNodes.get(nodeId).participants.members, [{
         name: "风电工程服务分公司_分管领导",
         type: "user_or_org",
@@ -167,6 +171,11 @@ describe("source directory stages", () => {
         sourceParentName: "风电工程服务公司领导"
       }]);
     }
+
+    assert.deepEqual(dslDraft.workflow.process.privilegerEntities.map((entity) => [entity.name, entity.orgType]), [
+      ["风电数字化管理部_EKP应用支持", 4],
+      ["毛欣昱", 8]
+    ]);
 
     const selectorIds = ["N385", "N810", "N811", "N62"];
     for (const targetNodeId of ["N71", "N812", "N813"]) {
@@ -178,6 +187,20 @@ describe("source directory stages", () => {
       ), true);
       assert.equal(selectorIds.every((selectorId) => node.participants.sourceSemantics.includes(selectorId)), true);
     }
+
+    const participantSelections = dslDraft.workflow.nodes.flatMap((node) => node.participantSelections || []);
+    assert.equal(participantSelections.length, 53);
+    assert.equal(participantSelections.filter((selection) => selection.sourceNodeId === "N2").length, 41);
+    assert.deepEqual(
+      [...new Set(participantSelections.map((selection) => selection.sourceNodeId))],
+      ["N2", "N385", "N810", "N811", "N62"]
+    );
+    assert.equal(draftNodes.get("N71").participants.alternativeMembers.length, 6);
+    assert.equal(draftNodes.get("N71").participants.useAlternativeOnly, true);
+    assert.equal(draftNodes.get("N812").participants.alternativeMembers.length, 2);
+    assert.equal(draftNodes.get("N812").participants.useAlternativeOnly, true);
+    assert.equal(draftNodes.get("N813").participants.alternativeMembers.length, 2);
+    assert.equal(draftNodes.get("N813").participants.useAlternativeOnly, true);
   });
 
   localCorpusIt("preserves edit-gate evidence while excluding detail-table linkage from native form rules", () => {
@@ -254,6 +277,61 @@ describe("source directory stages", () => {
     });
     assert.equal(nodes.get("N9").participants.mode, "explicit");
     assert.equal(nodes.get("N9").participants.members.length > 0, true);
+  });
+
+  it("uses structured handler evidence before cached ids and keeps optional handler constraints", () => {
+    const sourceDraft = sampleSourceDraft({ workflow: sampleDraftSelectionSourceWorkflow() });
+    const sourceNode = sourceDraft.workflow.nodes.find((node) => node.id === "N9");
+    sourceNode.attributes = {
+      ...sourceNode.attributes,
+      handlerIds: "stale-person-id",
+      handlerNames: "旧人员缓存",
+      optHandlerIds: "stale-optional-id",
+      useOptHandlerOnly: "true"
+    };
+    sourceNode.handlerEntities = [{
+      id: "legacy-post-id",
+      name: "部门负责人岗位",
+      orgType: 4,
+      class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+      parent: "示例部门",
+      index: 0
+    }];
+    sourceNode.optionalHandlerEntities = [{
+      id: "legacy-person-id",
+      name: "候选人员",
+      orgType: 8,
+      class: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+      parent: "示例部门",
+      index: 0,
+      loginName: "000001"
+    }];
+
+    const node = draftSourceDraft(sourceDraft).workflow.nodes.find((item) => item.id === "N9");
+
+    assert.deepEqual(node.participants, {
+      mode: "explicit",
+      members: [{
+        name: "部门负责人岗位",
+        type: "user_or_org",
+        sourceId: "legacy-post-id",
+        sourceOrgType: 4,
+        sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgPost",
+        sourceParentName: "示例部门"
+      }],
+      alternativeMembers: [{
+        name: "候选人员",
+        type: "user_or_org",
+        sourceId: "legacy-person-id",
+        sourceOrgType: 8,
+        sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        sourceParentName: "示例部门",
+        sourceLoginName: "000001"
+      }],
+      useAlternativeOnly: true
+    });
+    assert.equal(node.participants.members[0].id, undefined);
+    assert.equal(node.participants.alternativeMembers[0].id, undefined);
   });
 
   it("does not replace unsupported formula participants with draft-selection fallback", () => {
