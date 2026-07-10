@@ -728,10 +728,10 @@ describe("agent-review", () => {
     assert.equal(result.report.stage, "agent-review.env");
     const diagnostic = result.report.diagnostics.find((item) => item.code === "agent.provider.env_missing");
     assert.ok(diagnostic);
-    assert.deepEqual(diagnostic.details.missing, ["OPENAI_BASE_URL", "OPENAI_API_KEY"]);
+    assert.deepEqual(diagnostic.details.missing, ["OPENAI_BASE_URL", "OPENAI_API_KEY", "OPENAI_MODEL"]);
   });
 
-  it("uses gpt-5.6-luna for initial and repair Responses requests regardless of OPENAI_MODEL", async () => {
+  it("uses OPENAI_MODEL for initial and repair Responses requests", async () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/route-validation-lbpm");
     const dslDraft = draftSourceDraft(sourceDraft);
     const requests = [];
@@ -739,7 +739,7 @@ describe("agent-review", () => {
       env: {
         OPENAI_BASE_URL: "https://example.test/",
         OPENAI_API_KEY: "sk-test-secret",
-        OPENAI_MODEL: "conflicting-env-model"
+        OPENAI_MODEL: "configured-review-model"
       },
       fetchImpl: async (url, options) => {
         requests.push({ url, body: JSON.parse(options.body) });
@@ -775,11 +775,12 @@ describe("agent-review", () => {
       "https://example.test/v1/responses"
     ]);
     assert.deepEqual(requests.map((request) => request.body.model), [
-      "gpt-5.6-luna",
-      "gpt-5.6-luna"
+      "configured-review-model",
+      "configured-review-model"
     ]);
-    assert.equal(initial.model, "gpt-5.6-luna");
-    assert.equal(repaired.model, "gpt-5.6-luna");
+    assert.equal(initial.model, "configured-review-model");
+    assert.equal(repaired.model, "configured-review-model");
+    assert.equal(provider.metadata().model, "configured-review-model");
   });
 
   it("does not leak OPENAI_API_KEY into reports when provider errors include it", async () => {

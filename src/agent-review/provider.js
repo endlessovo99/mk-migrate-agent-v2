@@ -1,7 +1,5 @@
 import { buildAgentReviewPrompt, buildAgentReviewRepairPrompt } from "./prompt.js";
 
-const REVIEW_MODEL = "gpt-5.6-luna";
-
 export class OpenAIResponsesReviewProvider {
   constructor(options = {}) {
     this.env = options.env || process.env;
@@ -12,7 +10,7 @@ export class OpenAIResponsesReviewProvider {
     return {
       provider: "openai",
       baseUrl: this.env.OPENAI_BASE_URL || "",
-      model: REVIEW_MODEL
+      model: this.env.OPENAI_MODEL || ""
     };
   }
 
@@ -123,16 +121,18 @@ export class OpenAIResponsesReviewProvider {
   readConfig() {
     const baseUrl = this.env.OPENAI_BASE_URL;
     const apiKey = this.env.OPENAI_API_KEY;
+    const model = this.env.OPENAI_MODEL;
     const missing = [
       ["OPENAI_BASE_URL", baseUrl],
-      ["OPENAI_API_KEY", apiKey]
+      ["OPENAI_API_KEY", apiKey],
+      ["OPENAI_MODEL", model]
     ].filter(([, value]) => !nonEmptyString(value)).map(([name]) => name);
 
     if (missing.length) {
       return blockedProviderResult({
         ...this.metadata(),
         stage: "agent-review.env",
-        diagnostics: [error("agent.provider.env_missing", "agent-review requires OPENAI_BASE_URL and OPENAI_API_KEY.", "/provider/env", {
+        diagnostics: [error("agent.provider.env_missing", "agent-review requires OPENAI_BASE_URL, OPENAI_API_KEY, and OPENAI_MODEL.", "/provider/env", {
           missing
         })]
       });
@@ -142,7 +142,7 @@ export class OpenAIResponsesReviewProvider {
       ok: true,
       baseUrl,
       apiKey,
-      model: REVIEW_MODEL
+      model
     };
   }
 }

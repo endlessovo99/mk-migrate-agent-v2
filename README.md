@@ -51,7 +51,7 @@ node src/cli/main.js execute .tmp/sample/migration.dsl.json \
 
 `translate` remains a deterministic compatibility shortcut for `clean` plus `draft`. It does not call AI and writes a non-executable `dsl-draft.json`. `agent-review` is the only AI-backed stage. `dry-run` and `execute` accept only trusted `migration.dsl.json` with `trust.level = trusted` and `trust.executable = true`.
 
-`agent-review` reads `OPENAI_BASE_URL` and `OPENAI_API_KEY` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Initial review and repair requests always use `gpt-5.6-luna`; the model cannot be overridden, and provider failures do not fall back to another model. Keep local secrets in an ignored file such as `.tmp/newoa.env`, then source it explicitly before review or live smoke:
+`agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Review and repair requests use the configured model; provider failures do not fall back to another model. Keep local secrets in an ignored file such as `.tmp/newoa.env`, then source it explicitly before review or live smoke:
 
 ```bash
 source .tmp/newoa.env

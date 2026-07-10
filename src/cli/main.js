@@ -264,8 +264,8 @@ function printUsage() {
   console.error("  node src/cli/main.js clean <source-dir|sysform.xml> [--out source-draft.json]");
   console.error("  node src/cli/main.js draft <source-draft.json> [--out dsl-draft.json]");
   console.error("  node src/cli/main.js translate <source-dir|sysform.xml> [--out dsl-draft.json]");
-  console.error("  OPENAI_BASE_URL=... OPENAI_API_KEY=... node src/cli/main.js agent-review <source-draft.json> <dsl-draft.json> --out migration.dsl.json [--report-out agent-review.report.json]");
-  console.error("    Review and repair use fixed model gpt-5.6-luna; no override or fallback.");
+  console.error("  OPENAI_BASE_URL=... OPENAI_API_KEY=... OPENAI_MODEL=... node src/cli/main.js agent-review <source-draft.json> <dsl-draft.json> --out migration.dsl.json [--report-out agent-review.report.json]");
+  console.error("    Review and repair use OPENAI_MODEL from the environment; no model fallback.");
   console.error("  node src/cli/main.js trust <source-draft.json> <dsl-draft.json> --external-agent-reviewed [--reviewer-name name] [--out migration.dsl.json]");
   console.error("  node src/cli/main.js check draft <dsl-draft.json>");
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");
