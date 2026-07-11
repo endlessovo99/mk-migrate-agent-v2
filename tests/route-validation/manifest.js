@@ -56,6 +56,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "multi-batch-review-success",
+      source: {
+        kind: "form-only",
+        relativePath: "multi-batch/route-multi-batch_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "custom-base-url-success",
       source: {
         kind: "form-only",

@@ -41,6 +41,37 @@ describe("offline Route-validation", { concurrency: false }, () => {
     ]);
   });
 
+  it("reviews more than one script batch before dry-run and execution", async () => {
+    const result = await runRouteCase("multi-batch-review-success");
+
+    assert.equal(result.dsl.scripts.actions.length, 13);
+    assert.equal(result.review.batchCount, 2);
+    assert.deepEqual(result.review.batches.map((batch) => batch.actionIndexes.length), [12, 1]);
+    assert.equal(
+      result.review.batches.flatMap((batch) => batch.before)
+        .every((action) => action.translationStatus === "needs_review"),
+      true
+    );
+    assert.equal(
+      result.dsl.scripts.actions.every((action) => ["mapped", "omitted"].includes(action.translationStatus)),
+      true
+    );
+    assert.equal(result.dryRun.ok, true);
+    assert.equal(result.execution.ok, true);
+    assert.equal(result.execution.status, "written");
+    assert.equal(result.execution.readback.form.scripts.persistedActionCount, 0);
+    assert.deepEqual(result.transcript.map((entry) => entry.operation), [
+      "login",
+      "init",
+      "generate-table-name",
+      "load-parent-category",
+      "add",
+      "get-before-update",
+      "update",
+      "get-readback"
+    ]);
+  });
+
   it("executes a configured non-SIT origin through the public migration route", async () => {
     const result = await runRouteCase("custom-base-url-success");
 

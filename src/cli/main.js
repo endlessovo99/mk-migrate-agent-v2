@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { runAgentReview } from "../agent-review/index.js";
 import { checkDraft, checkExecute } from "../dsl/checks.js";
@@ -121,16 +121,31 @@ async function runAgentReviewCommand(argv, options = {}) {
   if (!args.out) {
     throw new Error("agent-review requires --out <migration.dsl.json>");
   }
+  const sourceDraft = readJson(sourceDraftPath);
+  const dslDraft = readJson(dslDraftPath);
+  const resumeCheckpoint = args["resume-from"] ? readJson(args["resume-from"]) : undefined;
+  rmSync(args.out, { force: true });
+  const checkpointOut = args["checkpoint-out"];
+  const env = options.env || process.env;
 
-  const result = await runAgentReview(readJson(sourceDraftPath), readJson(dslDraftPath), {
+  const result = await runAgentReview(sourceDraft, dslDraft, {
     provider: options.agentReviewProvider,
     providerOptions: options.agentReviewProviderOptions,
-    reviewedAt: options.reviewedAt
+    reviewedAt: options.reviewedAt,
+    batchSize: args["review-batch-size"],
+    maxAttemptsPerAction: args["max-review-attempts"],
+    checkpointSigningKey: options.agentReviewCheckpointKey || env.AGENT_REVIEW_CHECKPOINT_KEY,
+    resumeCheckpoint,
+    onCheckpoint: checkpointOut ? (checkpoint) => writeJsonAtomic(checkpointOut, checkpoint) : undefined
   });
 
   if (!result.ok) {
     if (args["report-out"]) writeJson(args["report-out"], result.report);
-    printJson(args["report-out"] ? { ...result.report, reportWrote: args["report-out"] } : result.report);
+    printJson({
+      ...result.report,
+      reportWrote: args["report-out"],
+      checkpointWrote: checkpointOut && result.checkpoint ? checkpointOut : undefined
+    });
     process.exitCode = 1;
     return;
   }
@@ -140,7 +155,8 @@ async function runAgentReviewCommand(argv, options = {}) {
   printJson({
     ...result.report,
     wrote: args.out,
-    reportWrote: args["report-out"]
+    reportWrote: args["report-out"],
+    checkpointWrote: checkpointOut
   });
 }
 
@@ -256,6 +272,13 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function writeJsonAtomic(path, value) {
+  mkdirSync(dirname(path), { recursive: true });
+  const temporaryPath = `${path}.tmp-${process.pid}`;
+  writeFileSync(temporaryPath, `${JSON.stringify(value, null, 2)}\n`);
+  renameSync(temporaryPath, path);
+}
+
 function printJson(value) {
   console.log(JSON.stringify(value, null, 2));
 }
@@ -265,7 +288,7 @@ function printUsage() {
   console.error("  node src/cli/main.js clean <source-dir|sysform.xml> [--out source-draft.json]");
   console.error("  node src/cli/main.js draft <source-draft.json> [--out dsl-draft.json]");
   console.error("  node src/cli/main.js translate <source-dir|sysform.xml> [--out dsl-draft.json]");
-  console.error("  OPENAI_BASE_URL=... OPENAI_API_KEY=... OPENAI_MODEL=... node src/cli/main.js agent-review <source-draft.json> <dsl-draft.json> --out migration.dsl.json [--report-out agent-review.report.json]");
+  console.error("  OPENAI_BASE_URL=... OPENAI_API_KEY=... OPENAI_MODEL=... AGENT_REVIEW_CHECKPOINT_KEY=... node src/cli/main.js agent-review <source-draft.json> <dsl-draft.json> --out migration.dsl.json [--report-out agent-review.report.json] [--checkpoint-out agent-review.checkpoint.json] [--resume-from agent-review.checkpoint.json] [--review-batch-size 12] [--max-review-attempts 2]");
   console.error("    Review and repair use OPENAI_MODEL from the environment; no model fallback.");
   console.error("  node src/cli/main.js trust <source-draft.json> <dsl-draft.json> --external-agent-reviewed [--reviewer-name name] [--out migration.dsl.json]");
   console.error("  node src/cli/main.js check draft <dsl-draft.json>");

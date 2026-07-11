@@ -269,6 +269,12 @@ describe("agent-review", () => {
     assert.equal(result.report.repairAttempts, 1);
     assert.equal(result.report.repairHistory.length, 1);
     assert.equal(result.report.repairHistory[0].stage, "agent-review.patch-validation");
+    assert.equal(result.report.repairHistory[0].batchOrdinal, 1);
+    assert.deepEqual(result.report.repairHistory[0].reviewScope, {
+      actionIndexes: [],
+      actionIds: [],
+      includeFormTargets: true
+    });
     assert.equal(result.report.repairHistory[0].rejectedPatches[0].path, "/form/fields/99/title");
   });
 

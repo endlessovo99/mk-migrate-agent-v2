@@ -14,14 +14,14 @@ export function createFakeReviewProvider(scenario) {
         model: "deterministic-review"
       };
     },
-    async review({ dslDraft }) {
+    async review({ dslDraft, reviewScope }) {
       const response = {
         summary: scenario === "warning"
           ? "Accepted with one deterministic manual-review warning."
           : "Accepted by the deterministic offline Route reviewer.",
         patches: [
-          ...staticPropertyClosurePatches(dslDraft),
-          ...nativeFormRuleClosurePatches(dslDraft)
+          ...staticPropertyClosurePatches(dslDraft, reviewScope),
+          ...nativeFormRuleClosurePatches(dslDraft, reviewScope)
         ],
         diagnostics: scenario === "warning"
           ? [{
@@ -46,8 +46,9 @@ export function createFakeReviewProvider(scenario) {
   };
 }
 
-function nativeFormRuleClosurePatches(dslDraft) {
+function nativeFormRuleClosurePatches(dslDraft, reviewScope) {
   return (dslDraft?.scripts?.actions || []).flatMap((action, actionIndex) => {
+    if (!actionIsInReviewScope(actionIndex, reviewScope)) return [];
     const coverage = action.coverage;
     if (
       coverage?.status !== "covered" ||
@@ -84,8 +85,9 @@ function nativeFormRuleClosurePatches(dslDraft) {
   });
 }
 
-function staticPropertyClosurePatches(dslDraft) {
+function staticPropertyClosurePatches(dslDraft, reviewScope) {
   return (dslDraft?.scripts?.actions || []).flatMap((action, actionIndex) => {
+    if (!actionIsInReviewScope(actionIndex, reviewScope)) return [];
     const staticProps = action.coverage?.staticProps;
     if (
       action.coverage?.status !== "covered" ||
@@ -124,4 +126,9 @@ function staticPropertyClosurePatches(dslDraft) {
       }
     ];
   });
+}
+
+function actionIsInReviewScope(actionIndex, reviewScope) {
+  return reviewScope === undefined ||
+    (Array.isArray(reviewScope.actionIndexes) && reviewScope.actionIndexes.includes(actionIndex));
 }

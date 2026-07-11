@@ -14,12 +14,13 @@ export class OpenAIResponsesReviewProvider {
     };
   }
 
-  async review({ sourceDraft, dslDraft }) {
-    return this.submitPrompt(buildAgentReviewPrompt(sourceDraft, dslDraft), "agent-review.provider");
+  async review({ sourceDraft, dslDraft, reviewScope }) {
+    return this.submitPrompt(buildAgentReviewPrompt(sourceDraft, dslDraft, { reviewScope }), "agent-review.provider");
   }
 
-  async repairReviewResponse({ sourceDraft, dslDraft, rawText, diagnostics, rejectedPatches, attempt }) {
+  async repairReviewResponse({ sourceDraft, dslDraft, reviewScope, rawText, diagnostics, rejectedPatches, attempt }) {
     return this.submitPrompt(buildAgentReviewRepairPrompt(sourceDraft, dslDraft, {
+      reviewScope,
       rawText,
       diagnostics,
       rejectedPatches,

@@ -37,7 +37,8 @@ node src/cli/main.js check draft .tmp/sample/dsl-draft.json
 source .tmp/newoa.env
 node src/cli/main.js agent-review .tmp/sample/source-draft.json .tmp/sample/dsl-draft.json \
   --out .tmp/sample/migration.dsl.json \
-  --report-out .tmp/sample/agent-review.report.json
+  --report-out .tmp/sample/agent-review.report.json \
+  --checkpoint-out .tmp/sample/agent-review.checkpoint.json
 
 node src/cli/main.js check trust .tmp/sample/source-draft.json .tmp/sample/migration.dsl.json
 node src/cli/main.js check execute .tmp/sample/migration.dsl.json
@@ -53,7 +54,7 @@ Set `NEWOA_BASE_URL` to select another NewOA root origin, or pass `--base-url` f
 
 `translate` remains a deterministic compatibility shortcut for `clean` plus `draft`. It does not call AI and writes a non-executable `dsl-draft.json`. `agent-review` is the only AI-backed stage. `dry-run` and `execute` accept only trusted `migration.dsl.json` with `trust.level = trusted` and `trust.executable = true`.
 
-`agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Review and repair requests use the configured model; provider failures do not fall back to another model. Keep local secrets in an ignored file such as `.tmp/newoa.env`, then source it explicitly before review or live smoke:
+`agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Review and repair requests use the configured model; provider failures do not fall back to another model. Checkpoint persistence additionally requires `AGENT_REVIEW_CHECKPOINT_KEY` with at least 32 characters. Keep local secrets in an ignored file such as `.tmp/newoa.env`, then source it explicitly before review or live smoke:
 
 ```bash
 source .tmp/newoa.env
@@ -63,6 +64,10 @@ npm run test:agent-review:live -- --target-category-id '<NewOA category fdId>'
 Default `npm test` is offline and uses fake review providers only. The live smoke is separate, uses the real provider, and writes sanitized artifacts under `.tmp/agent-review-live/`. Its default JSP fixtures validate layered Agent behavior without forcing unsafe NewOA writes: 19bb must map the detail-row behavior, omit native-covered row rules, and keep the complex onLoad blocked; 16add is reviewed as a script-only slice; 160de must produce useful diagnostics. A NewOA write happens only when an execute fixture produces trusted DSL and a target category fdId is supplied. The live smoke resolves `NEWOA_BASE_URL` with the same default as the CLI.
 
 The AI reviewer returns JSON patches, not a complete DSL. First-version patches are limited to form field/detail-column `title`, `type`, `componentId`, and `props` paths plus existing `scripts.actions[]` `function`, `translationStatus`, `functionMappings`, and `coverage` paths. Generated MK JavaScript coverage is recorded as `coverage.status = "translated"`; review-grade target APIs require explicit `functionMappings` before execution. Workflow review is diagnostic-only: warning diagnostics may remain in trusted DSL, while error or blocked diagnostics prevent `migration.dsl.json` from being written.
+
+Script review is scoped and incremental. The command reviews at most 12 pending actions per provider call, applies only locally validated patches, and continues from the resulting non-executable Draft until every action is `mapped` or `omitted`. Each pending action is attempted at most twice by default. A provider failure or unresolved action keeps the run blocked and never writes `migration.dsl.json`.
+
+Use `--checkpoint-out <path>` to persist each validated batch atomically. Resume with the same Source Draft, original DSL Draft, batch size, signing key, and `--resume-from <path>`. The checkpoint is authenticated with HMAC-SHA-256; its secret key is never stored in the artifact. Resume verifies the signature, canonical SHA-256 input and contract digests, replays every effective patch through the current validator, and rejects stale, forged, or mismatched checkpoints before calling the provider. A complete checkpoint is revalidated locally without another model call. Configure the same `AGENT_REVIEW_CHECKPOINT_KEY` securely on every machine that must share a checkpoint. `--review-batch-size <n>` changes the default batch size of 12; `--max-review-attempts <n>` changes the per-action attempt limit.
 
 JSP-to-NewOA JS translation is intentionally semantic-first. The deterministic translator extracts facts only: script/action boundaries, source refs, event and control/table targets, source windows, legacy function calls, field ids, row markers, native formRules evidence, and catalog/whitelist hits. It should not grow into a hard-coded JSP function translator. Agent review uses `catalogs/jsp-translation-playbook.v1.json` plus the target API catalog and source evidence to decide whether an action can be patched to `mapped`/`translated`, `omitted`/`covered`, or left as diagnostics.
 

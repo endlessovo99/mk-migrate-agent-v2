@@ -2,7 +2,7 @@ import { COMPONENT_CATALOG, FUNCTION_CATALOG, VALIDATION_POLICY } from "../dsl/c
 import { scriptTargetApiSummary } from "../dsl/scripts.js";
 import { JSP_TRANSLATION_PLAYBOOK } from "./playbook.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.form-patch.v1";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v2";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -19,10 +19,15 @@ export const ALLOWED_PATCH_PATHS = [
   "/scripts/actions/*/coverage"
 ];
 
-export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
-  const concretePatchTargets = buildConcretePatchTargets(dslDraft);
+export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
+  const reviewScope = options.reviewScope === undefined
+    ? undefined
+    : normalizeReviewScope(options.reviewScope, dslDraft?.scripts?.actions);
+  const concretePatchTargets = buildConcretePatchTargets(dslDraft, reviewScope);
   const allowedConcretePatchPaths = concretePatchTargets.flatMap((target) => target.allowedPatchPaths);
-  const focusedScriptSourceRefs = focusedSourceRefsForScripts(dslDraft?.scripts);
+  const focusedActionIndexes = reviewScope?.actionIndexes;
+  const focusedScriptSourceRefs = focusedSourceRefsForScripts(dslDraft?.scripts, focusedActionIndexes);
+  const allowedPatchPaths = allowedPatchPatterns(reviewScope);
 
   return {
     promptVersion: AGENT_REVIEW_PROMPT_VERSION,
@@ -32,6 +37,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       "Do not return a complete DSL.",
       "Only propose evidence-backed replace patches for allowed form and script DSL paths.",
       "Patch paths must be copied exactly from allowedConcretePatchPaths. Do not invent array indexes or paths.",
+      "When reviewScope is present, it is authoritative. Do not patch form fields or script actions outside that scope.",
       "Workflow is diagnostic-only in this version. Never patch workflow, trust, executor safety, source artifact, credentials, environment, or config paths.",
       "Every patch must include op, path, value, sourceRefs, evidence, confidence, and rationale. evidence must be a non-empty string array.",
       "Every diagnostic must include level, code, path, and message. Use diagnostics: [] when there are no diagnostics.",
@@ -71,14 +77,17 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
     ].join("\n"),
     context: {
       promptVersion: AGENT_REVIEW_PROMPT_VERSION,
-      task: "Review source-draft form evidence and dsl-draft form semantics, then propose restricted patches only when evidence is clear.",
+      reviewScope,
+      task: reviewScope
+        ? "Review only the scoped form targets and script actions, then propose restricted patches only when evidence is clear."
+        : "Review source-draft form evidence and dsl-draft form semantics, then propose restricted patches only when evidence is clear.",
       responseContract: {
         topLevelKeys: ["summary", "patches", "diagnostics"],
         patchKeys: ["op", "path", "value", "sourceRefs", "evidence", "confidence", "rationale"],
         supportedPatchOps: ["replace"],
         validPatchExample: validPatchExample(concretePatchTargets)
       },
-      allowedPatchPaths: ALLOWED_PATCH_PATHS,
+      allowedPatchPaths,
       patchTargetSummary: patchTargetSummary(dslDraft, concretePatchTargets, allowedConcretePatchPaths),
       allowedConcretePatchPaths,
       concretePatchTargets,
@@ -98,7 +107,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
         props: 0.85
       },
       formReviewPolicy: {
-        mayPatch: [
+        mayPatch: reviewScope && !reviewScope.includeFormTargets ? [] : [
           "form field titles",
           "detail table titles",
           "detail column titles",
@@ -174,13 +183,13 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
       functionCatalog: functionCatalogSummary(),
       sourceDraft: {
         form: sourceFormSummary(sourceDraft?.form),
-        scripts: scriptSourceSummary(sourceDraft?.scripts, focusedScriptSourceRefs),
+        scripts: scriptSourceSummary(sourceDraft?.scripts, focusedScriptSourceRefs, reviewScope !== undefined),
         workflowSummary: summarizeWorkflow(sourceDraft?.workflow)
       },
       dslDraft: {
         form: dslFormSummary(dslDraft?.form),
         formRules: formRulesSummary(dslDraft?.formRules),
-        scripts: scriptActionReviewSummary(dslDraft?.scripts, dslDraft?.formRules, dslDraft?.form),
+        scripts: scriptActionReviewSummary(dslDraft?.scripts, dslDraft?.formRules, dslDraft?.form, focusedActionIndexes),
         review: {
           warnings: dslDraft?.review?.warnings || [],
           reviewCandidates: dslDraft?.review?.reviewCandidates || []
@@ -194,7 +203,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft) {
 }
 
 export function buildAgentReviewRepairPrompt(sourceDraft, dslDraft, repair = {}) {
-  const base = buildAgentReviewPrompt(sourceDraft, dslDraft);
+  const base = buildAgentReviewPrompt(sourceDraft, dslDraft, { reviewScope: repair.reviewScope });
   return {
     promptVersion: base.promptVersion,
     system: [
@@ -219,14 +228,34 @@ export function buildAgentReviewRepairPrompt(sourceDraft, dslDraft, repair = {})
   };
 }
 
-function buildConcretePatchTargets(dslDraft) {
+function normalizeReviewScope(reviewScope, actions = []) {
+  const availableActions = Array.isArray(actions) ? actions : [];
+  const actionIndexes = [...new Set(Array.isArray(reviewScope?.actionIndexes) ? reviewScope.actionIndexes : [])]
+    .filter((index) => Number.isInteger(index) && index >= 0 && index < availableActions.length)
+    .sort((left, right) => left - right);
+  return {
+    actionIndexes,
+    actionIds: actionIndexes.map((index) => availableActions[index]?.id || `action-${index}`),
+    includeFormTargets: reviewScope?.includeFormTargets === true
+  };
+}
+
+function allowedPatchPatterns(reviewScope) {
+  if (!reviewScope) return ALLOWED_PATCH_PATHS;
+  const patterns = [];
+  if (reviewScope.includeFormTargets) patterns.push(...ALLOWED_PATCH_PATHS.slice(0, 8));
+  if (reviewScope.actionIndexes.length) patterns.push(...ALLOWED_PATCH_PATHS.slice(8));
+  return patterns;
+}
+
+function buildConcretePatchTargets(dslDraft, reviewScope) {
   const fields = Array.isArray(dslDraft?.form?.fields) ? dslDraft.form.fields : [];
   const scriptActions = Array.isArray(dslDraft?.scripts?.actions) ? dslDraft.scripts.actions : [];
   const targets = [];
   const patchProperties = ["title", "type", "componentId", "props"];
   const scriptPatchProperties = ["function", "translationStatus", "functionMappings", "coverage"];
 
-  fields.forEach((field, fieldIndex) => {
+  if (!reviewScope || reviewScope.includeFormTargets) fields.forEach((field, fieldIndex) => {
     const pathBase = `/form/fields/${fieldIndex}`;
     targets.push(targetSummary({
       scope: "field",
@@ -252,6 +281,7 @@ function buildConcretePatchTargets(dslDraft) {
   });
 
   scriptActions.forEach((action, actionIndex) => {
+    if (reviewScope && !reviewScope.actionIndexes.includes(actionIndex)) return;
     const pathBase = `/scripts/actions/${actionIndex}`;
     targets.push(targetSummary({
       scope: "scriptAction",
@@ -305,14 +335,17 @@ function patchTargetSummary(dslDraft, concretePatchTargets, allowedConcretePatch
 function validPatchExample(concretePatchTargets) {
   const target = concretePatchTargets.find((item) => item.sourceRef) || concretePatchTargets[0];
   if (!target) {
+    return undefined;
+  }
+  if (target.scope === "scriptAction") {
     return {
       op: "replace",
-      path: "/form/fields/0/title",
-      value: "业务字段标题",
-      sourceRefs: ["copy-a-sourceRef-from-sourceDraft"],
-      evidence: ["copy a specific source fact that supports this patch"],
+      path: `${target.pathBase}/translationStatus`,
+      value: "mapped",
+      sourceRefs: target.sourceRefs || [],
+      evidence: [`${target.sourceRefs?.[0] || target.pathBase} supports a complete semantic script translation`],
       confidence: 0.9,
-      rationale: "Use only paths from allowedConcretePatchPaths and sourceRefs from sourceDraft."
+      rationale: "Use only paths from the scoped allowedConcretePatchPaths."
     };
   }
 
@@ -503,7 +536,7 @@ function formRulesSummary(formRules = {}) {
   };
 }
 
-function scriptSourceSummary(scripts = {}, focusedRefs) {
+function scriptSourceSummary(scripts = {}, focusedRefs, hasExplicitFocus = false) {
   if (!scripts) return {};
   const hasFocusedRefs = focusedRefs instanceof Set && focusedRefs.size > 0;
   return pruneUndefined({
@@ -517,7 +550,9 @@ function scriptSourceSummary(scripts = {}, focusedRefs) {
       length: fragment.length
     })),
     sources: (scripts.sources || []).map((source) => {
-      const focused = !hasFocusedRefs || focusedRefs.has(source.sourceRef) || focusedRefs.has(source.id);
+      const focused = hasExplicitFocus
+        ? hasFocusedRefs && (focusedRefs.has(source.sourceRef) || focusedRefs.has(source.id))
+        : !hasFocusedRefs || focusedRefs.has(source.sourceRef) || focusedRefs.has(source.id);
       return {
         id: source.id,
         sourceRef: source.sourceRef,
@@ -555,27 +590,28 @@ function semanticFactsSummary(facts = {}, focused = false) {
   });
 }
 
-function focusedSourceRefsForScripts(scripts = {}) {
+function focusedSourceRefsForScripts(scripts = {}, focusedActionIndexes) {
   const actions = Array.isArray(scripts?.actions) ? scripts.actions : [];
   const refs = new Set();
-  actions
-    .filter((action) => action.translationStatus === "needs_review")
-    .slice(0, 12)
+  const focusedActions = Array.isArray(focusedActionIndexes)
+    ? focusedActionIndexes.map((index) => actions[index]).filter(Boolean)
+    : actions.filter((action) => action.translationStatus === "needs_review").slice(0, 12);
+  focusedActions
     .forEach((action) => {
       for (const ref of action.sourceRefs || []) refs.add(ref);
     });
   return refs;
 }
 
-function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}) {
+function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focusedActionIndexes) {
   const actions = Array.isArray(scripts?.actions) ? scripts.actions : [];
-  const focusedIndexes = new Set(
-    actions
-      .map((action, index) => ({ action, index }))
-      .filter(({ action }) => action.translationStatus === "needs_review")
-      .slice(0, 12)
-      .map(({ index }) => index)
-  );
+  const focusedIndexes = new Set(Array.isArray(focusedActionIndexes)
+    ? focusedActionIndexes
+    : actions
+        .map((action, index) => ({ action, index }))
+        .filter(({ action }) => action.translationStatus === "needs_review")
+        .slice(0, 12)
+        .map(({ index }) => index));
 
   return pruneUndefined({
     source: scripts?.source,
