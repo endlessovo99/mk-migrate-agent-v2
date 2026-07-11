@@ -164,6 +164,48 @@ describe("form field and detail mutations", () => {
     assert.equal(readback.ok, false);
     assert.equal(readback.diagnostics.some((item) => item.code === "readback.form.layout_cell_fields_mismatch"), true);
   });
+
+  it("splits a multi-field DSL cell into adjacent one-control native cells", () => {
+    const form = sampleForm();
+    form.layout.mkTree[0] = {
+      id: "layout.row-pack",
+      componentId: "xform-flex-1-1-layout",
+      props: { columns: 1, sourceColumns: 4 },
+      sourceRef: "source.form.layout.row.row-pack",
+      sourceMarkers: ["fd_pack_row"],
+      children: [{
+        id: "layout.row-pack-cell-0",
+        refType: "field",
+        refIds: ["fd_subject", "fd_amount"],
+        sourceRef: "source.form.layout.cell.row-pack-cell-0",
+        column: 0,
+        colspan: 1
+      }]
+    };
+    const prepared = prepareSample(sampleTrustedDsl({ form, workflow: null }));
+    assert.equal(prepared.ok, true);
+    const view = JSON.parse(xformConfig(prepared.update).viewModel[0].fdConfig);
+    const packRow = view.view.render.desktop[0].children[0].children[0];
+    const grid = packRow.children[0];
+    assert.equal(grid.controlProps.columns, 2);
+    assert.deepEqual(
+      grid.children.map((item) => ({
+        column: item.controlProps.column,
+        fields: item.children.map((child) => child.key)
+      })),
+      [
+        { column: 1, fields: ["fd_subject"] },
+        { column: 2, fields: ["fd_amount"] }
+      ]
+    );
+
+    const { readback } = persistAndVerify(sampleTrustedDsl({ form, workflow: null }));
+    assert.equal(readback.ok, true);
+    assert.deepEqual(
+      readback.form.layoutRows[0].cells.map((cell) => cell.fieldIds),
+      [["fd_subject"], ["fd_amount"]]
+    );
+  });
 });
 
 describe("marker independence", () => {

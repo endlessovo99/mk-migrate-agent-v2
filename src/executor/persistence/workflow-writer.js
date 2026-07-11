@@ -661,10 +661,11 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
   const namedOther = isOtherRoute(edge);
   const tautologicalDefault = isTautologyCondition(resultCode);
   const parsedFormula = buildFormulaDesignerConfig(edge, context);
-  const needsSyntheticOtherFormula = namedOther && !parsedFormula &&
-    (tautologicalDefault || !String(resultCode || "").trim());
+  const needsSyntheticDefaultFormula = !parsedFormula && (
+    tautologicalDefault || (namedOther && !String(resultCode || "").trim())
+  );
   const formulaConfig = parsedFormula ||
-    (needsSyntheticOtherFormula
+    (needsSyntheticDefaultFormula
       ? buildOtherDefaultFormulaDesignerConfig(node, edge, context, siblingEdges)
       : undefined);
   const conditionValue = {
@@ -1033,6 +1034,28 @@ function parseSimpleCondition(condition) {
     return {
       value: valueLeftNotEquals[1],
       field: valueLeftNotEquals[2].trim(),
+      symbol: "!=",
+      expressionType: "!="
+    };
+  }
+
+  // Unquoted numeric literals from EKP conditions are option values, so keep the
+  // digits as strings in the editable NewOA Batch formula.
+  const fieldLeftNumber = text.match(/^\$([^$]+)\$\s*={2,3}\s*(-?\d+(?:\.\d+)?)$/);
+  if (fieldLeftNumber) {
+    return {
+      field: fieldLeftNumber[1].trim(),
+      value: fieldLeftNumber[2],
+      symbol: "==",
+      expressionType: "=="
+    };
+  }
+
+  const fieldLeftNotNumber = text.match(/^\$([^$]+)\$\s*!={1,2}\s*(-?\d+(?:\.\d+)?)$/);
+  if (fieldLeftNotNumber) {
+    return {
+      field: fieldLeftNotNumber[1].trim(),
+      value: fieldLeftNotNumber[2],
       symbol: "!=",
       expressionType: "!="
     };

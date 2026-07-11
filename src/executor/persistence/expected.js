@@ -451,9 +451,7 @@ function buildExpectedWorkflow(workflow, diagnostics) {
       target: edge.target,
       isDefault: defaultEdgeIds.has(edge.id),
       branch: normalizeScalar(edge.attributes?.branch || edge.branch || ""),
-      condition: defaultEdgeIds.has(edge.id)
-        ? undefined
-        : summarizeCondition(edge, conditionBranchNodeIds.has(edge.source))
+      condition: summarizeCondition(edge, conditionBranchNodeIds.has(edge.source))
     };
   }).filter(Boolean);
 

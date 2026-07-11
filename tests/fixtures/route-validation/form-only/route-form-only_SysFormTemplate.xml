@@ -34,9 +34,9 @@
    <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
     &lt;tr&gt;
      &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_subject&quot;,content:&quot;Subject&quot;}&apos;&gt;Subject&lt;/label&gt;&lt;/td&gt;
-     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_subject&quot;,label:&quot;Subject&quot;,required:&quot;true&quot;}&apos;&gt;&lt;input id=&quot;fd_subject&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_subject&quot;,label:&quot;Subject&quot;,required:&quot;true&quot;}&apos;&gt;&lt;input id=&quot;fd_subject&quot;/&gt;&lt;/div&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_amount&quot;,label:&quot;Amount&quot;}&apos;&gt;&lt;input id=&quot;fd_amount&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
      &lt;td row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_amount&quot;,content:&quot;Amount&quot;}&apos;&gt;Amount&lt;/label&gt;&lt;/td&gt;
-     &lt;td row=&quot;0&quot; column=&quot;3&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_amount&quot;,label:&quot;Amount&quot;}&apos;&gt;&lt;input id=&quot;fd_amount&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;3&quot;&gt;&lt;/td&gt;
     &lt;/tr&gt;
    &lt;/tbody&gt;&lt;/table&gt;</string>
   </void>

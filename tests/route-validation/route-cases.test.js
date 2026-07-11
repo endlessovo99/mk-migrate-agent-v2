@@ -28,7 +28,15 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(result.execution.readback.form.fields.find((field) => field.id === "fd_subject").required, true);
     assert.deepEqual(result.execution.readback.form.subjectRule, {});
     assert.deepEqual(result.dsl.form.layout.mkTree[0].children.map((cell) => cell.column), [0, 1]);
+    assert.deepEqual(
+      result.dsl.form.layout.mkTree[0].children.map((cell) => cell.refIds),
+      [["fd_subject"], ["fd_amount"]]
+    );
     assert.deepEqual(result.execution.readback.form.layoutRows[0].cells.map((cell) => cell.column), [0, 1]);
+    assert.deepEqual(
+      result.execution.readback.form.layoutRows[0].cells.map((cell) => cell.fieldIds),
+      [["fd_subject"], ["fd_amount"]]
+    );
     assert.equal(result.dsl.form.layout.mkTree[0].props.sourceColumns, 4);
     assert.equal(result.execution.readback.form.scripts.persistedActionCount, 0);
     assert.deepEqual(result.transcript.map((entry) => entry.operation), [
@@ -144,7 +152,7 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(result.execution.status, "written_with_warnings");
   });
 
-  it("persists conditional organization fallback, named-other default, and detail-container rules", async () => {
+  it("persists conditional organization fallback, tautological default, and detail-container rules", async () => {
     const result = await runRouteCase("conditional-detail-success");
 
     assert.equal(result.execution.ok, true);
@@ -222,11 +230,29 @@ describe("offline Route-validation", { concurrency: false }, () => {
       functionIds: ["sysorg.isOrganizationBelongOrIncludeAnother"],
       orgIds: [SIT_CONDITION_ORG_FALLBACK_ID]
     });
-    assert.equal(result.execution.readback.workflow.conditionEdgeCount, 2);
-    assert.equal(
-      result.execution.readback.workflow.edges.find((edge) => edge.id === "L4").isDefault,
-      true
-    );
+    const numericEdge = result.execution.readback.workflow.edges.find((edge) => edge.id === "L5");
+    assert.deepEqual(numericEdge.condition, {
+      nativeKind: "batch_formula",
+      nativeStatus: "ok",
+      functionIds: [],
+      orgIds: []
+    });
+    const numericNotEdge = result.execution.readback.workflow.edges.find((edge) => edge.id === "L6");
+    assert.deepEqual(numericNotEdge.condition, {
+      nativeKind: "batch_formula",
+      nativeStatus: "ok",
+      functionIds: [],
+      orgIds: []
+    });
+    assert.equal(result.execution.readback.workflow.conditionEdgeCount, 4);
+    const defaultEdge = result.execution.readback.workflow.edges.find((edge) => edge.id === "L4");
+    assert.equal(defaultEdge.isDefault, true);
+    assert.deepEqual(defaultEdge.condition, {
+      nativeKind: "batch_formula",
+      nativeStatus: "ok",
+      functionIds: ["global.isEmpty"],
+      orgIds: []
+    });
   });
 
   it("blocks before transport when explicit write confirmation is absent", async () => {

@@ -1589,6 +1589,53 @@ describe("executeDsl", () => {
     assert.equal(sequence.style, "sequenceFlow;marker");
   });
 
+  it("writes a non-named tautological default as a native Batch formula", () => {
+    const form = sampleConditionBranchForm();
+    const workflow = sampleConditionBranchWorkflow();
+    const branch = workflow.nodes.find((node) => node.id === "N410");
+    branch.name = "条件分支";
+    branch.attributes.name = "条件分支";
+    const fallback = workflow.edges.find((edge) => edge.id === "L544");
+    fallback.name = "除系统开具外的线下路径";
+    fallback.condition = {
+      sourceText: "1==1",
+      displayText: "1==1",
+      targetText: "1==1",
+      translationStatus: "display_only"
+    };
+    delete fallback.attributes.isDefault;
+
+    const trusted = sampleTrustedDsl({ form, workflow });
+    const template = projectTemplate(trusted, baseTemplate());
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    const sequence = content.elements.find((element) => element.id === "L544");
+    const verification = verifyTemplate(trusted, template);
+
+    assert.equal(
+      verification.diagnostics.some((item) => item.code === "readback.workflow.edge_condition_native_corrupt"),
+      false,
+      JSON.stringify(verification.diagnostics)
+    );
+    assert.equal(sequence.defaultTrend, true);
+    assert.equal(sequence.formulaType, "formula");
+    const nativeFormula = JSON.parse(sequence.formula);
+    assert.equal(nativeFormula.type, "Batch");
+    assert.equal(verification.ok, true, JSON.stringify(verification.diagnostics));
+
+    const corrupt = structuredClone(template);
+    const corruptContent = JSON.parse(corrupt.mechanisms.lbpmTemplate[0].fdContent);
+    const corruptSequence = corruptContent.elements.find((element) => element.id === "L544");
+    corruptSequence.formulaType = "rule";
+    corruptSequence.formula = "1==1";
+    corrupt.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(corruptContent);
+    const rejected = verifyTemplate(trusted, corrupt);
+    assert.equal(rejected.ok, false);
+    assert.equal(
+      rejected.diagnostics.some((item) => item.code === "readback.workflow.edge_condition_native_corrupt"),
+      true
+    );
+  });
+
   it("fails readback when persisted designer structure loses layout cells and keeps the partial fdId", async () => {
     const client = new FakeNewoaClient({
       corruptReadback(template) {
