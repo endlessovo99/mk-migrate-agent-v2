@@ -112,6 +112,39 @@ describe("translateSysFormTemplateXml", () => {
     );
   });
 
+  it("extracts chinaValue designer controls as text fields for metadata matching", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0"><label fd_type="textLabel" fd_values='{id:"label_amount",content:"金额"}'>金额</label></td>
+            <td row="0" column="1"><div fd_type="inputText" fd_values='{id:"fd_amount",label:"金额",required:"true"}'><input id="fd_amount"/></div></td>
+            <td row="0" column="2"><label fd_type="textLabel" fd_values='{id:"label_cny",content:"人民币大写"}'>人民币大写</label></td>
+            <td row="0" column="3"><div fd_type="chinaValue" fd_values='{id:"fd_cny_upper",label:"人民币大写",relatedid:"fd_amount",dataType:"String"}' relatedid="fd_amount"></div></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="fd_amount" label="金额" type="Double" notNull="true"/>
+        <extendSimpleProperty name="fd_cny_upper" label="人民币大写" type="String"/>
+      </metadata>
+    `;
+    const xml = sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml });
+    const dsl = translateSysFormTemplateXml(xml, { sourcePath: "china-value_SysFormTemplate.xml" });
+    const byId = new Map(dsl.form.fields.map((field) => [field.id, field]));
+
+    assert.deepEqual(dsl.form.fields.map((field) => field.id), ["fd_amount", "fd_cny_upper"]);
+    assert.equal(byId.get("fd_cny_upper")?.type, "text");
+    assert.equal(byId.get("fd_cny_upper")?.source?.designerType, "chinaValue");
+    assert.equal(byId.get("fd_cny_upper")?.source?.metadataId, "fd_cny_upper");
+    assert.equal(
+      dsl.review.warnings.some((warning) => warning.code === "source.sysform.metadata_field_unmatched"),
+      false
+    );
+  });
+
   it("migrates styled hint textLabels to xform-description and skips plain field labels", () => {
     const designerHtml = `
       <table fd_type="standardTable">

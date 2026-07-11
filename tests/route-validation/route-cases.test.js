@@ -19,7 +19,7 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(result.dryRun.steps.some((step) => step.id === "map-workflow"), false);
     assert.equal(result.execution.ok, true);
     assert.equal(result.execution.status, "written");
-    assert.equal(result.execution.readback.form.fieldCount, 2);
+    assert.equal(result.execution.readback.form.fieldCount, 3);
     const staticRequiredAction = result.dsl.scripts.actions.find((action) =>
       action.coverage?.staticProps?.some((entry) => entry.fieldId === "fd_subject")
     );
@@ -27,15 +27,15 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(staticRequiredAction.function, "");
     assert.equal(result.execution.readback.form.fields.find((field) => field.id === "fd_subject").required, true);
     assert.deepEqual(result.execution.readback.form.subjectRule, {});
-    assert.deepEqual(result.dsl.form.layout.mkTree[0].children.map((cell) => cell.column), [0, 1]);
+    assert.deepEqual(result.dsl.form.layout.mkTree[0].children.map((cell) => cell.column), [0, 1, 2]);
     assert.deepEqual(
       result.dsl.form.layout.mkTree[0].children.map((cell) => cell.refIds),
-      [["fd_subject"], ["fd_amount"]]
+      [["fd_subject"], ["fd_amount"], ["fd_cny_upper"]]
     );
-    assert.deepEqual(result.execution.readback.form.layoutRows[0].cells.map((cell) => cell.column), [0, 1]);
+    assert.deepEqual(result.execution.readback.form.layoutRows[0].cells.map((cell) => cell.column), [0, 1, 2]);
     assert.deepEqual(
       result.execution.readback.form.layoutRows[0].cells.map((cell) => cell.fieldIds),
-      [["fd_subject"], ["fd_amount"]]
+      [["fd_subject"], ["fd_amount"], ["fd_cny_upper"]]
     );
     assert.equal(result.dsl.form.layout.mkTree[0].props.sourceColumns, 4);
     assert.equal(result.execution.readback.form.scripts.persistedActionCount, 0);

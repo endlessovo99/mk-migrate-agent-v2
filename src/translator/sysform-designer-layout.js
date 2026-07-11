@@ -535,6 +535,11 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
   if (["inputtext", "calculation"].includes(normalized)) {
     return { id, title, type: "text", required, mk: mkForFieldType("text"), source };
   }
+  // EKP chinaValue is a read-only Chinese-currency display bound to a related amount field.
+  // Map it as ordinary text so metadata matching and convertCurrency scripts have a target.
+  if (normalized === "chinavalue") {
+    return { id, title, type: "text", required, mk: mkForFieldType("text"), source };
+  }
 
   return undefined;
 }
