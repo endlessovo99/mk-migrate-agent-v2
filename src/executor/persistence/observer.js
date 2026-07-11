@@ -714,6 +714,92 @@ function observeWorkflow(lbpm) {
   };
 }
 
+function observeFormulaFieldId(handlers, node) {
+  const candidates = [];
+  const varIds = Array.isArray(handlers?.ruleKey?.varIds) ? handlers.ruleKey.varIds : [];
+  for (const varId of varIds) {
+    candidates.push(normalizeScalar(varId));
+  }
+  candidates.push(normalizeScalar(handlers?.ruleKey?.script));
+  candidates.push(normalizeScalar(node?.handlerIds));
+  for (const text of candidates) {
+    if (!text) continue;
+    const match = text.match(/(fd_[A-Za-z0-9_]+)\s*$/) || text.match(/\$\{data\.[^.}]*?(fd_[A-Za-z0-9_]+)\}/) || text.match(/\$(fd_[A-Za-z0-9_]+)\$/);
+    if (match) return match[1];
+  }
+  return undefined;
+}
+
+function observeRoleLineParticipants(script, formulaName, fieldId) {
+  const expression = [script, formulaName].find((value) => /组织架构\.解释角色线/.test(value));
+  if (!expression) return undefined;
+
+  const roles = observeRoleLineRoles(expression);
+  const nodeMatch = expression.match(/\$流程\.获取节点实际处理人\$\s*\(\s*["']([^"']+)["']\s*\)/);
+  if (nodeMatch) {
+    return {
+      mode: "role_line",
+      subjectKind: "node_handlers",
+      nodeId: nodeMatch[1],
+      ...roles
+    };
+  }
+  return fieldId
+    ? { mode: "role_line", subjectKind: "field", fieldId, ...roles }
+    : { mode: "role_line", ...roles };
+}
+
+function observeParticipantFormula(handlers, node) {
+  const ruleKey = handlers?.ruleKey && typeof handlers.ruleKey === "object"
+    ? handlers.ruleKey
+    : {};
+  return {
+    script: normalizeScalar(ruleKey.script),
+    varIds: Array.isArray(ruleKey.varIds) ? ruleKey.varIds.map(normalizeScalar) : [],
+    handlerSelectType: normalizeScalar(node?.handlerSelectType),
+    handlersType: normalizeScalar(handlers?.type),
+    handlersSource: normalizeScalar(handlers?.source),
+    handlersElement: normalizeScalar(handlers?.element),
+    memberCount: Array.isArray(handlers?.members) ? handlers.members.length : -1,
+    ruleMode: normalizeScalar(handlers?.ruleMode),
+    formulaType: normalizeScalar(handlers?.formulaType),
+    ruleKeyType: normalizeScalar(ruleKey.type),
+    ruleKeyMode: normalizeScalar(ruleKey.mode),
+    ruleVoMode: normalizeScalar(ruleKey.vo?.mode),
+    resultType: observeParticipantResultType(ruleKey.resultType)
+  };
+}
+
+function observeParticipantResultType(resultType) {
+  if (resultType === undefined) return "none";
+  const properties = resultType?.items?.properties;
+  if (
+    resultType?.type === "array" &&
+    resultType?.items?.type === "object" &&
+    properties?.fdId?.type === "string" &&
+    properties?.fdName?.type === "string" &&
+    properties?.fdOrgType?.type === "string"
+  ) {
+    return "org_array";
+  }
+  return `invalid:${stableStringify(resultType)}`;
+}
+
+function observeRoleLineRoles(expression) {
+  const match = String(expression || "").match(
+    /,\s*("(?:\\.|[^"\\])*")\s*,\s*("(?:\\.|[^"\\])*")\s*\)\s*$/
+  );
+  if (!match) return {};
+  try {
+    return {
+      companyRole: JSON.parse(match[1]),
+      departmentRole: JSON.parse(match[2])
+    };
+  } catch {
+    return {};
+  }
+}
+
 function observeParticipants(node, initiatorSelectTarget) {
   const handlers = node?.handlers;
   if (initiatorSelectTarget) {
@@ -729,9 +815,36 @@ function observeParticipants(node, initiatorSelectTarget) {
   }
   if (!handlers || typeof handlers !== "object") return undefined;
   if (handlers.type === "formula" || handlers.source === "2") {
-    return {
-      mode: "form_field"
-    };
+    const fieldId = observeFormulaFieldId(handlers, node);
+    const nativeFormula = observeParticipantFormula(handlers, node);
+    const script = normalizeScalar(handlers?.ruleKey?.script) || "";
+    const formulaName = normalizeScalar(handlers?.ruleName) ||
+      normalizeScalar(handlers?.ruleKey?.formulaName) ||
+      normalizeScalar(handlers?.ruleKey?.vo?.content) ||
+      "";
+    const roleLine = observeRoleLineParticipants(script, formulaName, fieldId);
+    if (roleLine) return { ...roleLine, nativeFormula };
+    if (/getPersonByLoginName/.test(script)) {
+      return fieldId
+        ? { mode: "person_by_login_name", fieldId, nativeFormula }
+        : { mode: "person_by_login_name", nativeFormula };
+    }
+    if (/根据部门编号获取部门领导/.test(script) || /根据部门编号获取部门领导/.test(formulaName)) {
+      return fieldId
+        ? { mode: "dept_leader_by_no", fieldId, nativeFormula }
+        : { mode: "dept_leader_by_no", nativeFormula };
+    }
+    if (
+      /data\._ProcessCreator|process\.docCreator/.test(script) ||
+      /流程数据项\.起草人/.test(formulaName) ||
+      /^(?:\$)?(?:docCreator|申请人|起草人)(?:\$)?$/i.test(formulaName) ||
+      /\$docCreator\$|\$申请人\$|\$起草人\$/i.test(formulaName)
+    ) {
+      return { mode: "doc_creator", nativeFormula };
+    }
+    return fieldId
+      ? { mode: "form_field", fieldId, nativeFormula }
+      : { mode: "form_field", nativeFormula };
   }
   if (handlers.source === "1" || Array.isArray(handlers.members)) {
     return {

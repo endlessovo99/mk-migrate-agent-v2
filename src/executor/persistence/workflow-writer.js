@@ -426,7 +426,11 @@ function buildArtificialNode(node, type, context = {}) {
     ignoreOnSameIdentity: resolveIgnoreOnSameIdentity(node, attrs),
     handlerIds: nativeHandlerIds(node.participants, attrs),
     handlerNames: nativeHandlerNames(node.participants, attrs),
-    handlerSelectType: node.participants?.mode === "form_field" || node.participants?.mode === "role_line"
+    handlerSelectType: node.participants?.mode === "form_field" ||
+      node.participants?.mode === "person_by_login_name" ||
+      node.participants?.mode === "dept_leader_by_no" ||
+      node.participants?.mode === "role_line" ||
+      node.participants?.mode === "doc_creator"
       ? "formula"
       : attrs.handlerSelectType,
     recalculateHandler: attrs.recalculateHandler,
@@ -1727,6 +1731,60 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       }
     };
   }
+  if (participants?.mode === "person_by_login_name") {
+    const ruleKey = personByLoginNameHandlerRuleKey(participants, context);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey,
+      ruleName: ruleKey.formulaName,
+      ruleMode: "formula",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        sourceExpression: participants.sourceExpression || "",
+        sourceNameExpression: participants.sourceNameExpression || ""
+      }
+    };
+  }
+  if (participants?.mode === "dept_leader_by_no") {
+    const ruleKey = deptLeaderByNoHandlerRuleKey(participants, context);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey,
+      ruleName: ruleKey.formulaName,
+      ruleMode: "simple",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        sourceExpression: participants.sourceExpression || "",
+        sourceNameExpression: participants.sourceNameExpression || ""
+      }
+    };
+  }
+  if (participants?.mode === "doc_creator") {
+    const ruleKey = docCreatorHandlerRuleKey(participants);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey,
+      ruleName: ruleKey.formulaName,
+      ruleMode: "formula",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        sourceExpression: participants.sourceExpression || "",
+        sourceNameExpression: participants.sourceNameExpression || ""
+      }
+    };
+  }
   if (participants?.mode === "role_line") {
     const ruleKey = roleLineHandlerRuleKey(participants, context);
     return {
@@ -1827,17 +1885,59 @@ function emptyOrgHandlers() {
 }
 
 function roleLineHandlerRuleKey(participants, context = {}) {
+  const companyRole = JSON.stringify(participants.companyRole || "");
+  const departmentRole = JSON.stringify(participants.departmentRole || "");
+  if (participants.subjectKind === "node_handlers" || participants.nodeId) {
+    const subjectRef = participants.subjectExpression ||
+      `$流程.获取节点实际处理人$(${JSON.stringify(participants.nodeId || "")})`;
+    const formulaName = participants.sourceNameExpression ||
+      `$组织架构.解释角色线$(${subjectRef}, ${companyRole}, ${departmentRole})`;
+    return {
+      type: "Eval",
+      script: `$组织架构.解释角色线$(${subjectRef}, ${companyRole}, ${departmentRole})`,
+      varIds: [],
+      vo: {
+        mode: "formula",
+        content: formulaName
+      },
+      mode: "simple",
+      formulaName
+    };
+  }
+
   const fieldId = participants.fieldId || "";
   const field = context.formFieldById?.get(fieldId);
   const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
   const fieldTitle = participants.fieldTitle || field?.title || fieldId;
   const formulaName = participants.sourceNameExpression ||
-    `$组织架构.解释角色线$($${fieldTitle}$, ${JSON.stringify(participants.companyRole || "")}, ${JSON.stringify(participants.departmentRole || "")})`;
+    `$组织架构.解释角色线$($${fieldTitle}$, ${companyRole}, ${departmentRole})`;
   const fieldRef = `\${data.${fdVarValue}}`;
 
   return {
     type: "Eval",
-    script: `$组织架构.解释角色线$(${fieldRef}, ${JSON.stringify(participants.companyRole || "")}, ${JSON.stringify(participants.departmentRole || "")})`,
+    script: `$组织架构.解释角色线$(${fieldRef}, ${companyRole}, ${departmentRole})`,
+    varIds: [fdVarValue],
+    vo: {
+      mode: "formula",
+      content: formulaName
+    },
+    mode: "simple",
+    formulaName
+  };
+}
+
+function deptLeaderByNoHandlerRuleKey(participants, context = {}) {
+  const fieldId = participants.fieldId || "";
+  const field = context.formFieldById?.get(fieldId);
+  const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
+  const fieldTitle = participants.fieldTitle || field?.title || fieldId;
+  const formulaName = participants.sourceNameExpression ||
+    `$部门领导.根据部门编号获取部门领导$($${fieldTitle}$)`;
+  const fieldRef = `\${data.${fdVarValue}}`;
+
+  return {
+    type: "Eval",
+    script: `$部门领导.根据部门编号获取部门领导$(${fieldRef})`,
     varIds: [fdVarValue],
     vo: {
       mode: "formula",
@@ -1863,6 +1963,65 @@ function formFieldHandlerRuleKey(participants, context = {}) {
       content: formulaName
     },
     mode: "simple",
+    formulaName
+  };
+}
+
+function docCreatorHandlerRuleKey(participants = {}) {
+  // NewOA designer binds drafter via process data item `_ProcessCreator`,
+  // not `${process.docCreator}` (UI label: $流程数据项.起草人$).
+  const formulaName = "$流程数据项.起草人$";
+  return {
+    type: "Eval",
+    script: "${data._ProcessCreator}",
+    vo: {
+      mode: "formula",
+      content: formulaName
+    },
+    resultType: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          fdId: { type: "string", description: "ID" },
+          fdName: { type: "string", description: "名称" },
+          fdOrgType: { type: "string", description: "组织机构类型" }
+        }
+      }
+    },
+    mode: "formula",
+    formulaName
+  };
+}
+
+function personByLoginNameHandlerRuleKey(participants, context = {}) {
+  const fieldId = participants.fieldId || "";
+  const field = context.formFieldById?.get(fieldId);
+  const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
+  const fieldTitle = participants.fieldTitle || field?.title || fieldId;
+  const formulaName = `#根据登录名查找人员#($内置表单.${fieldTitle}$)`;
+  const fieldRef = `\${data.${fdVarValue}}`;
+
+  return {
+    type: "Eval",
+    script: `\${func.sysorg.getPersonByLoginName}(${fieldRef})`,
+    varIds: [fdVarValue],
+    vo: {
+      mode: "formula",
+      content: formulaName
+    },
+    resultType: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          fdId: { type: "string", description: "ID" },
+          fdName: { type: "string", description: "名称" },
+          fdOrgType: { type: "string", description: "组织机构类型" }
+        }
+      }
+    },
+    mode: "formula",
     formulaName
   };
 }

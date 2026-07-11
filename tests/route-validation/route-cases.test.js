@@ -95,12 +95,12 @@ describe("offline Route-validation", { concurrency: false }, () => {
     const result = await runRouteCase("paired-success");
 
     assert.equal(result.dsl.artifact, "migration-dsl");
-    assert.equal(result.dsl.workflow.nodes.length, 3);
+    assert.equal(result.dsl.workflow.nodes.length, 7);
     assert.equal(result.dryRun.steps.some((step) => step.id === "map-workflow"), true);
     assert.equal(result.execution.ok, true);
     assert.equal(result.execution.status, "written_with_warnings");
-    assert.equal(result.execution.readback.workflow.nodeCount, 3);
-    assert.equal(result.execution.readback.workflow.edgeCount, 2);
+    assert.equal(result.execution.readback.workflow.nodeCount, 7);
+    assert.equal(result.execution.readback.workflow.edgeCount, 6);
     assert.deepEqual(
       result.execution.apiStages.find((stage) => stage.name === "resolveWorkflowParticipants"),
       {

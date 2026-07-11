@@ -588,10 +588,16 @@ function participantsFromSourceNode(node, participantSelections) {
     });
   }
 
+  const personByLoginNameParticipant = personByLoginNameParticipantFromFormulaHandler(attrs, handlerIds, handlerNames);
+  if (personByLoginNameParticipant) return pruneUndefined({ ...personByLoginNameParticipant, ...participantEvidence });
+  const deptLeaderByNoParticipant = deptLeaderByNoParticipantFromFormulaHandler(attrs, handlerIds, handlerNames);
+  if (deptLeaderByNoParticipant) return pruneUndefined({ ...deptLeaderByNoParticipant, ...participantEvidence });
   const formFieldParticipant = formFieldParticipantFromFormulaHandler(attrs, handlerIds, handlerNames);
   if (formFieldParticipant) return pruneUndefined({ ...formFieldParticipant, ...participantEvidence });
   const roleLineParticipant = roleLineParticipantFromFormulaHandler(attrs, handlerIds, handlerNames);
   if (roleLineParticipant) return pruneUndefined({ ...roleLineParticipant, ...participantEvidence });
+  const docCreatorParticipant = docCreatorParticipantFromFormulaHandler(attrs, handlerIds, handlerNames);
+  if (docCreatorParticipant) return pruneUndefined({ ...docCreatorParticipant, ...participantEvidence });
 
   if (handlerIds.length && !handlerIds.some((id) => id.startsWith("$"))) {
     return pruneUndefined({
@@ -670,20 +676,89 @@ function formFieldParticipantFromFormulaHandler(attrs, handlerIds, handlerNames)
   };
 }
 
-function roleLineParticipantFromFormulaHandler(attrs, handlerIds, handlerNames) {
+function docCreatorParticipantFromFormulaHandler(attrs, handlerIds, handlerNames) {
   if (attrs.handlerSelectType !== "formula") return undefined;
   if (handlerIds.length !== 1) return undefined;
 
-  const parsed = parseRoleLineFormula(handlerIds[0]);
+  const handlerId = simpleDollarExpressionValue(handlerIds[0]);
+  if (!isDocCreatorExpression(handlerId)) return undefined;
+
+  return {
+    mode: "doc_creator",
+    sourceExpression: handlerIds[0],
+    sourceNameExpression: handlerNames[0] || handlerIds[0]
+  };
+}
+
+function isDocCreatorExpression(value) {
+  const text = String(value || "").trim();
+  return /^(docCreator|申请人|起草人|creator|drafter|initiator)$/i.test(text);
+}
+
+function personByLoginNameParticipantFromFormulaHandler(attrs, handlerIds, handlerNames) {
+  return unaryFieldOrgFormulaParticipant(attrs, handlerIds, handlerNames, {
+    mode: "person_by_login_name",
+    parse: parsePersonByLoginNameFormula
+  });
+}
+
+function deptLeaderByNoParticipantFromFormulaHandler(attrs, handlerIds, handlerNames) {
+  return unaryFieldOrgFormulaParticipant(attrs, handlerIds, handlerNames, {
+    mode: "dept_leader_by_no",
+    parse: parseDeptLeaderByNoFormula
+  });
+}
+
+function unaryFieldOrgFormulaParticipant(attrs, handlerIds, handlerNames, { mode, parse }) {
+  if (attrs.handlerSelectType !== "formula") return undefined;
+  if (handlerIds.length !== 1) return undefined;
+
+  const parsed = parse(handlerIds[0]);
   if (!parsed || !parsed.subject.startsWith("fd_")) return undefined;
 
-  const nameParsed = parseRoleLineFormula(handlerNames[0]);
+  const nameParsed = parse(handlerNames[0]);
   const fieldTitle = nameParsed?.subject && !nameParsed.subject.startsWith("fd_")
     ? nameParsed.subject
     : parsed.subject;
 
   return {
+    mode,
+    fieldId: parsed.subject,
+    fieldTitle,
+    sourceExpression: handlerIds[0],
+    sourceNameExpression: handlerNames[0] || ""
+  };
+}
+
+function roleLineParticipantFromFormulaHandler(attrs, handlerIds, handlerNames) {
+  if (attrs.handlerSelectType !== "formula") return undefined;
+  if (handlerIds.length !== 1) return undefined;
+
+  const parsed = parseRoleLineFormula(handlerIds[0]);
+  if (!parsed) return undefined;
+
+  const nameParsed = parseRoleLineFormula(handlerNames[0]);
+  if (parsed.subjectKind === "node_handlers") {
+    return {
+      mode: "role_line",
+      subjectKind: "node_handlers",
+      nodeId: parsed.nodeId,
+      subjectExpression: parsed.subjectExpression,
+      companyRole: parsed.companyRole,
+      departmentRole: parsed.departmentRole,
+      sourceExpression: handlerIds[0],
+      sourceNameExpression: handlerNames[0] || ""
+    };
+  }
+
+  if (!parsed.subject.startsWith("fd_")) return undefined;
+  const fieldTitle = nameParsed?.subject && !String(nameParsed.subject).startsWith("fd_")
+    ? nameParsed.subject
+    : parsed.subject;
+
+  return {
     mode: "role_line",
+    subjectKind: "field",
     fieldId: parsed.subject,
     fieldTitle,
     companyRole: parsed.companyRole,
@@ -693,21 +768,63 @@ function roleLineParticipantFromFormulaHandler(attrs, handlerIds, handlerNames) 
   };
 }
 
+function parseUnaryFieldOrgFormula(value, functionPattern) {
+  const text = normalizeLegacyExpression(value);
+  const match = text.match(functionPattern);
+  if (!match) return undefined;
+
+  const args = splitFunctionArguments(match[1]);
+  if (args.length !== 1) return undefined;
+
+  const subject = simpleDollarExpressionValue(args[0]);
+  if (!subject) return undefined;
+
+  return { subject };
+}
+
+function parsePersonByLoginNameFormula(value) {
+  return parseUnaryFieldOrgFormula(value, /^\$组织架构\.根据登录名取用户\$\s*\((.*)\)$/);
+}
+
+function parseDeptLeaderByNoFormula(value) {
+  return parseUnaryFieldOrgFormula(value, /^\$部门领导\.根据部门编号获取部门领导\$\s*\((.*)\)$/);
+}
+
 function parseRoleLineFormula(value) {
   const text = normalizeLegacyExpression(value);
   const match = text.match(/^\$组织架构\.解释角色线\$\s*\((.*)\)$/);
   if (!match) return undefined;
 
   const args = splitFunctionArguments(match[1]);
-  if (args.length < 3) return undefined;
+  if (args.length !== 3) return undefined;
 
-  const subject = simpleDollarExpressionValue(args[0]);
+  const subject = parseRoleLineSubject(args[0]);
   if (!subject) return undefined;
+  const companyRole = quotedLegacyArgument(args[1]);
+  const departmentRole = quotedLegacyArgument(args[2]);
+  if (!companyRole || !departmentRole) return undefined;
 
   return {
-    subject,
-    companyRole: unquoteLegacyArgument(args[1]),
-    departmentRole: unquoteLegacyArgument(args[2])
+    ...subject,
+    companyRole,
+    departmentRole
+  };
+}
+
+function parseRoleLineSubject(value) {
+  const field = simpleDollarExpressionValue(value);
+  if (field) {
+    return { subjectKind: "field", subject: field };
+  }
+
+  const text = normalizeLegacyExpression(value);
+  const match = text.match(/^\$流程\.获取节点实际处理人\$\s*\(\s*["']([^"']+)["']\s*\)$/);
+  if (!match) return undefined;
+
+  return {
+    subjectKind: "node_handlers",
+    nodeId: match[1],
+    subjectExpression: text
   };
 }
 
@@ -744,13 +861,21 @@ function splitFunctionArguments(value) {
   }
 
   args.push(text.slice(start).trim());
-  return args.filter(Boolean);
+  return args;
 }
 
 function unquoteLegacyArgument(value) {
   const text = normalizeLegacyExpression(value);
   const match = text.match(/^["']([\s\S]*)["']$/);
   return match ? match[1].replace(/\\"/g, "\"").replace(/\\'/g, "'") : text;
+}
+
+function quotedLegacyArgument(value) {
+  const text = normalizeLegacyExpression(value);
+  if (!/^"(?:\\.|[^"\\])*"$/.test(text) && !/^'(?:\\.|[^'\\])*'$/.test(text)) {
+    return undefined;
+  }
+  return unquoteLegacyArgument(text);
 }
 
 function simpleDollarExpressionValue(value) {

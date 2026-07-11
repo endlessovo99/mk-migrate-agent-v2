@@ -47,6 +47,16 @@ export const FIELD_TYPES = new Set([
 const SCRIPT_COVERAGE_STATUSES = new Set(["none", "partial", "uncovered", "covered", "translated"]);
 const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "robot", "conditionBranch", "split", "join", "generalEnd"]);
 const WORKFLOW_NODE_ELEMENTS = new Set(["startEvent", "manualTask", "exclusiveGateway", "parallelGateway", "robot", "endEvent"]);
+const WORKFLOW_PARTICIPANT_MODES = new Set([
+  "empty",
+  "initiator_select",
+  "explicit",
+  "form_field",
+  "person_by_login_name",
+  "dept_leader_by_no",
+  "doc_creator",
+  "role_line"
+]);
 const MK_FIELD_ID_MAX_LENGTH = 25;
 
 export function validateMigrationDsl(input, options = {}) {
@@ -940,6 +950,7 @@ function validateWorkflow(workflow, diagnostics, context) {
   }
 
   const nodeMap = validateWorkflowNodes(workflow.nodes, diagnostics, context);
+  validateWorkflowParticipantNodeReferences(workflow.nodes, nodeMap, diagnostics);
   const edges = validateWorkflowEdges(workflow.edges, nodeMap, diagnostics);
   validateTopologicalOrder(workflow.topologicalOrder, nodeMap, edges, diagnostics);
   validateWorkflowConnectivity(nodeMap, edges, diagnostics);
@@ -1099,7 +1110,20 @@ function validateParallelGateways(nodes, nodeMap, diagnostics) {
 }
 
 function validateParticipants(participants, diagnostics, path, context = {}) {
-  if (!isRecord(participants)) return;
+  if (participants === undefined) return;
+  if (!isRecord(participants)) {
+    diagnostics.push(error("workflow.participants.type", "Workflow participants must be a JSON object.", path));
+    return;
+  }
+  if (!WORKFLOW_PARTICIPANT_MODES.has(participants.mode)) {
+    diagnostics.push(error(
+      "workflow.participants.mode_unsupported",
+      "Workflow participant mode is unsupported.",
+      `${path}/mode`,
+      { actual: participants.mode }
+    ));
+    return;
+  }
   if (participants.mode === "empty") {
     diagnostics.push(warning("workflow.participants.empty", "Workflow participants are empty because the source did not specify executable participants.", path, {
       reason: participants.reason
@@ -1127,15 +1151,70 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
       diagnostics.push(error("workflow.participants.form_field_source_required", "Form-field participants must preserve the source handler expression.", `${path}/sourceExpression`));
     }
   }
-  if (participants.mode === "role_line") {
+  if (participants.mode === "doc_creator") {
+    if (!nonEmptyString(participants.sourceExpression)) {
+      diagnostics.push(error("workflow.participants.doc_creator_source_required", "Document-creator participants must preserve the source handler expression.", `${path}/sourceExpression`));
+    }
+  }
+  if (participants.mode === "person_by_login_name" || participants.mode === "dept_leader_by_no") {
+    const mode = participants.mode;
     if (!nonEmptyString(participants.fieldId)) {
-      diagnostics.push(error("workflow.participants.role_line_field_required", "Role-line participants require fieldId.", `${path}/fieldId`));
+      diagnostics.push(error(`workflow.participants.${mode}_required`, `${mode} participants require fieldId.`, `${path}/fieldId`));
       return;
     }
     if (context.fieldIds instanceof Set && !context.fieldIds.has(participants.fieldId)) {
-      diagnostics.push(error("workflow.participants.role_line_field_missing", "Role-line participant fieldId must reference an existing form field.", `${path}/fieldId`, {
+      diagnostics.push(error(`workflow.participants.${mode}_missing`, `${mode} participant fieldId must reference an existing form field.`, `${path}/fieldId`, {
         fieldId: participants.fieldId
       }));
+    }
+    if (!nonEmptyString(participants.sourceExpression)) {
+      diagnostics.push(error(`workflow.participants.${mode}_source_required`, `${mode} participants must preserve the source handler expression.`, `${path}/sourceExpression`));
+    }
+  }
+  if (participants.mode === "role_line") {
+    if (!["field", "node_handlers"].includes(participants.subjectKind)) {
+      diagnostics.push(error(
+        "workflow.participants.role_line_subject_kind_unsupported",
+        "Role-line participants require subjectKind = field or node_handlers.",
+        `${path}/subjectKind`,
+        { actual: participants.subjectKind }
+      ));
+      return;
+    }
+    const isNodeHandlers = participants.subjectKind === "node_handlers";
+    if (isNodeHandlers) {
+      if (!nonEmptyString(participants.nodeId)) {
+        diagnostics.push(error("workflow.participants.role_line_node_required", "Role-line node-handler participants require nodeId.", `${path}/nodeId`));
+        return;
+      }
+      if (nonEmptyString(participants.fieldId)) {
+        diagnostics.push(error("workflow.participants.role_line_subject_conflict", "Role-line node-handler participants cannot also reference fieldId.", `${path}/fieldId`));
+      }
+      if (!nonEmptyString(participants.subjectExpression)) {
+        diagnostics.push(error("workflow.participants.role_line_subject_required", "Role-line node-handler participants require subjectExpression.", `${path}/subjectExpression`));
+      } else {
+        const subjectMatch = participants.subjectExpression.match(
+          /^\$流程\.获取节点实际处理人\$\s*\(\s*["']([^"']+)["']\s*\)$/
+        );
+        if (!subjectMatch || subjectMatch[1] !== participants.nodeId) {
+          diagnostics.push(error("workflow.participants.role_line_subject_mismatch", "Role-line subjectExpression must reference nodeId.", `${path}/subjectExpression`, {
+            nodeId: participants.nodeId
+          }));
+        }
+      }
+    } else {
+      if (nonEmptyString(participants.nodeId) || nonEmptyString(participants.subjectExpression)) {
+        diagnostics.push(error("workflow.participants.role_line_subject_conflict", "Role-line field participants cannot also reference node handlers.", `${path}/subjectKind`));
+      }
+      if (!nonEmptyString(participants.fieldId)) {
+        diagnostics.push(error("workflow.participants.role_line_field_required", "Role-line participants require fieldId.", `${path}/fieldId`));
+        return;
+      }
+      if (context.fieldIds instanceof Set && !context.fieldIds.has(participants.fieldId)) {
+        diagnostics.push(error("workflow.participants.role_line_field_missing", "Role-line participant fieldId must reference an existing form field.", `${path}/fieldId`, {
+          fieldId: participants.fieldId
+        }));
+      }
     }
     for (const key of ["companyRole", "departmentRole", "sourceExpression"]) {
       if (!nonEmptyString(participants[key])) {
@@ -1143,6 +1222,22 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
       }
     }
   }
+}
+
+function validateWorkflowParticipantNodeReferences(nodes, nodeMap, diagnostics) {
+  if (!Array.isArray(nodes)) return;
+  nodes.forEach((node, index) => {
+    const participants = node?.participants;
+    if (participants?.mode !== "role_line") return;
+    if (participants.subjectKind !== "node_handlers") return;
+    if (!nonEmptyString(participants.nodeId) || nodeMap.has(participants.nodeId)) return;
+    diagnostics.push(error(
+      "workflow.participants.role_line_node_missing",
+      "Role-line participant nodeId must reference an existing workflow node.",
+      `/workflow/nodes/${index}/participants/nodeId`,
+      { nodeId: participants.nodeId }
+    ));
+  });
 }
 
 function validateWorkflowEdges(edges, nodeMap, diagnostics) {

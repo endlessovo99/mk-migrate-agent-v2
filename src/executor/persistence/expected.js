@@ -18,7 +18,10 @@ export function buildExpectedInvariants(dsl, envelope) {
   const rulesExpected = buildExpectedRules(dsl?.formRules, dsl?.form || {}, diagnostics);
   const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, envelope?.tableName, diagnostics);
   const workflowExpected = dsl?.workflow
-    ? buildExpectedWorkflow(dsl.workflow, diagnostics)
+    ? buildExpectedWorkflow(dsl.workflow, diagnostics, {
+      templateId: envelope?.templateId,
+      runtime: dsl?.runtime
+    })
     : { expected: false };
 
   if (diagnostics.length) {
@@ -397,7 +400,7 @@ function renderExpectedScriptBody(source, detailTableNames = {}) {
   });
 }
 
-function buildExpectedWorkflow(workflow, diagnostics) {
+function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
   const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
   const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
   const initiatorSelectTargetNodeIds = collectInitiatorSelectTargetNodeIds(nodes);
@@ -429,7 +432,7 @@ function buildExpectedWorkflow(workflow, diagnostics) {
       element: node.element || defaultElementForType(node.type),
       mustModifyHandlerNodeIds: splitRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds),
       canModifyHandlerNodeIds: splitRelatedNodeIds(sourceAttributes(node).canModifyHandlerNodeIds),
-      participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id)),
+      participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id), context),
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),
       dataAuthority: summarizeDataAuthority(node),
@@ -483,7 +486,7 @@ function collectDefaultEdgeIds(nodes = [], edges = []) {
   return defaultEdgeIds;
 }
 
-function summarizeParticipants(node, initiatorSelectTarget) {
+function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
   if (initiatorSelectTarget) {
     return {
       mode: "initiator_select",
@@ -502,7 +505,48 @@ function summarizeParticipants(node, initiatorSelectTarget) {
   if (node.participants.mode === "form_field") {
     return {
       mode: "form_field",
-      fieldId: node.participants.fieldId
+      fieldId: node.participants.fieldId,
+      nativeFormula: expectedParticipantFormula(node.participants, context)
+    };
+  }
+  if (node.participants.mode === "doc_creator") {
+    return {
+      mode: "doc_creator",
+      nativeFormula: expectedParticipantFormula(node.participants, context)
+    };
+  }
+  if (node.participants.mode === "person_by_login_name") {
+    return {
+      mode: "person_by_login_name",
+      fieldId: node.participants.fieldId,
+      nativeFormula: expectedParticipantFormula(node.participants, context)
+    };
+  }
+  if (node.participants.mode === "dept_leader_by_no") {
+    return {
+      mode: "dept_leader_by_no",
+      fieldId: node.participants.fieldId,
+      nativeFormula: expectedParticipantFormula(node.participants, context)
+    };
+  }
+  if (node.participants.mode === "role_line") {
+    if (node.participants.subjectKind === "node_handlers" || node.participants.nodeId) {
+      return {
+        mode: "role_line",
+        subjectKind: "node_handlers",
+        nodeId: node.participants.nodeId,
+        companyRole: node.participants.companyRole,
+        departmentRole: node.participants.departmentRole,
+        nativeFormula: expectedParticipantFormula(node.participants, context)
+      };
+    }
+    return {
+      mode: "role_line",
+      subjectKind: "field",
+      fieldId: node.participants.fieldId,
+      companyRole: node.participants.companyRole,
+      departmentRole: node.participants.departmentRole,
+      nativeFormula: expectedParticipantFormula(node.participants, context)
     };
   }
   if (node.participants.mode === "explicit") {
@@ -524,6 +568,61 @@ function summarizeParticipants(node, initiatorSelectTarget) {
   }
   // empty / unsupported participant modes are not error-level persisted invariants
   return undefined;
+}
+
+function expectedParticipantFormula(participants, context = {}) {
+  const fieldId = participants?.fieldId || "";
+  const fieldRef = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
+  let script = "";
+  let varIds = [];
+  let ruleMode = "simple";
+  let ruleKeyMode = "simple";
+
+  if (participants?.mode === "form_field") {
+    script = `\${data.${fieldRef}}`;
+    varIds = [fieldRef];
+  } else if (participants?.mode === "person_by_login_name") {
+    script = `\${func.sysorg.getPersonByLoginName}(\${data.${fieldRef}})`;
+    varIds = [fieldRef];
+    ruleMode = "formula";
+    ruleKeyMode = "formula";
+  } else if (participants?.mode === "dept_leader_by_no") {
+    script = `$部门领导.根据部门编号获取部门领导$(\${data.${fieldRef}})`;
+    varIds = [fieldRef];
+  } else if (participants?.mode === "doc_creator") {
+    script = "${data._ProcessCreator}";
+    ruleMode = "formula";
+    ruleKeyMode = "formula";
+  } else if (participants?.mode === "role_line") {
+    const companyRole = JSON.stringify(participants.companyRole || "");
+    const departmentRole = JSON.stringify(participants.departmentRole || "");
+    if (participants.subjectKind === "node_handlers" || participants.nodeId) {
+      const subjectRef = participants.subjectExpression ||
+        `$流程.获取节点实际处理人$(${JSON.stringify(participants.nodeId || "")})`;
+      script = `$组织架构.解释角色线$(${subjectRef}, ${companyRole}, ${departmentRole})`;
+    } else {
+      script = `$组织架构.解释角色线$(\${data.${fieldRef}}, ${companyRole}, ${departmentRole})`;
+      varIds = [fieldRef];
+    }
+  }
+
+  return {
+    script,
+    varIds,
+    handlerSelectType: "formula",
+    handlersType: "formula",
+    handlersSource: "2",
+    handlersElement: "users",
+    memberCount: 0,
+    ruleMode,
+    formulaType: "formula",
+    ruleKeyType: "Eval",
+    ruleKeyMode,
+    ruleVoMode: "formula",
+    resultType: ["person_by_login_name", "doc_creator"].includes(participants?.mode)
+      ? "org_array"
+      : "none"
+  };
 }
 
 function summarizeAlternativeParticipants(participants) {

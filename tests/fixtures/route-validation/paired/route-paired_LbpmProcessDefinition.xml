@@ -57,15 +57,23 @@
   </void>
   <void method="put">
    <string>fdContent</string>
-   <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-paired-template&amp;amp;lbpmTmpId=route-paired-lbpm&quot; fdId=&quot;route-paired-process&quot; linesIndex=&quot;2&quot; nodesIndex=&quot;3&quot; notifyType=&quot;todo&quot;&gt;
+   <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-paired-template&amp;amp;lbpmTmpId=route-paired-lbpm&quot; fdId=&quot;route-paired-process&quot; linesIndex=&quot;6&quot; nodesIndex=&quot;7&quot; notifyType=&quot;todo&quot;&gt;
 &lt;nodes&gt;
 &lt;startNode id=&quot;N1&quot; name=&quot;Start&quot; x=&quot;100&quot; y=&quot;40&quot;/&gt;
 &lt;reviewNode handlerIds=&quot;route-reviewer&quot; handlerNames=&quot;Route Reviewer&quot; handlerSelectType=&quot;org&quot; id=&quot;N2&quot; name=&quot;Review&quot; x=&quot;100&quot; y=&quot;100&quot;/&gt;
-&lt;endNode id=&quot;N3&quot; name=&quot;End&quot; x=&quot;100&quot; y=&quot;160&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;$组织架构.根据登录名取用户$($fd_login_name$)&quot; handlerNames=&quot;$组织架构.根据登录名取用户$($Login Name$)&quot; handlerSelectType=&quot;formula&quot; id=&quot;N4&quot; name=&quot;Login-name Review&quot; x=&quot;100&quot; y=&quot;160&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;$部门领导.根据部门编号获取部门领导$($fd_department_no$)&quot; handlerNames=&quot;$部门领导.根据部门编号获取部门领导$($Department No$)&quot; handlerSelectType=&quot;formula&quot; id=&quot;N5&quot; name=&quot;Department-leader Review&quot; x=&quot;100&quot; y=&quot;220&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;$docCreator$&quot; handlerNames=&quot;$docCreator$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N6&quot; name=&quot;Document-creator Review&quot; x=&quot;100&quot; y=&quot;280&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;$组织架构.解释角色线$($流程.获取节点实际处理人$(&amp;quot;N2&amp;quot;), &amp;quot;Company Lead&amp;quot;, &amp;quot;Department Lead&amp;quot;)&quot; handlerNames=&quot;$组织架构.解释角色线$($流程.获取节点实际处理人$(&amp;quot;N2&amp;quot;), &amp;quot;Company Lead&amp;quot;, &amp;quot;Department Lead&amp;quot;)&quot; handlerSelectType=&quot;formula&quot; id=&quot;N7&quot; name=&quot;Role-line Review&quot; x=&quot;100&quot; y=&quot;340&quot;/&gt;
+&lt;endNode id=&quot;N3&quot; name=&quot;End&quot; x=&quot;100&quot; y=&quot;400&quot;/&gt;
 &lt;/nodes&gt;
 &lt;lines&gt;
 &lt;line endNodeId=&quot;N2&quot; id=&quot;L1&quot; startNodeId=&quot;N1&quot;/&gt;
-&lt;line endNodeId=&quot;N3&quot; id=&quot;L2&quot; startNodeId=&quot;N2&quot;/&gt;
+&lt;line endNodeId=&quot;N4&quot; id=&quot;L2&quot; startNodeId=&quot;N2&quot;/&gt;
+&lt;line endNodeId=&quot;N5&quot; id=&quot;L3&quot; startNodeId=&quot;N4&quot;/&gt;
+&lt;line endNodeId=&quot;N6&quot; id=&quot;L4&quot; startNodeId=&quot;N5&quot;/&gt;
+&lt;line endNodeId=&quot;N7&quot; id=&quot;L5&quot; startNodeId=&quot;N6&quot;/&gt;
+&lt;line endNodeId=&quot;N3&quot; id=&quot;L6&quot; startNodeId=&quot;N7&quot;/&gt;
 &lt;/lines&gt;
 &lt;/process&gt;</string>
   </void>

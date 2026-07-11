@@ -1,0 +1,150 @@
+{
+  "elements": [
+    {
+      "id": "N1",
+      "name": "Start",
+      "type": "generalStart",
+      "element": "startEvent"
+    },
+    {
+      "id": "N2",
+      "name": "Login Review",
+      "type": "review",
+      "element": "manualTask",
+      "handlerSelectType": "formula",
+      "ignoreOnSameIdentity": "2",
+      "handlers": {
+        "id": "handlers",
+        "type": "formula",
+        "source": "2",
+        "ruleMode": "formula",
+        "formulaType": "formula",
+        "members": [],
+        "element": "users",
+        "ruleKey": {
+          "type": "Eval",
+          "script": "${func.sysorg.getPersonByLoginName}(${data.template-id-fd_subject})",
+          "varIds": ["template-id-fd_subject"],
+          "vo": {
+            "mode": "formula",
+            "content": "#根据登录名查找人员#($内置表单.主题$)"
+          },
+          "resultType": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fdId": { "type": "string" },
+                "fdName": { "type": "string" },
+                "fdOrgType": { "type": "string" }
+              }
+            }
+          },
+          "mode": "formula"
+        }
+      }
+    },
+    {
+      "id": "N3",
+      "name": "Department Review",
+      "type": "review",
+      "element": "manualTask",
+      "handlerSelectType": "formula",
+      "ignoreOnSameIdentity": "2",
+      "handlers": {
+        "id": "handlers",
+        "type": "formula",
+        "source": "2",
+        "ruleMode": "simple",
+        "formulaType": "formula",
+        "members": [],
+        "element": "users",
+        "ruleKey": {
+          "type": "Eval",
+          "script": "$部门领导.根据部门编号获取部门领导$(${data.template-id-fd_subject})",
+          "varIds": ["template-id-fd_subject"],
+          "vo": {
+            "mode": "formula",
+            "content": "$部门领导.根据部门编号获取部门领导$($主题$)"
+          },
+          "mode": "simple"
+        }
+      }
+    },
+    {
+      "id": "N4",
+      "name": "Creator Review",
+      "type": "review",
+      "element": "manualTask",
+      "handlerSelectType": "formula",
+      "ignoreOnSameIdentity": "2",
+      "handlers": {
+        "id": "handlers",
+        "type": "formula",
+        "source": "2",
+        "ruleMode": "formula",
+        "formulaType": "formula",
+        "members": [],
+        "element": "users",
+        "ruleKey": {
+          "type": "Eval",
+          "script": "${data._ProcessCreator}",
+          "vo": {
+            "mode": "formula",
+            "content": "$流程数据项.起草人$"
+          },
+          "resultType": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fdId": { "type": "string" },
+                "fdName": { "type": "string" },
+                "fdOrgType": { "type": "string" }
+              }
+            }
+          },
+          "mode": "formula"
+        }
+      }
+    },
+    {
+      "id": "N5",
+      "name": "Role Review",
+      "type": "review",
+      "element": "manualTask",
+      "handlerSelectType": "formula",
+      "ignoreOnSameIdentity": "2",
+      "handlers": {
+        "id": "handlers",
+        "type": "formula",
+        "source": "2",
+        "ruleMode": "simple",
+        "formulaType": "formula",
+        "members": [],
+        "element": "users",
+        "ruleKey": {
+          "type": "Eval",
+          "script": "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N2\"), \"Company Lead\", \"Department Lead\")",
+          "varIds": [],
+          "vo": {
+            "mode": "formula",
+            "content": "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N2\"), \"Company Lead\", \"Department Lead\")"
+          },
+          "mode": "simple"
+        }
+      }
+    },
+    {
+      "id": "N6",
+      "name": "End",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    { "id": "L1", "type": "sequenceFlow", "sourceRef": "N1", "targetRef": "N2" },
+    { "id": "L2", "type": "sequenceFlow", "sourceRef": "N2", "targetRef": "N3" },
+    { "id": "L3", "type": "sequenceFlow", "sourceRef": "N3", "targetRef": "N4" },
+    { "id": "L4", "type": "sequenceFlow", "sourceRef": "N4", "targetRef": "N5" },
+    { "id": "L5", "type": "sequenceFlow", "sourceRef": "N5", "targetRef": "N6" }
+  ]
+}

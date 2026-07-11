@@ -96,7 +96,10 @@ export function buildWorkflowSummary(observedWorkflow) {
       id: node.id,
       type: node.type,
       element: node.element,
-      ignoreOnSameIdentity: node.ignoreOnSameIdentity
+      ignoreOnSameIdentity: node.ignoreOnSameIdentity,
+      ...(summarizeWorkflowParticipants(node.participants)
+        ? { participants: summarizeWorkflowParticipants(node.participants) }
+        : {})
     })),
     edges: edges.map((edge) => ({
       id: edge.id,
@@ -111,5 +114,15 @@ export function buildWorkflowSummary(observedWorkflow) {
         orgIds: edge.condition.orgIds || []
       } : undefined
     }))
+  };
+}
+
+function summarizeWorkflowParticipants(participants) {
+  if (!participants || typeof participants !== "object" || !participants.mode) return undefined;
+  return {
+    mode: participants.mode,
+    ...(participants.fieldId ? { fieldId: participants.fieldId } : {}),
+    ...(participants.subjectKind ? { subjectKind: participants.subjectKind } : {}),
+    ...(participants.nodeId ? { nodeId: participants.nodeId } : {})
   };
 }

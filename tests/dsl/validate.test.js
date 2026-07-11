@@ -693,6 +693,83 @@ describe("validateMigrationDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "workflow.participants.form_field_missing"), true);
   });
 
+  it("accepts person-by-login-name workflow participants only when the field exists", () => {
+    const workflow = {
+      process: { id: "process-person-by-login-name" },
+      nodes: [
+        { id: "N1", type: "generalStart", element: "startEvent", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+        {
+          id: "N2",
+          type: "review",
+          element: "manualTask",
+          sourceRef: "source.workflow.node.N2",
+          attributes: {
+            handlerIds: "$组织架构.根据登录名取用户$($fd_subject$)",
+            handlerNames: "$组织架构.根据登录名取用户$($主题$)",
+            handlerSelectType: "formula"
+          },
+          participants: {
+            mode: "person_by_login_name",
+            fieldId: "fd_subject",
+            fieldTitle: "主题",
+            sourceExpression: "$组织架构.根据登录名取用户$($fd_subject$)",
+            sourceNameExpression: "$组织架构.根据登录名取用户$($主题$)"
+          },
+          translationStatus: "executable"
+        },
+        { id: "N3", type: "generalEnd", element: "endEvent", sourceRef: "source.workflow.node.N3", attributes: {}, translationStatus: "executable" }
+      ],
+      edges: [
+        { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+        { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } }
+      ],
+      topologicalOrder: ["N1", "N2", "N3"]
+    };
+    const accepted = validateMigrationDsl(sampleTrustedDsl({ workflow }), { mode: "execute" });
+    const rejected = validateMigrationDsl(sampleTrustedDsl({
+      workflow: {
+        ...workflow,
+        nodes: workflow.nodes.map((node) => node.id === "N2"
+          ? { ...node, participants: { ...node.participants, fieldId: "fd_missing", sourceExpression: "$组织架构.根据登录名取用户$($fd_missing$)" } }
+          : node)
+      }
+    }), { mode: "execute" });
+
+    assert.equal(accepted.ok, true);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "workflow.participants.person_by_login_name_missing"), true);
+
+    const unknownModeDsl = sampleTrustedDsl({
+      workflow: {
+        ...workflow,
+        nodes: workflow.nodes.map((node) => node.id === "N2"
+          ? { ...node, participants: { ...node.participants, mode: "person_by_login_nam" } }
+          : node)
+      }
+    });
+    const unknownMode = validateMigrationDsl(unknownModeDsl, { mode: "execute" });
+    assert.equal(unknownMode.ok, false);
+    assert.equal(
+      unknownMode.diagnostics.some((item) => item.code === "workflow.participants.mode_unsupported"),
+      true
+    );
+
+    const invalidTypeDsl = sampleTrustedDsl({
+      workflow: {
+        ...workflow,
+        nodes: workflow.nodes.map((node) => node.id === "N2"
+          ? { ...node, participants: "person_by_login_name" }
+          : node)
+      }
+    });
+    const invalidType = validateMigrationDsl(invalidTypeDsl, { mode: "execute" });
+    assert.equal(invalidType.ok, false);
+    assert.equal(
+      invalidType.diagnostics.some((item) => item.code === "workflow.participants.type"),
+      true
+    );
+  });
+
   it("validates node data authority field references and flags", () => {
     const acceptedDsl = sampleTrustedDsl();
     acceptedDsl.workflow.nodes[0] = {
@@ -733,7 +810,7 @@ describe("validateMigrationDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.workflow.data_authority.flag_required"), true);
   });
 
-  it("accepts role-line workflow participants only when the field exists", () => {
+  it("validates role-line field and node-handler subjects", () => {
     const workflow = {
       process: { id: "process-role-line-handler" },
       nodes: [
@@ -750,6 +827,7 @@ describe("validateMigrationDsl", () => {
           },
           participants: {
             mode: "role_line",
+            subjectKind: "field",
             fieldId: "fd_subject",
             fieldTitle: "主题",
             companyRole: "公司级部门领导",
@@ -780,6 +858,59 @@ describe("validateMigrationDsl", () => {
     assert.equal(accepted.ok, true);
     assert.equal(rejected.ok, false);
     assert.equal(rejected.diagnostics.some((item) => item.code === "workflow.participants.role_line_field_missing"), true);
+
+    const nodeSubjectWorkflow = structuredClone(workflow);
+    nodeSubjectWorkflow.nodes[1].participants = {
+      mode: "role_line",
+      subjectKind: "node_handlers",
+      nodeId: "N1",
+      subjectExpression: "$流程.获取节点实际处理人$(\"N1\")",
+      companyRole: "公司级部门领导",
+      departmentRole: "部门领导",
+      sourceExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N1\"), \"公司级部门领导\", \"部门领导\")",
+      sourceNameExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N1\"), \"公司级部门领导\", \"部门领导\")"
+    };
+    const acceptedNodeSubject = validateMigrationDsl(
+      sampleTrustedDsl({ workflow: nodeSubjectWorkflow }),
+      { mode: "execute" }
+    );
+    nodeSubjectWorkflow.nodes[1].participants.nodeId = "N404";
+    const rejectedNodeSubject = validateMigrationDsl(
+      sampleTrustedDsl({ workflow: nodeSubjectWorkflow }),
+      { mode: "execute" }
+    );
+
+    assert.equal(acceptedNodeSubject.ok, true);
+    assert.equal(rejectedNodeSubject.ok, false);
+    assert.equal(
+      rejectedNodeSubject.diagnostics.some((item) => item.code === "workflow.participants.role_line_node_missing"),
+      true
+    );
+
+    const invalidKindWorkflow = structuredClone(workflow);
+    invalidKindWorkflow.nodes[1].participants.subjectKind = "unknown";
+    const invalidKind = validateMigrationDsl(
+      sampleTrustedDsl({ workflow: invalidKindWorkflow }),
+      { mode: "execute" }
+    );
+    assert.equal(invalidKind.ok, false);
+    assert.equal(
+      invalidKind.diagnostics.some((item) => item.code === "workflow.participants.role_line_subject_kind_unsupported"),
+      true
+    );
+
+    const conflictingSubjectWorkflow = structuredClone(workflow);
+    conflictingSubjectWorkflow.nodes[1].participants.nodeId = "N1";
+    conflictingSubjectWorkflow.nodes[1].participants.subjectExpression = "$流程.获取节点实际处理人$(\"N1\")";
+    const conflictingSubject = validateMigrationDsl(
+      sampleTrustedDsl({ workflow: conflictingSubjectWorkflow }),
+      { mode: "execute" }
+    );
+    assert.equal(conflictingSubject.ok, false);
+    assert.equal(
+      conflictingSubject.diagnostics.some((item) => item.code === "workflow.participants.role_line_subject_conflict"),
+      true
+    );
   });
 
   it("accepts executable all parallel split and join gateways", () => {

@@ -609,6 +609,126 @@ describe("executeDsl", () => {
     assert.equal(node.handlers.ruleKey.formulaName, "$处理人字段$");
   });
 
+  it("writes person-by-login-name formula participants as sysorg.getPersonByLoginName handlers", () => {
+    const form = sampleForm();
+    form.fields.push({
+      id: "fd_login",
+      title: "处理人工号",
+      type: "text",
+      componentId: "xform-input",
+      props: {},
+      sourceProps: {},
+      sourceRef: "source.form.control.fd_login"
+    });
+    const payload = projectTemplate(sampleTrustedDsl({
+      form,
+      workflow: {
+        process: { id: "process-person-by-login-name" },
+        nodes: [
+          { id: "N1", type: "generalStart", element: "startEvent", name: "开始", sourceType: "startNode", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+          {
+            id: "N2",
+            type: "review",
+            element: "manualTask",
+            name: "项目经理",
+            sourceType: "reviewNode",
+            sourceRef: "source.workflow.node.N2",
+            attributes: {
+              handlerIds: "$组织架构.根据登录名取用户$($fd_login$)",
+              handlerNames: "$组织架构.根据登录名取用户$($处理人工号$)",
+              handlerSelectType: "formula"
+            },
+            participants: {
+              mode: "person_by_login_name",
+              fieldId: "fd_login",
+              fieldTitle: "处理人工号",
+              sourceExpression: "$组织架构.根据登录名取用户$($fd_login$)",
+              sourceNameExpression: "$组织架构.根据登录名取用户$($处理人工号$)"
+            },
+            translationStatus: "executable"
+          },
+          { id: "N3", type: "generalEnd", element: "endEvent", name: "结束", sourceType: "endNode", sourceRef: "source.workflow.node.N3", attributes: {}, translationStatus: "executable" }
+        ],
+        edges: [
+          { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+          { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } }
+        ],
+        topologicalOrder: ["N1", "N2", "N3"]
+      }
+    }, baseTemplate(), baseTemplate()));
+    const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
+    const node = content.elements.find((element) => element.id === "N2");
+
+    assert.equal(node.handlerSelectType, "formula");
+    assert.equal(node.handlerIds, "$组织架构.根据登录名取用户$($fd_login$)");
+    assert.equal(node.handlerNames, "$组织架构.根据登录名取用户$($处理人工号$)");
+    assert.equal(node.handlers.type, "formula");
+    assert.equal(node.handlers.source, "2");
+    assert.equal(node.handlers.ruleMode, "formula");
+    assert.equal(node.handlers.ruleName, "#根据登录名查找人员#($内置表单.处理人工号$)");
+    assert.equal(node.handlers.ruleKey.script, "${func.sysorg.getPersonByLoginName}(${data.template-id-fd_login})");
+    assert.deepEqual(node.handlers.ruleKey.varIds, ["template-id-fd_login"]);
+    assert.equal(node.handlers.ruleKey.vo.content, "#根据登录名查找人员#($内置表单.处理人工号$)");
+    assert.equal(node.handlers.ruleKey.resultType.type, "array");
+  });
+
+  it("rejects readback when formula participant scripts are mutated", () => {
+    const trusted = sampleFormulaParticipantDsl();
+    const template = projectTemplate(trusted, baseTemplate());
+    const baseline = verifyTemplate(trusted, template);
+
+    assert.equal(baseline.ok, true, JSON.stringify(baseline.diagnostics));
+
+    const mutations = [
+      ["N2", '${func.sysorg.getPersonByLoginName}("hardcoded")'],
+      ["N3", '$部门领导.根据部门编号获取部门领导$("hardcoded")'],
+      ["N4", "${data._ProcessCreatorWrong}"],
+      ["N5", '$组织架构.解释角色线$($流程.获取节点实际处理人$("N3"), "Company Lead", "Department Lead")']
+    ];
+    for (const [nodeId, script] of mutations) {
+      const mutated = structuredClone(template);
+      const content = JSON.parse(mutated.mechanisms.lbpmTemplate[0].fdContent);
+      content.elements.find((element) => element.id === nodeId).handlers.ruleKey.script = script;
+      mutated.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+      const verification = verifyTemplate(trusted, mutated);
+
+      assert.equal(verification.ok, false, `${nodeId}: ${JSON.stringify(verification.diagnostics)}`);
+      assert.equal(
+        verification.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"),
+        true,
+        nodeId
+      );
+    }
+
+    const shapeMutations = [
+      ["handler type", "N2", (node) => { node.handlers.type = "org"; }],
+      ["handler source", "N2", (node) => { node.handlers.source = "1"; }],
+      ["handler select type", "N2", (node) => { node.handlerSelectType = "org"; }],
+      ["formula type", "N2", (node) => { node.handlers.formulaType = "rule"; }],
+      ["rule key type", "N2", (node) => { node.handlers.ruleKey.type = "Constant"; }],
+      ["rule vo mode", "N2", (node) => { node.handlers.ruleKey.vo.mode = "simple"; }],
+      ["person result type", "N2", (node) => { delete node.handlers.ruleKey.resultType; }],
+      ["creator result type", "N4", (node) => { delete node.handlers.ruleKey.resultType; }],
+      ["formula members", "N2", (node) => {
+        node.handlers.members = [{ id: "unexpected", element: "user", type: "1" }];
+      }]
+    ];
+    for (const [label, nodeId, mutate] of shapeMutations) {
+      const mutated = structuredClone(template);
+      const content = JSON.parse(mutated.mechanisms.lbpmTemplate[0].fdContent);
+      mutate(content.elements.find((element) => element.id === nodeId));
+      mutated.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+      const verification = verifyTemplate(trusted, mutated);
+
+      assert.equal(verification.ok, false, `${label}: ${JSON.stringify(verification.diagnostics)}`);
+      assert.equal(
+        verification.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"),
+        true,
+        label
+      );
+    }
+  });
+
   it("maps explicit participant org types to the current native member shape", () => {
     const workflow = sampleInitiatorSelectWorkflow();
     const node = workflow.nodes.find((item) => item.id === "N9");
@@ -2657,6 +2777,114 @@ function sampleParallelGatewayWorkflow() {
     ],
     topologicalOrder: ["N1", "N2", "N3", "N4", "N5"]
   };
+}
+
+function sampleFormulaParticipantDsl() {
+  const form = sampleForm();
+  form.fields.push(
+    {
+      id: "fd_login_name",
+      title: "Login Name",
+      type: "text",
+      componentId: "xform-input",
+      props: {},
+      sourceProps: {},
+      sourceRef: "source.form.control.fd_login_name"
+    },
+    {
+      id: "fd_department_no",
+      title: "Department No",
+      type: "text",
+      componentId: "xform-input",
+      props: {},
+      sourceProps: {},
+      sourceRef: "source.form.control.fd_department_no"
+    }
+  );
+  const nodes = [
+    { id: "N1", type: "generalStart", element: "startEvent", name: "Start", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+    {
+      id: "N2",
+      type: "review",
+      element: "manualTask",
+      name: "Login-name Review",
+      sourceRef: "source.workflow.node.N2",
+      attributes: { handlerSelectType: "formula" },
+      participants: {
+        mode: "person_by_login_name",
+        fieldId: "fd_login_name",
+        fieldTitle: "Login Name",
+        sourceExpression: "$组织架构.根据登录名取用户$($fd_login_name$)",
+        sourceNameExpression: "$组织架构.根据登录名取用户$($Login Name$)"
+      },
+      translationStatus: "executable"
+    },
+    {
+      id: "N3",
+      type: "review",
+      element: "manualTask",
+      name: "Department-leader Review",
+      sourceRef: "source.workflow.node.N3",
+      attributes: { handlerSelectType: "formula" },
+      participants: {
+        mode: "dept_leader_by_no",
+        fieldId: "fd_department_no",
+        fieldTitle: "Department No",
+        sourceExpression: "$部门领导.根据部门编号获取部门领导$($fd_department_no$)",
+        sourceNameExpression: "$部门领导.根据部门编号获取部门领导$($Department No$)"
+      },
+      translationStatus: "executable"
+    },
+    {
+      id: "N4",
+      type: "review",
+      element: "manualTask",
+      name: "Document-creator Review",
+      sourceRef: "source.workflow.node.N4",
+      attributes: { handlerSelectType: "formula" },
+      participants: {
+        mode: "doc_creator",
+        sourceExpression: "$docCreator$",
+        sourceNameExpression: "$docCreator$"
+      },
+      translationStatus: "executable"
+    },
+    {
+      id: "N5",
+      type: "review",
+      element: "manualTask",
+      name: "Role-line Review",
+      sourceRef: "source.workflow.node.N5",
+      attributes: { handlerSelectType: "formula" },
+      participants: {
+        mode: "role_line",
+        subjectKind: "node_handlers",
+        nodeId: "N2",
+        subjectExpression: "$流程.获取节点实际处理人$(\"N2\")",
+        companyRole: "Company Lead",
+        departmentRole: "Department Lead",
+        sourceExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N2\"), \"Company Lead\", \"Department Lead\")",
+        sourceNameExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N2\"), \"Company Lead\", \"Department Lead\")"
+      },
+      translationStatus: "executable"
+    },
+    { id: "N6", type: "generalEnd", element: "endEvent", name: "End", sourceRef: "source.workflow.node.N6", attributes: {}, translationStatus: "executable" }
+  ];
+  return sampleTrustedDsl({
+    form,
+    workflow: {
+      process: { id: "process-formula-participants" },
+      nodes,
+      edges: nodes.slice(0, -1).map((node, index) => ({
+        id: `L${index + 1}`,
+        source: node.id,
+        target: nodes[index + 1].id,
+        sourceRef: `source.workflow.edge.L${index + 1}`,
+        condition: { translationStatus: "executable" }
+      })),
+      topologicalOrder: nodes.map((node) => node.id)
+    }
+  });
 }
 
 function sampleInitiatorSelectWorkflow() {

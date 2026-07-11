@@ -115,6 +115,7 @@ describe("source directory stages", () => {
     assert.equal(nodesById.get("N16").participants.mode, "form_field");
     assert.deepEqual(nodesById.get("N53").participants, {
       mode: "role_line",
+      subjectKind: "field",
       fieldId: "fd_371229badb4b1a",
       fieldTitle: "部门固资管理员",
       companyRole: "公司级相关领导",
@@ -337,39 +338,52 @@ describe("source directory stages", () => {
   });
 
   it("does not replace unsupported formula participants with draft-selection fallback", () => {
-    const dslDraft = draftSourceDraft(sampleSourceDraft({
-      workflow: {
-        process: { id: "process-handler-formula" },
-        nodes: [
-          {
-            id: "N1",
-            sourceType: "draftNode",
-            sourceRef: "source.workflow.node.N1",
-            attributes: {},
-            definition: { attributes: { canModifyHandlerNodeIds: "N2" } }
-          },
-          {
-            id: "N2",
-            sourceType: "reviewNode",
-            sourceRef: "source.workflow.node.N2",
-            attributes: { handlerIds: "$unsupported(formula)$", handlerSelectType: "formula" }
-          },
-          {
-            id: "N3",
-            sourceType: "endNode",
-            sourceRef: "source.workflow.node.N3",
-            attributes: {}
-          }
-        ],
-        edges: [
-          { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1" },
-          { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2" }
-        ],
-        topologicalOrder: ["N1", "N2", "N3"]
-      }
-    }));
+    for (const { handlerIds, handlerNames } of [
+      { handlerIds: "$unsupported(formula)$" },
+      { handlerIds: '$组织架构.解释角色线$($fd_subject$, "Company Lead", "Department Lead", "extra")' },
+      { handlerIds: '$组织架构.解释角色线$($fd_subject$, $fd_company_role$, "Department Lead")' },
+      { handlerIds: '$组织架构.解释角色线$($fd_subject$, "Company" + $fd_role$ + "Lead", "Department Lead")' },
+      { handlerIds: '$组织架构.解释角色线$($fd_subject$, "Company Lead", "Department Lead",)' },
+      { handlerIds: "$unsupportedParticipant$", handlerNames: "$docCreator$" }
+    ]) {
+      const dslDraft = draftSourceDraft(sampleSourceDraft({
+        workflow: {
+          process: { id: "process-handler-formula" },
+          nodes: [
+            {
+              id: "N1",
+              sourceType: "draftNode",
+              sourceRef: "source.workflow.node.N1",
+              attributes: {},
+              definition: { attributes: { canModifyHandlerNodeIds: "N2" } }
+            },
+            {
+              id: "N2",
+              sourceType: "reviewNode",
+              sourceRef: "source.workflow.node.N2",
+              attributes: { handlerIds, handlerNames, handlerSelectType: "formula" }
+            },
+            {
+              id: "N3",
+              sourceType: "endNode",
+              sourceRef: "source.workflow.node.N3",
+              attributes: {}
+            }
+          ],
+          edges: [
+            { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1" },
+            { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2" }
+          ],
+          topologicalOrder: ["N1", "N2", "N3"]
+        }
+      }));
 
-    assert.equal(dslDraft.workflow.nodes.find((node) => node.id === "N2").participants.mode, "empty");
+      assert.equal(
+        dslDraft.workflow.nodes.find((node) => node.id === "N2").participants.mode,
+        "empty",
+        handlerIds
+      );
+    }
   });
 
   it("does not draft script actions for comment-only JSP sources", () => {
