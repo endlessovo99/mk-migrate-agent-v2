@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>class</string>
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string>
+  </void>
+  <void method="put">
+   <string>fdId</string>
+   <string>route-kmreview-named-sysform</string>
+  </void>
+  <void method="put">
+   <string>fdTemplateEdition</string>
+   <string>1</string>
+  </void>
+  <void method="put">
+   <string>fdModelName</string>
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string>
+  </void>
+  <void method="put">
+   <string>fdModelId</string>
+   <string>route-kmreview-named-template</string>
+  </void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_subject&quot;,content:&quot;Subject&quot;}&apos;&gt;Subject&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_subject&quot;,label:&quot;Subject&quot;,required:&quot;true&quot;}&apos;&gt;&lt;input id=&quot;fd_subject&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_note&quot;,content:&quot;Note&quot;}&apos;&gt;Note&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;3&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_note&quot;,label:&quot;Note&quot;}&apos;&gt;&lt;input id=&quot;fd_note&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_subject&quot; label=&quot;Subject&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_note&quot; label=&quot;Note&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

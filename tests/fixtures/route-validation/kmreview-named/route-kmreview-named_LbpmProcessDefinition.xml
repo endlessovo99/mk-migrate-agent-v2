@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>fdKey</string>
+   <string>reviewMainDoc</string>
+  </void>
+  <void method="put">
+   <string>class</string>
+   <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string>
+  </void>
+  <void method="put">
+   <string>nodeDefinitionHandlers</string>
+   <object class="java.util.ArrayList">
+    <void method="add">
+     <object class="java.util.HashMap">
+      <void method="put">
+       <string>fdIndex</string>
+       <int>0</int>
+      </void>
+      <void method="put">
+       <string>fdHandler</string>
+       <object class="java.util.HashMap">
+        <void method="put">
+         <string>fdOrgType</string>
+         <int>8</int>
+        </void>
+        <void method="put">
+         <string>fdId</string>
+         <string>legacy-route-reviewer</string>
+        </void>
+        <void method="put">
+         <string>class</string>
+         <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string>
+        </void>
+        <void method="put">
+         <string>fdName</string>
+         <string>Route Reviewer</string>
+        </void>
+        <void method="put">
+         <string>hbmParent.fdName</string>
+         <string>Legacy Route Department</string>
+        </void>
+       </object>
+      </void>
+      <void method="put">
+       <string>fdFactId</string>
+       <string>N2</string>
+      </void>
+      <void method="put">
+       <string>fdAttribute</string>
+       <string>handlerIds</string>
+      </void>
+     </object>
+    </void>
+   </object>
+  </void>
+  <void method="put">
+   <string>fdContent</string>
+   <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-kmreview-named-template&amp;amp;lbpmTmpId=route-kmreview-named-lbpm&quot; fdId=&quot;route-kmreview-named-process&quot; linesIndex=&quot;2&quot; nodesIndex=&quot;3&quot; notifyType=&quot;todo&quot;&gt;
+&lt;nodes&gt;
+&lt;startNode id=&quot;N1&quot; name=&quot;Start&quot; x=&quot;100&quot; y=&quot;40&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;route-reviewer&quot; handlerNames=&quot;Route Reviewer&quot; handlerSelectType=&quot;org&quot; id=&quot;N2&quot; name=&quot;Review&quot; x=&quot;100&quot; y=&quot;100&quot;/&gt;
+&lt;endNode id=&quot;N3&quot; name=&quot;End&quot; x=&quot;100&quot; y=&quot;160&quot;/&gt;
+&lt;/nodes&gt;
+&lt;lines&gt;
+&lt;line endNodeId=&quot;N2&quot; id=&quot;L1&quot; startNodeId=&quot;N1&quot;/&gt;
+&lt;line endNodeId=&quot;N3&quot; id=&quot;L2&quot; startNodeId=&quot;N2&quot;/&gt;
+&lt;/lines&gt;
+&lt;/process&gt;</string>
+  </void>
+ </object>
+</java>

@@ -5,6 +5,8 @@ The v2 route-validation source format is either:
 - A single `*_SysFormTemplate.xml` file for form-only translation.
 - A directory containing exactly one `*_SysFormTemplate.xml` file and exactly one `*_LbpmProcessDefinition.xml` file for form plus workflow translation.
 
+An optional `*_KmReviewTemplate.xml` may sit alongside the paired form and workflow files. When present, its root `fdName` is the authoritative business template name used by Source Draft and DSL. `--template-name` still overrides that value. Without either source, name resolution falls back through the root SysFormTemplate `fdName`, a designer title, and finally the source filename.
+
 `SysFormTemplate.xml` is a Java XMLDecoder export for `com.landray.kmss.sys.xform.base.model.SysFormTemplate`. The adapter reads:
 
 - `fdId`

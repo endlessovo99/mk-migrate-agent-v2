@@ -29,6 +29,6 @@ NewOA writes are allowed only for the executor implementation path when all of t
 - No frontend.
 - No batch.
 - No source formats outside the current XML route-validation scope.
-- Current source input is either `*_SysFormTemplate.xml` or a paired directory with `*_SysFormTemplate.xml` and `*_LbpmProcessDefinition.xml`.
+- Current source input is either `*_SysFormTemplate.xml` or a paired directory with `*_SysFormTemplate.xml` and `*_LbpmProcessDefinition.xml`, optionally plus `*_KmReviewTemplate.xml` for the authoritative template name.
 - No PI/Agent execution.
 - No production writes without explicit confirmation.

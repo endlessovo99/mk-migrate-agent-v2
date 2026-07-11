@@ -88,6 +88,10 @@ _Avoid_: legacy XML source, old source format
 The current v2 workflow source file shape. It is supported only when paired with the matching SysFormTemplate XML in a source directory.
 _Avoid_: standalone workflow source, legacy flow source
 
+**KmReviewTemplate XML**:
+An optional companion export in a paired source directory. Its root `fdName` is the authoritative business template name used when `--template-name` is not provided.
+_Avoid_: SysForm filename fallback, designer title substitute
+
 **Executor**:
 The source-agnostic component that validates DSL, builds a dry-run plan, performs confirmed API-first NewOA SIT test-template writes, and verifies readback.
 _Avoid_: source parser, translator

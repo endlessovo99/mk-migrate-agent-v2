@@ -3,6 +3,7 @@ import { basename, join } from "node:path";
 import { translateLbpmProcessDefinitionXml } from "./lbpm-process-definition-adapter.js";
 import { sourceFormRulesFromLegacyScripts } from "./sysform-form-rules.js";
 import { translateSysFormTemplateXml } from "./sysform-template-adapter.js";
+import { cleanText, parseRootHashMapStringPuts } from "./xml-utils.js";
 
 export const SOURCE_DRAFT_VERSION = "2.0-source-draft";
 
@@ -84,13 +85,17 @@ function cleanSourceDirectory(path, options = {}) {
   const entries = readdirSync(path);
   const sysFormName = requireSingle(entries, /_SysFormTemplate\.xml$/i, "SysFormTemplate");
   const lbpmProcessName = requireSingle(entries, /_LbpmProcessDefinition\.xml$/i, "LbpmProcessDefinition");
+  const kmReviewTemplateName = requireOptional(entries, /_KmReviewTemplate\.xml$/i, "KmReviewTemplate");
   const sysFormPath = join(path, sysFormName);
   const lbpmProcessPath = join(path, lbpmProcessName);
+  const kmReviewTemplate = kmReviewTemplateName
+    ? readKmReviewTemplateName(join(path, kmReviewTemplateName))
+    : undefined;
 
   const formDsl = translateSysFormTemplateXml(readFileSync(sysFormPath, "utf8"), {
     sourcePath: sysFormPath,
     functionWhitelist: options.functionWhitelist,
-    templateName: options.templateName
+    templateName: String(options.templateName || "").trim() || kmReviewTemplate?.name
   });
   const workflowDsl = translateLbpmProcessDefinitionXml(readFileSync(lbpmProcessPath, "utf8"), {
     sourcePath: lbpmProcessPath
@@ -101,6 +106,12 @@ function cleanSourceDirectory(path, options = {}) {
   if (formTemplateId && processTemplateId && formTemplateId !== processTemplateId) {
     throw new Error(`source directory template mismatch: SysFormTemplate fdModelId ${formTemplateId} does not match LbpmProcessDefinition templateId ${processTemplateId}`);
   }
+  if (kmReviewTemplate?.fdId && formTemplateId && kmReviewTemplate.fdId !== formTemplateId) {
+    throw new Error(`source directory template mismatch: KmReviewTemplate fdId ${kmReviewTemplate.fdId} does not match SysFormTemplate fdModelId ${formTemplateId}`);
+  }
+  if (kmReviewTemplate?.fdId && processTemplateId && kmReviewTemplate.fdId !== processTemplateId) {
+    throw new Error(`source directory template mismatch: KmReviewTemplate fdId ${kmReviewTemplate.fdId} does not match LbpmProcessDefinition templateId ${processTemplateId}`);
+  }
 
   return sourceDraftFromLegacyDsl({
     ...formDsl,
@@ -108,13 +119,31 @@ function cleanSourceDirectory(path, options = {}) {
       kind: "source-directory",
       path,
       sysFormTemplate: formDsl.source,
-      lbpmProcessDefinition: workflowDsl.source
+      lbpmProcessDefinition: workflowDsl.source,
+      ...(kmReviewTemplate ? {
+        kmReviewTemplate: {
+          path: join(path, kmReviewTemplateName),
+          fdId: kmReviewTemplate.fdId
+        }
+      } : {})
     },
     workflow: workflowDsl.workflow
   }, {
     sourcePath: path,
     sourceKind: "source-directory"
   });
+}
+
+function readKmReviewTemplateName(path) {
+  const values = parseRootHashMapStringPuts(readFileSync(path, "utf8"));
+  const name = cleanText(values.fdName || "");
+  if (!name) {
+    throw new Error(`KmReviewTemplate XML is missing root fdName: ${basename(path)}`);
+  }
+  return {
+    name,
+    fdId: cleanText(values.fdId || "") || undefined
+  };
 }
 
 function normalizeSourceMetadata(source, context) {
@@ -124,7 +153,8 @@ function normalizeSourceMetadata(source, context) {
       path: source.path || context.sourcePath,
       sourceId: basename(source.path || context.sourcePath || "source-directory"),
       sysFormTemplate: source.sysFormTemplate,
-      lbpmProcessDefinition: source.lbpmProcessDefinition
+      lbpmProcessDefinition: source.lbpmProcessDefinition,
+      kmReviewTemplate: source.kmReviewTemplate
     };
   }
 
@@ -381,6 +411,14 @@ function requireSingle(entries, pattern, label) {
   const matches = entries.filter((entry) => pattern.test(entry));
   if (matches.length !== 1) {
     throw new Error(`source directory requires exactly one ${label} XML file; found ${matches.length}`);
+  }
+  return matches[0];
+}
+
+function requireOptional(entries, pattern, label) {
+  const matches = entries.filter((entry) => pattern.test(entry));
+  if (matches.length > 1) {
+    throw new Error(`source directory allows at most one ${label} XML file; found ${matches.length}`);
   }
   return matches[0];
 }

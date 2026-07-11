@@ -16,6 +16,26 @@ describe("source template name CLI", () => {
     assert.equal(output.sourceDraft.template.name, "原流程模板");
   });
 
+  it("reads KmReviewTemplate fdName from a paired source directory", async () => {
+    const output = await captureJsonOutput(() => main([
+      "clean",
+      "tests/fixtures/route-validation/kmreview-named"
+    ]));
+
+    assert.equal(output.sourceDraft.template.name, "企业经营事项（其他类）审批流程");
+  });
+
+  it("lets --template-name override KmReviewTemplate fdName", async () => {
+    const output = await captureJsonOutput(() => main([
+      "clean",
+      "tests/fixtures/route-validation/kmreview-named",
+      "--template-name",
+      "手动覆盖名称"
+    ]));
+
+    assert.equal(output.sourceDraft.template.name, "手动覆盖名称");
+  });
+
   it("uses --template-name in the deterministic translate shortcut", async () => {
     const output = await captureJsonOutput(() => main([
       "translate",

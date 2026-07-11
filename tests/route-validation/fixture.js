@@ -26,8 +26,9 @@ export function resolveRouteFixture(source, fixtureRoot = FIXTURE_ROOT) {
   const entries = stat.isDirectory() ? readdirSync(fixturePath) : [];
   const formCount = entries.filter((entry) => /_SysFormTemplate\.xml$/i.test(entry)).length;
   const workflowCount = entries.filter((entry) => /_LbpmProcessDefinition\.xml$/i.test(entry)).length;
-  if (!stat.isDirectory() || formCount !== 1 || workflowCount !== 1) {
-    throw integrityError("route.fixture.shape", "Paired Route fixtures require exactly one form and one workflow XML file.");
+  const kmReviewCount = entries.filter((entry) => /_KmReviewTemplate\.xml$/i.test(entry)).length;
+  if (!stat.isDirectory() || formCount !== 1 || workflowCount !== 1 || kmReviewCount > 1) {
+    throw integrityError("route.fixture.shape", "Paired Route fixtures require exactly one form and one workflow XML file, with at most one optional KmReviewTemplate.");
   }
   return fixturePath;
 }
