@@ -2681,7 +2681,7 @@ function sampleInitiatorSelectWorkflow() {
         name: "发起人选择一",
         sourceType: "reviewNode",
         sourceRef: "source.workflow.node.N16",
-        attributes: {},
+        attributes: { ignoreOnHandlerEmpty: "false" },
         participants: { mode: "initiator_select", sourceSemantics: "draft node selects N16" },
         translationStatus: "executable"
       },

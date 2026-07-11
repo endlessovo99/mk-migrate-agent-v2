@@ -1964,12 +1964,13 @@ function collectPersistedInitiatorSelectTargetNodeIds(nodes = []) {
 }
 
 // NewOA EEmptyType: JUMP(1)=自动跳过, ERROR(2)=流程报异常, POINT_HANDLER(3)=指定处理人.
-// Source ignoreOnHandlerEmpty=true maps to JUMP; optional canModify* targets default to JUMP.
+// canModifyHandlerNodes targets always JUMP when handlers are empty (optional drafter pick).
+// Otherwise honor source ignoreOnHandlerEmpty / ignoreOnEmptyHandlers.
 function resolveEmptyHandlerType(node, attrs = {}, context = {}) {
+  if (context.canModifyHandlerTargetNodeIds?.has(node.id) === true) return 1;
   const ignoreEmpty = attrs.ignoreOnHandlerEmpty ?? attrs.ignoreOnEmptyHandlers;
   if (ignoreEmpty === true || ignoreEmpty === "true") return 1;
   if (ignoreEmpty === false || ignoreEmpty === "false") return 2;
-  if (context.canModifyHandlerTargetNodeIds?.has(node.id) === true) return 1;
   return 2;
 }
 
