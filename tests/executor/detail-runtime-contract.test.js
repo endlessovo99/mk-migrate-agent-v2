@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { preparePersistedTemplate } from "../../src/executor/persistence.js";
+import { detailTableNameFor } from "../../src/executor/persistence/detail-table-names.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
-describe("detail runtime persistence contract", () => {
+describe("detail persistence metadata contract", () => {
   it("projects native-compatible metadata for detail business fields", () => {
     const { detailModel } = projectDetailModel({
       templateId: "template-metadata",
@@ -27,7 +28,7 @@ describe("detail runtime persistence contract", () => {
     );
   });
 
-  it("keeps submitted detail business values after a runtime round-trip", () => {
+  it("marks submitted detail business values as platform-managed fields", () => {
     const { detailModel } = projectDetailModel({
       templateId: "template-runtime",
       mainTableName: "mk_runtime_main"
@@ -39,9 +40,9 @@ describe("detail runtime persistence contract", () => {
       fd_name: "风场 A"
     };
 
-    const persistedRow = persistLikeNewOaRuntime(detailModel, submittedRow);
+    const persistableRow = selectPlatformManagedDetailValues(detailModel, submittedRow);
 
-    assert.deepEqual(persistedRow, submittedRow);
+    assert.deepEqual(persistableRow, submittedRow);
   });
 
   it("derives each detail physical table from its server-generated main table", () => {
@@ -95,6 +96,33 @@ describe("detail runtime persistence contract", () => {
 
     assert.notEqual(first.detailModel.fdTableName, second.detailModel.fdTableName);
   });
+
+  it("isolates complete long main table identities with the same truncated prefix", () => {
+    const sharedPrefix = "mk_model_shared_prefix_that_exceeds_the_native_limit_";
+    const fieldId = "fd_detail";
+    const first = detailTableNameFor(`${sharedPrefix}alpha`, fieldId);
+    const second = detailTableNameFor(`${sharedPrefix}beta`, fieldId);
+
+    assert.notEqual(first, second);
+  });
+
+  it("isolates detail field identities within the same main table", () => {
+    const mainTableName = "mk_model_shared_main_table";
+    const first = detailTableNameFor(mainTableName, "fd_detail_alpha");
+    const second = detailTableNameFor(mainTableName, "fd_detail_beta");
+
+    assert.notEqual(first, second);
+  });
+
+  it("keeps detail table names within the native limit with a hexadecimal suffix", () => {
+    const tableName = detailTableNameFor(
+      "mk_model_shared_prefix_that_exceeds_the_native_limit_alpha",
+      "fd_detail"
+    );
+
+    assert.equal(tableName.length <= 30, true);
+    assert.match(tableName, /_d_[0-9a-f]{6,}$/);
+  });
 });
 
 function projectDetailModel({ templateId, mainTableName }) {
@@ -145,10 +173,10 @@ function projectDetailModel({ templateId, mainTableName }) {
 }
 
 /**
- * Minimal model of the observed NewOA add/get behavior: row identity survives,
- * while business values survive only for SYS-XFORM fields.
+ * Selects values backed by platform-managed field metadata. This verifies the
+ * writer contract only; the real add/get behavior is verified separately in SIT.
  */
-function persistLikeNewOaRuntime(detailModel, submittedRow) {
+function selectPlatformManagedDetailValues(detailModel, submittedRow) {
   return Object.fromEntries(
     detailModel.fdFields
       .filter((field) => field.fdIsSystem || field.fdMechanismType === "SYS-XFORM")

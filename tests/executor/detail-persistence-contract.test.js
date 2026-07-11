@@ -1,26 +1,76 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
+
+const fixturePath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../fixtures/executor/persistence/form-only-native-readback.json"
+);
 
 describe("detail persistence readback contract", () => {
   it("recovers the DSL detail id from fdAttribute when the server strips dynamicProps", () => {
     const readback = verifyMutated((config) => {
       const detail = detailModel(config);
-      const opaqueTableName = "mk_detail_opaque_7f3a";
-      const renamed = JSON.parse(
-        JSON.stringify(config).replaceAll(detail.fdTableName, opaqueTableName)
-      );
-      const renamedDetail = detailModel(renamed);
-      delete renamedDetail.dynamicProps;
-      for (const field of businessFields(renamedDetail)) {
-        field.fdMechanismType = "SYS-XFORM";
-      }
-      return renamed;
+      delete detail.dynamicProps;
+      return config;
     });
 
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
     assert.equal(readback.form.fields.some((field) => field.id === "fd_detail"), true);
+  });
+
+  it("rejects a coherently renamed physical detail table", () => {
+    const readback = verifyMutated((config) => {
+      const detail = detailModel(config);
+      return replaceDetailTableName(config, detail.fdTableName, "mk_detail_unexpected_7f3a");
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(hasCode(readback, "readback.form.detail_model_table_name_mismatch"), true);
+  });
+
+  it("rejects duplicate detail models bound to the same DSL field", () => {
+    const readback = verifyMutated((config) => {
+      const source = detailModel(config);
+      const duplicate = structuredClone(source);
+      const sourceTableName = duplicate.fdTableName;
+      const duplicateTableName = "mk_detail_duplicate_7f3a";
+
+      duplicate.fdId = "duplicate-detail-model-id";
+      duplicate.fdTableName = duplicateTableName;
+      duplicate.fdTableNameAlias = duplicateTableName;
+      duplicate.fdAttribute = replaceText(
+        duplicate.fdAttribute,
+        sourceTableName,
+        duplicateTableName
+      );
+      duplicate.fdFields = duplicate.fdFields.map((field) => ({
+        ...field,
+        fdId: `${field.fdId}-duplicate`,
+        fdDataModel: {
+          fdId: duplicate.fdId,
+          fdName: duplicate.fdName
+        },
+        ...(field.fdAttribute
+          ? {
+              fdAttribute: replaceText(
+                field.fdAttribute,
+                sourceTableName,
+                duplicateTableName
+              )
+            }
+          : {})
+      }));
+      config.dataModel.push(duplicate);
+      return config;
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(hasCode(readback, "readback.form.detail_model_duplicate"), true);
   });
 
   it("rejects a detail business field with a non-SYS-XFORM mechanism", () => {
@@ -89,8 +139,12 @@ describe("detail persistence readback contract", () => {
 
 function verifyMutated(mutateConfig) {
   const prepared = prepareSample(sampleTrustedDsl({ workflow: null }));
-  const template = structuredClone(prepared.update);
-  const config = mutateConfig(xformConfig(template));
+  const template = JSON.parse(readFileSync(fixturePath, "utf8"));
+  const nativeConfig = xformConfig(template);
+  const nativeFormAttr = JSON.parse(nativeConfig.attribute.formAttr);
+  nativeFormAttr.subjectRule = {};
+  nativeConfig.attribute.formAttr = JSON.stringify(nativeFormAttr);
+  const config = mutateConfig(nativeConfig);
   template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
   return prepared.verify(template);
 }
@@ -101,6 +155,16 @@ function detailModel(config) {
 
 function businessFields(detail) {
   return detail.fdFields.filter((field) => field.fdIsSystem !== true);
+}
+
+function replaceDetailTableName(config, sourceTableName, targetTableName) {
+  return JSON.parse(
+    JSON.stringify(config).replaceAll(sourceTableName, targetTableName)
+  );
+}
+
+function replaceText(value, source, target) {
+  return String(value).replaceAll(source, target);
 }
 
 function hasCode(readback, code) {

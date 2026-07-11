@@ -177,6 +177,26 @@ function compareDetailPersistence(expected = {}, actual = {}, diagnostics) {
     (expected.detailModels || []).map((model) => [model.fieldId, model])
   );
   const actualDetails = actual.detailModels || [];
+  const actualDetailsByFieldId = new Map();
+
+  for (const model of actualDetails) {
+    const models = actualDetailsByFieldId.get(model.fieldId) || [];
+    models.push(model);
+    actualDetailsByFieldId.set(model.fieldId, models);
+  }
+
+  for (const [fieldId, models] of actualDetailsByFieldId) {
+    if (!expectedDetails.has(fieldId) || models.length <= 1) continue;
+    diagnostics.push(mismatch("form", "readback.form.detail_model_duplicate", "Readback contains more than one data model for the same DSL detail field.", {
+      invariantKey: `form.persistence.detailModels.${fieldId}.count`,
+      path: "/mechanisms/sys-xform/fdConfig/dataModel",
+      expected: { count: 1 },
+      actual: {
+        count: models.length,
+        modelIndexes: models.map((model) => model.modelIndex)
+      }
+    }));
+  }
 
   if (expected.distinctModelTableNames === true) {
     compareDistinctModelTables(actual.models || [], diagnostics);
@@ -193,6 +213,15 @@ function compareDetailPersistence(expected = {}, actual = {}, diagnostics) {
         actual: { detailFieldId: model.fieldId }
       }));
       continue;
+    }
+
+    if (model.tableName !== expectedModel.tableName) {
+      diagnostics.push(mismatch("form", "readback.form.detail_model_table_name_mismatch", "Readback detail model does not use the physical table derived from its main model and DSL field.", {
+        invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.tableName`,
+        path: `${modelPath}/fdTableName`,
+        expected: expectedModel.tableName,
+        actual: model.tableName
+      }));
     }
 
     if (expectedModel.requireModelControlBinding === true) {

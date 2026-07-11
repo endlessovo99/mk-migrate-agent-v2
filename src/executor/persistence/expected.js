@@ -14,7 +14,7 @@ import { detailTableNameFor } from "./detail-table-names.js";
 export function buildExpectedInvariants(dsl, envelope) {
   const diagnostics = [];
   const envelopeExpected = buildExpectedEnvelope(envelope, diagnostics);
-  const formExpected = buildExpectedForm(dsl?.form || {}, diagnostics);
+  const formExpected = buildExpectedForm(dsl?.form || {}, envelope?.tableName, diagnostics);
   const rulesExpected = buildExpectedRules(dsl?.formRules, dsl?.form || {}, diagnostics);
   const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, envelope?.tableName, diagnostics);
   const workflowExpected = dsl?.workflow
@@ -82,7 +82,7 @@ function buildExpectedEnvelope(envelope = {}, diagnostics) {
   };
 }
 
-function buildExpectedForm(form, diagnostics) {
+function buildExpectedForm(form, mainTableName, diagnostics) {
   const fields = Array.isArray(form.fields) ? form.fields : [];
   const rows = Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : [];
   const fieldIds = new Set();
@@ -183,6 +183,7 @@ function buildExpectedForm(form, diagnostics) {
         .filter((field) => field.type === "detailTable")
         .map((field) => ({
           fieldId: field.id,
+          tableName: detailTableNameFor(mainTableName, field.id),
           tableType: "detail",
           fieldMechanismType: "SYS-XFORM",
           fieldColumnName: "",
