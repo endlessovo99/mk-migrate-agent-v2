@@ -1,11 +1,16 @@
 import { NEWOA_SCENARIOS } from "./manifest.js";
 import { integrityError } from "./integrity.js";
 import { appendTranscriptEntry, sanitizedTranscript } from "./transcript.js";
+import { SIT_PARTICIPANT_FALLBACKS } from "../../src/executor/participant-resolver.js";
+import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-resolver.js";
 
 const CREATED_TEMPLATE_ID = "route-created-template";
 const CREATED_WORKFLOW_TEMPLATE_ID = "route-created-workflow-template";
-const SIT_FALLBACK_PARTICIPANT_ID = "1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0";
-const SIT_CONDITION_ORG_FALLBACK_ID = "1j8l5tjpew1nwui9w1hmm19f3j4b7853vbw0";
+const SIT_CONDITION_ORG_FALLBACK_ID = SIT_CONDITION_ORG_FALLBACKS[0].fdId;
+const SIT_FALLBACK_BY_ID = new Map([
+  ...Object.values(SIT_PARTICIPANT_FALLBACKS).map((fallback) => [fallback.fdId, fallback]),
+  [SIT_CONDITION_ORG_FALLBACK_ID, SIT_CONDITION_ORG_FALLBACKS[0]]
+]);
 
 export class FakeNewoaAdapter {
   constructor(scenario) {
@@ -31,18 +36,22 @@ export class FakeNewoaAdapter {
 
   async getElementInfo(targets) {
     this.record({ operation: "get-element-info", targets: clone(targets) });
-    return targets.map((fdId) => fdId === SIT_CONDITION_ORG_FALLBACK_ID
-      ? {
-          fdId,
-          fdName: "人力资源与行政服务中心",
-          fdOrgType: 2,
-          fdNo: "50802206"
-        }
-      : {
-          fdId,
-          fdName: fdId === SIT_FALLBACK_PARTICIPANT_ID ? "SIT Fallback Reviewer" : fdId,
-          fdOrgType: 8
-        });
+    return targets.map((fdId) => {
+      const fallback = SIT_FALLBACK_BY_ID.get(fdId);
+      if (fallback) {
+        return {
+          fdId: fallback.fdId,
+          fdName: fallback.fdName,
+          fdOrgType: fallback.fdOrgType,
+          ...(fallback.fdNo ? { fdNo: fallback.fdNo } : {})
+        };
+      }
+      return {
+        fdId,
+        fdName: fdId,
+        fdOrgType: 8
+      };
+    });
   }
 
   async initTemplate() {

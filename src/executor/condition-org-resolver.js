@@ -5,20 +5,20 @@
  * predicates need concrete org objects (`belongany` / `notbelong`), so names are
  * resolved through the read-only org search API before workflow projection.
  *
- * On NewOA SIT (`p-sit.onewo.com`), unresolved names fall back to a known department
- * target captured from the designer curl catalog and revalidated before use.
+ * On allowed temporary-fallback origins (SIT and Shanghai Electric POC), unresolved
+ * names fall back to a known department target and are revalidated before use.
  */
 
-const CONDITION_ORG_RESOLUTION_STAGE = "resolveConditionOrgs";
-const NEWOA_SIT_ORIGIN = "https://p-sit.onewo.com";
+import { allowsTemporaryOrgFallbacks } from "./newoa-client.js";
 
-/** SIT department targets from the N344 designer curl catalog. */
+const CONDITION_ORG_RESOLUTION_STAGE = "resolveConditionOrgs";
+
+/** Department fallback for unresolved address-field condition org names. */
 export const SIT_CONDITION_ORG_FALLBACKS = Object.freeze([
   Object.freeze({
-    fdId: "1j8l5tjpew1nwui9w1hmm19f3j4b7853vbw0",
-    fdName: "人力资源与行政服务中心",
-    fdOrgType: 2,
-    fdNo: "50802206"
+    fdId: "1jt85rk85w23welrpw2s3uh4pvsr8ru35dw0",
+    fdName: "AI迁移默认部门",
+    fdOrgType: 2
   })
 ]);
 
@@ -60,7 +60,7 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl } = {}) 
   const searchCache = new Map();
   const conditionOrgByName = {};
   const unresolvedNames = [];
-  const allowSitFallback = isSitTarget(targetBaseUrl);
+  const allowSitFallback = allowsTemporaryOrgFallbacks(targetBaseUrl);
 
   for (const name of names) {
     try {
@@ -249,15 +249,6 @@ export function isAddressField(field) {
   if (designerType === "address") return true;
   const metadataKind = String(field.sourceProps?.metadataKind || "").toLowerCase();
   return metadataKind === "element";
-}
-
-function isSitTarget(value) {
-  try {
-    const url = new URL(String(value || ""));
-    return url.origin.toLowerCase() === NEWOA_SIT_ORIGIN;
-  } catch {
-    return false;
-  }
 }
 
 function normalizeText(value) {

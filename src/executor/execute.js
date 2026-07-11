@@ -48,16 +48,21 @@ export async function executeDsl(input, options = {}) {
     if (participantResolution.fallbackCount > 0) {
       apiStages[apiStages.length - 1].fallbackCount = participantResolution.fallbackCount;
       apiStages[apiStages.length - 1].fallbackIdentityCount = participantResolution.fallbackIdentityCount;
-      apiStages[apiStages.length - 1].fallbackTargetId = participantResolution.fallbackTargetId;
+      apiStages[apiStages.length - 1].fallbackTargetIds = participantResolution.fallbackTargetIds;
+      if (participantResolution.fallbackTargetId) {
+        apiStages[apiStages.length - 1].fallbackTargetId = participantResolution.fallbackTargetId;
+      }
+      apiStages[apiStages.length - 1].fallbackTargetsByOrgType = participantResolution.fallbackTargetsByOrgType;
       diagnostics.push({
         level: "warning",
         code: "workflow.participant_sit_fallback_applied",
-        message: "Unresolved source workflow participants were replaced with the configured NewOA SIT fallback participant.",
+        message: "Unresolved source workflow participants were replaced with the configured temporary type-specific fallback identities.",
         path: "/workflow/participants",
         details: {
           referenceCount: participantResolution.fallbackCount,
           identityCount: participantResolution.fallbackIdentityCount,
-          targetFdId: participantResolution.fallbackTargetId
+          targetFdIds: participantResolution.fallbackTargetIds,
+          targetsByOrgType: participantResolution.fallbackTargetsByOrgType
         }
       });
     }
@@ -75,7 +80,7 @@ export async function executeDsl(input, options = {}) {
       diagnostics.push({
         level: "warning",
         code: "workflow.condition_org_sit_fallback_applied",
-        message: "Unresolved address-field branch condition organization names were replaced with the configured NewOA SIT address-book sample orgs.",
+        message: "Unresolved address-field branch condition organization names were replaced with the configured temporary address-book fallback orgs.",
         path: "/workflow/conditions",
         details: {
           fallbackNames: conditionOrgResolution.fallbackNames,

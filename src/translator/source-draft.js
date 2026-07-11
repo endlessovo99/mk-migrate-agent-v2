@@ -21,7 +21,8 @@ export function cleanSourceFile(path, options = {}) {
 
   const legacyFormDsl = translateSysFormTemplateXml(readFileSync(path, "utf8"), {
     sourcePath: path,
-    functionWhitelist: options.functionWhitelist
+    functionWhitelist: options.functionWhitelist,
+    templateName: options.templateName
   });
 
   return sourceDraftFromLegacyDsl(legacyFormDsl, {
@@ -88,7 +89,8 @@ function cleanSourceDirectory(path, options = {}) {
 
   const formDsl = translateSysFormTemplateXml(readFileSync(sysFormPath, "utf8"), {
     sourcePath: sysFormPath,
-    functionWhitelist: options.functionWhitelist
+    functionWhitelist: options.functionWhitelist,
+    templateName: options.templateName
   });
   const workflowDsl = translateLbpmProcessDefinitionXml(readFileSync(lbpmProcessPath, "utf8"), {
     sourcePath: lbpmProcessPath

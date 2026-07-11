@@ -43,7 +43,8 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       id: "form-only-success",
       source: {
         kind: "form-only",
-        relativePath: "form-only/route-form-only_SysFormTemplate.xml"
+        relativePath: "form-only/route-form-only_SysFormTemplate.xml",
+        templateName: "原流程模板"
       },
       reviewScenario: "accept",
       newoaScenario: "persist",
@@ -206,6 +207,9 @@ export function validateRouteManifest(manifest) {
     }
     if (!safeRelativePath(routeCase.source.relativePath)) {
       throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has an unsafe fixture path.`);
+    }
+    if (routeCase.source.templateName !== undefined && !nonEmptyString(routeCase.source.templateName)) {
+      throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has an invalid source template name.`);
     }
     if (!REVIEW_SCENARIOS.includes(routeCase.reviewScenario)) {
       throw integrityError("route.scenario.review_unknown", `Unknown review scenario: ${routeCase.reviewScenario}`);

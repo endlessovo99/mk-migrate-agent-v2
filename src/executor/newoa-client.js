@@ -1,4 +1,20 @@
 export const NEWOA_SIT_BASE_URL = "https://p-sit.onewo.com";
+export const NEWOA_POC_BASE_URL = "http://mkpaaspoc.shanghai-electric.com";
+
+/** Origins that may substitute temporary unresolved person/post/group/department fallbacks. */
+export const NEWOA_TEMPORARY_FALLBACK_ORIGINS = Object.freeze([
+  NEWOA_SIT_BASE_URL,
+  NEWOA_POC_BASE_URL
+]);
+
+export function allowsTemporaryOrgFallbacks(value) {
+  try {
+    const origin = new URL(String(value || "")).origin.toLowerCase();
+    return NEWOA_TEMPORARY_FALLBACK_ORIGINS.some((allowed) => allowed.toLowerCase() === origin);
+  } catch {
+    return false;
+  }
+}
 
 export class NewoaClient {
   constructor(options = {}) {

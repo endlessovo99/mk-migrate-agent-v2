@@ -29,7 +29,9 @@ This repo is not a full replacement for `mk-migrate-agent` yet. The old repo rem
 ```bash
 npm test
 
-node src/cli/main.js clean tests/fixtures/source/route-validation-lbpm --out .tmp/sample/source-draft.json
+node src/cli/main.js clean tests/fixtures/source/route-validation-lbpm \
+  --template-name '原流程模板名称' \
+  --out .tmp/sample/source-draft.json
 node src/cli/main.js draft .tmp/sample/source-draft.json --out .tmp/sample/dsl-draft.json
 node src/cli/main.js check draft .tmp/sample/dsl-draft.json
 
@@ -54,6 +56,8 @@ Set `NEWOA_BASE_URL` to select another NewOA root origin, or pass `--base-url` f
 
 `translate` remains a deterministic compatibility shortcut for `clean` plus `draft`. It does not call AI and writes a non-executable `dsl-draft.json`. `agent-review` is the only AI-backed stage. `dry-run` and `execute` accept only trusted `migration.dsl.json` with `trust.level = trusted` and `trust.executable = true`.
 
+Some exported `SysFormTemplate`/`LbpmProcessDefinition` pairs contain only template IDs and no authoritative business template name. For those sources, pass the original name to `clean` or `translate` with `--template-name`; that value is preserved in Source Draft and DSL. If the option is omitted, name resolution falls back through the root SysFormTemplate `fdName`, a designer title, and finally the source filename. The Executor still adds the required test prefix and uniqueness suffix, producing `MK_TEST_<original-name>_<timestamp>`.
+
 `agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Review and repair requests use the configured model; provider failures do not fall back to another model. Checkpoint persistence additionally requires `AGENT_REVIEW_CHECKPOINT_KEY` with at least 32 characters. Keep local secrets in an ignored file such as `.tmp/newoa.env`, then source it explicitly before review or live smoke:
 
 ```bash
@@ -71,7 +75,7 @@ Use `--checkpoint-out <path>` to persist each validated batch atomically. Resume
 
 JSP-to-NewOA JS translation is intentionally semantic-first. The deterministic translator extracts facts only: script/action boundaries, source refs, event and control/table targets, source windows, legacy function calls, field ids, row markers, native formRules evidence, and catalog/whitelist hits. It should not grow into a hard-coded JSP function translator. Agent review uses `catalogs/jsp-translation-playbook.v1.json` plus the target API catalog and source evidence to decide whether an action can be patched to `mapped`/`translated`, `omitted`/`covered`, or left as diagnostics.
 
-`execute` creates a new `MK_TEST_...` template at the resolved NewOA origin, saves it as draft, reads it back, and reports the created `fdId`. Warning-only trusted DSL (`needs_manual`) is executable; DSL errors, invalid base URLs, and other safety errors block before login. If creation succeeds and a later stage fails, the report keeps the partial fdId and does not auto-rollback. Custom origins use the same write confirmation and draft-only gates as the default SIT origin; SIT-only participant and organization fallbacks are never reused elsewhere.
+`execute` creates a new `MK_TEST_...` template at the resolved NewOA origin, saves it as draft, reads it back, and reports the created `fdId`. Warning-only trusted DSL (`needs_manual`) is executable; DSL errors, invalid base URLs, and other safety errors block before login. If creation succeeds and a later stage fails, the report keeps the partial fdId and does not auto-rollback. Custom origins use the same write confirmation and draft-only gates as the default SIT origin; temporary participant and organization fallbacks apply only at `https://p-sit.onewo.com` and `http://mkpaaspoc.shanghai-electric.com`.
 
 ## Repository shape
 

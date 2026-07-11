@@ -22,7 +22,9 @@ export async function runRouteCase(caseId) {
   const sourcePath = resolveRouteFixture(routeCase.source);
 
   return withNetworkGuard(async () => {
-    const sourceDraft = cleanSourceFile(sourcePath);
+    const sourceDraft = cleanSourceFile(sourcePath, {
+      templateName: routeCase.source.templateName
+    });
     const dslDraft = draftSourceDraft(sourceDraft);
     const reviewResult = await runAgentReview(sourceDraft, dslDraft, {
       provider: createFakeReviewProvider(routeCase.reviewScenario),

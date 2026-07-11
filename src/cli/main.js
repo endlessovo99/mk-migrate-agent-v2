@@ -50,7 +50,8 @@ function runClean(argv) {
   if (!sourcePath) throw new Error("clean requires a source path");
 
   const sourceDraft = cleanSourceFile(sourcePath, {
-    functionWhitelist: loadWhitelist(args)
+    functionWhitelist: loadWhitelist(args),
+    templateName: args["template-name"]
   });
   writeOrPrint(args, sourceDraft, {
     ok: true,
@@ -80,7 +81,8 @@ function runTranslate(argv) {
   if (!sourcePath) throw new Error("translate requires a source path");
 
   const dsl = translateSourceFile(sourcePath, {
-    functionWhitelist: loadWhitelist(args)
+    functionWhitelist: loadWhitelist(args),
+    templateName: args["template-name"]
   });
   const check = checkDraft(dsl);
   writeOrPrint(args, dsl, {
@@ -285,9 +287,9 @@ function printJson(value) {
 
 function printUsage() {
   console.error("Usage:");
-  console.error("  node src/cli/main.js clean <source-dir|sysform.xml> [--out source-draft.json]");
+  console.error("  node src/cli/main.js clean <source-dir|sysform.xml> [--template-name <original-name>] [--out source-draft.json]");
   console.error("  node src/cli/main.js draft <source-draft.json> [--out dsl-draft.json]");
-  console.error("  node src/cli/main.js translate <source-dir|sysform.xml> [--out dsl-draft.json]");
+  console.error("  node src/cli/main.js translate <source-dir|sysform.xml> [--template-name <original-name>] [--out dsl-draft.json]");
   console.error("  OPENAI_BASE_URL=... OPENAI_API_KEY=... OPENAI_MODEL=... AGENT_REVIEW_CHECKPOINT_KEY=... node src/cli/main.js agent-review <source-draft.json> <dsl-draft.json> --out migration.dsl.json [--report-out agent-review.report.json] [--checkpoint-out agent-review.checkpoint.json] [--resume-from agent-review.checkpoint.json] [--review-batch-size 12] [--max-review-attempts 2]");
   console.error("    Review and repair use OPENAI_MODEL from the environment; no model fallback.");
   console.error("  node src/cli/main.js trust <source-draft.json> <dsl-draft.json> --external-agent-reviewed [--reviewer-name name] [--out migration.dsl.json]");

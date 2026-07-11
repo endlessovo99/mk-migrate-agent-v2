@@ -16,8 +16,9 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   if (Object.keys(nodeDataAuthorities.nodeDataAuthorities || {}).length) {
     form.nodeDataAuthorities = nodeDataAuthorities.nodeDataAuthorities;
   }
-  const title = extractDesignerTitle(template.fdDesignerHtml || "") ||
+  const title = String(options.templateName || "").trim() ||
     template.fdName ||
+    extractDesignerTitle(template.fdDesignerHtml || "") ||
     basename(options.sourcePath || "SysFormTemplate.xml").replace(/_SysFormTemplate\.xml$/i, "");
   const errors = [];
   const functionWhitelist = options.functionWhitelist

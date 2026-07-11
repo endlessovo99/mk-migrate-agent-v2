@@ -125,6 +125,40 @@ describe("resolveConditionOrgs", () => {
     assert.deepEqual(result.dsl.runtime.conditionOrgByName.海外业务中心, SIT_CONDITION_ORG_FALLBACKS[0]);
   });
 
+  it("applies the same condition-org fallback on the Shanghai Electric POC origin", async () => {
+    const client = {
+      async searchOrg() {
+        return [];
+      },
+      async getElementInfo(targets) {
+        return SIT_CONDITION_ORG_FALLBACKS.filter((fallback) => targets.includes(fallback.fdId));
+      }
+    };
+
+    const result = await resolveConditionOrgs({
+      form: {
+        fields: [{
+          id: "fd_req_dept",
+          componentId: "xform-address",
+          sourceProps: { designerType: "address" }
+        }]
+      },
+      workflow: {
+        edges: [{
+          condition: {
+            targetText: "$字符串.包含$($fd_req_dept$, \"南方服务中心\")"
+          }
+        }]
+      }
+    }, {
+      client,
+      targetBaseUrl: "http://mkpaaspoc.shanghai-electric.com"
+    });
+
+    assert.equal(result.fallbackCount, 1);
+    assert.deepEqual(result.dsl.runtime.conditionOrgByName.南方服务中心, SIT_CONDITION_ORG_FALLBACKS[0]);
+  });
+
   it("fails closed when the SIT condition fallback is not a current department", async () => {
     const client = {
       async searchOrg() {

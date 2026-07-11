@@ -1,16 +1,20 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { detailTableNameFor } from "../../src/executor/persistence/detail-table-names.js";
+import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-resolver.js";
+import { SIT_PARTICIPANT_FALLBACKS } from "../../src/executor/participant-resolver.js";
 import { runRouteCase } from "./run-route-case.js";
 
-const SIT_FALLBACK_PARTICIPANT_ID = "1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0";
-const SIT_CONDITION_ORG_FALLBACK_ID = "1j8l5tjpew1nwui9w1hmm19f3j4b7853vbw0";
+const SIT_FALLBACK_PARTICIPANT_ID = SIT_PARTICIPANT_FALLBACKS.person.fdId;
+const SIT_CONDITION_ORG_FALLBACK_ID = SIT_CONDITION_ORG_FALLBACKS[0].fdId;
 
 describe("offline Route-validation", { concurrency: false }, () => {
   it("executes a form-only source through the public migration route", async () => {
     const result = await runRouteCase("form-only-success");
 
     assert.equal(result.caseId, "form-only-success");
+    assert.equal(result.dsl.template.name, "原流程模板");
+    assert.equal(result.dryRun.template.name, "原流程模板");
     assert.equal(result.dsl.artifact, "migration-dsl");
     assert.equal(result.dsl.workflow, undefined);
     assert.equal(result.dryRun.ok, true);
@@ -100,7 +104,16 @@ describe("offline Route-validation", { concurrency: false }, () => {
         identityCount: 1,
         fallbackCount: 1,
         fallbackIdentityCount: 1,
-        fallbackTargetId: SIT_FALLBACK_PARTICIPANT_ID
+        fallbackTargetId: SIT_FALLBACK_PARTICIPANT_ID,
+        fallbackTargetIds: [SIT_FALLBACK_PARTICIPANT_ID],
+        fallbackTargetsByOrgType: {
+          8: {
+            sourceOrgType: 8,
+            targetFdId: SIT_FALLBACK_PARTICIPANT_ID,
+            targetOrgType: 8,
+            targetName: SIT_PARTICIPANT_FALLBACKS.person.fdName
+          }
+        }
       }
     );
     assert.equal(

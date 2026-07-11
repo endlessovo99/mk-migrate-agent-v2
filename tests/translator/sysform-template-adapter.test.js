@@ -10,6 +10,19 @@ import { localCorpusIt } from "../helpers/local-corpus.js";
 const whitelistPath = "tests/fixtures/function-whitelist.json";
 
 describe("translateSysFormTemplateXml", () => {
+  it("uses the explicit source name before XML and designer fallbacks", () => {
+    const xml = sysFormXml({
+      fdDesignerHtml: `<label fd_type="textLabel" fd_values='{id:"title",content:"设计器标题",b:"true"}'>设计器标题</label>`,
+      fdMetadataXml: "<metadata/>"
+    });
+
+    assert.equal(translateSysFormTemplateXml(xml).template.name, "设计器优先表单");
+    assert.equal(
+      translateSysFormTemplateXml(xml, { templateName: "原流程模板" }).template.name,
+      "原流程模板"
+    );
+  });
+
   it("translates a SysFormTemplate XML fixture into valid DSL", () => {
     const sourcePath = "tests/fixtures/source/route-validation-lbpm/route-validation_SysFormTemplate.xml";
     const xml = readFileSync(sourcePath, "utf8");
