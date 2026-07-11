@@ -452,6 +452,19 @@ function formRuleTargetIssues(rule, refIndex) {
           unresolved: resolved?.unresolved,
           message: "Form rule row target does not resolve to a direct field or mkTree.sourceMarkers entry."
         }));
+      } else if (resolved.targets.some((target) => target.field?.dataOnly === true)) {
+        result.push(pruneUndefined({
+          code: "form_rule.target_data_only",
+          ruleId: rule.id,
+          branch,
+          effectIndex,
+          target: effect.target,
+          type: effect.type,
+          dataOnlyFieldIds: resolved.targets
+            .filter((target) => target.field?.dataOnly === true)
+            .map((target) => target.id),
+          message: "Form rule visibility/required effects cannot target data-only fields."
+        }));
       }
     }
   }

@@ -96,6 +96,54 @@ describe("legacy JSP native form-rule lowering", () => {
     assert.equal(dslDraft.formRules.linkage[0].translationStatus, "executable");
   });
 
+  it("excludes visibility rules whose resolved target is data-only", () => {
+    const sourceDraft = {
+      version: "2.0-source-draft",
+      artifact: "source-draft",
+      source: { kind: "sysform-template", path: "synthetic", sourceId: "synthetic" },
+      template: { name: "data-only-rule-target" },
+      form: {
+        controls: [{
+          id: "fd_trigger",
+          title: "触发字段",
+          sourceType: "String",
+          componentHint: "radio",
+          sourceProps: { designerId: "fd_trigger" }
+        }],
+        dataFields: [{
+          id: "fd_hidden_helper",
+          title: "隐藏辅助字段",
+          sourceType: "String",
+          sourceProps: { metadataAttributes: { canDisplay: "false" } }
+        }],
+        layout: {
+          rows: [{
+            id: "row-1",
+            cells: [{ id: "cell-1", references: [{ referenceId: "fd_trigger" }] }]
+          }]
+        }
+      },
+      formRules: sourceFormRulesFromLegacyScripts({
+        sources: [sourceWithCondition("data-only", "value.indexOf(\"Y\") >= 0", "fd_hidden_helper", "xform:editShow")]
+      }),
+      scripts: { sources: [] },
+      issues: []
+    };
+
+    const dslDraft = draftSourceDraft(sourceDraft);
+
+    assert.deepEqual(dslDraft.formRules.linkage, []);
+    assert.deepEqual(dslDraft.formRules.review.excludedRules, [{
+      ruleId: "linkage.fd_trigger.contains.Y",
+      code: "form_rule.target_data_only",
+      target: "fd_hidden_helper",
+      detailTableRefs: [],
+      sourceJsp: "source.form.jsp.data-only",
+      displayGate: "xform:editShow",
+      message: "Form rule visibility/required effects cannot target data-only fields."
+    }]);
+  });
+
   localCorpusIt("lowers the target fixture to nine executable rules including detail-table container rows", () => {
     const sourceDraft = cleanSourceFile(targetFixture);
     const dslDraft = draftSourceDraft(sourceDraft);
