@@ -2,6 +2,7 @@ import { integrityError } from "./integrity.js";
 
 const ENTRY_KEYS_BY_OPERATION = new Map([
   ["login", new Set(["operation"])],
+  ["search-org", new Set(["operation", "key"])],
   ["get-element-info", new Set(["operation", "targets"])],
   ["init", new Set(["operation"])],
   ["generate-table-name", new Set(["operation"])],

@@ -6,9 +6,218 @@ import {
   ParticipantResolutionError,
   resolveWorkflowParticipants
 } from "../../src/executor/participant-resolver.js";
+import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
+const SIT_FALLBACK_PARTICIPANT_ID = "1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0";
+
 describe("resolveWorkflowParticipants", () => {
+  it("uses the validated SIT fallback for source identities that cannot be found", async () => {
+    const dsl = dslWithExplicitMembers([
+      sourceMember({
+        name: "不存在岗位",
+        sourceId: "legacy-post-missing",
+        sourceOrgType: 4,
+        sourceParentName: "采购部"
+      }),
+      sourceMember({
+        name: "部门领导",
+        sourceId: "legacy-role-without-parent",
+        sourceOrgType: 32,
+        sourceParentName: undefined
+      })
+    ]);
+    const client = new SearchClient({
+      不存在岗位: []
+    }, {
+      [SIT_FALLBACK_PARTICIPANT_ID]: [currentOrg({
+        fdId: SIT_FALLBACK_PARTICIPANT_ID,
+        fdName: "SIT 临时审批人",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: NEWOA_SIT_BASE_URL
+    });
+
+    assert.deepEqual(
+      result.dsl.workflow.nodes[1].participants.members.map(({ id, name, targetOrgType }) => ({
+        id,
+        name,
+        targetOrgType
+      })),
+      [
+        { id: SIT_FALLBACK_PARTICIPANT_ID, name: "SIT 临时审批人", targetOrgType: 8 }
+      ]
+    );
+    assert.equal(result.fallbackCount, 2);
+    assert.equal(result.fallbackIdentityCount, 2);
+    assert.equal(result.fallbackTargetId, SIT_FALLBACK_PARTICIPANT_ID);
+    assert.deepEqual(client.calls, ["不存在岗位"]);
+    assert.deepEqual(client.elementCalls, [[SIT_FALLBACK_PARTICIPANT_ID]]);
+  });
+
+  it("does not partially apply the SIT fallback when another identity is ambiguous", async () => {
+    const dsl = dslWithExplicitMembers([
+      sourceMember({
+        name: "不存在岗位",
+        sourceId: "legacy-post-missing",
+        sourceOrgType: 4,
+        sourceParentName: "采购部"
+      }),
+      sourceMember({
+        name: "重复岗位",
+        sourceId: "legacy-post-ambiguous",
+        sourceOrgType: 4,
+        sourceParentName: "采购部"
+      })
+    ]);
+    const client = new SearchClient({
+      不存在岗位: [],
+      重复岗位: [
+        currentOrg({ fdId: "post-a", fdName: "重复岗位", fdOrgType: 4, fdParentName: "采购部" }),
+        currentOrg({ fdId: "post-b", fdName: "重复岗位", fdOrgType: 4, fdParentName: "采购部" })
+      ]
+    }, {
+      [SIT_FALLBACK_PARTICIPANT_ID]: [currentOrg({
+        fdId: SIT_FALLBACK_PARTICIPANT_ID,
+        fdName: "SIT 临时审批人",
+        fdOrgType: 8
+      })]
+    });
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: NEWOA_SIT_BASE_URL
+      }),
+      (error) => {
+        assert.equal(error instanceof ParticipantResolutionError, true);
+        assert.deepEqual(error.issues.map((issue) => issue.reason), ["not_found", "ambiguous"]);
+        return true;
+      }
+    );
+    assert.deepEqual(client.elementCalls, []);
+  });
+
+  it("keeps unresolved identities blocking outside the exact NewOA SIT origin", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "不存在岗位",
+      sourceId: "legacy-post-missing",
+      sourceOrgType: 4,
+      sourceParentName: "采购部"
+    })]);
+    const client = new SearchClient({ 不存在岗位: [] }, {
+      [SIT_FALLBACK_PARTICIPANT_ID]: [currentOrg({
+        fdId: SIT_FALLBACK_PARTICIPANT_ID,
+        fdName: "SIT 临时审批人",
+        fdOrgType: 8
+      })]
+    });
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: "https://p-sit.onewo.com:8443"
+      }),
+      (error) => {
+        assert.deepEqual(error.issues.map((issue) => issue.reason), ["not_found"]);
+        return true;
+      }
+    );
+    assert.deepEqual(client.elementCalls, []);
+  });
+
+  it("requires the configured SIT fallback fdId to resolve to a current person", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "不存在岗位",
+      sourceId: "legacy-post-missing",
+      sourceOrgType: 4,
+      sourceParentName: "采购部"
+    })]);
+    const client = new SearchClient({ 不存在岗位: [] }, {
+      [SIT_FALLBACK_PARTICIPANT_ID]: [currentOrg({
+        fdId: SIT_FALLBACK_PARTICIPANT_ID,
+        fdName: "错误的岗位目标",
+        fdOrgType: 4
+      })]
+    });
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: NEWOA_SIT_BASE_URL
+      }),
+      (error) => {
+        assert.deepEqual(error.issues.map((issue) => issue.reason), ["fallback_target_not_person"]);
+        return true;
+      }
+    );
+  });
+
+  it("does not hide malformed source identities behind the SIT fallback", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "",
+      sourceId: "legacy-person-without-name",
+      sourceOrgType: 8,
+      sourceParentName: "采购部"
+    })]);
+    const client = new SearchClient({}, {
+      [SIT_FALLBACK_PARTICIPANT_ID]: [currentOrg({
+        fdId: SIT_FALLBACK_PARTICIPANT_ID,
+        fdName: "SIT 临时审批人",
+        fdOrgType: 8
+      })]
+    });
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: NEWOA_SIT_BASE_URL
+      }),
+      (error) => {
+        assert.deepEqual(error.issues.map((issue) => issue.reason), ["missing_source_evidence"]);
+        assert.deepEqual(error.issues[0].missing, ["name"]);
+        return true;
+      }
+    );
+    assert.deepEqual(client.elementCalls, []);
+  });
+
+  it("does not treat organization API failures as SIT not-found results", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "查询失败的审批人",
+      sourceId: "legacy-search-failure",
+      sourceOrgType: 8,
+      sourceParentName: "采购部"
+    })]);
+    const client = new SearchClient({}, {
+      [SIT_FALLBACK_PARTICIPANT_ID]: [currentOrg({
+        fdId: SIT_FALLBACK_PARTICIPANT_ID,
+        fdName: "SIT 临时审批人",
+        fdOrgType: 8
+      })]
+    });
+    client.searchOrg = async () => {
+      throw new Error("organization API unavailable");
+    };
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: NEWOA_SIT_BASE_URL
+      }),
+      (error) => {
+        assert.deepEqual(error.issues.map((issue) => issue.reason), ["search_failed"]);
+        return true;
+      }
+    );
+    assert.deepEqual(client.elementCalls, []);
+  });
+
   it("resolves explicit people and posts from current NewOA evidence and caches repeated identities", async () => {
     const dsl = dslWithExplicitMembers([
       sourceMember({
@@ -60,13 +269,11 @@ describe("resolveWorkflowParticipants", () => {
 
     assert.deepEqual(members.map(({ id, name, targetOrgType }) => ({ id, name, targetOrgType })), [
       { id: "new-person-1", name: "张三（现用名）", targetOrgType: 8 },
-      { id: "new-post-1", name: "采购岗", targetOrgType: 4 },
-      { id: "new-person-1", name: "张三（现用名）", targetOrgType: 8 }
+      { id: "new-post-1", name: "采购岗", targetOrgType: 4 }
     ]);
     assert.deepEqual(members.map((member) => member.sourceId), [
       "legacy-person-1",
-      "legacy-post-1",
-      "legacy-person-1"
+      "legacy-post-1"
     ]);
     assert.deepEqual(
       result.dsl.workflow.nodes[1].participants.alternativeMembers.map(({ id, name, targetOrgType }) => ({ id, name, targetOrgType })),
@@ -142,7 +349,7 @@ describe("resolveWorkflowParticipants", () => {
     assert.equal(result.dsl.workflow.nodes[1].participants.members[0].id, "current-target-id");
     assert.deepEqual(
       result.dsl.workflow.nodes[1].participants.members.map((member) => member.targetOrgType),
-      [8, 8]
+      [8]
     );
     assert.equal(result.identityCount, 1);
     assert.equal(result.resolvedCount, 0);
@@ -215,9 +422,105 @@ describe("resolveWorkflowParticipants", () => {
     assert.deepEqual(client.calls, ["不存在岗位", "重复岗位"]);
     assert.deepEqual(client.elementCalls, [["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]]);
   });
+
+  localCorpusIt("replaces every unresolved source 167 participant reference on NewOA SIT", async () => {
+    const dsl = draftSourceDraft(cleanSourceFile(
+      "tests/fixtures/source/1670297c984b45009eb5b1e444d9957d"
+    ));
+    const sourceReferenceCount = dsl.workflow.nodes.reduce((count, node) => (
+      count +
+      (node.participants?.members || []).length +
+      (node.participants?.alternativeMembers || []).length
+    ), 0);
+    const client = new SearchClient({}, {
+      [SIT_FALLBACK_PARTICIPANT_ID]: [currentOrg({
+        fdId: SIT_FALLBACK_PARTICIPANT_ID,
+        fdName: "SIT 临时审批人",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: NEWOA_SIT_BASE_URL
+    });
+    const collections = result.dsl.workflow.nodes.flatMap((node) => [
+      node.participants?.members,
+      node.participants?.alternativeMembers
+    ]).filter(Array.isArray);
+    const references = collections.flat();
+    const n210 = result.dsl.workflow.nodes.find((node) => node.id === "N210");
+    const n378 = result.dsl.workflow.nodes.find((node) => node.id === "N378");
+    assert.equal(result.identityCount, 57);
+    assert.equal(result.fallbackIdentityCount, 57);
+    assert.equal(result.fallbackCount, 326);
+    assert.equal(sourceReferenceCount, 326);
+    assert.equal(references.every((member) => member.id === SIT_FALLBACK_PARTICIPANT_ID), true);
+    assert.equal(collections.every((members) => (
+      new Set(members.map((member) => member.id)).size === members.length
+    )), true);
+    assert.equal(n210.participants.members.length, 1);
+    assert.equal(n378.participants.alternativeMembers.length, 1);
+    assert.deepEqual(client.elementCalls, [[SIT_FALLBACK_PARTICIPANT_ID]]);
+  });
 });
 
 describe("executeDsl participant resolution seam", () => {
+  it("reports and persists the temporary participant fallback on NewOA SIT", async () => {
+    const dsl = dslWithExplicitMembers([
+      sourceMember({
+        name: "当前 SIT 不存在的审批人",
+        sourceId: "legacy-person-not-in-sit",
+        sourceOrgType: 8,
+        sourceParentName: "源系统部门"
+      })
+    ]);
+    dsl.workflow.nodes[1].attributes = {
+      handlerIds: "legacy-person-not-in-sit",
+      handlerNames: "当前 SIT 不存在的审批人",
+      handlerSelectType: "org"
+    };
+    const client = new CompleteSearchClient({}, {
+      [SIT_FALLBACK_PARTICIPANT_ID]: [currentOrg({
+        fdId: SIT_FALLBACK_PARTICIPANT_ID,
+        fdName: "SIT 临时审批人",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await executeDsl(dsl, {
+      client,
+      credentials: { username: "route-user", encryptedPassword: "route-password" },
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      baseUrl: NEWOA_SIT_BASE_URL,
+      now: new Date("2026-07-10T10:00:00.000Z")
+    });
+    const workflow = JSON.parse(client.savedTemplate.mechanisms.lbpmTemplate[0].fdContent);
+    const reviewNode = workflow.elements.find((element) => element.id === "N-review");
+    const members = reviewNode.handlers.members;
+    const stage = result.apiStages.find((item) => item.name === "resolveWorkflowParticipants");
+
+    assert.equal(result.ok, true);
+    assert.equal(result.status, "written_with_warnings");
+    assert.deepEqual(members, [{
+      id: SIT_FALLBACK_PARTICIPANT_ID,
+      name: "SIT 临时审批人",
+      element: "user",
+      type: "1"
+    }]);
+    assert.equal(reviewNode.handlerIds, SIT_FALLBACK_PARTICIPANT_ID);
+    assert.equal(reviewNode.handlerNames, "SIT 临时审批人");
+    assert.equal(JSON.stringify(reviewNode.handlers).includes("legacy-person-not-in-sit"), false);
+    assert.equal(stage.fallbackCount, 1);
+    assert.equal(stage.fallbackIdentityCount, 1);
+    assert.equal(stage.fallbackTargetId, SIT_FALLBACK_PARTICIPANT_ID);
+    assert.equal(
+      result.diagnostics.some((item) => item.code === "workflow.participant_sit_fallback_applied"),
+      true
+    );
+  });
+
   it("projects current NewOA participant ids instead of the source ids", async () => {
     const dsl = dslWithExplicitMembers([
       sourceMember({

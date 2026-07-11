@@ -35,11 +35,30 @@ export async function executeDsl(input, options = {}) {
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
     apiStages.push({ name: "resolveWorkflowParticipants", status: "started" });
-    const participantResolution = await resolveWorkflowParticipants(input, { client });
+    const participantResolution = await resolveWorkflowParticipants(input, {
+      client,
+      targetBaseUrl: baseUrl
+    });
     executableDsl = participantResolution.dsl;
     apiStages[apiStages.length - 1].status = "ok";
     apiStages[apiStages.length - 1].resolvedCount = participantResolution.resolvedCount;
     apiStages[apiStages.length - 1].identityCount = participantResolution.identityCount;
+    if (participantResolution.fallbackCount > 0) {
+      apiStages[apiStages.length - 1].fallbackCount = participantResolution.fallbackCount;
+      apiStages[apiStages.length - 1].fallbackIdentityCount = participantResolution.fallbackIdentityCount;
+      apiStages[apiStages.length - 1].fallbackTargetId = participantResolution.fallbackTargetId;
+      diagnostics.push({
+        level: "warning",
+        code: "workflow.participant_sit_fallback_applied",
+        message: "Unresolved source workflow participants were replaced with the configured NewOA SIT fallback participant.",
+        path: "/workflow/participants",
+        details: {
+          referenceCount: participantResolution.fallbackCount,
+          identityCount: participantResolution.fallbackIdentityCount,
+          targetFdId: participantResolution.fallbackTargetId
+        }
+      });
+    }
     apiStages.push({ name: "init", status: "started" });
     const baseTemplate = await client.initTemplate();
     apiStages[apiStages.length - 1].status = "ok";

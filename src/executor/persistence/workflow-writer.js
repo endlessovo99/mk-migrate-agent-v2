@@ -413,8 +413,8 @@ function buildArtificialNode(node, type, context = {}) {
     relateId: node.id,
     cooperateType: attrs.processType || "2",
     ignoreOnSameIdentity: normalizeSameIdentity(attrs.ignoreOnHandlerSame),
-    handlerIds: attrs.handlerIds || node.participants?.sourceExpression || "",
-    handlerNames: attrs.handlerNames || node.participants?.sourceNameExpression || "",
+    handlerIds: nativeHandlerIds(node.participants, attrs),
+    handlerNames: nativeHandlerNames(node.participants, attrs),
     handlerSelectType: node.participants?.mode === "form_field" || node.participants?.mode === "role_line"
       ? "formula"
       : attrs.handlerSelectType,
@@ -1376,6 +1376,20 @@ function handlersFromParticipants(participants, attrs, context = {}) {
     return emptyOrgHandlers();
   }
   return handlersFromAttributes(attrs);
+}
+
+function nativeHandlerIds(participants, attrs) {
+  if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
+    return participants.members.map((member) => member.id).filter(Boolean).join(";");
+  }
+  return attrs.handlerIds || participants?.sourceExpression || "";
+}
+
+function nativeHandlerNames(participants, attrs) {
+  if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
+    return participants.members.map((member) => member.name || member.id).filter(Boolean).join(";");
+  }
+  return attrs.handlerNames || participants?.sourceNameExpression || "";
 }
 
 function nativeExplicitMemberType(member = {}) {

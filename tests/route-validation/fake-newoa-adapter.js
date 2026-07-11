@@ -4,6 +4,7 @@ import { appendTranscriptEntry, sanitizedTranscript } from "./transcript.js";
 
 const CREATED_TEMPLATE_ID = "route-created-template";
 const CREATED_WORKFLOW_TEMPLATE_ID = "route-created-workflow-template";
+const SIT_FALLBACK_PARTICIPANT_ID = "1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0";
 
 export class FakeNewoaAdapter {
   constructor(scenario) {
@@ -22,11 +23,16 @@ export class FakeNewoaAdapter {
     return { ok: true };
   }
 
+  async searchOrg(key) {
+    this.record({ operation: "search-org", key });
+    return [];
+  }
+
   async getElementInfo(targets) {
     this.record({ operation: "get-element-info", targets: clone(targets) });
     return targets.map((fdId) => ({
       fdId,
-      fdName: fdId === "route-reviewer" ? "Route Reviewer" : fdId,
+      fdName: fdId === SIT_FALLBACK_PARTICIPANT_ID ? "SIT Fallback Reviewer" : fdId,
       fdOrgType: 8
     }));
   }

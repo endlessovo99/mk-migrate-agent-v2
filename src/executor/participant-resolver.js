@@ -1,4 +1,7 @@
 const PARTICIPANT_RESOLUTION_STAGE = "resolveWorkflowParticipants";
+const NEWOA_SIT_ORIGIN = "https://p-sit.onewo.com";
+const SIT_FALLBACK_PARTICIPANT_ID = "1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0";
+const SIT_FALLBACK_REASONS = new Set(["not_found", "missing_source_evidence"]);
 
 export class ParticipantResolutionError extends Error {
   constructor(issues, options = {}) {
@@ -14,14 +17,16 @@ export class ParticipantResolutionError extends Error {
   }
 }
 
-export async function resolveWorkflowParticipants(dsl, { client } = {}) {
+export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl } = {}) {
   const nextDsl = structuredClone(dsl);
   const identities = collectParticipantIdentities(nextDsl);
   if (identities.size === 0) {
     return {
       dsl: nextDsl,
       resolvedCount: 0,
-      identityCount: 0
+      identityCount: 0,
+      fallbackCount: 0,
+      fallbackIdentityCount: 0
     };
   }
   const capabilityIssues = requiredClientCapabilityIssues(identities, client);
@@ -48,26 +53,131 @@ export async function resolveWorkflowParticipants(dsl, { client } = {}) {
     })
   );
 
+  const unresolvedResolutions = resolutions.filter((resolution) => resolution.issue);
+  const fallbackResolutions = isSitTarget(targetBaseUrl)
+    ? unresolvedResolutions.filter(isSitFallbackEligible)
+    : [];
+  const fallbackResolutionSet = new Set(fallbackResolutions);
+  const blockingResolutions = unresolvedResolutions.filter((resolution) => !fallbackResolutionSet.has(resolution));
+  if (blockingResolutions.length) {
+    throw new ParticipantResolutionError(unresolvedResolutions.map((resolution) => resolution.issue));
+  }
+  if (fallbackResolutions.length) {
+    const fallbackTarget = await resolveSitFallbackTarget(client, elementCache, fallbackResolutions);
+    for (const resolution of fallbackResolutions) {
+      resolution.target = fallbackTarget;
+      resolution.fallback = true;
+      resolution.issue = undefined;
+    }
+  }
+
   const issues = resolutions.flatMap((resolution) => resolution.issue ? [resolution.issue] : []);
   if (issues.length) {
     throw new ParticipantResolutionError(issues);
   }
 
   let resolvedCount = 0;
+  let fallbackCount = 0;
   for (const resolution of resolutions) {
     for (const member of resolution.members) {
       member.id = resolution.target.fdId;
       member.name = resolution.target.fdName;
       member.targetOrgType = resolution.target.fdOrgType;
       if (resolution.kind === "source") resolvedCount += 1;
+      if (resolution.fallback) fallbackCount += 1;
     }
   }
+  deduplicateResolvedParticipantCollections(nextDsl);
 
   return {
     dsl: nextDsl,
     resolvedCount,
-    identityCount: identities.size
+    identityCount: identities.size,
+    fallbackCount,
+    fallbackIdentityCount: fallbackResolutions.length,
+    ...(fallbackCount ? { fallbackTargetId: SIT_FALLBACK_PARTICIPANT_ID } : {})
   };
+}
+
+function deduplicateResolvedParticipantCollections(dsl) {
+  const nodes = Array.isArray(dsl?.workflow?.nodes) ? dsl.workflow.nodes : [];
+  for (const node of nodes) {
+    const participants = node?.participants;
+    if (!participants || typeof participants !== "object") continue;
+    for (const collectionName of ["members", "alternativeMembers"]) {
+      if (!Array.isArray(participants[collectionName])) continue;
+      const seen = new Set();
+      participants[collectionName] = participants[collectionName].filter((member) => {
+        const id = normalizeText(member?.id);
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+    }
+  }
+}
+
+function isSitFallbackEligible(resolution) {
+  if (resolution.kind !== "source" || !SIT_FALLBACK_REASONS.has(resolution.issue?.reason)) return false;
+  if (resolution.issue.reason === "not_found") return true;
+  return Array.isArray(resolution.issue.missing) &&
+    resolution.issue.missing.length > 0 &&
+    resolution.issue.missing.every((field) => field === "sourceParentName");
+}
+
+async function resolveSitFallbackTarget(client, elementCache, resolutions) {
+  const paths = resolutions.flatMap((resolution) => resolution.paths);
+  if (typeof client?.getElementInfo !== "function") {
+    throw new ParticipantResolutionError([{
+      reason: "fallback_validation_unavailable",
+      targetId: SIT_FALLBACK_PARTICIPANT_ID,
+      paths,
+      message: "NewOA client does not provide fallback participant validation."
+    }]);
+  }
+
+  try {
+    const validation = await validateCurrentTargetIdentity({
+      kind: "target",
+      member: { id: SIT_FALLBACK_PARTICIPANT_ID, name: "SIT fallback participant" },
+      members: [],
+      paths
+    }, client, elementCache);
+    if (validation.issue) {
+      throw new ParticipantResolutionError([{
+        ...validation.issue,
+        reason: "fallback_target_not_found",
+        targetId: SIT_FALLBACK_PARTICIPANT_ID,
+        paths
+      }]);
+    }
+    if (normalizeOrgType(validation.target.fdOrgType) !== "8") {
+      throw new ParticipantResolutionError([{
+        reason: "fallback_target_not_person",
+        targetId: SIT_FALLBACK_PARTICIPANT_ID,
+        targetOrgType: validation.target.fdOrgType,
+        paths
+      }]);
+    }
+    return validation.target;
+  } catch (error) {
+    if (error instanceof ParticipantResolutionError) throw error;
+    throw new ParticipantResolutionError([{
+      reason: "fallback_validation_failed",
+      targetId: SIT_FALLBACK_PARTICIPANT_ID,
+      paths,
+      message: error instanceof Error ? error.message : String(error)
+    }], { cause: error });
+  }
+}
+
+function isSitTarget(value) {
+  try {
+    const url = new URL(value);
+    return url.origin.toLowerCase() === NEWOA_SIT_ORIGIN;
+  } catch {
+    return false;
+  }
 }
 
 function collectParticipantIdentities(dsl) {

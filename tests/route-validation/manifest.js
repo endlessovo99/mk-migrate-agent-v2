@@ -16,6 +16,7 @@ const SUCCESS_OPERATIONS = Object.freeze([
 
 const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
+  "search-org",
   "get-element-info",
   ...SUCCESS_OPERATIONS.slice(1, -1),
   "save-workflow-draft",

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { runRouteCase } from "./run-route-case.js";
 
+const SIT_FALLBACK_PARTICIPANT_ID = "1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0";
+
 describe("offline Route-validation", { concurrency: false }, () => {
   it("executes a form-only source through the public migration route", async () => {
     const result = await runRouteCase("form-only-success");
@@ -43,6 +45,26 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(result.execution.status, "written_with_warnings");
     assert.equal(result.execution.readback.workflow.nodeCount, 3);
     assert.equal(result.execution.readback.workflow.edgeCount, 2);
+    assert.deepEqual(
+      result.execution.apiStages.find((stage) => stage.name === "resolveWorkflowParticipants"),
+      {
+        name: "resolveWorkflowParticipants",
+        status: "ok",
+        resolvedCount: 1,
+        identityCount: 1,
+        fallbackCount: 1,
+        fallbackIdentityCount: 1,
+        fallbackTargetId: SIT_FALLBACK_PARTICIPANT_ID
+      }
+    );
+    assert.equal(
+      result.execution.diagnostics.some((item) => item.code === "workflow.participant_sit_fallback_applied"),
+      true
+    );
+    assert.deepEqual(
+      result.transcript.find((entry) => entry.operation === "get-element-info"),
+      { operation: "get-element-info", targets: [SIT_FALLBACK_PARTICIPANT_ID] }
+    );
     assert.deepEqual(
       result.transcript.find((entry) => entry.operation === "get-workflow-detail"),
       {

@@ -115,3 +115,5 @@ node src/cli/main.js execute migration.dsl.json \
 ```
 
 The executor logs in through `/data/sys-auth/login`, then uses `kmReviewTemplate/add`, `kmReviewTemplate/get`, and `kmReviewTemplate/update`. It creates a new `MK_TEST_...` draft template and does not publish, delete, update existing templates, create categories, or batch execute.
+
+Temporary SIT participant policy: only when the exact target origin is `https://p-sit.onewo.com`, source workflow participants that resolve as `not_found` or whose only missing lookup evidence is `sourceParentName` are replaced with current person `1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0`. The executor validates that fdId through `getElementInfo`, writes a `workflow.participant_sit_fallback_applied` warning with replacement counts, and keeps ambiguous identities, malformed source identities, API failures, non-person fallback targets, and non-SIT targets blocking.
