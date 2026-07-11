@@ -47,8 +47,13 @@ describe("source directory stages", () => {
     assert.equal(action.controlId, "fd_371229d0cbd2cc");
     assert.equal(action.translationStatus, "needs_review");
     assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
-    assert.equal(action.coverage.status, "uncovered");
-    assert.deepEqual(action.coverage.nativeRules, []);
+    assert.equal(action.coverage.status, "covered");
+    assert.deepEqual(action.coverage.nativeRules, [
+      "linkage.fd_371229d0cbd2cc.contains.sb",
+      "linkage.fd_371229d0cbd2cc.contains.hc",
+      "linkage.fd_371229d0cbd2cc.contains.wx",
+      "linkage.fd_371229d0cbd2cc.contains.wb"
+    ]);
     assert.equal(action.functionMappings.some((mapping) => mapping.source === "GetXFormFieldById"), true);
 
     assert.equal(detailActions.length, 2);
@@ -203,7 +208,7 @@ describe("source directory stages", () => {
     assert.equal(draftNodes.get("N813").participants.useAlternativeOnly, true);
   });
 
-  localCorpusIt("preserves edit-gate evidence while excluding detail-table linkage from native form rules", () => {
+  localCorpusIt("preserves edit-gate evidence while lowering detail-table linkage to native form rules", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const markerRefs = Object.fromEntries(
@@ -221,8 +226,8 @@ describe("source directory stages", () => {
     assert.deepEqual(markerRefs.fd_over_budget_row, ["fd_37122b7cb12b7e"]);
 
     assert.equal(sourceDraft.formRules.linkage.length, 6);
-    assert.equal(dslDraft.formRules.linkage.length, 2);
-    assert.equal(dslDraft.formRules.review.excludedRules.length, 4);
+    assert.equal(dslDraft.formRules.linkage.length, 6);
+    assert.equal((dslDraft.formRules.review.excludedRules || []).length, 0);
     assert.equal(sourceDraft.formRules.linkage.every((rule) => rule.meta.displayGate === "xform:editShow"), true);
     assert.equal(
       dslDraft.scripts.actions
@@ -244,10 +249,7 @@ describe("source directory stages", () => {
 
     const refIndex = buildFormRuleRefIndex(dslDraft.form);
     assert.deepEqual(resolveEffectTarget(refIndex, "prefixed_row")?.targets.map((target) => target.id), ["fd_prefixed"]);
-    assert.deepEqual(resolveEffectTarget(refIndex, "detail_row")?.targets.map((target) => target.id), [
-      "fd_detail_name",
-      "fd_detail_count"
-    ]);
+    assert.deepEqual(resolveEffectTarget(refIndex, "detail_row")?.targets.map((target) => target.id), ["fd_detail"]);
   });
 
   it("keeps generated description field ids within the MK 25-character limit", () => {
@@ -485,14 +487,15 @@ describe("source directory stages", () => {
     assert.equal(fwqDescription.props.content.includes("废木质品"), true);
   });
 
-  localCorpusIt("keeps hidden-helper JSP row scripts reviewable when their native rule is excluded", () => {
+  localCorpusIt("keeps hidden-helper JSP row scripts reviewable after native row-rule lowering", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const actionsById = new Map(dslDraft.scripts.actions.map((action) => [action.id, action]));
 
     assert.equal(sourceDraft.formRules.linkage.length, 1);
-    assert.deepEqual(dslDraft.formRules.linkage, []);
-    assert.equal(dslDraft.formRules.review.excludedRules.length, 1);
+    assert.equal(dslDraft.formRules.linkage.length, 1);
+    assert.equal(dslDraft.formRules.linkage[0].id, "linkage.fd_376d6cbc433bfe.contains.A");
+    assert.equal((dslDraft.formRules.review.excludedRules || []).length, 0);
 
     const rowRuleAction = actionsById.get("fd_3a0a0882cb93b0.script.1.event.1");
     assert.equal(rowRuleAction.translationStatus, "needs_review");
@@ -500,9 +503,10 @@ describe("source directory stages", () => {
     assert.equal(rowRuleAction.event, "onChange");
     assert.equal(rowRuleAction.controlId, "fd_376d6cbc433bfe");
     assert.deepEqual(rowRuleAction.runWhen, { viewStatusIn: ["add", "edit"] });
-    assert.equal(rowRuleAction.coverage.status, "uncovered");
-    assert.deepEqual(rowRuleAction.coverage.nativeRules, []);
-    assert.equal(rowRuleAction.coverage.residuals.some((item) => item.code === "script.residual.form_rule_needs_review"), true);
+    assert.equal(rowRuleAction.coverage.status, "partial");
+    assert.deepEqual(rowRuleAction.coverage.nativeRules, ["linkage.fd_376d6cbc433bfe.contains.A"]);
+    assert.equal(rowRuleAction.coverage.residuals.some((item) => item.code === "script.residual.field_value_assignment"), true);
+    assert.equal(rowRuleAction.coverage.residuals.some((item) => item.code === "script.residual.form_rule_needs_review"), false);
 
     assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").translationStatus, "needs_review");
     assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").runWhen, undefined);

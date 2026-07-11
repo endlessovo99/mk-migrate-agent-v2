@@ -91,7 +91,7 @@ function buildBranch(rule, ruleId, branch, conditionItems, effects, formIndex, n
     for (const target of targets) {
       if (effect.type === "visible") {
         const result = buildDisplayResult(target, effect.value !== false, ruleId, branch, effectIndex);
-        const key = `${result.fieldName}:${result.tableType}:${result.displayFlag}`;
+        const key = `${JSON.stringify(result.fieldName)}:${result.tableType}:${result.type}:${result.displayFlag}`;
         if (displayKeys.has(key)) continue;
         displayKeys.add(key);
         displayResults.push(result);
@@ -171,6 +171,9 @@ function resolveNativeTargets(ref, formIndex, nativeIndex) {
 }
 
 function nativeTargetForDslTarget(target, nativeIndex) {
+  if (target?.kind === "detailTable" && nativeIndex.byDetailTable?.has(target.id)) {
+    return nativeIndex.byDetailTable.get(target.id);
+  }
   const keys = target.parentId ? [`${target.parentId}.${target.id}`, target.id] : [target.id];
   for (const key of keys) {
     if (nativeIndex.byRef.has(key)) return nativeIndex.byRef.get(key);
@@ -179,7 +182,24 @@ function nativeTargetForDslTarget(target, nativeIndex) {
 }
 
 function buildDisplayResult(target, visible, ruleId, branch, effectIndex) {
-  const seed = `${ruleId}:${branch}:display:${effectIndex}:${target.tableType}:${target.fieldName}`;
+  const seed = `${ruleId}:${branch}:display:${effectIndex}:${target.tableType}:${Array.isArray(target.fieldName) ? target.fieldName[0] : target.fieldName}`;
+  if (target.isDetailTableContainer) {
+    const columns = Array.isArray(target.columns) ? target.columns : [];
+    return {
+      fieldName: ["all", ...columns.map((column) => column.fieldName)],
+      fieldKey: [null, ...columns.map((column) => column.fieldKey)],
+      label: ["----", ...columns.map((column) => column.label)],
+      tableType: "detail",
+      type: target.tableName,
+      displayFlag: visible ? "display" : "hide",
+      title: "",
+      fieldID: stableId("result-field", seed),
+      actionID: stableId("result-action", seed),
+      tID: stableId("result-table", seed),
+      tableTypeID: stableId("result-table-type", seed),
+      required: ""
+    };
+  }
   return {
     fieldName: target.fieldName,
     fieldKey: target.fieldKey,
@@ -216,18 +236,27 @@ function buildRequireResult(target, required, ruleId, branch, effectIndex) {
 
 function buildNativeFieldIndex(dataModels = []) {
   const byRef = new Map();
+  const byDetailTable = new Map();
 
   for (const model of dataModels) {
-    const tableFieldName = model?.dynamicProps?.detailFieldName;
+    const tableFieldName = model?.dynamicProps?.detailFieldName || detailFieldNameFromTable(model?.fdTableName);
     const isDetail = model?.fdType === "detail";
     const fields = (model?.fdFields || []).filter((field) => field?.fdName && !field.fdIsSystem);
+    const columns = [];
 
     for (const field of fields) {
       const controlProps = parseJsonObject(field.fdAttribute).config?.controlProps || {};
+      const column = {
+        fieldName: field.fdName,
+        fieldKey: controlProps.id || controlProps.name || field.fdName,
+        label: field.fdLabel || controlProps.title || field.fdName
+      };
+      if (isDetail) columns.push(column);
+
       const ref = {
         fieldName: field.fdName,
         fieldKey: controlProps.name || field.fdName,
-        label: field.fdLabel || controlProps.title || field.fdName,
+        label: column.label,
         tableType: model.fdType || (isDetail ? "detail" : "main"),
         type: isDetail ? model.fdTableName : "main",
         tableName: model.fdTableName,
@@ -238,9 +267,33 @@ function buildNativeFieldIndex(dataModels = []) {
       if (isDetail && tableFieldName) addRef(byRef, `${tableFieldName}.${field.fdName}`, ref);
       if (isDetail && model.fdTableName) addRef(byRef, `${model.fdTableName}.${field.fdName}`, ref);
     }
+
+    if (isDetail && tableFieldName) {
+      const containerRef = {
+        fieldName: tableFieldName,
+        fieldKey: tableFieldName,
+        label: model.fdName || tableFieldName,
+        tableType: "main",
+        type: "main",
+        tableName: model.fdTableName,
+        isDetailTableContainer: true,
+        columns,
+        model
+      };
+      addRef(byDetailTable, tableFieldName, containerRef);
+      addRef(byRef, tableFieldName, containerRef);
+      if (model.fdTableName) addRef(byRef, model.fdTableName, containerRef);
+    }
   }
 
-  return { byRef };
+  return { byRef, byDetailTable };
+}
+
+function detailFieldNameFromTable(tableName) {
+  const normalized = typeof tableName === "string" ? tableName.trim() : "";
+  if (!normalized.startsWith("mk_model_")) return undefined;
+  const fieldName = normalized.slice("mk_model_".length);
+  return fieldName || undefined;
 }
 
 function invertClauses(clauses) {

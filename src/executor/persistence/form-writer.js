@@ -4,6 +4,8 @@ import {
   summarizeNativeFormRuleConfig
 } from "./form-rules-writer.js";
 import { COMPONENTS_BY_ID } from "../../dsl/catalogs.js";
+import { packLayoutCells } from "../../dsl/layout-pack.js";
+import { detailTableNameFor } from "./detail-table-names.js";
 
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
@@ -19,7 +21,7 @@ export function applyFormPayload(template, dsl) {
   const config = parseJsonObject(xform.fdConfig || "{}");
   const summary = summarizeDslForm(form, dsl.formRules);
   const mainModel = buildMainModel(next, xform, config, form);
-  const detailModels = buildDetailModels(next, form);
+  const detailModels = buildDetailModels(next, form, mainModel);
   const dataModels = [mainModel, ...detailModels];
   const detailModelsByField = new Map(
     detailModels.map((model) => [model.dynamicProps?.detailFieldName, model]).filter(([fieldId]) => Boolean(fieldId))
@@ -33,11 +35,7 @@ export function applyFormPayload(template, dsl) {
   });
   const nativeFormRules = buildNativeFormRuleConfig(dsl.formRules, form, dataModels);
   const formAttr = {
-    subjectRule: {
-      script: "${data.biz.fdSubject}",
-      type: "Eval",
-      vo: { content: "$标题$", mode: "formula" }
-    },
+    subjectRule: {},
     formRule: mergeNativeFormRules(existingFormAttr.formRule || { pattern: {} }, nativeFormRules),
     dataUnique: existingFormAttr.dataUnique || {},
     controlAction,
@@ -446,11 +444,11 @@ function buildMainModel(template, xform, config, form) {
   return main;
 }
 
-function buildDetailModels(template, form) {
+function buildDetailModels(template, form, mainModel) {
   return (form.fields || [])
     .filter((field) => field.type === "detailTable")
     .map((field) => {
-      const tableName = tableNameFor(field.id);
+      const tableName = detailTableNameFor(mainModel.fdTableName, field.id);
       const model = {
         fdId: stableHexId(`${template.fdId}:detail:${field.id}`),
         dynamicProps: { detailFieldName: field.id },
@@ -477,18 +475,21 @@ function buildDetailModels(template, form) {
 function canonicalField(field, template, model, order, tableType) {
   const spec = componentSpec(field);
   const fdLength = fieldLengthFromDsl(field, spec);
+  const isDescription = spec.attrType === "desc";
   return {
     fdId: stableHexId(`${template.fdId}:${model.fdTableName}:${field.id}:${order}`),
     fdLabel: field.title,
     fdName: field.id,
-    fdColumn: `fd_${field.id}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48),
+    ...(tableType === "main"
+      ? { fdColumn: `fd_${field.id}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48) }
+      : {}),
     fdType: spec.fdType,
     fdAttribute: JSON.stringify(fieldAttribute(field, template, model.fdTableName, tableType, spec)),
     fdFontExtendData: JSON.stringify(fieldFontExtendData(field, template, spec)),
     fdDataType: spec.fdDataType,
     fdDictType: spec.fdDictType,
     ...(fdLength !== undefined ? { fdLength } : {}),
-    fdIsStored: true,
+    fdIsStored: !isDescription,
     fdIsIndex: false,
     fdIsSystem: false,
     fdIsDataTask: false,
@@ -496,12 +497,13 @@ function canonicalField(field, template, model, order, tableType) {
     fdOuterMapping: false,
     fdState: "notEffective",
     fdDataModel: { fdId: model.fdId, fdName: model.fdName },
-    fdMechanismType: tableType === "detail" ? "KmReviewDetail" : "SYS-XFORM",
+    fdMechanismType: "SYS-XFORM",
     fdOrder: order
   };
 }
 
 function fieldLengthFromDsl(field, spec) {
+  if (spec.attrType === "desc") return 0;
   if (spec.attrType === "textarea") {
     return textareaMaxLengthFromDsl(field);
   }
@@ -556,22 +558,37 @@ function fieldAttribute(field, template, tableName, tableType, spec) {
     controlProps.org = { types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"] };
   }
   if (spec.attrType === "desc") {
-    controlProps.content = field.props?.content || field.title;
+    const content = field.props?.content || field.title || "";
+    Object.assign(controlProps, {
+      defaultTextValue: content,
+      content,
+      alignDesc: "left",
+      maxLength: 0
+    });
+    delete controlProps.span;
   }
 
   applyContextDefaultToControlProps(controlProps, field, template, spec);
 
+  const isDescription = spec.attrType === "desc";
   return {
     uuid: field.id,
     config: {
       key: controlId,
-      type: spec.desktop,
+      type: isDescription ? "desc" : spec.desktop,
       controlProps,
       kind: "control",
       label: field.title,
-      labelProps: { desktop: {}, title: field.title, mobile: {} }
+      labelProps: isDescription
+        ? {
+            compose: true,
+            desktop: { hiddenLabel: true },
+            title: field.title,
+            mobile: { hiddenLabel: true }
+          }
+        : { desktop: {}, title: field.title, mobile: {} }
     },
-    env: ["xform"]
+    env: isDescription ? ["xform", "print"] : ["xform"]
   };
 }
 
@@ -794,8 +811,33 @@ function buildViewConfig(mainModel, form, detailModelsByField) {
       }
     },
     theme: {},
-    controlStyle: {}
+    controlStyle: buildControlStyle(form)
   };
+}
+
+function buildControlStyle(form = {}) {
+  const styles = {};
+  for (const field of form.fields || []) {
+    if (field.componentId !== "xform-description") continue;
+    const style = descriptionControlStyle(field);
+    if (!style) continue;
+    styles[field.id] = {
+      desktop: {
+        layout: "vertical",
+        controlValueStyle: style
+      }
+    };
+  }
+  return styles;
+}
+
+function descriptionControlStyle(field) {
+  const style = field.props?.style;
+  if (!style || typeof style !== "object" || Array.isArray(style)) return undefined;
+  const next = {};
+  if (typeof style.color === "string" && style.color.trim()) next.color = style.color.trim();
+  if (typeof style.fontWeight === "string" && style.fontWeight.trim()) next.fontWeight = style.fontWeight.trim();
+  return Object.keys(next).length ? next : undefined;
 }
 
 function appearanceNode(tableName, mainContainer) {
@@ -813,17 +855,19 @@ function buildRows(rows, detailModelsByField) {
 }
 
 function buildLayoutGridRow(row, detailModelsByField) {
-  const cells = row.children || [];
+  const packed = packLayoutCells(row.children || []);
+  const cells = packed.cells;
   const layoutId = `layout~${stableShortId(row.id)}`;
   const gridId = `@elem/layout-grid~${stableShortId(`${row.id}:grid`)}`;
-  const displayColumns = displayColumnCount(row);
+  const displayColumns = packed.columns;
+  const migrationRowId = migrationRowIdFor(row);
   return {
     key: layoutId,
     type: "layout",
     kind: "container",
     controlProps: {
       id: layoutId,
-      migrationRowId: row.id,
+      migrationRowId,
       migrationLayoutComponentId: row.componentId,
       migrationLayoutType: `@elem/${row.componentId}`,
       migrationSourceColumns: row.props?.sourceColumns || cells.length || 1,
@@ -850,6 +894,7 @@ function buildGridItem(row, cell, index, detailModelsByField) {
   const firstRefId = refIds[0];
   const itemId = `@elem/layout-grid.GridItem~${stableShortId(`${row.id}:${cell.id || firstRefId || index}`)}`;
   const detailModel = detailModelsByField.get(firstRefId);
+  const migrationRowId = migrationRowIdFor(row);
   const fieldRef = {
     key: detailModel?.fdTableName || firstRefId,
     migrationFieldId: firstRefId,
@@ -874,7 +919,7 @@ function buildGridItem(row, cell, index, detailModelsByField) {
       id: itemId,
       style: { backgroundColor: "" },
       // Audit-only markers; observers must not treat these as verification evidence.
-      migrationRowId: row.id,
+      migrationRowId,
       migrationFieldId: firstRefId,
       migrationFieldIds: refIds,
       migrationRefType: cell.refType,
@@ -885,11 +930,12 @@ function buildGridItem(row, cell, index, detailModelsByField) {
   };
 }
 
-function displayColumnCount(row) {
-  const cells = row.children || [];
-  if (Number.isInteger(row.props?.columns)) return row.props.columns;
-  if (cells.length <= 1) return 1;
-  return Math.max(1, Math.min(4, cells.length));
+/** Prefer layout sourceMarkers so MKXFORM.setFieldAttr(rowMarker) resolves at runtime. */
+function migrationRowIdFor(row = {}) {
+  const markers = Array.isArray(row.sourceMarkers)
+    ? row.sourceMarkers.map((marker) => String(marker || "").trim()).filter(Boolean)
+    : [];
+  return markers[0] || row.id;
 }
 
 function buildFieldAuth(mainModel, detailModels, form) {
@@ -898,7 +944,7 @@ function buildFieldAuth(mainModel, detailModels, form) {
     [...(mainModel.fdFields || []), ...detailModels.flatMap((model) => model.fdFields || [])]
       .map((field) => [field.fdName, {
         visible: true,
-        editable: !field.fdIsSystem,
+        editable: !field.fdIsSystem && field.fdType !== "desc",
         required: required.has(field.fdName),
         hide: false
       }])

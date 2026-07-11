@@ -24,6 +24,18 @@ const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "get-readback"
 ]);
 
+const CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
+  "login",
+  "search-org",
+  "get-element-info",
+  "search-org",
+  "get-element-info",
+  ...SUCCESS_OPERATIONS.slice(1, -1),
+  "save-workflow-draft",
+  "get-workflow-detail",
+  "get-readback"
+]);
+
 export const ROUTE_CASE_MANIFEST = deepFreeze({
   version: 1,
   cases: [
@@ -73,6 +85,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "needs_manual",
         executionStatus: "written_with_warnings",
         operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "conditional-detail-success",
+      source: {
+        kind: "paired",
+        relativePath: "conditional-detail"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS
       }
     },
     {

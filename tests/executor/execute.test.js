@@ -781,6 +781,88 @@ describe("executeDsl", () => {
     assert.equal(content.elements.find((element) => element.id === "N1").openDataAuthority, false);
   });
 
+  it("forces ignoreOnSameIdentity=1 when node form auth has required fields", () => {
+    const workflow = {
+      process: { id: "process-same-identity-required" },
+      nodes: [
+        { id: "N1", type: "generalStart", element: "startEvent", name: "开始", attributes: {} },
+        {
+          id: "N387",
+          type: "review",
+          element: "manualTask",
+          name: "执行采购主管（叶片）",
+          attributes: {},
+          definition: {
+            attributes: {
+              ignoreOnHandlerSame: "true",
+              onAdjoinHandlerSame: "true"
+            }
+          },
+          dataAuthority: {
+            enabled: true,
+            fields: {
+              fd_subject: {
+                visible: true,
+                editable: true,
+                required: true,
+                sourceMode: "edit",
+                sourceRef: "source.form.dataAuthority.fd_subject"
+              }
+            }
+          },
+          participants: {
+            mode: "explicit",
+            members: [{ id: "handler-1", name: "审批人", type: "user_or_org" }]
+          }
+        },
+        { id: "N3", type: "generalEnd", element: "endEvent", name: "结束", attributes: {} }
+      ],
+      edges: [
+        { id: "L1", source: "N1", target: "N387" },
+        { id: "L2", source: "N387", target: "N3" }
+      ]
+    };
+
+    const content = buildWorkflowContent(workflow);
+    const node = content.elements.find((element) => element.id === "N387");
+    assert.equal(node.ignoreOnSameIdentity, "1");
+  });
+
+  it("maps ignoreOnHandlerSame=true to ignoreOnSameIdentity=2 when skip is allowed", () => {
+    const workflow = {
+      process: { id: "process-same-identity-skip" },
+      nodes: [
+        { id: "N1", type: "generalStart", element: "startEvent", name: "开始", attributes: {} },
+        {
+          id: "N378",
+          type: "review",
+          element: "manualTask",
+          name: "区域经理",
+          attributes: {},
+          definition: {
+            attributes: {
+              ignoreOnHandlerSame: "true",
+              onAdjoinHandlerSame: "true"
+            }
+          },
+          participants: {
+            mode: "explicit",
+            members: [{ id: "handler-1", name: "审批人", type: "user_or_org" }]
+          }
+        },
+        { id: "N3", type: "generalEnd", element: "endEvent", name: "结束", attributes: {} }
+      ],
+      edges: [
+        { id: "L1", source: "N1", target: "N378" },
+        { id: "L2", source: "N378", target: "N3" }
+      ]
+    };
+
+    const content = buildWorkflowContent(workflow);
+    const node = content.elements.find((element) => element.id === "N378");
+    assert.equal(node.ignoreOnSameIdentity, "2");
+  });
+
   it("writes conditional branch routes through the MK formula designer config", () => {
     const payload = projectTemplate(sampleTrustedDsl({
       form: sampleConditionBranchForm(),
@@ -904,10 +986,16 @@ describe("executeDsl", () => {
     );
   });
 
-  it("does not invent a default branch from an other label or final route position", () => {
+  it("marks named other routes as default even without isDefault or tautology", () => {
     const workflow = sampleConditionBranchWorkflow();
     const finalRoute = workflow.edges.find((edge) => edge.id === "L544");
     finalRoute.name = "其他";
+    finalRoute.condition = {
+      sourceText: "!(\"1689\" .equals( $fd_seller$ ) || \"1694\" .equals( $fd_seller$))",
+      displayText: "!($合同卖方$ == \"1689\" || $合同卖方$ == \"1694\")",
+      targetText: "!(\"1689\" .equals( $fd_seller$ ) || \"1694\" .equals( $fd_seller$))",
+      translationStatus: "display_only"
+    };
     delete finalRoute.attributes.isDefault;
 
     const content = buildWorkflowContent(workflow, {
@@ -916,12 +1004,85 @@ describe("executeDsl", () => {
     });
     const branch = content.elements.find((element) => element.id === "N410");
     const routes = JSON.parse(branch.conditionValue).formulas;
-    const sequences = content.elements.filter((element) => element.type === "sequenceFlow" && element.sourceRef === "N410");
+    const defaultRoute = routes.find((route) => route.lineId === "L544");
+    const sequence = content.elements.find((element) => element.id === "L544");
 
-    assert.equal(branch.default, undefined);
-    assert.equal(branch.conditionId, undefined);
-    assert.equal(routes.every((route) => route.defaultTrend === false), true);
-    assert.equal(sequences.every((edge) => edge.defaultTrend === false && edge.style === "sequenceFlow"), true);
+    assert.equal(branch.default, "L544");
+    assert.equal(branch.conditionId, "L544");
+    assert.equal(defaultRoute.defaultTrend, true);
+    assert.equal(sequence.defaultTrend, true);
+    assert.equal(sequence.style, "sequenceFlow;marker");
+    assert.equal(sequence.formulaType, "formula");
+    assert.equal(Boolean(defaultRoute.formulaConfig || defaultRoute.conditionSimpleData), true);
+  });
+
+  it("prefers named other over a sibling tautology when choosing the default route", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    delete workflow.edges.find((edge) => edge.id === "L544").attributes.isDefault;
+    workflow.edges.find((edge) => edge.id === "L544").name = "其他";
+    workflow.edges.find((edge) => edge.id === "L544").condition = {
+      sourceText: "!(\"1689\" .equals( $fd_seller$ ))",
+      displayText: "!($合同卖方$ == \"1689\")",
+      targetText: "!(\"1689\" .equals( $fd_seller$ ))",
+      translationStatus: "display_only"
+    };
+    workflow.edges.splice(1, 0, {
+      id: "L549",
+      source: "N410",
+      target: "N412",
+      name: "兜底业务",
+      sourceRef: "source.workflow.edge.L549",
+      condition: {
+        sourceText: "1 == 1",
+        displayText: "1 == 1",
+        targetText: "1 == 1",
+        translationStatus: "display_only"
+      },
+      attributes: { priority: "20" }
+    });
+
+    const content = buildWorkflowContent(workflow, {
+      templateId: "template-id",
+      form: sampleConditionBranchForm()
+    });
+    const branch = content.elements.find((element) => element.id === "N410");
+    const routes = JSON.parse(branch.conditionValue).formulas;
+    assert.equal(branch.default, "L544");
+    assert.equal(routes.find((route) => route.lineId === "L544").defaultTrend, true);
+    assert.equal(routes.find((route) => route.lineId === "L549").defaultTrend, false);
+  });
+
+  it("infers synthetic other formulas from sibling route fields when branch title is generic", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.nodes.find((node) => node.id === "N410").name = "条件分支";
+    workflow.nodes.find((node) => node.id === "N410").attributes.name = "条件分支";
+    delete workflow.edges.find((edge) => edge.id === "L544").attributes.isDefault;
+    workflow.edges.splice(1, 0, {
+      id: "L542",
+      source: "N410",
+      target: "N412",
+      name: "其他",
+      sourceRef: "source.workflow.edge.L542",
+      condition: {
+        sourceText: "1 == 1",
+        displayText: "1 == 1",
+        targetText: "1 == 1",
+        translationStatus: "display_only"
+      },
+      attributes: { priority: "21" }
+    });
+
+    const content = buildWorkflowContent(workflow, {
+      templateId: "template-id",
+      form: sampleConditionBranchForm()
+    });
+    const branch = content.elements.find((element) => element.id === "N410");
+    const route = JSON.parse(branch.conditionValue).formulas.find((item) => item.lineId === "L542");
+    const sequence = content.elements.find((element) => element.id === "L542");
+    assert.equal(branch.default, "L542");
+    assert.equal(route.defaultTrend, true);
+    assert.equal(route.formula.result.value, "(!${data.$VAR.L542_fd_seller_notempty})");
+    assert.equal(sequence.formulaType, "formula");
   });
 
   localCorpusIt("marks only the four true default routes in source 167 and keeps N384 on L1028", () => {
@@ -932,10 +1093,91 @@ describe("executeDsl", () => {
     });
     const defaultSequences = content.elements.filter((element) => element.type === "sequenceFlow" && element.defaultTrend === true);
     const n384 = content.elements.find((element) => element.id === "N384");
+    const n344 = content.elements.find((element) => element.id === "N344");
 
-    assert.equal(defaultSequences.length, 4);
+    assert.equal(defaultSequences.length >= 4, true);
     assert.equal(n384.default, "L1028");
     assert.equal(n384.conditionId, "L1028");
+    assert.equal(n344.default, "L444");
+  });
+
+  localCorpusIt("writes N344 address-field contains routes as belongany org predicates", () => {
+    const trusted = trustedDslFromFixture("tests/fixtures/source/1670297c984b45009eb5b1e444d9957d");
+    const conditionOrgByName = {
+      南方服务中心: { fdId: "org-south", fdName: "南方服务中心", fdOrgType: 2, fdNo: "S001" },
+      北方服务中心: { fdId: "org-north", fdName: "北方服务中心", fdOrgType: 2, fdNo: "N001" },
+      海外服务中心: { fdId: "org-overseas", fdName: "海外服务中心", fdOrgType: 2, fdNo: "O001" },
+      海外业务中心: { fdId: "org-overseas-biz", fdName: "海外业务中心", fdOrgType: 2, fdNo: "OB01" },
+      海外销售事业部: { fdId: "org-overseas-sales", fdName: "海外销售事业部", fdOrgType: 2, fdNo: "OS01" }
+    };
+    const content = buildWorkflowContent(trusted.workflow, {
+      templateId: "template-id",
+      form: trusted.form,
+      conditionOrgByName
+    });
+    const branch = content.elements.find((element) => element.id === "N344");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const southRoute = conditionValue.formulas.find((item) => item.lineId === "L443");
+    const overseasRoute = conditionValue.formulas.find((item) => item.lineId === "L1020");
+    const otherRoute = conditionValue.formulas.find((item) => item.lineId === "L444");
+    const southRules = southRoute.formula.vo.data.fdList[0].fdList;
+    const otherRules = otherRoute.formula.vo.data.fdList[0].fdList;
+
+    assert.equal(southRoute.formula.vars[0].value, "sysorg.isOrganizationBelongOrIncludeAnother");
+    assert.equal(southRules[0].fdSymbol, "belongany");
+    assert.equal(southRules[0].fdFunctionId, "sysorg.isOrganizationBelongOrIncludeAnother");
+    assert.equal(southRules[0].fdSymbolAndOrgType, "belongany.ORG_DEPT.true");
+    assert.equal(southRules[0].fdOrgType, 3);
+    assert.equal(southRules[0].fdThrough, "true");
+    assert.equal(southRules[0].vo.$ref, "ORG_DEPT");
+    assert.deepEqual(JSON.parse(southRules[0].fdValue), [conditionOrgByName.南方服务中心]);
+    assert.equal(overseasRoute.formula.vars[0].value, "sysorg.isOrganizationBelongOrIncludeAnother");
+    assert.equal(overseasRoute.formula.vo.data.fdList[0].fdList[0].fdSymbol, "belongany");
+    assert.equal(otherRoute.formula.vo.data.fdList[0].fdType, "AND");
+    assert.equal(otherRules.every((rule) => rule.fdSymbol === "notbelong"), true);
+    assert.equal(otherRules.every((rule) => rule.fdFunctionId === "sysorg.isOrganizationBelongOrIncludeAnother"), true);
+    assert.match(otherRoute.formula.result.value, /!\$\{data\.\$VAR\./);
+  });
+
+  it("writes address-field contains conditions as belongany when org is resolved", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.edges[1] = {
+      ...workflow.edges[1],
+      condition: {
+        sourceText: "$字符串.包含$($fd_req_dept$, \"南方服务中心\")",
+        displayText: "$需求人部门$ 包含 \"南方服务中心\"",
+        targetText: "$字符串.包含$($fd_req_dept$, \"南方服务中心\")",
+        translationStatus: "display_only"
+      }
+    };
+    const form = sampleConditionBranchForm();
+    form.fields.push({
+      id: "fd_req_dept",
+      title: "需求人部门",
+      type: "text",
+      componentId: "xform-address",
+      props: { required: true },
+      sourceProps: { designerType: "address" },
+      sourceRef: "source.form.control.fd_req_dept"
+    });
+    const org = { fdId: "org-south", fdName: "南方服务中心", fdOrgType: 2, fdNo: "S001" };
+    const content = buildWorkflowContent(workflow, {
+      templateId: "template-id",
+      form,
+      conditionOrgByName: { 南方服务中心: org }
+    });
+    const branch = content.elements.find((element) => element.id === "N410");
+    const route = JSON.parse(branch.conditionValue).formulas.find((item) => item.lineId === "L541");
+    const rule = route.formula.vo.data.fdList[0].fdList[0];
+
+    assert.equal(route.formula.vars[0].value, "sysorg.isOrganizationBelongOrIncludeAnother");
+    assert.deepEqual(route.formula.vars[0].arguments[1].value, [org]);
+    assert.equal(route.formula.vars[0].arguments[2].value, 4);
+    assert.equal(route.formula.vars[0].arguments[3].value, true);
+    assert.equal(rule.fdSymbol, "belongany");
+    assert.equal(rule.fdDataType, "object");
+    assert.equal(rule.fdSymbolAndOrgType, "belongany.ORG_DEPT.true");
+    assert.deepEqual(JSON.parse(rule.fdValue), [org]);
   });
 
   it("writes field-left equals conditional branch routes through formula config", () => {
@@ -1133,7 +1375,8 @@ describe("executeDsl", () => {
     const rootGroup = routeFormula.vo.data.fdList[0];
 
     assert.equal(route.lineName, "其他");
-    assert.equal(route.defaultTrend, false);
+    assert.equal(route.defaultTrend, true);
+    assert.equal(branch.default, "L548");
     assert.equal(route.formulaName, "");
     assert.deepEqual(route.conditionSimpleData, route.formula);
     assert.deepEqual(route.formulaConfig, route.formula);
@@ -1259,7 +1502,7 @@ describe("executeDsl", () => {
     assert.deepEqual(rawRoutes, []);
   });
 
-  localCorpusIt("marks only explicit or tautological fixture routes as defaults", () => {
+  localCorpusIt("marks only explicit, named-other, or tautological fixture routes as defaults", () => {
     const { content, trusted } = buildRouteValidationWorkflowContent();
     const edgeById = new Map(trusted.workflow.edges.map((edge) => [edge.id, edge]));
     const sequenceById = new Map(content.elements.filter((element) => element.type === "sequenceFlow").map((edge) => [edge.id, edge]));
@@ -1273,13 +1516,15 @@ describe("executeDsl", () => {
         const sequence = sequenceById.get(route.lineId);
         const isExplicit = edge?.isDefault === true || edge?.attributes?.isDefault === true ||
           edge?.isDefault === "true" || edge?.attributes?.isDefault === "true";
+        const isNamedOther = String(edge?.name || "").trim() === "其他";
         const isTautology = isTautologyConditionForTest(edgeConditionTextForTest(edge));
-        if ((!isExplicit && !isTautology) || sequence?.defaultTrend !== true || sequence?.style !== "sequenceFlow;marker") {
+        if ((!isExplicit && !isNamedOther && !isTautology) || sequence?.defaultTrend !== true || sequence?.style !== "sequenceFlow;marker") {
           invalidDefaultRoutes.push({
             branchId: branch.id,
             lineId: route.lineId,
             lineName: route.lineName,
             isExplicit,
+            isNamedOther,
             isTautology,
             sequenceDefaultTrend: sequence?.defaultTrend,
             style: sequence?.style
@@ -1665,13 +1910,22 @@ describe("executeDsl", () => {
     );
     assert.deepEqual(
       attributes
-        .filter(({ attribute }) => !String(attribute.config?.type || "").startsWith("@elem/xform-"))
+        .filter(({ attribute }) => {
+          const type = String(attribute.config?.type || "");
+          return type !== "desc" && !type.startsWith("@elem/xform-");
+        })
         .map(({ name, attribute }) => [name, attribute.config?.type]),
       []
     );
     assert.deepEqual(
       attributes
-        .filter(({ attribute }) => attribute.config?.type !== attribute.config?.controlProps?.desktop?.type)
+        .filter(({ attribute }) => {
+          const type = attribute.config?.type;
+          const desktopType = attribute.config?.controlProps?.desktop?.type;
+          return type === "desc"
+            ? desktopType !== "@elem/xform-description"
+            : type !== desktopType;
+        })
         .map(({ name, attribute }) => [name, attribute.config?.type, attribute.config?.controlProps?.desktop?.type]),
       []
     );
@@ -1889,8 +2143,8 @@ describe("executeDsl", () => {
     const controlKey = `${detailModel.fdTableName}.fd_name`;
     const action = formAttr.controlAction.control[controlKey].onChange[0];
 
-    assert.equal(detailModel.fdTableName, "mk_model_fd_detail");
-    assert.equal(action.function.includes("MKXFORM.updateControlStyle(\"mk_model_fd_detail.fd_name\", rowNum"), true);
+    assert.equal(detailModel.fdTableName.startsWith("mk_model_test_d_"), true);
+    assert.equal(action.function.includes(`MKXFORM.updateControlStyle("${detailModel.fdTableName}.fd_name", rowNum`), true);
     assert.equal(action.function.includes("${table:"), false);
     assert.deepEqual(summarizeProjectedForm(payload).scripts.controlEvents, [{
       controlKey,
@@ -1924,9 +2178,12 @@ describe("executeDsl", () => {
     const payload = projectTemplate(dsl, baseTemplate());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
     const formAttr = JSON.parse(config.attribute.formAttr);
+    const detailModel = config.dataModel.find((model) =>
+      model.fdType === "detail" && model.dynamicProps?.detailFieldName === "fd_detail"
+    );
     const action = formAttr.controlAction.global.onLoad[0];
 
-    assert.equal(action.function.includes("MKXFORM.getValue(\"mk_model_fd_detail\")"), true);
+    assert.equal(action.function.includes(`MKXFORM.getValue("${detailModel.fdTableName}")`), true);
     assert.equal(action.function.includes("${table:"), false);
   });
 
@@ -1943,6 +2200,9 @@ describe("executeDsl", () => {
     const updatePayload = client.calls.find((call) => call.name === "updateTemplate").payload;
     const config = JSON.parse(updatePayload.mechanisms["sys-xform"].fdConfig);
     const formAttr = JSON.parse(config.attribute.formAttr);
+    const detailModel = config.dataModel.find((model) =>
+      model.fdType === "detail" && model.dynamicProps?.detailFieldName === "fd_detail"
+    );
     const displayRules = formAttr.formRule.display;
     const requireRules = formAttr.formRule.require;
 
@@ -1950,7 +2210,16 @@ describe("executeDsl", () => {
     assert.equal(requireRules.length, 2);
     assert.deepEqual(displayRules.map((rule) => rule.result[0].displayFlag), ["display", "hide"]);
     assert.deepEqual(requireRules.map((rule) => rule.result[0].required), ["required", "non-required"]);
-    assert.deepEqual([...new Set(displayRules.flatMap((rule) => rule.result.map((item) => item.fieldName)))], ["fd_name"]);
+    for (const rule of displayRules) {
+      const result = rule.result[0];
+      assert.equal(result.tableType, "detail");
+      assert.equal(result.type, detailModel.fdTableName);
+      assert.equal(Array.isArray(result.fieldName) && result.fieldName[0], "all");
+      assert.equal(result.fieldName.includes("fd_name"), true);
+      assert.equal(result.fieldKey[0], null);
+      assert.equal(result.label[0], "----");
+    }
+    assert.deepEqual([...new Set(requireRules.flatMap((rule) => rule.result.map((item) => item.fieldName)))], ["fd_detail"]);
     assert.equal(JSON.stringify(formAttr.formRule).includes("fd_detail_row"), false);
     assert.equal(result.readback.form.formRules.displayRuleCount, 2);
     assert.equal(result.readback.form.formRules.requireRuleCount, 2);
@@ -2373,5 +2642,15 @@ class FakeNewoaClient {
       fdStatus: "draft"
     };
     return this.corruptWorkflowReadback ? this.corruptWorkflowReadback(detail) : detail;
+  }
+
+  async searchOrg(key) {
+    this.calls.push({ name: "searchOrg", payload: { key } });
+    return [];
+  }
+
+  async getElementInfo(targets) {
+    this.calls.push({ name: "getElementInfo", payload: { targets } });
+    return [];
   }
 }

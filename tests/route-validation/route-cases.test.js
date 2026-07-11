@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { detailTableNameFor } from "../../src/executor/persistence/detail-table-names.js";
 import { runRouteCase } from "./run-route-case.js";
 
 const SIT_FALLBACK_PARTICIPANT_ID = "1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0";
+const SIT_CONDITION_ORG_FALLBACK_ID = "1j8l5tjpew1nwui9w1hmm19f3j4b7853vbw0";
 
 describe("offline Route-validation", { concurrency: false }, () => {
   it("executes a form-only source through the public migration route", async () => {
@@ -22,6 +24,10 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(staticRequiredAction.translationStatus, "omitted");
     assert.equal(staticRequiredAction.function, "");
     assert.equal(result.execution.readback.form.fields.find((field) => field.id === "fd_subject").required, true);
+    assert.deepEqual(result.execution.readback.form.subjectRule, {});
+    assert.deepEqual(result.dsl.form.layout.mkTree[0].children.map((cell) => cell.column), [0, 1]);
+    assert.deepEqual(result.execution.readback.form.layoutRows[0].cells.map((cell) => cell.column), [0, 1]);
+    assert.equal(result.dsl.form.layout.mkTree[0].props.sourceColumns, 4);
     assert.equal(result.execution.readback.form.scripts.persistedActionCount, 0);
     assert.deepEqual(result.transcript.map((entry) => entry.operation), [
       "login",
@@ -85,6 +91,91 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(result.dryRun.status, "needs_manual");
     assert.equal(result.execution.ok, true);
     assert.equal(result.execution.status, "written_with_warnings");
+  });
+
+  it("persists conditional organization fallback, named-other default, and detail-container rules", async () => {
+    const result = await runRouteCase("conditional-detail-success");
+
+    assert.equal(result.execution.ok, true);
+    assert.equal(result.execution.readback.partitions.form, "verified");
+    assert.equal(result.execution.readback.partitions.rules, "verified");
+    assert.equal(result.execution.readback.partitions.workflow, "verified");
+    assert.deepEqual(result.execution.readback.form.subjectRule, {});
+    assert.equal(result.execution.readback.form.persistence.mainTableName, "route_model_generated");
+    assert.equal(result.execution.readback.form.persistence.detailTables.length, 1);
+    const detailTable = result.execution.readback.form.persistence.detailTables[0];
+    assert.equal(detailTable.fieldId, "fd_route_detail");
+    assert.equal(detailTable.tableName, detailTableNameFor("route_model_generated", "fd_route_detail"));
+    assert.equal(detailTable.tableName.length <= 30, true);
+    assert.notEqual(detailTable.tableName, result.execution.readback.form.persistence.mainTableName);
+
+    const hint = result.execution.readback.form.fields.find((field) => field.id === "fd_route_hint");
+    assert.equal(hint.type, "desc");
+    assert.equal(hint.component, "xform-description");
+    assert.deepEqual(hint.style, {
+      color: "rgba(255,0,0,1)",
+      fontWeight: "bold"
+    });
+    assert.deepEqual(result.dsl.form.fields.find((field) => field.id === "fd_route_hint").props.style, {
+      color: "rgba(255,0,0,1)",
+      fontWeight: "bold"
+    });
+
+    assert.equal(result.execution.readback.form.formRules.displayRuleCount, 2);
+    assert.equal(result.execution.readback.form.formRules.requireRuleCount, 2);
+    assert.equal(
+      result.execution.readback.form.formRules.displayRules.every((rule) =>
+        rule.effects.length === 1 && rule.effects[0].target === "fd_route_detail"
+      ),
+      true
+    );
+    assert.equal(
+      result.execution.readback.form.formRules.requireRules.every((rule) =>
+        rule.effects.length === 1 && rule.effects[0].target === "fd_route_detail"
+      ),
+      true
+    );
+    assert.equal(result.dsl.scripts.actions[0].translationStatus, "omitted");
+    assert.deepEqual(result.dsl.scripts.actions[0].coverage.nativeRules, ["linkage.fd_route_type.contains.A"]);
+
+    const conditionStage = result.execution.apiStages.find((stage) => stage.name === "resolveConditionOrgs");
+    assert.deepEqual(conditionStage, {
+      name: "resolveConditionOrgs",
+      status: "ok",
+      resolvedCount: 0,
+      nameCount: 1,
+      fallbackCount: 1
+    });
+    assert.equal(
+      result.execution.diagnostics.some((item) => item.code === "workflow.condition_org_sit_fallback_applied"),
+      true
+    );
+    assert.deepEqual(
+      result.transcript.filter((entry) => entry.operation === "search-org"),
+      [
+        { operation: "search-org", key: "Conditional Reviewer" },
+        { operation: "search-org", key: "南方服务中心" }
+      ]
+    );
+
+    assert.equal(
+      result.execution.readback.workflow.nodes.find((node) => node.id === "N2").ignoreOnSameIdentity,
+      "1"
+    );
+    const southEdge = result.execution.readback.workflow.edges.find((edge) => edge.id === "L3");
+    assert.equal(southEdge.isDefault, false);
+    assert.equal(southEdge.hasCondition, true);
+    assert.deepEqual(southEdge.condition, {
+      nativeKind: "batch_formula",
+      nativeStatus: "ok",
+      functionIds: ["sysorg.isOrganizationBelongOrIncludeAnother"],
+      orgIds: [SIT_CONDITION_ORG_FALLBACK_ID]
+    });
+    assert.equal(result.execution.readback.workflow.conditionEdgeCount, 2);
+    assert.equal(
+      result.execution.readback.workflow.edges.find((edge) => edge.id === "L4").isDefault,
+      true
+    );
   });
 
   it("blocks before transport when explicit write confirmation is absent", async () => {

@@ -19,7 +19,10 @@ export function createFakeReviewProvider(scenario) {
         summary: scenario === "warning"
           ? "Accepted with one deterministic manual-review warning."
           : "Accepted by the deterministic offline Route reviewer.",
-        patches: staticPropertyClosurePatches(dslDraft),
+        patches: [
+          ...staticPropertyClosurePatches(dslDraft),
+          ...nativeFormRuleClosurePatches(dslDraft)
+        ],
         diagnostics: scenario === "warning"
           ? [{
               level: "warning",
@@ -41,6 +44,44 @@ export function createFakeReviewProvider(scenario) {
       };
     }
   };
+}
+
+function nativeFormRuleClosurePatches(dslDraft) {
+  return (dslDraft?.scripts?.actions || []).flatMap((action, actionIndex) => {
+    const coverage = action.coverage;
+    if (
+      coverage?.status !== "covered" ||
+      !Array.isArray(coverage.nativeRules) ||
+      coverage.nativeRules.length === 0 ||
+      !Array.isArray(coverage.residuals) ||
+      coverage.residuals.length > 0
+    ) {
+      return [];
+    }
+
+    const common = {
+      op: "replace",
+      sourceRefs: action.sourceRefs || [],
+      evidence: ["Executable native form rules fully cover this tracked Route action."],
+      confidence: 0.99,
+      rationale: "Close deterministic native form-rule coverage without retaining duplicate script behavior."
+    };
+    return [
+      { ...common, path: `/scripts/actions/${actionIndex}/function`, value: "" },
+      { ...common, path: `/scripts/actions/${actionIndex}/translationStatus`, value: "omitted" },
+      {
+        ...common,
+        path: `/scripts/actions/${actionIndex}/functionMappings`,
+        value: [{
+          source: "legacy JSP row visibility/required behavior",
+          target: "native formRules.linkage",
+          basis: "native-form-rule",
+          reviewRequired: false
+        }]
+      },
+      { ...common, path: `/scripts/actions/${actionIndex}/coverage`, value: coverage }
+    ];
+  });
 }
 
 function staticPropertyClosurePatches(dslDraft) {

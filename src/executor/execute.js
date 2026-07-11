@@ -1,6 +1,7 @@
 import { buildDryRunPlan } from "./dry-run.js";
 import { assertAllowedBaseUrl, NewoaClient, NEWOA_SIT_BASE_URL } from "./newoa-client.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
+import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { preparePersistedTemplate, buildWorkflowDraftPayload } from "./persistence.js";
 
 export async function executeDsl(input, options = {}) {
@@ -56,6 +57,43 @@ export async function executeDsl(input, options = {}) {
           referenceCount: participantResolution.fallbackCount,
           identityCount: participantResolution.fallbackIdentityCount,
           targetFdId: participantResolution.fallbackTargetId
+        }
+      });
+    }
+    apiStages.push({ name: "resolveConditionOrgs", status: "started" });
+    const conditionOrgResolution = await resolveConditionOrgs(executableDsl, {
+      client,
+      targetBaseUrl: baseUrl
+    });
+    executableDsl = conditionOrgResolution.dsl;
+    apiStages[apiStages.length - 1].status = "ok";
+    apiStages[apiStages.length - 1].resolvedCount = conditionOrgResolution.resolvedCount;
+    apiStages[apiStages.length - 1].nameCount = conditionOrgResolution.nameCount;
+    if (conditionOrgResolution.fallbackCount > 0) {
+      apiStages[apiStages.length - 1].fallbackCount = conditionOrgResolution.fallbackCount;
+      diagnostics.push({
+        level: "warning",
+        code: "workflow.condition_org_sit_fallback_applied",
+        message: "Unresolved address-field branch condition organization names were replaced with the configured NewOA SIT address-book sample orgs.",
+        path: "/workflow/conditions",
+        details: {
+          fallbackNames: conditionOrgResolution.fallbackNames,
+          fallbackOrgs: conditionOrgResolution.fallbackNames.map((name) => ({
+            sourceName: name,
+            target: executableDsl.runtime?.conditionOrgByName?.[name]
+          }))
+        }
+      });
+    }
+    if (conditionOrgResolution.unresolvedNames.length) {
+      apiStages[apiStages.length - 1].unresolvedCount = conditionOrgResolution.unresolvedNames.length;
+      diagnostics.push({
+        level: "warning",
+        code: "workflow.condition_org_unresolved",
+        message: "Some address-field branch condition organization names could not be uniquely resolved; those predicates fall back to string contains.",
+        path: "/workflow/conditions",
+        details: {
+          unresolvedNames: conditionOrgResolution.unresolvedNames
         }
       });
     }

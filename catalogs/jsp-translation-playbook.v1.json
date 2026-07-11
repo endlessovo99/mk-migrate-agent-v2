@@ -1,12 +1,14 @@
 {
   "id": "jsp-translation-playbook",
-  "version": "2026-07-10.v3",
+  "version": "2026-07-11.v4",
   "goal": "Guide the Agent to semantically translate legacy EKP/JSP form scripts into restricted NewOA/MK DSL script patches. Deterministic code extracts evidence only; the Agent decides whether a patch is safe.",
   "principles": [
     "Translate behavior, not source syntax. Legacy function names and regex-like shapes are evidence, not completion criteria.",
     "Use form/source/dsl context, targetApi capabilities, function catalog semantics, row markers, and native formRules evidence together.",
     "Prefer verified native formRules or static form-property coverage when it fully covers behavior; otherwise generate small MKXFORM JavaScript using targetApi.",
     "Never replace editShow/viewShow gated behavior with ungated native formRules; preserve the source-derived runWhen and translate the complete gated action body.",
+    "Whole-row or whole detail-table container visibility/required state prefers native formRules.linkage against layout sourceMarkers (including markers whose only child is a detail table). Use MKXFORM.setFieldAttr(<sourceMarker>, 4|5|3|6) only for residual scripted cases that native rules cannot cover.",
+    "${table:<detailTableId>}.<controlId> placeholders are only for detail-column APIs such as updateControl, updateControlStyle, and setDetailFieldItemAttr.",
     "Keep unsupported, ambiguous, side-effect-heavy, or DOM-dependent behavior as needs_review/manual diagnostics.",
     "Never emit DOM APIs in mapped output."
   ],
@@ -44,7 +46,7 @@
     {
       "name": "common_dom_row_set_show_required_reset",
       "semantic": "Controls row or field visibility and required state; arguments usually mean rowId, visible, required, reset.",
-      "translationGuidance": "If native formRules already cover the same row behavior, patch the action to omitted with coverage.status covered. If JavaScript must cover it, use MKXFORM.setFieldAttr(rowId, 5/4 for show/hide and 3/6 for required/not-required).",
+      "translationGuidance": "If native formRules already cover the same row behavior, patch the action to omitted with coverage.status covered. If JavaScript must cover it, use MKXFORM.setFieldAttr(<sourceMarker>, 5/4 for show/hide and 3/6 for required/not-required). The first argument must be the layout sourceMarker (for example aqxy_row or fd_jsx_row), never ${table:<detailTableId>} and never the detail-table field id even when the marked row only contains a detail table.",
       "safeWhen": "The referenced row marker is present in layout sourceMarkers or otherwise resolves through form/layout evidence, reset is false or harmless, and no other behavior remains."
     },
     {
@@ -74,7 +76,7 @@
     {
       "name": "MKXFORM.setFieldAttr",
       "semantic": "Set a main-field or row marker attribute: 3 required, 4 hide, 5 show, 6 not required.",
-      "notes": "Good fit for legacy row visibility/required behavior when row markers are present."
+      "notes": "Good fit for legacy row visibility/required behavior when row markers are present. Do not pass ${table:<detailTableId>} or a detail-table field id; those targets are invalid for setFieldAttr."
     },
     {
       "name": "MKXFORM.setDetailFieldAttr",

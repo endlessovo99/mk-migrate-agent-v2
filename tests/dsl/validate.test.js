@@ -435,6 +435,134 @@ describe("validateMigrationDsl", () => {
     assert.equal(unknown.diagnostics.some((item) => item.code === "dsl.scripts.target_api_unsupported"), true);
   });
 
+  it("accepts only setFieldAttr targets that are actually persisted", () => {
+    const form = sampleForm();
+    form.layout.mkTree[1] = {
+      ...form.layout.mkTree[1],
+      sourceMarkers: ["fd_detail_row", "fd_detail_row_alias"]
+    };
+
+    const rejectedTablePlaceholder = validateMigrationDsl(sampleTrustedDsl({
+      form,
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.table_placeholder",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  MKXFORM.setFieldAttr(\"${table:fd_detail}\", value ? 5 : 4)\n}",
+          functionMappings: [{
+            source: "common_dom_row_set_show_required_reset",
+            target: "MKXFORM.setFieldAttr",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
+        })]
+      }
+    }), { mode: "execute" });
+
+    const rejectedDetailId = validateMigrationDsl(sampleTrustedDsl({
+      form,
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.detail_id",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  MKXFORM.setFieldAttr(\"fd_detail\", value ? 5 : 4)\n}",
+          functionMappings: [{
+            source: "common_dom_row_set_show_required_reset",
+            target: "MKXFORM.setFieldAttr",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
+        })]
+      }
+    }), { mode: "execute" });
+
+    const acceptedMarker = validateMigrationDsl(sampleTrustedDsl({
+      form,
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.row_marker",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  MKXFORM.setFieldAttr(\"fd_detail_row\", value ? 5 : 4)\n}",
+          functionMappings: [{
+            source: "common_dom_row_set_show_required_reset",
+            target: "MKXFORM.setFieldAttr",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
+        })]
+      }
+    }), { mode: "execute" });
+
+    const rejectedRowId = validateMigrationDsl(sampleTrustedDsl({
+      form,
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.row_id",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  MKXFORM.setFieldAttr(\"layout.row-1\", value ? 5 : 4)\n}",
+          functionMappings: [{
+            source: "common_dom_row_set_show_required_reset",
+            target: "MKXFORM.setFieldAttr",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
+        })]
+      }
+    }), { mode: "execute" });
+
+    const rejectedSecondaryMarker = validateMigrationDsl(sampleTrustedDsl({
+      form,
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.secondary_marker",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  MKXFORM.setFieldAttr(\"fd_detail_row_alias\", value ? 5 : 4)\n}",
+          functionMappings: [{
+            source: "common_dom_row_set_show_required_reset",
+            target: "MKXFORM.setFieldAttr",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
+        })]
+      }
+    }), { mode: "execute" });
+
+    const rejectedDynamicTarget = validateMigrationDsl(sampleTrustedDsl({
+      form,
+      workflow: undefined,
+      scripts: {
+        actions: [mappedAction({
+          id: "fd_subject.dynamic_target",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  const rowId = \"fd_detail_row\"\n  MKXFORM.setFieldAttr(rowId, value ? 5 : 4)\n}",
+          functionMappings: [{
+            source: "common_dom_row_set_show_required_reset",
+            target: "MKXFORM.setFieldAttr",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
+        })]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(rejectedTablePlaceholder.ok, false);
+    assert.equal(rejectedTablePlaceholder.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
+    assert.equal(rejectedDetailId.ok, false);
+    assert.equal(rejectedDetailId.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
+    assert.equal(acceptedMarker.ok, true);
+    assert.equal(rejectedRowId.ok, false);
+    assert.equal(rejectedRowId.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
+    assert.equal(rejectedSecondaryMarker.ok, false);
+    assert.equal(rejectedSecondaryMarker.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
+    assert.equal(rejectedDynamicTarget.ok, false);
+    assert.equal(rejectedDynamicTarget.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
+  });
+
   it("requires before-submit scripts to handle draft saves and return explicitly", () => {
     const result = validateMigrationDsl(sampleTrustedDsl({
       workflow: undefined,

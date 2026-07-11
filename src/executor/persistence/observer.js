@@ -141,7 +141,7 @@ function observeForm(config, xform) {
   const mainFields = (mainModel.fdFields || [])
     .filter((field) => field && !isPlatformSystemField(field, "main"))
     .map((field) => observeDataField(field));
-  const detailFields = detailModels.map((model) => observeDetailField(model));
+  const detailFields = detailModels.map((model) => observeDetailField(model, models.indexOf(model)));
   const fields = [...mainFields, ...detailFields];
 
   const viewModelResult = requireArray(config.viewModel, {
@@ -154,6 +154,7 @@ function observeForm(config, xform) {
     formDiagnostics.push(viewModelResult.diagnostic);
   } else {
     layoutRows = observeLayoutRows(viewModelResult.value[0], detailModels, formDiagnostics);
+    applyViewControlStyles(fields, viewModelResult.value[0]);
   }
 
   const attribute = config.attribute && typeof config.attribute === "object" ? config.attribute : {};
@@ -165,6 +166,7 @@ function observeForm(config, xform) {
 
   let rulesValue = { rules: [] };
   let scriptsValue = { actions: [] };
+  let subjectRule;
   let rulesStatus = "verified";
   let scriptsStatus = "verified";
 
@@ -175,14 +177,20 @@ function observeForm(config, xform) {
     rulesDiagnostics.push(formAttrResult.diagnostic);
   } else {
     const formAttr = formAttrResult.value;
-    rulesValue = observeRules(formAttr.formRule || {}, rulesDiagnostics);
+    subjectRule = formAttr.subjectRule;
+    rulesValue = observeRules(formAttr.formRule || {}, detailModels, rulesDiagnostics);
     scriptsValue = observeScripts(formAttr.controlAction || {}, scriptsDiagnostics);
   }
 
   const formValue = {
     fields,
     layoutRows,
-    tableName: normalizeScalar(mainModel.fdTableName || xform?.fdTableName || "")
+    tableName: normalizeScalar(mainModel.fdTableName || xform?.fdTableName || ""),
+    subjectRule,
+    persistence: {
+      models: models.map((model, modelIndex) => observeModelIdentity(model, modelIndex)),
+      detailModels: detailFields.map((field) => field.persistence)
+    }
   };
 
   return {
@@ -247,10 +255,11 @@ function decodeFieldAttribute(value) {
   }
 }
 
-function observeDetailField(model) {
+function observeDetailField(model, modelIndex) {
   const columns = (model.fdFields || [])
-    .filter((field) => field && !isPlatformSystemField(field, "detail"))
-    .map((field) => {
+    .map((field, fieldIndex) => ({ field, fieldIndex }))
+    .filter(({ field }) => field && !isPlatformSystemField(field, "detail"))
+    .map(({ field, fieldIndex }) => {
       const attribute = safeParseObject(field.fdAttribute);
       const controlProps = attribute?.config?.controlProps || {};
       return {
@@ -258,17 +267,69 @@ function observeDetailField(model) {
         title: normalizeScalar(field.fdLabel || controlProps.title || ""),
         type: inferFieldType(field, controlProps),
         component: inferComponent(field, controlProps),
-        props: observeExecutableProps(controlProps)
+        props: observeExecutableProps(controlProps),
+        persistence: {
+          fieldIndex,
+          mechanismType: normalizeScalar(field.fdMechanismType),
+          columnName: normalizeScalar(field.fdColumn),
+          dataModel: {
+            id: normalizeScalar(field.fdDataModel?.fdId),
+            name: normalizeScalar(field.fdDataModel?.fdName)
+          },
+          controlBinding: observeNativeControlBinding(field.fdAttribute)
+        }
       };
     });
+  const controlBinding = observeNativeControlBinding(model.fdAttribute);
   return {
-    id: normalizeScalar(model.dynamicProps?.detailFieldName || model.fdName),
+    id: normalizeScalar(detailFieldNameForModel(model)),
     title: normalizeScalar(model.fdName),
     type: "detailTable",
     component: "xform-detail-table",
     dataOnly: false,
     props: {},
-    columns
+    columns,
+    persistence: {
+      fieldId: normalizeScalar(detailFieldNameForModel(model)),
+      modelIndex,
+      modelId: normalizeScalar(model.fdId),
+      modelName: normalizeScalar(model.fdName),
+      tableName: normalizeScalar(model.fdTableName),
+      tableNameAlias: normalizeScalar(model.fdTableNameAlias),
+      controlBinding,
+      columns: columns.map((column) => ({
+        id: column.id,
+        ...column.persistence
+      }))
+    }
+  };
+}
+
+function observeModelIdentity(model, modelIndex) {
+  return {
+    modelIndex,
+    modelId: normalizeScalar(model?.fdId),
+    modelName: normalizeScalar(model?.fdName),
+    modelType: normalizeScalar(model?.fdType),
+    tableName: normalizeScalar(model?.fdTableName)
+  };
+}
+
+function observeNativeControlBinding(value) {
+  const attribute = decodeFieldAttribute(value);
+  const controlProps = attribute?.config?.controlProps;
+  const readable = Boolean(
+    attribute &&
+    controlProps &&
+    typeof controlProps === "object" &&
+    !Array.isArray(controlProps)
+  );
+  return {
+    readable,
+    detailFieldId: normalizeScalar(controlProps?.["$$detailTableFieldName"]),
+    fieldName: normalizeScalar(controlProps?.name || controlProps?.uuid),
+    tableType: normalizeScalar(controlProps?.["$$tableType"]),
+    tableName: normalizeScalar(controlProps?.["$$tableName"])
   };
 }
 
@@ -287,9 +348,25 @@ function observeExecutableProps(controlProps = {}) {
   return props;
 }
 
+function applyViewControlStyles(fields, viewModel) {
+  const scene = safeParseObject(viewModel?.fdConfig);
+  const controlStyle = scene.controlStyle && typeof scene.controlStyle === "object" && !Array.isArray(scene.controlStyle)
+    ? scene.controlStyle
+    : {};
+  for (const field of fields) {
+    if (field?.component !== "xform-description") continue;
+    const value = controlStyle[field.id]?.desktop?.controlValueStyle;
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    const style = {};
+    if (typeof value.color === "string" && value.color.trim()) style.color = value.color.trim();
+    if (typeof value.fontWeight === "string" && value.fontWeight.trim()) style.fontWeight = value.fontWeight.trim();
+    if (Object.keys(style).length) field.props.style = style;
+  }
+}
+
 function observeLayoutRows(viewModel, detailModels, diagnostics) {
   const detailByTable = new Map(
-    detailModels.map((model) => [model.fdTableName, model.dynamicProps?.detailFieldName || model.fdName])
+    detailModels.map((model) => [model.fdTableName, detailFieldNameForModel(model)])
   );
   const sceneConfigResult = decodeRequiredJsonObject(viewModel?.fdConfig, {
     partition: "form",
@@ -363,18 +440,21 @@ function nativeFieldIdsFromRef(fieldRef, detailByTable) {
   return [];
 }
 
-function observeRules(formRule, diagnostics) {
+function observeRules(formRule, detailModels = [], diagnostics) {
   void diagnostics;
+  const detailByTable = new Map(
+    detailModels.map((model) => [model.fdTableName, detailFieldNameForModel(model)])
+  );
   const display = Array.isArray(formRule.display) ? formRule.display : [];
   const require = Array.isArray(formRule.require) ? formRule.require : [];
   const rules = [
-    ...display.map((rule) => observeNativeRule(rule, "display")),
-    ...require.map((rule) => observeNativeRule(rule, "require"))
+    ...display.map((rule) => observeNativeRule(rule, "display", detailByTable)),
+    ...require.map((rule) => observeNativeRule(rule, "require", detailByTable))
   ].filter(Boolean);
   return { rules };
 }
 
-function observeNativeRule(rule, kind) {
+function observeNativeRule(rule, kind, detailByTable = new Map()) {
   if (!rule || typeof rule !== "object") return null;
   const conditions = (rule.choices?.items || []).map((item) => ({
     field: normalizeScalar(item.fieldName || item.fieldKey),
@@ -384,14 +464,15 @@ function observeNativeRule(rule, kind) {
       : normalizeRuleValue(item.value?.script ?? item.value)
   }));
   const effects = (Array.isArray(rule.result) ? rule.result : []).map((result) => {
+    const target = observeRuleResultTarget(result, detailByTable);
     if (kind === "display") {
       return {
-        target: normalizeScalar(result.fieldName || result.fieldKey),
+        target,
         visible: result.displayFlag !== "hide"
       };
     }
     return {
-      target: normalizeScalar(result.fieldName || result.fieldKey),
+      target,
       required: result.required === "required" || result.required === true
     };
   });
@@ -403,6 +484,32 @@ function observeNativeRule(rule, kind) {
     // provenance ignored for verification; retained only for debugging summaries
     provenanceIgnored: true
   };
+}
+
+function observeRuleResultTarget(result, detailByTable) {
+  if (result?.tableType === "detail" && result?.type && detailByTable.has(result.type)) {
+    return normalizeScalar(detailByTable.get(result.type));
+  }
+  if (Array.isArray(result?.fieldName)) {
+    if (result.fieldName[0] === "all" && result?.type && detailByTable.has(result.type)) {
+      return normalizeScalar(detailByTable.get(result.type));
+    }
+    return normalizeScalar(result.fieldName.find((name) => name && name !== "all") || result.fieldName[0]);
+  }
+  return normalizeScalar(result?.fieldName || result?.fieldKey);
+}
+
+function detailFieldNameForModel(model) {
+  const attribute = decodeFieldAttribute(model?.fdAttribute);
+  const attributeFieldName = attribute?.config?.controlProps?.["$$detailTableFieldName"];
+  if (attributeFieldName) return attributeFieldName;
+  if (model?.dynamicProps?.detailFieldName) return model.dynamicProps.detailFieldName;
+  const tableName = typeof model?.fdTableName === "string" ? model.fdTableName.trim() : "";
+  if (tableName.startsWith("mk_model_")) {
+    const fieldName = tableName.slice("mk_model_".length);
+    if (fieldName) return fieldName;
+  }
+  return model?.fdName;
 }
 
 function observeScripts(controlAction, diagnostics) {
@@ -576,6 +683,9 @@ function observeWorkflow(lbpm) {
       alternativeParticipants: observeAlternativeParticipants(node),
       sendConfig: observeSendConfig(node),
       dataAuthority: observeDataAuthority(formAuths[node.id]),
+      ignoreOnSameIdentity: node.ignoreOnSameIdentity === undefined
+        ? undefined
+        : normalizeScalar(node.ignoreOnSameIdentity),
       // presentation-only fields intentionally omitted from error comparison
       x: node.x,
       y: node.y
@@ -762,7 +872,8 @@ function observeEdgeCondition(edge, conditionBranch = false) {
       nativeKind: "batch_formula",
       nativeStatus: "ok",
       hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula),
-      formulaDigest: digestText(normalizeScalar(trimmedFormula))
+      formulaDigest: digestText(normalizeScalar(trimmedFormula)),
+      ...observeBatchConditionSemantics(parsed)
     });
   }
 
@@ -814,6 +925,39 @@ function isValidBatchConditionFormula(value) {
       typeof value.vo === "object" &&
       !Array.isArray(value.vo)
   );
+}
+
+function observeBatchConditionSemantics(formula) {
+  const referencedVarKeys = new Set(
+    [...String(formula?.result?.value || "").matchAll(/\$\{data\.\$VAR\.([^}]+)\}/g)]
+      .map((match) => String(match[1] || "").trim())
+      .filter(Boolean)
+  );
+  const functionIds = new Set();
+  const orgIds = new Set();
+
+  for (const variable of Array.isArray(formula?.vars) ? formula.vars : []) {
+    if (!variable || !referencedVarKeys.has(String(variable.key || ""))) continue;
+    if (variable.type !== "Function" || typeof variable.value !== "string") continue;
+
+    const functionId = variable.value.trim();
+    if (!functionId) continue;
+    functionIds.add(functionId);
+    if (functionId !== "sysorg.isOrganizationBelongOrIncludeAnother") continue;
+
+    for (const argument of Array.isArray(variable.arguments) ? variable.arguments : []) {
+      if (argument?.key !== "secondOrgs" || argument?.type !== "Fixed") continue;
+      for (const org of Array.isArray(argument.value) ? argument.value : []) {
+        const fdId = String(org?.fdId || "").trim();
+        if (fdId) orgIds.add(fdId);
+      }
+    }
+  }
+
+  return {
+    functionIds: [...functionIds].sort(),
+    orgIds: [...orgIds].sort()
+  };
 }
 
 function withConditionProvenance(edge, native) {

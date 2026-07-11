@@ -1,5 +1,6 @@
 import { catalogRefs, validationPolicyRef } from "../dsl/catalogs.js";
 import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../dsl/form-rules.js";
+import { packLayoutCells } from "../dsl/layout-pack.js";
 import { SOURCE_DRAFT_VERSION } from "./source-draft.js";
 import { draftMkScriptsFromSourceScripts } from "./sysform-jsp-scripts.js";
 
@@ -126,6 +127,8 @@ function propsFromSource(source) {
   if (componentForSourceType(source.sourceType, source) === "xform-description") {
     const content = source.sourceProps?.designerValues?.content || source.title;
     if (content) props.content = content;
+    const style = descriptionStyleFromSource(source);
+    if (style) props.style = style;
   }
 
   if (componentForSourceType(source.sourceType, source) === "xform-textarea") {
@@ -156,6 +159,32 @@ function legacyDefaultValueFromSource(source) {
   }
 
   return undefined;
+}
+
+function descriptionStyleFromSource(source) {
+  const values = source.sourceProps?.designerValues || {};
+  const style = {};
+  const color = cssColorFromDesigner(values.color);
+  if (color) style.color = color;
+  if (String(values.b || "").toLowerCase() === "true") style.fontWeight = "bold";
+  return Object.keys(style).length ? style : undefined;
+}
+
+function cssColorFromDesigner(value) {
+  const color = String(value || "").trim();
+  if (!color) return undefined;
+  const hex = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hex) {
+    const raw = hex[1];
+    const full = raw.length === 3
+      ? raw.split("").map((ch) => ch + ch).join("")
+      : raw;
+    const r = Number.parseInt(full.slice(0, 2), 16);
+    const g = Number.parseInt(full.slice(2, 4), 16);
+    const b = Number.parseInt(full.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},1)`;
+  }
+  return color;
 }
 
 function parseLegacyContextDefaultExpression(value, source) {
@@ -218,26 +247,27 @@ function normalizeLegacyExpression(value) {
 function draftMkTree(layout, detailTableIds) {
   const rows = Array.isArray(layout.rows) ? layout.rows : [];
   return rows.map((row, rowIndex) => {
-    const cells = Array.isArray(row.cells) ? row.cells : [];
-    const columns = Math.max(1, Math.min(4, cells.length || 1));
+    const sourceCells = Array.isArray(row.cells) ? row.cells : [];
+    const packed = packLayoutCells(sourceCells);
+    const columns = packed.columns;
     return {
       id: `layout.${row.id || `row-${rowIndex}`}`,
       componentId: `xform-flex-1-${columns}-layout`,
       props: {
         columns,
-        sourceColumns: row.columns || cells.length || 1
+        sourceColumns: row.columns || sourceCells.length || 1
       },
       sourceRef: row.sourceRef || `source.form.layout.row.${row.id || `row-${rowIndex}`}`,
       sourceMarkers: Array.isArray(row.sourceMarkers) && row.sourceMarkers.length ? row.sourceMarkers : undefined,
-      children: cells.map((cell, cellIndex) => {
+      children: packed.cells.map((cell, cellIndex) => {
         const references = Array.isArray(cell.references) ? cell.references : [];
         return {
           id: `layout.${cell.id || `${row.id || `row-${rowIndex}`}.cell.${cellIndex}`}`,
           refType: references.some((ref) => detailTableIds.has(ref.referenceId)) ? "detailTable" : "field",
           refIds: references.map((ref) => ref.referenceId),
           sourceRef: cell.sourceRef,
-          column: cell.column ?? cellIndex,
-          colspan: cell.colspan ?? 1
+          column: cell.column,
+          colspan: cell.colspan
         };
       })
     };
@@ -387,23 +417,6 @@ function formRuleTargetIssues(rule, refIndex) {
           unresolved: resolved?.unresolved,
           message: "Form rule row target does not resolve to a direct field or mkTree.sourceMarkers entry."
         }));
-        continue;
-      }
-
-      const detailTableRefs = resolved.source === "rowMarker"
-        ? (resolved.marker?.refIds || []).filter((refId) => resolveDirectRef(refIndex, refId)?.kind === "detailTable")
-        : [];
-      if (detailTableRefs.length) {
-        result.push({
-          code: "form_rule.target_detail_table",
-          ruleId: rule.id,
-          branch,
-          effectIndex,
-          target: effect.target,
-          type: effect.type,
-          detailTableRefs,
-          message: "Native form rules currently expand detail-table row markers to columns and cannot represent whole-container visibility or required semantics."
-        });
       }
     }
   }

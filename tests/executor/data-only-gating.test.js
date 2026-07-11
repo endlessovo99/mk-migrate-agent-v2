@@ -81,6 +81,9 @@ describe("executor data-only fields and view gates", () => {
     const config = xformConfig(template);
     const attr = JSON.parse(config.attribute.formAttr);
     const persisted = attr.controlAction.global.onLoad;
+    const detailTableName = config.dataModel.find((model) =>
+      model.fdType === "detail" && model.dynamicProps?.detailFieldName === "fd_detail"
+    ).fdTableName;
     const scripts = summarizeProjectedForm(template).scripts;
 
     assert.equal(persisted.length, 1);
@@ -91,18 +94,18 @@ describe("executor data-only fields and view gates", () => {
       { id: "edit-load", name: "onLoad_3", migrationRunWhen: { viewStatusIn: ["add", "edit"] } }
     ]);
     assert.equal(persisted[0].function.includes("${table:"), false);
-    assert.equal(persisted[0].function.includes("MKXFORM.getValue('mk_model_fd_detail')"), true);
+    assert.equal(persisted[0].function.includes(`MKXFORM.getValue('${detailTableName}')`), true);
     assert.equal(scripts.actionCount, 3);
     assert.equal(verifyTemplate(dsl, template).ok, true);
 
     assert.deepEqual(runPersistedAction(persisted[0], "add"), [
-      ["getValue", "mk_model_fd_detail"],
+      ["getValue", detailTableName],
       ["setValue", "fd_subject", "always"],
       ["setValue", "fd_subject", "edit"]
     ]);
     assert.deepEqual(runPersistedAction(persisted[0], "view"), [
       ["setValue", "fd_subject", "view"],
-      ["getValue", "mk_model_fd_detail"],
+      ["getValue", detailTableName],
       ["setValue", "fd_subject", "always"]
     ]);
   });

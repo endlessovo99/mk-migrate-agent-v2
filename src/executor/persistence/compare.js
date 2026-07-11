@@ -87,6 +87,15 @@ function compareEnvelope(expected, actual, diagnostics) {
 }
 
 function compareForm(expected, actual, diagnostics) {
+  if (stableStringify(expected.subjectRule) !== stableStringify(actual?.subjectRule)) {
+    diagnostics.push(mismatch("form", "readback.form.subject_rule_mismatch", "Readback form subjectRule must remain empty.", {
+      invariantKey: "form.subjectRule",
+      path: "/mechanisms/sys-xform/fdConfig/attribute/formAttr/subjectRule",
+      expected: expected.subjectRule,
+      actual: actual?.subjectRule
+    }));
+  }
+
   const actualFields = new Map((actual?.fields || []).map((field) => [field.id, field]));
   const expectedIds = new Set((expected.fields || []).map((field) => field.id));
 
@@ -159,7 +168,155 @@ function compareForm(expected, actual, diagnostics) {
     }
   }
 
+  compareDetailPersistence(expected.persistence, actual?.persistence, diagnostics);
   compareLayout(expected.layoutRows || [], actual?.layoutRows || [], diagnostics, expected.fields || []);
+}
+
+function compareDetailPersistence(expected = {}, actual = {}, diagnostics) {
+  const expectedDetails = new Map(
+    (expected.detailModels || []).map((model) => [model.fieldId, model])
+  );
+  const actualDetails = actual.detailModels || [];
+
+  if (expected.distinctModelTableNames === true) {
+    compareDistinctModelTables(actual.models || [], diagnostics);
+  }
+
+  for (const model of actualDetails) {
+    const expectedModel = expectedDetails.get(model.fieldId);
+    const modelPath = `/mechanisms/sys-xform/fdConfig/dataModel/${model.modelIndex}`;
+    if (!expectedModel) {
+      diagnostics.push(mismatch("form", "readback.form.detail_model_binding_mismatch", "Readback detail model is not bound to an expected DSL detail field.", {
+        invariantKey: `form.persistence.detailModels.${model.fieldId || model.modelIndex}`,
+        path: `${modelPath}/fdAttribute`,
+        expected: { detailFieldIds: [...expectedDetails.keys()] },
+        actual: { detailFieldId: model.fieldId }
+      }));
+      continue;
+    }
+
+    if (expectedModel.requireModelControlBinding === true) {
+      const binding = model.controlBinding || {};
+      const bindingMatches = Boolean(
+        model.modelId &&
+        model.modelName &&
+        model.tableName &&
+        binding.readable === true &&
+        binding.detailFieldId === expectedModel.fieldId &&
+        binding.tableType === expectedModel.tableType &&
+        binding.tableName === model.tableName &&
+        (!model.tableNameAlias || model.tableNameAlias === model.tableName)
+      );
+      if (!bindingMatches) {
+        diagnostics.push(mismatch("form", "readback.form.detail_model_binding_mismatch", "Readback detail model control binding does not identify its DSL field and physical table.", {
+          invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.binding`,
+          path: `${modelPath}/fdAttribute`,
+          expected: {
+            readable: true,
+            detailFieldId: expectedModel.fieldId,
+            tableType: expectedModel.tableType,
+            tableName: model.tableName,
+            tableNameAlias: model.tableName
+          },
+          actual: {
+            ...binding,
+            modelId: model.modelId,
+            modelName: model.modelName,
+            tableName: model.tableName,
+            tableNameAlias: model.tableNameAlias
+          }
+        }));
+      }
+    }
+
+    const actualColumns = new Map((model.columns || []).map((column) => [column.id, column]));
+    for (const columnId of expectedModel.columnIds || []) {
+      const column = actualColumns.get(columnId);
+      if (!column) continue;
+      const fieldPath = `${modelPath}/fdFields/${column.fieldIndex}`;
+
+      if (column.mechanismType !== expectedModel.fieldMechanismType) {
+        diagnostics.push(mismatch("form", "readback.form.detail_field_mechanism_type_mismatch", "Readback detail business field must use the SYS-XFORM mechanism.", {
+          invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.columns.${columnId}.mechanismType`,
+          path: `${fieldPath}/fdMechanismType`,
+          expected: expectedModel.fieldMechanismType,
+          actual: column.mechanismType
+        }));
+      }
+
+      if (column.columnName !== expectedModel.fieldColumnName) {
+        diagnostics.push(mismatch("form", "readback.form.detail_field_column_mismatch", "Readback detail business field must use the platform-managed physical column mapping.", {
+          invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.columns.${columnId}.columnName`,
+          path: `${fieldPath}/fdColumn`,
+          expected: expectedModel.fieldColumnName,
+          actual: column.columnName
+        }));
+      }
+
+      if (expectedModel.requireFieldModelBinding === true) {
+        const modelBinding = column.dataModel || {};
+        if (!model.modelId || !model.modelName ||
+          modelBinding.id !== model.modelId || modelBinding.name !== model.modelName) {
+          diagnostics.push(mismatch("form", "readback.form.detail_field_model_binding_mismatch", "Readback detail business field is not bound to its containing data model.", {
+            invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.columns.${columnId}.dataModel`,
+            path: `${fieldPath}/fdDataModel`,
+            expected: { id: model.modelId, name: model.modelName },
+            actual: modelBinding
+          }));
+        }
+      }
+
+      if (expectedModel.requireFieldTableBinding === true) {
+        const controlBinding = column.controlBinding || {};
+        const bindingMatches = Boolean(
+          controlBinding.readable === true &&
+          controlBinding.fieldName === columnId &&
+          controlBinding.tableType === expectedModel.tableType &&
+          controlBinding.tableName === model.tableName
+        );
+        if (!bindingMatches) {
+          diagnostics.push(mismatch("form", "readback.form.detail_field_table_binding_mismatch", "Readback detail business field control is not bound to its containing physical table.", {
+            invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.columns.${columnId}.tableBinding`,
+            path: `${fieldPath}/fdAttribute`,
+            expected: {
+              readable: true,
+              fieldName: columnId,
+              tableType: expectedModel.tableType,
+              tableName: model.tableName
+            },
+            actual: controlBinding
+          }));
+        }
+      }
+    }
+  }
+}
+
+function compareDistinctModelTables(models, diagnostics) {
+  const firstModelByTable = new Map();
+  for (const model of models) {
+    const tableName = normalizeScalar(model.tableName);
+    if (!tableName) continue;
+    const key = String(tableName).toLowerCase();
+    const previous = firstModelByTable.get(key);
+    if (!previous) {
+      firstModelByTable.set(key, model);
+      continue;
+    }
+    if (previous.modelType !== "detail" && model.modelType !== "detail") continue;
+    diagnostics.push(mismatch("form", "readback.form.detail_table_cross_model_conflict", "Readback reuses one physical detail table across multiple data models.", {
+      invariantKey: "form.persistence.distinctModelTableNames",
+      path: `/mechanisms/sys-xform/fdConfig/dataModel/${model.modelIndex}/fdTableName`,
+      expected: { distinct: true },
+      actual: {
+        tableName,
+        models: [
+          { index: previous.modelIndex, id: previous.modelId, type: previous.modelType },
+          { index: model.modelIndex, id: model.modelId, type: model.modelType }
+        ]
+      }
+    }));
+  }
 }
 
 function compareLayout(expectedRows, actualRows, diagnostics, fields) {
@@ -401,6 +558,15 @@ function compareWorkflow(expected, actual, diagnostics) {
         path: `/readback/workflow/nodes/${node.id}/name`,
         expected: node.name,
         actual: actualNode.name
+      }));
+    }
+    if (node.ignoreOnSameIdentity !== undefined &&
+      node.ignoreOnSameIdentity !== actualNode.ignoreOnSameIdentity) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.same_identity_policy_mismatch", "Readback workflow same-identity policy mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.ignoreOnSameIdentity`,
+        path: `/readback/workflow/nodes/${node.id}/ignoreOnSameIdentity`,
+        expected: node.ignoreOnSameIdentity,
+        actual: actualNode.ignoreOnSameIdentity
       }));
     }
     if ((node.mustModifyHandlerNodeIds || []).length > 0 &&

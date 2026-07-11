@@ -99,6 +99,56 @@ describe("translateSysFormTemplateXml", () => {
     );
   });
 
+  it("migrates styled hint textLabels to xform-description and skips plain field labels", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0,1" colSpan="2">
+              <label fd_type="textLabel" fd_values='{id:"fd_hint_red",content:"此流程近期改动较大",color:"#FF0000",b:"false"}'>此流程近期改动较大</label>
+            </td>
+          </tr>
+          <tr>
+            <td row="1" column="0"><label fd_type="textLabel" fd_values='{id:"label_subject",content:"主题"}'>主题</label></td>
+            <td row="1" column="1"><div fd_type="inputText" fd_values='{id:"fd_subject",label:"主题",required:"true"}'><input id="fd_subject"/></div></td>
+          </tr>
+          <tr>
+            <td row="2" column="0,1" colSpan="2">
+              <label fd_type="textLabel" fd_values='{id:"fd_hint_bold",content:"请按规范填写",color:"",b:"true"}'>请按规范填写</label>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="fd_subject" label="主题" type="String" notNull="true"/>
+      </metadata>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }));
+    const byId = new Map(dsl.form.fields.map((field) => [field.id, field]));
+
+    assert.deepEqual(dsl.form.fields.map((field) => field.id), ["fd_hint_red", "fd_subject", "fd_hint_bold"]);
+    assert.equal(byId.get("fd_hint_red")?.type, "description");
+    assert.equal(byId.get("fd_hint_red")?.mk.component, "xform-description");
+    assert.equal(byId.get("fd_hint_red")?.mk.itemTid, "xform-ide-sidebar-tabPane-control-@elem-xform-description");
+    assert.equal(byId.get("fd_hint_red")?.source?.designerValues?.content, "此流程近期改动较大");
+    assert.equal(byId.get("fd_hint_bold")?.type, "description");
+    assert.equal(byId.has("label_subject"), false);
+    assert.deepEqual(dsl.form.layout.rows.map((row) => row.cells.map((cell) => cell.fieldId)), [
+      ["fd_hint_red"],
+      ["fd_subject"],
+      ["fd_hint_bold"]
+    ]);
+    assert.equal(
+      dsl.review.warnings.some((warning) =>
+        warning.code === "source.sysform.metadata_field_missing" &&
+        warning.details?.designerId === "fd_hint_red"
+      ),
+      false
+    );
+  });
+
   it("keeps rows after a nested detail table body while extracting designer layout", () => {
     const designerHtml = `
       <table fd_type="standardTable">

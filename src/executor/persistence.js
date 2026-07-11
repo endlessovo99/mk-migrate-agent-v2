@@ -110,6 +110,8 @@ function emptyFormSummary() {
     fieldCount: 0,
     fields: [],
     detailTableCount: 0,
+    subjectRule: undefined,
+    persistence: { mainTableName: "", detailTables: [] },
     layoutRowCount: 0,
     layoutRows: [],
     scripts: { actionCount: 0, events: [], controlEvents: [], actions: [] },

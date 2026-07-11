@@ -243,11 +243,19 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "content": { "type": "string" }
+          "content": { "type": "string" },
+          "style": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "color": { "type": "string" },
+              "fontWeight": { "type": "string" }
+            }
+          }
         }
       },
       "defaultPolicy": {},
-      "omitPolicy": { "omitWhenAbsent": ["content"] }
+      "omitPolicy": { "omitWhenAbsent": ["content", "style"] }
     },
     {
       "componentId": "xform-detail-table",

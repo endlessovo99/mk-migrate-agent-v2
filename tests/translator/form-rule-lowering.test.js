@@ -37,26 +37,29 @@ describe("legacy JSP native form-rule lowering", () => {
     assert.equal(formRules.linkage.some((rule) => rule.meta.sourceJsp === "source.form.jsp.view"), false);
   });
 
-  localCorpusIt("lowers the target fixture to six executable rules and excludes three detail-table rules without deleting script actions", () => {
+  localCorpusIt("lowers the target fixture to nine executable rules including detail-table container rows", () => {
     const sourceDraft = cleanSourceFile(targetFixture);
     const dslDraft = draftSourceDraft(sourceDraft);
     const sourceRules = sourceDraft.formRules.linkage;
     const executable = dslDraft.formRules.linkage.filter((rule) => rule.translationStatus === "executable");
-    const excludedRules = dslDraft.formRules.review.excludedRules;
+    const excludedRules = dslDraft.formRules.review.excludedRules || [];
 
     assert.equal(sourceRules.length, 12);
-    assert.equal(executable.length, 6);
-    assert.equal(excludedRules.length, 3);
-    assert.equal(dslDraft.formRules.linkage.length, 6);
+    assert.equal(executable.length, 9);
+    assert.equal(excludedRules.length, 0);
+    assert.equal(dslDraft.formRules.linkage.length, 9);
     assert.equal(dslDraft.scripts.actions.length, 35);
     assert.equal(sourceRules.every((rule) => rule.meta.displayGate === "xform:editShow"), true);
     assert.equal(sourceRules.every((rule) => rule.meta.runWhen?.viewStatusIn.join(",") === "add,edit"), true);
 
+    const detailRules = executable.filter((rule) =>
+      (rule.effects || []).some((effect) => ["aqxy_row", "aqxy2_row", "aqxy3_row"].includes(effect.target))
+    );
+    assert.equal(detailRules.length, 3);
     assert.deepEqual(
-      excludedRules.map((rule) => rule.target).sort(),
+      [...new Set(detailRules.flatMap((rule) => rule.effects.map((effect) => effect.target)))].sort(),
       ["aqxy2_row", "aqxy3_row", "aqxy_row"].sort()
     );
-    assert.equal(excludedRules.every((rule) => rule.code === "form_rule.target_detail_table"), true);
 
     const mergedJsx = executable.find((rule) => rule.meta.sourceRuleIds?.length === 4);
     assert.equal(mergedJsx.logic, "or");
@@ -70,15 +73,15 @@ describe("legacy JSP native form-rule lowering", () => {
 
     assert.deepEqual(
       [...new Set(executable
-        .filter((rule) => rule !== mergedJsx)
+        .filter((rule) => rule !== mergedJsx && !detailRules.includes(rule))
         .flatMap((rule) => rule.effects.map((effect) => effect.target)))].sort(),
       ["cbfw_row", "gjqjqt_row", "glqx_row", "qtfw_row", "ypfw_row"].sort()
     );
 
     const detailAction = actionFor(dslDraft, "source.form.jsp.fd_3e502424ad4b9e.script.1", "fd_3268bfe94b435c");
-    assert.equal(detailAction.coverage.status, "uncovered");
-    assert.deepEqual(detailAction.coverage.nativeRules, []);
-    assert.equal(detailAction.coverage.residuals.some((item) => item.code === "script.residual.form_rule_needs_review"), true);
+    assert.equal(detailAction.coverage.status, "partial");
+    assert.equal(detailAction.coverage.nativeRules.length >= 1, true);
+    assert.equal(detailAction.coverage.residuals.some((item) => item.code === "script.residual.form_rule_needs_review"), false);
 
     const serviceAction = actionFor(dslDraft, "source.form.jsp.fd_3e2435e961a482.script.1", "fd_38e47090921a54");
     assert.equal(serviceAction.coverage.status, "partial");

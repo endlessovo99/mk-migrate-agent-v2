@@ -1,15 +1,22 @@
 import { COMPONENTS_BY_ID } from "../../dsl/catalogs.js";
-import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../../dsl/form-rules.js";
+import { packLayoutCells } from "../../dsl/layout-pack.js";
+import {
+  buildFormRuleRefIndex,
+  resolveDirectRef,
+  resolveEffectTarget
+} from "../../dsl/form-rules.js";
 import { EXECUTABLE_WORKFLOW_NODE_TYPE_SET, INVARIANT_VERSION } from "./invariants.js";
 import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "./normalize.js";
 import { projectionError } from "./diagnostics.js";
+import { selectDefaultBranchEdge } from "./branch-defaults.js";
+import { detailTableNameFor } from "./detail-table-names.js";
 
 export function buildExpectedInvariants(dsl, envelope) {
   const diagnostics = [];
   const envelopeExpected = buildExpectedEnvelope(envelope, diagnostics);
   const formExpected = buildExpectedForm(dsl?.form || {}, diagnostics);
   const rulesExpected = buildExpectedRules(dsl?.formRules, dsl?.form || {}, diagnostics);
-  const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, diagnostics);
+  const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, envelope?.tableName, diagnostics);
   const workflowExpected = dsl?.workflow
     ? buildExpectedWorkflow(dsl.workflow, diagnostics)
     : { expected: false };
@@ -144,9 +151,10 @@ function buildExpectedForm(form, diagnostics) {
       ));
       return null;
     }
+    const packed = packLayoutCells(Array.isArray(row.children) ? row.children : []);
     return {
       id: row.id,
-      cells: (Array.isArray(row.children) ? row.children : []).map((cell, cellIndex) => {
+      cells: packed.cells.map((cell, cellIndex) => {
         const fieldIdsForCell = childRefIds(cell);
         if (!fieldIdsForCell.length) {
           diagnostics.push(projectionError(
@@ -167,7 +175,23 @@ function buildExpectedForm(form, diagnostics) {
 
   return {
     fields: expectedFields,
-    layoutRows
+    layoutRows,
+    subjectRule: {},
+    persistence: {
+      distinctModelTableNames: true,
+      detailModels: expectedFields
+        .filter((field) => field.type === "detailTable")
+        .map((field) => ({
+          fieldId: field.id,
+          tableType: "detail",
+          fieldMechanismType: "SYS-XFORM",
+          fieldColumnName: "",
+          requireModelControlBinding: true,
+          requireFieldModelBinding: true,
+          requireFieldTableBinding: true,
+          columnIds: field.columns.map((column) => column.id)
+        }))
+    }
   };
 }
 
@@ -183,9 +207,21 @@ function executableProps(field = {}) {
   if (field.componentId === "xform-select~multi") props.multi = true;
   if (field.props?.content !== undefined) props.content = normalizeScalar(field.props.content);
   if (field.props?.maxLength !== undefined) props.maxLength = field.props.maxLength;
+  if (field.componentId === "xform-description") {
+    const style = descriptionStyle(field.props?.style);
+    if (style) props.style = style;
+  }
   const catalog = COMPONENTS_BY_ID.get(field.componentId);
   if (catalog?.componentId) props.componentId = catalog.componentId;
   return props;
+}
+
+function descriptionStyle(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const style = {};
+  if (typeof value.color === "string" && value.color.trim()) style.color = value.color.trim();
+  if (typeof value.fontWeight === "string" && value.fontWeight.trim()) style.fontWeight = value.fontWeight.trim();
+  return Object.keys(style).length ? style : undefined;
 }
 
 function buildExpectedRules(formRules = {}, form = {}, diagnostics) {
@@ -306,12 +342,12 @@ function normalizeRuleValue(value) {
   return normalizeScalar(value);
 }
 
-function buildExpectedScripts(scripts = {}, form = {}, diagnostics) {
+function buildExpectedScripts(scripts = {}, form = {}, mainTableName, diagnostics) {
   const actions = [];
   const detailTableNames = Object.fromEntries(
     (Array.isArray(form?.fields) ? form.fields : [])
       .filter((field) => field?.type === "detailTable")
-      .map((field) => [field.id, tableNameFor(field.id)])
+      .map((field) => [field.id, detailTableNameFor(mainTableName, field.id)])
   );
   for (const action of Array.isArray(scripts?.actions) ? scripts.actions : []) {
     if (action?.translationStatus === "omitted") {
@@ -360,10 +396,6 @@ function renderExpectedScriptBody(source, detailTableNames = {}) {
   });
 }
 
-function tableNameFor(id) {
-  return `mk_model_${String(id || "table").replace(/[^a-zA-Z0-9_]+/g, "_").slice(0, 32)}`;
-}
-
 function buildExpectedWorkflow(workflow, diagnostics) {
   const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
   const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
@@ -398,7 +430,8 @@ function buildExpectedWorkflow(workflow, diagnostics) {
       participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id)),
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),
-      dataAuthority: summarizeDataAuthority(node)
+      dataAuthority: summarizeDataAuthority(node),
+      ignoreOnSameIdentity: expectedIgnoreOnSameIdentity(node)
     };
   }).filter(Boolean);
 
@@ -444,27 +477,10 @@ function collectDefaultEdgeIds(nodes = [], edges = []) {
 
   const defaultEdgeIds = new Set();
   for (const sourceEdges of edgesBySource.values()) {
-    const defaultEdge = sourceEdges.find(isExplicitDefaultEdge) ||
-      sourceEdges.find((edge) => isTautologyCondition(edgeConditionText(edge)));
+    const defaultEdge = selectDefaultBranchEdge(sourceEdges);
     if (defaultEdge?.id) defaultEdgeIds.add(defaultEdge.id);
   }
   return defaultEdgeIds;
-}
-
-function isExplicitDefaultEdge(edge) {
-  return [true, "true", 1, "1"].includes(edge?.isDefault) ||
-    [true, "true", 1, "1"].includes(edge?.attributes?.isDefault);
-}
-
-function isTautologyCondition(condition) {
-  return /^(?:1\s*={2,3}\s*1|true)$/i.test(String(condition || "").trim());
-}
-
-function edgeConditionText(edge) {
-  if (edge?.condition && typeof edge.condition === "object") {
-    return edge.condition.targetText || edge.condition.sourceText || edge.condition.displayText || "";
-  }
-  return edge?.condition || edge?.displayCondition || "";
 }
 
 function summarizeParticipants(node, initiatorSelectTarget) {
@@ -566,6 +582,20 @@ function sourceAttributes(node) {
     ...(node?.attributes || {}),
     ...(node?.definition?.attributes || {})
   };
+}
+
+function expectedIgnoreOnSameIdentity(node) {
+  if (!node || !["review", "send"].includes(node.type)) return undefined;
+  const attrs = sourceAttributes(node);
+  const fields = node.dataAuthority?.fields || {};
+  const hasRequiredField = Object.values(fields).some((field) => field?.required === true);
+  const hasMustModifyHandlerNodes = splitRelatedNodeIds(
+    attrs.mustModifyHandlerNodeIds || attrs.mustModifyHandlerNodes
+  ).length > 0;
+  const eSign = attrs.eSignConfig || node.eSignConfig;
+  const hasEnabledESign = eSign && (eSign.enable === true || eSign.enable === "true");
+  if (hasRequiredField || hasMustModifyHandlerNodes || hasEnabledESign) return "1";
+  return attrs.ignoreOnHandlerSame === "false" ? "1" : "2";
 }
 
 function splitRelatedNodeIds(value = "") {

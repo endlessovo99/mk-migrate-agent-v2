@@ -21,7 +21,7 @@ describe("preparePersistedTemplate interface", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl());
     assert.equal(readback.ok, true);
     assert.equal(readback.status, "verified");
-    assert.equal(readback.invariantVersion, 1);
+    assert.equal(readback.invariantVersion, 2);
     assert.deepEqual(readback.partitions, {
       envelope: "verified",
       form: "verified",
@@ -167,6 +167,21 @@ describe("form field and detail mutations", () => {
 });
 
 describe("marker independence", () => {
+  it("writes layout sourceMarkers as migrationRowId for runtime setFieldAttr", () => {
+    const form = sampleForm();
+    form.layout.mkTree[1] = {
+      ...form.layout.mkTree[1],
+      sourceMarkers: ["fd_detail_row"]
+    };
+    const prepared = prepareSample(sampleTrustedDsl({ form, workflow: null }));
+    assert.equal(prepared.ok, true);
+    const view = JSON.parse(xformConfig(prepared.update).viewModel[0].fdConfig);
+    const main = view.view.render.desktop[0].children[0];
+    const detailRow = main.children[1];
+    assert.equal(detailRow.controlProps.migrationRowId, "fd_detail_row");
+    assert.equal(detailRow.children[0].children[0].controlProps.migrationRowId, "fd_detail_row");
+  });
+
   it("passes when native semantics are intact but migration markers are corrupt", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl({ workflow: null }), {
       mutate(template) {
@@ -220,6 +235,149 @@ describe("marker independence", () => {
     });
     assert.equal(readback.ok, false);
     assert.equal(readback.diagnostics.some((item) => item.code === "readback.form.component_mismatch"), true);
+  });
+});
+
+describe("form layout projection", () => {
+  it("packs gapped source columns into a dense NewOA layout grid", () => {
+    const form = sampleForm();
+    form.layout.mkTree = [{
+      id: "layout.row-wide",
+      componentId: "xform-flex-1-2-layout",
+      props: { columns: 2, sourceColumns: 4 },
+      sourceRef: "source.form.layout.row.row-wide",
+      children: [
+        {
+          id: "layout.row-wide-cell-1",
+          refType: "field",
+          refIds: ["fd_subject"],
+          sourceRef: "source.form.layout.cell.row-wide-cell-1",
+          column: 1,
+          colspan: 1
+        },
+        {
+          id: "layout.row-wide-cell-3",
+          refType: "field",
+          refIds: ["fd_amount"],
+          sourceRef: "source.form.layout.cell.row-wide-cell-3",
+          column: 3,
+          colspan: 1
+        }
+      ]
+    }];
+    const prepared = prepareSample(sampleTrustedDsl({ form, workflow: null }));
+    assert.equal(prepared.ok, true);
+    const view = JSON.parse(xformConfig(prepared.update).viewModel[0].fdConfig);
+    const row = view.view.render.desktop[0].children[0].children[0];
+    const grid = row.children[0];
+    assert.equal(row.controlProps.migrationSourceColumns, 4);
+    assert.equal(row.controlProps.migrationDisplayColumns, 2);
+    assert.equal(grid.controlProps.columns, 2);
+    assert.deepEqual(
+      grid.children.map((item) => ({
+        column: item.controlProps.column,
+        colSpan: item.controlProps.colSpan,
+        field: item.controlProps.migrationFieldId
+      })),
+      [
+        { column: 1, colSpan: 1, field: "fd_subject" },
+        { column: 2, colSpan: 1, field: "fd_amount" }
+      ]
+    );
+  });
+
+  it("leaves subjectRule empty and projects description content with style", () => {
+    const form = sampleForm();
+    form.fields.push({
+      id: "fd_hint_red",
+      title: "此流程近期改动较大",
+      type: "description",
+      componentId: "xform-description",
+      props: {
+        content: "此流程近期改动较大",
+        style: { color: "rgba(255,0,0,1)", fontWeight: "bold" }
+      },
+      sourceProps: { designerType: "textLabel" },
+      sourceRef: "source.form.control.fd_hint_red"
+    });
+    form.layout.mkTree.unshift({
+      id: "layout.row-hint",
+      componentId: "xform-flex-1-1-layout",
+      props: { columns: 1, sourceColumns: 1 },
+      sourceRef: "source.form.layout.row.row-hint",
+      children: [{
+        id: "layout.row-hint-cell-0",
+        refType: "field",
+        refIds: ["fd_hint_red"],
+        sourceRef: "source.form.layout.cell.row-hint-cell-0",
+        column: 0,
+        colspan: 1
+      }]
+    });
+
+    const prepared = prepareSample(sampleTrustedDsl({ form, workflow: null }));
+    assert.equal(prepared.ok, true);
+    const config = xformConfig(prepared.update);
+    const attr = formAttr(prepared.update);
+    const descField = config.dataModel[0].fdFields.find((field) => field.fdName === "fd_hint_red");
+    const descAttribute = JSON.parse(descField.fdAttribute);
+    const view = JSON.parse(config.viewModel[0].fdConfig);
+
+    assert.deepEqual(attr.subjectRule, {});
+    assert.equal(descField.fdType, "desc");
+    assert.equal(descField.fdIsStored, false);
+    assert.equal(descField.fdLength, 0);
+    assert.equal(descAttribute.config.controlProps.content, "此流程近期改动较大");
+    assert.equal(descAttribute.config.controlProps.defaultTextValue, "此流程近期改动较大");
+    assert.equal(descAttribute.config.controlProps.alignDesc, "left");
+    assert.equal(descAttribute.config.type, "desc");
+    assert.deepEqual(descAttribute.config.labelProps.desktop, { hiddenLabel: true });
+    assert.deepEqual(view.controlStyle.fd_hint_red, {
+      desktop: {
+        layout: "vertical",
+        controlValueStyle: { color: "rgba(255,0,0,1)", fontWeight: "bold" }
+      }
+    });
+    assert.equal(config.auth[0].add.mk_model_test.fields.fd_hint_red.editable, false);
+
+    const healthyReadback = prepared.verify(prepared.update);
+    assert.equal(healthyReadback.ok, true);
+    assert.deepEqual(
+      healthyReadback.form.fields.find((field) => field.id === "fd_hint_red").style,
+      { color: "rgba(255,0,0,1)", fontWeight: "bold" }
+    );
+
+    const withoutStyle = structuredClone(prepared.update);
+    const withoutStyleConfig = xformConfig(withoutStyle);
+    const withoutStyleView = JSON.parse(withoutStyleConfig.viewModel[0].fdConfig);
+    delete withoutStyleView.controlStyle.fd_hint_red;
+    withoutStyleConfig.viewModel[0].fdConfig = JSON.stringify(withoutStyleView);
+    withoutStyle.mechanisms["sys-xform"].fdConfig = JSON.stringify(withoutStyleConfig);
+    const missingStyleReadback = prepared.verify(withoutStyle);
+    assert.equal(missingStyleReadback.ok, false);
+    assert.equal(
+      missingStyleReadback.diagnostics.some((item) => item.code === "readback.form.prop_style_mismatch"),
+      true
+    );
+  });
+
+  it("fails readback when the empty subjectRule is replaced", () => {
+    const { readback } = persistAndVerify(sampleTrustedDsl({ workflow: null }), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.subjectRule = {
+          script: "${data.biz.fdSubject}",
+          type: "Eval",
+          vo: { content: "$标题$", mode: "formula" }
+        };
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+    assert.equal(readback.ok, false);
+    assert.equal(readback.diagnostics.some((item) => item.code === "readback.form.subject_rule_mismatch"), true);
   });
 });
 
@@ -386,6 +544,45 @@ describe("script mutations", () => {
 });
 
 describe("workflow mutations", () => {
+  it("fails when the same-identity policy changes", () => {
+    const workflow = sampleWorkflow();
+    workflow.nodes = [
+      workflow.nodes[0],
+      {
+        id: "N2",
+        type: "review",
+        element: "manualTask",
+        name: "审批",
+        sourceType: "reviewNode",
+        sourceRef: "source.workflow.node.N2",
+        attributes: { ignoreOnHandlerSame: "true" },
+        participants: {
+          mode: "explicit",
+          members: [{ id: "person-1", name: "审批人", targetOrgType: 8 }]
+        },
+        translationStatus: "executable"
+      },
+      { ...workflow.nodes[1], id: "N3", sourceRef: "source.workflow.node.N3" }
+    ];
+    workflow.edges = [
+      { ...workflow.edges[0], id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1" },
+      { ...workflow.edges[0], id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2" }
+    ];
+    workflow.topologicalOrder = ["N1", "N2", "N3"];
+
+    const { readback } = persistAndVerify(sampleTrustedDsl({ workflow }), {
+      mutate(template) {
+        const lbpm = template.mechanisms.lbpmTemplate[0];
+        const content = JSON.parse(lbpm.fdContent);
+        content.elements.find((element) => element.id === "N2").ignoreOnSameIdentity = "1";
+        lbpm.fdContent = JSON.stringify(content);
+        return template;
+      }
+    });
+    assert.equal(readback.ok, false);
+    assert.equal(readback.diagnostics.some((item) => item.code === "readback.workflow.same_identity_policy_mismatch"), true);
+  });
+
   it("fails on unexpected nodes and edges", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl(), {
       mutate(template) {
@@ -488,6 +685,13 @@ describe("decode failures", () => {
     const dsl = sampleTrustedDsl({ workflow: null });
     const prepared = prepareSample(dsl);
     const fixture = JSON.parse(readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8"));
+    const config = xformConfig(fixture);
+    const attr = JSON.parse(config.attribute.formAttr);
+    // Keep the independently authored native structure while upgrading the fixture
+    // from the retired title formula to the current empty-subject contract.
+    attr.subjectRule = {};
+    config.attribute.formAttr = JSON.stringify(attr);
+    fixture.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
     // Fixture is authored from a sanitized projection snapshot checked into the repo,
     // not cloned inside the test from the live writer output.
     const readback = prepared.verify(fixture);

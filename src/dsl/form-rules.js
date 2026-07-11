@@ -193,9 +193,8 @@ function markerRefCandidates(ref) {
 }
 
 function expandDslTarget(target) {
-  if (target.kind === "detailTable") {
-    return target.columns.length ? target.columns : [target];
-  }
+  // Detail tables are whole-container visibility/required targets.
+  // Column-level effects must address column ids (or table.column) directly.
   return [target];
 }
 

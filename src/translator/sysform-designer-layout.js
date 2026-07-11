@@ -182,15 +182,17 @@ function parseDesignerLayout(html, warnings) {
 
 function enrichDesignerField(field, metadataField, warnings) {
   if (!metadataField) {
-    warnings.push({
-      code: "source.sysform.metadata_field_missing",
-      message: `Designer field ${field.id} (${field.title}) did not match fdMetadataXml.`,
-      path: "/fdDesignerHtml",
-      details: {
-        designerId: field.id,
-        title: field.title
-      }
-    });
+    if (field.type !== "description") {
+      warnings.push({
+        code: "source.sysform.metadata_field_missing",
+        message: `Designer field ${field.id} (${field.title}) did not match fdMetadataXml.`,
+        path: "/fdDesignerHtml",
+        details: {
+          designerId: field.id,
+          title: field.title
+        }
+      });
+    }
     return field;
   }
 
@@ -281,9 +283,15 @@ function metadataCompatibleWithDesigner(metadataField, designerField) {
 }
 
 function extractLayoutCellControls(html) {
-  const controls = extractDesignerFieldControls(html, { includeHidden: true });
+  const controls = extractDesignerFieldControls(html, { includeHidden: true, includeTextLabels: true });
   const detailTables = controls.filter((control) => control.type === "detailTable");
-  return detailTables.length ? detailTables : controls;
+  if (detailTables.length) return detailTables;
+
+  const fieldControls = controls.filter((control) => control.type !== "description");
+  if (fieldControls.length) return fieldControls;
+
+  // Label-only cells: keep styled/hint textLabels as descriptions; skip plain field titles.
+  return controls.filter((control) => control.type === "description" && isHintTextLabel(control));
 }
 
 function extractDesignerFieldControls(html, options = {}) {
@@ -292,7 +300,8 @@ function extractDesignerFieldControls(html, options = {}) {
 
   for (const match of html.matchAll(controlPattern)) {
     const fdType = match[4];
-    if (String(fdType || "").toLowerCase() === "textlabel") continue;
+    const normalizedType = String(fdType || "").toLowerCase();
+    if (normalizedType === "textlabel" && !options.includeTextLabels) continue;
     const values = parseFdValues(attrValue(match[2], "fd_values"));
     const fragment = matchingElementFragment(html, match);
     const hidden = isHiddenDesignerControl(values, match[2], fragment);
@@ -305,6 +314,26 @@ function extractDesignerFieldControls(html, options = {}) {
   }
 
   return controls;
+}
+
+function isHintTextLabel(field) {
+  const values = field?.source?.designerValues || {};
+  if (hasTextLabelColor(values.color) || isTrueLike(values.b)) return true;
+  const style = String(values.style || "");
+  if (/color\s*:\s*#(?!000000|000\b)[0-9a-f]{3,8}\b/i.test(style)) return true;
+  if (/font-weight\s*:\s*(bold|[6-9]00)\b/i.test(style)) return true;
+  return false;
+}
+
+function hasTextLabelColor(value) {
+  const color = String(value || "").trim();
+  if (!color) return false;
+  const normalized = color.toLowerCase();
+  return !["#000", "#000000", "black", "rgb(0,0,0)", "rgba(0,0,0,1)"].includes(normalized);
+}
+
+function isTrueLike(value) {
+  return String(value ?? "").trim().toLowerCase() === "true";
 }
 
 function extractRowMarkers(html) {
@@ -390,7 +419,6 @@ function cleanDescriptionLabelText(value) {
 
 function designerFieldFromControl(fdType, values, attrs, context = {}) {
   const normalized = String(fdType || "").toLowerCase();
-  if (normalized === "textlabel") return undefined;
 
   const id = values.id || propertyFieldId(attrValue(attrs, "property")) || attrValue(attrs, "id");
   if (!id) return undefined;
@@ -406,6 +434,19 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
     designerShowStatus: attrValue(attrs, "showStatus") || undefined,
     ...(context.hidden ? { designerHidden: true } : {})
   };
+
+  if (normalized === "textlabel") {
+    const content = cleanText(values.content || title);
+    if (!content) return undefined;
+    return {
+      id,
+      title: content,
+      type: "description",
+      required: false,
+      mk: mkForFieldType("description"),
+      source
+    };
+  }
 
   if (normalized === "detailstable") {
     return {

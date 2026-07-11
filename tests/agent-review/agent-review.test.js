@@ -125,6 +125,116 @@ describe("agent-review", () => {
     assert.equal(result.report.diagnostics.some((item) => item.code === "agent.patch.low_confidence"), true);
   });
 
+  it("rejects script patches that use setFieldAttr on ${table:...} or detail-table ids", async () => {
+    const form = sampleForm();
+    form.layout.mkTree[1] = {
+      ...form.layout.mkTree[1],
+      sourceMarkers: ["fd_detail_row"]
+    };
+    const dslDraft = sampleDraftDsl({
+      form,
+      workflow: undefined,
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_subject.onChange.1",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          controlId: "fd_subject",
+          function: "function onChange(value) {\n  // Source JSP JavaScript:\n  // common_dom_row_set_show_required_reset(\"fd_detail_row\", true, true, false);\n}",
+          translationStatus: "needs_review",
+          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+          coverage: { status: "none", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    });
+    const sourceDraft = sampleSourceDraft({
+      form: {
+        ...sampleSourceDraft().form,
+        jsps: [{
+          id: "fd_jsp",
+          sourceRef: "source.form.jsp.fd_jsp",
+          scripts: [{
+            id: "fd_jsp.script.1",
+            sourceRef: "source.form.jsp.fd_jsp.script.1",
+            javascript: "common_dom_row_set_show_required_reset(\"fd_detail_row\", true, true, false);",
+            functionAudit: { matched: [], violations: [] }
+          }]
+        }]
+      }
+    });
+
+    const rejected = await runAgentReview(sourceDraft, dslDraft, {
+      provider: new FakeReviewProvider(reviewResponse({
+        patches: [{
+          op: "replace",
+          path: "/scripts/actions/0/function",
+          value: "function onChange(value) {\n  MKXFORM.setFieldAttr(\"${table:fd_detail}\", value ? 5 : 4)\n}",
+          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+          evidence: ["Legacy row toggle incorrectly mapped to a detail-table placeholder."],
+          confidence: 0.91,
+          rationale: "Should be rejected by setFieldAttr target validation."
+        }]
+      }))
+    });
+
+    const accepted = await runAgentReview(sourceDraft, dslDraft, {
+      provider: new FakeReviewProvider(reviewResponse({
+        patches: [
+          {
+            op: "replace",
+            path: "/scripts/actions/0/function",
+            value: "function onChange(value) {\n  MKXFORM.setFieldAttr(\"fd_detail_row\", value ? 5 : 4)\n  MKXFORM.setFieldAttr(\"fd_detail_row\", value ? 3 : 6)\n}",
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["Legacy common_dom_row_set_show_required_reset targets fd_detail_row."],
+            confidence: 0.91,
+            rationale: "Use the layout sourceMarker for whole-row visibility."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/translationStatus",
+            value: "mapped",
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["Mapped with setFieldAttr on the sourceMarker."],
+            confidence: 0.91,
+            rationale: "Target resolves through layout sourceMarkers."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/functionMappings",
+            value: [{
+              source: "common_dom_row_set_show_required_reset",
+              target: "MKXFORM.setFieldAttr",
+              basis: "semantic-translation",
+              reviewRequired: false
+            }],
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["Playbook maps row markers to setFieldAttr."],
+            confidence: 0.91,
+            rationale: "Record semantic mapping."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/coverage",
+            value: { status: "translated", nativeRules: [], residuals: [] },
+            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+            evidence: ["Row marker visibility is fully represented."],
+            confidence: 0.91,
+            rationale: "Close as translated."
+          }
+        ]
+      }))
+    });
+
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.report.diagnostics.some((item) => item.code === "agent.patch.set_field_attr_target_invalid"), true);
+    assert.equal(accepted.ok, true);
+    assert.equal(accepted.dsl.scripts.actions[0].function.includes("fd_detail_row"), true);
+    assert.equal(accepted.dsl.scripts.actions[0].function.includes("${table:"), false);
+  });
+
   it("repairs invalid patch responses once and records retry history", async () => {
     const sourceDraft = sampleSourceDraft();
     const dslDraft = sampleDraftDsl();
@@ -847,7 +957,11 @@ describe("agent-review", () => {
     assert.equal(prompt.context.scriptTranslationPolicy.nonWhitelistedFunctions.defaultHandling, "attempt_semantic_translation");
     assert.equal(prompt.context.scriptTranslationPolicy.nonWhitelistedFunctions.blockingByDefault, false);
     assert.equal(prompt.system.includes("formRules.linkage"), true);
-    assert.equal(prompt.context.dslDraft.formRules.linkageCount, 0);
+    assert.equal(prompt.context.dslDraft.formRules.linkageCount, 6);
+    assert.equal(
+      prompt.context.dslDraft.formRules.linkage.every((rule) => rule.translationStatus === "executable"),
+      true
+    );
     assert.equal(
       prompt.context.dslDraft.scripts.actions.some((action) =>
         action.runWhen?.viewStatusIn?.join(",") === "add,edit"
@@ -855,7 +969,9 @@ describe("agent-review", () => {
       true
     );
     assert.equal(prompt.system.includes("Pattern matching is evidence extraction only"), true);
+    assert.equal(prompt.system.includes("Whole-row or whole detail-table container visibility/required state must prefer native formRules.linkage"), true);
     assert.equal(prompt.context.jspTranslationPlaybook.id, "jsp-translation-playbook");
+    assert.equal(prompt.context.jspTranslationPlaybook.version, "2026-07-11.v4");
     assert.equal(prompt.context.jspTranslationPlaybook.fewShotExamples.some((example) => example.id === "row-load-guarded-by-value"), true);
     assert.equal(prompt.context.scriptTranslationPolicy.commonDomRowPattern, undefined);
     assert.equal(prompt.context.sourceDraft.scripts.sources.some((source) => source.semanticFacts?.rowMarkers?.length), true);

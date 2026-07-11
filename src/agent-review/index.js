@@ -1,5 +1,6 @@
 import { checkDraft } from "../dsl/checks.js";
 import { FIELD_TYPES } from "../dsl/schema.js";
+import { validateSetFieldAttrTargets } from "../dsl/scripts.js";
 import { checkTrust, createTrustedMigrationDsl } from "../dsl/trust.js";
 import { SOURCE_DRAFT_VERSION } from "../translator/source-draft.js";
 import { OpenAIResponsesReviewProvider, redactSecrets } from "./provider.js";
@@ -445,6 +446,15 @@ function validateScriptPatchValue(patch, target, path, currentValue, dslDraft) {
   const protection = protectedScriptActionReason(action);
   if (target.property === "function" && typeof patch.value !== "string") {
     return [error("agent.patch.value_script_function_required", "Script function patches require a string value. Empty strings are valid only when the final action is omitted.", `${path}/value`)];
+  }
+  if (target.property === "function" && typeof patch.value === "string" && patch.value.trim()) {
+    const setFieldAttrIssues = validateSetFieldAttrTargets(patch.value, dslDraft?.form);
+    if (setFieldAttrIssues.length) {
+      return [error("agent.patch.set_field_attr_target_invalid", "Script function patches must use MKXFORM.setFieldAttr only with main field ids or layout sourceMarkers, not detail-table ids or ${table:...} placeholders.", `${path}/value`, {
+        issues: setFieldAttrIssues,
+        actionIndex: target.actionIndex
+      })];
+    }
   }
   if (target.property === "translationStatus" && !["mapped", "needs_review", "manual", "omitted"].includes(patch.value)) {
     return [error("agent.patch.value_script_status_invalid", "Script translationStatus patches require mapped, needs_review, manual, or omitted.", `${path}/value`, {

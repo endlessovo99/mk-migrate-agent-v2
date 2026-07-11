@@ -237,6 +237,115 @@ export function analyzeScriptFunction(text = "") {
   };
 }
 
+/**
+ * Literal first-args of MKXFORM.setFieldAttr(...).
+ * Whole-row / main-field visibility must use a main field id or layout sourceMarker —
+ * never a ${table:...} placeholder or detail-table id.
+ */
+export function extractSetFieldAttrLiteralTargets(text = "") {
+  const source = String(text || "");
+  const targets = [];
+  const pattern = /MKXFORM\.setFieldAttr\s*\(\s*(["'`])([^"'`]*?)\1/g;
+  for (const match of source.matchAll(pattern)) {
+    targets.push({
+      target: match[2],
+      quote: match[1],
+      index: match.index,
+      snippet: snippetAt(source, match.index)
+    });
+  }
+  return targets;
+}
+
+export function buildSetFieldAttrTargetIndex(form = {}) {
+  const mainFields = new Set();
+  const detailTables = new Set();
+  const persistedRowTargets = new Set();
+
+  for (const field of Array.isArray(form.fields) ? form.fields : []) {
+    if (!field?.id) continue;
+    if (field.type === "detailTable") {
+      detailTables.add(field.id);
+      continue;
+    }
+    mainFields.add(field.id);
+  }
+
+  for (const row of Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : []) {
+    const markers = (Array.isArray(row?.sourceMarkers) ? row.sourceMarkers : [])
+      .map((marker) => String(marker || "").trim())
+      .filter(Boolean);
+    const persistedTarget = markers[0] || String(row?.id || "").trim();
+    if (persistedTarget) persistedRowTargets.add(persistedTarget);
+  }
+
+  return { mainFields, detailTables, persistedRowTargets };
+}
+
+export function validateSetFieldAttrTargets(functionText = "", form = {}) {
+  const index = buildSetFieldAttrTargetIndex(form);
+  const issues = [];
+
+  for (const entry of extractSetFieldAttrCalls(functionText)) {
+    if (entry.dynamic) {
+      issues.push({
+        code: "dynamic_target",
+        target: "",
+        snippet: entry.snippet,
+        message: "MKXFORM.setFieldAttr first argument must be a literal main field id or the persisted layout row target."
+      });
+      continue;
+    }
+    const target = entry.target;
+    if (/\$\{\s*table\s*:/.test(target) || target.includes("${table:")) {
+      issues.push({
+        code: "table_placeholder",
+        target,
+        snippet: entry.snippet,
+        message: "MKXFORM.setFieldAttr must target a main field or layout sourceMarker; ${table:...} is only for detail-column APIs."
+      });
+      continue;
+    }
+    if (index.detailTables.has(target)) {
+      issues.push({
+        code: "detail_table_id",
+        target,
+        snippet: entry.snippet,
+        message: "MKXFORM.setFieldAttr must not target a detail-table id; use the layout sourceMarker for whole-container visibility."
+      });
+      continue;
+    }
+    if (index.mainFields.has(target) || index.persistedRowTargets.has(target)) {
+      continue;
+    }
+    issues.push({
+      code: "unresolved",
+      target,
+      snippet: entry.snippet,
+      message: "MKXFORM.setFieldAttr target must resolve to a main field id or layout sourceMarker."
+    });
+  }
+
+  return issues;
+}
+
+function extractSetFieldAttrCalls(text = "") {
+  const source = String(text || "");
+  const literalByIndex = new Map(
+    extractSetFieldAttrLiteralTargets(source).map((entry) => [entry.index, entry])
+  );
+  const calls = [];
+  for (const match of source.matchAll(/MKXFORM\.setFieldAttr\s*\(\s*/g)) {
+    const literal = literalByIndex.get(match.index);
+    calls.push(literal || {
+      dynamic: true,
+      index: match.index,
+      snippet: snippetAt(source, match.index)
+    });
+  }
+  return calls;
+}
+
 export function parseNamedFunctionParams(text = "", name = "") {
   if (!name) return undefined;
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

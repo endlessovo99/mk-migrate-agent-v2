@@ -23,7 +23,8 @@ import {
   parseNamedFunctionParams,
   resolveControlEventSupport,
   resolveScriptControlTarget,
-  scriptTargetApiSummary
+  scriptTargetApiSummary,
+  validateSetFieldAttrTargets
 } from "./scripts.js";
 
 export const DSL_VERSION = "2.0-migration";
@@ -905,6 +906,12 @@ function validateScriptActionFunction(action, path, diagnostics, context) {
     if (analysis.disallowedCalls.length) {
       diagnostics.push(error("dsl.scripts.call_unsupported", "Mapped script actions may call only local helpers, cataloged JavaScript methods, and whitelisted MKXFORM APIs.", `${path}/function`, {
         calls: analysis.disallowedCalls
+      }));
+    }
+    const setFieldAttrIssues = validateSetFieldAttrTargets(action.function, context.form);
+    if (setFieldAttrIssues.length) {
+      diagnostics.push(error("dsl.scripts.set_field_attr_target_invalid", "Mapped MKXFORM.setFieldAttr targets must be main field ids or layout sourceMarkers, not detail-table ids or ${table:...} placeholders.", `${path}/function`, {
+        issues: setFieldAttrIssues
       }));
     }
   }

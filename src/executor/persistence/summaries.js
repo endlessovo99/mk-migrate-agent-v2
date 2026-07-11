@@ -5,6 +5,7 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
     type: field.type,
     component: field.component,
     required: field.props?.required === true,
+    style: field.props?.style,
     dataOnly: field.dataOnly === true,
     columns: (field.columns || []).map((column) => ({
       id: column.id,
@@ -32,6 +33,14 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
   return {
     fieldCount: fields.length,
     fields,
+    subjectRule: observedForm?.subjectRule,
+    persistence: {
+      mainTableName: observedForm?.tableName,
+      detailTables: (observedForm?.persistence?.detailModels || []).map((model) => ({
+        fieldId: model.fieldId,
+        tableName: model.tableName
+      }))
+    },
     detailTableCount: fields.filter((field) => field.type === "detailTable").length,
     layoutRowCount: layoutRows.length,
     layoutRows,
@@ -71,10 +80,13 @@ export function buildWorkflowSummary(observedWorkflow) {
   const nodes = observedWorkflow.nodes || [];
   const edges = observedWorkflow.edges || [];
   const nodeIds = new Set(nodes.map((node) => node.id));
+  const hasCondition = (edge) => Boolean(
+    edge.condition?.text || edge.condition?.nativeStatus === "ok"
+  );
   return {
     nodeCount: nodes.length,
     edgeCount: edges.length,
-    conditionEdgeCount: edges.filter((edge) => Boolean(edge.condition?.text)).length,
+    conditionEdgeCount: edges.filter(hasCondition).length,
     invalidEdgeCount: edges.filter((edge) => !edge.source || !edge.target || !nodeIds.has(edge.source) || !nodeIds.has(edge.target)).length,
     initiatorSelectNodeIds: nodes
       .filter((node) => node.participants?.mode === "initiator_select")
@@ -83,13 +95,21 @@ export function buildWorkflowSummary(observedWorkflow) {
     nodes: nodes.map((node) => ({
       id: node.id,
       type: node.type,
-      element: node.element
+      element: node.element,
+      ignoreOnSameIdentity: node.ignoreOnSameIdentity
     })),
     edges: edges.map((edge) => ({
       id: edge.id,
       source: edge.source,
       target: edge.target,
-      hasCondition: Boolean(edge.condition?.text)
+      isDefault: edge.isDefault === true,
+      hasCondition: hasCondition(edge),
+      condition: edge.condition ? {
+        nativeKind: edge.condition.nativeKind,
+        nativeStatus: edge.condition.nativeStatus,
+        functionIds: edge.condition.functionIds || [],
+        orgIds: edge.condition.orgIds || []
+      } : undefined
     }))
   };
 }

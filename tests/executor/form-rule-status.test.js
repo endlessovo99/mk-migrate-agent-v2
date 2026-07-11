@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { projectTemplate, formAttr } from "../helpers/persistence.js";
+import { projectTemplate, formAttr, xformConfig } from "../helpers/persistence.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleDraftDsl } from "../helpers/sample-dsl.js";
@@ -31,29 +31,42 @@ describe("native form-rule materialization", () => {
     );
   });
 
-  localCorpusIt("writes six target-fixture linkage rules and excludes detail-table review rules", () => {
+  localCorpusIt("writes nine target-fixture linkage rules including detail-table containers", () => {
     const dsl = draftSourceDraft(cleanSourceFile(targetFixture));
     const executable = dsl.formRules.linkage.filter((rule) => rule.translationStatus === "executable");
     const mergedJsx = executable.find((rule) => rule.meta.sourceRuleIds?.length === 4);
-    const formRule = formAttr(projectTemplate(dsl)).formRule;
+    const template = projectTemplate(dsl);
+    const formRule = formAttr(template).formRule;
     const allRules = [...formRule.display, ...formRule.require];
+    const detailTableNames = xformConfig(template).dataModel
+      .filter((model) => model.fdType === "detail")
+      .map((model) => model.fdTableName)
+      .sort();
 
-    assert.equal(formRule.display.length, 12);
-    assert.equal(formRule.require.length, 12);
+    assert.equal(formRule.display.length, 18);
+    assert.equal(formRule.require.length, 18);
     assert.deepEqual(
       [...new Set(allRules.map((rule) => rule.meta.sourceRuleId))].sort(),
       executable.map((rule) => rule.id).sort()
     );
+    const detailDisplayResults = formRule.display
+      .flatMap((rule) => rule.result)
+      .filter((result) => Array.isArray(result.fieldName));
+    assert.equal(detailDisplayResults.length, 6);
+    assert.equal(detailDisplayResults.every((result) => result.tableType === "detail" && result.fieldName[0] === "all"), true);
     assert.deepEqual(
-      [...new Set(allRules.flatMap((rule) => rule.result.map((result) => result.fieldName)))].sort(),
-      [
-        "fd_3da33437ef5bfc",
-        "fd_3e24177a9d94b4",
-        "fd_3f3165cdddb2cc",
-        "fd_38e47377ddcd7e",
-        "fd_38e4741c029f44",
-        "fd_39f8f1b8f9111e"
-      ].sort()
+      [...new Set(detailDisplayResults.map((result) => result.type))].sort(),
+      detailTableNames
+    );
+
+    const detailRequireTargets = formRule.require
+      .flatMap((rule) => rule.result)
+      .map((result) => result.fieldName)
+      .filter((fieldName) => /^fd_3e501d8/.test(fieldName));
+    assert.equal(detailRequireTargets.length, 6);
+    assert.deepEqual(
+      [...new Set(detailRequireTargets)].sort(),
+      ["fd_3e501d840bbb6e", "fd_3e501d85c8795a", "fd_3e501d87ae5c80"].sort()
     );
 
     const mergedDisplayRules = formRule.display.filter((rule) => rule.meta.sourceRuleId === mergedJsx.id);

@@ -1,3 +1,12 @@
+import {
+  edgeConditionText as sharedEdgeConditionText,
+  isExplicitDefaultEdge,
+  isNamedOtherEdge,
+  isTautologyCondition as sharedIsTautologyCondition,
+  selectDefaultBranchEdge
+} from "./branch-defaults.js";
+import { isAddressField } from "../condition-org-resolver.js";
+
 export function applyWorkflowPayload(template, dsl) {
   if (!dsl.workflow) return template;
 
@@ -18,7 +27,8 @@ export function applyWorkflowPayload(template, dsl) {
   }
   lbpm.fdContent = JSON.stringify(buildWorkflowContent(dsl.workflow, {
     templateId: next.fdId || next.mechanisms["sys-xform"]?.fdId || "",
-    form: dsl.form
+    form: dsl.form,
+    conditionOrgByName: dsl.runtime?.conditionOrgByName || {}
   }));
   lbpm.fdStatus = "draft";
   lbpm.fdPublishType ||= "instant";
@@ -412,7 +422,7 @@ function buildArtificialNode(node, type, context = {}) {
     number: node.id,
     relateId: node.id,
     cooperateType: attrs.processType || "2",
-    ignoreOnSameIdentity: normalizeSameIdentity(attrs.ignoreOnHandlerSame),
+    ignoreOnSameIdentity: resolveIgnoreOnSameIdentity(node, attrs),
     handlerIds: nativeHandlerIds(node.participants, attrs),
     handlerNames: nativeHandlerNames(node.participants, attrs),
     handlerSelectType: node.participants?.mode === "form_field" || node.participants?.mode === "role_line"
@@ -627,11 +637,13 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
   for (const node of nodes) {
     if (mapNodeType(node.type) !== "conditionBranch") continue;
 
-    const routes = (outgoingEdges.get(node.id) || [])
-      .filter((edge) => edgeConditionText(edge) || edge.name || isExplicitDefaultRoute(edge))
-      .map((edge, index) => buildBranchRoute(node, edge, index, context));
-    const defaultRoute = routes.find((route) => route.explicitDefault) ||
-      routes.find((route) => route.tautologicalDefault);
+    const sourceEdges = (outgoingEdges.get(node.id) || [])
+      .filter((edge) => edgeConditionText(edge) || edge.name || isExplicitDefaultRoute(edge));
+    const routes = sourceEdges.map((edge, index) => buildBranchRoute(node, edge, index, context, sourceEdges));
+    const defaultEdge = selectDefaultBranchEdge(sourceEdges);
+    const defaultRoute = defaultEdge
+      ? routes.find((route) => route.lineId === defaultEdge.id)
+      : undefined;
     if (defaultRoute) defaultRoute.defaultTrend = true;
     for (const route of routes) {
       route.conditionValue.defaultTrend = route.defaultTrend;
@@ -643,14 +655,18 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
   return { bySource, byEdge };
 }
 
-function buildBranchRoute(node, edge, index, context) {
+function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
   const resultCode = edgeConditionText(edge);
   const explicitDefault = isExplicitDefaultRoute(edge);
+  const namedOther = isOtherRoute(edge);
   const tautologicalDefault = isTautologyCondition(resultCode);
-  const useSyntheticOtherCondition = isOtherTautologyRoute(edge);
-  const formulaConfig = useSyntheticOtherCondition
-    ? buildOtherDefaultFormulaDesignerConfig(node, edge, context) || buildFormulaDesignerConfig(edge, context)
-    : buildFormulaDesignerConfig(edge, context);
+  const parsedFormula = buildFormulaDesignerConfig(edge, context);
+  const needsSyntheticOtherFormula = namedOther && !parsedFormula &&
+    (tautologicalDefault || !String(resultCode || "").trim());
+  const formulaConfig = parsedFormula ||
+    (needsSyntheticOtherFormula
+      ? buildOtherDefaultFormulaDesignerConfig(node, edge, context, siblingEdges)
+      : undefined);
   const conditionValue = {
     lineId: edge.id,
     lineName: edge.name || edge.id,
@@ -675,13 +691,14 @@ function buildBranchRoute(node, edge, index, context) {
     formulaConfig,
     defaultTrend: false,
     explicitDefault,
+    namedOther,
     tautologicalDefault,
     conditionValue
   };
 }
 
-function buildOtherDefaultFormulaDesignerConfig(node, edge, context) {
-  const field = branchFieldForNode(node, context);
+function buildOtherDefaultFormulaDesignerConfig(node, edge, context, siblingEdges = []) {
+  const field = branchFieldForOtherRoute(node, edge, siblingEdges, context);
   if (!field || !context.templateId) return undefined;
 
   return buildNotEmptyFormulaDesignerConfig(edge, field, context);
@@ -751,20 +768,55 @@ function buildNotEmptyFormulaDesignerConfig(edge, field, context) {
 }
 
 function isOtherRoute(edge) {
-  return String(edge?.name || "").trim() === "其他";
+  return isNamedOtherEdge(edge);
 }
 
 function isExplicitDefaultRoute(edge) {
-  return [true, "true", 1, "1"].includes(edge?.isDefault) ||
-    [true, "true", 1, "1"].includes(edge?.attributes?.isDefault);
-}
-
-function isOtherTautologyRoute(edge) {
-  return isOtherRoute(edge) && isTautologyCondition(edgeConditionText(edge));
+  return isExplicitDefaultEdge(edge);
 }
 
 function isTautologyCondition(condition) {
-  return /^(?:1\s*={2,3}\s*1|true)$/i.test(String(condition || "").trim());
+  return sharedIsTautologyCondition(condition);
+}
+
+function edgeConditionText(edge) {
+  return sharedEdgeConditionText(edge);
+}
+
+function branchFieldForOtherRoute(node, edge, siblingEdges, context) {
+  const direct = branchFieldForNode(node, context);
+  if (direct) return direct;
+
+  const keys = new Set();
+  for (const sibling of siblingEdges || []) {
+    if (!sibling || sibling.id === edge.id || isOtherRoute(sibling)) continue;
+    for (const key of collectConditionFieldKeys(edgeConditionText(sibling))) {
+      keys.add(key);
+    }
+  }
+
+  const resolved = [];
+  for (const key of keys) {
+    const byId = context.formFieldById?.get(key);
+    if (byId) {
+      resolved.push(byId);
+      continue;
+    }
+    const byTitle = context.formFieldsByTitle?.get(normalizeBranchFieldName(key)) || [];
+    if (byTitle.length === 1) resolved.push(byTitle[0]);
+  }
+  const unique = [...new Map(resolved.map((field) => [field.id, field])).values()];
+  return unique.length === 1 ? unique[0] : undefined;
+}
+
+function collectConditionFieldKeys(condition) {
+  const keys = new Set();
+  for (const match of String(condition || "").matchAll(/\$([^$]+)\$/g)) {
+    const key = String(match[1] || "").trim();
+    if (!key || key.includes(".")) continue;
+    keys.add(key);
+  }
+  return keys;
 }
 
 function branchFieldForNode(node, context) {
@@ -800,7 +852,8 @@ function buildFormulaDesignerConfig(edge, context) {
   const sourceTerms = collectConditionTerms(parsedAst);
   const terms = sourceTerms.map((term, index) => {
     const field = context.formFieldById?.get(term.field);
-    const fieldId = field?.id || term.field;
+    const upgraded = upgradeAddressConditionTerm(term, field, context);
+    const fieldId = field?.id || upgraded.field;
     if (!fieldId) return undefined;
     const variableKey = formulaVariableKey(
       edge.id,
@@ -808,7 +861,7 @@ function buildFormulaDesignerConfig(edge, context) {
     );
     const fdVarValue = `${templateId}-${fieldId}`;
     const fieldLabel = field?.title || fieldId;
-    const fieldType = formulaFieldType(field);
+    const fieldType = formulaFieldType(field, upgraded);
     const rule = {
       fdKey: variableKey,
       metaType: "RULE",
@@ -816,15 +869,25 @@ function buildFormulaDesignerConfig(edge, context) {
       fdDataType: fieldType,
       fdLabel: `$${fieldLabel}$`,
       vo: formulaFieldVo(field, fieldType),
-      fdSymbol: term.symbol
+      fdSymbol: upgraded.symbol
     };
-    if (term.value !== undefined) rule.fdValue = term.value;
-    if (term.functionId) rule.fdFunctionId = term.functionId;
+    if (upgraded.value !== undefined && upgraded.expressionType !== "orgBelong") {
+      rule.fdValue = upgraded.value;
+    }
+    if (upgraded.expressionType === "orgBelong") {
+      rule.fdValue = JSON.stringify(upgraded.orgValue || []);
+      rule.fdFunctionId = upgraded.functionId;
+      rule.fdSymbolAndOrgType = `${upgraded.symbol}.${upgraded.orgTypeKey}.${upgraded.through ? "true" : "false"}`;
+      rule.fdOrgType = upgraded.fdOrgType;
+      rule.fdThrough = upgraded.through ? "true" : "false";
+    } else if (upgraded.functionId) {
+      rule.fdFunctionId = upgraded.functionId;
+    }
 
     return {
       variableKey,
-      negateResult: Boolean(term.negateResult),
-      varConfig: termVarConfig(term, variableKey, fdVarValue),
+      negateResult: Boolean(upgraded.negateResult),
+      varConfig: termVarConfig(upgraded, variableKey, fdVarValue),
       rule
     };
   });
@@ -856,6 +919,40 @@ function buildFormulaDesignerConfig(edge, context) {
         })]
       }
     }
+  };
+}
+
+function upgradeAddressConditionTerm(term, field, context) {
+  if (!term || term.expressionType !== "contains" || !isAddressField(field)) return term;
+  const org = lookupConditionOrg(context, term.value);
+  if (!org) return term;
+
+  const negated = Boolean(term.negateResult);
+  return {
+    ...term,
+    expressionType: "orgBelong",
+    symbol: negated ? "notbelong" : "belongany",
+    functionId: "sysorg.isOrganizationBelongOrIncludeAnother",
+    orgValue: [org],
+    orgTypeKey: "ORG_DEPT",
+    fdOrgType: 3,
+    through: true,
+    relationType: 4,
+    negateResult: negated
+  };
+}
+
+function lookupConditionOrg(context, name) {
+  const key = String(name || "");
+  if (!key) return undefined;
+  const byName = context.conditionOrgByName || {};
+  const hit = byName instanceof Map ? byName.get(key) : byName[key];
+  if (!hit || typeof hit !== "object" || !hit.fdId || !hit.fdName) return undefined;
+  return {
+    fdId: String(hit.fdId),
+    fdName: String(hit.fdName),
+    fdOrgType: Number(hit.fdOrgType) || 2,
+    ...(hit.fdNo ? { fdNo: String(hit.fdNo) } : {})
   };
 }
 
@@ -991,6 +1088,15 @@ function negateConditionTerm(term) {
     };
   }
 
+  if (term.expressionType === "orgBelong") {
+    const negated = !term.negateResult;
+    return {
+      ...term,
+      symbol: negated ? "notbelong" : "belongany",
+      negateResult: negated
+    };
+  }
+
   if (term.expressionType === "empty") {
     const negated = !term.negateResult;
     return {
@@ -1034,6 +1140,41 @@ function termVarConfig(term, variableKey, fdVarValue) {
           resultType: { type: "any" },
           type: "Fixed",
           value: term.value
+        }
+      ]
+    };
+  }
+
+  if (term.expressionType === "orgBelong") {
+    return {
+      key: variableKey,
+      resultType: { type: "boolean" },
+      type: "Function",
+      value: "sysorg.isOrganizationBelongOrIncludeAnother",
+      arguments: [
+        {
+          key: "firstOrgs",
+          resultType: { $ref: "ORG_ALL", type: "object" },
+          type: "Var",
+          value: fdVarValue
+        },
+        {
+          key: "secondOrgs",
+          resultType: { $ref: "ORG_ALL", type: "object" },
+          type: "Fixed",
+          value: term.orgValue || []
+        },
+        {
+          key: "relationType",
+          resultType: { type: "any" },
+          type: "Fixed",
+          value: term.relationType ?? 4
+        },
+        {
+          key: "isCross",
+          resultType: { type: "boolean" },
+          type: "Fixed",
+          value: Boolean(term.through)
         }
       ]
     };
@@ -1235,7 +1376,9 @@ function formulaVariableKey(edgeId, value) {
   return /^[A-Za-z_]/.test(key) ? key : `v_${key}`;
 }
 
-function formulaFieldType(field) {
+function formulaFieldType(field, term) {
+  if (term?.expressionType === "orgBelong") return "object";
+  if (isAddressField(field) && (!term || term.expressionType === "empty")) return "object";
   const type = String(field?.type || "").toLowerCase();
   if (["number", "decimal", "double", "currency", "integer"].includes(type)) return "number";
   if (type.includes("date")) return "date";
@@ -1265,6 +1408,19 @@ function formulaFieldVo(field, fieldType) {
       type: "boolean",
       required: Boolean(field?.props?.required),
       description: field?.title || field?.id || ""
+    };
+  }
+
+  if (fieldType === "object") {
+    return {
+      type: "object",
+      $ref: "ORG_DEPT",
+      required: Boolean(field?.props?.required),
+      description: field?.title || field?.id || "",
+      properties: {
+        fdId: { type: "string", required: true, description: "ID", maxLength: 36 },
+        fdName: { type: "string", required: true, description: "名称", maxLength: 200 }
+      }
     };
   }
 
@@ -1609,15 +1765,32 @@ function normalizeSameIdentity(value) {
   return "2";
 }
 
-function hasEdgeCondition(edge) {
-  return Boolean(edge.formula || edge.condition || edge.displayCondition || edge.formulaName);
+// NewOA: "1"=不跳过 "2"=跳过 "3"=仅相邻相同身份跳过.
+// Nodes with required form auth / mustModifyHandlerNodes / e-sign cannot use skip.
+function resolveIgnoreOnSameIdentity(node, attrs = {}) {
+  if (nodeForbidsSameIdentitySkip(node, attrs)) {
+    return "1";
+  }
+  return normalizeSameIdentity(attrs.ignoreOnHandlerSame);
 }
 
-function edgeConditionText(edge) {
-  if (edge?.condition && typeof edge.condition === "object") {
-    return edge.condition.targetText || edge.condition.sourceText || edge.condition.displayText || "";
+function nodeForbidsSameIdentitySkip(node, attrs = {}) {
+  const fields = node?.dataAuthority?.fields || {};
+  if (Object.values(fields).some((field) => field?.required === true)) {
+    return true;
   }
-  return edge?.condition || edge?.displayCondition || "";
+  if (normalizeRelatedNodeIds(attrs.mustModifyHandlerNodeIds || attrs.mustModifyHandlerNodes)) {
+    return true;
+  }
+  const eSign = attrs.eSignConfig || node?.eSignConfig;
+  if (eSign && (eSign.enable === true || eSign.enable === "true")) {
+    return true;
+  }
+  return false;
+}
+
+function hasEdgeCondition(edge) {
+  return Boolean(edge.formula || edge.condition || edge.displayCondition || edge.formulaName);
 }
 
 function summarizeDefinition(definition) {

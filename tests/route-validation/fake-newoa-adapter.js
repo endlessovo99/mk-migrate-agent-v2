@@ -5,6 +5,7 @@ import { appendTranscriptEntry, sanitizedTranscript } from "./transcript.js";
 const CREATED_TEMPLATE_ID = "route-created-template";
 const CREATED_WORKFLOW_TEMPLATE_ID = "route-created-workflow-template";
 const SIT_FALLBACK_PARTICIPANT_ID = "1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0";
+const SIT_CONDITION_ORG_FALLBACK_ID = "1j8l5tjpew1nwui9w1hmm19f3j4b7853vbw0";
 
 export class FakeNewoaAdapter {
   constructor(scenario) {
@@ -30,11 +31,18 @@ export class FakeNewoaAdapter {
 
   async getElementInfo(targets) {
     this.record({ operation: "get-element-info", targets: clone(targets) });
-    return targets.map((fdId) => ({
-      fdId,
-      fdName: fdId === SIT_FALLBACK_PARTICIPANT_ID ? "SIT Fallback Reviewer" : fdId,
-      fdOrgType: 8
-    }));
+    return targets.map((fdId) => fdId === SIT_CONDITION_ORG_FALLBACK_ID
+      ? {
+          fdId,
+          fdName: "人力资源与行政服务中心",
+          fdOrgType: 2,
+          fdNo: "50802206"
+        }
+      : {
+          fdId,
+          fdName: fdId === SIT_FALLBACK_PARTICIPANT_ID ? "SIT Fallback Reviewer" : fdId,
+          fdOrgType: 8
+        });
   }
 
   async initTemplate() {
