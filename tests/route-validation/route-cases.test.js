@@ -13,8 +13,6 @@ describe("offline Route-validation", { concurrency: false }, () => {
     const result = await runRouteCase("form-only-success");
 
     assert.equal(result.caseId, "form-only-success");
-    assert.equal(result.dsl.template.name, "原流程模板");
-    assert.equal(result.dryRun.template.name, "原流程模板");
     assert.equal(result.dsl.artifact, "migration-dsl");
     assert.equal(result.dsl.workflow, undefined);
     assert.equal(result.dryRun.ok, true);

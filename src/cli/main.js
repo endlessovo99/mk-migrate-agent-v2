@@ -51,7 +51,7 @@ function runClean(argv) {
 
   const sourceDraft = cleanSourceFile(sourcePath, {
     functionWhitelist: loadWhitelist(args),
-    templateName: args["template-name"]
+    templateName: readTemplateNameOption(args)
   });
   writeOrPrint(args, sourceDraft, {
     ok: true,
@@ -82,7 +82,7 @@ function runTranslate(argv) {
 
   const dsl = translateSourceFile(sourcePath, {
     functionWhitelist: loadWhitelist(args),
-    templateName: args["template-name"]
+    templateName: readTemplateNameOption(args)
   });
   const check = checkDraft(dsl);
   writeOrPrint(args, dsl, {
@@ -230,6 +230,15 @@ async function runExecute(argv, options = {}) {
 
 function loadWhitelist(args) {
   return loadFunctionWhitelist(args["function-whitelist"] || process.env.MK_FUNCTION_WHITELIST_PATH);
+}
+
+function readTemplateNameOption(args) {
+  const value = args["template-name"];
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error("--template-name requires a non-empty value");
+  }
+  return value.trim();
 }
 
 function writeOrPrint(args, artifact, output) {

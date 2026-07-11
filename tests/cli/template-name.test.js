@@ -26,6 +26,22 @@ describe("source template name CLI", () => {
 
     assert.equal(output.dsl.template.name, "原流程模板");
   });
+
+  it("rejects --template-name when its value is missing", async () => {
+    const originalExitCode = process.exitCode;
+    try {
+      const output = await captureJsonOutput(() => main([
+        "clean",
+        SOURCE_PATH,
+        "--template-name"
+      ]));
+
+      assert.equal(output.ok, false);
+      assert.equal(output.message, "--template-name requires a non-empty value");
+    } finally {
+      process.exitCode = originalExitCode;
+    }
+  });
 });
 
 async function captureJsonOutput(run) {

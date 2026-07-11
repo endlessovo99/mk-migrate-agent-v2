@@ -7,7 +7,7 @@ const ENTRY_KEYS_BY_OPERATION = new Map([
   ["init", new Set(["operation"])],
   ["generate-table-name", new Set(["operation"])],
   ["load-parent-category", new Set(["operation", "categoryId"])],
-  ["add", new Set(["operation", "templateId", "draft"])],
+  ["add", new Set(["operation", "templateId", "templateName", "draft"])],
   ["get-before-update", new Set(["operation", "templateId"])],
   ["update", new Set(["operation", "templateId"])],
   ["save-workflow-draft", new Set(["operation", "templateId", "draft"])],
@@ -25,7 +25,7 @@ export function appendTranscriptEntry(transcript, entry) {
   if (unknown.length) {
     throw integrityError("route.transcript.invalid", "Transcript entry contains non-semantic data.", { unknown });
   }
-  for (const key of ["templateId", "categoryId"]) {
+  for (const key of ["templateId", "templateName", "categoryId"]) {
     if (Object.hasOwn(entry, key) && !nonEmptyString(entry[key])) {
       throw integrityError("route.transcript.invalid", `Transcript ${key} must be a non-empty string.`);
     }

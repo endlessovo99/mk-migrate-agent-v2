@@ -88,7 +88,12 @@ export class FakeNewoaAdapter {
     this.template.fdId = CREATED_TEMPLATE_ID;
     const lbpm = this.template.mechanisms?.lbpmTemplate?.[0];
     if (lbpm) lbpm.fdId = CREATED_WORKFLOW_TEMPLATE_ID;
-    this.record({ operation: "add", templateId: CREATED_TEMPLATE_ID, draft: true });
+    this.record({
+      operation: "add",
+      templateId: CREATED_TEMPLATE_ID,
+      templateName: payload.fdName,
+      draft: true
+    });
     return { fdId: CREATED_TEMPLATE_ID, fdName: payload.fdName };
   }
 
