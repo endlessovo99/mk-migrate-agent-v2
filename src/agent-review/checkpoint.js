@@ -13,7 +13,7 @@ import { JSP_TRANSLATION_PLAYBOOK } from "./playbook.js";
 
 export const AGENT_REVIEW_CHECKPOINT_VERSION = "1";
 export const AGENT_REVIEW_BATCH_CONTRACT_VERSION = "agent-review-batches.v1";
-export const AGENT_REVIEW_PATCH_VALIDATOR_VERSION = "agent-review-patch-validator.v2";
+export const AGENT_REVIEW_PATCH_VALIDATOR_VERSION = "agent-review-patch-validator.v3";
 const CHECKPOINT_STATUSES = new Set(["partial", "complete"]);
 const MIN_SIGNING_KEY_LENGTH = 32;
 

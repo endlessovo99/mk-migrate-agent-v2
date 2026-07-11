@@ -1,5 +1,6 @@
 import { REVIEW_SCENARIOS } from "./manifest.js";
 import { integrityError } from "./integrity.js";
+import { reviewAuditedRowMarkerOrphan } from "./fake-review-scenarios/audited-row-marker-orphan.js";
 
 export function createFakeReviewProvider(scenario) {
   if (!REVIEW_SCENARIOS.includes(scenario)) {
@@ -14,24 +15,26 @@ export function createFakeReviewProvider(scenario) {
         model: "deterministic-review"
       };
     },
-    async review({ dslDraft, reviewScope }) {
-      const response = {
-        summary: scenario === "warning"
-          ? "Accepted with one deterministic manual-review warning."
-          : "Accepted by the deterministic offline Route reviewer.",
-        patches: [
-          ...staticPropertyClosurePatches(dslDraft, reviewScope),
-          ...nativeFormRuleClosurePatches(dslDraft, reviewScope)
-        ],
-        diagnostics: scenario === "warning"
-          ? [{
-              level: "warning",
-              code: "route.review.needs_manual",
-              path: "/review",
-              message: "The deterministic Route scenario requires manual acknowledgement."
-            }]
-          : []
-      };
+    async review({ sourceDraft, dslDraft, reviewScope }) {
+      const response = scenario === "audited-row-marker-orphan-noop"
+        ? reviewAuditedRowMarkerOrphan({ sourceDraft, dslDraft, reviewScope })
+        : {
+            summary: scenario === "warning"
+              ? "Accepted with one deterministic manual-review warning."
+              : "Accepted by the deterministic offline Route reviewer.",
+            patches: [
+              ...staticPropertyClosurePatches(dslDraft, reviewScope),
+              ...nativeFormRuleClosurePatches(dslDraft, reviewScope)
+            ],
+            diagnostics: scenario === "warning"
+              ? [{
+                  level: "warning",
+                  code: "route.review.needs_manual",
+                  path: "/review",
+                  message: "The deterministic Route scenario requires manual acknowledgement."
+                }]
+              : []
+          };
       return {
         ok: true,
         status: "received",

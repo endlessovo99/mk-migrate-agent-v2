@@ -2,6 +2,7 @@ import { checkDraft } from "../dsl/checks.js";
 import { FIELD_TYPES } from "../dsl/schema.js";
 import { validateSetFieldAttrTargets } from "../dsl/scripts.js";
 import { AGENT_REVIEW_PROMPT_VERSION } from "./prompt.js";
+import { classifyActionRowMarkers } from "./row-marker-policy.js";
 
 const TOP_LEVEL_KEYS = new Set(["summary", "patches", "diagnostics"]);
 const PATCH_KEYS = ["op", "path", "value", "sourceRefs", "evidence", "confidence", "rationale"];
@@ -36,6 +37,7 @@ export function evaluateProviderReviewResult(sourceDraft, dslDraft, providerResu
 
   const patchResult = applyEvidenceBackedPatches(dslDraft, parsed.response.patches, {
     sourceRefs: collectSourceRefs(sourceDraft),
+    sourceDraft,
     reviewScope
   });
   if (!patchResult.ok) {
@@ -131,6 +133,7 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
   const decisions = [];
   const seenPaths = new Set();
   const sourceRefs = options.sourceRefs || new Set();
+  const sourceDraft = options.sourceDraft;
   const reviewScope = options.reviewScope;
 
   patches.forEach((patch, index) => {
@@ -164,6 +167,23 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     });
   });
 
+  const rowMarkerDiagnostics = validateRowMarkerClosures(
+    dslDraft,
+    patchedDraft,
+    acceptedPatches,
+    sourceDraft
+  );
+  if (rowMarkerDiagnostics.length) {
+    return {
+      ok: false,
+      diagnostics: rowMarkerDiagnostics,
+      rejectedPatches: acceptedPatches
+        .map((patch, index) => ({ patch, index }))
+        .filter(({ patch }) => /^\/scripts\/actions\/\d+\//.test(patch.path))
+        .map(({ patch, index }) => patchSummary(patch, index, rowMarkerDiagnostics))
+    };
+  }
+
   return {
     ok: true,
     dslDraft: patchedDraft,
@@ -171,6 +191,47 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     rejectedPatches,
     decisions
   };
+}
+
+function validateRowMarkerClosures(dslDraft, patchedDraft, patches, sourceDraft) {
+  if (!sourceDraft) return [];
+  const touchedActionIndexes = new Set(patches.flatMap((patch) => {
+    const match = String(patch?.path || "").match(/^\/scripts\/actions\/(\d+)\//);
+    return match ? [Number(match[1])] : [];
+  }));
+  const diagnostics = [];
+
+  for (const actionIndex of touchedActionIndexes) {
+    const sourceAction = dslDraft?.scripts?.actions?.[actionIndex];
+    const reviewedAction = patchedDraft?.scripts?.actions?.[actionIndex];
+    if (!sourceAction || !reviewedAction) continue;
+    if (!["mapped", "omitted"].includes(reviewedAction.translationStatus)) continue;
+    if (isCompleteNativeRuleClosure(reviewedAction)) continue;
+
+    const policy = classifyActionRowMarkers(sourceAction, dslDraft?.form, sourceDraft);
+    if (!policy.unresolvedMarkers.length) continue;
+    diagnostics.push(error(
+      "agent.patch.row_marker_orphan_evidence_invalid",
+      "Agent Review cannot close a script action while missing row markers lack exact auditable orphan evidence.",
+      `/scripts/actions/${actionIndex}/translationStatus`,
+      {
+        actionIndex,
+        sourceRefs: sourceAction.sourceRefs || [],
+        orphanRowMarkers: policy.orphanMarkers,
+        unresolvedRowMarkers: policy.unresolvedMarkers
+      }
+    ));
+  }
+
+  return diagnostics;
+}
+
+function isCompleteNativeRuleClosure(action) {
+  return action?.translationStatus === "omitted" &&
+    String(action?.function || "").trim() === "" &&
+    action?.coverage?.status === "covered" &&
+    Array.isArray(action.coverage.nativeRules) && action.coverage.nativeRules.length > 0 &&
+    Array.isArray(action.coverage.residuals) && action.coverage.residuals.length === 0;
 }
 
 export function collectSourceRefs(value) {

@@ -196,6 +196,54 @@ describe("translateSysFormTemplateXml", () => {
     ]);
   });
 
+  it("promotes detail-table footer calculation controls as main form fields", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0">
+              <table fd_type="detailsTable" fd_values='{id:"fd_detail",label:"明细"}'>
+                <tbody>
+                  <tr>
+                    <td row="0" column="0"><div fd_type="inputText" fd_values='{id:"fd_amount",label:"金额"}'></div></td>
+                  </tr>
+                  <tr>
+                    <td row="1" column="0" colType="noFoot"></td>
+                    <td row="1" column="1">
+                      <div fd_type="calculation" fd_values='{id:"fd_total",label:"合计金额",dataType:"Double"}'></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSubTableProperty name="fd_detail" label="明细">
+          <extendSimpleProperty name="fd_amount" label="金额" type="Double"/>
+        </extendSubTableProperty>
+        <extendSimpleProperty name="fd_total" label="合计金额" type="Double" scale="2"/>
+      </metadata>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }));
+
+    assert.deepEqual(
+      dsl.form.fields.map((field) => [field.id, field.type]),
+      [["fd_detail", "detailTable"], ["fd_total", "number"]]
+    );
+    assert.deepEqual(
+      dsl.form.layout.rows[0].cells.map((cell) => cell.fieldIds),
+      [["fd_detail"], ["fd_total"]]
+    );
+    assert.equal(
+      dsl.review.warnings.some((warning) => warning.code === "source.sysform.metadata_field_unmatched"),
+      false
+    );
+  });
+
   it("preserves field order inside one designer layout cell", () => {
     const designerHtml = `
       <table fd_type="standardTable">
@@ -445,6 +493,48 @@ describe("translateSysFormTemplateXml", () => {
     );
     assert.equal(dsl.form.dataFields.some((field) => field.id === "fd_designer_only"), false);
     assert.equal(dsl.form.dataFields.some((field) => field.id === "fd_hidden_column"), false);
+  });
+
+  it("prefers hidden-input name when row-marker id and name diverge", () => {
+    // Landray designer stores row markers as unquoted type=hidden JSP payloads.
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0">
+              <label fd_type="textLabel" fd_values='{id:"label_buyer",content:"受票方"}'>受票方</label>
+              <INPUT type=hidden value='<input type="hidden" id="invoice_row1" name="invoice_row1"/>'/>
+            </td>
+            <td row="0" column="1"><div fd_type="inputText" fd_values='{id:"buyerCompanyName",label:"受票方"}'></div></td>
+          </tr>
+          <tr>
+            <td row="1" column="0">
+              <label fd_type="textLabel" fd_values='{id:"label_remark",content:"发票备注"}'>发票备注</label>
+              <INPUT type=hidden value='<input type="hidden" id="stale_copy" name="invoice_row4"/>'/>
+            </td>
+            <td row="1" column="1"><div fd_type="textarea" fd_values='{id:"fd_remark",label:"发票备注"}'></div></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="buyerCompanyName" label="受票方" type="String"/>
+        <extendSimpleProperty name="fd_remark" label="发票备注" type="String"/>
+      </metadata>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }));
+    const markers = dsl.form.layout.rows.map((row) => row.sourceMarkers || []);
+
+    assert.deepEqual(markers, [["invoice_row1"], ["invoice_row4"]]);
+    assert.equal(
+      dsl.review.warnings.some((item) => item.code === "source.sysform.row_marker_id_name_mismatch"),
+      true
+    );
+    assert.deepEqual(
+      dsl.review.warnings.find((item) => item.code === "source.sysform.row_marker_id_name_mismatch")?.details,
+      { id: "stale_copy", name: "invoice_row4", chosen: "invoice_row4" }
+    );
   });
 
   it("keeps non-whitelisted designer script functions as review warnings", () => {

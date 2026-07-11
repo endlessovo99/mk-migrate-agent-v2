@@ -59,6 +59,63 @@ describe("executeDsl", () => {
     assert.equal(result.diagnostics.at(-1).message, "login rejected [REDACTED] [REDACTED]");
   });
 
+  it("updates an existing MK_TEST_ draft template without creating a new one", async () => {
+    const client = new FakeNewoaClient({
+      existingTemplate: {
+        fdId: "existing-template-id",
+        fdName: "MK_TEST_预算追加_20260711010203",
+        fdStatus: 0,
+        fdTableName: "existing_table_name",
+        fdCategory: { fdId: "category-1" },
+        mechanisms: {
+          "sys-xform": { fdId: "existing-template-id", fdName: "MK_TEST_预算追加_20260711010203", fdConfig: "{}", fdTableName: "existing_table_name" },
+          lbpmTemplate: [{
+            fdId: "lbpm-template-id",
+            fdName: "MK_TEST_预算追加_20260711010203",
+            fdTemplateCode: "template_existing",
+            fdEntityId: "existing-template-id",
+            fdEntityKey: "KmReviewMain",
+            fdEntityName: "com.landray.km.review.core.entity.KmReviewTemplate",
+            fdMainEntityName: "com.landray.km.review.core.entity.KmReviewMain",
+            fdModuleCode: "km-review",
+            fdContentType: "json",
+            fdSystemCode: "INNER_SYSTEM",
+            fdSystemName: "MK-PaaS内部系统",
+            fdTemplateForms: [{ fdFormKey: "existing-template-id" }],
+            fdReaders: [{ fdId: "reader-1" }],
+            fdEditors: [{ fdId: "editor-1" }],
+            isDraft: true,
+            fdContent: "{\"elements\":[]}"
+          }]
+        }
+      }
+    });
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      existingTemplateId: "existing-template-id"
+    });
+
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    assert.equal(result.templateId, "existing-template-id");
+    assert.deepEqual(result.createdFdIds, []);
+    assert.equal(client.calls.some((call) => call.name === "addTemplate"), false);
+    assert.equal(client.calls.some((call) => call.name === "initTemplate"), false);
+    assert.deepEqual(client.calls.map((call) => call.name), [
+      "login",
+      "getTemplate",
+      "updateTemplate",
+      "saveWorkflowDraft",
+      "getWorkflowTemplateDetail",
+      "getTemplate"
+    ]);
+    const updatePayload = client.calls.find((call) => call.name === "updateTemplate").payload;
+    assert.equal(updatePayload.fdId, "existing-template-id");
+    assert.equal(updatePayload.fdName, "MK_TEST_预算追加_20260711010203");
+  });
+
   it("writes an initial same-id workflow draft and verifies readback", async () => {
     const client = new FakeNewoaClient();
     const result = await executeDsl(sampleTrustedDsl(), {
@@ -665,12 +722,15 @@ describe("executeDsl", () => {
     const n9 = content.elements.find((element) => element.id === "N9");
 
     const draft = content.elements.find((element) => element.id === "N2");
-    assert.equal(draft.mustModifyHandlerNodes, "N16,N7");
+    assert.equal(draft.mustModifyHandlerNodes, "N7");
+    assert.equal(draft.canModifyHandlerNodes, "N16");
     assert.equal(n16.handlers.source, "1");
     assert.equal(n16.handlers.ruleKey, "");
     assert.equal(n16.handlers.ruleName, "");
     assert.deepEqual(n16.handlers.members, []);
+    assert.equal(n16.emptyHandlerType, 1);
     assert.equal(n7.handlers.source, "1");
+    assert.equal(n7.emptyHandlerType, 2);
     assert.equal(n9.handlers.source, "1");
     assert.equal(n9.handlers.members.length > 0, true);
 
@@ -681,6 +741,7 @@ describe("executeDsl", () => {
 
     const readbackContent = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
     readbackContent.elements.find((element) => element.id === "N2").mustModifyHandlerNodes = "N7";
+    delete readbackContent.elements.find((element) => element.id === "N2").canModifyHandlerNodes;
     template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(readbackContent);
     const rejected = verifyTemplate(trusted, template);
     assert.equal(rejected.ok, false);
@@ -690,13 +751,17 @@ describe("executeDsl", () => {
   it("persists draft-selection linkage from any workflow node with comma delimiters", () => {
     const workflow = sampleInitiatorSelectWorkflow();
     workflow.nodes.find((node) => node.id === "N1").attributes.mustModifyHandlerNodeIds = "N16; N7，N16";
+    workflow.nodes.find((node) => node.id === "N1").attributes.canModifyHandlerNodeIds = "N16";
     delete workflow.nodes.find((node) => node.id === "N2").attributes.mustModifyHandlerNodeIds;
+    delete workflow.nodes.find((node) => node.id === "N2").attributes.canModifyHandlerNodeIds;
     const trusted = sampleTrustedDsl({ workflow });
     const template = projectTemplate(trusted, baseTemplate());
     const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
 
     assert.equal(content.elements.find((element) => element.id === "N1").mustModifyHandlerNodes, "N16,N7");
+    assert.equal(content.elements.find((element) => element.id === "N1").canModifyHandlerNodes, "N16");
     assert.equal(content.elements.find((element) => element.id === "N2").mustModifyHandlerNodes, undefined);
+    assert.equal(content.elements.find((element) => element.id === "N2").canModifyHandlerNodes, undefined);
     assert.equal(verifyTemplate(trusted, template).ok, true);
 
     content.elements.find((element) => element.id === "N1").mustModifyHandlerNodes = "N7";
@@ -1182,6 +1247,215 @@ describe("executeDsl", () => {
     assert.deepEqual(JSON.parse(rule.fdValue), [org]);
   });
 
+  it("writes mixed equals-and-numeric OR branch routes through formula config", () => {
+    const form = sampleConditionBranchForm();
+    form.fields.push({
+      id: "fd_way",
+      title: "开票录入方式",
+      type: "radio",
+      componentId: "xform-radio",
+      props: {},
+      sourceProps: { designerType: "inputRadio" },
+      sourceRef: "source.form.control.fd_way"
+    });
+    form.fields.push({
+      id: "fd_qr_1",
+      title: "是否确认收入1",
+      type: "text",
+      componentId: "xform-input",
+      dataOnly: true,
+      props: {},
+      sourceProps: { designerType: "inputText" },
+      sourceRef: "source.form.control.fd_qr_1"
+    });
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.nodes[1] = {
+      ...workflow.nodes[1],
+      id: "N23",
+      name: "是否开票",
+      attributes: { id: "N23", name: "是否开票" },
+      sourceRef: "source.workflow.node.N23"
+    };
+    workflow.edges[0] = { ...workflow.edges[0], target: "N23" };
+    workflow.edges[1] = {
+      id: "L109",
+      source: "N23",
+      target: "N411",
+      name: "开票",
+      sourceRef: "source.workflow.edge.L109",
+      condition: {
+        sourceText: "\"er\" .equals($fd_qr_1$ )  || \"ui\" .equals($fd_qr_1$ )  || \"ty\" .equals( $fd_qr_1$) ",
+        displayText: "\"er\" .equals($是否确认收入1$ )  || \"ui\" .equals($是否确认收入1$ )  || \"ty\" .equals( $是否确认收入1$) ",
+        targetText: "\"er\" .equals($fd_qr_1$ )  || \"ui\" .equals($fd_qr_1$ )  || \"ty\" .equals( $fd_qr_1$) ",
+        translationStatus: "display_only"
+      },
+      attributes: { priority: "1" }
+    };
+    workflow.edges[2] = {
+      id: "L99",
+      source: "N23",
+      target: "N413",
+      name: "不开票",
+      sourceRef: "source.workflow.edge.L99",
+      condition: {
+        sourceText: "\"qw\" .equals( $fd_qr_1$) || $fd_way$ == 33",
+        displayText: "\"qw\" .equals( $是否确认收入1$) || $开票录入方式$ == 33",
+        targetText: "\"qw\" .equals( $fd_qr_1$) || $fd_way$ == 33",
+        translationStatus: "display_only"
+      },
+      attributes: { priority: "2" }
+    };
+    workflow.edges[3] = {
+      ...workflow.edges[3],
+      id: "L544",
+      source: "N23",
+      target: "N412",
+      name: "默认",
+      attributes: { priority: "3", isDefault: true }
+    };
+
+    const payload = projectTemplate(sampleTrustedDsl({ form, workflow }), baseTemplate());
+    const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
+    const branch = content.elements.find((element) => element.id === "N23");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const invoiceRoute = conditionValue.formulas.find((item) => item.lineId === "L109");
+    const noInvoiceRoute = conditionValue.formulas.find((item) => item.lineId === "L99");
+    const noInvoiceSequence = content.elements.find((element) => element.id === "L99");
+
+    assert.equal(invoiceRoute.formula.type, "Batch");
+    assert.equal(noInvoiceRoute.formula.type, "Batch");
+    assert.equal(noInvoiceSequence.formulaType, "formula");
+    assert.equal(
+      noInvoiceRoute.formula.result.value,
+      "(${data.$VAR.L99_fd_qr_1_1} || ${data.$VAR.L99_fd_way_2})"
+    );
+    assert.deepEqual(noInvoiceRoute.formula.vars.map((item) => item.value), [
+      "${data.template-id-fd_qr_1} == \"qw\"",
+      "${data.template-id-fd_way} == \"33\""
+    ]);
+    assert.equal(noInvoiceRoute.formula.vo.data.fdList[0].fdList[1].fdValue, "33");
+    assert.equal(noInvoiceRoute.formula.vo.data.fdList[0].fdList[1].fdVarValue, "template-id-fd_way");
+  });
+
+  it("writes manualBranchNode gateways as conditionType 2 named rules", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.nodes[1] = {
+      ...workflow.nodes[1],
+      id: "N35",
+      name: "人工决策",
+      sourceType: "manualBranchNode",
+      attributes: { decidedBranchOnDraft: "false", id: "N35", name: "人工决策" },
+      sourceRef: "source.workflow.node.N35"
+    };
+    workflow.edges[0] = { ...workflow.edges[0], target: "N35" };
+    workflow.edges[1] = {
+      id: "L44",
+      source: "N35",
+      target: "N411",
+      name: "上汽",
+      sourceRef: "source.workflow.edge.L44",
+      condition: { sourceText: "", displayText: "", targetText: "", translationStatus: "executable" },
+      attributes: { priority: "1" }
+    };
+    workflow.edges[2] = {
+      id: "L45",
+      source: "N35",
+      target: "N413",
+      name: "上发",
+      sourceRef: "source.workflow.edge.L45",
+      condition: { sourceText: "", displayText: "", targetText: "", translationStatus: "executable" },
+      attributes: { priority: "2" }
+    };
+    workflow.edges[3] = {
+      id: "L46",
+      source: "N35",
+      target: "N412",
+      name: "上辅",
+      sourceRef: "source.workflow.edge.L46",
+      condition: { sourceText: "", displayText: "", targetText: "", translationStatus: "executable" },
+      attributes: { priority: "3" }
+    };
+
+    const payload = projectTemplate(sampleTrustedDsl({
+      form: sampleConditionBranchForm(),
+      workflow
+    }), baseTemplate());
+    const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
+    const branch = content.elements.find((element) => element.id === "N35");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const edge = content.elements.find((element) => element.id === "L44");
+
+    assert.equal(branch.conditionType, "2");
+    assert.equal(conditionValue.formulas, undefined);
+    assert.equal(conditionValue.rules.length, 3);
+    assert.deepEqual(conditionValue.rules.map((rule) => rule.lineName), ["上汽", "上发", "上辅"]);
+    assert.equal(conditionValue.rules[0].type, "rules");
+    assert.equal(conditionValue.rules[0].formulaType, "rule");
+    assert.equal(conditionValue.rules[0].formula, "上汽");
+    assert.equal(conditionValue.ruleConfig.vo.mode, "rule");
+    assert.equal(edge.formulaType, "rule");
+    assert.equal(edge.formula, "上汽");
+    assert.equal(JSON.parse(branch.resultSetMapping)[0].resultCode, "上汽");
+  });
+
+  it("writes numeric relational comparisons through formula config", () => {
+    const form = sampleConditionBranchForm();
+    form.fields.push({
+      id: "fd_total",
+      title: "合计金额A",
+      type: "number",
+      componentId: "xform-number",
+      props: {},
+      sourceProps: { designerType: "calculation" },
+      sourceRef: "source.form.control.fd_total"
+    });
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.edges[1] = {
+      ...workflow.edges[1],
+      condition: {
+        sourceText: "$fd_total$ >= 100000",
+        displayText: "$合计金额A$ >= 100000",
+        targetText: "$fd_total$ >= 100000",
+        translationStatus: "display_only"
+      }
+    };
+    workflow.edges[2] = {
+      ...workflow.edges[2],
+      condition: {
+        sourceText: "$fd_total$  <  100000",
+        displayText: "$合计金额A$  <  100000",
+        targetText: "$fd_total$  <  100000",
+        translationStatus: "display_only"
+      }
+    };
+
+    const content = buildWorkflowContent(workflow, {
+      templateId: "template-id",
+      form
+    });
+    const high = content.elements.find((element) => element.id === "L541");
+    const low = content.elements.find((element) => element.id === "L546");
+    const branch = content.elements.find((element) => element.id === "N410");
+    const routes = JSON.parse(branch.conditionValue).formulas;
+    const highRoute = routes.find((route) => route.lineId === "L541");
+    const lowRoute = routes.find((route) => route.lineId === "L546");
+
+    assert.equal(high.formulaType, "formula");
+    assert.equal(low.formulaType, "formula");
+    assert.equal(highRoute.formula.type, "Batch");
+    assert.equal(lowRoute.formula.type, "Batch");
+    assert.equal(highRoute.formula.vars[0].value, "${data.template-id-fd_total} >= \"100000\"");
+    assert.equal(lowRoute.formula.vars[0].value, "${data.template-id-fd_total} < \"100000\"");
+    assert.equal(highRoute.formula.vo.data.fdList[0].fdList[0].fdSymbol, ">=");
+    assert.equal(lowRoute.formula.vo.data.fdList[0].fdList[0].fdSymbol, "<");
+    assert.equal(highRoute.formula.vo.data.fdList[0].fdList[0].fdDataType, "number");
+    assert.equal(lowRoute.formula.vo.data.fdList[0].fdList[0].fdDataType, "number");
+    assert.strictEqual(highRoute.formula.vo.data.fdList[0].fdList[0].fdValue, 100000);
+    assert.strictEqual(lowRoute.formula.vo.data.fdList[0].fdList[0].fdValue, 100000);
+    assert.equal(typeof highRoute.formula.vo.data.fdList[0].fdList[0].fdValue, "number");
+    assert.equal(typeof lowRoute.formula.vo.data.fdList[0].fdList[0].fdValue, "number");
+  });
+
   it("writes field-left equals conditional branch routes through formula config", () => {
     const workflow = sampleConditionBranchWorkflow();
     workflow.edges[1] = {
@@ -1196,7 +1470,7 @@ describe("executeDsl", () => {
     const payload = projectTemplate(sampleTrustedDsl({
       form: sampleConditionBranchForm(),
       workflow
-    }, baseTemplate()));
+    }), baseTemplate());
     const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
     const branch = content.elements.find((element) => element.id === "N410");
     const conditionValue = JSON.parse(branch.conditionValue);
@@ -2397,7 +2671,7 @@ function sampleInitiatorSelectWorkflow() {
         name: "起草",
         sourceType: "draftNode",
         sourceRef: "source.workflow.node.N2",
-        attributes: { mustModifyHandlerNodeIds: "N16;N7" },
+        attributes: { canModifyHandlerNodeIds: "N16", mustModifyHandlerNodeIds: "N7" },
         translationStatus: "executable"
       },
       {
@@ -2418,7 +2692,7 @@ function sampleInitiatorSelectWorkflow() {
         name: "发起人选择二",
         sourceType: "reviewNode",
         sourceRef: "source.workflow.node.N7",
-        attributes: {},
+        attributes: { ignoreOnHandlerEmpty: "false" },
         participants: { mode: "initiator_select", sourceSemantics: "draft node selects N7" },
         translationStatus: "executable"
       },
@@ -2620,6 +2894,7 @@ class FakeNewoaClient {
     this.workflowDraftResult = options.workflowDraftResult ?? { fdId: "lbpm-template-id" };
     this.expectedCredentials = options.expectedCredentials;
     this.loginError = options.loginError;
+    this.existingTemplate = options.existingTemplate;
   }
 
   async login(credentials) {
@@ -2668,7 +2943,11 @@ class FakeNewoaClient {
     if (this.savedTemplate && this.corruptReadback && this.calls.filter((call) => call.name === "getTemplate").length > 1) {
       return this.corruptReadback(this.savedTemplate);
     }
-    return this.savedTemplate || {
+    if (this.savedTemplate) return this.savedTemplate;
+    if (this.existingTemplate && this.existingTemplate.fdId === fdId) {
+      return JSON.parse(JSON.stringify(this.existingTemplate));
+    }
+    return {
       fdId,
       fdName: "created",
       mechanisms: {

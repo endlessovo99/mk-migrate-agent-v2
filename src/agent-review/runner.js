@@ -88,7 +88,8 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
   if (!roundResult.ok) return roundResult.result;
 
   const cumulativePatchResult = applyEvidenceBackedPatches(dslDraft, state.acceptedPatches, {
-    sourceRefs: collectSourceRefs(sourceDraft)
+    sourceRefs: collectSourceRefs(sourceDraft),
+    sourceDraft
   });
   if (!cumulativePatchResult.ok) {
     return blockedResultWithState({
@@ -199,7 +200,8 @@ function applyBatchReview(context, state, review, reviewScope, batchOrdinal, bef
     }));
   const mergedPatches = mergeAcceptedPatches(state.acceptedPatches, patchResult.acceptedPatches);
   const cumulativePatchResult = applyEvidenceBackedPatches(context.dslDraft, mergedPatches, {
-    sourceRefs: collectSourceRefs(context.sourceDraft)
+    sourceRefs: collectSourceRefs(context.sourceDraft),
+    sourceDraft: context.sourceDraft
   });
   if (!cumulativePatchResult.ok) {
     return {

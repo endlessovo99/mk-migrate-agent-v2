@@ -400,7 +400,7 @@ function renderExpectedScriptBody(source, detailTableNames = {}) {
 function buildExpectedWorkflow(workflow, diagnostics) {
   const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
   const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
-  const initiatorSelectTargetNodeIds = collectMustModifyHandlerTargetNodeIds(nodes);
+  const initiatorSelectTargetNodeIds = collectInitiatorSelectTargetNodeIds(nodes);
   const defaultEdgeIds = collectDefaultEdgeIds(nodes, edges);
   const conditionBranchNodeIds = new Set(
     nodes.filter((node) => node?.type === "conditionBranch").map((node) => node.id)
@@ -428,6 +428,7 @@ function buildExpectedWorkflow(workflow, diagnostics) {
       type: node.type,
       element: node.element || defaultElementForType(node.type),
       mustModifyHandlerNodeIds: splitRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds),
+      canModifyHandlerNodeIds: splitRelatedNodeIds(sourceAttributes(node).canModifyHandlerNodeIds),
       participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id)),
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),
@@ -566,11 +567,14 @@ function nativeBoolean(value) {
   return value === true || value === 1 || normalized === "true" || normalized === "1";
 }
 
-function collectMustModifyHandlerTargetNodeIds(nodes = []) {
+function collectInitiatorSelectTargetNodeIds(nodes = []) {
   const targetNodeIds = new Set();
   for (const node of nodes) {
-    for (const targetNodeId of splitRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds)) {
-      targetNodeIds.add(targetNodeId);
+    const attrs = sourceAttributes(node);
+    for (const attribute of ["mustModifyHandlerNodeIds", "canModifyHandlerNodeIds"]) {
+      for (const targetNodeId of splitRelatedNodeIds(attrs[attribute])) {
+        targetNodeIds.add(targetNodeId);
+      }
     }
   }
   return targetNodeIds;
@@ -591,9 +595,12 @@ function expectedIgnoreOnSameIdentity(node) {
   const hasMustModifyHandlerNodes = splitRelatedNodeIds(
     attrs.mustModifyHandlerNodeIds || attrs.mustModifyHandlerNodes
   ).length > 0;
+  const hasCanModifyHandlerNodes = splitRelatedNodeIds(
+    attrs.canModifyHandlerNodeIds || attrs.canModifyHandlerNodes
+  ).length > 0;
   const eSign = attrs.eSignConfig || node.eSignConfig;
   const hasEnabledESign = eSign && (eSign.enable === true || eSign.enable === "true");
-  if (hasRequiredField || hasMustModifyHandlerNodes || hasEnabledESign) return "1";
+  if (hasRequiredField || hasMustModifyHandlerNodes || hasCanModifyHandlerNodes || hasEnabledESign) return "1";
   return attrs.ignoreOnHandlerSame === "false" ? "1" : "2";
 }
 

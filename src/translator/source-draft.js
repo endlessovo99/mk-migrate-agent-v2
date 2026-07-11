@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
+import { auditSourceScriptRowMarkerOrphans, ORPHAN_ROW_MARKER_WARNING_CODE } from "./row-marker-orphan-audit.js";
 import { translateLbpmProcessDefinitionXml } from "./lbpm-process-definition-adapter.js";
 import { sourceFormRulesFromLegacyScripts } from "./sysform-form-rules.js";
 import { translateSysFormTemplateXml } from "./sysform-template-adapter.js";
@@ -41,6 +42,8 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
   const normalControls = fields.filter((field) => field.type !== "detailTable").map(sourceControlFromField);
   const sourceDataFields = dataFields.map(sourceDataFieldFromField);
   const detailTables = fields.filter((field) => field.type === "detailTable").map(sourceDetailTableFromField);
+  const layout = sourceLayoutFromLegacyLayout(legacyDsl.form?.layout, detailTableIds);
+  const scripts = sourceScriptsFromLegacy(legacyDsl.scripts);
   const workflow = legacyDsl.workflow ? sourceWorkflowFromLegacyWorkflow(legacyDsl.workflow, {
     nodeDataAuthorities: legacyDsl.form?.nodeDataAuthorities,
     fields: allFields
@@ -58,12 +61,15 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
       controls: normalControls,
       dataFields: sourceDataFields,
       detailTables,
-      layout: sourceLayoutFromLegacyLayout(legacyDsl.form?.layout, detailTableIds)
+      layout
     },
     formRules: sourceFormRulesFromLegacyScripts(legacyDsl.scripts),
-    scripts: sourceScriptsFromLegacy(legacyDsl.scripts),
+    scripts,
     workflow,
-    issues: sourceIssuesFromReview(legacyDsl.review)
+    issues: [
+      ...sourceIssuesFromReview(legacyDsl.review),
+      ...sourceScriptRowMarkerOrphanIssues(scripts, layout)
+    ]
   });
 }
 
@@ -354,6 +360,24 @@ function sourceScriptsFromLegacy(scripts) {
       semanticFacts: source.semanticFacts
     }))
   };
+}
+
+function sourceScriptRowMarkerOrphanIssues(scripts, layout) {
+  const layoutMarkers = new Set(
+    (layout?.rows || []).flatMap((row) => Array.isArray(row.sourceMarkers) ? row.sourceMarkers : [])
+  );
+
+  return (scripts?.sources || []).flatMap((source, sourceIndex) => {
+    const evidence = auditSourceScriptRowMarkerOrphans(source, layoutMarkers);
+    if (!evidence) return [];
+    return [{
+      level: "warning",
+      code: ORPHAN_ROW_MARKER_WARNING_CODE,
+      message: "Source script row markers have no current source layout target and are proven safe orphan no-op calls.",
+      sourcePath: `/scripts/sources/${sourceIndex}/semanticFacts/rowMarkers`,
+      evidence
+    }];
+  });
 }
 
 function sourceIssuesFromReview(review = {}) {

@@ -607,6 +607,15 @@ function compareWorkflow(expected, actual, diagnostics) {
         actual: actualNode.mustModifyHandlerNodeIds
       }));
     }
+    if ((node.canModifyHandlerNodeIds || []).length > 0 &&
+      stableStringify(node.canModifyHandlerNodeIds) !== stableStringify(actualNode.canModifyHandlerNodeIds || [])) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.participant_mismatch", "Readback workflow optional draft-selection linkage mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.canModifyHandlerNodeIds`,
+        path: `/readback/workflow/nodes/${node.id}/canModifyHandlerNodeIds`,
+        expected: node.canModifyHandlerNodeIds,
+        actual: actualNode.canModifyHandlerNodeIds
+      }));
+    }
     if (node.participants) {
       if (stableStringify(node.participants) !== stableStringify(actualNode.participants || {})) {
         diagnostics.push(mismatch("workflow", "readback.workflow.participant_mismatch", "Readback workflow participant mismatch.", {

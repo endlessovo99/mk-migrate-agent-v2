@@ -50,7 +50,8 @@ export function restoreReviewState(checkpoint, context) {
 
   const validatedCheckpoint = checkpointValidation.checkpoint;
   const replay = applyEvidenceBackedPatches(context.dslDraft, validatedCheckpoint.acceptedPatches, {
-    sourceRefs: collectSourceRefs(context.sourceDraft)
+    sourceRefs: collectSourceRefs(context.sourceDraft),
+    sourceDraft: context.sourceDraft
   });
   if (!replay.ok) {
     return {

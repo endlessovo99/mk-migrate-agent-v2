@@ -1225,7 +1225,9 @@ function validateTopologicalOrder(order, nodeMap, edges, diagnostics) {
 
   for (const edge of edges) {
     if ((positions.get(edge.source) ?? Number.POSITIVE_INFINITY) >= (positions.get(edge.target) ?? Number.NEGATIVE_INFINITY)) {
-      diagnostics.push(error("dsl.workflow.cycle_or_bad_order", "workflow edges must follow topologicalOrder.", "/workflow/topologicalOrder", {
+      // Retry/reject loops are valid in LBPM; keep them as manual-review warnings so
+      // needs_manual trusted DSL can still execute while preserving the cycle.
+      diagnostics.push(warning("dsl.workflow.cycle_or_bad_order", "workflow edges must follow topologicalOrder; cyclic or reverse edges need manual review.", "/workflow/topologicalOrder", {
         edge: edge.id,
         source: edge.source,
         target: edge.target

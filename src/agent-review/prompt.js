@@ -1,8 +1,13 @@
 import { COMPONENT_CATALOG, FUNCTION_CATALOG, VALIDATION_POLICY } from "../dsl/catalogs.js";
 import { scriptTargetApiSummary } from "../dsl/scripts.js";
 import { JSP_TRANSLATION_PLAYBOOK } from "./playbook.js";
+import {
+  classifyActionRowMarkers,
+  legacySourceFromGeneratedFunction,
+  rowMarkersFromText
+} from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v2";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v3";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -65,6 +70,9 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Detail-table control scripts use tableId plus controlId; preserve rowNum for row-scoped APIs.",
       "When a detail-table function refers to a runtime control id inside a detail row, use ${table:<sourceDetailTableId>}.<controlId>; the executor resolves this placeholder to mk_model_fd_... at write time.",
       "Whole-row or whole detail-table container visibility/required state must prefer native formRules.linkage against layout sourceMarkers (including detail-table-only rows). Do not use ${table:<detailTableId>} or the detail-table field id as an MKXFORM.setFieldAttr target.",
+      "Only the first sourceMarker on a layout row is persisted as migrationRowId. When a row lists multiple sourceMarkers, rewrite every co-located alias to that primary marker in MKXFORM.setFieldAttr calls.",
+      "Treat a literal missing row marker as an auditable orphan no-op only when sourceDraft.issues contains source.sysform.script_row_marker_orphan_noop for the action sourceRef and its proof says absentFromLayout=true, onlyHelperTarget=true, resetAlwaysFalse=true, and dynamicDomCreationDetected=false.",
+      "Never generate MKXFORM.setFieldAttr for an orphan marker. Translate every remaining resolved marker and helper behavior, use coverage.status=translated only when no unresolved residual remains, and preserve the Source Draft warning in the Trusted DSL audit record.",
       "If native formRules already cover a JSP visibility/required rule, do not duplicate that rule in generated JavaScript.",
       "If native formRules.linkage entries with meta.sourceJsp or meta.sourceJsps matching the action sourceRefs fully cover the action-local JSP behavior, patch the action to function:\"\", translationStatus:\"omitted\", and coverage:{status:\"covered\",nativeRules:[executable rule ids],residuals:[]}; preserve runWhen.",
       "When native formRules cover only part of an action, retain mapped residual JavaScript for uncovered setValue or other behavior, preserve runWhen, exclude covered visible/required calls, and close coverage with the executable native rule ids plus no remaining residuals.",
@@ -184,12 +192,13 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       sourceDraft: {
         form: sourceFormSummary(sourceDraft?.form),
         scripts: scriptSourceSummary(sourceDraft?.scripts, focusedScriptSourceRefs, reviewScope !== undefined),
+        issues: sourceIssueSummary(sourceDraft?.issues),
         workflowSummary: summarizeWorkflow(sourceDraft?.workflow)
       },
       dslDraft: {
         form: dslFormSummary(dslDraft?.form),
         formRules: formRulesSummary(dslDraft?.formRules),
-        scripts: scriptActionReviewSummary(dslDraft?.scripts, dslDraft?.formRules, dslDraft?.form, focusedActionIndexes),
+        scripts: scriptActionReviewSummary(dslDraft?.scripts, dslDraft?.formRules, dslDraft?.form, focusedActionIndexes, sourceDraft),
         review: {
           warnings: dslDraft?.review?.warnings || [],
           reviewCandidates: dslDraft?.review?.reviewCandidates || []
@@ -427,6 +436,19 @@ function sourceFormSummary(form = {}) {
   };
 }
 
+function sourceIssueSummary(issues = []) {
+  if (!Array.isArray(issues)) return [];
+  return issues
+    .filter((issue) => issue?.code === "source.sysform.script_row_marker_orphan_noop")
+    .map((issue) => pruneUndefined({
+      level: issue?.level,
+      code: issue?.code,
+      message: issue?.message,
+      sourcePath: issue?.sourcePath,
+      evidence: issue?.evidence
+    }));
+}
+
 function sourceControlSummary(control = {}) {
   return pruneUndefined({
     id: control.id,
@@ -507,6 +529,8 @@ function layoutSummary(layout = {}) {
       .filter((row) => Array.isArray(row?.sourceMarkers) && row.sourceMarkers.length)
       .map((row) => ({
         rowId: row.id,
+        persistedMarker: row.sourceMarkers[0],
+        aliasMarkers: row.sourceMarkers.slice(1),
         sourceMarkers: row.sourceMarkers,
         refIds: (row.children || []).flatMap((child) => childRefIds(child))
       }))
@@ -603,7 +627,7 @@ function focusedSourceRefsForScripts(scripts = {}, focusedActionIndexes) {
   return refs;
 }
 
-function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focusedActionIndexes) {
+function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focusedActionIndexes, sourceDraft = {}) {
   const actions = Array.isArray(scripts?.actions) ? scripts.actions : [];
   const focusedIndexes = new Set(Array.isArray(focusedActionIndexes)
     ? focusedActionIndexes
@@ -633,7 +657,7 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
         coverage: coverageSummary(action.coverage, focused ? 4 : 0),
         functionMappings: functionMappingSummary(action.functionMappings, focused ? 8 : 0),
         semanticHints: action.semanticHints,
-        reviewOpportunities: focused ? reviewOpportunitiesForAction(action, formRules, index, form) : undefined,
+        reviewOpportunities: focused ? reviewOpportunitiesForAction(action, formRules, index, form, sourceDraft) : undefined,
         actionSource: focused ? actionSourceSummary(action, 6200) : actionSourceSummary(action, 520),
         unmappedFunctions: focused ? action.unmappedFunctions : undefined,
         functionLength: String(action.function || "").length,
@@ -657,37 +681,6 @@ function actionSourceSummary(action = {}, limit = 1200) {
   });
 }
 
-function legacySourceFromGeneratedFunction(functionText = "") {
-  const text = String(functionText || "");
-  const marker = "Source JSP JavaScript:";
-  const markerIndex = text.indexOf(marker);
-  if (markerIndex < 0) return "";
-  return text
-    .slice(markerIndex + marker.length)
-    .split("\n")
-    .map((line) => {
-      const match = line.match(/^\s*\/\/ ?(.*)$/);
-      return match ? match[1] : "";
-    })
-    .join("\n")
-    .trim();
-}
-
-function rowMarkersFromText(text = "") {
-  const markers = [];
-  const pattern = /common_dom_row_set_show_required_reset\(\s*(["'])([^"']+)\1\s*,\s*(true|false)\s*,\s*(true|false)\s*,\s*(true|false)\s*\)/g;
-  for (const match of String(text || "").matchAll(pattern)) {
-    markers.push({
-      rowId: match[2],
-      visible: match[3] === "true",
-      required: match[4] === "true",
-      reset: match[5] === "true",
-      evidence: oneLine(match[0])
-    });
-  }
-  return markers;
-}
-
 function legacyCallsFromText(text = "") {
   const names = [
     "AttachXFormValueChangeEventById",
@@ -709,7 +702,7 @@ function legacyCallsFromText(text = "") {
     .filter((item) => item.occurrenceCount > 0);
 }
 
-function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, form = {}) {
+function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, form = {}, sourceDraft = {}) {
   const opportunities = [];
   const coverage = action.coverage || {};
   const residuals = Array.isArray(coverage.residuals) ? coverage.residuals : [];
@@ -831,56 +824,69 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
     }
   }
 
-  const rowMarkerOpportunity = rowMarkerVisibilityOpportunity(action, actionIndex, form);
+  const rowMarkerOpportunity = rowMarkerVisibilityOpportunity(action, actionIndex, form, sourceDraft);
   if (rowMarkerOpportunity) opportunities.push(rowMarkerOpportunity);
 
   return opportunities.length ? opportunities : undefined;
 }
 
-function rowMarkerVisibilityOpportunity(action = {}, actionIndex, form = {}) {
-  const source = legacySourceFromGeneratedFunction(action.function);
-  const markers = rowMarkersFromText(source);
+function rowMarkerVisibilityOpportunity(action = {}, actionIndex, form = {}, sourceDraft = {}) {
+  const {
+    markers,
+    resolvedMarkers,
+    orphanMarkers,
+    unresolvedMarkers
+  } = classifyActionRowMarkers(action, form, sourceDraft);
   if (!markers.length) return undefined;
 
-  const knownMarkers = new Set(
-    (Array.isArray(form?.layout?.mkTree) ? form.layout.mkTree : [])
-      .flatMap((row) => Array.isArray(row?.sourceMarkers) ? row.sourceMarkers : [])
+  // Collapse co-located aliases to the persisted primary marker per layout row.
+  const primaryByAlias = new Map();
+  for (const row of Array.isArray(form?.layout?.mkTree) ? form.layout.mkTree : []) {
+    const markers = (Array.isArray(row?.sourceMarkers) ? row.sourceMarkers : [])
       .map((marker) => String(marker || "").trim())
-      .filter(Boolean)
+      .filter(Boolean);
+    if (!markers.length) continue;
+    for (const alias of markers) primaryByAlias.set(alias, markers[0]);
+  }
+  const persistedMarkers = uniqueStrings(
+    resolvedMarkers.map((marker) => primaryByAlias.get(marker) || marker)
   );
-  const resolvedMarkers = uniqueStrings(markers.map((item) => item.rowId).filter((rowId) => knownMarkers.has(rowId)));
-  if (!resolvedMarkers.length) return undefined;
-
-  const primaryMarker = resolvedMarkers[0];
+  const markerEffectLines = persistedMarkers.flatMap((marker) => [
+    `  MKXFORM.setFieldAttr(${JSON.stringify(marker)}, active ? 5 : 4)`,
+    `  MKXFORM.setFieldAttr(${JSON.stringify(marker)}, active ? 3 : 6)`
+  ]).join("\n");
   const eventName = action.event || action.name || "onLoad";
   const isChange = eventName === "onChange";
   const functionShape = isChange
     ? `function onChange(value, rowNum, parentRowNum) {
   var selectedValue = Array.isArray(value) ? value[0] : value
   var active = /* compare selectedValue with the legacy trigger values */
-  MKXFORM.setFieldAttr(${JSON.stringify(primaryMarker)}, active ? 5 : 4)
-  MKXFORM.setFieldAttr(${JSON.stringify(primaryMarker)}, active ? 3 : 6)
+${markerEffectLines}
 }`
     : `function onLoad() {
   var storedValue = MKXFORM.getValue(/* helper or trigger field id */)
   var normalizedValue = Array.isArray(storedValue) ? storedValue[0] : storedValue
   var active = /* compare normalizedValue with the legacy trigger values */
-  MKXFORM.setFieldAttr(${JSON.stringify(primaryMarker)}, active ? 5 : 4)
-  MKXFORM.setFieldAttr(${JSON.stringify(primaryMarker)}, 6)
+${markerEffectLines}
 }`;
 
   return {
     kind: "row_marker_visibility_candidate",
     actionIndex,
     targetApis: ["MKXFORM.setFieldAttr", "MKXFORM.getValue", "MKXFORM.setValue"],
-    rowMarkers: resolvedMarkers,
+    rowMarkers: persistedMarkers,
+    resolvedRowMarkers: persistedMarkers,
+    orphanRowMarkers: orphanMarkers,
+    unresolvedRowMarkers: unresolvedMarkers,
     requiredBusinessSemantics: [
-      "Use the layout sourceMarker as the MKXFORM.setFieldAttr target.",
+      "Use the persisted primary layout sourceMarker (first entry in sourceMarkers / persistedMarker) as the MKXFORM.setFieldAttr target.",
+      "When multiple sourceMarkers share one layout row, collapse co-located aliases to that primary marker; do not call setFieldAttr on aliasMarkers.",
+      "Treat only warning-proven orphanRowMarkers as auditable no-ops and never emit MKXFORM.setFieldAttr for them.",
       "Do not substitute ${table:<detailTableId>} or the detail-table field id for whole-row/container visibility.",
       "Preserve helper-field writes when the source persists marker state for view/onLoad reconstruction."
     ],
-    safeDecision: "If the action-local body only toggles marked-row visibility/required state (optionally with helper setValue), map it with setFieldAttr on the sourceMarker and close coverage as translated.",
-    suggestedPatchShape: {
+    safeDecision: "Map resolvedRowMarkers with setFieldAttr, omit only warning-proven orphanRowMarkers as auditable no-ops, and translate any remaining helper behavior. Never invent a target for unresolvedRowMarkers.",
+    suggestedPatchShape: persistedMarkers.length && unresolvedMarkers.length === 0 ? {
       function: functionShape,
       translationStatus: "mapped",
       functionMappings: [{
@@ -890,8 +896,8 @@ function rowMarkerVisibilityOpportunity(action = {}, actionIndex, form = {}) {
         reviewRequired: false
       }],
       coverage: { status: "translated", nativeRules: [], residuals: [] }
-    },
-    coverageDecision: "Use coverage.status translated with empty residuals when every referenced sourceMarker toggle is represented by setFieldAttr; keep needs_review when DOM/table helpers remain."
+    } : undefined,
+    coverageDecision: "Use coverage.status translated with empty residuals only when every resolved row toggle and remaining helper behavior is translated, every omitted marker is listed in orphanRowMarkers, and unresolvedRowMarkers is empty; preserve the Source Draft warning. Otherwise keep needs_review."
   };
 }
 

@@ -115,12 +115,12 @@ export function buildFormRuleRefIndex(form = {}) {
 }
 
 export function resolveDirectRef(index, ref) {
-  const normalized = normalizeRef(ref);
-  if (!normalized) return undefined;
-  if (index.fieldRefs.has(normalized)) return index.fieldRefs.get(normalized);
-  if (normalized.includes(".")) {
-    const tail = normalized.split(".").pop();
-    if (index.fieldRefs.has(tail)) return index.fieldRefs.get(tail);
+  for (const candidate of fieldRefCandidates(ref)) {
+    if (index.fieldRefs.has(candidate)) return index.fieldRefs.get(candidate);
+    if (candidate.includes(".")) {
+      const tail = candidate.split(".").pop();
+      if (index.fieldRefs.has(tail)) return index.fieldRefs.get(tail);
+    }
   }
   return undefined;
 }
@@ -188,6 +188,20 @@ function markerRefCandidates(ref) {
     candidates.push(normalized.slice(3));
   } else {
     candidates.push(`fd_${normalized}`);
+  }
+  return candidates;
+}
+
+// Landray radio/checkbox change listeners often register as d_<hex> while the
+// designer/metadata field id remains fd_<hex>. Accept that one-character alias.
+function fieldRefCandidates(ref) {
+  const normalized = normalizeRef(ref);
+  if (!normalized) return [];
+  const candidates = [normalized];
+  if (/^d_[A-Za-z0-9_]+$/.test(normalized)) {
+    candidates.push(`f${normalized}`);
+  } else if (/^fd_[A-Za-z0-9_]+$/.test(normalized)) {
+    candidates.push(normalized.slice(1));
   }
   return candidates;
 }

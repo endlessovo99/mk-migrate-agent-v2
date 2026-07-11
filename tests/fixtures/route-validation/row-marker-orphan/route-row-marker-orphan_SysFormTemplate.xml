@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>class</string>
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string>
+  </void>
+  <void method="put">
+   <string>fdId</string>
+   <string>route-row-marker-orphan-sysform</string>
+  </void>
+  <void method="put">
+   <string>fdTemplateEdition</string>
+   <string>1</string>
+  </void>
+  <void method="put">
+   <string>fdName</string>
+   <string>Route Row Marker Orphan</string>
+  </void>
+  <void method="put">
+   <string>fdModelName</string>
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string>
+  </void>
+  <void method="put">
+   <string>fdModelId</string>
+   <string>route-row-marker-orphan-template</string>
+  </void>
+  <void method="put">
+   <string>fdDisplayJsp</string>
+   <string>
+    &lt;xform:editShow&gt;
+     &lt;script&gt;
+      AttachXFormValueChangeEventById(&quot;fd_way&quot;, function(value, domElement) {
+        SetXFormFieldValueById(&quot;wayTemp&quot;, value, false);
+        if (value == 11) {
+          common_dom_row_set_show_required_reset(&quot;invoice_row10&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row4&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row11&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, true, true, false);
+        } else if (value == 22) {
+          common_dom_row_set_show_required_reset(&quot;invoice_row10&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row4&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row11&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, false, false, false);
+        }
+      });
+     &lt;/script&gt;
+    &lt;/xform:editShow&gt;
+    &lt;xform:viewShow&gt;
+     &lt;script&gt;
+      Com_AddEventListener(window, &quot;load&quot;, function() {
+        var value = GetXFormFieldById(&quot;wayTemp&quot;)[0].value;
+        if (value == 11) {
+          common_dom_row_set_show_required_reset(&quot;invoice_row10&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row4&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row11&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, true, true, false);
+        } else if (value == 22) {
+          common_dom_row_set_show_required_reset(&quot;invoice_row10&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row4&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row11&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, false, false, false);
+        }
+      });
+     &lt;/script&gt;
+    &lt;/xform:viewShow&gt;
+   </string>
+  </void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_way&quot;,content:&quot;Entry mode&quot;}&apos;&gt;Entry mode&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;table fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_way&quot;,label:&quot;Entry mode&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,items:&quot;Single|11&amp;#13;&amp;#10;Batch|22&quot;}&apos;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;input id=&quot;fd_way&quot; type=&quot;radio&quot; value=&quot;11&quot;/&gt;&lt;input id=&quot;fd_way&quot; type=&quot;radio&quot; value=&quot;22&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_recipient&quot;,content:&quot;Recipient&quot;}&apos;&gt;Recipient&lt;/label&gt;&lt;input type=&quot;hidden&quot; id=&quot;invoice_row10&quot; name=&quot;invoice_row10&quot;/&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_recipient&quot;,label:&quot;Recipient&quot;}&apos;&gt;&lt;input id=&quot;fd_recipient&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_remark&quot;,content:&quot;Remark&quot;}&apos;&gt;Remark&lt;/label&gt;&lt;input type=&quot;hidden&quot; id=&quot;invoice_row1&quot; name=&quot;invoice_row4&quot;/&gt;&lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_remark&quot;,label:&quot;Remark&quot;}&apos;&gt;&lt;input id=&quot;fd_remark&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;div style=&quot;display:none&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;wayTemp&quot;,label:&quot;Entry mode helper&quot;,canShow:&quot;false&quot;,showStatus:&quot;noShow&quot;}&apos;&gt;&lt;input id=&quot;wayTemp&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_way&quot; label=&quot;Entry mode&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_recipient&quot; label=&quot;Recipient&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_remark&quot; label=&quot;Remark&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;wayTemp&quot; label=&quot;Entry mode helper&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

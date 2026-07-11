@@ -977,7 +977,7 @@ describe("agent-review", () => {
     assert.equal(prompt.system.includes("Pattern matching is evidence extraction only"), true);
     assert.equal(prompt.system.includes("Whole-row or whole detail-table container visibility/required state must prefer native formRules.linkage"), true);
     assert.equal(prompt.context.jspTranslationPlaybook.id, "jsp-translation-playbook");
-    assert.equal(prompt.context.jspTranslationPlaybook.version, "2026-07-11.v4");
+    assert.equal(prompt.context.jspTranslationPlaybook.version, "2026-07-11.v5");
     assert.equal(prompt.context.jspTranslationPlaybook.fewShotExamples.some((example) => example.id === "row-load-guarded-by-value"), true);
     assert.equal(prompt.context.scriptTranslationPolicy.commonDomRowPattern, undefined);
     assert.equal(prompt.context.sourceDraft.scripts.sources.some((source) => source.semanticFacts?.rowMarkers?.length), true);

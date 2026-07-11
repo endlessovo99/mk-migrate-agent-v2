@@ -186,6 +186,28 @@ describe("workflow current-native readback", () => {
     );
     assert.deepEqual(conditionDiagnostics, []);
   });
+
+  it("writes a native Batch fallback when sibling conditions reference multiple fields", () => {
+    const { template, readback } = persistAndVerify(multiFieldDefaultDsl());
+    const content = workflowContent(template);
+    const fallback = edge(content, "L4");
+
+    assert.equal(fallback.defaultTrend, true);
+    assert.equal(fallback.formulaType, "formula");
+    const nativeFormula = JSON.parse(fallback.formula);
+    assert.equal(nativeFormula.type, "Batch");
+    assert.equal(
+      nativeFormula.vo.data.fdList[0].fdList[0].fdVarValue,
+      "template-id-fd_subject"
+    );
+    assert.equal(
+      readback.diagnostics.some((item) =>
+        item.code === "readback.workflow.edge_condition_native_corrupt" &&
+        item.path === "/readback/workflow/edges/L4/condition"
+      ),
+      false
+    );
+  });
 });
 
 function branchDsl() {
@@ -224,6 +246,52 @@ function branchDsl() {
         }
       ],
       topologicalOrder: ["N1", "N410", "N2", "N3"]
+    }
+  });
+}
+
+function multiFieldDefaultDsl() {
+  return sampleTrustedDsl({
+    workflow: {
+      process: { id: "multi-field-default" },
+      nodes: [
+        workflowNode("N1", "generalStart", "startEvent", "开始"),
+        workflowNode("N5", "conditionBranch", "exclusiveGateway", "条件分支"),
+        workflowNode("N6", "generalEnd", "endEvent", "开票"),
+        workflowNode("N14", "generalEnd", "endEvent", "不开票")
+      ],
+      edges: [
+        workflowEdge("L1", "N1", "N5"),
+        {
+          id: "L4",
+          source: "N5",
+          target: "N6",
+          name: "开票",
+          sourceRef: "source.workflow.edge.L4",
+          condition: {
+            sourceText: "1==1",
+            displayText: "1==1",
+            targetText: "1==1",
+            translationStatus: "display_only"
+          },
+          attributes: { priority: "1" }
+        },
+        {
+          id: "L9",
+          source: "N5",
+          target: "N14",
+          name: "不开票",
+          sourceRef: "source.workflow.edge.L9",
+          condition: {
+            sourceText: "$fd_subject$ == \"A\" || $fd_amount$ > 0",
+            displayText: "$主题$ == \"A\" || $金额$ > 0",
+            targetText: "$fd_subject$ == \"A\" || $fd_amount$ > 0",
+            translationStatus: "display_only"
+          },
+          attributes: { priority: "0" }
+        }
+      ],
+      topologicalOrder: ["N1", "N5", "N6", "N14"]
     }
   });
 }

@@ -1,6 +1,10 @@
 import { integrityError } from "./integrity.js";
 
-export const REVIEW_SCENARIOS = Object.freeze(["accept", "warning"]);
+export const REVIEW_SCENARIOS = Object.freeze([
+  "accept",
+  "warning",
+  "audited-row-marker-orphan-noop"
+]);
 export const NEWOA_SCENARIOS = Object.freeze(["persist", "lose-layout-on-readback", "lose-required-on-readback", "fail-at-update"]);
 
 const SUCCESS_OPERATIONS = Object.freeze([
@@ -128,6 +132,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         relativePath: "form-only/route-form-only_SysFormTemplate.xml"
       },
       reviewScenario: "warning",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "row-marker-orphan-noop-success",
+      source: {
+        kind: "form-only",
+        relativePath: "row-marker-orphan/route-row-marker-orphan_SysFormTemplate.xml"
+      },
+      reviewScenario: "audited-row-marker-orphan-noop",
       newoaScenario: "persist",
       confirmWrite: true,
       expected: {

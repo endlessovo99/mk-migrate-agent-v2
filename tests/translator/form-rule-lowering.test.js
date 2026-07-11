@@ -37,6 +37,65 @@ describe("legacy JSP native form-rule lowering", () => {
     assert.equal(formRules.linkage.some((rule) => rule.meta.sourceJsp === "source.form.jsp.view"), false);
   });
 
+  it("canonicalizes Landray d_<hex> radio listeners onto matching fd_<hex> fields", () => {
+    const sourceDraft = {
+      version: "2.0-source-draft",
+      artifact: "source-draft",
+      source: { kind: "sysform-template", path: "synthetic", sourceId: "synthetic" },
+      template: { name: "alias-test" },
+      form: {
+        controls: [
+          {
+            id: "fd_3c66895473ff5c",
+            title: "对应申请",
+            sourceType: "String",
+            componentHint: "radio",
+            sourceProps: { designerId: "fd_3c66895473ff5c" }
+          }
+        ],
+        layout: {
+          rows: [
+            {
+              id: "row-1",
+              sourceMarkers: ["fd_four_row"],
+              cells: [{ id: "cell-1", references: [{ referenceId: "fd_3c66895473ff5c" }] }]
+            }
+          ]
+        }
+      },
+      formRules: sourceFormRulesFromLegacyScripts({
+        sources: [
+          {
+            id: "radio-alias",
+            sourceRef: "source.form.jsp.radio-alias",
+            displayGate: "xform:editShow",
+            javascript: `
+              AttachXFormValueChangeEventById("d_3c66895473ff5c", function(value) {
+                if (value.indexOf("D") >= 0) {
+                  common_dom_row_set_show_required_reset("fd_four_row", true, true, false);
+                } else {
+                  common_dom_row_set_show_required_reset("fd_four_row", false, false, false);
+                }
+              });
+            `
+          }
+        ]
+      }),
+      scripts: { sources: [] },
+      issues: []
+    };
+
+    const dslDraft = draftSourceDraft(sourceDraft);
+    assert.equal(dslDraft.formRules.linkage.length, 1);
+    assert.equal(dslDraft.formRules.linkage[0].source, "fd_3c66895473ff5c");
+    assert.deepEqual(dslDraft.formRules.linkage[0].when, [{
+      field: "fd_3c66895473ff5c",
+      op: "contains",
+      value: "D"
+    }]);
+    assert.equal(dslDraft.formRules.linkage[0].translationStatus, "executable");
+  });
+
   localCorpusIt("lowers the target fixture to nine executable rules including detail-table container rows", () => {
     const sourceDraft = cleanSourceFile(targetFixture);
     const dslDraft = draftSourceDraft(sourceDraft);

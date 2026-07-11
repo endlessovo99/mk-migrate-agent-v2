@@ -205,8 +205,17 @@ function buildDirectedAcyclicGraph(process) {
     }
   }
 
+  // Real LBPM templates may contain retry/reject loops. Preserve the full graph and
+  // complete topologicalOrder with remaining cyclic nodes in source order so downstream
+  // DSL validation can warn on back-edges instead of blocking clean.
   if (topologicalOrder.length !== process.nodes.length) {
-    throw new Error("LbpmProcessDefinition graph must be acyclic");
+    const ordered = new Set(topologicalOrder);
+    for (const node of process.nodes) {
+      if (!ordered.has(node.id)) {
+        topologicalOrder.push(node.id);
+        ordered.add(node.id);
+      }
+    }
   }
 
   return {

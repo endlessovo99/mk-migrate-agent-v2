@@ -100,7 +100,7 @@ function parseDesignerLayout(html, warnings) {
 
   rows.forEach((rowHtml, rowIndex) => {
     const cells = [];
-    const sourceMarkers = extractRowMarkers(rowHtml);
+    const sourceMarkers = extractRowMarkers(rowHtml, warnings);
     const sourceCells = splitDirectChildCells(rowHtml);
     const sourceColumns = sourceCells.reduce((max, cell, cellIndex) => {
       const column = parseColumnSpec(cell.attrs.column, cellIndex);
@@ -110,29 +110,32 @@ function parseDesignerLayout(html, warnings) {
     sourceCells.forEach((cell, cellIndex) => {
       const controls = extractLayoutCellControls(cell.body);
       if (!controls.length) return;
-      const cellFieldIds = [];
-      for (const control of controls) {
-        if (control.source?.designerHidden) {
-          if (!hiddenFieldIds.has(control.id)) {
-            hiddenFieldIds.add(control.id);
-            hiddenFields.push(control);
-          }
-          continue;
-        }
-        cellFieldIds.push(control.id);
-        if (fieldIds.has(control.id)) continue;
-        fieldIds.add(control.id);
-        fields.push(control);
-      }
-      if (!cellFieldIds.length) return;
-
       const column = parseColumnSpec(cell.attrs.column, cellIndex);
-      cells.push({
-        id: `row-${rowIndex}-cell-${column.column}`,
-        fieldId: cellFieldIds[0],
-        fieldIds: cellFieldIds,
-        column: column.column,
-        colspan: column.colspan
+      const controlGroups = groupLayoutCellControls(controls);
+      controlGroups.forEach((group, groupIndex) => {
+        const cellFieldIds = [];
+        for (const control of group) {
+          if (control.source?.designerHidden) {
+            if (!hiddenFieldIds.has(control.id)) {
+              hiddenFieldIds.add(control.id);
+              hiddenFields.push(control);
+            }
+            continue;
+          }
+          cellFieldIds.push(control.id);
+          if (fieldIds.has(control.id)) continue;
+          fieldIds.add(control.id);
+          fields.push(control);
+        }
+        if (!cellFieldIds.length) return;
+
+        cells.push({
+          id: `row-${rowIndex}-cell-${column.column}${groupIndex ? `-${groupIndex}` : ""}`,
+          fieldId: cellFieldIds[0],
+          fieldIds: cellFieldIds,
+          column: column.column,
+          colspan: column.colspan
+        });
       });
     });
 
@@ -285,13 +288,36 @@ function metadataCompatibleWithDesigner(metadataField, designerField) {
 function extractLayoutCellControls(html) {
   const controls = extractDesignerFieldControls(html, { includeHidden: true, includeTextLabels: true });
   const detailTables = controls.filter((control) => control.type === "detailTable");
-  if (detailTables.length) return detailTables;
+  if (detailTables.length) {
+    // Detail-table cells often host main-level calculation totals in footer
+    // (nofoot) rows. Keep those as sibling form controls; do not promote
+    // ordinary detail columns that also match the broad control scan.
+    const footerControls = [];
+    const seen = new Set(detailTables.map((table) => table.id));
+    for (const table of detailTables) {
+      const tableHtml = matchingDetailTableFragment(html, table.id);
+      for (const control of extractDetailTableFooterControls(tableHtml, table.id)) {
+        if (seen.has(control.id)) continue;
+        seen.add(control.id);
+        footerControls.push(control);
+      }
+    }
+    return [...detailTables, ...footerControls];
+  }
 
   const fieldControls = controls.filter((control) => control.type !== "description");
   if (fieldControls.length) return fieldControls;
 
   // Label-only cells: keep styled/hint textLabels as descriptions; skip plain field titles.
   return controls.filter((control) => control.type === "description" && isHintTextLabel(control));
+}
+
+// Detail tables and ordinary fields cannot share one mkTree child refType.
+function groupLayoutCellControls(controls) {
+  const detailTables = controls.filter((control) => control.type === "detailTable");
+  const others = controls.filter((control) => control.type !== "detailTable");
+  if (detailTables.length && others.length) return [detailTables, others];
+  return [controls];
 }
 
 function extractDesignerFieldControls(html, options = {}) {
@@ -336,22 +362,48 @@ function isTrueLike(value) {
   return String(value ?? "").trim().toLowerCase() === "true";
 }
 
-function extractRowMarkers(html) {
+function extractRowMarkers(html, warnings = []) {
   const decoded = decodeEntities(html);
   const markers = [];
   const seen = new Set();
-  const inputPattern = /<input\b(?=[^>]*\btype\s*=\s*(?:"hidden"|'hidden'|hidden)\b)[^>]*>/gi;
+  const inputPattern = /<input\b(?=[^>]*\btype\s*=\s*(?:"hidden"|'hidden'|hidden)(?=\s|\/?>))[^>]*>/gi;
 
   for (const match of decoded.matchAll(inputPattern)) {
     const id = attrValue(match[0], "id");
     const name = attrValue(match[0], "name");
-    const marker = id || name;
-    if (!marker || !isLegacyRowMarker(marker) || seen.has(marker)) continue;
+    const marker = resolveLegacyRowMarker(id, name, warnings);
+    if (!marker || seen.has(marker)) continue;
     seen.add(marker);
     markers.push(marker);
   }
 
   return markers;
+}
+
+function resolveLegacyRowMarker(id, name, warnings = []) {
+  const rawId = String(id || "").trim();
+  const rawName = String(name || "").trim();
+  const idMarker = isLegacyRowMarker(rawId) ? rawId : "";
+  const nameMarker = isLegacyRowMarker(rawName) ? rawName : "";
+  if (nameMarker) {
+    // Prefer name when id/name diverge so script literals such as
+    // common_dom_row_set_show_required_reset("invoice_row4", ...) can resolve
+    // against layout sourceMarkers. Export typos often leave a duplicated id.
+    if (rawId && rawId !== nameMarker) {
+      warnings.push({
+        code: "source.sysform.row_marker_id_name_mismatch",
+        message: `Row marker hidden input id (${rawId}) differs from name (${nameMarker}); using name for sourceMarkers.`,
+        path: "/fdDesignerHtml",
+        details: {
+          id: rawId,
+          name: nameMarker,
+          chosen: nameMarker
+        }
+      });
+    }
+    return nameMarker;
+  }
+  return idMarker;
 }
 
 function isLegacyRowMarker(value) {
@@ -505,6 +557,43 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
   return columns;
 }
 
+function extractDetailTableFooterControls(tableHtml, tableId) {
+  if (!tableHtml) return [];
+
+  const controls = [];
+  const seen = new Set();
+  for (const row of splitDirectChildRows(extractFirstTbodyContent(tableHtml) || tableHtml)) {
+    if (!isDetailFooterRow(row)) continue;
+    for (const cell of splitDirectChildCells(row)) {
+      if (isNonDataDetailCell(cell.attrs)) continue;
+      for (const control of extractDesignerFieldControls(cell.body)) {
+        if (!isDetailFooterMainControl(control, tableId) || seen.has(control.id)) continue;
+        seen.add(control.id);
+        controls.push(control);
+      }
+    }
+  }
+  return controls;
+}
+
+function isDetailFooterRow(rowHtml) {
+  return splitDirectChildCells(rowHtml).some((cell) => {
+    const colType = String(cell.attrs.colType || cell.attrs.coltype || "").toLowerCase();
+    return colType === "nofoot";
+  });
+}
+
+function isDetailFooterMainControl(control, tableId) {
+  if (!control || control.type === "detailTable" || control.type === "description") return false;
+  if (!control.title || control.title === control.id) return false;
+  if ((control.source?.designerValues?.showStatus || control.source?.designerShowStatus) === "noShow") return false;
+  const tableName = control.source?.designerValues?.tableName || control.source?.designerTableName;
+  if (tableName && tableName !== tableId) return false;
+  // Footer totals are main-model calculation/simple fields, not row-scoped columns.
+  const designerType = String(control.source?.designerType || "").toLowerCase();
+  return designerType === "calculation" || !tableName;
+}
+
 function isNonDataDetailCell(attrs) {
   const colType = String(attrs.colType || attrs.coltype || "").toLowerCase();
   return ["notitle", "notemplate", "nofoot", "emptycell"].includes(colType);
@@ -546,6 +635,18 @@ function matchingElementFragment(html, match) {
   if (isVoidLikeTag(tagName)) return match[0];
   const end = findMatchingCloseTag(html, openEnd, tagName);
   return end > openEnd ? html.slice(start, end + `</${tagName}>`.length) : match[0];
+}
+
+function matchingDetailTableFragment(html, tableId) {
+  if (!html || !tableId) return "";
+  const controlPattern = /<([a-zA-Z][\w:-]*)\b([^>]*\bfd_type\s*=\s*(["'])detailsTable\3[^>]*)>/gi;
+  for (const match of html.matchAll(controlPattern)) {
+    const values = parseFdValues(attrValue(match[2], "fd_values"));
+    const id = values.id || attrValue(match[2], "id");
+    if (id !== tableId) continue;
+    return matchingElementFragment(html, match);
+  }
+  return "";
 }
 
 function isVoidLikeTag(tagName = "") {

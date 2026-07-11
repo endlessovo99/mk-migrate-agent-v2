@@ -168,7 +168,8 @@ export function buildWorkflowContent(workflow, context = {}) {
     ...context,
     formFieldById: context.formFieldById || buildFormFieldIndex(context.form),
     formFieldsByTitle: context.formFieldsByTitle || buildFormFieldTitleIndex(context.form),
-    initiatorSelectTargetNodeIds: collectMustModifyHandlerTargetNodeIds(nodes)
+    initiatorSelectTargetNodeIds: collectInitiatorSelectTargetNodeIds(nodes),
+    canModifyHandlerTargetNodeIds: collectCanModifyHandlerTargetNodeIds(nodes)
   };
   const branchRoutes = buildBranchRoutes(nodes, outgoingEdges, workflowContext);
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
@@ -220,7 +221,7 @@ export function summarizeWorkflowFromTemplate(template) {
     edgeCount: edges.length,
     conditionEdgeCount: edges.filter((element) => hasEdgeCondition(element)).length,
     invalidEdgeCount: edges.filter((edge) => !edge.sourceRef || !edge.targetRef || !nodeIds.has(edge.sourceRef) || !nodeIds.has(edge.targetRef)).length,
-    initiatorSelectNodeIds: [...collectPersistedMustModifyHandlerTargetNodeIds(nodes)].sort(),
+    initiatorSelectNodeIds: [...collectPersistedInitiatorSelectTargetNodeIds(nodes)].sort(),
     nodes: nodes.map((node) => ({
       id: node.id,
       type: node.type,
@@ -244,7 +245,7 @@ export function summarizeDslWorkflow(workflow = {}) {
     edgeCount: edges.length,
     conditionEdgeCount: edges.filter((edge) => Boolean(edgeConditionText(edge))).length,
     invalidEdgeCount: 0,
-    initiatorSelectNodeIds: [...collectMustModifyHandlerTargetNodeIds(nodes)].sort(),
+    initiatorSelectNodeIds: [...collectInitiatorSelectTargetNodeIds(nodes)].sort(),
     nodes: nodes.map((node) => ({
       id: node.id,
       type: node.type,
@@ -401,7 +402,7 @@ function buildArtificialNode(node, type, context = {}) {
     ...baseNode(node, 0, type, "manualTask", 160, 40),
     name,
     required: true,
-    emptyHandlerType: 2,
+    emptyHandlerType: resolveEmptyHandlerType(node, attrs, context),
     formKey: "default",
     operationRefId: "default",
     openModifyProcessAuthority: "true",
@@ -492,30 +493,68 @@ function legacyRobotKey(sourceUnid) {
   return match ? match[1] : sourceUnid;
 }
 
+function isManualConditionBranch(node) {
+  return String(node?.sourceType || "").toLowerCase().includes("manualbranch");
+}
+
 function buildConditionBranchNode(node, routes) {
   const attrs = sourceAttributes(node);
   const defaultRoute = routes.find((route) => route.defaultTrend);
+  const manual = isManualConditionBranch(node) || routes.some((route) => route.manual);
+  const displayName = node.name || attrs.name || (manual ? "人工决策" : "条件分支");
   const element = {
     ...baseNode(node, 0, "conditionBranch", "exclusiveGateway", 34, 34),
-    conditionType: "1",
-    simpleName: node.name || attrs.name || "条件分支",
+    conditionType: manual ? "2" : "1",
+    simpleName: displayName,
     number: node.id,
     relateId: node.id,
     scope: "branch",
     operations: [],
-    language: { nameCn: node.name || "条件分支", nameUs: "Conditional Branch" }
+    language: { nameCn: displayName, nameUs: manual ? "Manual Decision" : "Conditional Branch" }
   };
   if (routes.length) {
-    element.resultSetMapping = JSON.stringify(routes.map((route) => ({ id: route.lineId, resultCode: route.resultCode })));
+    element.resultSetMapping = JSON.stringify(routes.map((route) => ({
+      id: route.lineId,
+      resultCode: route.resultCode || route.lineName || route.lineId
+    })));
     if (defaultRoute) {
       element.default = defaultRoute.lineId;
       element.conditionId = defaultRoute.lineId;
     }
-    element.conditionValue = JSON.stringify({
-      formulas: routes.map((route) => route.conditionValue)
-    });
+    element.conditionValue = JSON.stringify(
+      manual
+        ? {
+          rules: routes.map((route) => route.conditionValue),
+          ruleConfig: buildManualBranchRuleConfig(node, routes)
+        }
+        : {
+          formulas: routes.map((route) => route.conditionValue)
+        }
+    );
   }
   return element;
+}
+
+function buildManualBranchRuleConfig(node, routes) {
+  const firstRoute = routes[0];
+  const routeValue = firstRoute?.resultCode || firstRoute?.lineName || node?.id || "manualBranch";
+  return {
+    vo: { mode: "rule" },
+    type: "Batch",
+    vars: [],
+    result: {
+      vo: {
+        fdDataType: "any",
+        fdType: "any",
+        enableArray: false,
+        fdValueType: "Var",
+        fdValue: routeValue
+      },
+      type: "Var",
+      value: routeValue,
+      resultType: { type: "any" }
+    }
+  };
 }
 
 function buildParallelGatewayNode(node, index, type, nodeById) {
@@ -557,7 +596,9 @@ function buildParallelGatewayNode(node, index, type, nodeById) {
 
 function baseNode(node, index, type, element, width, height) {
   const name = node.name || node.id;
-  const mustModifyHandlerNodes = normalizeRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds);
+  const attrs = sourceAttributes(node);
+  const mustModifyHandlerNodes = normalizeRelatedNodeIds(attrs.mustModifyHandlerNodeIds);
+  const canModifyHandlerNodes = normalizeRelatedNodeIds(attrs.canModifyHandlerNodeIds);
   return {
     type,
     id: node.id,
@@ -570,7 +611,8 @@ function baseNode(node, index, type, element, width, height) {
     config: "{}",
     componentOriginalValue: "{}",
     migrationSource: migrationNodeSource(node),
-    ...(mustModifyHandlerNodes ? { mustModifyHandlerNodes } : {})
+    ...(mustModifyHandlerNodes ? { mustModifyHandlerNodes } : {}),
+    ...(canModifyHandlerNodes ? { canModifyHandlerNodes } : {})
   };
 }
 
@@ -611,12 +653,18 @@ function buildEdgeElement(edge, index, branchRoute) {
   };
   if (branchRoute) {
     const hasFormulaConfig = Boolean(branchRoute.formulaConfig);
+    const ruleText = branchRoute.manual
+      ? (displayText || branchRoute.resultCode || branchRoute.lineName || edge.name || "")
+      : (displayText || branchRoute.resultCode || "");
+    const rulePayload = branchRoute.manual
+      ? ruleText
+      : (branchRoute.resultCode || "");
     element.priority = branchRoute.priority;
-    element.formulaName = hasFormulaConfig ? "" : displayText || branchRoute.resultCode || "";
-    element.formulaType = hasFormulaConfig ? "formula" : branchRoute.resultCode ? "rule" : "formula";
+    element.formulaName = hasFormulaConfig ? "" : ruleText;
+    element.formulaType = hasFormulaConfig ? "formula" : rulePayload ? "rule" : "formula";
     element.defaultTrend = branchRoute.defaultTrend;
     element.language = { nameCn: edge.name || "" };
-    element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : branchRoute.resultCode || "";
+    element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : rulePayload;
     return element;
   }
   if (formula) {
@@ -656,28 +704,45 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
 }
 
 function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
-  const resultCode = edgeConditionText(edge);
+  const manual = isManualConditionBranch(node);
+  const conditionText = edgeConditionText(edge);
+  const lineName = edge.name || edge.id;
+  const resultCode = manual
+    ? (conditionText || lineName)
+    : conditionText;
   const explicitDefault = isExplicitDefaultRoute(edge);
   const namedOther = isOtherRoute(edge);
-  const tautologicalDefault = isTautologyCondition(resultCode);
-  const parsedFormula = buildFormulaDesignerConfig(edge, context);
-  const needsSyntheticDefaultFormula = !parsedFormula && (
-    tautologicalDefault || (namedOther && !String(resultCode || "").trim())
+  const tautologicalDefault = isTautologyCondition(conditionText);
+  const parsedFormula = manual ? undefined : buildFormulaDesignerConfig(edge, context);
+  const needsSyntheticDefaultFormula = !manual && !parsedFormula && (
+    tautologicalDefault || (namedOther && !String(conditionText || "").trim())
   );
   const formulaConfig = parsedFormula ||
     (needsSyntheticDefaultFormula
       ? buildOtherDefaultFormulaDesignerConfig(node, edge, context, siblingEdges)
       : undefined);
-  const conditionValue = {
-    lineId: edge.id,
-    lineName: edge.name || edge.id,
-    priority: parseInteger(edge.priority || edge.attributes?.priority, index + 1),
-    formula: formulaConfig || resultCode || "",
-    formulaName: formulaConfig ? "" : edge.condition?.displayText || edge.displayCondition || resultCode || "",
-    mode: "simple",
-    defaultTrend: false,
-    type: "formulas"
-  };
+  const conditionValue = manual
+    ? {
+      lineId: edge.id,
+      lineName,
+      priority: parseInteger(edge.priority || edge.attributes?.priority, index + 1),
+      formula: resultCode,
+      formulaName: edge.condition?.displayText || edge.displayCondition || resultCode,
+      formulaType: "rule",
+      mode: "simple",
+      defaultTrend: false,
+      type: "rules"
+    }
+    : {
+      lineId: edge.id,
+      lineName,
+      priority: parseInteger(edge.priority || edge.attributes?.priority, index + 1),
+      formula: formulaConfig || resultCode || "",
+      formulaName: formulaConfig ? "" : edge.condition?.displayText || edge.displayCondition || resultCode || "",
+      mode: "simple",
+      defaultTrend: false,
+      type: "formulas"
+    };
 
   if (formulaConfig) {
     conditionValue.conditionSimpleData = formulaConfig;
@@ -686,10 +751,11 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
 
   return {
     lineId: edge.id,
-    lineName: edge.name || edge.id,
+    lineName,
     priority: conditionValue.priority,
     resultCode,
     formulaConfig,
+    manual,
     defaultTrend: false,
     explicitDefault,
     namedOther,
@@ -807,7 +873,10 @@ function branchFieldForOtherRoute(node, edge, siblingEdges, context) {
     if (byTitle.length === 1) resolved.push(byTitle[0]);
   }
   const unique = [...new Map(resolved.map((field) => [field.id, field])).values()];
-  return unique.length === 1 ? unique[0] : undefined;
+  // A defaultTrend route still needs one native Batch field binding for the
+  // NewOA formula designer. The binding is structural; default ownership, not
+  // this placeholder predicate, decides the fallback route at runtime.
+  return unique[0];
 }
 
 function collectConditionFieldKeys(condition) {
@@ -873,7 +942,8 @@ function buildFormulaDesignerConfig(edge, context) {
       fdSymbol: upgraded.symbol
     };
     if (upgraded.value !== undefined && upgraded.expressionType !== "orgBelong") {
-      rule.fdValue = upgraded.value;
+      // NewOA simple-rule UI stores numeric relational thresholds as JSON numbers.
+      rule.fdValue = formulaRuleValue(upgraded, fieldType);
     }
     if (upgraded.expressionType === "orgBelong") {
       rule.fdValue = JSON.stringify(upgraded.orgValue || []);
@@ -1039,8 +1109,8 @@ function parseSimpleCondition(condition) {
     };
   }
 
-  // Unquoted numeric literals from EKP conditions are option values, so keep the
-  // digits as strings in the editable NewOA Batch formula.
+  // Unquoted numeric literals from EKP (e.g. $fd_way$ == 33). Keep the digits as a
+  // string value so radio/option comparisons still emit == "33" in Batch formulas.
   const fieldLeftNumber = text.match(/^\$([^$]+)\$\s*={2,3}\s*(-?\d+(?:\.\d+)?)$/);
   if (fieldLeftNumber) {
     return {
@@ -1061,6 +1131,47 @@ function parseSimpleCondition(condition) {
     };
   }
 
+  const valueLeftNumber = text.match(/^(-?\d+(?:\.\d+)?)\s*={2,3}\s*\$([^$]+)\$$/);
+  if (valueLeftNumber) {
+    return {
+      value: valueLeftNumber[1],
+      field: valueLeftNumber[2].trim(),
+      symbol: "==",
+      expressionType: "=="
+    };
+  }
+
+  const valueLeftNotNumber = text.match(/^(-?\d+(?:\.\d+)?)\s*!={1,2}\s*\$([^$]+)\$$/);
+  if (valueLeftNotNumber) {
+    return {
+      value: valueLeftNotNumber[1],
+      field: valueLeftNotNumber[2].trim(),
+      symbol: "!=",
+      expressionType: "!="
+    };
+  }
+
+  // Numeric relational comparisons from EKP amount thresholds.
+  const fieldLeftCompareNumber = text.match(/^\$([^$]+)\$\s*(>=|<=|>|<)\s*(-?\d+(?:\.\d+)?)$/);
+  if (fieldLeftCompareNumber) {
+    return {
+      field: fieldLeftCompareNumber[1].trim(),
+      value: fieldLeftCompareNumber[3],
+      symbol: fieldLeftCompareNumber[2],
+      expressionType: fieldLeftCompareNumber[2]
+    };
+  }
+
+  const valueLeftCompareNumber = text.match(/^(-?\d+(?:\.\d+)?)\s*(>=|<=|>|<)\s*\$([^$]+)\$$/);
+  if (valueLeftCompareNumber) {
+    return {
+      value: valueLeftCompareNumber[1],
+      field: valueLeftCompareNumber[3].trim(),
+      symbol: flipCompareSymbol(valueLeftCompareNumber[2]),
+      expressionType: flipCompareSymbol(valueLeftCompareNumber[2])
+    };
+  }
+
   const emptyFunction = text.match(/^(!\s*)?\$字符串\.为空\$\(\s*\$([^$]+)\$\s*\)$/);
   if (emptyFunction) {
     const negated = Boolean(emptyFunction[1]);
@@ -1073,7 +1184,77 @@ function parseSimpleCondition(condition) {
     };
   }
 
+  // EKP null/length idioms for non-empty checks, e.g. null!=$fd_x$ or $fd_x$.length()>0.
+  const nullNotEqualsField = text.match(/^null\s*!=\s*\$([^$]+)\$$/i);
+  if (nullNotEqualsField) {
+    return {
+      field: nullNotEqualsField[1].trim(),
+      symbol: "notempty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: true
+    };
+  }
+  const fieldNotEqualsNull = text.match(/^\$([^$]+)\$\s*!=\s*null$/i);
+  if (fieldNotEqualsNull) {
+    return {
+      field: fieldNotEqualsNull[1].trim(),
+      symbol: "notempty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: true
+    };
+  }
+  const nullEqualsField = text.match(/^null\s*==\s*\$([^$]+)\$$/i);
+  if (nullEqualsField) {
+    return {
+      field: nullEqualsField[1].trim(),
+      symbol: "empty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: false
+    };
+  }
+  const fieldEqualsNull = text.match(/^\$([^$]+)\$\s*==\s*null$/i);
+  if (fieldEqualsNull) {
+    return {
+      field: fieldEqualsNull[1].trim(),
+      symbol: "empty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: false
+    };
+  }
+  const fieldLengthGreaterZero = text.match(/^\$([^$]+)\$\s*\.\s*length\s*\(\s*\)\s*>\s*0$/);
+  if (fieldLengthGreaterZero) {
+    return {
+      field: fieldLengthGreaterZero[1].trim(),
+      symbol: "notempty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: true
+    };
+  }
+  const fieldLengthEqualsZero = text.match(/^\$([^$]+)\$\s*\.\s*length\s*\(\s*\)\s*={1,3}\s*0$/);
+  if (fieldLengthEqualsZero) {
+    return {
+      field: fieldLengthEqualsZero[1].trim(),
+      symbol: "empty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: false
+    };
+  }
+
   return undefined;
+}
+
+function flipCompareSymbol(symbol) {
+  if (symbol === ">") return "<";
+  if (symbol === "<") return ">";
+  if (symbol === ">=") return "<=";
+  if (symbol === "<=") return ">=";
+  return symbol;
 }
 
 function parseNegatedGroup(text) {
@@ -1229,7 +1410,9 @@ function termVarConfig(term, variableKey, fdVarValue) {
 function termExpression(term, fdVarValue) {
   const dataRef = `\${data.${fdVarValue}}`;
   const value = JSON.stringify(term.value);
-  if (term.expressionType === "!=") return `${dataRef} != ${value}`;
+  if (["!=", ">=", "<=", ">", "<"].includes(term.expressionType)) {
+    return `${dataRef} ${term.expressionType} ${value}`;
+  }
   return `${dataRef} == ${value}`;
 }
 
@@ -1407,6 +1590,19 @@ function formulaFieldType(field, term) {
   if (type.includes("date")) return "date";
   if (type.includes("boolean")) return "boolean";
   return "string";
+}
+
+function formulaRuleValue(term, fieldType) {
+  if (
+    fieldType === "number"
+    && [">=", "<=", ">", "<"].includes(term.expressionType)
+    && term.value !== undefined
+    && term.value !== ""
+  ) {
+    const numeric = Number(term.value);
+    if (Number.isFinite(numeric)) return numeric;
+  }
+  return term.value;
 }
 
 function formulaFieldVo(field, fieldType) {
@@ -1732,24 +1928,49 @@ function normalizeRelatedNodeIds(value = "") {
   return [...new Set(splitRelatedNodeIds(value))].join(",");
 }
 
-function collectMustModifyHandlerTargetNodeIds(nodes = []) {
+function collectInitiatorSelectTargetNodeIds(nodes = []) {
   const targetNodeIds = new Set();
   for (const node of nodes) {
-    for (const targetNodeId of splitRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds)) {
+    const attrs = sourceAttributes(node);
+    for (const attribute of ["mustModifyHandlerNodeIds", "canModifyHandlerNodeIds"]) {
+      for (const targetNodeId of splitRelatedNodeIds(attrs[attribute])) {
+        targetNodeIds.add(targetNodeId);
+      }
+    }
+  }
+  return targetNodeIds;
+}
+
+function collectCanModifyHandlerTargetNodeIds(nodes = []) {
+  const targetNodeIds = new Set();
+  for (const node of nodes) {
+    for (const targetNodeId of splitRelatedNodeIds(sourceAttributes(node).canModifyHandlerNodeIds)) {
       targetNodeIds.add(targetNodeId);
     }
   }
   return targetNodeIds;
 }
 
-function collectPersistedMustModifyHandlerTargetNodeIds(nodes = []) {
+function collectPersistedInitiatorSelectTargetNodeIds(nodes = []) {
   const targetNodeIds = new Set();
   for (const node of nodes) {
-    for (const targetNodeId of splitRelatedNodeIds(node?.mustModifyHandlerNodes)) {
-      targetNodeIds.add(targetNodeId);
+    for (const attribute of ["mustModifyHandlerNodes", "canModifyHandlerNodes"]) {
+      for (const targetNodeId of splitRelatedNodeIds(node?.[attribute])) {
+        targetNodeIds.add(targetNodeId);
+      }
     }
   }
   return targetNodeIds;
+}
+
+// NewOA EEmptyType: JUMP(1)=自动跳过, ERROR(2)=流程报异常, POINT_HANDLER(3)=指定处理人.
+// Source ignoreOnHandlerEmpty=true maps to JUMP; optional canModify* targets default to JUMP.
+function resolveEmptyHandlerType(node, attrs = {}, context = {}) {
+  const ignoreEmpty = attrs.ignoreOnHandlerEmpty ?? attrs.ignoreOnEmptyHandlers;
+  if (ignoreEmpty === true || ignoreEmpty === "true") return 1;
+  if (ignoreEmpty === false || ignoreEmpty === "false") return 2;
+  if (context.canModifyHandlerTargetNodeIds?.has(node.id) === true) return 1;
+  return 2;
 }
 
 function migrationNodeSource(node) {
@@ -1789,7 +2010,7 @@ function normalizeSameIdentity(value) {
 }
 
 // NewOA: "1"=不跳过 "2"=跳过 "3"=仅相邻相同身份跳过.
-// Nodes with required form auth / mustModifyHandlerNodes / e-sign cannot use skip.
+// Nodes with required form auth / mustModifyHandlerNodes / canModifyHandlerNodes / e-sign cannot use skip.
 function resolveIgnoreOnSameIdentity(node, attrs = {}) {
   if (nodeForbidsSameIdentitySkip(node, attrs)) {
     return "1";
@@ -1803,6 +2024,9 @@ function nodeForbidsSameIdentitySkip(node, attrs = {}) {
     return true;
   }
   if (normalizeRelatedNodeIds(attrs.mustModifyHandlerNodeIds || attrs.mustModifyHandlerNodes)) {
+    return true;
+  }
+  if (normalizeRelatedNodeIds(attrs.canModifyHandlerNodeIds || attrs.canModifyHandlerNodes)) {
     return true;
   }
   const eSign = attrs.eSignConfig || node?.eSignConfig;

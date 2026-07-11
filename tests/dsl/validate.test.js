@@ -559,6 +559,12 @@ describe("validateMigrationDsl", () => {
     assert.equal(rejectedRowId.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
     assert.equal(rejectedSecondaryMarker.ok, false);
     assert.equal(rejectedSecondaryMarker.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
+    assert.equal(
+      rejectedSecondaryMarker.diagnostics.some((item) =>
+        item.details?.issues?.some((issue) => issue.code === "secondary_marker" && issue.primary === "fd_detail_row")
+      ),
+      true
+    );
     assert.equal(rejectedDynamicTarget.ok, false);
     assert.equal(rejectedDynamicTarget.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
   });

@@ -221,6 +221,14 @@ describe("offline Route-validation", { concurrency: false }, () => {
       result.execution.readback.workflow.nodes.find((node) => node.id === "N2").ignoreOnSameIdentity,
       "1"
     );
+    const branchNode = result.dsl.workflow.nodes.find((node) => node.id === "N3");
+    const siblingConditions = result.dsl.workflow.edges
+      .filter((edge) => edge.source === "N3" && edge.id !== "L4")
+      .map((edge) => edge.condition?.sourceText || "")
+      .join(" ");
+    assert.equal(branchNode.name, "条件分支");
+    assert.match(siblingConditions, /\$fd_condition_org\$/);
+    assert.match(siblingConditions, /\$fd_route_type\$/);
     const southEdge = result.execution.readback.workflow.edges.find((edge) => edge.id === "L3");
     assert.equal(southEdge.isDefault, false);
     assert.equal(southEdge.hasCondition, true);

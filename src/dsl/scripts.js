@@ -261,6 +261,7 @@ export function buildSetFieldAttrTargetIndex(form = {}) {
   const mainFields = new Set();
   const detailTables = new Set();
   const persistedRowTargets = new Set();
+  const secondaryMarkerToPrimary = new Map();
 
   for (const field of Array.isArray(form.fields) ? form.fields : []) {
     if (!field?.id) continue;
@@ -277,9 +278,14 @@ export function buildSetFieldAttrTargetIndex(form = {}) {
       .filter(Boolean);
     const persistedTarget = markers[0] || String(row?.id || "").trim();
     if (persistedTarget) persistedRowTargets.add(persistedTarget);
+    for (const alias of markers.slice(1)) {
+      if (!secondaryMarkerToPrimary.has(alias)) {
+        secondaryMarkerToPrimary.set(alias, persistedTarget);
+      }
+    }
   }
 
-  return { mainFields, detailTables, persistedRowTargets };
+  return { mainFields, detailTables, persistedRowTargets, secondaryMarkerToPrimary };
 }
 
 export function validateSetFieldAttrTargets(functionText = "", form = {}) {
@@ -316,6 +322,17 @@ export function validateSetFieldAttrTargets(functionText = "", form = {}) {
       continue;
     }
     if (index.mainFields.has(target) || index.persistedRowTargets.has(target)) {
+      continue;
+    }
+    const primary = index.secondaryMarkerToPrimary.get(target);
+    if (primary) {
+      issues.push({
+        code: "secondary_marker",
+        target,
+        primary,
+        snippet: entry.snippet,
+        message: `MKXFORM.setFieldAttr must use the persisted primary sourceMarker "${primary}", not co-located alias "${target}".`
+      });
       continue;
     }
     issues.push({

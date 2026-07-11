@@ -37,7 +37,7 @@ describe("hidden data field route", () => {
     assert.equal(checkDraft(dslDraft).ok, true);
   });
 
-  it("preserves JSP edit/view gates and excludes unresolved native form rules", () => {
+  it("preserves JSP edit/view gates and resolved native form rules", () => {
     const sourceDraft = cleanSourceFile(fixture);
     const dslDraft = draftSourceDraft(sourceDraft);
     const sourceGates = sourceDraft.scripts.sources.map((source) => source.displayGate);
@@ -47,9 +47,23 @@ describe("hidden data field route", () => {
     assert.deepEqual(sourceGates, ["xform:editShow", "xform:viewShow"]);
     assert.equal(sourceDraft.formRules.linkage.length, 1);
     assert.equal(sourceDraft.formRules.linkage[0].meta.displayGate, "xform:editShow");
-    assert.deepEqual(dslDraft.formRules.linkage, []);
-    assert.equal(dslDraft.formRules.review.excludedRules.length, 1);
+    assert.equal(dslDraft.formRules.linkage.length, 1);
+    assert.equal(dslDraft.formRules.linkage[0].translationStatus, "executable");
+    assert.equal(dslDraft.formRules.review?.excludedRules, undefined);
     assert.deepEqual(editAction.runWhen, { viewStatusIn: ["add", "edit"] });
     assert.deepEqual(viewAction.runWhen, { viewStatusIn: ["view"] });
+  });
+
+  it("recognizes quoted hidden inputs as source row markers", () => {
+    const sourceDraft = cleanSourceFile(fixture);
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const modeRow = sourceDraft.form.layout.rows.find((row) =>
+      row.sourceMarkers?.includes("mode_row")
+    );
+
+    assert.equal(modeRow?.cells[0]?.references[0]?.referenceId, "fd_mode");
+    assert.equal(dslDraft.formRules.linkage.length, 1);
+    assert.equal(dslDraft.formRules.linkage[0].translationStatus, "executable");
+    assert.equal(dslDraft.formRules.review?.excludedRules, undefined);
   });
 });

@@ -415,8 +415,9 @@ function observeNativeLayoutRow(row, rowIndex, detailByTable) {
     id: `row-${rowIndex}`,
     order: rowIndex,
     cells: gridItems.map((item, cellIndex) => {
-      const fieldRef = (item.children || [])[0] || {};
-      const fieldIds = nativeFieldIdsFromRef(fieldRef, detailByTable);
+      const fieldIds = (Array.isArray(item.children) ? item.children : [])
+        .flatMap((fieldRef) => nativeFieldIdsFromRef(fieldRef, detailByTable))
+        .filter(Boolean);
       const column = Number.isInteger(item.controlProps?.column)
         ? item.controlProps.column - 1
         : cellIndex;
@@ -663,10 +664,12 @@ function observeWorkflow(lbpm) {
   const elements = elementsResult.value;
   const nodes = elements.filter((element) => element && element.type !== "sequenceFlow");
   const edges = elements.filter((element) => element && element.type === "sequenceFlow");
-  const conditionBranchNodeIds = new Set(
-    nodes.filter((node) => node?.type === "conditionBranch").map((node) => node.id)
+  const autoConditionBranchNodeIds = new Set(
+    nodes
+      .filter((node) => node?.type === "conditionBranch" && String(node.conditionType || "1") !== "2")
+      .map((node) => node.id)
   );
-  const initiatorSelectTargetNodeIds = collectMustModifyHandlerTargetNodeIds(nodes);
+  const initiatorSelectTargetNodeIds = collectInitiatorSelectTargetNodeIds(nodes);
   const formAuths = lbpm.fdTemplateFormAuths && typeof lbpm.fdTemplateFormAuths === "object"
     ? lbpm.fdTemplateFormAuths
     : {};
@@ -679,6 +682,7 @@ function observeWorkflow(lbpm) {
       type: normalizeScalar(node.type),
       element: normalizeScalar(node.element),
       mustModifyHandlerNodeIds: splitRelatedNodeIds(node.mustModifyHandlerNodes),
+      canModifyHandlerNodeIds: splitRelatedNodeIds(node.canModifyHandlerNodes),
       participants: observeParticipants(node, initiatorSelectTargetNodeIds.has(node.id)),
       alternativeParticipants: observeAlternativeParticipants(node),
       sendConfig: observeSendConfig(node),
@@ -698,7 +702,7 @@ function observeWorkflow(lbpm) {
         nativeBoolean(edge.isDefault) ||
         nativeBoolean(edge.attributes?.isDefault),
       branch: normalizeScalar(edge.branch || edge.attributes?.branch || ""),
-      condition: observeEdgeCondition(edge, conditionBranchNodeIds.has(edge.sourceRef)),
+      condition: observeEdgeCondition(edge, autoConditionBranchNodeIds.has(edge.sourceRef)),
       waypoints: edge.waypoints
     }))
   };
@@ -785,11 +789,13 @@ function nativeBoolean(value) {
   return value === true || value === 1 || normalized === "true" || normalized === "1";
 }
 
-function collectMustModifyHandlerTargetNodeIds(nodes = []) {
+function collectInitiatorSelectTargetNodeIds(nodes = []) {
   const targetNodeIds = new Set();
   for (const node of nodes) {
-    for (const targetNodeId of splitRelatedNodeIds(node?.mustModifyHandlerNodes)) {
-      targetNodeIds.add(targetNodeId);
+    for (const attribute of ["mustModifyHandlerNodes", "canModifyHandlerNodes"]) {
+      for (const targetNodeId of splitRelatedNodeIds(node?.[attribute])) {
+        targetNodeIds.add(targetNodeId);
+      }
     }
   }
   return targetNodeIds;
@@ -824,7 +830,7 @@ function observeSendConfig(node) {
   };
 }
 
-function observeEdgeCondition(edge, conditionBranch = false) {
+function observeEdgeCondition(edge, autoConditionBranch = false) {
   const formulaRaw = edge?.formula;
   const formulaText = typeof formulaRaw === "string"
     ? formulaRaw
@@ -832,7 +838,21 @@ function observeEdgeCondition(edge, conditionBranch = false) {
       ? stableStringify(formulaRaw)
       : "";
   const trimmedFormula = formulaText.trim();
-  const looksLikeBatch = conditionBranch ||
+
+  // Manual decision outlets (conditionType=2) persist named rule formulas, not Batch JSON.
+  if (!autoConditionBranch && edge?.formulaType === "rule") {
+    if (!trimmedFormula) {
+      return withConditionProvenance(edge, { nativeKind: "rule", nativeStatus: "missing" });
+    }
+    return withConditionProvenance(edge, {
+      nativeKind: "rule",
+      nativeStatus: "ok",
+      text: normalizeScalar(trimmedFormula),
+      hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+    });
+  }
+
+  const looksLikeBatch = autoConditionBranch ||
     edge?.formulaType === "formula" ||
     trimmedFormula.startsWith("{") ||
     trimmedFormula.startsWith("[");
@@ -841,7 +861,7 @@ function observeEdgeCondition(edge, conditionBranch = false) {
     if (!trimmedFormula) {
       return withConditionProvenance(edge, { nativeKind: "batch_formula", nativeStatus: "missing" });
     }
-    if (conditionBranch && edge?.formulaType !== "formula") {
+    if (autoConditionBranch && edge?.formulaType !== "formula") {
       return withConditionProvenance(edge, {
         nativeKind: "batch_formula",
         nativeStatus: "corrupt",

@@ -46,6 +46,40 @@ describe("translateLbpmProcessDefinitionXml", () => {
     assert.equal(result.workflow.edges.length, 3);
   });
 
+  it("preserves retry loops instead of rejecting cyclic graphs", () => {
+    const process = [
+      '<process fdId="process-with-retry">',
+      "<nodes>",
+      '<startNode id="N1" name="开始"/>',
+      '<reviewNode id="N2" name="过账"/>',
+      '<autoBranchNode id="N3" name="是否成功"/>',
+      '<endNode id="N4" name="结束"/>',
+      "</nodes>",
+      "<lines>",
+      '<line id="L1" startNodeId="N1" endNodeId="N2"/>',
+      '<line id="L2" startNodeId="N2" endNodeId="N3"/>',
+      '<line id="L3" startNodeId="N3" endNodeId="N2" name="失败重试"/>',
+      '<line id="L4" startNodeId="N3" endNodeId="N4" name="成功"/>',
+      "</lines>",
+      "</process>"
+    ].join("");
+    const xml = `
+      <java>
+        <object>
+          <void method="put">
+            <string>fdContent</string>
+            <string>${encodeXml(process)}</string>
+          </void>
+        </object>
+      </java>
+    `;
+    const graph = parseLbpmProcessDefinitionXml(xml);
+
+    assert.deepEqual(graph.topologicalOrder, ["N1", "N2", "N3", "N4"]);
+    assert.equal(graph.edges.length, 4);
+    assert.equal(graph.edges.find((edge) => edge.id === "L3").target, "N2");
+  });
+
   it("keeps comparison operators inside line conditions", () => {
     const xml = `
       <java>

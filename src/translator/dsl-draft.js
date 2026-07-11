@@ -1,6 +1,13 @@
 import { catalogRefs, validationPolicyRef } from "../dsl/catalogs.js";
 import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../dsl/form-rules.js";
 import { packLayoutCells } from "../dsl/layout-pack.js";
+import {
+  applyFieldIdMapToForm,
+  applyFieldIdMapToScripts,
+  applyFieldIdMapToSourceFormRules,
+  applyFieldIdMapToWorkflow,
+  buildFieldIdMap
+} from "./field-id-remap.js";
 import { SOURCE_DRAFT_VERSION } from "./source-draft.js";
 import { draftMkScriptsFromSourceScripts } from "./sysform-jsp-scripts.js";
 
@@ -11,8 +18,27 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     throw new Error("draft requires a source-draft artifact");
   }
 
-  const form = draftForm(sourceDraft.form || {});
-  const formRules = draftFormRules(sourceDraft.formRules, form);
+  const rawForm = draftForm(sourceDraft.form || {});
+  const fieldIdMap = buildFieldIdMap(rawForm);
+  const form = applyFieldIdMapToForm(rawForm, fieldIdMap);
+  const knownFieldIds = new Set();
+  for (const field of form.fields || []) {
+    if (field?.id) knownFieldIds.add(field.id);
+    for (const column of field?.columns || []) {
+      if (column?.id) knownFieldIds.add(column.id);
+    }
+  }
+  const formRules = draftFormRules(
+    applyFieldIdMapToSourceFormRules(sourceDraft.formRules, fieldIdMap),
+    form
+  );
+  const scripts = applyFieldIdMapToScripts(
+    draftMkScriptsFromSourceScripts(sourceDraft.scripts, { form, formRules }),
+    fieldIdMap
+  );
+  const workflow = sourceDraft.workflow
+    ? applyFieldIdMapToWorkflow(draftWorkflow(sourceDraft.workflow, knownFieldIds), fieldIdMap)
+    : undefined;
 
   return pruneUndefined({
     version: MIGRATION_DSL_VERSION,
@@ -38,8 +64,8 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     },
     form,
     formRules,
-    scripts: draftMkScriptsFromSourceScripts(sourceDraft.scripts, { form, formRules }),
-    workflow: sourceDraft.workflow ? draftWorkflow(sourceDraft.workflow) : undefined,
+    scripts,
+    workflow,
     review: {
       warnings: sourceIssuesToWarnings(sourceDraft.issues || []),
       errors: sourceIssuesToErrors(sourceDraft.issues || []),
@@ -115,6 +141,18 @@ function draftDetailTableFromSource(table) {
 }
 
 function propsFromSource(source) {
+  const componentId = componentForSourceType(source.sourceType, source);
+
+  // Description is display-only; catalog allows only content/style.
+  if (componentId === "xform-description") {
+    const props = {};
+    const content = source.sourceProps?.designerValues?.content || source.title;
+    if (content) props.content = content;
+    const style = descriptionStyleFromSource(source);
+    if (style) props.style = style;
+    return props;
+  }
+
   const props = {};
   if (source.required) props.required = true;
   if (Array.isArray(source.options) && source.options.length) {
@@ -124,14 +162,7 @@ function propsFromSource(source) {
   const defaultValue = legacyDefaultValueFromSource(source);
   if (defaultValue) props.defaultValue = defaultValue;
 
-  if (componentForSourceType(source.sourceType, source) === "xform-description") {
-    const content = source.sourceProps?.designerValues?.content || source.title;
-    if (content) props.content = content;
-    const style = descriptionStyleFromSource(source);
-    if (style) props.style = style;
-  }
-
-  if (componentForSourceType(source.sourceType, source) === "xform-textarea") {
+  if (componentId === "xform-textarea") {
     const maxLength = positiveInteger(
       source.sourceProps?.designerValues?.maxLength ??
         source.sourceProps?.designerValues?.maxlength ??
@@ -282,7 +313,7 @@ function draftFormRules(sourceFormRules, form) {
   const classifiedLinkage = linkage.map((rule) => {
     const ruleTargetIssues = formRuleTargetIssues(rule, refIndex);
     targetIssues.push(...ruleTargetIssues);
-    return draftLinkageRule(rule, ruleTargetIssues);
+    return draftLinkageRule(rule, refIndex, ruleTargetIssues);
   });
   const excludedLinkage = classifiedLinkage.filter(hasTargetIssue);
   const draftedLinkage = mergeEquivalentOrRules(classifiedLinkage.filter((rule) => !hasTargetIssue(rule)));
@@ -377,21 +408,25 @@ function dedupeConditions(conditions) {
   });
 }
 
-function draftLinkageRule(rule, targetIssues = []) {
+function draftLinkageRule(rule, refIndex, targetIssues = []) {
   const translationStatus = targetIssues.length && (rule.translationStatus || "executable") === "executable"
     ? "needs_review"
     : rule.translationStatus || "executable";
+  const canonicalSource = resolveDirectRef(refIndex, rule.source)?.id || rule.source;
+  const when = Array.isArray(rule.when)
+    ? rule.when.map((condition) => ({
+        field: resolveDirectRef(refIndex, condition.field)?.id || condition.field,
+        op: condition.op,
+        value: condition.value
+      }))
+    : [];
 
   return pruneUndefined({
     id: rule.id,
     trigger: rule.trigger || "change",
-    source: rule.source,
+    source: canonicalSource,
     logic: rule.logic || "and",
-    when: Array.isArray(rule.when) ? rule.when.map((condition) => ({
-      field: condition.field,
-      op: condition.op,
-      value: condition.value
-    })) : [],
+    when,
     effects: draftRuleEffects(rule.effects),
     else: draftRuleEffects(rule.else),
     meta: rule.meta,
@@ -433,7 +468,7 @@ function draftRuleEffects(effects) {
     : undefined;
 }
 
-function draftWorkflow(sourceWorkflow) {
+function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
   const sourceNodes = sourceWorkflow.nodes || [];
   const nodeById = new Map(sourceNodes.map((node) => [node.id, node]));
   const participantSelections = participantSelectionsFromWorkflowNodes(sourceNodes);
@@ -452,7 +487,7 @@ function draftWorkflow(sourceWorkflow) {
         definition: node.definition,
         handlerEntities: node.handlerEntities,
         optionalHandlerEntities: node.optionalHandlerEntities,
-        dataAuthority: draftDataAuthority(node.dataAuthority),
+        dataAuthority: draftDataAuthority(node.dataAuthority, knownFieldIds),
         participantSelections: participantSelections.get(node.id),
         participants: nodeType.participants === false
           ? undefined
@@ -500,16 +535,18 @@ function participantSelectionsFromWorkflowNodes(nodes) {
   return selections;
 }
 
-function draftDataAuthority(dataAuthority) {
+function draftDataAuthority(dataAuthority, knownFieldIds = null) {
   if (!dataAuthority || typeof dataAuthority !== "object") return undefined;
   const fields = Object.fromEntries(
-    Object.entries(dataAuthority.fields || {}).map(([fieldId, value]) => [fieldId, pruneUndefined({
-      visible: value.visible,
-      editable: value.editable,
-      required: value.required,
-      sourceMode: value.sourceMode,
-      sourceRef: value.sourceRef
-    })])
+    Object.entries(dataAuthority.fields || {})
+      .filter(([fieldId]) => !knownFieldIds || knownFieldIds.has(fieldId))
+      .map(([fieldId, value]) => [fieldId, pruneUndefined({
+        visible: value.visible,
+        editable: value.editable,
+        required: value.required,
+        sourceMode: value.sourceMode,
+        sourceRef: value.sourceRef
+      })])
   );
 
   if (!Object.keys(fields).length) return undefined;
