@@ -104,16 +104,21 @@ tests/fixtures/source/route-hidden-data-field/
 
 Do not add source formats outside the current XML route-validation scope while hardening this adapter.
 
-Execution uses the NewOA SIT API route only:
+Execution uses a configured NewOA root origin, defaulting to `https://p-sit.onewo.com`:
 
 ```bash
 NEWOA_USERNAME=01025344 \
 NEWOA_ENCRYPTED_PASSWORD='...' \
+NEWOA_BASE_URL='https://p-sit.onewo.com' \
 node src/cli/main.js execute migration.dsl.json \
   --confirm-write \
   --target-category-id '<NewOA category fdId>'
 ```
 
+`--base-url` overrides `NEWOA_BASE_URL`; when neither contains a value, execution uses `https://p-sit.onewo.com`. The CLI and live-smoke entry points read the environment variable and pass the resolved value to the Executor; the Executor does not read `process.env`. The base URL must be an HTTP or HTTPS root origin. Leading/trailing whitespace and a trailing root slash are normalized, while user information, a non-root path, query, fragment, or another protocol produces `safety.base_url_invalid` before login. Domains, IP addresses, localhost, and explicit ports are allowed. The normalized origin is used for requests and execution reporting.
+
 The executor logs in through `/data/sys-auth/login`, then uses `kmReviewTemplate/add`, `kmReviewTemplate/get`, and `kmReviewTemplate/update`. It creates a new `MK_TEST_...` draft template and does not publish, delete, update existing templates, create categories, or batch execute.
 
-Temporary SIT participant policy: only when the exact target origin is `https://p-sit.onewo.com`, source workflow participants that resolve as `not_found` or whose only missing lookup evidence is `sourceParentName` are replaced with current person `1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0`. The executor validates that fdId through `getElementInfo`, writes a `workflow.participant_sit_fallback_applied` warning with replacement counts, and keeps ambiguous identities, malformed source identities, API failures, non-person fallback targets, and non-SIT targets blocking.
+Custom origins use the same explicit confirmation, category, `MK_TEST_` naming, draft-only, and readback gates as the default origin. There is no target-host allowlist or extra confirmation for a non-SIT origin.
+
+Temporary SIT fallback policy: only when the exact normalized target origin is `https://p-sit.onewo.com`, source workflow participants that resolve as `not_found` or whose only missing lookup evidence is `sourceParentName` are replaced with current person `1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0`. The executor validates that fdId through `getElementInfo` and writes a `workflow.participant_sit_fallback_applied` warning with replacement counts. Condition-organization sample fdIds are likewise SIT-only. Neither fallback is reused at a custom origin; normal resolution, diagnostics, and blocking behavior apply without substituting SIT identifiers.

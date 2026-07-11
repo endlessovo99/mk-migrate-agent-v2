@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  assertAllowedBaseUrl,
   NewoaClient,
-  NEWOA_SIT_BASE_URL
+  NEWOA_SIT_BASE_URL,
+  normalizeBaseUrl
 } from "../../src/executor/newoa-client.js";
 
 describe("NewoaClient", () => {
@@ -185,11 +185,117 @@ describe("NewoaClient", () => {
     assert.equal(fetchCalled, false);
   });
 
-  it("accepts only the NewOA SIT origin at the execution safety seam", () => {
-    assert.equal(assertAllowedBaseUrl(`${NEWOA_SIT_BASE_URL}/`), NEWOA_SIT_BASE_URL);
+  it("accepts a configured HTTPS root origin at the execution safety seam", () => {
+    assert.equal(normalizeBaseUrl("https://p.onewo.com"), "https://p.onewo.com");
+  });
+
+  it("uses the SIT origin when the configured base URL is blank", () => {
+    assert.equal(normalizeBaseUrl("   "), NEWOA_SIT_BASE_URL);
+  });
+
+  it("normalizes surrounding whitespace and a trailing slash to the canonical origin", () => {
+    assert.equal(normalizeBaseUrl("  HTTP://Example.COM:80/  "), "http://example.com");
+  });
+
+  it("accepts HTTP root origins using domain, localhost, IP, and explicit port hosts", () => {
+    assert.deepEqual(
+      [
+        "http://oa.example.com",
+        "http://localhost:3000/",
+        "http://127.0.0.1:8080/"
+      ].map(normalizeBaseUrl),
+      [
+        "http://oa.example.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:8080"
+      ]
+    );
+  });
+
+  it("uses the canonical configured origin for client requests", async () => {
+    let requestUrl;
+    const client = new NewoaClient({
+      baseUrl: "  HTTP://LOCALHOST:8080/  ",
+      fetchImpl: async (url) => {
+        requestUrl = url;
+        return jsonResponse({ success: true, data: { fdId: "init-1" } });
+      }
+    });
+
+    await client.initTemplate();
+
+    assert.equal(requestUrl, "http://localhost:8080/data/km-review/kmReviewTemplate/init");
+  });
+
+  it("rejects a base URL with a non-root path", () => {
     assert.throws(
-      () => assertAllowedBaseUrl("https://p.onewo.com"),
-      /locked to https:\/\/p-sit\.onewo\.com/
+      () => normalizeBaseUrl("https://oa.example.com/api"),
+      /root HTTP\(S\) origin/
+    );
+  });
+
+  it("rejects a path that URL parsing would otherwise resolve to root", () => {
+    assert.throws(
+      () => normalizeBaseUrl("https://oa.example.com/."),
+      /root HTTP\(S\) origin/
+    );
+  });
+
+  it("rejects a base URL with a query", () => {
+    assert.throws(
+      () => normalizeBaseUrl("https://oa.example.com?tenant=test"),
+      /root HTTP\(S\) origin/
+    );
+  });
+
+  it("rejects a base URL with an empty query marker", () => {
+    assert.throws(
+      () => normalizeBaseUrl("https://oa.example.com?"),
+      /root HTTP\(S\) origin/
+    );
+  });
+
+  it("rejects a base URL with a fragment", () => {
+    assert.throws(
+      () => normalizeBaseUrl("https://oa.example.com#login"),
+      /root HTTP\(S\) origin/
+    );
+  });
+
+  it("rejects a base URL with user information", () => {
+    assert.throws(
+      () => normalizeBaseUrl("https://user:password@oa.example.com"),
+      /root HTTP\(S\) origin/
+    );
+  });
+
+  it("rejects a base URL with empty user information", () => {
+    for (const value of ["https://@oa.example.com", "https://:@oa.example.com"]) {
+      assert.throws(
+        () => normalizeBaseUrl(value),
+        /root HTTP\(S\) origin/
+      );
+    }
+  });
+
+  it("rejects a base URL with a non-HTTP protocol", () => {
+    assert.throws(
+      () => normalizeBaseUrl("ftp://oa.example.com"),
+      /root HTTP\(S\) origin/
+    );
+  });
+
+  it("rejects a malformed base URL", () => {
+    assert.throws(
+      () => normalizeBaseUrl("not a URL"),
+      /root HTTP\(S\) origin/
+    );
+  });
+
+  it("rejects a URL without an explicit authority delimiter", () => {
+    assert.throws(
+      () => normalizeBaseUrl("https:oa.example.com"),
+      /root HTTP\(S\) origin/
     );
   });
 });

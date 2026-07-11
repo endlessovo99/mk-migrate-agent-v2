@@ -41,6 +41,15 @@ describe("offline Route-validation", { concurrency: false }, () => {
     ]);
   });
 
+  it("executes a configured non-SIT origin through the public migration route", async () => {
+    const result = await runRouteCase("custom-base-url-success");
+
+    assert.equal(result.execution.ok, true);
+    assert.equal(result.execution.status, "written");
+    assert.equal(result.execution.baseUrl, "http://localhost:8080");
+    assert.equal(result.transcript[0].operation, "login");
+  });
+
   it("executes a paired form and workflow source through the public migration route", async () => {
     const result = await runRouteCase("paired-success");
 

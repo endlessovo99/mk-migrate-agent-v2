@@ -2,6 +2,7 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { runAgentReview } from "../src/agent-review/index.js";
+import { selectNewoaBaseUrl } from "../src/cli/base-url.js";
 import { executeDsl } from "../src/executor/execute.js";
 import { cleanSourceFile, draftSourceDraft } from "../src/translator/index.js";
 
@@ -26,6 +27,7 @@ const DEFAULT_FIXTURES = [
 const args = parseArgs(process.argv.slice(2));
 const outputDir = args["out-dir"] || ".tmp/agent-review-live";
 const targetCategoryId = args["target-category-id"] || process.env.NEWOA_TARGET_CATEGORY_ID || "";
+const newoaBaseUrl = selectNewoaBaseUrl(args["base-url"], process.env.NEWOA_BASE_URL);
 const executeFixtureId = args["execute-fixture"] || DEFAULT_FIXTURES.find((fixture) => fixture.mode === "execute")?.id || "";
 const partialActionLimit = positiveInteger(args["partial-action-limit"] || process.env.AGENT_REVIEW_PARTIAL_ACTION_LIMIT, 8);
 const reviewRetryCount = positiveInteger(args["review-retries"] || process.env.AGENT_REVIEW_LIVE_RETRIES, 2);
@@ -78,6 +80,7 @@ for (const fixture of fixtures) {
     executeReport = await executeDsl(result.dsl, {
       confirmWrite: true,
       targetCategoryId,
+      baseUrl: newoaBaseUrl,
       credentials: {
         username: process.env.NEWOA_USERNAME,
         encryptedPassword: process.env.NEWOA_ENCRYPTED_PASSWORD

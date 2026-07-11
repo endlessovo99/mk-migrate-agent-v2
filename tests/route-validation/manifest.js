@@ -56,6 +56,23 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "custom-base-url-success",
+      source: {
+        kind: "form-only",
+        relativePath: "form-only/route-form-only_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      baseUrl: " http://LOCALHOST:8080/ ",
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "paired-success",
       source: {
         kind: "paired",
@@ -182,6 +199,9 @@ export function validateRouteManifest(manifest) {
     }
     if (typeof routeCase.confirmWrite !== "boolean" || !isPlainRecord(routeCase.expected)) {
       throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has invalid execution data.`);
+    }
+    if (routeCase.baseUrl !== undefined && !nonEmptyString(routeCase.baseUrl)) {
+      throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has an invalid base URL.`);
     }
     if (!nonEmptyString(routeCase.expected.reviewStatus) ||
         !nonEmptyString(routeCase.expected.dryRunStatus) ||

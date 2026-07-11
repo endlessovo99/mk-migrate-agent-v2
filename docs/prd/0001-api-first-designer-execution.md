@@ -9,13 +9,13 @@ status: ready-for-agent
 
 The route-validation version can translate source XML into DSL and dry-run the migration shape, but it cannot yet execute the DSL into a NewOA/MK test template. The current executor is intentionally guarded and does not perform NewOA writes.
 
-The user needs the v2 product to include both a translator and an executor. The executor must create a real NewOA SIT test template from DSL, write the form and workflow into the NewOA designer data model, save it as draft, read it back, and report the created template `fdId`. The executor must remain narrow, API-first, and source-agnostic, with DSL as the only public boundary between translation and execution.
+The user needs the v2 product to include both a translator and an executor. The executor must create a real NewOA test template from DSL at a caller-selected NewOA origin, write the form and workflow into the NewOA designer data model, save it as draft, read it back, and report the created template `fdId`. The executor must remain narrow, API-first, and source-agnostic, with DSL as the only public boundary between translation and execution.
 
 The user also needs the form DSL to carry layout information from `fdDesignerHtml`. A flat field list is insufficient because the NewOA designer output must preserve the source form's row and column relationships at a structural level.
 
 ## Solution
 
-Build the first vertical slice of the NewOA/MK executor around a single confirmed SIT write path:
+Build the first vertical slice of the NewOA/MK executor around a single confirmed write path:
 
 DSL is validated, translated into a dry-run plan, written through NewOA APIs into a newly created `MK_TEST_...` template, saved as draft, read back, structurally verified, and reported with the created `fdId`.
 
@@ -32,21 +32,21 @@ The executor will be API-first:
 - Login uses the NewOA login API directly.
 - Template writes use only the minimum template-level APIs.
 - Browser automation is not used for login or writing in the first version.
-- The first version is locked to NewOA SIT.
+- The target root origin is configurable and defaults to `https://p-sit.onewo.com`.
 - Templates are created as new test drafts only.
 
 ## User Stories
 
-1. As a migration operator, I want to execute one DSL file into a NewOA SIT test template, so that I can verify the route from source XML to NewOA without manual designer work.
+1. As a migration operator, I want to execute one DSL file into a NewOA test template at a configured origin, so that I can verify the route from source XML to NewOA without manual designer work.
 2. As a migration operator, I want the executor to return the created template `fdId`, so that I can open the NewOA template and inspect the result.
 3. As a migration operator, I want every executed template to be created with an `MK_TEST_` prefix, so that test templates are clearly distinguishable from business templates.
 4. As a migration operator, I want to pass the target NewOA category `fdId` explicitly, so that the executor does not guess category mappings from source XML.
 5. As a migration operator, I want the executor to require an explicit write confirmation flag, so that accidental writes are blocked.
-6. As a migration operator, I want the executor to block before login when confirmation, category, credentials, or environment checks fail, so that no unnecessary NewOA requests are sent.
+6. As a migration operator, I want the executor to block before login when confirmation, category, credentials, base URL, or other safety checks fail, so that no unnecessary NewOA requests are sent.
 7. As a migration operator, I want NewOA login to happen through API credentials, so that execution does not depend on browser state.
 8. As a migration operator, I want encrypted NewOA password input to be read from environment variables, so that secrets are not printed in shell history or JSON output.
 9. As a migration operator, I want the executor to save templates as drafts only, so that route-validation does not publish usable business processes.
-10. As a migration operator, I want execution to be locked to SIT for the first version, so that production cannot be written by mistake.
+10. As a migration operator, I want to select the NewOA root origin through `NEWOA_BASE_URL` or `--base-url`, with SIT as the default, so that the same executor can be used in explicitly selected environments.
 11. As a migration operator, I want `needs_manual` DSL warnings to allow execution, so that structurally useful test templates can still be created for review.
 12. As a migration operator, I want invalid DSL errors to block execution, so that malformed migrations do not create misleading NewOA templates.
 13. As a migration operator, I want function whitelist violations to remain blocking errors, so that unsupported source-side functions are not silently migrated.
@@ -73,14 +73,21 @@ The executor will be API-first:
 ## Implementation Decisions
 
 - v2 includes both a translator and an executor. The executor is in scope for the route-validation product, but it must stay narrow and API-first.
-- The first executor version only creates a new NewOA SIT test template and saves it as draft.
-- The executor must not update an existing template, delete a template, publish a template, run batch migration, auto-create categories, or write production.
-- The executor uses only NewOA SIT in the first version. Other base URLs are rejected.
+- The first executor version only creates a new NewOA test template at the resolved target origin and saves it as draft.
+- The executor must not update an existing template, delete a template, publish a template, run batch migration, or auto-create categories.
+- The CLI resolves the target in this order: non-empty `--base-url`, non-empty `NEWOA_BASE_URL`, then `https://p-sit.onewo.com`.
+- The live-smoke entry point reads the same `NEWOA_BASE_URL` and uses the same SIT default. The Executor API receives `options.baseUrl` and does not read `process.env`.
+- Empty and whitespace-only base URL values are treated as unspecified. Non-empty values are trimmed and normalized to their URL origin, including removal of a trailing root slash and normal URL canonicalization.
+- A target may use `http://` or `https://` and may contain a domain, IP address, localhost, or explicit port. User information, a non-root path, query, fragment, and every other protocol are invalid.
+- Invalid base URLs produce a blocking `safety.base_url_invalid` diagnostic before login or any other NewOA API request.
+- The normalized target origin is used for every NewOA request and recorded in the execution report.
+- Non-SIT targets use the same single explicit write confirmation as SIT. The executor does not maintain a target-host allowlist or require an extra environment-specific confirmation.
+- Temporary participant or organization fallback identifiers are valid only for the exact normalized origin `https://p-sit.onewo.com`; at every other origin, normal resolution, diagnostics, and blocking behavior apply without substituting SIT identifiers.
 - The executor must require explicit write confirmation and explicit target category `fdId`.
 - The target category is provided by the caller as `targetCategoryId`. It is not inferred from source XML category text or path.
 - The template name is generated from the DSL template name with an `MK_TEST_` prefix and a uniqueness suffix.
 - NewOA login is API-based. It posts the provided username and already encrypted password to the NewOA login endpoint as form URL encoded data.
-- Login credentials are read from environment variables. The encrypted password is passed through directly as `j_password`; first version does not implement client-side password encryption.
+- Login credentials and the optional default base URL are read at the CLI/live-smoke seam from environment variables. The encrypted password is passed through directly as `j_password`; first version does not implement client-side password encryption.
 - Secrets, login request bodies, cookies, and tokens are not written to disk and are not included in JSON output.
 - The executor performs local validation and safety checks before making any login or write request.
 - The first write API boundary is limited to template-level `add`, `get`, and `update`.
@@ -124,12 +131,12 @@ The executor will be API-first:
 - Readback tests treat structural loss as failure: missing `fdId`, unreadable template, field count mismatch, component mismatch, detail table mismatch, workflow node mismatch, workflow edge mismatch, condition edge mismatch, and empty or invalid workflow content.
 - Readback tests treat semantic gaps as warnings: styling differences, node coordinates, handler/assignee incompleteness, condition expression conversion gaps, and advanced node attributes.
 - CLI tests verify argument and environment behavior without printing secrets.
-- A real NewOA SIT smoke test may exist behind explicit environment flags, but it must not run in default `npm test`.
+- A real NewOA smoke test may exist behind explicit environment flags, but it must not run in default `npm test`.
 - Prior art in the repo includes route-validation translator tests, DSL validation tests, dry-run tests, and the accepted ADR that defines the single-template write/readback milestone.
 
 ## Out of Scope
 
-- Production writes.
+- Creating templates without the `MK_TEST_` test prefix.
 - Updating existing NewOA templates.
 - Deleting or cleaning up test templates.
 - Publishing templates.

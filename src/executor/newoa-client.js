@@ -2,7 +2,7 @@ export const NEWOA_SIT_BASE_URL = "https://p-sit.onewo.com";
 
 export class NewoaClient {
   constructor(options = {}) {
-    this.baseUrl = normalizeBaseUrl(options.baseUrl || NEWOA_SIT_BASE_URL);
+    this.baseUrl = normalizeBaseUrl(options.baseUrl);
     this.fetch = options.fetchImpl || globalThis.fetch;
     this.cookie = "";
     this.token = "";
@@ -186,17 +186,29 @@ export class NewoaClient {
   }
 }
 
-export function assertAllowedBaseUrl(baseUrl) {
-  const normalized = normalizeBaseUrl(baseUrl || NEWOA_SIT_BASE_URL);
-  const url = new URL(normalized);
-  if (url.origin !== NEWOA_SIT_BASE_URL) {
-    throw new Error("NewOA execution is locked to https://p-sit.onewo.com in v2 route-validation.");
+export function normalizeBaseUrl(value) {
+  const input = String(value ?? "").trim() || NEWOA_SIT_BASE_URL;
+  if (!/^https?:\/\/[^/?#@\\\s]+\/?$/i.test(input)) {
+    throw new TypeError("NewOA base URL must be a root HTTP(S) origin.");
   }
-  return normalized;
-}
-
-function normalizeBaseUrl(value) {
-  return String(value).replace(/\/+$/, "");
+  let url;
+  try {
+    url = new URL(input);
+  } catch {
+    throw new TypeError("NewOA base URL must be a root HTTP(S) origin.");
+  }
+  if (
+    !["http:", "https:"].includes(url.protocol) ||
+    url.username ||
+    url.password ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash ||
+    url.href !== `${url.origin}/`
+  ) {
+    throw new TypeError("NewOA base URL must be a root HTTP(S) origin.");
+  }
+  return url.origin;
 }
 
 async function readResponse(response) {

@@ -4,11 +4,11 @@ This repo is a v2 route-validation rebuild. Keep it narrow.
 
 ## Product Boundary
 
-The product is a migration execution tool. Agent work may implement DSL generation, DSL repair, dry-run planning, and the narrow NewOA SIT executor path described by route-validation fixtures.
+The product is a migration execution tool. Agent work may implement DSL generation, DSL repair, dry-run planning, and the narrow NewOA executor path described by route-validation fixtures.
 
 NewOA writes are allowed only for the executor implementation path when all of these are true:
 
-- The target is `https://p-sit.onewo.com`.
+- The target is an explicitly configured valid HTTP/HTTPS root origin, or the default `https://p-sit.onewo.com` when no base URL is configured.
 - The template is a new `MK_TEST_` draft template.
 - The caller provides explicit write confirmation and a target category `fdId`.
 - Credentials are provided through environment variables.

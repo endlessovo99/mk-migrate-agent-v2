@@ -1,5 +1,5 @@
 import { buildDryRunPlan } from "./dry-run.js";
-import { assertAllowedBaseUrl, NewoaClient, NEWOA_SIT_BASE_URL } from "./newoa-client.js";
+import { NewoaClient, normalizeBaseUrl } from "./newoa-client.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { preparePersistedTemplate, buildWorkflowDraftPayload } from "./persistence.js";
@@ -19,12 +19,13 @@ export async function executeDsl(input, options = {}) {
   }
 
   const credentials = options.credentials || {};
-  const safety = validateSafety(options);
+  const target = resolveBaseUrl(options.baseUrl);
+  const safety = validateSafety(options, target.diagnostics);
   if (safety.length) {
-    return blocked(plan, safety);
+    return blocked(plan, safety, target.baseUrl);
   }
 
-  const baseUrl = assertAllowedBaseUrl(options.baseUrl || NEWOA_SIT_BASE_URL);
+  const baseUrl = target.baseUrl;
   const client = options.client || new NewoaClient({ baseUrl, fetchImpl: options.fetchImpl });
   const diagnostics = [...plan.diagnostics];
   const apiStages = [];
@@ -152,6 +153,7 @@ export async function executeDsl(input, options = {}) {
         diagnostics,
         apiStages,
         templateId,
+        baseUrl,
         credentials,
         error
       });
@@ -163,6 +165,7 @@ export async function executeDsl(input, options = {}) {
         status: "failed",
         stage: "projection",
         failedAt: "projection",
+        baseUrl,
         templateId,
         createdFdIds: [templateId].filter(Boolean),
         cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
@@ -216,6 +219,7 @@ export async function executeDsl(input, options = {}) {
         status: "readback_failed",
         stage: "readback",
         failedAt: "readback",
+        baseUrl,
         templateId,
         createdFdIds: [templateId].filter(Boolean),
         cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
@@ -229,6 +233,7 @@ export async function executeDsl(input, options = {}) {
     return {
       ok: true,
       status: diagnostics.some((diagnostic) => diagnostic.level === "warning") ? "written_with_warnings" : "written",
+      baseUrl,
       templateId,
       createdFdIds: [templateId].filter(Boolean),
       validationPolicy: input?.validationPolicy,
@@ -247,6 +252,7 @@ export async function executeDsl(input, options = {}) {
       status: "failed",
       stage: error?.stage || inferFailureStage(error),
       failedAt: error?.stage || inferFailureStage(error),
+      baseUrl,
       templateId: templateId || undefined,
       createdFdIds: [templateId].filter(Boolean),
       cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
@@ -270,12 +276,13 @@ export async function executeDsl(input, options = {}) {
   }
 }
 
-function projectionFailure({ plan, diagnostics, apiStages, templateId, credentials, error }) {
+function projectionFailure({ plan, diagnostics, apiStages, templateId, baseUrl, credentials, error }) {
   return {
     ok: false,
     status: "failed",
     stage: "projection",
     failedAt: "projection",
+    baseUrl,
     templateId,
     createdFdIds: [templateId].filter(Boolean),
     cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
@@ -293,7 +300,7 @@ function projectionFailure({ plan, diagnostics, apiStages, templateId, credentia
   };
 }
 
-function validateSafety(options) {
+function validateSafety(options, baseUrlDiagnostics = []) {
   const diagnostics = [];
   if (options.confirmWrite !== true) {
     diagnostics.push({
@@ -327,17 +334,24 @@ function validateSafety(options) {
       path: "/credentials/encryptedPassword"
     });
   }
-  try {
-    assertAllowedBaseUrl(options.baseUrl || NEWOA_SIT_BASE_URL);
-  } catch (error) {
-    diagnostics.push({
-      level: "error",
-      code: "safety.base_url_not_allowed",
-      message: error instanceof Error ? error.message : String(error),
-      path: "/baseUrl"
-    });
-  }
+  diagnostics.push(...baseUrlDiagnostics);
   return diagnostics;
+}
+
+function resolveBaseUrl(value) {
+  try {
+    return { baseUrl: normalizeBaseUrl(value), diagnostics: [] };
+  } catch (error) {
+    return {
+      baseUrl: undefined,
+      diagnostics: [{
+        level: "error",
+        code: "safety.base_url_invalid",
+        message: error instanceof Error ? error.message : String(error),
+        path: "/baseUrl"
+      }]
+    };
+  }
 }
 
 function buildCreatePayload(baseTemplate, input, options, context = {}) {
@@ -443,10 +457,11 @@ function localizedText(value) {
   };
 }
 
-function blocked(plan, diagnostics) {
+function blocked(plan, diagnostics, baseUrl) {
   return {
     ok: false,
     status: "blocked",
+    ...(baseUrl ? { baseUrl } : {}),
     diagnostics,
     plan
   };

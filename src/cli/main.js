@@ -8,6 +8,7 @@ import { buildDryRunPlan } from "../executor/dry-run.js";
 import { executeDsl } from "../executor/execute.js";
 import { loadFunctionWhitelist } from "../translator/function-whitelist.js";
 import { cleanSourceFile, draftSourceDraft, translateSourceFile } from "../translator/index.js";
+import { selectNewoaBaseUrl } from "./base-url.js";
 
 const commands = new Map([
   ["clean", runClean],
@@ -199,7 +200,7 @@ async function runExecute(argv, options = {}) {
   const report = await execute(readJson(inputPath), {
     confirmWrite: args["confirm-write"] === true,
     targetCategoryId: args["target-category-id"],
-    baseUrl: args["base-url"],
+    baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
     credentials: {
       username: env.NEWOA_USERNAME,
       encryptedPassword: env.NEWOA_ENCRYPTED_PASSWORD
@@ -271,7 +272,7 @@ function printUsage() {
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");
   console.error("  node src/cli/main.js check execute <migration.dsl.json>");
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
-  console.error("  NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId>");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--base-url <origin>]");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

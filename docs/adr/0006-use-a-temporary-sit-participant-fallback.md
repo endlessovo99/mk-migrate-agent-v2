@@ -6,7 +6,7 @@ The current NewOA SIT organization directory intentionally does not contain ever
 
 ## Decision
 
-- The exception applies only when the exact execution origin is `https://p-sit.onewo.com`.
+- The exception applies only when the normalized execution origin is exactly `https://p-sit.onewo.com`. Configuring any other origin through `NEWOA_BASE_URL` or `--base-url` does not carry this SIT fdId into that environment.
 - Source participants that return `not_found`, or whose only missing lookup evidence is `sourceParentName`, are replaced with current person `1j8mu7vviw1owgp04w2v4p47v1rmcohi3tw0`.
 - The fallback fdId is validated once through current `getElementInfo` evidence and must resolve uniquely as organization type `8`.
 - Ambiguous matches, malformed source identities, target-shaped identity failures, and organization API failures remain blocking.

@@ -46,12 +46,14 @@ describe("executeDsl", () => {
       client,
       credentials: TEST_CREDENTIALS,
       confirmWrite: true,
-      targetCategoryId: "category-1"
+      targetCategoryId: "category-1",
+      baseUrl: " HTTP://LOCALHOST:8080/ "
     });
     const serialized = JSON.stringify(result);
 
     assert.equal(result.ok, false);
     assert.equal(result.stage, "login");
+    assert.equal(result.baseUrl, "http://localhost:8080");
     assert.equal(serialized.includes(TEST_CREDENTIALS.username), false);
     assert.equal(serialized.includes(TEST_CREDENTIALS.encryptedPassword), false);
     assert.equal(result.diagnostics.at(-1).message, "login rejected [REDACTED] [REDACTED]");
@@ -1716,28 +1718,46 @@ describe("executeDsl", () => {
     const result = await executeDsl(sampleTrustedDsl(), {
       client,
       confirmWrite: true,
-      targetCategoryId: "category-1"
+      targetCategoryId: "category-1",
+      baseUrl: " http://LOCALHOST:8080/ "
     });
 
     assert.equal(result.ok, false);
     assert.equal(result.status, "blocked");
+    assert.equal(result.baseUrl, "http://localhost:8080");
     assert.equal(result.diagnostics[0].code, "safety.username_required");
     assert.deepEqual(client.calls, []);
   });
 
-  it("blocks before login when the base URL is not NewOA SIT", async () => {
+  it("executes against a normalized caller-provided NewOA origin", async () => {
     const client = new FakeNewoaClient();
     const result = await executeDsl(sampleTrustedDsl(), {
       client,
       credentials: TEST_CREDENTIALS,
       confirmWrite: true,
       targetCategoryId: "category-1",
-      baseUrl: "https://p.onewo.com"
+      baseUrl: " http://LOCALHOST:8080/ "
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.status, "written");
+    assert.equal(result.baseUrl, "http://localhost:8080");
+    assert.equal(client.calls[0].name, "login");
+  });
+
+  it("blocks an invalid NewOA base URL before login", async () => {
+    const client = new FakeNewoaClient();
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      baseUrl: "https://oa.example.com/api"
     });
 
     assert.equal(result.ok, false);
     assert.equal(result.status, "blocked");
-    assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "safety.base_url_not_allowed"), true);
+    assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "safety.base_url_invalid"), true);
     assert.deepEqual(client.calls, []);
   });
 

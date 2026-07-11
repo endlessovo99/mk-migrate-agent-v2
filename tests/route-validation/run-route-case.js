@@ -43,7 +43,7 @@ export async function runRouteCase(caseId) {
       credentials: TEST_CREDENTIALS,
       confirmWrite: routeCase.confirmWrite,
       targetCategoryId: "route-category-id",
-      baseUrl: NEWOA_SIT_BASE_URL,
+      baseUrl: routeCase.baseUrl ?? NEWOA_SIT_BASE_URL,
       now: new Date(FIXED_NOW)
     });
     const transcript = adapter.transcript();

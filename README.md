@@ -22,7 +22,7 @@ This repo is not a full replacement for `mk-migrate-agent` yet. The old repo rem
 - No batch execution.
 - No PI/Agent execution path.
 - API-first execution; browser automation is not used by the v2 executor.
-- NewOA writes are locked to SIT and require explicit confirmation, credentials, and a target category `fdId`.
+- NewOA writes target a configurable HTTP/HTTPS root origin and require explicit confirmation, credentials, and a target category `fdId`; the default origin is `https://p-sit.onewo.com`.
 
 ## Commands
 
@@ -49,6 +49,8 @@ node src/cli/main.js execute .tmp/sample/migration.dsl.json \
   --target-category-id '<NewOA category fdId>'
 ```
 
+Set `NEWOA_BASE_URL` to select another NewOA root origin, or pass `--base-url` for a one-command override. Resolution order is `--base-url` > `NEWOA_BASE_URL` > `https://p-sit.onewo.com`. Empty or whitespace-only values are treated as unspecified. The resolved value may use `http://` or `https://`, including localhost, an IP address, and an explicit port, but it must be a root origin: user information, a non-root path, query, fragment, and other protocols are rejected before login. The normalized origin is used for requests and included in the execution report.
+
 `translate` remains a deterministic compatibility shortcut for `clean` plus `draft`. It does not call AI and writes a non-executable `dsl-draft.json`. `agent-review` is the only AI-backed stage. `dry-run` and `execute` accept only trusted `migration.dsl.json` with `trust.level = trusted` and `trust.executable = true`.
 
 `agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Review and repair requests use the configured model; provider failures do not fall back to another model. Keep local secrets in an ignored file such as `.tmp/newoa.env`, then source it explicitly before review or live smoke:
@@ -58,13 +60,13 @@ source .tmp/newoa.env
 npm run test:agent-review:live -- --target-category-id '<NewOA category fdId>'
 ```
 
-Default `npm test` is offline and uses fake review providers only. The live smoke is separate, uses the real provider, and writes sanitized artifacts under `.tmp/agent-review-live/`. Its default JSP fixtures validate layered Agent behavior without forcing unsafe NewOA writes: 19bb must map the detail-row behavior, omit native-covered row rules, and keep the complex onLoad blocked; 16add is reviewed as a script-only slice; 160de must produce useful diagnostics. A NewOA SIT write happens only when an execute fixture produces trusted DSL and a target category fdId is supplied.
+Default `npm test` is offline and uses fake review providers only. The live smoke is separate, uses the real provider, and writes sanitized artifacts under `.tmp/agent-review-live/`. Its default JSP fixtures validate layered Agent behavior without forcing unsafe NewOA writes: 19bb must map the detail-row behavior, omit native-covered row rules, and keep the complex onLoad blocked; 16add is reviewed as a script-only slice; 160de must produce useful diagnostics. A NewOA write happens only when an execute fixture produces trusted DSL and a target category fdId is supplied. The live smoke resolves `NEWOA_BASE_URL` with the same default as the CLI.
 
 The AI reviewer returns JSON patches, not a complete DSL. First-version patches are limited to form field/detail-column `title`, `type`, `componentId`, and `props` paths plus existing `scripts.actions[]` `function`, `translationStatus`, `functionMappings`, and `coverage` paths. Generated MK JavaScript coverage is recorded as `coverage.status = "translated"`; review-grade target APIs require explicit `functionMappings` before execution. Workflow review is diagnostic-only: warning diagnostics may remain in trusted DSL, while error or blocked diagnostics prevent `migration.dsl.json` from being written.
 
 JSP-to-NewOA JS translation is intentionally semantic-first. The deterministic translator extracts facts only: script/action boundaries, source refs, event and control/table targets, source windows, legacy function calls, field ids, row markers, native formRules evidence, and catalog/whitelist hits. It should not grow into a hard-coded JSP function translator. Agent review uses `catalogs/jsp-translation-playbook.v1.json` plus the target API catalog and source evidence to decide whether an action can be patched to `mapped`/`translated`, `omitted`/`covered`, or left as diagnostics.
 
-`execute` creates a new `MK_TEST_...` template in NewOA SIT, saves it as draft, reads it back, and reports the created `fdId`. Warning-only trusted DSL (`needs_manual`) is executable; DSL errors and safety errors block before login. If creation succeeds and a later stage fails, the report keeps the partial fdId and does not auto-rollback.
+`execute` creates a new `MK_TEST_...` template at the resolved NewOA origin, saves it as draft, reads it back, and reports the created `fdId`. Warning-only trusted DSL (`needs_manual`) is executable; DSL errors, invalid base URLs, and other safety errors block before login. If creation succeeds and a later stage fails, the report keeps the partial fdId and does not auto-rollback. Custom origins use the same write confirmation and draft-only gates as the default SIT origin; SIT-only participant and organization fallbacks are never reused elsewhere.
 
 ## Repository shape
 
@@ -94,4 +96,4 @@ For `js-methods.v1.json`, add only methods with auditable evidence from route-va
 
 ## Decision checkpoint
 
-The first milestone succeeds only when one real paired source XML directory can produce source draft, DSL draft, trusted migration DSL, check reports, dry-run report, and then, behind the explicit SIT write gates, a verified `MK_TEST_` draft template through NewOA API.
+The first milestone succeeds only when one real paired source XML directory can produce source draft, DSL draft, trusted migration DSL, check reports, dry-run report, and then, behind the explicit write gates, a verified `MK_TEST_` draft template through the NewOA API.
