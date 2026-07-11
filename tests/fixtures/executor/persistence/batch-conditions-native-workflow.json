@@ -1,0 +1,51 @@
+{
+  "elements": [
+    {
+      "id": "N1",
+      "name": "Start",
+      "type": "generalStart",
+      "element": "startEvent"
+    },
+    {
+      "id": "N2",
+      "name": "Condition",
+      "type": "conditionBranch",
+      "element": "exclusiveGateway",
+      "conditionType": "1"
+    },
+    {
+      "id": "N3",
+      "name": "Amount End",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    {
+      "id": "N4",
+      "name": "Never End",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    {
+      "id": "L1",
+      "type": "sequenceFlow",
+      "sourceRef": "N1",
+      "targetRef": "N2"
+    },
+    {
+      "id": "L2",
+      "type": "sequenceFlow",
+      "sourceRef": "N2",
+      "targetRef": "N3",
+      "formulaType": "formula",
+      "formula": "{\"result\":{\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"(${data.$VAR.L2_amount_sum})\"},\"type\":\"Batch\",\"vars\":[{\"key\":\"L2_amount_sum\",\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"(${data.template-id-fd_subject} + ${data.template-id-fd_amount}) < \\\"300000\\\"\"}],\"vo\":{\"mode\":\"simple\",\"modeType\":\"simpleRule\",\"data\":{\"key\":\"ROOT\",\"fdKey\":\"L2_ROOT\",\"leavel\":\"1\",\"fdList\":[{\"fdKey\":\"L2_group\",\"fdType\":\"OR\",\"metaType\":\"GROUP\",\"fdList\":[{\"fdKey\":\"L2_amount_sum\",\"metaType\":\"RULE\",\"fdVarValue\":\"template-id-fd_subject\",\"fdDataType\":\"number\",\"fdLabel\":\"$主题$+$金额$\",\"fdSymbol\":\"<\",\"fdValue\":300000}]}]}}}"
+    },
+    {
+      "id": "L3",
+      "type": "sequenceFlow",
+      "sourceRef": "N2",
+      "targetRef": "N4",
+      "formulaType": "formula",
+      "formula": "{\"result\":{\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"false\"},\"type\":\"Batch\",\"vars\":[],\"vo\":{\"mode\":\"simple\",\"modeType\":\"simpleRule\",\"data\":{\"key\":\"ROOT\",\"fdKey\":\"L3_ROOT\",\"leavel\":\"1\",\"fdList\":[]}}}"
+    }
+  ]
+}

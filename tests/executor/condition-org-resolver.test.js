@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   collectAddressConditionOrgNames,
+  collectAddressConditionOrgFdNos,
   resolveConditionOrgs,
   SIT_CONDITION_ORG_FALLBACKS
 } from "../../src/executor/condition-org-resolver.js";
@@ -38,6 +39,34 @@ describe("resolveConditionOrgs", () => {
     });
 
     assert.deepEqual([...names].sort(), ["北方服务中心", "南方服务中心"]);
+  });
+
+  it("collects organization fdNo codes from address-field fdNo.equals conditions", () => {
+    const fdNos = collectAddressConditionOrgFdNos({
+      form: {
+        fields: [{
+          id: "fd_req_dept",
+          title: "需求人部门",
+          componentId: "xform-address",
+          sourceProps: { designerType: "address" }
+        }, {
+          id: "fd_seller",
+          title: "合同卖方",
+          componentId: "xform-input",
+          sourceProps: { designerType: "inputText" }
+        }]
+      },
+      workflow: {
+        edges: [{
+          id: "L1",
+          condition: {
+            targetText: "$fd_req_dept$.fdNo.equals(\"ROUTE-ORG-001\") || $fd_seller$.fdNo.equals(\"IGNORE\")"
+          }
+        }]
+      }
+    });
+
+    assert.deepEqual([...fdNos], ["ROUTE-ORG-001"]);
   });
 
   it("resolves unique organization matches into runtime conditionOrgByName", async () => {
@@ -80,6 +109,82 @@ describe("resolveConditionOrgs", () => {
     assert.deepEqual(result.dsl.runtime.conditionOrgByName, {
       南方服务中心: { fdId: "org-south", fdName: "南方服务中心", fdOrgType: 2, fdNo: "S001" }
     });
+  });
+
+  it("resolves address condition organization numbers into runtime conditionOrgByFdNo", async () => {
+    const client = {
+      async searchOrg(key) {
+        return key === "ROUTE-ORG-001"
+          ? [{ fdId: "org-example", fdName: "示例组织", fdOrgType: 2, fdNo: key }]
+          : [];
+      }
+    };
+
+    const result = await resolveConditionOrgs({
+      form: {
+        fields: [{
+          id: "fd_req_dept",
+          componentId: "xform-address",
+          sourceProps: { designerType: "address" }
+        }]
+      },
+      workflow: {
+        edges: [{
+          condition: {
+            targetText: "$fd_req_dept$.fdNo.equals(\"ROUTE-ORG-001\")"
+          }
+        }]
+      }
+    }, { client, targetBaseUrl: "https://example.test" });
+
+    assert.equal(result.resolvedCount, 1);
+    assert.equal(result.fdNoCount, 1);
+    assert.deepEqual(result.unresolvedFdNos, []);
+    assert.deepEqual(result.dsl.runtime.conditionOrgByFdNo, {
+      "ROUTE-ORG-001": {
+        fdId: "org-example",
+        fdName: "示例组织",
+        fdOrgType: 2,
+        fdNo: "ROUTE-ORG-001"
+      }
+    });
+  });
+
+  it("fails closed when an organization number cannot be resolved outside fallback origins", async () => {
+    for (const candidates of [
+      [],
+      [{ fdId: "org-other", fdName: "其他组织", fdOrgType: 2, fdNo: "ROUTE-ORG-OTHER" }]
+    ]) {
+      const client = {
+        async searchOrg() {
+          return candidates;
+        }
+      };
+
+      await assert.rejects(
+        resolveConditionOrgs({
+          form: {
+            fields: [{
+              id: "fd_req_dept",
+              componentId: "xform-address",
+              sourceProps: { designerType: "address" }
+            }]
+          },
+          workflow: {
+            edges: [{
+              condition: {
+                targetText: "$fd_req_dept$.fdNo.equals(\"ROUTE-ORG-MISSING\")"
+              }
+            }]
+          }
+        }, {
+          client,
+          targetBaseUrl: "https://example.test"
+        }),
+        (error) => error?.stage === "resolveConditionOrgs" &&
+          error?.issues?.some((issue) => issue.reason === "fd_no_not_found")
+      );
+    }
   });
 
   it("applies SIT curl sample orgs when unresolved on p-sit.onewo.com", async () => {

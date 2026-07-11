@@ -455,7 +455,7 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       target: edge.target,
       isDefault: defaultEdgeIds.has(edge.id),
       branch: normalizeScalar(edge.attributes?.branch || edge.branch || ""),
-      condition: summarizeCondition(edge, conditionBranchNodeIds.has(edge.source))
+      condition: summarizeCondition(edge, conditionBranchNodeIds.has(edge.source), context)
     };
   }).filter(Boolean);
 
@@ -732,7 +732,7 @@ function summarizeSendConfig(node) {
   };
 }
 
-function summarizeCondition(edge, conditionBranch) {
+function summarizeCondition(edge, conditionBranch, context = {}) {
   const sourceText = edge?.condition?.sourceText ||
     (typeof edge?.condition === "string" ? edge.condition : "") ||
     edge?.condition?.targetText ||
@@ -740,11 +740,135 @@ function summarizeCondition(edge, conditionBranch) {
     edge?.displayCondition ||
     "";
   if (!String(sourceText).trim()) return undefined;
+  const nativeSemantics = conditionBranch
+    ? expectedBatchConditionSemantics(sourceText, context)
+    : undefined;
   return {
     sourceText: normalizeScalar(sourceText),
     nativeRequired: true,
-    nativeKind: conditionBranch ? "batch_formula" : "rule"
+    nativeKind: conditionBranch ? "batch_formula" : "rule",
+    ...(nativeSemantics ? { nativeSemantics } : {})
   };
+}
+
+function expectedBatchConditionSemantics(sourceText, context = {}) {
+  const compact = String(sourceText || "").replace(/\s+/g, "");
+  if (/^(?:1={2,3}2|1!={1,2}1|false)$/i.test(compact)) {
+    return { resultShape: "false", varCount: 0 };
+  }
+
+  const negated = unwrapExpectedNegation(compact);
+  const text = negated.text;
+  const fieldSum = text.match(
+    /^\(?\$([^$]+)\$\+\$([^$]+)\$\)?(>=|<=|>|<|==|!=)(-?\d+(?:\.\d+)?)$/
+  );
+  if (fieldSum) {
+    const leftRef = expectedFormulaFieldRef(context.templateId, fieldSum[1]);
+    const rightRef = expectedFormulaFieldRef(context.templateId, fieldSum[2]);
+    const symbol = negated.negated ? negateExpectedCompareSymbol(fieldSum[3]) : fieldSum[3];
+    return {
+      resultShape: "(${VAR})",
+      evalExpressions: [`(\${data.${leftRef}} + \${data.${rightRef}}) ${symbol} ${JSON.stringify(fieldSum[4])}`],
+      ruleSymbols: [symbol]
+    };
+  }
+
+  const orgFdNo = text.match(/^\$([^$]+)\$\.fdNo\.equals\(["']([^"']+)["']\)$/i);
+  if (orgFdNo) {
+    const hit = context.runtime?.conditionOrgByFdNo?.[orgFdNo[2]];
+    const symbol = negated.negated ? "notbelong" : "belongany";
+    const functionId = "sysorg.isOrganizationBelongOrIncludeAnother";
+    const orgIds = hit?.fdId ? [String(hit.fdId)] : [];
+    return {
+      resultShape: negated.negated ? "(!${VAR})" : "(${VAR})",
+      functionIds: [functionId],
+      orgIds,
+      functionCalls: [{
+        functionId,
+        inputs: [{
+          key: "firstOrgs",
+          type: "Var",
+          value: expectedFormulaFieldRef(context.templateId, orgFdNo[1])
+        }],
+        fixedArguments: [{
+          key: "isCross",
+          type: "Fixed",
+          value: true
+        }, {
+          key: "relationType",
+          type: "Fixed",
+          value: 4
+        }, {
+          key: "secondOrgs",
+          type: "Fixed",
+          value: { orgIds }
+        }]
+      }],
+      ruleSymbols: [symbol]
+    };
+  }
+
+  const emptySymbol = expectedEmptyConditionSymbol(text, negated.negated);
+  if (emptySymbol) {
+    const fieldId = text.match(/\$([^$]+)\$/)?.[1] || "";
+    const functionId = "global.isEmpty";
+    return {
+      resultShape: emptySymbol === "notempty" ? "(!${VAR})" : "(${VAR})",
+      functionIds: [functionId],
+      functionCalls: [{
+        functionId,
+        inputs: [{
+          key: "value",
+          type: "Var",
+          value: expectedFormulaFieldRef(context.templateId, fieldId)
+        }],
+        fixedArguments: []
+      }],
+      ruleSymbols: [emptySymbol]
+    };
+  }
+
+  return undefined;
+}
+
+function unwrapExpectedNegation(compact) {
+  if (compact.startsWith("!(") && compact.endsWith(")")) {
+    return { text: compact.slice(2, -1), negated: true };
+  }
+  if (compact.startsWith("!")) {
+    return { text: compact.slice(1), negated: true };
+  }
+  return { text: compact, negated: false };
+}
+
+function expectedEmptyConditionSymbol(text, outerNegated) {
+  let symbol;
+  if (/^null!=\$[^$]+\$$/i.test(text) || /^\$[^$]+\$!=null$/i.test(text) || /^\$[^$]+\$\.length\(\)>0$/.test(text)) {
+    symbol = "notempty";
+  } else if (/^null==\$[^$]+\$$/i.test(text) || /^\$[^$]+\$==null$/i.test(text) || /^\$[^$]+\$\.length\(\)==0$/.test(text)) {
+    symbol = "empty";
+  } else if (/^\$[^$]+\$(?:==|===)["']["']$/.test(text) || /^\$[^$]+\$\.equals\(["']["']\)$/.test(text)) {
+    symbol = "empty";
+  } else if (/^\$[^$]+\$(?:!=|!==)["']["']$/.test(text) || /^!\$[^$]+\$\.equals\(["']["']\)$/.test(text)) {
+    symbol = "notempty";
+  }
+  if (!symbol) return undefined;
+  if (!outerNegated) return symbol;
+  return symbol === "empty" ? "notempty" : "empty";
+}
+
+function expectedFormulaFieldRef(templateId, fieldId) {
+  return templateId ? `${templateId}-${fieldId}` : fieldId;
+}
+
+function negateExpectedCompareSymbol(symbol) {
+  if (symbol === "==") return "!=";
+  if (symbol === "!=") return "==";
+  if (symbol === ">") return "<=";
+  if (symbol === ">=") return "<";
+  if (symbol === "<") return ">=";
+  if (symbol === "<=") return ">";
+  return symbol;
 }
 
 function defaultElementForType(type) {

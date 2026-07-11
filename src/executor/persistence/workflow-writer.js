@@ -28,7 +28,8 @@ export function applyWorkflowPayload(template, dsl) {
   lbpm.fdContent = JSON.stringify(buildWorkflowContent(dsl.workflow, {
     templateId: next.fdId || next.mechanisms["sys-xform"]?.fdId || "",
     form: dsl.form,
-    conditionOrgByName: dsl.runtime?.conditionOrgByName || {}
+    conditionOrgByName: dsl.runtime?.conditionOrgByName || {},
+    conditionOrgByFdNo: dsl.runtime?.conditionOrgByFdNo || {}
   }));
   lbpm.fdStatus = "draft";
   lbpm.fdPublishType ||= "instant";
@@ -664,11 +665,19 @@ function buildEdgeElement(edge, index, branchRoute) {
       ? ruleText
       : (branchRoute.resultCode || "");
     element.priority = branchRoute.priority;
-    element.formulaName = hasFormulaConfig ? "" : ruleText;
-    element.formulaType = hasFormulaConfig ? "formula" : rulePayload ? "rule" : "formula";
     element.defaultTrend = branchRoute.defaultTrend;
     element.language = { nameCn: edge.name || "" };
-    element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : rulePayload;
+    // Auto conditionBranch outlets must persist Batch JSON with formulaType=formula.
+    // Never fall back to formulaType=rule for non-manual branches — that corrupts readback.
+    if (branchRoute.manual) {
+      element.formulaName = hasFormulaConfig ? "" : ruleText;
+      element.formulaType = hasFormulaConfig ? "formula" : rulePayload ? "rule" : "formula";
+      element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : rulePayload;
+    } else {
+      element.formulaName = hasFormulaConfig ? "" : "";
+      element.formulaType = "formula";
+      element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : "";
+    }
     return element;
   }
   if (formula) {
@@ -718,13 +727,29 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
   const namedOther = isOtherRoute(edge);
   const tautologicalDefault = isTautologyCondition(conditionText);
   const parsedFormula = manual ? undefined : buildFormulaDesignerConfig(edge, context);
+  const contradictionDefault = isContradictionCondition(conditionText);
   const needsSyntheticDefaultFormula = !manual && !parsedFormula && (
-    tautologicalDefault || (namedOther && !String(conditionText || "").trim())
+    tautologicalDefault || contradictionDefault || (namedOther && !String(conditionText || "").trim())
   );
   const formulaConfig = parsedFormula ||
-    (needsSyntheticDefaultFormula
-      ? buildOtherDefaultFormulaDesignerConfig(node, edge, context, siblingEdges)
-      : undefined);
+    (contradictionDefault
+      ? buildConstantBooleanFormulaDesignerConfig(edge, false)
+      : needsSyntheticDefaultFormula
+        ? (
+          buildOtherDefaultFormulaDesignerConfig(node, edge, context, siblingEdges) ||
+          buildConstantBooleanFormulaDesignerConfig(edge, true)
+        )
+        : undefined);
+  if (!manual && String(conditionText || "").trim() && !formulaConfig) {
+    const error = new Error(`Automatic branch condition on edge ${edge.id} cannot be projected as a native Batch formula.`);
+    error.code = "projection.workflow.edge_condition_unsupported";
+    error.details = {
+      edgeId: edge.id,
+      sourceRef: edge.sourceRef,
+      condition: conditionText
+    };
+    throw error;
+  }
   const conditionValue = manual
     ? {
       lineId: edge.id,
@@ -850,6 +875,34 @@ function isTautologyCondition(condition) {
   return sharedIsTautologyCondition(condition);
 }
 
+function isContradictionCondition(condition) {
+  return /^(?:1\s*={2,3}\s*2|1\s*!={1,2}\s*1|false)$/i.test(String(condition || "").trim());
+}
+
+function buildConstantBooleanFormulaDesignerConfig(edge, value) {
+  const rootKey = formulaVariableKey(edge.id, "ROOT");
+  const bool = value ? "true" : "false";
+  return {
+    result: {
+      resultType: { type: "boolean" },
+      type: "Eval",
+      value: bool
+    },
+    type: "Batch",
+    vars: [],
+    vo: {
+      mode: "simple",
+      modeType: "simpleRule",
+      data: {
+        key: "ROOT",
+        fdKey: rootKey,
+        leavel: "1",
+        fdList: []
+      }
+    }
+  };
+}
+
 function edgeConditionText(edge) {
   return sharedEdgeConditionText(edge);
 }
@@ -925,9 +978,23 @@ function buildFormulaDesignerConfig(edge, context) {
 
   const sourceTerms = collectConditionTerms(parsedAst);
   const terms = sourceTerms.map((term, index) => {
+    if (term.expressionType === "fieldSumCompare") {
+      return buildFieldSumCompareTerm(term, {
+        edgeId: edge.id,
+        templateId,
+        formFieldById: context.formFieldById,
+        termCount: sourceTerms.length,
+        termIndex: index
+      });
+    }
+
     const field = context.formFieldById?.get(term.field);
+    if (!field) return undefined;
     const upgraded = upgradeAddressConditionTerm(term, field, context);
-    const fieldId = field?.id || upgraded.field;
+    if (term.expressionType === "orgFdNo" && upgraded.expressionType !== "orgBelong") {
+      return undefined;
+    }
+    const fieldId = field.id;
     if (!fieldId) return undefined;
     const variableKey = formulaVariableKey(
       edge.id,
@@ -945,7 +1012,11 @@ function buildFormulaDesignerConfig(edge, context) {
       vo: formulaFieldVo(field, fieldType),
       fdSymbol: upgraded.symbol
     };
-    if (upgraded.value !== undefined && upgraded.expressionType !== "orgBelong") {
+    if (upgraded.expressionType === "empty") {
+      // notempty/empty rules still carry an empty fdValue for the designer schema,
+      // but the operator itself is the emptiness predicate — not compare-to-blank.
+      rule.fdValue = "";
+    } else if (upgraded.value !== undefined && upgraded.expressionType !== "orgBelong") {
       // NewOA simple-rule UI stores numeric relational thresholds as JSON numbers.
       rule.fdValue = formulaRuleValue(upgraded, fieldType);
     }
@@ -997,8 +1068,74 @@ function buildFormulaDesignerConfig(edge, context) {
   };
 }
 
+function buildFieldSumCompareTerm(term, options) {
+  const fields = Array.isArray(term?.fields) ? term.fields : [];
+  if (fields.length !== 2) return undefined;
+
+  const left = options.formFieldById?.get(fields[0]);
+  const right = options.formFieldById?.get(fields[1]);
+  if (!left || !right || !options.templateId) return undefined;
+  const leftId = left.id;
+  const rightId = right.id;
+
+  const stem = `${leftId}_plus_${rightId}`;
+  const variableKey = formulaVariableKey(
+    options.edgeId,
+    options.termCount === 1 ? stem : `${stem}_${options.termIndex + 1}`
+  );
+  const leftRef = `${options.templateId}-${leftId}`;
+  const rightRef = `${options.templateId}-${rightId}`;
+  const leftLabel = left?.title || leftId;
+  const rightLabel = right?.title || rightId;
+  const numeric = Number(term.value);
+  const fdValue = Number.isFinite(numeric) ? numeric : term.value;
+  const compareValue = JSON.stringify(String(term.value));
+
+  return {
+    variableKey,
+    negateResult: false,
+    varConfig: {
+      key: variableKey,
+      resultType: { type: "boolean" },
+      type: "Eval",
+      value: `(\${data.${leftRef}} + \${data.${rightRef}}) ${term.symbol} ${compareValue}`
+    },
+    rule: {
+      fdKey: variableKey,
+      metaType: "RULE",
+      fdVarValue: leftRef,
+      fdDataType: "number",
+      fdLabel: `$${leftLabel}$+$${rightLabel}$`,
+      vo: formulaFieldVo(left || { id: leftId, title: leftLabel }, "number"),
+      fdSymbol: term.symbol,
+      fdValue
+    }
+  };
+}
+
 function upgradeAddressConditionTerm(term, field, context) {
-  if (!term || term.expressionType !== "contains" || !isAddressField(field)) return term;
+  if (!term) return term;
+
+  if (term.expressionType === "orgFdNo") {
+    if (!isAddressField(field)) return term;
+    const org = lookupConditionOrgByFdNo(context, term.value);
+    if (!org) return term;
+    const negated = Boolean(term.negateResult);
+    return {
+      ...term,
+      expressionType: "orgBelong",
+      symbol: negated ? "notbelong" : "belongany",
+      functionId: "sysorg.isOrganizationBelongOrIncludeAnother",
+      orgValue: [org],
+      orgTypeKey: "ORG_DEPT",
+      fdOrgType: 3,
+      through: true,
+      relationType: 4,
+      negateResult: negated
+    };
+  }
+
+  if (term.expressionType !== "contains" || !isAddressField(field)) return term;
   const org = lookupConditionOrg(context, term.value);
   if (!org) return term;
 
@@ -1028,6 +1165,32 @@ function lookupConditionOrg(context, name) {
     fdName: String(hit.fdName),
     fdOrgType: Number(hit.fdOrgType) || 2,
     ...(hit.fdNo ? { fdNo: String(hit.fdNo) } : {})
+  };
+}
+
+function lookupConditionOrgByFdNo(context, fdNo) {
+  const key = String(fdNo || "").trim();
+  if (!key) return undefined;
+  const byFdNo = context.conditionOrgByFdNo || {};
+  const hit = byFdNo instanceof Map ? byFdNo.get(key) : byFdNo[key];
+  if (hit && typeof hit === "object" && hit.fdId && hit.fdName) {
+    return {
+      fdId: String(hit.fdId),
+      fdName: String(hit.fdName),
+      fdOrgType: Number(hit.fdOrgType) || 2,
+      ...(hit.fdNo ? { fdNo: String(hit.fdNo) } : { fdNo: key })
+    };
+  }
+  // Also accept name-map entries that carry the matching fdNo.
+  const byName = context.conditionOrgByName || {};
+  const values = byName instanceof Map ? [...byName.values()] : Object.values(byName);
+  const matched = values.find((org) => org && String(org.fdNo || "").trim() === key);
+  if (!matched || !matched.fdId || !matched.fdName) return undefined;
+  return {
+    fdId: String(matched.fdId),
+    fdName: String(matched.fdName),
+    fdOrgType: Number(matched.fdOrgType) || 2,
+    fdNo: key
   };
 }
 
@@ -1070,6 +1233,70 @@ function parseSimpleCondition(condition) {
       expressionType: "contains",
       functionId: "global.contains",
       negateResult: negated
+    };
+  }
+
+  // Org number predicates: $addressField$.fdNo.equals("CODE")
+  const fdNoEquals = text.match(/^(!\s*)?\$([^$]+)\$\s*\.\s*fdNo\s*\.\s*equals\s*\(\s*["']([^"']*)["']\s*\)$/i);
+  if (fdNoEquals) {
+    const negated = Boolean(fdNoEquals[1]);
+    return {
+      field: fdNoEquals[2].trim(),
+      value: fdNoEquals[3],
+      symbol: negated ? "notbelong" : "belongany",
+      expressionType: "orgFdNo",
+      functionId: "sysorg.isOrganizationBelongOrIncludeAnother",
+      negateResult: negated
+    };
+  }
+
+  // Empty-string equals/compare idioms are emptiness checks. Project them as
+  // NewOA notempty/empty rules so the designer does not show a blank object.
+  const fieldMethodEqualsEmpty = text.match(/^(!\s*)?\$([^$]+)\$\s*\.\s*equals\s*\(\s*["']["']\s*\)$/);
+  if (fieldMethodEqualsEmpty) {
+    const negated = Boolean(fieldMethodEqualsEmpty[1]);
+    return {
+      field: fieldMethodEqualsEmpty[2].trim(),
+      symbol: negated ? "notempty" : "empty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: negated
+    };
+  }
+
+  const legacyEqualsEmpty = text.match(/^(!\s*)?["']["']\s*\.\s*equals\s*\(\s*\$([^$]+)\$\s*\)$/);
+  if (legacyEqualsEmpty) {
+    const negated = Boolean(legacyEqualsEmpty[1]);
+    return {
+      field: legacyEqualsEmpty[2].trim(),
+      symbol: negated ? "notempty" : "empty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: negated
+    };
+  }
+
+  const fieldCompareEmpty = text.match(/^\$([^$]+)\$\s*(={1,3}|!={1,2})\s*["']["']$/);
+  if (fieldCompareEmpty) {
+    const isNotEqual = fieldCompareEmpty[2].startsWith("!");
+    return {
+      field: fieldCompareEmpty[1].trim(),
+      symbol: isNotEqual ? "notempty" : "empty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: isNotEqual
+    };
+  }
+
+  const valueCompareEmpty = text.match(/^["']["']\s*(={1,3}|!={1,2})\s*\$([^$]+)\$$/);
+  if (valueCompareEmpty) {
+    const isNotEqual = valueCompareEmpty[1].startsWith("!");
+    return {
+      field: valueCompareEmpty[2].trim(),
+      symbol: isNotEqual ? "notempty" : "empty",
+      expressionType: "empty",
+      functionId: "global.isEmpty",
+      negateResult: isNotEqual
     };
   }
 
@@ -1152,6 +1379,25 @@ function parseSimpleCondition(condition) {
       field: valueLeftNotNumber[2].trim(),
       symbol: "!=",
       expressionType: "!="
+    };
+  }
+
+  // Field-sum relational comparisons from EKP amount thresholds, e.g. ($a$+$b$) < 300000.
+  const fieldSumCompare = text.match(
+    /^\(\s*\$([^$]+)\$\s*\+\s*\$([^$]+)\$\s*\)\s*(>=|<=|>|<|==|!=)\s*(-?\d+(?:\.\d+)?)$/
+  ) || text.match(
+    /^\$([^$]+)\$\s*\+\s*\$([^$]+)\$\s*(>=|<=|>|<|==|!=)\s*(-?\d+(?:\.\d+)?)$/
+  );
+  if (fieldSumCompare) {
+    const leftField = fieldSumCompare[1].trim();
+    const rightField = fieldSumCompare[2].trim();
+    return {
+      field: leftField,
+      fields: [leftField, rightField],
+      value: fieldSumCompare[4],
+      symbol: fieldSumCompare[3],
+      expressionType: "fieldSumCompare",
+      operator: "+"
     };
   }
 
@@ -1264,9 +1510,18 @@ function flipCompareSymbol(symbol) {
 function parseNegatedGroup(text) {
   if (!text.startsWith("!")) return undefined;
   const rest = text.slice(1).trim();
-  if (!isFullyWrappedInParentheses(rest)) return undefined;
-  const parsed = parseConditionExpression(rest);
-  return parsed ? negateConditionAst(parsed) : undefined;
+  if (isFullyWrappedInParentheses(rest)) {
+    const parsed = parseConditionExpression(rest);
+    return parsed ? negateConditionAst(parsed) : undefined;
+  }
+  // Landray often writes (!$field$.equals("x")) which strips to !$field$.equals("x")
+  // without a second paren wrapper around the simple term.
+  const simple = parseSimpleCondition(rest);
+  if (!simple) return undefined;
+  return {
+    type: "term",
+    term: negateConditionTerm(simple)
+  };
 }
 
 function negateConditionAst(ast) {
@@ -1296,12 +1551,19 @@ function negateConditionTerm(term) {
     };
   }
 
-  if (term.expressionType === "orgBelong") {
+  if (term.expressionType === "orgBelong" || term.expressionType === "orgFdNo") {
     const negated = !term.negateResult;
     return {
       ...term,
       symbol: negated ? "notbelong" : "belongany",
       negateResult: negated
+    };
+  }
+
+  if (term.expressionType === "fieldSumCompare") {
+    return {
+      ...term,
+      symbol: negateCompareSymbol(term.symbol)
     };
   }
 
@@ -1314,11 +1576,12 @@ function negateConditionTerm(term) {
     };
   }
 
-  if (term.expressionType === "!=") {
+  if (["==", "!=", ">", ">=", "<", "<="].includes(term.symbol)) {
+    const symbol = negateCompareSymbol(term.symbol);
     return {
       ...term,
-      symbol: "==",
-      expressionType: "=="
+      symbol,
+      expressionType: symbol
     };
   }
 
@@ -1327,6 +1590,16 @@ function negateConditionTerm(term) {
     symbol: "!=",
     expressionType: "!="
   };
+}
+
+function negateCompareSymbol(symbol) {
+  if (symbol === "==") return "!=";
+  if (symbol === "!=") return "==";
+  if (symbol === ">") return "<=";
+  if (symbol === ">=") return "<";
+  if (symbol === "<") return ">=";
+  if (symbol === "<=") return ">";
+  return symbol;
 }
 
 function termVarConfig(term, variableKey, fdVarValue) {

@@ -27,6 +27,12 @@
      &lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;input type=hidden id=&quot;fd_route_detail_row&quot; name=&quot;fd_route_detail_row&quot;/&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_detail&quot;,content:&quot;明细&quot;}&apos;&gt;明细&lt;/label&gt;&lt;/td&gt;
      &lt;td row=&quot;3&quot; column=&quot;3&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_route_detail&quot;,label:&quot;明细&quot;}&apos;&gt;&lt;/table&gt;&lt;/td&gt;
     &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_formula_amount_a&quot;,content:&quot;条件分支&quot;}&apos;&gt;条件分支&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;4&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_formula_amount_a&quot;,label:&quot;条件分支&quot;}&apos;&gt;&lt;input id=&quot;fd_formula_amount_a&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;4&quot; column=&quot;2&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_formula_amount_b&quot;,content:&quot;累计金额&quot;}&apos;&gt;累计金额&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;4&quot; column=&quot;3&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_formula_amount_b&quot;,label:&quot;累计金额&quot;}&apos;&gt;&lt;input id=&quot;fd_formula_amount_b&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
    &lt;/tbody&gt;&lt;/table&gt;
    &lt;div id=&quot;fd_route_rule_jsp&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;AttachXFormValueChangeEventById(&quot;fd_route_type&quot;, function(value){ if (value.indexOf(&quot;A&quot;) &gt;= 0) { common_dom_row_set_show_required_reset(&quot;fd_route_detail_row&quot;, true, true, false); } else { common_dom_row_set_show_required_reset(&quot;fd_route_detail_row&quot;, false, false, false); } });&lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;</string>
   </void>
@@ -39,6 +45,8 @@
     &lt;extendSimpleProperty name=&quot;fd_subject&quot; label=&quot;主题&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
     &lt;extendElementProperty name=&quot;fd_condition_org&quot; label=&quot;申请单位&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; notNull=&quot;true&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_route_type&quot; label=&quot;类型&quot; enumValues=&quot;类型A|A&amp;#10;类型B|B&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_formula_amount_a&quot; label=&quot;条件分支&quot; type=&quot;Double&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_formula_amount_b&quot; label=&quot;累计金额&quot; type=&quot;Double&quot;/&gt;
    &lt;/metadata&gt;</string>
   </void>
  </object>

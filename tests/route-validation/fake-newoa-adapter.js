@@ -6,6 +6,12 @@ import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-re
 
 const CREATED_TEMPLATE_ID = "route-created-template";
 const CREATED_WORKFLOW_TEMPLATE_ID = "route-created-workflow-template";
+const ROUTE_CONDITION_ORG = Object.freeze({
+  fdId: "route-org-001",
+  fdName: "Route Example Organization",
+  fdOrgType: 2,
+  fdNo: "ROUTE_ORG_001"
+});
 const SIT_CONDITION_ORG_FALLBACK_ID = SIT_CONDITION_ORG_FALLBACKS[0].fdId;
 const SIT_FALLBACK_BY_ID = new Map([
   ...Object.values(SIT_PARTICIPANT_FALLBACKS).map((fallback) => [fallback.fdId, fallback]),
@@ -31,6 +37,9 @@ export class FakeNewoaAdapter {
 
   async searchOrg(key) {
     this.record({ operation: "search-org", key });
+    if (key === ROUTE_CONDITION_ORG.fdNo) {
+      return [clone(ROUTE_CONDITION_ORG)];
+    }
     return [];
   }
 

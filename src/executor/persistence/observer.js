@@ -1068,14 +1068,22 @@ function observeBatchConditionSemantics(formula) {
   );
   const functionIds = new Set();
   const orgIds = new Set();
+  const evalExpressions = new Set();
+  const ruleSymbols = new Set();
+  const functionCalls = [];
 
   for (const variable of Array.isArray(formula?.vars) ? formula.vars : []) {
     if (!variable || !referencedVarKeys.has(String(variable.key || ""))) continue;
+    if (variable.type === "Eval" && typeof variable.value === "string") {
+      evalExpressions.add(normalizeScalar(variable.value));
+      continue;
+    }
     if (variable.type !== "Function" || typeof variable.value !== "string") continue;
 
     const functionId = variable.value.trim();
     if (!functionId) continue;
     functionIds.add(functionId);
+    functionCalls.push(observeBatchFunctionCall(variable, functionId));
     if (functionId !== "sysorg.isOrganizationBelongOrIncludeAnother") continue;
 
     for (const argument of Array.isArray(variable.arguments) ? variable.arguments : []) {
@@ -1086,11 +1094,70 @@ function observeBatchConditionSemantics(formula) {
       }
     }
   }
+  collectBatchRuleSymbols(formula?.vo, ruleSymbols);
 
   return {
+    resultShape: normalizeBatchResultShape(formula?.result?.value),
+    varCount: Array.isArray(formula?.vars) ? formula.vars.length : -1,
     functionIds: [...functionIds].sort(),
-    orgIds: [...orgIds].sort()
+    orgIds: [...orgIds].sort(),
+    evalExpressions: [...evalExpressions].sort(),
+    ruleSymbols: [...ruleSymbols].sort(),
+    functionCalls: functionCalls.sort((left, right) =>
+      stableStringify(left).localeCompare(stableStringify(right))
+    )
   };
+}
+
+function observeBatchFunctionCall(variable, functionId) {
+  const inputs = [];
+  const fixedArguments = [];
+  for (const argument of Array.isArray(variable?.arguments) ? variable.arguments : []) {
+    const key = normalizeScalar(argument?.key);
+    if (argument?.type === "Var") {
+      inputs.push({
+        key,
+        type: "Var",
+        value: normalizeScalar(argument.value)
+      });
+      continue;
+    }
+    if (argument?.type !== "Fixed") continue;
+    let value = normalizeScalar(argument.value);
+    if (key === "secondOrgs") {
+      value = {
+        orgIds: (Array.isArray(argument.value) ? argument.value : [])
+          .map((org) => normalizeScalar(org?.fdId))
+          .filter(Boolean)
+          .sort()
+      };
+    } else if (key === "isCross") {
+      value = nativeBoolean(argument.value);
+    }
+    fixedArguments.push({ key, type: "Fixed", value });
+  }
+  const byKey = (left, right) => String(left.key).localeCompare(String(right.key));
+  return {
+    functionId,
+    inputs: inputs.sort(byKey),
+    fixedArguments: fixedArguments.sort(byKey)
+  };
+}
+
+function normalizeBatchResultShape(value) {
+  return normalizeScalar(value).replace(/\$\{data\.\$VAR\.[^}]+\}/g, "${VAR}");
+}
+
+function collectBatchRuleSymbols(value, symbols) {
+  if (!value || typeof value !== "object") return;
+  if (typeof value.fdSymbol === "string" && value.fdSymbol.trim()) {
+    symbols.add(value.fdSymbol.trim());
+  }
+  if (Array.isArray(value)) {
+    value.forEach((entry) => collectBatchRuleSymbols(entry, symbols));
+    return;
+  }
+  Object.values(value).forEach((entry) => collectBatchRuleSymbols(entry, symbols));
 }
 
 function withConditionProvenance(edge, native) {

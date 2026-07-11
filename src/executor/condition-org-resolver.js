@@ -1,19 +1,23 @@
 /**
- * Resolve organization names referenced by address-field branch conditions.
+ * Resolve organization names/numbers referenced by address-field branch conditions.
  *
- * Source Landray often writes `$字符串.包含$($addressField$, "部门名")`. NewOA address
- * predicates need concrete org objects (`belongany` / `notbelong`), so names are
- * resolved through the read-only org search API before workflow projection.
+ * Source Landray often writes:
+ * - `$字符串.包含$($addressField$, "部门名")`
+ * - `$addressField$.fdNo.equals("ORG_NO")`
+ *
+ * NewOA address predicates need concrete org objects (`belongany` / `notbelong`),
+ * so names and fdNo codes are resolved through the read-only org search API before
+ * workflow projection.
  *
  * On allowed temporary-fallback origins (SIT and Shanghai Electric POC), unresolved
- * names fall back to a known department target and are revalidated before use.
+ * names/fdNos fall back to a known department target and are revalidated before use.
  */
 
 import { allowsTemporaryOrgFallbacks } from "./newoa-client.js";
 
 const CONDITION_ORG_RESOLUTION_STAGE = "resolveConditionOrgs";
 
-/** Department fallback for unresolved address-field condition org names. */
+/** Department fallback for unresolved address-field condition org names/fdNos. */
 export const SIT_CONDITION_ORG_FALLBACKS = Object.freeze([
   Object.freeze({
     fdId: "1jt85rk85w23welrpw2s3uh4pvsr8ru35dw0",
@@ -39,14 +43,18 @@ export class ConditionOrgResolutionError extends Error {
 export async function resolveConditionOrgs(dsl, { client, targetBaseUrl } = {}) {
   const nextDsl = structuredClone(dsl);
   const names = collectAddressConditionOrgNames(nextDsl);
-  if (names.size === 0) {
+  const fdNos = collectAddressConditionOrgFdNos(nextDsl);
+  if (names.size === 0 && fdNos.size === 0) {
     return {
       dsl: nextDsl,
       resolvedCount: 0,
       nameCount: 0,
+      fdNoCount: 0,
       unresolvedNames: [],
+      unresolvedFdNos: [],
       fallbackCount: 0,
-      fallbackNames: []
+      fallbackNames: [],
+      fallbackFdNos: []
     };
   }
 
@@ -59,7 +67,9 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl } = {}) 
 
   const searchCache = new Map();
   const conditionOrgByName = {};
+  const conditionOrgByFdNo = {};
   const unresolvedNames = [];
+  const unresolvedFdNos = [];
   const allowSitFallback = allowsTemporaryOrgFallbacks(targetBaseUrl);
 
   for (const name of names) {
@@ -80,36 +90,89 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl } = {}) 
     }
   }
 
+  for (const fdNo of fdNos) {
+    try {
+      const candidates = uniqueCandidates(await searchCurrentCandidates(fdNo, client, searchCache));
+      const match = pickOrgCandidateByFdNo(fdNo, candidates);
+      if (!match) {
+        unresolvedFdNos.push(fdNo);
+        continue;
+      }
+      conditionOrgByFdNo[fdNo] = normalizeOrgValue(match);
+    } catch (error) {
+      throw new ConditionOrgResolutionError([{
+        reason: "search_failed",
+        fdNo,
+        message: error instanceof Error ? error.message : String(error)
+      }], { cause: error });
+    }
+  }
+
   const fallbackNames = [];
-  if (allowSitFallback && unresolvedNames.length) {
-    const assignments = unresolvedNames.map((name, index) => ({
-      name,
-      fallback: SIT_CONDITION_ORG_FALLBACKS[index % SIT_CONDITION_ORG_FALLBACKS.length]
-    }));
+  const fallbackFdNos = [];
+  if (allowSitFallback && (unresolvedNames.length || unresolvedFdNos.length)) {
+    const assignments = [
+      ...unresolvedNames.map((name, index) => ({
+        kind: "name",
+        key: name,
+        fallback: SIT_CONDITION_ORG_FALLBACKS[index % SIT_CONDITION_ORG_FALLBACKS.length]
+      })),
+      ...unresolvedFdNos.map((fdNo, index) => ({
+        kind: "fdNo",
+        key: fdNo,
+        fallback: SIT_CONDITION_ORG_FALLBACKS[
+          (unresolvedNames.length + index) % SIT_CONDITION_ORG_FALLBACKS.length
+        ]
+      }))
+    ];
     const validatedFallbacks = await validateSitConditionOrgFallbacks(
       client,
       assignments.map((assignment) => assignment.fallback)
     );
-    assignments.forEach(({ name, fallback }) => {
+    assignments.forEach(({ kind, key, fallback }) => {
       const current = validatedFallbacks.get(fallback.fdId);
-      conditionOrgByName[name] = normalizeOrgValue(current);
-      fallbackNames.push(name);
+      const normalized = normalizeOrgValue(current);
+      if (kind === "name") {
+        conditionOrgByName[key] = normalized;
+        fallbackNames.push(key);
+      } else {
+        conditionOrgByFdNo[key] = {
+          ...normalized,
+          fdNo: key
+        };
+        fallbackFdNos.push(key);
+      }
     });
     unresolvedNames.length = 0;
+    unresolvedFdNos.length = 0;
+  }
+
+  if (unresolvedFdNos.length) {
+    throw new ConditionOrgResolutionError(unresolvedFdNos.map((fdNo) => ({
+      reason: "fd_no_not_found",
+      fdNo,
+      message: `Organization number could not be uniquely resolved: ${fdNo}`
+    })));
   }
 
   nextDsl.runtime = {
     ...(nextDsl.runtime && typeof nextDsl.runtime === "object" ? nextDsl.runtime : {}),
-    conditionOrgByName
+    conditionOrgByName,
+    conditionOrgByFdNo
   };
 
   return {
     dsl: nextDsl,
-    resolvedCount: Object.keys(conditionOrgByName).length - fallbackNames.length,
+    resolvedCount:
+      Object.keys(conditionOrgByName).length - fallbackNames.length +
+      Object.keys(conditionOrgByFdNo).length - fallbackFdNos.length,
     nameCount: names.size,
+    fdNoCount: fdNos.size,
     unresolvedNames,
-    fallbackCount: fallbackNames.length,
-    fallbackNames
+    unresolvedFdNos,
+    fallbackCount: fallbackNames.length + fallbackFdNos.length,
+    fallbackNames,
+    fallbackFdNos
   };
 }
 
@@ -134,6 +197,27 @@ export function collectAddressConditionOrgNames(dsl) {
   return names;
 }
 
+export function collectAddressConditionOrgFdNos(dsl) {
+  const fdNos = new Set();
+  const formFieldById = buildFormFieldIndex(dsl?.form);
+  const edges = Array.isArray(dsl?.workflow?.edges) ? dsl.workflow.edges : [];
+
+  for (const edge of edges) {
+    const condition = edgeConditionText(edge);
+    for (const match of String(condition || "").matchAll(
+      /\$([^$]+)\$\s*\.\s*fdNo\s*\.\s*equals\s*\(\s*["']([^"']+)["']\s*\)/gi
+    )) {
+      const fieldId = String(match[1] || "").trim();
+      const fdNo = String(match[2] || "").trim();
+      const field = formFieldById.get(fieldId);
+      if (!isAddressField(field) || !fdNo) continue;
+      fdNos.add(fdNo);
+    }
+  }
+
+  return fdNos;
+}
+
 function pickOrgCandidate(name, candidates) {
   const normalized = normalizeText(name);
   const exact = candidates.filter((candidate) => normalizeText(candidate.fdName) === normalized);
@@ -146,6 +230,28 @@ function pickOrgCandidate(name, candidates) {
 
   const depts = pool.filter((candidate) => normalizeOrgType(candidate.fdOrgType) === "2");
   if (depts.length === 1) return depts[0];
+  return undefined;
+}
+
+function pickOrgCandidateByFdNo(fdNo, candidates) {
+  const key = String(fdNo || "").trim();
+  if (!key) return undefined;
+  const exact = candidates.filter((candidate) => String(candidate.fdNo || "").trim() === key);
+  const candidatesWithOtherFdNos = candidates.filter((candidate) => String(candidate.fdNo || "").trim());
+  if (exact.length === 0 && candidatesWithOtherFdNos.length > 0) return undefined;
+  const pool = exact.length ? exact : candidates;
+  if (pool.length === 0) return undefined;
+
+  const preferredTypes = new Set(["1", "2"]);
+  const typed = pool.filter((candidate) => preferredTypes.has(normalizeOrgType(candidate.fdOrgType)));
+  const preferred = typed.length ? typed : pool;
+  if (preferred.length === 1) return preferred[0];
+
+  const depts = preferred.filter((candidate) => normalizeOrgType(candidate.fdOrgType) === "2");
+  if (depts.length === 1) return depts[0];
+  // When searching by fdNo, ACCURATE mode often returns a unique org even without fdNo echo.
+  if (preferred.length === 1) return preferred[0];
+  if (pool.length === 1) return pool[0];
   return undefined;
 }
 

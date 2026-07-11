@@ -781,6 +781,22 @@ function compareNativeEdgeCondition(edge, actualEdge, diagnostics) {
     return;
   }
 
+  const expectedSemantics = edge.condition.nativeSemantics;
+  if (expectedSemantics) {
+    const actualSemantics = Object.fromEntries(
+      Object.keys(expectedSemantics).map((key) => [key, actual[key]])
+    );
+    if (stableStringify(expectedSemantics) !== stableStringify(actualSemantics)) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.edge_condition_native_semantic_mismatch", "Readback workflow edge native condition semantics changed.", {
+        invariantKey: `workflow.edges.${edge.id}.condition.nativeSemantics`,
+        path: `/readback/workflow/edges/${edge.id}/condition`,
+        expected: expectedSemantics,
+        actual: actualSemantics
+      }));
+      return;
+    }
+  }
+
   const expectedSourceText = normalizeScalar(edge.condition.sourceText || "");
   const actualSourceText = normalizeScalar(actual.provenance?.sourceText || "");
   if (expectedSourceText && actualSourceText && expectedSourceText !== actualSourceText) {

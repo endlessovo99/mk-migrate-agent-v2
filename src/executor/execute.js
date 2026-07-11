@@ -78,19 +78,29 @@ export async function executeDsl(input, options = {}) {
     apiStages[apiStages.length - 1].status = "ok";
     apiStages[apiStages.length - 1].resolvedCount = conditionOrgResolution.resolvedCount;
     apiStages[apiStages.length - 1].nameCount = conditionOrgResolution.nameCount;
+    apiStages[apiStages.length - 1].fdNoCount = conditionOrgResolution.fdNoCount;
     if (conditionOrgResolution.fallbackCount > 0) {
       apiStages[apiStages.length - 1].fallbackCount = conditionOrgResolution.fallbackCount;
       diagnostics.push({
         level: "warning",
         code: "workflow.condition_org_sit_fallback_applied",
-        message: "Unresolved address-field branch condition organization names were replaced with the configured temporary address-book fallback orgs.",
+        message: "Unresolved address-field branch condition organization names or numbers were replaced with the configured temporary address-book fallback orgs.",
         path: "/workflow/conditions",
         details: {
           fallbackNames: conditionOrgResolution.fallbackNames,
-          fallbackOrgs: conditionOrgResolution.fallbackNames.map((name) => ({
-            sourceName: name,
-            target: executableDsl.runtime?.conditionOrgByName?.[name]
-          }))
+          fallbackFdNos: conditionOrgResolution.fallbackFdNos,
+          fallbackOrgs: [
+            ...conditionOrgResolution.fallbackNames.map((name) => ({
+              sourceKind: "name",
+              sourceName: name,
+              target: executableDsl.runtime?.conditionOrgByName?.[name]
+            })),
+            ...conditionOrgResolution.fallbackFdNos.map((fdNo) => ({
+              sourceKind: "fdNo",
+              sourceFdNo: fdNo,
+              target: executableDsl.runtime?.conditionOrgByFdNo?.[fdNo]
+            }))
+          ]
         }
       });
     }

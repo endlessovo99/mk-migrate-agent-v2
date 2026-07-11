@@ -201,8 +201,9 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.deepEqual(conditionStage, {
       name: "resolveConditionOrgs",
       status: "ok",
-      resolvedCount: 0,
+      resolvedCount: 1,
       nameCount: 1,
+      fdNoCount: 1,
       fallbackCount: 1
     });
     assert.equal(
@@ -213,7 +214,8 @@ describe("offline Route-validation", { concurrency: false }, () => {
       result.transcript.filter((entry) => entry.operation === "search-org"),
       [
         { operation: "search-org", key: "Conditional Reviewer" },
-        { operation: "search-org", key: "南方服务中心" }
+        { operation: "search-org", key: "南方服务中心" },
+        { operation: "search-org", key: "ROUTE_ORG_001" }
       ]
     );
 
@@ -252,7 +254,7 @@ describe("offline Route-validation", { concurrency: false }, () => {
       functionIds: [],
       orgIds: []
     });
-    assert.equal(result.execution.readback.workflow.conditionEdgeCount, 4);
+    assert.equal(result.execution.readback.workflow.conditionEdgeCount, 8);
     const defaultEdge = result.execution.readback.workflow.edges.find((edge) => edge.id === "L4");
     assert.equal(defaultEdge.isDefault, true);
     assert.deepEqual(defaultEdge.condition, {

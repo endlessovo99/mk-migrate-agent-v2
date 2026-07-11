@@ -27,7 +27,7 @@
   </void>
   <void method="put">
    <string>fdContent</string>
-   <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-conditional-detail-template&amp;amp;lbpmTmpId=route-conditional-detail-lbpm&quot; fdId=&quot;route-conditional-detail-process&quot; linesIndex=&quot;6&quot; nodesIndex=&quot;4&quot; notifyType=&quot;todo&quot;&gt;
+   <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-conditional-detail-template&amp;amp;lbpmTmpId=route-conditional-detail-lbpm&quot; fdId=&quot;route-conditional-detail-process&quot; linesIndex=&quot;10&quot; nodesIndex=&quot;4&quot; notifyType=&quot;todo&quot;&gt;
 &lt;nodes&gt;
 &lt;startNode id=&quot;N1&quot; name=&quot;开始&quot; x=&quot;100&quot; y=&quot;40&quot;/&gt;
 &lt;reviewNode handlerIds=&quot;legacy-conditional-reviewer&quot; handlerNames=&quot;Conditional Reviewer&quot; handlerSelectType=&quot;org&quot; id=&quot;N2&quot; ignoreOnHandlerSame=&quot;true&quot; name=&quot;审批&quot; x=&quot;100&quot; y=&quot;100&quot;/&gt;
@@ -41,6 +41,10 @@
 &lt;line condition=&quot;$fd_route_type$ == 81 || $fd_route_type$==82&quot; disCondition=&quot;$类型$ == 81 || $类型$ == 82&quot; endNodeId=&quot;N4&quot; id=&quot;L5&quot; name=&quot;数字类型&quot; priority=&quot;1&quot; startNodeId=&quot;N3&quot;/&gt;
 &lt;line condition=&quot;$fd_route_type$ != 335&quot; disCondition=&quot;$类型$ != 335&quot; endNodeId=&quot;N4&quot; id=&quot;L6&quot; name=&quot;非水务类型&quot; priority=&quot;2&quot; startNodeId=&quot;N3&quot;/&gt;
 &lt;line condition=&quot;1==1&quot; disCondition=&quot;1==1&quot; endNodeId=&quot;N4&quot; id=&quot;L4&quot; name=&quot;默认业务路径&quot; priority=&quot;3&quot; startNodeId=&quot;N3&quot;/&gt;
+&lt;line condition=&quot;$fd_condition_org$.fdNo.equals(&amp;quot;ROUTE_ORG_001&amp;quot;)&quot; disCondition=&quot;$申请单位$.fdNo.equals(&amp;quot;ROUTE_ORG_001&amp;quot;)&quot; endNodeId=&quot;N4&quot; id=&quot;L7&quot; name=&quot;组织编号路径&quot; priority=&quot;4&quot; startNodeId=&quot;N3&quot;/&gt;
+&lt;line condition=&quot;null!=$fd_route_type$&quot; disCondition=&quot;null!=$类型$&quot; endNodeId=&quot;N4&quot; id=&quot;L8&quot; name=&quot;类型非空路径&quot; priority=&quot;5&quot; startNodeId=&quot;N3&quot;/&gt;
+&lt;line condition=&quot;($fd_formula_amount_a$+$fd_formula_amount_b$) &amp;lt; 300000&quot; disCondition=&quot;($条件分支$+$累计金额$) &amp;lt; 300000&quot; endNodeId=&quot;N4&quot; id=&quot;L9&quot; name=&quot;合计金额路径&quot; priority=&quot;6&quot; startNodeId=&quot;N3&quot;/&gt;
+&lt;line condition=&quot;1==2&quot; disCondition=&quot;1==2&quot; endNodeId=&quot;N4&quot; id=&quot;L10&quot; name=&quot;恒假保留路径&quot; priority=&quot;7&quot; startNodeId=&quot;N3&quot;/&gt;
 &lt;/lines&gt;
 &lt;/process&gt;</string>
   </void>

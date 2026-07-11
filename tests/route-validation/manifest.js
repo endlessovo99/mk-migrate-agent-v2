@@ -33,6 +33,7 @@ const CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "search-org",
   "get-element-info",
   "search-org",
+  "search-org",
   "get-element-info",
   ...SUCCESS_OPERATIONS.slice(1, -1),
   "save-workflow-draft",

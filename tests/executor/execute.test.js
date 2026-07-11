@@ -1326,6 +1326,177 @@ describe("executeDsl", () => {
     assert.match(otherRoute.formula.result.value, /!\$\{data\.\$VAR\./);
   });
 
+  it("writes address-field fdNo.equals conditions as belongany org predicates", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.edges[1] = {
+      ...workflow.edges[1],
+      condition: {
+        sourceText: "$fd_req_dept$.fdNo.equals(\"ROUTE-ORG-001\")",
+        displayText: "$需求人部门$.fdNo.equals(\"ROUTE-ORG-001\")",
+        targetText: "$fd_req_dept$.fdNo.equals(\"ROUTE-ORG-001\")",
+        translationStatus: "display_only"
+      }
+    };
+    const form = sampleConditionBranchForm();
+    form.fields.push({
+      id: "fd_req_dept",
+      title: "需求人部门",
+      type: "text",
+      componentId: "xform-address",
+      props: { required: true },
+      sourceProps: { designerType: "address" },
+      sourceRef: "source.form.control.fd_req_dept"
+    });
+    const org = { fdId: "org-example", fdName: "示例组织", fdOrgType: 2, fdNo: "ROUTE-ORG-001" };
+    const content = buildWorkflowContent(workflow, {
+      templateId: "template-id",
+      form,
+      conditionOrgByFdNo: { "ROUTE-ORG-001": org }
+    });
+    const branch = content.elements.find((element) => element.id === "N410");
+    const route = JSON.parse(branch.conditionValue).formulas.find((item) => item.lineId === "L541");
+    const edge = content.elements.find((element) => element.id === "L541");
+    const rule = route.formula.vo.data.fdList[0].fdList[0];
+
+    assert.equal(edge.formulaType, "formula");
+    assert.equal(route.formula.vars[0].value, "sysorg.isOrganizationBelongOrIncludeAnother");
+    assert.equal(rule.fdSymbol, "belongany");
+    assert.deepEqual(JSON.parse(rule.fdValue), [org]);
+
+    workflow.edges[1].condition = {
+      sourceText: "!($fd_req_dept$.fdNo.equals(\"ROUTE-ORG-001\"))",
+      displayText: "!($需求人部门$.fdNo.equals(\"ROUTE-ORG-001\"))",
+      targetText: "!($fd_req_dept$.fdNo.equals(\"ROUTE-ORG-001\"))",
+      translationStatus: "display_only"
+    };
+    const negatedContent = buildWorkflowContent(workflow, {
+      templateId: "template-id",
+      form,
+      conditionOrgByFdNo: { "ROUTE-ORG-001": org }
+    });
+    const negatedBranch = negatedContent.elements.find((element) => element.id === "N410");
+    const negatedRoute = JSON.parse(negatedBranch.conditionValue).formulas.find((item) => item.lineId === "L541");
+    const negatedRule = negatedRoute.formula.vo.data.fdList[0].fdList[0];
+
+    assert.equal(negatedRoute.formula.vars[0].value, "sysorg.isOrganizationBelongOrIncludeAnother");
+    assert.equal(negatedRule.fdSymbol, "notbelong");
+    assert.deepEqual(JSON.parse(negatedRule.fdValue), [org]);
+  });
+
+  it("writes parenthesized bang-equals and tautology/contradiction branch routes as Batch formulas", () => {
+    const form = sampleConditionBranchForm();
+    form.fields.push({
+      id: "fd_cat3",
+      title: "授权分类3",
+      type: "singleSelect",
+      componentId: "xform-select",
+      props: {},
+      sourceProps: { designerType: "select" },
+      sourceRef: "source.form.control.fd_cat3"
+    });
+    form.fields.push({
+      id: "fd_has_contract",
+      title: "是否有合同",
+      type: "radio",
+      componentId: "xform-radio",
+      props: {},
+      sourceProps: { designerType: "inputRadio" },
+      sourceRef: "source.form.control.fd_has_contract"
+    });
+    const workflow = {
+      process: { id: "P1", name: "test" },
+      nodes: [
+        { id: "N1", type: "generalStart", name: "开始", sourceRef: "s" },
+        { id: "N2", type: "conditionBranch", name: "授权分类3", sourceRef: "c" },
+        { id: "N3", type: "review", name: "审批", sourceRef: "r" },
+        { id: "N4", type: "generalEnd", name: "结束", sourceRef: "e" }
+      ],
+      edges: [
+        { id: "L1", source: "N1", target: "N2", sourceRef: "e1" },
+        {
+          id: "L2",
+          source: "N2",
+          target: "N3",
+          name: "复杂",
+          sourceRef: "e2",
+          condition: {
+            sourceText: "(!$fd_cat3$.equals(\"3.991\" ) )&&$fd_has_contract$ .equals( \"y\")",
+            targetText: "(!$fd_cat3$.equals(\"3.991\" ) )&&$fd_has_contract$ .equals( \"y\")",
+            displayText: "复杂",
+            translationStatus: "display_only"
+          }
+        },
+        {
+          id: "L3",
+          source: "N2",
+          target: "N4",
+          name: "所有情况",
+          sourceRef: "e3",
+          condition: {
+            sourceText: "1==1",
+            targetText: "1==1",
+            displayText: "1==1",
+            translationStatus: "display_only"
+          }
+        },
+        {
+          id: "L4",
+          source: "N2",
+          target: "N4",
+          name: "预留",
+          sourceRef: "e4",
+          condition: {
+            sourceText: "1==2",
+            targetText: "1==2",
+            displayText: "1==2",
+            translationStatus: "display_only"
+          }
+        }
+      ]
+    };
+    const content = buildWorkflowContent(workflow, { templateId: "template-id", form });
+    const complex = content.elements.find((element) => element.id === "L2");
+    const always = content.elements.find((element) => element.id === "L3");
+    const never = content.elements.find((element) => element.id === "L4");
+
+    assert.equal(complex.formulaType, "formula");
+    assert.equal(JSON.parse(complex.formula).type, "Batch");
+    assert.equal(always.formulaType, "formula");
+    assert.equal(JSON.parse(always.formula).type, "Batch");
+    assert.equal(never.formulaType, "formula");
+    assert.equal(JSON.parse(never.formula).type, "Batch");
+    assert.equal(JSON.parse(never.formula).result?.value, "false");
+  });
+
+  it("rejects unsupported automatic branch conditions instead of dropping them", () => {
+    for (const conditionText of [
+      "$fd_seller$.unsupported(\"example\")",
+      "$fd_missing$ == \"A\"",
+      "$fd_missing$.equals(\"\")",
+      "($fd_missing_a$+$fd_missing_b$) < 100"
+    ]) {
+      const workflow = sampleConditionBranchWorkflow();
+      workflow.edges[1] = {
+        ...workflow.edges[1],
+        condition: {
+          sourceText: conditionText,
+          displayText: conditionText,
+          targetText: conditionText,
+          translationStatus: "display_only"
+        }
+      };
+
+      assert.throws(
+        () => buildWorkflowContent(workflow, {
+          templateId: "template-id",
+          form: sampleConditionBranchForm()
+        }),
+        (error) => error?.code === "projection.workflow.edge_condition_unsupported",
+        conditionText
+      );
+    }
+  });
+
   it("writes address-field contains conditions as belongany when org is resolved", () => {
     const workflow = sampleConditionBranchWorkflow();
     workflow.edges[1] = {
@@ -1576,6 +1747,116 @@ describe("executeDsl", () => {
     assert.equal(typeof lowRoute.formula.vo.data.fdList[0].fdList[0].fdValue, "number");
   });
 
+  it("writes field-sum relational comparisons through formula config", () => {
+    const form = sampleConditionBranchForm();
+    form.fields.push(
+      {
+        id: "fd_cost_a",
+        title: "本次预投外采成本",
+        type: "number",
+        componentId: "xform-number",
+        props: {},
+        sourceProps: { designerType: "numberText" },
+        sourceRef: "source.form.control.fd_cost_a"
+      },
+      {
+        id: "fd_cost_b",
+        title: "历次预投外采成本",
+        type: "number",
+        componentId: "xform-number",
+        props: {},
+        sourceProps: { designerType: "numberText" },
+        sourceRef: "source.form.control.fd_cost_b"
+      },
+      {
+        id: "fd_khfl",
+        title: "客户分类",
+        type: "radio",
+        componentId: "xform-radio",
+        props: {},
+        sourceProps: { designerType: "radio" },
+        sourceRef: "source.form.control.fd_khfl"
+      },
+      {
+        id: "fd_total",
+        title: "累计预投成本",
+        type: "number",
+        componentId: "xform-number",
+        props: {},
+        sourceProps: { designerType: "numberText" },
+        sourceRef: "source.form.control.fd_total"
+      }
+    );
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.edges[1] = {
+      ...workflow.edges[1],
+      condition: {
+        sourceText: "($fd_total$ < 1000000) && ($fd_khfl$ .equals(\"3\")) && (($fd_cost_a$+$fd_cost_b$) < 300000)",
+        displayText: "($累计预投成本$ < 1000000) && ($客户分类$ .equals(\"3\")) && (($本次预投外采成本$+$历次预投外采成本$) < 300000)",
+        targetText: "($fd_total$ < 1000000) && ($fd_khfl$ .equals(\"3\")) && (($fd_cost_a$+$fd_cost_b$) < 300000)",
+        translationStatus: "display_only"
+      }
+    };
+    workflow.edges[2] = {
+      ...workflow.edges[2],
+      condition: {
+        sourceText: "(($fd_cost_a$+$fd_cost_b$) == 0) && ($fd_total$ < 200000) && $fd_khfl$ .equals(\"1\")",
+        displayText: "(($本次预投外采成本$+$历次预投外采成本$) == 0) && ($累计预投成本$ < 200000) && $客户分类$ .equals(\"1\")",
+        targetText: "(($fd_cost_a$+$fd_cost_b$) == 0) && ($fd_total$ < 200000) && $fd_khfl$ .equals(\"1\")",
+        translationStatus: "display_only"
+      }
+    };
+
+    const trusted = sampleTrustedDsl({ form, workflow });
+    const template = projectTemplate(trusted, baseTemplate());
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    const high = content.elements.find((element) => element.id === "L541");
+    const low = content.elements.find((element) => element.id === "L546");
+    const branch = content.elements.find((element) => element.id === "N410");
+    const routes = JSON.parse(branch.conditionValue).formulas;
+    const highRoute = routes.find((route) => route.lineId === "L541");
+    const lowRoute = routes.find((route) => route.lineId === "L546");
+    const verification = verifyTemplate(trusted, template);
+
+    assert.equal(high.formulaType, "formula");
+    assert.equal(low.formulaType, "formula");
+    assert.equal(highRoute.formula.type, "Batch");
+    assert.equal(lowRoute.formula.type, "Batch");
+    assert.equal(
+      highRoute.formula.vars.some((item) => item.value === "(${data.template-id-fd_cost_a} + ${data.template-id-fd_cost_b}) < \"300000\""),
+      true,
+      JSON.stringify(highRoute.formula.vars)
+    );
+    assert.equal(
+      lowRoute.formula.vars.some((item) => item.value === "(${data.template-id-fd_cost_a} + ${data.template-id-fd_cost_b}) == \"0\""),
+      true,
+      JSON.stringify(lowRoute.formula.vars)
+    );
+    assert.equal(
+      verification.diagnostics.some((item) => item.code === "readback.workflow.edge_condition_native_corrupt"),
+      false,
+      JSON.stringify(verification.diagnostics)
+    );
+    assert.equal(verification.ok, true, JSON.stringify(verification.diagnostics));
+
+    workflow.edges[1].condition = {
+      sourceText: "!(($fd_cost_a$+$fd_cost_b$) < 300000)",
+      displayText: "!(($本次预投外采成本$+$历次预投外采成本$) < 300000)",
+      targetText: "!(($fd_cost_a$+$fd_cost_b$) < 300000)",
+      translationStatus: "display_only"
+    };
+    const negatedContent = buildWorkflowContent(workflow, { templateId: "template-id", form });
+    const negatedBranch = negatedContent.elements.find((element) => element.id === "N410");
+    const negatedRoute = JSON.parse(negatedBranch.conditionValue).formulas.find((route) => route.lineId === "L541");
+    assert.equal(
+      negatedRoute.formula.vars.some((item) =>
+        item.value === "(${data.template-id-fd_cost_a} + ${data.template-id-fd_cost_b}) >= \"300000\""
+      ),
+      true,
+      JSON.stringify(negatedRoute.formula.vars)
+    );
+  });
+
   it("writes field-left equals conditional branch routes through formula config", () => {
     const workflow = sampleConditionBranchWorkflow();
     workflow.edges[1] = {
@@ -1714,6 +1995,56 @@ describe("executeDsl", () => {
     assert.equal(notEmpty.result.value, "(!${data.$VAR.L541_fd_seller})");
     assert.equal(notEmpty.vo.data.fdList[0].fdList[0].fdSymbol, "notempty");
     assert.equal(notEmpty.vo.data.fdList[0].fdList[0].fdFunctionId, "global.isEmpty");
+
+    // EKP blank-literal idioms must project as emptiness operators, not != "".
+    for (const raw of [
+      "$fd_seller$ != \"\"",
+      "!$fd_seller$.equals(\"\")",
+      "!$fd_seller$ .equals(\"\")",
+      "null!=$fd_seller$",
+      "$fd_seller$.length()>0"
+    ]) {
+      const blankNotEmpty = routeForCondition(raw);
+      assert.equal(blankNotEmpty.vars[0].type, "Function", raw);
+      assert.equal(blankNotEmpty.vars[0].value, "global.isEmpty", raw);
+      assert.equal(blankNotEmpty.result.value, "(!${data.$VAR.L541_fd_seller})", raw);
+      assert.equal(blankNotEmpty.vo.data.fdList[0].fdList[0].fdSymbol, "notempty", raw);
+      assert.equal(blankNotEmpty.vo.data.fdList[0].fdList[0].fdFunctionId, "global.isEmpty", raw);
+      assert.equal(blankNotEmpty.vo.data.fdList[0].fdList[0].fdValue, "", raw);
+    }
+
+    for (const raw of [
+      "$fd_seller$ == \"\"",
+      "$fd_seller$.equals(\"\")",
+      "\"\".equals($fd_seller$)",
+      "$fd_seller$.length()==0"
+    ]) {
+      const blankEmpty = routeForCondition(raw);
+      assert.equal(blankEmpty.vars[0].type, "Function", raw);
+      assert.equal(blankEmpty.vars[0].value, "global.isEmpty", raw);
+      assert.equal(blankEmpty.result.value, "(${data.$VAR.L541_fd_seller})", raw);
+      assert.equal(blankEmpty.vo.data.fdList[0].fdList[0].fdSymbol, "empty", raw);
+      assert.equal(blankEmpty.vo.data.fdList[0].fdList[0].fdFunctionId, "global.isEmpty", raw);
+    }
+  });
+
+  localCorpusIt("fails closed on L769 without native fdDepartment binding evidence", () => {
+    const trusted = trustedDslFromFixture(
+      "tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e"
+    );
+    const edge = trusted.workflow.edges.find((item) => item.id === "L769");
+
+    assert.match(edge.condition.targetText, /\$fdDepartment\$/);
+    assert.equal(trusted.form.fields.some((field) => field.id === "fdDepartment"), false);
+    assert.throws(
+      () => buildWorkflowContent(trusted.workflow, {
+        templateId: "template-id",
+        form: trusted.form
+      }),
+      (error) => error?.code === "projection.workflow.edge_condition_unsupported" &&
+        error?.details?.edgeId === "L769" &&
+        String(error?.details?.condition || "").includes("$fdDepartment$")
+    );
   });
 
   localCorpusIt("writes N437 contains department routes into editable simple conditions", () => {
@@ -1724,9 +2055,10 @@ describe("executeDsl", () => {
       reviewerName: "test-reviewer",
       checkedAt: "2026-07-09T00:00:00.000Z"
     });
-    const content = buildWorkflowContent(trusted.workflow, {
+    const focusedTrusted = omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted);
+    const content = buildWorkflowContent(focusedTrusted.workflow, {
       templateId: "template-id",
-      form: trusted.form
+      form: focusedTrusted.form
     });
     const branch = content.elements.find((element) => element.id === "N437");
     const conditionValue = JSON.parse(branch.conditionValue);
@@ -1759,9 +2091,10 @@ describe("executeDsl", () => {
       reviewerName: "test-reviewer",
       checkedAt: "2026-07-09T00:00:00.000Z"
     });
-    const content = buildWorkflowContent(trusted.workflow, {
+    const focusedTrusted = omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted);
+    const content = buildWorkflowContent(focusedTrusted.workflow, {
       templateId: "template-id",
-      form: trusted.form
+      form: focusedTrusted.form
     });
     const branch = content.elements.find((element) => element.id === "N415");
     const conditionValue = JSON.parse(branch.conditionValue);
@@ -1813,9 +2146,10 @@ describe("executeDsl", () => {
       reviewerName: "test-reviewer",
       checkedAt: "2026-07-09T00:00:00.000Z"
     });
-    const content = buildWorkflowContent(trusted.workflow, {
+    const focusedTrusted = omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted);
+    const content = buildWorkflowContent(focusedTrusted.workflow, {
       templateId: "template-id",
-      form: trusted.form
+      form: focusedTrusted.form
     });
     const branch = content.elements.find((element) => element.id === "N257");
     const conditionValue = JSON.parse(branch.conditionValue);
@@ -1871,7 +2205,7 @@ describe("executeDsl", () => {
     assert.deepEqual(JSON.parse(sequence.formula), routeFormula);
   });
 
-  localCorpusIt("writes every fixture branch condition into editable formula configs", () => {
+  localCorpusIt("writes every supported fixture branch condition into editable formula configs", () => {
     const { content, trusted } = buildRouteValidationWorkflowContent();
     const edgeById = new Map(trusted.workflow.edges.map((edge) => [edge.id, edge]));
     const sequenceById = new Map(content.elements.filter((element) => element.type === "sequenceFlow").map((edge) => [edge.id, edge]));
@@ -1898,7 +2232,7 @@ describe("executeDsl", () => {
     assert.deepEqual(rawRoutes, []);
   });
 
-  localCorpusIt("marks only explicit, named-other, or tautological fixture routes as defaults", () => {
+  localCorpusIt("marks only explicit, named-other, or tautological supported fixture routes as defaults", () => {
     const { content, trusted } = buildRouteValidationWorkflowContent();
     const edgeById = new Map(trusted.workflow.edges.map((edge) => [edge.id, edge]));
     const sequenceById = new Map(content.elements.filter((element) => element.type === "sequenceFlow").map((edge) => [edge.id, edge]));
@@ -2347,7 +2681,7 @@ describe("executeDsl", () => {
   localCorpusIt("writes fixture fields with registered MK control types and no textarea heights", () => {
     const trusted = trustedDslFromFixture("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslFields = trusted.form.fields.flatMap((field) => field.type === "detailTable" ? field.columns || [] : [field]);
-    const payload = projectTemplate(trusted, baseTemplate());
+    const payload = projectTemplate({ ...trusted, workflow: undefined }, baseTemplate());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
     const fields = config.dataModel
       .flatMap((model) => model.fdFields || [])
@@ -2707,12 +3041,30 @@ function buildRouteValidationWorkflowContent() {
     reviewerName: "test-reviewer",
     checkedAt: "2026-07-09T00:00:00.000Z"
   });
+  const focusedTrusted = omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted);
   return {
-    trusted,
-    content: buildWorkflowContent(trusted.workflow, {
+    trusted: focusedTrusted,
+    content: buildWorkflowContent(focusedTrusted.workflow, {
       templateId: "template-id",
-      form: trusted.form
+      form: focusedTrusted.form
     })
+  };
+}
+
+function omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted) {
+  const edges = trusted?.workflow?.edges || [];
+  const unsupportedEdgeIds = edges
+    .filter((edge) => edgeConditionTextForTest(edge).includes("$fdDepartment$"))
+    .map((edge) => edge.id)
+    .sort();
+  assert.deepEqual(unsupportedEdgeIds, ["L323", "L769", "L791"]);
+  const unsupportedEdgeIdSet = new Set(unsupportedEdgeIds);
+  return {
+    ...trusted,
+    workflow: {
+      ...trusted.workflow,
+      edges: edges.filter((edge) => !unsupportedEdgeIdSet.has(edge.id))
+    }
   };
 }
 

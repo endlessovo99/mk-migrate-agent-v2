@@ -80,6 +80,98 @@ describe("workflow current-native readback", () => {
     );
   });
 
+  it("rejects valid Batch shapes whose field-sum or constant semantics changed", () => {
+    for (const dsl of [fieldSumBranchDsl(), constantFalseBranchDsl()]) {
+      const healthy = persistAndVerify(dsl);
+      assert.equal(healthy.readback.ok, true, JSON.stringify(healthy.readback.diagnostics));
+
+      const mutated = persistAndVerify(dsl, {
+        mutate(template) {
+          const content = workflowContent(template);
+          const branchEdge = edge(content, "L541");
+          const formula = JSON.parse(branchEdge.formula);
+          formula.result.value = "true";
+          formula.vars = [];
+          formula.vo = {
+            mode: "simple",
+            modeType: "simpleRule",
+            data: { key: "ROOT", fdKey: "L541_ROOT", leavel: "1", fdList: [] }
+          };
+          branchEdge.formula = JSON.stringify(formula);
+          persistWorkflowContent(template, content);
+          return template;
+        }
+      }).readback;
+
+      assert.equal(mutated.ok, false, JSON.stringify(mutated.diagnostics));
+      assert.equal(
+        mutated.diagnostics.some((item) => item.code === "readback.workflow.edge_condition_native_semantic_mismatch"),
+        true
+      );
+    }
+  });
+
+  it("rejects Batch Function mutations to input bindings and organization options", () => {
+    for (const dsl of [orgFdNoBranchDsl(), emptyBranchDsl()]) {
+      const healthy = persistAndVerify(dsl).readback;
+      assert.equal(healthy.ok, true, JSON.stringify(healthy.diagnostics));
+    }
+
+    const cases = [
+      {
+        label: "fdNo input field",
+        dsl: orgFdNoBranchDsl(),
+        functionId: "sysorg.isOrganizationBelongOrIncludeAnother",
+        argumentKey: "firstOrgs",
+        value: "template-id-fd_amount"
+      },
+      {
+        label: "fdNo relation type",
+        dsl: orgFdNoBranchDsl(),
+        functionId: "sysorg.isOrganizationBelongOrIncludeAnother",
+        argumentKey: "relationType",
+        value: 3
+      },
+      {
+        label: "fdNo hierarchy traversal",
+        dsl: orgFdNoBranchDsl(),
+        functionId: "sysorg.isOrganizationBelongOrIncludeAnother",
+        argumentKey: "isCross",
+        value: false
+      },
+      {
+        label: "empty input field",
+        dsl: emptyBranchDsl(),
+        functionId: "global.isEmpty",
+        argumentKey: "value",
+        value: "template-id-fd_amount"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const mutated = persistAndVerify(testCase.dsl, {
+        mutate(template) {
+          const content = workflowContent(template);
+          const branchEdge = edge(content, "L541");
+          const formula = JSON.parse(branchEdge.formula);
+          const variable = formula.vars.find((item) => item.value === testCase.functionId);
+          const argument = variable.arguments.find((item) => item.key === testCase.argumentKey);
+          argument.value = testCase.value;
+          branchEdge.formula = JSON.stringify(formula);
+          persistWorkflowContent(template, content);
+          return template;
+        }
+      }).readback;
+
+      assert.equal(mutated.ok, false, `${testCase.label}: ${JSON.stringify(mutated.diagnostics)}`);
+      assert.equal(
+        mutated.diagnostics.some((item) => item.code === "readback.workflow.edge_condition_native_semantic_mismatch"),
+        true,
+        testCase.label
+      );
+    }
+  });
+
   it("reports only default ownership when defaultTrend is mutated", () => {
     const { readback } = persistAndVerify(branchDsl(), {
       mutate(template) {
@@ -294,6 +386,85 @@ function multiFieldDefaultDsl() {
       topologicalOrder: ["N1", "N5", "N6", "N14"]
     }
   });
+}
+
+function fieldSumBranchDsl() {
+  const dsl = branchDsl();
+  dsl.form.fields.push(
+    {
+      id: "fd_cost_a",
+      title: "Cost A",
+      type: "number",
+      componentId: "xform-number",
+      props: {},
+      sourceProps: {},
+      sourceRef: "source.form.control.fd_cost_a"
+    },
+    {
+      id: "fd_cost_b",
+      title: "Cost B",
+      type: "number",
+      componentId: "xform-number",
+      props: {},
+      sourceProps: {},
+      sourceRef: "source.form.control.fd_cost_b"
+    }
+  );
+  dsl.workflow.edges.find((item) => item.id === "L541").condition = {
+    sourceText: "($fd_cost_a$+$fd_cost_b$) < 300000",
+    displayText: "($Cost A$+$Cost B$) < 300000",
+    targetText: "($fd_cost_a$+$fd_cost_b$) < 300000",
+    translationStatus: "display_only"
+  };
+  return dsl;
+}
+
+function constantFalseBranchDsl() {
+  const dsl = branchDsl();
+  dsl.workflow.edges.find((item) => item.id === "L541").condition = {
+    sourceText: "1==2",
+    displayText: "1==2",
+    targetText: "1==2",
+    translationStatus: "display_only"
+  };
+  return dsl;
+}
+
+function orgFdNoBranchDsl() {
+  const dsl = branchDsl();
+  const field = dsl.form.fields.find((item) => item.id === "fd_subject");
+  field.componentId = "xform-address";
+  field.sourceProps = { designerType: "address" };
+  const condition = "$fd_subject$.fdNo.equals(\"ORG-1\")";
+  dsl.workflow.edges.find((item) => item.id === "L541").condition = {
+    sourceText: condition,
+    displayText: condition,
+    targetText: condition,
+    translationStatus: "display_only"
+  };
+  dsl.runtime = {
+    conditionOrgByFdNo: {
+      "ORG-1": {
+        fdId: "org-1",
+        fdName: "Organization One",
+        fdOrgType: 2,
+        fdNo: "ORG-1"
+      }
+    }
+  };
+  return dsl;
+}
+
+function emptyBranchDsl() {
+  const dsl = branchDsl();
+  const condition = "null!=$fd_subject$";
+  dsl.workflow.edges.find((item) => item.id === "L541").condition = {
+    sourceText: condition,
+    displayText: condition,
+    targetText: condition,
+    translationStatus: "display_only"
+  };
+  return dsl;
 }
 
 function workflowNode(id, type, element, name) {
