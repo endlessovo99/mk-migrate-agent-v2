@@ -921,6 +921,14 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.ok, true);
   });
 
+  it("accepts an executable condition split paired with an all join", () => {
+    const workflow = sampleParallelGatewayWorkflow();
+    workflow.nodes.find((node) => node.id === "N2").definition.attributes.splitType = "condition";
+    const result = validateMigrationDsl(sampleTrustedDsl({ workflow }), { mode: "execute" });
+
+    assert.equal(result.ok, true);
+  });
+
   it("rejects executable parallel gateways without a single reciprocal related node", () => {
     const workflow = sampleParallelGatewayWorkflow();
     workflow.nodes.find((node) => node.id === "N2").attributes.relatedNodeIds = "N4;N5";

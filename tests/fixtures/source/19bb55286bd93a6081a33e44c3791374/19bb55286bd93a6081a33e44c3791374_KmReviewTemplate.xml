@@ -1,0 +1,1272 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>authRBPFlag</string> 
+   <boolean>true</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>syncDataToCalendarTime</string> 
+   <string>noSync</string> 
+  </void> 
+  <void method="put"> 
+   <string>docCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>10100204</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>1483a993f6c37112f2aa7ed4532ad0a1</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>环保集团本部（机电院）信息技术部</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>authAllEditors</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>8</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdLoginName</string> 
+       <string>41710016</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14912dbf678bca76a4cd399482890382</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>环保集团本部（机电院）信息技术部</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>8</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdLoginName</string> 
+       <string>331-EKP-YUANYF</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>176b204a71a27d834da32de4a2eb92c9</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>环保集团本部（机电院）信息技术部</string> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdNumberPrefix</string> 
+   <string>BH</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdFeedbackModify</string> 
+   <boolean>true</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>authTmpAttNodownload</string> 
+   <boolean>false</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>docAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>331-EKP-YUANYF</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>176b204a71a27d834da32de4a2eb92c9</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>环保集团本部（机电院）信息技术部</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>authReaders</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14edd66e39b548ded5989364a9db5fd3</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）党群工作部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1653772e54783cebad07cba4fd2842b8</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）工业设计工程研究院</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>165b455245cf1b91c40097049b09a4a5</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）能源设计工程研究院</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16203fafa246af8eec771d94e0f8926a</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）工程管理中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1653772e54655829cc5e46d4376867af</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）固废事业部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1653772e5462185c0a8e5eb4ede9f3e7</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）水处理事业部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1653772e5475d1dd9ac527e4e118fc4c</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）海外事业部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14912dba28903acfe47a7c442c486558</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>上海环保工程成套有限公司</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19962465b98e021d0d1ba0a4d73b2868</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）信息技术部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14912dba65833e02b420c814cdda099d</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>上海希明工程咨询有限公司</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>159a64a429d09b930f1351f43f49ad60</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）人力资源部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>159a5a5797df694a76d74f2444d8dd43</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）总裁工作部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16203fafa246572b8b21af54a8f8fdc7</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）运营管理中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>17430380482c9d37dedc9074f1898c1a</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）安全环保部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14edd66e39a7280f4e5ebb4451aac93f</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）市场拓展中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16981a73cfa680cba7152d6404caf35f</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）法务风控部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>193fcd472e22562202c4fab4ad396cb4</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）审计中心环保分中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>166c922f2cb7c7f72071b894740bd4f8</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）采购管理中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16203fafa2564e2ed2c27824749a46c1</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）技术管理中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14edd66e39a5424675c9ee54e8a905cb</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）资产财务部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>docAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1780534438430</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>authEditors</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>8</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdLoginName</string> 
+       <string>41710016</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14912dbf678bca76a4cd399482890382</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>环保集团本部（机电院）信息技术部</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>8</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdLoginName</string> 
+       <string>331-EKP-YUANYF</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>176b204a71a27d834da32de4a2eb92c9</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>环保集团本部（机电院）信息技术部</string> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>authTmpAttNoprint</string> 
+   <boolean>false</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>docCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1768273920000</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>authChangeAtt</string> 
+   <boolean>false</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>authReaderFlag</string> 
+   <boolean>false</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>authTmpAttNocopy</string> 
+   <boolean>false</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>fdUseForm</string> 
+   <boolean>true</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>fdName</string> 
+   <string>IT设备、耗材申请发放及维修流程</string> 
+  </void> 
+  <void method="put"> 
+   <string>docCategory</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>19ed339168c011c33a7aec54a81b3ed7</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.category.model.SysCategoryMain</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>19bb55286bd93a6081a33e44c3791374</string> 
+  </void> 
+  <void method="put"> 
+   <string>authChangeReaderFlag</string> 
+   <boolean>false</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>authAllReaders</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>8</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdLoginName</string> 
+       <string>41710016</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14912dbf678bca76a4cd399482890382</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>环保集团本部（机电院）信息技术部</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14edd66e39b548ded5989364a9db5fd3</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）党群工作部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1653772e54783cebad07cba4fd2842b8</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）工业设计工程研究院</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>165b455245cf1b91c40097049b09a4a5</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）能源设计工程研究院</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16203fafa246af8eec771d94e0f8926a</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）工程管理中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1653772e54655829cc5e46d4376867af</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）固废事业部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1653772e5462185c0a8e5eb4ede9f3e7</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）水处理事业部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1653772e5475d1dd9ac527e4e118fc4c</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）海外事业部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14912dba28903acfe47a7c442c486558</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>上海环保工程成套有限公司</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19962465b98e021d0d1ba0a4d73b2868</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）信息技术部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14912dba65833e02b420c814cdda099d</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>上海希明工程咨询有限公司</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>159a64a429d09b930f1351f43f49ad60</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）人力资源部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>159a5a5797df694a76d74f2444d8dd43</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）总裁工作部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16203fafa246572b8b21af54a8f8fdc7</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）运营管理中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>17430380482c9d37dedc9074f1898c1a</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）安全环保部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14edd66e39a7280f4e5ebb4451aac93f</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）市场拓展中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16981a73cfa680cba7152d6404caf35f</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）法务风控部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>193fcd472e22562202c4fab4ad396cb4</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）审计中心环保分中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>166c922f2cb7c7f72071b894740bd4f8</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）采购管理中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16203fafa2564e2ed2c27824749a46c1</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）技术管理中心</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>14edd66e39a5424675c9ee54e8a905cb</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>环保集团本部（机电院）资产财务部</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气环保集团本部（机电院）</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>8</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdLoginName</string> 
+       <string>331-EKP-YUANYF</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>176b204a71a27d834da32de4a2eb92c9</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>环保集团本部（机电院）信息技术部</string> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

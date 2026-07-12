@@ -590,6 +590,15 @@ describe("source directory stages", () => {
     assert.equal(join.translationStatus, "pending_review");
   });
 
+  it("drafts a condition split paired with an all join as executable", () => {
+    const workflow = sampleParallelGatewaySourceWorkflow();
+    workflow.nodes.find((node) => node.id === "N2").definition.attributes.splitType = "condition";
+
+    const dslDraft = draftSourceDraft(sampleSourceDraft({ workflow }));
+    assert.equal(dslDraft.workflow.nodes.find((node) => node.id === "N2").translationStatus, "executable");
+    assert.equal(dslDraft.workflow.nodes.find((node) => node.id === "N4").translationStatus, "executable");
+  });
+
   it("allows non-whitelisted source functions through draft as warnings", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/route-validation-lbpm");
     sourceDraft.issues.push({

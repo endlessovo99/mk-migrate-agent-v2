@@ -38,7 +38,7 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
   if (!sources.length) return undefined;
 
   const candidates = dedupeCandidatesByKey(sources
-    .flatMap((source, sourceIndex) => eventCandidatesFromSource(source, sourceIndex)));
+    .flatMap((source, sourceIndex) => eventCandidatesFromSource(source, sourceIndex, options)));
   const actions = [];
   const warnings = [];
   candidates.forEach((candidate, index) => {
@@ -374,8 +374,35 @@ function runWhenFromDisplayGate(displayGate) {
   return undefined;
 }
 
-function eventCandidatesFromSource(source, sourceIndex) {
+function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   if (!hasExecutableJavascript(source.javascript)) return [];
+
+  const legacyAttachmentRuntime = legacyAttachmentRuntimeCandidate(source, options.form);
+  if (legacyAttachmentRuntime) {
+    return [{
+      ...legacyAttachmentRuntime,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+      source
+    }];
+  }
+
+  const legacyDetailRuntime = legacyDetailRuntimeCandidate(source, options.form);
+  if (legacyDetailRuntime) {
+    return [{
+      ...legacyDetailRuntime,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+      source
+    }];
+  }
+
+  const legacyRequiredToggle = legacyRequiredToggleCandidate(source, options.form);
+  if (legacyRequiredToggle) {
+    return [{
+      ...legacyRequiredToggle,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+      source
+    }];
+  }
 
   const candidates = [
     ...extractValueChangeCandidates(source),
@@ -391,6 +418,191 @@ function eventCandidatesFromSource(source, sourceIndex) {
     id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
     source
   }));
+}
+
+function legacyAttachmentRuntimeCandidate(source, form) {
+  const text = String(source.javascript || "").trim();
+  const hasAttachment = (form?.fields || []).some((field) => field?.type === "attachment");
+  if (!hasAttachment || !isLegacyAttachmentRuntimePatch(text)) return undefined;
+
+  return legacyRuntimeOmission(text, "legacy WebUploader CSS/refresh patch", "xform-attach native rendering");
+}
+
+function legacyRequiredToggleCandidate(source, form) {
+  const text = String(source.javascript || "").trim();
+  const toggle = legacyRequiredToggle(text);
+  if (!toggle) return undefined;
+
+  const fields = Array.isArray(form?.fields) ? form.fields : [];
+  const trigger = fields.find((field) => field?.id === toggle.triggerFieldId && field.type !== "detailTable");
+  const target = fields.find((field) => field?.id === toggle.targetFieldId && field.type !== "detailTable");
+  if (!trigger || !target) return undefined;
+
+  return {
+    index: toggle.index,
+    event: "onChange",
+    scope: "control",
+    controlId: toggle.triggerFieldId,
+    javascript: toggle.javascript,
+    function: [
+      "function onChange(value, rowNum, parentRowNum) {",
+      `  const required = String(value || "").indexOf(${JSON.stringify(toggle.matchValue)}) >= 0`,
+      `  MKXFORM.setFieldAttr(${JSON.stringify(toggle.targetFieldId)}, required ? 3 : 6)`,
+      "}"
+    ].join("\n"),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: "AttachXFormValueChangeEventById + set_required/set_not_required",
+      target: "MKXFORM.setFieldAttr",
+      basis: "semantic-translation",
+      reviewRequired: false
+    }]
+  };
+}
+
+function legacyRequiredToggle(text) {
+  if (!/\bfunction\s+set_required\s*\(/.test(text) || !/\bfunction\s+set_not_required\s*\(/.test(text)) {
+    return undefined;
+  }
+  if (!/\.attr\(\s*(["'])validate\1\s*,\s*(["'])required\2\s*\)/.test(text)) return undefined;
+  if (!/\.attr\(\s*(["'])validate\1\s*,\s*(["'])\s*\2\s*\)/.test(text)) return undefined;
+
+  const bindingPattern = /AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*,\s*function\s*\(([^)]*)\)\s*\{/g;
+  for (const match of text.matchAll(bindingPattern)) {
+    const bodyStart = match.index + match[0].length;
+    const bodyEnd = findBalancedClose(text, bodyStart - 1, "{", "}");
+    if (bodyEnd < bodyStart) continue;
+
+    const valueParam = String(match[3] || "").split(",")[0]?.trim() || "value";
+    const toggle = requiredToggleFromBody(text.slice(bodyStart, bodyEnd), valueParam);
+    if (!toggle) continue;
+
+    return {
+      index: match.index,
+      triggerFieldId: match[2],
+      targetFieldId: toggle.targetFieldId,
+      matchValue: toggle.matchValue,
+      javascript: text.slice(match.index, findCallEnd(text, bodyEnd + 1)).trim()
+    };
+  }
+  return undefined;
+}
+
+function requiredToggleFromBody(body, valueParam) {
+  const bodyText = String(body || "");
+  const setRequiredCalls = [...bodyText.matchAll(/\bset_required\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*\)/g)];
+  const setNotRequiredCalls = [...bodyText.matchAll(/\bset_not_required\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*\)/g)];
+  if (setRequiredCalls.length !== 1 || setNotRequiredCalls.length < 1) return undefined;
+
+  const targetFieldId = setRequiredCalls[0][2];
+  if (!setNotRequiredCalls.every((call) => call[2] === targetFieldId)) return undefined;
+
+  const condition = new RegExp(
+    `if\\s*\\(\\s*${escapeRegExp(valueParam)}\\.indexOf\\(\\s*(["'])([^"']+)\\1\\s*\\)\\s*>=\\s*0\\s*\\)\\s*\\{[\\s\\S]*?set_required\\(\\s*(["'])${escapeRegExp(targetFieldId)}\\3\\s*\\)[\\s\\S]*?\\}\\s*else\\s*\\{[\\s\\S]*?set_not_required\\(\\s*(["'])${escapeRegExp(targetFieldId)}\\4\\s*\\)[\\s\\S]*?\\}`
+  );
+  const match = bodyText.match(condition);
+  if (!match) return undefined;
+
+  return {
+    targetFieldId,
+    matchValue: match[2]
+  };
+}
+
+function isLegacyAttachmentRuntimePatch(text) {
+  const normalized = String(text || "");
+  return normalized.includes("document.createElement('style')") &&
+    normalized.includes(".swfuploadbutton") &&
+    normalized.includes('div[id^="rt_rt_"]') &&
+    normalized.includes("attachmentObject_") &&
+    normalized.includes("uploader.refresh()") &&
+    normalized.includes("window.onload") &&
+    !/\b(?:MKXFORM|GetXFormFieldById|AttachXFormValueChangeEventById|Com_Parameter|setValue|\.value\s*=)\b/.test(normalized);
+}
+
+function legacyDetailRuntimeCandidate(source, form) {
+  const text = String(source.javascript || "").trim();
+  if (/^Com_IncludeFile\(\s*(['"])doclist\.js\1\s*\)\s*;?\s*$/.test(text)) {
+    return legacyDetailRuntimeOmission(text, "Com_IncludeFile", "MK detail-table runtime");
+  }
+  const detailTableIds = new Set((form?.fields || [])
+    .filter((field) => field?.type === "detailTable" && field.id)
+    .map((field) => field.id));
+  const tableId = legacyDetailTableId(text);
+  if (!tableId || !detailTableIds.has(tableId)) return undefined;
+
+  if (new RegExp(`^DocList_Info\\.push\\(\\s*(['"])TABLE_DL_${escapeRegExp(tableId)}\\1\\s*\\)\\s*;?\\s*$`).test(text)) {
+    return legacyDetailRuntimeOmission(text, "DocList_Info.push", "MK detail-table registration");
+  }
+  if (isLegacyDetailDefaultRowScript(text, tableId) && source.displayGate === "xform:editShow") {
+    return {
+      index: 0,
+      event: "onLoad",
+      scope: "global",
+      javascript: text,
+      function: `function onLoad() {\n  MKXFORM.addRow('${tableId}', {})\n}`,
+      translationStatus: "mapped",
+      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      functionMappings: [{
+        source: "DocList_AddRow",
+        target: "MKXFORM.addRow",
+        basis: "semantic-translation",
+        reviewRequired: false
+      }]
+    };
+  }
+  if (isLegacyDetailWidthScript(text, tableId)) {
+    return legacyDetailRuntimeOmission(text, "legacy detail-table width styling", "MK responsive detail-table layout");
+  }
+  return undefined;
+}
+
+function legacyDetailRuntimeOmission(javascript, sourceName, target) {
+  return legacyRuntimeOmission(javascript, sourceName, target);
+}
+
+function legacyRuntimeOmission(javascript, sourceName, target) {
+  return {
+    index: 0,
+    event: "onLoad",
+    scope: "global",
+    javascript,
+    function: "",
+    translationStatus: "omitted",
+    coverage: { status: "covered", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: sourceName,
+      target,
+      basis: "legacy-runtime-noop",
+      reviewRequired: false
+    }]
+  };
+}
+
+function legacyDetailTableId(text) {
+  const match = String(text || "").match(/TABLE_DL_(fd_[A-Za-z0-9_]+)/);
+  return match?.[1];
+}
+
+function isLegacyDetailDefaultRowScript(text, tableId) {
+  return new RegExp(
+    `^Com_AddEventListener\\(\\s*window\\s*,\\s*(['"])load\\1\\s*,[\\s\\S]*?DocList_AddRow\\(\\s*document\\.getElementById\\(\\s*(['"])TABLE_DL_${escapeRegExp(tableId)}\\2\\s*\\)\\s*\\)[\\s\\S]*?\\)\\s*;?\\s*$`
+  ).test(text);
+}
+
+function isLegacyDetailWidthScript(text, tableId) {
+  const normalized = String(text || "");
+  return normalized.includes(`TABLE_DL_${tableId}`) &&
+    normalized.includes(`TABLE_DL_${tableId}_div`) &&
+    normalized.includes("tr[type='titleRow']") &&
+    normalized.includes("tds.each") &&
+    normalized.includes(".css('width'") &&
+    normalized.includes(".css('width','100%')");
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function hasExecutableJavascript(value = "") {

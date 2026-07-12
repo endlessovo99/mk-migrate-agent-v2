@@ -15,7 +15,7 @@ export class OpenAIResponsesReviewProvider {
   }
 
   async review({ sourceDraft, dslDraft, reviewScope }) {
-    return this.submitPrompt(buildAgentReviewPrompt(sourceDraft, dslDraft, { reviewScope }), "agent-review.provider");
+    return this.submitPrompt(buildAgentReviewPrompt(sourceDraft, dslDraft, { reviewScope, compact: this.env.OPENAI_REVIEW_CONTEXT === "compact" }), "agent-review.provider");
   }
 
   async repairReviewResponse({ sourceDraft, dslDraft, reviewScope, rawText, diagnostics, rejectedPatches, attempt }) {
@@ -51,8 +51,11 @@ export class OpenAIResponsesReviewProvider {
         format: { type: "json_object" }
       }
     };
+    if (config.thinking) body.thinking = { type: config.thinking };
 
     let response;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), config.requestTimeoutMs);
     try {
       response = await this.fetchImpl(endpoint, {
         method: "POST",
@@ -60,7 +63,8 @@ export class OpenAIResponsesReviewProvider {
           "content-type": "application/json",
           authorization: `Bearer ${config.apiKey}`
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: controller.signal
       });
     } catch (requestError) {
       return blockedProviderResult({
@@ -71,6 +75,8 @@ export class OpenAIResponsesReviewProvider {
           config.apiKey
         ), "/provider/network")]
       });
+    } finally {
+      clearTimeout(timeout);
     }
 
     const responseText = await safeReadResponseText(response);
@@ -143,9 +149,21 @@ export class OpenAIResponsesReviewProvider {
       ok: true,
       baseUrl,
       apiKey,
-      model
+      model,
+      thinking: normalizeThinking(this.env.OPENAI_THINKING),
+      requestTimeoutMs: positiveInteger(this.env.OPENAI_REQUEST_TIMEOUT_MS, 600000)
     };
   }
+}
+
+function normalizeThinking(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["enabled", "disabled"].includes(normalized) ? normalized : undefined;
+}
+
+function positiveInteger(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 export function extractResponseText(responseJson) {

@@ -1100,13 +1100,25 @@ function validateParallelGateways(nodes, nodeMap, diagnostics) {
       }));
     }
 
-    const modeKey = node.type === "split" ? "splitType" : "joinType";
-    if (!isAllParallelMode(attrs[modeKey])) {
-      diagnostics.push(error("dsl.workflow.parallel_gateway.mode_unsupported", "Only all parallel split/join gateways are executable in this version.", `${path}/definition/attributes/${modeKey}`, {
+    if (!isSupportedParallelGatewayPair(node, related)) {
+      const modeKey = node.type === "split" ? "splitType" : "joinType";
+      diagnostics.push(error("dsl.workflow.parallel_gateway.mode_unsupported", "Executable parallel gateways must be all/all, or a condition split paired with an all join.", `${path}/definition/attributes/${modeKey}`, {
         current: attrs[modeKey]
       }));
     }
   });
+}
+
+function isSupportedParallelGatewayPair(node, related) {
+  const attrs = workflowNodeAttributes(node);
+  const relatedAttrs = workflowNodeAttributes(related);
+  const modeKey = node.type === "split" ? "splitType" : "joinType";
+  const relatedModeKey = node.type === "split" ? "joinType" : "splitType";
+  const mode = normalizeParallelMode(attrs[modeKey]);
+  const relatedMode = normalizeParallelMode(relatedAttrs[relatedModeKey]);
+  return (mode === "all" && relatedMode === "all") ||
+    (node.type === "split" && mode === "condition" && relatedMode === "all") ||
+    (node.type === "join" && mode === "all" && relatedMode === "condition");
 }
 
 function validateParticipants(participants, diagnostics, path, context = {}) {
@@ -1399,8 +1411,12 @@ function splitRelatedNodeIds(value = "") {
 }
 
 function isAllParallelMode(value) {
-  const normalized = String(value || "").trim().toLowerCase();
+  const normalized = normalizeParallelMode(value);
   return normalized === "all" || normalized === "1";
+}
+
+function normalizeParallelMode(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function groupEdges(edges, key, valueKey) {

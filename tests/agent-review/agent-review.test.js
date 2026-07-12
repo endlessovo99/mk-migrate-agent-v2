@@ -899,6 +899,30 @@ describe("agent-review", () => {
     assert.equal(provider.metadata().model, "configured-review-model");
   });
 
+  it("passes an optional OPENAI_THINKING setting to Responses requests", async () => {
+    let submittedBody;
+    const provider = new OpenAIResponsesReviewProvider({
+      env: {
+        OPENAI_BASE_URL: "https://example.test",
+        OPENAI_API_KEY: "sk-test-secret",
+        OPENAI_MODEL: "configured-review-model",
+        OPENAI_THINKING: "disabled"
+      },
+      fetchImpl: async (_url, options) => {
+        submittedBody = JSON.parse(options.body);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ output_text: "{}" })
+        };
+      }
+    });
+
+    await provider.review({ sourceDraft: sampleSourceDraft(), dslDraft: sampleDraftDsl() });
+
+    assert.deepEqual(submittedBody.thinking, { type: "disabled" });
+  });
+
   it("does not leak OPENAI_API_KEY into reports when provider errors include it", async () => {
     const secret = "sk-test-secret";
     const provider = new OpenAIResponsesReviewProvider({

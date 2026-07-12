@@ -25,6 +25,7 @@ export const ALLOWED_PATCH_PATHS = [
 ];
 
 export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
+  const compact = options.compact === true;
   const reviewScope = options.reviewScope === undefined
     ? undefined
     : normalizeReviewScope(options.reviewScope, dslDraft?.scripts?.actions);
@@ -191,14 +192,14 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       functionCatalog: functionCatalogSummary(),
       sourceDraft: {
         form: sourceFormSummary(sourceDraft?.form),
-        scripts: scriptSourceSummary(sourceDraft?.scripts, focusedScriptSourceRefs, reviewScope !== undefined),
+        scripts: scriptSourceSummary(sourceDraft?.scripts, focusedScriptSourceRefs, reviewScope !== undefined, compact),
         issues: sourceIssueSummary(sourceDraft?.issues),
         workflowSummary: summarizeWorkflow(sourceDraft?.workflow)
       },
       dslDraft: {
         form: dslFormSummary(dslDraft?.form),
         formRules: formRulesSummary(dslDraft?.formRules),
-        scripts: scriptActionReviewSummary(dslDraft?.scripts, dslDraft?.formRules, dslDraft?.form, focusedActionIndexes, sourceDraft),
+        scripts: scriptActionReviewSummary(dslDraft?.scripts, dslDraft?.formRules, dslDraft?.form, focusedActionIndexes, sourceDraft, compact),
         review: {
           warnings: dslDraft?.review?.warnings || [],
           reviewCandidates: dslDraft?.review?.reviewCandidates || []
@@ -560,7 +561,7 @@ function formRulesSummary(formRules = {}) {
   };
 }
 
-function scriptSourceSummary(scripts = {}, focusedRefs, hasExplicitFocus = false) {
+function scriptSourceSummary(scripts = {}, focusedRefs, hasExplicitFocus = false, compact = false) {
   if (!scripts) return {};
   const hasFocusedRefs = focusedRefs instanceof Set && focusedRefs.size > 0;
   return pruneUndefined({
@@ -585,7 +586,7 @@ function scriptSourceSummary(scripts = {}, focusedRefs, hasExplicitFocus = false
         fragmentId: source.fragmentId,
         displayGate: source.displayGate,
         javascriptLength: String(source.javascript || "").length,
-        javascriptWindows: focused ? sourceJavascriptWindows(source) : undefined,
+        javascriptWindows: focused ? sourceJavascriptWindows(source, compact) : undefined,
         functionAudit: focused ? compactFunctionAudit(source.functionAudit) : compactFunctionAuditNames(source.functionAudit),
         semanticFacts: semanticFactsSummary(source.semanticFacts, focused)
       };
@@ -627,7 +628,7 @@ function focusedSourceRefsForScripts(scripts = {}, focusedActionIndexes) {
   return refs;
 }
 
-function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focusedActionIndexes, sourceDraft = {}) {
+function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focusedActionIndexes, sourceDraft = {}, compact = false) {
   const actions = Array.isArray(scripts?.actions) ? scripts.actions : [];
   const focusedIndexes = new Set(Array.isArray(focusedActionIndexes)
     ? focusedActionIndexes
@@ -658,10 +659,10 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
         functionMappings: functionMappingSummary(action.functionMappings, focused ? 8 : 0),
         semanticHints: action.semanticHints,
         reviewOpportunities: focused ? reviewOpportunitiesForAction(action, formRules, index, form, sourceDraft) : undefined,
-        actionSource: focused ? actionSourceSummary(action, 6200) : actionSourceSummary(action, 520),
+        actionSource: focused ? actionSourceSummary(action, compact ? 1800 : 6200) : actionSourceSummary(action, 520),
         unmappedFunctions: focused ? action.unmappedFunctions : undefined,
         functionLength: String(action.function || "").length,
-        functionPreview: previewText(action.function, focused ? 2200 : 180)
+        functionPreview: previewText(action.function, focused ? (compact ? 700 : 2200) : 180)
       };
     })
   });
@@ -919,19 +920,21 @@ function nativeRuleSummaries(formRules = {}, ruleIds = []) {
   });
 }
 
-function sourceJavascriptWindows(source = {}) {
+function sourceJavascriptWindows(source = {}, compact = false) {
   const text = String(source.javascript || "");
   if (!text) return [];
-  if (text.length <= 1800) {
+  const fullLimit = compact ? 700 : 1800;
+  if (text.length <= fullLimit) {
     return [{ label: "full", start: 0, end: text.length, text }];
   }
 
   const windows = [];
-  pushWindow(windows, text, "head", 0, 700);
-  pushWindow(windows, text, "tail", Math.max(0, text.length - 700), text.length);
+  const edge = compact ? 260 : 700;
+  pushWindow(windows, text, "head", 0, edge);
+  pushWindow(windows, text, "tail", Math.max(0, text.length - edge), text.length);
   for (const occurrence of selectedAuditOccurrences(source.functionAudit)) {
-    const start = Math.max(0, occurrence.index - 260);
-    const end = Math.min(text.length, occurrence.index + 520);
+    const start = Math.max(0, occurrence.index - (compact ? 100 : 260));
+    const end = Math.min(text.length, occurrence.index + (compact ? 220 : 520));
     pushWindow(windows, text, `around:${occurrence.name}`, start, end);
   }
   return windows;

@@ -1,0 +1,1411 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdVersion</string> 
+   <long>40</long> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>68300003</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>164d6e3d469485728f5d9d947ea854fd</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科技术质量中心研发一处</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdIsCurrentVersion</string> 
+   <boolean>true</boolean> 
+  </void> 
+  <void method="put"> 
+   <string>nodeDefinitionHandlers</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdIndex</string> 
+       <int>0</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf78880262f22e1537c4e828fa8e</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdHandler</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdOrgType</string> 
+         <int>8</int> 
+        </void> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>181613a6b7a65d02648affa4c23aff18</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.organization.model.SysOrgElement</string> 
+        </void> 
+        <void method="put"> 
+         <string>fdName</string> 
+         <string>季星宏-应用支持</string> 
+        </void> 
+        <void method="put"> 
+         <string>hbmParent.fdName</string> 
+         <string>电气数科大客户及解决方案中心</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinitionHandler</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>00</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAttribute</string> 
+       <string>privilegerIds</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdIndex</string> 
+       <int>0</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf78880a141e5c554ab488080bc4</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdHandler</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdOrgType</string> 
+         <int>8</int> 
+        </void> 
+        <void method="put"> 
+         <string>fdLoginName</string> 
+         <string>68300303</string> 
+        </void> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>1857d15439e2699b35c2127468dbab3c</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+        </void> 
+        <void method="put"> 
+         <string>hbmParent.fdName</string> 
+         <string>电气数科基础架构中心网络及安全处</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinitionHandler</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N16</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAttribute</string> 
+       <string>handlerIds</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdIndex</string> 
+       <int>0</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf78880bdd8736519de443c83420</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdHandler</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdOrgType</string> 
+         <int>4</int> 
+        </void> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>1862f65358f870358984903439da7edb</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.organization.model.SysOrgPost</string> 
+        </void> 
+        <void method="put"> 
+         <string>fdName</string> 
+         <string>电气数科_总经理</string> 
+        </void> 
+        <void method="put"> 
+         <string>hbmParent.fdName</string> 
+         <string>电气数科公司领导</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinitionHandler</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N10</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAttribute</string> 
+       <string>handlerIds</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdIndex</string> 
+       <int>1</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf78880c9fbf8d2e86b4c639679e</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdHandler</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdOrgType</string> 
+         <int>4</int> 
+        </void> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>165fa11ff7defb1dcb210dd4f72b3eb2</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.organization.model.SysOrgPost</string> 
+        </void> 
+        <void method="put"> 
+         <string>fdName</string> 
+         <string>电气数科基础架构中心_总经理</string> 
+        </void> 
+        <void method="put"> 
+         <string>hbmParent.fdName</string> 
+         <string>电气数科基础架构中心</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinitionHandler</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N10</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAttribute</string> 
+       <string>handlerIds</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdIndex</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf78880c855948b0e2846ac84cf7</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdHandler</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdOrgType</string> 
+         <int>4</int> 
+        </void> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>165fa11ff81eaf07b79ee8248899d01e</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.organization.model.SysOrgElement</string> 
+        </void> 
+        <void method="put"> 
+         <string>fdName</string> 
+         <string>电气数科技术质量中心_总经理</string> 
+        </void> 
+        <void method="put"> 
+         <string>hbmParent.fdName</string> 
+         <string>电气数科技术质量中心</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinitionHandler</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N10</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAttribute</string> 
+       <string>handlerIds</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdIndex</string> 
+       <int>0</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf78880398ca2a7314946abbebd8</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdHandler</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdOrgType</string> 
+         <int>32</int> 
+        </void> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>132b9721f5b953deb32a74c4d1a90f6c</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.organization.model.SysOrgElement</string> 
+        </void> 
+        <void method="put"> 
+         <string>fdName</string> 
+         <string>&lt;提交人&gt;</string> 
+        </void> 
+        <void method="put"> 
+         <string>hbmParent.fdName</string> 
+         <string></string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinitionHandler</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N14</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAttribute</string> 
+       <string>handlerIds</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdIndex</string> 
+       <int>0</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf78880aec8fad8db49428098b4e</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdHandler</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdOrgType</string> 
+         <int>8</int> 
+        </void> 
+        <void method="put"> 
+         <string>fdLoginName</string> 
+         <string>10604680</string> 
+        </void> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>14912dbf3cd0693198cdcbd481cb8547</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+        </void> 
+        <void method="put"> 
+         <string>hbmParent.fdName</string> 
+         <string>电气集团数字和信息化部</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinitionHandler</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N20</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAttribute</string> 
+       <string>handlerIds</string> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdContent</string> 
+   <string>&lt;process dayOfNotifyPrivileger=&quot;15&quot; description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=16a8c7e6740bd9caad821ba447dbf330&amp;amp;lbpmTmpId=16a8c81963849be3f2dedd64d8293c12&quot; fdId=&quot;19b6cf7887acad7ce9a109b4721b1fcf&quot; hourOfNotifyPrivileger=&quot;0&quot; iconType=&quot;2&quot; linesIndex=&quot;31&quot; minuteOfNotifyPrivileger=&quot;0&quot; nodesIndex=&quot;31&quot; notifyDraftOnFinish=&quot;true&quot; notifyOnFinish=&quot;true&quot; notifyType=&quot;todo&quot; orgAttribute=&quot;privilegerIds:privilegerNames&quot; privilegerIds=&quot;181613a6b7a65d02648affa4c23aff18&quot; privilegerNames=&quot;季星宏-应用支持&quot; recalculateHandler=&quot;true&quot; rejectReturn=&quot;true&quot;&gt;
+&lt;nodes&gt;
+&lt;startNode id=&quot;N1&quot; name=&quot;开始节点&quot; x=&quot;400&quot; y=&quot;60&quot;/&gt;
+&lt;draftNode id=&quot;N2&quot; mustModifyHandlerNodeIds=&quot;N4;N6;N7&quot; name=&quot;起草节点&quot; orgAttributes=&quot;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; x=&quot;400&quot; y=&quot;120&quot;/&gt;
+&lt;autoBranchNode id=&quot;N15&quot; name=&quot;条件分支&quot; x=&quot;580&quot; y=&quot;140&quot;/&gt;
+&lt;sendNode handlerIds=&quot;$fd_3ea698a261c666$&quot; handlerNames=&quot;$抄送相关领导$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N4&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;抄送相关领导&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;180&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;1857d15439e2699b35c2127468dbab3c&quot; handlerNames=&quot;钱进&quot; handlerSelectType=&quot;org&quot; id=&quot;N16&quot; ignoreOnHandlerEmpty=&quot;false&quot; mustModifyHandlerNodeIds=&quot;N10;N11;N12;N13&quot; name=&quot;数科对接人审批&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;0&quot; recalculateHandler=&quot;true&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;240&quot;/&gt;
+&lt;sendNode handlerIds=&quot;$fd_3ea698a0fa7c78$&quot; handlerNames=&quot;$相关人员$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N31&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;相关人员&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;260&quot;/&gt;
+&lt;robotNode id=&quot;N21&quot; name=&quot;漏洞确认&quot; x=&quot;400&quot; y=&quot;340&quot;/&gt;
+&lt;sendNode handlerIds=&quot;1862f65358f870358984903439da7edb;165fa11ff7defb1dcb210dd4f72b3eb2;165fa11ff81eaf07b79ee8248899d01e&quot; handlerNames=&quot;电气数科_总经理;电气数科基础架构中心_总经理;电气数科技术质量中心_总经理&quot; handlerSelectType=&quot;org&quot; id=&quot;N10&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;抄送相关领导&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;340&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;$fd_3ea8c4b09da4fe$&quot; handlerNames=&quot;$相关领导$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N6&quot; ignoreOnHandlerEmpty=&quot;false&quot; name=&quot;漏洞确认&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;400&quot;/&gt;
+&lt;reviewNode handlerSelectType=&quot;org&quot; id=&quot;N11&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;相关人员&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;440&quot;/&gt;
+&lt;robotNode id=&quot;N26&quot; name=&quot;漏洞修复&quot; x=&quot;400&quot; y=&quot;460&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;$fd_3ea8c511ffc138$&quot; handlerNames=&quot;$漏洞处理$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N7&quot; ignoreOnHandlerEmpty=&quot;false&quot; name=&quot;漏洞处理&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;520&quot;/&gt;
+&lt;reviewNode handlerSelectType=&quot;org&quot; id=&quot;N12&quot; ignoreOnHandlerEmpty=&quot;false&quot; name=&quot;相关领导&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;540&quot;/&gt;
+&lt;robotNode id=&quot;N27&quot; name=&quot;漏洞复测&quot; x=&quot;400&quot; y=&quot;580&quot;/&gt;
+&lt;reviewNode handlerSelectType=&quot;org&quot; id=&quot;N13&quot; ignoreOnHandlerEmpty=&quot;false&quot; name=&quot;漏洞处理&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;620&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;$fd_3ea8c5326b3754$&quot; handlerNames=&quot;$漏洞处理反馈$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N8&quot; ignoreOnHandlerEmpty=&quot;false&quot; name=&quot;漏洞处理反馈&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;1&quot; recalculateHandler=&quot;true&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;660&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;132b9721f5b953deb32a74c4d1a90f6c&quot; handlerNames=&quot;&amp;lt;提交人&amp;gt;&quot; handlerSelectType=&quot;org&quot; id=&quot;N14&quot; ignoreOnHandlerEmpty=&quot;false&quot; name=&quot;漏洞处理反馈&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;0&quot; recalculateHandler=&quot;true&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;700&quot;/&gt;
+&lt;robotNode id=&quot;N28&quot; name=&quot;修复完成&quot; x=&quot;400&quot; y=&quot;720&quot;/&gt;
+&lt;sendNode handlerIds=&quot;$fd_3ea8c5b2213ef2$&quot; handlerNames=&quot;$结果抄送$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N19&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;抄送节点&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;800&quot;/&gt;
+&lt;endNode id=&quot;N3&quot; name=&quot;结束节点&quot; x=&quot;400&quot; y=&quot;880&quot;/&gt;
+&lt;sendNode handlerIds=&quot;14912dbf3cd0693198cdcbd481cb8547&quot; handlerNames=&quot;李斌&quot; handlerSelectType=&quot;org&quot; id=&quot;N20&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;抄送节点&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;880&quot;/&gt;
+&lt;/nodes&gt;
+&lt;lines&gt;
+&lt;line endNodeId=&quot;N2&quot; endPosition=&quot;1&quot; id=&quot;L1&quot; points=&quot;400,80;400,100&quot; startNodeId=&quot;N1&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N15&quot; endPosition=&quot;4&quot; id=&quot;L2&quot; points=&quot;400,140;520,140&quot; startNodeId=&quot;N2&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line condition=&quot;return true;&quot; disCondition=&quot;return true;&quot; endNodeId=&quot;N4&quot; endPosition=&quot;2&quot; id=&quot;L13&quot; points=&quot;580,180;460,180&quot; priority=&quot;1&quot; startNodeId=&quot;N15&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line condition=&quot;&amp;quot;李斌&amp;quot;.equals($docCreator$.getFdName()) &quot; disCondition=&quot;&amp;quot;李斌&amp;quot;.equals($申请人$.getFdName()) &quot; endNodeId=&quot;N16&quot; endPosition=&quot;1&quot; id=&quot;L14&quot; name=&quot;股份提交分支&quot; points=&quot;580,180;580,220&quot; priority=&quot;0&quot; startNodeId=&quot;N15&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N31&quot; endPosition=&quot;1&quot; id=&quot;L3&quot; points=&quot;400,200;400,240&quot; startNodeId=&quot;N4&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N10&quot; endPosition=&quot;1&quot; id=&quot;L15&quot; points=&quot;580,260;580,320&quot; startNodeId=&quot;N16&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N21&quot; endPosition=&quot;1&quot; id=&quot;L31&quot; points=&quot;400,280;400,320&quot; startNodeId=&quot;N31&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N6&quot; endPosition=&quot;1&quot; id=&quot;L22&quot; points=&quot;400,360;400,380&quot; startNodeId=&quot;N21&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N11&quot; endPosition=&quot;1&quot; id=&quot;L9&quot; points=&quot;580,360;580,420&quot; startNodeId=&quot;N10&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N26&quot; endPosition=&quot;1&quot; id=&quot;L5&quot; points=&quot;400,420;400,440&quot; startNodeId=&quot;N6&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N12&quot; endPosition=&quot;1&quot; id=&quot;L10&quot; points=&quot;580,460;580,520&quot; startNodeId=&quot;N11&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N7&quot; endPosition=&quot;1&quot; id=&quot;L26&quot; points=&quot;400,480;400,500&quot; startNodeId=&quot;N26&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N27&quot; endPosition=&quot;1&quot; id=&quot;L6&quot; points=&quot;400,540;400,560&quot; startNodeId=&quot;N7&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N13&quot; endPosition=&quot;1&quot; id=&quot;L11&quot; points=&quot;580,560;580,600&quot; startNodeId=&quot;N12&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N8&quot; endPosition=&quot;1&quot; id=&quot;L27&quot; points=&quot;400,600;400,640&quot; startNodeId=&quot;N27&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N14&quot; endPosition=&quot;1&quot; id=&quot;L12&quot; points=&quot;580,640;580,680&quot; startNodeId=&quot;N13&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N28&quot; endPosition=&quot;1&quot; id=&quot;L7&quot; points=&quot;400,680;400,700&quot; startNodeId=&quot;N8&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N20&quot; endPosition=&quot;1&quot; id=&quot;L18&quot; points=&quot;580,720;580,860&quot; startNodeId=&quot;N14&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N19&quot; endPosition=&quot;1&quot; id=&quot;L28&quot; points=&quot;400,740;400,780&quot; startNodeId=&quot;N28&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N3&quot; endPosition=&quot;1&quot; id=&quot;L20&quot; points=&quot;400,820;400,860&quot; startNodeId=&quot;N19&quot; startPosition=&quot;3&quot;/&gt;
+&lt;line endNodeId=&quot;N3&quot; endPosition=&quot;2&quot; id=&quot;L21&quot; points=&quot;520,880;460,880&quot; startNodeId=&quot;N20&quot; startPosition=&quot;4&quot;/&gt;
+&lt;/lines&gt;
+&lt;/process&gt;
+</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateId</string> 
+   <string>16a8c81963849be3f2dedd64d8293c12</string> 
+  </void> 
+  <void method="put"> 
+   <string>nodeDefinitions</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;startNode id=&quot;N1&quot; name=&quot;开始节点&quot; x=&quot;400&quot; y=&quot;60&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>开始节点</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N1</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N1</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;draftNode canModifyFlow=&quot;false&quot; canModifyNotionPopedom=&quot;false&quot; hourOfRejectNotifyDraft=&quot;0&quot; id=&quot;N2&quot; minuteOfRejectNotifyDraft=&quot;0&quot; mustModifyHandlerNodeIds=&quot;N4;N6;N7&quot; name=&quot;起草节点&quot; orgAttributes=&quot;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; rejectNotifyDraft=&quot;0&quot; x=&quot;400&quot; y=&quot;120&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>起草节点</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N2</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N2</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;autoBranchNode id=&quot;N15&quot; name=&quot;条件分支&quot; x=&quot;580&quot; y=&quot;140&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>条件分支</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N15</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N15</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;sendNode canAddOpinion=&quot;false&quot; handlerIds=&quot;$fd_3ea698a261c666$&quot; handlerNames=&quot;$抄送相关领导$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N4&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;抄送相关领导&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;180&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>抄送相关领导</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N4</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N4</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;reviewNode canModifyFlow=&quot;false&quot; canModifyMainDoc=&quot;false&quot; canModifyNotionPopedom=&quot;false&quot; dayOfNotify=&quot;3&quot; dayOfPass=&quot;0&quot; handlerIds=&quot;1857d15439e2699b35c2127468dbab3c&quot; handlerNames=&quot;钱进&quot; handlerSelectType=&quot;org&quot; hourOfNotify=&quot;0&quot; hourOfPass=&quot;0&quot; hourOfTranNotifyDraft=&quot;0&quot; hourOfTranNotifyPrivate=&quot;0&quot; id=&quot;N16&quot; ignoreOnHandlerEmpty=&quot;false&quot; ignoreOnHandlerSame=&quot;false&quot; minuteOfNotify=&quot;0&quot; minuteOfPass=&quot;0&quot; minuteOfTranNotifyDraft=&quot;0&quot; minuteOfTranNotifyPrivate=&quot;0&quot; mustModifyHandlerNodeIds=&quot;N10;N11;N12;N13&quot; name=&quot;数科对接人审批&quot; onAdjoinHandlerSame=&quot;false&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;0&quot; recalculateHandler=&quot;true&quot; tranNotifyDraft=&quot;3&quot; tranNotifyPrivate=&quot;3&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;240&quot;&gt;
+&lt;operations refId=&quot;13c5ae137925b6f5b55b6cf4051ac33a&quot;/&gt;
+&lt;/reviewNode&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>数科对接人审批</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N16</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N16</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;sendNode canAddOpinion=&quot;false&quot; handlerIds=&quot;$fd_3ea698a0fa7c78$&quot; handlerNames=&quot;$相关人员$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N31&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;相关人员&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;260&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>相关人员</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N31</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N31</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;reviewNode canModifyFlow=&quot;false&quot; canModifyMainDoc=&quot;false&quot; dayOfNotify=&quot;3&quot; dayOfPass=&quot;0&quot; handlerSelectType=&quot;org&quot; hourOfNotify=&quot;0&quot; hourOfPass=&quot;0&quot; hourOfTranNotifyDraft=&quot;0&quot; hourOfTranNotifyPrivate=&quot;0&quot; id=&quot;N13&quot; ignoreOnHandlerEmpty=&quot;false&quot; ignoreOnHandlerSame=&quot;true&quot; minuteOfNotify=&quot;0&quot; minuteOfPass=&quot;0&quot; minuteOfTranNotifyDraft=&quot;0&quot; minuteOfTranNotifyPrivate=&quot;0&quot; name=&quot;漏洞处理&quot; onAdjoinHandlerSame=&quot;true&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; tranNotifyDraft=&quot;3&quot; tranNotifyPrivate=&quot;3&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;620&quot;&gt;
+&lt;operations refId=&quot;13c5ae137925b6f5b55b6cf4051ac33a&quot;/&gt;
+&lt;/reviewNode&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>漏洞处理</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N13</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N13</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;reviewNode canModifyFlow=&quot;false&quot; canModifyMainDoc=&quot;false&quot; canModifyNotionPopedom=&quot;false&quot; dayOfNotify=&quot;3&quot; dayOfPass=&quot;0&quot; handlerIds=&quot;$fd_3ea8c5326b3754$&quot; handlerNames=&quot;$漏洞处理反馈$&quot; handlerSelectType=&quot;formula&quot; hourOfNotify=&quot;0&quot; hourOfPass=&quot;0&quot; hourOfTranNotifyDraft=&quot;0&quot; hourOfTranNotifyPrivate=&quot;0&quot; id=&quot;N8&quot; ignoreOnHandlerEmpty=&quot;false&quot; ignoreOnHandlerSame=&quot;true&quot; minuteOfNotify=&quot;0&quot; minuteOfPass=&quot;0&quot; minuteOfTranNotifyDraft=&quot;0&quot; minuteOfTranNotifyPrivate=&quot;0&quot; name=&quot;漏洞处理反馈&quot; onAdjoinHandlerSame=&quot;true&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;1&quot; recalculateHandler=&quot;true&quot; tranNotifyDraft=&quot;3&quot; tranNotifyPrivate=&quot;3&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;660&quot;&gt;
+&lt;operations refId=&quot;13c5ae137925b6f5b55b6cf4051ac33a&quot;/&gt;
+&lt;/reviewNode&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>漏洞处理反馈</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N8</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N8</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;reviewNode canModifyFlow=&quot;false&quot; canModifyMainDoc=&quot;false&quot; dayOfNotify=&quot;3&quot; dayOfPass=&quot;0&quot; handlerIds=&quot;132b9721f5b953deb32a74c4d1a90f6c&quot; handlerNames=&quot;&amp;lt;提交人&amp;gt;&quot; handlerSelectType=&quot;org&quot; hourOfNotify=&quot;0&quot; hourOfPass=&quot;0&quot; hourOfTranNotifyDraft=&quot;0&quot; hourOfTranNotifyPrivate=&quot;0&quot; id=&quot;N14&quot; ignoreOnHandlerEmpty=&quot;false&quot; ignoreOnHandlerSame=&quot;true&quot; minuteOfNotify=&quot;0&quot; minuteOfPass=&quot;0&quot; minuteOfTranNotifyDraft=&quot;0&quot; minuteOfTranNotifyPrivate=&quot;0&quot; name=&quot;漏洞处理反馈&quot; onAdjoinHandlerSame=&quot;true&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;0&quot; recalculateHandler=&quot;true&quot; tranNotifyDraft=&quot;3&quot; tranNotifyPrivate=&quot;3&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;700&quot;&gt;
+&lt;operations refId=&quot;13c5ae137925b6f5b55b6cf4051ac33a&quot;/&gt;
+&lt;/reviewNode&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>漏洞处理反馈</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N14</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N14</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;robotNode content=&quot;{&amp;quot;headers&amp;quot;:[],&amp;quot;params&amp;quot;:[{&amp;quot;fieldName&amp;quot;:&amp;quot;appKey&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;483131cb7dfdc6c2&amp;quot;},{&amp;quot;fieldName&amp;quot;:&amp;quot;status&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;修复完成&amp;quot;},{&amp;quot;fieldName&amp;quot;:&amp;quot;sign&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;NTlkZDcyOTFiOWYyMGQ3MTUyMDYxNzg3ZjVlZDFhZThhNWJjYWZhZTEzY2EwYTFjYzEyZGY0MGMxYzA1NTVhYw==&amp;quot;}],&amp;quot;formParams&amp;quot;:[{&amp;quot;field&amp;quot;:&amp;quot;$fdId$&amp;quot;,&amp;quot;fieldText&amp;quot;:&amp;quot;$ID$&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;Object&amp;quot;,&amp;quot;fieldName&amp;quot;:&amp;quot;fdId&amp;quot;,&amp;quot;defaultValue&amp;quot;:&amp;quot;&amp;quot;}],&amp;quot;responseParams&amp;quot;:[],&amp;quot;requestMethod&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;restfulUrl&amp;quot;:&amp;quot;https://owork.shanghai-electric.com/api/workflow/hooks/NjhiNzk2MGY3NDUzZTYyOTlkMTBkYTYy&amp;quot;,&amp;quot;successParam&amp;quot;:{&amp;quot;successFieldName&amp;quot;:&amp;quot;success&amp;quot;,&amp;quot;successValue&amp;quot;:&amp;quot;true&amp;quot;},&amp;quot;dataFieldName&amp;quot;:&amp;quot;data&amp;quot;}&quot; id=&quot;N28&quot; name=&quot;修复完成&quot; unid=&quot;*@Robot@restapiRobotNode&quot; x=&quot;400&quot; y=&quot;720&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>修复完成</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N28</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N28</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;sendNode canAddOpinion=&quot;false&quot; handlerIds=&quot;$fd_3ea8c5b2213ef2$&quot; handlerNames=&quot;$结果抄送$&quot; handlerSelectType=&quot;formula&quot; id=&quot;N19&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;抄送节点&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;800&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>抄送节点</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N19</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N19</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;endNode id=&quot;N3&quot; name=&quot;结束节点&quot; x=&quot;400&quot; y=&quot;880&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>结束节点</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N3</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N3</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;sendNode canAddOpinion=&quot;false&quot; handlerIds=&quot;14912dbf3cd0693198cdcbd481cb8547&quot; handlerNames=&quot;李斌&quot; handlerSelectType=&quot;org&quot; id=&quot;N20&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;抄送节点&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;880&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>抄送节点</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N20</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N20</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;robotNode content=&quot;{&amp;quot;headers&amp;quot;:[],&amp;quot;params&amp;quot;:[{&amp;quot;fieldName&amp;quot;:&amp;quot;appKey&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;483131cb7dfdc6c2&amp;quot;},{&amp;quot;fieldName&amp;quot;:&amp;quot;status&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;领导审批&amp;quot;},{&amp;quot;fieldName&amp;quot;:&amp;quot;sign&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;NTlkZDcyOTFiOWYyMGQ3MTUyMDYxNzg3ZjVlZDFhZThhNWJjYWZhZTEzY2EwYTFjYzEyZGY0MGMxYzA1NTVhYw==&amp;quot;}],&amp;quot;formParams&amp;quot;:[{&amp;quot;field&amp;quot;:&amp;quot;$fdId$&amp;quot;,&amp;quot;fieldText&amp;quot;:&amp;quot;$ID$&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;Object&amp;quot;,&amp;quot;fieldName&amp;quot;:&amp;quot;fdId&amp;quot;,&amp;quot;defaultValue&amp;quot;:&amp;quot;&amp;quot;},{&amp;quot;field&amp;quot;:&amp;quot;$fd_375294981edcea$&amp;quot;,&amp;quot;fieldText&amp;quot;:&amp;quot;$漏洞信息发布来源$&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;Object&amp;quot;,&amp;quot;fieldName&amp;quot;:&amp;quot;source&amp;quot;,&amp;quot;defaultValue&amp;quot;:&amp;quot;&amp;quot;},{&amp;quot;field&amp;quot;:&amp;quot;$fd_3dc979118b5f3c$&amp;quot;,&amp;quot;fieldText&amp;quot;:&amp;quot;$漏洞风险等级$&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;Object&amp;quot;,&amp;quot;fieldName&amp;quot;:&amp;quot;risk_level&amp;quot;,&amp;quot;defaultValue&amp;quot;:&amp;quot;&amp;quot;}],&amp;quot;responseParams&amp;quot;:[],&amp;quot;requestMethod&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;restfulUrl&amp;quot;:&amp;quot;https://owork.shanghai-electric.com/api/workflow/hooks/NjhiNzk2MGY3NDUzZTYyOTlkMTBkYTYy&amp;quot;,&amp;quot;successParam&amp;quot;:{&amp;quot;successFieldName&amp;quot;:&amp;quot;success&amp;quot;,&amp;quot;successValue&amp;quot;:&amp;quot;true&amp;quot;},&amp;quot;dataFieldName&amp;quot;:&amp;quot;data&amp;quot;}&quot; id=&quot;N21&quot; name=&quot;漏洞确认&quot; unid=&quot;*@Robot@restapiRobotNode&quot; x=&quot;400&quot; y=&quot;340&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>漏洞确认</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N21</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N21</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;sendNode canAddOpinion=&quot;false&quot; handlerIds=&quot;1862f65358f870358984903439da7edb;165fa11ff7defb1dcb210dd4f72b3eb2;165fa11ff81eaf07b79ee8248899d01e&quot; handlerNames=&quot;电气数科_总经理;电气数科基础架构中心_总经理;电气数科技术质量中心_总经理&quot; handlerSelectType=&quot;org&quot; id=&quot;N10&quot; ignoreOnHandlerEmpty=&quot;true&quot; name=&quot;抄送相关领导&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;340&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>抄送相关领导</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N10</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N10</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;reviewNode canModifyFlow=&quot;false&quot; canModifyMainDoc=&quot;false&quot; canModifyNotionPopedom=&quot;false&quot; dayOfNotify=&quot;3&quot; dayOfPass=&quot;0&quot; handlerIds=&quot;$fd_3ea8c4b09da4fe$&quot; handlerNames=&quot;$相关领导$&quot; handlerSelectType=&quot;formula&quot; hourOfNotify=&quot;0&quot; hourOfPass=&quot;0&quot; hourOfTranNotifyDraft=&quot;0&quot; hourOfTranNotifyPrivate=&quot;0&quot; id=&quot;N6&quot; ignoreOnHandlerEmpty=&quot;false&quot; ignoreOnHandlerSame=&quot;false&quot; minuteOfNotify=&quot;0&quot; minuteOfPass=&quot;0&quot; minuteOfTranNotifyDraft=&quot;0&quot; minuteOfTranNotifyPrivate=&quot;0&quot; name=&quot;漏洞确认&quot; onAdjoinHandlerSame=&quot;false&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; tranNotifyDraft=&quot;3&quot; tranNotifyPrivate=&quot;3&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;400&quot;&gt;
+&lt;operations refId=&quot;13c5ae137925b6f5b55b6cf4051ac33a&quot;/&gt;
+&lt;/reviewNode&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>漏洞确认</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N6</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N6</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;reviewNode canModifyFlow=&quot;false&quot; canModifyMainDoc=&quot;false&quot; dayOfNotify=&quot;3&quot; dayOfPass=&quot;0&quot; handlerSelectType=&quot;org&quot; hourOfNotify=&quot;0&quot; hourOfPass=&quot;0&quot; hourOfTranNotifyDraft=&quot;0&quot; hourOfTranNotifyPrivate=&quot;0&quot; id=&quot;N11&quot; ignoreOnHandlerEmpty=&quot;true&quot; ignoreOnHandlerSame=&quot;true&quot; minuteOfNotify=&quot;0&quot; minuteOfPass=&quot;0&quot; minuteOfTranNotifyDraft=&quot;0&quot; minuteOfTranNotifyPrivate=&quot;0&quot; name=&quot;相关人员&quot; onAdjoinHandlerSame=&quot;true&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; tranNotifyDraft=&quot;3&quot; tranNotifyPrivate=&quot;3&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;440&quot;&gt;
+&lt;operations refId=&quot;13c5ae137925b6f5b55b6cf4051ac33a&quot;/&gt;
+&lt;/reviewNode&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>相关人员</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N11</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N11</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;robotNode content=&quot;{&amp;quot;headers&amp;quot;:[],&amp;quot;params&amp;quot;:[{&amp;quot;fieldName&amp;quot;:&amp;quot;appKey&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;483131cb7dfdc6c2&amp;quot;},{&amp;quot;fieldName&amp;quot;:&amp;quot;status&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;漏洞修复&amp;quot;},{&amp;quot;fieldName&amp;quot;:&amp;quot;sign&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;NTlkZDcyOTFiOWYyMGQ3MTUyMDYxNzg3ZjVlZDFhZThhNWJjYWZhZTEzY2EwYTFjYzEyZGY0MGMxYzA1NTVhYw==&amp;quot;}],&amp;quot;formParams&amp;quot;:[{&amp;quot;field&amp;quot;:&amp;quot;$fdId$&amp;quot;,&amp;quot;fieldText&amp;quot;:&amp;quot;$ID$&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;Object&amp;quot;,&amp;quot;fieldName&amp;quot;:&amp;quot;fdId&amp;quot;,&amp;quot;defaultValue&amp;quot;:&amp;quot;&amp;quot;}],&amp;quot;responseParams&amp;quot;:[],&amp;quot;requestMethod&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;restfulUrl&amp;quot;:&amp;quot;https://owork.shanghai-electric.com/api/workflow/hooks/NjhiNzk2MGY3NDUzZTYyOTlkMTBkYTYy&amp;quot;,&amp;quot;successParam&amp;quot;:{&amp;quot;successFieldName&amp;quot;:&amp;quot;success&amp;quot;,&amp;quot;successValue&amp;quot;:&amp;quot;true&amp;quot;},&amp;quot;dataFieldName&amp;quot;:&amp;quot;data&amp;quot;}&quot; id=&quot;N26&quot; name=&quot;漏洞修复&quot; unid=&quot;*@Robot@restapiRobotNode&quot; x=&quot;400&quot; y=&quot;460&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>漏洞修复</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N26</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N26</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;reviewNode canModifyFlow=&quot;false&quot; canModifyMainDoc=&quot;false&quot; canModifyNotionPopedom=&quot;false&quot; dayOfNotify=&quot;3&quot; dayOfPass=&quot;0&quot; handlerIds=&quot;$fd_3ea8c511ffc138$&quot; handlerNames=&quot;$漏洞处理$&quot; handlerSelectType=&quot;formula&quot; hourOfNotify=&quot;0&quot; hourOfPass=&quot;0&quot; hourOfTranNotifyDraft=&quot;0&quot; hourOfTranNotifyPrivate=&quot;0&quot; id=&quot;N7&quot; ignoreOnHandlerEmpty=&quot;false&quot; ignoreOnHandlerSame=&quot;false&quot; minuteOfNotify=&quot;0&quot; minuteOfPass=&quot;0&quot; minuteOfTranNotifyDraft=&quot;0&quot; minuteOfTranNotifyPrivate=&quot;0&quot; name=&quot;漏洞处理&quot; onAdjoinHandlerSame=&quot;false&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; tranNotifyDraft=&quot;3&quot; tranNotifyPrivate=&quot;3&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;400&quot; y=&quot;520&quot;&gt;
+&lt;operations refId=&quot;13c5ae137925b6f5b55b6cf4051ac33a&quot;/&gt;
+&lt;/reviewNode&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>漏洞处理</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N7</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N7</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;reviewNode canModifyFlow=&quot;false&quot; canModifyMainDoc=&quot;false&quot; dayOfNotify=&quot;3&quot; dayOfPass=&quot;0&quot; handlerSelectType=&quot;org&quot; hourOfNotify=&quot;0&quot; hourOfPass=&quot;0&quot; hourOfTranNotifyDraft=&quot;0&quot; hourOfTranNotifyPrivate=&quot;0&quot; id=&quot;N12&quot; ignoreOnHandlerEmpty=&quot;false&quot; ignoreOnHandlerSame=&quot;true&quot; minuteOfNotify=&quot;0&quot; minuteOfPass=&quot;0&quot; minuteOfTranNotifyDraft=&quot;0&quot; minuteOfTranNotifyPrivate=&quot;0&quot; name=&quot;相关领导&quot; onAdjoinHandlerSame=&quot;true&quot; optHandlerCalType=&quot;2&quot; optHandlerSelectType=&quot;org&quot; orgAttributes=&quot;handlerIds:handlerNames;optHandlerIds:optHandlerNames;otherCanViewCurNodeIds:otherCanViewCurNodeNames&quot; processType=&quot;2&quot; recalculateHandler=&quot;true&quot; tranNotifyDraft=&quot;3&quot; tranNotifyPrivate=&quot;3&quot; useOptHandlerOnly=&quot;false&quot; x=&quot;580&quot; y=&quot;540&quot;&gt;
+&lt;operations refId=&quot;13c5ae137925b6f5b55b6cf4051ac33a&quot;/&gt;
+&lt;/reviewNode&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>相关领导</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N12</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N12</string> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdContent</string> 
+       <string>&lt;robotNode content=&quot;{&amp;quot;headers&amp;quot;:[],&amp;quot;params&amp;quot;:[{&amp;quot;fieldName&amp;quot;:&amp;quot;appKey&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;483131cb7dfdc6c2&amp;quot;},{&amp;quot;fieldName&amp;quot;:&amp;quot;status&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;漏洞复测&amp;quot;},{&amp;quot;fieldName&amp;quot;:&amp;quot;sign&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;String&amp;quot;,&amp;quot;dataTypeText&amp;quot;:&amp;quot;字符串&amp;quot;,&amp;quot;fieldValue&amp;quot;:&amp;quot;NTlkZDcyOTFiOWYyMGQ3MTUyMDYxNzg3ZjVlZDFhZThhNWJjYWZhZTEzY2EwYTFjYzEyZGY0MGMxYzA1NTVhYw==&amp;quot;}],&amp;quot;formParams&amp;quot;:[{&amp;quot;field&amp;quot;:&amp;quot;$fdId$&amp;quot;,&amp;quot;fieldText&amp;quot;:&amp;quot;$ID$&amp;quot;,&amp;quot;dataType&amp;quot;:&amp;quot;Object&amp;quot;,&amp;quot;fieldName&amp;quot;:&amp;quot;fdId&amp;quot;,&amp;quot;defaultValue&amp;quot;:&amp;quot;&amp;quot;}],&amp;quot;responseParams&amp;quot;:[],&amp;quot;requestMethod&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;restfulUrl&amp;quot;:&amp;quot;https://owork.shanghai-electric.com/api/workflow/hooks/NjhiNzk2MGY3NDUzZTYyOTlkMTBkYTYy&amp;quot;,&amp;quot;successParam&amp;quot;:{&amp;quot;successFieldName&amp;quot;:&amp;quot;success&amp;quot;,&amp;quot;successValue&amp;quot;:&amp;quot;true&amp;quot;},&amp;quot;dataFieldName&amp;quot;:&amp;quot;data&amp;quot;}&quot; id=&quot;N27&quot; name=&quot;漏洞复测&quot; unid=&quot;*@Robot@restapiRobotNode&quot; x=&quot;400&quot; y=&quot;580&quot;/&gt;
+
+</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdProcess</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>19b6cf7887acad7ce9a109b4721b1fcf</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactName</string> 
+       <string>漏洞复测</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>19b6cf7887acad7ce9a109b4721b1fcf;N27</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmNodeDefinition</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFactId</string> 
+       <string>N27</string> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1767059720314</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdLoadType</string> 
+   <short>3</short> 
+  </void> 
+ </object> 
+</java> 

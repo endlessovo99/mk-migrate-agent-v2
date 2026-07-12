@@ -907,11 +907,11 @@ function parallelGatewayNodeType(node, nodeById, type) {
     type,
     element: "parallelGateway",
     participants: false,
-    needsReview: !isExecutableAllParallelGateway(node, nodeById, type)
+    needsReview: !isExecutableParallelGateway(node, nodeById, type)
   };
 }
 
-function isExecutableAllParallelGateway(node, nodeById, type) {
+function isExecutableParallelGateway(node, nodeById, type) {
   const attrs = sourceNodeAttributes(node);
   const relatedIds = splitRelatedNodeIds(attrs.relatedNodeIds);
   if (relatedIds.length !== 1) return false;
@@ -923,13 +923,23 @@ function isExecutableAllParallelGateway(node, nodeById, type) {
   const expectedRelatedType = type === "split" ? "join" : "split";
   if (!relatedType.includes(expectedRelatedType)) return false;
 
-  const modeKey = type === "split" ? "splitType" : "joinType";
-  const relatedModeKey = type === "split" ? "joinType" : "splitType";
-  if (!isAllParallelMode(attrs[modeKey])) return false;
-  if (!isAllParallelMode(sourceNodeAttributes(related)[relatedModeKey])) return false;
+  if (!isSupportedParallelGatewayPair(attrs, sourceNodeAttributes(related), type)) return false;
 
   const relatedBackIds = splitRelatedNodeIds(sourceNodeAttributes(related).relatedNodeIds);
   return relatedBackIds.length === 1 && relatedBackIds[0] === node.id;
+}
+
+function isSupportedParallelGatewayPair(attrs, relatedAttrs, type) {
+  const modeKey = type === "split" ? "splitType" : "joinType";
+  const relatedModeKey = type === "split" ? "joinType" : "splitType";
+  const mode = normalizeParallelMode(attrs[modeKey]);
+  const relatedMode = normalizeParallelMode(relatedAttrs[relatedModeKey]);
+
+  // Legacy `condition` splits fan out to every matching branch and pair with
+  // an `all` join. NewOA persists this paired gateway shape as splitType "1".
+  return (mode === "all" && relatedMode === "all") ||
+    (type === "split" && mode === "condition" && relatedMode === "all") ||
+    (type === "join" && mode === "all" && relatedMode === "condition");
 }
 
 function sourceNodeAttributes(node) {
@@ -940,8 +950,12 @@ function sourceNodeAttributes(node) {
 }
 
 function isAllParallelMode(value) {
-  const normalized = String(value || "").trim().toLowerCase();
+  const normalized = normalizeParallelMode(value);
   return normalized === "all" || normalized === "1";
+}
+
+function normalizeParallelMode(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function splitRelatedNodeIds(value = "") {
