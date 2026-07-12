@@ -2,6 +2,7 @@ import { PLATFORM_OWNED } from "./invariants.js";
 import { decodeRequiredJsonObject, requireArray, requireRecord } from "./decode.js";
 import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "./normalize.js";
 import { diagnostic } from "./diagnostics.js";
+import { subProcessContract } from "../../dsl/subprocess.js";
 
 /**
  * Independently observe native persisted template semantics.
@@ -690,6 +691,7 @@ function observeWorkflow(lbpm) {
       ignoreOnSameIdentity: node.ignoreOnSameIdentity === undefined
         ? undefined
         : normalizeScalar(node.ignoreOnSameIdentity),
+      subProcess: node.type === "startSubProcess" ? observeSubProcess(node) : undefined,
       // presentation-only fields intentionally omitted from error comparison
       x: node.x,
       y: node.y
@@ -712,6 +714,39 @@ function observeWorkflow(lbpm) {
     value,
     diagnostics
   };
+}
+
+function observeSubProcess(node) {
+  const config = decodeJsonObject(node.config);
+  const contract = subProcessContract({
+    templateId: config.subProcess?.templateId,
+    recoverNodeId: node.migrationSource?.subProcess?.recoverNodeId,
+    startCountType: node.startCountType || config.startCountType,
+    flowType: node.flowType || config.flowType,
+    autoSubmit: node.autoSubmit,
+    variableScope: config.recovery?.variableScope,
+    recoverRule: config.recovery?.recoverRule,
+    startParamConfig: node.startParamConfig,
+    recoverParamConfig: node.recoverParamConfig
+  });
+  return {
+    ...contract,
+    templateId: normalizeScalar(contract.templateId),
+    recoverNodeId: normalizeScalar(contract.recoverNodeId),
+    startCountType: normalizeScalar(contract.startCountType),
+    flowType: normalizeScalar(contract.flowType)
+  };
+}
+
+function decodeJsonObject(value) {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  if (typeof value !== "string") return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 function observeFormulaFieldId(handlers, node) {

@@ -352,11 +352,11 @@ describe("translateSysFormTemplateXml", () => {
     const detailActions = draftMkScriptsFromSourceScripts(dsl.scripts).actions.filter((action) =>
       action.tableId === "fd_371228ebe5dec2" && action.controlId === "fd_371576f83b26d8"
     );
-    assert.equal(detailActions.length, 2);
+    assert.equal(detailActions.length, 1);
     assert.deepEqual(detailActions.map((action) => action.runWhen), [
-      { viewStatusIn: ["add", "edit"] },
-      undefined
+      { viewStatusIn: ["add", "edit"] }
     ]);
+    assert.equal(detailActions[0].recipe.kind, "detail_row_control_state");
   });
 
   it("preserves edit, view, and ungated JSP display contexts on drafted actions", () => {

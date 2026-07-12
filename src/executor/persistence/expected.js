@@ -14,6 +14,7 @@ import {
   selectDefaultBranchEdge
 } from "./branch-defaults.js";
 import { detailTableNameFor } from "./detail-table-names.js";
+import { projectSubProcessWorkflow, subProcessContract } from "../../dsl/subprocess.js";
 import { persistedFieldLabel } from "./field-labels.js";
 import { isAddressField } from "../condition-org-resolver.js";
 import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
@@ -415,8 +416,9 @@ function renderExpectedScriptBody(source, detailTableNames = {}) {
 }
 
 function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
-  const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
-  const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
+  const projectedWorkflow = projectSubProcessWorkflow(workflow);
+  const nodes = projectedWorkflow.nodes;
+  const edges = projectedWorkflow.edges;
   const formulaParticipantNodeIds = new Set(
     nodes.filter((node) => isFormulaParticipantMode(node?.participants?.mode)).map((node) => node.id)
   );
@@ -480,7 +482,8 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),
       dataAuthority: summarizeDataAuthority(node),
-      ignoreOnSameIdentity: expectedIgnoreOnSameIdentity(node)
+      ignoreOnSameIdentity: expectedIgnoreOnSameIdentity(node),
+      subProcess: node.type === "startSubProcess" ? summarizeExpectedSubProcess(node.subProcess) : undefined
     };
   }).filter(Boolean);
 
@@ -508,6 +511,17 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
     readable: true,
     nodes: expectedNodes,
     edges: expectedEdges
+  };
+}
+
+function summarizeExpectedSubProcess(value = {}) {
+  const contract = subProcessContract(value);
+  return {
+    ...contract,
+    templateId: normalizeScalar(contract.templateId),
+    recoverNodeId: normalizeScalar(contract.recoverNodeId),
+    startCountType: normalizeScalar(contract.startCountType),
+    flowType: normalizeScalar(contract.flowType)
   };
 }
 
@@ -1185,6 +1199,7 @@ function defaultElementForType(type) {
   if (type === "conditionBranch") return "exclusiveGateway";
   if (type === "split" || type === "join") return "parallelGateway";
   if (type === "robot") return "robot";
+  if (type === "startSubProcess" || type === "recoverSubProcess") return "subProcess";
   return "manualTask";
 }
 

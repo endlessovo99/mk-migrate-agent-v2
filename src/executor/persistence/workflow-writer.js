@@ -9,6 +9,8 @@ import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import { isAddressField } from "../condition-org-resolver.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
+import { projectSubProcessWorkflow } from "../../dsl/subprocess.js";
+import { buildNativeSubProcessFields } from "./subprocess-writer.js";
 
 const parseConditionExpression = createConditionExpressionParser({
   parseTerm: parseSimpleCondition,
@@ -171,8 +173,9 @@ export function buildWorkflowDraftPayload(template) {
 }
 
 export function buildWorkflowContent(workflow, context = {}) {
-  const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
-  const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
+  const projectedWorkflow = projectSubProcessWorkflow(workflow);
+  const nodes = projectedWorkflow.nodes;
+  const edges = projectedWorkflow.edges;
   const outgoingEdges = groupEdgesBySource(edges);
   const formulaParticipantNodeIds = new Set(
     nodes.filter((node) => isFormulaParticipantMode(node?.participants?.mode)).map((node) => node.id)
@@ -325,6 +328,8 @@ const EXECUTABLE_NODE_TYPES = new Set([
   "review",
   "send",
   "robot",
+  "startSubProcess",
+  "recoverSubProcess",
   "conditionBranch",
   "split",
   "join"
@@ -365,6 +370,7 @@ function mapNodeElement(type = "") {
   if (mapped === "conditionBranch") return "exclusiveGateway";
   if (mapped === "split" || mapped === "join") return "parallelGateway";
   if (mapped === "robot") return "robot";
+  if (mapped === "startSubProcess" || mapped === "recoverSubProcess") return "subProcess";
   return "manualTask";
 }
 
@@ -379,10 +385,18 @@ function buildNodeElement(node, index, outgoingEdges, nodeById, branchRoutes, co
     join: (value, valueIndex) => buildParallelGatewayNode(value, valueIndex, "join", nodeById),
     send: (value) => buildArtificialNode(value, "send", context),
     robot: buildRobotNode,
+    startSubProcess: buildStartSubProcessNode,
     review: (value) => buildArtificialNode(value, "review", context)
   };
   const builder = builders[mappedType] || builders.review;
   return builder(node, index);
+}
+
+function buildStartSubProcessNode(node, index) {
+  return {
+    ...baseNode(node, index, "startSubProcess", "subProcess", 160, 40),
+    ...buildNativeSubProcessFields(node)
+  };
 }
 
 function buildStartNode(node, index) {
@@ -2473,6 +2487,7 @@ function migrationNodeSource(node) {
     name: node.name || "",
     attributes: node.attributes || {},
     definition: summarizeDefinition(node.definition),
+    subProcess: node.subProcess,
     sourceXml: node.sourceXml || ""
   };
 }

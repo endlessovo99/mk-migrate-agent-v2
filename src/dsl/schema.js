@@ -26,6 +26,8 @@ import {
   scriptTargetApiSummary,
   validateSetFieldAttrTargets
 } from "./scripts.js";
+import { scriptRecipeValidationIssues } from "./script-recipes.js";
+import { subProcessValidationIssues } from "./subprocess.js";
 
 export const DSL_VERSION = "2.0-migration";
 
@@ -45,8 +47,8 @@ export const FIELD_TYPES = new Set([
 ]);
 
 const SCRIPT_COVERAGE_STATUSES = new Set(["none", "partial", "uncovered", "covered", "translated"]);
-const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "robot", "conditionBranch", "split", "join", "generalEnd"]);
-const WORKFLOW_NODE_ELEMENTS = new Set(["startEvent", "manualTask", "exclusiveGateway", "parallelGateway", "robot", "endEvent"]);
+const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "robot", "startSubProcess", "recoverSubProcess", "conditionBranch", "split", "join", "generalEnd"]);
+const WORKFLOW_NODE_ELEMENTS = new Set(["startEvent", "manualTask", "exclusiveGateway", "parallelGateway", "subProcess", "robot", "endEvent"]);
 const WORKFLOW_PARTICIPANT_MODES = new Set([
   "empty",
   "unmapped_formula",
@@ -701,6 +703,7 @@ function validateScripts(scripts, diagnostics, context) {
       diagnostics.push(error("dsl.scripts.omitted_coverage_incomplete", "Omitted script actions require complete, residual-free native-rule or static-property coverage evidence.", `${path}/coverage`));
     }
     validateScriptRunWhen(action, path, diagnostics);
+    validateScriptRecipe(action, path, diagnostics, context);
     if (
       action.translationStatus === "omitted" &&
       action.runWhen !== undefined &&
@@ -722,6 +725,12 @@ function validateScripts(scripts, diagnostics, context) {
       }));
     }
   });
+}
+
+function validateScriptRecipe(action, path, diagnostics, context) {
+  for (const issue of scriptRecipeValidationIssues(action, context)) {
+    diagnostics.push(error(issue.code, issue.message, `${path}${issue.pathSuffix}`, issue.details));
+  }
 }
 
 function hasCompleteOmissionCoverage(action, context) {
@@ -998,6 +1007,14 @@ function validateWorkflow(workflow, diagnostics, context) {
   validateWorkflowConnectivity(nodeMap, edges, diagnostics);
   validateWorkflowConditions(edges, diagnostics, context);
   validateParallelGateways(workflow.nodes, nodeMap, diagnostics);
+  validateSubProcessPairs(workflow.nodes, workflow.edges, diagnostics, context);
+}
+
+function validateSubProcessPairs(nodes, edges, diagnostics, context) {
+  for (const issue of subProcessValidationIssues({ nodes, edges, mode: context.mode })) {
+    const diagnostic = issue.level === "warning" ? warning : error;
+    diagnostics.push(diagnostic(issue.code, issue.message, issue.path));
+  }
 }
 
 function validateWorkflowParticipantNodeReferences(nodes, nodeMap, diagnostics) {
@@ -1360,7 +1377,7 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
     }
     if (
       participants.companyRole !== "公司级相关领导" ||
-      participants.departmentRole !== "相关领导"
+      !["相关领导", "部门相关领导"].includes(participants.departmentRole)
     ) {
       diagnostics.push(error(
         "workflow.participants.configured_fallback_roles_unsupported",

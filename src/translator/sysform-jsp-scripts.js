@@ -2,6 +2,12 @@ import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitel
 import { resolveScriptControlTarget } from "../dsl/scripts.js";
 import { analyzeLegacyScriptFormRules } from "./sysform-form-rules.js";
 import { attrValue, decodeEntities } from "./xml-utils.js";
+import {
+  attachmentNonEmptyCandidate,
+  dependentSelectOptionsCandidates,
+  detailRowControlStateCandidate,
+  detailRowLifecycleCandidate
+} from "./sysform-script-recipes.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -232,10 +238,19 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     displayGate: candidate.source.displayGate,
     form: options.form
   }), options.formRules);
-  const translationStatus = candidate.translationStatus || "needs_review";
+  const nativeCovered = coverage?.status === "covered" &&
+    Array.isArray(coverage.nativeRules) && coverage.nativeRules.length > 0 &&
+    Array.isArray(coverage.residuals) && coverage.residuals.length === 0;
+  const translationStatus = candidate.translationStatus || (nativeCovered ? "omitted" : "needs_review");
+  const effectiveMappings = candidate.functionMappings || (nativeCovered ? [{
+    source: "legacy JSP row visibility/required behavior",
+    target: "native formRules.linkage",
+    basis: "native-form-rule",
+    reviewRequired: false
+  }] : functionMappings);
   const fn = translationStatus === "omitted"
     ? ""
-    : candidate.function || buildMkFunction(candidate, functionMappings, candidate.source.functionAudit?.violations || []);
+    : candidate.function || buildMkFunction(candidate, effectiveMappings, candidate.source.functionAudit?.violations || []);
 
   return pruneUndefined({
     id: stableActionId(candidate.id || `${candidate.event}.${index + 1}`),
@@ -249,7 +264,8 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     sourceRefs: [candidate.source.sourceRef].filter(Boolean),
     translationStatus,
     coverage,
-    functionMappings,
+    functionMappings: effectiveMappings,
+    recipe: candidate.recipe,
     semanticHints: candidate.semanticHints,
     unmappedFunctions: (candidate.source.functionAudit?.violations || []).map((violation) => violation.name)
   });
@@ -377,6 +393,24 @@ function runWhenFromDisplayGate(displayGate) {
 function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   if (!hasExecutableJavascript(source.javascript)) return [];
 
+  const dependentSelectOptions = dependentSelectOptionsCandidates(source, options.form);
+  if (dependentSelectOptions.length) {
+    return dependentSelectOptions.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const attachmentValidation = attachmentNonEmptyCandidate(source, options.form);
+  if (attachmentValidation) {
+    return [{
+      ...attachmentValidation,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+      source
+    }];
+  }
+
   const legacyHelperDefinitions = legacyHelperDefinitionsCandidate(source);
   if (legacyHelperDefinitions) {
     return [{
@@ -416,7 +450,7 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   const candidates = [
     ...extractValueChangeCandidates(source),
     ...extractDetailControlDisplayCandidates(source),
-    ...extractWindowLoadCandidates(source),
+    ...extractWindowLoadCandidates(source, options),
     ...extractSubmitQueueCandidates(source, "submit", "onBeforeSubmit"),
     ...extractSubmitQueueCandidates(source, "afterSubmit", "onAfterSubmit")
   ].sort((left, right) => left.index - right.index);
@@ -717,6 +751,7 @@ function extractDetailControlDisplayCandidates(source) {
   if (!parts) return [];
 
   const binding = snippetAround(text, parts.trigger.index, 420);
+  const recipeCandidate = detailRowControlStateCandidate(parts);
   return [{
     index: text.indexOf(parts.functionText),
     event: "onChange",
@@ -725,6 +760,7 @@ function extractDetailControlDisplayCandidates(source) {
     controlId: parts.trigger.controlId,
     dedupeKey: `detail-control-display:${parts.trigger.tableId}.${parts.trigger.controlId}:${parts.target.controlId}`,
     javascript: [parts.functionText, binding].filter(Boolean).join("\n\n"),
+    ...recipeCandidate,
     semanticHints: [{
       kind: "detail_row_visibility",
       triggerTableId: parts.trigger.tableId,
@@ -800,7 +836,7 @@ function detailFieldReferences(text) {
   return references;
 }
 
-function extractWindowLoadCandidates(source) {
+function extractWindowLoadCandidates(source, options = {}) {
   const text = source.javascript || "";
   const candidates = [];
   const inlinePattern = /Com_AddEventListener\(\s*window\s*,\s*(["'])load\1\s*,\s*function\s*\([^)]*\)\s*\{/g;
@@ -810,11 +846,15 @@ function extractWindowLoadCandidates(source) {
     if (bodyEnd < bodyStart) continue;
     const end = findCallEnd(text, bodyEnd + 1);
     const detailDisplay = detailControlDisplayParts(text);
+    const lifecycle = detailDisplay
+      ? detailRowLifecycleCandidate(detailDisplay, options.formRules, source.sourceRef)
+      : undefined;
     candidates.push({
       index: match.index,
       event: "onLoad",
       scope: "global",
       javascript: text.slice(match.index, end).trim(),
+      ...(lifecycle || {}),
       ...(detailDisplay ? {
         semanticHints: [{
           kind: "detail_row_load_initialization",
@@ -1005,6 +1045,10 @@ function findBalancedClose(text, openIndex, openChar, closeChar) {
         continue;
       }
       if (char === quote) quote = "";
+      // JavaScript single/double quoted strings cannot cross an unescaped
+      // line break. Recover the structural boundary from malformed legacy JSP
+      // instead of letting one missing quote swallow the enclosing callback.
+      if ((char === "\n" || char === "\r") && quote !== "`") quote = "";
       continue;
     }
 
@@ -1058,7 +1102,7 @@ function dedupeCandidatesByKey(candidates) {
       result.push(candidate);
       continue;
     }
-    const key = `${candidate.dedupeKey}:${candidate.source?.displayGate || "ungated"}`;
+    const key = candidate.dedupeKey;
     if (seen.has(key)) continue;
     seen.add(key);
     result.push(candidate);

@@ -165,6 +165,8 @@ function parseDesignerLayout(html, warnings) {
     }
   });
 
+  recoverDesignerAttachments(decoded, fields, fieldIds, layoutRows, warnings);
+
   if (!rows.length && decoded.trim()) {
     warnings.push({
       code: "source.sysform.designer_rows_missing",
@@ -181,6 +183,35 @@ function parseDesignerLayout(html, warnings) {
       rows: layoutRows
     }
   };
+}
+
+function recoverDesignerAttachments(html, fields, fieldIds, layoutRows, warnings) {
+  const attachments = extractDesignerFieldControls(html)
+    .filter((control) => control.type === "attachment" && !fieldIds.has(control.id));
+
+  for (const attachment of attachments) {
+    fieldIds.add(attachment.id);
+    fields.push(attachment);
+    const rowIndex = layoutRows.length;
+    layoutRows.push({
+      id: `row-recovered-attachment-${attachment.id}`,
+      sourceRow: `recovered-attachment-${attachment.id}`,
+      columns: 1,
+      cells: [{
+        id: `row-recovered-attachment-${attachment.id}-cell-0`,
+        fieldId: attachment.id,
+        fieldIds: [attachment.id],
+        column: 0,
+        colspan: 1
+      }]
+    });
+    warnings.push({
+      code: "source.sysform.designer_attachment_recovered",
+      message: `Designer attachment ${attachment.id} (${attachment.title}) was recovered outside the directly parsed standard-table cells.`,
+      path: `/fdDesignerHtml/attachments/${rowIndex}`,
+      details: { designerId: attachment.id, title: attachment.title }
+    });
+  }
 }
 
 function enrichDesignerField(field, metadataField, warnings) {

@@ -1074,13 +1074,14 @@ describe("executeDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"), true);
   });
 
-  localCorpusIt("does not project legacy role-line formulas without a verified Script recipe", () => {
+  localCorpusIt("projects the related-leader role line through the configured execution fallback", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const node = dslDraft.workflow.nodes.find((element) => element.id === "N53");
 
-    assert.equal(node.participants.mode, "unmapped_formula");
-    assert.equal(node.translationStatus, "pending_review");
+    assert.equal(node.participants.mode, "configured_person_fallback");
+    assert.equal(node.participants.fallbackKind, "person");
+    assert.equal(node.translationStatus, "executable");
   });
 
   localCorpusIt("writes legacy robot nodes with selectable robot type and preserved config", () => {

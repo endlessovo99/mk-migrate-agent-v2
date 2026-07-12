@@ -61,7 +61,7 @@ function configuredPersonFallbackParticipant(attributes, handlerIds, handlerName
     !parsed ||
     !parsed.subject.startsWith("fd_") ||
     parsed.companyRole !== "公司级相关领导" ||
-    parsed.departmentRole !== "相关领导"
+    !["相关领导", "部门相关领导"].includes(parsed.departmentRole)
   ) {
     return undefined;
   }

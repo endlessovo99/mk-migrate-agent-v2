@@ -59,11 +59,11 @@ describe("source directory stages", () => {
     );
     const loadAction = dslDraft.scripts.actions.find((item) => item.event === "onLoad");
 
-    assert.equal(dslDraft.scripts.actions.length, 5);
+    assert.equal(dslDraft.scripts.actions.length, 4);
     assert.equal(action.scope, "control");
     assert.equal(action.event, "onChange");
     assert.equal(action.controlId, "fd_371229d0cbd2cc");
-    assert.equal(action.translationStatus, "needs_review");
+    assert.equal(action.translationStatus, "omitted");
     assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
     assert.equal(action.coverage.status, "covered");
     assert.deepEqual(action.coverage.nativeRules, [
@@ -72,22 +72,21 @@ describe("source directory stages", () => {
       "linkage.fd_371229d0cbd2cc.contains.wx",
       "linkage.fd_371229d0cbd2cc.contains.wb"
     ]);
-    assert.equal(action.functionMappings.some((mapping) => mapping.source === "GetXFormFieldById"), true);
+    assert.equal(action.functionMappings.some((mapping) => mapping.basis === "native-form-rule"), true);
 
-    assert.equal(detailActions.length, 2);
+    assert.equal(detailActions.length, 1);
     assert.equal(detailActions.every((item) => item.scope === "control" && item.event === "onChange"), true);
-    assert.equal(detailActions.every((item) => item.translationStatus === "needs_review"), true);
+    assert.equal(detailActions.every((item) => item.translationStatus === "mapped"), true);
     assert.equal(detailActions.every((item) => item.semanticHints.some((hint) => hint.kind === "detail_row_visibility")), true);
-    assert.deepEqual(detailActions.map((item) => item.runWhen), [
-      { viewStatusIn: ["add", "edit"] },
-      undefined
-    ]);
+    assert.deepEqual(detailActions.map((item) => item.runWhen), [{ viewStatusIn: ["add", "edit"] }]);
+    assert.equal(detailActions[0].recipe.kind, "detail_row_control_state");
 
     assert.equal(loadAction.scope, "global");
     assert.equal(loadAction.runWhen, undefined);
-    assert.equal(loadAction.translationStatus, "needs_review");
+    assert.equal(loadAction.translationStatus, "mapped");
     assert.equal(loadAction.semanticHints.some((hint) => hint.kind === "detail_row_load_initialization"), true);
-    assert.equal(loadAction.coverage.status, "uncovered");
+    assert.equal(loadAction.coverage.status, "translated");
+    assert.equal(loadAction.recipe.kind, "detail_row_lifecycle");
     assert.equal(sourceDraft.scripts.sources.some((source) => source.semanticFacts?.legacyFunctionCalls?.length), true);
   });
 
@@ -143,7 +142,7 @@ describe("source directory stages", () => {
     assert.equal(actions.filter((action) => action.translationStatus === "needs_review").length, 5);
   });
 
-  localCorpusIt("keeps legacy role-line workflow participants pending review", () => {
+  localCorpusIt("maps the related-leader workflow participant to the configured person fallback", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const nodesById = new Map(dslDraft.workflow.nodes.map((node) => [node.id, node]));
@@ -158,11 +157,12 @@ describe("source directory stages", () => {
     });
     assert.equal(nodesById.get("N32").participants.mode, "form_field");
     assert.equal(nodesById.get("N16").participants.mode, "form_field");
-    assert.equal(nodesById.get("N53").participants.mode, "unmapped_formula");
-    assert.equal(nodesById.get("N53").translationStatus, "pending_review");
+    assert.equal(nodesById.get("N53").participants.mode, "configured_person_fallback");
+    assert.equal(nodesById.get("N53").participants.fallbackKind, "person");
+    assert.equal(nodesById.get("N53").translationStatus, "executable");
   });
 
-  it("keeps subprocess workflow nodes pending review instead of counting them as process starts", () => {
+  it("keeps incomplete subprocess workflow nodes pending review instead of counting them as process starts", () => {
     const sourceDraft = sampleSourceDraft({
       form: sampleSingleFieldSourceForm(),
       workflow: sampleSubprocessSourceWorkflow()
@@ -178,8 +178,12 @@ describe("source directory stages", () => {
       [["N1", "startNode"]]
     );
     assert.equal(nodesById.get("N20").sourceType, "startSubProcessNode");
+    assert.equal(nodesById.get("N20").type, "startSubProcess");
+    assert.equal(nodesById.get("N20").element, "subProcess");
     assert.equal(nodesById.get("N20").translationStatus, "pending_review");
     assert.equal(nodesById.get("N23").sourceType, "recoverSubProcessNode");
+    assert.equal(nodesById.get("N23").type, "recoverSubProcess");
+    assert.equal(nodesById.get("N23").element, "subProcess");
     assert.equal(nodesById.get("N23").translationStatus, "pending_review");
     assert.equal(check.diagnostics.some((diagnostic) => diagnostic.code === "dsl.workflow.start_node_required"), false);
     assert.equal(check.ok, true);

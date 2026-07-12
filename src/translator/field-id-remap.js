@@ -81,7 +81,8 @@ export function applyFieldIdMapToScripts(scripts, idMap) {
       controlId: mapFieldId(action.controlId, idMap),
       tableId: mapFieldId(action.tableId, idMap),
       function: replaceFieldIdsInText(action.function, idMap),
-      coverage: remapCoverage(action.coverage, idMap)
+      coverage: remapCoverage(action.coverage, idMap),
+      recipe: remapStructuredValue(action.recipe, idMap)
     }))
   };
 }
@@ -93,9 +94,15 @@ export function applyFieldIdMapToWorkflow(workflow, idMap) {
     nodes: (workflow.nodes || []).map((node) => ({
       ...node,
       dataAuthority: remapDataAuthority(node.dataAuthority, idMap),
-      participants: remapParticipants(node.participants, idMap)
+      participants: remapParticipants(node.participants, idMap),
+      subProcess: remapStructuredValue(node.subProcess, idMap)
     }))
   };
+}
+
+function remapStructuredValue(value, idMap) {
+  if (value === undefined) return undefined;
+  return JSON.parse(replaceFieldIdsInText(JSON.stringify(value), idMap));
 }
 
 function allocateShortFieldId(originalId, used) {

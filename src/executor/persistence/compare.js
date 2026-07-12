@@ -654,6 +654,14 @@ function compareWorkflow(expected, actual, diagnostics) {
         }));
       }
     }
+    if (node.subProcess && stableStringify(node.subProcess) !== stableStringify(actualNode.subProcess || {})) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.subprocess_mismatch", "Readback subprocess native configuration mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.subProcess`,
+        path: `/readback/workflow/nodes/${node.id}/subProcess`,
+        expected: node.subProcess,
+        actual: actualNode.subProcess
+      }));
+    }
   }
   for (const node of actual.nodes || []) {
     if (!expectedNodeIds.has(node.id)) {

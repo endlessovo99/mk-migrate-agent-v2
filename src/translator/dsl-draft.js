@@ -486,6 +486,7 @@ function draftRuleEffects(effects) {
 function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
   const sourceNodes = sourceWorkflow.nodes || [];
   const nodeById = new Map(sourceNodes.map((node) => [node.id, node]));
+  const subProcessByNodeId = draftSubProcessPairs(sourceNodes);
   const participantSelections = participantSelectionsFromWorkflowNodes(sourceNodes);
   return {
     process: sourceWorkflow.process || {},
@@ -495,6 +496,8 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
         ? undefined
         : participantsFromSourceNode(node, participantSelections.get(node.id));
       const formulaNeedsReview = participants?.mode === "unmapped_formula";
+      const subProcessNeedsReview = ["startSubProcess", "recoverSubProcess"].includes(nodeType.type) &&
+        !subProcessByNodeId.has(node.id);
       return pruneUndefined({
         id: node.id,
         type: nodeType.type,
@@ -509,7 +512,8 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
         dataAuthority: draftDataAuthority(node.dataAuthority, knownFieldIds),
         participantSelections: participantSelections.get(node.id),
         participants,
-        translationStatus: nodeType.needsReview || formulaNeedsReview ? "pending_review" : "executable"
+        subProcess: subProcessByNodeId.get(node.id),
+        translationStatus: nodeType.needsReview || formulaNeedsReview || subProcessNeedsReview ? "pending_review" : "executable"
       });
     }),
     edges: (sourceWorkflow.edges || []).map((edge) => {
@@ -531,6 +535,78 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
     }),
     topologicalOrder: sourceWorkflow.topologicalOrder || []
   };
+}
+
+function draftSubProcessPairs(nodes) {
+  const result = new Map();
+  const configs = new Map(nodes.map((node) => [node.id, parseSubProcessConfig(node)]));
+  for (const start of nodes.filter((node) => String(node.sourceType || "").toLowerCase() === "startsubprocessnode")) {
+    const startConfig = configs.get(start.id);
+    if (!startConfig?.subProcess?.templateId) continue;
+    const recover = nodes.find((node) => {
+      if (String(node.sourceType || "").toLowerCase() !== "recoversubprocessnode") return false;
+      return configs.get(node.id)?.subProcessNode === start.id;
+    });
+    if (!recover) continue;
+    const recoverConfig = configs.get(recover.id);
+    const flowType = nativeSubProcessFlowType(recoverConfig);
+    if (!flowType) continue;
+    const common = {
+      templateId: startConfig.subProcess.templateId,
+      templateName: startConfig.subProcess.templateName || "",
+      modelName: startConfig.subProcess.modelName || "",
+      dictBean: startConfig.subProcess.dictBean || "",
+      createParam: startConfig.subProcess.createParam || "",
+      startIdentity: startConfig.startIdentity || { type: 1, names: "", values: "" },
+      startCountType: String(startConfig.startCountType || 1),
+      autoSubmit: startConfig.skipDraftNode === true,
+      flowType,
+      startParamConfig: parameterMappings(startConfig.startParamenters, "parent_to_child"),
+      recoverParamConfig: parameterMappings(recoverConfig.recoverParamenters, "child_to_parent"),
+      variableScope: recoverConfig.variableScope,
+      recoverRule: recoverConfig.recoverRule
+    };
+    result.set(start.id, { ...common, recoverNodeId: recover.id });
+    result.set(recover.id, {
+      startNodeId: start.id,
+      variableScope: recoverConfig.variableScope,
+      recoverRule: recoverConfig.recoverRule,
+      recoverParamConfig: common.recoverParamConfig
+    });
+  }
+  return result;
+}
+
+function nativeSubProcessFlowType(recoverConfig) {
+  const expression = recoverConfig?.recoverRule?.expression;
+  const emptyExpression = !expression?.text && !expression?.value;
+  if (Number(recoverConfig?.variableScope) === 2 && Number(recoverConfig?.recoverRule?.type) === 1 && emptyExpression) {
+    return "2";
+  }
+  return undefined;
+}
+
+function parseSubProcessConfig(node) {
+  const raw = node?.definition?.attributes?.configContent || node?.attributes?.configContent;
+  if (!raw || typeof raw !== "string") return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function parameterMappings(parameters, direction) {
+  return (Array.isArray(parameters) ? parameters : []).map((parameter) => ({
+    direction,
+    source: parameter.expression,
+    target: parameter.name,
+    mappingItems: [{
+      source: parameter.expression,
+      target: parameter.name
+    }]
+  }));
 }
 
 function participantSelectionsFromWorkflowNodes(nodes) {
@@ -658,6 +734,8 @@ function booleanAttribute(attributes, key) {
 function mapWorkflowNodeType(node = {}, nodeById = new Map()) {
   const sourceType = node.sourceType || "";
   const normalized = String(sourceType).toLowerCase();
+  if (normalized === "startsubprocessnode") return { type: "startSubProcess", element: "subProcess", participants: false };
+  if (normalized === "recoversubprocessnode") return { type: "recoverSubProcess", element: "subProcess", participants: false };
   if (normalized.includes("subprocess")) return { type: "review", element: "manualTask", needsReview: true };
   if (normalized.includes("split")) return parallelGatewayNodeType(node, nodeById, "split");
   if (normalized.includes("join")) return parallelGatewayNodeType(node, nodeById, "join");
