@@ -31,6 +31,22 @@ describe("static form-property script coverage validation", () => {
     assert.equal(missingEvidence.diagnostics.some((item) => item.code === "dsl.scripts.omitted_coverage_incomplete"), true);
     assert.equal(gatedResult.diagnostics.some((item) => item.code === "dsl.scripts.gated_omission_forbidden"), true);
   });
+
+  it("accepts a gated legacy runtime no-op omission", () => {
+    const dsl = dslWithCoverage(undefined);
+    dsl.scripts.actions[0].runWhen = { viewStatusIn: ["add", "edit"] };
+    dsl.scripts.actions[0].coverage = { status: "covered", nativeRules: [], residuals: [] };
+    dsl.scripts.actions[0].functionMappings = [{
+      source: "legacy WebUploader CSS/refresh patch",
+      target: "xform-attach native rendering",
+      basis: "legacy-runtime-noop",
+      reviewRequired: false
+    }];
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+
+    assert.equal(result.ok, true);
+  });
 });
 
 function dslWithCoverage(staticProps) {

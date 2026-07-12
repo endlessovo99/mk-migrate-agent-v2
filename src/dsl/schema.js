@@ -674,8 +674,13 @@ function validateScripts(scripts, diagnostics, context) {
       diagnostics.push(error("dsl.scripts.omitted_coverage_incomplete", "Omitted script actions require complete, residual-free native-rule or static-property coverage evidence.", `${path}/coverage`));
     }
     validateScriptRunWhen(action, path, diagnostics);
-    if (action.translationStatus === "omitted" && action.runWhen !== undefined && !hasCompleteExecutableNativeCoverage(action, context.formRules)) {
-      diagnostics.push(error("dsl.scripts.gated_omission_forbidden", "View-gated script actions may be omitted only when the empty action body is fully covered by referenced executable native form rules with no residuals.", `${path}/translationStatus`));
+    if (
+      action.translationStatus === "omitted" &&
+      action.runWhen !== undefined &&
+      !hasCompleteExecutableNativeCoverage(action, context.formRules) &&
+      !hasLegacyRuntimeNoopCoverage(action)
+    ) {
+      diagnostics.push(error("dsl.scripts.gated_omission_forbidden", "View-gated script actions may be omitted only when the empty action body is fully covered by referenced executable native form rules or a legacy runtime no-op with no residuals.", `${path}/translationStatus`));
     }
     if (!SCRIPT_SCOPES.has(action.scope)) {
       diagnostics.push(error("dsl.scripts.scope_invalid", "Script action scope must be global or control.", `${path}/scope`, {
@@ -710,6 +715,16 @@ function hasCompleteExecutableNativeCoverage(action, formRules) {
   const nativeRules = Array.isArray(action.coverage?.nativeRules) ? action.coverage.nativeRules : [];
   if (!nativeRules.length) return false;
   return nativeRulesAreExecutable(nativeRules, formRules);
+}
+
+function hasLegacyRuntimeNoopCoverage(action) {
+  if (nonEmptyString(action.function)) return false;
+  if (action.coverage?.status !== "covered") return false;
+  if (!Array.isArray(action.coverage?.residuals) || action.coverage.residuals.length) return false;
+  if (Array.isArray(action.coverage?.nativeRules) && action.coverage.nativeRules.length) return false;
+  if (Array.isArray(action.coverage?.staticProps) && action.coverage.staticProps.length) return false;
+  return (Array.isArray(action.functionMappings) ? action.functionMappings : [])
+    .some((mapping) => mapping?.basis === "legacy-runtime-noop" && mapping.reviewRequired === false);
 }
 
 function nativeRulesAreExecutable(nativeRules, formRules) {

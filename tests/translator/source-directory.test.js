@@ -99,6 +99,20 @@ describe("source directory stages", () => {
     );
   });
 
+  localCorpusIt("keeps gated legacy attachment runtime omissions from blocking draft checks", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/150a3903e1f12f60503744b400195b75");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const result = checkDraft(dslDraft);
+
+    assert.equal(result.ok, true);
+    assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.gated_omission_forbidden"), false);
+    assert.equal(dslDraft.scripts.actions.some((action) =>
+      action.translationStatus === "omitted" &&
+      action.runWhen?.viewStatusIn?.includes("edit") &&
+      action.functionMappings?.some((mapping) => mapping.basis === "legacy-runtime-noop")
+    ), true);
+  });
+
   localCorpusIt("drafts simple form-field formula workflow participants as executable handlers", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
