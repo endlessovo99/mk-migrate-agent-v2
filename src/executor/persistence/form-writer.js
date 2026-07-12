@@ -6,6 +6,7 @@ import {
 import { COMPONENTS_BY_ID } from "../../dsl/catalogs.js";
 import { packLayoutCells } from "../../dsl/layout-pack.js";
 import { detailTableNameFor } from "./detail-table-names.js";
+import { persistedFieldLabel } from "./field-labels.js";
 
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
@@ -452,7 +453,7 @@ function buildDetailModels(template, form, mainModel) {
       const model = {
         fdId: stableHexId(`${template.fdId}:detail:${field.id}`),
         dynamicProps: { detailFieldName: field.id },
-        fdName: field.title,
+        fdName: persistedFieldLabel(field),
         fdTableName: tableName,
         fdTableNameAlias: tableName,
         fdType: "detail",
@@ -476,9 +477,10 @@ function canonicalField(field, template, model, order, tableType) {
   const spec = componentSpec(field);
   const fdLength = fieldLengthFromDsl(field, spec);
   const isDescription = spec.attrType === "desc";
+  const label = persistedFieldLabel(field);
   return {
     fdId: stableHexId(`${template.fdId}:${model.fdTableName}:${field.id}:${order}`),
-    fdLabel: field.title,
+    fdLabel: label,
     fdName: field.id,
     ...(tableType === "main"
       ? { fdColumn: `fd_${field.id}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48) }
@@ -512,13 +514,14 @@ function fieldLengthFromDsl(field, spec) {
 
 function fieldAttribute(field, template, tableName, tableType, spec) {
   const controlId = `${spec.desktop}~${stableShortId(field.id)}`;
+  const label = persistedFieldLabel(field);
   const controlProps = {
     id: controlId,
     desktop: { type: spec.desktop },
     mobile: { type: spec.mobile },
     name: field.id,
     uuid: field.id,
-    title: field.title,
+    title: label,
     span: 24,
     "$$tableType": tableType,
     "$$tableName": tableName
@@ -578,15 +581,15 @@ function fieldAttribute(field, template, tableName, tableType, spec) {
       type: isDescription ? "desc" : spec.desktop,
       controlProps,
       kind: "control",
-      label: field.title,
+      label,
       labelProps: isDescription
         ? {
             compose: true,
             desktop: { hiddenLabel: true },
-            title: field.title,
+            title: label,
             mobile: { hiddenLabel: true }
           }
-        : { desktop: {}, title: field.title, mobile: {} }
+        : { desktop: {}, title: label, mobile: {} }
     },
     env: isDescription ? ["xform", "print"] : ["xform"]
   };
@@ -706,6 +709,7 @@ function normalizeMaxLength(value) {
 function detailModelAttribute(field, model) {
   const target = componentTarget("xform-detail-table", "@elem/xform-detail-table", "@elem/xform-m-detail-table");
   const controlId = `${target.desktop}~${stableShortId(field.id)}`;
+  const label = persistedFieldLabel(field);
   return {
     uuid: model.fdTableName,
     config: {
@@ -733,7 +737,7 @@ function detailModelAttribute(field, model) {
         mobile: { type: target.mobile },
         name: model.fdTableName,
         uuid: model.fdTableName,
-        title: field.title,
+        title: label,
         "$$detailTableFieldName": field.id,
         "$$tableType": "detail",
         "$$tableName": model.fdTableName,
@@ -742,7 +746,7 @@ function detailModelAttribute(field, model) {
         printLayoutType: "table"
       },
       kind: "container",
-      label: field.title,
+      label,
       labelProps: { desktop: {}, mobile: {} }
     }
   };

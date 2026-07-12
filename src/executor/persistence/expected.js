@@ -10,6 +10,7 @@ import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "
 import { projectionError } from "./diagnostics.js";
 import { selectDefaultBranchEdge } from "./branch-defaults.js";
 import { detailTableNameFor } from "./detail-table-names.js";
+import { persistedFieldLabel } from "./field-labels.js";
 
 export function buildExpectedInvariants(dsl, envelope) {
   const diagnostics = [];
@@ -112,7 +113,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     if (field.type === "detailTable") {
       return {
         id: field.id,
-        title: normalizeScalar(field.title),
+        title: normalizeScalar(persistedFieldLabel(field)),
         type: "detailTable",
         component: field.componentId,
         dataOnly: false,
@@ -128,7 +129,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
           }
           return {
             id: column.id,
-            title: normalizeScalar(column.title),
+            title: normalizeScalar(persistedFieldLabel(column)),
             type: column.type,
             component: column.componentId,
             props: executableProps(column)
@@ -138,7 +139,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     }
     return {
       id: field.id,
-      title: normalizeScalar(field.title),
+      title: normalizeScalar(persistedFieldLabel(field)),
       type: field.type,
       component: field.componentId,
       dataOnly: field.dataOnly === true,
