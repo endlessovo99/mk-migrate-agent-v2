@@ -672,6 +672,86 @@ describe("executeDsl", () => {
     assert.equal(node.handlers.ruleKey.resultType.type, "array");
   });
 
+  it("writes deterministic detail participant recipes as ES5 Script handlers", () => {
+    const form = sampleForm();
+    form.fields.find((field) => field.id === "fd_detail").columns.push({
+      id: "departmentCode",
+      title: "部门编码",
+      type: "text",
+      componentId: "xform-input",
+      props: {},
+      sourceProps: {},
+      sourceRef: "source.form.detailTable.fd_detail.column.departmentCode"
+    });
+    const nodes = [
+      { id: "N1", type: "generalStart", element: "startEvent", sourceRef: "source.workflow.node.N1", attributes: { mustModifyHandlerNodeIds: "N2" }, translationStatus: "executable" },
+      {
+        id: "N2",
+        type: "review",
+        element: "manualTask",
+        name: "项目经理",
+        sourceRef: "source.workflow.node.N2",
+        attributes: { handlerSelectType: "formula" },
+        participants: {
+          mode: "script_formula",
+          recipe: "detail_login_names_to_persons",
+          detailTableId: "fd_detail",
+          fieldId: "departmentCode",
+          sourceFieldId: "departmentCode",
+          sourceExpression: "legacy detail login formula"
+        },
+        translationStatus: "executable"
+      },
+      {
+        id: "N3",
+        type: "review",
+        element: "manualTask",
+        name: "部门领导",
+        sourceRef: "source.workflow.node.N3",
+        attributes: { handlerSelectType: "formula" },
+        participants: {
+          mode: "script_formula",
+          recipe: "first_detail_department_code_to_head",
+          detailTableId: "fd_detail",
+          fieldId: "fd_name",
+          sourceFieldId: "fd_name",
+          sourceExpression: "legacy detail department formula"
+        },
+        translationStatus: "executable"
+      },
+      { id: "N4", type: "generalEnd", element: "endEvent", sourceRef: "source.workflow.node.N4", attributes: {}, translationStatus: "executable" }
+    ];
+    const trusted = sampleTrustedDsl({
+      form,
+      workflow: {
+        process: { id: "script-formula-process" },
+        nodes,
+        edges: nodes.slice(0, -1).map((node, index) => ({
+          id: `L${index + 1}`,
+          source: node.id,
+          target: nodes[index + 1].id,
+          sourceRef: `source.workflow.edge.L${index + 1}`,
+          condition: { translationStatus: "executable" }
+        })),
+        topologicalOrder: nodes.map((node) => node.id)
+      }
+    });
+    const template = projectTemplate(trusted, baseTemplate());
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    const loginRule = JSON.parse(content.elements.find((node) => node.id === "N2").handlers.ruleKey);
+    const departmentRule = JSON.parse(content.elements.find((node) => node.id === "N3").handlers.ruleKey);
+
+    assert.equal(loginRule.type, "Script");
+    assert.equal(loginRule.vo.mode, "script");
+    assert.match(loginRule.script, /^var /);
+    assert.match(loginRule.script, /\$\{func\.sysorg\.getPersonByLoginName\}/);
+    assert.doesNotMatch(loginRule.script, /\b(?:let|const)\b|=>/);
+    assert.equal(departmentRule.type, "Script");
+    assert.match(departmentRule.script, /\$\{func\.sysorg\.getElementByNo\}/);
+    assert.match(departmentRule.script, /\$\{func\.sysorg\.getDepartmentHead\}/);
+    assert.equal(verifyTemplate(trusted, template).ok, true);
+  });
+
   it("rejects readback when formula participant scripts are mutated", () => {
     const trusted = sampleFormulaParticipantDsl();
     const template = projectTemplate(trusted, baseTemplate());
@@ -1502,9 +1582,9 @@ describe("executeDsl", () => {
     workflow.edges[1] = {
       ...workflow.edges[1],
       condition: {
-        sourceText: "$字符串.包含$($fd_req_dept$, \"南方服务中心\")",
+        sourceText: "$字符串.包含$($fd_req_dept$.getFdName(), \"南方服务中心\")",
         displayText: "$需求人部门$ 包含 \"南方服务中心\"",
-        targetText: "$字符串.包含$($fd_req_dept$, \"南方服务中心\")",
+        targetText: "$字符串.包含$($fd_req_dept$.getFdName(), \"南方服务中心\")",
         translationStatus: "display_only"
       }
     };

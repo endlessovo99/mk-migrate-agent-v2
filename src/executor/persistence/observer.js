@@ -716,15 +716,19 @@ function observeWorkflow(lbpm) {
 
 function observeFormulaFieldId(handlers, node) {
   const candidates = [];
-  const varIds = Array.isArray(handlers?.ruleKey?.varIds) ? handlers.ruleKey.varIds : [];
+  const ruleKey = participantRuleKey(handlers);
+  const varIds = Array.isArray(ruleKey.varIds) ? ruleKey.varIds : [];
   for (const varId of varIds) {
     candidates.push(normalizeScalar(varId));
   }
-  candidates.push(normalizeScalar(handlers?.ruleKey?.script));
+  candidates.push(normalizeScalar(ruleKey.script));
   candidates.push(normalizeScalar(node?.handlerIds));
   for (const text of candidates) {
     if (!text) continue;
-    const match = text.match(/(fd_[A-Za-z0-9_]+)\s*$/) || text.match(/\$\{data\.[^.}]*?(fd_[A-Za-z0-9_]+)\}/) || text.match(/\$(fd_[A-Za-z0-9_]+)\$/);
+    const match = text.match(/(fd_[A-Za-z0-9_]+)\s*$/) ||
+      text.match(/\$\{data\.[^.}]*?(fd_[A-Za-z0-9_]+)\}/) ||
+      text.match(/\$(fd_[A-Za-z0-9_]+)\$/) ||
+      text.match(/\$\{data\.[^}]*-([A-Za-z_][A-Za-z0-9_]*)\}/);
     if (match) return match[1];
   }
   return undefined;
@@ -750,9 +754,7 @@ function observeRoleLineParticipants(script, formulaName, fieldId) {
 }
 
 function observeParticipantFormula(handlers, node) {
-  const ruleKey = handlers?.ruleKey && typeof handlers.ruleKey === "object"
-    ? handlers.ruleKey
-    : {};
+  const ruleKey = participantRuleKey(handlers);
   return {
     script: normalizeScalar(ruleKey.script),
     varIds: Array.isArray(ruleKey.varIds) ? ruleKey.varIds.map(normalizeScalar) : [],
@@ -768,6 +770,18 @@ function observeParticipantFormula(handlers, node) {
     ruleVoMode: normalizeScalar(ruleKey.vo?.mode),
     resultType: observeParticipantResultType(ruleKey.resultType)
   };
+}
+
+function participantRuleKey(handlers) {
+  const value = handlers?.ruleKey;
+  if (value && typeof value === "object") return value;
+  if (typeof value !== "string" || !value.trim()) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 function observeParticipantResultType(resultType) {
@@ -815,13 +829,24 @@ function observeParticipants(node, initiatorSelectTarget) {
   }
   if (!handlers || typeof handlers !== "object") return undefined;
   if (handlers.type === "formula" || handlers.source === "2") {
+    const ruleKey = participantRuleKey(handlers);
     const fieldId = observeFormulaFieldId(handlers, node);
     const nativeFormula = observeParticipantFormula(handlers, node);
-    const script = normalizeScalar(handlers?.ruleKey?.script) || "";
+    const script = normalizeScalar(ruleKey.script) || "";
     const formulaName = normalizeScalar(handlers?.ruleName) ||
-      normalizeScalar(handlers?.ruleKey?.formulaName) ||
-      normalizeScalar(handlers?.ruleKey?.vo?.content) ||
+      normalizeScalar(ruleKey.formulaName) ||
+      normalizeScalar(ruleKey.vo?.content) ||
       "";
+    if (ruleKey.type === "Script") {
+      const recipe = /getPersonByLoginName/.test(script)
+        ? "detail_login_names_to_persons"
+        : /getElementByNo/.test(script) && /getDepartmentHead/.test(script)
+          ? "first_detail_department_code_to_head"
+          : "unknown";
+      return fieldId
+        ? { mode: "script_formula", recipe, fieldId, nativeFormula }
+        : { mode: "script_formula", recipe, nativeFormula };
+    }
     const roleLine = observeRoleLineParticipants(script, formulaName, fieldId);
     if (roleLine) return { ...roleLine, nativeFormula };
     if (/getPersonByLoginName/.test(script)) {

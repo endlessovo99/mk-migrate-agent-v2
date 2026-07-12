@@ -1,5 +1,7 @@
 const FORMULA_PARTICIPANT_KEYS = Object.freeze([
   "mode",
+  "recipe",
+  "detailTableId",
   "fieldTitle",
   "subjectKind",
   "nodeId",
@@ -22,7 +24,8 @@ const FORMULA_PARTICIPANT_MODES = new Set([
   "person_by_login_name",
   "dept_leader_by_no",
   "doc_creator",
-  "role_line"
+  "role_line",
+  "script_formula"
 ]);
 
 export function classifyWorkflowFormulaParticipant(attributes = {}) {
@@ -30,7 +33,8 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
 
   const handlerIds = splitList(attributes.handlerIds);
   const handlerNames = splitList(attributes.handlerNames);
-  return personByLoginNameParticipant(attributes, handlerIds, handlerNames) ||
+  return detailScriptParticipant(attributes) ||
+    personByLoginNameParticipant(attributes, handlerIds, handlerNames) ||
     deptLeaderByNoParticipant(attributes, handlerIds, handlerNames) ||
     formFieldParticipant(attributes, handlerIds, handlerNames) ||
     roleLineParticipant(attributes, handlerIds, handlerNames) ||
@@ -41,6 +45,34 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
       sourceExpression: attributes.handlerIds || "",
       sourceNameExpression: attributes.handlerNames || ""
     };
+}
+
+function detailScriptParticipant(attributes) {
+  const sourceExpression = String(attributes.handlerIds || "");
+  const detailRef = sourceExpression.match(/\$([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)\$/);
+  if (!detailRef) return undefined;
+
+  let recipe;
+  if (/根据登录名取用户/.test(sourceExpression) && /\bfor\s*\(/.test(sourceExpression)) {
+    recipe = "detail_login_names_to_persons";
+  } else if (/根据部门编号获取部门领导/.test(sourceExpression) && /\.get\s*\(\s*0\s*\)/.test(sourceExpression)) {
+    recipe = "first_detail_department_code_to_head";
+  } else {
+    return undefined;
+  }
+
+  const sourceNameExpression = String(attributes.handlerNames || "");
+  const nameRef = sourceNameExpression.match(/\$([^.]+)\.([^$]+)\$/);
+  return {
+    mode: "script_formula",
+    recipe,
+    detailTableId: detailRef[1],
+    fieldId: detailRef[2],
+    sourceFieldId: detailRef[2],
+    fieldTitle: nameRef ? nameRef[2] : detailRef[2],
+    sourceExpression,
+    sourceNameExpression
+  };
 }
 
 export function workflowFormulaParticipantMatches(attributes, participants) {

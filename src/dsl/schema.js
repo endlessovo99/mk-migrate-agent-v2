@@ -56,14 +56,16 @@ const WORKFLOW_PARTICIPANT_MODES = new Set([
   "person_by_login_name",
   "dept_leader_by_no",
   "doc_creator",
-  "role_line"
+  "role_line",
+  "script_formula"
 ]);
 const MAPPED_FORMULA_PARTICIPANT_MODES = new Set([
   "form_field",
   "person_by_login_name",
   "dept_leader_by_no",
   "doc_creator",
-  "role_line"
+  "role_line",
+  "script_formula"
 ]);
 const MK_FIELD_ID_MAX_LENGTH = 25;
 
@@ -1290,6 +1292,40 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
       if (!nonEmptyString(participants[key])) {
         diagnostics.push(error("workflow.participants.role_line_field_required", `Role-line participants require ${key}.`, `${path}/${key}`));
       }
+    }
+  }
+  if (participants.mode === "script_formula") {
+    if (!["detail_login_names_to_persons", "first_detail_department_code_to_head"].includes(participants.recipe)) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_recipe_unsupported",
+        "Script formula participants require a supported deterministic recipe.",
+        `${path}/recipe`,
+        { actual: participants.recipe }
+      ));
+    }
+    if (!nonEmptyString(participants.fieldId) || !nonEmptyString(participants.sourceFieldId)) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_field_required",
+        "Script formula participants require fieldId and sourceFieldId.",
+        `${path}/fieldId`
+      ));
+    } else if (
+      context.dataAuthorityFieldIds instanceof Set &&
+      !context.dataAuthorityFieldIds.has(participants.fieldId)
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_field_missing",
+        "Script formula participant fieldId must reference an existing detail column.",
+        `${path}/fieldId`,
+        { fieldId: participants.fieldId }
+      ));
+    }
+    if (!nonEmptyString(participants.sourceExpression)) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_source_required",
+        "Script formula participants must preserve the source expression.",
+        `${path}/sourceExpression`
+      ));
     }
   }
 }

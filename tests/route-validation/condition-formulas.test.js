@@ -40,6 +40,16 @@ describe("conditional formula Route case", { concurrency: false }, () => {
       result.dsl.form.fields.find((field) => field.id === "fd_formula_amount_b")?.type,
       "number"
     );
+    assert.deepEqual(
+      ["N5", "N6"].map((nodeId) => {
+        const participants = result.dsl.workflow.nodes.find((node) => node.id === nodeId)?.participants;
+        return { mode: participants?.mode, recipe: participants?.recipe, fieldId: participants?.fieldId };
+      }),
+      [
+        { mode: "script_formula", recipe: "detail_login_names_to_persons", fieldId: "fd_detail_name" },
+        { mode: "script_formula", recipe: "first_detail_department_code_to_head", fieldId: "fd_detail_name" }
+      ]
+    );
 
     assert.equal(result.execution.ok, true);
     assert.equal(result.execution.readback.partitions.workflow, "verified");

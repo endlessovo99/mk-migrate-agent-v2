@@ -31,12 +31,16 @@
 &lt;nodes&gt;
 &lt;startNode id=&quot;N1&quot; name=&quot;开始&quot; x=&quot;100&quot; y=&quot;40&quot;/&gt;
 &lt;reviewNode handlerIds=&quot;legacy-conditional-reviewer&quot; handlerNames=&quot;Conditional Reviewer&quot; handlerSelectType=&quot;org&quot; id=&quot;N2&quot; ignoreOnHandlerSame=&quot;true&quot; name=&quot;审批&quot; x=&quot;100&quot; y=&quot;100&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;List values = $fd_route_detail.fd_detail_name$; for (int i=0;values.size()!=i;i++) { $组织架构.根据登录名取用户$(values.get(i)); } return values;&quot; handlerNames=&quot;List values = $明细.名称$; for (int i=0;values.size()!=i;i++) { $组织架构.根据登录名取用户$(values.get(i)); } return values;&quot; handlerSelectType=&quot;formula&quot; id=&quot;N5&quot; name=&quot;明细人员&quot; x=&quot;100&quot; y=&quot;130&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;List values = $fd_route_detail.fd_detail_name$; if(values.size()&gt;0){ return $部门领导.根据部门编号获取部门领导$(values.get(0)); } return null;&quot; handlerNames=&quot;List values = $明细.名称$; if(values.size()&gt;0){ return $部门领导.根据部门编号获取部门领导$(values.get(0)); } return null;&quot; handlerSelectType=&quot;formula&quot; id=&quot;N6&quot; name=&quot;明细部门领导&quot; x=&quot;100&quot; y=&quot;145&quot;/&gt;
 &lt;branchNode id=&quot;N3&quot; name=&quot;条件分支&quot; x=&quot;100&quot; y=&quot;160&quot;/&gt;
 &lt;endNode id=&quot;N4&quot; name=&quot;结束&quot; x=&quot;100&quot; y=&quot;220&quot;/&gt;
 &lt;/nodes&gt;
 &lt;lines&gt;
 &lt;line endNodeId=&quot;N2&quot; id=&quot;L1&quot; startNodeId=&quot;N1&quot;/&gt;
-&lt;line endNodeId=&quot;N3&quot; id=&quot;L2&quot; startNodeId=&quot;N2&quot;/&gt;
+&lt;line endNodeId=&quot;N5&quot; id=&quot;L2&quot; startNodeId=&quot;N2&quot;/&gt;
+&lt;line endNodeId=&quot;N6&quot; id=&quot;L11&quot; startNodeId=&quot;N5&quot;/&gt;
+&lt;line endNodeId=&quot;N3&quot; id=&quot;L12&quot; startNodeId=&quot;N6&quot;/&gt;
 &lt;line condition=&quot;$字符串.包含$($fd_condition_org$, &amp;quot;南方服务中心&amp;quot;)&quot; disCondition=&quot;$申请单位$ 包含 &amp;quot;南方服务中心&amp;quot;&quot; endNodeId=&quot;N4&quot; id=&quot;L3&quot; name=&quot;南方服务中心&quot; priority=&quot;0&quot; startNodeId=&quot;N3&quot;/&gt;
 &lt;line condition=&quot;$fd_route_type$ == 81 || $fd_route_type$==82&quot; disCondition=&quot;$类型$ == 81 || $类型$ == 82&quot; endNodeId=&quot;N4&quot; id=&quot;L5&quot; name=&quot;数字类型&quot; priority=&quot;1&quot; startNodeId=&quot;N3&quot;/&gt;
 &lt;line condition=&quot;$fd_route_type$ != 335&quot; disCondition=&quot;$类型$ != 335&quot; endNodeId=&quot;N4&quot; id=&quot;L6&quot; name=&quot;非水务类型&quot; priority=&quot;2&quot; startNodeId=&quot;N3&quot;/&gt;

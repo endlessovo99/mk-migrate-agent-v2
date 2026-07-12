@@ -165,11 +165,16 @@ export function buildWorkflowContent(workflow, context = {}) {
   const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
   const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
   const outgoingEdges = groupEdgesBySource(edges);
+  const formulaParticipantNodeIds = new Set(
+    nodes.filter((node) => isFormulaParticipantMode(node?.participants?.mode)).map((node) => node.id)
+  );
+  const initiatorSelectTargetNodeIds = collectInitiatorSelectTargetNodeIds(nodes);
+  for (const nodeId of formulaParticipantNodeIds) initiatorSelectTargetNodeIds.delete(nodeId);
   const workflowContext = {
     ...context,
     formFieldById: context.formFieldById || buildFormFieldIndex(context.form),
     formFieldsByTitle: context.formFieldsByTitle || buildFormFieldTitleIndex(context.form),
-    initiatorSelectTargetNodeIds: collectInitiatorSelectTargetNodeIds(nodes),
+    initiatorSelectTargetNodeIds,
     canModifyHandlerTargetNodeIds: collectCanModifyHandlerTargetNodeIds(nodes)
   };
   const branchRoutes = buildBranchRoutes(nodes, outgoingEdges, workflowContext);
@@ -182,6 +187,14 @@ export function buildWorkflowContent(workflow, context = {}) {
     branchRoutes.bySource.get(node.id) || [],
     workflowContext
   ));
+  for (const element of nodeElements) {
+    for (const key of ["mustModifyHandlerNodes", "canModifyHandlerNodes"]) {
+      if (!element[key]) continue;
+      const retained = splitRelatedNodeIds(element[key]).filter((nodeId) => !formulaParticipantNodeIds.has(nodeId));
+      if (retained.length) element[key] = retained.join(",");
+      else delete element[key];
+    }
+  }
   const edgeElements = edges.map((edge, index) => buildEdgeElement(edge, index, branchRoutes.byEdge.get(edge.id)));
 
   return {
@@ -209,6 +222,17 @@ export function buildWorkflowContent(workflow, context = {}) {
       workflow: summarizeDslWorkflow(workflow)
     }
   };
+}
+
+function isFormulaParticipantMode(mode) {
+  return [
+    "form_field",
+    "person_by_login_name",
+    "dept_leader_by_no",
+    "doc_creator",
+    "role_line",
+    "script_formula"
+  ].includes(mode);
 }
 
 export function summarizeWorkflowFromTemplate(template) {
@@ -431,7 +455,8 @@ function buildArtificialNode(node, type, context = {}) {
       node.participants?.mode === "person_by_login_name" ||
       node.participants?.mode === "dept_leader_by_no" ||
       node.participants?.mode === "role_line" ||
-      node.participants?.mode === "doc_creator"
+      node.participants?.mode === "doc_creator" ||
+      node.participants?.mode === "script_formula"
       ? "formula"
       : attrs.handlerSelectType,
     recalculateHandler: attrs.recalculateHandler,
@@ -1223,7 +1248,7 @@ function parseSimpleCondition(condition) {
   const text = String(condition || "").trim();
   if (!text) return undefined;
 
-  const contains = text.match(/^(!\s*)?\$(?:字符串|列表)\.包含\$\(\s*\$([^$]+)\$\s*,\s*(["'])([\s\S]*?)\3\s*\)$/);
+  const contains = text.match(/^(!\s*)?\$(?:字符串|列表)\.包含\$\(\s*\$([^$]+)\$(?:\s*\.\s*getFdName\s*\(\s*\))?\s*,\s*(["'])([\s\S]*?)\3\s*\)$/);
   if (contains) {
     const negated = Boolean(contains[1]);
     return {
@@ -1967,7 +1992,7 @@ function handlersFromAttributes(attrs) {
 }
 
 function handlersFromParticipants(participants, attrs, context = {}) {
-  if (context.initiatorSelectTarget === true) {
+  if (context.initiatorSelectTarget === true && participants?.mode === "initiator_select") {
     return emptyOrgHandlers();
   }
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
@@ -2078,6 +2103,25 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       }
     };
   }
+  if (participants?.mode === "script_formula") {
+    const ruleKey = scriptFormulaHandlerRuleKey(participants, context);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey: JSON.stringify(ruleKey),
+      ruleName: ruleKey.vo.content,
+      ruleMode: "script",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        sourceExpression: participants.sourceExpression || "",
+        sourceNameExpression: participants.sourceNameExpression || "",
+        recipe: participants.recipe || ""
+      }
+    };
+  }
   if (participants?.mode === "initiator_select") {
     return emptyOrgHandlers();
   }
@@ -2085,6 +2129,7 @@ function handlersFromParticipants(participants, attrs, context = {}) {
 }
 
 function nativeHandlerIds(participants, attrs) {
+  if (participants?.mode === "script_formula") return "";
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return participants.members.map((member) => member.id).filter(Boolean).join(";");
   }
@@ -2092,6 +2137,7 @@ function nativeHandlerIds(participants, attrs) {
 }
 
 function nativeHandlerNames(participants, attrs) {
+  if (participants?.mode === "script_formula") return "";
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return participants.members.map((member) => member.name || member.id).filter(Boolean).join(";");
   }
@@ -2154,6 +2200,45 @@ function emptyOrgHandlers() {
     ruleName: "",
     members: [],
     element: "users"
+  };
+}
+
+function scriptFormulaHandlerRuleKey(participants, context = {}) {
+  const fieldId = participants.fieldId || "";
+  const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
+  const dataRef = `\${data.${fdVarValue}}`;
+  let script;
+  let content;
+
+  if (participants.recipe === "detail_login_names_to_persons") {
+    script = `var values = ${dataRef} || []; var handlers = []; var seen = {}; for (var i = 0; i < values.length; i++) { var loginName = String(values[i] || ""); if (!loginName || seen[loginName]) { continue; } seen[loginName] = true; var found = \${func.sysorg.getPersonByLoginName}(loginName) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); } } return handlers;`;
+    content = "return #根据登录名查找人员#($明细表.项目经理工号$)";
+  } else if (participants.recipe === "first_detail_department_code_to_head") {
+    script = `var values = ${dataRef} || []; if (!values.length) { return []; } var departments = \${func.sysorg.getElementByNo}(String(values[0]), "2") || []; return \${func.sysorg.getDepartmentHead}(departments) || [];`;
+    content = "return #查找部门领导#(#根据组织编码查找组织#($明细表.WBS所属部门Code$, \"2\"))";
+  } else {
+    throw new Error(`unsupported workflow script formula recipe: ${participants.recipe || ""}`);
+  }
+
+  return {
+    type: "Script",
+    script,
+    vo: { mode: "script", content },
+    resultType: workflowOrgArrayResultType()
+  };
+}
+
+function workflowOrgArrayResultType() {
+  return {
+    type: "array",
+    items: {
+      type: "object",
+      properties: {
+        fdId: { type: "string", description: "ID" },
+        fdName: { type: "string", description: "名称" },
+        fdOrgType: { type: "string", description: "组织机构类型" }
+      }
+    }
   };
 }
 

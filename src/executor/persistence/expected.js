@@ -403,7 +403,11 @@ function renderExpectedScriptBody(source, detailTableNames = {}) {
 function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
   const nodes = Array.isArray(workflow.nodes) ? workflow.nodes : [];
   const edges = Array.isArray(workflow.edges) ? workflow.edges : [];
+  const formulaParticipantNodeIds = new Set(
+    nodes.filter((node) => isFormulaParticipantMode(node?.participants?.mode)).map((node) => node.id)
+  );
   const initiatorSelectTargetNodeIds = collectInitiatorSelectTargetNodeIds(nodes);
+  for (const nodeId of formulaParticipantNodeIds) initiatorSelectTargetNodeIds.delete(nodeId);
   const defaultEdgeIds = collectDefaultEdgeIds(nodes, edges);
   const conditionBranchNodeIds = new Set(
     nodes.filter((node) => node?.type === "conditionBranch").map((node) => node.id)
@@ -442,8 +446,10 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       name: normalizeScalar(node.name),
       type: node.type,
       element: node.element || defaultElementForType(node.type),
-      mustModifyHandlerNodeIds: splitRelatedNodeIds(attributes.mustModifyHandlerNodeIds),
-      canModifyHandlerNodeIds: splitRelatedNodeIds(attributes.canModifyHandlerNodeIds),
+      mustModifyHandlerNodeIds: splitRelatedNodeIds(attributes.mustModifyHandlerNodeIds)
+        .filter((nodeId) => !formulaParticipantNodeIds.has(nodeId)),
+      canModifyHandlerNodeIds: splitRelatedNodeIds(attributes.canModifyHandlerNodeIds)
+        .filter((nodeId) => !formulaParticipantNodeIds.has(nodeId)),
       participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id), context),
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),
@@ -479,6 +485,17 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
   };
 }
 
+function isFormulaParticipantMode(mode) {
+  return [
+    "form_field",
+    "person_by_login_name",
+    "dept_leader_by_no",
+    "doc_creator",
+    "role_line",
+    "script_formula"
+  ].includes(mode);
+}
+
 function collectDefaultEdgeIds(nodes = [], edges = []) {
   const conditionBranchNodeIds = new Set(
     nodes.filter((node) => node?.type === "conditionBranch").map((node) => node.id)
@@ -499,7 +516,7 @@ function collectDefaultEdgeIds(nodes = [], edges = []) {
 }
 
 function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
-  if (initiatorSelectTarget) {
+  if (initiatorSelectTarget && node?.participants?.mode === "initiator_select") {
     return {
       mode: "initiator_select",
       handlersType: "org",
@@ -537,6 +554,14 @@ function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
   if (node.participants.mode === "dept_leader_by_no") {
     return {
       mode: "dept_leader_by_no",
+      fieldId: node.participants.fieldId,
+      nativeFormula: expectedParticipantFormula(node.participants, context)
+    };
+  }
+  if (node.participants.mode === "script_formula") {
+    return {
+      mode: "script_formula",
+      recipe: node.participants.recipe,
       fieldId: node.participants.fieldId,
       nativeFormula: expectedParticipantFormula(node.participants, context)
     };
@@ -616,6 +641,15 @@ function expectedParticipantFormula(participants, context = {}) {
       script = `$组织架构.解释角色线$(\${data.${fieldRef}}, ${companyRole}, ${departmentRole})`;
       varIds = [fieldRef];
     }
+  } else if (participants?.mode === "script_formula") {
+    const dataRef = `\${data.${fieldRef}}`;
+    if (participants.recipe === "detail_login_names_to_persons") {
+      script = `var values = ${dataRef} || []; var handlers = []; var seen = {}; for (var i = 0; i < values.length; i++) { var loginName = String(values[i] || ""); if (!loginName || seen[loginName]) { continue; } seen[loginName] = true; var found = \${func.sysorg.getPersonByLoginName}(loginName) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); } } return handlers;`;
+    } else if (participants.recipe === "first_detail_department_code_to_head") {
+      script = `var values = ${dataRef} || []; if (!values.length) { return []; } var departments = \${func.sysorg.getElementByNo}(String(values[0]), "2") || []; return \${func.sysorg.getDepartmentHead}(departments) || [];`;
+    }
+    ruleMode = "script";
+    ruleKeyMode = "";
   }
 
   return {
@@ -628,10 +662,10 @@ function expectedParticipantFormula(participants, context = {}) {
     memberCount: 0,
     ruleMode,
     formulaType: "formula",
-    ruleKeyType: "Eval",
+    ruleKeyType: participants?.mode === "script_formula" ? "Script" : "Eval",
     ruleKeyMode,
-    ruleVoMode: "formula",
-    resultType: ["person_by_login_name", "doc_creator"].includes(participants?.mode)
+    ruleVoMode: participants?.mode === "script_formula" ? "script" : "formula",
+    resultType: ["person_by_login_name", "doc_creator", "script_formula"].includes(participants?.mode)
       ? "org_array"
       : "none"
   };
