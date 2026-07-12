@@ -264,7 +264,52 @@ describe("resolveConditionOrgs", () => {
     assert.deepEqual(result.dsl.runtime.conditionOrgByName.南方服务中心, SIT_CONDITION_ORG_FALLBACKS[0]);
   });
 
+  it("uses the configured organization fallback fdId for unresolved conditions", async () => {
+    const organizationFdId = "configured-condition-organization-id";
+    const configuredOrganization = {
+      fdId: organizationFdId,
+      fdName: "配置条件兜底组织",
+      fdOrgType: 2
+    };
+    const elementCalls = [];
+    const client = {
+      async searchOrg() {
+        return [];
+      },
+      async getElementInfo(targets) {
+        elementCalls.push(targets);
+        return targets.includes(organizationFdId) ? [configuredOrganization] : [];
+      }
+    };
+
+    const result = await resolveConditionOrgs({
+      form: {
+        fields: [{
+          id: "fd_req_dept",
+          componentId: "xform-address",
+          sourceProps: { designerType: "address" }
+        }]
+      },
+      workflow: {
+        edges: [{
+          condition: {
+            targetText: "$字符串.包含$($fd_req_dept$, \"南方服务中心\")"
+          }
+        }]
+      }
+    }, {
+      client,
+      targetBaseUrl: "http://oa-dev.shanghai-electric.com:8088",
+      fallbackFdIds: { organization: organizationFdId }
+    });
+
+    assert.equal(result.fallbackCount, 1);
+    assert.deepEqual(elementCalls, [[organizationFdId]]);
+    assert.deepEqual(result.dsl.runtime.conditionOrgByName.南方服务中心, configuredOrganization);
+  });
+
   it("fails closed when the SIT condition fallback is not a current department", async () => {
+    const configuredOrganizationId = "configured-wrong-type-organization-id";
     const client = {
       async searchOrg() {
         return [];
@@ -292,7 +337,8 @@ describe("resolveConditionOrgs", () => {
         }
       }, {
         client,
-        targetBaseUrl: "https://p-sit.onewo.com"
+        targetBaseUrl: "https://p-sit.onewo.com",
+        fallbackFdIds: { organization: configuredOrganizationId }
       }),
       (error) => error?.issues?.some((issue) => issue.reason === "fallback_target_not_department")
     );

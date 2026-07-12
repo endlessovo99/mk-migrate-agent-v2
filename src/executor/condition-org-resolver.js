@@ -14,16 +14,16 @@
  */
 
 import { allowsTemporaryOrgFallbacks } from "./newoa-client.js";
+import {
+  DEFAULT_TEMPORARY_ORG_FALLBACKS,
+  resolveTemporaryOrgFallbacks
+} from "./temporary-org-fallbacks.js";
 
 const CONDITION_ORG_RESOLUTION_STAGE = "resolveConditionOrgs";
 
 /** Department fallback for unresolved address-field condition org names/fdNos. */
 export const SIT_CONDITION_ORG_FALLBACKS = Object.freeze([
-  Object.freeze({
-    fdId: "1jt85rk85w23welrpw2s3uh4pvsr8ru35dw0",
-    fdName: "AI迁移默认部门",
-    fdOrgType: 2
-  })
+  DEFAULT_TEMPORARY_ORG_FALLBACKS.organization
 ]);
 
 export class ConditionOrgResolutionError extends Error {
@@ -40,8 +40,9 @@ export class ConditionOrgResolutionError extends Error {
   }
 }
 
-export async function resolveConditionOrgs(dsl, { client, targetBaseUrl } = {}) {
+export async function resolveConditionOrgs(dsl, { client, targetBaseUrl, fallbackFdIds } = {}) {
   const nextDsl = structuredClone(dsl);
+  const configuredOrganizationFallback = resolveTemporaryOrgFallbacks(fallbackFdIds).organization;
   const names = collectAddressConditionOrgNames(nextDsl);
   const fdNos = collectAddressConditionOrgFdNos(nextDsl);
   if (names.size === 0 && fdNos.size === 0) {
@@ -112,17 +113,15 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl } = {}) 
   const fallbackFdNos = [];
   if (allowSitFallback && (unresolvedNames.length || unresolvedFdNos.length)) {
     const assignments = [
-      ...unresolvedNames.map((name, index) => ({
+      ...unresolvedNames.map((name) => ({
         kind: "name",
         key: name,
-        fallback: SIT_CONDITION_ORG_FALLBACKS[index % SIT_CONDITION_ORG_FALLBACKS.length]
+        fallback: configuredOrganizationFallback
       })),
-      ...unresolvedFdNos.map((fdNo, index) => ({
+      ...unresolvedFdNos.map((fdNo) => ({
         kind: "fdNo",
         key: fdNo,
-        fallback: SIT_CONDITION_ORG_FALLBACKS[
-          (unresolvedNames.length + index) % SIT_CONDITION_ORG_FALLBACKS.length
-        ]
+        fallback: configuredOrganizationFallback
       }))
     ];
     const validatedFallbacks = await validateSitConditionOrgFallbacks(

@@ -17,9 +17,15 @@ const SIT_FALLBACK_BY_ID = new Map([
   ...Object.values(SIT_PARTICIPANT_FALLBACKS).map((fallback) => [fallback.fdId, fallback]),
   [SIT_CONDITION_ORG_FALLBACK_ID, SIT_CONDITION_ORG_FALLBACKS[0]]
 ]);
+const CONFIGURED_FALLBACK_SHAPES = Object.freeze({
+  person: Object.freeze({ fdName: "Route Configured Person", fdOrgType: 8 }),
+  organization: Object.freeze({ fdName: "Route Configured Organization", fdOrgType: 2 }),
+  group: Object.freeze({ fdName: "Route Configured Group", fdOrgType: 16 }),
+  post: Object.freeze({ fdName: "Route Configured Post", fdOrgType: 4 })
+});
 
 export class FakeNewoaAdapter {
-  constructor(scenario) {
+  constructor(scenario, options = {}) {
     if (!NEWOA_SCENARIOS.includes(scenario)) {
       throw integrityError("route.scenario.newoa_unknown", `Unknown NewOA scenario: ${scenario}`);
     }
@@ -28,6 +34,11 @@ export class FakeNewoaAdapter {
     this.template = undefined;
     this.workflowDraft = undefined;
     this.updated = false;
+    this.fallbackById = new Map(SIT_FALLBACK_BY_ID);
+    for (const [kind, fdId] of Object.entries(options.fallbackFdIds || {})) {
+      const shape = CONFIGURED_FALLBACK_SHAPES[kind];
+      if (shape) this.fallbackById.set(fdId, { fdId, ...shape });
+    }
   }
 
   async login() {
@@ -46,7 +57,7 @@ export class FakeNewoaAdapter {
   async getElementInfo(targets) {
     this.record({ operation: "get-element-info", targets: clone(targets) });
     return targets.map((fdId) => {
-      const fallback = SIT_FALLBACK_BY_ID.get(fdId);
+      const fallback = this.fallbackById.get(fdId);
       if (fallback) {
         return {
           fdId: fallback.fdId,

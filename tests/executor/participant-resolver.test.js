@@ -85,6 +85,82 @@ describe("resolveWorkflowParticipants", () => {
     ].sort()]);
   });
 
+  it("uses configured fallback fdIds for people, organizations, groups, and posts", async () => {
+    const fallbackFdIds = {
+      person: "configured-person-id",
+      organization: "configured-organization-id",
+      group: "configured-group-id",
+      post: "configured-post-id"
+    };
+    const dsl = dslWithExplicitMembers([
+      sourceMember({ name: "缺失人员", sourceOrgType: 8, sourceParentName: "源部门" }),
+      sourceMember({ name: "缺失组织", sourceOrgType: 2, sourceParentName: "源总部" }),
+      sourceMember({ name: "缺失群组", sourceOrgType: 16, sourceParentName: "源总部" }),
+      sourceMember({ name: "缺失岗位", sourceOrgType: 4, sourceParentName: "源部门" })
+    ]);
+    const client = new SearchClient({
+      缺失人员: [],
+      缺失组织: [],
+      缺失群组: [],
+      缺失岗位: []
+    }, {
+      [fallbackFdIds.person]: [currentOrg({ fdId: fallbackFdIds.person, fdName: "配置兜底人", fdOrgType: 8 })],
+      [fallbackFdIds.organization]: [currentOrg({ fdId: fallbackFdIds.organization, fdName: "配置兜底组织", fdOrgType: 2 })],
+      [fallbackFdIds.group]: [currentOrg({ fdId: fallbackFdIds.group, fdName: "配置兜底群组", fdOrgType: 16 })],
+      [fallbackFdIds.post]: [currentOrg({ fdId: fallbackFdIds.post, fdName: "配置兜底岗位", fdOrgType: 4 })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: NEWOA_SIT_BASE_URL,
+      fallbackFdIds
+    });
+
+    assert.deepEqual(
+      result.dsl.workflow.nodes[1].participants.members.map(({ id, name, targetOrgType }) => ({
+        id,
+        name,
+        targetOrgType
+      })),
+      [
+        { id: fallbackFdIds.person, name: "配置兜底人", targetOrgType: 8 },
+        { id: fallbackFdIds.organization, name: "配置兜底组织", targetOrgType: 2 },
+        { id: fallbackFdIds.group, name: "配置兜底群组", targetOrgType: 16 },
+        { id: fallbackFdIds.post, name: "配置兜底岗位", targetOrgType: 4 }
+      ]
+    );
+    assert.deepEqual(result.fallbackTargetIds, Object.values(fallbackFdIds).sort());
+    assert.deepEqual(client.elementCalls, [Object.values(fallbackFdIds).sort()]);
+  });
+
+  it("rejects one configured fallback fdId reused across incompatible participant types", async () => {
+    const sharedFdId = "configured-shared-person-group-id";
+    const dsl = dslWithExplicitMembers([
+      sourceMember({ name: "缺失群组", sourceOrgType: 16, sourceParentName: "源总部" }),
+      sourceMember({ name: "缺失人员", sourceOrgType: 8, sourceParentName: "源部门" })
+    ]);
+    const client = new SearchClient({ 缺失人员: [], 缺失群组: [] }, {
+      [sharedFdId]: [currentOrg({ fdId: sharedFdId, fdName: "仅为人员类型", fdOrgType: 8 })]
+    });
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: NEWOA_SIT_BASE_URL,
+        fallbackFdIds: { person: sharedFdId, group: sharedFdId }
+      }),
+      (error) => {
+        assert.equal(
+          error.issues.some((issue) =>
+            issue.reason === "fallback_target_type_mismatch" && issue.expectedOrgType === 16
+          ),
+          true
+        );
+        return true;
+      }
+    );
+  });
+
   it("does not partially apply the SIT fallback when another identity is ambiguous", async () => {
     const dsl = dslWithExplicitMembers([
       sourceMember({
@@ -129,12 +205,16 @@ describe("resolveWorkflowParticipants", () => {
       sourceOrgType: 4,
       sourceParentName: "采购部"
     })]);
-    const client = new SearchClient({ 不存在岗位: [] }, sitFallbackElementResults());
+    const configuredPostId = "must-not-be-used-outside-allowed-origin";
+    const client = new SearchClient({ 不存在岗位: [] }, {
+      [configuredPostId]: [currentOrg({ fdId: configuredPostId, fdName: "不可使用兜底岗位", fdOrgType: 4 })]
+    });
 
     await assert.rejects(
       () => resolveWorkflowParticipants(dsl, {
         client,
-        targetBaseUrl: "https://p-sit.onewo.com:8443"
+        targetBaseUrl: "https://p-sit.onewo.com:8443",
+        fallbackFdIds: { post: configuredPostId }
       }),
       (error) => {
         assert.deepEqual(error.issues.map((issue) => issue.reason), ["not_found"]);
@@ -171,6 +251,7 @@ describe("resolveWorkflowParticipants", () => {
   });
 
   it("requires each configured SIT fallback fdId to resolve to the expected org type", async () => {
+    const configuredPostId = "configured-wrong-type-post-id";
     const dsl = dslWithExplicitMembers([sourceMember({
       name: "不存在岗位",
       sourceId: "legacy-post-missing",
@@ -178,8 +259,8 @@ describe("resolveWorkflowParticipants", () => {
       sourceParentName: "采购部"
     })]);
     const client = new SearchClient({ 不存在岗位: [] }, {
-      [SIT_FALLBACK_POST.fdId]: [currentOrg({
-        fdId: SIT_FALLBACK_POST.fdId,
+      [configuredPostId]: [currentOrg({
+        fdId: configuredPostId,
         fdName: "错误的人员目标",
         fdOrgType: 8
       })]
@@ -188,7 +269,8 @@ describe("resolveWorkflowParticipants", () => {
     await assert.rejects(
       () => resolveWorkflowParticipants(dsl, {
         client,
-        targetBaseUrl: NEWOA_SIT_BASE_URL
+        targetBaseUrl: NEWOA_SIT_BASE_URL,
+        fallbackFdIds: { post: configuredPostId }
       }),
       (error) => {
         assert.deepEqual(error.issues.map((issue) => issue.reason), ["fallback_target_type_mismatch"]);
@@ -541,6 +623,43 @@ describe("executeDsl participant resolution seam", () => {
     assert.equal(
       result.diagnostics.some((item) => item.code === "workflow.participant_sit_fallback_applied"),
       true
+    );
+  });
+
+  it("passes configured fallback fdIds through execution into workflow persistence", async () => {
+    const personFdId = "configured-execute-person-id";
+    const dsl = dslWithExplicitMembers([
+      sourceMember({
+        name: "目标环境不存在的审批人",
+        sourceId: "legacy-person-missing",
+        sourceOrgType: 8,
+        sourceParentName: "源系统部门"
+      })
+    ]);
+    const client = new CompleteSearchClient({}, {
+      [personFdId]: [currentOrg({ fdId: personFdId, fdName: "配置执行兜底人", fdOrgType: 8 })]
+    });
+
+    const result = await executeDsl(dsl, {
+      client,
+      credentials: { username: "route-user", encryptedPassword: "route-password" },
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      baseUrl: NEWOA_SIT_BASE_URL,
+      fallbackFdIds: { person: personFdId },
+      now: new Date("2026-07-10T10:00:00.000Z")
+    });
+    const workflow = JSON.parse(client.savedTemplate.mechanisms.lbpmTemplate[0].fdContent);
+    const members = workflow.elements.find((element) => element.id === "N-review").handlers.members;
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(members.map(({ id, name }) => ({ id, name })), [{
+      id: personFdId,
+      name: "配置执行兜底人"
+    }]);
+    assert.deepEqual(
+      result.apiStages.find((stage) => stage.name === "resolveWorkflowParticipants").fallbackTargetIds,
+      [personFdId]
     );
   });
 

@@ -57,13 +57,16 @@ export async function runRouteCase(caseId) {
       throw unexpected("dry-run", routeCase, dryRun.status);
     }
 
-    const adapter = new FakeNewoaAdapter(routeCase.newoaScenario);
+    const adapter = new FakeNewoaAdapter(routeCase.newoaScenario, {
+      fallbackFdIds: routeCase.fallbackFdIds
+    });
     const execution = await executeDsl(reviewResult.dsl, {
       client: adapter,
       credentials: TEST_CREDENTIALS,
       confirmWrite: routeCase.confirmWrite,
       targetCategoryId: "route-category-id",
       baseUrl: routeCase.baseUrl ?? NEWOA_SIT_BASE_URL,
+      fallbackFdIds: routeCase.fallbackFdIds,
       now: new Date(FIXED_NOW)
     });
     const transcript = adapter.transcript();

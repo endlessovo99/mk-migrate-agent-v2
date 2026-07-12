@@ -93,6 +93,8 @@ describe("offline Route-validation", { concurrency: false }, () => {
 
   it("applies participant and condition-organization fallbacks on the Shanghai Electric development origin", async () => {
     const result = await runRouteCase("shanghai-electric-dev-fallback-success");
+    const participantFallbackId = "route-configured-person-fallback";
+    const organizationFallbackId = "route-configured-organization-fallback";
 
     assert.equal(result.execution.ok, true);
     assert.equal(result.execution.baseUrl, "http://oa-dev.shanghai-electric.com:8088");
@@ -103,6 +105,20 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(
       result.execution.diagnostics.some((item) => item.code === "workflow.condition_org_sit_fallback_applied"),
       true
+    );
+    assert.deepEqual(
+      result.execution.diagnostics.find((item) => item.code === "workflow.participant_sit_fallback_applied")
+        .details.targetFdIds,
+      [participantFallbackId]
+    );
+    assert.deepEqual(
+      result.execution.diagnostics.find((item) => item.code === "workflow.condition_org_sit_fallback_applied")
+        .details.fallbackOrgs.map((entry) => entry.target.fdId),
+      [organizationFallbackId]
+    );
+    assert.deepEqual(
+      result.transcript.filter((entry) => entry.operation === "get-element-info").map((entry) => entry.targets),
+      [[participantFallbackId], [organizationFallbackId]]
     );
   });
 

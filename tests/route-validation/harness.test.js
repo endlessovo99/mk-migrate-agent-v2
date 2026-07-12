@@ -50,6 +50,10 @@ describe("Route-validation harness integrity", { concurrency: false }, () => {
       () => appendTranscriptEntry([], { operation: "update", templateId: { raw: "payload" } }),
       (error) => error?.code === "route.transcript.invalid"
     );
+    assert.throws(
+      () => validateRouteManifest(manifestWith({ fallbackFdIds: { unknown: "fallback-id" } })),
+      (error) => error?.code === "route.manifest.invalid"
+    );
 
     assert.doesNotThrow(() => validateRouteManifest(manifestWith({
       expected: {

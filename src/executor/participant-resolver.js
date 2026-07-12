@@ -1,41 +1,18 @@
 import { allowsTemporaryOrgFallbacks } from "./newoa-client.js";
+import {
+  DEFAULT_TEMPORARY_ORG_FALLBACKS,
+  resolveTemporaryOrgFallbacks
+} from "./temporary-org-fallbacks.js";
 
 const PARTICIPANT_RESOLUTION_STAGE = "resolveWorkflowParticipants";
 const SIT_FALLBACK_REASONS = new Set(["not_found", "missing_source_evidence"]);
 
 /** NewOA orgType: 1 机构, 2 部门, 4 岗位, 8 人员, 16 群组, 32 角色, 128 公共岗位, 256 身份 */
 export const SIT_PARTICIPANT_FALLBACKS = Object.freeze({
-  person: Object.freeze({
-    fdId: "1j5e6gebgwkw1tvw1jqie81aeqnhg302viw0",
-    fdName: "AI迁移默认人",
-    fdOrgType: 8
-  }),
-  post: Object.freeze({
-    fdId: "1jt85eh5hw23welj9w3jq4nba1522lpc3tw0",
-    fdName: "AI迁移默认岗位",
-    fdOrgType: 4
-  }),
-  group: Object.freeze({
-    fdId: "1jt85gq4uw23well7w25q9bmdj729u82tmw0",
-    fdName: "AI迁移默认群组",
-    fdOrgType: 16
-  }),
-  department: Object.freeze({
-    fdId: "1jt85rk85w23welrpw2s3uh4pvsr8ru35dw0",
-    fdName: "AI迁移默认部门",
-    fdOrgType: 2
-  })
-});
-
-const SIT_FALLBACK_BY_SOURCE_ORG_TYPE = Object.freeze({
-  1: SIT_PARTICIPANT_FALLBACKS.department,
-  2: SIT_PARTICIPANT_FALLBACKS.department,
-  4: SIT_PARTICIPANT_FALLBACKS.post,
-  8: SIT_PARTICIPANT_FALLBACKS.person,
-  16: SIT_PARTICIPANT_FALLBACKS.group,
-  32: SIT_PARTICIPANT_FALLBACKS.person,
-  128: SIT_PARTICIPANT_FALLBACKS.post,
-  256: SIT_PARTICIPANT_FALLBACKS.person
+  person: DEFAULT_TEMPORARY_ORG_FALLBACKS.person,
+  post: DEFAULT_TEMPORARY_ORG_FALLBACKS.post,
+  group: DEFAULT_TEMPORARY_ORG_FALLBACKS.group,
+  department: DEFAULT_TEMPORARY_ORG_FALLBACKS.organization
 });
 
 export class ParticipantResolutionError extends Error {
@@ -52,8 +29,9 @@ export class ParticipantResolutionError extends Error {
   }
 }
 
-export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl } = {}) {
+export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, fallbackFdIds } = {}) {
   const nextDsl = structuredClone(dsl);
+  const configuredFallbacks = resolveTemporaryOrgFallbacks(fallbackFdIds);
   const identities = collectParticipantIdentities(nextDsl);
   if (identities.size === 0) {
     return {
@@ -99,10 +77,18 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl }
   }
   let fallbackTargetsByOrgType = {};
   if (fallbackResolutions.length) {
-    const validatedTargets = await resolveSitFallbackTargets(client, elementCache, fallbackResolutions);
+    const validatedTargets = await resolveSitFallbackTargets(
+      client,
+      elementCache,
+      fallbackResolutions,
+      configuredFallbacks
+    );
     for (const resolution of fallbackResolutions) {
-      const fallback = sitFallbackForSourceOrgType(resolution.member?.sourceOrgType);
-      const target = validatedTargets.get(fallback.fdId);
+      const fallback = temporaryFallbackForSourceOrgType(
+        resolution.member?.sourceOrgType,
+        configuredFallbacks
+      );
+      const target = validatedTargets.get(fallbackValidationKey(fallback));
       resolution.target = target;
       resolution.fallback = true;
       resolution.fallbackSpec = fallback;
@@ -116,7 +102,7 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl }
             sourceOrgType: Number(sourceOrgType),
             targetFdId: resolution.fallbackSpec.fdId,
             targetOrgType: resolution.fallbackSpec.fdOrgType,
-            targetName: resolution.fallbackSpec.fdName
+            targetName: resolution.target.fdName
           }];
         })
       ).entries()].sort(([left], [right]) => Number(left) - Number(right))
@@ -185,20 +171,33 @@ function isSitFallbackEligible(resolution) {
     resolution.issue.missing.every((field) => field === "sourceParentName");
 }
 
-function sitFallbackForSourceOrgType(sourceOrgType) {
+function temporaryFallbackForSourceOrgType(sourceOrgType, fallbacks) {
   const normalized = normalizeOrgType(sourceOrgType);
-  return SIT_FALLBACK_BY_SOURCE_ORG_TYPE[normalized] || SIT_PARTICIPANT_FALLBACKS.person;
+  const bySourceOrgType = {
+    1: fallbacks.organization,
+    2: fallbacks.organization,
+    4: fallbacks.post,
+    8: fallbacks.person,
+    16: fallbacks.group,
+    32: fallbacks.person,
+    128: fallbacks.post,
+    256: fallbacks.person
+  };
+  return bySourceOrgType[normalized] || fallbacks.person;
 }
 
-async function resolveSitFallbackTargets(client, elementCache, resolutions) {
+async function resolveSitFallbackTargets(client, elementCache, resolutions, fallbacksByKind) {
   const paths = resolutions.flatMap((resolution) => resolution.paths);
   const fallbacks = [...new Map(
     resolutions.map((resolution) => {
-      const fallback = sitFallbackForSourceOrgType(resolution.member?.sourceOrgType);
-      return [fallback.fdId, fallback];
+      const fallback = temporaryFallbackForSourceOrgType(
+        resolution.member?.sourceOrgType,
+        fallbacksByKind
+      );
+      return [fallbackValidationKey(fallback), fallback];
     })
   ).values()].sort((left, right) => left.fdId.localeCompare(right.fdId));
-  const targetIds = fallbacks.map((fallback) => fallback.fdId);
+  const targetIds = [...new Set(fallbacks.map((fallback) => fallback.fdId))];
 
   if (typeof client?.getElementInfo !== "function") {
     throw new ParticipantResolutionError(fallbacks.map((fallback) => ({
@@ -247,7 +246,7 @@ async function resolveSitFallbackTargets(client, elementCache, resolutions) {
         });
         continue;
       }
-      validated.set(fallback.fdId, {
+      validated.set(fallbackValidationKey(fallback), {
         ...candidate,
         fdName: normalizeText(candidate.fdName) || fallback.fdName,
         fdOrgType: fallback.fdOrgType
@@ -264,6 +263,10 @@ async function resolveSitFallbackTargets(client, elementCache, resolutions) {
       message: error instanceof Error ? error.message : String(error)
     }], { cause: error });
   }
+}
+
+function fallbackValidationKey(fallback) {
+  return `${fallback.fdId}\0${fallback.fdOrgType}`;
 }
 
 function collectParticipantIdentities(dsl) {

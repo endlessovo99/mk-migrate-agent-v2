@@ -9,6 +9,7 @@ import { executeDsl } from "../executor/execute.js";
 import { loadFunctionWhitelist } from "../translator/function-whitelist.js";
 import { cleanSourceFile, draftSourceDraft, translateSourceFile } from "../translator/index.js";
 import { selectNewoaBaseUrl } from "./base-url.js";
+import { selectFallbackFdIds } from "./fallback-fd-ids.js";
 
 const commands = new Map([
   ["clean", runClean],
@@ -220,6 +221,7 @@ async function runExecute(argv, options = {}) {
     targetCategoryId: args["target-category-id"],
     existingTemplateId: args["template-id"],
     baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
+    fallbackFdIds: selectFallbackFdIds(env),
     credentials: {
       username: env.NEWOA_USERNAME,
       encryptedPassword: env.NEWOA_ENCRYPTED_PASSWORD
@@ -307,7 +309,7 @@ function printUsage() {
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");
   console.error("  node src/cli/main.js check execute <migration.dsl.json>");
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
-  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--template-id <existingFdId>] [--base-url <origin>]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--template-id <existingFdId>] [--base-url <origin>]");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

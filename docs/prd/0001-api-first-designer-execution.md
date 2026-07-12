@@ -83,6 +83,8 @@ The executor will be API-first:
 - The normalized target origin is used for every NewOA request and recorded in the execution report.
 - Non-SIT targets use the same single explicit write confirmation as SIT. The executor does not maintain a target-host allowlist or require an extra environment-specific confirmation.
 - Temporary participant or organization fallback identifiers are valid only for the exact normalized origins `https://p-sit.onewo.com`, `http://mkpaaspoc.shanghai-electric.com`, and `http://oa-dev.shanghai-electric.com:8088`; at every other origin, normal resolution, diagnostics, and blocking behavior apply without substituting those identifiers.
+- The CLI and live-smoke entry points accept optional `NEWOA_FALLBACK_PERSON_FD_ID`, `NEWOA_FALLBACK_ORGANIZATION_FD_ID`, `NEWOA_FALLBACK_GROUP_FD_ID`, and `NEWOA_FALLBACK_POST_FD_ID` overrides. Missing or blank values preserve defaults, and the organization override is shared by organization/department participants and condition organizations.
+- The Executor receives fallback overrides explicitly, never reads `process.env`, and verifies every used fdId through `getElementInfo` against fixed types before any template write.
 - The executor must require explicit write confirmation and explicit target category `fdId`.
 - The target category is provided by the caller as `targetCategoryId`. It is not inferred from source XML category text or path.
 - The template name is generated from the DSL template name with an `MK_TEST_` prefix and a uniqueness suffix.

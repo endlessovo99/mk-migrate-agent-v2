@@ -64,6 +64,39 @@ describe("execute CLI", () => {
     assert.equal(output.join("\n").includes(credentials.username), false);
     assert.equal(output.join("\n").includes(credentials.encryptedPassword), false);
   });
+
+  it("passes configured fallback fdIds from the environment to the executor", async () => {
+    const { request } = await runExecuteCli({
+      env: {
+        NEWOA_FALLBACK_PERSON_FD_ID: " person-fallback-id ",
+        NEWOA_FALLBACK_ORGANIZATION_FD_ID: "organization-fallback-id",
+        NEWOA_FALLBACK_GROUP_FD_ID: "group-fallback-id",
+        NEWOA_FALLBACK_POST_FD_ID: "post-fallback-id",
+        NEWOA_UNUSED_FALLBACK_FD_ID: "ignored",
+        NEWOA_FALLBACK_UNUSED_FD_ID: "   "
+      }
+    });
+
+    assert.deepEqual(request.options.fallbackFdIds, {
+      person: "person-fallback-id",
+      organization: "organization-fallback-id",
+      group: "group-fallback-id",
+      post: "post-fallback-id"
+    });
+  });
+
+  it("treats blank fallback fdId environment values as unspecified", async () => {
+    const { request } = await runExecuteCli({
+      env: {
+        NEWOA_FALLBACK_PERSON_FD_ID: " ",
+        NEWOA_FALLBACK_ORGANIZATION_FD_ID: "",
+        NEWOA_FALLBACK_GROUP_FD_ID: "\t",
+        NEWOA_FALLBACK_POST_FD_ID: "  "
+      }
+    });
+
+    assert.deepEqual(request.options.fallbackFdIds, {});
+  });
 });
 
 async function runExecuteCli({ argv = [], env = {} } = {}) {

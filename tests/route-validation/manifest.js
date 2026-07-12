@@ -121,6 +121,10 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       newoaScenario: "persist",
       confirmWrite: true,
       baseUrl: "http://oa-dev.shanghai-electric.com:8088",
+      fallbackFdIds: {
+        person: "route-configured-person-fallback",
+        organization: "route-configured-organization-fallback"
+      },
       expected: {
         reviewStatus: "needs_manual",
         dryRunStatus: "needs_manual",
@@ -294,6 +298,9 @@ export function validateRouteManifest(manifest) {
     if (routeCase.baseUrl !== undefined && !nonEmptyString(routeCase.baseUrl)) {
       throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has an invalid base URL.`);
     }
+    if (routeCase.fallbackFdIds !== undefined && !validFallbackFdIds(routeCase.fallbackFdIds)) {
+      throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has invalid fallback fdIds.`);
+    }
     const expected = routeCase.expected;
     const reviewTerminal = expected.terminalStage === "review";
     if (!nonEmptyString(expected.reviewStatus) ||
@@ -348,4 +355,11 @@ function isPlainRecord(value) {
 
 function nonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function validFallbackFdIds(value) {
+  if (!isPlainRecord(value)) return false;
+  const allowed = new Set(["person", "organization", "group", "post"]);
+  const entries = Object.entries(value);
+  return entries.length > 0 && entries.every(([kind, fdId]) => allowed.has(kind) && nonEmptyString(fdId));
 }

@@ -42,7 +42,8 @@ export async function executeDsl(input, options = {}) {
     apiStages.push({ name: "resolveWorkflowParticipants", status: "started" });
     const participantResolution = await resolveWorkflowParticipants(input, {
       client,
-      targetBaseUrl: baseUrl
+      targetBaseUrl: baseUrl,
+      fallbackFdIds: options.fallbackFdIds
     });
     executableDsl = participantResolution.dsl;
     apiStages[apiStages.length - 1].status = "ok";
@@ -72,7 +73,8 @@ export async function executeDsl(input, options = {}) {
     apiStages.push({ name: "resolveConditionOrgs", status: "started" });
     const conditionOrgResolution = await resolveConditionOrgs(executableDsl, {
       client,
-      targetBaseUrl: baseUrl
+      targetBaseUrl: baseUrl,
+      fallbackFdIds: options.fallbackFdIds
     });
     executableDsl = conditionOrgResolution.dsl;
     apiStages[apiStages.length - 1].status = "ok";
