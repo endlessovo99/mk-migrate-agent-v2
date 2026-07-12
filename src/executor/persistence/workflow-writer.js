@@ -781,17 +781,9 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
           buildConstantBooleanFormulaDesignerConfig(edge, true)
         )
         : undefined);
-  if (!manual && String(conditionText || "").trim() && !formulaConfig) {
-    const error = new Error(`Automatic branch condition on edge ${edge.id} cannot be projected as a native Batch formula.`);
-    error.code = "projection.workflow.edge_condition_unsupported";
-    error.details = {
-      edgeId: edge.id,
-      sourceRef: edge.sourceRef,
-      condition: conditionText
-    };
-    throw error;
-  }
-  const conditionValue = manual
+  const manualFallback = !manual && String(conditionText || "").trim() && !formulaConfig;
+  const asManual = manual || manualFallback;
+  const conditionValue = asManual
     ? {
       lineId: edge.id,
       lineName,
@@ -830,7 +822,8 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
     priority: conditionValue.priority,
     resultCode,
     formulaConfig,
-    manual,
+    manual: asManual,
+    manualFallback,
     defaultTrend: false,
     explicitDefault,
     namedOther,

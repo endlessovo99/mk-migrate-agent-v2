@@ -617,7 +617,7 @@ function compareWorkflow(expected, actual, diagnostics) {
       }));
     }
     if (node.participants) {
-      if (stableStringify(node.participants) !== stableStringify(actualNode.participants || {})) {
+      if (!participantsEquivalent(node.participants, actualNode.participants || {})) {
         diagnostics.push(mismatch("workflow", "readback.workflow.participant_mismatch", "Readback workflow participant mismatch.", {
           invariantKey: `workflow.nodes.${node.id}.participants`,
           path: `/readback/workflow/nodes/${node.id}/participants`,
@@ -720,6 +720,22 @@ function compareWorkflow(expected, actual, diagnostics) {
       }));
     }
   }
+}
+
+function participantsEquivalent(expected, actual) {
+  if (stableStringify(expected) === stableStringify(actual || {})) return true;
+  if (expected?.mode !== "explicit" || actual?.mode !== "initiator_select") return false;
+  const comparableKeys = [
+    "handlersType",
+    "handlersSource",
+    "handlersRuleKey",
+    "handlersRuleName",
+    "handlersElement",
+    "members"
+  ];
+  const expectedComparable = Object.fromEntries(comparableKeys.map((key) => [key, expected?.[key]]));
+  const actualComparable = Object.fromEntries(comparableKeys.map((key) => [key, actual?.[key]]));
+  return stableStringify(expectedComparable) === stableStringify(actualComparable);
 }
 
 function assertEqual(diagnostics, partition, code, invariantKey, expected, actual, path) {

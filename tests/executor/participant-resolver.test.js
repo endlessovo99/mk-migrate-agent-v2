@@ -372,7 +372,36 @@ describe("resolveWorkflowParticipants", () => {
     assert.deepEqual(client.elementCalls, []);
   });
 
-  it("does not treat organization API failures as SIT not-found results", async () => {
+  it("uses the configured fallback when organization search fails on an allowed temporary-fallback origin", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "查询失败的审批人",
+      sourceId: "legacy-search-failure",
+      sourceOrgType: 8,
+      sourceParentName: "采购部"
+    })]);
+    const client = new SearchClient({}, sitFallbackElementResults());
+    client.searchOrg = async () => {
+      throw new Error("organization API unavailable");
+    };
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: NEWOA_SIT_BASE_URL
+    });
+
+    assert.deepEqual(
+      result.dsl.workflow.nodes[1].participants.members.map(({ id, name, targetOrgType }) => ({
+        id,
+        name,
+        targetOrgType
+      })),
+      [{ id: SIT_FALLBACK_PERSON.fdId, name: SIT_FALLBACK_PERSON.fdName, targetOrgType: 8 }]
+    );
+    assert.equal(result.fallbackCount, 1);
+    assert.deepEqual(client.elementCalls, [[SIT_FALLBACK_PERSON.fdId]]);
+  });
+
+  it("keeps organization API failures blocking outside temporary-fallback origins", async () => {
     const dsl = dslWithExplicitMembers([sourceMember({
       name: "查询失败的审批人",
       sourceId: "legacy-search-failure",
@@ -387,7 +416,7 @@ describe("resolveWorkflowParticipants", () => {
     await assert.rejects(
       () => resolveWorkflowParticipants(dsl, {
         client,
-        targetBaseUrl: NEWOA_SIT_BASE_URL
+        targetBaseUrl: "https://p-sit.onewo.com:8443"
       }),
       (error) => {
         assert.deepEqual(error.issues.map((issue) => issue.reason), ["search_failed"]);

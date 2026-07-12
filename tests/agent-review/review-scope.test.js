@@ -26,6 +26,10 @@ describe("Agent Review prompt scope", () => {
     assert.deepEqual(prompt.context.reviewScope, reviewScope);
     assert.deepEqual(prompt.context.allowedConcretePatchPaths, expectedPatchPaths);
     assert.deepEqual(prompt.context.dslDraft.scripts.focusedActionIndexes, [1]);
+    assert.deepEqual(prompt.context.dslDraft.scripts.actions.map((action) => action.index), [1]);
+    assert.equal(prompt.context.dslDraft.scripts.omittedActionCount, 1);
+    assert.deepEqual(prompt.context.sourceDraft.scripts.sources.map((source) => source.sourceRef), [sourceRefs[1]]);
+    assert.equal(prompt.context.sourceDraft.scripts.omittedSourceCount, 1);
     assert.equal(prompt.context.allowedConcretePatchPaths.some((path) => path.startsWith("/form/")), false);
     assert.equal(expectedPatchPaths.includes(prompt.context.responseContract.validPatchExample.path), true);
     assert.equal(prompt.context.responseContract.validPatchExample.path.endsWith("/title"), false);
@@ -66,6 +70,49 @@ describe("Agent Review prompt scope", () => {
     assert.deepEqual(submittedContext.reviewScope, reviewScope);
     assert.deepEqual(submittedContext.allowedConcretePatchPaths, expectedPatchPaths);
     assert.deepEqual(submittedContext.dslDraft.scripts.focusedActionIndexes, [1]);
+    assert.deepEqual(submittedContext.dslDraft.scripts.actions.map((action) => action.index), [1]);
+  });
+
+  it("uses compact scoped context for repair requests when configured", async () => {
+    let submittedContext;
+    const provider = new OpenAIResponsesReviewProvider({
+      env: {
+        OPENAI_BASE_URL: "https://example.test",
+        OPENAI_API_KEY: "sk-test-secret",
+        OPENAI_MODEL: "fake-review-model",
+        OPENAI_REVIEW_CONTEXT: "compact"
+      },
+      fetchImpl: async (_url, options) => {
+        const body = JSON.parse(options.body);
+        submittedContext = JSON.parse(body.input.find((item) => item.role === "user").content);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            output_text: JSON.stringify({
+              summary: "Repaired the selected action.",
+              patches: [],
+              diagnostics: []
+            })
+          })
+        };
+      }
+    });
+
+    const result = await provider.repairReviewResponse({
+      sourceDraft: sourceDraft(),
+      dslDraft: dslDraft(),
+      reviewScope,
+      rawText: "{",
+      diagnostics: [],
+      rejectedPatches: [],
+      attempt: 1
+    });
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(submittedContext.reviewScope, reviewScope);
+    assert.deepEqual(submittedContext.dslDraft.scripts.actions.map((action) => action.index), [1]);
+    assert.deepEqual(submittedContext.sourceDraft.scripts.sources.map((source) => source.sourceRef), [sourceRefs[1]]);
   });
 
   it("does not expand script source windows for an explicitly form-only scope", () => {
@@ -122,21 +169,22 @@ describe("Agent Review prompt scope", () => {
     );
   });
 
-  it("rejects mixed target-owned and unrelated source refs", async () => {
-    const result = await runAgentReview(sourceDraft(), dslDraft(), {
-      provider: new CrossActionEvidenceProvider([sourceRefs[0], sourceRefs[1]]),
-      batchSize: 1,
-      maxReviewRounds: 1,
-      maxRepairAttempts: 0,
-      reviewedAt: "2026-07-11T00:00:00.000Z"
+  it("normalizes mixed target-owned and unrelated source refs at the provider boundary", () => {
+    const result = applyEvidenceBackedPatches(dslDraft(), [{
+      op: "replace",
+      path: "/scripts/actions/0/translationStatus",
+      value: "mapped",
+      sourceRefs: [sourceRefs[0], sourceRefs[1], "invented.source.ref"],
+      evidence: [`${sourceRefs[0]} is the target action source; extra refs must be ignored.`],
+      confidence: 0.95,
+      rationale: "Mark the first action as translated using its own source evidence."
+    }], {
+      sourceRefs: new Set(sourceRefs),
+      normalizeSourceRefs: true
     });
 
-    assert.equal(result.ok, false);
-    assert.equal(result.report.stage, "agent-review.patch-validation");
-    assert.equal(
-      result.report.diagnostics.some((diagnostic) => diagnostic.code === "agent.patch.source_refs_outside_target"),
-      true
-    );
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.acceptedPatches[0].sourceRefs, [sourceRefs[0]]);
   });
 
   it("rejects patches when the target has no source refs of its own", () => {

@@ -5,7 +5,7 @@ import {
 } from "./temporary-org-fallbacks.js";
 
 const PARTICIPANT_RESOLUTION_STAGE = "resolveWorkflowParticipants";
-const SIT_FALLBACK_REASONS = new Set(["not_found", "missing_source_evidence"]);
+const SIT_FALLBACK_REASONS = new Set(["not_found", "missing_source_evidence", "search_failed"]);
 
 /** NewOA orgType: 1 机构, 2 部门, 4 岗位, 8 人员, 16 群组, 32 角色, 128 公共岗位, 256 身份 */
 export const SIT_PARTICIPANT_FALLBACKS = Object.freeze({
@@ -63,13 +63,16 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
         return await resolveIdentity(identity, client, { searchCache, elementCache });
       } catch (error) {
         if (error instanceof ParticipantResolutionError) throw error;
-        throw new ParticipantResolutionError([{
+        return {
+          ...identity,
+          issue: {
           reason: identity.kind === "target" ? "target_validation_failed" : "search_failed",
           name: identity.member.name,
           sourceId: identity.member.sourceId,
           paths: identity.paths,
           message: error instanceof Error ? error.message : String(error)
-        }], { cause: error });
+          }
+        };
       }
     }
   );
@@ -254,7 +257,7 @@ function deduplicateResolvedParticipantCollections(dsl) {
 
 function isSitFallbackEligible(resolution) {
   if (resolution.kind !== "source" || !SIT_FALLBACK_REASONS.has(resolution.issue?.reason)) return false;
-  if (resolution.issue.reason === "not_found") return true;
+  if (resolution.issue.reason === "not_found" || resolution.issue.reason === "search_failed") return true;
   return Array.isArray(resolution.issue.missing) &&
     resolution.issue.missing.length > 0 &&
     resolution.issue.missing.every((field) => field === "sourceParentName");

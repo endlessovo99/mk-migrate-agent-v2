@@ -144,11 +144,49 @@ export async function executeDsl(input, options = {}) {
       apiStages.push({ name: "loadParentCategory", status: "started" });
       const parentCategory = await client.loadParentCategory(options.targetCategoryId);
       apiStages[apiStages.length - 1].status = "ok";
-      apiStages.push({ name: "add", status: "started" });
       const createPayload = buildCreatePayload(baseTemplate, executableDsl, options, {
         fdTableName,
         parentCategory
       });
+
+      apiStages.push({ name: "projectionPreflight", status: "started" });
+      const preflight = preparePersistedTemplate({
+        dsl: executableDsl,
+        envelope: buildExecutionEnvelope({
+          templateId: "__projection_preflight_template_id__",
+          templateName: createPayload.fdName,
+          categoryId: options.targetCategoryId,
+          tableName: fdTableName || createPayload.fdTableName,
+          detail: preflightTemplateDetail(createPayload, {
+            templateId: "__projection_preflight_template_id__",
+            workflowTemplateId: "__projection_preflight_workflow_id__",
+            fdTableName
+          })
+        }),
+        baseTemplate: preflightTemplateDetail(createPayload, {
+          templateId: "__projection_preflight_template_id__",
+          workflowTemplateId: "__projection_preflight_workflow_id__",
+          fdTableName
+        })
+      });
+      if (!preflight.ok) {
+        apiStages[apiStages.length - 1].status = "failed";
+        return {
+          ok: false,
+          status: "failed",
+          stage: "projection",
+          failedAt: "projection",
+          baseUrl,
+          createdFdIds: [],
+          cleanup: { attempted: false, reason: "projection preflight failed before template creation" },
+          diagnostics: [...diagnostics, ...preflight.diagnostics],
+          apiStages,
+          plan
+        };
+      }
+      apiStages[apiStages.length - 1].status = "ok";
+
+      apiStages.push({ name: "add", status: "started" });
       const created = await client.addTemplate(createPayload);
       templateId = created.fdId;
       apiStages[apiStages.length - 1].status = "ok";
@@ -162,24 +200,13 @@ export async function executeDsl(input, options = {}) {
 
     const createdFdIds = existingTemplateId ? [] : [templateId].filter(Boolean);
 
-    const envelope = {
+    const envelope = buildExecutionEnvelope({
       templateId,
       templateName,
       categoryId: options.targetCategoryId,
       tableName,
-      lifecycle: {
-        draft: true,
-        unpublished: true,
-        fdStatus: detail.fdStatus ?? 0,
-        xformStatus: "draft",
-        lbpmStatus: "draft",
-        lbpmIsDraft: true
-      },
-      bindings: {
-        formFdId: templateId,
-        workflowFdId: detail.mechanisms?.lbpmTemplate?.[0]?.fdId || ""
-      }
-    };
+      detail
+    });
 
     let prepared;
     try {
@@ -442,6 +469,50 @@ function resolveBaseUrl(value) {
       }]
     };
   }
+}
+
+function buildExecutionEnvelope({ templateId, templateName, categoryId, tableName, detail }) {
+  return {
+    templateId,
+    templateName,
+    categoryId,
+    tableName,
+    lifecycle: {
+      draft: true,
+      unpublished: true,
+      fdStatus: detail.fdStatus ?? 0,
+      xformStatus: "draft",
+      lbpmStatus: "draft",
+      lbpmIsDraft: true
+    },
+    bindings: {
+      formFdId: templateId,
+      workflowFdId: detail.mechanisms?.lbpmTemplate?.[0]?.fdId || ""
+    }
+  };
+}
+
+function preflightTemplateDetail(payload, { templateId, workflowTemplateId, fdTableName }) {
+  const detail = clone(payload);
+  detail.fdId = templateId;
+  detail.fdTableName = fdTableName || detail.fdTableName || "";
+  detail.mechanisms = detail.mechanisms || {};
+  detail.mechanisms["sys-xform"] = {
+    ...(detail.mechanisms["sys-xform"] || {}),
+    fdId: templateId,
+    fdName: detail.fdName,
+    fdTableName: detail.fdTableName
+  };
+  detail.mechanisms.lbpmTemplate = Array.isArray(detail.mechanisms.lbpmTemplate)
+    ? detail.mechanisms.lbpmTemplate
+    : [{}];
+  detail.mechanisms.lbpmTemplate[0] = {
+    ...detail.mechanisms.lbpmTemplate[0],
+    fdId: workflowTemplateId,
+    fdName: detail.fdName,
+    fdEntityId: templateId
+  };
+  return detail;
 }
 
 function buildCreatePayload(baseTemplate, input, options, context = {}) {

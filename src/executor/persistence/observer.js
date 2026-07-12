@@ -1011,8 +1011,8 @@ function observeEdgeCondition(edge, autoConditionBranch = false) {
       : "";
   const trimmedFormula = formulaText.trim();
 
-  // Manual decision outlets (conditionType=2) persist named rule formulas, not Batch JSON.
-  if (!autoConditionBranch && edge?.formulaType === "rule") {
+  // Manual decision outlets and unsupported auto-branch fallbacks persist named rule formulas.
+  if (edge?.formulaType === "rule") {
     if (!trimmedFormula) {
       return withConditionProvenance(edge, { nativeKind: "rule", nativeStatus: "missing" });
     }

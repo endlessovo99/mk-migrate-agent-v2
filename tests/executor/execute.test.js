@@ -907,6 +907,16 @@ describe("executeDsl", () => {
     ]);
   });
 
+  it("accepts explicit fallback participants when readback marks the node as initiator-select but preserves members", () => {
+    const workflow = sampleInitiatorSelectWorkflow();
+    workflow.nodes.find((node) => node.id === "N2").attributes.mustModifyHandlerNodeIds = "N9";
+    const trusted = sampleTrustedDsl({ workflow });
+    const template = projectTemplate(trusted, baseTemplate());
+    const verification = verifyTemplate(trusted, template);
+
+    assert.equal(verification.ok, true, JSON.stringify(verification.diagnostics));
+  });
+
   it("rejects readback when an explicit post is persisted as a person", () => {
     const workflow = sampleInitiatorSelectWorkflow();
     const explicitNode = workflow.nodes.find((node) => node.id === "N9");
@@ -1623,7 +1633,40 @@ describe("executeDsl", () => {
     assert.equal(JSON.parse(never.formula).result?.value, "false");
   });
 
-  it("rejects unsupported automatic branch conditions instead of dropping them", () => {
+  it("blocks projection failures before creating a blank template", async () => {
+    const client = new FakeNewoaClient({ generatedTableName: "" });
+    const dsl = sampleTrustedDsl();
+
+    const result = await executeDsl(dsl, {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      now: new Date("2026-07-05T01:02:03.000Z")
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.stage, "projection");
+    assert.deepEqual(result.createdFdIds, []);
+    assert.equal(client.calls.some((call) => call.name === "addTemplate"), false);
+    assert.equal(client.calls.some((call) => call.name === "updateTemplate"), false);
+    assert.deepEqual(client.calls.map((call) => call.name), [
+      "login",
+      "initTemplate",
+      "generateTableName",
+      "loadParentCategory"
+    ]);
+    assert.deepEqual(result.apiStages.at(-1), {
+      name: "projectionPreflight",
+      status: "failed"
+    });
+    assert.equal(
+      result.diagnostics.some((item) => item.code === "projection.envelope.missing" && item.details?.field === "tableName"),
+      true
+    );
+  });
+
+  it("keeps unsupported automatic branch conditions as manual rules instead of dropping them", () => {
     for (const conditionText of [
       "$fd_seller$.unsupported(\"example\")",
       "$fd_missing$ == \"A\"",
@@ -1641,14 +1684,24 @@ describe("executeDsl", () => {
         }
       };
 
-      assert.throws(
-        () => buildWorkflowContent(workflow, {
-          templateId: "template-id",
-          form: sampleConditionBranchForm()
-        }),
-        (error) => error?.code === "projection.workflow.edge_condition_unsupported",
-        conditionText
-      );
+      const content = buildWorkflowContent(workflow, {
+        templateId: "template-id",
+        form: sampleConditionBranchForm()
+      });
+      const branch = content.elements.find((element) => element.id === "N410");
+      const conditionValue = JSON.parse(branch.conditionValue);
+      const route = conditionValue.rules.find((rule) => rule.lineId === "L541");
+      const edge = content.elements.find((element) => element.id === "L541");
+
+      assert.equal(branch.conditionType, "2", conditionText);
+      assert.equal(route.formulaType, "rule", conditionText);
+      assert.equal(route.formula, conditionText);
+      assert.equal(edge.formulaType, "rule", conditionText);
+      assert.equal(edge.formula, conditionText);
+      const trusted = sampleTrustedDsl({ form: sampleConditionBranchForm(), workflow });
+      const template = projectTemplate(trusted, baseTemplate());
+      const verification = verifyTemplate(trusted, template);
+      assert.equal(verification.ok, true, `${conditionText}: ${JSON.stringify(verification.diagnostics)}`);
     }
   });
 
@@ -3599,6 +3652,7 @@ class FakeNewoaClient {
     this.expectedCredentials = options.expectedCredentials;
     this.loginError = options.loginError;
     this.existingTemplate = options.existingTemplate;
+    this.generatedTableName = options.generatedTableName ?? "generated_table_name";
   }
 
   async login(credentials) {
@@ -3626,7 +3680,7 @@ class FakeNewoaClient {
 
   async generateTableName() {
     this.calls.push({ name: "generateTableName", payload: {} });
-    return "generated_table_name";
+    return this.generatedTableName;
   }
 
   async loadParentCategory(fdId) {

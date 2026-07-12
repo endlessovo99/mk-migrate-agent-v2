@@ -308,6 +308,81 @@ describe("resolveConditionOrgs", () => {
     assert.deepEqual(result.dsl.runtime.conditionOrgByName.南方服务中心, configuredOrganization);
   });
 
+  it("uses the configured organization fallback when condition org search fails on allowed origins", async () => {
+    const organizationFdId = "configured-condition-organization-id";
+    const configuredOrganization = {
+      fdId: organizationFdId,
+      fdName: "配置条件兜底组织",
+      fdOrgType: 2
+    };
+    const client = {
+      async searchOrg() {
+        throw new Error("请求有误");
+      },
+      async getElementInfo(targets) {
+        return targets.includes(organizationFdId) ? [configuredOrganization] : [];
+      }
+    };
+
+    const result = await resolveConditionOrgs({
+      form: {
+        fields: [{
+          id: "fd_req_dept",
+          componentId: "xform-address",
+          sourceProps: { designerType: "address" }
+        }]
+      },
+      workflow: {
+        edges: [{
+          condition: {
+            targetText: "$字符串.包含$($fd_req_dept$, \"市场拓展部\")"
+          }
+        }]
+      }
+    }, {
+      client,
+      targetBaseUrl: "http://oa-dev.shanghai-electric.com:8088",
+      fallbackFdIds: { organization: organizationFdId }
+    });
+
+    assert.equal(result.fallbackCount, 1);
+    assert.deepEqual(result.fallbackNames, ["市场拓展部"]);
+    assert.deepEqual(result.searchFailures.map((issue) => issue.reason), ["search_failed"]);
+    assert.deepEqual(result.dsl.runtime.conditionOrgByName.市场拓展部, configuredOrganization);
+  });
+
+  it("keeps condition org search failures blocking outside fallback origins", async () => {
+    const client = {
+      async searchOrg() {
+        throw new Error("请求有误");
+      }
+    };
+
+    await assert.rejects(
+      resolveConditionOrgs({
+        form: {
+          fields: [{
+            id: "fd_req_dept",
+            componentId: "xform-address",
+            sourceProps: { designerType: "address" }
+          }]
+        },
+        workflow: {
+          edges: [{
+            condition: {
+              targetText: "$字符串.包含$($fd_req_dept$, \"市场拓展部\")"
+            }
+          }]
+        }
+      }, {
+        client,
+        targetBaseUrl: "https://example.test"
+      }),
+      (error) => error?.stage === "resolveConditionOrgs" &&
+        error?.issues?.some((issue) => issue.reason === "search_failed")
+    );
+  });
+
   it("fails closed when the SIT condition fallback is not a current department", async () => {
     const configuredOrganizationId = "configured-wrong-type-organization-id";
     const client = {

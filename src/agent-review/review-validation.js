@@ -38,7 +38,8 @@ export function evaluateProviderReviewResult(sourceDraft, dslDraft, providerResu
   const patchResult = applyEvidenceBackedPatches(dslDraft, parsed.response.patches, {
     sourceRefs: collectSourceRefs(sourceDraft),
     sourceDraft,
-    reviewScope
+    reviewScope,
+    normalizeSourceRefs: true
   });
   if (!patchResult.ok) {
     return failedReview({
@@ -137,14 +138,17 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
   const reviewScope = options.reviewScope;
 
   patches.forEach((patch, index) => {
-    const result = validatePatch(patch, index, dslDraft, sourceRefs, seenPaths, reviewScope);
+    const normalizedPatch = options.normalizeSourceRefs === true
+      ? normalizePatchSourceRefs(patch, dslDraft)
+      : patch;
+    const result = validatePatch(normalizedPatch, index, dslDraft, sourceRefs, seenPaths, reviewScope);
     if (!result.ok) {
       diagnostics.push(...result.diagnostics);
-      rejectedPatches.push(patchSummary(patch, index, result.diagnostics));
+      rejectedPatches.push(patchSummary(normalizedPatch, index, result.diagnostics));
       return;
     }
-    seenPaths.add(patch.path);
-    acceptedPatches.push(patch);
+    seenPaths.add(normalizedPatch.path);
+    acceptedPatches.push(normalizedPatch);
   });
 
   if (diagnostics.length) {
@@ -190,6 +194,23 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     acceptedPatches,
     rejectedPatches,
     decisions
+  };
+}
+
+function normalizePatchSourceRefs(patch, dslDraft) {
+  if (!isRecord(patch) || !Array.isArray(patch.sourceRefs)) return patch;
+  const target = parseAllowedPatchPath(patch.path);
+  if (!target.ok) return patch;
+  const expectedRefs = targetEvidenceRefs(target, dslDraft);
+  if (expectedRefs.length === 0) return patch;
+  const retainedRefs = patch.sourceRefs
+    .filter(nonEmptyString)
+    .filter((ref, index, refs) => refs.indexOf(ref) === index)
+    .filter((ref) => expectedRefs.includes(ref));
+  if (retainedRefs.length === 0 || retainedRefs.length === patch.sourceRefs.length) return patch;
+  return {
+    ...patch,
+    sourceRefs: retainedRefs
   };
 }
 

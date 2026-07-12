@@ -21,6 +21,7 @@ export class OpenAIResponsesReviewProvider {
   async repairReviewResponse({ sourceDraft, dslDraft, reviewScope, rawText, diagnostics, rejectedPatches, attempt }) {
     return this.submitPrompt(buildAgentReviewRepairPrompt(sourceDraft, dslDraft, {
       reviewScope,
+      compact: this.env.OPENAI_REVIEW_CONTEXT === "compact",
       rawText,
       diagnostics,
       rejectedPatches,

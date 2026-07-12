@@ -34,6 +34,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
   const focusedActionIndexes = reviewScope?.actionIndexes;
   const focusedScriptSourceRefs = focusedSourceRefsForScripts(dslDraft?.scripts, focusedActionIndexes);
   const allowedPatchPaths = allowedPatchPatterns(reviewScope);
+  const scopedCompact = compact && reviewScope !== undefined;
 
   return {
     promptVersion: AGENT_REVIEW_PROMPT_VERSION,
@@ -161,7 +162,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
           covered: "native formRules or verified static form properties cover all source behavior and no JavaScript should run",
           translated: "generated MK JavaScript covers all source JSP behavior"
         },
-        targetApi: scriptTargetApiSummary(),
+        targetApi: scopedCompact ? compactScriptTargetApiSummary() : scriptTargetApiSummary(),
         forbiddenTargetOutput: [
           "document.*",
           "window.document",
@@ -188,23 +189,26 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
           unsafeOutcome: "Keep translationStatus as needs_review or manual and emit diagnostics naming unresolved functions and why targetApi translation was not safe."
         }
       },
-      jspTranslationPlaybook: jspTranslationPlaybookSummary(),
-      functionCatalog: functionCatalogSummary(),
+      jspTranslationPlaybook: jspTranslationPlaybookSummary(scopedCompact),
+      functionCatalog: functionCatalogSummary(scopedCompact),
       sourceDraft: {
-        form: sourceFormSummary(sourceDraft?.form),
+        form: sourceFormSummary(sourceDraft?.form, scopedCompact),
         scripts: scriptSourceSummary(sourceDraft?.scripts, focusedScriptSourceRefs, reviewScope !== undefined, compact),
         issues: sourceIssueSummary(sourceDraft?.issues),
-        workflowSummary: summarizeWorkflow(sourceDraft?.workflow)
+        workflowSummary: scopedCompact ? undefined : summarizeWorkflow(sourceDraft?.workflow)
       },
       dslDraft: {
-        form: dslFormSummary(dslDraft?.form),
+        form: dslFormSummary(dslDraft?.form, scopedCompact),
         formRules: formRulesSummary(dslDraft?.formRules),
         scripts: scriptActionReviewSummary(dslDraft?.scripts, dslDraft?.formRules, dslDraft?.form, focusedActionIndexes, sourceDraft, compact),
-        review: {
+        review: scopedCompact ? {
+          warningCount: Array.isArray(dslDraft?.review?.warnings) ? dslDraft.review.warnings.length : 0,
+          reviewCandidateCount: Array.isArray(dslDraft?.review?.reviewCandidates) ? dslDraft.review.reviewCandidates.length : 0
+        } : {
           warnings: dslDraft?.review?.warnings || [],
           reviewCandidates: dslDraft?.review?.reviewCandidates || []
         },
-        workflowSummary: summarizeWorkflow(dslDraft?.workflow)
+        workflowSummary: scopedCompact ? undefined : summarizeWorkflow(dslDraft?.workflow)
       },
       componentCatalog: componentCatalogSummary(),
       validationPolicy: validationPolicySummary()
@@ -213,7 +217,10 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
 }
 
 export function buildAgentReviewRepairPrompt(sourceDraft, dslDraft, repair = {}) {
-  const base = buildAgentReviewPrompt(sourceDraft, dslDraft, { reviewScope: repair.reviewScope });
+  const base = buildAgentReviewPrompt(sourceDraft, dslDraft, {
+    reviewScope: repair.reviewScope,
+    compact: repair.compact === true
+  });
   return {
     promptVersion: base.promptVersion,
     system: [
@@ -382,12 +389,18 @@ function componentCatalogSummary() {
     }));
 }
 
-function functionCatalogSummary() {
+function functionCatalogSummary(compact = false) {
   return {
     id: FUNCTION_CATALOG.id,
     version: FUNCTION_CATALOG.version,
     source: FUNCTION_CATALOG.source,
-    functions: FUNCTION_CATALOG.functions.map((fn) => ({
+    functions: FUNCTION_CATALOG.functions.map((fn) => compact ? ({
+      name: fn.name,
+      intent: fn.intent || "",
+      targetApis: fn.targetApis || [],
+      translationKind: fn.translationKind || "",
+      safety: fn.safety || ""
+    }) : ({
       name: fn.name,
       description: fn.description || "",
       mkFunction: fn.mkFunction || "",
@@ -400,7 +413,18 @@ function functionCatalogSummary() {
   };
 }
 
-function jspTranslationPlaybookSummary() {
+function jspTranslationPlaybookSummary(compact = false) {
+  if (compact) {
+    return {
+      id: JSP_TRANSLATION_PLAYBOOK.id,
+      version: JSP_TRANSLATION_PLAYBOOK.version,
+      goal: JSP_TRANSLATION_PLAYBOOK.goal,
+      principles: JSP_TRANSLATION_PLAYBOOK.principles,
+      targetApiCapabilities: JSP_TRANSLATION_PLAYBOOK.targetApiCapabilities,
+      forbiddenPatterns: JSP_TRANSLATION_PLAYBOOK.forbiddenPatterns,
+      coverageStandards: JSP_TRANSLATION_PLAYBOOK.coverageStandards
+    };
+  }
   return {
     id: JSP_TRANSLATION_PLAYBOOK.id,
     version: JSP_TRANSLATION_PLAYBOOK.version,
@@ -415,7 +439,24 @@ function jspTranslationPlaybookSummary() {
   };
 }
 
-function sourceFormSummary(form = {}) {
+function compactScriptTargetApiSummary() {
+  const summary = scriptTargetApiSummary();
+  return {
+    allowedPrefixes: summary.allowedPrefixes,
+    allowedFunctions: summary.allowedFunctions,
+    catalog: {
+      id: summary.catalog?.id,
+      version: summary.catalog?.version,
+      policy: summary.catalog?.policy,
+      safe: (summary.catalog?.safe || []).map((api) => api.name),
+      review: (summary.catalog?.review || []).map((api) => api.name),
+      blocked: (summary.catalog?.blocked || []).map((api) => api.name)
+    },
+    jsMethodsCatalog: summary.jsMethodsCatalog
+  };
+}
+
+function sourceFormSummary(form = {}, compact = false) {
   const controls = Array.isArray(form?.controls) ? form.controls : [];
   const dataFields = Array.isArray(form?.dataFields) ? form.dataFields : [];
   const detailTables = Array.isArray(form?.detailTables) ? form.detailTables : [];
@@ -423,16 +464,16 @@ function sourceFormSummary(form = {}) {
     controlCount: controls.length,
     dataFieldCount: dataFields.length,
     detailTableCount: detailTables.length,
-    layout: layoutSummary(form?.layout),
-    controls: controls.map(sourceControlSummary),
-    dataFields: dataFields.map(sourceControlSummary),
+    layout: layoutSummary(form?.layout, compact),
+    controls: controls.map((control) => sourceControlSummary(control, compact)),
+    dataFields: dataFields.map((field) => sourceControlSummary(field, compact)),
     detailTables: detailTables.map((table) => ({
       id: table.id,
       title: table.title,
       sourceRef: table.sourceRef,
       sourceType: table.sourceType,
       columnCount: Array.isArray(table.columns) ? table.columns.length : 0,
-      columns: (table.columns || []).map(sourceControlSummary)
+      columns: (table.columns || []).map((column) => sourceControlSummary(column, compact))
     }))
   };
 }
@@ -450,7 +491,7 @@ function sourceIssueSummary(issues = []) {
     }));
 }
 
-function sourceControlSummary(control = {}) {
+function sourceControlSummary(control = {}, compact = false) {
   return pruneUndefined({
     id: control.id,
     title: control.title,
@@ -458,32 +499,32 @@ function sourceControlSummary(control = {}) {
     sourceType: control.sourceType,
     required: control.required,
     dataOnly: control.dataOnly,
-    sourceProps: compactSourceProps(control.sourceProps),
-    evidence: control.evidence
+    sourceProps: compact ? undefined : compactSourceProps(control.sourceProps),
+    evidence: compact ? undefined : control.evidence
   });
 }
 
-function dslFormSummary(form = {}) {
+function dslFormSummary(form = {}, compact = false) {
   const fields = Array.isArray(form?.fields) ? form.fields : [];
   return {
     fieldCount: fields.length,
-    layout: layoutSummary(form?.layout),
-    fields: fields.map(dslFieldSummary)
+    layout: layoutSummary(form?.layout, compact),
+    fields: fields.map((field) => dslFieldSummary(field, compact))
   };
 }
 
-function dslFieldSummary(field = {}) {
+function dslFieldSummary(field = {}, compact = false) {
   return pruneUndefined({
     id: field.id,
     title: field.title,
     type: field.type,
     componentId: field.componentId,
     dataOnly: field.dataOnly,
-    props: field.props,
+    props: compact ? undefined : field.props,
     sourceRef: field.sourceRef,
-    sourceProps: compactSourceProps(field.sourceProps),
+    sourceProps: compact ? undefined : compactSourceProps(field.sourceProps),
     columnCount: Array.isArray(field.columns) ? field.columns.length : undefined,
-    columns: Array.isArray(field.columns) ? field.columns.map(dslFieldSummary) : undefined
+    columns: Array.isArray(field.columns) ? field.columns.map((column) => dslFieldSummary(column, compact)) : undefined
   });
 }
 
@@ -517,7 +558,7 @@ function compactSourceProps(sourceProps = {}) {
   });
 }
 
-function layoutSummary(layout = {}) {
+function layoutSummary(layout = {}, compact = false) {
   if (!isRecord(layout)) return undefined;
   const mkTree = Array.isArray(layout.mkTree) ? layout.mkTree : [];
   const rows = Array.isArray(layout.rows) ? layout.rows : [];
@@ -525,8 +566,8 @@ function layoutSummary(layout = {}) {
     rowCount: rows.length || mkTree.length,
     mkTreeCount: mkTree.length,
     cellCount: rows.reduce((sum, row) => sum + (Array.isArray(row?.cells) ? row.cells.length : 0), 0),
-    sourceRefs: rows.slice(0, 12).map((row) => row?.sourceRef).filter(Boolean),
-    sourceMarkers: mkTree
+    sourceRefs: compact ? undefined : rows.slice(0, 12).map((row) => row?.sourceRef).filter(Boolean),
+    sourceMarkers: compact ? undefined : mkTree
       .filter((row) => Array.isArray(row?.sourceMarkers) && row.sourceMarkers.length)
       .map((row) => ({
         rowId: row.id,
@@ -564,6 +605,10 @@ function formRulesSummary(formRules = {}) {
 function scriptSourceSummary(scripts = {}, focusedRefs, hasExplicitFocus = false, compact = false) {
   if (!scripts) return {};
   const hasFocusedRefs = focusedRefs instanceof Set && focusedRefs.size > 0;
+  const sources = scripts.sources || [];
+  const summarizedSources = hasExplicitFocus
+    ? sources.filter((source) => hasFocusedRefs && (focusedRefs.has(source.sourceRef) || focusedRefs.has(source.id)))
+    : sources;
   return pruneUndefined({
     source: scripts.source,
     displayJsp: scripts.displayJsp,
@@ -574,7 +619,8 @@ function scriptSourceSummary(scripts = {}, focusedRefs, hasExplicitFocus = false
       sourceType: fragment.sourceType,
       length: fragment.length
     })),
-    sources: (scripts.sources || []).map((source) => {
+    omittedSourceCount: Math.max(0, sources.length - summarizedSources.length),
+    sources: summarizedSources.map((source) => {
       const focused = hasExplicitFocus
         ? hasFocusedRefs && (focusedRefs.has(source.sourceRef) || focusedRefs.has(source.id))
         : !hasFocusedRefs || focusedRefs.has(source.sourceRef) || focusedRefs.has(source.id);
@@ -630,6 +676,7 @@ function focusedSourceRefsForScripts(scripts = {}, focusedActionIndexes) {
 
 function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focusedActionIndexes, sourceDraft = {}, compact = false) {
   const actions = Array.isArray(scripts?.actions) ? scripts.actions : [];
+  const hasExplicitFocus = Array.isArray(focusedActionIndexes);
   const focusedIndexes = new Set(Array.isArray(focusedActionIndexes)
     ? focusedActionIndexes
     : actions
@@ -637,12 +684,17 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
         .filter(({ action }) => action.translationStatus === "needs_review")
         .slice(0, 12)
         .map(({ index }) => index));
+  const actionEntries = actions.map((action, index) => ({ action, index }));
+  const summarizedActions = hasExplicitFocus
+    ? actionEntries.filter(({ index }) => focusedIndexes.has(index))
+    : actionEntries;
 
   return pruneUndefined({
     source: scripts?.source,
     actionCount: actions.length,
     focusedActionIndexes: [...focusedIndexes],
-    actions: actions.map((action, index) => {
+    omittedActionCount: Math.max(0, actions.length - summarizedActions.length),
+    actions: summarizedActions.map(({ action, index }) => {
       const focused = focusedIndexes.has(index);
       return {
         index,
@@ -659,7 +711,7 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
         functionMappings: functionMappingSummary(action.functionMappings, focused ? 8 : 0),
         semanticHints: action.semanticHints,
         reviewOpportunities: focused ? reviewOpportunitiesForAction(action, formRules, index, form, sourceDraft) : undefined,
-        actionSource: focused ? actionSourceSummary(action, compact ? 1800 : 6200) : actionSourceSummary(action, 520),
+        actionSource: focused ? actionSourceSummary(action, compact ? 5200 : 6200) : actionSourceSummary(action, 520),
         unmappedFunctions: focused ? action.unmappedFunctions : undefined,
         functionLength: String(action.function || "").length,
         functionPreview: previewText(action.function, focused ? (compact ? 700 : 2200) : 180)

@@ -9,7 +9,10 @@ import {
 import { EXECUTABLE_WORKFLOW_NODE_TYPE_SET, INVARIANT_VERSION } from "./invariants.js";
 import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "./normalize.js";
 import { projectionError } from "./diagnostics.js";
-import { selectDefaultBranchEdge } from "./branch-defaults.js";
+import {
+  isTautologyCondition as sharedIsTautologyCondition,
+  selectDefaultBranchEdge
+} from "./branch-defaults.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { persistedFieldLabel } from "./field-labels.js";
 import { isAddressField } from "../condition-org-resolver.js";
@@ -866,14 +869,17 @@ function summarizeCondition(edge, conditionBranch, context = {}) {
   const nativeSemantics = scriptSemantics || (
     conditionBranch ? expectedBatchConditionSemantics(semanticText, context) : undefined
   );
+  const nativeKind = conditionBranch
+    ? scriptSemantics
+      ? "script_formula"
+      : nativeSemantics || sharedIsTautologyCondition(sourceText)
+        ? "batch_formula"
+        : undefined
+    : "rule";
   return {
     sourceText: normalizeScalar(sourceText),
     nativeRequired: true,
-    nativeKind: conditionBranch
-      ? scriptSemantics
-        ? "script_formula"
-        : "batch_formula"
-      : "rule",
+    ...(nativeKind ? { nativeKind } : {}),
     ...(nativeSemantics ? { nativeSemantics } : {})
   };
 }
@@ -910,6 +916,9 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
     /^\(?\$([^$]+)\$\+\$([^$]+)\$\)?(>=|<=|>|<|==|!=)(-?\d+(?:\.\d+)?)$/
   );
   if (fieldSum) {
+    if (!expectedConditionFieldExists(context, fieldSum[1]) || !expectedConditionFieldExists(context, fieldSum[2])) {
+      return undefined;
+    }
     const leftRef = expectedFormulaFieldRef(context.templateId, fieldSum[1]);
     const rightRef = expectedFormulaFieldRef(context.templateId, fieldSum[2]);
     const symbol = negated.negated ? negateExpectedCompareSymbol(fieldSum[3]) : fieldSum[3];
@@ -922,6 +931,7 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
 
   const orgFdNo = text.match(/^\$([^$]+)\$\.fdNo\.equals\(["']([^"']+)["']\)$/i);
   if (orgFdNo) {
+    if (!expectedConditionFieldExists(context, orgFdNo[1])) return undefined;
     const hit = context.runtime?.conditionOrgByFdNo?.[orgFdNo[2]];
     const symbol = negated.negated ? "notbelong" : "belongany";
     const functionId = "sysorg.isOrganizationBelongOrIncludeAnother";
@@ -958,6 +968,7 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
   const emptySymbol = expectedEmptyConditionSymbol(text, negated.negated);
   if (emptySymbol) {
     const fieldId = text.match(/\$([^$]+)\$/)?.[1] || "";
+    if (!expectedConditionFieldExists(context, fieldId)) return undefined;
     const functionId = "global.isEmpty";
     return {
       resultShape: emptySymbol === "notempty" ? "(!${VAR})" : "(${VAR})",
@@ -1119,6 +1130,13 @@ function expectedConditionOrg(runtime, name) {
   const hit = values instanceof Map ? values.get(String(name || "")) : values?.[String(name || "")];
   if (!hit?.fdId || !hit?.fdName) return undefined;
   return { fdId: String(hit.fdId) };
+}
+
+function expectedConditionFieldExists(context = {}, fieldId) {
+  const id = String(fieldId || "").trim();
+  if (!id) return false;
+  if (context.formFieldById instanceof Map && context.formFieldById.has(id)) return true;
+  return Boolean(expectedConditionField(context.form, id));
 }
 
 function unwrapExpectedNegation(compact) {

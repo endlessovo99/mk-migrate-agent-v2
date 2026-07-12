@@ -27,7 +27,7 @@ export function isExplicitDefaultEdge(edge) {
 }
 
 export function isTautologyCondition(condition) {
-  return /^(?:1\s*={2,3}\s*1|true)$/i.test(String(condition || "").trim());
+  return /^(?:1\s*={2,3}\s*1|true|return\s+true\s*;?)$/i.test(String(condition || "").trim());
 }
 
 export function edgeConditionText(edge) {

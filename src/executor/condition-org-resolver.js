@@ -71,6 +71,7 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl, fallbac
   const conditionOrgByFdNo = {};
   const unresolvedNames = [];
   const unresolvedFdNos = [];
+  const searchFailures = [];
   const allowSitFallback = allowsTemporaryOrgFallbacks(targetBaseUrl);
 
   for (const name of names) {
@@ -83,11 +84,17 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl, fallbac
       }
       conditionOrgByName[name] = normalizeOrgValue(match);
     } catch (error) {
-      throw new ConditionOrgResolutionError([{
+      const issue = {
         reason: "search_failed",
         name,
         message: error instanceof Error ? error.message : String(error)
-      }], { cause: error });
+      };
+      if (allowSitFallback) {
+        unresolvedNames.push(name);
+        searchFailures.push(issue);
+        continue;
+      }
+      throw new ConditionOrgResolutionError([issue], { cause: error });
     }
   }
 
@@ -101,11 +108,17 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl, fallbac
       }
       conditionOrgByFdNo[fdNo] = normalizeOrgValue(match);
     } catch (error) {
-      throw new ConditionOrgResolutionError([{
+      const issue = {
         reason: "search_failed",
         fdNo,
         message: error instanceof Error ? error.message : String(error)
-      }], { cause: error });
+      };
+      if (allowSitFallback) {
+        unresolvedFdNos.push(fdNo);
+        searchFailures.push(issue);
+        continue;
+      }
+      throw new ConditionOrgResolutionError([issue], { cause: error });
     }
   }
 
@@ -171,7 +184,8 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl, fallbac
     unresolvedFdNos,
     fallbackCount: fallbackNames.length + fallbackFdNos.length,
     fallbackNames,
-    fallbackFdNos
+    fallbackFdNos,
+    searchFailures
   };
 }
 
