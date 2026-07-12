@@ -7,6 +7,14 @@ import { COMPONENTS_BY_ID } from "../../dsl/catalogs.js";
 import { packLayoutCells } from "../../dsl/layout-pack.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { persistedFieldLabel } from "./field-labels.js";
+import { SCRIPT_SINGLETON_GLOBAL_EVENTS } from "../../dsl/scripts.js";
+import {
+  dispatcherActionEndMarker,
+  dispatcherActionStartMarker,
+  markedDispatcherActionFunction,
+  renderDispatcherInvocation,
+  singletonDispatcherContract
+} from "./script-dispatcher-contract.js";
 
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
@@ -219,7 +227,7 @@ function persistedActionSummaries(action = {}, context = {}) {
   if (!migrationActions.length) return [persistedActionSummary(action, context)];
 
   return migrationActions.flatMap((migrationAction) => {
-    const functionText = dispatcherActionFunction(action.function, migrationAction.name);
+    const functionText = markedDispatcherActionFunction(action.function, migrationAction.name);
     if (!migrationAction.id || !functionText) return [];
     return [persistedActionSummary({
       id: migrationAction.id,
@@ -287,8 +295,8 @@ function buildControlAction(existing, scripts = {}, context = {}) {
   }
 
   for (const item of grouped.values()) {
-    const persistedActions = item.scope === "global" && item.event === "onLoad"
-      ? [buildOnLoadDispatcher(item.actions)]
+    const persistedActions = item.scope === "global" && SCRIPT_SINGLETON_GLOBAL_EVENTS.has(item.event)
+      ? [buildGlobalDispatcher(item.event, item.actions)]
       : item.actions;
     if (item.scope === "control") {
       next.control[item.key] = {
@@ -302,9 +310,10 @@ function buildControlAction(existing, scripts = {}, context = {}) {
   return next;
 }
 
-function buildOnLoadDispatcher(actions) {
+function buildGlobalDispatcher(event, actions) {
+  const contract = singletonDispatcherContract(event, actions);
   const handlers = actions.map((action, index) => {
-    const name = `onLoad_${index + 1}`;
+    const name = contract.childNames[index];
     return {
       action,
       name,
@@ -316,7 +325,7 @@ function buildOnLoadDispatcher(actions) {
     indentLines(handler.function, "  "),
     `  ${dispatcherActionEndMarker(handler.name)}`
   ].join("\n"));
-  const calls = handlers.map((handler) => `  ${handler.name}(context);`);
+  const invocation = renderDispatcherInvocation(event, contract.callNames);
   const migrationActions = handlers.map((handler) => ({
     id: handler.action.id,
     name: handler.name,
@@ -325,9 +334,9 @@ function buildOnLoadDispatcher(actions) {
       : {})
   }));
   return {
-    name: "onLoad",
-    function: `function onLoad(context) {\n${definitions.join("\n\n")}\n\n${calls.join("\n")}\n}`,
-    id: `onLoad_dispatcher_${stableShortId(migrationActions.map((action) => action.id).join("|"))}`,
+    name: event,
+    function: `${event === "onBeforeSubmit" ? "async " : ""}function ${event}(context) {\n${definitions.join("\n\n")}\n\n${invocation}\n}`,
+    id: `${event}_dispatcher_${stableShortId(migrationActions.map((action) => action.id).join("|"))}`,
     migrationActions
   };
 }
@@ -342,28 +351,6 @@ function renameFunctionDeclaration(source, currentName, nextName) {
 
 function indentLines(value, indent) {
   return String(value).split("\n").map((line) => `${indent}${line}`).join("\n");
-}
-
-function dispatcherActionStartMarker(name) {
-  return `/* mk-migrate:action-start=${name} */`;
-}
-
-function dispatcherActionEndMarker(name) {
-  return `/* mk-migrate:action-end=${name} */`;
-}
-
-function dispatcherActionFunction(source, name) {
-  if (!name) return "";
-  const startMarker = dispatcherActionStartMarker(name);
-  const endMarker = dispatcherActionEndMarker(name);
-  const start = String(source || "").indexOf(startMarker);
-  if (start < 0) return "";
-  const contentStart = start + startMarker.length;
-  const end = String(source || "").indexOf(endMarker, contentStart);
-  if (end < 0) return "";
-  const functionText = String(source || "").slice(contentStart, end).trim();
-  const declaration = new RegExp(`\\bfunction\\s+${escapeRegExp(name)}\\s*\\(`);
-  return declaration.test(functionText) ? functionText : "";
 }
 
 function controlActionKey(action, context) {

@@ -469,6 +469,7 @@ function compareScripts(expected, actual, diagnostics) {
   const expectedActions = (expected.actions || []).filter((action) => !action.omitted);
   const omittedIds = new Set((expected.actions || []).filter((action) => action.omitted).map((action) => action.id));
   const actualActions = [...(actual?.actions || [])];
+  compareScriptDispatchers(expected.dispatchers, actual?.dispatchers, diagnostics);
 
   for (const actionId of omittedIds) {
     if (actualActions.some((action) => action.id === actionId)) {
@@ -545,6 +546,25 @@ function compareScripts(expected, actual, diagnostics) {
         scope: leftover.scope
       }
     }));
+  }
+}
+
+function compareScriptDispatchers(expectedDispatchers = [], actualDispatchers = [], diagnostics) {
+  for (const expected of expectedDispatchers || []) {
+    const actual = (actualDispatchers || []).find((candidate) => candidate.event === expected.event);
+    if (!actual || stableStringify(actual) !== stableStringify(expected)) {
+      diagnostics.push(mismatch(
+        "scripts",
+        "readback.scripts.dispatcher_mismatch",
+        "Readback singleton global dispatcher did not preserve child definitions, invocation order, or execution strategy.",
+        {
+          invariantKey: `scripts.dispatchers.${expected.event}`,
+          path: `/readback/scripts/dispatchers/${expected.event}`,
+          expected,
+          actual
+        }
+      ));
+    }
   }
 }
 

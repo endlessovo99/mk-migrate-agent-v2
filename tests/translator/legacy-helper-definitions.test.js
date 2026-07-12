@@ -42,6 +42,73 @@ describe("legacy helper-only scripts", () => {
 
     assert.equal(scripts.actions[0].translationStatus, "needs_review");
   });
+
+  it("omits helper libraries with comments and inert top-level constants", () => {
+    const scripts = draftMkScriptsFromSourceScripts({
+      source: "sysform-jsp",
+      sources: [source(`
+        // Shared finance helper declarations.
+        var columns = ['fd_amount', 'fd_currency'];
+        const tableId = 'fd_finance_detail';
+
+        function buildRows(){
+          return columns.map(function (column) { return column + tableId; });
+        }
+
+        /* No top-level invocation: callbacks call this helper elsewhere. */
+        function normalizeAmount(value){
+          return Number(value || 0).toFixed(2);
+        }
+      `)]
+    });
+
+    assert.equal(scripts.actions.length, 1);
+    assert.equal(scripts.actions[0].translationStatus, "omitted");
+    assert.equal(scripts.actions[0].function, "");
+  });
+
+  it("keeps variable initializers with top-level calls reviewable", () => {
+    const scripts = draftMkScriptsFromSourceScripts({
+      source: "sysform-jsp",
+      sources: [source(`
+        function buildRows(){ return []; }
+        var rows = buildRows();
+      `)]
+    });
+
+    assert.equal(scripts.actions[0].translationStatus, "needs_review");
+  });
+
+  it("keeps unknown or side-effecting initializer expressions reviewable", () => {
+    const initializers = [
+      "const value = `${loadData()}`;",
+      "const value = new SideEffect();",
+      "const value = tag`payload`;",
+      "const value = target.value = 1;",
+      "const value = counter++;"
+    ];
+
+    for (const initializer of initializers) {
+      const scripts = draftMkScriptsFromSourceScripts({
+        source: "sysform-jsp",
+        sources: [source(`function helper() { return true; }\n${initializer}`)]
+      });
+      assert.equal(scripts.actions[0].translationStatus, "needs_review", initializer);
+    }
+  });
+
+  it("omits declarations initialized only with nested literal values", () => {
+    const scripts = draftMkScriptsFromSourceScripts({
+      source: "sysform-jsp",
+      sources: [source(`
+        const config = { labels: ["a", "b"], enabled: true, limits: { min: -1, max: 2 } };
+        let empty;
+        function helper() { return config; }
+      `)]
+    });
+
+    assert.equal(scripts.actions[0].translationStatus, "omitted");
+  });
 });
 
 function source(javascript) {

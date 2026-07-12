@@ -13,8 +13,7 @@ export function classifyActionRowMarkers(action = {}, form = {}, sourceDraft = {
   const resolvedMarkers = markerIds.filter((rowId) => knownMarkers.has(rowId));
   const orphanMarkers = markerIds.filter((rowId) =>
     !knownMarkers.has(rowId) &&
-    auditableOrphanIds.has(rowId) &&
-    markers.filter((item) => item.rowId === rowId).every((item) => item.reset === false)
+    auditableOrphanIds.has(rowId)
   );
   const orphanMarkerSet = new Set(orphanMarkers);
   const unresolvedMarkers = markerIds.filter((rowId) =>
@@ -102,7 +101,7 @@ function exactAuditIssue(issue, expected) {
     evidence.markers.length !== expected.markers.length ||
     proof?.absentFromLayout !== true ||
     proof?.onlyHelperTarget !== true ||
-    proof?.resetAlwaysFalse !== true ||
+    proof?.resetValuesAudited !== true ||
     proof?.dynamicDomCreationDetected !== false
   ) {
     return false;
@@ -113,7 +112,8 @@ function exactAuditIssue(issue, expected) {
     return marker?.rowId === expectedMarker.rowId &&
       marker?.occurrenceCount === expectedMarker.occurrenceCount &&
       Array.isArray(marker?.resetValues) &&
-      marker.resetValues.length === 1 && marker.resetValues[0] === false;
+      marker.resetValues.length === expectedMarker.resetValues.length &&
+      marker.resetValues.every((value, resetIndex) => value === expectedMarker.resetValues[resetIndex]);
   });
 }
 

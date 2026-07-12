@@ -122,7 +122,7 @@ function completeOrphanAuditIssue(issue, primaryMarkerBySourceMarker, source) {
     evidence.markers.length === 0 ||
     proof?.absentFromLayout !== true ||
     proof?.onlyHelperTarget !== true ||
-    proof?.resetAlwaysFalse !== true ||
+    proof?.resetValuesAudited !== true ||
     proof?.dynamicDomCreationDetected !== false
   ) {
     return false;

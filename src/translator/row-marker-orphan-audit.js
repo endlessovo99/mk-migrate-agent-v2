@@ -28,10 +28,10 @@ export function auditSourceScriptRowMarkerOrphans(source = {}, layoutMarkers = n
     const onlyHelperTarget = matchingCalls.length > 0 &&
       matchingCalls.length === matchingFacts.length &&
       matchingCalls.length === literalOccurrenceCount;
-    const resetAlwaysFalse = resetValues.length === 1 && resetValues[0] === false &&
-      factResetValues.length === 1 && factResetValues[0] === false;
-
-    if (!onlyHelperTarget || !resetAlwaysFalse) return [];
+    const resetValuesAudited = resetValues.length > 0 &&
+      resetValues.length === factResetValues.length &&
+      resetValues.every((value, index) => value === factResetValues[index]);
+    if (!onlyHelperTarget || !resetValuesAudited) return [];
     return [{
       rowId,
       occurrenceCount: matchingCalls.length,
@@ -47,7 +47,7 @@ export function auditSourceScriptRowMarkerOrphans(source = {}, layoutMarkers = n
     proof: {
       absentFromLayout: true,
       onlyHelperTarget: true,
-      resetAlwaysFalse: true,
+      resetValuesAudited: true,
       dynamicDomCreationDetected: false
     }
   };

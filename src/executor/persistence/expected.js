@@ -18,6 +18,8 @@ import { projectSubProcessWorkflow, subProcessContract } from "../../dsl/subproc
 import { persistedFieldLabel } from "./field-labels.js";
 import { isAddressField } from "../condition-org-resolver.js";
 import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
+import { SCRIPT_SINGLETON_GLOBAL_EVENTS } from "../../dsl/scripts.js";
+import { singletonDispatcherContract } from "./script-dispatcher-contract.js";
 
 const parseExpectedContextConditionExpression = createConditionExpressionParser({
   parseTerm: parseExpectedContextConditionTerm,
@@ -405,7 +407,25 @@ function buildExpectedScripts(scripts = {}, form = {}, mainTableName, diagnostic
       hasCanonicalGuardExpectation: Boolean(action.runWhen?.viewStatusIn?.length)
     });
   }
-  return { actions };
+  return { actions, dispatchers: expectedSingletonDispatchers(scripts.actions) };
+}
+
+function expectedSingletonDispatchers(scriptActions = []) {
+  const grouped = new Map();
+  for (const action of Array.isArray(scriptActions) ? scriptActions : []) {
+    const event = action?.event || action?.name;
+    if (
+      action?.translationStatus === "omitted" ||
+      (action?.scope || "global") !== "global" ||
+      !SCRIPT_SINGLETON_GLOBAL_EVENTS.has(event) ||
+      !nonEmptyString(action?.function)
+    ) {
+      continue;
+    }
+    if (!grouped.has(event)) grouped.set(event, []);
+    grouped.get(event).push(action);
+  }
+  return [...grouped.entries()].map(([event, actions]) => singletonDispatcherContract(event, actions));
 }
 
 function renderExpectedScriptBody(source, detailTableNames = {}) {

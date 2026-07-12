@@ -4,6 +4,8 @@ import { buildWorkflowContent } from "../../src/executor/persistence/workflow-wr
 import { createTrustedMigrationDsl, checkTrust } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { persistAndVerify } from "../helpers/persistence.js";
+import { projectTemplate, xformConfig } from "../helpers/persistence.js";
+import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
 
 const sourceRoot = "tests/fixtures/source";
@@ -154,6 +156,15 @@ describe("four blocking route capabilities", () => {
     assert.equal(requiredAttachments.every((action) => action.function.includes("MKXFORM.getFormValues")), true);
     assert.equal(requiredAttachments.every((action) => action.function.includes("MKXFORM.modal")), true);
     assert.equal(requiredAttachments.every((action) => action.recipe.message), true);
+
+    const persisted = projectTemplate(sampleTrustedDsl({
+      form: draft.form,
+      workflow: null,
+      scripts: { actions: requiredAttachments }
+    }));
+    const formAttr = JSON.parse(xformConfig(persisted).attribute.formAttr);
+    assert.equal(formAttr.controlAction.global.onBeforeSubmit.length, 1);
+    assert.equal(formAttr.controlAction.global.onBeforeSubmit[0].migrationActions.length, 3);
   });
 
   localCorpusIt("splits complex detail onLoad into native rules, control event, and lifecycle recipe", () => {

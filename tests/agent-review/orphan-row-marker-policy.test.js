@@ -40,6 +40,7 @@ describe("Agent Review orphan row-marker policy", () => {
     const invalidEvidenceCases = [
       ["sourceRef mismatch", (evidence) => { evidence.sourceRef = "source.form.jsp.other"; }],
       ["incomplete proof", (evidence) => { evidence.proof.onlyHelperTarget = false; }],
+      ["unaudited reset values", (evidence) => { evidence.proof.resetValuesAudited = false; }],
       ["dynamic DOM creation", (evidence) => { evidence.proof.dynamicDomCreationDetected = true; }],
       ["invalid resetValues", (evidence) => { evidence.markers[0].resetValues = [true]; }],
       ["non-canonical resetValues", (evidence) => { evidence.markers[0].resetValues = [false, false]; }],
@@ -196,7 +197,7 @@ function warningEvidence() {
     proof: {
       absentFromLayout: true,
       onlyHelperTarget: true,
-      resetAlwaysFalse: true,
+      resetValuesAudited: true,
       dynamicDomCreationDetected: false
     }
   };

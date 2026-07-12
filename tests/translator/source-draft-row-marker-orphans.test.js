@@ -72,7 +72,7 @@ describe("Source Draft script row-marker reconciliation", () => {
       proof: {
         absentFromLayout: true,
         onlyHelperTarget: true,
-        resetAlwaysFalse: true,
+        resetValuesAudited: true,
         dynamicDomCreationDetected: false
       }
     });
@@ -85,12 +85,6 @@ describe("Source Draft script row-marker reconciliation", () => {
       form: { fields: [], layout: { rows: [] } },
       scripts: {
         sources: [
-          {
-            id: "reset-true",
-            sourceRef: "source.form.jsp.reset-true",
-            javascript: "common_dom_row_set_show_required_reset('reset_row', false, false, true);",
-            semanticFacts: { rowMarkers: [{ rowId: "reset_row", reset: true }] }
-          },
           {
             id: "non-helper-use",
             sourceRef: "source.form.jsp.non-helper-use",
@@ -152,5 +146,44 @@ describe("Source Draft script row-marker reconciliation", () => {
     assert.equal(sourceDraft.issues.some((issue) =>
       issue.code === "source.sysform.script_row_marker_orphan_noop"
     ), false);
+  });
+
+  it("audits reset-bearing helper calls as no-ops when their marker target is proven absent", () => {
+    const sourceDraft = sourceDraftFromLegacyDsl({
+      source: { fdModelId: "model-reset-orphan" },
+      template: { name: "reset-bearing-row-marker" },
+      form: { fields: [], layout: { rows: [] } },
+      scripts: {
+        sources: [{
+          id: "reset-true",
+          sourceRef: "source.form.jsp.reset-true",
+          javascript: [
+            "common_dom_row_set_show_required_reset('reset_row', false, false, false);",
+            "common_dom_row_set_show_required_reset('reset_row', true, true, true);"
+          ].join("\n"),
+          semanticFacts: {
+            rowMarkers: [
+              { rowId: "reset_row", reset: false },
+              { rowId: "reset_row", reset: true }
+            ]
+          }
+        }]
+      }
+    });
+
+    const warning = sourceDraft.issues.find((issue) =>
+      issue.code === "source.sysform.script_row_marker_orphan_noop"
+    );
+    assert.deepEqual(warning.evidence.markers, [{
+      rowId: "reset_row",
+      occurrenceCount: 2,
+      resetValues: [false, true]
+    }]);
+    assert.deepEqual(warning.evidence.proof, {
+      absentFromLayout: true,
+      onlyHelperTarget: true,
+      resetValuesAudited: true,
+      dynamicDomCreationDetected: false
+    });
   });
 });

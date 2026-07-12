@@ -131,6 +131,32 @@ describe("Agent Review prompt scope", () => {
     );
   });
 
+  it("includes same-source local helper definitions invoked by the focused action", () => {
+    const source = sourceDraft();
+    source.scripts.sources[1].javascript = [
+      "function outerHelper() { return innerHelper(); }",
+      "function innerHelper() { return GetXFormFieldValueById('fd_amount'); }",
+      "AttachXFormValueChangeEventById('fd_trigger', function () { outerHelper(); });"
+    ].join("\n");
+    const draft = dslDraft();
+    draft.scripts.actions[1].function = [
+      "function onChange(value, rowNum, parentRowNum) {",
+      "  // Source JSP JavaScript:",
+      "  // AttachXFormValueChangeEventById('fd_trigger', function () { outerHelper(); });",
+      "}"
+    ].join("\n");
+
+    const prompt = buildAgentReviewPrompt(source, draft, { reviewScope });
+    const actionSource = prompt.context.dslDraft.scripts.actions[0].actionSource;
+
+    assert.deepEqual(actionSource.localHelperDefinitions.map((helper) => helper.name), [
+      "outerHelper",
+      "innerHelper"
+    ]);
+    assert.match(actionSource.localHelperDefinitions[0].definition, /function outerHelper/);
+    assert.match(actionSource.localHelperDefinitions[1].definition, /GetXFormFieldValueById/);
+  });
+
   it("rejects a valid patch that targets an action outside the current review batch", async () => {
     const provider = new OutOfScopeReviewProvider();
 

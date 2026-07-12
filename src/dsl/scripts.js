@@ -9,6 +9,7 @@ import {
 
 export const SCRIPT_EVENTS = new Set(Object.keys(CONTROL_EVENTS_CATALOG.events || {}));
 export const SCRIPT_GLOBAL_EVENTS = new Set(CONTROL_EVENTS_CATALOG.global?.events || []);
+export const SCRIPT_SINGLETON_GLOBAL_EVENTS = new Set(["onLoad", "onBeforeSubmit", "onAfterSubmit"]);
 export const SCRIPT_CONTROL_EVENTS = new Set(
   [...CONTROL_EVENTS_BY_COMPONENT.values()].flatMap((component) => component.events || [])
 );

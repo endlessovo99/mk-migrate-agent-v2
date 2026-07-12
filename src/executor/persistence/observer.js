@@ -3,6 +3,15 @@ import { decodeRequiredJsonObject, requireArray, requireRecord } from "./decode.
 import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "./normalize.js";
 import { diagnostic } from "./diagnostics.js";
 import { subProcessContract } from "../../dsl/subprocess.js";
+import { SCRIPT_SINGLETON_GLOBAL_EVENTS } from "../../dsl/scripts.js";
+import {
+  BEFORE_SUBMIT_DISPATCH_STRATEGY,
+  ORDERED_DISPATCH_STRATEGY,
+  dispatcherCallNames,
+  dispatcherActionEndMarker,
+  markedDispatcherActionFunction,
+  renderDispatcherInvocation
+} from "./script-dispatcher-contract.js";
 
 /**
  * Independently observe native persisted template semantics.
@@ -519,15 +528,21 @@ function observeScripts(controlAction, diagnostics) {
   const global = controlAction.global && typeof controlAction.global === "object" ? controlAction.global : {};
   const control = controlAction.control && typeof controlAction.control === "object" ? controlAction.control : {};
   const actions = [];
+  const dispatchers = [];
+  let persistedActionCount = 0;
 
   for (const [event, entries] of Object.entries(global)) {
     for (const action of Array.isArray(entries) ? entries : []) {
+      persistedActionCount += 1;
+      const dispatcher = observeSingletonDispatcher(action, { event, scope: "global" });
+      if (dispatcher) dispatchers.push(dispatcher.contract);
       actions.push(...observePersistedActions(action, { event, scope: "global" }));
     }
   }
   for (const [controlKey, byEvent] of Object.entries(control)) {
     for (const [event, entries] of Object.entries(byEvent || {})) {
       for (const action of Array.isArray(entries) ? entries : []) {
+        persistedActionCount += 1;
         actions.push(...observePersistedActions(action, {
           event,
           scope: "control",
@@ -537,16 +552,16 @@ function observeScripts(controlAction, diagnostics) {
     }
   }
 
-  return { actions };
+  return { actions, dispatchers, persistedActionCount };
 }
 
 function observePersistedActions(action, context) {
   if (!action || typeof action !== "object") return [];
   const functionText = typeof action.function === "string" ? action.function : "";
-  const nested = extractNestedFunctions(functionText);
-  if (context.event === "onLoad" && context.scope === "global" && nested.length >= 1 && /onLoad_\d+/.test(functionText)) {
+  const dispatcher = observeSingletonDispatcher(action, context);
+  if (dispatcher) {
     // Dispatcher wraps one child function per expected action; compare children, not the wrapper.
-    return nested.map((part) => ({
+    return dispatcher.children.map((part) => ({
       id: undefined,
       event: context.event,
       scope: context.scope,
@@ -570,46 +585,48 @@ function observePersistedActions(action, context) {
   }];
 }
 
-function extractNestedFunctions(source = "") {
-  const all = extractAllFunctions(source);
-  if (all.length <= 1) return all;
-  const outer = all[0];
-  const nested = all.filter((part) => part.start > outer.start && part.end < outer.end);
-  return nested.length ? nested : all;
+function observeSingletonDispatcher(action, context) {
+  if (context.scope !== "global" || !SCRIPT_SINGLETON_GLOBAL_EVENTS.has(context.event)) return undefined;
+  const migrationActions = Array.isArray(action.migrationActions) ? action.migrationActions : [];
+  if (!migrationActions.length || typeof action.function !== "string") return undefined;
+  const children = migrationActions.flatMap((migrationAction) => {
+    const fn = markedDispatcherActionFunction(action.function, migrationAction.name);
+    return fn ? [{ name: migrationAction.name, function: fn }] : [];
+  });
+  const lastName = migrationActions.at(-1)?.name;
+  const lastMarker = dispatcherActionEndMarker(lastName);
+  const invocationStart = action.function.indexOf(lastMarker);
+  const invocationText = invocationStart < 0
+    ? ""
+    : action.function.slice(invocationStart + lastMarker.length);
+  const callNames = dispatcherCallNames(invocationText);
+  const strategy = observeDispatcherStrategy(
+    context.event,
+    action.function,
+    invocationText,
+    migrationActions.map((item) => item.name)
+  );
+  return {
+    children,
+    contract: {
+      event: context.event,
+      actionIds: migrationActions.map((item) => item.id),
+      childNames: children.map((item) => item.name),
+      callNames,
+      strategy
+    }
+  };
 }
 
-function extractAllFunctions(source = "") {
-  const text = String(source);
-  const parts = [];
-  const re = /\bfunction\s+([A-Za-z0-9_]+)\s*\(/g;
-  let match = re.exec(text);
-  while (match) {
-    const name = match[1];
-    const start = match.index;
-    const bodyStart = text.indexOf("{", start);
-    if (bodyStart < 0) break;
-    let depth = 0;
-    let end = -1;
-    for (let index = bodyStart; index < text.length; index += 1) {
-      if (text[index] === "{") depth += 1;
-      if (text[index] === "}") {
-        depth -= 1;
-        if (depth === 0) {
-          end = index + 1;
-          break;
-        }
-      }
-    }
-    if (end < 0) break;
-    parts.push({
-      name,
-      start,
-      end,
-      function: text.slice(start, end)
-    });
-    match = re.exec(text);
-  }
-  return parts;
+function observeDispatcherStrategy(event, functionText, invocationText, childNames) {
+  const expectedTail = `${renderDispatcherInvocation(event, childNames)}\n}`;
+  const expectedDeclaration = event === "onBeforeSubmit"
+    ? /^\s*async\s+function\s+onBeforeSubmit\b/
+    : new RegExp(`^\\s*function\\s+${event}\\b`);
+  if (!expectedDeclaration.test(functionText) || invocationText.trim() !== expectedTail.trim()) return "invalid";
+  return event === "onBeforeSubmit"
+    ? BEFORE_SUBMIT_DISPATCH_STRATEGY
+    : ORDERED_DISPATCH_STRATEGY;
 }
 
 function observeRunWhenFromFunction(source = "") {

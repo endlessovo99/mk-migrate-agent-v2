@@ -46,8 +46,9 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
     layoutRows,
     scripts: {
       actionCount: actions.length,
-      persistedActionCount: actions.length,
+      persistedActionCount: observedScripts?.persistedActionCount ?? actions.length,
       events: [...new Set(actions.map((action) => action.event).filter(Boolean))],
+      dispatchers: observedScripts?.dispatchers || [],
       controlEvents: actions
         .filter((action) => action.scope === "control")
         .map((action) => ({

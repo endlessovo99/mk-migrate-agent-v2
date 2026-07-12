@@ -8,6 +8,7 @@ import {
   detailRowControlStateCandidate,
   detailRowLifecycleCandidate
 } from "./sysform-script-recipes.js";
+import { isProvablyInertVariableDeclaration } from "./pure-declarations.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -465,26 +466,109 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
 
 function legacyHelperDefinitionsCandidate(source) {
   const text = String(source.javascript || "").trim();
-  if (!containsOnlyFunctionDeclarations(text)) return undefined;
+  if (!containsOnlyInertDeclarations(text)) return undefined;
 
   return legacyRuntimeOmission(text, "legacy helper function definitions", "inlined translated script actions");
 }
 
-function containsOnlyFunctionDeclarations(text) {
+function containsOnlyInertDeclarations(text) {
   let rest = String(text || "").trim();
   if (!rest) return false;
   let count = 0;
 
   while (rest) {
+    rest = stripLeadingTrivia(rest);
+    if (!rest) break;
     const match = rest.match(/^function\s+[A-Za-z_$][\w$]*\s*\([^)]*\)\s*\{/);
-    if (!match) return false;
-    const close = findBalancedClose(rest, match[0].length - 1, "{", "}");
-    if (close < 0) return false;
-    count += 1;
-    rest = rest.slice(close + 1).replace(/^\s*;?\s*/, "");
+    if (match) {
+      const close = findBalancedClose(rest, match[0].length - 1, "{", "}");
+      if (close < 0) return false;
+      count += 1;
+      rest = rest.slice(close + 1).replace(/^\s*;?\s*/, "");
+      continue;
+    }
+
+    if (/^(?:var|let|const)\b/.test(rest)) {
+      const end = findTopLevelStatementEnd(rest);
+      if (end < 0) return false;
+      const statement = rest.slice(0, end);
+      if (!isProvablyInertVariableDeclaration(statement)) return false;
+      count += 1;
+      rest = rest.slice(end).replace(/^\s*;?\s*/, "");
+      continue;
+    }
+    return false;
   }
 
   return count > 0;
+}
+
+function stripLeadingTrivia(text) {
+  let rest = String(text || "").replace(/^\s+/, "");
+  while (rest.startsWith("//") || rest.startsWith("/*")) {
+    if (rest.startsWith("//")) {
+      const end = rest.indexOf("\n");
+      rest = end < 0 ? "" : rest.slice(end + 1);
+    } else {
+      const end = rest.indexOf("*/", 2);
+      if (end < 0) return rest;
+      rest = rest.slice(end + 2);
+    }
+    rest = rest.replace(/^\s+/, "");
+  }
+  return rest;
+}
+
+function findTopLevelStatementEnd(text) {
+  let quote = "";
+  let lineComment = false;
+  let blockComment = false;
+  const depths = { "(": 0, "[": 0, "{": 0 };
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+    if (lineComment) {
+      if (char === "\n") lineComment = false;
+      continue;
+    }
+    if (blockComment) {
+      if (char === "*" && next === "/") {
+        blockComment = false;
+        index += 1;
+      }
+      continue;
+    }
+    if (quote) {
+      if (char === "\\") {
+        index += 1;
+        continue;
+      }
+      if (char === quote) quote = "";
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      lineComment = true;
+      index += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      blockComment = true;
+      index += 1;
+      continue;
+    }
+    if (["\"", "'", "`"].includes(char)) {
+      quote = char;
+      continue;
+    }
+    if (char === "(") depths["("] += 1;
+    if (char === "[") depths["["] += 1;
+    if (char === "{") depths["{"] += 1;
+    if (char === ")") depths["("] -= 1;
+    if (char === "]") depths["["] -= 1;
+    if (char === "}") depths["{"] -= 1;
+    if (char === ";" && Object.values(depths).every((depth) => depth === 0)) return index + 1;
+  }
+  return text.length;
 }
 
 function legacyAttachmentRuntimeCandidate(source, form) {

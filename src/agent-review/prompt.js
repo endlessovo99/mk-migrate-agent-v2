@@ -7,7 +7,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v3";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v4";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -73,7 +73,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "When a detail-table function refers to a runtime control id inside a detail row, use ${table:<sourceDetailTableId>}.<controlId>; the executor resolves this placeholder to mk_model_fd_... at write time.",
       "Whole-row or whole detail-table container visibility/required state must prefer native formRules.linkage against layout sourceMarkers (including detail-table-only rows). Do not use ${table:<detailTableId>} or the detail-table field id as an MKXFORM.setFieldAttr target.",
       "Only the first sourceMarker on a layout row is persisted as migrationRowId. When a row lists multiple sourceMarkers, rewrite every co-located alias to that primary marker in MKXFORM.setFieldAttr calls.",
-      "Treat a literal missing row marker as an auditable orphan no-op only when sourceDraft.issues contains source.sysform.script_row_marker_orphan_noop for the action sourceRef and its proof says absentFromLayout=true, onlyHelperTarget=true, resetAlwaysFalse=true, and dynamicDomCreationDetected=false.",
+      "Treat a literal missing row marker as an auditable orphan no-op only when sourceDraft.issues contains source.sysform.script_row_marker_orphan_noop for the action sourceRef and its proof says absentFromLayout=true, onlyHelperTarget=true, resetValuesAudited=true, and dynamicDomCreationDetected=false. Exact reset values remain audit evidence, but cannot mutate a target proven absent at every call.",
       "Never generate MKXFORM.setFieldAttr for an orphan marker. Translate every remaining resolved marker and helper behavior, use coverage.status=translated only when no unresolved residual remains, and preserve the Source Draft warning in the Trusted DSL audit record.",
       "If native formRules already cover a JSP visibility/required rule, do not duplicate that rule in generated JavaScript.",
       "If native formRules.linkage entries with meta.sourceJsp or meta.sourceJsps matching the action sourceRefs fully cover the action-local JSP behavior, patch the action to function:\"\", translationStatus:\"omitted\", and coverage:{status:\"covered\",nativeRules:[executable rule ids],residuals:[]}; preserve runWhen.",
@@ -711,7 +711,9 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
         functionMappings: functionMappingSummary(action.functionMappings, focused ? 8 : 0),
         semanticHints: action.semanticHints,
         reviewOpportunities: focused ? reviewOpportunitiesForAction(action, formRules, index, form, sourceDraft) : undefined,
-        actionSource: focused ? actionSourceSummary(action, compact ? 5200 : 6200) : actionSourceSummary(action, 520),
+        actionSource: focused
+          ? actionSourceSummary(action, compact ? 5200 : 6200, sourceDraft, compact ? 5200 : 10000)
+          : actionSourceSummary(action, 520),
         unmappedFunctions: focused ? action.unmappedFunctions : undefined,
         functionLength: String(action.function || "").length,
         functionPreview: previewText(action.function, focused ? (compact ? 700 : 2200) : 180)
@@ -720,7 +722,7 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
   });
 }
 
-function actionSourceSummary(action = {}, limit = 1200) {
+function actionSourceSummary(action = {}, limit = 1200, sourceDraft, helperBudget = 0) {
   const source = legacySourceFromGeneratedFunction(action.function);
   if (!source) return undefined;
   return pruneUndefined({
@@ -730,8 +732,115 @@ function actionSourceSummary(action = {}, limit = 1200) {
     excerpt: previewText(source, limit),
     fieldIds: uniqueStrings([...source.matchAll(/\bfd_[A-Za-z0-9_]+\b/g)].map((match) => match[0])).slice(0, 32),
     rowMarkers: rowMarkersFromText(source).slice(0, 32),
-    legacyCalls: legacyCallsFromText(source).slice(0, 16)
+    legacyCalls: legacyCallsFromText(source).slice(0, 16),
+    localHelperDefinitions: helperBudget > 0
+      ? localHelperDefinitions(action, source, sourceDraft, helperBudget)
+      : undefined
   });
+}
+
+function localHelperDefinitions(action, actionSource, sourceDraft = {}, budget = 10000) {
+  const sourceRefs = new Set(Array.isArray(action?.sourceRefs) ? action.sourceRefs : []);
+  const sourceTexts = (sourceDraft?.scripts?.sources || [])
+    .filter((source) => sourceRefs.has(source?.sourceRef) || sourceRefs.has(source?.id))
+    .map((source) => String(source?.javascript || ""))
+    .filter(Boolean);
+  if (!sourceTexts.length) return [];
+
+  const queue = calledFunctionNames(actionSource).map((name) => ({ name, depth: 0 }));
+  const queued = new Set(queue.map((item) => item.name));
+  const definitions = [];
+  let used = 0;
+  while (queue.length && used < budget) {
+    const { name, depth } = queue.shift();
+    const definition = sourceTexts
+      .map((text) => namedFunctionDefinition(text, name))
+      .find(Boolean);
+    if (!definition || used + definition.length > budget) continue;
+    definitions.push({ name, definition });
+    used += definition.length;
+    if (depth >= 2) continue;
+    for (const calledName of calledFunctionNames(definition)) {
+      if (queued.has(calledName)) continue;
+      queued.add(calledName);
+      queue.push({ name: calledName, depth: depth + 1 });
+    }
+  }
+  return definitions;
+}
+
+function calledFunctionNames(text = "") {
+  const names = [];
+  const seen = new Set();
+  const pattern = /(^|[^.\w$])([A-Za-z_$][\w$]*)\s*\(/g;
+  for (const match of String(text || "").matchAll(pattern)) {
+    const name = match[2];
+    if (["function", "if", "for", "while", "switch", "catch", "typeof", "return", "new"].includes(name)) continue;
+    if (seen.has(name)) continue;
+    seen.add(name);
+    names.push(name);
+  }
+  return names;
+}
+
+function namedFunctionDefinition(text = "", name = "") {
+  const pattern = new RegExp(`\\bfunction\\s+${escapeRegExp(name)}\\s*\\([^)]*\\)\\s*\\{`);
+  const match = pattern.exec(String(text || ""));
+  if (!match) return "";
+  const open = match.index + match[0].length - 1;
+  const close = balancedClose(text, open, "{", "}");
+  return close > open ? String(text).slice(match.index, close + 1).trim() : "";
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function balancedClose(text = "", openIndex, openChar, closeChar) {
+  let depth = 0;
+  let quote = "";
+  let lineComment = false;
+  let blockComment = false;
+  for (let index = openIndex; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+    if (lineComment) {
+      if (char === "\n") lineComment = false;
+      continue;
+    }
+    if (blockComment) {
+      if (char === "*" && next === "/") {
+        blockComment = false;
+        index += 1;
+      }
+      continue;
+    }
+    if (quote) {
+      if (char === "\\") {
+        index += 1;
+        continue;
+      }
+      if (char === quote) quote = "";
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      lineComment = true;
+      index += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      blockComment = true;
+      index += 1;
+      continue;
+    }
+    if (["\"", "'", "`"].includes(char)) {
+      quote = char;
+      continue;
+    }
+    if (char === openChar) depth += 1;
+    if (char === closeChar && --depth === 0) return index;
+  }
+  return -1;
 }
 
 function legacyCallsFromText(text = "") {
