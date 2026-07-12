@@ -82,7 +82,7 @@ The executor will be API-first:
 - Invalid base URLs produce a blocking `safety.base_url_invalid` diagnostic before login or any other NewOA API request.
 - The normalized target origin is used for every NewOA request and recorded in the execution report.
 - Non-SIT targets use the same single explicit write confirmation as SIT. The executor does not maintain a target-host allowlist or require an extra environment-specific confirmation.
-- Temporary participant or organization fallback identifiers are valid only for the exact normalized origins `https://p-sit.onewo.com` and `http://mkpaaspoc.shanghai-electric.com`; at every other origin, normal resolution, diagnostics, and blocking behavior apply without substituting those identifiers.
+- Temporary participant or organization fallback identifiers are valid only for the exact normalized origins `https://p-sit.onewo.com`, `http://mkpaaspoc.shanghai-electric.com`, and `http://oa-dev.shanghai-electric.com:8088`; at every other origin, normal resolution, diagnostics, and blocking behavior apply without substituting those identifiers.
 - The executor must require explicit write confirmation and explicit target category `fdId`.
 - The target category is provided by the caller as `targetCategoryId`. It is not inferred from source XML category text or path.
 - The template name is generated from the DSL template name with an `MK_TEST_` prefix and a uniqueness suffix.

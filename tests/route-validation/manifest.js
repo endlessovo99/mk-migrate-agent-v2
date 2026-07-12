@@ -112,6 +112,23 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "shanghai-electric-dev-fallback-success",
+      source: {
+        kind: "paired",
+        relativePath: "conditional-detail"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      baseUrl: "http://oa-dev.shanghai-electric.com:8088",
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "kmreview-named-success",
       source: {
         kind: "paired",

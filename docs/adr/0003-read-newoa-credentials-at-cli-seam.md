@@ -12,6 +12,6 @@ The Executor does not read `process.env`. It accepts `options.baseUrl`, normaliz
 - A one-command `--base-url` override is allowed because the target origin is not a secret. Resolution order is `--base-url` > `NEWOA_BASE_URL` > `https://p-sit.onewo.com`.
 - The target may be any valid HTTP/HTTPS root origin. It is normalized before requests and reporting; it is not restricted by a host allowlist.
 - Selecting a non-SIT origin does not weaken or duplicate the existing explicit confirmation, category, `MK_TEST_` draft-only, and readback gates.
-- Temporary participant and condition-organization fallback fdIds remain available only at the exact normalized origins `https://p-sit.onewo.com` and `http://mkpaaspoc.shanghai-electric.com`.
+- Temporary participant and condition-organization fallback fdIds remain available only at the exact normalized origins `https://p-sit.onewo.com`, `http://mkpaaspoc.shanghai-electric.com`, and `http://oa-dev.shanghai-electric.com:8088`.
 - Credentials must never enter DSL, Route case manifests, transcripts, reports, or persisted test artifacts.
 - Default tests remain deterministic and can run without real NewOA credentials.

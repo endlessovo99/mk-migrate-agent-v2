@@ -91,6 +91,21 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(result.transcript[0].operation, "login");
   });
 
+  it("applies participant and condition-organization fallbacks on the Shanghai Electric development origin", async () => {
+    const result = await runRouteCase("shanghai-electric-dev-fallback-success");
+
+    assert.equal(result.execution.ok, true);
+    assert.equal(result.execution.baseUrl, "http://oa-dev.shanghai-electric.com:8088");
+    assert.equal(
+      result.execution.diagnostics.some((item) => item.code === "workflow.participant_sit_fallback_applied"),
+      true
+    );
+    assert.equal(
+      result.execution.diagnostics.some((item) => item.code === "workflow.condition_org_sit_fallback_applied"),
+      true
+    );
+  });
+
   it("executes a paired form and workflow source through the public migration route", async () => {
     const result = await runRouteCase("paired-success");
 

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  allowsTemporaryOrgFallbacks,
   NewoaClient,
   NEWOA_SIT_BASE_URL,
   normalizeBaseUrl
@@ -210,6 +211,12 @@ describe("NewoaClient", () => {
         "http://127.0.0.1:8080"
       ]
     );
+  });
+
+  it("allows temporary organization fallbacks on the Shanghai Electric development origin only at its configured port", () => {
+    assert.equal(allowsTemporaryOrgFallbacks("http://oa-dev.shanghai-electric.com:8088/"), true);
+    assert.equal(allowsTemporaryOrgFallbacks("http://oa-dev.shanghai-electric.com"), false);
+    assert.equal(allowsTemporaryOrgFallbacks("http://oa-dev.shanghai-electric.com:8089"), false);
   });
 
   it("uses the canonical configured origin for client requests", async () => {

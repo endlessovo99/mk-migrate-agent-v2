@@ -9,7 +9,7 @@
  * so names and fdNo codes are resolved through the read-only org search API before
  * workflow projection.
  *
- * On allowed temporary-fallback origins (SIT and Shanghai Electric POC), unresolved
+ * On allowed temporary-fallback origins (SIT and Shanghai Electric POC/dev), unresolved
  * names/fdNos fall back to a known department target and are revalidated before use.
  */
 

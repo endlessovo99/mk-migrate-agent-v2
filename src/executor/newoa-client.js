@@ -1,10 +1,12 @@
 export const NEWOA_SIT_BASE_URL = "https://p-sit.onewo.com";
 export const NEWOA_POC_BASE_URL = "http://mkpaaspoc.shanghai-electric.com";
+export const NEWOA_SHANGHAI_ELECTRIC_DEV_BASE_URL = "http://oa-dev.shanghai-electric.com:8088";
 
 /** Origins that may substitute temporary unresolved person/post/group/department fallbacks. */
 export const NEWOA_TEMPORARY_FALLBACK_ORIGINS = Object.freeze([
   NEWOA_SIT_BASE_URL,
-  NEWOA_POC_BASE_URL
+  NEWOA_POC_BASE_URL,
+  NEWOA_SHANGHAI_ELECTRIC_DEV_BASE_URL
 ]);
 
 export function allowsTemporaryOrgFallbacks(value) {
