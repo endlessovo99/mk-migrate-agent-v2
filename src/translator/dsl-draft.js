@@ -1,4 +1,5 @@
 import { catalogRefs, validationPolicyRef } from "../dsl/catalogs.js";
+import { translateLegacyConditionContextReferences } from "../dsl/condition-context.js";
 import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../dsl/form-rules.js";
 import { packLayoutCells } from "../dsl/layout-pack.js";
 import {
@@ -523,7 +524,7 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
         condition: {
           sourceText: edge.condition || "",
           displayText: edge.displayCondition || "",
-          targetText: edge.condition || "",
+          targetText: translateLegacyConditionContextReferences(edge.condition, knownFieldIds || []),
           translationStatus: hasCondition ? "display_only" : "executable"
         }
       };

@@ -2183,23 +2183,28 @@ describe("executeDsl", () => {
     }
   });
 
-  localCorpusIt("fails closed on L769 without native fdDepartment binding evidence", () => {
+  localCorpusIt("projects legacy fdDepartment routes through the creator-department context", () => {
     const trusted = trustedDslFromFixture(
       "tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e"
     );
     const edge = trusted.workflow.edges.find((item) => item.id === "L769");
 
-    assert.match(edge.condition.targetText, /\$fdDepartment\$/);
+    assert.match(edge.condition.sourceText, /\$fdDepartment\$/);
+    assert.match(edge.condition.targetText, /\$context\.creatorDept\.fdName\$/);
     assert.equal(trusted.form.fields.some((field) => field.id === "fdDepartment"), false);
-    assert.throws(
-      () => buildWorkflowContent(trusted.workflow, {
-        templateId: "template-id",
-        form: trusted.form
-      }),
-      (error) => error?.code === "projection.workflow.edge_condition_unsupported" &&
-        error?.details?.edgeId === "L769" &&
-        String(error?.details?.condition || "").includes("$fdDepartment$")
-    );
+    const content = buildWorkflowContent(trusted.workflow, {
+      templateId: "template-id",
+      form: trusted.form
+    });
+    for (const edgeId of ["L323", "L769", "L791"]) {
+      const projected = content.elements.find((item) => item.id === edgeId);
+      const formula = JSON.parse(projected.formula);
+      assert.equal(formula.vars.some((variable) =>
+        variable.arguments?.some((argument) =>
+          argument.type === "Var" && argument.value === "template-id-fdCreatorDept.fdName"
+        )
+      ), true, edgeId);
+    }
   });
 
   localCorpusIt("writes N437 contains department routes into editable simple conditions", () => {
@@ -2210,7 +2215,7 @@ describe("executeDsl", () => {
       reviewerName: "test-reviewer",
       checkedAt: "2026-07-09T00:00:00.000Z"
     });
-    const focusedTrusted = omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted);
+    const focusedTrusted = trusted;
     const content = buildWorkflowContent(focusedTrusted.workflow, {
       templateId: "template-id",
       form: focusedTrusted.form
@@ -2246,7 +2251,7 @@ describe("executeDsl", () => {
       reviewerName: "test-reviewer",
       checkedAt: "2026-07-09T00:00:00.000Z"
     });
-    const focusedTrusted = omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted);
+    const focusedTrusted = trusted;
     const content = buildWorkflowContent(focusedTrusted.workflow, {
       templateId: "template-id",
       form: focusedTrusted.form
@@ -2301,7 +2306,7 @@ describe("executeDsl", () => {
       reviewerName: "test-reviewer",
       checkedAt: "2026-07-09T00:00:00.000Z"
     });
-    const focusedTrusted = omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted);
+    const focusedTrusted = trusted;
     const content = buildWorkflowContent(focusedTrusted.workflow, {
       templateId: "template-id",
       form: focusedTrusted.form
@@ -3196,30 +3201,13 @@ function buildRouteValidationWorkflowContent() {
     reviewerName: "test-reviewer",
     checkedAt: "2026-07-09T00:00:00.000Z"
   });
-  const focusedTrusted = omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted);
+  const focusedTrusted = trusted;
   return {
     trusted: focusedTrusted,
     content: buildWorkflowContent(focusedTrusted.workflow, {
       templateId: "template-id",
       form: focusedTrusted.form
     })
-  };
-}
-
-function omitUnsupportedFdDepartmentEdgesForFocusedTest(trusted) {
-  const edges = trusted?.workflow?.edges || [];
-  const unsupportedEdgeIds = edges
-    .filter((edge) => edgeConditionTextForTest(edge).includes("$fdDepartment$"))
-    .map((edge) => edge.id)
-    .sort();
-  assert.deepEqual(unsupportedEdgeIds, ["L323", "L769", "L791"]);
-  const unsupportedEdgeIdSet = new Set(unsupportedEdgeIds);
-  return {
-    ...trusted,
-    workflow: {
-      ...trusted.workflow,
-      edges: edges.filter((edge) => !unsupportedEdgeIdSet.has(edge.id))
-    }
   };
 }
 

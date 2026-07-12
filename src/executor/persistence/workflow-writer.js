@@ -5,8 +5,15 @@ import {
   isTautologyCondition as sharedIsTautologyCondition,
   selectDefaultBranchEdge
 } from "./branch-defaults.js";
+import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import { isAddressField } from "../condition-org-resolver.js";
 import { detailTableNameFor } from "./detail-table-names.js";
+import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
+
+const parseConditionExpression = createConditionExpressionParser({
+  parseTerm: parseSimpleCondition,
+  negateTerm: negateConditionTerm
+});
 
 export function applyWorkflowPayload(template, dsl) {
   if (!dsl.workflow) return template;
@@ -1050,7 +1057,7 @@ function buildFormulaDesignerConfig(edge, context) {
       });
     }
 
-    const field = context.formFieldById?.get(term.field);
+    const field = resolveConditionField(term.field, context);
     if (!field) return undefined;
     const upgraded = upgradeAddressConditionTerm(term, field, context);
     if (term.expressionType === "orgFdNo" && upgraded.expressionType !== "orgBelong") {
@@ -1128,6 +1135,23 @@ function buildFormulaDesignerConfig(edge, context) {
       }
     }
   };
+}
+
+function resolveConditionField(fieldId, context) {
+  const formField = context.formFieldById?.get(fieldId);
+  if (formField) return formField;
+
+  const semantic = conditionContextSemantic(fieldId);
+  if (semantic?.source === "creatorDept" && semantic.property === "fdName") {
+    return {
+      id: "fdCreatorDept.fdName",
+      title: "创建者部门名称",
+      type: "text",
+      props: {},
+      context: semantic
+    };
+  }
+  return undefined;
 }
 
 function buildFieldSumCompareTerm(term, options) {
@@ -1254,31 +1278,6 @@ function lookupConditionOrgByFdNo(context, fdNo) {
     fdOrgType: Number(matched.fdOrgType) || 2,
     fdNo: key
   };
-}
-
-function parseConditionExpression(condition) {
-  const text = stripEnclosingParentheses(String(condition || "").trim());
-  if (!text) return undefined;
-
-  const negatedGroup = parseNegatedGroup(text);
-  if (negatedGroup) return negatedGroup;
-
-  const orParts = splitLogicalExpression(text, "||");
-  if (orParts.length > 1) {
-    const children = orParts.map(parseConditionExpression);
-    if (children.every(Boolean)) return { type: "group", children, operator: "||", groupType: "OR" };
-    return undefined;
-  }
-
-  const andParts = splitLogicalExpression(text, "&&");
-  if (andParts.length > 1) {
-    const children = andParts.map(parseConditionExpression);
-    if (children.every(Boolean)) return { type: "group", children, operator: "&&", groupType: "AND" };
-    return undefined;
-  }
-
-  const parsed = parseSimpleCondition(text);
-  return parsed ? { type: "term", term: parsed } : undefined;
 }
 
 function parseSimpleCondition(condition) {
@@ -1569,40 +1568,6 @@ function flipCompareSymbol(symbol) {
   return symbol;
 }
 
-function parseNegatedGroup(text) {
-  if (!text.startsWith("!")) return undefined;
-  const rest = text.slice(1).trim();
-  if (isFullyWrappedInParentheses(rest)) {
-    const parsed = parseConditionExpression(rest);
-    return parsed ? negateConditionAst(parsed) : undefined;
-  }
-  // Landray often writes (!$field$.equals("x")) which strips to !$field$.equals("x")
-  // without a second paren wrapper around the simple term.
-  const simple = parseSimpleCondition(rest);
-  if (!simple) return undefined;
-  return {
-    type: "term",
-    term: negateConditionTerm(simple)
-  };
-}
-
-function negateConditionAst(ast) {
-  if (ast.type === "term") {
-    return {
-      type: "term",
-      term: negateConditionTerm(ast.term)
-    };
-  }
-
-  const operator = ast.operator === "&&" ? "||" : "&&";
-  return {
-    type: "group",
-    children: ast.children.map(negateConditionAst),
-    operator,
-    groupType: operator === "&&" ? "AND" : "OR"
-  };
-}
-
 function negateConditionTerm(term) {
   if (term.expressionType === "contains") {
     const negated = !term.negateResult;
@@ -1768,11 +1733,6 @@ function conditionResultExpression(ast) {
   }).join(` ${ast.operator} `)})`;
 }
 
-function collectConditionTerms(ast) {
-  if (ast.type === "term") return [ast.term];
-  return ast.children.flatMap(collectConditionTerms);
-}
-
 function attachConditionTerms(ast, terms, state = { index: 0 }) {
   if (ast.type === "term") {
     const term = terms[state.index];
@@ -1817,72 +1777,6 @@ function conditionVoNode(ast, options) {
     parentLeavel: options.parentLeavel,
     leavel: "3"
   };
-}
-
-function stripEnclosingParentheses(text) {
-  let result = text;
-  while (isFullyWrappedInParentheses(result)) {
-    result = result.slice(1, -1).trim();
-  }
-  return result;
-}
-
-function isFullyWrappedInParentheses(text) {
-  if (!text.startsWith("(") || !text.endsWith(")")) return false;
-  let quote = "";
-  let depth = 0;
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-    const previous = text[index - 1];
-    if (quote) {
-      if (char === quote && previous !== "\\") quote = "";
-      continue;
-    }
-    if (char === "\"" || char === "'") {
-      quote = char;
-      continue;
-    }
-    if (char === "(") depth += 1;
-    if (char === ")") depth -= 1;
-    if (depth === 0 && index < text.length - 1) return false;
-  }
-  return depth === 0;
-}
-
-function splitLogicalExpression(text, operator) {
-  const parts = [];
-  let quote = "";
-  let depth = 0;
-  let start = 0;
-
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-    const previous = text[index - 1];
-    if (quote) {
-      if (char === quote && previous !== "\\") quote = "";
-      continue;
-    }
-    if (char === "\"" || char === "'") {
-      quote = char;
-      continue;
-    }
-    if (char === "(") {
-      depth += 1;
-      continue;
-    }
-    if (char === ")") {
-      depth = Math.max(0, depth - 1);
-      continue;
-    }
-    if (depth === 0 && text.startsWith(operator, index)) {
-      parts.push(text.slice(start, index).trim());
-      index += operator.length - 1;
-      start = index + 1;
-    }
-  }
-
-  parts.push(text.slice(start).trim());
-  return parts.filter(Boolean);
 }
 
 function buildFormFieldIndex(form = {}) {

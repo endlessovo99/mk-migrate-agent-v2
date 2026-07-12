@@ -4,11 +4,91 @@ import { buildWorkflowContent, projectTemplate, verifyTemplate } from "../helper
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 import { validateMigrationDsl } from "../../src/dsl/schema.js";
+import { translateLegacyConditionContextReferences } from "../../src/dsl/condition-context.js";
 
 const ROLE_LINE_SOURCE = "tests/fixtures/source/19ca1bf6a201d607679a76d4609a3e87";
 const CREATOR_PATH_SOURCE = "tests/fixtures/source/195023f8389d40797436b304835a3525";
+const CREATOR_DEPT_SOURCE = "tests/fixtures/source/191e3d177105738cef50e6545cd8c01f";
 
 describe("workflow Script recipes", () => {
+  it("translates legacy fdDepartment conditions to the NewOA creator-department context", () => {
+    const sourceDraft = cleanSourceFile(CREATOR_DEPT_SOURCE);
+    const dslDraft = draftSourceDraft(sourceDraft);
+
+    assert.equal(dslDraft.form.fields.some((field) => field.id === "fdDepartment"), false);
+
+    for (const edgeId of ["L57", "L587"]) {
+      const edge = dslDraft.workflow.edges.find((item) => item.id === edgeId);
+      assert.match(edge.condition.sourceText, /\$fdDepartment\$/);
+      assert.doesNotMatch(edge.condition.targetText, /\$fdDepartment\$/);
+      assert.match(edge.condition.targetText, /\$context\.creatorDept\.fdName\$/);
+
+      const content = buildWorkflowContent(focusedConditionWorkflow(edge), {
+        templateId: "template-id",
+        form: dslDraft.form
+      });
+      const projected = content.elements.find((element) => element.id === edgeId);
+      const formula = JSON.parse(projected.formula);
+      const creatorDeptContains = formula.vars.find((variable) =>
+        variable.value === "global.contains" &&
+        variable.arguments?.some((argument) =>
+          argument.type === "Var" && argument.value === "template-id-fdCreatorDept.fdName"
+        )
+      );
+
+      assert.equal(formula.type, "Batch");
+      assert.ok(creatorDeptContains, `${edgeId} should read NewOA fdCreatorDept.fdName`);
+      assert.match(formula.result.value, /&&/);
+      assert.match(formula.result.value, /\|\|/);
+    }
+  });
+
+  it("verifies the creator-department context binding through native readback", () => {
+    const dslDraft = draftSourceDraft(cleanSourceFile(CREATOR_DEPT_SOURCE));
+
+    for (const edgeId of ["L57", "L587"]) {
+      const sourceEdge = dslDraft.workflow.edges.find((item) => item.id === edgeId);
+      const workflow = focusedConditionWorkflow(sourceEdge);
+      const trusted = sampleTrustedDsl({ form: dslDraft.form, workflow });
+      const template = projectTemplate(trusted);
+      const verified = verifyTemplate(trusted, template);
+
+      assert.equal(verified.ok, true, JSON.stringify(verified.diagnostics, null, 2));
+
+      const lbpm = template.mechanisms.lbpmTemplate[0];
+      const content = JSON.parse(lbpm.fdContent);
+      const edge = content.elements.find((element) => element.id === edgeId);
+      const formula = JSON.parse(edge.formula);
+      const contains = formula.vars.find((variable) =>
+        variable.value === "global.contains" && variable.arguments?.some((argument) =>
+          argument.type === "Var" && argument.value === "template-id-fdCreatorDept.fdName"
+        )
+      );
+      contains.arguments.find((argument) => argument.type === "Var").value = "template-id-wrong-field";
+      edge.formula = JSON.stringify(formula);
+      lbpm.fdContent = JSON.stringify(content);
+
+      const mutated = verifyTemplate(trusted, template);
+      assert.equal(mutated.ok, false, edgeId);
+      assert.equal(mutated.diagnostics.some((item) =>
+        item.code === "readback.workflow.edge_condition_native_semantic_mismatch"
+      ), true, edgeId);
+    }
+  });
+
+  it("does not rewrite real form fields or quoted legacy-looking text", () => {
+    const condition = '$字符串.包含$($fdDepartment$, "literal $fdDepartment$")';
+
+    assert.equal(
+      translateLegacyConditionContextReferences(condition, new Set(["fdDepartment"])),
+      condition
+    );
+    assert.equal(
+      translateLegacyConditionContextReferences(condition),
+      '$字符串.包含$($context.creatorDept.fdName$, "literal $fdDepartment$")'
+    );
+  });
+
   it("maps common field role lines and routes related leaders to the configured person fallback", () => {
     const sourceDraft = cleanSourceFile(ROLE_LINE_SOURCE);
     const dslDraft = draftSourceDraft(sourceDraft);
@@ -184,3 +264,81 @@ describe("workflow Script recipes", () => {
     assert.equal(verified.ok, true, JSON.stringify(verified.diagnostics, null, 2));
   });
 });
+
+function focusedConditionWorkflow(edge) {
+  const condition = edge.condition || {
+    sourceText: edge.sourceText,
+    displayText: edge.displayText,
+    targetText: edge.targetText,
+    translationStatus: "display_only"
+  };
+  const route = {
+    ...edge,
+    source: "N_CONTEXT_BRANCH",
+    target: "N_CONTEXT_MATCH",
+    condition
+  };
+  return {
+    process: { id: `creator-dept-${edge.id}` },
+    nodes: [
+      workflowNode("N_CONTEXT_START", "generalStart", "startEvent", "startNode"),
+      workflowNode("N_CONTEXT_BRANCH", "conditionBranch", "exclusiveGateway", "autoBranchNode"),
+      workflowNode("N_CONTEXT_MATCH", "review", "manualTask", "reviewNode"),
+      workflowNode("N_CONTEXT_OTHER", "review", "manualTask", "reviewNode"),
+      workflowNode("N_CONTEXT_END", "generalEnd", "endEvent", "endNode")
+    ],
+    edges: [
+      workflowEdge("L_CONTEXT_IN", "N_CONTEXT_START", "N_CONTEXT_BRANCH"),
+      route,
+      {
+        ...workflowEdge("L_CONTEXT_OTHER", "N_CONTEXT_BRANCH", "N_CONTEXT_OTHER"),
+        name: "其他",
+        condition: {
+          sourceText: "1==1",
+          displayText: "其他",
+          targetText: "1==1",
+          translationStatus: "display_only"
+        }
+      },
+      workflowEdge("L_CONTEXT_MATCH_END", "N_CONTEXT_MATCH", "N_CONTEXT_END"),
+      workflowEdge("L_CONTEXT_OTHER_END", "N_CONTEXT_OTHER", "N_CONTEXT_END")
+    ],
+    topologicalOrder: [
+      "N_CONTEXT_START",
+      "N_CONTEXT_BRANCH",
+      "N_CONTEXT_MATCH",
+      "N_CONTEXT_OTHER",
+      "N_CONTEXT_END"
+    ]
+  };
+}
+
+function workflowNode(id, type, element, sourceType) {
+  return {
+    id,
+    type,
+    element,
+    name: id,
+    sourceType,
+    sourceRef: `source.workflow.node.${id}`,
+    attributes: {},
+    translationStatus: "executable"
+  };
+}
+
+function workflowEdge(id, source, target) {
+  return {
+    id,
+    source,
+    target,
+    name: "",
+    sourceRef: `source.workflow.edge.${id}`,
+    attributes: {},
+    condition: {
+      sourceText: "",
+      displayText: "",
+      targetText: "",
+      translationStatus: "executable"
+    }
+  };
+}

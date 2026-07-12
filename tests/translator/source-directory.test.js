@@ -151,6 +151,7 @@ describe("source directory stages", () => {
     assert.deepEqual(nodesById.get("N29").participants, {
       mode: "form_field",
       fieldId: "fd_371229badb4b1a",
+      sourceFieldId: "fd_371229badb4b1a",
       fieldTitle: "部门固资管理员",
       sourceExpression: "$fd_371229badb4b1a$",
       sourceNameExpression: "$部门固资管理员$"

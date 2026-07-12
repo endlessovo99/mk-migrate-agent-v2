@@ -1,4 +1,5 @@
 import { COMPONENTS_BY_ID } from "../../dsl/catalogs.js";
+import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import { packLayoutCells } from "../../dsl/layout-pack.js";
 import {
   buildFormRuleRefIndex,
@@ -11,6 +12,13 @@ import { projectionError } from "./diagnostics.js";
 import { selectDefaultBranchEdge } from "./branch-defaults.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { persistedFieldLabel } from "./field-labels.js";
+import { isAddressField } from "../condition-org-resolver.js";
+import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
+
+const parseExpectedContextConditionExpression = createConditionExpressionParser({
+  parseTerm: parseExpectedContextConditionTerm,
+  negateTerm: negateExpectedContextConditionTerm
+});
 
 export function buildExpectedInvariants(dsl, envelope) {
   const diagnostics = [];
@@ -850,12 +858,13 @@ function summarizeCondition(edge, conditionBranch, context = {}) {
     edge?.condition?.displayText ||
     edge?.displayCondition ||
     "";
+  const semanticText = edge?.condition?.targetText || sourceText;
   if (!String(sourceText).trim()) return undefined;
   const scriptSemantics = conditionBranch
-    ? expectedCreatorParentPathContainsScriptSemantics(sourceText)
+    ? expectedCreatorParentPathContainsScriptSemantics(semanticText)
     : undefined;
   const nativeSemantics = scriptSemantics || (
-    conditionBranch ? expectedBatchConditionSemantics(sourceText, context) : undefined
+    conditionBranch ? expectedBatchConditionSemantics(semanticText, context) : undefined
   );
   return {
     sourceText: normalizeScalar(sourceText),
@@ -888,6 +897,11 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
   const compact = String(sourceText || "").replace(/\s+/g, "");
   if (/^(?:1={2,3}2|1!={1,2}1|false)$/i.test(compact)) {
     return { resultShape: "false", varCount: 0 };
+  }
+
+  const parsedAst = parseExpectedContextConditionExpression(sourceText);
+  if (parsedAst && collectConditionTerms(parsedAst).some((term) => conditionContextSemantic(term.field))) {
+    return expectedContextConditionSemantics(parsedAst, context);
   }
 
   const negated = unwrapExpectedNegation(compact);
@@ -962,6 +976,149 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
   }
 
   return undefined;
+}
+
+function expectedContextConditionSemantics(ast, context) {
+  const functionIds = new Set();
+  const orgIds = new Set();
+  const evalExpressions = new Set();
+  const ruleSymbols = new Set();
+  const functionCalls = [];
+  const terms = collectConditionTerms(ast);
+
+  for (const term of terms) {
+    const contextSemantic = conditionContextSemantic(term.field);
+    const field = contextSemantic
+      ? { id: "fdCreatorDept.fdName", type: "text" }
+      : expectedConditionField(context.form, term.field);
+    if (!field) return undefined;
+    const fieldRef = expectedFormulaFieldRef(context.templateId, field.id);
+    const org = term.expressionType === "contains" && isAddressField(field)
+      ? expectedConditionOrg(context.runtime, term.value)
+      : undefined;
+
+    if (org) {
+      const functionId = "sysorg.isOrganizationBelongOrIncludeAnother";
+      functionIds.add(functionId);
+      orgIds.add(org.fdId);
+      ruleSymbols.add(term.negateResult ? "notbelong" : "belongany");
+      functionCalls.push({
+        functionId,
+        inputs: [{ key: "firstOrgs", type: "Var", value: fieldRef }],
+        fixedArguments: [{ key: "isCross", type: "Fixed", value: true }, {
+          key: "relationType",
+          type: "Fixed",
+          value: 4
+        }, {
+          key: "secondOrgs",
+          type: "Fixed",
+          value: { orgIds: [org.fdId] }
+        }]
+      });
+      continue;
+    }
+
+    if (term.expressionType === "contains") {
+      const functionId = "global.contains";
+      functionIds.add(functionId);
+      ruleSymbols.add(term.negateResult ? "notcontain" : "contain");
+      functionCalls.push({
+        functionId,
+        inputs: [{ key: "X", type: "Var", value: fieldRef }],
+        fixedArguments: [{ key: "Y", type: "Fixed", value: term.value }]
+      });
+      continue;
+    }
+
+    const symbol = term.expressionType === "==" ? "==" : term.expressionType;
+    if (!["==", "!=", ">", ">=", "<", "<="].includes(symbol)) return undefined;
+    evalExpressions.add(`\${data.${fieldRef}} ${symbol} ${JSON.stringify(term.value)}`);
+    ruleSymbols.add(term.symbol);
+  }
+
+  return {
+    resultShape: expectedConditionResultShape(ast),
+    varCount: terms.length,
+    functionIds: [...functionIds].sort(),
+    orgIds: [...orgIds].sort(),
+    evalExpressions: [...evalExpressions].sort(),
+    ruleSymbols: [...ruleSymbols].sort(),
+    functionCalls: functionCalls.sort((left, right) =>
+      stableStringify(left).localeCompare(stableStringify(right))
+    )
+  };
+}
+
+function parseExpectedContextConditionTerm(value) {
+  const text = String(value || "").trim();
+  const contains = text.match(
+    /^\$(?:字符串|列表)\.包含\$\(\s*\$([^$]+)\$(?:\s*\.\s*getFdName\s*\(\s*\))?\s*,\s*(["'])([\s\S]*?)\2\s*\)$/
+  );
+  if (contains) {
+    return {
+      field: contains[1].trim(),
+      value: contains[3],
+      symbol: "contain",
+      expressionType: "contains",
+      negateResult: false
+    };
+  }
+
+  const legacyEquals = text.match(/^["']([^"']*)["']\s*\.\s*equals\s*\(\s*\$([^$]+)\$\s*\)$/);
+  if (legacyEquals) {
+    return { value: legacyEquals[1], field: legacyEquals[2].trim(), symbol: "==", expressionType: "==" };
+  }
+  const fieldEqualsString = text.match(/^\$([^$]+)\$\s*={2,3}\s*["']([^"']*)["']$/);
+  if (fieldEqualsString) {
+    return { field: fieldEqualsString[1].trim(), value: fieldEqualsString[2], symbol: "==", expressionType: "==" };
+  }
+  const fieldEqualsNumber = text.match(/^\$([^$]+)\$\s*={2,3}\s*(-?\d+(?:\.\d+)?)$/);
+  if (fieldEqualsNumber) {
+    return { field: fieldEqualsNumber[1].trim(), value: fieldEqualsNumber[2], symbol: "==", expressionType: "==" };
+  }
+  return undefined;
+}
+
+function negateExpectedContextConditionTerm(term) {
+  if (term.expressionType === "contains") {
+    const negated = !term.negateResult;
+    return {
+      ...term,
+      symbol: negated ? "notcontain" : "contain",
+      negateResult: negated
+    };
+  }
+  const symbol = negateExpectedCompareSymbol(term.symbol);
+  return { ...term, symbol, expressionType: symbol };
+}
+
+function expectedConditionResultShape(ast) {
+  if (ast.type === "term") return `(${expectedConditionTermResult(ast.term)})`;
+  return `(${ast.children.map((child) =>
+    child.type === "term"
+      ? expectedConditionTermResult(child.term)
+      : expectedConditionResultShape(child)
+  ).join(` ${ast.operator} `)})`;
+}
+
+function expectedConditionTermResult(term) {
+  return term.negateResult ? "!${VAR}" : "${VAR}";
+}
+
+function expectedConditionField(form, fieldId) {
+  for (const field of form?.fields || []) {
+    if (field?.id === fieldId) return field;
+    const column = (field?.columns || []).find((item) => item?.id === fieldId);
+    if (column) return column;
+  }
+  return undefined;
+}
+
+function expectedConditionOrg(runtime, name) {
+  const values = runtime?.conditionOrgByName;
+  const hit = values instanceof Map ? values.get(String(name || "")) : values?.[String(name || "")];
+  if (!hit?.fdId || !hit?.fdName) return undefined;
+  return { fdId: String(hit.fdId) };
 }
 
 function unwrapExpectedNegation(compact) {
