@@ -404,11 +404,11 @@ describe("source directory stages", () => {
         }
       }));
 
-      assert.equal(
-        dslDraft.workflow.nodes.find((node) => node.id === "N2").participants.mode,
-        "empty",
-        handlerIds
-      );
+      const node = dslDraft.workflow.nodes.find((item) => item.id === "N2");
+      assert.equal(node.participants.mode, "unmapped_formula", handlerIds);
+      assert.equal(node.participants.sourceExpression, handlerIds, handlerIds);
+      assert.equal(node.participants.sourceNameExpression, handlerNames || "", handlerIds);
+      assert.equal(node.translationStatus, "pending_review", handlerIds);
     }
   });
 

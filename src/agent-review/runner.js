@@ -39,11 +39,12 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
   const checkpointRequested = resumeRequested || typeof options.onCheckpoint === "function";
   const inputDiagnostics = validateInputs(sourceDraft, dslDraft);
   if (inputDiagnostics.length) {
-    return blockedResult({
+    const result = blockedResult({
       ...metadata,
       stage: "agent-review.input",
       diagnostics: inputDiagnostics
     });
+    return { ...result, dslDraft };
   }
   if (checkpointRequested && !checkpointEnabled) {
     return blockedResult({

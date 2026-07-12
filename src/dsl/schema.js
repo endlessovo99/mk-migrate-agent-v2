@@ -49,8 +49,16 @@ const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", 
 const WORKFLOW_NODE_ELEMENTS = new Set(["startEvent", "manualTask", "exclusiveGateway", "parallelGateway", "robot", "endEvent"]);
 const WORKFLOW_PARTICIPANT_MODES = new Set([
   "empty",
+  "unmapped_formula",
   "initiator_select",
   "explicit",
+  "form_field",
+  "person_by_login_name",
+  "dept_leader_by_no",
+  "doc_creator",
+  "role_line"
+]);
+const MAPPED_FORMULA_PARTICIPANT_MODES = new Set([
   "form_field",
   "person_by_login_name",
   "dept_leader_by_no",
@@ -1015,6 +1023,23 @@ function validateWorkflowNodes(nodes, diagnostics, context) {
       diagnostics.push(error("dsl.workflow.node.source_ref_required", "Workflow node sourceRef is required unless generated is true.", `${path}/sourceRef`));
     }
     validateParticipants(node.participants, diagnostics, `${path}/participants`, context);
+    const sourceAttributes = {
+      ...(isRecord(node.attributes) ? node.attributes : {}),
+      ...(isRecord(node.definition?.attributes) ? node.definition.attributes : {})
+    };
+    if (
+      context.mode === "execute" &&
+      sourceAttributes.handlerSelectType === "formula" &&
+      node.participants?.mode !== "unmapped_formula" &&
+      !MAPPED_FORMULA_PARTICIPANT_MODES.has(node.participants?.mode)
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.formula_unmapped",
+        "Formula-selected workflow participants require a supported participant mapping before execution.",
+        `${path}/participants`,
+        { sourceExpression: node.participants.sourceExpression || sourceAttributes.handlerIds || "" }
+      ));
+    }
     validateNodeDataAuthority(node.dataAuthority, diagnostics, `${path}/dataAuthority`, context);
     if (context.mode === "execute" && node.translationStatus === "pending_review") {
       diagnostics.push(error("dsl.workflow.node.pending_review", "Executable workflow nodes cannot remain pending_review.", `${path}/translationStatus`));
@@ -1155,6 +1180,24 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
     diagnostics.push(warning("workflow.participants.empty", "Workflow participants are empty because the source did not specify executable participants.", path, {
       reason: participants.reason
     }));
+    return;
+  }
+  if (participants.mode === "unmapped_formula") {
+    if (!nonEmptyString(participants.sourceExpression)) {
+      diagnostics.push(error(
+        "workflow.participants.formula_source_required",
+        "Unmapped formula participants must preserve the source expression.",
+        `${path}/sourceExpression`
+      ));
+    }
+    if (context.mode === "execute") {
+      diagnostics.push(error(
+        "workflow.participants.formula_unmapped",
+        "Formula-selected workflow participants require a mapped ES5 script before execution.",
+        path,
+        { sourceExpression: participants.sourceExpression || "" }
+      ));
+    }
     return;
   }
   if (participants.mode === "initiator_select" && !nonEmptyString(participants.sourceSemantics)) {

@@ -1,4 +1,5 @@
 import { SOURCE_DRAFT_VERSION } from "../translator/source-draft.js";
+import { inspectWorkflowFormulaProvenance } from "../translator/workflow-formula-participants.js";
 import {
   createReviewCheckpoint,
   validateReviewCheckpoint,
@@ -128,6 +129,23 @@ export function validateInputs(sourceDraft, dslDraft) {
   }
   if (dslDraft?.artifact !== "dsl-draft" || dslDraft?.trust?.level !== "draft" || dslDraft?.trust?.executable !== false) {
     diagnostics.push(error("agent.input.dsl_draft_required", "agent-review requires a non-executable dsl-draft artifact.", "/dslDraft"));
+  }
+  for (const inspection of inspectWorkflowFormulaProvenance(sourceDraft, dslDraft)) {
+    if (inspection.status === "unmapped") {
+      diagnostics.push(error(
+        "agent.input.workflow_formula_unrepairable",
+        "Agent Review cannot repair workflow participant formulas; add a deterministic Script mapping before review.",
+        `/dslDraft/workflow/nodes/${inspection.nodeIndex}/participants`,
+        inspection
+      ));
+    } else if (inspection.status !== "matched") {
+      diagnostics.push(error(
+        "agent.input.workflow_formula_provenance_mismatch",
+        "Workflow formula evidence must match the authoritative source draft before Agent Review.",
+        `/dslDraft/workflow/nodes/${inspection.nodeIndex}/participants`,
+        inspection
+      ));
+    }
   }
   return diagnostics;
 }

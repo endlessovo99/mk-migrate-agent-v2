@@ -2,6 +2,7 @@ import { catalogRefs, validationPolicyRef, validateCatalogVersions } from "./cat
 import { validateMigrationDsl } from "./schema.js";
 import { MIGRATION_DSL_VERSION } from "../translator/dsl-draft.js";
 import { SOURCE_DRAFT_VERSION } from "../translator/source-draft.js";
+import { inspectWorkflowFormulaProvenance } from "../translator/workflow-formula-participants.js";
 
 export function createTrustedMigrationDsl(sourceDraft, dslDraft, options = {}) {
   if (sourceDraft?.version !== SOURCE_DRAFT_VERSION || sourceDraft?.artifact !== "source-draft") {
@@ -64,11 +65,28 @@ export function checkTrust(sourceDraft, migrationDsl) {
   const sourceRefs = collectSourceRefs(sourceDraft);
   validateDerivedFrom(sourceDraft, migrationDsl, diagnostics);
   validateCoreProvenance(migrationDsl, sourceRefs, diagnostics);
+  validateWorkflowFormulaProvenance(sourceDraft, migrationDsl, diagnostics);
 
   const executionValidation = validateMigrationDsl(migrationDsl, { mode: "execute" });
   diagnostics.push(...executionValidation.diagnostics);
 
   return finalize("trust", diagnostics);
+}
+
+function validateWorkflowFormulaProvenance(sourceDraft, migrationDsl, diagnostics) {
+  for (const inspection of inspectWorkflowFormulaProvenance(sourceDraft, migrationDsl)) {
+    if (inspection.status === "matched") continue;
+    diagnostics.push(error(
+      inspection.status === "unmapped"
+        ? "trust.workflow_formula_unmapped"
+        : "trust.workflow_formula_provenance_mismatch",
+      inspection.status === "unmapped"
+        ? "Unmapped source workflow formulas cannot become executable."
+        : "Executable workflow formula evidence must match the authoritative source draft.",
+      `/workflow/nodes/${inspection.nodeIndex}/participants`,
+      inspection
+    ));
+  }
 }
 
 export function validateTrustedMetadata(root, diagnostics, path = "") {

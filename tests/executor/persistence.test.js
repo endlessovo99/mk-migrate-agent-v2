@@ -689,6 +689,47 @@ describe("workflow mutations", () => {
     assert.equal(prepared.ok, false);
     assert.equal(prepared.diagnostics.some((item) => item.code === "projection.workflow.node_type_unsupported"), true);
   });
+
+  it("rejects an unmapped source formula at projection time", () => {
+    const workflow = sampleWorkflow();
+    workflow.nodes = [
+      workflow.nodes[0],
+      {
+        id: "N2",
+        type: "review",
+        element: "manualTask",
+        name: "公式审批",
+        sourceType: "reviewNode",
+        sourceRef: "source.workflow.node.N2",
+        attributes: {},
+        participants: {
+          mode: "unmapped_formula",
+          reason: "source formula requires ES5 script translation",
+          sourceExpression: "import java.util.List; return handlers;",
+          sourceNameExpression: "复杂公式"
+        },
+        translationStatus: "executable"
+      },
+      { ...workflow.nodes[1], id: "N3", sourceRef: "source.workflow.node.N3" }
+    ];
+    workflow.edges = [
+      { ...workflow.edges[0], id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1" },
+      { ...workflow.edges[0], id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2" }
+    ];
+    workflow.topologicalOrder = ["N1", "N2", "N3"];
+
+    const prepared = preparePersistedTemplate({
+      dsl: sampleTrustedDsl({ workflow }),
+      envelope: sampleEnvelope(),
+      baseTemplate: sampleBaseTemplate()
+    });
+
+    assert.equal(prepared.ok, false);
+    assert.equal(
+      prepared.diagnostics.some((item) => item.code === "projection.workflow.formula_participant_unmapped"),
+      true
+    );
+  });
 });
 
 describe("decode failures", () => {

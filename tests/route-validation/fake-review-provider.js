@@ -16,6 +16,12 @@ export function createFakeReviewProvider(scenario) {
       };
     },
     async review({ sourceDraft, dslDraft, reviewScope }) {
+      if (scenario === "fail-if-called") {
+        throw integrityError(
+          "route.review.unexpected_call",
+          "The review provider must not be called for a locally unrepairable workflow formula."
+        );
+      }
       const response = scenario === "audited-row-marker-orphan-noop"
         ? reviewAuditedRowMarkerOrphan({ sourceDraft, dslDraft, reviewScope })
         : {

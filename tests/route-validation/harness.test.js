@@ -50,6 +50,15 @@ describe("Route-validation harness integrity", { concurrency: false }, () => {
       () => appendTranscriptEntry([], { operation: "update", templateId: { raw: "payload" } }),
       (error) => error?.code === "route.transcript.invalid"
     );
+
+    assert.doesNotThrow(() => validateRouteManifest(manifestWith({
+      expected: {
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.input",
+        operations: []
+      }
+    })));
   });
 
   it("fails on a caught fetch attempt and restores global fetch", async () => {

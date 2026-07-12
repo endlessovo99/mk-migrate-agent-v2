@@ -31,7 +31,25 @@ export async function runRouteCase(caseId) {
       reviewedAt: FIXED_NOW
     });
     if (!reviewResult.ok) {
-      throw unexpected("review", routeCase, reviewResult.report?.status, reviewResult.report?.stage);
+      const review = reviewResult.report;
+      if (
+        routeCase.expected.terminalStage !== "review" ||
+        review?.status !== routeCase.expected.reviewStatus ||
+        routeCase.expected.reviewStage !== review?.stage ||
+        routeCase.expected.operations.length !== 0
+      ) {
+        throw unexpected("review", routeCase, review?.status, review?.stage);
+      }
+      const result = {
+        caseId: routeCase.id,
+        review,
+        dsl: reviewResult.dslDraft,
+        dryRun: undefined,
+        execution: undefined,
+        transcript: []
+      };
+      assertNoSecretLeak(result, Object.values(TEST_CREDENTIALS));
+      return result;
     }
 
     const dryRun = buildDryRunPlan(reviewResult.dsl);

@@ -64,4 +64,103 @@ describe("trust boundary", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "trust.source_ref_missing"), true);
     assert.equal(result.diagnostics.some((item) => item.code === "trust.pending_review_executable"), true);
   });
+
+  it("rejects formula evidence forgery, source identity replacement, and node removal", () => {
+    const sourceExpression = "import java.util.List; return handlers;";
+    const sourceDraft = sampleSourceDraft();
+    sourceDraft.workflow.nodes[1].attributes = {
+      handlerSelectType: "formula",
+      handlerIds: sourceExpression,
+      handlerNames: "复杂公式"
+    };
+    sourceDraft.workflow.nodes.push({
+      id: "N3",
+      sourceRef: "source.workflow.node.N3",
+      attributes: { handlerSelectType: "formula", handlerIds: "$docCreator$", handlerNames: "$docCreator$" }
+    });
+
+    for (const attack of ["attributes", "identity", "deletion"]) {
+      const trusted = sampleTrustedDsl();
+      if (attack === "deletion") {
+        trusted.workflow.nodes.splice(1, 1);
+      } else {
+        trusted.workflow.nodes[1] = {
+          ...trusted.workflow.nodes[1],
+          type: "review",
+          element: "manualTask",
+          sourceRef: attack === "identity" ? "source.workflow.node.N3" : "source.workflow.node.N2",
+          attributes: {
+            handlerSelectType: "formula",
+            handlerIds: "$docCreator$",
+            handlerNames: "$docCreator$"
+          },
+          participants: {
+            mode: "doc_creator",
+            sourceExpression: "$docCreator$",
+            sourceNameExpression: "$docCreator$"
+          }
+        };
+      }
+
+      const result = checkTrust(sourceDraft, trusted);
+
+      assert.equal(result.ok, false, attack);
+      assert.equal(
+        result.diagnostics.some((item) => item.code === "trust.workflow_formula_unmapped"),
+        true,
+        attack
+      );
+    }
+  });
+
+  it("rejects extra mapped formula claims and target field substitution", () => {
+    const plainSource = sampleSourceDraft();
+    const extraClaim = sampleTrustedDsl();
+    extraClaim.workflow.nodes[1].participants = {
+      mode: "doc_creator",
+      sourceExpression: "$docCreator$",
+      sourceNameExpression: "$docCreator$"
+    };
+    const extraClaimResult = checkTrust(plainSource, extraClaim);
+
+    assert.equal(extraClaimResult.ok, false);
+    assert.equal(
+      extraClaimResult.diagnostics.some((item) => item.code === "trust.workflow_formula_provenance_mismatch"),
+      true
+    );
+
+    const formula = "$组织架构.根据登录名取用户$($fd_subject$)";
+    const formulaSource = sampleSourceDraft();
+    formulaSource.workflow.nodes[1].attributes = {
+      handlerSelectType: "formula",
+      handlerIds: formula,
+      handlerNames: "$组织架构.根据登录名取用户$($主题$)"
+    };
+    const wrongField = sampleTrustedDsl();
+    const wrongTarget = wrongField.form.fields.find((field) => field.id === "fd_amount");
+    const authoritativeTarget = wrongField.form.fields.find((field) => field.id === "fd_subject");
+    wrongTarget.sourceProps.originalId = "fd_subject";
+    wrongTarget.sourceRef = authoritativeTarget.sourceRef;
+    wrongField.workflow.nodes[1] = {
+      ...wrongField.workflow.nodes[1],
+      type: "review",
+      element: "manualTask",
+      attributes: formulaSource.workflow.nodes[1].attributes,
+      participants: {
+        mode: "person_by_login_name",
+        fieldId: "fd_amount",
+        sourceFieldId: "fd_subject",
+        fieldTitle: "主题",
+        sourceExpression: formula,
+        sourceNameExpression: "$组织架构.根据登录名取用户$($主题$)"
+      }
+    };
+    const wrongFieldResult = checkTrust(formulaSource, wrongField);
+
+    assert.equal(wrongFieldResult.ok, false);
+    assert.equal(
+      wrongFieldResult.diagnostics.some((item) => item.code === "trust.workflow_formula_provenance_mismatch"),
+      true
+    );
+  });
 });

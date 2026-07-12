@@ -7,6 +7,10 @@ import {
   buildFieldIdMap,
   MK_FIELD_ID_MAX_LENGTH
 } from "../../src/translator/field-id-remap.js";
+import {
+  classifyWorkflowFormulaParticipant,
+  inspectWorkflowFormulaProvenance
+} from "../../src/translator/workflow-formula-participants.js";
 
 describe("field-id-remap", () => {
   it("shortens detail table and column ids over the MK limit and remaps references", () => {
@@ -74,12 +78,58 @@ describe("field-id-remap", () => {
             fd_accommodationx_tax_amount: { visible: true, editable: false, required: false }
           }
         },
-        participants: { mode: "form_field", fieldId: "fd_accommodationx_tax_account" }
+        participants: {
+          mode: "form_field",
+          fieldId: "fd_accommodationx_tax_account",
+          sourceFieldId: "fd_accommodationx_tax_account"
+        }
       }]
     }, idMap);
     assert.deepEqual(Object.keys(workflow.nodes[0].dataAuthority.fields), [
       idMap.get("fd_accommodationx_tax_amount")
     ]);
     assert.equal(workflow.nodes[0].participants.fieldId, idMap.get("fd_accommodationx_tax_account"));
+    assert.equal(workflow.nodes[0].participants.sourceFieldId, "fd_accommodationx_tax_account");
+  });
+
+  it("keeps long source formula field evidence while remapping the executable field id", () => {
+    const sourceFieldId = "fd_formula_participant_field_that_exceeds_limit";
+    const attributes = {
+      handlerSelectType: "formula",
+      handlerIds: `$${sourceFieldId}$`,
+      handlerNames: "$公式审批人$"
+    };
+    const idMap = new Map([[sourceFieldId, "fd_1234567890abcdef"]]);
+    const sourceDraft = {
+      form: {
+        controls: [{ id: sourceFieldId, sourceRef: "source.form.control.long-formula-field" }]
+      },
+      workflow: {
+        nodes: [{ id: "N2", sourceRef: "source.workflow.node.N2", attributes }]
+      }
+    };
+    const workflow = applyFieldIdMapToWorkflow({
+      nodes: [{
+        id: "N2",
+        sourceRef: "source.workflow.node.N2",
+        attributes,
+        participants: classifyWorkflowFormulaParticipant(attributes)
+      }]
+    }, idMap);
+
+    assert.equal(workflow.nodes[0].participants.fieldId, "fd_1234567890abcdef");
+    assert.equal(workflow.nodes[0].participants.sourceFieldId, sourceFieldId);
+    const form = applyFieldIdMapToForm({
+      fields: [{
+        id: sourceFieldId,
+        title: "公式审批人",
+        type: "text",
+        sourceRef: "source.form.control.long-formula-field"
+      }]
+    }, idMap);
+    assert.equal(
+      inspectWorkflowFormulaProvenance(sourceDraft, { form, workflow })[0].status,
+      "matched"
+    );
   });
 });

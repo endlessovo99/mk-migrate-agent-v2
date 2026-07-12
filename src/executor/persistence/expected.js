@@ -425,13 +425,25 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       ));
       return null;
     }
+    const attributes = sourceAttributes(node);
+    if (node.participants?.mode === "unmapped_formula") {
+      diagnostics.push(projectionError(
+        "projection.workflow.formula_participant_unmapped",
+        "Workflow formula participants must be translated to a supported ES5 script before persistence.",
+        {
+          nodeId: node.id,
+          sourceExpression: node.participants.sourceExpression || attributes.handlerIds || ""
+        }
+      ));
+      return null;
+    }
     return {
       id: node.id,
       name: normalizeScalar(node.name),
       type: node.type,
       element: node.element || defaultElementForType(node.type),
-      mustModifyHandlerNodeIds: splitRelatedNodeIds(sourceAttributes(node).mustModifyHandlerNodeIds),
-      canModifyHandlerNodeIds: splitRelatedNodeIds(sourceAttributes(node).canModifyHandlerNodeIds),
+      mustModifyHandlerNodeIds: splitRelatedNodeIds(attributes.mustModifyHandlerNodeIds),
+      canModifyHandlerNodeIds: splitRelatedNodeIds(attributes.canModifyHandlerNodeIds),
       participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id), context),
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),

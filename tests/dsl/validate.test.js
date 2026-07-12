@@ -650,6 +650,45 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "workflow.participants.initiator_select_without_source"), true);
   });
 
+  it("rejects a formula-selected source node forged as explicit participants", () => {
+    const result = validateMigrationDsl(sampleTrustedDsl({
+      workflow: {
+        process: { id: "process-formula-forged-explicit" },
+        nodes: [
+          { id: "N1", type: "generalStart", element: "startEvent", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+          {
+            id: "N2",
+            type: "review",
+            element: "manualTask",
+            sourceRef: "source.workflow.node.N2",
+            attributes: {
+              handlerSelectType: "formula",
+              handlerIds: "import java.util.List; return handlers;",
+              handlerNames: "复杂公式"
+            },
+            participants: {
+              mode: "explicit",
+              members: [{ id: "import java.util.List", name: "import java.util.List", type: "user_or_org" }]
+            },
+            translationStatus: "executable"
+          },
+          { id: "N3", type: "generalEnd", element: "endEvent", sourceRef: "source.workflow.node.N3", attributes: {}, translationStatus: "executable" }
+        ],
+        edges: [
+          { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+          { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } }
+        ],
+        topologicalOrder: ["N1", "N2", "N3"]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(result.ok, false);
+    assert.equal(
+      result.diagnostics.some((item) => item.code === "workflow.participants.formula_unmapped"),
+      true
+    );
+  });
+
   it("accepts form-field workflow participants only when the field exists", () => {
     const workflow = {
       process: { id: "process-form-field-handler" },
@@ -860,6 +899,8 @@ describe("validateMigrationDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "workflow.participants.role_line_field_missing"), true);
 
     const nodeSubjectWorkflow = structuredClone(workflow);
+    nodeSubjectWorkflow.nodes[1].attributes.handlerIds = "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N1\"), \"公司级部门领导\", \"部门领导\")";
+    nodeSubjectWorkflow.nodes[1].attributes.handlerNames = "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N1\"), \"公司级部门领导\", \"部门领导\")";
     nodeSubjectWorkflow.nodes[1].participants = {
       mode: "role_line",
       subjectKind: "node_handlers",

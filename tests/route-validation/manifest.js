@@ -3,7 +3,8 @@ import { integrityError } from "./integrity.js";
 export const REVIEW_SCENARIOS = Object.freeze([
   "accept",
   "warning",
-  "audited-row-marker-orphan-noop"
+  "audited-row-marker-orphan-noop",
+  "fail-if-called"
 ]);
 export const NEWOA_SCENARIOS = Object.freeze(["persist", "lose-layout-on-readback", "lose-required-on-readback", "fail-at-update"]);
 
@@ -191,6 +192,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "unmapped-formula-blocked-before-transport",
+      source: {
+        kind: "paired",
+        relativePath: "unmapped-formula"
+      },
+      reviewScenario: "fail-if-called",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.input",
+        operations: []
+      }
+    },
+    {
       id: "readback-loss",
       source: {
         kind: "paired",
@@ -260,11 +277,14 @@ export function validateRouteManifest(manifest) {
     if (routeCase.baseUrl !== undefined && !nonEmptyString(routeCase.baseUrl)) {
       throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has an invalid base URL.`);
     }
-    if (!nonEmptyString(routeCase.expected.reviewStatus) ||
-        !nonEmptyString(routeCase.expected.dryRunStatus) ||
-        !nonEmptyString(routeCase.expected.executionStatus) ||
-        !Array.isArray(routeCase.expected.operations) ||
-        routeCase.expected.operations.some((operation) => !nonEmptyString(operation))) {
+    const expected = routeCase.expected;
+    const reviewTerminal = expected.terminalStage === "review";
+    if (!nonEmptyString(expected.reviewStatus) ||
+        !Array.isArray(expected.operations) ||
+        expected.operations.some((operation) => !nonEmptyString(operation)) ||
+        (reviewTerminal && (!nonEmptyString(expected.reviewStage) || expected.operations.length !== 0)) ||
+        (!reviewTerminal && (!nonEmptyString(expected.dryRunStatus) || !nonEmptyString(expected.executionStatus))) ||
+        (expected.terminalStage !== undefined && !reviewTerminal)) {
       throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has invalid expected data.`);
     }
   }

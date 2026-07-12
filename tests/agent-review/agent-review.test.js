@@ -95,6 +95,118 @@ describe("agent-review", () => {
     assert.equal(result.dsl, undefined);
   });
 
+  it("blocks workflow formula evidence forgery and node removal before calling the provider", async () => {
+    const sourceExpression = "import java.util.List; return handlers;";
+    const sourceDraft = sampleSourceDraft();
+    sourceDraft.workflow.nodes[1].attributes = {
+      handlerSelectType: "formula",
+      handlerIds: sourceExpression,
+      handlerNames: "复杂公式"
+    };
+    sourceDraft.workflow.nodes.push({
+      id: "N3",
+      sourceRef: "source.workflow.node.N3",
+      attributes: { handlerSelectType: "formula", handlerIds: "$docCreator$", handlerNames: "$docCreator$" }
+    });
+
+    for (const attack of ["attributes", "identity", "deletion"]) {
+      const provider = new FakeReviewProvider(reviewResponse());
+      const dslDraft = sampleDraftDsl();
+      if (attack === "deletion") {
+        dslDraft.workflow.nodes.splice(1, 1);
+      } else {
+        dslDraft.workflow.nodes[1] = {
+          id: "N2",
+          type: "review",
+          element: "manualTask",
+          sourceRef: attack === "identity" ? "source.workflow.node.N3" : "source.workflow.node.N2",
+          attributes: {
+            handlerSelectType: "formula",
+            handlerIds: "$docCreator$",
+            handlerNames: "$docCreator$"
+          },
+          participants: {
+            mode: "doc_creator",
+            sourceExpression: "$docCreator$",
+            sourceNameExpression: "$docCreator$"
+          },
+          translationStatus: "executable"
+        };
+      }
+
+      const result = await runAgentReview(sourceDraft, dslDraft, { provider });
+
+      assert.equal(result.ok, false, attack);
+      assert.equal(result.report.stage, "agent-review.input", attack);
+      assert.equal(provider.called, false, attack);
+      assert.equal(
+        result.report.diagnostics.some((item) => item.code === "agent.input.workflow_formula_unrepairable"),
+        true,
+        attack
+      );
+    }
+  });
+
+  it("blocks a mapped formula participant added to a non-formula source node", async () => {
+    const provider = new FakeReviewProvider(reviewResponse());
+    const dslDraft = sampleDraftDsl();
+    dslDraft.workflow.nodes[1].participants = {
+      mode: "doc_creator",
+      sourceExpression: "$docCreator$",
+      sourceNameExpression: "$docCreator$"
+    };
+
+    const result = await runAgentReview(sampleSourceDraft(), dslDraft, { provider });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.report.stage, "agent-review.input");
+    assert.equal(provider.called, false);
+    assert.equal(
+      result.report.diagnostics.some((item) => item.code === "agent.input.workflow_formula_provenance_mismatch"),
+      true
+    );
+  });
+
+  it("blocks target field and originalId substitution before calling the provider", async () => {
+    const provider = new FakeReviewProvider(reviewResponse());
+    const formula = "$组织架构.根据登录名取用户$($fd_subject$)";
+    const sourceDraft = sampleSourceDraft();
+    sourceDraft.workflow.nodes[1].attributes = {
+      handlerSelectType: "formula",
+      handlerIds: formula,
+      handlerNames: "$组织架构.根据登录名取用户$($主题$)"
+    };
+    const dslDraft = sampleDraftDsl();
+    const wrongTarget = dslDraft.form.fields.find((field) => field.id === "fd_amount");
+    const authoritativeTarget = dslDraft.form.fields.find((field) => field.id === "fd_subject");
+    wrongTarget.sourceProps.originalId = "fd_subject";
+    wrongTarget.sourceRef = authoritativeTarget.sourceRef;
+    dslDraft.workflow.nodes[1] = {
+      ...dslDraft.workflow.nodes[1],
+      type: "review",
+      element: "manualTask",
+      attributes: sourceDraft.workflow.nodes[1].attributes,
+      participants: {
+        mode: "person_by_login_name",
+        fieldId: "fd_amount",
+        sourceFieldId: "fd_subject",
+        fieldTitle: "主题",
+        sourceExpression: formula,
+        sourceNameExpression: "$组织架构.根据登录名取用户$($主题$)"
+      }
+    };
+
+    const result = await runAgentReview(sourceDraft, dslDraft, { provider });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.report.stage, "agent-review.input");
+    assert.equal(provider.called, false);
+    assert.equal(
+      result.report.diagnostics.some((item) => item.code === "agent.input.workflow_formula_provenance_mismatch"),
+      true
+    );
+  });
+
   it("rejects illegal form paths and invalid JSON responses", async () => {
     const illegalPath = await runAgentReview(sampleSourceDraft(), sampleDraftDsl(), {
       provider: new FakeReviewProvider(reviewResponse({
