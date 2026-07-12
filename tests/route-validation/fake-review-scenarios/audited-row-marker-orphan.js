@@ -25,7 +25,7 @@ function auditedRowMarkerOrphanPatches(sourceDraft, dslDraft, reviewScope) {
       op: "replace",
       sourceRefs: action.sourceRefs || [],
       evidence: [
-        "The Source Draft proves every omitted orphan marker is absent from layout, used only by the row helper, never reset, and not dynamically created."
+        "The Source Draft proves every omitted orphan marker is absent from layout, used only by the row helper with exact reset values audited, and not dynamically created."
       ],
       confidence: 0.99,
       rationale: "Translate only behavior whose helper or row-marker targets exist in the generated form."
@@ -132,12 +132,15 @@ function completeOrphanAuditIssue(issue, primaryMarkerBySourceMarker, source) {
   if (uniqueStrings(markerIds).length !== markerIds.length) return false;
   return evidence.markers.every((marker) => {
     const matchingFacts = sourceMarkerFacts.filter((fact) => fact?.rowId === marker?.rowId);
+    const resetValues = [...new Set(matchingFacts
+      .map((fact) => fact?.reset)
+      .filter((value) => typeof value === "boolean"))];
     return typeof marker?.rowId === "string" && marker.rowId.trim() &&
       Number.isSafeInteger(marker.occurrenceCount) && marker.occurrenceCount > 0 &&
       marker.occurrenceCount === matchingFacts.length &&
-      matchingFacts.every((fact) => fact?.reset === false) &&
       Array.isArray(marker.resetValues) &&
-      marker.resetValues.length === 1 && marker.resetValues[0] === false &&
+      marker.resetValues.length === resetValues.length &&
+      marker.resetValues.every((value, index) => value === resetValues[index]) &&
       !primaryMarkerBySourceMarker.has(marker.rowId);
   });
 }

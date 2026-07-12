@@ -709,6 +709,7 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
         translationStatus: action.translationStatus,
         coverage: coverageSummary(action.coverage, focused ? 4 : 0),
         functionMappings: functionMappingSummary(action.functionMappings, focused ? 8 : 0),
+        recipe: action.recipe,
         semanticHints: action.semanticHints,
         reviewOpportunities: focused ? reviewOpportunitiesForAction(action, formRules, index, form, sourceDraft) : undefined,
         actionSource: focused
@@ -932,6 +933,41 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
   }
 
   for (const hint of action.semanticHints || []) {
+    if (hint.kind === "dependent_select_options") {
+      const recipe = action.recipe || {};
+      opportunities.push({
+        kind: "dependent_select_options_candidate",
+        actionIndex,
+        targetApis: hint.targetApiCandidates || ["MKXFORM.setProps"],
+        triggerFieldId: hint.triggerFieldId,
+        targetFieldId: hint.targetFieldId,
+        cases: recipe.cases,
+        defaultOptions: recipe.defaultOptions,
+        safeDecision: "Treat the recipe as extracted evidence, not an approved translation. Map only when the action-local source proves the trigger comparison, restricted options, default options, and event semantics.",
+        requiredBusinessSemantics: [
+          "Normalize the onChange value, or read the trigger field during onLoad.",
+          "Select the extracted case options only for the evidenced trigger value.",
+          "Restore the complete extracted default option set otherwise.",
+          "Apply options to the resolved target select with MKXFORM.setProps."
+        ]
+      });
+    }
+    if (hint.kind === "attachment_non_empty") {
+      opportunities.push({
+        kind: "attachment_non_empty_candidate",
+        actionIndex,
+        targetApis: hint.targetApiCandidates || ["MKXFORM.getFormValues", "MKXFORM.modal"],
+        fieldId: hint.fieldId,
+        message: hint.message,
+        safeDecision: "Treat the recipe as extracted evidence, not an approved translation. Map only when the complete submit callback proves a non-empty attachment requirement and no additional validation behavior remains.",
+        requiredBusinessSemantics: [
+          "Allow draft saves when the source/runtime contract distinguishes drafts.",
+          "Read the resolved attachment value from MKXFORM.getFormValues.",
+          "Return false and show the captured message when the attachment is empty.",
+          "Return true when validation passes."
+        ]
+      });
+    }
     if (hint.kind === "detail_row_visibility") {
       opportunities.push({
         kind: "detail_row_visibility_candidate",

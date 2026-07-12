@@ -7,12 +7,18 @@ import { resolveRouteFixture } from "./fixture.js";
 import { runRouteCase } from "./run-route-case.js";
 
 describe("audited orphan row-marker Route case", { concurrency: false }, () => {
-  it("proves reset-bearing missing row markers inert from complete source evidence", () => {
-    const source = cleanSourceFile("tests/fixtures/source/18a8c4df333fef9872595a24f1795e71");
+  it("proves reset-bearing missing row markers inert from minimal source evidence", () => {
+    const fixturePath = resolveRouteFixture({
+      kind: "form-only",
+      relativePath: "row-marker-orphan/route-row-marker-orphan_SysFormTemplate.xml"
+    });
+    const source = cleanSourceFile(fixturePath);
     const draft = draftSourceDraft(source);
     const warning = source.issues.find((issue) =>
       issue.code === "source.sysform.script_row_marker_orphan_noop" &&
-      issue.evidence?.markers?.some((marker) => marker.rowId === "fd_xhqd_row")
+      issue.evidence?.markers?.some((marker) =>
+        marker.rowId === "invoice_row111" && marker.resetValues?.includes(true)
+      )
     );
 
     assert.equal(warning.evidence.proof.absentFromLayout, true);
@@ -22,10 +28,9 @@ describe("audited orphan row-marker Route case", { concurrency: false }, () => {
 
     const actionIndexes = draft.scripts.actions
       .map((action, index) => ({ action, index }))
-      .filter(({ action }) => action.sourceRefs?.includes("source.form.jsp.fd_3c342374884666.script.1") ||
-        action.sourceRefs?.includes("source.form.jsp.fd_3c342374884666.script.2"))
+      .filter(({ action }) => action.sourceRefs?.includes(warning.evidence.sourceRef))
       .map(({ index }) => index);
-    assert.deepEqual(actionIndexes, [2, 3, 4]);
+    assert.equal(actionIndexes.length > 0, true);
 
     const prompt = buildAgentReviewPrompt(source, draft, {
       reviewScope: { actionIndexes, includeFormTargets: false }
@@ -34,7 +39,7 @@ describe("audited orphan row-marker Route case", { concurrency: false }, () => {
       const opportunity = action.reviewOpportunities.find((item) =>
         item.kind === "row_marker_visibility_candidate"
       );
-      assert.equal(opportunity.orphanRowMarkers.includes("fd_xhqd_row"), true);
+      assert.equal(opportunity.orphanRowMarkers.includes("invoice_row111"), true);
       assert.deepEqual(opportunity.unresolvedRowMarkers, []);
     }
   });

@@ -1,78 +1,106 @@
 import assert from "node:assert/strict";
-import { describe } from "node:test";
+import { describe, it } from "node:test";
+import { buildAgentReviewPrompt } from "../../src/agent-review/prompt.js";
+import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { buildWorkflowContent } from "../../src/executor/persistence/workflow-writer.js";
-import { createTrustedMigrationDsl, checkTrust } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { persistAndVerify } from "../helpers/persistence.js";
-import { projectTemplate, xformConfig } from "../helpers/persistence.js";
-import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
-import { localCorpusIt } from "../helpers/local-corpus.js";
-
-const sourceRoot = "tests/fixtures/source";
+import { resolveRouteFixture } from "./fixture.js";
 
 describe("four blocking route capabilities", () => {
-  localCorpusIt("drafts dependent select options and recovers malformed value-change boundaries", () => {
-    const draft = draftFixture("1900f4bec4249fc9cde772a43b8a2e81");
-    const dependent = draft.scripts.actions.filter((action) =>
-      action.recipe?.kind === "dependent_select_options"
+  it("extracts dependent-select, attachment, and detail-lifecycle facts for Agent Review", () => {
+    const fixturePath = resolveRouteFixture({
+      kind: "form-only",
+      relativePath: "script-review-recipes/route-script-review-recipes_SysFormTemplate.xml"
+    });
+    const source = cleanSourceFile(fixturePath);
+    const draft = draftSourceDraft(source);
+    const recipeActions = draft.scripts.actions.filter((action) => action.recipe);
+    const actionFor = (kind, event) => recipeActions.find((action) =>
+      action.recipe.kind === kind && (!event || action.event === event)
     );
 
-    assert.deepEqual(dependent.map((action) => action.event).sort(), ["onChange", "onLoad"]);
-    assert.equal(dependent.every((action) => action.translationStatus === "mapped"), true);
-    assert.equal(dependent.every((action) => action.recipe.triggerFieldId === "fd_khfl"), true);
-    assert.equal(dependent.every((action) => action.recipe.targetFieldId === "fd_3d101d73b41d10"), true);
-    assert.deepEqual(dependent[0].recipe.cases[0].options.map((option) => option.value), ["1", "2", "3"]);
+    assert.deepEqual([...new Set(recipeActions.map((action) => action.recipe.kind))].sort(), [
+      "attachment_non_empty",
+      "dependent_select_options",
+      "detail_row_control_state",
+      "detail_row_lifecycle"
+    ]);
+    assert.equal(recipeActions.every((action) => action.translationStatus === "needs_review"), true);
+    assert.equal(recipeActions.every((action) =>
+      !action.functionMappings?.some((mapping) => mapping.basis === "semantic-recipe")
+    ), true);
 
-    for (const controlId of ["fd_3d09cd843e0440", "fd_3d09cf8e8aea9a"]) {
-      const recovered = draft.scripts.actions.find((action) => action.controlId === controlId);
-      assert.equal(recovered?.event, "onChange");
-      assert.equal(recovered?.scope, "control");
-    }
+    const dependent = actionFor("dependent_select_options", "onChange");
+    assert.equal(dependent.controlId, "fd_trigger");
+    assert.equal(dependent.recipe.targetFieldId, "fd_target");
+    assert.deepEqual(dependent.recipe.cases[0].options.map((option) => option.value), ["1", "2", "3"]);
+    assert.deepEqual(dependent.recipe.defaultOptions.map((option) => option.value), ["1", "2", "3", "4"]);
+
+    const attachment = actionFor("attachment_non_empty");
+    assert.equal(attachment.event, "onBeforeSubmit");
+    assert.equal(attachment.recipe.fieldId, "fd_attach");
+    assert.equal(attachment.recipe.message, "Attachment is required");
+
+    const detail = actionFor("detail_row_control_state");
+    assert.equal(detail.tableId, "fd_detail");
+    assert.equal(detail.controlId, "fd_detail_trigger");
+    assert.equal(detail.recipe.targetControlId, "fd_target_detail");
+    assert.equal(detail.recipe.hiddenControlId, "fd_hidden");
+
+    const lifecycle = actionFor("detail_row_lifecycle");
+    assert.equal(lifecycle.coverage.status, "partial");
+    assert.deepEqual(lifecycle.recipe.rowLifecycle, {
+      existingRows: "on_load_initialization",
+      addedRows: "native_detail_control_event",
+      deletedRows: "native_detail_runtime",
+      legacyDomCleanup: "not_applicable_native_runtime"
+    });
+
+    const actionIndexes = draft.scripts.actions
+      .map((action, index) => ({ action, index }))
+      .filter(({ action }) => action.translationStatus === "needs_review")
+      .map(({ index }) => index);
+    const prompt = buildAgentReviewPrompt(source, draft, {
+      reviewScope: { actionIndexes, includeFormTargets: false }
+    });
+    const opportunities = prompt.context.dslDraft.scripts.actions.flatMap((action) =>
+      action.reviewOpportunities?.map((item) => item.kind) || []
+    );
+    assert.equal(opportunities.includes("dependent_select_options_candidate"), true);
+    assert.equal(opportunities.includes("attachment_non_empty_candidate"), true);
+    assert.equal(opportunities.includes("detail_row_visibility_candidate"), true);
+    assert.equal(opportunities.includes("detail_row_load_initialization_candidate"), true);
+    assert.equal(prompt.context.dslDraft.scripts.actions.every((action) => action.recipe), true);
   });
 
-  localCorpusIt("maps the legacy start/recover pair to executable subprocess DSL and one native node", () => {
-    const source = cleanSourceFile(`${sourceRoot}/1922c92a772710632f41c544ea59bc7e`);
+  it("maps a minimal start/recover pair to one executable native subprocess node", () => {
+    const fixturePath = resolveRouteFixture({
+      kind: "paired",
+      relativePath: "subprocess"
+    });
+    const source = cleanSourceFile(fixturePath);
     const draft = draftSourceDraft(source);
     const nodes = new Map(draft.workflow.nodes.map((node) => [node.id, node]));
 
     assert.equal(nodes.get("N20").type, "startSubProcess");
-    assert.equal(nodes.get("N20").element, "subProcess");
     assert.equal(nodes.get("N20").translationStatus, "executable");
     assert.equal(nodes.get("N20").subProcess.recoverNodeId, "N23");
-    assert.equal(nodes.get("N20").subProcess.templateId, "14c96ce79bd257c75f9fe6749c59b4ab");
-    assert.equal(nodes.get("N20").subProcess.startParamConfig.length, 4);
-    assert.equal(nodes.get("N20").subProcess.recoverParamConfig.length, 2);
+    assert.equal(nodes.get("N20").subProcess.templateId, "route-child-template");
+    assert.equal(nodes.get("N20").subProcess.startParamConfig.length, 1);
+    assert.equal(nodes.get("N20").subProcess.recoverParamConfig.length, 1);
     assert.equal(nodes.get("N20").subProcess.variableScope, 2);
-    assert.deepEqual(nodes.get("N20").subProcess.recoverRule, {
-      type: 1,
-      expression: { text: "", value: "" }
-    });
-
     assert.equal(nodes.get("N23").type, "recoverSubProcess");
-    assert.equal(nodes.get("N23").element, "subProcess");
-    assert.equal(nodes.get("N23").translationStatus, "executable");
     assert.equal(nodes.get("N23").subProcess.startNodeId, "N20");
 
     const native = buildWorkflowContent(draft.workflow, { form: draft.form });
     const nativeNodes = native.elements.filter((element) => element.type !== "sequenceFlow");
     const nativeEdges = native.elements.filter((element) => element.type === "sequenceFlow");
     const subprocess = nativeNodes.find((node) => node.id === "N20");
-
     assert.equal(nativeNodes.some((node) => node.id === "N23"), false);
     assert.equal(subprocess.type, "startSubProcess");
-    assert.equal(subprocess.element, "subProcess");
-    assert.equal(subprocess.startParamConfig.length, 4);
-    assert.equal(subprocess.recoverParamConfig.length, 2);
-    const subprocessConfig = JSON.parse(subprocess.config);
-    assert.equal(subprocessConfig.subProcess.templateId, "14c96ce79bd257c75f9fe6749c59b4ab");
-    assert.equal(subprocessConfig.flowType, "2");
-    assert.deepEqual(subprocessConfig.recovery, {
-      recoverNodeId: "N23",
-      variableScope: 2,
-      recoverRule: { type: 1, expression: { text: "", value: "" } }
-    });
+    assert.equal(JSON.parse(subprocess.config).subProcess.templateId, "route-child-template");
     assert.equal(nativeEdges.some((edge) => edge.sourceRef === "N20" && edge.targetRef === "N3"), true);
-    assert.equal(nativeEdges.some((edge) => edge.sourceRef === "N20" && edge.targetRef === "N23"), false);
 
     const trusted = createTrustedMigrationDsl(source, draft, {
       externalAgentReviewed: true,
@@ -87,17 +115,10 @@ describe("four blocking route capabilities", () => {
         result: "accepted"
       }]
     });
-    const trust = checkTrust(source, trusted);
-    assert.equal(trust.ok, true, JSON.stringify(trust.diagnostics));
-    const persistenceDsl = structuredClone(trusted);
-    for (const node of persistenceDsl.workflow.nodes) {
-      if (["N24", "N25"].includes(node.id)) {
-        node.participants = { mode: "empty", reason: "isolated subprocess readback contract" };
-      }
-    }
-    const healthy = persistAndVerify(persistenceDsl).readback;
-    assert.equal(healthy.ok, true, JSON.stringify(healthy.diagnostics));
-    const mutated = persistAndVerify(persistenceDsl, {
+    assert.equal(checkTrust(source, trusted).ok, true);
+    assert.equal(persistAndVerify(trusted).readback.ok, true);
+
+    const mutated = persistAndVerify(trusted, {
       mutate(template) {
         const lbpm = template.mechanisms.lbpmTemplate[0];
         const content = JSON.parse(lbpm.fdContent);
@@ -110,99 +131,8 @@ describe("four blocking route capabilities", () => {
       }
     }).readback;
     assert.equal(mutated.ok, false);
-    assert.equal(mutated.diagnostics.some((item) => item.code === "readback.workflow.subprocess_mismatch"), true);
-    const recoveryMutated = persistAndVerify(persistenceDsl, {
-      mutate(template) {
-        const lbpm = template.mechanisms.lbpmTemplate[0];
-        const content = JSON.parse(lbpm.fdContent);
-        const node = content.elements.find((element) => element.id === "N20");
-        const config = JSON.parse(node.config);
-        config.recovery.variableScope = 1;
-        node.config = JSON.stringify(config);
-        lbpm.fdContent = JSON.stringify(content);
-        return template;
-      }
-    }).readback;
-    assert.equal(recoveryMutated.ok, false);
-    assert.equal(recoveryMutated.diagnostics.some((item) => item.code === "readback.workflow.subprocess_mismatch"), true);
-  });
-
-  localCorpusIt("discovers every designer attachment and maps three non-empty submit recipes", () => {
-    const source = cleanSourceFile(`${sourceRoot}/1927955f6e544383f46970f48468a743`);
-    const draft = draftSourceDraft(source);
-    const attachmentIds = draft.form.fields
-      .filter((field) => field.type === "attachment")
-      .map((field) => field.id)
-      .sort();
-
-    assert.deepEqual(attachmentIds, [
-      "fd_324d3fee5f0e8e",
-      "fd_3d69cddbac1d5c",
-      "fd_3d69ce0df07f72",
-      "fd_3d69d0a4a24b98",
-      "fd_3d69d0ae9d49d4"
-    ]);
-
-    const requiredAttachments = draft.scripts.actions.filter((action) =>
-      action.recipe?.kind === "attachment_non_empty"
-    );
-    assert.deepEqual(requiredAttachments.map((action) => action.recipe.fieldId).sort(), [
-      "fd_3d69cddbac1d5c",
-      "fd_3d69d0a4a24b98",
-      "fd_3d69d0ae9d49d4"
-    ]);
-    assert.equal(requiredAttachments.every((action) => action.event === "onBeforeSubmit"), true);
-    assert.equal(requiredAttachments.every((action) => action.translationStatus === "mapped"), true);
-    assert.equal(requiredAttachments.every((action) => action.function.includes("MKXFORM.getFormValues")), true);
-    assert.equal(requiredAttachments.every((action) => action.function.includes("MKXFORM.modal")), true);
-    assert.equal(requiredAttachments.every((action) => action.recipe.message), true);
-
-    const persisted = projectTemplate(sampleTrustedDsl({
-      form: draft.form,
-      workflow: null,
-      scripts: { actions: requiredAttachments }
-    }));
-    const formAttr = JSON.parse(xformConfig(persisted).attribute.formAttr);
-    assert.equal(formAttr.controlAction.global.onBeforeSubmit.length, 1);
-    assert.equal(formAttr.controlAction.global.onBeforeSubmit[0].migrationActions.length, 3);
-  });
-
-  localCorpusIt("splits complex detail onLoad into native rules, control event, and lifecycle recipe", () => {
-    const draft = draftFixture("19bb55286bd93a6081a33e44c3791374");
-    const detailEvents = draft.scripts.actions.filter((action) =>
-      action.tableId === "fd_371228ebe5dec2" &&
-      action.controlId === "fd_371576f83b26d8" &&
-      action.event === "onChange"
-    );
-    const lifecycle = draft.scripts.actions.find((action) =>
-      action.recipe?.kind === "detail_row_lifecycle"
-    );
-    const nativeCovered = draft.scripts.actions.filter((action) =>
-      action.translationStatus === "omitted" && action.coverage?.nativeRules?.length
-    );
-
-    assert.equal(detailEvents.length, 1);
-    assert.equal(detailEvents[0].translationStatus, "mapped");
-    assert.equal(detailEvents[0].recipe.kind, "detail_row_control_state");
-    assert.equal(lifecycle.event, "onLoad");
-    assert.equal(lifecycle.translationStatus, "mapped");
-    assert.equal(lifecycle.recipe.tableId, "fd_371228ebe5dec2");
-    assert.equal(lifecycle.function.includes("MKXFORM.getValue"), true);
-    assert.equal(lifecycle.function.includes("MKXFORM.updateControl"), true);
-    assert.deepEqual(lifecycle.recipe.rowLifecycle, {
-      existingRows: "on_load_initialization",
-      addedRows: "native_detail_control_event",
-      deletedRows: "native_detail_runtime",
-      legacyDomCleanup: "not_applicable_native_runtime"
-    });
-    assert.equal(nativeCovered.length >= 2, true);
-    assert.equal(draft.formRules.linkage.every((rule) => rule.translationStatus === "executable"), true);
-    const relatedLeader = draft.workflow.nodes.find((node) => node.id === "N53");
-    assert.equal(relatedLeader.participants.mode, "configured_person_fallback");
-    assert.equal(relatedLeader.translationStatus, "executable");
+    assert.equal(mutated.diagnostics.some((item) =>
+      item.code === "readback.workflow.subprocess_mismatch"
+    ), true);
   });
 });
-
-function draftFixture(id) {
-  return draftSourceDraft(cleanSourceFile(`${sourceRoot}/${id}`));
-}

@@ -76,16 +76,16 @@ describe("source directory stages", () => {
 
     assert.equal(detailActions.length, 1);
     assert.equal(detailActions.every((item) => item.scope === "control" && item.event === "onChange"), true);
-    assert.equal(detailActions.every((item) => item.translationStatus === "mapped"), true);
+    assert.equal(detailActions.every((item) => item.translationStatus === "needs_review"), true);
     assert.equal(detailActions.every((item) => item.semanticHints.some((hint) => hint.kind === "detail_row_visibility")), true);
     assert.deepEqual(detailActions.map((item) => item.runWhen), [{ viewStatusIn: ["add", "edit"] }]);
     assert.equal(detailActions[0].recipe.kind, "detail_row_control_state");
 
     assert.equal(loadAction.scope, "global");
     assert.equal(loadAction.runWhen, undefined);
-    assert.equal(loadAction.translationStatus, "mapped");
+    assert.equal(loadAction.translationStatus, "needs_review");
     assert.equal(loadAction.semanticHints.some((hint) => hint.kind === "detail_row_load_initialization"), true);
-    assert.equal(loadAction.coverage.status, "translated");
+    assert.equal(loadAction.coverage.status, "partial");
     assert.equal(loadAction.recipe.kind, "detail_row_lifecycle");
     assert.equal(sourceDraft.scripts.sources.some((source) => source.semanticFacts?.legacyFunctionCalls?.length), true);
   });

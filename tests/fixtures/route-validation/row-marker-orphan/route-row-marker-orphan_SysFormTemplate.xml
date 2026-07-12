@@ -36,12 +36,12 @@
           common_dom_row_set_show_required_reset(&quot;invoice_row10&quot;, true, true, false);
           common_dom_row_set_show_required_reset(&quot;invoice_row4&quot;, true, true, false);
           common_dom_row_set_show_required_reset(&quot;invoice_row11&quot;, true, true, false);
-          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, true, true, true);
         } else if (value == 22) {
           common_dom_row_set_show_required_reset(&quot;invoice_row10&quot;, false, false, false);
           common_dom_row_set_show_required_reset(&quot;invoice_row4&quot;, false, false, false);
           common_dom_row_set_show_required_reset(&quot;invoice_row11&quot;, false, false, false);
-          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, false, false, true);
         }
       });
      &lt;/script&gt;
@@ -54,12 +54,12 @@
           common_dom_row_set_show_required_reset(&quot;invoice_row10&quot;, true, true, false);
           common_dom_row_set_show_required_reset(&quot;invoice_row4&quot;, true, true, false);
           common_dom_row_set_show_required_reset(&quot;invoice_row11&quot;, true, true, false);
-          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, true, true, true);
         } else if (value == 22) {
           common_dom_row_set_show_required_reset(&quot;invoice_row10&quot;, false, false, false);
           common_dom_row_set_show_required_reset(&quot;invoice_row4&quot;, false, false, false);
           common_dom_row_set_show_required_reset(&quot;invoice_row11&quot;, false, false, false);
-          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row111&quot;, false, false, true);
         }
       });
      &lt;/script&gt;

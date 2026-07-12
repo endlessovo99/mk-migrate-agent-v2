@@ -1,6 +1,6 @@
 {
   "id": "jsp-translation-playbook",
-  "version": "2026-07-11.v5",
+  "version": "2026-07-12.v6",
   "goal": "Guide the Agent to semantically translate legacy EKP/JSP form scripts into restricted NewOA/MK DSL script patches. Deterministic code extracts evidence only; the Agent decides whether a patch is safe.",
   "principles": [
     "Translate behavior, not source syntax. Legacy function names and regex-like shapes are evidence, not completion criteria.",
@@ -8,7 +8,8 @@
     "Prefer verified native formRules or static form-property coverage when it fully covers behavior; otherwise generate small MKXFORM JavaScript using targetApi.",
     "Never replace editShow/viewShow gated behavior with ungated native formRules; preserve the source-derived runWhen and translate the complete gated action body.",
     "Whole-row or whole detail-table container visibility/required state prefers native formRules.linkage against layout sourceMarkers (including markers whose only child is a detail table). Use MKXFORM.setFieldAttr(<sourceMarker>, 4|5|3|6) only for residual scripted cases that native rules cannot cover.",
-    "A literal row marker absent from the current layout is an auditable orphan no-op only when Source Draft warning source.sysform.script_row_marker_orphan_noop proves it is used only as a common_dom_row_set_show_required_reset target, every reset argument is false, and no dynamic DOM creation exists. Never invent an MKXFORM.setFieldAttr target for it; preserve the warning.",
+    "A literal row marker absent from the current layout is an auditable orphan no-op only when Source Draft warning source.sysform.script_row_marker_orphan_noop proves it is used only as a common_dom_row_set_show_required_reset target, records the exact reset values for every call, and finds no dynamic DOM creation. Reset cannot mutate a target proven absent at every call. Never invent an MKXFORM.setFieldAttr target for it; preserve the warning.",
+    "Structured script recipes and semanticHints are extracted evidence, not deterministic translation results. Agent Review must still verify the complete action-local behavior before mapping them.",
     "${table:<detailTableId>}.<controlId> placeholders are only for detail-column APIs such as updateControl, updateControlStyle, and setDetailFieldItemAttr.",
     "Keep unsupported, ambiguous, side-effect-heavy, or DOM-dependent behavior as needs_review/manual diagnostics.",
     "Never emit DOM APIs in mapped output."
@@ -48,7 +49,7 @@
       "name": "common_dom_row_set_show_required_reset",
       "semantic": "Controls row or field visibility and required state; arguments usually mean rowId, visible, required, reset.",
       "translationGuidance": "If native formRules already cover the same row behavior, patch the action to omitted with coverage.status covered. If JavaScript must cover it, use MKXFORM.setFieldAttr(<sourceMarker>, 5/4 for show/hide and 3/6 for required/not-required). The first argument must be the layout sourceMarker (for example aqxy_row or fd_jsx_row), never ${table:<detailTableId>} and never the detail-table field id even when the marked row only contains a detail table. When source.sysform.script_row_marker_orphan_noop carries the complete proof contract, omit that orphan call as an auditable no-op; do not emit setFieldAttr for the missing marker, translate every resolved marker and remaining helper effect, and preserve the warning.",
-      "safeWhen": "The referenced row marker is present in layout sourceMarkers or otherwise resolves through form/layout evidence; or the marker has the complete Source Draft orphan proof (absentFromLayout, onlyHelperTarget, resetAlwaysFalse, and no dynamic DOM creation). No unresolved behavior may remain."
+      "safeWhen": "The referenced row marker is present in layout sourceMarkers or otherwise resolves through form/layout evidence; or the marker has the complete Source Draft orphan proof (absentFromLayout, onlyHelperTarget, resetValuesAudited, and no dynamic DOM creation). No unresolved behavior may remain."
     },
     {
       "name": "document.getElementById / getElementsByName / getElementsByTagName",
@@ -169,7 +170,7 @@
     },
     {
       "id": "row-load-with-auditable-orphan",
-      "sourceBehavior": "onLoad toggles persisted invoice_row10 and missing invoice_row11; Source Draft warning source.sysform.script_row_marker_orphan_noop proves invoice_row11 is only a literal common_dom_row_set_show_required_reset target, reset is always false, it is absent from layout, and no dynamic DOM creation exists.",
+      "sourceBehavior": "onLoad toggles persisted invoice_row10 and missing invoice_row11; Source Draft warning source.sysform.script_row_marker_orphan_noop proves invoice_row11 is only a literal common_dom_row_set_show_required_reset target, records the exact reset values, confirms it is absent from layout, and finds no dynamic DOM creation.",
       "safePatchShape": {
         "function": "function onLoad() {\n  var rawValue = MKXFORM.getValue('fd_way')\n  var value = Array.isArray(rawValue) ? rawValue[0] : rawValue\n  var directEntry = value === '11'\n  MKXFORM.setFieldAttr('invoice_row10', directEntry ? 5 : 4)\n  MKXFORM.setFieldAttr('invoice_row10', directEntry ? 3 : 6)\n}",
         "translationStatus": "mapped",

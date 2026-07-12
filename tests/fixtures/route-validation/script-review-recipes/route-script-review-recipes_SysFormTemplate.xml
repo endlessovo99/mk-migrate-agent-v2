@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>class</string><string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string></void>
+  <void method="put"><string>fdId</string><string>route-script-review-recipes-sysform</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+  <void method="put"><string>fdName</string><string>Route Script Review Recipes</string></void>
+  <void method="put"><string>fdModelName</string><string>com.landray.kmss.km.review.model.KmReviewTemplate</string></void>
+  <void method="put"><string>fdModelId</string><string>route-script-review-recipes-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;select fd_type=&quot;inputSelect&quot; fd_values=&apos;{id:&quot;fd_trigger&quot;,label:&quot;Trigger&quot;,items:&quot;Restricted|restricted&amp;#10;Default|default&quot;}&apos;&gt;&lt;/select&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;select fd_type=&quot;inputSelect&quot; fd_values=&apos;{id:&quot;fd_target&quot;,label:&quot;Target options&quot;,items:&quot;One|1&amp;#10;Two|2&amp;#10;Three|3&amp;#10;Four|4&quot;}&apos;&gt;&lt;/select&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;div id=&quot;fd_attach&quot; fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_attach&quot;,label:&quot;Required attachment&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;input type=&quot;hidden&quot; id=&quot;fd_detail_row&quot; name=&quot;fd_detail_row&quot;/&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail&quot;,label:&quot;Detail&quot;}&apos;&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div id=&quot;jsp_dependent&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;script&gt;
+    $(document).ready(function(){ var target = $(&quot;select[subject=&amp;quot;Target options&amp;quot;]&quot;); target.children(&quot;option&quot;).remove(); target.append(&quot;&lt;option value=&amp;quot;4&amp;quot;&gt;Four&lt;/option&gt;&quot;); });
+    AttachXFormValueChangeEventById(&quot;fd_trigger&quot;, function(value){ var target = $(&quot;select[subject=&amp;quot;Target options&amp;quot;]&quot;); target.children(&quot;option&quot;).remove(); if(value==&quot;restricted&quot;){ target.append(&quot;&lt;option value=&amp;quot;4&amp;quot;&gt;Four&lt;/option&gt;&quot;); } });
+   &lt;/script&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_attachment&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;script&gt;
+    Com_Parameter.event[&quot;submit&quot;].push(function(){ if(attachmentObject_fd_attach.fileList.length &lt;= 0){ alert(&quot;Attachment is required&quot;); return false; } return true; });
+   &lt;/script&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_detail&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function controlDisplay(value,i){ var hidden=document.getElementsByName(&quot;extendDataFormInfo.value(fd_detail.&quot;+i+&quot;.fd_hidden)&quot;)[0]; if(value==&quot;gh&quot;){ hidden.value=&quot;true&quot;; document.getElementsByName(&quot;extendDataFormInfo.value(fd_detail.&quot;+i+&quot;.fd_target_detail)&quot;)[0].style.display=&quot;&quot;; document.getElementsByName(&quot;extendDataFormInfo.value(fd_detail.&quot;+i+&quot;.fd_target_detail)&quot;)[0].setAttribute(&quot;validate&quot;,&quot;required&quot;); } else { hidden.value=&quot;&quot;; document.getElementsByName(&quot;extendDataFormInfo.value(fd_detail.&quot;+i+&quot;.fd_target_detail)&quot;)[0].style.display=&quot;none&quot;; document.getElementsByName(&quot;extendDataFormInfo.value(fd_detail.&quot;+i+&quot;.fd_target_detail)&quot;)[0].setAttribute(&quot;validate&quot;,&quot;&quot;); } }
+    function wireRows(){ for(var i=0;i&lt;1;i++){ var trigger=document.getElementsByName(&quot;extendDataFormInfo.value(fd_detail.&quot;+i+&quot;.fd_detail_trigger)&quot;)[0]; trigger.setAttribute(&quot;onclick&quot;,&quot;controlDisplay(this.value,&quot;+i+&quot;)&quot;); } }
+    AttachXFormValueChangeEventById(&quot;fd_trigger&quot;, function(value){ if(value.indexOf(&quot;restricted&quot;)&gt;=0){ common_dom_row_set_show_required_reset(&quot;fd_detail_row&quot;,true,true,false); } else { common_dom_row_set_show_required_reset(&quot;fd_detail_row&quot;,false,false,false); } });
+    Com_AddEventListener(window,&quot;load&quot;,function(){ wireRows(); });
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_trigger&quot; label=&quot;Trigger&quot; enumValues=&quot;Restricted|restricted&amp;#10;Default|default&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_target&quot; label=&quot;Target options&quot; enumValues=&quot;One|1&amp;#10;Two|2&amp;#10;Three|3&amp;#10;Four|4&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail&quot; label=&quot;Detail&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_detail_trigger&quot; label=&quot;Purchase type&quot; enumValues=&quot;New|xg&amp;#10;Replace|gh&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_target_detail&quot; label=&quot;Replacement information&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_hidden&quot; label=&quot;Replacement state&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

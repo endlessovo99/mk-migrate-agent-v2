@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdKey</string><string>reviewMainDoc</string></void>
+  <void method="put"><string>class</string><string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string></void>
+  <void method="put">
+   <string>fdContent</string>
+   <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-subprocess-template&amp;amp;lbpmTmpId=route-subprocess-lbpm&quot; fdId=&quot;route-subprocess-process&quot; linesIndex=&quot;3&quot; nodesIndex=&quot;4&quot; notifyType=&quot;todo&quot;&gt;
+&lt;nodes&gt;
+&lt;startNode id=&quot;N1&quot; name=&quot;Start&quot; x=&quot;100&quot; y=&quot;40&quot;/&gt;
+&lt;startSubProcessNode configContent=&quot;{&amp;quot;subProcess&amp;quot;:{&amp;quot;modelName&amp;quot;:&amp;quot;com.example.Child&amp;quot;,&amp;quot;templateId&amp;quot;:&amp;quot;route-child-template&amp;quot;,&amp;quot;templateName&amp;quot;:&amp;quot;Route Child&amp;quot;},&amp;quot;startCountType&amp;quot;:1,&amp;quot;startParamenters&amp;quot;:[{&amp;quot;name&amp;quot;:{&amp;quot;text&amp;quot;:&amp;quot;Subject&amp;quot;,&amp;quot;value&amp;quot;:&amp;quot;fdSubject&amp;quot;,&amp;quot;type&amp;quot;:&amp;quot;String&amp;quot;},&amp;quot;expression&amp;quot;:{&amp;quot;text&amp;quot;:&amp;quot;$Subject$&amp;quot;,&amp;quot;value&amp;quot;:&amp;quot;$fd_subject$&amp;quot;}}]}&quot; id=&quot;N20&quot; name=&quot;Start child&quot; x=&quot;260&quot; y=&quot;40&quot;/&gt;
+&lt;recoverSubProcessNode configContent=&quot;{&amp;quot;subProcessNode&amp;quot;:&amp;quot;N20&amp;quot;,&amp;quot;variableScope&amp;quot;:2,&amp;quot;recoverRule&amp;quot;:{&amp;quot;type&amp;quot;:1,&amp;quot;expression&amp;quot;:{&amp;quot;text&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;value&amp;quot;:&amp;quot;&amp;quot;}},&amp;quot;recoverParamenters&amp;quot;:[{&amp;quot;name&amp;quot;:{&amp;quot;text&amp;quot;:&amp;quot;Child result&amp;quot;,&amp;quot;value&amp;quot;:&amp;quot;fd_result&amp;quot;,&amp;quot;type&amp;quot;:&amp;quot;String&amp;quot;},&amp;quot;expression&amp;quot;:{&amp;quot;text&amp;quot;:&amp;quot;$Child subject$&amp;quot;,&amp;quot;value&amp;quot;:&amp;quot;$fdSubject$&amp;quot;}}]}&quot; id=&quot;N23&quot; name=&quot;Recover child&quot; x=&quot;420&quot; y=&quot;40&quot;/&gt;
+&lt;endNode id=&quot;N3&quot; name=&quot;End&quot; x=&quot;580&quot; y=&quot;40&quot;/&gt;
+&lt;/nodes&gt;
+&lt;lines&gt;
+&lt;line endNodeId=&quot;N20&quot; id=&quot;L1&quot; startNodeId=&quot;N1&quot;/&gt;
+&lt;line endNodeId=&quot;N23&quot; id=&quot;L2&quot; startNodeId=&quot;N20&quot;/&gt;
+&lt;line endNodeId=&quot;N3&quot; id=&quot;L3&quot; startNodeId=&quot;N23&quot;/&gt;
+&lt;/lines&gt;
+&lt;/process&gt;</string>
+  </void>
+ </object>
+</java>
