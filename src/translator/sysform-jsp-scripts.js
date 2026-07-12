@@ -377,6 +377,15 @@ function runWhenFromDisplayGate(displayGate) {
 function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   if (!hasExecutableJavascript(source.javascript)) return [];
 
+  const legacyHelperDefinitions = legacyHelperDefinitionsCandidate(source);
+  if (legacyHelperDefinitions) {
+    return [{
+      ...legacyHelperDefinitions,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+      source
+    }];
+  }
+
   const legacyAttachmentRuntime = legacyAttachmentRuntimeCandidate(source, options.form);
   if (legacyAttachmentRuntime) {
     return [{
@@ -418,6 +427,30 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
     source
   }));
+}
+
+function legacyHelperDefinitionsCandidate(source) {
+  const text = String(source.javascript || "").trim();
+  if (!containsOnlyFunctionDeclarations(text)) return undefined;
+
+  return legacyRuntimeOmission(text, "legacy helper function definitions", "inlined translated script actions");
+}
+
+function containsOnlyFunctionDeclarations(text) {
+  let rest = String(text || "").trim();
+  if (!rest) return false;
+  let count = 0;
+
+  while (rest) {
+    const match = rest.match(/^function\s+[A-Za-z_$][\w$]*\s*\([^)]*\)\s*\{/);
+    if (!match) return false;
+    const close = findBalancedClose(rest, match[0].length - 1, "{", "}");
+    if (close < 0) return false;
+    count += 1;
+    rest = rest.slice(close + 1).replace(/^\s*;?\s*/, "");
+  }
+
+  return count > 0;
 }
 
 function legacyAttachmentRuntimeCandidate(source, form) {

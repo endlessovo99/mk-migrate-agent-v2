@@ -113,6 +113,18 @@ describe("source directory stages", () => {
     ), true);
   });
 
+  localCorpusIt("omits standalone JSP helper definitions while keeping callers reviewable", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/149c6e78f7c015f4c7da952411fa0cef");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actions = dslDraft.scripts.actions;
+
+    assert.equal(actions.some((action) =>
+      action.translationStatus === "omitted" &&
+      action.functionMappings?.some((mapping) => mapping.source === "legacy helper function definitions")
+    ), true);
+    assert.equal(actions.filter((action) => action.translationStatus === "needs_review").length, 5);
+  });
+
   localCorpusIt("drafts simple form-field formula workflow participants as executable handlers", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
