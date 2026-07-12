@@ -232,6 +232,7 @@ function isFormulaParticipantMode(mode) {
     "person_by_login_name",
     "dept_leader_by_no",
     "doc_creator",
+    "node_history_superior_department_head",
     "script_formula"
   ].includes(mode);
 }
@@ -456,6 +457,7 @@ function buildArtificialNode(node, type, context = {}) {
       node.participants?.mode === "person_by_login_name" ||
       node.participants?.mode === "dept_leader_by_no" ||
       node.participants?.mode === "doc_creator" ||
+      node.participants?.mode === "node_history_superior_department_head" ||
       node.participants?.mode === "script_formula"
       ? "formula"
       : attrs.handlerSelectType,
@@ -2083,6 +2085,27 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       }
     };
   }
+  if (participants?.mode === "node_history_superior_department_head") {
+    const ruleKey = nodeHistorySuperiorDepartmentHeadRuleKey(participants);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey: JSON.stringify(ruleKey),
+      ruleName: ruleKey.vo.content,
+      ruleMode: "formula",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        sourceExpression: participants.sourceExpression || "",
+        sourceNameExpression: participants.sourceNameExpression || "",
+        nodeId: participants.nodeId || "",
+        companyRole: participants.companyRole || "",
+        departmentRole: participants.departmentRole || ""
+      }
+    };
+  }
   if (participants?.mode === "script_formula") {
     const ruleKey = scriptFormulaHandlerRuleKey(participants, context);
     return {
@@ -2106,6 +2129,18 @@ function handlersFromParticipants(participants, attrs, context = {}) {
     return emptyOrgHandlers();
   }
   return handlersFromAttributes(attrs);
+}
+
+function nodeHistorySuperiorDepartmentHeadRuleKey(participants = {}) {
+  const nodeId = JSON.stringify(String(participants.nodeId || ""));
+  return {
+    script: `\${func.sysorg.getSuperiorDepartmenthead}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), 1)`,
+    type: "Eval",
+    vo: {
+      content: `#查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`,
+      mode: "formula"
+    }
+  };
 }
 
 function nativeHandlerIds(participants, attrs) {

@@ -14,7 +14,7 @@
    <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-unmapped-formula-template&amp;amp;lbpmTmpId=route-unmapped-formula-lbpm&quot; fdId=&quot;route-unmapped-formula-process&quot;&gt;
 &lt;nodes&gt;
 &lt;startNode id=&quot;N1&quot; name=&quot;Start&quot;/&gt;
-&lt;reviewNode handlerIds=&quot;$组织架构.解释角色线$($流程.获取节点实际处理人$(&amp;quot;N27&amp;quot;), &amp;quot;公司级分管领导&amp;quot;, &amp;quot;分管领导&amp;quot;)&quot; handlerNames=&quot;$组织架构.解释角色线$($流程.获取节点实际处理人$(&amp;quot;N27&amp;quot;), &amp;quot;公司级分管领导&amp;quot;, &amp;quot;分管领导&amp;quot;)&quot; handlerSelectType=&quot;formula&quot; id=&quot;N7&quot; name=&quot;分管领导&quot;/&gt;
+&lt;reviewNode handlerIds=&quot;import java.util.List; List handlers = new java.util.ArrayList(); return handlers;&quot; handlerNames=&quot;复杂公式审批人&quot; handlerSelectType=&quot;formula&quot; id=&quot;N7&quot; name=&quot;复杂公式审批人&quot;/&gt;
 &lt;endNode id=&quot;N3&quot; name=&quot;End&quot;/&gt;
 &lt;/nodes&gt;
 &lt;lines&gt;

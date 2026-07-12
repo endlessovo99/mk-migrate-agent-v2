@@ -359,8 +359,8 @@ describe("source directory stages", () => {
     for (const { handlerIds, handlerNames } of [
       { handlerIds: "$unsupported(formula)$" },
       {
-        handlerIds: '$组织架构.解释角色线$($流程.获取节点实际处理人$("N27"), "公司级分管领导", "分管领导")',
-        handlerNames: '$组织架构.解释角色线$($流程.获取节点实际处理人$("N27"), "公司级分管领导", "分管领导")'
+        handlerIds: '$组织架构.解释角色线$($流程.获取节点实际处理人$("N27"), "未知公司角色", "未知部门角色")',
+        handlerNames: '$组织架构.解释角色线$($流程.获取节点实际处理人$("N27"), "未知公司角色", "未知部门角色")'
       },
       { handlerIds: '$组织架构.解释角色线$($fd_subject$, "Company Lead", "Department Lead", "extra")' },
       { handlerIds: '$组织架构.解释角色线$($fd_subject$, $fd_company_role$, "Department Lead")' },

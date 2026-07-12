@@ -771,7 +771,10 @@ function observeParticipantFormula(handlers, node) {
     ruleVoMode: normalizeScalar(ruleKey.vo?.mode),
     resultType: observeParticipantResultType(ruleKey.resultType)
   };
-  return ruleKey.type === "Script"
+  return ruleKey.type === "Script" || (
+    /getSuperiorDepartmenthead/.test(String(ruleKey.script || "")) &&
+    /getNodeHistoryHandlers/.test(String(ruleKey.script || ""))
+  )
     ? { ...observed, ruleVoContent: normalizeScalar(ruleKey.vo?.content) }
     : observed;
 }
@@ -850,6 +853,12 @@ function observeParticipants(node, initiatorSelectTarget) {
       return fieldId
         ? { mode: "script_formula", recipe, fieldId, nativeFormula }
         : { mode: "script_formula", recipe, nativeFormula };
+    }
+    if (/getSuperiorDepartmenthead/.test(script) && /getNodeHistoryHandlers/.test(script)) {
+      const nodeMatch = script.match(/getNodeHistoryHandlers\}\s*\(\s*["']([^"']+)["']/);
+      return nodeMatch
+        ? { mode: "node_history_superior_department_head", nodeId: nodeMatch[1], nativeFormula }
+        : { mode: "node_history_superior_department_head", nativeFormula };
     }
     const roleLine = observeRoleLineParticipants(script, formulaName, fieldId);
     if (roleLine) return { ...roleLine, nativeFormula };

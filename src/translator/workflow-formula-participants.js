@@ -24,6 +24,7 @@ const FORMULA_PARTICIPANT_MODES = new Set([
   "person_by_login_name",
   "dept_leader_by_no",
   "doc_creator",
+  "node_history_superior_department_head",
   "script_formula"
 ]);
 
@@ -33,6 +34,7 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
   const handlerIds = splitList(attributes.handlerIds);
   const handlerNames = splitList(attributes.handlerNames);
   return detailScriptParticipant(attributes) ||
+    nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) ||
     personByLoginNameParticipant(attributes, handlerIds, handlerNames) ||
     deptLeaderByNoParticipant(attributes, handlerIds, handlerNames) ||
     formFieldParticipant(attributes, handlerIds, handlerNames) ||
@@ -43,6 +45,50 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
       sourceExpression: attributes.handlerIds || "",
       sourceNameExpression: attributes.handlerNames || ""
     };
+}
+
+function nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) {
+  if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
+
+  const parsed = parseNodeHistoryRoleLineFormula(handlerIds[0]);
+  if (!parsed || parsed.companyRole !== "公司级分管领导" || parsed.departmentRole !== "分管领导") {
+    return undefined;
+  }
+
+  return {
+    mode: "node_history_superior_department_head",
+    nodeId: parsed.nodeId,
+    companyRole: parsed.companyRole,
+    departmentRole: parsed.departmentRole,
+    sourceExpression: handlerIds[0],
+    sourceNameExpression: handlerNames[0] || ""
+  };
+}
+
+function parseNodeHistoryRoleLineFormula(value) {
+  const match = normalizeLegacyExpression(value).match(/^\$组织架构\.解释角色线\$\s*\((.*)\)$/);
+  if (!match) return undefined;
+
+  const args = splitFunctionArguments(match[1]);
+  if (args.length !== 3) return undefined;
+  const subject = normalizeLegacyExpression(args[0]).match(
+    /^\$流程\.获取节点实际处理人\$\s*\(\s*(["'])([^"']+)\1\s*\)$/
+  );
+  const companyRole = quotedStringValue(args[1]);
+  const departmentRole = quotedStringValue(args[2]);
+  if (!subject || companyRole === undefined || departmentRole === undefined) return undefined;
+
+  return { nodeId: subject[2], companyRole, departmentRole };
+}
+
+function quotedStringValue(value) {
+  const text = String(value || "").trim();
+  if (!/^"(?:\\.|[^"\\])*"$/.test(text)) return undefined;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 function detailScriptParticipant(attributes) {

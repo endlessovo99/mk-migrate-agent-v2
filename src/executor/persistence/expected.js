@@ -493,6 +493,7 @@ function isFormulaParticipantMode(mode) {
     "person_by_login_name",
     "dept_leader_by_no",
     "doc_creator",
+    "node_history_superior_department_head",
     "script_formula"
   ].includes(mode);
 }
@@ -567,6 +568,13 @@ function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
       nativeFormula: expectedParticipantFormula(node.participants, context)
     };
   }
+  if (node.participants.mode === "node_history_superior_department_head") {
+    return {
+      mode: "node_history_superior_department_head",
+      nodeId: node.participants.nodeId,
+      nativeFormula: expectedParticipantFormula(node.participants, context)
+    };
+  }
   if (node.participants.mode === "explicit") {
     return {
       mode: "explicit",
@@ -612,6 +620,12 @@ function expectedParticipantFormula(participants, context = {}) {
     script = "${data._ProcessCreator}";
     ruleMode = "formula";
     ruleKeyMode = "formula";
+  } else if (participants?.mode === "node_history_superior_department_head") {
+    const nodeId = JSON.stringify(String(participants.nodeId || ""));
+    script = `\${func.sysorg.getSuperiorDepartmenthead}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), 1)`;
+    ruleVoContent = `#查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`;
+    ruleMode = "formula";
+    ruleKeyMode = "";
   } else if (participants?.mode === "script_formula") {
     const binding = expectedDetailScriptFormulaBinding(participants, context);
     const dataRef = `\${data.${binding.variableId}}`;

@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { runRouteCase } from "./run-route-case.js";
 
 describe("Route-validation unmapped formula participants", { concurrency: false }, () => {
-  it("blocks the legacy N7 role-line formula before dry-run or NewOA transport", async () => {
+  it("blocks an unsupported formula before dry-run or NewOA transport", async () => {
     const result = await runRouteCase("unmapped-formula-blocked-before-transport");
     const node = result.dsl.workflow.nodes.find((item) => item.id === "N7");
 
@@ -18,7 +18,7 @@ describe("Route-validation unmapped formula participants", { concurrency: false 
     assert.equal(node.attributes.handlerSelectType, "formula");
     assert.equal(node.participants.mode, "unmapped_formula");
     assert.equal(node.participants.sourceExpression, node.attributes.handlerIds);
-    assert.match(node.participants.sourceExpression, /解释角色线/);
+    assert.match(node.participants.sourceExpression, /import java\.util\.List/);
     assert.equal(node.participants.sourceNameExpression, node.attributes.handlerNames);
     assert.equal(node.participants.members, undefined);
     assert.equal(node.translationStatus, "pending_review");
