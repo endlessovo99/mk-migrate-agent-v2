@@ -744,12 +744,29 @@ describe("executeDsl", () => {
     assert.equal(loginRule.type, "Script");
     assert.equal(loginRule.vo.mode, "script");
     assert.match(loginRule.script, /^var /);
+    assert.match(loginRule.script, /\$\{data\.template-id-[^.}]+\.departmentCode\}/);
+    assert.doesNotMatch(loginRule.script, /\$\{data\.template-id-departmentCode\}/);
     assert.match(loginRule.script, /\$\{func\.sysorg\.getPersonByLoginName\}/);
+    assert.match(loginRule.vo.content, /\$内置表单\.[^.$]+\.部门编码\$/);
+    assert.doesNotMatch(loginRule.vo.content, /\$\$|\$明细表\./);
     assert.doesNotMatch(loginRule.script, /\b(?:let|const)\b|=>/);
     assert.equal(departmentRule.type, "Script");
+    assert.match(departmentRule.script, /\$\{data\.template-id-[^.}]+\.fd_name\}/);
+    assert.doesNotMatch(departmentRule.script, /\$\{data\.template-id-fd_name\}/);
     assert.match(departmentRule.script, /\$\{func\.sysorg\.getElementByNo\}/);
     assert.match(departmentRule.script, /\$\{func\.sysorg\.getDepartmentHead\}/);
+    assert.match(departmentRule.vo.content, /\$内置表单\.[^.$]+\.[^$]+\$/);
+    assert.doesNotMatch(departmentRule.vo.content, /\$\$|\$明细表\./);
     assert.equal(verifyTemplate(trusted, template).ok, true);
+
+    const brokenDisplay = structuredClone(template);
+    const brokenContent = JSON.parse(brokenDisplay.mechanisms.lbpmTemplate[0].fdContent);
+    const brokenNode = brokenContent.elements.find((node) => node.id === "N2");
+    const brokenRule = JSON.parse(brokenNode.handlers.ruleKey);
+    brokenRule.vo.content = "var values = $$ || [];";
+    brokenNode.handlers.ruleKey = JSON.stringify(brokenRule);
+    brokenDisplay.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(brokenContent);
+    assert.equal(verifyTemplate(trusted, brokenDisplay).ok, false);
   });
 
   it("rejects readback when formula participant scripts are mutated", () => {

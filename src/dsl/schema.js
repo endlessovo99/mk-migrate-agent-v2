@@ -95,7 +95,9 @@ export function validateMigrationDsl(input, options = {}) {
     validateWorkflow(root.workflow, diagnostics, {
       mode,
       fieldIds: formContext.fieldIds,
-      dataAuthorityFieldIds: formContext.dataAuthorityFieldIds
+      dataAuthorityFieldIds: formContext.dataAuthorityFieldIds,
+      detailTableIds: formContext.detailTableIds,
+      detailColumnIdsByTable: formContext.detailColumnIdsByTable
     });
   }
 
@@ -188,7 +190,13 @@ function validateTemplate(template, diagnostics) {
 function validateForm(form, diagnostics) {
   if (!isRecord(form)) {
     diagnostics.push(error("dsl.form_required", "form is required.", "/form"));
-    return { fieldIds: new Set(), dataAuthorityFieldIds: new Set(), detailTableIds: new Set(), layoutNodeIds: new Set() };
+    return {
+      fieldIds: new Set(),
+      dataAuthorityFieldIds: new Set(),
+      detailTableIds: new Set(),
+      detailColumnIdsByTable: new Map(),
+      layoutNodeIds: new Set()
+    };
   }
 
   const fieldIds = validateFields(form.fields, diagnostics);
@@ -200,8 +208,13 @@ function validateForm(form, diagnostics) {
   );
   const dataAuthorityFieldIds = collectDataAuthorityFieldIds(form.fields);
   const detailTableIds = new Set((form.fields || []).filter((field) => field?.type === "detailTable").map((field) => field.id));
+  const detailColumnIdsByTable = new Map(
+    (form.fields || [])
+      .filter((field) => field?.type === "detailTable")
+      .map((field) => [field.id, new Set((field.columns || []).map((column) => column?.id).filter(nonEmptyString))])
+  );
   const layoutNodeIds = validateFormLayout(form.layout, { fieldIds, detailTableIds, dataOnlyFieldIds }, diagnostics);
-  return { fieldIds, dataAuthorityFieldIds, detailTableIds, layoutNodeIds };
+  return { fieldIds, dataAuthorityFieldIds, detailTableIds, detailColumnIdsByTable, layoutNodeIds };
 }
 
 function validateFields(fields, diagnostics) {
@@ -1264,6 +1277,33 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         "Script formula participant fieldId must reference an existing detail column.",
         `${path}/fieldId`,
         { fieldId: participants.fieldId }
+      ));
+    }
+    if (!nonEmptyString(participants.detailTableId)) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_detail_table_required",
+        "Script formula participants require detailTableId.",
+        `${path}/detailTableId`
+      ));
+    } else if (
+      context.detailTableIds instanceof Set &&
+      !context.detailTableIds.has(participants.detailTableId)
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_detail_table_missing",
+        "Script formula participant detailTableId must reference an existing detail table.",
+        `${path}/detailTableId`,
+        { detailTableId: participants.detailTableId }
+      ));
+    } else if (
+      context.detailColumnIdsByTable instanceof Map &&
+      !context.detailColumnIdsByTable.get(participants.detailTableId)?.has(participants.fieldId)
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_detail_column_mismatch",
+        "Script formula participant fieldId must belong to detailTableId.",
+        `${path}/fieldId`,
+        { detailTableId: participants.detailTableId, fieldId: participants.fieldId }
       ));
     }
     if (!nonEmptyString(participants.sourceExpression)) {

@@ -6,6 +6,7 @@ import {
   selectDefaultBranchEdge
 } from "./branch-defaults.js";
 import { isAddressField } from "../condition-org-resolver.js";
+import { detailTableNameFor } from "./detail-table-names.js";
 
 export function applyWorkflowPayload(template, dsl) {
   if (!dsl.workflow) return template;
@@ -27,6 +28,7 @@ export function applyWorkflowPayload(template, dsl) {
   }
   lbpm.fdContent = JSON.stringify(buildWorkflowContent(dsl.workflow, {
     templateId: next.fdId || next.mechanisms["sys-xform"]?.fdId || "",
+    mainTableName: next.mechanisms["sys-xform"]?.fdTableName || next.fdTableName || "",
     form: dsl.form,
     conditionOrgByName: dsl.runtime?.conditionOrgByName || {},
     conditionOrgByFdNo: dsl.runtime?.conditionOrgByFdNo || {}
@@ -2182,21 +2184,18 @@ function emptyOrgHandlers() {
 }
 
 function scriptFormulaHandlerRuleKey(participants, context = {}) {
-  const fieldId = participants.fieldId || "";
-  const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
-  const dataRef = `\${data.${fdVarValue}}`;
+  const binding = detailScriptFormulaBinding(participants, context);
+  const dataRef = `\${data.${binding.variableId}}`;
   let script;
-  let content;
 
   if (participants.recipe === "detail_login_names_to_persons") {
     script = `var values = ${dataRef} || []; var handlers = []; var seen = {}; for (var i = 0; i < values.length; i++) { var loginName = String(values[i] || ""); if (!loginName || seen[loginName]) { continue; } seen[loginName] = true; var found = \${func.sysorg.getPersonByLoginName}(loginName) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); } } return handlers;`;
-    content = "return #根据登录名查找人员#($明细表.项目经理工号$)";
   } else if (participants.recipe === "first_detail_department_code_to_head") {
     script = `var values = ${dataRef} || []; if (!values.length) { return []; } var departments = \${func.sysorg.getElementByNo}(String(values[0]), "2") || []; return \${func.sysorg.getDepartmentHead}(departments) || [];`;
-    content = "return #查找部门领导#(#根据组织编码查找组织#($明细表.WBS所属部门Code$, \"2\"))";
   } else {
     throw new Error(`unsupported workflow script formula recipe: ${participants.recipe || ""}`);
   }
+  const content = scriptFormulaDisplayContent(script, dataRef, binding.displayRef);
 
   return {
     type: "Script",
@@ -2204,6 +2203,37 @@ function scriptFormulaHandlerRuleKey(participants, context = {}) {
     vo: { mode: "script", content },
     resultType: workflowOrgArrayResultType()
   };
+}
+
+function detailScriptFormulaBinding(participants, context = {}) {
+  const detailTableId = String(participants.detailTableId || "").trim();
+  const fieldId = String(participants.fieldId || "").trim();
+  const templateId = String(context.templateId || "").trim();
+  const mainTableName = String(context.mainTableName || "").trim();
+  const detailTable = (context.form?.fields || []).find((field) =>
+    field?.id === detailTableId && field?.type === "detailTable"
+  );
+  const column = (detailTable?.columns || []).find((field) => field?.id === fieldId);
+  if (!templateId || !mainTableName || !detailTable || !column) {
+    const error = new Error("Workflow Script formula detail binding is incomplete.");
+    error.code = "projection.workflow.script_formula_detail_binding_invalid";
+    error.details = { detailTableId, fieldId, templateId, mainTableName };
+    throw error;
+  }
+  const physicalTableName = detailTableNameFor(mainTableName, detailTableId);
+  const fieldTitle = participants.fieldTitle || column.title || fieldId;
+  return {
+    variableId: `${templateId}-${physicalTableName}.${fieldId}`,
+    displayRef: `$内置表单.${detailTable.title || detailTableId}.${fieldTitle}$`
+  };
+}
+
+function scriptFormulaDisplayContent(script, dataRef, displayRef) {
+  return String(script)
+    .replace(dataRef, () => displayRef)
+    .replace(/\$\{func\.sysorg\.getPersonByLoginName\}/g, "#根据登录名查找人员#")
+    .replace(/\$\{func\.sysorg\.getElementByNo\}/g, "#根据组织编码查找组织#")
+    .replace(/\$\{func\.sysorg\.getDepartmentHead\}/g, "#查找部门领导#");
 }
 
 function workflowOrgArrayResultType() {

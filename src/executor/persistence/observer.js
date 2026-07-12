@@ -725,7 +725,8 @@ function observeFormulaFieldId(handlers, node) {
   candidates.push(normalizeScalar(node?.handlerIds));
   for (const text of candidates) {
     if (!text) continue;
-    const match = text.match(/(fd_[A-Za-z0-9_]+)\s*$/) ||
+    const match = text.match(/\$\{data\.[^}]*\.([A-Za-z_][A-Za-z0-9_]*)\}/) ||
+      text.match(/(fd_[A-Za-z0-9_]+)\s*$/) ||
       text.match(/\$\{data\.[^.}]*?(fd_[A-Za-z0-9_]+)\}/) ||
       text.match(/\$(fd_[A-Za-z0-9_]+)\$/) ||
       text.match(/\$\{data\.[^}]*-([A-Za-z_][A-Za-z0-9_]*)\}/);
@@ -755,7 +756,7 @@ function observeRoleLineParticipants(script, formulaName, fieldId) {
 
 function observeParticipantFormula(handlers, node) {
   const ruleKey = participantRuleKey(handlers);
-  return {
+  const observed = {
     script: normalizeScalar(ruleKey.script),
     varIds: Array.isArray(ruleKey.varIds) ? ruleKey.varIds.map(normalizeScalar) : [],
     handlerSelectType: normalizeScalar(node?.handlerSelectType),
@@ -770,6 +771,9 @@ function observeParticipantFormula(handlers, node) {
     ruleVoMode: normalizeScalar(ruleKey.vo?.mode),
     resultType: observeParticipantResultType(ruleKey.resultType)
   };
+  return ruleKey.type === "Script"
+    ? { ...observed, ruleVoContent: normalizeScalar(ruleKey.vo?.content) }
+    : observed;
 }
 
 function participantRuleKey(handlers) {

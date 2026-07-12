@@ -20,6 +20,8 @@ export function buildExpectedInvariants(dsl, envelope) {
   const workflowExpected = dsl?.workflow
     ? buildExpectedWorkflow(dsl.workflow, diagnostics, {
       templateId: envelope?.templateId,
+      mainTableName: envelope?.tableName,
+      form: dsl?.form,
       runtime: dsl?.runtime
     })
     : { expected: false };
@@ -593,6 +595,7 @@ function expectedParticipantFormula(participants, context = {}) {
   let varIds = [];
   let ruleMode = "simple";
   let ruleKeyMode = "simple";
+  let ruleVoContent;
 
   if (participants?.mode === "form_field") {
     script = `\${data.${fieldRef}}`;
@@ -610,12 +613,14 @@ function expectedParticipantFormula(participants, context = {}) {
     ruleMode = "formula";
     ruleKeyMode = "formula";
   } else if (participants?.mode === "script_formula") {
-    const dataRef = `\${data.${fieldRef}}`;
+    const binding = expectedDetailScriptFormulaBinding(participants, context);
+    const dataRef = `\${data.${binding.variableId}}`;
     if (participants.recipe === "detail_login_names_to_persons") {
       script = `var values = ${dataRef} || []; var handlers = []; var seen = {}; for (var i = 0; i < values.length; i++) { var loginName = String(values[i] || ""); if (!loginName || seen[loginName]) { continue; } seen[loginName] = true; var found = \${func.sysorg.getPersonByLoginName}(loginName) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); } } return handlers;`;
     } else if (participants.recipe === "first_detail_department_code_to_head") {
       script = `var values = ${dataRef} || []; if (!values.length) { return []; } var departments = \${func.sysorg.getElementByNo}(String(values[0]), "2") || []; return \${func.sysorg.getDepartmentHead}(departments) || [];`;
     }
+    ruleVoContent = expectedScriptFormulaDisplayContent(script, dataRef, binding.displayRef);
     ruleMode = "script";
     ruleKeyMode = "";
   }
@@ -633,10 +638,34 @@ function expectedParticipantFormula(participants, context = {}) {
     ruleKeyType: participants?.mode === "script_formula" ? "Script" : "Eval",
     ruleKeyMode,
     ruleVoMode: participants?.mode === "script_formula" ? "script" : "formula",
+    ...(ruleVoContent !== undefined ? { ruleVoContent } : {}),
     resultType: ["person_by_login_name", "doc_creator", "script_formula"].includes(participants?.mode)
       ? "org_array"
       : "none"
   };
+}
+
+function expectedDetailScriptFormulaBinding(participants, context = {}) {
+  const detailTableId = String(participants?.detailTableId || "").trim();
+  const fieldId = String(participants?.fieldId || "").trim();
+  const detailTable = (context.form?.fields || []).find((field) =>
+    field?.id === detailTableId && field?.type === "detailTable"
+  );
+  const column = (detailTable?.columns || []).find((field) => field?.id === fieldId);
+  const physicalTableName = detailTableNameFor(context.mainTableName, detailTableId);
+  const fieldTitle = participants?.fieldTitle || column?.title || fieldId;
+  return {
+    variableId: `${context.templateId}-${physicalTableName}.${fieldId}`,
+    displayRef: `$内置表单.${detailTable?.title || detailTableId}.${fieldTitle}$`
+  };
+}
+
+function expectedScriptFormulaDisplayContent(script, dataRef, displayRef) {
+  return String(script)
+    .replace(dataRef, () => displayRef)
+    .replace(/\$\{func\.sysorg\.getPersonByLoginName\}/g, "#根据登录名查找人员#")
+    .replace(/\$\{func\.sysorg\.getElementByNo\}/g, "#根据组织编码查找组织#")
+    .replace(/\$\{func\.sysorg\.getDepartmentHead\}/g, "#查找部门领导#");
 }
 
 function summarizeAlternativeParticipants(participants) {

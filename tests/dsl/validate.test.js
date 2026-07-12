@@ -809,6 +809,57 @@ describe("validateMigrationDsl", () => {
     );
   });
 
+  it("binds Script formula detail columns to their owning detail table", () => {
+    const workflow = {
+      process: { id: "process-detail-script-formula" },
+      nodes: [
+        { id: "N1", type: "generalStart", element: "startEvent", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+        {
+          id: "N2",
+          type: "review",
+          element: "manualTask",
+          sourceRef: "source.workflow.node.N2",
+          attributes: { handlerSelectType: "formula" },
+          participants: {
+            mode: "script_formula",
+            recipe: "detail_login_names_to_persons",
+            detailTableId: "fd_detail",
+            fieldId: "fd_name",
+            sourceFieldId: "fd_name",
+            sourceExpression: "legacy detail formula"
+          },
+          translationStatus: "executable"
+        },
+        { id: "N3", type: "generalEnd", element: "endEvent", sourceRef: "source.workflow.node.N3", attributes: {}, translationStatus: "executable" }
+      ],
+      edges: [
+        { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+        { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } }
+      ],
+      topologicalOrder: ["N1", "N2", "N3"]
+    };
+    const accepted = validateMigrationDsl(sampleTrustedDsl({ workflow }), { mode: "execute" });
+    const wrongTable = structuredClone(workflow);
+    wrongTable.nodes[1].participants.detailTableId = "fd_missing_detail";
+    const rejectedTable = validateMigrationDsl(sampleTrustedDsl({ workflow: wrongTable }), { mode: "execute" });
+    const wrongColumn = structuredClone(workflow);
+    wrongColumn.nodes[1].participants.fieldId = "fd_subject";
+    wrongColumn.nodes[1].participants.sourceFieldId = "fd_subject";
+    const rejectedColumn = validateMigrationDsl(sampleTrustedDsl({ workflow: wrongColumn }), { mode: "execute" });
+
+    assert.equal(accepted.ok, true);
+    assert.equal(rejectedTable.ok, false);
+    assert.equal(
+      rejectedTable.diagnostics.some((item) => item.code === "workflow.participants.script_formula_detail_table_missing"),
+      true
+    );
+    assert.equal(rejectedColumn.ok, false);
+    assert.equal(
+      rejectedColumn.diagnostics.some((item) => item.code === "workflow.participants.script_formula_detail_column_mismatch"),
+      true
+    );
+  });
+
   it("validates node data authority field references and flags", () => {
     const acceptedDsl = sampleTrustedDsl();
     acceptedDsl.workflow.nodes[0] = {
