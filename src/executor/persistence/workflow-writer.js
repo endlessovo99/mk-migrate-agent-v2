@@ -230,7 +230,6 @@ function isFormulaParticipantMode(mode) {
     "person_by_login_name",
     "dept_leader_by_no",
     "doc_creator",
-    "role_line",
     "script_formula"
   ].includes(mode);
 }
@@ -454,7 +453,6 @@ function buildArtificialNode(node, type, context = {}) {
     handlerSelectType: node.participants?.mode === "form_field" ||
       node.participants?.mode === "person_by_login_name" ||
       node.participants?.mode === "dept_leader_by_no" ||
-      node.participants?.mode === "role_line" ||
       node.participants?.mode === "doc_creator" ||
       node.participants?.mode === "script_formula"
       ? "formula"
@@ -2083,26 +2081,6 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       }
     };
   }
-  if (participants?.mode === "role_line") {
-    const ruleKey = roleLineHandlerRuleKey(participants, context);
-    return {
-      id: "handlers",
-      type: "formula",
-      source: "2",
-      ruleKey,
-      ruleName: ruleKey.formulaName,
-      ruleMode: "simple",
-      formulaType: "formula",
-      members: [],
-      element: "users",
-      migrationSource: {
-        sourceExpression: participants.sourceExpression || "",
-        sourceNameExpression: participants.sourceNameExpression || "",
-        companyRole: participants.companyRole || "",
-        departmentRole: participants.departmentRole || ""
-      }
-    };
-  }
   if (participants?.mode === "script_formula") {
     const ruleKey = scriptFormulaHandlerRuleKey(participants, context);
     return {
@@ -2239,48 +2217,6 @@ function workflowOrgArrayResultType() {
         fdOrgType: { type: "string", description: "组织机构类型" }
       }
     }
-  };
-}
-
-function roleLineHandlerRuleKey(participants, context = {}) {
-  const companyRole = JSON.stringify(participants.companyRole || "");
-  const departmentRole = JSON.stringify(participants.departmentRole || "");
-  if (participants.subjectKind === "node_handlers" || participants.nodeId) {
-    const subjectRef = participants.subjectExpression ||
-      `$流程.获取节点实际处理人$(${JSON.stringify(participants.nodeId || "")})`;
-    const formulaName = participants.sourceNameExpression ||
-      `$组织架构.解释角色线$(${subjectRef}, ${companyRole}, ${departmentRole})`;
-    return {
-      type: "Eval",
-      script: `$组织架构.解释角色线$(${subjectRef}, ${companyRole}, ${departmentRole})`,
-      varIds: [],
-      vo: {
-        mode: "formula",
-        content: formulaName
-      },
-      mode: "simple",
-      formulaName
-    };
-  }
-
-  const fieldId = participants.fieldId || "";
-  const field = context.formFieldById?.get(fieldId);
-  const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
-  const fieldTitle = participants.fieldTitle || field?.title || fieldId;
-  const formulaName = participants.sourceNameExpression ||
-    `$组织架构.解释角色线$($${fieldTitle}$, ${companyRole}, ${departmentRole})`;
-  const fieldRef = `\${data.${fdVarValue}}`;
-
-  return {
-    type: "Eval",
-    script: `$组织架构.解释角色线$(${fieldRef}, ${companyRole}, ${departmentRole})`,
-    varIds: [fdVarValue],
-    vo: {
-      mode: "formula",
-      content: formulaName
-    },
-    mode: "simple",
-    formulaName
   };
 }
 

@@ -762,8 +762,7 @@ describe("executeDsl", () => {
     const mutations = [
       ["N2", '${func.sysorg.getPersonByLoginName}("hardcoded")'],
       ["N3", '$部门领导.根据部门编号获取部门领导$("hardcoded")'],
-      ["N4", "${data._ProcessCreatorWrong}"],
-      ["N5", '$组织架构.解释角色线$($流程.获取节点实际处理人$("N3"), "Company Lead", "Department Lead")']
+      ["N4", "${data._ProcessCreatorWrong}"]
     ];
     for (const [nodeId, script] of mutations) {
       const mutated = structuredClone(template);
@@ -971,31 +970,13 @@ describe("executeDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"), true);
   });
 
-  localCorpusIt("writes role-line formula participants as dynamic handler formulas", () => {
+  localCorpusIt("does not project legacy role-line formulas without a verified Script recipe", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
-    const content = buildWorkflowContent(dslDraft.workflow, {
-      templateId: "template-id",
-      form: dslDraft.form
-    });
-    const node = content.elements.find((element) => element.id === "N53");
+    const node = dslDraft.workflow.nodes.find((element) => element.id === "N53");
 
-    assert.equal(node.name, "申请部门相关领导");
-    assert.equal(node.handlerSelectType, "formula");
-    assert.equal(node.handlers.type, "formula");
-    assert.equal(node.handlers.source, "2");
-    assert.equal(node.handlers.ruleName, "$组织架构.解释角色线$($部门固资管理员$, \"公司级相关领导\", \"部门相关领导\")");
-    assert.equal(node.handlers.ruleKey.type, "Eval");
-    assert.equal(
-      node.handlers.ruleKey.script,
-      "$组织架构.解释角色线$(${data.template-id-fd_371229badb4b1a}, \"公司级相关领导\", \"部门相关领导\")"
-    );
-    assert.deepEqual(node.handlers.ruleKey.varIds, ["template-id-fd_371229badb4b1a"]);
-    assert.equal(
-      node.handlers.ruleKey.vo.content,
-      "$组织架构.解释角色线$($部门固资管理员$, \"公司级相关领导\", \"部门相关领导\")"
-    );
-    assert.deepEqual(node.handlers.members, []);
+    assert.equal(node.participants.mode, "unmapped_formula");
+    assert.equal(node.translationStatus, "pending_review");
   });
 
   localCorpusIt("writes legacy robot nodes with selectable robot type and preserved config", () => {
@@ -3281,26 +3262,7 @@ function sampleFormulaParticipantDsl() {
       },
       translationStatus: "executable"
     },
-    {
-      id: "N5",
-      type: "review",
-      element: "manualTask",
-      name: "Role-line Review",
-      sourceRef: "source.workflow.node.N5",
-      attributes: { handlerSelectType: "formula" },
-      participants: {
-        mode: "role_line",
-        subjectKind: "node_handlers",
-        nodeId: "N2",
-        subjectExpression: "$流程.获取节点实际处理人$(\"N2\")",
-        companyRole: "Company Lead",
-        departmentRole: "Department Lead",
-        sourceExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N2\"), \"Company Lead\", \"Department Lead\")",
-        sourceNameExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N2\"), \"Company Lead\", \"Department Lead\")"
-      },
-      translationStatus: "executable"
-    },
-    { id: "N6", type: "generalEnd", element: "endEvent", name: "End", sourceRef: "source.workflow.node.N6", attributes: {}, translationStatus: "executable" }
+    { id: "N5", type: "generalEnd", element: "endEvent", name: "End", sourceRef: "source.workflow.node.N5", attributes: {}, translationStatus: "executable" }
   ];
   return sampleTrustedDsl({
     form,

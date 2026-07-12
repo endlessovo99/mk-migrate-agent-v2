@@ -24,7 +24,6 @@ const FORMULA_PARTICIPANT_MODES = new Set([
   "person_by_login_name",
   "dept_leader_by_no",
   "doc_creator",
-  "role_line",
   "script_formula"
 ]);
 
@@ -37,7 +36,6 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
     personByLoginNameParticipant(attributes, handlerIds, handlerNames) ||
     deptLeaderByNoParticipant(attributes, handlerIds, handlerNames) ||
     formFieldParticipant(attributes, handlerIds, handlerNames) ||
-    roleLineParticipant(attributes, handlerIds, handlerNames) ||
     docCreatorParticipant(attributes, handlerIds, handlerNames) ||
     {
       mode: "unmapped_formula",
@@ -224,44 +222,6 @@ function unaryFieldOrgFormulaParticipant(attributes, handlerIds, handlerNames, o
   };
 }
 
-function roleLineParticipant(attributes, handlerIds, handlerNames) {
-  if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
-
-  const parsed = parseRoleLineFormula(handlerIds[0]);
-  if (!parsed) return undefined;
-
-  const nameParsed = parseRoleLineFormula(handlerNames[0]);
-  if (parsed.subjectKind === "node_handlers") {
-    return {
-      mode: "role_line",
-      subjectKind: "node_handlers",
-      nodeId: parsed.nodeId,
-      subjectExpression: parsed.subjectExpression,
-      companyRole: parsed.companyRole,
-      departmentRole: parsed.departmentRole,
-      sourceExpression: handlerIds[0],
-      sourceNameExpression: handlerNames[0] || ""
-    };
-  }
-
-  if (!parsed.subject.startsWith("fd_")) return undefined;
-  const fieldTitle = nameParsed && nameParsed.subject && !String(nameParsed.subject).startsWith("fd_")
-    ? nameParsed.subject
-    : parsed.subject;
-
-  return {
-    mode: "role_line",
-    subjectKind: "field",
-    fieldId: parsed.subject,
-    sourceFieldId: parsed.subject,
-    fieldTitle,
-    companyRole: parsed.companyRole,
-    departmentRole: parsed.departmentRole,
-    sourceExpression: handlerIds[0],
-    sourceNameExpression: handlerNames[0] || ""
-  };
-}
-
 function parseUnaryFieldOrgFormula(value, functionPattern) {
   const match = normalizeLegacyExpression(value).match(functionPattern);
   if (!match) return undefined;
@@ -279,32 +239,6 @@ function parsePersonByLoginNameFormula(value) {
 
 function parseDeptLeaderByNoFormula(value) {
   return parseUnaryFieldOrgFormula(value, /^\$部门领导\.根据部门编号获取部门领导\$\s*\((.*)\)$/);
-}
-
-function parseRoleLineFormula(value) {
-  const match = normalizeLegacyExpression(value).match(/^\$组织架构\.解释角色线\$\s*\((.*)\)$/);
-  if (!match) return undefined;
-
-  const args = splitFunctionArguments(match[1]);
-  if (args.length !== 3) return undefined;
-
-  const subject = parseRoleLineSubject(args[0]);
-  const companyRole = quotedLegacyArgument(args[1]);
-  const departmentRole = quotedLegacyArgument(args[2]);
-  if (!subject || !companyRole || !departmentRole) return undefined;
-
-  return { ...subject, companyRole, departmentRole };
-}
-
-function parseRoleLineSubject(value) {
-  const field = simpleDollarExpressionValue(value);
-  if (field) return { subjectKind: "field", subject: field };
-
-  const text = normalizeLegacyExpression(value);
-  const match = text.match(/^\$流程\.获取节点实际处理人\$\s*\(\s*["']([^"']+)["']\s*\)$/);
-  return match
-    ? { subjectKind: "node_handlers", nodeId: match[1], subjectExpression: text }
-    : undefined;
 }
 
 function splitFunctionArguments(value) {
@@ -335,13 +269,6 @@ function splitFunctionArguments(value) {
 
   args.push(text.slice(start).trim());
   return args;
-}
-
-function quotedLegacyArgument(value) {
-  const text = normalizeLegacyExpression(value);
-  if (!/^"(?:\\.|[^"\\])*"$/.test(text) && !/^'(?:\\.|[^'\\])*'$/.test(text)) return undefined;
-  const match = text.match(/^["']([\s\S]*)["']$/);
-  return match ? match[1].replace(/\\"/g, "\"").replace(/\\'/g, "'") : text;
 }
 
 function simpleDollarExpressionValue(value) {

@@ -491,7 +491,6 @@ function isFormulaParticipantMode(mode) {
     "person_by_login_name",
     "dept_leader_by_no",
     "doc_creator",
-    "role_line",
     "script_formula"
   ].includes(mode);
 }
@@ -566,26 +565,6 @@ function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
       nativeFormula: expectedParticipantFormula(node.participants, context)
     };
   }
-  if (node.participants.mode === "role_line") {
-    if (node.participants.subjectKind === "node_handlers" || node.participants.nodeId) {
-      return {
-        mode: "role_line",
-        subjectKind: "node_handlers",
-        nodeId: node.participants.nodeId,
-        companyRole: node.participants.companyRole,
-        departmentRole: node.participants.departmentRole,
-        nativeFormula: expectedParticipantFormula(node.participants, context)
-      };
-    }
-    return {
-      mode: "role_line",
-      subjectKind: "field",
-      fieldId: node.participants.fieldId,
-      companyRole: node.participants.companyRole,
-      departmentRole: node.participants.departmentRole,
-      nativeFormula: expectedParticipantFormula(node.participants, context)
-    };
-  }
   if (node.participants.mode === "explicit") {
     return {
       mode: "explicit",
@@ -630,17 +609,6 @@ function expectedParticipantFormula(participants, context = {}) {
     script = "${data._ProcessCreator}";
     ruleMode = "formula";
     ruleKeyMode = "formula";
-  } else if (participants?.mode === "role_line") {
-    const companyRole = JSON.stringify(participants.companyRole || "");
-    const departmentRole = JSON.stringify(participants.departmentRole || "");
-    if (participants.subjectKind === "node_handlers" || participants.nodeId) {
-      const subjectRef = participants.subjectExpression ||
-        `$流程.获取节点实际处理人$(${JSON.stringify(participants.nodeId || "")})`;
-      script = `$组织架构.解释角色线$(${subjectRef}, ${companyRole}, ${departmentRole})`;
-    } else {
-      script = `$组织架构.解释角色线$(\${data.${fieldRef}}, ${companyRole}, ${departmentRole})`;
-      varIds = [fieldRef];
-    }
   } else if (participants?.mode === "script_formula") {
     const dataRef = `\${data.${fieldRef}}`;
     if (participants.recipe === "detail_login_names_to_persons") {

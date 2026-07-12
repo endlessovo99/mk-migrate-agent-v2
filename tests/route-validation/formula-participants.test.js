@@ -20,7 +20,7 @@ describe("Route-validation formula participants", { concurrency: false }, () => 
         { id: "N4", mode: "person_by_login_name", fieldId: "fd_login_name" },
         { id: "N5", mode: "dept_leader_by_no", fieldId: "fd_department_no" },
         { id: "N6", mode: "doc_creator" },
-        { id: "N7", mode: "role_line", subjectKind: "node_handlers", nodeId: "N2" }
+        { id: "N7", mode: "form_field", fieldId: "fd_login_name" }
       ]
     );
 
@@ -39,7 +39,7 @@ describe("Route-validation formula participants", { concurrency: false }, () => 
         { id: "N4", mode: "person_by_login_name", fieldId: "fd_login_name" },
         { id: "N5", mode: "dept_leader_by_no", fieldId: "fd_department_no" },
         { id: "N6", mode: "doc_creator" },
-        { id: "N7", mode: "role_line", nodeId: "N2" }
+        { id: "N7", mode: "form_field", fieldId: "fd_login_name" }
       ]
     );
   });

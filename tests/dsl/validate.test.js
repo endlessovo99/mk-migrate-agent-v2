@@ -849,7 +849,7 @@ describe("validateMigrationDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.workflow.data_authority.flag_required"), true);
   });
 
-  it("validates role-line field and node-handler subjects", () => {
+  it("rejects legacy role-line participants without a verified NewOA Script recipe", () => {
     const workflow = {
       process: { id: "process-role-line-handler" },
       nodes: [
@@ -884,72 +884,11 @@ describe("validateMigrationDsl", () => {
       ],
       topologicalOrder: ["N1", "N2", "N3"]
     };
-    const accepted = validateMigrationDsl(sampleTrustedDsl({ workflow }), { mode: "execute" });
-    const rejected = validateMigrationDsl(sampleTrustedDsl({
-      workflow: {
-        ...workflow,
-        nodes: workflow.nodes.map((node) => node.id === "N2"
-          ? { ...node, participants: { ...node.participants, fieldId: "fd_missing", sourceExpression: "$组织架构.解释角色线$($fd_missing$, \"公司级部门领导\", \"部门领导\")" } }
-          : node)
-      }
-    }), { mode: "execute" });
+    const rejected = validateMigrationDsl(sampleTrustedDsl({ workflow }), { mode: "execute" });
 
-    assert.equal(accepted.ok, true);
     assert.equal(rejected.ok, false);
-    assert.equal(rejected.diagnostics.some((item) => item.code === "workflow.participants.role_line_field_missing"), true);
-
-    const nodeSubjectWorkflow = structuredClone(workflow);
-    nodeSubjectWorkflow.nodes[1].attributes.handlerIds = "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N1\"), \"公司级部门领导\", \"部门领导\")";
-    nodeSubjectWorkflow.nodes[1].attributes.handlerNames = "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N1\"), \"公司级部门领导\", \"部门领导\")";
-    nodeSubjectWorkflow.nodes[1].participants = {
-      mode: "role_line",
-      subjectKind: "node_handlers",
-      nodeId: "N1",
-      subjectExpression: "$流程.获取节点实际处理人$(\"N1\")",
-      companyRole: "公司级部门领导",
-      departmentRole: "部门领导",
-      sourceExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N1\"), \"公司级部门领导\", \"部门领导\")",
-      sourceNameExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N1\"), \"公司级部门领导\", \"部门领导\")"
-    };
-    const acceptedNodeSubject = validateMigrationDsl(
-      sampleTrustedDsl({ workflow: nodeSubjectWorkflow }),
-      { mode: "execute" }
-    );
-    nodeSubjectWorkflow.nodes[1].participants.nodeId = "N404";
-    const rejectedNodeSubject = validateMigrationDsl(
-      sampleTrustedDsl({ workflow: nodeSubjectWorkflow }),
-      { mode: "execute" }
-    );
-
-    assert.equal(acceptedNodeSubject.ok, true);
-    assert.equal(rejectedNodeSubject.ok, false);
     assert.equal(
-      rejectedNodeSubject.diagnostics.some((item) => item.code === "workflow.participants.role_line_node_missing"),
-      true
-    );
-
-    const invalidKindWorkflow = structuredClone(workflow);
-    invalidKindWorkflow.nodes[1].participants.subjectKind = "unknown";
-    const invalidKind = validateMigrationDsl(
-      sampleTrustedDsl({ workflow: invalidKindWorkflow }),
-      { mode: "execute" }
-    );
-    assert.equal(invalidKind.ok, false);
-    assert.equal(
-      invalidKind.diagnostics.some((item) => item.code === "workflow.participants.role_line_subject_kind_unsupported"),
-      true
-    );
-
-    const conflictingSubjectWorkflow = structuredClone(workflow);
-    conflictingSubjectWorkflow.nodes[1].participants.nodeId = "N1";
-    conflictingSubjectWorkflow.nodes[1].participants.subjectExpression = "$流程.获取节点实际处理人$(\"N1\")";
-    const conflictingSubject = validateMigrationDsl(
-      sampleTrustedDsl({ workflow: conflictingSubjectWorkflow }),
-      { mode: "execute" }
-    );
-    assert.equal(conflictingSubject.ok, false);
-    assert.equal(
-      conflictingSubject.diagnostics.some((item) => item.code === "workflow.participants.role_line_subject_conflict"),
+      rejected.diagnostics.some((item) => item.code === "workflow.participants.mode_unsupported"),
       true
     );
   });

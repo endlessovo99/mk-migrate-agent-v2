@@ -57,20 +57,7 @@ function nativeFormulaParticipantDsl() {
         sourceNameExpression: "$docCreator$"
       }
     },
-    {
-      ...workflowNode("N5", "review", "manualTask", "Role Review"),
-      participants: {
-        mode: "role_line",
-        subjectKind: "node_handlers",
-        nodeId: "N2",
-        subjectExpression: "$流程.获取节点实际处理人$(\"N2\")",
-        companyRole: "Company Lead",
-        departmentRole: "Department Lead",
-        sourceExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N2\"), \"Company Lead\", \"Department Lead\")",
-        sourceNameExpression: "$组织架构.解释角色线$($流程.获取节点实际处理人$(\"N2\"), \"Company Lead\", \"Department Lead\")"
-      }
-    },
-    workflowNode("N6", "generalEnd", "endEvent", "End")
+    workflowNode("N5", "generalEnd", "endEvent", "End")
   ];
   return sampleTrustedDsl({
     workflow: {
