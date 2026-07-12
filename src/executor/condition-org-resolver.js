@@ -75,7 +75,7 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl, fallbac
 
   for (const name of names) {
     try {
-      const candidates = uniqueCandidates(await searchCurrentCandidates(name, client, searchCache));
+      const candidates = uniqueCandidates(await searchCurrentCandidates(name, 2, client, searchCache));
       const match = pickOrgCandidate(name, candidates);
       if (!match) {
         unresolvedNames.push(name);
@@ -93,7 +93,7 @@ export async function resolveConditionOrgs(dsl, { client, targetBaseUrl, fallbac
 
   for (const fdNo of fdNos) {
     try {
-      const candidates = uniqueCandidates(await searchCurrentCandidates(fdNo, client, searchCache));
+      const candidates = uniqueCandidates(await searchCurrentCandidates(fdNo, 2, client, searchCache));
       const match = pickOrgCandidateByFdNo(fdNo, candidates);
       if (!match) {
         unresolvedFdNos.push(fdNo);
@@ -254,11 +254,12 @@ function pickOrgCandidateByFdNo(fdNo, candidates) {
   return undefined;
 }
 
-function searchCurrentCandidates(key, client, searchCache) {
-  let candidatesPromise = searchCache.get(key);
+function searchCurrentCandidates(key, sourceOrgType, client, searchCache) {
+  const cacheKey = `${sourceOrgType}\0${key}`;
+  let candidatesPromise = searchCache.get(cacheKey);
   if (!candidatesPromise) {
-    candidatesPromise = Promise.resolve(client.searchOrg(key));
-    searchCache.set(key, candidatesPromise);
+    candidatesPromise = Promise.resolve(client.searchOrg(key, sourceOrgType));
+    searchCache.set(cacheKey, candidatesPromise);
   }
   return candidatesPromise;
 }

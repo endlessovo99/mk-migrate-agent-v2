@@ -57,6 +57,8 @@ const WORKFLOW_PARTICIPANT_MODES = new Set([
   "dept_leader_by_no",
   "doc_creator",
   "node_history_superior_department_head",
+  "field_role_line_script",
+  "configured_person_fallback",
   "script_formula"
 ]);
 const MAPPED_FORMULA_PARTICIPANT_MODES = new Set([
@@ -65,6 +67,8 @@ const MAPPED_FORMULA_PARTICIPANT_MODES = new Set([
   "dept_leader_by_no",
   "doc_creator",
   "node_history_superior_department_head",
+  "field_role_line_script",
+  "configured_person_fallback",
   "script_formula"
 ]);
 const MK_FIELD_ID_MAX_LENGTH = 25;
@@ -1281,6 +1285,95 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         "workflow.participants.node_history_source_required",
         "Node-history superior-department-head participants must preserve the source expression.",
         `${path}/sourceExpression`
+      ));
+    }
+  }
+  if (participants.mode === "field_role_line_script") {
+    const expectedRoles = participants.recipe === "department_head"
+      ? ["公司级部门领导", "部门领导"]
+      : participants.recipe === "superior_department_head"
+        ? ["公司级分管领导", "分管领导"]
+        : undefined;
+    if (!expectedRoles) {
+      diagnostics.push(error(
+        "workflow.participants.field_role_line_recipe_unsupported",
+        "Field role-line participants require a supported deterministic Script recipe.",
+        `${path}/recipe`,
+        { actual: participants.recipe }
+      ));
+    }
+    if (!nonEmptyString(participants.fieldId) || !nonEmptyString(participants.sourceFieldId)) {
+      diagnostics.push(error(
+        "workflow.participants.field_role_line_field_required",
+        "Field role-line participants require fieldId and sourceFieldId.",
+        `${path}/fieldId`
+      ));
+    } else if (context.fieldIds instanceof Set && !context.fieldIds.has(participants.fieldId)) {
+      diagnostics.push(error(
+        "workflow.participants.field_role_line_field_missing",
+        "Field role-line participant fieldId must reference an existing form field.",
+        `${path}/fieldId`,
+        { fieldId: participants.fieldId }
+      ));
+    }
+    if (
+      expectedRoles &&
+      (participants.companyRole !== expectedRoles[0] || participants.departmentRole !== expectedRoles[1])
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.field_role_line_roles_mismatch",
+        "Field role-line roles must match the selected deterministic Script recipe.",
+        path,
+        { companyRole: participants.companyRole, departmentRole: participants.departmentRole }
+      ));
+    }
+    if (!nonEmptyString(participants.sourceExpression)) {
+      diagnostics.push(error(
+        "workflow.participants.field_role_line_source_required",
+        "Field role-line participants must preserve the source expression.",
+        `${path}/sourceExpression`
+      ));
+    }
+  }
+  if (participants.mode === "configured_person_fallback") {
+    if (participants.fallbackKind !== "person") {
+      diagnostics.push(error(
+        "workflow.participants.configured_fallback_kind_unsupported",
+        "Configured formula fallbacks currently support only the person fallback.",
+        `${path}/fallbackKind`,
+        { actual: participants.fallbackKind }
+      ));
+    }
+    if (!nonEmptyString(participants.fieldId) || !nonEmptyString(participants.sourceFieldId)) {
+      diagnostics.push(error(
+        "workflow.participants.configured_fallback_field_required",
+        "Configured formula person fallbacks require fieldId and sourceFieldId.",
+        `${path}/fieldId`
+      ));
+    } else if (context.fieldIds instanceof Set && !context.fieldIds.has(participants.fieldId)) {
+      diagnostics.push(error(
+        "workflow.participants.configured_fallback_field_missing",
+        "Configured formula person fallback fieldId must reference an existing form field.",
+        `${path}/fieldId`,
+        { fieldId: participants.fieldId }
+      ));
+    }
+    if (
+      participants.companyRole !== "公司级相关领导" ||
+      participants.departmentRole !== "相关领导"
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.configured_fallback_roles_unsupported",
+        "Configured formula person fallback is limited to the verified related-leader role pair.",
+        path,
+        { companyRole: participants.companyRole, departmentRole: participants.departmentRole }
+      ));
+    }
+    if (!nonEmptyString(participants.sourceExpression) || !nonEmptyString(participants.reason)) {
+      diagnostics.push(error(
+        "workflow.participants.configured_fallback_evidence_required",
+        "Configured formula person fallbacks must preserve sourceExpression and reason.",
+        path
       ));
     }
   }

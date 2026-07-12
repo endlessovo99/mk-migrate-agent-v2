@@ -32,6 +32,13 @@ export class ParticipantResolutionError extends Error {
 export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, fallbackFdIds } = {}) {
   const nextDsl = structuredClone(dsl);
   const configuredFallbacks = resolveTemporaryOrgFallbacks(fallbackFdIds);
+  const elementCache = new Map();
+  const configuredFormulaFallback = await materializeConfiguredPersonFallbacks(nextDsl, {
+    client,
+    targetBaseUrl,
+    configuredFallbacks,
+    elementCache
+  });
   const identities = collectParticipantIdentities(nextDsl);
   if (identities.size === 0) {
     return {
@@ -48,9 +55,10 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
   }
 
   const searchCache = new Map();
-  const elementCache = new Map();
-  const resolutions = await Promise.all(
-    [...identities.values()].map(async (identity) => {
+  const resolutions = await mapWithConcurrency(
+    [...identities.values()],
+    1,
+    async (identity) => {
       try {
         return await resolveIdentity(identity, client, { searchCache, elementCache });
       } catch (error) {
@@ -63,7 +71,7 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
           message: error instanceof Error ? error.message : String(error)
         }], { cause: error });
       }
-    })
+    }
   );
 
   const unresolvedResolutions = resolutions.filter((resolution) => resolution.issue);
@@ -75,7 +83,7 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
   if (blockingResolutions.length) {
     throw new ParticipantResolutionError(unresolvedResolutions.map((resolution) => resolution.issue));
   }
-  let fallbackTargetsByOrgType = {};
+  let fallbackTargetsByOrgType = configuredFormulaFallback.targetsByOrgType;
   if (fallbackResolutions.length) {
     const validatedTargets = await resolveSitFallbackTargets(
       client,
@@ -94,7 +102,9 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
       resolution.fallbackSpec = fallback;
       resolution.issue = undefined;
     }
-    fallbackTargetsByOrgType = Object.fromEntries(
+    fallbackTargetsByOrgType = {
+      ...fallbackTargetsByOrgType,
+      ...Object.fromEntries(
       [...new Map(
         fallbackResolutions.map((resolution) => {
           const sourceOrgType = normalizeOrgType(resolution.member?.sourceOrgType) || "8";
@@ -106,7 +116,8 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
           }];
         })
       ).entries()].sort(([left], [right]) => Number(left) - Number(right))
-    );
+      )
+    };
   }
 
   const issues = resolutions.flatMap((resolution) => resolution.issue ? [resolution.issue] : []);
@@ -115,7 +126,7 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
   }
 
   let resolvedCount = 0;
-  let fallbackCount = 0;
+  let fallbackCount = configuredFormulaFallback.referenceCount;
   for (const resolution of resolutions) {
     for (const member of resolution.members) {
       member.id = resolution.target.fdId;
@@ -127,21 +138,99 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
   }
   deduplicateResolvedParticipantCollections(nextDsl);
 
-  const fallbackTargetIds = [...new Set(
-    fallbackResolutions.map((resolution) => resolution.fallbackSpec.fdId)
-  )].sort();
+  const fallbackTargetIds = [...new Set([
+    ...configuredFormulaFallback.targetFdIds,
+    ...fallbackResolutions.map((resolution) => resolution.fallbackSpec.fdId)
+  ])].sort();
 
   return {
     dsl: nextDsl,
     resolvedCount,
     identityCount: identities.size,
     fallbackCount,
-    fallbackIdentityCount: fallbackResolutions.length,
+    fallbackIdentityCount: configuredFormulaFallback.identityCount + fallbackResolutions.length,
     ...(fallbackCount ? {
       fallbackTargetIds,
       fallbackTargetsByOrgType,
       ...(fallbackTargetIds.length === 1 ? { fallbackTargetId: fallbackTargetIds[0] } : {})
     } : {})
+  };
+}
+
+async function mapWithConcurrency(values, limit, mapper) {
+  const results = new Array(values.length);
+  let nextIndex = 0;
+  const worker = async () => {
+    while (nextIndex < values.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await mapper(values[index], index);
+    }
+  };
+  const workerCount = Math.min(limit, values.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
+}
+
+async function materializeConfiguredPersonFallbacks(dsl, {
+  client,
+  targetBaseUrl,
+  configuredFallbacks,
+  elementCache
+}) {
+  const nodes = Array.isArray(dsl?.workflow?.nodes) ? dsl.workflow.nodes : [];
+  const requests = nodes.flatMap((node, nodeIndex) => {
+    if (node?.participants?.mode !== "configured_person_fallback") return [];
+    return [{
+      node,
+      member: { sourceOrgType: 8 },
+      paths: [`/workflow/nodes/${nodeIndex}/participants`]
+    }];
+  });
+  if (requests.length === 0) {
+    return { referenceCount: 0, identityCount: 0, targetFdIds: [], targetsByOrgType: {} };
+  }
+  if (!allowsTemporaryOrgFallbacks(targetBaseUrl)) {
+    throw new ParticipantResolutionError(requests.map((request) => ({
+      reason: "configured_fallback_origin_forbidden",
+      fallbackKind: "person",
+      paths: request.paths,
+      message: "Configured formula participant fallbacks are restricted to the allowed SIT/dev origins."
+    })));
+  }
+
+  const validatedTargets = await resolveSitFallbackTargets(
+    client,
+    elementCache,
+    requests,
+    configuredFallbacks
+  );
+  const fallback = configuredFallbacks.person;
+  const target = validatedTargets.get(fallbackValidationKey(fallback));
+  for (const request of requests) {
+    request.node.participants = {
+      mode: "explicit",
+      members: [{
+        id: target.fdId,
+        name: target.fdName,
+        type: "user_or_org",
+        targetOrgType: fallback.fdOrgType
+      }]
+    };
+  }
+
+  return {
+    referenceCount: requests.length,
+    identityCount: 1,
+    targetFdIds: [fallback.fdId],
+    targetsByOrgType: {
+      "8": {
+        sourceOrgType: 8,
+        targetFdId: fallback.fdId,
+        targetOrgType: fallback.fdOrgType,
+        targetName: target.fdName
+      }
+    }
   };
 }
 
@@ -316,7 +405,7 @@ async function resolveIdentity(identity, client, caches) {
   const sourceLoginName = normalizeText(identity.member.sourceLoginName);
   if (sourceOrgType === "8" && sourceLoginName) {
     const loginCandidates = uniqueCurrentCandidates(
-      await searchCurrentCandidates(sourceLoginName, client, caches.searchCache)
+      await searchCurrentCandidates(sourceLoginName, Number(sourceOrgType), client, caches.searchCache)
     );
     const loginMatches = matchPersonLoginCandidates(identity.member, loginCandidates);
     if (loginMatches.length > 0) {
@@ -324,7 +413,10 @@ async function resolveIdentity(identity, client, caches) {
     }
   }
 
-  const candidates = uniqueCurrentCandidates(await searchCurrentCandidates(name, client, caches.searchCache));
+  const searchName = participantSearchName(identity.member, sourceOrgType);
+  const candidates = uniqueCurrentCandidates(
+    await searchCurrentCandidates(searchName, Number(sourceOrgType), client, caches.searchCache)
+  );
   const matches = matchCurrentCandidates(identity.member, candidates);
   return resolutionFromMatches(identity, matches);
 }
@@ -390,11 +482,12 @@ function resolutionFromMatches(identity, matches) {
   };
 }
 
-function searchCurrentCandidates(key, client, searchCache) {
-  let candidatesPromise = searchCache.get(key);
+function searchCurrentCandidates(key, sourceOrgType, client, searchCache) {
+  const cacheKey = `${sourceOrgType}\0${key}`;
+  let candidatesPromise = searchCache.get(cacheKey);
   if (!candidatesPromise) {
-    candidatesPromise = Promise.resolve(client.searchOrg(key));
-    searchCache.set(key, candidatesPromise);
+    candidatesPromise = Promise.resolve(client.searchOrg(key, sourceOrgType));
+    searchCache.set(cacheKey, candidatesPromise);
   }
   return candidatesPromise;
 }
@@ -431,12 +524,29 @@ function matchCurrentCandidates(member, candidates) {
   }
 
   const sourceName = normalizeText(member.name);
+  const sourceLeafName = participantSearchName(member, sourceOrgType);
   const sourceParentName = normalizeText(member.sourceParentName);
   if (!sourceName || !sourceParentName) return [];
   return sameType.filter((candidate) => (
-    normalizeText(candidate.fdName) === sourceName &&
-    normalizeText(candidateParentName(candidate)) === sourceParentName
+    [sourceName, sourceLeafName].includes(normalizeText(candidate.fdName)) &&
+    parentNameMatches(sourceParentName, candidateParentName(candidate))
   ));
+}
+
+function participantSearchName(member, sourceOrgType) {
+  const name = normalizeText(member?.name);
+  if (!["4", "32", "128"].includes(normalizeOrgType(sourceOrgType))) return name;
+  const separatorIndex = name.lastIndexOf("_");
+  return separatorIndex >= 0 ? normalizeText(name.slice(separatorIndex + 1)) || name : name;
+}
+
+function parentNameMatches(sourceParentName, candidateValue) {
+  const source = normalizeText(sourceParentName);
+  const candidate = normalizeText(candidateValue);
+  if (!source || !candidate) return false;
+  return candidate === source ||
+    candidate.endsWith(`/${source}`) ||
+    candidate.endsWith(`\\${source}`);
 }
 
 function matchPersonLoginCandidates(member, candidates) {

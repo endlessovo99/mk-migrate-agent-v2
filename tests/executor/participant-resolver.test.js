@@ -17,6 +17,70 @@ const SIT_FALLBACK_GROUP = SIT_PARTICIPANT_FALLBACKS.group;
 const SIT_FALLBACK_DEPARTMENT = SIT_PARTICIPANT_FALLBACKS.department;
 
 describe("resolveWorkflowParticipants", () => {
+  it("materializes configured formula person fallbacks only at the allowed execution origin", async () => {
+    const dsl = dslWithExplicitMembers([]);
+    dsl.workflow.nodes[1].participants = {
+      mode: "configured_person_fallback",
+      fallbackKind: "person",
+      reason: "related leader formula has no verified target recipe",
+      sourceExpression: '$组织架构.解释角色线$($fd_department$, "公司级相关领导", "相关领导")',
+      sourceNameExpression: '$组织架构.解释角色线$($部门$, "公司级相关领导", "相关领导")'
+    };
+    const configuredPersonId = "configured-formula-person-id";
+    const client = new SearchClient({}, {
+      [configuredPersonId]: [currentOrg({
+        fdId: configuredPersonId,
+        fdName: "配置公式兜底人",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: NEWOA_SIT_BASE_URL,
+      fallbackFdIds: { person: configuredPersonId }
+    });
+
+    assert.deepEqual(result.dsl.workflow.nodes[1].participants, {
+      mode: "explicit",
+      members: [{
+        id: configuredPersonId,
+        name: "配置公式兜底人",
+        type: "user_or_org",
+        targetOrgType: 8
+      }]
+    });
+    assert.equal(result.identityCount, 1);
+    assert.equal(result.fallbackCount, 1);
+    assert.equal(result.fallbackIdentityCount, 1);
+    assert.deepEqual(result.fallbackTargetIds, [configuredPersonId]);
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[configuredPersonId]]);
+  });
+
+  it("rejects configured formula person fallbacks outside the allowed execution origins", async () => {
+    const dsl = dslWithExplicitMembers([]);
+    dsl.workflow.nodes[1].participants = {
+      mode: "configured_person_fallback",
+      fallbackKind: "person",
+      reason: "related leader formula has no verified target recipe",
+      sourceExpression: '$组织架构.解释角色线$($fd_department$, "公司级相关领导", "相关领导")'
+    };
+    const client = new SearchClient();
+
+    await assert.rejects(
+      resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: "https://production.example.com",
+        fallbackFdIds: { person: "configured-formula-person-id" }
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.every((issue) => issue.reason === "configured_fallback_origin_forbidden")
+    );
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, []);
+  });
+
   it("uses type-specific validated SIT fallbacks for source identities that cannot be found", async () => {
     const dsl = dslWithExplicitMembers([
       sourceMember({
@@ -70,6 +134,11 @@ describe("resolveWorkflowParticipants", () => {
     );
     assert.equal(result.fallbackCount, 4);
     assert.equal(result.fallbackIdentityCount, 4);
+    assert.deepEqual(client.searchRequests, [
+      { key: "不存在岗位", sourceOrgType: 4 },
+      { key: "不存在群组", sourceOrgType: 16 },
+      { key: "不存在部门", sourceOrgType: 2 }
+    ]);
     assert.deepEqual(result.fallbackTargetIds, [
       SIT_FALLBACK_PERSON.fdId,
       SIT_FALLBACK_POST.fdId,
@@ -487,6 +556,34 @@ describe("resolveWorkflowParticipants", () => {
     assert.equal(result.dsl.workflow.nodes[1].participants.members[0].targetOrgType, 32);
   });
 
+  it("resolves legacy qualified post names by leaf name and parent-path suffix", async () => {
+    const dsl = dslWithExplicitMembers([
+      sourceMember({
+        name: "环保集团本部（机电院）工业设计工程研究院_总经理",
+        sourceId: "legacy-qualified-post",
+        sourceOrgType: 4,
+        sourceParentName: "环保集团本部（机电院）工业设计工程研究院"
+      })
+    ]);
+    const client = new SearchClient({
+      总经理: [currentOrg({
+        fdId: "current-general-manager-post",
+        fdName: "总经理",
+        fdOrgType: 4,
+        fdParentName: "上海电气集团/环保集团本部（机电院）工业设计工程研究院"
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: "https://production.example.com"
+    });
+
+    assert.equal(result.resolvedCount, 1);
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].id, "current-general-manager-post");
+    assert.deepEqual(client.searchRequests, [{ key: "总经理", sourceOrgType: 4 }]);
+  });
+
   it("aggregates missing and ambiguous identities instead of trusting legacy ids", async () => {
     const dsl = dslWithExplicitMembers([
       sourceMember({
@@ -572,6 +669,40 @@ describe("resolveWorkflowParticipants", () => {
       SIT_FALLBACK_PERSON.fdId,
       SIT_FALLBACK_POST.fdId
     ].sort()]);
+  });
+
+  it("bounds concurrent organization searches so NewOA is not flooded", async () => {
+    const members = Array.from({ length: 12 }, (_, index) => sourceMember({
+      name: `人员${index}`,
+      sourceId: `legacy-person-${index}`,
+      sourceOrgType: 8,
+      sourceParentName: `部门${index}`
+    }));
+    let active = 0;
+    let maxActive = 0;
+    const client = {
+      async searchOrg(name, sourceOrgType) {
+        active += 1;
+        maxActive = Math.max(maxActive, active);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        active -= 1;
+        const index = Number(name.replace("人员", ""));
+        return [currentOrg({
+          fdId: `current-person-${index}`,
+          fdName: name,
+          fdOrgType: sourceOrgType,
+          fdParentName: `部门${index}`
+        })];
+      }
+    };
+
+    const result = await resolveWorkflowParticipants(dslWithExplicitMembers(members), {
+      client,
+      targetBaseUrl: "https://production.example.com"
+    });
+
+    assert.equal(result.resolvedCount, 12);
+    assert.equal(maxActive, 1, `observed ${maxActive} concurrent searches`);
   });
 });
 
@@ -752,12 +883,30 @@ describe("NewoaClient current organization reads", () => {
     assert.equal(calls[0].url, `${NEWOA_SIT_BASE_URL}/data/sys-org/sysOrgAddress/searchOrg`);
     assert.deepEqual(JSON.parse(calls[0].options.body), {
       key: "张三",
-      orgType: 287,
+      orgType: 60,
       paramAvailable: 1,
-      searchMode: "ACCURATE"
+      addressRange: [1],
+      searchMode: "FUZZY"
     });
     assert.equal(calls[0].options.method, "POST");
     assert.deepEqual(result.map((item) => item.fdId), ["person-1"]);
+  });
+
+  it("narrows current organization search to the source org type when provided", async () => {
+    const calls = [];
+    const client = new NewoaClient({
+      baseUrl: NEWOA_SIT_BASE_URL,
+      fetchImpl: async (url, options) => {
+        calls.push({ url, options });
+        return jsonResponse({ success: true, data: [] });
+      }
+    });
+    client.token = "test-token";
+
+    await client.searchOrg("环保集团本部（机电院）运营管理中心_部门领导", 4);
+
+    assert.equal(calls.length, 1);
+    assert.equal(JSON.parse(calls[0].options.body).orgType, 4);
   });
 
   it("validates existing targets with the current element-info contract", async () => {
@@ -788,6 +937,7 @@ class SearchClient {
     this.results = results;
     this.elementResults = elementResults;
     this.calls = [];
+    this.searchRequests = [];
     this.elementCalls = [];
     this.executeCalls = [];
   }
@@ -797,8 +947,9 @@ class SearchClient {
     return { ok: true };
   }
 
-  async searchOrg(name) {
+  async searchOrg(name, sourceOrgType) {
     this.calls.push(name);
+    this.searchRequests.push({ key: name, sourceOrgType });
     return structuredClone(this.results[name] || []);
   }
 

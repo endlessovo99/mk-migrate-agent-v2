@@ -1025,6 +1025,22 @@ describe("executeDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"), true);
   });
 
+  it("verifies draft-selected nodes that retain explicit default handlers", () => {
+    const workflow = sampleInitiatorSelectWorkflow();
+    const selected = workflow.nodes.find((node) => node.id === "N16");
+    selected.attributes.handlerIds = "person-default";
+    selected.attributes.handlerNames = "默认审批人";
+    selected.participants = {
+      mode: "explicit",
+      members: [{ id: "person-default", name: "默认审批人", sourceOrgType: 8 }]
+    };
+    const trusted = sampleTrustedDsl({ workflow });
+    const template = projectTemplate(trusted, baseTemplate());
+    const verified = verifyTemplate(trusted, template);
+
+    assert.equal(verified.ok, true, JSON.stringify(verified.diagnostics, null, 2));
+  });
+
   it("persists draft-selection linkage from any workflow node with comma delimiters", () => {
     const workflow = sampleInitiatorSelectWorkflow();
     workflow.nodes.find((node) => node.id === "N1").attributes.mustModifyHandlerNodeIds = "N16; N7，N16";

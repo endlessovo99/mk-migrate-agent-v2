@@ -8,6 +8,8 @@ const FORMULA_PARTICIPANT_KEYS = Object.freeze([
   "subjectExpression",
   "companyRole",
   "departmentRole",
+  "fallbackKind",
+  "reason",
   "sourceExpression",
   "sourceNameExpression"
 ]);
@@ -25,6 +27,8 @@ const FORMULA_PARTICIPANT_MODES = new Set([
   "dept_leader_by_no",
   "doc_creator",
   "node_history_superior_department_head",
+  "field_role_line_script",
+  "configured_person_fallback",
   "script_formula"
 ]);
 
@@ -35,6 +39,8 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
   const handlerNames = splitList(attributes.handlerNames);
   return detailScriptParticipant(attributes) ||
     nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) ||
+    fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) ||
+    configuredPersonFallbackParticipant(attributes, handlerIds, handlerNames) ||
     personByLoginNameParticipant(attributes, handlerIds, handlerNames) ||
     deptLeaderByNoParticipant(attributes, handlerIds, handlerNames) ||
     formFieldParticipant(attributes, handlerIds, handlerNames) ||
@@ -45,6 +51,81 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
       sourceExpression: attributes.handlerIds || "",
       sourceNameExpression: attributes.handlerNames || ""
     };
+}
+
+function configuredPersonFallbackParticipant(attributes, handlerIds, handlerNames) {
+  if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
+
+  const parsed = parseFieldRoleLineFormula(handlerIds[0]);
+  if (
+    !parsed ||
+    !parsed.subject.startsWith("fd_") ||
+    parsed.companyRole !== "公司级相关领导" ||
+    parsed.departmentRole !== "相关领导"
+  ) {
+    return undefined;
+  }
+
+  const nameParsed = parseFieldRoleLineFormula(handlerNames[0]);
+  const fieldTitle = nameParsed && !nameParsed.subject.startsWith("fd_")
+    ? nameParsed.subject
+    : parsed.subject;
+  return {
+    mode: "configured_person_fallback",
+    fallbackKind: "person",
+    reason: "related leader formula has no verified target recipe",
+    subjectKind: "field",
+    fieldId: parsed.subject,
+    sourceFieldId: parsed.subject,
+    fieldTitle,
+    companyRole: parsed.companyRole,
+    departmentRole: parsed.departmentRole,
+    sourceExpression: handlerIds[0],
+    sourceNameExpression: handlerNames[0] || ""
+  };
+}
+
+function fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) {
+  if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
+
+  const parsed = parseFieldRoleLineFormula(handlerIds[0]);
+  if (!parsed || !parsed.subject.startsWith("fd_")) return undefined;
+  const recipe = parsed.companyRole === "公司级部门领导" && parsed.departmentRole === "部门领导"
+    ? "department_head"
+    : parsed.companyRole === "公司级分管领导" && parsed.departmentRole === "分管领导"
+      ? "superior_department_head"
+      : undefined;
+  if (!recipe) return undefined;
+
+  const nameParsed = parseFieldRoleLineFormula(handlerNames[0]);
+  const fieldTitle = nameParsed && !nameParsed.subject.startsWith("fd_")
+    ? nameParsed.subject
+    : parsed.subject;
+  return {
+    mode: "field_role_line_script",
+    recipe,
+    subjectKind: "field",
+    fieldId: parsed.subject,
+    sourceFieldId: parsed.subject,
+    fieldTitle,
+    companyRole: parsed.companyRole,
+    departmentRole: parsed.departmentRole,
+    sourceExpression: handlerIds[0],
+    sourceNameExpression: handlerNames[0] || ""
+  };
+}
+
+function parseFieldRoleLineFormula(value) {
+  const match = normalizeLegacyExpression(value).match(/^\$组织架构\.解释角色线\$\s*\((.*)\)$/);
+  if (!match) return undefined;
+
+  const args = splitFunctionArguments(match[1]);
+  if (args.length !== 3) return undefined;
+  const subject = simpleDollarExpressionValue(args[0]);
+  const companyRole = quotedStringValue(args[1]);
+  const departmentRole = quotedStringValue(args[2]);
+  if (!subject || companyRole === undefined || departmentRole === undefined) return undefined;
+  return { subject, companyRole, departmentRole };
 }
 
 function nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) {

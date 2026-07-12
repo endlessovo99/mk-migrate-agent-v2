@@ -444,6 +444,18 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       ));
       return null;
     }
+    if (node.participants?.mode === "configured_person_fallback") {
+      diagnostics.push(projectionError(
+        "projection.workflow.configured_fallback_unresolved",
+        "Configured formula participant fallbacks must be materialized by participant resolution before persistence.",
+        {
+          nodeId: node.id,
+          fallbackKind: node.participants.fallbackKind || "",
+          sourceExpression: node.participants.sourceExpression || attributes.handlerIds || ""
+        }
+      ));
+      return null;
+    }
     return {
       id: node.id,
       name: normalizeScalar(node.name),
@@ -495,6 +507,8 @@ function isFormulaParticipantMode(mode) {
     "dept_leader_by_no",
     "doc_creator",
     "node_history_superior_department_head",
+    "field_role_line_script",
+    "configured_person_fallback",
     "script_formula"
   ].includes(mode);
 }
@@ -519,7 +533,16 @@ function collectDefaultEdgeIds(nodes = [], edges = []) {
 }
 
 function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
-  if (initiatorSelectTarget && node?.participants?.mode === "initiator_select") {
+  if (initiatorSelectTarget) {
+    const members = node?.participants?.mode === "explicit"
+      ? (node.participants.members || [])
+        .map((member) => ({
+          id: normalizeScalar(member.id),
+          element: "user",
+          type: expectedNativeMemberType(member)
+        }))
+        .sort((left, right) => String(left.id).localeCompare(String(right.id)))
+      : [];
     return {
       mode: "initiator_select",
       handlersType: "org",
@@ -527,7 +550,7 @@ function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
       handlersRuleKey: "",
       handlersRuleName: "",
       handlersElement: "users",
-      members: []
+      members
     };
   }
   if (!node?.participants) return undefined;
@@ -564,6 +587,14 @@ function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
   if (node.participants.mode === "script_formula") {
     return {
       mode: "script_formula",
+      recipe: node.participants.recipe,
+      fieldId: node.participants.fieldId,
+      nativeFormula: expectedParticipantFormula(node.participants, context)
+    };
+  }
+  if (node.participants.mode === "field_role_line_script") {
+    return {
+      mode: "field_role_line_script",
       recipe: node.participants.recipe,
       fieldId: node.participants.fieldId,
       nativeFormula: expectedParticipantFormula(node.participants, context)
@@ -627,6 +658,18 @@ function expectedParticipantFormula(participants, context = {}) {
     ruleVoContent = `return #查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`;
     ruleMode = "script";
     ruleKeyMode = "";
+  } else if (participants?.mode === "field_role_line_script") {
+    const dataRef = `\${data.${fieldRef}}`;
+    const displayRef = `$内置表单.${participants.fieldTitle || fieldId}$`;
+    if (participants.recipe === "department_head") {
+      script = `return \${func.sysorg.getDepartmentHead}(${dataRef}) || [];`;
+      ruleVoContent = `return #查找部门领导#(${displayRef}) || [];`;
+    } else if (participants.recipe === "superior_department_head") {
+      script = `return \${func.sysorg.getSuperiorDepartmenthead}(${dataRef}, 1) || [];`;
+      ruleVoContent = `return #查找上级部门领导#(${displayRef}, 1) || [];`;
+    }
+    ruleMode = "script";
+    ruleKeyMode = "";
   } else if (participants?.mode === "script_formula") {
     const binding = expectedDetailScriptFormulaBinding(participants, context);
     const dataRef = `\${data.${binding.variableId}}`;
@@ -650,11 +693,11 @@ function expectedParticipantFormula(participants, context = {}) {
     memberCount: 0,
     ruleMode,
     formulaType: "formula",
-    ruleKeyType: ["script_formula", "node_history_superior_department_head"].includes(participants?.mode)
+    ruleKeyType: ["script_formula", "node_history_superior_department_head", "field_role_line_script"].includes(participants?.mode)
       ? "Script"
       : "Eval",
     ruleKeyMode,
-    ruleVoMode: ["script_formula", "node_history_superior_department_head"].includes(participants?.mode)
+    ruleVoMode: ["script_formula", "node_history_superior_department_head", "field_role_line_script"].includes(participants?.mode)
       ? "script"
       : "formula",
     ...(ruleVoContent !== undefined ? { ruleVoContent } : {}),
@@ -662,7 +705,8 @@ function expectedParticipantFormula(participants, context = {}) {
       "person_by_login_name",
       "doc_creator",
       "script_formula",
-      "node_history_superior_department_head"
+      "node_history_superior_department_head",
+      "field_role_line_script"
     ].includes(participants?.mode)
       ? "org_array"
       : "none"
@@ -807,15 +851,37 @@ function summarizeCondition(edge, conditionBranch, context = {}) {
     edge?.displayCondition ||
     "";
   if (!String(sourceText).trim()) return undefined;
-  const nativeSemantics = conditionBranch
-    ? expectedBatchConditionSemantics(sourceText, context)
+  const scriptSemantics = conditionBranch
+    ? expectedCreatorParentPathContainsScriptSemantics(sourceText)
     : undefined;
+  const nativeSemantics = scriptSemantics || (
+    conditionBranch ? expectedBatchConditionSemantics(sourceText, context) : undefined
+  );
   return {
     sourceText: normalizeScalar(sourceText),
     nativeRequired: true,
-    nativeKind: conditionBranch ? "batch_formula" : "rule",
+    nativeKind: conditionBranch
+      ? scriptSemantics
+        ? "script_formula"
+        : "batch_formula"
+      : "rule",
     ...(nativeSemantics ? { nativeSemantics } : {})
   };
+}
+
+function expectedCreatorParentPathContainsScriptSemantics(sourceText) {
+  const match = String(sourceText || "").trim().match(
+    /^\$字符串\.包含\$\(\s*\$(?:docCreator|申请人|起草人)\$\s*\.\s*getFdParentsName\s*\(\s*["']\/["']\s*\)\s*,\s*("(?:\\.|[^"\\])*")\s*\)$/i
+  );
+  if (!match) return undefined;
+  try {
+    return {
+      recipe: "creator_parent_path_contains",
+      needle: JSON.parse(match[1])
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 function expectedBatchConditionSemantics(sourceText, context = {}) {

@@ -730,6 +730,28 @@ describe("workflow mutations", () => {
       true
     );
   });
+
+  it("rejects a configured formula fallback that was not materialized by participant resolution", () => {
+    const workflow = sampleWorkflow();
+    workflow.nodes[0].participants = {
+      mode: "configured_person_fallback",
+      fallbackKind: "person",
+      reason: "related leader formula has no verified target recipe",
+      sourceExpression: '$组织架构.解释角色线$($fd_department$, "公司级相关领导", "相关领导")'
+    };
+
+    const prepared = preparePersistedTemplate({
+      dsl: sampleTrustedDsl({ workflow }),
+      envelope: sampleEnvelope(),
+      baseTemplate: sampleBaseTemplate()
+    });
+
+    assert.equal(prepared.ok, false);
+    assert.equal(
+      prepared.diagnostics.some((item) => item.code === "projection.workflow.configured_fallback_unresolved"),
+      true
+    );
+  });
 });
 
 describe("decode failures", () => {

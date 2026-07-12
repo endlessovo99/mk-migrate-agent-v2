@@ -850,6 +850,27 @@ function observeParticipants(node, initiatorSelectTarget) {
         ? { mode: "node_history_superior_department_head", nodeId: nodeMatch[1], nativeFormula }
         : { mode: "node_history_superior_department_head", nativeFormula };
     }
+    if (
+      ruleKey.type === "Script" &&
+      fieldId &&
+      /getDepartmentHead/.test(script) &&
+      !/getElementByNo/.test(script)
+    ) {
+      return {
+        mode: "field_role_line_script",
+        recipe: "department_head",
+        fieldId,
+        nativeFormula
+      };
+    }
+    if (ruleKey.type === "Script" && fieldId && /getSuperiorDepartmenthead/.test(script)) {
+      return {
+        mode: "field_role_line_script",
+        recipe: "superior_department_head",
+        fieldId,
+        nativeFormula
+      };
+    }
     if (ruleKey.type === "Script") {
       const recipe = /getPersonByLoginName/.test(script)
         ? "detail_login_names_to_persons"
@@ -1003,6 +1024,41 @@ function observeEdgeCondition(edge, autoConditionBranch = false) {
     });
   }
 
+  let parsedFormula;
+  if (trimmedFormula.startsWith("{")) {
+    try {
+      parsedFormula = typeof formulaRaw === "string" ? JSON.parse(trimmedFormula) : formulaRaw;
+    } catch {
+      parsedFormula = undefined;
+    }
+  }
+  if (parsedFormula?.type === "Script") {
+    const semantics = observeCreatorParentPathContainsScriptSemantics(parsedFormula);
+    if (autoConditionBranch && edge?.formulaType !== "formula") {
+      return withConditionProvenance(edge, {
+        nativeKind: "script_formula",
+        nativeStatus: "corrupt",
+        reason: "condition_branch_formula_type",
+        hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+      });
+    }
+    if (!semantics) {
+      return withConditionProvenance(edge, {
+        nativeKind: "script_formula",
+        nativeStatus: "corrupt",
+        reason: "invalid_script_shape",
+        hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+      });
+    }
+    return withConditionProvenance(edge, {
+      nativeKind: "script_formula",
+      nativeStatus: "ok",
+      hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula),
+      formulaDigest: digestText(normalizeScalar(trimmedFormula)),
+      ...semantics
+    });
+  }
+
   const looksLikeBatch = autoConditionBranch ||
     edge?.formulaType === "formula" ||
     trimmedFormula.startsWith("{") ||
@@ -1080,6 +1136,28 @@ function observeEdgeCondition(edge, autoConditionBranch = false) {
     text: normalizeScalar(typeof text === "string" ? text : stableStringify(text)),
     hasForbiddenLiteral: hasForbiddenConditionLiteral(text)
   });
+}
+
+function observeCreatorParentPathContainsScriptSemantics(formula) {
+  if (
+    typeof formula?.script !== "string" ||
+    formula?.vo?.mode !== "script" ||
+    formula?.resultType?.type !== "boolean"
+  ) {
+    return undefined;
+  }
+  const scriptMatch = formula.script.match(
+    /^var creator = \$\{data\._ProcessCreator\}; if \(Object\.prototype\.toString\.call\(creator\) === "\[object Array\]"\) \{ creator = creator\[0\]; \} if \(!creator\) \{ return false; \} var path = \$\{func\.sysorg\.getDepartmentAllPath\}\(creator\) \|\| ""; return String\(path\)\.indexOf\(("(?:\\.|[^"\\])*")\) !== -1;$/
+  );
+  if (!scriptMatch) return undefined;
+  try {
+    return {
+      recipe: "creator_parent_path_contains",
+      needle: JSON.parse(scriptMatch[1])
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 function isValidBatchConditionFormula(value) {

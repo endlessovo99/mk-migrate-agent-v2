@@ -233,6 +233,8 @@ function isFormulaParticipantMode(mode) {
     "dept_leader_by_no",
     "doc_creator",
     "node_history_superior_department_head",
+    "field_role_line_script",
+    "configured_person_fallback",
     "script_formula"
   ].includes(mode);
 }
@@ -458,6 +460,7 @@ function buildArtificialNode(node, type, context = {}) {
       node.participants?.mode === "dept_leader_by_no" ||
       node.participants?.mode === "doc_creator" ||
       node.participants?.mode === "node_history_superior_department_head" ||
+      node.participants?.mode === "field_role_line_script" ||
       node.participants?.mode === "script_formula"
       ? "formula"
       : attrs.handlerSelectType,
@@ -685,6 +688,7 @@ function buildEdgeElement(edge, index, branchRoute) {
   };
   if (branchRoute) {
     const hasFormulaConfig = Boolean(branchRoute.formulaConfig);
+    const isScriptFormula = branchRoute.formulaConfig?.type === "Script";
     const ruleText = branchRoute.manual
       ? (displayText || branchRoute.resultCode || branchRoute.lineName || edge.name || "")
       : (displayText || branchRoute.resultCode || "");
@@ -701,7 +705,7 @@ function buildEdgeElement(edge, index, branchRoute) {
       element.formulaType = hasFormulaConfig ? "formula" : rulePayload ? "rule" : "formula";
       element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : rulePayload;
     } else {
-      element.formulaName = hasFormulaConfig ? "" : "";
+      element.formulaName = isScriptFormula ? branchRoute.formulaConfig.vo?.content || "" : "";
       element.formulaType = "formula";
       element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : "";
     }
@@ -754,11 +758,14 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
   const namedOther = isOtherRoute(edge);
   const tautologicalDefault = isTautologyCondition(conditionText);
   const parsedFormula = manual ? undefined : buildFormulaDesignerConfig(edge, context);
+  const scriptFormula = manual || parsedFormula
+    ? undefined
+    : buildCreatorParentPathContainsScriptFormula(conditionText);
   const contradictionDefault = isContradictionCondition(conditionText);
-  const needsSyntheticDefaultFormula = !manual && !parsedFormula && (
+  const needsSyntheticDefaultFormula = !manual && !parsedFormula && !scriptFormula && (
     tautologicalDefault || contradictionDefault || (namedOther && !String(conditionText || "").trim())
   );
-  const formulaConfig = parsedFormula ||
+  const formulaConfig = parsedFormula || scriptFormula ||
     (contradictionDefault
       ? buildConstantBooleanFormulaDesignerConfig(edge, false)
       : needsSyntheticDefaultFormula
@@ -794,15 +801,20 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
       lineName,
       priority: parseInteger(edge.priority || edge.attributes?.priority, index + 1),
       formula: formulaConfig || resultCode || "",
-      formulaName: formulaConfig ? "" : edge.condition?.displayText || edge.displayCondition || resultCode || "",
-      mode: "simple",
+      formulaName: formulaConfig?.type === "Script"
+        ? formulaConfig.vo?.content || ""
+        : formulaConfig
+          ? ""
+          : edge.condition?.displayText || edge.displayCondition || resultCode || "",
+      formulaType: "formula",
+      mode: formulaConfig?.type === "Script" ? "script" : "simple",
       defaultTrend: false,
       type: "formulas"
     };
 
   if (formulaConfig) {
-    conditionValue.conditionSimpleData = formulaConfig;
     conditionValue.formulaConfig = formulaConfig;
+    if (formulaConfig.type === "Batch") conditionValue.conditionSimpleData = formulaConfig;
   }
 
   return {
@@ -817,6 +829,29 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
     namedOther,
     tautologicalDefault,
     conditionValue
+  };
+}
+
+function buildCreatorParentPathContainsScriptFormula(conditionText) {
+  const match = String(conditionText || "").trim().match(
+    /^\$字符串\.包含\$\(\s*\$(?:docCreator|申请人|起草人)\$\s*\.\s*getFdParentsName\s*\(\s*["']\/["']\s*\)\s*,\s*("(?:\\.|[^"\\])*")\s*\)$/i
+  );
+  if (!match) return undefined;
+
+  let organizationName;
+  try {
+    organizationName = JSON.parse(match[1]);
+  } catch {
+    return undefined;
+  }
+  const quotedName = JSON.stringify(organizationName);
+  const script = `var creator = \${data._ProcessCreator}; if (Object.prototype.toString.call(creator) === "[object Array]") { creator = creator[0]; } if (!creator) { return false; } var path = \${func.sysorg.getDepartmentAllPath}(creator) || ""; return String(path).indexOf(${quotedName}) !== -1;`;
+  const content = `var creator = $流程数据项.起草人$; if (Object.prototype.toString.call(creator) === "[object Array]") { creator = creator[0]; } if (!creator) { return false; } var path = #获取部门全路径#(creator) || ""; return String(path).indexOf(${quotedName}) !== -1;`;
+  return {
+    type: "Script",
+    script,
+    vo: { mode: "script", content },
+    resultType: { type: "boolean" }
   };
 }
 
@@ -2106,6 +2141,28 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       }
     };
   }
+  if (participants?.mode === "field_role_line_script") {
+    const ruleKey = fieldRoleLineScriptRuleKey(participants, context);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey: JSON.stringify(ruleKey),
+      ruleName: ruleKey.vo.content,
+      ruleMode: "script",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        sourceExpression: participants.sourceExpression || "",
+        sourceNameExpression: participants.sourceNameExpression || "",
+        recipe: participants.recipe || "",
+        fieldId: participants.fieldId || "",
+        companyRole: participants.companyRole || "",
+        departmentRole: participants.departmentRole || ""
+      }
+    };
+  }
   if (participants?.mode === "script_formula") {
     const ruleKey = scriptFormulaHandlerRuleKey(participants, context);
     return {
@@ -2144,8 +2201,35 @@ function nodeHistorySuperiorDepartmentHeadRuleKey(participants = {}) {
   };
 }
 
+function fieldRoleLineScriptRuleKey(participants = {}, context = {}) {
+  const fieldId = String(participants.fieldId || "").trim();
+  const field = context.formFieldById?.get(fieldId);
+  const fieldRef = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
+  const dataRef = `\${data.${fieldRef}}`;
+  const displayRef = `$内置表单.${participants.fieldTitle || field?.title || fieldId}$`;
+  let script;
+  let content;
+
+  if (participants.recipe === "department_head") {
+    script = `return \${func.sysorg.getDepartmentHead}(${dataRef}) || [];`;
+    content = `return #查找部门领导#(${displayRef}) || [];`;
+  } else if (participants.recipe === "superior_department_head") {
+    script = `return \${func.sysorg.getSuperiorDepartmenthead}(${dataRef}, 1) || [];`;
+    content = `return #查找上级部门领导#(${displayRef}, 1) || [];`;
+  } else {
+    throw new Error(`unsupported workflow field role-line Script recipe: ${participants.recipe || ""}`);
+  }
+
+  return {
+    type: "Script",
+    script,
+    vo: { mode: "script", content },
+    resultType: workflowOrgArrayResultType()
+  };
+}
+
 function nativeHandlerIds(participants, attrs) {
-  if (participants?.mode === "script_formula") return "";
+  if (["script_formula", "field_role_line_script"].includes(participants?.mode)) return "";
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return participants.members.map((member) => member.id).filter(Boolean).join(";");
   }
@@ -2153,7 +2237,7 @@ function nativeHandlerIds(participants, attrs) {
 }
 
 function nativeHandlerNames(participants, attrs) {
-  if (participants?.mode === "script_formula") return "";
+  if (["script_formula", "field_role_line_script"].includes(participants?.mode)) return "";
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return participants.members.map((member) => member.name || member.id).filter(Boolean).join(";");
   }

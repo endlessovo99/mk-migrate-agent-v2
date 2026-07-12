@@ -75,16 +75,17 @@ export class NewoaClient {
     return body?.data || {};
   }
 
-  async searchOrg(key) {
+  async searchOrg(key, sourceOrgType) {
     const normalizedKey = String(key || "").trim();
     if (!normalizedKey) {
       throw clientStageError("sysOrgAddress/searchOrg", "organization search requires a non-empty key");
     }
     const body = await this.postJson("sys-org", "sysOrgAddress/searchOrg", {
       key: normalizedKey,
-      orgType: 287,
+      orgType: searchOrgType(sourceOrgType),
       paramAvailable: 1,
-      searchMode: "ACCURATE"
+      addressRange: [1],
+      searchMode: "FUZZY"
     });
     if (!Array.isArray(body?.data)) {
       throw clientStageError("sysOrgAddress/searchOrg", "organization search response did not include an array");
@@ -202,6 +203,11 @@ export class NewoaClient {
     }
     return result.body;
   }
+}
+
+function searchOrgType(sourceOrgType) {
+  const numeric = Number(sourceOrgType);
+  return Number.isInteger(numeric) && numeric > 0 ? numeric : 60;
 }
 
 export function normalizeBaseUrl(value) {
