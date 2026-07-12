@@ -622,9 +622,9 @@ function expectedParticipantFormula(participants, context = {}) {
     ruleKeyMode = "formula";
   } else if (participants?.mode === "node_history_superior_department_head") {
     const nodeId = JSON.stringify(String(participants.nodeId || ""));
-    script = `\${func.sysorg.getSuperiorDepartmenthead}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), 1)`;
-    ruleVoContent = `#查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`;
-    ruleMode = "formula";
+    script = `return \${func.sysorg.getSuperiorDepartmenthead}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), 1)`;
+    ruleVoContent = `return #查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`;
+    ruleMode = "script";
     ruleKeyMode = "";
   } else if (participants?.mode === "script_formula") {
     const binding = expectedDetailScriptFormulaBinding(participants, context);
@@ -649,11 +649,20 @@ function expectedParticipantFormula(participants, context = {}) {
     memberCount: 0,
     ruleMode,
     formulaType: "formula",
-    ruleKeyType: participants?.mode === "script_formula" ? "Script" : "Eval",
+    ruleKeyType: ["script_formula", "node_history_superior_department_head"].includes(participants?.mode)
+      ? "Script"
+      : "Eval",
     ruleKeyMode,
-    ruleVoMode: participants?.mode === "script_formula" ? "script" : "formula",
+    ruleVoMode: ["script_formula", "node_history_superior_department_head"].includes(participants?.mode)
+      ? "script"
+      : "formula",
     ...(ruleVoContent !== undefined ? { ruleVoContent } : {}),
-    resultType: ["person_by_login_name", "doc_creator", "script_formula"].includes(participants?.mode)
+    resultType: [
+      "person_by_login_name",
+      "doc_creator",
+      "script_formula",
+      "node_history_superior_department_head"
+    ].includes(participants?.mode)
       ? "org_array"
       : "none"
   };

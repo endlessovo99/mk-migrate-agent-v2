@@ -844,6 +844,12 @@ function observeParticipants(node, initiatorSelectTarget) {
       normalizeScalar(ruleKey.formulaName) ||
       normalizeScalar(ruleKey.vo?.content) ||
       "";
+    if (/getSuperiorDepartmenthead/.test(script) && /getNodeHistoryHandlers/.test(script)) {
+      const nodeMatch = script.match(/getNodeHistoryHandlers\}\s*\(\s*["']([^"']+)["']/);
+      return nodeMatch
+        ? { mode: "node_history_superior_department_head", nodeId: nodeMatch[1], nativeFormula }
+        : { mode: "node_history_superior_department_head", nativeFormula };
+    }
     if (ruleKey.type === "Script") {
       const recipe = /getPersonByLoginName/.test(script)
         ? "detail_login_names_to_persons"
@@ -853,12 +859,6 @@ function observeParticipants(node, initiatorSelectTarget) {
       return fieldId
         ? { mode: "script_formula", recipe, fieldId, nativeFormula }
         : { mode: "script_formula", recipe, nativeFormula };
-    }
-    if (/getSuperiorDepartmenthead/.test(script) && /getNodeHistoryHandlers/.test(script)) {
-      const nodeMatch = script.match(/getNodeHistoryHandlers\}\s*\(\s*["']([^"']+)["']/);
-      return nodeMatch
-        ? { mode: "node_history_superior_department_head", nodeId: nodeMatch[1], nativeFormula }
-        : { mode: "node_history_superior_department_head", nativeFormula };
     }
     const roleLine = observeRoleLineParticipants(script, formulaName, fieldId);
     if (roleLine) return { ...roleLine, nativeFormula };

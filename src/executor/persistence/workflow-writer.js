@@ -2093,7 +2093,7 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       source: "2",
       ruleKey: JSON.stringify(ruleKey),
       ruleName: ruleKey.vo.content,
-      ruleMode: "formula",
+      ruleMode: "script",
       formulaType: "formula",
       members: [],
       element: "users",
@@ -2134,12 +2134,13 @@ function handlersFromParticipants(participants, attrs, context = {}) {
 function nodeHistorySuperiorDepartmentHeadRuleKey(participants = {}) {
   const nodeId = JSON.stringify(String(participants.nodeId || ""));
   return {
-    script: `\${func.sysorg.getSuperiorDepartmenthead}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), 1)`,
-    type: "Eval",
+    script: `return \${func.sysorg.getSuperiorDepartmenthead}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), 1)`,
+    type: "Script",
     vo: {
-      content: `#查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`,
-      mode: "formula"
-    }
+      content: `return #查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`,
+      mode: "script"
+    },
+    resultType: workflowOrgArrayResultType()
   };
 }
 
