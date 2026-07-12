@@ -769,6 +769,67 @@ describe("executeDsl", () => {
     assert.equal(verifyTemplate(trusted, brokenDisplay).ok, false);
   });
 
+  it("writes node-history superior leaders as Script handlers for arbitrary node ids", () => {
+    const sourceExpression = '$组织架构.解释角色线$($流程.获取节点实际处理人$("N654"), "公司级分管领导", "分管领导")';
+    const nodes = [
+      { id: "N100", type: "generalStart", element: "startEvent", sourceRef: "source.workflow.node.N100", attributes: {}, translationStatus: "executable" },
+      {
+        id: "N654",
+        type: "review",
+        element: "manualTask",
+        name: "前序审批",
+        sourceRef: "source.workflow.node.N654",
+        attributes: { handlerIds: "person-1", handlerNames: "审批人" },
+        participants: { mode: "explicit", members: [{ id: "person-1", name: "审批人", type: "user_or_org" }] },
+        translationStatus: "executable"
+      },
+      {
+        id: "N812",
+        type: "review",
+        element: "manualTask",
+        name: "分管领导",
+        sourceRef: "source.workflow.node.N812",
+        attributes: { handlerSelectType: "formula", handlerIds: sourceExpression, handlerNames: sourceExpression },
+        participants: {
+          mode: "node_history_superior_department_head",
+          nodeId: "N654",
+          companyRole: "公司级分管领导",
+          departmentRole: "分管领导",
+          sourceExpression,
+          sourceNameExpression: sourceExpression
+        },
+        translationStatus: "executable"
+      },
+      { id: "N900", type: "generalEnd", element: "endEvent", sourceRef: "source.workflow.node.N900", attributes: {}, translationStatus: "executable" }
+    ];
+    const trusted = sampleTrustedDsl({
+      workflow: {
+        process: { id: "node-history-formula-process" },
+        nodes,
+        edges: nodes.slice(0, -1).map((node, index) => ({
+          id: `L${index + 1}`,
+          source: node.id,
+          target: nodes[index + 1].id,
+          sourceRef: `source.workflow.edge.L${index + 1}`,
+          condition: { translationStatus: "executable" }
+        })),
+        topologicalOrder: nodes.map((node) => node.id)
+      }
+    });
+    const template = projectTemplate(trusted, baseTemplate());
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    const persisted = content.elements.find((node) => node.id === "N812");
+    const rule = JSON.parse(persisted.handlers.ruleKey);
+
+    assert.equal(persisted.handlers.ruleMode, "script");
+    assert.equal(rule.type, "Script");
+    assert.equal(rule.script, 'return ${func.sysorg.getSuperiorDepartmenthead}(${func.lbpm.getNodeHistoryHandlers}("N654", false), 1)');
+    assert.equal(rule.vo.content, 'return #查找上级部门领导#(#获取节点历史处理人#("N654", false), 1)');
+    assert.equal(rule.vo.mode, "script");
+    assert.equal(rule.resultType.type, "array");
+    assert.equal(verifyTemplate(trusted, template).ok, true);
+  });
+
   it("rejects readback when formula participant scripts are mutated", () => {
     const trusted = sampleFormulaParticipantDsl();
     const template = projectTemplate(trusted, baseTemplate());

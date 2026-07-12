@@ -4,6 +4,7 @@ import { checkDraft, checkExecute } from "../../src/dsl/checks.js";
 import { buildFormRuleRefIndex, resolveEffectTarget } from "../../src/dsl/form-rules.js";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { classifyWorkflowFormulaParticipant } from "../../src/translator/workflow-formula-participants.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
 import { sampleSourceDraft } from "../helpers/sample-dsl.js";
 
@@ -12,6 +13,23 @@ const moduleDetailColumnsSource = "tests/fixtures/source/module-detail-columns-e
 const moduleRightsSource = "tests/fixtures/source/module-rights-evidence";
 
 describe("source directory stages", () => {
+  it("maps verified node-history leader formulas independently of workflow node ids", () => {
+    const sourceExpression = '$组织架构.解释角色线$($流程.获取节点实际处理人$("N654"), "公司级分管领导", "分管领导")';
+
+    assert.deepEqual(classifyWorkflowFormulaParticipant({
+      handlerSelectType: "formula",
+      handlerIds: sourceExpression,
+      handlerNames: sourceExpression
+    }), {
+      mode: "node_history_superior_department_head",
+      nodeId: "N654",
+      companyRole: "公司级分管领导",
+      departmentRole: "分管领导",
+      sourceExpression,
+      sourceNameExpression: sourceExpression
+    });
+  });
+
   localCorpusIt("cleans a paired SysFormTemplate and LbpmProcessDefinition directory into source-only facts", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const text = JSON.stringify(sourceDraft);
