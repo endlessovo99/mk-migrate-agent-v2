@@ -97,17 +97,33 @@ describe("execute CLI", () => {
 
     assert.deepEqual(request.options.fallbackFdIds, {});
   });
+
+  it("returns a non-zero process status when execution is blocked", async () => {
+    const { exitCode, output } = await runExecuteCli({
+      executeResult: {
+        ok: false,
+        status: "blocked",
+        diagnostics: [{ level: "error", code: "safety.existing_template_not_draft" }]
+      }
+    });
+
+    assert.equal(exitCode, 1);
+    assert.equal(JSON.parse(output.at(-1)).status, "blocked");
+  });
 });
 
-async function runExecuteCli({ argv = [], env = {} } = {}) {
+async function runExecuteCli({ argv = [], env = {}, executeResult } = {}) {
   const tempDir = mkdtempSync(join(tmpdir(), "mk-migrate-cli-execute-"));
   const inputPath = join(tempDir, "migration.dsl.json");
   const output = [];
   const originalLog = console.log;
+  const originalExitCode = process.exitCode;
   let request;
+  let exitCode;
 
   writeFileSync(inputPath, `${JSON.stringify(sampleTrustedDsl(), null, 2)}\n`);
   console.log = (value) => output.push(String(value));
+  process.exitCode = undefined;
   try {
     await main(["execute", inputPath, ...argv], {
       env: {
@@ -117,13 +133,15 @@ async function runExecuteCli({ argv = [], env = {} } = {}) {
       },
       executeDsl: async (dsl, options) => {
         request = { dsl, options };
-        return { ok: true, status: "written", templateId: "template-1" };
+        return executeResult || { ok: true, status: "written", templateId: "template-1" };
       }
     });
+    exitCode = process.exitCode;
   } finally {
     console.log = originalLog;
+    process.exitCode = originalExitCode;
     rmSync(tempDir, { recursive: true, force: true });
   }
 
-  return { request, output };
+  return { request, output, exitCode };
 }

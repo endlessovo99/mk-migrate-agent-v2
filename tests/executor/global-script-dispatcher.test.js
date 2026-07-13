@@ -88,7 +88,7 @@ describe("global singleton script dispatchers", () => {
         readbackAttr.controlAction.global.onBeforeSubmit[0].function =
           readbackAttr.controlAction.global.onBeforeSubmit[0].function.replace(
             "  if (await onBeforeSubmit_2(context) === false) return false;\n",
-            ""
+            "  // if (await onBeforeSubmit_2(context) === false) return false;\n"
           );
         readbackConfig.attribute.formAttr = JSON.stringify(readbackAttr);
         readbackTemplate.mechanisms["sys-xform"].fdConfig = JSON.stringify(readbackConfig);

@@ -229,6 +229,7 @@ async function runExecute(argv, options = {}) {
   });
   if (args.out) writeJson(args.out, report);
   printJson(args.out ? { ...report, wrote: args.out } : report);
+  if (report.ok !== true) process.exitCode = 1;
 }
 
 function loadWhitelist(args) {
