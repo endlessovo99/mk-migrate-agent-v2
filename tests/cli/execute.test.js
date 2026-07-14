@@ -65,6 +65,20 @@ describe("execute CLI", () => {
     assert.equal(output.join("\n").includes(credentials.encryptedPassword), false);
   });
 
+  it("passes the explicit existing-template workflow update mode", async () => {
+    const { request } = await runExecuteCli({
+      argv: [
+        "--template-id",
+        "existing-template-id",
+        "--workflow-update-mode",
+        "scoped-repair"
+      ]
+    });
+
+    assert.equal(request.options.existingTemplateId, "existing-template-id");
+    assert.equal(request.options.workflowUpdateMode, "scoped-repair");
+  });
+
   it("passes configured fallback fdIds from the environment to the executor", async () => {
     const { request } = await runExecuteCli({
       env: {

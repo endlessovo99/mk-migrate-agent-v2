@@ -6,6 +6,10 @@ import { compareInvariants } from "./persistence/compare.js";
 import { buildFormSummary, buildWorkflowSummary } from "./persistence/summaries.js";
 import { projectionError } from "./persistence/diagnostics.js";
 import { INVARIANT_VERSION } from "./persistence/invariants.js";
+import {
+  applyScopedWorkflowRepair,
+  verifyScopedWorkflowRepair
+} from "./persistence/workflow-repair.js";
 
 export { buildWorkflowDraftPayload, INVARIANT_VERSION };
 
@@ -13,7 +17,7 @@ export { buildWorkflowDraftPayload, INVARIANT_VERSION };
  * Prepare a native template update and a bound deterministic verify capability.
  * Seam: after first getTemplate, before updateTemplate.
  */
-export function preparePersistedTemplate({ dsl, envelope, baseTemplate }) {
+export function preparePersistedTemplate({ dsl, envelope, baseTemplate, workflowUpdateMode = "full" }) {
   if (!dsl || typeof dsl !== "object") {
     return {
       ok: false,
@@ -33,7 +37,20 @@ export function preparePersistedTemplate({ dsl, envelope, baseTemplate }) {
     };
   }
 
-  const expectedResult = buildExpectedInvariants(dsl, envelope);
+  if (!["full", "scoped-repair"].includes(workflowUpdateMode)) {
+    return {
+      ok: false,
+      diagnostics: [projectionError(
+        "projection.workflow_update_mode_invalid",
+        `Unsupported workflow update mode: ${workflowUpdateMode}`
+      )]
+    };
+  }
+
+  const expectedDsl = workflowUpdateMode === "scoped-repair"
+    ? { ...dsl, workflow: undefined }
+    : dsl;
+  const expectedResult = buildExpectedInvariants(expectedDsl, envelope);
   if (!expectedResult.ok) {
     return {
       ok: false,
@@ -42,6 +59,7 @@ export function preparePersistedTemplate({ dsl, envelope, baseTemplate }) {
   }
 
   let update;
+  let workflowRepairPlan;
   try {
     const withCategory = {
       ...clone(baseTemplate),
@@ -58,7 +76,14 @@ export function preparePersistedTemplate({ dsl, envelope, baseTemplate }) {
         fdId: envelope.templateId || withCategory.mechanisms["sys-xform"].fdId
       };
     }
-    update = applyWorkflowPayload(applyFormPayload(withCategory, dsl), dsl);
+    const formUpdate = applyFormPayload(withCategory, dsl);
+    if (workflowUpdateMode === "scoped-repair") {
+      const repair = applyScopedWorkflowRepair(formUpdate, dsl);
+      update = repair.update;
+      workflowRepairPlan = repair.plan;
+    } else {
+      update = applyWorkflowPayload(formUpdate, dsl);
+    }
   } catch (error) {
     return {
       ok: false,
@@ -77,7 +102,23 @@ export function preparePersistedTemplate({ dsl, envelope, baseTemplate }) {
     ok: true,
     update,
     verify(readbackTemplate) {
-      return verifyPrepared(expected, readbackTemplate);
+      const verified = verifyPrepared(expected, readbackTemplate);
+      if (workflowUpdateMode !== "scoped-repair") return verified;
+      const workflow = verifyScopedWorkflowRepair(workflowRepairPlan, readbackTemplate);
+      const observed = observeNativeTemplate(readbackTemplate || {});
+      return {
+        ...verified,
+        ok: verified.ok && workflow.ok,
+        status: verified.ok && workflow.ok ? "verified" : "mismatch",
+        partitions: {
+          ...verified.partitions,
+          workflow: workflow.ok ? "verified" : "mismatch"
+        },
+        workflow: observed.workflow.status === "decode_failed"
+          ? undefined
+          : buildWorkflowSummary(observed.workflow.value),
+        diagnostics: [...verified.diagnostics, ...workflow.diagnostics]
+      };
     }
   };
 }

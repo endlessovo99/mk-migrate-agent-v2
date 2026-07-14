@@ -220,6 +220,7 @@ async function runExecute(argv, options = {}) {
     confirmWrite: args["confirm-write"] === true,
     targetCategoryId: args["target-category-id"],
     existingTemplateId: args["template-id"],
+    workflowUpdateMode: args["workflow-update-mode"],
     baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
     fallbackFdIds: selectFallbackFdIds(env),
     credentials: {
@@ -310,7 +311,7 @@ function printUsage() {
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");
   console.error("  node src/cli/main.js check execute <migration.dsl.json>");
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
-  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--template-id <existingFdId>] [--base-url <origin>]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--template-id <existingFdId> --workflow-update-mode scoped-repair] [--base-url <origin>]");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

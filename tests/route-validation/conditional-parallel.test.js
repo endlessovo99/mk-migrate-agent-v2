@@ -112,6 +112,166 @@ describe("conditional-parallel route semantics", () => {
     );
   });
 
+  it("repairs only conditional-parallel and document-creator semantics on an existing workflow", () => {
+    const source = cleanSourceFile(fixture);
+    const draft = draftSourceDraft(source);
+    const trusted = createTrustedMigrationDsl(source, draft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt: "2026-07-14T00:00:00.000Z"
+    });
+    const fullyProjected = prepareSample(trusted).update;
+    const baseline = structuredClone(fullyProjected);
+    const baselineLbpm = baseline.mechanisms.lbpmTemplate[0];
+    baselineLbpm.fdTemplateFormAuths = {
+      PX31: {
+        fd_route_choice: {
+          isShow: true,
+          isEdit: false,
+          isRequire: false
+        }
+      }
+    };
+    mutateWorkflow(baseline, (content) => {
+      const split = content.elements.find((element) => element.id === "PX20");
+      split.splitType = "0";
+      split.relateId = "legacy-split-relation";
+      split.gatewayDirection = "converging";
+      const join = content.elements.find((element) => element.id === "PX50");
+      join.joinType = "0";
+      join.relateId = "legacy-join-relation";
+      join.gatewayDirection = "diverging";
+      const edge = content.elements.find((element) => element.id === "PE21");
+      edge.formula = "legacy-formula";
+      edge.formulaName = "legacy formula";
+      const creator = content.elements.find((element) => element.id === "PX60");
+      creator.handlerSelectType = "org";
+      creator.handlers = { type: "org", source: "1", members: [] };
+      const unrelated = content.elements.find((element) => element.id === "PX31");
+      unrelated.ignoreOnSameIdentity = "legacy-preserve";
+      unrelated.routeValidationSentinel = { untouched: true };
+    });
+
+    const baselineContent = workflowContent(baseline);
+    const prepared = prepareSample(trusted, {
+      baseTemplate: baseline,
+      workflowUpdateMode: "scoped-repair"
+    });
+    const repairedContent = workflowContent(prepared.update);
+
+    assert.deepEqual(
+      prepared.update.mechanisms.lbpmTemplate[0].fdTemplateFormAuths,
+      baselineLbpm.fdTemplateFormAuths
+    );
+    assert.deepEqual(
+      repairedContent.elements.find((element) => element.id === "PX31"),
+      baselineContent.elements.find((element) => element.id === "PX31")
+    );
+    assert.equal(repairedContent.elements.find((element) => element.id === "PX20").splitType, "1");
+    assert.equal(repairedContent.elements.find((element) => element.id === "PX50").joinType, "1");
+    assert.equal(repairedContent.elements.find((element) => element.id === "PE21").formula.includes("fd_route_choice"), true);
+    assert.equal(repairedContent.elements.find((element) => element.id === "PX60").handlers.type, "formula");
+    const serverFilledMetadata = structuredClone(prepared.update);
+    serverFilledMetadata.mechanisms.lbpmTemplate[0].fdTemplateFormAuths.PX31.fd_route_choice.fdNodeId = "PX31";
+    serverFilledMetadata.mechanisms.lbpmTemplate[0].fdTemplateFormAuths.PX31.fd_route_choice.fdFieldId = "fd_route_choice";
+    assert.equal(prepared.verify(serverFilledMetadata).ok, true);
+
+    const authorityMutation = structuredClone(prepared.update);
+    authorityMutation.mechanisms.lbpmTemplate[0].fdTemplateFormAuths.PX31.fd_route_choice.isEdit = true;
+    assert.equal(
+      prepared.verify(authorityMutation).diagnostics.some((item) =>
+        item.code === "readback.workflow.scoped_repair_data_authority_changed"
+      ),
+      true
+    );
+
+    const unrelatedMutation = structuredClone(prepared.update);
+    mutateWorkflow(unrelatedMutation, (content) => {
+      content.elements.find((element) => element.id === "PX31").ignoreOnSameIdentity = "1";
+    });
+    assert.equal(
+      prepared.verify(unrelatedMutation).diagnostics.some((item) =>
+        item.code === "readback.workflow.scoped_repair_unrelated_element_changed"
+      ),
+      true
+    );
+
+    const conditionMutation = structuredClone(prepared.update);
+    mutateWorkflow(conditionMutation, (content) => {
+      content.elements.find((element) => element.id === "PE21").formula = "";
+    });
+    assert.equal(
+      prepared.verify(conditionMutation).diagnostics.some((item) =>
+        item.code === "readback.workflow.scoped_repair_target_mismatch"
+      ),
+      true
+    );
+
+    const overwriteMutation = structuredClone(prepared.update);
+    mutateWorkflow(overwriteMutation, (content) => {
+      content.elements.find((element) => element.id === "PX60").ignoreOnSameIdentity = "1";
+    });
+    assert.equal(
+      prepared.verify(overwriteMutation).diagnostics.some((item) =>
+        item.code === "readback.workflow.scoped_repair_target_overwrite"
+      ),
+      true
+    );
+
+    const policyMutation = structuredClone(prepared.update);
+    policyMutation.mechanisms.lbpmTemplate[0].identityRepeatSkipType = "server-mutated";
+    assert.equal(
+      prepared.verify(policyMutation).diagnostics.some((item) =>
+        item.code === "readback.workflow.scoped_repair_policy_changed"
+      ),
+      true
+    );
+  });
+
+  it("preserves workflow policy even when a scoped repair has no supported targets", () => {
+    const source = cleanSourceFile(fixture);
+    const draft = draftSourceDraft(source);
+    const targetless = createTrustedMigrationDsl(source, draft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt: "2026-07-14T00:00:00.000Z"
+    });
+    for (const edge of targetless.workflow.edges) delete edge.condition.critical;
+    targetless.workflow.nodes.find((node) => node.id === "PX60").participants = {
+      mode: "explicit",
+      members: [{ id: "submitter-person", name: "Submitter", type: "user_or_org" }]
+    };
+    const baseline = prepareSample(targetless).update;
+    baseline.mechanisms.lbpmTemplate[0].fdTemplateFormAuths = {
+      PX31: { fd_route_choice: { isShow: true, isEdit: false, isRequire: false } }
+    };
+    const prepared = prepareSample(targetless, {
+      baseTemplate: baseline,
+      workflowUpdateMode: "scoped-repair"
+    });
+    assert.equal(prepared.verify(prepared.update).ok, true);
+
+    const authorityMutation = structuredClone(prepared.update);
+    authorityMutation.mechanisms.lbpmTemplate[0].fdTemplateFormAuths.PX31.fd_route_choice.isEdit = true;
+    assert.equal(
+      prepared.verify(authorityMutation).diagnostics.some((item) =>
+        item.code === "readback.workflow.scoped_repair_data_authority_changed"
+      ),
+      true
+    );
+
+    const contentMutation = structuredClone(prepared.update);
+    mutateWorkflow(contentMutation, (content) => {
+      content.elements.find((element) => element.id === "PX31").ignoreOnSameIdentity = "changed";
+    });
+    assert.equal(
+      prepared.verify(contentMutation).diagnostics.some((item) =>
+        item.code === "readback.workflow.scoped_repair_unrelated_element_changed"
+      ),
+      true
+    );
+  });
+
   it("keeps ordinary parallel and exclusive-branch semantics distinct", () => {
     const ordinarySource = cleanSourceFile(fixture);
     ordinarySource.workflow.nodes.find((node) => node.id === "PX20").attributes.splitType = "all";
@@ -214,4 +374,8 @@ function mutateWorkflow(template, mutate) {
   const content = JSON.parse(lbpm.fdContent);
   mutate(content);
   lbpm.fdContent = JSON.stringify(content);
+}
+
+function workflowContent(template) {
+  return JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
 }
