@@ -345,10 +345,39 @@ describe("executeDsl", () => {
     });
   }
 
-  it("fails workflow readback unless details confirms both draft markers", async () => {
+  it("accepts the native draft marker when fdStatus is omitted", async () => {
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client: new FakeNewoaClient({
+        corruptWorkflowReadback(detail) {
+          const next = { ...detail, latestDefinitionStatus: 0 };
+          delete next.fdStatus;
+          return next;
+        }
+      }),
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    assert.equal(result.apiStages.find((stage) => stage.name === "getWorkflowTemplateDetail").status, "ok");
+  });
+
+  it("fails workflow readback unless details confirms a native draft state", async () => {
     for (const corruptWorkflowReadback of [
       (detail) => ({ ...detail, isDraft: false }),
-      (detail) => ({ ...detail, fdStatus: "published" })
+      (detail) => ({ ...detail, fdStatus: "published" }),
+      (detail) => {
+        const next = { ...detail, latestDefinitionStatus: 1 };
+        delete next.fdStatus;
+        return next;
+      },
+      (detail) => {
+        const next = { ...detail };
+        delete next.fdStatus;
+        delete next.latestDefinitionStatus;
+        return next;
+      }
     ]) {
       const result = await executeDsl(sampleTrustedDsl(), {
         client: new FakeNewoaClient({ corruptWorkflowReadback }),

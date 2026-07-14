@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-structural-recovery-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Structural Recovery Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-structural-recovery-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_alpha&quot;,label:&quot;Alpha&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;desc_between&quot;,content:&quot;Between fields&quot;,color:&quot;#FF0000&quot;}&apos;&gt;Between fields&lt;/label&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_beta&quot;,label:&quot;Beta&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;desc_after&quot;,content:&quot;After fields&quot;,b:&quot;true&quot;}&apos;&gt;After fields&lt;/label&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_values=&quot;{id:&amp;quot;fd_remote_choice&amp;quot;,label:&amp;quot;Remote choice&amp;quot;,required:&amp;quot;true&amp;quot;,requestMethod:&amp;quot;GET&amp;quot;,searchKey:&amp;quot;query&amp;quot;,_outputParams:&amp;quot;{'outputParams':[{'outParamName':'code','idField':'$fd_alpha$'}]}&amp;quot;,restApiPath:&amp;quot;https://example.invalid/api/items?credential=do-not-retain&amp;quot;,password:&amp;quot;password-do-not-retain&amp;quot;,accessToken:&amp;quot;token-do-not-retain&amp;quot;,authorization:&amp;quot;Bearer do-not-retain&amp;quot;,headers:&amp;quot;Authorization: Bearer do-not-retain&amp;quot;}&quot; fd_type=&quot;RestDialog&quot;&gt;&lt;/label&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;heading_a&quot;,content:&quot;Equipment list&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Equipment list&lt;/label&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_a&quot;,label:&quot;DetailTable1&quot;}&apos;&gt;
+      &lt;tbody&gt;&lt;tr&gt;&lt;td&gt;
+       &lt;div fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_detail_attach&quot;,label:&quot;Detail attachment&quot;,tableName:&quot;fd_detail_a&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;
+     &lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_plain&quot;,label:&quot;DetailTable2&quot;}&apos;&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;heading_b&quot;,content:&quot;Parts list&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Parts list&lt;/label&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_b&quot;,label:&quot;DetailTable3&quot;}&apos;&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;5&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;heading_c&quot;,content:&quot;Service list&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Service list&lt;/label&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_c&quot;,label:&quot;DetailTable4&quot;}&apos;&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;
+     &lt;input type=&quot;hidden&quot; value=&apos;&lt;table class=&quot;permission-placeholder&quot;&gt;&apos;/&gt;
+     &lt;table class=&quot;layout-wrapper&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_nested&quot;,label:&quot;Nested visible&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;7&quot; column=&quot;0&quot;&gt;
+     &lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;permission_wrapper&quot;}&apos;&gt;
+      &lt;table fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_decision&quot;,label:&quot;Decision&quot;,items:&quot;Yes|Y&amp;#10;No|N&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/table&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_hidden_scaffold&quot;,label:&quot;Hidden scaffold&quot;,canShow:&quot;false&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;8&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;linkLabel&quot; fd_values=&apos;{id:&quot;download_hint&quot;,content:&quot;Download the sample sheet&quot;,link:&quot;https://example.invalid/file?token=do-not-retain&quot;,b:&quot;true&quot;}&apos;&gt;Download the sample sheet&lt;/label&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;9&quot; column=&quot;0&quot;&gt;
+     &lt;div fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_attachment&quot;,label:&quot;Supporting file&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;div class=&quot;duplicate-source-fragment&quot;&gt;&lt;div fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_attachment&quot;,label:&quot;Supporting file&quot;}&apos;&gt;&lt;/div&gt;&lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;10&quot; column=&quot;0&quot;&gt;
+     &lt;div class=&quot;permission-hidden&quot; style=&quot;display:none&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_hidden_ancestor&quot;,label:&quot;Hidden ancestor field&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;11&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;heading_not_adjacent&quot;,content:&quot;Must not become a table title&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Must not become a table title&lt;/label&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_between_heading_table&quot;,label:&quot;Between heading and table&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_gap&quot;,label:&quot;DetailTable5&quot;}&apos;&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;12&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;RestDialog&quot; fd_values=&quot;{id:&amp;quot;fd_remote_reverse&amp;quot;,label:&amp;quot;Reverse remote&amp;quot;,required:&amp;quot;false&amp;quot;,requestMethod:&amp;quot;POST&amp;quot;,restApiPath:&amp;quot;https://example.invalid/reverse?token=do-not-retain&amp;quot;}&quot;&gt;&lt;/label&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;13&quot; column=&quot;0&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&quot;{id:&amp;quot;fd_detail_reverse&amp;quot;,label:&amp;quot;DetailTable6&amp;quot;}&quot;&gt;
+      &lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_detail_reverse_name&quot;,label:&quot;Reverse detail name&quot;,tableName:&quot;fd_detail_reverse&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;
+     &lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div class=&quot;recovered-attachment-wrapper&quot;&gt;
+    &lt;label fd_type=&quot;linkLabel&quot; fd_values=&apos;{id:&quot;recovered_download_hint&quot;,content:&quot;Download recovered template&quot;,link:&quot;https://example.invalid/recovered?token=do-not-retain&quot;,b:&quot;true&quot;}&apos;&gt;Download recovered template&lt;/label&gt;
+    &lt;div fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_recovered_attachment&quot;,label:&quot;Recovered supporting file&quot;}&apos;&gt;&lt;/div&gt;
+   &lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_alpha&quot; label=&quot;Alpha&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_beta&quot; label=&quot;Beta&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_remote_choice&quot; label=&quot;Remote choice&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_a&quot; label=&quot;DetailTable1&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_a_name&quot; label=&quot;Name A&quot; type=&quot;String&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_detail_attach&quot; label=&quot;Detail attachment&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_plain&quot; label=&quot;DetailTable2&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_plain_name&quot; label=&quot;Name plain&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_b&quot; label=&quot;DetailTable3&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_b_name&quot; label=&quot;Name B&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_c&quot; label=&quot;DetailTable4&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_c_name&quot; label=&quot;Name C&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_gap&quot; label=&quot;DetailTable5&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_gap_name&quot; label=&quot;Gap detail name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_reverse&quot; label=&quot;DetailTable6&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_reverse_name&quot; label=&quot;Reverse detail name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_nested&quot; label=&quot;Nested visible&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_decision&quot; label=&quot;Decision&quot; enumValues=&quot;Yes|Y&amp;#10;No|N&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_hidden_scaffold&quot; label=&quot;Hidden scaffold&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_hidden_ancestor&quot; label=&quot;Hidden ancestor field&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_between_heading_table&quot; label=&quot;Between heading and table&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_remote_reverse&quot; label=&quot;Reverse remote&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

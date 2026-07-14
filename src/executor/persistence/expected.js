@@ -20,6 +20,7 @@ import { isAddressField } from "../condition-org-resolver.js";
 import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
 import { SCRIPT_SINGLETON_GLOBAL_EVENTS } from "../../dsl/scripts.js";
 import { singletonDispatcherContract } from "./script-dispatcher-contract.js";
+import { normalizeRuleConditionText } from "./condition-rule.js";
 
 const parseExpectedContextConditionExpression = createConditionExpressionParser({
   parseTerm: parseExpectedContextConditionTerm,
@@ -28,7 +29,7 @@ const parseExpectedContextConditionExpression = createConditionExpressionParser(
 
 export function buildExpectedInvariants(dsl, envelope) {
   const diagnostics = [];
-  const envelopeExpected = buildExpectedEnvelope(envelope, diagnostics);
+  const envelopeExpected = buildExpectedEnvelope(envelope, diagnostics, Boolean(dsl?.workflow));
   const formExpected = buildExpectedForm(dsl?.form || {}, envelope?.tableName, diagnostics);
   const rulesExpected = buildExpectedRules(dsl?.formRules, dsl?.form || {}, diagnostics);
   const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, envelope?.tableName, diagnostics);
@@ -58,7 +59,7 @@ export function buildExpectedInvariants(dsl, envelope) {
   };
 }
 
-function buildExpectedEnvelope(envelope = {}, diagnostics) {
+function buildExpectedEnvelope(envelope = {}, diagnostics, workflowExpected = false) {
   const required = [
     ["templateId", envelope.templateId],
     ["templateName", envelope.templateName],
@@ -92,8 +93,8 @@ function buildExpectedEnvelope(envelope = {}, diagnostics) {
       unpublished: envelope.lifecycle?.unpublished !== false,
       fdStatus: envelope.lifecycle?.fdStatus ?? 0,
       xformStatus: envelope.lifecycle?.xformStatus || "draft",
-      lbpmStatus: envelope.lifecycle?.lbpmStatus || "draft",
-      lbpmIsDraft: envelope.lifecycle?.lbpmIsDraft !== false
+      lbpmStatus: workflowExpected ? envelope.lifecycle?.lbpmStatus || "draft" : undefined,
+      lbpmIsDraft: workflowExpected ? envelope.lifecycle?.lbpmIsDraft !== false : undefined
     },
     bindings: {
       formFdId: normalizeScalar(envelope.bindings?.formFdId || envelope.templateId),
@@ -501,6 +502,7 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id), context),
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),
+      parallelGateway: summarizeExpectedParallelGateway(node),
       dataAuthority: summarizeDataAuthority(node),
       ignoreOnSameIdentity: expectedIgnoreOnSameIdentity(node),
       subProcess: node.type === "startSubProcess" ? summarizeExpectedSubProcess(node.subProcess) : undefined
@@ -888,6 +890,16 @@ function summarizeSendConfig(node) {
   };
 }
 
+function summarizeExpectedParallelGateway(node) {
+  if (!node || !["split", "join"].includes(node.type)) return undefined;
+  const attrs = sourceAttributes(node);
+  return {
+    mode: "1",
+    relatedNodeId: splitRelatedNodeIds(attrs.relatedNodeIds)[0] || "",
+    direction: node.type === "split" ? "diverging" : "converging"
+  };
+}
+
 function summarizeCondition(edge, conditionBranch, context = {}) {
   const sourceText = edge?.condition?.sourceText ||
     (typeof edge?.condition === "string" ? edge.condition : "") ||
@@ -914,6 +926,7 @@ function summarizeCondition(edge, conditionBranch, context = {}) {
     sourceText: normalizeScalar(sourceText),
     nativeRequired: true,
     ...(nativeKind ? { nativeKind } : {}),
+    ...(nativeKind === "rule" ? { nativeText: normalizeRuleConditionText(semanticText) } : {}),
     ...(nativeSemantics ? { nativeSemantics } : {})
   };
 }

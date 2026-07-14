@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdKey</string><string>reviewMainDoc</string></void>
+  <void method="put">
+   <string>nodeDefinitionHandlers</string>
+   <object class="java.util.ArrayList">
+    <void method="add"><object class="java.util.HashMap">
+     <void method="put"><string>fdIndex</string><int>0</int></void>
+     <void method="put"><string>fdFactId</string><string>PX60</string></void>
+     <void method="put"><string>fdAttribute</string><string>handlerIds</string></void>
+     <void method="put"><string>fdHandler</string><object class="java.util.HashMap">
+      <void method="put"><string>fdOrgType</string><int>32</int></void>
+      <void method="put"><string>fdId</string><string>dynamic-submitter-placeholder-77</string></void>
+      <void method="put"><string>fdName</string><string>&lt;提交人&gt;</string></void>
+      <void method="put"><string>class</string><string>com.landray.kmss.sys.organization.model.SysOrgElement</string></void>
+     </object></void>
+    </object></void>
+   </object>
+  </void>
+  <void method="put">
+   <string>fdContent</string>
+   <string>&lt;process description=&quot;templateId=route-conditional-parallel-template&amp;amp;lbpmTmpId=route-conditional-parallel-lbpm&quot; fdId=&quot;route-conditional-parallel-process&quot;&gt;
+&lt;nodes&gt;
+ &lt;startNode id=&quot;PX10&quot; name=&quot;Start&quot;/&gt;
+ &lt;splitNode id=&quot;PX20&quot; name=&quot;Conditional fan-out&quot; splitType=&quot;condition&quot; relatedNodeIds=&quot;PX50&quot;/&gt;
+ &lt;reviewNode id=&quot;PX31&quot; name=&quot;Alpha review&quot; handlerIds=&quot;alpha-reviewer&quot; handlerNames=&quot;Alpha Reviewer&quot; handlerSelectType=&quot;org&quot;/&gt;
+ &lt;reviewNode id=&quot;PX32&quot; name=&quot;Gamma review&quot; handlerIds=&quot;gamma-reviewer&quot; handlerNames=&quot;Gamma Reviewer&quot; handlerSelectType=&quot;org&quot;/&gt;
+ &lt;joinNode id=&quot;PX50&quot; name=&quot;Conditional join&quot; joinType=&quot;all&quot; relatedNodeIds=&quot;PX20&quot;/&gt;
+ &lt;reviewNode id=&quot;PX60&quot; name=&quot;Submitter confirmation&quot; handlerIds=&quot;dynamic-submitter-placeholder-77&quot; handlerNames=&quot;&amp;lt;提交人&amp;gt;&quot; handlerSelectType=&quot;org&quot;/&gt;
+ &lt;reviewNode id=&quot;PX70&quot; name=&quot;Department confirmation&quot; handlerIds=&quot;ordinary-department-88&quot; handlerNames=&quot;提交人部门&quot; handlerSelectType=&quot;org&quot;/&gt;
+ &lt;endNode id=&quot;PX90&quot; name=&quot;End&quot;/&gt;
+&lt;/nodes&gt;
+&lt;lines&gt;
+ &lt;line id=&quot;PE10&quot; startNodeId=&quot;PX10&quot; endNodeId=&quot;PX20&quot;/&gt;
+ &lt;line id=&quot;PE21&quot; startNodeId=&quot;PX20&quot; endNodeId=&quot;PX31&quot; condition=&quot;$fd_route_choice$.equals(&amp;quot;A&amp;quot;) || $fd_route_choice$.equals(&amp;quot;B&amp;quot;)&quot; disCondition=&quot;$Route choice$ is Alpha or Beta&quot;/&gt;
+ &lt;line id=&quot;PE22&quot; startNodeId=&quot;PX20&quot; endNodeId=&quot;PX32&quot; condition=&quot;$fd_route_choice$.equals(&amp;quot;C&amp;quot;)&quot; disCondition=&quot;$Route choice$ is Gamma&quot;/&gt;
+ &lt;line id=&quot;PE31&quot; startNodeId=&quot;PX31&quot; endNodeId=&quot;PX50&quot;/&gt;
+ &lt;line id=&quot;PE32&quot; startNodeId=&quot;PX32&quot; endNodeId=&quot;PX50&quot;/&gt;
+ &lt;line id=&quot;PE50&quot; startNodeId=&quot;PX50&quot; endNodeId=&quot;PX60&quot;/&gt;
+ &lt;line id=&quot;PE60&quot; startNodeId=&quot;PX60&quot; endNodeId=&quot;PX70&quot;/&gt;
+ &lt;line id=&quot;PE70&quot; startNodeId=&quot;PX70&quot; endNodeId=&quot;PX90&quot;/&gt;
+&lt;/lines&gt;
+&lt;/process&gt;</string>
+  </void>
+ </object>
+</java>

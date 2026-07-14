@@ -53,6 +53,43 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
     };
 }
 
+export function classifyWorkflowDynamicParticipant(attributes = {}, handlerEntities = []) {
+  if (attributes.handlerSelectType !== "org" || !Array.isArray(handlerEntities) || handlerEntities.length !== 1) {
+    return undefined;
+  }
+  const entity = handlerEntities[0];
+  const submitterName = String(entity?.name || "").trim();
+  if (
+    String(entity?.orgType ?? "") !== "32" ||
+    !isBracketedDocumentCreatorSemantic(submitterName)
+  ) {
+    return undefined;
+  }
+  const declaredNames = splitList(attributes.handlerNames);
+  if (
+    declaredNames.length &&
+    !declaredNames.some((name) => documentCreatorSemantic(name) === documentCreatorSemantic(submitterName))
+  ) {
+    return undefined;
+  }
+  return {
+    mode: "doc_creator",
+    sourceExpression: submitterName,
+    sourceNameExpression: submitterName
+  };
+}
+
+function documentCreatorSemantic(value) {
+  const normalized = String(value || "").trim().replace(/^<\s*|\s*>$/g, "").trim();
+  return /^(?:提交人|申请人|起草人|docCreator|creator|drafter|initiator)$/i.test(normalized)
+    ? normalized.toLowerCase()
+    : "";
+}
+
+function isBracketedDocumentCreatorSemantic(value) {
+  return /^<\s*[^<>]+\s*>$/.test(String(value || "").trim()) && Boolean(documentCreatorSemantic(value));
+}
+
 function configuredPersonFallbackParticipant(attributes, handlerIds, handlerNames) {
   if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
 
@@ -200,8 +237,9 @@ function detailScriptParticipant(attributes) {
   };
 }
 
-export function workflowFormulaParticipantMatches(attributes, participants) {
-  const expected = classifyWorkflowFormulaParticipant(attributes);
+export function workflowFormulaParticipantMatches(attributes, participants, handlerEntities = []) {
+  const expected = classifyWorkflowFormulaParticipant(attributes) ||
+    classifyWorkflowDynamicParticipant(attributes, handlerEntities);
   if (!expected || !participants || typeof participants !== "object") return false;
   const expectedSourceFieldId = expected.sourceFieldId || expected.fieldId;
   const actualSourceFieldId = participants.sourceFieldId || participants.fieldId;
@@ -218,7 +256,8 @@ export function inspectWorkflowFormulaProvenance(sourceDraft, dslDraft) {
 
   sourceNodes.forEach((sourceNode, sourceNodeIndex) => {
     const sourceAttributes = mergedAttributes(sourceNode);
-    const sourceFormula = classifyWorkflowFormulaParticipant(sourceAttributes);
+    const sourceFormula = classifyWorkflowFormulaParticipant(sourceAttributes) ||
+      classifyWorkflowDynamicParticipant(sourceAttributes, sourceNode?.handlerEntities);
     if (!sourceFormula) return;
 
     const idMatches = indexedDslNodes.filter((entry) => entry.node?.id === sourceNode?.id);
@@ -249,7 +288,7 @@ export function inspectWorkflowFormulaProvenance(sourceDraft, dslDraft) {
       if (!formulaSourceAttributesMatch(sourceAttributes, dslAttributes)) {
         inspections.push({ ...common, status: "source_mismatch", identityMatched: true });
       } else if (
-        !workflowFormulaParticipantMatches(sourceAttributes, exact.node?.participants) ||
+        !workflowFormulaParticipantMatches(sourceAttributes, exact.node?.participants, sourceNode?.handlerEntities) ||
         !workflowFormulaTargetFieldMatches(
           sourceFormula,
           exact.node?.participants,
@@ -305,7 +344,7 @@ function docCreatorParticipant(attributes, handlerIds, handlerNames) {
   if (handlerIds.length !== 1) return undefined;
 
   const handlerId = simpleDollarExpressionValue(handlerIds[0]);
-  if (!/^(docCreator|申请人|起草人|creator|drafter|initiator)$/i.test(handlerId)) return undefined;
+  if (!documentCreatorSemantic(handlerId)) return undefined;
 
   return {
     mode: "doc_creator",

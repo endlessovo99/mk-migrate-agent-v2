@@ -76,6 +76,25 @@ function compareEnvelope(expected, actual, diagnostics) {
       actual: actual?.lifecycle?.xformStatus
     }));
   }
+  if (expected.lifecycle.lbpmStatus && actual?.lifecycle?.lbpmStatus !== expected.lifecycle.lbpmStatus) {
+    diagnostics.push(mismatch("envelope", "readback.envelope.lbpm_status", "Readback workflow draft status mismatch.", {
+      invariantKey: "envelope.lifecycle.lbpmStatus",
+      path: "/mechanisms/lbpmTemplate/0/fdStatus",
+      expected: expected.lifecycle.lbpmStatus,
+      actual: actual?.lifecycle?.lbpmStatus
+    }));
+  }
+  if (
+    expected.lifecycle.lbpmIsDraft !== undefined &&
+    actual?.lifecycle?.lbpmIsDraft !== expected.lifecycle.lbpmIsDraft
+  ) {
+    diagnostics.push(mismatch("envelope", "readback.envelope.lbpm_is_draft", "Readback workflow isDraft marker mismatch.", {
+      invariantKey: "envelope.lifecycle.lbpmIsDraft",
+      path: "/mechanisms/lbpmTemplate/0/isDraft",
+      expected: expected.lifecycle.lbpmIsDraft,
+      actual: actual?.lifecycle?.lbpmIsDraft
+    }));
+  }
   if (expected.bindings.formFdId && actual?.bindings?.formFdId && actual.bindings.formFdId !== expected.bindings.formFdId) {
     diagnostics.push(mismatch("envelope", "readback.envelope.form_binding", "Readback form binding fdId mismatch.", {
       invariantKey: "envelope.bindings.formFdId",
@@ -664,6 +683,15 @@ function compareWorkflow(expected, actual, diagnostics) {
         actual: actualNode.sendConfig
       }));
     }
+    if (node.parallelGateway &&
+      stableStringify(node.parallelGateway) !== stableStringify(actualNode.parallelGateway || {})) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.parallel_gateway_mismatch", "Readback parallel-gateway configuration mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.parallelGateway`,
+        path: `/readback/workflow/nodes/${node.id}/parallelGateway`,
+        expected: node.parallelGateway,
+        actual: actualNode.parallelGateway
+      }));
+    }
     if (node.dataAuthority) {
       if (stableStringify(node.dataAuthority) !== stableStringify(actualNode.dataAuthority || {})) {
         diagnostics.push(mismatch("workflow", "readback.workflow.data_authority_mismatch", "Readback workflow data authority mismatch.", {
@@ -821,6 +849,16 @@ function compareNativeEdgeCondition(edge, actualEdge, diagnostics) {
       path: `/readback/workflow/edges/${edge.id}/condition`,
       expected: expectedKind,
       actual: actual.nativeKind
+    }));
+    return;
+  }
+
+  if (edge.condition.nativeText && edge.condition.nativeText !== actual.nativeText) {
+    diagnostics.push(mismatch("workflow", "readback.workflow.edge_condition_native_semantic_mismatch", "Readback workflow edge native rule condition changed.", {
+      invariantKey: `workflow.edges.${edge.id}.condition.nativeText`,
+      path: `/readback/workflow/edges/${edge.id}/condition/nativeText`,
+      expected: edge.condition.nativeText,
+      actual: actual.nativeText || ""
     }));
     return;
   }

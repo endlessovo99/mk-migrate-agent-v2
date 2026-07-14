@@ -6,7 +6,12 @@ export const REVIEW_SCENARIOS = Object.freeze([
   "audited-row-marker-orphan-noop",
   "fail-if-called"
 ]);
-export const NEWOA_SCENARIOS = Object.freeze(["persist", "lose-layout-on-readback", "lose-required-on-readback", "fail-at-update"]);
+export const NEWOA_SCENARIOS = Object.freeze([
+  "persist",
+  "lose-layout-on-readback",
+  "lose-required-on-readback",
+  "fail-at-update"
+]);
 
 const SUCCESS_OPERATIONS = Object.freeze([
   "login",

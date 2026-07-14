@@ -4,6 +4,7 @@ import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "
 import { diagnostic } from "./diagnostics.js";
 import { subProcessContract } from "../../dsl/subprocess.js";
 import { SCRIPT_SINGLETON_GLOBAL_EVENTS } from "../../dsl/scripts.js";
+import { normalizeRuleConditionText } from "./condition-rule.js";
 import {
   BEFORE_SUBMIT_DISPATCH_STRATEGY,
   ORDERED_DISPATCH_STRATEGY,
@@ -75,6 +76,12 @@ function observeEnvelope(template) {
   const diagnostics = [];
   const xform = template?.mechanisms?.["sys-xform"];
   const lbpm = template?.mechanisms?.lbpmTemplate?.[0];
+  const explicitLbpmStatus = normalizeScalar(lbpm?.fdStatus || "");
+  const inferredLbpmStatus = !explicitLbpmStatus &&
+    lbpm?.isDraft === true &&
+    String(normalizeScalar(lbpm?.latestDefinitionStatus)) === "0"
+    ? "draft"
+    : explicitLbpmStatus;
   const categoryId = template?.fdCategory?.fdId || "";
   const value = {
     templateId: normalizeScalar(template?.fdId),
@@ -86,7 +93,7 @@ function observeEnvelope(template) {
       unpublished: true,
       fdStatus: template?.fdStatus ?? 0,
       xformStatus: normalizeScalar(xform?.fdStatus || ""),
-      lbpmStatus: normalizeScalar(lbpm?.fdStatus || ""),
+      lbpmStatus: inferredLbpmStatus,
       lbpmIsDraft: lbpm ? lbpm.isDraft === true : undefined
     },
     bindings: {
@@ -704,6 +711,7 @@ function observeWorkflow(lbpm) {
       participants: observeParticipants(node, initiatorSelectTargetNodeIds.has(node.id)),
       alternativeParticipants: observeAlternativeParticipants(node),
       sendConfig: observeSendConfig(node),
+      parallelGateway: observeParallelGateway(node),
       dataAuthority: observeDataAuthority(formAuths[node.id]),
       ignoreOnSameIdentity: node.ignoreOnSameIdentity === undefined
         ? undefined
@@ -730,6 +738,15 @@ function observeWorkflow(lbpm) {
     status: diagnostics.length ? "decode_failed" : "verified",
     value,
     diagnostics
+  };
+}
+
+function observeParallelGateway(node) {
+  if (!node || !["split", "join"].includes(node.type)) return undefined;
+  return {
+    mode: normalizeScalar(node.type === "split" ? node.splitType : node.joinType),
+    relatedNodeId: normalizeScalar(node.relateId),
+    direction: normalizeScalar(node.gatewayDirection)
   };
 }
 
@@ -1072,6 +1089,7 @@ function observeEdgeCondition(edge, autoConditionBranch = false) {
       nativeKind: "rule",
       nativeStatus: "ok",
       text: normalizeScalar(trimmedFormula),
+      nativeText: normalizeRuleConditionText(trimmedFormula),
       hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
     });
   }
@@ -1172,6 +1190,7 @@ function observeEdgeCondition(edge, autoConditionBranch = false) {
       nativeKind: "rule",
       nativeStatus: "ok",
       text: normalizeScalar(trimmedFormula),
+      nativeText: normalizeRuleConditionText(trimmedFormula),
       hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
     });
   }

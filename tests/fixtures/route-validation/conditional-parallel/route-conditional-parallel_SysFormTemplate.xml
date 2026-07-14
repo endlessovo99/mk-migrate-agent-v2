@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-conditional-parallel-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Conditional Parallel Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-conditional-parallel-template</string></void>
+  <void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;table fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_route_choice&quot;,label:&quot;Route choice&quot;,items:&quot;Alpha|A&amp;#10;Beta|B&amp;#10;Gamma|C&quot;}&apos;&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+  <void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name=&quot;fd_route_choice&quot; label=&quot;Route choice&quot; enumValues=&quot;Alpha|A&amp;#10;Beta|B&amp;#10;Gamma|C&quot;/&gt;&lt;/metadata&gt;</string></void>
+ </object>
+</java>

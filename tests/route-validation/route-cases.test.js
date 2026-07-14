@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { detailTableNameFor } from "../../src/executor/persistence/detail-table-names.js";
 import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-resolver.js";
 import { SIT_PARTICIPANT_FALLBACKS } from "../../src/executor/participant-resolver.js";
+import { executeDsl } from "../../src/executor/execute.js";
+import { NEWOA_SIT_BASE_URL } from "../../src/executor/newoa-client.js";
+import { FakeNewoaAdapter } from "./fake-newoa-adapter.js";
 import { runRouteCase } from "./run-route-case.js";
 
 const SIT_FALLBACK_PARTICIPANT_ID = SIT_PARTICIPANT_FALLBACKS.person.fdId;
@@ -168,6 +172,33 @@ describe("offline Route-validation", { concurrency: false }, () => {
         templateId: "route-created-workflow-template",
         definitionId: ""
       }
+    );
+  });
+
+  it("accepts live workflow draft readback when fdStatus is omitted", async () => {
+    const { dsl } = await runRouteCase("paired-success");
+    const workflowDraftMarkers = JSON.parse(readFileSync(
+      new URL("../fixtures/route-validation/workflow-draft-status-omitted.json", import.meta.url),
+      "utf8"
+    ));
+    const adapter = new FakeNewoaAdapter("persist", { workflowDraftMarkers });
+    const execution = await executeDsl(dsl, {
+      client: adapter,
+      credentials: {
+        username: "route-test-user",
+        encryptedPassword: "route-test-encrypted-password"
+      },
+      confirmWrite: true,
+      targetCategoryId: "route-category-id",
+      baseUrl: NEWOA_SIT_BASE_URL,
+      now: new Date("2026-07-10T00:00:00.000Z")
+    });
+
+    assert.equal(execution.ok, true, JSON.stringify(execution.diagnostics));
+    assert.equal(execution.readback.partitions.workflow, "verified");
+    assert.equal(
+      execution.apiStages.find((stage) => stage.name === "getWorkflowTemplateDetail").status,
+      "ok"
     );
   });
 

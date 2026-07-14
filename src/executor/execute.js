@@ -687,7 +687,11 @@ function assertWorkflowTemplateDetail(detail, workflowTemplateId, targetCategory
       "Workflow detail readback belongs to a different LBPM template."
     );
   }
-  if (detail.isDraft !== true || detail.fdStatus !== "draft") {
+  const hasExplicitStatus = detail.fdStatus !== undefined && detail.fdStatus !== null && detail.fdStatus !== "";
+  const confirmsDraftStatus = hasExplicitStatus
+    ? detail.fdStatus === "draft"
+    : String(detail.latestDefinitionStatus) === "0";
+  if (detail.isDraft !== true || !confirmsDraftStatus) {
     throw stagedError(
       "getWorkflowTemplateDetail",
       "Workflow detail readback is not a draft."

@@ -1,13 +1,25 @@
-import { createHash } from "node:crypto";
 import { mkForComponent, mkForFieldType } from "../dsl/mk-components.js";
 import { isDataOnlyMetadataField } from "./sysform-metadata.js";
+import { restDialogEvidence, sanitizeDesignerValues } from "./rest-dialog.js";
+import { parseDesignerFdValues } from "./designer-control-values.js";
+import { descriptionFieldFromMarkedRow, extractRowMarkers } from "./designer-row-markers.js";
+import {
+  applyAdjacentDetailTableTitles,
+  attachmentContextControls
+} from "./designer-structure-recovery.js";
+import {
+  findMatchingCloseTag,
+  isVoidLikeTag,
+  matchingElementFragment,
+  scanHtmlTags,
+  splitDirectChildCells,
+  splitDirectChildRows
+} from "./designer-html-tokenizer.js";
 import {
   attrValue,
   cleanText,
   decodeEntities,
-  parseFdValues,
   parseOptions,
-  parseXmlAttributes,
   propertyFieldId
 } from "./xml-utils.js";
 
@@ -122,10 +134,10 @@ function parseDesignerLayout(html, warnings) {
             }
             continue;
           }
-          cellFieldIds.push(control.id);
           if (fieldIds.has(control.id)) continue;
           fieldIds.add(control.id);
           fields.push(control);
+          cellFieldIds.push(control.id);
         }
         if (!cellFieldIds.length) return;
 
@@ -186,12 +198,30 @@ function parseDesignerLayout(html, warnings) {
 }
 
 function recoverDesignerAttachments(html, fields, fieldIds, layoutRows, warnings) {
-  const attachments = extractDesignerFieldControls(html)
-    .filter((control) => control.type === "attachment" && !fieldIds.has(control.id));
+  const detailChildIds = nestedDetailControlIds(html);
+  const entries = extractDesignerFieldControlEntries(html);
+  const attachments = entries.filter((entry) =>
+      entry.control.type === "attachment" &&
+      !fieldIds.has(entry.control.id) &&
+      !detailChildIds.has(entry.control.id)
+    );
 
-  for (const attachment of attachments) {
-    fieldIds.add(attachment.id);
-    fields.push(attachment);
+  for (const attachmentEntry of attachments) {
+    const attachment = attachmentEntry.control;
+    if (fieldIds.has(attachment.id)) continue;
+    const recovered = attachmentContextControls(html, attachmentEntry, entries)
+      .filter((control) =>
+        (isSourceDescriptionControl(control) || control.type === "attachment") &&
+        !fieldIds.has(control.id) &&
+        !detailChildIds.has(control.id)
+      );
+    const group = recovered.some((control) => control.id === attachment.id)
+      ? recovered
+      : [attachment];
+    for (const control of group) {
+      fieldIds.add(control.id);
+      fields.push(control);
+    }
     const rowIndex = layoutRows.length;
     layoutRows.push({
       id: `row-recovered-attachment-${attachment.id}`,
@@ -199,8 +229,8 @@ function recoverDesignerAttachments(html, fields, fieldIds, layoutRows, warnings
       columns: 1,
       cells: [{
         id: `row-recovered-attachment-${attachment.id}-cell-0`,
-        fieldId: attachment.id,
-        fieldIds: [attachment.id],
+        fieldId: group[0].id,
+        fieldIds: group.map((control) => control.id),
         column: 0,
         colspan: 1
       }]
@@ -209,12 +239,29 @@ function recoverDesignerAttachments(html, fields, fieldIds, layoutRows, warnings
       code: "source.sysform.designer_attachment_recovered",
       message: `Designer attachment ${attachment.id} (${attachment.title}) was recovered outside the directly parsed standard-table cells.`,
       path: `/fdDesignerHtml/attachments/${rowIndex}`,
-      details: { designerId: attachment.id, title: attachment.title }
+      details: {
+        designerId: attachment.id,
+        title: attachment.title,
+        contextIds: group.map((control) => control.id)
+      }
     });
   }
 }
 
 function enrichDesignerField(field, metadataField, warnings) {
+  if (String(field.source?.designerType || "").toLowerCase() === "restdialog") {
+    warnings.push({
+      code: "source.sysform.rest_dialog_partial",
+      message: `Designer RestDialog ${field.id} (${field.title}) is preserved as a visible text field; remote lookup and cascading output behavior require manual implementation.`,
+      path: "/fdDesignerHtml",
+      details: {
+        designerId: field.id,
+        title: field.title,
+        outputMappings: field.source?.restDialog?.outputMappings || []
+      }
+    });
+  }
+
   if (!metadataField) {
     if (field.type !== "description") {
       warnings.push({
@@ -324,23 +371,53 @@ function extractLayoutCellControls(html) {
     // (nofoot) rows. Keep those as sibling form controls; do not promote
     // ordinary detail columns that also match the broad control scan.
     const footerControls = [];
+    const nestedControlIds = new Set();
     const seen = new Set(detailTables.map((table) => table.id));
     for (const table of detailTables) {
       const tableHtml = matchingDetailTableFragment(html, table.id);
+      for (const nested of extractDesignerFieldControls(tableHtml, { includeHidden: true, includeTextLabels: true })) {
+        if (nested.id !== table.id) nestedControlIds.add(nested.id);
+      }
       for (const control of extractDetailTableFooterControls(tableHtml, table.id)) {
         if (seen.has(control.id)) continue;
         seen.add(control.id);
         footerControls.push(control);
+        nestedControlIds.delete(control.id);
       }
     }
-    return [...detailTables, ...footerControls];
+    const topLevelControls = controls.filter((control) =>
+      control.type === "detailTable" || !nestedControlIds.has(control.id)
+    );
+    const withFooters = appendMissingControls(topLevelControls, footerControls);
+    return applyAdjacentDetailTableTitles(withFooters, isSuspiciousDetailTableTitle);
   }
 
-  const fieldControls = controls.filter((control) => control.type !== "description");
-  if (fieldControls.length) return fieldControls;
+  const fieldControls = controls.filter((control) => !isSourceDescriptionControl(control));
+  if (fieldControls.length) {
+    const boundLabelIds = new Set(
+      fieldControls.map((control) => control.source?.designerValues?._label_bind_id).filter(Boolean)
+    );
+    return controls.filter((control) =>
+      !isSourceDescriptionControl(control) || !boundLabelIds.has(control.id)
+    );
+  }
 
   // Label-only cells: keep styled/hint textLabels as descriptions; skip plain field titles.
-  return controls.filter((control) => control.type === "description" && isHintTextLabel(control));
+  return controls.filter((control) =>
+    isSourceDescriptionControl(control) &&
+    (isHintTextLabel(control) || String(control.source?.designerType || "").toLowerCase() === "linklabel")
+  );
+}
+
+function appendMissingControls(controls, additions) {
+  const seen = new Set(controls.map((control) => control.id));
+  const result = [...controls];
+  for (const addition of additions) {
+    if (seen.has(addition.id)) continue;
+    seen.add(addition.id);
+    result.push(addition);
+  }
+  return result;
 }
 
 // Detail tables and ordinary fields cannot share one mkTree child refType.
@@ -351,23 +428,38 @@ function groupLayoutCellControls(controls) {
   return [controls];
 }
 
+function isSourceDescriptionControl(control) {
+  const designerType = String(control?.source?.designerType || "").toLowerCase();
+  return control?.type === "description" || ["textlabel", "linklabel"].includes(designerType);
+}
+
 function extractDesignerFieldControls(html, options = {}) {
+  return extractDesignerFieldControlEntries(html, options).map((entry) => entry.control);
+}
+
+function extractDesignerFieldControlEntries(html, options = {}) {
   const controls = [];
+  const hiddenRanges = hiddenAncestorRanges(html);
   const controlPattern = /<([a-zA-Z][\w:-]*)\b([^>]*\bfd_type\s*=\s*(["'])([^"']+)\3[^>]*)>/gi;
 
   for (const match of html.matchAll(controlPattern)) {
     const fdType = match[4];
     const normalizedType = String(fdType || "").toLowerCase();
     if (normalizedType === "textlabel" && !options.includeTextLabels) continue;
-    const values = parseFdValues(attrValue(match[2], "fd_values"));
+    const values = parseDesignerFdValues(match[2]);
     const fragment = matchingElementFragment(html, match);
-    const hidden = isHiddenDesignerControl(values, match[2], fragment);
+    const hidden = isHiddenDesignerControl(values, match[2], fragment) ||
+      hiddenRanges.some((range) => match.index >= range.start && match.index < range.end);
     if (hidden && !options.includeHidden) continue;
     const field = designerFieldFromControl(fdType, values, match[2], {
       html: fragment,
       hidden
     });
-    if (field) controls.push(field);
+    if (field) controls.push({
+      control: field,
+      start: match.index,
+      end: match.index + match[0].length
+    });
   }
 
   return controls;
@@ -393,113 +485,6 @@ function isTrueLike(value) {
   return String(value ?? "").trim().toLowerCase() === "true";
 }
 
-function extractRowMarkers(html, warnings = []) {
-  const decoded = decodeEntities(html);
-  const markers = [];
-  const seen = new Set();
-  const inputPattern = /<input\b(?=[^>]*\btype\s*=\s*(?:"hidden"|'hidden'|hidden)(?=\s|\/?>))[^>]*>/gi;
-
-  for (const match of decoded.matchAll(inputPattern)) {
-    const id = attrValue(match[0], "id");
-    const name = attrValue(match[0], "name");
-    const marker = resolveLegacyRowMarker(id, name, warnings);
-    if (!marker || seen.has(marker)) continue;
-    seen.add(marker);
-    markers.push(marker);
-  }
-
-  return markers;
-}
-
-function resolveLegacyRowMarker(id, name, warnings = []) {
-  const rawId = String(id || "").trim();
-  const rawName = String(name || "").trim();
-  const idMarker = isLegacyRowMarker(rawId) ? rawId : "";
-  const nameMarker = isLegacyRowMarker(rawName) ? rawName : "";
-  if (nameMarker) {
-    // Prefer name when id/name diverge so script literals such as
-    // common_dom_row_set_show_required_reset("invoice_row4", ...) can resolve
-    // against layout sourceMarkers. Export typos often leave a duplicated id.
-    if (rawId && rawId !== nameMarker) {
-      warnings.push({
-        code: "source.sysform.row_marker_id_name_mismatch",
-        message: `Row marker hidden input id (${rawId}) differs from name (${nameMarker}); using name for sourceMarkers.`,
-        path: "/fdDesignerHtml",
-        details: {
-          id: rawId,
-          name: nameMarker,
-          chosen: nameMarker
-        }
-      });
-    }
-    return nameMarker;
-  }
-  return idMarker;
-}
-
-function isLegacyRowMarker(value) {
-  return /_row\d*$/i.test(String(value || ""));
-}
-
-function descriptionFieldFromMarkedRow(html, marker, usedFieldIds = new Set()) {
-  const labels = [];
-  const decoded = decodeEntities(html);
-  for (const match of decoded.matchAll(/<label\b[^>]*>([\s\S]*?)<\/label>/gi)) {
-    if (containsHiddenInput(match[1])) continue;
-    const text = cleanDescriptionLabelText(match[1]);
-    if (text) labels.push(text);
-  }
-  const content = labels.join("\n").trim();
-  if (!content) return undefined;
-  const title = labels[0].replace(/[:：]\s*$/, "") || marker;
-  const id = descriptionFieldId(decoded, marker, usedFieldIds);
-  return {
-    id,
-    title,
-    type: "description",
-    required: false,
-    mk: mkForFieldType("description"),
-    source: {
-      designerId: id,
-      designerType: "textLabel",
-      designerValues: {
-        id,
-        label: title,
-        content
-      }
-    }
-  };
-}
-
-function descriptionFieldId(html, marker, usedFieldIds) {
-  const legacyId = `${marker}__description`.replace(/[^A-Za-z0-9_]/g, "_");
-  if (legacyId.length <= 25 && !usedFieldIds.has(legacyId)) return legacyId;
-
-  for (const match of html.matchAll(/<div\b([^>]*)>/gi)) {
-    if (attrValue(match[1], "fd_type").toLowerCase() !== "textlabel") continue;
-    const values = parseFdValues(attrValue(match[1], "fd_values"));
-    const designerId = values.id || attrValue(match[1], "id");
-    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(designerId) && designerId.length <= 25 && !usedFieldIds.has(designerId)) {
-      return designerId;
-    }
-  }
-
-  return `fd_desc_${createHash("sha256").update(legacyId).digest("hex").slice(0, 12)}`;
-}
-
-function containsHiddenInput(value = "") {
-  return /<input\b(?=[^>]*\btype\s*=\s*(?:"hidden"|'hidden'|hidden)\b)[^>]*>/i.test(value);
-}
-
-function cleanDescriptionLabelText(value) {
-  return cleanText(value)
-    .split("\n")
-    .map((line) => line.replace(/^['"]?>\s*/, "").trim())
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-}
-
 function designerFieldFromControl(fdType, values, attrs, context = {}) {
   const normalized = String(fdType || "").toLowerCase();
 
@@ -512,9 +497,10 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
   const source = {
     designerId: id,
     designerType: fdType,
-    designerValues: values,
+    designerValues: sanitizeDesignerValues(normalized, values),
     designerTableName: attrValue(attrs, "tableName") || undefined,
     designerShowStatus: attrValue(attrs, "showStatus") || undefined,
+    ...(normalized === "restdialog" ? { restDialog: restDialogEvidence(values) } : {}),
     ...(context.hidden ? { designerHidden: true } : {})
   };
 
@@ -529,6 +515,11 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
       mk: mkForFieldType("description"),
       source
     };
+  }
+  if (normalized === "linklabel") {
+    const content = cleanText(values.content || title);
+    if (!content) return undefined;
+    return { id, title: content, type: "LinkLabel", required: false, source };
   }
 
   if (normalized === "detailstable") {
@@ -565,6 +556,9 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
   }
   if (["inputtext", "calculation"].includes(normalized)) {
     return { id, title, type: "text", required, mk: mkForFieldType("text"), source };
+  }
+  if (normalized === "restdialog") {
+    return { id, title, type: "RestDialog", required, source };
   }
   // EKP chinaValue is a read-only Chinese-currency display bound to a related amount field.
   // Map it as ordinary text so metadata matching and convertCurrency scripts have a target.
@@ -620,7 +614,7 @@ function isDetailFooterRow(rowHtml) {
 }
 
 function isDetailFooterMainControl(control, tableId) {
-  if (!control || control.type === "detailTable" || control.type === "description") return false;
+  if (!control || control.type === "detailTable" || isSourceDescriptionControl(control)) return false;
   if (!control.title || control.title === control.id) return false;
   if ((control.source?.designerValues?.showStatus || control.source?.designerShowStatus) === "noShow") return false;
   const tableName = control.source?.designerValues?.tableName || control.source?.designerTableName;
@@ -652,6 +646,50 @@ function isHiddenDesignerControl(values = {}, attrs = "", fragment = "") {
   return false;
 }
 
+function hiddenAncestorRanges(html) {
+  const ranges = [];
+  const stack = [];
+  for (const token of scanHtmlTags(html)) {
+    if (token.closing) {
+      const entry = stack.pop();
+      if (entry?.rootHidden) ranges.push({ start: entry.contentStart, end: token.start });
+      continue;
+    }
+    if (token.selfClosing || isVoidLikeTag(token.name)) continue;
+    const parentHidden = stack.at(-1)?.hidden === true;
+    const values = parseDesignerFdValues(token.attrs);
+    const ownHidden = isHiddenDesignerControl(values, token.attrs, token.raw);
+    stack.push({
+      name: token.name,
+      contentStart: token.end,
+      hidden: parentHidden || ownHidden,
+      rootHidden: ownHidden && !parentHidden
+    });
+  }
+  for (const entry of stack) {
+    if (entry.rootHidden) ranges.push({ start: entry.contentStart, end: String(html || "").length });
+  }
+  return ranges;
+}
+
+function nestedDetailControlIds(html) {
+  const ids = new Set();
+  const detailTables = extractDesignerFieldControls(html, {
+    includeHidden: true,
+    includeTextLabels: true
+  }).filter((control) => control.type === "detailTable");
+  for (const table of detailTables) {
+    const tableHtml = matchingDetailTableFragment(html, table.id);
+    for (const control of extractDesignerFieldControls(tableHtml, {
+      includeHidden: true,
+      includeTextLabels: true
+    })) {
+      if (control.id !== table.id) ids.add(control.id);
+    }
+  }
+  return ids;
+}
+
 function isFalseLike(value) {
   return String(value ?? "").trim().toLowerCase() === "false";
 }
@@ -664,29 +702,16 @@ function hasDisplayNone(value) {
   return /(?:^|;)\s*display\s*:\s*none\b/i.test(String(value ?? ""));
 }
 
-function matchingElementFragment(html, match) {
-  const tagName = match[1];
-  const start = match.index;
-  const openEnd = start + match[0].length;
-  if (isVoidLikeTag(tagName)) return match[0];
-  const end = findMatchingCloseTag(html, openEnd, tagName);
-  return end > openEnd ? html.slice(start, end + `</${tagName}>`.length) : match[0];
-}
-
 function matchingDetailTableFragment(html, tableId) {
   if (!html || !tableId) return "";
   const controlPattern = /<([a-zA-Z][\w:-]*)\b([^>]*\bfd_type\s*=\s*(["'])detailsTable\3[^>]*)>/gi;
   for (const match of html.matchAll(controlPattern)) {
-    const values = parseFdValues(attrValue(match[2], "fd_values"));
+    const values = parseDesignerFdValues(match[2]);
     const id = values.id || attrValue(match[2], "id");
     if (id !== tableId) continue;
     return matchingElementFragment(html, match);
   }
   return "";
-}
-
-function isVoidLikeTag(tagName = "") {
-  return ["input", "br", "hr", "img", "meta", "link"].includes(String(tagName).toLowerCase());
 }
 
 function fallbackLayout(fields, source) {
@@ -752,105 +777,6 @@ function extractFirstTbodyContent(fragment) {
   const start = match.index + match[0].length;
   const end = findMatchingCloseTag(fragment, start, "tbody");
   return end > start ? fragment.slice(start, end) : fragment.slice(start);
-}
-
-function findMatchingCloseTag(html, contentStart, tagName) {
-  const lower = html.toLowerCase();
-  const openToken = `<${tagName}`;
-  const closeToken = `</${tagName}>`;
-  let depth = 1;
-  let cursor = contentStart;
-
-  while (cursor < html.length) {
-    const nextOpen = lower.indexOf(openToken, cursor);
-    const nextClose = lower.indexOf(closeToken, cursor);
-    if (nextClose === -1) return html.length;
-    if (nextOpen !== -1 && nextOpen < nextClose) {
-      depth += 1;
-      const openEnd = lower.indexOf(">", nextOpen);
-      cursor = openEnd === -1 ? nextOpen + openToken.length : openEnd + 1;
-      continue;
-    }
-    depth -= 1;
-    if (depth === 0) return nextClose;
-    cursor = nextClose + closeToken.length;
-  }
-
-  return html.length;
-}
-
-function splitDirectChildRows(fragment) {
-  const rows = [];
-  let tableDepth = 0;
-  let rowStart = -1;
-  const lower = fragment.toLowerCase();
-
-  for (let index = 0; index < fragment.length; index += 1) {
-    if (lower.startsWith("<table", index)) {
-      const close = lower.indexOf(">", index);
-      if (close === -1) break;
-      tableDepth += 1;
-      index = close;
-      continue;
-    }
-    if (lower.startsWith("</table>", index)) {
-      tableDepth = Math.max(0, tableDepth - 1);
-      index += "</table>".length - 1;
-      continue;
-    }
-    if (tableDepth === 0 && lower.startsWith("<tr", index)) {
-      rowStart = index;
-      continue;
-    }
-    if (tableDepth === 0 && lower.startsWith("</tr>", index) && rowStart >= 0) {
-      rows.push(fragment.slice(rowStart, index + "</tr>".length));
-      rowStart = -1;
-      index += "</tr>".length - 1;
-    }
-  }
-
-  if (rows.length) return rows;
-  return [...fragment.matchAll(/<tr\b[\s\S]*?<\/tr>/gi)].map((match) => match[0]);
-}
-
-function splitDirectChildCells(rowHtml) {
-  const cells = [];
-  let tableDepth = 0;
-  let cellStart = -1;
-  const lower = rowHtml.toLowerCase();
-
-  for (let index = 0; index < rowHtml.length; index += 1) {
-    if (lower.startsWith("<table", index) && cellStart >= 0) {
-      const close = lower.indexOf(">", index);
-      if (close === -1) break;
-      tableDepth += 1;
-      index = close;
-      continue;
-    }
-    if (lower.startsWith("</table>", index) && tableDepth > 0) {
-      tableDepth -= 1;
-      index += "</table>".length - 1;
-      continue;
-    }
-    if (tableDepth === 0 && cellStart < 0 && (lower.startsWith("<td", index) || lower.startsWith("<th", index))) {
-      cellStart = index;
-      continue;
-    }
-    if (tableDepth === 0 && cellStart >= 0 && (lower.startsWith("</td>", index) || lower.startsWith("</th>", index))) {
-      const endTag = lower.startsWith("</td>", index) ? "</td>" : "</th>";
-      const cellHtml = rowHtml.slice(cellStart, index + endTag.length);
-      const openMatch = cellHtml.match(/^<(td|th)\b([^>]*)>/i);
-      const bodyStart = openMatch ? openMatch[0].length : 0;
-      cells.push({
-        attrs: parseXmlAttributes(openMatch?.[2] || ""),
-        body: cellHtml.slice(bodyStart, -endTag.length)
-      });
-      cellStart = -1;
-      index += endTag.length - 1;
-    }
-  }
-
-  return cells;
 }
 
 function parseColumnSpec(value, fallback) {

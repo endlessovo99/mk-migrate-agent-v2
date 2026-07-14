@@ -11,7 +11,14 @@ import {
 } from "./field-id-remap.js";
 import { SOURCE_DRAFT_VERSION } from "./source-draft.js";
 import { draftMkScriptsFromSourceScripts } from "./sysform-jsp-scripts.js";
-import { classifyWorkflowFormulaParticipant } from "./workflow-formula-participants.js";
+import {
+  classifyWorkflowDynamicParticipant,
+  classifyWorkflowFormulaParticipant
+} from "./workflow-formula-participants.js";
+import {
+  conditionalParallelSplitIds,
+  isSupportedConditionalParallelCondition
+} from "./conditional-parallel.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -486,6 +493,11 @@ function draftRuleEffects(effects) {
 function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
   const sourceNodes = sourceWorkflow.nodes || [];
   const nodeById = new Map(sourceNodes.map((node) => [node.id, node]));
+  const conditionalSplitIds = conditionalParallelSplitIds(
+    sourceNodes,
+    sourceNodeAttributes,
+    normalizeParallelMode
+  );
   const subProcessByNodeId = draftSubProcessPairs(sourceNodes);
   const participantSelections = participantSelectionsFromWorkflowNodes(sourceNodes);
   return {
@@ -518,6 +530,9 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
     }),
     edges: (sourceWorkflow.edges || []).map((edge) => {
       const hasCondition = Boolean(edge.condition || edge.displayCondition);
+      const conditionalParallel = conditionalSplitIds.has(edge.source);
+      const conditionExecutable = conditionalParallel &&
+        isSupportedConditionalParallelCondition(edge.condition, knownFieldIds || []);
       return {
         id: edge.id,
         source: edge.source,
@@ -529,7 +544,10 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
           sourceText: edge.condition || "",
           displayText: edge.displayCondition || "",
           targetText: translateLegacyConditionContextReferences(edge.condition, knownFieldIds || []),
-          translationStatus: hasCondition ? "display_only" : "executable"
+          translationStatus: conditionalParallel
+            ? conditionExecutable ? "executable" : hasCondition ? "display_only" : "pending_review"
+            : hasCondition ? "display_only" : "executable",
+          ...(conditionalParallel ? { critical: true } : {})
         }
       };
     }),
@@ -662,6 +680,9 @@ function participantsFromSourceNode(node, participantSelections) {
 
   const formulaParticipant = classifyWorkflowFormulaParticipant(attrs);
   if (formulaParticipant) return pruneUndefined({ ...formulaParticipant, ...participantEvidence });
+
+  const dynamicParticipant = classifyWorkflowDynamicParticipant(attrs, node.handlerEntities);
+  if (dynamicParticipant) return pruneUndefined({ ...dynamicParticipant, ...participantEvidence });
 
   if (handlerMembers.length) {
     return pruneUndefined({
@@ -824,13 +845,17 @@ function componentForSourceType(type, source) {
     radio: "xform-radio",
     checkbox: "xform-checkbox",
     attachment: "xform-attach",
-    description: "xform-description"
+    description: "xform-description",
+    RestDialog: "xform-input",
+    LinkLabel: "xform-description"
   }[type] || "xform-input";
 }
 
 function normalizeFieldType(type) {
   return {
-    date: "dateTime"
+    date: "dateTime",
+    RestDialog: "text",
+    LinkLabel: "description"
   }[type] || type || "text";
 }
 
