@@ -96,7 +96,26 @@ export function applyFieldIdMapToWorkflow(workflow, idMap) {
       dataAuthority: remapDataAuthority(node.dataAuthority, idMap),
       participants: remapParticipants(node.participants, idMap),
       subProcess: remapStructuredValue(node.subProcess, idMap)
-    }))
+    })),
+    ...(Array.isArray(workflow.edges) ? {
+      edges: workflow.edges.map((edge) => ({
+        ...edge,
+        condition: remapWorkflowCondition(edge.condition, idMap)
+      }))
+    } : {})
+  };
+}
+
+function remapWorkflowCondition(condition, idMap) {
+  if (
+    !condition ||
+    typeof condition !== "object" ||
+    Array.isArray(condition) ||
+    typeof condition.targetText !== "string"
+  ) return condition;
+  return {
+    ...condition,
+    targetText: replaceFieldIdsInText(condition.targetText, idMap)
   };
 }
 

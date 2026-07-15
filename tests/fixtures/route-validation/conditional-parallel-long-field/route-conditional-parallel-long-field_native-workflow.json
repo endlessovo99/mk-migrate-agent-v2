@@ -1,0 +1,128 @@
+{
+  "elements": [
+    {
+      "id": "QX10",
+      "name": "Start",
+      "type": "generalStart",
+      "element": "startEvent"
+    },
+    {
+      "id": "QX20",
+      "name": "Conditional fan-out",
+      "type": "split",
+      "element": "parallelGateway",
+      "splitType": "1",
+      "relateId": "QX50",
+      "gatewayDirection": "diverging"
+    },
+    {
+      "id": "QX31",
+      "name": "Alpha review",
+      "type": "review",
+      "element": "manualTask",
+      "ignoreOnSameIdentity": "2",
+      "handlerSelectType": "org",
+      "handlers": {
+        "id": "handlers",
+        "type": "org",
+        "source": "1",
+        "ruleKey": "",
+        "ruleName": "",
+        "members": [
+          {
+            "id": "variant-alpha-reviewer",
+            "name": "Alpha Reviewer",
+            "element": "user",
+            "type": "3"
+          }
+        ],
+        "element": "users"
+      }
+    },
+    {
+      "id": "QX32",
+      "name": "Gamma review",
+      "type": "review",
+      "element": "manualTask",
+      "ignoreOnSameIdentity": "2",
+      "handlerSelectType": "org",
+      "handlers": {
+        "id": "handlers",
+        "type": "org",
+        "source": "1",
+        "ruleKey": "",
+        "ruleName": "",
+        "members": [
+          {
+            "id": "variant-gamma-reviewer",
+            "name": "Gamma Reviewer",
+            "element": "user",
+            "type": "3"
+          }
+        ],
+        "element": "users"
+      }
+    },
+    {
+      "id": "QX50",
+      "name": "Conditional join",
+      "type": "join",
+      "element": "parallelGateway",
+      "joinType": "1",
+      "relateId": "QX20",
+      "gatewayDirection": "converging"
+    },
+    {
+      "id": "QX90",
+      "name": "End",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    {
+      "id": "QE10",
+      "type": "sequenceFlow",
+      "sourceRef": "QX10",
+      "targetRef": "QX20"
+    },
+    {
+      "id": "QE21",
+      "type": "sequenceFlow",
+      "sourceRef": "QX20",
+      "targetRef": "QX31",
+      "priority": 2,
+      "defaultTrend": false,
+      "formulaType": "rule",
+      "formulaName": "$Route selection$ is Alpha or Beta",
+      "formula": "$fd_fd955d37adee43fc66d73d$.equals(\"A\") || $fd_fd955d37adee43fc66d73d$ == \"B\""
+    },
+    {
+      "id": "QE22",
+      "type": "sequenceFlow",
+      "sourceRef": "QX20",
+      "targetRef": "QX32",
+      "priority": 3,
+      "defaultTrend": false,
+      "formulaType": "rule",
+      "formulaName": "$Route selection$ is Gamma",
+      "formula": "$fd_fd955d37adee43fc66d73d$.equals(\"C\")"
+    },
+    {
+      "id": "QE31",
+      "type": "sequenceFlow",
+      "sourceRef": "QX31",
+      "targetRef": "QX50"
+    },
+    {
+      "id": "QE32",
+      "type": "sequenceFlow",
+      "sourceRef": "QX32",
+      "targetRef": "QX50"
+    },
+    {
+      "id": "QE50",
+      "type": "sequenceFlow",
+      "sourceRef": "QX50",
+      "targetRef": "QX90"
+    }
+  ]
+}

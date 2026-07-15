@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdKey</string><string>reviewMainDoc</string></void>
+  <void method="put">
+   <string>fdContent</string>
+   <string>&lt;process description=&quot;templateId=route-conditional-parallel-long-field-template&amp;amp;lbpmTmpId=route-conditional-parallel-long-field-lbpm&quot; fdId=&quot;route-conditional-parallel-long-field-process&quot;&gt;
+&lt;nodes&gt;
+ &lt;startNode id=&quot;QX10&quot; name=&quot;Start&quot;/&gt;
+ &lt;splitNode id=&quot;QX20&quot; name=&quot;Conditional fan-out&quot; splitType=&quot;condition&quot; relatedNodeIds=&quot;QX50&quot;/&gt;
+ &lt;reviewNode id=&quot;QX31&quot; name=&quot;Alpha review&quot; handlerIds=&quot;variant-alpha-reviewer&quot; handlerNames=&quot;Alpha Reviewer&quot; handlerSelectType=&quot;org&quot;/&gt;
+ &lt;reviewNode id=&quot;QX32&quot; name=&quot;Gamma review&quot; handlerIds=&quot;variant-gamma-reviewer&quot; handlerNames=&quot;Gamma Reviewer&quot; handlerSelectType=&quot;org&quot;/&gt;
+ &lt;joinNode id=&quot;QX50&quot; name=&quot;Conditional join&quot; joinType=&quot;all&quot; relatedNodeIds=&quot;QX20&quot;/&gt;
+ &lt;endNode id=&quot;QX90&quot; name=&quot;End&quot;/&gt;
+&lt;/nodes&gt;
+&lt;lines&gt;
+ &lt;line id=&quot;QE10&quot; startNodeId=&quot;QX10&quot; endNodeId=&quot;QX20&quot;/&gt;
+ &lt;line id=&quot;QE21&quot; startNodeId=&quot;QX20&quot; endNodeId=&quot;QX31&quot; condition=&quot;$fd_route_selection_structural_variant$.equals(&amp;quot;A&amp;quot;) || $fd_route_selection_structural_variant$ == &amp;quot;B&amp;quot;&quot; disCondition=&quot;$Route selection$ is Alpha or Beta&quot;/&gt;
+ &lt;line id=&quot;QE22&quot; startNodeId=&quot;QX20&quot; endNodeId=&quot;QX32&quot; condition=&quot;$fd_route_selection_structural_variant$.equals(&amp;quot;C&amp;quot;)&quot; disCondition=&quot;$Route selection$ is Gamma&quot;/&gt;
+ &lt;line id=&quot;QE31&quot; startNodeId=&quot;QX31&quot; endNodeId=&quot;QX50&quot;/&gt;
+ &lt;line id=&quot;QE32&quot; startNodeId=&quot;QX32&quot; endNodeId=&quot;QX50&quot;/&gt;
+ &lt;line id=&quot;QE50&quot; startNodeId=&quot;QX50&quot; endNodeId=&quot;QX90&quot;/&gt;
+&lt;/lines&gt;
+&lt;/process&gt;</string>
+  </void>
+ </object>
+</java>

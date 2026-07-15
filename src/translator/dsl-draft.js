@@ -30,13 +30,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   const rawForm = draftForm(sourceDraft.form || {});
   const fieldIdMap = buildFieldIdMap(rawForm);
   const form = applyFieldIdMapToForm(rawForm, fieldIdMap);
-  const knownFieldIds = new Set();
-  for (const field of form.fields || []) {
-    if (field?.id) knownFieldIds.add(field.id);
-    for (const column of field?.columns || []) {
-      if (column?.id) knownFieldIds.add(column.id);
-    }
-  }
+  const knownSourceFieldIds = collectFormFieldIds(rawForm);
   const formRules = draftFormRules(
     applyFieldIdMapToSourceFormRules(sourceDraft.formRules, fieldIdMap),
     form
@@ -46,7 +40,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     fieldIdMap
   );
   const workflow = sourceDraft.workflow
-    ? applyFieldIdMapToWorkflow(draftWorkflow(sourceDraft.workflow, knownFieldIds), fieldIdMap)
+    ? applyFieldIdMapToWorkflow(draftWorkflow(sourceDraft.workflow, knownSourceFieldIds), fieldIdMap)
     : undefined;
 
   return pruneUndefined({
@@ -85,6 +79,17 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceDraft: options.sourceDraftDigest || ""
     }
   });
+}
+
+function collectFormFieldIds(form = {}) {
+  const fieldIds = new Set();
+  for (const field of form.fields || []) {
+    if (field?.id) fieldIds.add(field.id);
+    for (const column of field?.columns || []) {
+      if (column?.id) fieldIds.add(column.id);
+    }
+  }
+  return fieldIds;
 }
 
 function draftForm(sourceForm) {
