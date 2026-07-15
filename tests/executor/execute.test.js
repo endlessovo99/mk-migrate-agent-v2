@@ -116,83 +116,6 @@ describe("executeDsl", () => {
     assert.equal(updatePayload.fdName, "MK_TEST_预算追加_20260711010203");
   });
 
-  it("executes an existing-template scoped repair without changing unrelated workflow policy", async () => {
-    const dsl = trustedDslFromFixture("tests/fixtures/route-validation/conditional-parallel");
-    const templateShell = existingTemplateShell();
-    const existingTemplate = projectTemplate(dsl, templateShell);
-    const lbpm = existingTemplate.mechanisms.lbpmTemplate[0];
-    lbpm.fdTemplateFormAuths = {
-      PX31: {
-        fd_route_choice: {
-          fdNodeId: "PX31",
-          fdFieldId: "fd_route_choice",
-          isShow: true,
-          isEdit: false,
-          isRequire: false
-        }
-      }
-    };
-    const content = JSON.parse(lbpm.fdContent);
-    content.elements.find((element) => element.id === "PE21").formula = "legacy-formula";
-    content.elements.find((element) => element.id === "PX20").splitType = "0";
-    const creator = content.elements.find((element) => element.id === "PX60");
-    creator.handlerSelectType = "org";
-    creator.handlers = { type: "org", source: "1", members: [] };
-    const unrelated = content.elements.find((element) => element.id === "PX31");
-    unrelated.ignoreOnSameIdentity = "legacy-preserve";
-    unrelated.routeValidationSentinel = { untouched: true };
-    lbpm.fdContent = JSON.stringify(content);
-
-    const client = new FakeNewoaClient({
-      existingTemplate,
-      elementResults: {
-        "alpha-reviewer": { fdId: "alpha-reviewer", fdName: "Alpha Reviewer", fdOrgType: 8 },
-        "gamma-reviewer": { fdId: "gamma-reviewer", fdName: "Gamma Reviewer", fdOrgType: 8 },
-        "ordinary-department-88": { fdId: "ordinary-department-88", fdName: "提交人部门", fdOrgType: 8 }
-      }
-    });
-    const result = await executeDsl(dsl, {
-      client,
-      credentials: TEST_CREDENTIALS,
-      confirmWrite: true,
-      targetCategoryId: "category-1",
-      existingTemplateId: "existing-template-id",
-      workflowUpdateMode: "scoped-repair"
-    });
-
-    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
-    assert.equal(result.readback.partitions.workflow, "verified");
-    const update = client.calls.find((call) => call.name === "updateTemplate").payload;
-    const repaired = JSON.parse(update.mechanisms.lbpmTemplate[0].fdContent);
-    assert.deepEqual(update.mechanisms.lbpmTemplate[0].fdTemplateFormAuths, lbpm.fdTemplateFormAuths);
-    assert.equal(repaired.elements.find((element) => element.id === "PE21").formula.includes("fd_route_choice"), true);
-    assert.equal(repaired.elements.find((element) => element.id === "PX20").splitType, "1");
-    assert.equal(repaired.elements.find((element) => element.id === "PX60").handlers.type, "formula");
-    assert.deepEqual(
-      repaired.elements.find((element) => element.id === "PX31"),
-      content.elements.find((element) => element.id === "PX31")
-    );
-  });
-
-  it("blocks scoped repair without an existing template id", async () => {
-    const client = new FakeNewoaClient();
-    const result = await executeDsl(sampleTrustedDsl(), {
-      client,
-      credentials: TEST_CREDENTIALS,
-      confirmWrite: true,
-      targetCategoryId: "category-1",
-      workflowUpdateMode: "scoped-repair"
-    });
-
-    assert.equal(result.ok, false);
-    assert.equal(result.status, "blocked");
-    assert.equal(
-      result.diagnostics.some((item) => item.code === "safety.scoped_repair_existing_template_required"),
-      true
-    );
-    assert.deepEqual(client.calls, []);
-  });
-
   it("writes an initial same-id workflow draft and verifies readback", async () => {
     const client = new FakeNewoaClient();
     const result = await executeDsl(sampleTrustedDsl(), {
@@ -3682,43 +3605,6 @@ function baseTemplate() {
   };
 }
 
-function existingTemplateShell() {
-  return {
-    fdId: "existing-template-id",
-    fdName: "MK_TEST_条件并行修复_20260714000000",
-    fdStatus: 0,
-    fdTableName: "existing_table_name",
-    fdCategory: { fdId: "category-1" },
-    mechanisms: {
-      "sys-xform": {
-        fdId: "existing-template-id",
-        fdName: "MK_TEST_条件并行修复_20260714000000",
-        fdConfig: "{}",
-        fdTableName: "existing_table_name"
-      },
-      lbpmTemplate: [{
-        fdId: "lbpm-template-id",
-        fdName: "MK_TEST_条件并行修复_20260714000000",
-        fdTemplateCode: "template_existing_repair",
-        fdEntityId: "existing-template-id",
-        fdEntityKey: "KmReviewMain",
-        fdEntityName: "com.landray.km.review.core.entity.KmReviewTemplate",
-        fdMainEntityName: "com.landray.km.review.core.entity.KmReviewMain",
-        fdModuleCode: "km-review",
-        fdContentType: "json",
-        fdSystemCode: "INNER_SYSTEM",
-        fdSystemName: "MK-PaaS内部系统",
-        fdTemplateForms: [{ fdFormKey: "existing-template-id" }],
-        fdReaders: [],
-        fdEditors: [],
-        fdStatus: "draft",
-        isDraft: true,
-        fdContent: JSON.stringify({ elements: [] })
-      }]
-    }
-  };
-}
-
 function baseTemplateWithExistingFormRules() {
   const template = baseTemplate();
   template.mechanisms["sys-xform"].fdConfig = JSON.stringify({
@@ -3796,7 +3682,6 @@ class FakeNewoaClient {
     this.expectedCredentials = options.expectedCredentials;
     this.loginError = options.loginError;
     this.existingTemplate = options.existingTemplate;
-    this.elementResults = options.elementResults || {};
     this.generatedTableName = options.generatedTableName ?? "generated_table_name";
   }
 
@@ -3900,9 +3785,6 @@ class FakeNewoaClient {
 
   async getElementInfo(targets) {
     this.calls.push({ name: "getElementInfo", payload: { targets } });
-    return targets.flatMap((target) => {
-      const result = this.elementResults[target];
-      return result ? [structuredClone(result)] : [];
-    });
+    return [];
   }
 }

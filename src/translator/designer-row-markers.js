@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { mkForFieldType } from "../dsl/mk-components.js";
 import { parseDesignerFdValues } from "./designer-control-values.js";
 import { attrValue, cleanText, decodeEntities } from "./xml-utils.js";
 
@@ -36,7 +35,6 @@ export function descriptionFieldFromMarkedRow(html, marker, usedFieldIds = new S
     title,
     type: "description",
     required: false,
-    mk: mkForFieldType("description"),
     source: {
       designerId: id,
       designerType: "textLabel",

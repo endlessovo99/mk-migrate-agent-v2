@@ -89,8 +89,7 @@ export function prepareSample(dsl, options = {}) {
   const prepared = preparePersistedTemplate({
     dsl,
     envelope,
-    baseTemplate: providedBase,
-    workflowUpdateMode: options.workflowUpdateMode
+    baseTemplate: providedBase
   });
   if (!prepared.ok) {
     const error = new Error(prepared.diagnostics.map((item) => item.message).join("; "));

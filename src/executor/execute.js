@@ -213,8 +213,7 @@ export async function executeDsl(input, options = {}) {
       prepared = preparePersistedTemplate({
         dsl: executableDsl,
         envelope,
-        baseTemplate: detail,
-        workflowUpdateMode: options.workflowUpdateMode || "full"
+        baseTemplate: detail
       });
     } catch (error) {
       return projectionFailure({
@@ -450,23 +449,6 @@ function validateSafety(options, baseUrlDiagnostics = []) {
       code: "safety.encrypted_password_required",
       message: "execute requires NEWOA_ENCRYPTED_PASSWORD.",
       path: "/credentials/encryptedPassword"
-    });
-  }
-  const workflowUpdateMode = options.workflowUpdateMode || "full";
-  if (!["full", "scoped-repair"].includes(workflowUpdateMode)) {
-    diagnostics.push({
-      level: "error",
-      code: "safety.workflow_update_mode_invalid",
-      message: "execute requires --workflow-update-mode to be full or scoped-repair.",
-      path: "/workflowUpdateMode"
-    });
-  }
-  if (workflowUpdateMode === "scoped-repair" && !nonEmptyString(options.existingTemplateId)) {
-    diagnostics.push({
-      level: "error",
-      code: "safety.scoped_repair_existing_template_required",
-      message: "Scoped workflow repair is available only with --template-id.",
-      path: "/existingTemplateId"
     });
   }
   diagnostics.push(...baseUrlDiagnostics);
