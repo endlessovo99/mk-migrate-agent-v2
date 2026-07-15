@@ -394,6 +394,14 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
   expectedRows.forEach((expectedRow, rowIndex) => {
     const actualRow = actualRows[rowIndex];
     if (!actualRow) return;
+    if (expectedRow.rows !== actualRow.rows || expectedRow.columns !== actualRow.columns) {
+      diagnostics.push(mismatch("form", "readback.form.layout_grid_size_mismatch", "Readback form layout grid size does not match DSL.", {
+        invariantKey: `form.layout.rows.${rowIndex}.grid`,
+        path: `/readback/form/layoutRows/${rowIndex}`,
+        expected: { rows: expectedRow.rows, columns: expectedRow.columns },
+        actual: { rows: actualRow.rows, columns: actualRow.columns }
+      }));
+    }
     if ((expectedRow.cells || []).length !== (actualRow.cells || []).length) {
       diagnostics.push(mismatch("form", "readback.form.layout_cells_mismatch", "Readback form layout cell count does not match DSL.", {
         invariantKey: `form.layout.rows.${rowIndex}.cells`,
@@ -414,12 +422,16 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
           actual: actualCell.fieldIds
         }));
       }
-      if (expectedCell.column !== actualCell.column || expectedCell.colspan !== actualCell.colspan) {
+      if (
+        expectedCell.row !== actualCell.row ||
+        expectedCell.column !== actualCell.column ||
+        expectedCell.colspan !== actualCell.colspan
+      ) {
         diagnostics.push(mismatch("form", "readback.form.layout_cell_position_mismatch", "Readback form layout cell position does not match DSL.", {
           invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.position`,
           path: `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}`,
-          expected: { column: expectedCell.column, colspan: expectedCell.colspan },
-          actual: { column: actualCell.column, colspan: actualCell.colspan }
+          expected: { row: expectedCell.row, column: expectedCell.column, colspan: expectedCell.colspan },
+          actual: { row: actualCell.row, column: actualCell.column, colspan: actualCell.colspan }
         }));
       }
     });

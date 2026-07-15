@@ -33,6 +33,13 @@ export const FUNCTIONS_BY_NAME = new Map(
   FUNCTION_CATALOG.functions.map((fn) => [fn.name, fn])
 );
 
+export function componentSupportsProp(componentId, propName) {
+  if (!nonEmptyString(componentId) || !nonEmptyString(propName)) return false;
+  return Boolean(
+    COMPONENTS_BY_ID.get(componentId)?.propsSchema?.properties?.[propName]
+  );
+}
+
 export function componentCatalogRef() {
   return {
     id: COMPONENT_CATALOG.id,

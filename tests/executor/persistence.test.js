@@ -21,7 +21,7 @@ describe("preparePersistedTemplate interface", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl());
     assert.equal(readback.ok, true);
     assert.equal(readback.status, "verified");
-    assert.equal(readback.invariantVersion, 7);
+    assert.equal(readback.invariantVersion, 8);
     assert.deepEqual(readback.partitions, {
       envelope: "verified",
       form: "verified",
@@ -169,8 +169,8 @@ describe("form field and detail mutations", () => {
     const form = sampleForm();
     form.layout.mkTree[0] = {
       id: "layout.row-pack",
-      componentId: "xform-flex-1-1-layout",
-      props: { columns: 1, sourceColumns: 4 },
+      componentId: "xform-flex-1-2-layout",
+      props: { columns: 2, sourceColumns: 4 },
       sourceRef: "source.form.layout.row.row-pack",
       sourceMarkers: ["fd_pack_row"],
       children: [{
@@ -204,6 +204,87 @@ describe("form field and detail mutations", () => {
     assert.deepEqual(
       readback.form.layoutRows[0].cells.map((cell) => cell.fieldIds),
       [["fd_subject"], ["fd_amount"]]
+    );
+  });
+
+  it("persists overflow as one multi-row grid with one runtime row marker", () => {
+    const form = sampleForm();
+    const baseField = form.fields.find((field) => field.id === "fd_amount");
+    for (const id of ["fd_extra_1", "fd_extra_2", "fd_extra_3"]) {
+      form.fields.splice(form.fields.length - 1, 0, {
+        ...structuredClone(baseField),
+        id,
+        title: id,
+        sourceRef: `source.form.control.${id}`
+      });
+    }
+    const ids = ["fd_subject", "fd_amount", "fd_extra_1", "fd_extra_2", "fd_extra_3"];
+    form.layout.mkTree[0] = {
+      id: "layout.row-multi",
+      componentId: "xform-multi-row-table-layout",
+      props: { rows: 2, columns: 4 },
+      sourceRef: "source.form.layout.row.row-multi",
+      sourceMarkers: ["fd_multi_row"],
+      children: ids.map((id, index) => ({
+        id: `layout.row-multi-cell-${index}`,
+        refType: "field",
+        refIds: [id],
+        sourceRef: `source.form.layout.cell.row-multi-cell-${index}`,
+        row: Math.floor(index / 4),
+        column: index === 4 ? 3 : index % 4,
+        colspan: 1
+      }))
+    };
+
+    const dsl = sampleTrustedDsl({ form, workflow: null });
+    const prepared = prepareSample(dsl);
+    assert.equal(prepared.ok, true, JSON.stringify(prepared.diagnostics));
+    const view = JSON.parse(xformConfig(prepared.update).viewModel[0].fdConfig);
+    const main = view.view.render.desktop[0].children[0];
+    const multiRows = main.children.filter((row) => row.controlProps?.migrationRowId === "fd_multi_row");
+    const grid = multiRows[0].children[0];
+
+    assert.equal(multiRows.length, 1);
+    assert.equal(grid.controlProps.columns, 4);
+    assert.equal(grid.controlProps.rows, 2);
+    assert.deepEqual(
+      grid.children.map((item) => [item.controlProps.row, item.controlProps.column]),
+      [[1, 1], [1, 2], [1, 3], [1, 4], [2, 4]]
+    );
+
+    const { readback } = persistAndVerify(dsl);
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.deepEqual(
+      readback.form.layoutRows[0].cells.map((cell) => [cell.row, cell.column]),
+      [[0, 0], [0, 1], [0, 2], [0, 3], [1, 3]]
+    );
+
+    const changed = prepared.verify(structuredClone(prepared.update));
+    assert.equal(changed.ok, true);
+    const wrongGridSize = structuredClone(prepared.update);
+    const wrongGridConfig = xformConfig(wrongGridSize);
+    const wrongGridView = JSON.parse(wrongGridConfig.viewModel[0].fdConfig);
+    wrongGridView.view.render.desktop[0].children[0].children[0].children[0].controlProps.rows = 1;
+    wrongGridConfig.viewModel[0].fdConfig = JSON.stringify(wrongGridView);
+    wrongGridSize.mechanisms["sys-xform"].fdConfig = JSON.stringify(wrongGridConfig);
+    const gridMismatch = prepared.verify(wrongGridSize);
+    assert.equal(gridMismatch.ok, false);
+    assert.equal(
+      gridMismatch.diagnostics.some((item) => item.code === "readback.form.layout_grid_size_mismatch"),
+      true
+    );
+
+    const mutated = structuredClone(prepared.update);
+    const mutatedConfig = xformConfig(mutated);
+    const mutatedView = JSON.parse(mutatedConfig.viewModel[0].fdConfig);
+    mutatedView.view.render.desktop[0].children[0].children[0].children[0].children[4].controlProps.row = 1;
+    mutatedConfig.viewModel[0].fdConfig = JSON.stringify(mutatedView);
+    mutated.mechanisms["sys-xform"].fdConfig = JSON.stringify(mutatedConfig);
+    const mismatch = prepared.verify(mutated);
+    assert.equal(mismatch.ok, false);
+    assert.equal(
+      mismatch.diagnostics.some((item) => item.code === "readback.form.layout_cell_position_mismatch"),
+      true
     );
   });
 });
@@ -281,7 +362,7 @@ describe("marker independence", () => {
 });
 
 describe("form layout projection", () => {
-  it("packs gapped source columns into a dense NewOA layout grid", () => {
+  it("preserves dense DSL positions while retaining wider source-column evidence", () => {
     const form = sampleForm();
     form.layout.mkTree = [{
       id: "layout.row-wide",
@@ -294,7 +375,7 @@ describe("form layout projection", () => {
           refType: "field",
           refIds: ["fd_subject"],
           sourceRef: "source.form.layout.cell.row-wide-cell-1",
-          column: 1,
+          column: 0,
           colspan: 1
         },
         {
@@ -302,7 +383,7 @@ describe("form layout projection", () => {
           refType: "field",
           refIds: ["fd_amount"],
           sourceRef: "source.form.layout.cell.row-wide-cell-3",
-          column: 3,
+          column: 1,
           colspan: 1
         }
       ]

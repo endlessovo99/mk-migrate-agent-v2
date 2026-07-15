@@ -1,7 +1,9 @@
 import { mkForComponent, mkForFieldType } from "../dsl/mk-components.js";
+import { componentSupportsProp } from "../dsl/catalogs.js";
 import { isDataOnlyMetadataField } from "./sysform-metadata.js";
 import { restDialogEvidence, sanitizeDesignerValues } from "./rest-dialog.js";
 import { parseDesignerFdValues } from "./designer-control-values.js";
+import { componentForSourceType } from "./field-component.js";
 import { descriptionFieldFromMarkedRow, extractRowMarkers } from "./designer-row-markers.js";
 import { isSourceDescriptionControl } from "./source-description-control.js";
 import {
@@ -26,8 +28,8 @@ import {
 } from "./xml-utils.js";
 
 export function buildDesignerFirstForm(html, metadata, warnings) {
-  const designer = parseDesignerLayout(html, warnings);
   const metadataFields = Array.isArray(metadata?.fields) ? metadata.fields : [];
+  const designer = parseDesignerLayout(html, metadataFields, warnings);
   const visibleDesignerIds = new Set(designer.fields.map((field) => field.id));
   const designerById = new Map(
     [...designer.hiddenFields, ...designer.fields].map((field) => [field.id, field])
@@ -104,10 +106,11 @@ function dataOnlyFieldFromMetadata(metadataField, designerField, warnings) {
   };
 }
 
-function parseDesignerLayout(html, warnings) {
+function parseDesignerLayout(html, metadataFields, warnings) {
   const decoded = decodeEntities(html);
   const rows = splitMainFormRows(decoded);
   const duplicateBoundLabelIds = designerDuplicateBoundLabelIds(decoded);
+  const metadataContext = metadataMatchContext(metadataFields);
   const fields = [];
   const fieldIds = new Set();
   const hiddenFields = [];
@@ -124,7 +127,7 @@ function parseDesignerLayout(html, warnings) {
     }, 1);
 
     sourceCells.forEach((cell, cellIndex) => {
-      const controls = extractLayoutCellControls(cell.body, duplicateBoundLabelIds);
+      const controls = extractLayoutCellControls(cell.body, duplicateBoundLabelIds, metadataContext);
       if (!controls.length) return;
       const column = parseColumnSpec(cell.attrs.column, cellIndex);
       const controlGroups = groupLayoutCellControls(controls);
@@ -370,8 +373,16 @@ function matchMetadataField(field, metadataById, metadataByTitle) {
   const exact = metadataById.get(field.id);
   if (exact) return exact;
 
-  const sameTitle = metadataByTitle.get(normalizeMatchText(field.title)) || [];
-  const compatible = sameTitle.filter((candidate) => metadataCompatibleWithDesigner(candidate, field));
+  const matchTitles = [
+    field.title,
+    field.source?.designerValues?.label
+  ].map(normalizeMatchText).filter(Boolean);
+  const compatible = [...new Set(matchTitles)]
+    .flatMap((title) => metadataByTitle.get(title) || [])
+    .filter((candidate, index, candidates) =>
+      candidates.findIndex((item) => item.id === candidate.id) === index &&
+      metadataCompatibleWithDesigner(candidate, field)
+    );
   return compatible.length === 1 ? compatible[0] : undefined;
 }
 
@@ -381,15 +392,23 @@ function metadataCompatibleWithDesigner(metadataField, designerField) {
   return metadataField.type !== "detailTable";
 }
 
-function extractLayoutCellControls(html, crossCellBoundLabelIds = new Set()) {
-  const extractedControls = extractDesignerFieldControls(html, {
+function metadataMatchContext(metadataFields = []) {
+  return {
+    byId: new Map(metadataFields.map((field) => [field.id, field])),
+    byTitle: groupBy(metadataFields, (field) => normalizeMatchText(field.title))
+  };
+}
+
+function extractLayoutCellControls(html, crossCellBoundLabelIds = new Set(), metadataContext) {
+  const extractedEntries = extractDesignerFieldControlEntries(html, {
     includeHidden: true,
     includeTextLabels: true
   });
-  const controls = extractedControls.filter((control) =>
-    !isSourceDescriptionControl(control) ||
-    !crossCellBoundLabelIds.has(control.id)
+  const entries = extractedEntries.filter((entry) =>
+    !isSourceDescriptionControl(entry.control) ||
+    !crossCellBoundLabelIds.has(entry.control.id)
   );
+  const controls = entries.map((entry) => entry.control);
   const detailTables = controls.filter((control) => control.type === "detailTable");
   if (detailTables.length) {
     // Detail-table cells often host main-level calculation totals in footer
@@ -417,23 +436,269 @@ function extractLayoutCellControls(html, crossCellBoundLabelIds = new Set()) {
     return applyAdjacentDetailTableTitles(withFooters, isSuspiciousDetailTableTitle);
   }
 
-  const fieldControls = controls.filter((control) => !isSourceDescriptionControl(control));
+  const semanticControls = foldInlineCellSemantics(html, entries, metadataContext);
+  const fieldControls = semanticControls.filter((control) => !isSourceDescriptionControl(control));
   if (fieldControls.length) {
     const cellBoundLabelIds = new Set(
       fieldControls
         .map((control) => control.source?.designerValues?._label_bind_id)
         .filter(Boolean)
     );
-    return controls.filter((control) =>
+    return semanticControls.filter((control) =>
       !isSourceDescriptionControl(control) || !cellBoundLabelIds.has(control.id)
     );
   }
 
   // Label-only cells: keep styled/hint textLabels as descriptions; skip plain field titles.
-  return controls.filter((control) =>
+  return semanticControls.filter((control) =>
     isSourceDescriptionControl(control) &&
     (isHintTextLabel(control) || String(control.source?.designerType || "").toLowerCase() === "linklabel")
   );
+}
+
+function foldInlineCellSemantics(html, entries, metadataContext) {
+  return foldInlineHints(html, foldInlineCaptions(html, entries), metadataContext)
+    .map((entry) => entry.control);
+}
+
+function foldInlineCaptions(html, entries) {
+  const folded = [];
+
+  for (let index = 0; index < entries.length;) {
+    const current = entries[index];
+    const next = entries[index + 1];
+    if (!next || current.control.source?.designerHidden || next.control.source?.designerHidden) {
+      folded.push(current);
+      index += 1;
+      continue;
+    }
+
+    const separatedByBreak = hasDesignerBreakBetween(html, current, next);
+    if (
+      !isSourceDescriptionControl(current.control) &&
+      isPlainInlineCaption(next.control) &&
+      !separatedByBreak
+    ) {
+      const canonicalTitle = ordinalCaptionTitle(current.control.title, next.control.title);
+      if (canonicalTitle) {
+        folded.push(mergeControlEntries(
+          current,
+          next,
+          withInlineCaption(current.control, next.control, canonicalTitle, "trailing-ordinal-caption")
+        ));
+        index += 2;
+        continue;
+      }
+    }
+
+    if (
+      isPlainInlineCaption(current.control) &&
+      !isSourceDescriptionControl(next.control) &&
+      !separatedByBreak &&
+      captionMatchesTitleEnd(current.control.title, next.control.title)
+    ) {
+      folded.push(mergeControlEntries(
+        current,
+        next,
+        withInlineCaption(next.control, current.control, next.control.title, "leading-title-segment")
+      ));
+      index += 2;
+      continue;
+    }
+
+    folded.push(current);
+    index += 1;
+  }
+
+  return folded;
+}
+
+function foldInlineHints(html, entries, metadataContext) {
+  const folded = [];
+
+  for (let index = 0; index < entries.length;) {
+    const current = entries[index];
+    const next = entries[index + 1];
+    if (
+      next &&
+      !current.control.source?.designerHidden &&
+      !next.control.source?.designerHidden &&
+      !isSourceDescriptionControl(current.control) &&
+      supportsInlinePlaceholder(current.control, metadataContext) &&
+      isSourceDescriptionControl(next.control) &&
+      isHintTextLabel(next.control) &&
+      hasDirectDesignerBreakBetween(html, current, next)
+    ) {
+      folded.push(mergeControlEntries(
+        current,
+        next,
+        withInlineHint(current.control, next.control)
+      ));
+      index += 2;
+      continue;
+    }
+
+    folded.push(current);
+    index += 1;
+  }
+
+  return folded;
+}
+
+function isPlainInlineCaption(control) {
+  return isSourceDescriptionControl(control) &&
+    String(control.source?.designerType || "").toLowerCase() === "textlabel" &&
+    !isHintTextLabel(control);
+}
+
+function supportsInlinePlaceholder(control, metadataContext) {
+  const metadataField = metadataContext
+    ? matchMetadataField(control, metadataContext.byId, metadataContext.byTitle)
+    : undefined;
+  const type = control?.type === "text" && ["number", "date", "dateTime"].includes(metadataField?.type)
+    ? metadataField.type
+    : control?.type;
+  const component = componentForSourceType(type, {
+    sourceProps: {
+      ...control?.source,
+      ...(metadataField?.source?.metadataKind
+        ? { metadataKind: metadataField.source.metadataKind }
+        : {})
+    }
+  });
+  return componentSupportsProp(component, "placeholder") || control?.type === "RestDialog";
+}
+
+function hasDesignerBreakBetween(html, left, right) {
+  const between = String(html || "").slice(left.end, right.start);
+  return /\bfd_type\s*=\s*(["'])brcontrol\1/i.test(between);
+}
+
+function hasDirectDesignerBreakBetween(html, left, right) {
+  const between = String(html || "").slice(left.end, right.start);
+  const elements = directElementFragments(between);
+  if (elements.length < 1 || elements.length > 2) return false;
+  const [breakElement, placeholder] = elements;
+  if (attrValue(breakElement.attrs, "fd_type").toLowerCase() !== "brcontrol") return false;
+
+  const breakId = attrValue(breakElement.attrs, "id") ||
+    parseDesignerFdValues(breakElement.attrs).id;
+  if (placeholder) {
+    if (!breakId || placeholder.name !== "div") return false;
+    if (attrValue(placeholder.attrs, "id") !== `brcontrol-${breakId}`) return false;
+    if (!/^<div\b[^>]*>\s*<\/div>$/i.test(placeholder.html)) return false;
+  }
+
+  const gaps = directElementGaps(between, elements);
+  return gaps.replace(/(?:\s|&#(?:x[0-9a-f]+|\d+);|&nbsp;)+/gi, "") === "";
+}
+
+function directElementFragments(html) {
+  const elements = [];
+  let depth = 0;
+  let opening;
+
+  for (const token of scanHtmlTags(html)) {
+    if (token.closing) {
+      if (depth === 0) continue;
+      depth -= 1;
+      if (depth === 0 && opening) {
+        elements.push({
+          ...opening,
+          end: token.end,
+          html: html.slice(opening.start, token.end)
+        });
+        opening = undefined;
+      }
+      continue;
+    }
+
+    const voidLike = token.selfClosing || isVoidLikeTag(token.name);
+    if (depth === 0) {
+      opening = token;
+      if (voidLike) {
+        elements.push({ ...token, html: html.slice(token.start, token.end) });
+        opening = undefined;
+      }
+    }
+    if (!voidLike) depth += 1;
+  }
+
+  return depth === 0 ? elements : [];
+}
+
+function directElementGaps(html, elements) {
+  let cursor = 0;
+  let gaps = "";
+  for (const element of elements) {
+    gaps += html.slice(cursor, element.start);
+    cursor = element.end;
+  }
+  return gaps + html.slice(cursor);
+}
+
+function mergeControlEntries(left, right, control) {
+  return {
+    control,
+    start: left.start,
+    end: right.end
+  };
+}
+
+function ordinalCaptionTitle(fieldTitle, captionTitle) {
+  const title = cleanText(fieldTitle);
+  const match = /^(.*\S)([0-9０-９]+)$/u.exec(title);
+  if (!match) return undefined;
+  const caption = inlineCaptionText(captionTitle);
+  if (!caption || normalizeSemanticText(match[1]) !== normalizeSemanticText(caption)) return undefined;
+  return caption;
+}
+
+function captionMatchesTitleEnd(captionTitle, fieldTitle) {
+  const caption = normalizeSemanticText(inlineCaptionText(captionTitle));
+  if (!caption) return false;
+  const segments = cleanText(fieldTitle)
+    .split(/\s*[-–—/／|｜:：]\s*/u)
+    .map(normalizeSemanticText)
+    .filter(Boolean);
+  return segments.length > 0 && segments.at(-1) === caption;
+}
+
+function inlineCaptionText(value) {
+  return cleanText(value).replace(/^[\s:：,，;；]+|[\s:：,，;；]+$/gu, "");
+}
+
+function normalizeSemanticText(value) {
+  return normalizeMatchText(value).toLocaleLowerCase();
+}
+
+function withInlineCaption(control, caption, title, relation) {
+  return {
+    ...control,
+    title,
+    source: {
+      ...control.source,
+      inlineCaption: {
+        id: caption.id,
+        content: inlineCaptionText(caption.title),
+        relation
+      }
+    }
+  };
+}
+
+function withInlineHint(control, hint) {
+  return {
+    ...control,
+    source: {
+      ...control.source,
+      inlineHint: {
+        id: hint.id,
+        content: cleanText(hint.title),
+        relation: "post-break-styled-text"
+      }
+    }
+  };
 }
 
 function designerDuplicateBoundLabelIds(html) {
@@ -506,7 +771,7 @@ function extractDesignerFieldControlEntries(html, options = {}) {
     if (field) controls.push({
       control: field,
       start: match.index,
-      end: match.index + match[0].length
+      end: match.index + fragment.length
     });
   }
 
@@ -814,7 +1079,7 @@ function findStandardTableFragment(html) {
     const start = match.index;
     const openEnd = start + match[0].length;
     const end = findMatchingCloseTag(html, openEnd, "table");
-    return end > openEnd ? html.slice(openEnd, end) : html.slice(openEnd);
+    return end >= openEnd ? html.slice(openEnd, end) : html.slice(openEnd);
   }
   return "";
 }
@@ -824,7 +1089,7 @@ function extractFirstTbodyContent(fragment) {
   if (!match) return "";
   const start = match.index + match[0].length;
   const end = findMatchingCloseTag(fragment, start, "tbody");
-  return end > start ? fragment.slice(start, end) : fragment.slice(start);
+  return end >= start ? fragment.slice(start, end) : fragment.slice(start);
 }
 
 function parseColumnSpec(value, fallback) {

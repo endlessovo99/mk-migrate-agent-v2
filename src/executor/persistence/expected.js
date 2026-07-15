@@ -1,6 +1,6 @@
-import { COMPONENTS_BY_ID } from "../../dsl/catalogs.js";
+import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
-import { packLayoutCells } from "../../dsl/layout-pack.js";
+import { projectLayoutGrid } from "../../dsl/layout-pack.js";
 import {
   buildFormRuleRefIndex,
   resolveDirectRef,
@@ -172,9 +172,14 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
       ));
       return null;
     }
-    const packed = packLayoutCells(Array.isArray(row.children) ? row.children : []);
+    const packed = projectLayoutGrid(Array.isArray(row.children) ? row.children : [], {
+      columns: row.props?.columns,
+      rows: row.componentId === "xform-multi-row-table-layout" ? row.props?.rows : 1
+    });
     return {
       id: row.id,
+      rows: packed.rows,
+      columns: packed.columns,
       cells: packed.cells.map((cell, cellIndex) => {
         const fieldIdsForCell = childRefIds(cell);
         if (!fieldIdsForCell.length) {
@@ -187,6 +192,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
         return {
           id: cell.id || `${row.id}-cell-${cellIndex}`,
           fieldIds: fieldIdsForCell,
+          row: cell.row,
           column: cell.column,
           colspan: cell.colspan
         };
@@ -220,6 +226,9 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
 function executableProps(field = {}) {
   const props = {};
   if (field.props?.required === true) props.required = true;
+  if (componentSupportsProp(field.componentId, "placeholder") && typeof field.props?.placeholder === "string") {
+    props.placeholder = normalizeScalar(field.props.placeholder);
+  }
   if (Array.isArray(field.props?.options) && field.props.options.length) {
     props.options = field.props.options.map((option) => ({
       label: normalizeScalar(option.label ?? option.text ?? option.value),

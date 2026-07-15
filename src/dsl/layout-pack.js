@@ -7,22 +7,90 @@
  * target grid densely.
  */
 export function packLayoutCells(cells = []) {
+  const packed = packLayoutGrid(cells);
+  return {
+    columns: packed.columns,
+    cells: packed.cells
+  };
+}
+
+/**
+ * Pack controls into one native NewOA layout-grid. Ordinary source rows use
+ * at most four columns; overflow remains inside the same logical layout node
+ * on additional grid rows so a source row marker still has one runtime target.
+ */
+export function packLayoutGrid(cells = [], options = {}) {
+  const sorted = orderedExpandedCells(cells);
+  const requestedColumns = positiveInteger(options.columns);
+  const columns = requestedColumns || Math.max(1, Math.min(4, sorted.length || 1));
+  const requiredRows = Math.max(1, Math.ceil(sorted.length / columns));
+  const rows = Math.max(positiveInteger(options.rows) || 1, requiredRows);
+  return {
+    columns,
+    rows,
+    cells: packedCells(sorted, columns)
+  };
+}
+
+/**
+ * Project an already-reviewed DSL grid without reflowing its coordinates.
+ * Multi-ref children are the one supported expansion: their references occupy
+ * consecutive cells beginning at the declared row/column.
+ */
+export function projectLayoutGrid(cells = [], options = {}) {
+  const columns = positiveInteger(options.columns) || 1;
+  const rows = positiveInteger(options.rows) || 1;
+  const projected = [];
+
+  cells.forEach((cell, cellIndex) => {
+    const expanded = splitCellReferences(cell, cellIndex);
+    const startRow = Number.isInteger(cell?.row) ? cell.row : 0;
+    const startColumn = Number.isInteger(cell?.column) ? cell.column : cellIndex;
+    const start = startRow * columns + startColumn;
+    expanded.forEach((entry, referenceIndex) => {
+      const position = start + referenceIndex;
+      projected.push({
+        ...entry,
+        row: Math.floor(position / columns),
+        column: position % columns,
+        colspan: expanded.length > 1
+          ? 1
+          : (Number.isInteger(cell?.colspan) ? cell.colspan : 1)
+      });
+    });
+  });
+
+  projected.sort((left, right) => {
+    if (left.row !== right.row) return left.row - right.row;
+    return left.column - right.column;
+  });
+  return { columns, rows, cells: projected };
+}
+
+function orderedExpandedCells(cells) {
   const expanded = cells.flatMap((cell, cellIndex) => splitCellReferences(cell, cellIndex));
-  const sorted = expanded.sort((left, right) => {
+  return expanded.sort((left, right) => {
+    const leftRow = Number.isInteger(left?.row) ? left.row : 0;
+    const rightRow = Number.isInteger(right?.row) ? right.row : 0;
+    if (leftRow !== rightRow) return leftRow - rightRow;
     const leftColumn = Number.isInteger(left?.column) ? left.column : Number.MAX_SAFE_INTEGER;
     const rightColumn = Number.isInteger(right?.column) ? right.column : Number.MAX_SAFE_INTEGER;
     if (leftColumn !== rightColumn) return leftColumn - rightColumn;
     return 0;
   });
-  const columns = Math.max(1, Math.min(4, sorted.length || 1));
-  return {
-    columns,
-    cells: sorted.map((cell, index) => ({
-      ...cell,
-      column: index,
-      colspan: 1
-    }))
-  };
+}
+
+function packedCells(cells, columns) {
+  return cells.map((cell, index) => ({
+    ...cell,
+    row: Math.floor(index / columns),
+    column: index % columns,
+    colspan: 1
+  }));
+}
+
+function positiveInteger(value) {
+  return Number.isInteger(value) && value >= 1 ? value : undefined;
 }
 
 function splitCellReferences(cell = {}, cellIndex) {

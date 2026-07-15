@@ -6,7 +6,7 @@ export function matchingElementFragment(html, match) {
   const openEnd = start + match[0].length;
   if (isVoidLikeTag(tagName)) return match[0];
   const end = findMatchingCloseTag(html, openEnd, tagName);
-  return end > openEnd ? html.slice(start, end + `</${tagName}>`.length) : match[0];
+  return end >= openEnd ? html.slice(start, end + `</${tagName}>`.length) : match[0];
 }
 
 export function isVoidLikeTag(tagName = "") {
@@ -25,7 +25,7 @@ export function findMatchingCloseTag(html, contentStart, tagName) {
       depth += 1;
     }
   }
-  return html.length;
+  return -1;
 }
 
 export function* scanHtmlTags(html, startAt = 0) {

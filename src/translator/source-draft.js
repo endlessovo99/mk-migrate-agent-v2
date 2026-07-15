@@ -229,6 +229,8 @@ function sourcePropsFromField(field) {
     designerType: field.source?.designerType,
     designerValues: field.source?.designerValues,
     designerTableName: field.source?.designerTableName,
+    inlineCaption: field.source?.inlineCaption,
+    inlineHint: field.source?.inlineHint,
     restDialog: field.source?.restDialog,
     metadataId: field.source?.metadataId,
     metadataKind: field.source?.metadataKind,

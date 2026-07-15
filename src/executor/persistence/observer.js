@@ -353,6 +353,9 @@ function observeNativeControlBinding(value) {
 function observeExecutableProps(controlProps = {}) {
   const props = {};
   if (controlProps.required === true) props.required = true;
+  if (typeof controlProps.placeholder === "string") {
+    props.placeholder = normalizeScalar(controlProps.placeholder);
+  }
   if (Array.isArray(controlProps.options) && controlProps.options.length) {
     props.options = controlProps.options.map((option) => ({
       label: normalizeScalar(option.label ?? option.text ?? option.value),
@@ -431,6 +434,8 @@ function observeNativeLayoutRow(row, rowIndex, detailByTable) {
     // Structural identity is order + membership; native keys are not DSL row ids.
     id: `row-${rowIndex}`,
     order: rowIndex,
+    rows: Number.isInteger(grid.controlProps?.rows) ? grid.controlProps.rows : 1,
+    columns: Number.isInteger(grid.controlProps?.columns) ? grid.controlProps.columns : 1,
     cells: gridItems.map((item, cellIndex) => {
       const fieldIds = (Array.isArray(item.children) ? item.children : [])
         .flatMap((fieldRef) => nativeFieldIdsFromRef(fieldRef, detailByTable))
@@ -438,12 +443,16 @@ function observeNativeLayoutRow(row, rowIndex, detailByTable) {
       const column = Number.isInteger(item.controlProps?.column)
         ? item.controlProps.column - 1
         : cellIndex;
+      const gridRow = Number.isInteger(item.controlProps?.row)
+        ? item.controlProps.row - 1
+        : 0;
       const colspan = Number.isInteger(item.controlProps?.colSpan)
         ? item.controlProps.colSpan
         : 1;
       return {
         id: normalizeScalar(item.key || `cell-${cellIndex}`),
         fieldIds,
+        row: gridRow,
         column,
         colspan
       };

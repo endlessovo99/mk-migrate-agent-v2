@@ -1,7 +1,7 @@
-import { catalogRefs, validationPolicyRef } from "../dsl/catalogs.js";
+import { catalogRefs, componentSupportsProp, validationPolicyRef } from "../dsl/catalogs.js";
 import { translateLegacyConditionContextReferences } from "../dsl/condition-context.js";
 import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../dsl/form-rules.js";
-import { packLayoutCells } from "../dsl/layout-pack.js";
+import { packLayoutGrid } from "../dsl/layout-pack.js";
 import {
   applyFieldIdMapToForm,
   applyFieldIdMapToScripts,
@@ -19,6 +19,7 @@ import {
   conditionalParallelSplitIds,
   isSupportedConditionalParallelCondition
 } from "./conditional-parallel.js";
+import { componentForSourceType } from "./field-component.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -169,6 +170,10 @@ function propsFromSource(source) {
 
   const props = {};
   if (source.required) props.required = true;
+  const inlineHint = source.sourceProps?.inlineHint?.content;
+  if (componentSupportsProp(componentId, "placeholder") && typeof inlineHint === "string" && inlineHint.trim()) {
+    props.placeholder = inlineHint;
+  }
   if (Array.isArray(source.options) && source.options.length) {
     props.options = source.options.map((option) => ({ label: option.label, value: option.value }));
   }
@@ -293,24 +298,30 @@ function draftMkTree(layout, detailTableIds) {
   const rows = Array.isArray(layout.rows) ? layout.rows : [];
   return rows.map((row, rowIndex) => {
     const sourceCells = Array.isArray(row.cells) ? row.cells : [];
-    const packed = packLayoutCells(sourceCells);
-    const columns = packed.columns;
+    const sourceRowId = row.id || `row-${rowIndex}`;
+    const packed = packLayoutGrid(sourceCells);
+    const multiRow = packed.rows > 1;
     return {
-      id: `layout.${row.id || `row-${rowIndex}`}`,
-      componentId: `xform-flex-1-${columns}-layout`,
-      props: {
-        columns,
-        sourceColumns: row.columns || sourceCells.length || 1
-      },
-      sourceRef: row.sourceRef || `source.form.layout.row.${row.id || `row-${rowIndex}`}`,
+      id: `layout.${sourceRowId}`,
+      componentId: multiRow
+        ? "xform-multi-row-table-layout"
+        : `xform-flex-1-${packed.columns}-layout`,
+      props: multiRow
+        ? { rows: packed.rows, columns: packed.columns }
+        : {
+            columns: packed.columns,
+            sourceColumns: row.columns || sourceCells.length || 1
+          },
+      sourceRef: row.sourceRef || `source.form.layout.row.${sourceRowId}`,
       sourceMarkers: Array.isArray(row.sourceMarkers) && row.sourceMarkers.length ? row.sourceMarkers : undefined,
       children: packed.cells.map((cell, cellIndex) => {
         const references = Array.isArray(cell.references) ? cell.references : [];
         return {
-          id: `layout.${cell.id || `${row.id || `row-${rowIndex}`}.cell.${cellIndex}`}`,
+          id: `layout.${cell.id || `${sourceRowId}.cell.${cellIndex}`}`,
           refType: references.some((ref) => detailTableIds.has(ref.referenceId)) ? "detailTable" : "field",
           refIds: references.map((ref) => ref.referenceId),
           sourceRef: cell.sourceRef,
+          ...(multiRow ? { row: cell.row } : {}),
           column: cell.column,
           colspan: cell.colspan
         };
@@ -835,25 +846,6 @@ function normalizeParallelMode(value) {
 
 function splitRelatedNodeIds(value = "") {
   return String(value || "").split(/[;,，\s]+/).map((item) => item.trim()).filter(Boolean);
-}
-
-function componentForSourceType(type, source) {
-  if (source.sourceProps?.designerType === "address") return "xform-address";
-  return {
-    text: source.sourceProps?.metadataKind === "element" ? "xform-address" : "xform-input",
-    longText: "xform-textarea",
-    number: "xform-number",
-    date: "xform-datetime",
-    dateTime: "xform-datetime",
-    singleSelect: "xform-select",
-    multiSelect: "xform-select~multi",
-    radio: "xform-radio",
-    checkbox: "xform-checkbox",
-    attachment: "xform-attach",
-    description: "xform-description",
-    RestDialog: "xform-input",
-    LinkLabel: "xform-description"
-  }[type] || "xform-input";
 }
 
 function normalizeFieldType(type) {

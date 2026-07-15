@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
+import { buildFormRuleRefIndex, resolveEffectTarget } from "../../src/dsl/form-rules.js";
 import { draftSourceDraft, cleanSourceFile } from "../../src/translator/index.js";
 
 const fixture = "tests/fixtures/route-validation/structural-recovery/route-structural-recovery_SysFormTemplate.xml";
 const duplicateAttachmentFixture =
   "tests/fixtures/route-validation/structural-recovery/route-structural-recovery-duplicate-attachment_SysFormTemplate.xml";
-const structuralFixtures = [fixture, duplicateAttachmentFixture];
+const inlineContentFixture =
+  "tests/fixtures/route-validation/structural-recovery/route-structural-recovery-inline-content_SysFormTemplate.xml";
+const structuralFixtures = [fixture, duplicateAttachmentFixture, inlineContentFixture];
 const forbiddenAcceptanceEvidence =
   /1927955f6e544383f46970f48468a743|1jtckfnf9w6hw4ktrw3ngnr6033lm23r15w0|fd_3ee52ece20de5a|\bN(?:67|68|91)\b|\bL103\b|商务投标探路报价申请/;
 
@@ -102,6 +105,177 @@ describe("generic structural form recovery", () => {
     }
   });
 
+  it("normalizes ordinal-suffixed compound controls from adjacent inline captions", () => {
+    const source = cleanSourceFile(inlineContentFixture);
+    const dsl = draftSourceDraft(source);
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+    const sourceRow = dsl.form.layout.sourceGrid.rows.find((row) =>
+      row.cells.some((cell) =>
+        cell.references.some((reference) => reference.referenceId === "fd_region_province")
+      )
+    );
+    const mkRow = dsl.form.layout.mkTree.find((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_region_province"))
+    );
+
+    assert.equal(fields.get("fd_region_province")?.sourceProps.designerValues.label, "Province1");
+    assert.equal(fields.get("fd_region_city")?.sourceProps.designerValues.label, "City2");
+    assert.deepEqual(fields.get("fd_region_province")?.sourceProps.inlineCaption, {
+      id: "region_province_suffix",
+      content: "Province",
+      relation: "trailing-ordinal-caption"
+    });
+    assert.equal(fields.get("fd_region_province")?.sourceProps.metadataId, "meta_region_province");
+    assert.equal(fields.get("fd_region_province")?.type, "dateTime");
+    assert.equal(fields.get("fd_region_province")?.props.required, true);
+    assert.equal(fields.get("fd_region_province")?.title, "Province");
+    assert.equal(fields.get("fd_region_city")?.title, "City");
+    assert.equal(fields.has("region_province_suffix"), false);
+    assert.equal(fields.has("region_city_suffix"), false);
+    assert.deepEqual(
+      sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      ["fd_region_province", "fd_region_city"]
+    );
+    assert.deepEqual(
+      mkRow?.children.map((cell) => cell.refIds),
+      [["fd_region_province"], ["fd_region_city"]]
+    );
+  });
+
+  it("folds an unambiguous post-break styled hint into the owning input placeholder", () => {
+    const source = cleanSourceFile(inlineContentFixture);
+    const dsl = draftSourceDraft(source);
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+    const sourceRow = dsl.form.layout.sourceGrid.rows.find((row) =>
+      row.cells.some((cell) =>
+        cell.references.some((reference) => reference.referenceId === "fd_opportunity")
+      )
+    );
+    const mkRow = dsl.form.layout.mkTree.find((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_opportunity"))
+    );
+    const hint = "Example: REF-123; enter NONE if unavailable";
+
+    assert.equal(fields.get("fd_opportunity")?.componentId, "xform-input");
+    assert.equal(fields.get("fd_opportunity")?.props.placeholder, hint);
+    assert.deepEqual(fields.get("fd_opportunity")?.sourceProps.inlineCaption, {
+      id: "opportunity_inline_caption",
+      content: "Opportunity ID",
+      relation: "leading-title-segment"
+    });
+    assert.deepEqual(fields.get("fd_opportunity")?.sourceProps.inlineHint, {
+      id: "opportunity_hint",
+      content: hint,
+      relation: "post-break-styled-text"
+    });
+    assert.equal(fields.has("opportunity_hint"), false);
+    assert.equal(fields.has("opportunity_inline_caption"), false);
+    assert.deepEqual(
+      sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      ["fd_opportunity"]
+    );
+    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), [["fd_opportunity"]]);
+  });
+
+  it("folds the same direct styled hint pattern into textarea placeholder capability", () => {
+    const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+    const note = fields.get("fd_long_note");
+
+    assert.equal(note?.componentId, "xform-textarea");
+    assert.equal(note?.props.placeholder, "Explain the exception in detail");
+    assert.deepEqual(note?.sourceProps.inlineHint, {
+      id: "long_note_hint",
+      content: "Explain the exception in detail",
+      relation: "post-break-styled-text"
+    });
+    assert.equal(fields.has("long_note_hint"), false);
+  });
+
+  it("keeps a hint standalone when metadata refines the owner to a component without placeholder support", () => {
+    const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+
+    assert.equal(fields.get("fd_metadata_date")?.componentId, "xform-datetime");
+    assert.equal(fields.get("fd_metadata_date")?.props.placeholder, undefined);
+    assert.equal(fields.get("metadata_date_hint")?.componentId, "xform-description");
+    assert.equal(fields.get("metadata_date_hint")?.props.content, "Choose the contractual date");
+  });
+
+  it("uses the shared final component rule before folding an element-property hint", () => {
+    const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+
+    assert.equal(fields.get("fd_metadata_address")?.componentId, "xform-address");
+    assert.equal(fields.get("fd_metadata_address")?.props.placeholder, undefined);
+    assert.equal(fields.get("metadata_address_hint")?.componentId, "xform-description");
+    assert.equal(fields.get("metadata_address_hint")?.props.content, "Select an organization");
+  });
+
+  it("does not attach a styled description across an unsupported intervening control", () => {
+    const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+
+    assert.equal(fields.get("fd_guarded_hint")?.props.placeholder, undefined);
+    assert.equal(fields.get("guarded_hint")?.componentId, "xform-description");
+  });
+
+  it("keeps four real controls in one four-column row after removing inline range captions", () => {
+    const source = cleanSourceFile(inlineContentFixture);
+    const dsl = draftSourceDraft(source);
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+    const dateIds = ["fd_delivery_start", "fd_delivery_end", "fd_bid_date", "fd_visit_date"];
+    const sourceRow = dsl.form.layout.sourceGrid.rows.find((row) =>
+      row.cells.some((cell) =>
+        cell.references.some((reference) => reference.referenceId === "fd_delivery_start")
+      )
+    );
+    const mkRow = dsl.form.layout.mkTree.find((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_delivery_start"))
+    );
+
+    assert.deepEqual(
+      sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      dateIds
+    );
+    assert.equal(fields.has("delivery_start_caption"), false);
+    assert.equal(fields.has("delivery_end_caption"), false);
+    assert.equal(fields.get("fd_delivery_start")?.title, "Delivery window - Start");
+    assert.equal(fields.get("fd_delivery_end")?.title, "Delivery window - End");
+    assert.equal(mkRow?.componentId, "xform-flex-1-4-layout");
+    assert.equal(mkRow?.props.columns, 4);
+    assert.equal(mkRow?.children.length, 4);
+    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), dateIds.map((id) => [id]));
+    assert.deepEqual(mkRow?.children.map((cell) => cell.column), [0, 1, 2, 3]);
+    assert.equal(mkRow?.children.every((cell) => cell.colspan === 1), true);
+  });
+
+  it("reflows a source row with more than four controls and preserves its marker target", () => {
+    const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
+    const ids = [
+      "fd_slot_alpha",
+      "fd_slot_bravo",
+      "fd_slot_charlie",
+      "fd_slot_delta",
+      "fd_slot_echo"
+    ];
+    const rows = dsl.form.layout.mkTree.filter((row) =>
+      row.sourceMarkers?.includes("fd_overflow_row")
+    );
+    const row = rows[0];
+    const markerTarget = resolveEffectTarget(buildFormRuleRefIndex(dsl.form), "fd_overflow_row");
+
+    assert.equal(rows.length, 1);
+    assert.equal(row.componentId, "xform-multi-row-table-layout");
+    assert.deepEqual(row.props, { rows: 2, columns: 4 });
+    assert.equal(row.children.length, 5);
+    assert.deepEqual(row.children.flatMap((cell) => cell.refIds), ids);
+    assert.deepEqual(row.children.map((cell) => cell.row), [0, 0, 0, 0, 1]);
+    assert.deepEqual(row.children.map((cell) => cell.column), [0, 1, 2, 3, 0]);
+    assert.deepEqual(markerTarget?.targets.map((target) => target.id), ids);
+    assert.equal(row.children.every((cell) => cell.row * row.props.columns + cell.column < 8), true);
+  });
+
   it("deduplicates recovered attachment candidates by natural source ID in wrapper order", () => {
     const source = cleanSourceFile(duplicateAttachmentFixture);
     const dsl = draftSourceDraft(source);
@@ -143,6 +317,7 @@ describe("generic structural form recovery", () => {
 
     assert.equal(fields.get("different_bound_caption")?.componentId, "xform-description");
     assert.equal(fields.get("fd_machine_named_value")?.componentId, "xform-input");
+    assert.equal(fields.get("fd_machine_named_value")?.title, "Machine field 1");
     assert.deepEqual(
       rowRefs.find((references) => references.includes("fd_machine_named_value")),
       ["different_bound_caption", "fd_machine_named_value"]

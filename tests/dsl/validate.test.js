@@ -120,6 +120,185 @@ describe("validateMigrationDsl", () => {
     assert.equal(missingField.diagnostics.some((item) => item.code === "dsl.form.layout.field_missing"), true);
   });
 
+  it("rejects expanded mkTree cells that exceed a single-row grid", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.layout.mkTree[0].children.push({
+      id: "layout.row-0-cell-overflow",
+      refType: "field",
+      refIds: ["fd_subject"],
+      sourceRef: "source.form.layout.cell.row-0-cell-overflow",
+      column: 0,
+      colspan: 1
+    });
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.cells_exceed_grid"
+    );
+
+    assert.equal(result.ok, false);
+    assert.equal(diagnostic?.path, "/form/layout/mkTree/0/children");
+    assert.deepEqual(diagnostic?.details, {
+      rows: 1,
+      columns: 2,
+      cellCount: 3,
+      capacity: 2
+    });
+  });
+
+  it("counts multi-ref children after native cell expansion", () => {
+    const dsl = sampleTrustedDsl();
+    const row = dsl.form.layout.mkTree[0];
+    row.componentId = "xform-flex-1-4-layout";
+    row.props.columns = 4;
+    row.children = [{
+      ...row.children[0],
+      refIds: ["fd_subject", "fd_amount", "fd_subject", "fd_amount", "fd_subject"]
+    }];
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.cells_exceed_grid"
+    );
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(diagnostic?.details, {
+      rows: 1,
+      columns: 4,
+      cellCount: 5,
+      capacity: 4
+    });
+  });
+
+  it("rejects multi-ref expansion that runs past the declared final row", () => {
+    const dsl = sampleTrustedDsl();
+    const row = dsl.form.layout.mkTree[0];
+    row.componentId = "xform-flex-1-4-layout";
+    row.props.columns = 4;
+    row.children = [{
+      ...row.children[0],
+      refIds: ["fd_subject", "fd_amount"],
+      column: 3
+    }];
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.cells_exceed_grid"
+    );
+
+    assert.equal(result.ok, false);
+    assert.equal(diagnostic?.details.outOfBounds?.[0]?.row, 1);
+  });
+
+  it("accepts catalog-supported multi-row layouts without applying the four-column ceiling", () => {
+    const dsl = sampleTrustedDsl();
+    const row = dsl.form.layout.mkTree[0];
+    row.componentId = "xform-multi-row-table-layout";
+    row.props = { rows: 2, columns: 5 };
+    row.children[0].row = 0;
+    row.children[1].row = 1;
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  });
+
+  it("rejects multi-row child coordinates outside the declared grid", () => {
+    const dsl = sampleTrustedDsl();
+    const row = dsl.form.layout.mkTree[0];
+    row.componentId = "xform-multi-row-table-layout";
+    row.props = { rows: 2, columns: 2 };
+    row.children[0].row = 2;
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.child_row_invalid"
+    );
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(diagnostic?.details, { rows: 2, row: 2 });
+  });
+
+  it("requires mkTree props.columns to be an integer from one through four", () => {
+    for (const actual of [undefined, 0, 1.5, 5]) {
+      const dsl = sampleTrustedDsl();
+      if (actual === undefined) delete dsl.form.layout.mkTree[0].props.columns;
+      else dsl.form.layout.mkTree[0].props.columns = actual;
+
+      const result = validateMigrationDsl(dsl, { mode: "execute" });
+      const diagnostic = result.diagnostics.find((item) =>
+        item.code === "dsl.form.layout.columns_invalid"
+      );
+
+      assert.equal(result.ok, false);
+      assert.equal(diagnostic?.path, "/form/layout/mkTree/0/props/columns");
+      assert.deepEqual(diagnostic?.details, {
+        actual,
+        supported: [1, 2, 3, 4]
+      });
+    }
+  });
+
+  it("accepts mkTree rows with one through four columns", () => {
+    for (const columns of [1, 2, 3, 4]) {
+      const dsl = sampleTrustedDsl();
+      const row = dsl.form.layout.mkTree[0];
+      row.componentId = `xform-flex-1-${columns}-layout`;
+      row.props.columns = columns;
+      row.children = row.children.slice(0, Math.min(columns, row.children.length));
+
+      const result = validateMigrationDsl(dsl, { mode: "execute" });
+
+      assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    }
+  });
+
+  it("rejects mkTree child columns outside the row grid", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.layout.mkTree[0].children[1].column = 2;
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.child_column_invalid"
+    );
+
+    assert.equal(result.ok, false);
+    assert.equal(diagnostic?.path, "/form/layout/mkTree/0/children/1/column");
+    assert.deepEqual(diagnostic?.details, { columns: 2, column: 2 });
+  });
+
+  it("rejects mkTree child colspans larger than the row grid", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.layout.mkTree[0].children[0].colspan = 3;
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.child_colspan_invalid"
+    );
+
+    assert.equal(result.ok, false);
+    assert.equal(diagnostic?.path, "/form/layout/mkTree/0/children/0/colspan");
+    assert.deepEqual(diagnostic?.details, { columns: 2, colspan: 3 });
+  });
+
+  it("rejects mkTree child spans that cross the row boundary", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.layout.mkTree[0].children[1].colspan = 2;
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.child_span_exceeds_columns"
+    );
+
+    assert.equal(result.ok, false);
+    assert.equal(diagnostic?.path, "/form/layout/mkTree/0/children/1/colspan");
+    assert.deepEqual(diagnostic?.details, {
+      columns: 2,
+      column: 1,
+      colspan: 2
+    });
+  });
+
   it("requires JSP script actions to be reviewed before execution", () => {
     const result = validateMigrationDsl(sampleTrustedDsl({
       scripts: {
@@ -1018,6 +1197,8 @@ function mappedAction(overrides = {}) {
 
 function selectForm() {
   const form = sampleForm();
+  form.layout.mkTree[0].componentId = "xform-flex-1-3-layout";
+  form.layout.mkTree[0].props = { columns: 3, sourceColumns: 3 };
   form.fields.splice(2, 0, {
     id: "fd_select",
     title: "选项",

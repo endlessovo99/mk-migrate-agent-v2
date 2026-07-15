@@ -1,3 +1,5 @@
+import { componentSupportsProp } from "../../dsl/catalogs.js";
+
 export function buildFormSummary(observedForm, observedRules, observedScripts) {
   const fields = (observedForm?.fields || []).map((field) => ({
     id: field.id,
@@ -5,6 +7,9 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
     type: field.type,
     component: field.component,
     required: field.props?.required === true,
+    ...(componentSupportsProp(field.component, "placeholder") && field.props?.placeholder !== undefined
+      ? { placeholder: field.props.placeholder }
+      : {}),
     style: field.props?.style,
     dataOnly: field.dataOnly === true,
     columns: (field.columns || []).map((column) => ({
@@ -12,15 +17,21 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
       title: column.title,
       type: column.type,
       component: column.component,
-      required: column.props?.required === true
+      required: column.props?.required === true,
+      ...(componentSupportsProp(column.component, "placeholder") && column.props?.placeholder !== undefined
+        ? { placeholder: column.props.placeholder }
+        : {})
     }))
   }));
   const layoutRows = (observedForm?.layoutRows || []).map((row) => ({
     id: row.id,
+    rows: row.rows,
+    columns: row.columns,
     fields: (row.cells || []).flatMap((cell) => cell.fieldIds || []),
     cells: (row.cells || []).map((cell) => ({
       fieldId: (cell.fieldIds || [])[0],
       fieldIds: cell.fieldIds || [],
+      row: cell.row,
       column: cell.column,
       colspan: cell.colspan
     }))

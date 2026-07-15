@@ -28,6 +28,7 @@ import {
 } from "./scripts.js";
 import { scriptRecipeValidationIssues } from "./script-recipes.js";
 import { subProcessValidationIssues } from "./subprocess.js";
+import { projectLayoutGrid } from "./layout-pack.js";
 import { findUnredactedCredentialPaths } from "../credential-material.js";
 
 export const DSL_VERSION = "2.0-migration";
@@ -390,11 +391,137 @@ function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
     return;
   }
 
+  const columns = node.props?.columns;
+  const multiRow = node.componentId === "xform-multi-row-table-layout";
+  const flexRow = /^xform-flex-1-[1-4]-layout$/.test(node.componentId || "");
+  const validColumns = Number.isInteger(columns) && columns >= 1 && (!flexRow || columns <= 4);
+  if (!validColumns) {
+    diagnostics.push(error(
+      "dsl.form.layout.columns_invalid",
+      flexRow
+        ? "Single-row mkTree props.columns must be an integer from 1 through 4."
+        : "mkTree props.columns must be a positive integer.",
+      `${path}/props/columns`,
+      flexRow
+        ? { actual: columns, supported: [1, 2, 3, 4] }
+        : { actual: columns, minimum: 1 }
+    ));
+  }
+
+  const rows = multiRow ? node.props?.rows : 1;
+  const validRows = Number.isInteger(rows) && rows >= 1;
+  if (!validRows) {
+    diagnostics.push(error(
+      "dsl.form.layout.rows_invalid",
+      "Multi-row mkTree props.rows must be a positive integer.",
+      `${path}/props/rows`,
+      { actual: rows, minimum: 1 }
+    ));
+  }
+
+  const cellCount = node.children.reduce((count, child) => {
+    if (!isRecord(child)) return count + 1;
+    const refIds = Array.isArray(child.refIds) ? child.refIds.filter(Boolean) : [child.refId].filter(Boolean);
+    return count + Math.max(refIds.length, 1);
+  }, 0);
+  const exceedsCapacity = validColumns && validRows && cellCount > columns * rows;
+  if (exceedsCapacity) {
+    diagnostics.push(error(
+      "dsl.form.layout.cells_exceed_grid",
+      "Expanded mkTree cells must fit within props.rows and props.columns.",
+      `${path}/children`,
+      { rows, columns, cellCount, capacity: rows * columns }
+    ));
+  }
+  if (validColumns && validRows && !exceedsCapacity) {
+    const projected = projectLayoutGrid(node.children.filter(isRecord), { rows, columns });
+    const outOfBounds = projected.cells.filter((cell) =>
+      cell.row < 0 || cell.row >= rows ||
+      cell.column < 0 || cell.column + cell.colspan > columns
+    );
+    if (outOfBounds.length) {
+      diagnostics.push(error(
+        "dsl.form.layout.cells_exceed_grid",
+        "Expanded mkTree cells must fit within props.rows and props.columns.",
+        `${path}/children`,
+        {
+          rows,
+          columns,
+          cellCount,
+          capacity: rows * columns,
+          outOfBounds: outOfBounds.map((cell) => ({
+            id: cell.id,
+            row: cell.row,
+            column: cell.column,
+            colspan: cell.colspan
+          }))
+        }
+      ));
+    }
+
+    const occupied = new Map();
+    const overlaps = [];
+    for (const cell of projected.cells) {
+      for (let column = cell.column; column < cell.column + cell.colspan; column += 1) {
+        const key = `${cell.row}:${column}`;
+        if (occupied.has(key)) {
+          overlaps.push({ row: cell.row, column, firstId: occupied.get(key), secondId: cell.id });
+        } else {
+          occupied.set(key, cell.id);
+        }
+      }
+    }
+    if (overlaps.length) {
+      diagnostics.push(error(
+        "dsl.form.layout.cells_overlap",
+        "Expanded mkTree cells must not overlap within the declared grid.",
+        `${path}/children`,
+        { rows, columns, overlaps }
+      ));
+    }
+  }
+
   node.children.forEach((child, childIndex) => {
     const childPath = `${path}/children/${childIndex}`;
     if (!isRecord(child)) {
       diagnostics.push(error("dsl.form.layout.child_type", "mkTree child must be an object.", childPath));
       return;
+    }
+    const childRow = child.row ?? 0;
+    const validChildRow = Number.isInteger(childRow) && childRow >= 0 && childRow < rows;
+    if (validRows && !validChildRow) {
+      diagnostics.push(error(
+        "dsl.form.layout.child_row_invalid",
+        "mkTree child row must be a zero-based integer within props.rows.",
+        `${childPath}/row`,
+        { rows, row: child.row }
+      ));
+    }
+    const validChildColumn = Number.isInteger(child.column) && child.column >= 0 && child.column < columns;
+    if (validColumns && !validChildColumn) {
+      diagnostics.push(error(
+        "dsl.form.layout.child_column_invalid",
+        "mkTree child column must be a zero-based integer within props.columns.",
+        `${childPath}/column`,
+        { columns, column: child.column }
+      ));
+    }
+    const validChildColspan = Number.isInteger(child.colspan) && child.colspan >= 1 && child.colspan <= columns;
+    if (validColumns && !validChildColspan) {
+      diagnostics.push(error(
+        "dsl.form.layout.child_colspan_invalid",
+        "mkTree child colspan must be a positive integer within props.columns.",
+        `${childPath}/colspan`,
+        { columns, colspan: child.colspan }
+      ));
+    }
+    if (validColumns && validChildColumn && validChildColspan && child.column + child.colspan > columns) {
+      diagnostics.push(error(
+        "dsl.form.layout.child_span_exceeds_columns",
+        "mkTree child column plus colspan must fit within props.columns.",
+        `${childPath}/colspan`,
+        { columns, column: child.column, colspan: child.colspan }
+      ));
     }
     if (!["field", "detailTable", "layout"].includes(child.refType)) {
       diagnostics.push(error("dsl.form.layout.child_ref_type_invalid", "mkTree child refType must be field, detailTable, or layout.", `${childPath}/refType`));

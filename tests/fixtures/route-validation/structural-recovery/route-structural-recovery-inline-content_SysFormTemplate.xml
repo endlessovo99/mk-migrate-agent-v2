@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-structural-recovery-inline-content</string></void>
+  <void method="put"><string>fdName</string><string>Inline Content Structural Recovery</string></void>
+  <void method="put"><string>fdModelId</string><string>route-structural-recovery-inline-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;region_group_label&quot;,content:&quot;Project address&quot;}&apos;&gt;Project address&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_region_province&quot;,label:&quot;Province1&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;region_group_label&quot;,canShow:&quot;true&quot;,readOnly:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;region_province_suffix&quot;,content:&quot;Province&quot;,size:&quot;14px&quot;,color:&quot;&quot;,b:&quot;false&quot;}&apos;&gt;Province&lt;/label&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_region_city&quot;,label:&quot;City2&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;region_group_label&quot;,canShow:&quot;true&quot;,readOnly:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;region_city_suffix&quot;,content:&quot;City&quot;,size:&quot;14px&quot;,color:&quot;&quot;,b:&quot;false&quot;}&apos;&gt;City&lt;/label&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;opportunity_label&quot;,content:&quot;Opportunity ID&quot;}&apos;&gt;Opportunity ID&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;opportunity_inline_caption&quot;,content:&quot;Opportunity ID&quot;,color:&quot;&quot;,b:&quot;false&quot;}&apos;&gt;Opportunity ID&lt;/label&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_opportunity&quot;,label:&quot;Opportunity ID&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;opportunity_label&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div id=&quot;opportunity_break&quot; fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;opportunity_break&quot;}&apos;&gt;&lt;label title=&quot;line break&quot;&gt;&lt;/label&gt;&lt;/div&gt;
+      &lt;div id=&quot;brcontrol-opportunity_break&quot;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;opportunity_hint&quot;,content:&quot;Example: REF-123; enter NONE if unavailable&quot;,color:&quot;#FF0000&quot;,b:&quot;false&quot;,i:&quot;true&quot;}&apos;&gt;Example: REF-123; enter NONE if unavailable&lt;/label&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;delivery_window_label&quot;,content:&quot;Delivery window&quot;}&apos;&gt;Delivery window&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;1&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;delivery_start_caption&quot;,content:&quot;Start:&quot;,color:&quot;&quot;,b:&quot;false&quot;}&apos;&gt;Start:&lt;/label&gt;
+      &lt;div fd_type=&quot;datetime&quot; fd_values=&apos;{id:&quot;fd_delivery_start&quot;,label:&quot;Delivery window - Start&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;delivery_window_label&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;delivery_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;delivery_end_caption&quot;,content:&quot;End:&quot;,color:&quot;&quot;,b:&quot;false&quot;}&apos;&gt;End:&lt;/label&gt;
+      &lt;div fd_type=&quot;datetime&quot; fd_values=&apos;{id:&quot;fd_delivery_end&quot;,label:&quot;Delivery window - End&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;delivery_window_label&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;2&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;bid_date_label&quot;,content:&quot;Bid date&quot;}&apos;&gt;Bid date&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;3&quot;&gt;
+      &lt;div fd_type=&quot;datetime&quot; fd_values=&apos;{id:&quot;fd_bid_date&quot;,label:&quot;Bid date&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;bid_date_label&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;4&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;visit_date_label&quot;,content:&quot;Site visit date&quot;}&apos;&gt;Site visit date&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;5,6&quot;&gt;
+      &lt;div fd_type=&quot;datetime&quot; fd_values=&apos;{id:&quot;fd_visit_date&quot;,label:&quot;Site visit date&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;visit_date_label&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;
+      &lt;input type=&quot;hidden&quot; id=&quot;fd_overflow_row&quot; name=&quot;fd_overflow_row&quot;/&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_slot_alpha&quot;,label:&quot;Alpha&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;3&quot; column=&quot;1&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_slot_bravo&quot;,label:&quot;Bravo&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;3&quot; column=&quot;2&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_slot_charlie&quot;,label:&quot;Charlie&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;3&quot; column=&quot;3&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_slot_delta&quot;,label:&quot;Delta&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;3&quot; column=&quot;4&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_slot_echo&quot;,label:&quot;Echo&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;
+      &lt;div fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_long_note&quot;,label:&quot;Long note&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;long_note_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;long_note_hint&quot;,content:&quot;Explain the exception in detail&quot;,color:&quot;#CC3300&quot;,b:&quot;false&quot;}&apos;&gt;Explain the exception in detail&lt;/label&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;5&quot; column=&quot;0&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_guarded_hint&quot;,label:&quot;Guarded hint&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;guarded_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div fd_type=&quot;signature&quot; fd_values=&apos;{id:&quot;unsupported_between&quot;,label:&quot;Unsupported&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;guarded_hint&quot;,content:&quot;Must remain standalone&quot;,color:&quot;#CC3300&quot;,b:&quot;false&quot;}&apos;&gt;Must remain standalone&lt;/label&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_metadata_date&quot;,label:&quot;Metadata date&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;metadata_date_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;metadata_date_hint&quot;,content:&quot;Choose the contractual date&quot;,color:&quot;#CC3300&quot;,b:&quot;false&quot;}&apos;&gt;Choose the contractual date&lt;/label&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;7&quot; column=&quot;0&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_metadata_address&quot;,label:&quot;Metadata address&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;metadata_address_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;metadata_address_hint&quot;,content:&quot;Select an organization&quot;,color:&quot;#CC3300&quot;,b:&quot;false&quot;}&apos;&gt;Select an organization&lt;/label&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;meta_region_province&quot; label=&quot;Province1&quot; type=&quot;Date&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_region_city&quot; label=&quot;City2&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_opportunity&quot; label=&quot;Opportunity ID&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_delivery_start&quot; label=&quot;Delivery window - Start&quot; type=&quot;Date&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_delivery_end&quot; label=&quot;Delivery window - End&quot; type=&quot;Date&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_bid_date&quot; label=&quot;Bid date&quot; type=&quot;Date&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_visit_date&quot; label=&quot;Site visit date&quot; type=&quot;Date&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_slot_alpha&quot; label=&quot;Alpha&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_slot_bravo&quot; label=&quot;Bravo&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_slot_charlie&quot; label=&quot;Charlie&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_slot_delta&quot; label=&quot;Delta&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_slot_echo&quot; label=&quot;Echo&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_long_note&quot; label=&quot;Long note&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_guarded_hint&quot; label=&quot;Guarded hint&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_metadata_date&quot; label=&quot;Metadata date&quot; type=&quot;Date&quot;/&gt;
+    &lt;extendElementProperty name=&quot;fd_metadata_address&quot; label=&quot;Metadata address&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

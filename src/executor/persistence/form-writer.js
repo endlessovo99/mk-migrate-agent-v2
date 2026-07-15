@@ -3,8 +3,8 @@ import {
   mergeNativeFormRules,
   summarizeNativeFormRuleConfig
 } from "./form-rules-writer.js";
-import { COMPONENTS_BY_ID } from "../../dsl/catalogs.js";
-import { packLayoutCells } from "../../dsl/layout-pack.js";
+import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
+import { projectLayoutGrid } from "../../dsl/layout-pack.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { persistedFieldLabel } from "./field-labels.js";
 import { SCRIPT_SINGLETON_GLOBAL_EVENTS } from "../../dsl/scripts.js";
@@ -515,6 +515,9 @@ function fieldAttribute(field, template, tableName, tableType, spec) {
   };
 
   if (field.props?.required) controlProps.required = true;
+  if (componentSupportsProp(field.componentId, "placeholder") && typeof field.props?.placeholder === "string") {
+    controlProps.placeholder = field.props.placeholder;
+  }
   if (field.props?.options?.length) {
     controlProps.options = field.props.options.map((option) => ({
       label: option.label ?? option.text ?? option.value,
@@ -535,7 +538,7 @@ function fieldAttribute(field, template, tableName, tableType, spec) {
     });
   }
   if (spec.attrType === "textarea") {
-    Object.assign(controlProps, { placeholder: "请输入" });
+    if (typeof controlProps.placeholder !== "string") controlProps.placeholder = "请输入";
     const maxLength = textareaMaxLengthFromDsl(field);
     if (maxLength !== undefined) {
       controlProps.maxLength = maxLength;
@@ -846,11 +849,15 @@ function buildRows(rows, detailModelsByField) {
 }
 
 function buildLayoutGridRow(row, detailModelsByField) {
-  const packed = packLayoutCells(row.children || []);
+  const packed = projectLayoutGrid(row.children || [], {
+    columns: row.props?.columns,
+    rows: row.componentId === "xform-multi-row-table-layout" ? row.props?.rows : 1
+  });
   const cells = packed.cells;
   const layoutId = `layout~${stableShortId(row.id)}`;
   const gridId = `@elem/layout-grid~${stableShortId(`${row.id}:grid`)}`;
   const displayColumns = packed.columns;
+  const displayRows = packed.rows;
   const migrationRowId = migrationRowIdFor(row);
   return {
     key: layoutId,
@@ -871,7 +878,7 @@ function buildLayoutGridRow(row, detailModelsByField) {
         kind: "container",
         controlProps: {
           columns: displayColumns,
-          rows: 1,
+          rows: displayRows,
           id: gridId
         },
         children: cells.map((cell, index) => buildGridItem(row, cell, index, detailModelsByField))
@@ -893,11 +900,13 @@ function buildGridItem(row, cell, index, detailModelsByField) {
     migrationRefType: cell.refType,
     migrationColumn: cell.column,
     migrationColspan: cell.colspan,
+    migrationGridRow: cell.row,
     ...(detailModel
       ? { children: detailModel.fdFields.filter((field) => !field.fdIsSystem).map((field) => ({ key: field.fdName })) }
       : {})
   };
   const column = Number.isInteger(cell.column) ? cell.column : index;
+  const gridRow = Number.isInteger(cell.row) ? cell.row : 0;
   const colspan = Number.isInteger(cell.colspan) ? cell.colspan : 1;
   return {
     key: itemId,
@@ -906,7 +915,7 @@ function buildGridItem(row, cell, index, detailModelsByField) {
     controlProps: {
       column: column + 1,
       colSpan: colspan,
-      row: 1,
+      row: gridRow + 1,
       id: itemId,
       style: { backgroundColor: "" },
       // Audit-only markers; observers must not treat these as verification evidence.
@@ -915,7 +924,8 @@ function buildGridItem(row, cell, index, detailModelsByField) {
       migrationFieldIds: refIds,
       migrationRefType: cell.refType,
       migrationColumn: cell.column,
-      migrationColspan: cell.colspan
+      migrationColspan: cell.colspan,
+      migrationGridRow: cell.row
     },
     children: [fieldRef]
   };
@@ -964,10 +974,13 @@ function extractLayoutRows(config, detailModels) {
   if (Array.isArray(simpleRows)) {
     return simpleRows.map((row) => ({
       id: row.id,
+      rows: row.rows || 1,
+      columns: row.columns || 1,
       fields: (row.cells || []).flatMap((cell) => cellFieldIds(cell)),
       cells: (row.cells || []).map((cell) => ({
         fieldId: cell.fieldId || cellFieldIds(cell)[0],
         fieldIds: cellFieldIds(cell),
+        row: cell.row ?? 0,
         column: cell.column,
         colspan: cell.colspan
       }))
@@ -988,12 +1001,15 @@ function layoutNodeToSummaryRow(row, rowIndex, detailFieldByTable) {
     return {
       id: row.controlProps?.migrationRowId || row.key || `row-${rowIndex}`,
       layoutType: row.type,
+      rows: 1,
+      columns: Math.max((row.children || []).length, 1),
       fields: (row.children || []).flatMap((child) => childFieldIds(child, detailFieldByTable)),
       cells: (row.children || []).map((child, cellIndex) => {
         const fieldIds = childFieldIds(child, detailFieldByTable);
         return {
           fieldId: fieldIds[0],
           fieldIds,
+          row: child.migrationGridRow ?? 0,
           column: child.migrationColumn ?? cellIndex,
           colspan: child.migrationColspan ?? 1
         };
@@ -1016,6 +1032,8 @@ function layoutNodeToSummaryRow(row, rowIndex, detailFieldByTable) {
   return {
     id: row.controlProps?.migrationRowId || row.key || `row-${rowIndex}`,
     layoutType: row.controlProps?.migrationLayoutType || "layout",
+    rows: grid.controlProps?.rows || 1,
+    columns: grid.controlProps?.columns || 1,
     fields: gridItems.flatMap((item) => childFieldIds(gridItemFieldRef(item), detailFieldByTable)),
     cells: gridItems.map((item, cellIndex) => {
       const child = gridItemFieldRef(item);
@@ -1023,6 +1041,7 @@ function layoutNodeToSummaryRow(row, rowIndex, detailFieldByTable) {
       return {
         fieldId: fieldIds[0],
         fieldIds,
+        row: item.controlProps?.migrationGridRow ?? child?.migrationGridRow ?? 0,
         column: item.controlProps?.migrationColumn ?? child?.migrationColumn ?? cellIndex,
         colspan: item.controlProps?.migrationColspan ?? child?.migrationColspan ?? 1
       };
