@@ -37,7 +37,11 @@
     &lt;/td&gt;&lt;/tr&gt;
     &lt;tr&gt;&lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;
      &lt;input type=&quot;hidden&quot; value=&apos;&lt;table class=&quot;permission-placeholder&quot;&gt;&apos;/&gt;
-     &lt;table class=&quot;layout-wrapper&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_nested&quot;,label:&quot;Nested visible&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+     &lt;table class=&quot;layout-wrapper&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;
+      &lt;table class=&quot;layout-wrapper-level-two&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;
+       &lt;table class=&quot;layout-wrapper-level-three&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_nested&quot;,label:&quot;Nested visible&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+      &lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+     &lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
     &lt;/td&gt;&lt;/tr&gt;
     &lt;tr&gt;&lt;td row=&quot;7&quot; column=&quot;0&quot;&gt;
      &lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;permission_wrapper&quot;}&apos;&gt;
@@ -70,6 +74,26 @@
       &lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_detail_reverse_name&quot;,label:&quot;Reverse detail name&quot;,tableName:&quot;fd_detail_reverse&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;
      &lt;/table&gt;
     &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;14&quot; column=&quot;0&quot;&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_visibility_collision&quot;,label:&quot;Hidden shadow&quot;,canShow:&quot;false&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_visibility_collision&quot;,label:&quot;Visible business field&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;15&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;heading_cross_row&quot;,content:&quot;Cross-row equipment list&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Cross-row equipment list&lt;/label&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;16&quot; column=&quot;0&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_cross_row&quot;,label:&quot;DetailTable7&quot;}&apos;&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;17&quot; column=&quot;0&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_follow&quot;,label:&quot;DetailTable8&quot;}&apos;&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;18&quot; column=&quot;0,1&quot;&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;heading_shared_ambiguous&quot;,content:&quot;Ambiguous shared heading&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Ambiguous shared heading&lt;/label&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;19&quot; column=&quot;0&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_twin_a&quot;,label:&quot;DetailTable9&quot;}&apos;&gt;&lt;/table&gt;&lt;/td&gt;
+     &lt;td row=&quot;19&quot; column=&quot;1&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_twin_b&quot;,label:&quot;DetailTable10&quot;}&apos;&gt;&lt;/table&gt;&lt;/td&gt;
+    &lt;/tr&gt;
    &lt;/tbody&gt;&lt;/table&gt;
    &lt;div class=&quot;recovered-attachment-wrapper&quot;&gt;
     &lt;label fd_type=&quot;linkLabel&quot; fd_values=&apos;{id:&quot;recovered_download_hint&quot;,content:&quot;Download recovered template&quot;,link:&quot;https://example.invalid/recovered?token=do-not-retain&quot;,b:&quot;true&quot;}&apos;&gt;Download recovered template&lt;/label&gt;
@@ -88,12 +112,17 @@
     &lt;extendSubTableProperty name=&quot;fd_detail_c&quot; label=&quot;DetailTable4&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_c_name&quot; label=&quot;Name C&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
     &lt;extendSubTableProperty name=&quot;fd_detail_gap&quot; label=&quot;DetailTable5&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_gap_name&quot; label=&quot;Gap detail name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
     &lt;extendSubTableProperty name=&quot;fd_detail_reverse&quot; label=&quot;DetailTable6&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_reverse_name&quot; label=&quot;Reverse detail name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_cross_row&quot; label=&quot;DetailTable7&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_cross_row_name&quot; label=&quot;Cross-row name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_follow&quot; label=&quot;DetailTable8&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_follow_name&quot; label=&quot;Follower name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_twin_a&quot; label=&quot;DetailTable9&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_twin_a_name&quot; label=&quot;Twin A name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_twin_b&quot; label=&quot;DetailTable10&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_twin_b_name&quot; label=&quot;Twin B name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
     &lt;extendSimpleProperty name=&quot;fd_nested&quot; label=&quot;Nested visible&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_decision&quot; label=&quot;Decision&quot; enumValues=&quot;Yes|Y&amp;#10;No|N&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_hidden_scaffold&quot; label=&quot;Hidden scaffold&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_hidden_ancestor&quot; label=&quot;Hidden ancestor field&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_between_heading_table&quot; label=&quot;Between heading and table&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_remote_reverse&quot; label=&quot;Reverse remote&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_visibility_collision&quot; label=&quot;Visible business field&quot; type=&quot;String&quot;/&gt;
    &lt;/metadata&gt;</string>
   </void>
  </object>

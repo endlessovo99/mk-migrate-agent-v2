@@ -31,9 +31,6 @@ export async function executeDsl(input, options = {}) {
   const apiStages = [];
   let templateId = "";
   let executableDsl = input;
-  const existingTemplateId = nonEmptyString(options.existingTemplateId)
-    ? String(options.existingTemplateId).trim()
-    : "";
 
   try {
     apiStages.push({ name: "login", status: "started" });
@@ -118,87 +115,69 @@ export async function executeDsl(input, options = {}) {
         }
       });
     }
-    let detail;
-    let templateName;
-    let tableName;
+    apiStages.push({ name: "init", status: "started" });
+    const baseTemplate = await client.initTemplate();
+    apiStages[apiStages.length - 1].status = "ok";
+    apiStages.push({ name: "generateTableName", status: "started" });
+    const fdTableName = await client.generateTableName();
+    apiStages[apiStages.length - 1].status = "ok";
+    apiStages[apiStages.length - 1].fdTableName = fdTableName || undefined;
+    apiStages.push({ name: "loadParentCategory", status: "started" });
+    const parentCategory = await client.loadParentCategory(options.targetCategoryId);
+    apiStages[apiStages.length - 1].status = "ok";
+    const createPayload = buildCreatePayload(baseTemplate, executableDsl, options, {
+      fdTableName,
+      parentCategory
+    });
 
-    if (existingTemplateId) {
-      templateId = existingTemplateId;
-      apiStages.push({ name: "get", status: "started", templateId });
-      detail = await client.getTemplate(templateId);
-      apiStages[apiStages.length - 1].status = "ok";
-      const existingSafety = validateExistingTemplate(detail, templateId, options.targetCategoryId);
-      if (existingSafety.length) {
-        return blocked(plan, [...diagnostics, ...existingSafety], baseUrl);
-      }
-      templateName = detail.fdName;
-      tableName = detail.fdTableName || detail.mechanisms?.["sys-xform"]?.fdTableName || "";
-    } else {
-      apiStages.push({ name: "init", status: "started" });
-      const baseTemplate = await client.initTemplate();
-      apiStages[apiStages.length - 1].status = "ok";
-      apiStages.push({ name: "generateTableName", status: "started" });
-      const fdTableName = await client.generateTableName();
-      apiStages[apiStages.length - 1].status = "ok";
-      apiStages[apiStages.length - 1].fdTableName = fdTableName || undefined;
-      apiStages.push({ name: "loadParentCategory", status: "started" });
-      const parentCategory = await client.loadParentCategory(options.targetCategoryId);
-      apiStages[apiStages.length - 1].status = "ok";
-      const createPayload = buildCreatePayload(baseTemplate, executableDsl, options, {
-        fdTableName,
-        parentCategory
-      });
-
-      apiStages.push({ name: "projectionPreflight", status: "started" });
-      const preflight = preparePersistedTemplate({
-        dsl: executableDsl,
-        envelope: buildExecutionEnvelope({
-          templateId: "__projection_preflight_template_id__",
-          templateName: createPayload.fdName,
-          categoryId: options.targetCategoryId,
-          tableName: fdTableName || createPayload.fdTableName,
-          detail: preflightTemplateDetail(createPayload, {
-            templateId: "__projection_preflight_template_id__",
-            workflowTemplateId: "__projection_preflight_workflow_id__",
-            fdTableName
-          })
-        }),
-        baseTemplate: preflightTemplateDetail(createPayload, {
+    apiStages.push({ name: "projectionPreflight", status: "started" });
+    const preflight = preparePersistedTemplate({
+      dsl: executableDsl,
+      envelope: buildExecutionEnvelope({
+        templateId: "__projection_preflight_template_id__",
+        templateName: createPayload.fdName,
+        categoryId: options.targetCategoryId,
+        tableName: fdTableName || createPayload.fdTableName,
+        detail: preflightTemplateDetail(createPayload, {
           templateId: "__projection_preflight_template_id__",
           workflowTemplateId: "__projection_preflight_workflow_id__",
           fdTableName
         })
-      });
-      if (!preflight.ok) {
-        apiStages[apiStages.length - 1].status = "failed";
-        return {
-          ok: false,
-          status: "failed",
-          stage: "projection",
-          failedAt: "projection",
-          baseUrl,
-          createdFdIds: [],
-          cleanup: { attempted: false, reason: "projection preflight failed before template creation" },
-          diagnostics: [...diagnostics, ...preflight.diagnostics],
-          apiStages,
-          plan
-        };
-      }
-      apiStages[apiStages.length - 1].status = "ok";
-
-      apiStages.push({ name: "add", status: "started" });
-      const created = await client.addTemplate(createPayload);
-      templateId = created.fdId;
-      apiStages[apiStages.length - 1].status = "ok";
-      apiStages[apiStages.length - 1].templateId = templateId;
-      apiStages.push({ name: "get", status: "started", templateId });
-      detail = await client.getTemplate(templateId);
-      apiStages[apiStages.length - 1].status = "ok";
-      templateName = createPayload.fdName;
-      tableName = fdTableName || detail.fdTableName || detail.mechanisms?.["sys-xform"]?.fdTableName || "";
+      }),
+      baseTemplate: preflightTemplateDetail(createPayload, {
+        templateId: "__projection_preflight_template_id__",
+        workflowTemplateId: "__projection_preflight_workflow_id__",
+        fdTableName
+      })
+    });
+    if (!preflight.ok) {
+      apiStages[apiStages.length - 1].status = "failed";
+      return {
+        ok: false,
+        status: "failed",
+        stage: "projection",
+        failedAt: "projection",
+        baseUrl,
+        createdFdIds: [],
+        cleanup: { attempted: false, reason: "projection preflight failed before template creation" },
+        diagnostics: [...diagnostics, ...preflight.diagnostics],
+        apiStages,
+        plan
+      };
     }
+    apiStages[apiStages.length - 1].status = "ok";
 
-    const createdFdIds = existingTemplateId ? [] : [templateId].filter(Boolean);
+    apiStages.push({ name: "add", status: "started" });
+    const created = await client.addTemplate(createPayload);
+    templateId = created.fdId;
+    apiStages[apiStages.length - 1].status = "ok";
+    apiStages[apiStages.length - 1].templateId = templateId;
+    apiStages.push({ name: "get", status: "started", templateId });
+    const detail = await client.getTemplate(templateId);
+    apiStages[apiStages.length - 1].status = "ok";
+    const templateName = createPayload.fdName;
+    const tableName = fdTableName || detail.fdTableName || detail.mechanisms?.["sys-xform"]?.fdTableName || "";
+    const createdFdIds = [templateId].filter(Boolean);
 
     const envelope = buildExecutionEnvelope({
       templateId,
@@ -221,7 +200,6 @@ export async function executeDsl(input, options = {}) {
         diagnostics,
         apiStages,
         templateId,
-        createdFdIds,
         baseUrl,
         credentials,
         error
@@ -323,7 +301,7 @@ export async function executeDsl(input, options = {}) {
       failedAt: error?.stage || inferFailureStage(error),
       baseUrl,
       templateId: templateId || undefined,
-      createdFdIds: existingTemplateId ? [] : [templateId].filter(Boolean),
+      createdFdIds: [templateId].filter(Boolean),
       cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
       validationPolicy: input?.validationPolicy,
       catalogs: input?.catalogs,
@@ -345,7 +323,7 @@ export async function executeDsl(input, options = {}) {
   }
 }
 
-function projectionFailure({ plan, diagnostics, apiStages, templateId, createdFdIds, baseUrl, credentials, error }) {
+function projectionFailure({ plan, diagnostics, apiStages, templateId, baseUrl, credentials, error }) {
   return {
     ok: false,
     status: "failed",
@@ -353,7 +331,7 @@ function projectionFailure({ plan, diagnostics, apiStages, templateId, createdFd
     failedAt: "projection",
     baseUrl,
     templateId,
-    createdFdIds: createdFdIds || [templateId].filter(Boolean),
+    createdFdIds: [templateId].filter(Boolean),
     cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
     diagnostics: [
       ...diagnostics,
@@ -367,54 +345,6 @@ function projectionFailure({ plan, diagnostics, apiStages, templateId, createdFd
     apiStages,
     plan
   };
-}
-
-function validateExistingTemplate(detail, templateId, targetCategoryId) {
-  const diagnostics = [];
-  if (!detail || typeof detail !== "object" || !nonEmptyString(detail.fdId)) {
-    diagnostics.push({
-      level: "error",
-      code: "safety.existing_template_missing",
-      message: `Existing template was not found: ${templateId}`,
-      path: "/templateId"
-    });
-    return diagnostics;
-  }
-  if (detail.fdId !== templateId) {
-    diagnostics.push({
-      level: "error",
-      code: "safety.existing_template_id_mismatch",
-      message: `Existing template fdId mismatch: expected ${templateId}, got ${detail.fdId}`,
-      path: "/templateId"
-    });
-  }
-  if (!String(detail.fdName || "").startsWith("MK_TEST_")) {
-    diagnostics.push({
-      level: "error",
-      code: "safety.existing_template_not_mk_test",
-      message: "Existing template updates are allowed only for MK_TEST_ draft templates.",
-      path: "/template/fdName"
-    });
-  }
-  const fdStatus = detail.fdStatus ?? 0;
-  if (Number(fdStatus) !== 0) {
-    diagnostics.push({
-      level: "error",
-      code: "safety.existing_template_not_draft",
-      message: "Existing template updates are allowed only for draft templates (fdStatus=0).",
-      path: "/template/fdStatus"
-    });
-  }
-  const categoryId = detail.fdCategory?.fdId || detail.fdCategoryId || "";
-  if (nonEmptyString(targetCategoryId) && nonEmptyString(categoryId) && categoryId !== targetCategoryId) {
-    diagnostics.push({
-      level: "error",
-      code: "safety.existing_template_category_mismatch",
-      message: `Existing template category mismatch: expected ${targetCategoryId}, got ${categoryId}`,
-      path: "/targetCategoryId"
-    });
-  }
-  return diagnostics;
 }
 
 function validateSafety(options, baseUrlDiagnostics = []) {

@@ -1,3 +1,4 @@
+import { sanitizeCredentialMaterial } from "../credential-material.js";
 import { parseRootHashMapValue } from "./xml-utils.js";
 
 export function translateLbpmProcessDefinitionXml(xml, options = {}) {
@@ -5,7 +6,7 @@ export function translateLbpmProcessDefinitionXml(xml, options = {}) {
   const processXml = findProcessContent(contents);
   const nodeDefinitions = parseNodeDefinitionContents(contents);
   const handlerIndex = indexNodeDefinitionHandlers(parseRootHashMapValue(xml, "nodeDefinitionHandlers"));
-  const process = parseProcessXml(processXml, nodeDefinitions, handlerIndex);
+  const process = parseProcessXml(processXml, nodeDefinitions.definitions, handlerIndex);
   const graph = buildDirectedAcyclicGraph(process);
 
   return {
@@ -31,14 +32,18 @@ export function translateLbpmProcessDefinitionXml(xml, options = {}) {
       nodes: graph.nodes,
       edges: graph.edges,
       topologicalOrder: graph.topologicalOrder
-    }
+    },
+    ...(nodeDefinitions.warnings.length ? {
+      review: { warnings: nodeDefinitions.warnings }
+    } : {})
   };
 }
 
 export function parseLbpmProcessDefinitionXml(xml) {
   const contents = extractFdContents(xml);
   const handlerIndex = indexNodeDefinitionHandlers(parseRootHashMapValue(xml, "nodeDefinitionHandlers"));
-  return buildDirectedAcyclicGraph(parseProcessXml(findProcessContent(contents), parseNodeDefinitionContents(contents), handlerIndex));
+  const nodeDefinitions = parseNodeDefinitionContents(contents);
+  return buildDirectedAcyclicGraph(parseProcessXml(findProcessContent(contents), nodeDefinitions.definitions, handlerIndex));
 }
 
 function extractFdContents(xml = "") {
@@ -58,6 +63,7 @@ function findProcessContent(contents) {
 
 function parseNodeDefinitionContents(contents) {
   const definitions = new Map();
+  const warnings = [];
 
   for (const content of contents) {
     if (/^<process\b/i.test(content)) continue;
@@ -65,17 +71,58 @@ function parseNodeDefinitionContents(contents) {
     const root = scanStartTags(content).find((token) => token.name.endsWith("Node"));
     if (!root) continue;
 
-    const attributes = parseXmlAttributes(root.attributesText);
+    const parsedAttributes = parseXmlAttributes(root.attributesText);
+    const sanitized = sanitizeCredentialMaterial(parsedAttributes, { path: "/attributes" });
+    const attributes = sanitized.value;
     if (!attributes.id || definitions.has(attributes.id)) continue;
+
+    const sanitizedRoot = replaceSanitizedAttributes(root.sourceXml, parsedAttributes, attributes);
+    const sourceXml = content.replace(root.sourceXml, sanitizedRoot);
 
     definitions.set(attributes.id, {
       type: root.name,
       attributes,
-      sourceXml: content
+      sourceXml
     });
+
+    if (sanitized.redactedPaths.length) {
+      warnings.push({
+        code: "source.workflow.credential_redacted",
+        message: "Credential material was redacted from workflow source evidence.",
+        path: `/workflow/nodes/${jsonPointerSegment(attributes.id)}/definition`,
+        details: {
+          redactedPaths: sanitized.redactedPaths
+        }
+      });
+    }
   }
 
-  return definitions;
+  return { definitions, warnings };
+}
+
+function replaceSanitizedAttributes(sourceXml, original, sanitized) {
+  let result = sourceXml;
+  for (const [name, value] of Object.entries(sanitized)) {
+    if (value === original[name]) continue;
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp(`(\\b${escapedName}\\s*=\\s*)([\"'])([\\s\\S]*?)\\2`);
+    result = result.replace(pattern, (_match, prefix, quote) =>
+      `${prefix}${quote}${encodeXmlAttribute(value, quote)}${quote}`
+    );
+  }
+  return result;
+}
+
+function encodeXmlAttribute(value, quote) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(quote === "\"" ? /"/g : /'/g, quote === "\"" ? "&quot;" : "&apos;");
+}
+
+function jsonPointerSegment(value) {
+  return String(value).replace(/~/g, "~0").replace(/\//g, "~1");
 }
 
 function parseProcessXml(processXml, nodeDefinitions = new Map(), handlerIndex = new Map()) {

@@ -133,11 +133,24 @@ function cleanSourceDirectory(path, options = {}) {
         }
       } : {})
     },
-    workflow: workflowDsl.workflow
+    workflow: workflowDsl.workflow,
+    review: mergeSourceReviews(formDsl.review, workflowDsl.review)
   }, {
     sourcePath: path,
     sourceKind: "source-directory"
   });
+}
+
+function mergeSourceReviews(formReview, workflowReview) {
+  if (!workflowReview) return formReview;
+  const merged = { ...(formReview || {}) };
+  if (Array.isArray(workflowReview.warnings) && workflowReview.warnings.length) {
+    merged.warnings = [...(formReview?.warnings || []), ...workflowReview.warnings];
+  }
+  if (Array.isArray(workflowReview.errors) && workflowReview.errors.length) {
+    merged.errors = [...(formReview?.errors || []), ...workflowReview.errors];
+  }
+  return merged;
 }
 
 function readKmReviewTemplateName(path) {

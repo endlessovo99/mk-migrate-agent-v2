@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-structural-recovery-duplicate-attachment</string></void>
+  <void method="put"><string>fdName</string><string>Duplicate Recovered Attachment</string></void>
+  <void method="put"><string>fdModelId</string><string>route-structural-recovery-duplicate-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_anchor&quot;,label:&quot;Anchor&quot;}&apos;&gt;&lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div class=&quot;recovered-attachment-wrapper&quot;&gt;
+    &lt;label fd_type=&quot;linkLabel&quot; fd_values=&apos;{id:&quot;download_hint&quot;,content:&quot;Download template&quot;}&apos;&gt;Download template&lt;/label&gt;
+    &lt;div fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_shared_attachment&quot;,label:&quot;First attachment&quot;}&apos;&gt;&lt;/div&gt;
+    &lt;div class=&quot;duplicate-source-fragment&quot;&gt;
+     &lt;div fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_shared_attachment&quot;,label:&quot;Duplicate shadow&quot;}&apos;&gt;&lt;/div&gt;
+    &lt;/div&gt;
+   &lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_anchor&quot; label=&quot;Anchor&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

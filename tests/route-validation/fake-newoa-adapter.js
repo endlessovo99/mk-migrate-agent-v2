@@ -34,7 +34,6 @@ export class FakeNewoaAdapter {
     this.template = undefined;
     this.workflowDraft = undefined;
     this.updated = false;
-    this.workflowDraftMarkers = options.workflowDraftMarkers;
     this.fallbackById = new Map(SIT_FALLBACK_BY_ID);
     for (const [kind, fdId] of Object.entries(options.fallbackFdIds || {})) {
       const shape = CONFIGURED_FALLBACK_SHAPES[kind];
@@ -162,11 +161,11 @@ export class FakeNewoaAdapter {
       templateId,
       definitionId
     });
-    const draftMarkers = this.workflowDraftMarkers || { isDraft: true, fdStatus: "draft" };
     return {
       ...clone(this.workflowDraft),
       fdId: CREATED_WORKFLOW_TEMPLATE_ID,
-      ...draftMarkers
+      isDraft: true,
+      fdStatus: "draft"
     };
   }
 

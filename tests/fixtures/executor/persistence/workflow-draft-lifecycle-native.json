@@ -1,0 +1,28 @@
+{
+  "fdId": "workflow-template-id",
+  "latestDefinitionStatus": 0,
+  "isDraft": true,
+  "fdTemplateForms": [],
+  "content": {
+    "elements": [
+      {
+        "id": "N1",
+        "name": "开始",
+        "type": "generalStart",
+        "element": "startEvent"
+      },
+      {
+        "id": "N2",
+        "name": "结束",
+        "type": "generalEnd",
+        "element": "endEvent"
+      },
+      {
+        "id": "L1",
+        "type": "sequenceFlow",
+        "sourceRef": "N1",
+        "targetRef": "N2"
+      }
+    ]
+  }
+}

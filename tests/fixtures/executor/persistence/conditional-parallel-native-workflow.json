@@ -1,0 +1,137 @@
+{
+  "elements": [
+    {
+      "id": "QC10",
+      "name": "Start",
+      "type": "generalStart",
+      "element": "startEvent"
+    },
+    {
+      "id": "QC20",
+      "name": "Conditional split",
+      "type": "split",
+      "element": "parallelGateway",
+      "splitType": "1",
+      "relateId": "QC50",
+      "gatewayDirection": "diverging"
+    },
+    {
+      "id": "QC31",
+      "name": "Alpha review",
+      "type": "review",
+      "element": "manualTask",
+      "ignoreOnSameIdentity": "2"
+    },
+    {
+      "id": "QC32",
+      "name": "Gamma review",
+      "type": "review",
+      "element": "manualTask",
+      "ignoreOnSameIdentity": "2"
+    },
+    {
+      "id": "QC50",
+      "name": "Conditional join",
+      "type": "join",
+      "element": "parallelGateway",
+      "joinType": "1",
+      "relateId": "QC20",
+      "gatewayDirection": "converging"
+    },
+    {
+      "id": "QC60",
+      "name": "Submitter confirmation",
+      "type": "review",
+      "element": "manualTask",
+      "ignoreOnSameIdentity": "2",
+      "handlerSelectType": "formula",
+      "handlers": {
+        "id": "handlers",
+        "type": "formula",
+        "source": "2",
+        "ruleMode": "formula",
+        "formulaType": "formula",
+        "members": [],
+        "element": "users",
+        "ruleKey": {
+          "type": "Eval",
+          "script": "${data._ProcessCreator}",
+          "vo": {
+            "mode": "formula",
+            "content": "$流程数据项.起草人$"
+          },
+          "resultType": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fdId": { "type": "string" },
+                "fdName": { "type": "string" },
+                "fdOrgType": { "type": "string" }
+              }
+            }
+          },
+          "mode": "formula"
+        }
+      }
+    },
+    {
+      "id": "QC90",
+      "name": "End",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    {
+      "id": "QE10",
+      "type": "sequenceFlow",
+      "sourceRef": "QC10",
+      "targetRef": "QC20"
+    },
+    {
+      "id": "QE21",
+      "type": "sequenceFlow",
+      "sourceRef": "QC20",
+      "targetRef": "QC31",
+      "priority": 1,
+      "defaultTrend": false,
+      "formulaType": "rule",
+      "formulaName": "$主题$ is Alpha or Beta",
+      "formula": "$fd_subject$.equals(\"A\") || $fd_subject$.equals(\"B\")"
+    },
+    {
+      "id": "QE22",
+      "type": "sequenceFlow",
+      "sourceRef": "QC20",
+      "targetRef": "QC32",
+      "priority": 2,
+      "defaultTrend": false,
+      "formulaType": "rule",
+      "formulaName": "$主题$ is Gamma",
+      "formula": "$fd_subject$.equals(\"C\")"
+    },
+    {
+      "id": "QE31",
+      "type": "sequenceFlow",
+      "sourceRef": "QC31",
+      "targetRef": "QC50"
+    },
+    {
+      "id": "QE32",
+      "type": "sequenceFlow",
+      "sourceRef": "QC32",
+      "targetRef": "QC50"
+    },
+    {
+      "id": "QE50",
+      "type": "sequenceFlow",
+      "sourceRef": "QC50",
+      "targetRef": "QC60"
+    },
+    {
+      "id": "QE60",
+      "type": "sequenceFlow",
+      "sourceRef": "QC60",
+      "targetRef": "QC90"
+    }
+  ]
+}

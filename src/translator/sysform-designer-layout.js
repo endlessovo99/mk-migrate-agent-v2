@@ -3,8 +3,10 @@ import { isDataOnlyMetadataField } from "./sysform-metadata.js";
 import { restDialogEvidence, sanitizeDesignerValues } from "./rest-dialog.js";
 import { parseDesignerFdValues } from "./designer-control-values.js";
 import { descriptionFieldFromMarkedRow, extractRowMarkers } from "./designer-row-markers.js";
+import { isSourceDescriptionControl } from "./source-description-control.js";
 import {
   applyAdjacentDetailTableTitles,
+  applyAdjacentRowDetailTableTitles,
   attachmentContextControls
 } from "./designer-structure-recovery.js";
 import {
@@ -26,12 +28,13 @@ import {
 export function buildDesignerFirstForm(html, metadata, warnings) {
   const designer = parseDesignerLayout(html, warnings);
   const metadataFields = Array.isArray(metadata?.fields) ? metadata.fields : [];
+  const visibleDesignerIds = new Set(designer.fields.map((field) => field.id));
   const designerById = new Map(
-    [...designer.fields, ...designer.hiddenFields].map((field) => [field.id, field])
+    [...designer.hiddenFields, ...designer.fields].map((field) => [field.id, field])
   );
   const hiddenDesignerIds = new Set(
     designer.hiddenFields
-      .filter((field) => field.type !== "detailTable")
+      .filter((field) => field.type !== "detailTable" && !visibleDesignerIds.has(field.id))
       .map((field) => field.id)
   );
   const dataOnlyMetadataFields = metadataFields.filter((field) =>
@@ -177,6 +180,14 @@ function parseDesignerLayout(html, warnings) {
     }
   });
 
+  const adjacentRowTitles = applyAdjacentRowDetailTableTitles(
+    fields,
+    layoutRows,
+    isSuspiciousDetailTableTitle
+  );
+  fields.splice(0, fields.length, ...adjacentRowTitles.controls);
+  layoutRows.splice(0, layoutRows.length, ...adjacentRowTitles.rows);
+
   recoverDesignerAttachments(decoded, fields, fieldIds, layoutRows, warnings);
 
   if (!rows.length && decoded.trim()) {
@@ -215,9 +226,15 @@ function recoverDesignerAttachments(html, fields, fieldIds, layoutRows, warnings
         !fieldIds.has(control.id) &&
         !detailChildIds.has(control.id)
       );
-    const group = recovered.some((control) => control.id === attachment.id)
+    const candidates = recovered.some((control) => control.id === attachment.id)
       ? recovered
       : [attachment];
+    const groupIds = new Set();
+    const group = candidates.filter((control) => {
+      if (groupIds.has(control.id)) return false;
+      groupIds.add(control.id);
+      return true;
+    });
     for (const control of group) {
       fieldIds.add(control.id);
       fields.push(control);
@@ -426,11 +443,6 @@ function groupLayoutCellControls(controls) {
   const others = controls.filter((control) => control.type !== "detailTable");
   if (detailTables.length && others.length) return [detailTables, others];
   return [controls];
-}
-
-function isSourceDescriptionControl(control) {
-  const designerType = String(control?.source?.designerType || "").toLowerCase();
-  return control?.type === "description" || ["textlabel", "linklabel"].includes(designerType);
 }
 
 function extractDesignerFieldControls(html, options = {}) {

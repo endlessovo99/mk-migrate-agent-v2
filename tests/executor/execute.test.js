@@ -59,63 +59,6 @@ describe("executeDsl", () => {
     assert.equal(result.diagnostics.at(-1).message, "login rejected [REDACTED] [REDACTED]");
   });
 
-  it("updates an existing MK_TEST_ draft template without creating a new one", async () => {
-    const client = new FakeNewoaClient({
-      existingTemplate: {
-        fdId: "existing-template-id",
-        fdName: "MK_TEST_预算追加_20260711010203",
-        fdStatus: 0,
-        fdTableName: "existing_table_name",
-        fdCategory: { fdId: "category-1" },
-        mechanisms: {
-          "sys-xform": { fdId: "existing-template-id", fdName: "MK_TEST_预算追加_20260711010203", fdConfig: "{}", fdTableName: "existing_table_name" },
-          lbpmTemplate: [{
-            fdId: "lbpm-template-id",
-            fdName: "MK_TEST_预算追加_20260711010203",
-            fdTemplateCode: "template_existing",
-            fdEntityId: "existing-template-id",
-            fdEntityKey: "KmReviewMain",
-            fdEntityName: "com.landray.km.review.core.entity.KmReviewTemplate",
-            fdMainEntityName: "com.landray.km.review.core.entity.KmReviewMain",
-            fdModuleCode: "km-review",
-            fdContentType: "json",
-            fdSystemCode: "INNER_SYSTEM",
-            fdSystemName: "MK-PaaS内部系统",
-            fdTemplateForms: [{ fdFormKey: "existing-template-id" }],
-            fdReaders: [{ fdId: "reader-1" }],
-            fdEditors: [{ fdId: "editor-1" }],
-            isDraft: true,
-            fdContent: "{\"elements\":[]}"
-          }]
-        }
-      }
-    });
-    const result = await executeDsl(sampleTrustedDsl(), {
-      client,
-      credentials: TEST_CREDENTIALS,
-      confirmWrite: true,
-      targetCategoryId: "category-1",
-      existingTemplateId: "existing-template-id"
-    });
-
-    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
-    assert.equal(result.templateId, "existing-template-id");
-    assert.deepEqual(result.createdFdIds, []);
-    assert.equal(client.calls.some((call) => call.name === "addTemplate"), false);
-    assert.equal(client.calls.some((call) => call.name === "initTemplate"), false);
-    assert.deepEqual(client.calls.map((call) => call.name), [
-      "login",
-      "getTemplate",
-      "updateTemplate",
-      "saveWorkflowDraft",
-      "getWorkflowTemplateDetail",
-      "getTemplate"
-    ]);
-    const updatePayload = client.calls.find((call) => call.name === "updateTemplate").payload;
-    assert.equal(updatePayload.fdId, "existing-template-id");
-    assert.equal(updatePayload.fdName, "MK_TEST_预算追加_20260711010203");
-  });
-
   it("writes an initial same-id workflow draft and verifies readback", async () => {
     const client = new FakeNewoaClient();
     const result = await executeDsl(sampleTrustedDsl(), {
@@ -3681,7 +3624,6 @@ class FakeNewoaClient {
     this.workflowDraftResult = options.workflowDraftResult ?? { fdId: "lbpm-template-id" };
     this.expectedCredentials = options.expectedCredentials;
     this.loginError = options.loginError;
-    this.existingTemplate = options.existingTemplate;
     this.generatedTableName = options.generatedTableName ?? "generated_table_name";
   }
 
@@ -3732,9 +3674,6 @@ class FakeNewoaClient {
       return this.corruptReadback(this.savedTemplate);
     }
     if (this.savedTemplate) return this.savedTemplate;
-    if (this.existingTemplate && this.existingTemplate.fdId === fdId) {
-      return JSON.parse(JSON.stringify(this.existingTemplate));
-    }
     return {
       fdId,
       fdName: "created",

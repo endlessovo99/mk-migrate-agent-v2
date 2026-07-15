@@ -28,6 +28,7 @@ import {
 } from "./scripts.js";
 import { scriptRecipeValidationIssues } from "./script-recipes.js";
 import { subProcessValidationIssues } from "./subprocess.js";
+import { findUnredactedCredentialPaths } from "../credential-material.js";
 
 export const DSL_VERSION = "2.0-migration";
 
@@ -1074,6 +1075,7 @@ function validateWorkflowNodes(nodes, diagnostics, context) {
     if (!nonEmptyString(node.sourceRef) && node.generated !== true) {
       diagnostics.push(error("dsl.workflow.node.source_ref_required", "Workflow node sourceRef is required unless generated is true.", `${path}/sourceRef`));
     }
+    validateWorkflowCredentialMaterial(node, diagnostics, path);
     validateParticipants(node.participants, diagnostics, `${path}/participants`, context);
     const sourceAttributes = {
       ...(isRecord(node.attributes) ? node.attributes : {}),
@@ -1512,12 +1514,35 @@ function validateWorkflowEdges(edges, nodeMap, diagnostics) {
       diagnostics.push(error("dsl.workflow.edge.source_ref_required", "Workflow edge sourceRef is required unless generated is true.", `${path}/sourceRef`));
     }
 
+    validateWorkflowCredentialMaterial(edge, diagnostics, path);
+
     if (nodeMap.has(edge.source) && nodeMap.has(edge.target)) {
       validEdges.push(edge);
     }
   });
 
   return validEdges;
+}
+
+function validateWorkflowCredentialMaterial(value, diagnostics, path) {
+  for (const credentialPath of findUnredactedCredentialPaths(value)) {
+    diagnostics.push(error(
+      "dsl.workflow.credential_material_forbidden",
+      "Workflow DSL must not contain unredacted credential material.",
+      `${path}${credentialPath}`
+    ));
+  }
+
+  for (const sourceXmlPath of [
+    value?.sourceXml !== undefined ? "/sourceXml" : undefined,
+    value?.definition?.sourceXml !== undefined ? "/definition/sourceXml" : undefined
+  ].filter(Boolean)) {
+    diagnostics.push(error(
+      "dsl.workflow.raw_source_xml_forbidden",
+      "Workflow DSL must not retain raw source XML.",
+      `${path}${sourceXmlPath}`
+    ));
+  }
 }
 
 function validateTopologicalOrder(order, nodeMap, edges, diagnostics) {

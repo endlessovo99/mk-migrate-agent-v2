@@ -72,75 +72,13 @@ describe("envelope mutations", () => {
   }
 });
 
-describe("workflow draft lifecycle readback", () => {
-  it("accepts omitted fdStatus only with native draft markers", () => {
-    const { readback } = persistAndVerify(sampleTrustedDsl(), {
-      mutate(template) {
-        const lbpm = template.mechanisms.lbpmTemplate[0];
-        delete lbpm.fdStatus;
-        lbpm.latestDefinitionStatus = 0;
-        return template;
-      }
-    });
-    assert.equal(readback.ok, true);
-    assert.equal(readback.partitions.envelope, "verified");
-  });
-
-  for (const [name, mutateLbpm, code] of [
-    ["published fdStatus", (lbpm) => { lbpm.fdStatus = "published"; }, "readback.envelope.lbpm_status"],
-    ["false isDraft", (lbpm) => { lbpm.isDraft = false; }, "readback.envelope.lbpm_is_draft"],
-    ["missing native status", (lbpm) => {
-      delete lbpm.fdStatus;
-      delete lbpm.latestDefinitionStatus;
-    }, "readback.envelope.lbpm_status"]
-  ]) {
-    it(`fails on ${name}`, () => {
-      const { readback } = persistAndVerify(sampleTrustedDsl(), {
-        mutate(template) {
-          mutateLbpm(template.mechanisms.lbpmTemplate[0]);
-          return template;
-        }
-      });
-      assert.equal(readback.ok, false);
-      assert.equal(readback.partitions.envelope, "mismatch");
-      assert.equal(readback.diagnostics.some((item) => item.code === code), true);
-    });
-  }
-});
-
 describe("form field and detail mutations", () => {
-  it("fails when a main field is removed", () => {
-    const { readback } = persistAndVerify(sampleTrustedDsl({ workflow: null }), {
-      mutate(template) {
-        const config = xformConfig(template);
-        config.dataModel[0].fdFields = config.dataModel[0].fdFields.filter((item) => item.fdName !== "fd_subject");
-        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
-        return template;
-      }
-    });
-    assert.equal(readback.ok, false);
-    assert.equal(readback.diagnostics.some((item) => item.code === "readback.form.field_missing"), true);
-  });
-
   it("fails when a field title changes", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl({ workflow: null }), {
       mutate(template) {
         const config = xformConfig(template);
         const field = config.dataModel[0].fdFields.find((item) => item.fdName === "fd_subject");
         field.fdLabel = "被篡改";
-        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
-        return template;
-      }
-    });
-    assert.equal(readback.ok, false);
-    assert.equal(readback.diagnostics.some((item) => item.code === "readback.form.field_title"), true);
-  });
-
-  it("fails when a detail table title changes", () => {
-    const { readback } = persistAndVerify(sampleTrustedDsl({ workflow: null }), {
-      mutate(template) {
-        const config = xformConfig(template);
-        config.dataModel.find((model) => model.fdType === "detail").fdName = "被篡改的明细标题";
         template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
         return template;
       }

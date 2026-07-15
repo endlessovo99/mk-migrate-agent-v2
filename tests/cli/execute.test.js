@@ -103,7 +103,7 @@ describe("execute CLI", () => {
       executeResult: {
         ok: false,
         status: "blocked",
-        diagnostics: [{ level: "error", code: "safety.existing_template_not_draft" }]
+        diagnostics: [{ level: "error", code: "safety.confirm_write_required" }]
       }
     });
 
