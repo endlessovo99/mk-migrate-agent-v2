@@ -107,6 +107,7 @@ function dataOnlyFieldFromMetadata(metadataField, designerField, warnings) {
 function parseDesignerLayout(html, warnings) {
   const decoded = decodeEntities(html);
   const rows = splitMainFormRows(decoded);
+  const duplicateBoundLabelIds = designerDuplicateBoundLabelIds(decoded);
   const fields = [];
   const fieldIds = new Set();
   const hiddenFields = [];
@@ -123,7 +124,7 @@ function parseDesignerLayout(html, warnings) {
     }, 1);
 
     sourceCells.forEach((cell, cellIndex) => {
-      const controls = extractLayoutCellControls(cell.body);
+      const controls = extractLayoutCellControls(cell.body, duplicateBoundLabelIds);
       if (!controls.length) return;
       const column = parseColumnSpec(cell.attrs.column, cellIndex);
       const controlGroups = groupLayoutCellControls(controls);
@@ -380,8 +381,15 @@ function metadataCompatibleWithDesigner(metadataField, designerField) {
   return metadataField.type !== "detailTable";
 }
 
-function extractLayoutCellControls(html) {
-  const controls = extractDesignerFieldControls(html, { includeHidden: true, includeTextLabels: true });
+function extractLayoutCellControls(html, crossCellBoundLabelIds = new Set()) {
+  const extractedControls = extractDesignerFieldControls(html, {
+    includeHidden: true,
+    includeTextLabels: true
+  });
+  const controls = extractedControls.filter((control) =>
+    !isSourceDescriptionControl(control) ||
+    !crossCellBoundLabelIds.has(control.id)
+  );
   const detailTables = controls.filter((control) => control.type === "detailTable");
   if (detailTables.length) {
     // Detail-table cells often host main-level calculation totals in footer
@@ -411,11 +419,13 @@ function extractLayoutCellControls(html) {
 
   const fieldControls = controls.filter((control) => !isSourceDescriptionControl(control));
   if (fieldControls.length) {
-    const boundLabelIds = new Set(
-      fieldControls.map((control) => control.source?.designerValues?._label_bind_id).filter(Boolean)
+    const cellBoundLabelIds = new Set(
+      fieldControls
+        .map((control) => control.source?.designerValues?._label_bind_id)
+        .filter(Boolean)
     );
     return controls.filter((control) =>
-      !isSourceDescriptionControl(control) || !boundLabelIds.has(control.id)
+      !isSourceDescriptionControl(control) || !cellBoundLabelIds.has(control.id)
     );
   }
 
@@ -424,6 +434,32 @@ function extractLayoutCellControls(html) {
     isSourceDescriptionControl(control) &&
     (isHintTextLabel(control) || String(control.source?.designerType || "").toLowerCase() === "linklabel")
   );
+}
+
+function designerDuplicateBoundLabelIds(html) {
+  const controls = extractDesignerFieldControls(html, {
+    includeHidden: true,
+    includeTextLabels: true
+  });
+  const descriptionsById = new Map(
+    controls
+      .filter((control) => isSourceDescriptionControl(control))
+      .map((control) => [control.id, control])
+  );
+  const duplicateIds = controls
+    .filter((control) =>
+      !isSourceDescriptionControl(control) && !control.source?.designerHidden
+    )
+    .map((control) => {
+      const labelId = control.source?.designerValues?._label_bind_id;
+      const label = descriptionsById.get(labelId);
+      if (!label || normalizeMatchText(label.title) !== normalizeMatchText(control.title)) {
+        return undefined;
+      }
+      return labelId;
+    })
+    .filter(Boolean);
+  return new Set(duplicateIds);
 }
 
 function appendMissingControls(controls, additions) {

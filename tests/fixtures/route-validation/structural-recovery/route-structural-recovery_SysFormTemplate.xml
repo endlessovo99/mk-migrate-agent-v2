@@ -94,6 +94,41 @@
      &lt;td row=&quot;19&quot; column=&quot;0&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_twin_a&quot;,label:&quot;DetailTable9&quot;}&apos;&gt;&lt;/table&gt;&lt;/td&gt;
      &lt;td row=&quot;19&quot; column=&quot;1&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_twin_b&quot;,label:&quot;DetailTable10&quot;}&apos;&gt;&lt;/table&gt;&lt;/td&gt;
     &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;20&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;bound_field_label&quot;,content:&quot;Bound field&quot;}&apos;&gt;Bound field&lt;/label&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_bound_helper&quot;,label:&quot;Hidden helper&quot;,canShow:&quot;false&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;20&quot; column=&quot;1&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_bound_value&quot;,label:&quot;Bound field&quot;,_label_bind_id:&quot;bound_field_label&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;21&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;unbound_same_title&quot;,content:&quot;Shared wording&quot;,color:&quot;#FF0000&quot;}&apos;&gt;Shared wording&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;21&quot; column=&quot;1&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_shared_wording&quot;,label:&quot;Shared wording&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;21&quot; column=&quot;2&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_hidden_hint_helper&quot;,label:&quot;Hidden hint helper&quot;,_label_bind_id:&quot;unbound_same_title&quot;,canShow:&quot;false&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;22&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;different_bound_caption&quot;,content:&quot;Human-readable caption&quot;,b:&quot;true&quot;}&apos;&gt;Human-readable caption&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;22&quot; column=&quot;1&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_machine_named_value&quot;,label:&quot;Machine field 1&quot;,_label_bind_id:&quot;different_bound_caption&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;23&quot; column=&quot;0&quot;&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_with_caption&quot;,label:&quot;DetailTable11&quot;}&apos;&gt;&lt;/table&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;detail_companion_caption&quot;,content:&quot;Readable total&quot;}&apos;&gt;Readable total&lt;/label&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_detail_companion_total&quot;,label:&quot;Total1&quot;,_label_bind_id:&quot;detail_companion_caption&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
    &lt;/tbody&gt;&lt;/table&gt;
    &lt;div class=&quot;recovered-attachment-wrapper&quot;&gt;
     &lt;label fd_type=&quot;linkLabel&quot; fd_values=&apos;{id:&quot;recovered_download_hint&quot;,content:&quot;Download recovered template&quot;,link:&quot;https://example.invalid/recovered?token=do-not-retain&quot;,b:&quot;true&quot;}&apos;&gt;Download recovered template&lt;/label&gt;
@@ -116,6 +151,7 @@
     &lt;extendSubTableProperty name=&quot;fd_detail_follow&quot; label=&quot;DetailTable8&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_follow_name&quot; label=&quot;Follower name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
     &lt;extendSubTableProperty name=&quot;fd_detail_twin_a&quot; label=&quot;DetailTable9&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_twin_a_name&quot; label=&quot;Twin A name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
     &lt;extendSubTableProperty name=&quot;fd_detail_twin_b&quot; label=&quot;DetailTable10&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_twin_b_name&quot; label=&quot;Twin B name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_with_caption&quot; label=&quot;DetailTable11&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_detail_with_caption_name&quot; label=&quot;Caption detail name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
     &lt;extendSimpleProperty name=&quot;fd_nested&quot; label=&quot;Nested visible&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_decision&quot; label=&quot;Decision&quot; enumValues=&quot;Yes|Y&amp;#10;No|N&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_hidden_scaffold&quot; label=&quot;Hidden scaffold&quot; type=&quot;String&quot;/&gt;
@@ -123,6 +159,10 @@
     &lt;extendSimpleProperty name=&quot;fd_between_heading_table&quot; label=&quot;Between heading and table&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_remote_reverse&quot; label=&quot;Reverse remote&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_visibility_collision&quot; label=&quot;Visible business field&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_bound_value&quot; label=&quot;Bound field&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_shared_wording&quot; label=&quot;Shared wording&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_machine_named_value&quot; label=&quot;Machine field 1&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_detail_companion_total&quot; label=&quot;Total1&quot; type=&quot;String&quot;/&gt;
    &lt;/metadata&gt;</string>
   </void>
  </object>
