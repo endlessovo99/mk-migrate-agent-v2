@@ -1,4 +1,4 @@
-export const BEFORE_SUBMIT_DISPATCH_STRATEGY = "ordered_await_false_short_circuit";
+export const BEFORE_SUBMIT_DISPATCH_STRATEGY = "ordered_false_short_circuit";
 export const ORDERED_DISPATCH_STRATEGY = "ordered";
 
 export function singletonDispatcherContract(event, actions = []) {
@@ -33,7 +33,7 @@ export function dispatcherCallEndMarker(name) {
 export function renderDispatcherInvocation(event, childNames) {
   const blocks = childNames.map((name) => {
     const statement = event === "onBeforeSubmit"
-      ? `if (await ${name}(context) === false) return false;`
+      ? `if (${name}(context) === false) return false;`
       : `${name}(context);`;
     return [
       `  ${dispatcherCallStartMarker(name)}`,

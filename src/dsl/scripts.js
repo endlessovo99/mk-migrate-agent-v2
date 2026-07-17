@@ -208,6 +208,8 @@ export function summarizeScriptActionSupport(actions = [], form = {}) {
 export function analyzeScriptFunction(text = "") {
   const source = String(text || "");
   const masked = maskStringsAndComments(source);
+  const unsupportedSyntax = extractUnsupportedMkSyntax(masked, source);
+  const promiseReturns = extractPromiseReturns(masked, source);
   const localFunctions = extractLocalFunctionNames(masked);
   const calls = extractCalls(masked, source, localFunctions);
   const domUsages = extractDomUsages(masked, source);
@@ -229,6 +231,8 @@ export function analyzeScriptFunction(text = "") {
     .filter((call) => !isAllowedCall(call.name, localFunctions));
 
   return {
+    unsupportedSyntax,
+    promiseReturns,
     calls,
     targetCalls,
     domUsages,
@@ -236,6 +240,73 @@ export function analyzeScriptFunction(text = "") {
     reviewTargetCalls,
     disallowedCalls
   };
+}
+
+function extractUnsupportedMkSyntax(masked, source) {
+  const usages = [];
+  const asyncPatterns = [
+    /\basync\s+function\b/g,
+    /\basync\s*(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/g,
+    /\basync\s+\*?\s*[A-Za-z_$][\w$]*\s*\(/g
+  ];
+  for (const pattern of asyncPatterns) {
+    for (const match of masked.matchAll(pattern)) {
+      usages.push({
+        keyword: "async",
+        index: match.index,
+        snippet: snippetAt(source, match.index)
+      });
+    }
+  }
+  if (usages.length) {
+    for (const match of masked.matchAll(/\bawait\b/g)) {
+      if (isPropertyIdentifier(masked, match.index, match[0].length)) continue;
+      usages.push({
+        keyword: "await",
+        index: match.index,
+        snippet: snippetAt(source, match.index)
+      });
+    }
+  }
+  return usages.sort((left, right) => left.index - right.index);
+}
+
+function extractPromiseReturns(masked, source) {
+  const usages = [];
+  for (const match of masked.matchAll(/\breturn\b/g)) {
+    const expression = returnExpressionAt(masked, match.index + match[0].length);
+    if (!/(?:\bPromise\b|\.(?:then|catch|finally)\s*\()/.test(expression)) continue;
+    usages.push({ index: match.index, snippet: snippetAt(source, match.index) });
+  }
+  return usages;
+}
+
+function returnExpressionAt(source, start) {
+  const stack = [];
+  let expression = "";
+  const pairs = { "(": ")", "[": "]", "{": "}" };
+  for (let index = start; index < source.length; index += 1) {
+    const char = source[index];
+    if (pairs[char]) stack.push(pairs[char]);
+    else if (stack.at(-1) === char) stack.pop();
+    else if (!stack.length && (char === ";" || char === "}")) break;
+    else if (!stack.length && char === "\n") {
+      const next = source.slice(index + 1).match(/\S/)?.[0] || "";
+      if (next !== ".") break;
+    }
+    expression += char;
+  }
+  return expression;
+}
+
+function isPropertyIdentifier(source, index, length) {
+  const before = source.slice(0, index);
+  const after = source.slice(index + length);
+  const previous = before.match(/\S(?=\s*$)/)?.[0] || "";
+  const next = after.match(/^\s*(\S)/)?.[1] || "";
+  if (previous === "." || next === ":") return true;
+  if (/\b(?:var|let|const)\s*$/.test(before)) return true;
+  return ["{", ","].includes(previous) && [",", "}"].includes(next);
 }
 
 /**
@@ -376,9 +447,7 @@ export function parseNamedFunctionParams(text = "", name = "") {
 }
 
 export function hasExplicitBeforeSubmitReturn(text = "") {
-  return /\breturn\s+(?:true|false)\b/.test(text) ||
-    /\breturn\s+new\s+Promise\s*\(/.test(text) ||
-    /\breturn\s+Promise\./.test(text);
+  return /\breturn\s+(?:true|false)\b/.test(text);
 }
 
 export function handlesDraftContext(text = "") {

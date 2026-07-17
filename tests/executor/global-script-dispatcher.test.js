@@ -11,6 +11,65 @@ import {
 } from "../helpers/persistence.js";
 
 describe("global singleton script dispatchers", () => {
+  it("fails closed before persistence when an action contains async syntax", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: null,
+      scripts: {
+        actions: [{
+          ...mappedGlobalAction("async-load", "onLoad", "await MKXFORM.getValue('fd_subject')"),
+          function: "async function onLoad(context) { await MKXFORM.getValue('fd_subject') }"
+        }]
+      }
+    });
+
+    assert.throws(
+      () => projectTemplate(dsl),
+      /uses unsupported asynchronous syntax: async, await/
+    );
+
+    const bareAwaitDsl = sampleTrustedDsl({
+      workflow: null,
+      scripts: {
+        actions: [{
+          ...mappedGlobalAction("bare-await", "onLoad", "MKXFORM.getValue('fd_subject')"),
+          function: "function onLoad() { await MKXFORM.getValue('fd_subject') }"
+        }]
+      }
+    });
+    assert.throws(
+      () => projectTemplate(bareAwaitDsl),
+      /uses unsupported JavaScript syntax/
+    );
+
+    const promiseDsl = sampleTrustedDsl({
+      workflow: null,
+      scripts: {
+        actions: [mappedGlobalAction(
+          "promise-before-submit",
+          "onBeforeSubmit",
+          "if (context.isDraft) return true; return Promise.resolve(true)"
+        )]
+      }
+    });
+    assert.throws(
+      () => projectTemplate(promiseDsl),
+      /must synchronously return a boolean and cannot return a Promise/
+    );
+    for (const method of ["catch", "finally"]) {
+      promiseDsl.scripts.actions[0].function = `function onBeforeSubmit(context, value) { if (context.isDraft) return true; return value.${method}(function () { return true; }); }`;
+      assert.throws(
+        () => projectTemplate(promiseDsl),
+        /must synchronously return a boolean and cannot return a Promise/
+      );
+    }
+
+    promiseDsl.scripts.actions[0].function = "function onBeforeSubmit(context, value) { if (context.isDraft) return true; return value\n.then(function () { return true; }); }";
+    assert.throws(
+      () => projectTemplate(promiseDsl),
+      /must synchronously return a boolean and cannot return a Promise/
+    );
+  });
+
   it("persists one ordered dispatcher for each singleton global event", async () => {
     const dsl = sampleTrustedDsl({
       workflow: null,
@@ -19,7 +78,7 @@ describe("global singleton script dispatchers", () => {
           mappedGlobalAction("load-1", "onLoad", "MKXFORM.setValue('fd_subject', 'load-1')"),
           mappedGlobalAction("load-2", "onLoad", "MKXFORM.setValue('fd_subject', 'load-2')"),
           mappedGlobalAction("before-1", "onBeforeSubmit", "MKXFORM.setValue('fd_subject', 'before-1'); return true"),
-          mappedGlobalAction("before-2", "onBeforeSubmit", "MKXFORM.setValue('fd_subject', 'before-2'); return Promise.resolve(context.allow !== false)"),
+          mappedGlobalAction("before-2", "onBeforeSubmit", "MKXFORM.setValue('fd_subject', 'before-2'); return context.allow !== false"),
           mappedGlobalAction("before-3", "onBeforeSubmit", "MKXFORM.setValue('fd_subject', 'before-3'); return true"),
           mappedGlobalAction(
             "after-1",
@@ -53,11 +112,12 @@ describe("global singleton script dispatchers", () => {
     assert.equal(summary.persistedActionCount, 3);
     assert.deepEqual(summary.dispatchers.map(({ event, strategy }) => ({ event, strategy })), [
       { event: "onLoad", strategy: "ordered" },
-      { event: "onBeforeSubmit", strategy: "ordered_await_false_short_circuit" },
+      { event: "onBeforeSubmit", strategy: "ordered_false_short_circuit" },
       { event: "onAfterSubmit", strategy: "ordered" }
     ]);
     assert.equal(verifyTemplate(dsl, template).ok, true);
-    assert.equal(global.onBeforeSubmit[0].function.startsWith("async function onBeforeSubmit"), true);
+    assert.equal(global.onBeforeSubmit[0].function.startsWith("function onBeforeSubmit"), true);
+    assert.doesNotMatch(global.onBeforeSubmit[0].function, /\b(?:async|await)\b/);
 
     const rejectedCalls = await runDispatcher(global.onBeforeSubmit[0], { allow: false });
     assert.equal(rejectedCalls.result, false);
@@ -87,8 +147,8 @@ describe("global singleton script dispatchers", () => {
         const readbackAttr = JSON.parse(readbackConfig.attribute.formAttr);
         readbackAttr.controlAction.global.onBeforeSubmit[0].function =
           readbackAttr.controlAction.global.onBeforeSubmit[0].function.replace(
-            "  if (await onBeforeSubmit_2(context) === false) return false;\n",
-            "  // if (await onBeforeSubmit_2(context) === false) return false;\n"
+            "  if (onBeforeSubmit_2(context) === false) return false;\n",
+            "  // if (onBeforeSubmit_2(context) === false) return false;\n"
           );
         readbackConfig.attribute.formAttr = JSON.stringify(readbackAttr);
         readbackTemplate.mechanisms["sys-xform"].fdConfig = JSON.stringify(readbackConfig);

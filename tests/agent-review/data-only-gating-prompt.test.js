@@ -28,5 +28,8 @@ describe("agent-review hidden field and view gate context", () => {
     assert.equal(prompt.system.includes("Keep runWhen on any residual JavaScript"), true);
     assert.equal(prompt.system.includes("Do not duplicate visible or required effects already covered by native formRules"), true);
     assert.equal(prompt.system.includes("A gated action may be omitted only when its function is empty"), true);
+    assert.equal(prompt.system.includes("does not support async or await syntax"), true);
+    assert.equal(prompt.system.includes("synchronously return true or false"), true);
+    assert.equal(prompt.system.includes("read rows from its values array"), true);
   });
 });

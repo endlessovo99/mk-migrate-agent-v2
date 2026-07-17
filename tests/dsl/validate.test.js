@@ -959,6 +959,114 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "dsl.scripts.before_submit_draft_guard_required"), true);
   });
 
+  it("rejects async and await syntax from executable MK scripts", () => {
+    const result = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "before-submit.async",
+          name: "onBeforeSubmit",
+          event: "onBeforeSubmit",
+          scope: "global",
+          function: "async function onBeforeSubmit(context) {\n  if (context.isDraft) return true\n  await MKXFORM.validateFields()\n  return true\n}",
+          translationStatus: "mapped",
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "before submit validation",
+            target: "MKXFORM.validateFields",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
+        }]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.diagnostics.some((item) =>
+      item.code === "dsl.scripts.mk_async_syntax_forbidden"
+    ), true);
+
+    const propertyNames = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "load.async-property",
+          name: "onLoad",
+          event: "onLoad",
+          scope: "global",
+          function: "function onLoad(context, await) { var flags = { async: true, await: false }; var await = await || false; if (context.async || flags.await || await) return; }",
+          translationStatus: "mapped",
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{ source: "state flags", target: "local state", basis: "semantic-translation", reviewRequired: false }]
+        }]
+      }
+    }), { mode: "execute" });
+    assert.equal(propertyNames.diagnostics.some((item) =>
+      item.code === "dsl.scripts.mk_async_syntax_forbidden"
+    ), false);
+
+    const asyncMethod = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "load.async-method",
+          name: "onLoad",
+          event: "onLoad",
+          scope: "global",
+          function: "function onLoad() { var helper = { async run() { return true; } }; helper.run(); }",
+          translationStatus: "mapped",
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{ source: "async helper", target: "local helper", basis: "semantic-translation", reviewRequired: false }]
+        }]
+      }
+    }), { mode: "execute" });
+    assert.equal(asyncMethod.diagnostics.some((item) =>
+      item.code === "dsl.scripts.mk_async_syntax_forbidden"
+    ), true);
+  });
+
+  it("rejects Promise-returning before-submit handlers", () => {
+    const result = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "before-submit.promise",
+          name: "onBeforeSubmit",
+          event: "onBeforeSubmit",
+          scope: "global",
+          function: "function onBeforeSubmit(context) { if (context.isDraft) return true; return (\n  Promise.resolve(true)\n); }",
+          translationStatus: "mapped",
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{ source: "submit guard", target: "boolean return", basis: "semantic-translation", reviewRequired: false }]
+        }]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.diagnostics.some((item) =>
+      item.code === "dsl.scripts.before_submit_promise_forbidden"
+    ), true);
+
+    const chainedResult = validateMigrationDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "before-submit.promise-chain",
+          name: "onBeforeSubmit",
+          event: "onBeforeSubmit",
+          scope: "global",
+          function: "function onBeforeSubmit(context, value) { if (context.isDraft) return true; return value\n.then(function () { return true; }); }",
+          translationStatus: "mapped",
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{ source: "submit guard", target: "boolean return", basis: "semantic-translation", reviewRequired: false }]
+        }]
+      }
+    }), { mode: "execute" });
+    assert.equal(chainedResult.diagnostics.some((item) =>
+      item.code === "dsl.scripts.before_submit_promise_forbidden"
+    ), true);
+  });
+
   it("rejects executable form linkage rules with unresolved condition fields or effect targets", () => {
     const result = validateMigrationDsl(sampleTrustedDsl({
       formRules: {

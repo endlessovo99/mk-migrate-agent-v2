@@ -7,7 +7,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v4";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v6";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -70,6 +70,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Do not downgrade deterministic mapped or coverage-backed omitted script actions to needs_review or manual. If confidence is insufficient, leave the action unchanged and emit a warning diagnostic.",
       "Legacy APIs listed in jspTranslationPlaybook are semantic examples and guidance; still verify each patch against the concrete source/action context.",
       "Detail-table control scripts use tableId plus controlId; preserve rowNum for row-scoped APIs.",
+      "MKXFORM.getFormValues returns each detail table as a state object; read rows from its values array. A direct array may be accepted only as a compatibility fallback.",
       "When a detail-table function refers to a runtime control id inside a detail row, use ${table:<sourceDetailTableId>}.<controlId>; the executor resolves this placeholder to mk_model_fd_... at write time.",
       "Whole-row or whole detail-table container visibility/required state must prefer native formRules.linkage against layout sourceMarkers (including detail-table-only rows). Do not use ${table:<detailTableId>} or the detail-table field id as an MKXFORM.setFieldAttr target.",
       "Only the first sourceMarker on a layout row is persisted as migrationRowId. When a row lists multiple sourceMarkers, rewrite every co-located alias to that primary marker in MKXFORM.setFieldAttr calls.",
@@ -81,7 +82,8 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "When generated JavaScript alone covers source JSP behavior, patch coverage to {status:\"translated\", nativeRules:[], residuals:[]}.",
       "Do not patch coverage for existing deterministic mapped or coverage-backed omitted actions to partial, uncovered, or residual-bearing coverage.",
       "Review-grade targetApi calls may be used only when the action has explicit functionMappings, coverage.status is translated or covered, and residuals are empty.",
-      "onBeforeSubmit must explicitly handle context.isDraft and return true, false, or Promise<boolean>.",
+      "MK runtime JavaScript does not support async or await syntax. Never generate either keyword for executable scripts.",
+      "onBeforeSubmit must explicitly handle context.isDraft, synchronously return true or false, and never return a Promise.",
       "If a workflow concern is found, emit a diagnostic instead of a patch.",
       "If no safe patches are needed, return exactly this shape with your own non-empty summary: {\"summary\":\"Reviewed form DSL; no safe patches proposed.\",\"patches\":[],\"diagnostics\":[]}"
     ].join("\n"),

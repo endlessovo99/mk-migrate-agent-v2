@@ -1140,7 +1140,7 @@ function validateScriptActionFunction(action, path, diagnostics, context) {
   }
   if (action.event === "onBeforeSubmit") {
     if (!hasExplicitBeforeSubmitReturn(action.function)) {
-      diagnostics.push(error("dsl.scripts.before_submit_return_required", "onBeforeSubmit must explicitly return true, false, or Promise<boolean>.", `${path}/function`));
+      diagnostics.push(error("dsl.scripts.before_submit_return_required", "onBeforeSubmit must synchronously return true or false.", `${path}/function`));
     }
     if (!handlesDraftContext(action.function)) {
       diagnostics.push(error("dsl.scripts.before_submit_draft_guard_required", "onBeforeSubmit must explicitly handle context.isDraft.", `${path}/function`));
@@ -1149,6 +1149,16 @@ function validateScriptActionFunction(action, path, diagnostics, context) {
 
   if (context.mode === "execute" || action.translationStatus === "mapped") {
     const analysis = analyzeScriptFunction(action.function);
+    if (analysis.unsupportedSyntax.length) {
+      diagnostics.push(error("dsl.scripts.mk_async_syntax_forbidden", "MK runtime scripts must be synchronous and cannot use async or await.", `${path}/function`, {
+        usages: analysis.unsupportedSyntax
+      }));
+    }
+    if (action.event === "onBeforeSubmit" && analysis.promiseReturns.length) {
+      diagnostics.push(error("dsl.scripts.before_submit_promise_forbidden", "onBeforeSubmit must synchronously return true or false and cannot return a Promise.", `${path}/function`, {
+        usages: analysis.promiseReturns
+      }));
+    }
     if (analysis.domUsages.length) {
       diagnostics.push(error("dsl.scripts.dom_api_forbidden", "Mapped script actions must use MK component APIs instead of direct DOM APIs.", `${path}/function`, {
         usages: analysis.domUsages

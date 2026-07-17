@@ -344,7 +344,8 @@ function detailExpansionTranslation(javascript, handler) {
     function: [
       "function onClick() {",
       "  var formValues = MKXFORM.getFormValues() || {};",
-      `  var sourceRows = formValues['\${table:${sourceDetailTableId}}'] || [];`,
+      `  var sourceTable = formValues['\${table:${sourceDetailTableId}}'] || {};`,
+      "  var sourceRows = Array.isArray(sourceTable) ? sourceTable : (sourceTable.values || []);",
       `  var partTypes = ${JSON.stringify(values)};`,
       `  MKXFORM.deleteRow('\${table:${targetDetailTableId}}');`,
       "  for (var i = 0; i < sourceRows.length; i += 1) {",

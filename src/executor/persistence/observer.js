@@ -671,9 +671,7 @@ function observeSingletonDispatcher(action, context) {
 
 function observeDispatcherStrategy(event, functionText, invocationText, childNames) {
   const expectedTail = `${renderDispatcherInvocation(event, childNames)}\n}`;
-  const expectedDeclaration = event === "onBeforeSubmit"
-    ? /^\s*async\s+function\s+onBeforeSubmit\b/
-    : new RegExp(`^\\s*function\\s+${event}\\b`);
+  const expectedDeclaration = new RegExp(`^\\s*function\\s+${event}\\b`);
   if (!expectedDeclaration.test(functionText) || invocationText.trim() !== expectedTail.trim()) return "invalid";
   return event === "onBeforeSubmit"
     ? BEFORE_SUBMIT_DISPATCH_STRATEGY

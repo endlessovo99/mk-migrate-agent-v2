@@ -7,7 +7,7 @@ import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { projectLayoutGrid } from "../../dsl/layout-pack.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { persistedFieldLabel } from "./field-labels.js";
-import { SCRIPT_SINGLETON_GLOBAL_EVENTS } from "../../dsl/scripts.js";
+import { SCRIPT_SINGLETON_GLOBAL_EVENTS, analyzeScriptFunction } from "../../dsl/scripts.js";
 import {
   dispatcherActionEndMarker,
   dispatcherActionStartMarker,
@@ -272,6 +272,7 @@ function buildControlAction(existing, scripts = {}, context = {}) {
     if (action.translationStatus === "omitted") continue;
     const event = action.event || action.name;
     if (!event || typeof action.function !== "string" || !action.function.trim()) continue;
+    assertSynchronousMkScript(action.function, action.id || event, event);
     const scope = action.scope || "global";
     const key = scope === "control"
       ? controlActionKey(action, context)
@@ -310,6 +311,24 @@ function buildControlAction(existing, scripts = {}, context = {}) {
     next.global[item.event] = persistedActions;
   }
   return next;
+}
+
+function assertSynchronousMkScript(source, actionId, event) {
+  try {
+    // Syntax-only persistence guard; declarations are compiled but never executed.
+    // eslint-disable-next-line no-new-func
+    new Function(source);
+  } catch (error) {
+    throw new Error(`MK runtime script ${actionId} uses unsupported JavaScript syntax: ${error instanceof Error ? error.message : String(error)}.`);
+  }
+  const analysis = analyzeScriptFunction(source);
+  if (analysis.unsupportedSyntax.length) {
+    const keywords = [...new Set(analysis.unsupportedSyntax.map((usage) => usage.keyword))].join(", ");
+    throw new Error(`MK runtime script ${actionId} uses unsupported asynchronous syntax: ${keywords}.`);
+  }
+  if (event === "onBeforeSubmit" && analysis.promiseReturns.length) {
+    throw new Error(`MK runtime script ${actionId} must synchronously return a boolean and cannot return a Promise.`);
+  }
 }
 
 function pruneOrphanControlActions(control, context) {
@@ -354,7 +373,7 @@ function buildGlobalDispatcher(event, actions) {
   }));
   return {
     name: event,
-    function: `${event === "onBeforeSubmit" ? "async " : ""}function ${event}(context) {\n${definitions.join("\n\n")}\n\n${invocation}\n}`,
+    function: `function ${event}(context) {\n${definitions.join("\n\n")}\n\n${invocation}\n}`,
     id: `${event}_dispatcher_${stableShortId(migrationActions.map((action) => action.id).join("|"))}`,
     migrationActions
   };

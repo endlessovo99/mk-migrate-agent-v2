@@ -54,10 +54,14 @@ describe("source directory stages", () => {
     const onClick = Function("MKXFORM", `${executable}; return onClick;`)({
       getFormValues() {
         return {
-          source_detail: [
-            { fd_model_desc1: "M1", fd_quantity1: 2 },
-            { fd_model_desc1: "M2", fd_quantity1: 3 }
-          ]
+          source_detail: {
+            values: [
+              { fd_model_desc1: "M1", fd_quantity1: 2 },
+              { fd_model_desc1: "M2", fd_quantity1: 3 }
+            ],
+            dataState: {},
+            deleteState: []
+          }
         };
       },
       deleteRow(id) { calls.deleted.push(id); },
