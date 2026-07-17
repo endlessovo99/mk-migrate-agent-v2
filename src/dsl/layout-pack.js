@@ -15,9 +15,9 @@ export function packLayoutCells(cells = []) {
 }
 
 /**
- * Pack controls into one native NewOA layout-grid. Ordinary source rows use
- * at most four columns; overflow remains inside the same logical layout node
- * on additional grid rows so a source row marker still has one runtime target.
+ * Pack controls into one native NewOA layout-grid. The default mirrors the
+ * designer's one-to-four-column quick layouts. Callers preserving a wider
+ * table-layout source row pass its explicit column count.
  */
 export function packLayoutGrid(cells = [], options = {}) {
   const sorted = orderedExpandedCells(cells);

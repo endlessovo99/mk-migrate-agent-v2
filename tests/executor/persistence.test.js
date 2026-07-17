@@ -283,6 +283,111 @@ describe("form field and detail mutations", () => {
     );
   });
 
+  it("persists a one-row five-column table layout in desktop and mobile views", () => {
+    const form = sampleForm();
+    const baseField = form.fields.find((field) => field.id === "fd_amount");
+    const ids = [
+      "fd_slot_alpha",
+      "fd_slot_bravo",
+      "fd_slot_charlie",
+      "fd_slot_delta",
+      "fd_slot_echo"
+    ];
+    for (const id of ids) {
+      form.fields.splice(form.fields.length - 1, 0, {
+        ...structuredClone(baseField),
+        id,
+        title: id,
+        sourceRef: `source.form.control.${id}`
+      });
+    }
+    form.layout.mkTree[0] = {
+      id: "layout.row-five-columns",
+      componentId: "xform-multi-row-table-layout",
+      props: { rows: 1, columns: 5 },
+      sourceRef: "source.form.layout.row.row-five-columns",
+      sourceMarkers: ["fd_five_column_row"],
+      children: ids.map((id, index) => ({
+        id: `layout.row-five-columns-cell-${index}`,
+        refType: "field",
+        refIds: [id],
+        sourceRef: `source.form.layout.cell.row-five-columns-cell-${index}`,
+        row: 0,
+        column: index,
+        colspan: 1
+      }))
+    };
+
+    const dsl = sampleTrustedDsl({ form, workflow: null });
+    const prepared = prepareSample(dsl);
+    assert.equal(prepared.ok, true, JSON.stringify(prepared.diagnostics));
+    const view = JSON.parse(xformConfig(prepared.update).viewModel[0].fdConfig);
+
+    for (const mode of ["desktop", "mobile"]) {
+      const main = view.view.render[mode][0].children[0];
+      const row = main.children.find((candidate) =>
+        candidate.controlProps?.migrationRowId === "fd_five_column_row"
+      );
+      const grid = row.children[0];
+      assert.equal(
+        row.controlProps.migrationLayoutType,
+        "@elem/xform-multi-row-table-layout",
+        mode
+      );
+      assert.equal(grid.controlProps.columns, 5, mode);
+      assert.equal(grid.controlProps.rows, 1, mode);
+      assert.deepEqual(
+        grid.children.map((item) => [
+          item.controlProps.row,
+          item.controlProps.column,
+          item.children[0].key
+        ]),
+        ids.map((id, index) => [1, index + 1, id]),
+        mode
+      );
+    }
+
+    const nativeEvidence = JSON.parse(
+      readFileSync(join(fixtureDir, "multi-line-column-1x5-native-layout.json"), "utf8")
+    );
+    const independentReadback = structuredClone(prepared.update);
+    const independentConfig = xformConfig(independentReadback);
+    const independentView = JSON.parse(independentConfig.viewModel[0].fdConfig);
+    const independentMain = independentView.view.render.desktop[0].children[0];
+    const independentRowIndex = independentMain.children.findIndex((candidate) =>
+      candidate.controlProps?.migrationRowId === "fd_five_column_row"
+    );
+    independentMain.children[independentRowIndex] = structuredClone(nativeEvidence.nativeLayout);
+    independentConfig.viewModel[0].fdConfig = JSON.stringify(independentView);
+    independentReadback.mechanisms["sys-xform"].fdConfig = JSON.stringify(independentConfig);
+
+    const readback = prepared.verify(independentReadback);
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.equal(readback.form.layoutRows[0].rows, 1);
+    assert.equal(readback.form.layoutRows[0].columns, 5);
+    assert.deepEqual(
+      readback.form.layoutRows[0].cells.map((cell) => [cell.row, cell.column]),
+      [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]]
+    );
+
+    const wrongGridSize = structuredClone(independentReadback);
+    const wrongConfig = xformConfig(wrongGridSize);
+    const wrongView = JSON.parse(wrongConfig.viewModel[0].fdConfig);
+    const wrongRow = wrongView.view.render.desktop[0].children[0].children.find((candidate) =>
+      candidate.children?.[0]?.children?.some((item) => item.children?.[0]?.key === ids[0])
+    );
+    wrongRow.children[0].controlProps.columns = 4;
+    wrongRow.children[0].controlProps.rows = 2;
+    wrongConfig.viewModel[0].fdConfig = JSON.stringify(wrongView);
+    wrongGridSize.mechanisms["sys-xform"].fdConfig = JSON.stringify(wrongConfig);
+    const mismatch = prepared.verify(wrongGridSize);
+    assert.equal(mismatch.ok, false);
+    assert.equal(
+      mismatch.diagnostics.some((item) => item.code === "readback.form.layout_grid_size_mismatch"),
+      true
+    );
+  });
+
   it("persists overflow as one multi-row grid with one runtime row marker", () => {
     const form = sampleForm();
     const baseField = form.fields.find((field) => field.id === "fd_amount");

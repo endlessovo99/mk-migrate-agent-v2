@@ -503,6 +503,21 @@ function foldInlineCaptions(html, entries) {
         index += 2;
         continue;
       }
+
+      if (captionMatchesExactTitle(next.control.title, current.control.title)) {
+        folded.push(mergeControlEntries(
+          current,
+          next,
+          withInlineCaption(
+            current.control,
+            next.control,
+            current.control.title,
+            "trailing-duplicate-caption"
+          )
+        ));
+        index += 2;
+        continue;
+      }
     }
 
     if (
@@ -676,6 +691,12 @@ function captionMatchesTitleEnd(captionTitle, fieldTitle) {
     .map(normalizeSemanticText)
     .filter(Boolean);
   return segments.length > 0 && segments.at(-1) === caption;
+}
+
+function captionMatchesExactTitle(captionTitle, fieldTitle) {
+  const caption = normalizeSemanticText(inlineCaptionText(captionTitle));
+  const field = normalizeSemanticText(inlineCaptionText(fieldTitle));
+  return Boolean(caption && field && caption === field);
 }
 
 function inlineCaptionText(value) {

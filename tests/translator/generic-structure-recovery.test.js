@@ -381,8 +381,9 @@ describe("generic structural form recovery", () => {
     assert.equal(mkRow?.children.every((cell) => cell.colspan === 1), true);
   });
 
-  it("reflows a source row with more than four controls and preserves its marker target", () => {
-    const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
+  it("preserves a five-control source row as one five-column layout and keeps its marker target", () => {
+    const source = cleanSourceFile(inlineContentFixture);
+    const dsl = draftSourceDraft(source);
     const ids = [
       "fd_slot_alpha",
       "fd_slot_bravo",
@@ -394,17 +395,83 @@ describe("generic structural form recovery", () => {
       row.sourceMarkers?.includes("fd_overflow_row")
     );
     const row = rows[0];
+    const sourceRow = dsl.form.layout.sourceGrid.rows.find((candidate) =>
+      candidate.sourceMarkers?.includes("fd_overflow_row")
+    );
     const markerTarget = resolveEffectTarget(buildFormRuleRefIndex(dsl.form), "fd_overflow_row");
 
+    assert.equal(sourceRow?.cells.length, 3);
+    assert.deepEqual(
+      sourceRow?.cells.map((cell) => cell.references.map((reference) => reference.referenceId)),
+      [["fd_slot_alpha"], ["fd_slot_bravo"], ["fd_slot_charlie", "fd_slot_delta", "fd_slot_echo"]]
+    );
     assert.equal(rows.length, 1);
     assert.equal(row.componentId, "xform-multi-row-table-layout");
-    assert.deepEqual(row.props, { rows: 2, columns: 4 });
+    assert.deepEqual(row.props, { rows: 1, columns: 5 });
     assert.equal(row.children.length, 5);
     assert.deepEqual(row.children.flatMap((cell) => cell.refIds), ids);
-    assert.deepEqual(row.children.map((cell) => cell.row), [0, 0, 0, 0, 1]);
-    assert.deepEqual(row.children.map((cell) => cell.column), [0, 1, 2, 3, 0]);
+    assert.deepEqual(row.children.map((cell) => cell.row), [0, 0, 0, 0, 0]);
+    assert.deepEqual(row.children.map((cell) => cell.column), [0, 1, 2, 3, 4]);
     assert.deepEqual(markerTarget?.targets.map((target) => target.id), ids);
-    assert.equal(row.children.every((cell) => cell.row * row.props.columns + cell.column < 8), true);
+    assert.equal(row.children.every((cell) => cell.row === 0 && cell.column < 5), true);
+  });
+
+  it("removes an exact same-title trailing plain label before choosing the target column count", () => {
+    const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
+    const ids = [
+      "fd_address_country",
+      "fd_address_province",
+      "fd_address_city",
+      "fd_address_district"
+    ];
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+    const sourceRow = dsl.form.layout.sourceGrid.rows.find((row) =>
+      row.cells.some((cell) =>
+        cell.references.some((reference) => reference.referenceId === "fd_address_country")
+      )
+    );
+    const mkRow = dsl.form.layout.mkTree.find((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_address_country"))
+    );
+
+    assert.equal(fields.has("address_district_duplicate_label"), false);
+    assert.deepEqual(fields.get("fd_address_district")?.sourceProps.inlineCaption, {
+      id: "address_district_duplicate_label",
+      content: "Address district",
+      relation: "trailing-duplicate-caption"
+    });
+    assert.deepEqual(
+      sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      ids
+    );
+    assert.equal(mkRow?.componentId, "xform-flex-1-4-layout");
+    assert.deepEqual(mkRow?.props, { columns: 4, sourceColumns: 4 });
+    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), ids.map((id) => [id]));
+    assert.deepEqual(mkRow?.children.map((cell) => cell.column), [0, 1, 2, 3]);
+  });
+
+  it("keeps same-title trailing labels when a break or visible styling makes them meaningful", () => {
+    const source = cleanSourceFile(inlineContentFixture);
+    const dsl = draftSourceDraft(source);
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+    const sourceControls = new Map(source.form.controls.map((field) => [field.id, field]));
+    const afterBreakRow = source.form.layout.rows.find((row) =>
+      row.cells.some((cell) =>
+        cell.references.some((reference) => reference.referenceId === "fd_same_title_after_break")
+      )
+    );
+
+    assert.equal(fields.get("fd_same_title_after_break")?.sourceProps.inlineCaption, undefined);
+    assert.equal(sourceControls.get("after_break_label")?.title, "Separate after break");
+    assert.deepEqual(
+      afterBreakRow?.cells[0].references.map((reference) => reference.referenceId),
+      ["fd_same_title_after_break", "after_break_label"]
+    );
+    assert.equal(fields.get("fd_same_title_styled")?.sourceProps.inlineCaption, undefined);
+    assert.equal(fields.get("styled_same_title_label")?.props.content, "Styled same title");
+    assert.deepEqual(fields.get("styled_same_title_label")?.props.style, {
+      color: "rgba(204,51,0,1)"
+    });
   });
 
   it("deduplicates recovered attachment candidates by natural source ID in wrapper order", () => {

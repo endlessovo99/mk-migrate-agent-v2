@@ -331,6 +331,19 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
   });
 
+  it("accepts a one-row five-column table layout", () => {
+    const dsl = sampleTrustedDsl();
+    const row = dsl.form.layout.mkTree[0];
+    row.componentId = "xform-multi-row-table-layout";
+    row.props = { rows: 1, columns: 5 };
+    row.children[0].row = 0;
+    row.children[1].row = 0;
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  });
+
   it("rejects multi-row child coordinates outside the declared grid", () => {
     const dsl = sampleTrustedDsl();
     const row = dsl.form.layout.mkTree[0];

@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-07-08.v1",
+  "version": "2026-07-17.v2",
   "components": [
     {
       "componentId": "xform-input",
@@ -360,12 +360,16 @@
     {
       "componentId": "xform-multi-row-table-layout",
       "kind": "layout",
-      "label": "多行表格布局",
-      "description": "Table-like layout component reserved for rows that must stay grouped.",
-      "usage": "Use when Agent review explicitly preserves a source multi-row table grouping.",
-      "negativeUsage": "Do not use as the default layout for ordinary rows.",
+      "label": "多行多列表格布局",
+      "description": "Table-like native grid capable of representing multiple rows or more than four visible columns.",
+      "usage": "Use after the Translator has selected a table-shaped DSL layout that cannot be represented by the quick flex layouts.",
+      "negativeUsage": "Do not use as a source-classification rule; source-to-target selection belongs to the Translator.",
       "allowedScopes": ["layout"],
-      "target": { "desktop": "@elem/xform-table-layout" },
+      "target": {
+        "desktop": "@elem/layout-grid",
+        "mobile": "@elem/layout-grid",
+        "designerItemTid": "xform-ide-sidebar-tabPane-control-tablelayout-multiLineColumn"
+      },
       "propsSchema": {
         "type": "object",
         "additionalProperties": false,

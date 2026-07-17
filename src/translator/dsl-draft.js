@@ -314,18 +314,24 @@ function draftMkTree(layout, detailTableIds) {
     );
 
     return segments.map((segment, segmentIndex) => {
-      const packed = packLayoutGrid(segment.cells);
-      const multiRow = packed.rows > 1;
+      // sourcePacked has already expanded every inline reference into one cell.
+      // Preserve one source <tr> as one target row even when it needs more than
+      // the four columns offered by the designer's quick flex layouts.
+      const packed = packLayoutGrid(segment.cells, {
+        columns: Math.max(segment.cells.length, 1),
+        rows: 1
+      });
+      const tableLayout = packed.rows > 1 || packed.columns > 4;
       const baseSegment = segmentIndex === baseSegmentIndex;
       const segmentSuffix = segments.length > 1 && !baseSegment
         ? `.segment-${segmentIndex + 1}`
         : "";
       return {
         id: `layout.${sourceRowId}${segmentSuffix}`,
-        componentId: multiRow
+        componentId: tableLayout
           ? "xform-multi-row-table-layout"
           : `xform-flex-1-${packed.columns}-layout`,
-        props: multiRow
+        props: tableLayout
           ? { rows: packed.rows, columns: packed.columns }
           : {
               columns: packed.columns,
@@ -343,7 +349,7 @@ function draftMkTree(layout, detailTableIds) {
             refType: references.some((ref) => detailTableIds.has(ref.referenceId)) ? "detailTable" : "field",
             refIds: references.map((ref) => ref.referenceId),
             sourceRef: cell.sourceRef,
-            ...(multiRow ? { row: cell.row } : {}),
+            ...(tableLayout ? { row: cell.row } : {}),
             column: cell.column,
             colspan: cell.colspan
           };

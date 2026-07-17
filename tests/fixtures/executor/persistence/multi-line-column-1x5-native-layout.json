@@ -1,0 +1,64 @@
+{
+  "evidence": {
+    "source": "sanitized user-supplied NewOA desktop readback",
+    "capturedAt": "2026-07-17",
+    "designerItemTid": "xform-ide-sidebar-tabPane-control-tablelayout-multiLineColumn",
+    "note": "The design-time itemTid is not persisted. This desktop-only evidence records its native layout-grid result; mobile parity is a separate writer policy."
+  },
+  "nativeLayout": {
+    "key": "layout~sanitized-five-column",
+    "type": "layout",
+    "controlProps": {
+      "id": "layout~sanitized-five-column"
+    },
+    "children": [
+      {
+        "key": "@elem/layout-grid~sanitized-five-column",
+        "type": "@elem/layout-grid",
+        "kind": "container",
+        "controlProps": {
+          "columns": 5,
+          "rows": 1,
+          "id": "@elem/layout-grid~sanitized-five-column"
+        },
+        "children": [
+          {
+            "key": "@elem/layout-grid.GridItem~sanitized-1",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": { "column": 1, "row": 1, "id": "@elem/layout-grid.GridItem~sanitized-1" },
+            "children": [{ "key": "fd_slot_alpha" }]
+          },
+          {
+            "key": "@elem/layout-grid.GridItem~sanitized-2",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": { "column": 2, "row": 1, "id": "@elem/layout-grid.GridItem~sanitized-2" },
+            "children": [{ "key": "fd_slot_bravo" }]
+          },
+          {
+            "key": "@elem/layout-grid.GridItem~sanitized-3",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": { "column": 3, "row": 1, "id": "@elem/layout-grid.GridItem~sanitized-3" },
+            "children": [{ "key": "fd_slot_charlie" }]
+          },
+          {
+            "key": "@elem/layout-grid.GridItem~sanitized-4",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": { "column": 4, "row": 1, "id": "@elem/layout-grid.GridItem~sanitized-4" },
+            "children": [{ "key": "fd_slot_delta" }]
+          },
+          {
+            "key": "@elem/layout-grid.GridItem~sanitized-5",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": { "column": 5, "row": 1, "id": "@elem/layout-grid.GridItem~sanitized-5" },
+            "children": [{ "key": "fd_slot_echo" }]
+          }
+        ]
+      }
+    ]
+  }
+}
