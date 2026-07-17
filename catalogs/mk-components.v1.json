@@ -3,6 +3,23 @@
   "version": "2026-07-17.v3",
   "components": [
     {
+      "componentId": "xform-button",
+      "kind": "field",
+      "label": "按钮",
+      "description": "NewOA/MK native JavaScript button control.",
+      "usage": "Use when a source JSP exposes an explicit user-click action that can be translated to MK JavaScript.",
+      "negativeUsage": "Do not use for passive JSP content or unreviewed arbitrary HTML.",
+      "allowedScopes": ["field"],
+      "target": { "desktop": "@elem/xform-button", "mobile": "@elem/xform-m-button" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": [] }
+    },
+    {
       "componentId": "xform-input",
       "kind": "field",
       "label": "单行文本",

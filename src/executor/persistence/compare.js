@@ -558,16 +558,12 @@ function compareScripts(expected, actual, diagnostics) {
       }));
     }
     if (expectedAction.bodyDigest && actualAction.bodyDigest && expectedAction.bodyDigest !== actualAction.bodyDigest) {
-      // Body may include injected guards; compare guard + digest of canonicalized body separately.
-      // If runWhen is expected, body digest differences caused only by guard injection are tolerated when guard matches.
-      if (!expectedAction.runWhen) {
-        diagnostics.push(mismatch("scripts", "readback.scripts.body_digest_mismatch", "Readback script body digest mismatch.", {
-          invariantKey: `scripts.actions.${expectedAction.id}.bodyDigest`,
-          path: "/readback/scripts/actions",
-          expected: expectedAction.bodyDigest,
-          actual: actualAction.bodyDigest
-        }));
-      }
+      diagnostics.push(mismatch("scripts", "readback.scripts.body_digest_mismatch", "Readback script body digest mismatch.", {
+        invariantKey: `scripts.actions.${expectedAction.id}.bodyDigest`,
+        path: "/readback/scripts/actions",
+        expected: expectedAction.bodyDigest,
+        actual: actualAction.bodyDigest
+      }));
     }
     if (expectedAction.runWhen) {
       const expectedStatuses = expectedAction.runWhen.viewStatusIn || [];

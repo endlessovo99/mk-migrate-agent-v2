@@ -45,6 +45,7 @@ export const FIELD_TYPES = new Set([
   "checkbox",
   "attachment",
   "description",
+  "button",
   "detailTable"
 ]);
 

@@ -13,6 +13,7 @@ export function componentForSourceType(type, source = {}) {
     attachment: "xform-attach",
     description: "xform-description",
     RestDialog: "xform-input",
-    LinkLabel: "xform-description"
+    LinkLabel: "xform-description",
+    button: "xform-button"
   }[type] || "xform-input";
 }

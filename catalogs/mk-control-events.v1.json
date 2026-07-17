@@ -10,7 +10,8 @@
     "onBlur": { "label": "失去焦点", "scope": "control" },
     "onSelect": { "label": "选择事件", "scope": "control" },
     "onDelect": { "label": "删除事件", "scope": "control" },
-    "onOk": { "label": "点击确定按钮", "scope": "control" }
+    "onOk": { "label": "点击确定按钮", "scope": "control" },
+    "onClick": { "label": "点击", "scope": "control" }
   },
   "global": {
     "scope": "global",
@@ -24,6 +25,7 @@
     "evidence": "SIT designer form-property action dropdown showed onLoad/onBeforeSubmit/onAfterSubmit."
   },
   "components": [
+    { "componentId": "xform-button", "scope": "field", "status": "supported", "events": ["onClick"], "detailColumn": false, "handlerParams": { "onClick": [] }, "actionFamilies": ["MKXFORM"], "evidence": "Native update payload supplied for xform-button with typeCfg.type=js and typeCfg.operInfo language indirection." },
     { "componentId": "xform-input", "scope": "field", "status": "supported", "events": ["onChange", "onFocus", "onBlur"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"], "onFocus": [], "onBlur": [] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 单行文本1." },
     { "componentId": "xform-textarea", "scope": "field", "status": "supported", "events": ["onChange", "onFocus", "onBlur"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"], "onFocus": [], "onBlur": [] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 多行文本1." },
     { "componentId": "xform-radio", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 单选框1." },

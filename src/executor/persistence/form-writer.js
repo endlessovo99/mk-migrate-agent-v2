@@ -28,13 +28,15 @@ export function applyFormPayload(template, dsl) {
 
   const xform = next.mechanisms["sys-xform"];
   const config = parseJsonObject(xform.fdConfig || "{}");
+  const lang = parseJsonObject(config.lang || "{}");
   const summary = summarizeDslForm(form, dsl.formRules);
-  const mainModel = buildMainModel(next, xform, config, form);
+  const mainModel = buildMainModel(next, xform, config, form, lang);
   const detailModels = buildDetailModels(next, form, mainModel);
   const dataModels = [mainModel, ...detailModels];
   const detailModelsByField = new Map(
     detailModels.map((model) => [model.dynamicProps?.detailFieldName, model]).filter(([fieldId]) => Boolean(fieldId))
   );
+  applyButtonNativeActions(mainModel, dsl.scripts, lang, { mainModel, detailModelsByField });
 
   const fieldAuth = buildFieldAuth(mainModel, detailModels, form);
   const existingFormAttr = parseJsonObject(config.attribute?.formAttr || "{}");
@@ -58,14 +60,14 @@ export function applyFormPayload(template, dsl) {
 
   const nextConfig = {
     authFilter: config.authFilter || { detailAuthDefine: {} },
-    auth: buildAuth(mainModel.fdTableName, fieldAuth),
+    auth: buildAuth(mainModel.fdTableName, fieldAuth, form),
     attribute: {
       ...(config.attribute || {}),
       formAttr: JSON.stringify(formAttr)
     },
     dataModel: dataModels,
     viewModel: [buildViewModel(config, next, mainModel, form, detailModelsByField)],
-    lang: config.lang || "{}",
+    lang: JSON.stringify(lang),
     extendMap: {
       ...(config.extendMap || {}),
       dataModelError: JSON.stringify({ errors: [] })
@@ -254,7 +256,7 @@ function persistedActionSummary(action = {}, context = {}) {
 
 function buildControlAction(existing, scripts = {}, context = {}) {
   const next = {
-    control: existing?.control || {},
+    control: pruneOrphanControlActions(existing?.control, context),
     global: existing?.global || {}
   };
   const actions = Array.isArray(scripts.actions) ? scripts.actions : [];
@@ -308,6 +310,23 @@ function buildControlAction(existing, scripts = {}, context = {}) {
     next.global[item.event] = persistedActions;
   }
   return next;
+}
+
+function pruneOrphanControlActions(control, context) {
+  const validKeys = new Set();
+  for (const field of context.mainModel?.fdFields || []) {
+    if (!field?.fdIsSystem && field?.fdName) {
+      validKeys.add(`${context.mainModel.fdTableName}.${field.fdName}`);
+    }
+  }
+  for (const model of context.detailModelsByField?.values?.() || []) {
+    for (const field of model.fdFields || []) {
+      if (!field?.fdIsSystem && field?.fdName) validKeys.add(`${model.fdTableName}.${field.fdName}`);
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(control || {}).filter(([controlKey]) => validKeys.has(controlKey))
+  );
 }
 
 function buildGlobalDispatcher(event, actions) {
@@ -407,7 +426,7 @@ function hasCanonicalViewStatusGuard(source, statuses, event) {
   return String(source).includes(`if (${viewStatusGuardCondition(statuses)}) ${fallback}`);
 }
 
-function buildMainModel(template, xform, config, form) {
+function buildMainModel(template, xform, config, form, lang) {
   const existing = (Array.isArray(config.dataModel) ? config.dataModel : []).find((model) => model?.fdType === "main") || {};
   const main = {
     ...clone(existing),
@@ -427,7 +446,14 @@ function buildMainModel(template, xform, config, form) {
   const normalFields = (form.fields || []).filter((field) => field.type !== "detailTable");
   main.fdFields = [
     ...systemFields,
-    ...normalFields.map((field, index) => canonicalField(field, template, main, systemFields.length + index + 1, "main"))
+    ...normalFields.map((field, index) => canonicalField(
+      field,
+      template,
+      main,
+      systemFields.length + index + 1,
+      "main",
+      lang
+    ))
   ];
   return main;
 }
@@ -460,10 +486,10 @@ function buildDetailModels(template, form, mainModel) {
     });
 }
 
-function canonicalField(field, template, model, order, tableType) {
+function canonicalField(field, template, model, order, tableType, lang) {
   const spec = componentSpec(field);
   const fdLength = fieldLengthFromDsl(field, spec);
-  const isDescription = spec.attrType === "desc";
+  const isDisplayOnly = ["desc", "button"].includes(spec.attrType);
   const label = persistedFieldLabel(field);
   return {
     fdId: stableHexId(`${template.fdId}:${model.fdTableName}:${field.id}:${order}`),
@@ -473,12 +499,12 @@ function canonicalField(field, template, model, order, tableType) {
       ? { fdColumn: `fd_${field.id}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48) }
       : {}),
     fdType: spec.fdType,
-    fdAttribute: JSON.stringify(fieldAttribute(field, template, model.fdTableName, tableType, spec)),
+    fdAttribute: JSON.stringify(fieldAttribute(field, template, model.fdTableName, tableType, spec, lang)),
     fdFontExtendData: JSON.stringify(fieldFontExtendData(field, template, spec)),
     fdDataType: spec.fdDataType,
     fdDictType: spec.fdDictType,
     ...(fdLength !== undefined ? { fdLength } : {}),
-    fdIsStored: !isDescription,
+    fdIsStored: !isDisplayOnly,
     fdIsIndex: false,
     fdIsSystem: false,
     fdIsDataTask: false,
@@ -492,14 +518,14 @@ function canonicalField(field, template, model, order, tableType) {
 }
 
 function fieldLengthFromDsl(field, spec) {
-  if (spec.attrType === "desc") return 0;
+  if (["desc", "button"].includes(spec.attrType)) return 0;
   if (spec.attrType === "textarea") {
     return textareaMaxLengthFromDsl(field);
   }
   return 200;
 }
 
-function fieldAttribute(field, template, tableName, tableType, spec) {
+function fieldAttribute(field, template, tableName, tableType, spec, lang) {
   const controlId = `${spec.desktop}~${stableShortId(field.id)}`;
   const label = persistedFieldLabel(field);
   const controlProps = {
@@ -560,15 +586,32 @@ function fieldAttribute(field, template, tableName, tableType, spec) {
     });
     delete controlProps.span;
   }
+  if (spec.attrType === "button") {
+    const textToken = nativeLangToken(field.id, "btnCfg");
+    lang[textToken] = nativeLangEntry("btnCfg", field.id, label);
+    Object.assign(controlProps, {
+      showText: false,
+      btnCfg: {
+        title: "按钮",
+        inputVal: textToken,
+        colorMap: {
+          background: { label: "背景", color: "#4285F4" },
+          font: { label: "文字", color: "#fff" }
+        }
+      },
+      maxLength: 0
+    });
+  }
 
   applyContextDefaultToControlProps(controlProps, field, template, spec);
 
   const isDescription = spec.attrType === "desc";
+  const isButton = spec.attrType === "button";
   return {
     uuid: field.id,
     config: {
       key: controlId,
-      type: isDescription ? "desc" : spec.desktop,
+      type: isDescription ? "desc" : isButton ? "button" : spec.desktop,
       controlProps,
       kind: "control",
       label,
@@ -579,10 +622,42 @@ function fieldAttribute(field, template, tableName, tableType, spec) {
             title: label,
             mobile: { hiddenLabel: true }
           }
-        : { desktop: {}, title: label, mobile: {} }
+        : isButton
+          ? { desktop: {}, showText: false, title: label, mobile: {} }
+          : { desktop: {}, title: label, mobile: {} }
     },
     env: isDescription ? ["xform", "print"] : ["xform"]
   };
+}
+
+function applyButtonNativeActions(mainModel, scripts, lang, context) {
+  const actions = (scripts?.actions || []).filter((candidate) =>
+    candidate?.translationStatus !== "omitted" &&
+    candidate?.scope === "control" &&
+    (candidate?.event || candidate?.name) === "onClick" &&
+    typeof candidate?.function === "string" &&
+    candidate.function.trim()
+  );
+  const actionsByControl = new Map(actions.map((action) => [action.controlId, action]));
+  for (const field of mainModel.fdFields || []) {
+    if (field?.fdType !== "button") continue;
+    const action = actionsByControl.get(field.fdName);
+    if (!action) throw new Error(`xform-button ${field.fdName} requires one translated onClick action`);
+    const scriptToken = nativeLangToken(field.fdName, "typeCfg");
+    const rendered = renderScriptFunction(action.function, context, action);
+    lang[scriptToken] = nativeLangEntry("typeCfg", field.fdName, rendered);
+    const attribute = JSON.parse(field.fdAttribute);
+    attribute.config.controlProps.typeCfg = { type: "js", operInfo: scriptToken, business: {} };
+    field.fdAttribute = JSON.stringify(attribute);
+  }
+}
+
+function nativeLangToken(fieldId, prop) {
+  return `!{${stableHexId(`${fieldId}:${prop}`)}${stableHexId(`${prop}:${fieldId}`)}}`;
+}
+
+function nativeLangEntry(prop, name, text) {
+  return { prop, name, type: "input", content: { Cn: String(text || "") } };
 }
 
 function applyContextDefaultToControlProps(controlProps, field, template, spec) {
@@ -952,10 +1027,13 @@ function buildFieldAuth(mainModel, detailModels, form) {
   );
 }
 
-function buildAuth(tableName, fieldAuth) {
+function buildAuth(tableName, fieldAuth, form) {
+  const editOnly = new Set((form.fields || [])
+    .filter((field) => field.sourceProps?.displayGate === "xform:editShow")
+    .map((field) => field.id));
   const viewFields = Object.fromEntries(Object.keys(fieldAuth).map((fieldName) => [fieldName, {
-    visible: true,
-    hide: false
+    visible: !editOnly.has(fieldName),
+    hide: editOnly.has(fieldName)
   }]));
   return [{
     fdName: ":publicLang.sysFormAuth",
@@ -1142,6 +1220,9 @@ function componentForFdType(type) {
 
 function componentSpec(field) {
   const component = field.componentId;
+  if (component === "xform-button") {
+    return specForComponent(component, "button", "varchar", "simpleDict", "button", "@elem/xform-button", "@elem/xform-m-button");
+  }
   if (component === "xform-subject") {
     return specForComponent(component, "subject", "varchar", "simpleDict", "subject", "@elem/xform-subject", "@elem/xform-m-subject");
   }

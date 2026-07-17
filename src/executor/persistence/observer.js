@@ -196,7 +196,10 @@ function observeForm(config, xform) {
     const formAttr = formAttrResult.value;
     subjectRule = formAttr.subjectRule;
     rulesValue = observeRules(formAttr.formRule || {}, detailModels, rulesDiagnostics);
-    scriptsValue = observeScripts(formAttr.controlAction || {}, scriptsDiagnostics);
+    scriptsValue = observeScripts(formAttr.controlAction || {}, scriptsDiagnostics, {
+      mainModel,
+      lang: safeParseObject(config.lang)
+    });
   }
 
   const formValue = {
@@ -541,8 +544,7 @@ function detailFieldNameForModel(model) {
   return model?.fdName;
 }
 
-function observeScripts(controlAction, diagnostics) {
-  void diagnostics;
+function observeScripts(controlAction, diagnostics, native = {}) {
   const global = controlAction.global && typeof controlAction.global === "object" ? controlAction.global : {};
   const control = controlAction.control && typeof controlAction.control === "object" ? controlAction.control : {};
   const actions = [];
@@ -561,6 +563,9 @@ function observeScripts(controlAction, diagnostics) {
     for (const [event, entries] of Object.entries(byEvent || {})) {
       for (const action of Array.isArray(entries) ? entries : []) {
         persistedActionCount += 1;
+        if (event === "onClick") {
+          validateNativeButtonBinding(action, controlKey, native, diagnostics);
+        }
         actions.push(...observePersistedActions(action, {
           event,
           scope: "control",
@@ -571,6 +576,34 @@ function observeScripts(controlAction, diagnostics) {
   }
 
   return { actions, dispatchers, persistedActionCount };
+}
+
+function validateNativeButtonBinding(action, controlKey, native, diagnostics) {
+  const fieldId = String(controlKey || "").split(".").at(-1);
+  const field = (native.mainModel?.fdFields || []).find((candidate) => candidate?.fdName === fieldId);
+  const attribute = decodeFieldAttribute(field?.fdAttribute);
+  const controlProps = attribute?.config?.controlProps || {};
+  const scriptToken = controlProps.typeCfg?.type === "js" ? controlProps.typeCfg?.operInfo : undefined;
+  const nativeScript = scriptToken ? native.lang?.[scriptToken]?.content?.Cn : undefined;
+  if (field?.fdType === "button" && typeof nativeScript !== "string") {
+    diagnostics.push(diagnostic({
+      code: "readback.scripts.button_native_binding_missing",
+      message: "Readback button lost its native typeCfg JavaScript binding.",
+      partition: "scripts",
+      decodePath: `/mechanisms/sys-xform/fdConfig/dataModel/${fieldId}/fdAttribute`,
+      details: { fieldId }
+    }));
+    return;
+  }
+  if (field?.fdType === "button" && canonicalizeScriptBody(nativeScript) !== canonicalizeScriptBody(action?.function)) {
+    diagnostics.push(diagnostic({
+      code: "readback.scripts.button_native_binding_mismatch",
+      message: "Readback button native JavaScript does not match its persisted onClick action.",
+      partition: "scripts",
+      decodePath: `/mechanisms/sys-xform/fdConfig/dataModel/${fieldId}/fdAttribute`,
+      details: { fieldId }
+    }));
+  }
 }
 
 function observePersistedActions(action, context) {

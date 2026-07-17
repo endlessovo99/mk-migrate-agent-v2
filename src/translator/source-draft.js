@@ -38,11 +38,18 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
   const fields = Array.isArray(legacyDsl.form?.fields) ? legacyDsl.form.fields : [];
   const dataFields = Array.isArray(legacyDsl.form?.dataFields) ? legacyDsl.form.dataFields : [];
   const allFields = [...fields, ...dataFields];
+  const jspButtons = Array.isArray(legacyDsl.scripts?.buttons) ? legacyDsl.scripts.buttons : [];
   const detailTableIds = new Set(fields.filter((field) => field.type === "detailTable").map((field) => field.id));
-  const normalControls = fields.filter((field) => field.type !== "detailTable").map(sourceControlFromField);
+  const normalControls = [
+    ...fields.filter((field) => field.type !== "detailTable").map(sourceControlFromField),
+    ...jspButtons.map(sourceControlFromJspButton)
+  ];
   const sourceDataFields = dataFields.map(sourceDataFieldFromField);
   const detailTables = fields.filter((field) => field.type === "detailTable").map(sourceDetailTableFromField);
-  const layout = sourceLayoutFromLegacyLayout(legacyDsl.form?.layout, detailTableIds);
+  const layout = insertJspButtonRows(
+    sourceLayoutFromLegacyLayout(legacyDsl.form?.layout, detailTableIds),
+    jspButtons
+  );
   const scripts = sourceScriptsFromLegacy(legacyDsl.scripts);
   const workflow = legacyDsl.workflow ? sourceWorkflowFromLegacyWorkflow(legacyDsl.workflow, {
     nodeDataAuthorities: legacyDsl.form?.nodeDataAuthorities,
@@ -199,6 +206,49 @@ function sourceControlFromField(field) {
     sourceProps: sourcePropsFromField(field),
     evidence: evidenceForField(field)
   });
+}
+
+function sourceControlFromJspButton(button) {
+  return {
+    id: button.id,
+    sourceRef: button.sourceRef,
+    title: button.title,
+    sourceType: "button",
+    required: false,
+    sourceProps: {
+      jspHandler: button.handler,
+      displayGate: button.displayGate,
+      targetDetailTableId: button.targetDetailTableId
+    },
+    evidence: { jspFragmentId: button.id, handler: button.handler }
+  };
+}
+
+function insertJspButtonRows(layout, buttons) {
+  const rows = [...(layout.rows || [])];
+  for (const button of buttons) {
+    const row = {
+      id: `jsp-button-${button.id}`,
+      sourceRef: button.sourceRef,
+      sourceRow: `jsp-button-${button.id}`,
+      columns: 1,
+      cells: [{
+        id: `jsp-button-${button.id}-cell-0`,
+        sourceRef: button.sourceRef,
+        column: 0,
+        colspan: 1,
+        references: [{ referenceType: "control", referenceId: button.id, sourceRef: button.sourceRef }],
+        evidence: { jspFragmentId: button.id, handler: button.handler }
+      }]
+    };
+    const targetIndex = rows.findIndex((candidate) =>
+      (candidate.cells || []).some((cell) =>
+        (cell.references || []).some((reference) => reference.referenceId === button.targetDetailTableId)
+      )
+    );
+    rows.splice(targetIndex < 0 ? rows.length : targetIndex, 0, row);
+  }
+  return { ...layout, rows };
 }
 
 function sourceDetailTableFromField(field) {
@@ -362,12 +412,16 @@ function buildRequiredFieldIndex(fields) {
 }
 
 function sourceScriptsFromLegacy(scripts) {
-  if (!scripts || !Array.isArray(scripts.sources) || scripts.sources.length === 0) return undefined;
+  if (!scripts || (
+    (!Array.isArray(scripts.sources) || scripts.sources.length === 0) &&
+    (!Array.isArray(scripts.buttons) || scripts.buttons.length === 0)
+  )) return undefined;
   return {
     source: scripts.source || "sysform-jsp",
     displayJsp: scripts.displayJsp,
     fragments: scripts.fragments || [],
-    sources: scripts.sources.map((source) => pruneUndefined({
+    buttons: (scripts.buttons || []).map((button) => ({ ...button })),
+    sources: (scripts.sources || []).map((source) => pruneUndefined({
       id: source.id,
       sourceRef: source.sourceRef,
       sourceKey: source.sourceKey,

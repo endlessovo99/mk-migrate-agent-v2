@@ -25,6 +25,9 @@ export function extractSysFormJspScripts(template = {}, options = {}) {
       semanticFacts: extractLegacyScriptSemanticFacts(source.javascript, functionAudit)
     };
   });
+  const buttons = designerFragments.flatMap((fragment) =>
+    extractJspButtons(fragment, sources.filter((source) => source.fragmentId === fragment.id))
+  );
 
   if (!designerFragments.length && !sources.length && !template.fdDisplayJsp) return undefined;
 
@@ -36,16 +39,20 @@ export function extractSysFormJspScripts(template = {}, options = {}) {
       usedForScripts: designerScriptSources.length === 0 && displayScriptSources.length > 0
     } : undefined,
     fragments: designerFragments,
+    buttons,
     sources
   });
 }
 
 export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}) {
   const sources = Array.isArray(sourceScripts.sources) ? sourceScripts.sources : [];
-  if (!sources.length) return undefined;
+  const buttons = Array.isArray(sourceScripts.buttons) ? sourceScripts.buttons : [];
+  if (!sources.length && !buttons.length) return undefined;
 
-  const candidates = dedupeCandidatesByKey(sources
-    .flatMap((source, sourceIndex) => eventCandidatesFromSource(source, sourceIndex, options)));
+  const candidates = dedupeCandidatesByKey([
+    ...buttons.map(buttonCandidate),
+    ...sources.flatMap((source, sourceIndex) => eventCandidatesFromSource(source, sourceIndex, options))
+  ]);
   const actions = [];
   const warnings = [];
   candidates.forEach((candidate, index) => {
@@ -62,6 +69,30 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
     actions,
     warnings,
     javascript: actions.map((action) => action.function).filter(Boolean).join("\n\n")
+  };
+}
+
+function buttonCandidate(button) {
+  return {
+    id: `${button.id}.onClick`,
+    event: "onClick",
+    scope: "control",
+    controlId: button.id,
+    javascript: button.javascript,
+    function: button.function,
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: `${button.handler} legacy JSP click handler`,
+      target: "MK native button typeCfg JavaScript",
+      basis: "deterministic-detail-row-expansion",
+      reviewRequired: false
+    }],
+    source: {
+      sourceRef: button.sourceRef,
+      displayGate: button.displayGate,
+      functionAudit: { matched: [], violations: [] }
+    }
   };
 }
 
@@ -150,12 +181,11 @@ function eventBindingsFromLegacyScript(text = "") {
 function extractDesignerJspFragments(html = "") {
   const decoded = html.includes("<") ? String(html) : decodeEntities(html);
   const fragments = [];
-  const pattern = /<([A-Za-z][\w:-]*)\b([^>]*\bfd_type\s*=\s*(["'])jsp\3[^>]*)>([\s\S]*?)<\/\1>/gi;
-
-  for (const match of decoded.matchAll(pattern)) {
-    const attrs = match[2];
+  for (const element of htmlElements(decoded)) {
+    if (!/\bfd_type\s*=\s*(["'])jsp\1/i.test(element.attrs)) continue;
+    const attrs = element.attrs;
     const id = attrValue(attrs, "id") || `jsp-${fragments.length + 1}`;
-    const rawContent = hiddenInputValue(match[4]);
+    const rawContent = hiddenInputValue(element.content);
     const content = decodeDeep(rawContent);
     fragments.push(pruneUndefined({
       id,
@@ -171,6 +201,79 @@ function extractDesignerJspFragments(html = "") {
   return fragments;
 }
 
+// fdDesignerHtml is decoded before it reaches this parser. A JSP control can
+// therefore contain HTML-looking text inside an <input value="..."> attribute.
+// Regex matching cannot distinguish that text from real nested elements and
+// used to stop at the button's </div> instead of the JSP control's </DIV>.
+function htmlElements(html = "") {
+  const elements = [];
+  let cursor = 0;
+  while (cursor < html.length) {
+    const opening = nextHtmlTag(html, cursor);
+    if (!opening) break;
+    cursor = opening.end;
+    if (opening.closing || opening.selfClosing) continue;
+    if (!/\bfd_type\s*=\s*(["'])jsp\1/i.test(opening.attrs)) continue;
+
+    let depth = 1;
+    let nestedCursor = opening.end;
+    while (depth > 0) {
+      const tag = nextHtmlTag(html, nestedCursor);
+      if (!tag) break;
+      nestedCursor = tag.end;
+      if (tag.name.toLowerCase() !== opening.name.toLowerCase() || tag.selfClosing) continue;
+      depth += tag.closing ? -1 : 1;
+      if (depth === 0) {
+        elements.push({
+          name: opening.name,
+          attrs: opening.attrs,
+          content: html.slice(opening.end, tag.start)
+        });
+      }
+    }
+  }
+  return elements;
+}
+
+function nextHtmlTag(html, from) {
+  let start = html.indexOf("<", from);
+  while (start >= 0) {
+    if (/^<!--[\s\S]*?-->/.test(html.slice(start))) {
+      const commentEnd = html.indexOf("-->", start + 4);
+      if (commentEnd < 0) return undefined;
+      start = html.indexOf("<", commentEnd + 3);
+      continue;
+    }
+    const head = html.slice(start).match(/^<\s*(\/?)\s*([A-Za-z][\w:-]*)\b/);
+    if (!head) {
+      start = html.indexOf("<", start + 1);
+      continue;
+    }
+    let quote;
+    let end = start + head[0].length;
+    for (; end < html.length; end += 1) {
+      const ch = html[end];
+      if (quote) {
+        if (ch === quote) quote = undefined;
+      } else if (ch === "\"" || ch === "'") {
+        quote = ch;
+      } else if (ch === ">") {
+        const raw = html.slice(start, end + 1);
+        return {
+          start,
+          end: end + 1,
+          name: head[2],
+          attrs: raw.slice(head[0].length, -1),
+          closing: Boolean(head[1]),
+          selfClosing: /\/\s*>$/.test(raw)
+        };
+      }
+    }
+    return undefined;
+  }
+  return undefined;
+}
+
 function scriptSourcesFromFragment(fragment) {
   return extractScriptBlocks(fragment.content).map((script, index) => ({
     id: `${fragment.id}.script.${index + 1}`,
@@ -180,6 +283,95 @@ function scriptSourcesFromFragment(fragment) {
     fragmentId: fragment.id,
     ...script
   }));
+}
+
+function extractJspButtons(fragment, sources) {
+  const buttons = [];
+  const pattern = /<(button|div)\b([^>]*\bonclick\s*=\s*(["'])\s*([A-Za-z_$][\w$]*)\s*\(\s*\)\s*\3[^>]*)>([\s\S]*?)<\/\1>/gi;
+  for (const match of fragment.content.matchAll(pattern)) {
+    const handler = match[4];
+    const title = cleanHtmlText(match[5]);
+    const source = sources.find((candidate) =>
+      new RegExp(`\\bfunction\\s+${escapeRegExp(handler)}\\s*\\(`).test(candidate.javascript)
+    );
+    const translation = source ? detailExpansionTranslation(source.javascript, handler) : undefined;
+    if (!title || !translation) continue;
+    buttons.push({
+      id: fragment.id,
+      sourceRef: `${fragment.sourceRef}.button.1`,
+      title,
+      handler,
+      displayGate: displayGateAt(fragment.content, match.index),
+      javascript: source.javascript,
+      function: translation.function,
+      sourceDetailTableId: translation.sourceDetailTableId,
+      targetDetailTableId: translation.targetDetailTableId
+    });
+  }
+  return buttons;
+}
+
+function detailExpansionTranslation(javascript, handler) {
+  if (!new RegExp(`\\bfunction\\s+${escapeRegExp(handler)}\\s*\\(`).test(javascript)) return undefined;
+  const sourceVariable = javascript.match(/_DocList_FormFieldValue\(\s*([A-Za-z_$][\w$]*)\s*,\s*(["'])(fd_[\w]+)\2\s*\)/);
+  const quantity = javascript.match(/_DocList_FormFieldValue\(\s*([A-Za-z_$][\w$]*)\s*,\s*(["'])(fd_quantity[\w]*)\2\s*\)/);
+  const addRows = javascript.match(/_DocList_AddRows\(\s*([A-Za-z_$][\w$]*)\s*,/);
+  const partTypes = javascript.match(/\bpartTypes\s*=\s*\[([^\]]+)\]/);
+  const assignments = [...javascript.matchAll(/this\[buildDetailTableFieldId\(\s*([A-Za-z_$][\w$]*)\s*,\s*(["'])(fd_[\w]+)\2\s*\)\]\s*=\s*([A-Za-z_$][\w$]*)/g)];
+  if (!sourceVariable || !quantity || !addRows || !partTypes || assignments.length < 3) return undefined;
+  const variables = Object.fromEntries([...javascript.matchAll(/\bvar\s+([A-Za-z_$][\w$]*)\s*=\s*(["'])(fd_[\w]+)\2/g)]
+    .map((match) => [match[1], match[3]]));
+  const sourceDetailTableId = variables[sourceVariable[1]];
+  const targetDetailTableId = variables[addRows[1]];
+  if (!sourceDetailTableId || !targetDetailTableId || sourceVariable[1] !== quantity[1]) return undefined;
+  const values = [...partTypes[1].matchAll(/(["'])([^"']+)\1/g)].map((match) => match[2]);
+  if (!values.length) return undefined;
+  const targetByParam = Object.fromEntries(assignments.map((match) => [match[4], match[3]]));
+  const modelTarget = targetByParam.fd_model_desc;
+  const quantityTarget = targetByParam.fd_quantity;
+  const partTarget = targetByParam.fd_part_type;
+  if (!modelTarget || !quantityTarget || !partTarget) return undefined;
+  const partTarget2 = assignments.find((match) => match[4] === "fd_part_type" && match[3] !== partTarget)?.[3];
+  const rowAssignments = [
+    `      row.${modelTarget} = sourceRow.${sourceVariable[3]};`,
+    `      row.${quantityTarget} = sourceRow.${quantity[3]};`,
+    `      row.${partTarget} = partTypes[j];`,
+    ...(partTarget2 ? [`      row.${partTarget2} = partTypes[j];`] : [])
+  ];
+  return {
+    sourceDetailTableId,
+    targetDetailTableId,
+    function: [
+      "function onClick() {",
+      "  var formValues = MKXFORM.getFormValues() || {};",
+      `  var sourceRows = formValues['\${table:${sourceDetailTableId}}'] || [];`,
+      `  var partTypes = ${JSON.stringify(values)};`,
+      `  MKXFORM.deleteRow('\${table:${targetDetailTableId}}');`,
+      "  for (var i = 0; i < sourceRows.length; i += 1) {",
+      "    var sourceRow = sourceRows[i] || {};",
+      "    for (var j = 0; j < partTypes.length; j += 1) {",
+      "      var row = {};",
+      ...rowAssignments,
+      `      MKXFORM.addRow('\${table:${targetDetailTableId}}', row);`,
+      "    }",
+      "  }",
+      "}"
+    ].join("\n")
+  };
+}
+
+function displayGateAt(content, index) {
+  const before = content.slice(0, index);
+  const editOpen = before.lastIndexOf("<xform:editShow");
+  const editClose = before.lastIndexOf("</xform:editShow");
+  if (editOpen > editClose) return "xform:editShow";
+  const viewOpen = before.lastIndexOf("<xform:viewShow");
+  const viewClose = before.lastIndexOf("</xform:viewShow");
+  return viewOpen > viewClose ? "xform:viewShow" : undefined;
+}
+
+function cleanHtmlText(value) {
+  return decodeDeep(String(value || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
 }
 
 function extractDisplayJspScripts(jsp = "") {

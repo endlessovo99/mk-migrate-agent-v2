@@ -13,6 +13,70 @@ const moduleDetailColumnsSource = "tests/fixtures/source/module-detail-columns-e
 const moduleRightsSource = "tests/fixtures/source/module-rights-evidence";
 
 describe("source directory stages", () => {
+  it("preserves nested HTML inside JSP designer controls", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/1927955f6e544383f46970f48468a743");
+    const fragment = sourceDraft.scripts.fragments.find((item) => item.id === "fd_3d7f13d18ccc00");
+
+    assert.ok(fragment);
+    assert.match(fragment.content, /onclick="buildTableContent\(\)"/);
+    assert.match(fragment.content, /function buildTableContent\(\)/);
+    assert.equal(sourceDraft.scripts.sources.some((source) =>
+      source.fragmentId === fragment.id && source.javascript.includes("function buildTableContent()")
+    ), true);
+  });
+
+  it("drafts a JSP click control as a native MK button action", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/1927955f6e544383f46970f48468a743");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const button = dslDraft.form.fields.find((field) => field.id === "fd_3d7f13d18ccc00");
+    const action = dslDraft.scripts.actions.find((item) =>
+      item.controlId === button?.id && item.event === "onClick"
+    );
+
+    assert.equal(button?.componentId, "xform-button");
+    assert.equal(button?.title, "生成部件清单");
+    assert.ok(dslDraft.form.layout.mkTree.some((row) =>
+      row.children.some((cell) => cell.refIds.includes(button.id))
+    ));
+    assert.equal(action?.scope, "control");
+    assert.equal(action?.translationStatus, "mapped");
+    assert.match(action?.function || "", /MKXFORM\.getFormValues\(\)/);
+    assert.match(action?.function || "", /formValues\['\$\{table:fd_3d69ce51f013c0\}'\]/);
+    assert.match(action?.function || "", /MKXFORM\.deleteRow\('\$\{table:fd_3d69cf2b1acb52\}'\)/);
+    assert.match(action?.function || "", /MKXFORM\.addRow\('\$\{table:fd_3d69cf2b1acb52\}'/);
+    assert.match(action?.function || "", /fd_model_desc2/);
+    assert.match(action?.function || "", /fd_quantity2/);
+
+    const calls = { deleted: [], added: [] };
+    const executable = action.function
+      .replaceAll("${table:fd_3d69ce51f013c0}", "source_detail")
+      .replaceAll("${table:fd_3d69cf2b1acb52}", "target_detail");
+    const onClick = Function("MKXFORM", `${executable}; return onClick;`)({
+      getFormValues() {
+        return {
+          source_detail: [
+            { fd_model_desc1: "M1", fd_quantity1: 2 },
+            { fd_model_desc1: "M2", fd_quantity1: 3 }
+          ]
+        };
+      },
+      deleteRow(id) { calls.deleted.push(id); },
+      addRow(id, row) { calls.added.push({ id, row }); }
+    });
+    onClick();
+    assert.deepEqual(calls.deleted, ["target_detail"]);
+    assert.equal(calls.added.length, 8);
+    assert.deepEqual(calls.added[0], {
+      id: "target_detail",
+      row: {
+        fd_model_desc2: "M1",
+        fd_quantity2: 2,
+        fd_part_type: "STD01",
+        fd_part_type2: "STD01"
+      }
+    });
+  });
+
   it("maps verified node-history leader formulas independently of workflow node ids", () => {
     const sourceExpression = '$组织架构.解释角色线$($流程.获取节点实际处理人$("N654"), "公司级分管领导", "分管领导")';
 
