@@ -1,37 +1,75 @@
 import { isVoidLikeTag, scanHtmlTags } from "./designer-html-tokenizer.js";
-import { isSourceDescriptionControl } from "./source-description-control.js";
+import {
+  isSourceDescriptionControl,
+  isStyledSourceDescriptionControl
+} from "./source-description-control.js";
 
-export function applyAdjacentDetailTableTitles(controls, isSuspiciousTitle) {
+export function applyAdjacentDetailTableTitles(controls, isSuspiciousTitle, options = {}) {
   const consumedHeadingIds = new Set();
+  const consumedHintIds = new Set();
   let descriptionBlockStart = 0;
   const result = controls.map((control, index) => {
     if (control.type !== "detailTable") {
-      if (control.type !== "description") descriptionBlockStart = index + 1;
+      if (!isSourceDescriptionControl(control)) descriptionBlockStart = index + 1;
       return control;
     }
-    const headingCandidates = controls.slice(descriptionBlockStart, index)
-      .filter((candidate) => isExplicitDetailTableHeading(candidate));
+    const descriptionBlock = controls.slice(descriptionBlockStart, index);
+    const headingCandidates = descriptionBlock.filter((candidate) =>
+      isExplicitDetailTableHeading(candidate)
+    );
     descriptionBlockStart = index + 1;
     const heading = headingCandidates.length === 1 ? headingCandidates[0] : undefined;
-    if (
-      !heading ||
-      !isSuspiciousTitle(control.title)
-    ) return control;
-    consumedHeadingIds.add(heading.id);
+    const canRecoverHeading = heading && (
+      isSuspiciousTitle(control.title) || sameVisibleTitle(heading.title, control.title)
+    );
+    const styledPrecedingHints = descriptionBlock.filter((candidate) =>
+      candidate.id !== heading?.id && isStyledSourceDescriptionControl(candidate)
+    );
+    const precedingHint =
+      canRecoverHeading &&
+      styledPrecedingHints.length === 1 &&
+      options.hasDirectBreakBetween?.(heading, styledPrecedingHints[0]) === true
+        ? styledPrecedingHints[0]
+        : undefined;
+    const ownedHint = precedingHint;
+
+    if (!canRecoverHeading && !ownedHint) return control;
+    if (canRecoverHeading) consumedHeadingIds.add(heading.id);
+    if (ownedHint) consumedHintIds.add(ownedHint.id);
+    const baseTitle = canRecoverHeading ? heading.title : control.title;
     return {
       ...control,
-      title: heading.title,
+      title: baseTitle,
       source: {
         ...control.source,
-        explicitTitle: {
-          sourceId: heading.id,
-          content: heading.title,
-          evidence: "preceding-large-bold-textLabel-in-same-cell"
-        }
+        ...(canRecoverHeading
+          ? {
+              explicitTitle: {
+                sourceId: heading.id,
+                content: heading.title,
+                evidence: "preceding-large-bold-textLabel-in-same-cell"
+              }
+            }
+          : {}),
+        ...(ownedHint
+          ? {
+              detailTitleHint: {
+                id: ownedHint.id,
+                content: String(ownedHint.title ?? ""),
+                rawContent: String(
+                  ownedHint.source?.designerValues?.content ?? ownedHint.title ?? ""
+                ),
+                designerValues: ownedHint.source?.designerValues,
+                relation: "post-heading-break-styled-text-before-detail-table"
+              }
+            }
+          : {})
       }
     };
   });
-  return result.filter((control) => !consumedHeadingIds.has(control.id));
+  return result.filter((control) =>
+    !consumedHeadingIds.has(control.id) && !consumedHintIds.has(control.id)
+  );
 }
 
 export function applyAdjacentRowDetailTableTitles(controls, rows, isSuspiciousTitle) {
@@ -183,4 +221,9 @@ function enclosingElementRanges(html, position) {
 
 function isTrueLike(value) {
   return ["true", "1", "yes"].includes(String(value ?? "").trim().toLowerCase());
+}
+
+function sameVisibleTitle(left, right) {
+  return String(left ?? "").replace(/[\s\u00a0]+/gu, "").toLowerCase() ===
+    String(right ?? "").replace(/[\s\u00a0]+/gu, "").toLowerCase();
 }

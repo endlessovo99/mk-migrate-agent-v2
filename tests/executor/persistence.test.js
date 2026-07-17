@@ -16,12 +16,26 @@ import { preparePersistedTemplate } from "../../src/executor/persistence.js";
 
 const fixtureDir = join(dirname(fileURLToPath(import.meta.url)), "../fixtures/executor/persistence");
 
+function loadIndependentFormFixture() {
+  const fixture = JSON.parse(
+    readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8")
+  );
+  const config = xformConfig(fixture);
+  const attr = JSON.parse(config.attribute.formAttr);
+  // The checked-in native fixture predates the empty-subject default. Keep its
+  // native form structure independent while normalizing only that retired rule.
+  attr.subjectRule = {};
+  config.attribute.formAttr = JSON.stringify(attr);
+  fixture.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+  return fixture;
+}
+
 describe("preparePersistedTemplate interface", () => {
   it("verifies a healthy projected template", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl());
     assert.equal(readback.ok, true);
     assert.equal(readback.status, "verified");
-    assert.equal(readback.invariantVersion, 8);
+    assert.equal(readback.invariantVersion, 9);
     assert.deepEqual(readback.partitions, {
       envelope: "verified",
       form: "verified",
@@ -73,6 +87,25 @@ describe("envelope mutations", () => {
 });
 
 describe("form field and detail mutations", () => {
+  it("persists and reads back a detail title from all native title locations", () => {
+    const title = "子表2-机型部件清单(复制的流程需重新点击“生成部件清单”按钮)";
+    const form = sampleForm();
+    form.fields.find((field) => field.type === "detailTable").title = title;
+    const { template, readback } = persistAndVerify(sampleTrustedDsl({ form, workflow: null }));
+    const config = xformConfig(template);
+    const detail = config.dataModel.find((model) => model.fdType === "detail");
+    const attribute = JSON.parse(detail.fdAttribute);
+
+    assert.equal(detail.fdName, title);
+    assert.equal(attribute.config.controlProps.title, title);
+    assert.equal(attribute.config.label, title);
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.equal(
+      readback.form.fields.find((field) => field.type === "detailTable").title,
+      title
+    );
+  });
+
   it("fails when a field title changes", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl({ workflow: null }), {
       mutate(template) {
@@ -110,6 +143,49 @@ describe("form field and detail mutations", () => {
     assert.equal(readback.ok, false);
     assert.equal(readback.diagnostics.some((item) => item.code === "readback.form.data_only_flag_mismatch"), true);
   });
+
+  for (const testCase of [
+    {
+      name: "detail model fdName changes",
+      code: "readback.form.field_title",
+      mutate(detail) {
+        detail.fdName = "被篡改的明细模型标题";
+      }
+    },
+    {
+      name: "detail controlProps.title changes",
+      code: "readback.form.detail_control_title_mismatch",
+      mutate(detail) {
+        const attribute = JSON.parse(detail.fdAttribute);
+        attribute.config.controlProps.title = "被篡改的明细控件标题";
+        detail.fdAttribute = JSON.stringify(attribute);
+      }
+    },
+    {
+      name: "detail container label changes",
+      code: "readback.form.detail_control_label_mismatch",
+      mutate(detail) {
+        const attribute = JSON.parse(detail.fdAttribute);
+        attribute.config.label = "被篡改的明细容器标签";
+        detail.fdAttribute = JSON.stringify(attribute);
+      }
+    }
+  ]) {
+    it(`fails when ${testCase.name}`, () => {
+      const dsl = sampleTrustedDsl({ workflow: null });
+      const prepared = prepareSample(dsl);
+      const fixture = loadIndependentFormFixture();
+      const config = xformConfig(fixture);
+      const detail = config.dataModel.find((model) => model.fdType === "detail");
+      testCase.mutate(detail);
+      fixture.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+      const readback = prepared.verify(fixture);
+
+      assert.equal(readback.ok, false);
+      assert.equal(readback.partitions.form, "mismatch");
+      assert.equal(readback.diagnostics.some((item) => item.code === testCase.code), true);
+    });
+  }
 
   it("fails when a detail column is missing or unexpected", () => {
     const missing = persistAndVerify(sampleTrustedDsl({ workflow: null }), {
@@ -870,14 +946,7 @@ describe("decode failures", () => {
   it("loads an independently authored native fixture for successful readback", () => {
     const dsl = sampleTrustedDsl({ workflow: null });
     const prepared = prepareSample(dsl);
-    const fixture = JSON.parse(readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8"));
-    const config = xformConfig(fixture);
-    const attr = JSON.parse(config.attribute.formAttr);
-    // Keep the independently authored native structure while upgrading the fixture
-    // from the retired title formula to the current empty-subject contract.
-    attr.subjectRule = {};
-    config.attribute.formAttr = JSON.stringify(attr);
-    fixture.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+    const fixture = loadIndependentFormFixture();
     // Fixture is authored from a sanitized projection snapshot checked into the repo,
     // not cloned inside the test from the live writer output.
     const readback = prepared.verify(fixture);

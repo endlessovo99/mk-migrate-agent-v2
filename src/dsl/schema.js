@@ -217,7 +217,12 @@ function validateForm(form, diagnostics) {
       .filter(nonEmptyString)
   );
   const dataAuthorityFieldIds = collectDataAuthorityFieldIds(form.fields);
-  const detailTableIds = new Set((form.fields || []).filter((field) => field?.type === "detailTable").map((field) => field.id));
+  const detailTableIds = new Set(
+    (form.fields || [])
+      .filter((field) => field?.type === "detailTable")
+      .map((field) => field.id)
+      .filter(nonEmptyString)
+  );
   const detailColumnIdsByTable = new Map(
     (form.fields || [])
       .filter((field) => field?.type === "detailTable")
@@ -351,11 +356,43 @@ function validateFormLayout(layout, refs, diagnostics) {
 
   if (!Array.isArray(layout.mkTree) || layout.mkTree.length === 0) {
     diagnostics.push(error("dsl.form.layout.mk_tree_required", "form.layout.mkTree must contain explicit MK layout nodes.", "/form/layout/mkTree"));
+    validateDetailTableLayoutCardinality([], refs.detailTableIds, diagnostics);
     return layoutNodeIds;
   }
 
   layout.mkTree.forEach((node, index) => validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds));
+  validateDetailTableLayoutCardinality(layout.mkTree, refs.detailTableIds, diagnostics);
   return layoutNodeIds;
+}
+
+function validateDetailTableLayoutCardinality(mkTree, detailTableIds, diagnostics) {
+  const occurrencesById = new Map(
+    Array.from(detailTableIds || [], (detailTableId) => [detailTableId, 0])
+  );
+
+  for (const node of mkTree || []) {
+    if (!isRecord(node) || !Array.isArray(node.children)) continue;
+    for (const child of node.children) {
+      if (!isRecord(child)) continue;
+      const refIds = Array.isArray(child.refIds)
+        ? child.refIds
+        : [child.refId].filter(Boolean);
+      for (const refId of refIds) {
+        if (!occurrencesById.has(refId)) continue;
+        occurrencesById.set(refId, occurrencesById.get(refId) + 1);
+      }
+    }
+  }
+
+  for (const [detailTableId, occurrences] of occurrencesById) {
+    if (occurrences === 1) continue;
+    diagnostics.push(error(
+      "dsl.form.layout.detail_table_cardinality",
+      "Each detail table must appear exactly once in form.layout.mkTree.",
+      "/form/layout/mkTree",
+      { detailTableId, occurrences, expected: 1 }
+    ));
+  }
 }
 
 function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
@@ -477,6 +514,39 @@ function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
         "Expanded mkTree cells must not overlap within the declared grid.",
         `${path}/children`,
         { rows, columns, overlaps }
+      ));
+    }
+  }
+
+  const expandedRefIds = node.children
+    .filter(isRecord)
+    .flatMap((child) => Array.isArray(child.refIds) ? child.refIds : [child.refId].filter(Boolean));
+  const detailTableIds = expandedRefIds.filter((refId) => refs.detailTableIds.has(refId));
+  if (detailTableIds.length) {
+    const onlyChild = node.children.length === 1 && isRecord(node.children[0])
+      ? node.children[0]
+      : undefined;
+    const childRow = onlyChild?.row ?? 0;
+    const exclusive =
+      node.componentId === "xform-flex-1-1-layout" &&
+      columns === 1 &&
+      expandedRefIds.length === 1 &&
+      onlyChild?.refType === "detailTable" &&
+      childRow === 0 &&
+      onlyChild?.column === 0 &&
+      onlyChild?.colspan === 1;
+    if (!exclusive) {
+      diagnostics.push(error(
+        "dsl.form.layout.detail_table_row_exclusive",
+        "Each detail table must own one full-width 1x1 mkTree row.",
+        path,
+        {
+          detailTableIds,
+          componentId: node.componentId,
+          columns,
+          childCount: node.children.length,
+          expandedRefCount: expandedRefIds.length
+        }
       ));
     }
   }

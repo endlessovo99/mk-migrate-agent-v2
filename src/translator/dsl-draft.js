@@ -135,7 +135,7 @@ function draftFieldFromSourceControl(control) {
 function draftDetailTableFromSource(table) {
   return pruneUndefined({
     id: table.id,
-    title: table.title,
+    title: targetDetailTableTitle(table),
     type: "detailTable",
     componentId: "xform-detail-table",
     props: {},
@@ -153,6 +153,13 @@ function draftDetailTableFromSource(table) {
       generated: false
     }))
   });
+}
+
+function targetDetailTableTitle(table) {
+  const baseTitle = String(table?.title ?? "");
+  const hint = String(table?.sourceProps?.detailTitleHint?.content ?? "")
+    .replace(/[\s\u00a0]+/gu, "");
+  return hint ? `${baseTitle}(${hint})` : baseTitle;
 }
 
 function propsFromSource(source) {
@@ -296,38 +303,79 @@ function normalizeLegacyExpression(value) {
 
 function draftMkTree(layout, detailTableIds) {
   const rows = Array.isArray(layout.rows) ? layout.rows : [];
-  return rows.map((row, rowIndex) => {
+  return rows.flatMap((row, rowIndex) => {
     const sourceCells = Array.isArray(row.cells) ? row.cells : [];
     const sourceRowId = row.id || `row-${rowIndex}`;
-    const packed = packLayoutGrid(sourceCells);
-    const multiRow = packed.rows > 1;
-    return {
-      id: `layout.${sourceRowId}`,
-      componentId: multiRow
-        ? "xform-multi-row-table-layout"
-        : `xform-flex-1-${packed.columns}-layout`,
-      props: multiRow
-        ? { rows: packed.rows, columns: packed.columns }
-        : {
-            columns: packed.columns,
-            sourceColumns: row.columns || sourceCells.length || 1
-          },
-      sourceRef: row.sourceRef || `source.form.layout.row.${sourceRowId}`,
-      sourceMarkers: Array.isArray(row.sourceMarkers) && row.sourceMarkers.length ? row.sourceMarkers : undefined,
-      children: packed.cells.map((cell, cellIndex) => {
-        const references = Array.isArray(cell.references) ? cell.references : [];
-        return {
-          id: `layout.${cell.id || `${sourceRowId}.cell.${cellIndex}`}`,
-          refType: references.some((ref) => detailTableIds.has(ref.referenceId)) ? "detailTable" : "field",
-          refIds: references.map((ref) => ref.referenceId),
-          sourceRef: cell.sourceRef,
-          ...(multiRow ? { row: cell.row } : {}),
-          column: cell.column,
-          colspan: cell.colspan
-        };
-      })
-    };
+    const sourcePacked = packLayoutGrid(sourceCells);
+    const segments = splitDetailTableLayoutSegments(sourcePacked.cells, detailTableIds);
+    const baseSegmentIndex = Math.max(
+      segments.findIndex((segment) => segment.kind === "detailTable"),
+      0
+    );
+
+    return segments.map((segment, segmentIndex) => {
+      const packed = packLayoutGrid(segment.cells);
+      const multiRow = packed.rows > 1;
+      const baseSegment = segmentIndex === baseSegmentIndex;
+      const segmentSuffix = segments.length > 1 && !baseSegment
+        ? `.segment-${segmentIndex + 1}`
+        : "";
+      return {
+        id: `layout.${sourceRowId}${segmentSuffix}`,
+        componentId: multiRow
+          ? "xform-multi-row-table-layout"
+          : `xform-flex-1-${packed.columns}-layout`,
+        props: multiRow
+          ? { rows: packed.rows, columns: packed.columns }
+          : {
+              columns: packed.columns,
+              sourceColumns: row.columns || sourceCells.length || 1
+            },
+        sourceRef: row.sourceRef || `source.form.layout.row.${sourceRowId}`,
+        sourceMarkers:
+          baseSegment && Array.isArray(row.sourceMarkers) && row.sourceMarkers.length
+            ? row.sourceMarkers
+            : undefined,
+        children: packed.cells.map((cell, cellIndex) => {
+          const references = Array.isArray(cell.references) ? cell.references : [];
+          return {
+            id: `layout.${cell.id || `${sourceRowId}.cell.${cellIndex}`}`,
+            refType: references.some((ref) => detailTableIds.has(ref.referenceId)) ? "detailTable" : "field",
+            refIds: references.map((ref) => ref.referenceId),
+            sourceRef: cell.sourceRef,
+            ...(multiRow ? { row: cell.row } : {}),
+            column: cell.column,
+            colspan: cell.colspan
+          };
+        })
+      };
+    });
   });
+}
+
+function splitDetailTableLayoutSegments(cells, detailTableIds) {
+  const segments = [];
+  let ordinaryCells = [];
+  const flushOrdinary = () => {
+    if (!ordinaryCells.length) return;
+    segments.push({ kind: "field", cells: ordinaryCells });
+    ordinaryCells = [];
+  };
+
+  for (const cell of cells) {
+    const references = Array.isArray(cell.references) ? cell.references : [];
+    const detailTable = references.some((reference) =>
+      detailTableIds.has(reference.referenceId)
+    );
+    if (detailTable) {
+      flushOrdinary();
+      segments.push({ kind: "detailTable", cells: [cell] });
+    } else {
+      ordinaryCells.push(cell);
+    }
+  }
+  flushOrdinary();
+  return segments;
 }
 
 function draftFormRules(sourceFormRules, form) {

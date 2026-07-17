@@ -343,6 +343,8 @@ function observeNativeControlBinding(value) {
   );
   return {
     readable,
+    title: normalizeScalar(controlProps?.title),
+    label: normalizeScalar(attribute?.config?.label),
     detailFieldId: normalizeScalar(controlProps?.["$$detailTableFieldName"]),
     fieldName: normalizeScalar(controlProps?.name || controlProps?.uuid),
     tableType: normalizeScalar(controlProps?.["$$tableType"]),

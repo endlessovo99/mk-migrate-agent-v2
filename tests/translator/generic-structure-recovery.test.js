@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { buildFormRuleRefIndex, resolveEffectTarget } from "../../src/dsl/form-rules.js";
+import { applyAdjacentDetailTableTitles } from "../../src/translator/designer-structure-recovery.js";
 import { draftSourceDraft, cleanSourceFile } from "../../src/translator/index.js";
 
 const fixture = "tests/fixtures/route-validation/structural-recovery/route-structural-recovery_SysFormTemplate.xml";
@@ -192,6 +193,136 @@ describe("generic structural form recovery", () => {
     assert.equal(fields.has("long_note_hint"), false);
   });
 
+  it("merges one structurally owned styled note into a detail-table title without whitespace", () => {
+    const source = cleanSourceFile(inlineContentFixture);
+    const dsl = draftSourceDraft(source);
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+    const title = "Assembly parts(Copyflowthenregenerateparts)";
+    const sourceRow = dsl.form.layout.sourceGrid.rows.find((row) =>
+      row.cells.some((cell) =>
+        cell.references.some((reference) => reference.referenceId === "fd_parts_table")
+      )
+    );
+    const mkRow = dsl.form.layout.mkTree.find((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_parts_table"))
+    );
+
+    assert.equal(fields.get("fd_parts_table")?.title, title);
+    assert.equal(fields.get("fd_parts_table")?.title.includes("( "), false);
+    assert.equal(fields.get("fd_parts_table")?.title.includes(" )"), false);
+    assert.deepEqual(fields.get("fd_parts_table")?.sourceProps.detailTitleHint, {
+      id: "parts_table_hint",
+      content: "Copy flow then regenerate parts",
+      rawContent: " Copy flow then regenerate parts ",
+      designerValues: {
+        id: "parts_table_hint",
+        content: " Copy flow then regenerate parts ",
+        color: "#FF0000",
+        b: "false"
+      },
+      relation: "post-heading-break-styled-text-before-detail-table"
+    });
+    assert.equal(fields.has("parts_table_heading"), false);
+    assert.equal(fields.has("parts_table_hint"), false);
+    assert.deepEqual(
+      sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      ["fd_parts_table"]
+    );
+    assert.equal(mkRow?.componentId, "xform-flex-1-1-layout");
+    assert.deepEqual(mkRow?.props, { columns: 1, sourceColumns: 1 });
+    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), [["fd_parts_table"]]);
+    assert.deepEqual(
+      mkRow?.children.map((cell) => ({ refType: cell.refType, row: cell.row, column: cell.column, colspan: cell.colspan })),
+      [{ refType: "detailTable", row: undefined, column: 0, colspan: 1 }]
+    );
+  });
+
+  it("does not merge a detail note across a supported control or when ownership is ambiguous", () => {
+    const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+
+    assert.equal(fields.get("fd_guarded_parts_table")?.title, "DetailTable13");
+    assert.equal(fields.get("guarded_parts_hint")?.props.content, "Must remain standalone");
+    assert.equal(fields.get("fd_ambiguous_parts")?.title, "Ambiguous parts");
+    assert.equal(fields.get("ambiguous_parts_hint_a")?.props.content, "First styled note");
+    assert.equal(fields.get("ambiguous_parts_hint_b")?.props.content, "Second styled note");
+  });
+
+  it("does not merge a styled note when an existing business title conflicts with the visible heading", () => {
+    const heading = {
+      id: "visible_heading",
+      title: "Visible heading",
+      type: "description",
+      source: { designerType: "textLabel", designerValues: { size: "18px", b: "true" } }
+    };
+    const hint = {
+      id: "styled_hint",
+      title: "Must stay standalone",
+      type: "description",
+      source: { designerType: "textLabel", designerValues: { color: "#FF0000" } }
+    };
+    const detail = {
+      id: "fd_named_detail",
+      title: "Canonical business title",
+      type: "detailTable",
+      source: { designerType: "detailsTable", designerValues: {} }
+    };
+
+    const result = applyAdjacentDetailTableTitles(
+      [heading, hint, detail],
+      () => false,
+      { hasDirectBreakBetween: () => true }
+    );
+
+    assert.deepEqual(result, [heading, hint, detail]);
+  });
+
+  it("merges only a pre-detail owned note and keeps a post-detail note standalone", () => {
+    const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+    const sourceRow = dsl.form.layout.sourceGrid.rows.find((row) =>
+      row.sourceMarkers?.includes("post_detail_row")
+    );
+    const targetRows = dsl.form.layout.mkTree.filter((row) =>
+      row.sourceRef === sourceRow?.sourceRef
+    );
+    const detailRow = targetRows.find((row) =>
+      row.children.some((child) => child.refIds.includes("fd_post_hint_table"))
+    );
+
+    assert.equal(fields.get("fd_post_hint_table")?.title, "Gift allocation(Namedguidance)");
+    assert.deepEqual(fields.get("fd_post_hint_table")?.sourceProps.detailTitleHint, {
+      id: "named_detail_hint",
+      content: "Named guidance",
+      rawContent: " Named guidance ",
+      designerValues: {
+        id: "named_detail_hint",
+        content: " Named guidance ",
+        color: "#FF0000",
+        b: "false"
+      },
+      relation: "post-heading-break-styled-text-before-detail-table"
+    });
+    assert.equal(fields.has("named_detail_heading"), false);
+    assert.equal(fields.has("named_detail_hint"), false);
+    assert.equal(fields.get("post_detail_hint")?.props.content, " Post-detail guidance ");
+    assert.deepEqual(
+      sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      ["fd_before_post_detail", "fd_post_hint_table", "post_detail_hint", "fd_after_post_detail"]
+    );
+    assert.equal(sourceRow?.cells.length, 3);
+    assert.deepEqual(
+      sourceRow?.cells[1].references.map((reference) => reference.referenceId),
+      ["fd_post_hint_table", "post_detail_hint"]
+    );
+    assert.deepEqual(
+      targetRows.map((row) => row.children.flatMap((child) => child.refIds)),
+      [["fd_before_post_detail"], ["fd_post_hint_table"], ["post_detail_hint", "fd_after_post_detail"]]
+    );
+    assert.deepEqual(detailRow?.sourceMarkers, ["post_detail_row"]);
+    assert.equal(targetRows.filter((row) => row.sourceMarkers?.includes("post_detail_row")).length, 1);
+  });
+
   it("keeps a hint standalone when metadata refines the owner to a component without placeholder support", () => {
     const dsl = draftSourceDraft(cleanSourceFile(inlineContentFixture));
     const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
@@ -329,5 +460,69 @@ describe("generic structural form recovery", () => {
       rowRefs.find((references) => references.includes("fd_detail_companion_total")),
       ["fd_detail_with_caption", "detail_companion_caption", "fd_detail_companion_total"]
     );
+  });
+
+  it("keeps source-grid evidence intact while giving every detail table its own target row", () => {
+    const dsl = draftSourceDraft(cleanSourceFile(fixture));
+    const detailIds = new Set(
+      dsl.form.fields.filter((field) => field.type === "detailTable").map((field) => field.id)
+    );
+    const sourceRow = dsl.form.layout.sourceGrid.rows.find((row) =>
+      row.cells.some((cell) =>
+        cell.references.some((reference) => reference.referenceId === "fd_detail_with_caption")
+      )
+    );
+    const targetRows = dsl.form.layout.mkTree;
+    const detailRowIndex = targetRows.findIndex((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_detail_with_caption"))
+    );
+    const companionRowIndex = targetRows.findIndex((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_detail_companion_total"))
+    );
+    const guardedSourceRow = dsl.form.layout.sourceGrid.rows.find((row) =>
+      row.cells.some((cell) =>
+        cell.references.some((reference) => reference.referenceId === "fd_between_heading_table")
+      )
+    );
+    const guardedOrdinaryRowIndex = targetRows.findIndex((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_between_heading_table"))
+    );
+    const guardedDetailRowIndex = targetRows.findIndex((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_detail_gap"))
+    );
+    const twinAIndex = targetRows.findIndex((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_detail_twin_a"))
+    );
+    const twinBIndex = targetRows.findIndex((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_detail_twin_b"))
+    );
+
+    assert.deepEqual(
+      sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      ["fd_detail_with_caption", "detail_companion_caption", "fd_detail_companion_total"]
+    );
+    assert.equal(sourceRow?.cells.length, 1);
+    assert.equal(detailRowIndex >= 0, true);
+    assert.equal(companionRowIndex > detailRowIndex, true);
+    assert.deepEqual(
+      guardedSourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      ["heading_not_adjacent", "fd_between_heading_table", "fd_detail_gap"]
+    );
+    assert.equal(guardedSourceRow?.cells.length, 1);
+    assert.equal(guardedOrdinaryRowIndex < guardedDetailRowIndex, true);
+    assert.equal(twinBIndex, twinAIndex + 1);
+    for (const detailId of detailIds) {
+      const owningRows = targetRows.filter((row) =>
+        row.children.some((child) => child.refIds.includes(detailId))
+      );
+      assert.equal(owningRows.length, 1, detailId);
+      assert.equal(owningRows[0].componentId, "xform-flex-1-1-layout", detailId);
+      assert.equal(owningRows[0].props.columns, 1, detailId);
+      assert.equal(owningRows[0].children.length, 1, detailId);
+      assert.deepEqual(owningRows[0].children[0].refIds, [detailId], detailId);
+      assert.equal(owningRows[0].children[0].refType, "detailTable", detailId);
+      assert.equal(owningRows[0].children[0].column, 0, detailId);
+      assert.equal(owningRows[0].children[0].colspan, 1, detailId);
+    }
   });
 });

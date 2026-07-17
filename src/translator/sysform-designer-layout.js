@@ -5,7 +5,10 @@ import { restDialogEvidence, sanitizeDesignerValues } from "./rest-dialog.js";
 import { parseDesignerFdValues } from "./designer-control-values.js";
 import { componentForSourceType } from "./field-component.js";
 import { descriptionFieldFromMarkedRow, extractRowMarkers } from "./designer-row-markers.js";
-import { isSourceDescriptionControl } from "./source-description-control.js";
+import {
+  isSourceDescriptionControl,
+  isStyledSourceDescriptionControl
+} from "./source-description-control.js";
 import {
   applyAdjacentDetailTableTitles,
   applyAdjacentRowDetailTableTitles,
@@ -433,7 +436,18 @@ function extractLayoutCellControls(html, crossCellBoundLabelIds = new Set(), met
       control.type === "detailTable" || !nestedControlIds.has(control.id)
     );
     const withFooters = appendMissingControls(topLevelControls, footerControls);
-    return applyAdjacentDetailTableTitles(withFooters, isSuspiciousDetailTableTitle);
+    const entryById = new Map(entries.map((entry) => [entry.control.id, entry]));
+    return applyAdjacentDetailTableTitles(withFooters, isSuspiciousDetailTableTitle, {
+      hasDirectBreakBetween(left, right) {
+        const leftEntry = entryById.get(left?.id);
+        const rightEntry = entryById.get(right?.id);
+        return Boolean(
+          leftEntry &&
+          rightEntry &&
+          hasDirectDesignerBreakBetween(html, leftEntry, rightEntry)
+        );
+      }
+    });
   }
 
   const semanticControls = foldInlineCellSemantics(html, entries, metadataContext);
@@ -452,7 +466,7 @@ function extractLayoutCellControls(html, crossCellBoundLabelIds = new Set(), met
   // Label-only cells: keep styled/hint textLabels as descriptions; skip plain field titles.
   return semanticControls.filter((control) =>
     isSourceDescriptionControl(control) &&
-    (isHintTextLabel(control) || String(control.source?.designerType || "").toLowerCase() === "linklabel")
+    (isStyledSourceDescriptionControl(control) || String(control.source?.designerType || "").toLowerCase() === "linklabel")
   );
 }
 
@@ -526,7 +540,7 @@ function foldInlineHints(html, entries, metadataContext) {
       !isSourceDescriptionControl(current.control) &&
       supportsInlinePlaceholder(current.control, metadataContext) &&
       isSourceDescriptionControl(next.control) &&
-      isHintTextLabel(next.control) &&
+      isStyledSourceDescriptionControl(next.control) &&
       hasDirectDesignerBreakBetween(html, current, next)
     ) {
       folded.push(mergeControlEntries(
@@ -548,7 +562,7 @@ function foldInlineHints(html, entries, metadataContext) {
 function isPlainInlineCaption(control) {
   return isSourceDescriptionControl(control) &&
     String(control.source?.designerType || "").toLowerCase() === "textlabel" &&
-    !isHintTextLabel(control);
+    !isStyledSourceDescriptionControl(control);
 }
 
 function supportsInlinePlaceholder(control, metadataContext) {
@@ -738,11 +752,9 @@ function appendMissingControls(controls, additions) {
   return result;
 }
 
-// Detail tables and ordinary fields cannot share one mkTree child refType.
+// One designer <td> remains one source-layout cell. The deterministic DSL
+// mapper expands its ordered references and gives detail tables target rows.
 function groupLayoutCellControls(controls) {
-  const detailTables = controls.filter((control) => control.type === "detailTable");
-  const others = controls.filter((control) => control.type !== "detailTable");
-  if (detailTables.length && others.length) return [detailTables, others];
   return [controls];
 }
 
@@ -776,26 +788,6 @@ function extractDesignerFieldControlEntries(html, options = {}) {
   }
 
   return controls;
-}
-
-function isHintTextLabel(field) {
-  const values = field?.source?.designerValues || {};
-  if (hasTextLabelColor(values.color) || isTrueLike(values.b)) return true;
-  const style = String(values.style || "");
-  if (/color\s*:\s*#(?!000000|000\b)[0-9a-f]{3,8}\b/i.test(style)) return true;
-  if (/font-weight\s*:\s*(bold|[6-9]00)\b/i.test(style)) return true;
-  return false;
-}
-
-function hasTextLabelColor(value) {
-  const color = String(value || "").trim();
-  if (!color) return false;
-  const normalized = color.toLowerCase();
-  return !["#000", "#000000", "black", "rgb(0,0,0)", "rgba(0,0,0,1)"].includes(normalized);
-}
-
-function isTrueLike(value) {
-  return String(value ?? "").trim().toLowerCase() === "true";
 }
 
 function designerFieldFromControl(fdType, values, attrs, context = {}) {

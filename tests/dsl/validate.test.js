@@ -120,6 +120,134 @@ describe("validateMigrationDsl", () => {
     assert.equal(missingField.diagnostics.some((item) => item.code === "dsl.form.layout.field_missing"), true);
   });
 
+  it("rejects a detail table that does not own a one-cell target row", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.layout.mkTree = [{
+      id: "layout.mixed-detail-row",
+      componentId: "xform-flex-1-2-layout",
+      props: { columns: 2, sourceColumns: 2 },
+      sourceRef: "source.form.layout.row.mixed-detail-row",
+      children: [
+        {
+          id: "layout.mixed-detail-row-detail",
+          refType: "detailTable",
+          refIds: ["fd_detail"],
+          sourceRef: "source.form.layout.cell.mixed-detail-row-detail",
+          column: 0,
+          colspan: 1
+        },
+        {
+          id: "layout.mixed-detail-row-field",
+          refType: "field",
+          refIds: ["fd_subject"],
+          sourceRef: "source.form.layout.cell.mixed-detail-row-field",
+          column: 1,
+          colspan: 1
+        }
+      ]
+    }];
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.detail_table_row_exclusive"
+    );
+
+    assert.equal(result.ok, false);
+    assert.equal(diagnostic?.path, "/form/layout/mkTree/0");
+    assert.deepEqual(diagnostic?.details, {
+      detailTableIds: ["fd_detail"],
+      componentId: "xform-flex-1-2-layout",
+      columns: 2,
+      childCount: 2,
+      expandedRefCount: 2
+    });
+  });
+
+  it("rejects detail tables that are missing from the target layout", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.layout.mkTree = dsl.form.layout.mkTree.filter((node) =>
+      !node.children.some((child) => child.refIds?.includes("fd_detail"))
+    );
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.detail_table_cardinality"
+    );
+
+    assert.equal(result.ok, false);
+    assert.equal(diagnostic?.path, "/form/layout/mkTree");
+    assert.deepEqual(diagnostic?.details, {
+      detailTableId: "fd_detail",
+      occurrences: 0,
+      expected: 1
+    });
+  });
+
+  it("rejects detail tables that occur more than once in the target layout", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.layout.mkTree.push({
+      ...structuredClone(dsl.form.layout.mkTree[1]),
+      id: "layout.row-2",
+      sourceRef: "source.form.layout.row.row-2",
+      children: [{
+        ...structuredClone(dsl.form.layout.mkTree[1].children[0]),
+        id: "layout.row-2-cell-0",
+        sourceRef: "source.form.layout.cell.row-2-cell-0"
+      }]
+    });
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.detail_table_cardinality"
+    );
+
+    assert.equal(result.ok, false);
+    assert.equal(diagnostic?.path, "/form/layout/mkTree");
+    assert.deepEqual(diagnostic?.details, {
+      detailTableId: "fd_detail",
+      occurrences: 2,
+      expected: 1
+    });
+    assert.equal(
+      result.diagnostics.some((item) => item.code === "dsl.form.layout.detail_table_row_exclusive"),
+      false
+    );
+  });
+
+  it("accepts multiple detail tables when each owns exactly one 1x1 target row", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.fields.push({
+      ...structuredClone(dsl.form.fields[2]),
+      id: "fd_detail_second",
+      title: "第二张明细",
+      sourceRef: "source.form.detailTable.fd_detail_second",
+      columns: [{
+        ...structuredClone(dsl.form.fields[2].columns[0]),
+        id: "fd_second_name",
+        sourceRef: "source.form.detailTable.fd_detail_second.column.fd_second_name"
+      }]
+    });
+    dsl.form.layout.mkTree.push({
+      id: "layout.row-2",
+      componentId: "xform-flex-1-1-layout",
+      props: { columns: 1, sourceColumns: 1 },
+      sourceRef: "source.form.layout.row.row-2",
+      children: [{
+        id: "layout.row-2-cell-0",
+        refType: "detailTable",
+        refIds: ["fd_detail_second"],
+        sourceRef: "source.form.layout.cell.row-2-cell-0",
+        column: 0,
+        colspan: 1
+      }]
+    });
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("rejects expanded mkTree cells that exceed a single-row grid", () => {
     const dsl = sampleTrustedDsl();
     dsl.form.layout.mkTree[0].children.push({

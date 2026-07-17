@@ -277,6 +277,26 @@ function compareDetailPersistence(expected = {}, actual = {}, diagnostics) {
       }
     }
 
+    const nativeTitle = model.controlBinding?.title;
+    if (nativeTitle !== expectedModel.title) {
+      diagnostics.push(mismatch("form", "readback.form.detail_control_title_mismatch", "Readback detail control title does not match its DSL title.", {
+        invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.controlTitle`,
+        path: `${modelPath}/fdAttribute/config/controlProps/title`,
+        expected: expectedModel.title,
+        actual: nativeTitle
+      }));
+    }
+
+    const nativeLabel = model.controlBinding?.label;
+    if (nativeLabel !== expectedModel.title) {
+      diagnostics.push(mismatch("form", "readback.form.detail_control_label_mismatch", "Readback detail container label does not match its DSL title.", {
+        invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.controlLabel`,
+        path: `${modelPath}/fdAttribute/config/label`,
+        expected: expectedModel.title,
+        actual: nativeLabel
+      }));
+    }
+
     const actualColumns = new Map((model.columns || []).map((column) => [column.id, column]));
     for (const columnId of expectedModel.columnIds || []) {
       const column = actualColumns.get(columnId);

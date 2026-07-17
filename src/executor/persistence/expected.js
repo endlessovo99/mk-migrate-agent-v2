@@ -210,6 +210,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
         .filter((field) => field.type === "detailTable")
         .map((field) => ({
           fieldId: field.id,
+          title: normalizeScalar(persistedFieldLabel(field)),
           tableName: detailTableNameFor(mainTableName, field.id),
           tableType: "detail",
           fieldMechanismType: "SYS-XFORM",

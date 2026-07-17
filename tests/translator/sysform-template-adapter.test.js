@@ -269,7 +269,7 @@ describe("translateSysFormTemplateXml", () => {
     );
     assert.deepEqual(
       dsl.form.layout.rows[0].cells.map((cell) => cell.fieldIds),
-      [["fd_detail"], ["fd_total"]]
+      [["fd_detail", "fd_total"]]
     );
     assert.equal(
       dsl.review.warnings.some((warning) => warning.code === "source.sysform.metadata_field_unmatched"),

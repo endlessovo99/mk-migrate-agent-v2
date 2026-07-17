@@ -101,6 +101,53 @@
       &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;metadata_address_hint&quot;,content:&quot;Select an organization&quot;,color:&quot;#CC3300&quot;,b:&quot;false&quot;}&apos;&gt;Select an organization&lt;/label&gt;
      &lt;/td&gt;
     &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;8&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;parts_table_heading&quot;,content:&quot;Assembly parts&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Assembly parts&lt;/label&gt;
+      &lt;div id=&quot;parts_table_break&quot; fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;parts_table_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div id=&quot;brcontrol-parts_table_break&quot;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;parts_table_hint&quot;,content:&quot; Copy flow then regenerate parts &quot;,color:&quot;#FF0000&quot;,b:&quot;false&quot;}&apos;&gt; Copy flow then regenerate parts &lt;/label&gt;
+      &lt;div fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;parts_table_action&quot;,label:&quot;Generate parts&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_parts_table&quot;,label:&quot;DetailTable12&quot;}&apos;&gt;&lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;9&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;guarded_parts_heading&quot;,content:&quot;Guarded parts&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Guarded parts&lt;/label&gt;
+      &lt;div fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;guarded_parts_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;guarded_parts_hint&quot;,content:&quot;Must remain standalone&quot;,color:&quot;#FF0000&quot;,b:&quot;false&quot;}&apos;&gt;Must remain standalone&lt;/label&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_hint_blocker&quot;,label:&quot;Intervening field&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_guarded_parts_table&quot;,label:&quot;DetailTable13&quot;}&apos;&gt;&lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;10&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;ambiguous_parts_heading&quot;,content:&quot;Ambiguous parts&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Ambiguous parts&lt;/label&gt;
+      &lt;div fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;ambiguous_parts_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;ambiguous_parts_hint_a&quot;,content:&quot;First styled note&quot;,color:&quot;#FF0000&quot;,b:&quot;false&quot;}&apos;&gt;First styled note&lt;/label&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;ambiguous_parts_hint_b&quot;,content:&quot;Second styled note&quot;,color:&quot;#FF0000&quot;,b:&quot;false&quot;}&apos;&gt;Second styled note&lt;/label&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_ambiguous_parts&quot;,label:&quot;DetailTable14&quot;}&apos;&gt;&lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;11&quot; column=&quot;0&quot;&gt;
+      &lt;input type=&quot;hidden&quot; id=&quot;post_detail_row&quot; name=&quot;post_detail_row&quot;/&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_before_post_detail&quot;,label:&quot;Before detail&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;11&quot; column=&quot;1&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;named_detail_heading&quot;,content:&quot;Gift allocation&quot;,size:&quot;18px&quot;,b:&quot;true&quot;}&apos;&gt;Gift allocation&lt;/label&gt;
+      &lt;div id=&quot;named_detail_break&quot; fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;named_detail_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div id=&quot;brcontrol-named_detail_break&quot;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;named_detail_hint&quot;,content:&quot; Named guidance &quot;,color:&quot;#FF0000&quot;,b:&quot;false&quot;}&apos;&gt; Named guidance &lt;/label&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_post_hint_table&quot;,label:&quot;Gift allocation&quot;}&apos;&gt;&lt;/table&gt;
+      &lt;div id=&quot;post_detail_break&quot; fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;post_detail_break&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div id=&quot;brcontrol-post_detail_break&quot;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;post_detail_hint&quot;,content:&quot; Post-detail guidance &quot;,color:&quot;#FF0000&quot;,b:&quot;false&quot;}&apos;&gt; Post-detail guidance &lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;11&quot; column=&quot;3&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_after_post_detail&quot;,label:&quot;After detail&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
    &lt;/tbody&gt;&lt;/table&gt;</string>
   </void>
   <void method="put">
@@ -122,6 +169,13 @@
     &lt;extendSimpleProperty name=&quot;fd_guarded_hint&quot; label=&quot;Guarded hint&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_metadata_date&quot; label=&quot;Metadata date&quot; type=&quot;Date&quot;/&gt;
     &lt;extendElementProperty name=&quot;fd_metadata_address&quot; label=&quot;Metadata address&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_parts_table&quot; label=&quot;DetailTable12&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_parts_name&quot; label=&quot;Part name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_hint_blocker&quot; label=&quot;Intervening field&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_guarded_parts_table&quot; label=&quot;DetailTable13&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_guarded_part_name&quot; label=&quot;Guarded part name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_ambiguous_parts&quot; label=&quot;DetailTable14&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_ambiguous_part_name&quot; label=&quot;Ambiguous part name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_before_post_detail&quot; label=&quot;Before detail&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_post_hint_table&quot; label=&quot;Gift allocation&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_gift_name&quot; label=&quot;Gift name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_after_post_detail&quot; label=&quot;After detail&quot; type=&quot;String&quot;/&gt;
    &lt;/metadata&gt;</string>
   </void>
  </object>
