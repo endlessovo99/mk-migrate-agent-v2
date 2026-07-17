@@ -1,4 +1,9 @@
-import { catalogRefs, componentSupportsProp, validationPolicyRef } from "../dsl/catalogs.js";
+import {
+  catalogRefs,
+  COMPONENTS_BY_ID,
+  componentSupportsProp,
+  validationPolicyRef
+} from "../dsl/catalogs.js";
 import { translateLegacyConditionContextReferences } from "../dsl/condition-context.js";
 import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../dsl/form-rules.js";
 import { packLayoutGrid } from "../dsl/layout-pack.js";
@@ -22,6 +27,9 @@ import {
 import { componentForSourceType } from "./field-component.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
+
+const TABLE_LAYOUT_COMPONENT_ID = "xform-multi-row-table-layout";
+const TABLE_LAYOUT_MAX_COLUMNS = tableLayoutMaxColumns();
 
 export function draftSourceDraft(sourceDraft, options = {}) {
   if (sourceDraft?.version !== SOURCE_DRAFT_VERSION || sourceDraft?.artifact !== "source-draft") {
@@ -315,11 +323,11 @@ function draftMkTree(layout, detailTableIds) {
 
     return segments.map((segment, segmentIndex) => {
       // sourcePacked has already expanded every inline reference into one cell.
-      // Preserve one source <tr> as one target row even when it needs more than
-      // the four columns offered by the designer's quick flex layouts.
+      // Preserve one source <tr> as one logical target grid. The table layout
+      // caps each native row at its catalog capability and keeps overflow in
+      // additional rows of that same grid so row-marker ownership stays intact.
       const packed = packLayoutGrid(segment.cells, {
-        columns: Math.max(segment.cells.length, 1),
-        rows: 1
+        columns: Math.max(Math.min(segment.cells.length, TABLE_LAYOUT_MAX_COLUMNS), 1)
       });
       const tableLayout = packed.rows > 1 || packed.columns > 4;
       const baseSegment = segmentIndex === baseSegmentIndex;
@@ -329,7 +337,7 @@ function draftMkTree(layout, detailTableIds) {
       return {
         id: `layout.${sourceRowId}${segmentSuffix}`,
         componentId: tableLayout
-          ? "xform-multi-row-table-layout"
+          ? TABLE_LAYOUT_COMPONENT_ID
           : `xform-flex-1-${packed.columns}-layout`,
         props: tableLayout
           ? { rows: packed.rows, columns: packed.columns }
@@ -357,6 +365,15 @@ function draftMkTree(layout, detailTableIds) {
       };
     });
   });
+}
+
+function tableLayoutMaxColumns() {
+  const maximum = COMPONENTS_BY_ID.get(TABLE_LAYOUT_COMPONENT_ID)
+    ?.propsSchema?.properties?.columns?.maximum;
+  if (!Number.isInteger(maximum) || maximum <= 4) {
+    throw new Error(`${TABLE_LAYOUT_COMPONENT_ID} must declare an integer columns maximum greater than four.`);
+  }
+  return maximum;
 }
 
 function splitDetailTableLayoutSegments(cells, detailTableIds) {

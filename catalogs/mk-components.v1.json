@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-07-17.v2",
+  "version": "2026-07-17.v3",
   "components": [
     {
       "componentId": "xform-input",
@@ -361,7 +361,7 @@
       "componentId": "xform-multi-row-table-layout",
       "kind": "layout",
       "label": "多行多列表格布局",
-      "description": "Table-like native grid capable of representing multiple rows or more than four visible columns.",
+      "description": "Table-like native grid capable of representing multiple rows with at most eight visible columns per row.",
       "usage": "Use after the Translator has selected a table-shaped DSL layout that cannot be represented by the quick flex layouts.",
       "negativeUsage": "Do not use as a source-classification rule; source-to-target selection belongs to the Translator.",
       "allowedScopes": ["layout"],
@@ -375,7 +375,7 @@
         "additionalProperties": false,
         "properties": {
           "rows": { "type": "integer", "minimum": 1 },
-          "columns": { "type": "integer", "minimum": 1 }
+          "columns": { "type": "integer", "minimum": 1, "maximum": 8 }
         }
       },
       "defaultPolicy": {},

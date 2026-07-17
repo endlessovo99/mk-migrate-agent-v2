@@ -344,6 +344,49 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
   });
 
+  it("accepts a one-row eight-column table layout", () => {
+    const dsl = sampleTrustedDsl();
+    const row = dsl.form.layout.mkTree[0];
+    row.componentId = "xform-multi-row-table-layout";
+    row.props = { rows: 1, columns: 8 };
+    row.children[0].row = 0;
+    row.children[1].row = 0;
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  });
+
+  it("rejects table layouts wider than eight columns", () => {
+    const dsl = sampleTrustedDsl();
+    const row = dsl.form.layout.mkTree[0];
+    row.componentId = "xform-multi-row-table-layout";
+    row.props = { rows: 1, columns: 9 };
+    row.children[0].row = 0;
+    row.children[1].row = 0;
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.layout.columns_invalid"
+    );
+    const catalogDiagnostic = result.diagnostics.find((item) =>
+      item.code === "catalog.props.value_invalid" &&
+      item.path === "/form/layout/mkTree/0/props/columns"
+    );
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(catalogDiagnostic?.details, {
+      componentId: "xform-multi-row-table-layout",
+      maximum: 8,
+      actual: 9
+    });
+    assert.deepEqual(diagnostic?.details, {
+      actual: 9,
+      minimum: 1,
+      maximum: 8
+    });
+  });
+
   it("rejects multi-row child coordinates outside the declared grid", () => {
     const dsl = sampleTrustedDsl();
     const row = dsl.form.layout.mkTree[0];

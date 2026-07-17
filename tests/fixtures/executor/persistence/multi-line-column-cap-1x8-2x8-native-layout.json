@@ -1,0 +1,112 @@
+{
+  "evidence": {
+    "source": "independently hand-authored sanitized NewOA native layout fixture",
+    "capturedAt": "2026-07-17",
+    "designerItemTid": "xform-ide-sidebar-tabPane-control-tablelayout-multiLineColumn",
+    "note": "Desktop and mobile fragments are authored separately. Each endpoint contains an eight-control 1x8 grid and a nine-control 2x8 grid whose ninth control is at native row 2, column 1. None of these layout nodes was extracted from the persistence writer payload."
+  },
+  "nativeLayouts": {
+    "desktop": {
+      "oneByEight": {
+        "key": "layout~sanitized-desktop-one-by-eight",
+        "type": "layout",
+        "kind": "container",
+        "controlProps": { "id": "layout~sanitized-desktop-one-by-eight" },
+        "children": [
+          {
+            "key": "@elem/layout-grid~sanitized-desktop-one-by-eight",
+            "type": "@elem/layout-grid",
+            "kind": "container",
+            "controlProps": { "columns": 8, "rows": 1, "id": "@elem/layout-grid~sanitized-desktop-one-by-eight" },
+            "children": [
+              { "key": "@elem/layout-grid.GridItem~desktop-eight-1", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 1, "row": 1, "migrationColumn": 0, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_1" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-eight-2", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 2, "row": 1, "migrationColumn": 1, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_2" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-eight-3", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 3, "row": 1, "migrationColumn": 2, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_3" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-eight-4", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 4, "row": 1, "migrationColumn": 3, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_4" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-eight-5", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 5, "row": 1, "migrationColumn": 4, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_5" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-eight-6", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 6, "row": 1, "migrationColumn": 5, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_6" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-eight-7", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 7, "row": 1, "migrationColumn": 6, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_7" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-eight-8", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 8, "row": 1, "migrationColumn": 7, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_8" }] }
+            ]
+          }
+        ]
+      },
+      "twoByEight": {
+        "key": "layout~sanitized-desktop-two-by-eight",
+        "type": "layout",
+        "kind": "container",
+        "controlProps": { "id": "layout~sanitized-desktop-two-by-eight" },
+        "children": [
+          {
+            "key": "@elem/layout-grid~sanitized-desktop-two-by-eight",
+            "type": "@elem/layout-grid",
+            "kind": "container",
+            "controlProps": { "columns": 8, "rows": 2, "id": "@elem/layout-grid~sanitized-desktop-two-by-eight" },
+            "children": [
+              { "key": "@elem/layout-grid.GridItem~desktop-nine-1", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 1, "row": 1, "migrationColumn": 0, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_1" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-nine-2", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 2, "row": 1, "migrationColumn": 1, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_2" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-nine-3", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 3, "row": 1, "migrationColumn": 2, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_3" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-nine-4", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 4, "row": 1, "migrationColumn": 3, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_4" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-nine-5", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 5, "row": 1, "migrationColumn": 4, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_5" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-nine-6", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 6, "row": 1, "migrationColumn": 5, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_6" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-nine-7", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 7, "row": 1, "migrationColumn": 6, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_7" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-nine-8", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 8, "row": 1, "migrationColumn": 7, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_8" }] },
+              { "key": "@elem/layout-grid.GridItem~desktop-nine-9", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 1, "row": 2, "migrationColumn": 0, "migrationGridRow": 1, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_9" }] }
+            ]
+          }
+        ]
+      }
+    },
+    "mobile": {
+      "oneByEight": {
+        "key": "layout~sanitized-mobile-one-by-eight",
+        "type": "layout",
+        "kind": "container",
+        "controlProps": { "id": "layout~sanitized-mobile-one-by-eight" },
+        "children": [
+          {
+            "key": "@elem/layout-grid~sanitized-mobile-one-by-eight",
+            "type": "@elem/layout-grid",
+            "kind": "container",
+            "controlProps": { "columns": 8, "rows": 1, "id": "@elem/layout-grid~sanitized-mobile-one-by-eight" },
+            "children": [
+              { "key": "@elem/layout-grid.GridItem~mobile-eight-1", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 1, "row": 1, "migrationColumn": 0, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_1" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-eight-2", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 2, "row": 1, "migrationColumn": 1, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_2" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-eight-3", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 3, "row": 1, "migrationColumn": 2, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_3" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-eight-4", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 4, "row": 1, "migrationColumn": 3, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_4" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-eight-5", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 5, "row": 1, "migrationColumn": 4, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_5" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-eight-6", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 6, "row": 1, "migrationColumn": 5, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_6" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-eight-7", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 7, "row": 1, "migrationColumn": 6, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_7" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-eight-8", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 8, "row": 1, "migrationColumn": 7, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_eight_8" }] }
+            ]
+          }
+        ]
+      },
+      "twoByEight": {
+        "key": "layout~sanitized-mobile-two-by-eight",
+        "type": "layout",
+        "kind": "container",
+        "controlProps": { "id": "layout~sanitized-mobile-two-by-eight" },
+        "children": [
+          {
+            "key": "@elem/layout-grid~sanitized-mobile-two-by-eight",
+            "type": "@elem/layout-grid",
+            "kind": "container",
+            "controlProps": { "columns": 8, "rows": 2, "id": "@elem/layout-grid~sanitized-mobile-two-by-eight" },
+            "children": [
+              { "key": "@elem/layout-grid.GridItem~mobile-nine-1", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 1, "row": 1, "migrationColumn": 0, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_1" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-nine-2", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 2, "row": 1, "migrationColumn": 1, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_2" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-nine-3", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 3, "row": 1, "migrationColumn": 2, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_3" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-nine-4", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 4, "row": 1, "migrationColumn": 3, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_4" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-nine-5", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 5, "row": 1, "migrationColumn": 4, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_5" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-nine-6", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 6, "row": 1, "migrationColumn": 5, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_6" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-nine-7", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 7, "row": 1, "migrationColumn": 6, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_7" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-nine-8", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 8, "row": 1, "migrationColumn": 7, "migrationGridRow": 0, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_8" }] },
+              { "key": "@elem/layout-grid.GridItem~mobile-nine-9", "type": "@elem/layout-grid.GridItem", "controlProps": { "column": 1, "row": 2, "migrationColumn": 0, "migrationGridRow": 1, "migrationColspan": 1 }, "children": [{ "key": "fd_native_cap_nine_9" }] }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

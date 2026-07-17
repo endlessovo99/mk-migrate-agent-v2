@@ -301,6 +301,13 @@ function validateNumberRange(value, schema, diagnostics, path, componentId) {
       actual: value
     }));
   }
+  if (Number.isFinite(schema.maximum) && value > schema.maximum) {
+    diagnostics.push(error("catalog.props.value_invalid", "Numeric prop is greater than the catalog maximum.", path, {
+      componentId,
+      maximum: schema.maximum,
+      actual: value
+    }));
+  }
   if (Array.isArray(schema.enum) && !schema.enum.includes(value)) {
     diagnostics.push(enumError(path, componentId, schema.enum, value));
   }

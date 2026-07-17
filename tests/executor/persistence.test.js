@@ -388,6 +388,47 @@ describe("form field and detail mutations", () => {
     );
   });
 
+  it("projects the eight-column boundary and ninth-control overflow equally to desktop and mobile", () => {
+    const form = sampleForm();
+    const baseField = form.fields.find((field) => field.id === "fd_amount");
+    const eightIds = Array.from({ length: 8 }, (_, index) => `fd_cap_eight_${index + 1}`);
+    const nineIds = Array.from({ length: 9 }, (_, index) => `fd_cap_nine_${index + 1}`);
+    for (const id of [...eightIds, ...nineIds]) {
+      form.fields.splice(form.fields.length - 1, 0, {
+        ...structuredClone(baseField),
+        id,
+        title: id,
+        sourceRef: `source.form.control.${id}`
+      });
+    }
+    form.layout.mkTree.splice(
+      0,
+      1,
+      tableLayoutRow("layout.row-eight-columns", "fd_eight_column_row", eightIds, 1),
+      tableLayoutRow("layout.row-nine-controls", "fd_nine_control_row", nineIds, 2)
+    );
+
+    const prepared = prepareSample(sampleTrustedDsl({ form, workflow: null }));
+    assert.equal(prepared.ok, true, JSON.stringify(prepared.diagnostics));
+    const view = JSON.parse(xformConfig(prepared.update).viewModel[0].fdConfig);
+
+    for (const mode of ["desktop", "mobile"]) {
+      const main = view.view.render[mode][0].children[0];
+      assertNativeGrid(
+        main.children.find((row) => row.controlProps?.migrationRowId === "fd_eight_column_row"),
+        eightIds,
+        { rows: 1, columns: 8 },
+        mode
+      );
+      assertNativeGrid(
+        main.children.find((row) => row.controlProps?.migrationRowId === "fd_nine_control_row"),
+        nineIds,
+        { rows: 2, columns: 8 },
+        mode
+      );
+    }
+  });
+
   it("persists overflow as one multi-row grid with one runtime row marker", () => {
     const form = sampleForm();
     const baseField = form.fields.find((field) => field.id === "fd_amount");
@@ -469,6 +510,42 @@ describe("form field and detail mutations", () => {
     );
   });
 });
+
+function tableLayoutRow(id, markerId, fieldIds, rows) {
+  return {
+    id,
+    componentId: "xform-multi-row-table-layout",
+    props: { rows, columns: 8 },
+    sourceRef: `source.form.layout.row.${id}`,
+    sourceMarkers: [markerId],
+    children: fieldIds.map((fieldId, index) => ({
+      id: `${id}-cell-${index}`,
+      refType: "field",
+      refIds: [fieldId],
+      sourceRef: `source.form.layout.cell.${id}-cell-${index}`,
+      row: Math.floor(index / 8),
+      column: index % 8,
+      colspan: 1
+    }))
+  };
+}
+
+function assertNativeGrid(row, fieldIds, expected, mode) {
+  const grid = row?.children?.[0];
+  assert.equal(row?.type, "layout", mode);
+  assert.equal(grid?.type, "@elem/layout-grid", mode);
+  assert.equal(grid?.controlProps?.rows, expected.rows, mode);
+  assert.equal(grid?.controlProps?.columns, expected.columns, mode);
+  assert.deepEqual(
+    grid?.children?.map((item) => [
+      item.controlProps.row,
+      item.controlProps.column,
+      item.children[0].key
+    ]),
+    fieldIds.map((fieldId, index) => [Math.floor(index / 8) + 1, (index % 8) + 1, fieldId]),
+    mode
+  );
+}
 
 describe("marker independence", () => {
   it("writes layout sourceMarkers as migrationRowId for runtime setFieldAttr", () => {

@@ -68,22 +68,6 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
-      id: "five-column-layout-success",
-      source: {
-        kind: "form-only",
-        relativePath: "structural-recovery/route-structural-recovery-inline-content_SysFormTemplate.xml"
-      },
-      reviewScenario: "accept",
-      newoaScenario: "persist",
-      confirmWrite: true,
-      expected: {
-        reviewStatus: "needs_manual",
-        dryRunStatus: "needs_manual",
-        executionStatus: "written_with_warnings",
-        operations: SUCCESS_OPERATIONS
-      }
-    },
-    {
       id: "multi-batch-review-success",
       source: {
         kind: "form-only",

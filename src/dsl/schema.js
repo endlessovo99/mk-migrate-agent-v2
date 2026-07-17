@@ -431,17 +431,27 @@ function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
   const columns = node.props?.columns;
   const multiRow = node.componentId === "xform-multi-row-table-layout";
   const flexRow = /^xform-flex-1-[1-4]-layout$/.test(node.componentId || "");
-  const validColumns = Number.isInteger(columns) && columns >= 1 && (!flexRow || columns <= 4);
+  const tableMaxColumns = multiRow
+    ? component?.propsSchema?.properties?.columns?.maximum
+    : undefined;
+  const validColumns = Number.isInteger(columns) &&
+    columns >= 1 &&
+    (!flexRow || columns <= 4) &&
+    (!multiRow || (Number.isInteger(tableMaxColumns) && columns <= tableMaxColumns));
   if (!validColumns) {
     diagnostics.push(error(
       "dsl.form.layout.columns_invalid",
       flexRow
         ? "Single-row mkTree props.columns must be an integer from 1 through 4."
-        : "mkTree props.columns must be a positive integer.",
+        : multiRow
+          ? `Table mkTree props.columns must be an integer from 1 through ${tableMaxColumns}.`
+          : "mkTree props.columns must be a positive integer.",
       `${path}/props/columns`,
       flexRow
         ? { actual: columns, supported: [1, 2, 3, 4] }
-        : { actual: columns, minimum: 1 }
+        : multiRow
+          ? { actual: columns, minimum: 1, maximum: tableMaxColumns }
+          : { actual: columns, minimum: 1 }
     ));
   }
 
