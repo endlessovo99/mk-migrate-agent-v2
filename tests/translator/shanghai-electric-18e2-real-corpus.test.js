@@ -14,7 +14,7 @@ describe("Shanghai Electric 18e2 route regression", () => {
       .flatMap((candidate) => [candidate, ...(candidate.columns || [])])
       .find((candidate) => candidate.id === originalId || candidate.sourceProps?.originalId === originalId)?.id;
 
-    assert.equal(dsl.form.fields.length, 97);
+    assert.equal(dsl.form.fields.length, 96);
     assert.equal(field("fd_person_name").title, "出差人员");
 
     assert.deepEqual(field("fd_bkpf_waers").props.defaultValue, {
@@ -107,19 +107,23 @@ describe("Shanghai Electric 18e2 route regression", () => {
       kind: "literal",
       value: 0
     });
-    const flightCalculation = field("fd_flight_total_inspire").props.calculation;
-    const flightRawTotal = field(flightCalculation.fieldIds[0]);
-    assert.equal(flightCalculation.kind, "formula");
-    assert.equal(flightCalculation.expression, `Math.max($${flightRawTotal.id}$, 0)`);
-    assert.deepEqual(flightRawTotal.props.calculation, {
+    assert.deepEqual(field("fd_flight_total_inspire").props.calculation, {
       kind: "aggregate",
       operation: "sum",
       tableId: "fd_flight_detail",
       fieldId: "fd_flight_inspire"
     });
-    assert.equal(flightRawTotal.componentId, "xform-calculate");
-    assert.equal(flightRawTotal.dataOnly, true);
-    assert.equal(flightRawTotal.generated, true);
+    assert.deepEqual(field("fd_flight_total_inspire").sourceProps.inferredCalculation.postTransform, {
+      kind: "clamp",
+      min: 0
+    });
+    assert.equal(
+      dsl.form.fields.some((candidate) =>
+        candidate.dataOnly === true &&
+        candidate.sourceProps?.generatedCalculation?.targetFieldId === "fd_flight_total_inspire"
+      ),
+      false
+    );
     assert.deepEqual(field("fd_total_inspire").props.calculation, {
       kind: "formula",
       expression: "$fd_train_total$ +$fd_flight_total_inspire$",
@@ -188,6 +192,17 @@ describe("Shanghai Electric 18e2 route regression", () => {
       "fd_flight_detail",
       ["fd_flight_address", "fd_flight_price"]
     );
+    const flightAggregateActions = actionsByBasis(actions, "deterministic-clamped-detail-aggregate");
+    assert.deepEqual(flightAggregateActions.map(actionKey), [
+      "onChange:fd_flight_inspire:fd_flight_detail",
+      "onChange:fd_flight_total_inspire:",
+      "onAfterDel:fd_flight_detail:fd_flight_detail",
+      "onLoad::",
+      "onBeforeSubmit::"
+    ]);
+    assert.match(flightAggregateActions[0].function, /MKXFORM\.getValue\("\$\{table:fd_flight_detail\}"\)/);
+    assert.match(flightAggregateActions[0].function, /Math\.max\(total, 0\)/);
+    assert.match(flightAggregateActions[2].function, /var rawRows = data \|\| \[\]/);
 
     const personActions = actionsByBasis(actions, "deterministic-person-text-calculation");
     assert.deepEqual(personActions.map(actionKey), [
@@ -267,7 +282,7 @@ describe("Shanghai Electric 18e2 route regression", () => {
       assert.ok(decision.targetRefs.length > 0, `${decision.id} must identify target semantics`);
     }
 
-    assert.equal(decisions.filter((decision) => decision.classification === "native").length, 10);
+    assert.equal(decisions.filter((decision) => decision.classification === "native").length, 9);
     assert.equal(decisions.filter((decision) => decision.classification === "script").length, 28);
     assert.equal(decisions.filter((decision) => decision.classification === "manual").length, 3);
     for (const targetRef of ["fd_train_total", "fd_flight_total_inspire"]) {
@@ -279,6 +294,9 @@ describe("Shanghai Electric 18e2 route regression", () => {
         handling: "native_dependency_recalculation",
         nativeTarget: "fd_total_inspire"
       }]);
+      if (targetRef === "fd_flight_total_inspire") {
+        assert.deepEqual(decision.semantics.postTransform, { kind: "clamp", min: 0 });
+      }
     }
     const manualCodes = new Set(
       decisions.filter((decision) => decision.classification === "manual").map((decision) => decision.code)

@@ -55,7 +55,8 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
     ...sources.flatMap((source, sourceIndex) => eventCandidatesFromSource(source, sourceIndex, {
       ...options,
       sourceScripts
-    }))
+    })),
+    ...clampedDetailAggregateCandidates(options.form, sourceScripts)
   ]);
   const actions = [];
   const warnings = [];
@@ -1537,6 +1538,154 @@ function groupedDetailCalculationFunction(event, model) {
     ? "function onChange(value, rowNum, parentRowNum) {"
     : event === "onAfterDel" ? "function onAfterDel(data) {" : "function onLoad() {";
   return [signature, ...body, "}"].join("\n");
+}
+
+function clampedDetailAggregateCandidates(form = {}, sourceScripts = {}) {
+  const sourcesByRef = new Map(
+    (sourceScripts.sources || []).map((source) => [source.sourceRef, source])
+  );
+  const candidates = [];
+
+  for (const field of form.fields || []) {
+    const calculation = field?.props?.calculation;
+    const inference = field?.sourceProps?.inferredCalculation;
+    const postTransform = inference?.postTransform;
+    if (
+      field?.type === "detailTable" ||
+      field?.dataOnly === true ||
+      calculation?.kind !== "aggregate" ||
+      calculation.operation !== "sum" ||
+      postTransform?.kind !== "clamp" ||
+      !Number.isFinite(Number(postTransform.min))
+    ) continue;
+
+    const table = (form.fields || []).find((candidate) =>
+      candidate?.id === calculation.tableId && candidate.type === "detailTable"
+    );
+    if (!(table?.columns || []).some((column) => column.id === calculation.fieldId)) continue;
+
+    const source = sourcesByRef.get(inference.sourceRef) || {
+      sourceRef: inference.sourceRef || field.sourceRef,
+      functionAudit: { matched: [], violations: [] }
+    };
+    const model = {
+      tableId: calculation.tableId,
+      fieldId: calculation.fieldId,
+      targetFieldId: field.id,
+      min: Number(postTransform.min)
+    };
+    const common = {
+      translationStatus: "mapped",
+      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      source,
+      sourceRefs: uniqueStrings([field.sourceRef, inference.sourceRef]),
+      functionMappings: [{
+        source: `detail SUM with ${postTransform.kind} post-transform`,
+        target: "MK native SUM plus synchronous lifecycle clamp",
+        basis: "deterministic-clamped-detail-aggregate",
+        reviewRequired: false
+      }],
+      semanticHints: {
+        coveredCalculationRanges: inference.coveredCalculationRanges || []
+      }
+    };
+    const idStem = `${inference.sourceRef || field.sourceRef || field.id}.clamped-aggregate.${field.id}`;
+
+    candidates.push(
+      {
+        ...common,
+        id: `${idStem}.source-change`,
+        event: "onChange",
+        scope: "control",
+        controlId: model.fieldId,
+        tableId: model.tableId,
+        javascript: inference.evidence,
+        function: clampedDetailAggregateFunction("onChange", model)
+      },
+      {
+        ...common,
+        id: `${idStem}.target-change`,
+        event: "onChange",
+        scope: "control",
+        controlId: model.targetFieldId,
+        javascript: inference.evidence,
+        function: clampedAggregateTargetFunction(model)
+      },
+      {
+        ...common,
+        id: `${idStem}.after-delete`,
+        event: "onAfterDel",
+        scope: "control",
+        controlId: model.tableId,
+        tableId: model.tableId,
+        javascript: inference.evidence,
+        function: clampedDetailAggregateFunction("onAfterDel", model)
+      },
+      {
+        ...common,
+        id: `${idStem}.load`,
+        event: "onLoad",
+        scope: "global",
+        javascript: inference.evidence,
+        function: clampedDetailAggregateFunction("onLoad", model)
+      },
+      {
+        ...common,
+        id: `${idStem}.before-submit`,
+        event: "onBeforeSubmit",
+        scope: "global",
+        javascript: inference.evidence,
+        function: clampedDetailAggregateFunction("onBeforeSubmit", model)
+      }
+    );
+  }
+
+  return candidates;
+}
+
+function clampedDetailAggregateFunction(event, model) {
+  const rowSource = event === "onAfterDel"
+    ? "data || []"
+    : `MKXFORM.getValue(${JSON.stringify(`\${table:${model.tableId}}`)}) || []`;
+  const body = [
+    `  var rawRows = ${rowSource}`,
+    "  var rows = Array.isArray(rawRows) ? rawRows : (rawRows.values || [])",
+    "  var total = 0",
+    "  for (var index = 0; index < rows.length; index += 1) {",
+    "    var row = rows[index] || {}",
+    `    total += Number(row[${JSON.stringify(model.fieldId)}] || 0)`,
+    "  }",
+    `  var result = Math.max(total, ${model.min})`,
+    `  MKXFORM.setValue(${JSON.stringify(model.targetFieldId)}, result)`
+  ];
+  if (event === "onBeforeSubmit") {
+    return [
+      "function onBeforeSubmit(context) {",
+      "  if (context && context.isDraft) {",
+      ...body.map((line) => `  ${line}`),
+      "    return true",
+      "  }",
+      ...body,
+      "  return true",
+      "}"
+    ].join("\n");
+  }
+  const signature = event === "onChange"
+    ? "function onChange(value, rowNum, parentRowNum) {"
+    : event === "onAfterDel" ? "function onAfterDel(data) {" : "function onLoad(context) {";
+  return [signature, ...body, "}"].join("\n");
+}
+
+function clampedAggregateTargetFunction(model) {
+  return [
+    "function onChange(value) {",
+    "  var current = Number(value || 0)",
+    `  var result = Math.max(current, ${model.min})`,
+    "  if (result !== current) {",
+    `    MKXFORM.setValue(${JSON.stringify(model.targetFieldId)}, result)`,
+    "  }",
+    "}"
+  ].join("\n");
 }
 
 function groupedDetailCalculationLines(model, rowSource) {

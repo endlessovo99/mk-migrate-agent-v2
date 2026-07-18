@@ -56,28 +56,54 @@ describe("calculation migration Route case", () => {
     });
   });
 
-  it("composes a nonnegative aggregate through a generated data-only SUM field", () => {
+  it("keeps the rendered target as the native SUM execution point for a clamped aggregate", () => {
+    const { dsl } = stages();
+
+    assert.deepEqual(field(dsl, "fd_clamped_sum").props.calculation, {
+      kind: "aggregate",
+      operation: "sum",
+      tableId: "fd_lines",
+      fieldId: "fd_line_total"
+    });
+  });
+
+  it("clamps a native detail SUM through synchronous lifecycle actions without a hidden compute field", () => {
     const { dsl } = stages();
     const target = field(dsl, "fd_clamped_sum");
     const helper = dsl.form.fields.find((candidate) =>
       candidate.dataOnly === true &&
       candidate.sourceProps?.generatedCalculation?.targetFieldId === "fd_clamped_sum"
     );
+    const actions = dsl.scripts.actions.filter((action) =>
+      action.functionMappings?.some((mapping) =>
+        mapping.basis === "deterministic-clamped-detail-aggregate"
+      )
+    );
 
-    assert.ok(helper);
-    assert.equal(helper.generated, true);
-    assert.deepEqual(helper.props.calculation, {
+    assert.equal(helper, undefined);
+    assert.deepEqual(target.props.calculation, {
       kind: "aggregate",
       operation: "sum",
       tableId: "fd_lines",
       fieldId: "fd_line_total"
     });
-    assert.deepEqual(target.props.calculation, {
-      kind: "formula",
-      expression: `Math.max($${helper.id}$, 0)`,
-      displayExpression: `MAX($${helper.title}$, 0)`,
-      fieldIds: [helper.id]
-    });
+    assert.deepEqual(actions.map(actionKey), [
+      "onChange:fd_line_total:fd_lines",
+      "onChange:fd_clamped_sum:",
+      "onAfterDel:fd_lines:fd_lines",
+      "onLoad::",
+      "onBeforeSubmit::"
+    ]);
+    for (const action of actions) {
+      assert.equal(action.translationStatus, "mapped");
+      assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
+      assert.match(action.function, /Math\.max\([^\n]+, 0\)/);
+      assert.match(action.function, /MKXFORM\.setValue\("fd_clamped_sum"/);
+      assert.doesNotMatch(action.function, /DocList_TableInfo|SetXFormFieldValueById|jQuery|\$\(/);
+    }
+    assert.match(actions.find(action => action.event === "onAfterDel").function, /var rawRows = data \|\| \[\]/);
+    assert.match(actions.find(action => action.event === "onLoad").function, /MKXFORM\.getValue\("\$\{table:fd_lines\}"\)/);
+    assert.match(actions.find(action => action.event === "onBeforeSubmit").function, /return true/);
     assert.equal(
       dsl.scripts.calculationDecisions.some((decision) =>
         decision.code === "calculation.aggregate_nonnegative_clamp" &&
@@ -85,6 +111,44 @@ describe("calculation migration Route case", () => {
       ),
       false
     );
+  });
+
+  it("executes clamped aggregate lifecycle handlers for row changes, deletion, and draft saves", () => {
+    const { dsl } = stages();
+    const actions = dsl.scripts.actions.filter((action) =>
+      action.functionMappings?.some((mapping) =>
+        mapping.basis === "deterministic-clamped-detail-aggregate"
+      )
+    );
+    const writes = [];
+    const rows = [{ fd_line_total: -200 }, { fd_line_total: -32 }];
+    const MKXFORM = {
+      getValue(ref) {
+        assert.equal(ref, "${table:fd_lines}");
+        return rows;
+      },
+      setValue(fieldId, value) {
+        writes.push([fieldId, value]);
+      }
+    };
+
+    executeAction(actions.find((action) => actionKey(action) === "onChange:fd_line_total:fd_lines"), MKXFORM)(-32, 1);
+    executeAction(actions.find((action) => actionKey(action) === "onChange:fd_clamped_sum:"), MKXFORM)(-232);
+    executeAction(actions.find((action) => actionKey(action) === "onAfterDel:fd_lines:fd_lines"), MKXFORM)([
+      { fd_line_total: 100 },
+      { fd_line_total: -40 }
+    ]);
+    assert.equal(executeAction(
+      actions.find((action) => actionKey(action) === "onBeforeSubmit::"),
+      MKXFORM
+    )({ isDraft: true }), true);
+
+    assert.deepEqual(writes, [
+      ["fd_clamped_sum", 0],
+      ["fd_clamped_sum", 0],
+      ["fd_clamped_sum", 60],
+      ["fd_clamped_sum", 0]
+    ]);
   });
 
   it("maps a safe synchronous onChange recalculation without legacy DOM code", () => {
@@ -109,7 +173,7 @@ describe("calculation migration Route case", () => {
       displayExpression: "$fd_detail_sum$ - $fd_recompute_input$",
       fieldIds: ["fd_detail_sum", "fd_recompute_input"]
     });
-    assert.match(field(dsl, "fd_clamped_sum").props.calculation.expression, /^Math\.max/);
+    assert.equal(field(dsl, "fd_clamped_sum").props.calculation.kind, "aggregate");
     assert.ok(dsl.scripts.calculationDecisions.some(decision =>
       decision.classification === "manual" &&
       decision.sourceRefs.includes("source.form.jsp.jsp_clamped_sum.script.1") &&
@@ -172,11 +236,6 @@ describe("calculation migration Route case", () => {
     const line = detailColumn(result.execution.readback.form, "fd_lines", "fd_line_total");
     const sum = field(result.execution.readback.form, "fd_detail_sum");
     const clamped = field(result.execution.readback.form, "fd_clamped_sum");
-    const clampHelper = result.dsl.form.fields.find((candidate) =>
-      candidate.dataOnly === true &&
-      candidate.sourceProps?.generatedCalculation?.targetFieldId === "fd_clamped_sum"
-    );
-    const readbackHelper = field(result.execution.readback.form, clampHelper.id);
     const action = result.execution.readback.form.scripts.actions.find((candidate) =>
       candidate.event === "onChange" && candidate.controlKey?.endsWith(".fd_recompute_input")
     );
@@ -184,15 +243,13 @@ describe("calculation migration Route case", () => {
     assert.deepEqual(main.calculation, field(result.dsl, "fd_main_total").props.calculation);
     assert.deepEqual(line.calculation, detailColumn(result.dsl, "fd_lines", "fd_line_total").props.calculation);
     assert.deepEqual(sum.calculation, field(result.dsl, "fd_detail_sum").props.calculation);
-    assert.deepEqual(readbackHelper.calculation, clampHelper.props.calculation);
     assert.deepEqual(clamped.calculation, field(result.dsl, "fd_clamped_sum").props.calculation);
     assert.deepEqual(result.execution.readback.form.calculationOrder, [
       "fd_main_total",
       "fd_lines.fd_line_total",
       "fd_detail_sum",
-      "fd_recompute_output",
-      clampHelper.id,
-      "fd_clamped_sum"
+      "fd_clamped_sum",
+      "fd_recompute_output"
     ]);
     assert.equal(action.event, "onChange");
     assert.match(action.controlKey, /\.fd_recompute_input$/);
@@ -203,6 +260,23 @@ describe("calculation migration Route case", () => {
         candidate.event === "onChange" && candidate.controlKey?.endsWith(`.${controlId}`)
       );
       assert.equal(detailAction?.hasCanonicalGuard, true);
+    }
+    for (const expected of [
+      ["onChange", ".fd_line_total"],
+      ["onChange", ".fd_clamped_sum"],
+      ["onAfterDel", "detailTable"],
+      ["onLoad", "global"],
+      ["onBeforeSubmit", "global"]
+    ]) {
+      const clampAction = result.execution.readback.form.scripts.actions.find((candidate) =>
+        candidate.event === expected[0] &&
+        (expected[1] === "global"
+          ? candidate.scope === "global"
+          : expected[1] === "detailTable"
+            ? candidate.scope === "control" && candidate.id?.endsWith(".after-delete")
+          : candidate.controlKey?.endsWith(expected[1]))
+      );
+      assert.equal(clampAction?.hasCanonicalGuard, true, expected.join(":"));
     }
   });
 });
@@ -219,4 +293,13 @@ function field(dsl, id) {
 
 function detailColumn(dsl, tableId, columnId) {
   return field(dsl, tableId).columns.find((candidate) => candidate.id === columnId);
+}
+
+function actionKey(action) {
+  return `${action.event}:${action.controlId || ""}:${action.tableId || ""}`;
+}
+
+function executeAction(action, MKXFORM) {
+  assert.ok(action);
+  return Function("MKXFORM", `${action.function}; return ${action.event};`)(MKXFORM);
 }

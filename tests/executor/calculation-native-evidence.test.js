@@ -65,7 +65,6 @@ describe("independent native calculation evidence", () => {
     assert.deepEqual(clampAggregate.item.statisticField, [
       `${native.detailTableName}.${evidence.clampAggregate.sourceField}`
     ]);
-    assertFormula(native.byRef.get(evidence.clampFormula.targetField), evidence.clampFormula);
     assertFormula(
       native.byRef.get(evidence.runtimeDifferenceFormula.targetField),
       evidence.runtimeDifferenceFormula
@@ -82,6 +81,27 @@ describe("independent native calculation evidence", () => {
     assert.equal(action.id, evidence.onChange.actionId);
     assert.deepEqual(action.migrationRunWhen, evidence.onChange.runWhen);
     assert.equal(action.function.includes(evidence.onChange.targetCall), true);
+
+    const clampSource = nativeControlAction(
+      native,
+      evidence.clampActions.sourceChange.controlId,
+      evidence.clampActions.sourceChange.event
+    );
+    assert.equal(clampSource.id, evidence.clampActions.sourceChange.actionId);
+    assert.equal(clampSource.function.includes(evidence.clampActions.sourceChange.targetCall), true);
+    const clampTarget = nativeControlAction(
+      native,
+      evidence.clampActions.targetChange.controlId,
+      evidence.clampActions.targetChange.event
+    );
+    assert.equal(clampTarget.id, evidence.clampActions.targetChange.actionId);
+    assert.equal(clampTarget.function.includes(evidence.clampActions.targetChange.targetCall), true);
+    const afterDelete = nativeActionById(native, evidence.clampActions.afterDelete.actionId);
+    assert.equal(afterDelete.function.includes(evidence.clampActions.afterDelete.targetCall), true);
+    for (const event of evidence.clampActions.globalEvents) {
+      assert.equal(Array.isArray(native.formAttr.controlAction.global[event]), true, event);
+      assert.equal(native.formAttr.controlAction.global[event].length, 1, event);
+    }
   });
 
   for (const testCase of [
@@ -109,11 +129,18 @@ describe("independent native calculation evidence", () => {
       }
     },
     {
-      name: "server changes the aggregate post-clamp formula",
+      name: "server changes the clamped aggregate into a formula",
       code: "readback.form.prop_calculation_mismatch",
       mutate(native) {
-        native.byRef.get(evidence.clampFormula.targetField).item.value.script =
-          "Math.min(${data.biz.fd_mig_raw_clamped_sum}, 0)";
+        const item = native.byRef.get(evidence.clampAggregate.targetField).item;
+        item.type = "FORMULA";
+        item.statisticField = "";
+        item.value = {
+          type: "Eval",
+          script: "0",
+          vo: { mode: "formula", content: "0" },
+          varIds: []
+        };
       }
     },
     {
@@ -134,12 +161,49 @@ describe("independent native calculation evidence", () => {
       }
     },
     {
-      name: "server changes the clamp helper physical detail table",
+      name: "server changes the clamped aggregate physical detail table",
       code: "readback.form.prop_calculation_mismatch",
       mutate(native) {
         native.byRef.get(evidence.clampAggregate.targetField).item.statisticField = [
           `mk_model_wrong.${evidence.clampAggregate.sourceField}`
         ];
+      }
+    },
+    {
+      name: "server drops the clamped aggregate source-change binding",
+      code: "readback.scripts.action_missing",
+      mutate(native) {
+        delete nativeControlActionBucket(
+          native,
+          evidence.clampActions.sourceChange.controlId
+        )[evidence.clampActions.sourceChange.event];
+      }
+    },
+    {
+      name: "server changes the clamped aggregate target-change body",
+      code: "readback.scripts.body_digest_mismatch",
+      mutate(native) {
+        const action = nativeControlAction(
+          native,
+          evidence.clampActions.targetChange.controlId,
+          evidence.clampActions.targetChange.event
+        );
+        action.function = action.function.replace("Math.max(current, 0)", "Math.min(current, 0)");
+      }
+    },
+    {
+      name: "server drops the clamped aggregate post-delete binding",
+      code: "readback.scripts.action_missing",
+      mutate(native) {
+        const entry = nativeActionEntryById(native, evidence.clampActions.afterDelete.actionId);
+        delete entry.bucket[entry.event];
+      }
+    },
+    {
+      name: "server drops the clamped aggregate submit-time recomputation",
+      code: "readback.scripts.action_missing",
+      mutate(native) {
+        delete native.formAttr.controlAction.global.onBeforeSubmit;
       }
     },
     {
@@ -239,6 +303,35 @@ function nativeCalculationState(template) {
 function persistNativeState(template, native) {
   native.config.attribute.formAttr = JSON.stringify(native.formAttr);
   template.mechanisms["sys-xform"].fdConfig = JSON.stringify(native.config);
+}
+
+function nativeControlActionBucket(native, controlId) {
+  const entry = Object.entries(native.formAttr.controlAction.control || {})
+    .find(([key]) => key.endsWith(`.${controlId}`));
+  assert.ok(entry, `missing native action bucket for ${controlId}`);
+  return entry[1];
+}
+
+function nativeControlAction(native, controlId, event) {
+  const actions = nativeControlActionBucket(native, controlId)[event];
+  assert.equal(Array.isArray(actions), true, `${controlId}.${event}`);
+  assert.equal(actions.length, 1, `${controlId}.${event}`);
+  return actions[0];
+}
+
+function nativeActionEntryById(native, actionId) {
+  for (const bucket of Object.values(native.formAttr.controlAction.control || {})) {
+    for (const [event, actions] of Object.entries(bucket || {})) {
+      if (!Array.isArray(actions)) continue;
+      if (actions.some((action) => action.id === actionId)) return { bucket, event };
+    }
+  }
+  assert.fail(`missing native action ${actionId}`);
+}
+
+function nativeActionById(native, actionId) {
+  const { bucket, event } = nativeActionEntryById(native, actionId);
+  return bucket[event].find((action) => action.id === actionId);
 }
 
 function assertFormula(actual, expected) {

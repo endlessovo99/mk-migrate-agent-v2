@@ -3,9 +3,8 @@
     "fd_main_total",
     "fd_lines.fd_line_total",
     "fd_detail_sum",
-    "fd_recompute_output",
-    "fd_mig_raw_clamped_sum",
-    "fd_clamped_sum"
+    "fd_clamped_sum",
+    "fd_recompute_output"
   ],
   "mainFormula": {
     "targetField": "fd_main_total",
@@ -27,16 +26,30 @@
     "sourceField": "fd_line_total"
   },
   "clampAggregate": {
-    "targetField": "fd_mig_raw_clamped_sum",
+    "targetField": "fd_clamped_sum",
     "operation": "SUM",
     "tableId": "fd_lines",
     "sourceField": "fd_line_total"
   },
-  "clampFormula": {
-    "targetField": "fd_clamped_sum",
-    "script": "Math.max(${data.biz.fd_mig_raw_clamped_sum}, 0)",
-    "display": "MAX($非负明细合计原始合计$, 0)",
-    "fieldIds": ["fd_mig_raw_clamped_sum"]
+  "clampActions": {
+    "sourceChange": {
+      "event": "onChange",
+      "controlId": "fd_line_total",
+      "actionId": "source.form.jsp.jsp_clamped_sum.script.1.clamped-aggregate.fd_clamped_sum.source-change",
+      "targetCall": "MKXFORM.setValue(\"fd_clamped_sum\", result)"
+    },
+    "targetChange": {
+      "event": "onChange",
+      "controlId": "fd_clamped_sum",
+      "actionId": "source.form.jsp.jsp_clamped_sum.script.1.clamped-aggregate.fd_clamped_sum.target-change",
+      "targetCall": "Math.max(current, 0)"
+    },
+    "afterDelete": {
+      "event": "onAfterDel",
+      "actionId": "source.form.jsp.jsp_clamped_sum.script.1.clamped-aggregate.fd_clamped_sum.after-delete",
+      "targetCall": "var rawRows = data || []"
+    },
+    "globalEvents": ["onLoad", "onBeforeSubmit"]
   },
   "runtimeDifferenceFormula": {
     "targetField": "fd_recompute_output",

@@ -196,6 +196,7 @@ function attachCalculationDecisions(scripts, form, sourceScripts = {}) {
         `${calculation.operation}(${calculation.tableId}.${calculation.fieldId})`,
       semantics: {
         ...calculation,
+        ...(inferred?.postTransform ? { postTransform: inferred.postTransform } : {}),
         ...(dependentCallSemantics.length ? { sourceDependentCalls: dependentCallSemantics } : {})
       }
     });
@@ -766,71 +767,27 @@ function applyNativeCalculationInferences(form, sourceScripts = {}) {
   }
   if (!inferredByTarget.size) return form;
 
-  const usedFieldIds = new Set((form.fields || []).map((field) => field.id));
-  const generatedFields = [];
-
   const fields = (form.fields || []).map((field) => {
       const inference = inferredByTarget.get(field.id);
       if (!inference || field.type === "detailTable") return field;
       if (inference.postTransform?.kind === "clamp" && inference.kind === "aggregate") {
-        const helperId = allocateGeneratedCalculationFieldId(field.id, usedFieldIds);
-        const helperTitle = `${field.title}原始合计`;
         const aggregateCalculation = {
           kind: "aggregate",
           operation: "sum",
           tableId: inference.tableId,
           fieldId: inference.sourceFieldId
         };
-        generatedFields.push({
-          id: helperId,
-          title: helperTitle,
-          type: "number",
-          componentId: "xform-calculate",
-          dataOnly: true,
-          props: {
-            ...(Number.isInteger(field.props?.precision) ? { precision: field.props.precision } : {}),
-            defaultValue: { kind: "literal", value: 0 },
-            calculation: aggregateCalculation
-          },
-          sourceProps: {
-            generatedCalculation: {
-              role: "aggregateInput",
-              targetFieldId: field.id,
-              sourceRef: inference.sourceRef,
-              transform: inference.postTransform
-            },
-            inferredCalculation: inferredCalculationEvidence({ ...inference, dependentCalls: [] })
-          },
-          sourceRef: inference.sourceRef,
-          generated: true,
-          reason: `Generated raw aggregate for ${inference.postTransform.kind} post-processing on ${field.id}.`
-        });
-        const min = Number(inference.postTransform.min);
-        const expression = `Math.max($${helperId}$, ${min})`;
         return {
           ...field,
           type: "number",
           componentId: "xform-calculate",
           props: {
             ...(field.props || {}),
-            calculation: {
-              kind: "formula",
-              expression,
-              displayExpression: `MAX($${helperTitle}$, ${min})`,
-              fieldIds: [helperId]
-            }
+            calculation: aggregateCalculation
           },
           sourceProps: {
             ...(field.sourceProps || {}),
-            inferredCalculation: inferredCalculationEvidence({
-              ...inference,
-              kind: "formula",
-              composition: {
-                aggregate: aggregateCalculation,
-                postTransform: inference.postTransform,
-                helperFieldId: helperId
-              }
-            }, field.props?.calculation)
+            inferredCalculation: inferredCalculationEvidence(inference, field.props?.calculation)
           }
         };
       }
@@ -874,7 +831,7 @@ function applyNativeCalculationInferences(form, sourceScripts = {}) {
 
   return {
     ...form,
-    fields: [...fields, ...generatedFields]
+    fields
   };
 }
 
@@ -921,18 +878,6 @@ function inferConditionalTotalCalculation(source, sourceScripts) {
     runtimeOverride: true,
     residuals: []
   };
-}
-
-function allocateGeneratedCalculationFieldId(targetFieldId, usedFieldIds) {
-  const stem = `fd_mig_raw_${String(targetFieldId).replace(/^fd_/u, "")}`;
-  let candidate = stem;
-  let suffix = 1;
-  while (usedFieldIds.has(candidate)) {
-    candidate = `${stem}_${suffix}`;
-    suffix += 1;
-  }
-  usedFieldIds.add(candidate);
-  return candidate;
 }
 
 function inferredCalculationEvidence(inference, sourceFormulaOverride) {
