@@ -184,6 +184,7 @@ function observeForm(config, xform) {
 
   let rulesValue = { rules: [] };
   let scriptsValue = { actions: [] };
+  let calculationOrder = [];
   let subjectRule;
   let rulesStatus = "verified";
   let scriptsStatus = "verified";
@@ -196,7 +197,7 @@ function observeForm(config, xform) {
   } else {
     const formAttr = formAttrResult.value;
     subjectRule = formAttr.subjectRule;
-    applyObservedComputations(fields, formAttr.formRule || {}, detailModels);
+    calculationOrder = applyObservedComputations(fields, formAttr.formRule || {}, detailModels);
     rulesValue = observeRules(formAttr.formRule || {}, detailModels, rulesDiagnostics);
     scriptsValue = observeScripts(formAttr.controlAction || {}, scriptsDiagnostics, {
       mainModel,
@@ -206,6 +207,7 @@ function observeForm(config, xform) {
 
   const formValue = {
     fields,
+    calculationOrder,
     layoutRows,
     tableName: normalizeScalar(mainModel.fdTableName || xform?.fdTableName || ""),
     subjectRule,
@@ -354,6 +356,7 @@ function observeNativeControlBinding(value) {
   );
   return {
     readable,
+    controlId: normalizeScalar(controlProps?.id),
     title: normalizeScalar(controlProps?.title),
     label: normalizeScalar(attribute?.config?.label),
     detailFieldId: normalizeScalar(controlProps?.["$$detailTableFieldName"]),
@@ -424,12 +427,25 @@ function observeNativeDefaultValue(controlProps, field) {
 function applyObservedComputations(fields, formRule, detailModels) {
   const compute = Array.isArray(formRule?.compute) ? formRule.compute : [];
   const fieldById = new Map(fields.filter((field) => field?.type !== "detailTable").map((field) => [field.id, field]));
+  const detailFieldByControlId = new Map(
+    fields
+      .filter((field) => field?.type === "detailTable")
+      .flatMap((field) => (field.columns || []).map((column) => ({
+        column,
+        ref: `${field.id}.${column.id}`
+      })))
+      .map((entry) => [entry.column.persistence?.controlBinding?.controlId, entry])
+      .filter(([controlId]) => controlId)
+  );
   const detailByTable = new Map(detailModels.map((model) => [model.fdTableName, detailFieldNameForModel(model)]));
+  const calculationOrder = [];
 
   for (const rule of compute) {
     for (const item of Array.isArray(rule?.choices?.items) ? rule.choices.items : []) {
-      const field = fieldById.get(normalizeScalar(item.fieldName));
+      const detailTarget = detailFieldByControlId.get(normalizeScalar(item.fieldKey));
+      const field = detailTarget?.column || fieldById.get(normalizeScalar(item.fieldName));
       if (!field) continue;
+      calculationOrder.push(detailTarget?.ref || field.id);
       if (item.type === "FORMULA" && item.value && typeof item.value === "object") {
         const script = String(item.value.script || "");
         field.props.calculation = {
@@ -461,6 +477,7 @@ function applyObservedComputations(fields, formRule, detailModels) {
       }
     }
   }
+  return calculationOrder;
 }
 
 function cloneValue(value) {

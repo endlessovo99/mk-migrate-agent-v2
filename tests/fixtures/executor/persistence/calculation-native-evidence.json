@@ -1,0 +1,59 @@
+{
+  "calculationOrder": [
+    "fd_main_total",
+    "fd_lines.fd_line_total",
+    "fd_detail_sum",
+    "fd_recompute_output",
+    "fd_mig_raw_clamped_sum",
+    "fd_clamped_sum"
+  ],
+  "mainFormula": {
+    "targetField": "fd_main_total",
+    "script": "${data.biz.fd_main_left} + ${data.biz.fd_main_right}",
+    "display": "$主表左值$ + $主表右值$",
+    "fieldIds": ["fd_main_left", "fd_main_right"]
+  },
+  "detailFormula": {
+    "tableId": "fd_lines",
+    "targetField": "fd_line_total",
+    "script": "${data.biz.fd_quantity} * ${data.biz.fd_unit_price}",
+    "display": "$数量$ * $单价$",
+    "fieldIds": ["fd_quantity", "fd_unit_price"]
+  },
+  "aggregate": {
+    "targetField": "fd_detail_sum",
+    "operation": "SUM",
+    "tableId": "fd_lines",
+    "sourceField": "fd_line_total"
+  },
+  "clampAggregate": {
+    "targetField": "fd_mig_raw_clamped_sum",
+    "operation": "SUM",
+    "tableId": "fd_lines",
+    "sourceField": "fd_line_total"
+  },
+  "clampFormula": {
+    "targetField": "fd_clamped_sum",
+    "script": "Math.max(${data.biz.fd_mig_raw_clamped_sum}, 0)",
+    "display": "MAX($非负明细合计原始合计$, 0)",
+    "fieldIds": ["fd_mig_raw_clamped_sum"]
+  },
+  "runtimeDifferenceFormula": {
+    "targetField": "fd_recompute_output",
+    "script": "${data.biz.fd_detail_sum} - ${data.biz.fd_recompute_input}",
+    "display": "$fd_detail_sum$ - $fd_recompute_input$",
+    "fieldIds": ["fd_detail_sum", "fd_recompute_input"]
+  },
+  "onChange": {
+    "controlId": "fd_recompute_input",
+    "event": "onChange",
+    "actionId": "jsp_recompute.script.1.event.1",
+    "runWhen": { "viewStatusIn": ["add", "edit"] },
+    "targetCall": "MKXFORM.setValue(\"fd_recompute_output\", Number(value || 0) * 2)"
+  },
+  "dependencyCycle": {
+    "leftField": "fd_main_total",
+    "rightField": "fd_clamped_sum",
+    "errorCode": "projection.form.calculation_dependency_cycle"
+  }
+}

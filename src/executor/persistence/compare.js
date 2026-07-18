@@ -114,6 +114,14 @@ function compareForm(expected, actual, diagnostics) {
       actual: actual?.subjectRule
     }));
   }
+  if (stableStringify(expected.calculationOrder || []) !== stableStringify(actual?.calculationOrder || [])) {
+    diagnostics.push(mismatch("form", "readback.form.calculation_order_mismatch", "Readback calculation rule order does not preserve dependency order.", {
+      invariantKey: "form.calculationOrder",
+      path: "/mechanisms/sys-xform/fdConfig/attribute/formAttr/formRule/compute",
+      expected: expected.calculationOrder || [],
+      actual: actual?.calculationOrder || []
+    }));
+  }
 
   const actualFields = new Map((actual?.fields || []).map((field) => [field.id, field]));
   const expectedIds = new Set((expected.fields || []).map((field) => field.id));
@@ -549,7 +557,12 @@ function compareScripts(expected, actual, diagnostics) {
   }
 
   for (const expectedAction of expectedActions) {
-    const matchIndex = actualActions.findIndex((candidate) => scriptMatches(expectedAction, candidate));
+    const exactIdIndex = expectedAction.id
+      ? actualActions.findIndex((candidate) => candidate.id === expectedAction.id)
+      : -1;
+    const matchIndex = exactIdIndex >= 0
+      ? exactIdIndex
+      : actualActions.findIndex((candidate) => scriptMatches(expectedAction, candidate));
     if (matchIndex === -1) {
       diagnostics.push(mismatch("scripts", "readback.scripts.action_missing", "Readback is missing an executable DSL script action.", {
         invariantKey: `scripts.actions.${expectedAction.id}`,
@@ -565,12 +578,24 @@ function compareScripts(expected, actual, diagnostics) {
     const actualAction = actualActions[matchIndex];
     actualActions.splice(matchIndex, 1);
 
-    if (expectedAction.event !== actualAction.event || expectedAction.scope !== actualAction.scope) {
+    if (
+      expectedAction.event !== actualAction.event ||
+      expectedAction.scope !== actualAction.scope ||
+      expectedAction.controlKey !== actualAction.controlKey
+    ) {
       diagnostics.push(mismatch("scripts", "readback.scripts.binding_mismatch", "Readback script action binding mismatch.", {
         invariantKey: `scripts.actions.${expectedAction.id}.binding`,
         path: "/readback/scripts/actions",
-        expected: { event: expectedAction.event, scope: expectedAction.scope },
-        actual: { event: actualAction.event, scope: actualAction.scope }
+        expected: {
+          event: expectedAction.event,
+          scope: expectedAction.scope,
+          controlKey: expectedAction.controlKey
+        },
+        actual: {
+          event: actualAction.event,
+          scope: actualAction.scope,
+          controlKey: actualAction.controlKey
+        }
       }));
     }
     if (expectedAction.bodyDigest && actualAction.bodyDigest && expectedAction.bodyDigest !== actualAction.bodyDigest) {
@@ -634,11 +659,13 @@ function compareScriptDispatchers(expectedDispatchers = [], actualDispatchers = 
 function scriptMatches(expected, actual) {
   if (expected.id && actual.id && expected.id === actual.id) return true;
   if (expected.bodyDigest && actual.bodyDigest && expected.bodyDigest === actual.bodyDigest) {
-    return expected.event === actual.event && expected.scope === actual.scope;
+    return expected.event === actual.event &&
+      expected.scope === actual.scope &&
+      expected.controlKey === actual.controlKey;
   }
   return expected.event === actual.event &&
     expected.scope === actual.scope &&
-    (!expected.controlId || !actual.controlKey || String(actual.controlKey).includes(expected.controlId));
+    expected.controlKey === actual.controlKey;
 }
 
 function compareWorkflow(expected, actual, diagnostics) {

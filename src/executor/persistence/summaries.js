@@ -52,6 +52,7 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
   return {
     fieldCount: fields.length,
     fields,
+    calculationOrder: observedForm?.calculationOrder || [],
     subjectRule: observedForm?.subjectRule,
     persistence: {
       mainTableName: observedForm?.tableName,

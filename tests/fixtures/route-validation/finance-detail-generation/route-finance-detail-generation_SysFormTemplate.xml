@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-finance-detail-generation-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Finance Detail Generation Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-finance-detail-generation-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_amount&quot;,label:&quot;报销金额&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_currency&quot;,label:&quot;币种&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_bank&quot;,label:&quot;付款银行&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_status&quot;,label:&quot;生成状态&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td colspan=&quot;2&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_fixture_projects&quot;,label:&quot;项目明细&quot;}&apos;&gt;&lt;tbody&gt;
+     &lt;tr&gt;&lt;td&gt;WBS&lt;/td&gt;&lt;/tr&gt;&lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_wbs&quot;,label:&quot;WBS&quot;,tableName:&quot;fd_fixture_projects&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td colspan=&quot;2&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_fixture_payees&quot;,label:&quot;收款明细&quot;}&apos;&gt;&lt;tbody&gt;
+     &lt;tr&gt;&lt;td&gt;金额&lt;/td&gt;&lt;td&gt;姓名&lt;/td&gt;&lt;td&gt;卡号&lt;/td&gt;&lt;/tr&gt;
+     &lt;tr type=&quot;templateRow&quot;&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_payee_amount&quot;,label:&quot;金额&quot;,tableName:&quot;fd_fixture_payees&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_payee_name&quot;,label:&quot;姓名&quot;,tableName:&quot;fd_fixture_payees&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_card&quot;,label:&quot;卡号&quot;,tableName:&quot;fd_fixture_payees&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td colspan=&quot;2&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_fixture_finance&quot;,label:&quot;财务明细&quot;}&apos;&gt;&lt;tbody&gt;
+     &lt;tr&gt;&lt;td&gt;行号&lt;/td&gt;&lt;td&gt;记账码&lt;/td&gt;&lt;td&gt;金额&lt;/td&gt;&lt;td&gt;币种&lt;/td&gt;&lt;td&gt;WBS&lt;/td&gt;&lt;td&gt;收款人&lt;/td&gt;&lt;td&gt;卡号&lt;/td&gt;&lt;/tr&gt;
+     &lt;tr type=&quot;templateRow&quot;&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_line_no&quot;,label:&quot;行号&quot;,tableName:&quot;fd_fixture_finance&quot;,dataType:&quot;Double&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_posting_key&quot;,label:&quot;记账码&quot;,tableName:&quot;fd_fixture_finance&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_line_amount&quot;,label:&quot;金额&quot;,tableName:&quot;fd_fixture_finance&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_line_currency&quot;,label:&quot;币种&quot;,tableName:&quot;fd_fixture_finance&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_line_wbs&quot;,label:&quot;WBS&quot;,tableName:&quot;fd_fixture_finance&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_line_payee&quot;,label:&quot;收款人&quot;,tableName:&quot;fd_fixture_finance&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_fixture_line_card&quot;,label:&quot;卡号&quot;,tableName:&quot;fd_fixture_finance&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div id=&quot;jsp_fixture_handler&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    var fixtureColumns = [&quot;fd_fixture_line_no&quot;,&quot;fd_fixture_posting_key&quot;,&quot;fd_fixture_line_amount&quot;,&quot;fd_fixture_line_currency&quot;,&quot;fd_fixture_line_wbs&quot;,&quot;fd_fixture_line_payee&quot;,&quot;fd_fixture_line_card&quot;];
+    var fixtureFinanceTable = &quot;fd_fixture_finance&quot;;
+    var fixtureProjectTable = &quot;fd_fixture_projects&quot;;
+    function compileFixtureVoucher() {
+      SetXFormFieldValueById(&quot;fd_fixture_status&quot;, &quot;&quot;);
+      var wbsList = _DocList_FormFieldValue(fixtureProjectTable, &quot;fd_fixture_wbs&quot;);
+      var amount = Number(getFormFieldValue(&quot;fd_fixture_amount&quot;));
+      var data = [];
+      var detailInfo = initializeFixtureInfo();
+      detailInfo.fd_fixture_posting_key = &quot;40&quot;;
+      data = splitFixtureRows(data, amount, 0, detailInfo, wbsList);
+      detailInfo = chooseFixtureBank(detailInfo, getFormFieldValue(&quot;fd_fixture_bank&quot;));
+      appendFixturePayees(data, detailInfo);
+      _DocList_AddRows(fixtureFinanceTable, data);
+    }
+    function initializeFixtureInfo(detailInfo) {
+      if (!detailInfo) detailInfo = new Object();
+      detailInfo.fd_fixture_line_no = &quot;&quot;;
+      detailInfo.fd_fixture_posting_key = &quot;&quot;;
+      detailInfo.fd_fixture_line_amount = &quot;&quot;;
+      detailInfo.fd_fixture_line_currency = getFormFieldValue(&quot;fd_fixture_currency&quot;) || &quot;CNY&quot;;
+      detailInfo.fd_fixture_line_wbs = &quot;&quot;;
+      detailInfo.fd_fixture_line_payee = &quot;&quot;;
+      detailInfo.fd_fixture_line_card = &quot;&quot;;
+      return detailInfo;
+    }
+    function unrelatedFixtureTotal() {
+      var unrelatedTotal = Number(getFormFieldValue(&quot;fd_fixture_amount&quot;)) * 2;
+      SetXFormFieldValueById(&quot;fd_fixture_status&quot;, unrelatedTotal);
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_fixture_helpers&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function fixtureRound(value) { return Math.round(Number(value) * 100) / 100; }
+    function splitFixtureRowsWithoutWbs(data, sum, detailInfo) {
+      var amount = detailInfo.fd_fixture_posting_key == &quot;50&quot; ? (sum * -1).toFixed(2) : Number(sum).toFixed(2);
+      data.push(makeFixtureRow(data.length, detailInfo, amount));
+      return data;
+    }
+    function splitFixtureRows(data, sum, balanceFlag, detailInfo, wbsList) {
+      sum = Number(sum);
+      if (wbsList &amp;&amp; wbsList.length &gt; 0) {
+        var oneAmount = (sum / wbsList.length).toFixed(2);
+        var allocated = 0;
+        for (var i = 0; i &lt; wbsList.length - 1; i++) {
+          allocated = fixtureRound(allocated + Number(oneAmount));
+          detailInfo.fd_fixture_line_wbs = wbsList[i];
+          data.push(makeFixtureRow(data.length, detailInfo, oneAmount));
+        }
+        detailInfo.fd_fixture_line_wbs = wbsList[wbsList.length - 1];
+        data.push(makeFixtureRow(data.length, detailInfo, fixtureRound(sum - allocated)));
+        if (balanceFlag) {
+          detailInfo.fd_fixture_posting_key = &quot;50&quot;;
+          data.push(makeFixtureRow(data.length, detailInfo, (sum * -1).toFixed(2)));
+        }
+      } else {
+        data = splitFixtureRowsWithoutWbs(data, sum, detailInfo);
+      }
+      return data;
+    }
+    function makeFixtureRow(number, detailInfo, amount) {
+      detailInfo.fd_fixture_line_no = number + 1;
+      detailInfo.fd_fixture_line_amount = amount;
+      return new FixtureFinanceRow(detailInfo);
+    }
+    function FixtureFinanceRow(detailInfo) {
+      for (var i = 0; i &lt; fixtureColumns.length; i++) {
+        var column = fixtureColumns[i];
+        this[buildDetailTableFieldId(fixtureFinanceTable, column)] = detailInfo[column];
+      }
+    }
+    function chooseFixtureBank(detailInfo, bank) {
+      detailInfo = initializeFixtureInfo();
+      detailInfo.fd_fixture_posting_key = &quot;50&quot;;
+      return detailInfo;
+    }
+    function appendFixturePayees(data, detailInfo) {
+      var amountColumn = &quot;fd_fixture_payee_amount&quot;;
+      var nameColumn = &quot;fd_fixture_payee_name&quot;;
+      var cardColumn = &quot;fd_fixture_card&quot;;
+      var tableInfo = DocList_TableInfo[&quot;TABLE_DL_&quot; + fixturePayeeTable];
+      if (typeof(tableInfo) != &quot;undefined&quot;) {
+        for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+          var amountId = fixturePayeeTable + &quot;.&quot; + i + &quot;.&quot; + amountColumn;
+          var nameId = fixturePayeeTable + &quot;.&quot; + i + &quot;.&quot; + nameColumn;
+          var cardId = fixturePayeeTable + &quot;.&quot; + i + &quot;.&quot; + cardColumn;
+          var currentAmount = $(&quot;[name=extendDataFormInfo.value(&quot; + amountId + &quot;)]&quot;).val();
+          detailInfo.fd_fixture_line_payee = $(&quot;[name=extendDataFormInfo.value(&quot; + nameId + &quot;)]&quot;).val();
+          detailInfo.fd_fixture_line_card = $(&quot;[name=extendDataFormInfo.value(&quot; + cardId + &quot;)]&quot;).val();
+          if (Number(currentAmount) &gt; 0) data = splitFixtureRows(data, Number(currentAmount), 1, detailInfo);
+        }
+      }
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_fixture_common&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;script&gt;
+    function _DocList_AddRows(tableId, rows) {
+      var table = document.getElementById(&quot;TABLE_DL_&quot; + tableId);
+      var info = DocList_TableInfo[table.id];
+      if (info) { for (var i = info.lastIndex - 1; i &gt; 0; i--) table.deleteRow(i); }
+      for (var j = 0; j &lt; rows.length; j++) DocList_AddRow(table, null, rows[j]);
+    }
+   &lt;/script&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_fixture_payee_variable&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;script&gt;var fixturePayeeTable = &quot;fd_fixture_payees&quot;;&lt;/script&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_fixture_button&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;div onclick=&quot;compileFixtureVoucher()&quot;&gt;生成财务明细&lt;/div&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_fixture_amount&quot; label=&quot;报销金额&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_fixture_currency&quot; label=&quot;币种&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_fixture_bank&quot; label=&quot;付款银行&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_fixture_status&quot; label=&quot;生成状态&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_fixture_projects&quot; label=&quot;项目明细&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_fixture_wbs&quot; label=&quot;WBS&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_fixture_payees&quot; label=&quot;收款明细&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_payee_amount&quot; label=&quot;金额&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_payee_name&quot; label=&quot;姓名&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_card&quot; label=&quot;卡号&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_fixture_finance&quot; label=&quot;财务明细&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_line_no&quot; label=&quot;行号&quot; type=&quot;Double&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_posting_key&quot; label=&quot;记账码&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_line_amount&quot; label=&quot;金额&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_line_currency&quot; label=&quot;币种&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_line_wbs&quot; label=&quot;WBS&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_line_payee&quot; label=&quot;收款人&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_fixture_line_card&quot; label=&quot;卡号&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

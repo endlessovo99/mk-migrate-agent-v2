@@ -339,6 +339,7 @@ function pruneOrphanControlActions(control, context) {
     }
   }
   for (const model of context.detailModelsByField?.values?.() || []) {
+    if (model?.fdTableName) validKeys.add(`${model.fdTableName}.${model.fdTableName}`);
     for (const field of model.fdFields || []) {
       if (!field?.fdIsSystem && field?.fdName) validKeys.add(`${model.fdTableName}.${field.fdName}`);
     }
@@ -396,6 +397,9 @@ function controlActionKey(action, context) {
     ? context.detailModelsByField?.get(action.tableId)
     : context.mainModel;
   if (!model?.fdTableName || !action.controlId) return "";
+  if (action.tableId && action.controlId === action.tableId) {
+    return `${model.fdTableName}.${model.fdTableName}`;
+  }
   return `${model.fdTableName}.${action.controlId}`;
 }
 

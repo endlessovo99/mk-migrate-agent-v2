@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-calculation-script-recipes-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Calculation Script Recipes Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-calculation-script-recipes-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_trip_mode&quot;,label:&quot;出差模式&quot;,items:&quot;市内|0&amp;#10;国内|1&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_package_mode&quot;,label:&quot;包干模式&quot;,items:&quot;否|0&amp;#10;是|1&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_trip_start&quot;,label:&quot;开始日期&quot;,dataType:&quot;Date&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_trip_end&quot;,label:&quot;结束日期&quot;,dataType:&quot;Date&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_people&quot;,label:&quot;人数&quot;,dataType:&quot;Double&quot;,decimal:&quot;0&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_daily_rate&quot;,label:&quot;日标准&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_overnights&quot;,label:&quot;过夜天数&quot;,dataType:&quot;Double&quot;,decimal:&quot;0&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;3&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_allowance_days&quot;,label:&quot;津贴天数&quot;,dataType:&quot;Double&quot;,decimal:&quot;0&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_regular_allowance&quot;,label:&quot;常规津贴&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;4&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_package_allowance&quot;,label:&quot;包干津贴&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_radiation_allowance&quot;,label:&quot;附加津贴&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;5&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_allowance_total&quot;,label:&quot;津贴合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_receipt_result&quot;,label:&quot;票据核定额&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;6&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_lookup_date&quot;,label:&quot;查表日期&quot;,dataType:&quot;Date&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;7&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_traveler_text&quot;,label:&quot;出差人员文本&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;7&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_destination_text&quot;,label:&quot;出差地点文本&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;8&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_reason_text&quot;,label:&quot;出差事由文本&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;8&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_description_text&quot;,label:&quot;出差描述&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;9&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_local_transport_cost&quot;,label:&quot;垫付交通费&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;9&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_allowance_cost&quot;,label:&quot;津贴费用&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;10&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_hotel_cost&quot;,label:&quot;住宿费用&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;10&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_other_cost&quot;,label:&quot;其他费用&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;11&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_incentive_cost&quot;,label:&quot;激励费用&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;11&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_grand_total&quot;,label:&quot;费用总计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;12&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;&lt;div fd_type=&quot;chinaValue&quot; fd_values=&apos;{id:&quot;fd_grand_total_upper&quot;,label:&quot;费用总计大写&quot;,relatedid:&quot;fd_grand_total&quot;,dataType:&quot;String&quot;}&apos; relatedid=&quot;fd_grand_total&quot;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;13&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_receipts&quot;,label:&quot;票据明细&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;
+       &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_receipt_kind&quot;,content:&quot;票据类别&quot;}&apos;&gt;票据类别&lt;/label&gt;&lt;/td&gt;
+       &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_receipt&quot;,content:&quot;票据金额&quot;}&apos;&gt;票据金额&lt;/label&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;
+       &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_receipt_kind&quot;,label:&quot;票据类别&quot;,tableName:&quot;fd_receipts&quot;,items:&quot;甲类|alpha&amp;#10;乙类|beta&amp;#10;丙类|gamma&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_receipt_value&quot;,label:&quot;票据金额&quot;,tableName:&quot;fd_receipts&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;14&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_lookup_lines&quot;,label:&quot;激励明细&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;
+       &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_destination&quot;,content:&quot;目的地&quot;}&apos;&gt;目的地&lt;/label&gt;&lt;/td&gt;
+       &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_paid&quot;,content:&quot;实付&quot;}&apos;&gt;实付&lt;/label&gt;&lt;/td&gt;
+       &lt;td row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_base&quot;,content:&quot;基准&quot;}&apos;&gt;基准&lt;/label&gt;&lt;/td&gt;
+       &lt;td row=&quot;0&quot; column=&quot;3&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_reward&quot;,content:&quot;激励&quot;}&apos;&gt;激励&lt;/label&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;
+       &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_destination&quot;,label:&quot;目的地&quot;,tableName:&quot;fd_lookup_lines&quot;,items:&quot;甲地|A&amp;#10;乙地|B&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_paid&quot;,label:&quot;实付&quot;,tableName:&quot;fd_lookup_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;td row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_base&quot;,label:&quot;基准&quot;,tableName:&quot;fd_lookup_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;td row=&quot;1&quot; column=&quot;3&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_reward&quot;,label:&quot;激励&quot;,tableName:&quot;fd_lookup_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;0&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div id=&quot;jsp_allowance_recipe&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    var theCityFlag = Number(getFormRadioValue(&quot;fd_trip_mode&quot;));
+    var receiptTableId = &quot;fd_receipts&quot;;
+    function fixedTwo(value) { return Number(Number(value).toFixed(2)); }
+    function unsafeReceiptDetail(tableId, controlId) {
+      var sum = 0;
+      for (var i = 0; i &lt; 1; i++) { sum = theFixedNumTwo(sum + 0); }
+      return sum;
+    }
+    function unsafeReceiptTotal() {
+      var receiptResult = $(&quot;[name=extendDataFormInfo.value(fd_receipt_result)]&quot;);
+      var receiptVal = unsafeReceiptDetail(receiptTableId, &quot;fd_receipt_value&quot;);
+      receiptResult.val(receiptVal);
+    }
+    function reversedReceiptDetail(tableId, controlId) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = controlId + &quot;.&quot; + i + &quot;.&quot; + tableId;
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+        sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function reversedReceiptTotal() {
+      var receiptResult = $(&quot;[name=extendDataFormInfo.value(fd_receipt_result)]&quot;);
+      var receiptVal = reversedReceiptDetail(receiptTableId, &quot;fd_receipt_value&quot;);
+      receiptResult.val(receiptVal);
+    }
+    function unseparatedReceiptDetail(tableId, controlId) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + i + controlId;
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+        sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function unseparatedReceiptTotal() {
+      var receiptResult = $(&quot;[name=extendDataFormInfo.value(fd_receipt_result)]&quot;);
+      var receiptVal = unseparatedReceiptDetail(receiptTableId, &quot;fd_receipt_value&quot;);
+      receiptResult.val(receiptVal);
+    }
+    function outOfOrderReceiptDetail(tableId, controlId) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+        sum = theFixedNumTwo(sum + Number(currentValue));
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+      }
+      return sum;
+    }
+    function outOfOrderReceiptTotal() {
+      var receiptResult = $(&quot;[name=extendDataFormInfo.value(fd_receipt_result)]&quot;);
+      var receiptVal = outOfOrderReceiptDetail(receiptTableId, &quot;fd_receipt_value&quot;);
+      receiptResult.val(receiptVal);
+    }
+    function partialReceiptDetail(tableId, controlId) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; 1; i++) {
+        var rowId = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+        sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function partialReceiptTotal() {
+      var receiptResult = $(&quot;[name=extendDataFormInfo.value(fd_receipt_result)]&quot;);
+      var receiptVal = partialReceiptDetail(receiptTableId, &quot;fd_receipt_value&quot;);
+      receiptResult.val(receiptVal);
+    }
+    function filteredReceiptDetail(tableId, controlId) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+        if (Number(currentValue) &gt; 0) sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function filteredReceiptTotal() {
+      var receiptResult = $(&quot;[name=extendDataFormInfo.value(fd_receipt_result)]&quot;);
+      var receiptVal = filteredReceiptDetail(receiptTableId, &quot;fd_receipt_value&quot;);
+      receiptResult.val(receiptVal);
+    }
+    function receiptDetail(tableId, controlId) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+        sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function trafficAmount() {
+      var days = 1;
+      var person = 1;
+      return days * person * 100;
+    }
+    function receiptTotal() {
+      var receiptResult = $(&quot;[name=extendDataFormInfo.value(fd_receipt_result)]&quot;);
+      var receiptVal = receiptDetail(receiptTableId, &quot;fd_receipt_value&quot;);
+      receiptResult.val(receiptVal);
+    }
+    function trafficDays() {
+      var days = timeDifference(&quot;fd_trip_start&quot;, &quot;fd_trip_end&quot;);
+      var overnight = $(&quot;[name=extendDataFormInfo.value(fd_overnights)]&quot;);
+      return days;
+    }
+    function trafficOvernightDaysCal() {
+      var allowanceDays = $(&quot;[name=extendDataFormInfo.value(fd_allowance_days)]&quot;);
+      var person = $(&quot;[name=extendDataFormInfo.value(fd_people)]&quot;);
+      var everyday = $(&quot;[name=extendDataFormInfo.value(fd_daily_rate)]&quot;);
+      var regular = $(&quot;[name=extendDataFormInfo.value(fd_regular_allowance)]&quot;);
+      var total = allowanceDays.val() * person.val() * everyday.val();
+      regular.val(total ? total.toFixed(2) : 0.00);
+    }
+    function allowanceCalBG() {
+      var night = Number(getFormFieldValue(&quot;fd_overnights&quot;));
+      var person = Number(getFormFieldValue(&quot;fd_people&quot;));
+      var everyday = Number(getFormFieldValue(&quot;fd_daily_rate&quot;));
+      var bgAmount = theFixedNumTwo(person * everyday * night + 200);
+      var packaged = $(&quot;[name=extendDataFormInfo.value(fd_package_allowance)]&quot;);
+      packaged.val(bgAmount.toFixed(2));
+    }
+    function allowanceCal() {
+      var total = $(&quot;[name=extendDataFormInfo.value(fd_allowance_total)]&quot;);
+      var regular = $(&quot;[name=extendDataFormInfo.value(fd_regular_allowance)]&quot;);
+      var packaged = $(&quot;[name=extendDataFormInfo.value(fd_package_allowance)]&quot;);
+      var radiation = $(&quot;[name=extendDataFormInfo.value(fd_radiation_allowance)]&quot;);
+      var allowanceSum = 0.00;
+      var mode = getFormRadioValue(&quot;fd_package_mode&quot;);
+      total.val(allowanceSum.toFixed(2));
+    }
+    function trafficCityChange() {
+      var everyday = $(&quot;[name=extendDataFormInfo.value(fd_daily_rate)]&quot;);
+      if (theCityFlag == 0) { everyday.val(20); } else { everyday.val(100); }
+    }
+    AttachXFormValueChangeEventById(&quot;fd_trip_start&quot;, function(value) { trafficDays(); });
+    AttachXFormValueChangeEventById(&quot;fd_trip_end&quot;, function(value) { trafficDays(); });
+    AttachXFormValueChangeEventById(&quot;fd_people&quot;, function(value) { trafficOvernightDaysCal(); });
+    AttachXFormValueChangeEventById(&quot;fd_package_mode&quot;, function(value) { allowanceCalBG(); });
+    AttachXFormValueChangeEventById(&quot;fd_regular_allowance&quot;, function(value) { allowanceCal(); });
+    AttachXFormValueChangeEventById(&quot;fd_package_allowance&quot;, function(value) { allowanceCal(); });
+    AttachXFormValueChangeEventById(&quot;fd_radiation_allowance&quot;, function(value) { allowanceCal(); });
+    AttachXFormValueChangeEventById(&quot;fd_receipt_value&quot;, function(value) { receiptTotal(); });
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_lookup_recipe&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function calculateLookupRow(value, domElement) {
+      var rates = new Map();
+      var current = true;
+      var sourceDate = getFormFieldValue(&quot;fd_lookup_date&quot;);
+      var cutoff = new Date(&quot;2025-01-01 00:00:00&quot;);
+      if (sourceDate &amp;&amp; new Date(sourceDate) &lt; cutoff) { current = false; }
+      if (current) {
+        rates.set(&quot;A&quot;, 1000);
+        rates.set(&quot;B&quot;, 800);
+      } else {
+        rates.set(&quot;A&quot;, 900);
+        rates.set(&quot;B&quot;, 700);
+      }
+      var rowField = domElement;
+      var destinationField = GetXFormSameRowFieldById(rowField, &quot;fd_destination&quot;)[0];
+      var paidField = GetXFormSameRowFieldById(rowField, &quot;fd_paid&quot;)[0];
+      var baseField = GetXFormSameRowFieldById(rowField, &quot;fd_base&quot;)[0];
+      var rewardField = GetXFormSameRowFieldById(rowField, &quot;fd_reward&quot;)[0];
+      var destination = destinationField.value;
+      var paid = paidField.value;
+      var base = rates.get(destination);
+      var reward = (Number(base) - Number(paid)) * 0.3;
+      baseField.value = base;
+      rewardField.value = reward.toFixed(0);
+    }
+    AttachXFormValueChangeEventById(&quot;fd_destination&quot;, function(value, domElement) { calculateLookupRow(value, domElement); });
+   AttachXFormValueChangeEventById(&quot;fd_paid&quot;, function(value, domElement) { calculateLookupRow(value, domElement); });
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_grouped_recipe&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    var groupedTableId = &quot;fd_receipts&quot;;
+    function groupedDetail(tableId, controlId, calculation, type) {
+      var sum = 0;
+      var categoryCount = 0;
+      var current_type = &quot;&quot;;
+      if (type === &quot;alphaTotal&quot; &amp;&amp; current_type === &quot;alpha&quot;) {
+        sum = theFixedNumTwo(sum + 0);
+      } else if (type === &quot;betaTotal&quot; &amp;&amp; current_type === &quot;beta&quot;) {
+        categoryCount++;
+        sum = theFixedNumTwo(sum + 0);
+      } else if (type === &quot;gammaTotal&quot; &amp;&amp; current_type === &quot;gamma&quot;) {
+        sum = theFixedNumTwo(sum + 0);
+      }
+      var kindField = &quot;fd_receipt_kind&quot;;
+      SetXFormFieldValueById(&quot;fd_group_count&quot;, categoryCount);
+      calculation.val(sum);
+      return sum;
+    }
+    function groupedAmount() {
+      var alphaTotal = $(&quot;[name=extendDataFormInfo.value(fd_group_alpha)]&quot;);
+      var betaTotal = $(&quot;[name=extendDataFormInfo.value(fd_group_beta)]&quot;);
+      var gammaTotal = $(&quot;[name=extendDataFormInfo.value(fd_group_gamma)]&quot;);
+      var betaTax = $(&quot;[name=extendDataFormInfo.value(fd_group_tax)]&quot;);
+      var fullTotal = $(&quot;[name=extendDataFormInfo.value(fd_group_total)]&quot;);
+      var taxiTotal = $(&quot;[name=extendDataFormInfo.value(fd_receipt_result)]&quot;);
+      var domesticTotal = $(&quot;[name=extendDataFormInfo.value(fd_group_domestic)]&quot;);
+      var travelingTax = $(&quot;[name=extendDataFormInfo.value(fd_group_travel_tax)]&quot;);
+      var fullSum = 0.00;
+      var domesticSum = 0.00;
+      fullSum = groupedDetail(groupedTableId, &quot;fd_receipt_value&quot;, alphaTotal, &quot;alphaTotal&quot;);
+      domesticSum = groupedDetail(groupedTableId, &quot;fd_receipt_value&quot;, betaTotal, &quot;betaTotal&quot;);
+      domesticSum = theFixedNumTwo(domesticSum + groupedDetail(groupedTableId, &quot;fd_receipt_value&quot;, gammaTotal, &quot;gammaTotal&quot;));
+      domesticSum = theFixedNumTwo(domesticSum + Number(taxiTotal.val()));
+      if (theCityFlag == 0) {
+        var cityTaxi = Number(taxiTotal.val());
+        fullTotal.val(cityTaxi.toFixed(2));
+        domesticTotal.val(cityTaxi.toFixed(2));
+      } else {
+        fullTotal.val(theFixedNumTwo(fullSum + domesticSum));
+        domesticTotal.val(domesticSum.toFixed(2));
+      }
+      var tax = (betaTotal.val() ? theFixedNumTwo(betaTotal.val() / 1.09 * 0.09) : 0).toFixed(2);
+      betaTax.val(tax);
+      travelingTax.val(tax);
+    }
+    AttachXFormValueChangeEventById(&quot;fd_receipt_kind&quot;, function(value) { groupedAmount(); });
+    AttachXFormValueChangeEventById(&quot;fd_receipt_value&quot;, function(value) { groupedAmount(); });
+    AttachXFormValueChangeEventById(&quot;fd_receipt_result&quot;, function(value) { groupedAmount(); });
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_conditional_total_recipe&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    var fixtureTravelScope = Number(getFormRadioValue(&quot;fd_trip_mode&quot;));
+    function updateOverallCosts() {
+      var localTransport = $(&quot;[name=extendDataFormInfo.value(fd_local_transport_cost)]&quot;);
+      var allowanceCost = $(&quot;[name=extendDataFormInfo.value(fd_allowance_cost)]&quot;);
+      var hotelCost = $(&quot;[name=extendDataFormInfo.value(fd_hotel_cost)]&quot;);
+      var otherCost = $(&quot;[name=extendDataFormInfo.value(fd_other_cost)]&quot;);
+      var incentiveCost = $(&quot;[name=extendDataFormInfo.value(fd_incentive_cost)]&quot;);
+      var overallCost = $(&quot;[name=extendDataFormInfo.value(fd_grand_total)]&quot;);
+      var total;
+      if (fixtureTravelScope == 0) {
+        total = Number(localTransport.val() ? localTransport.val() : 0) + Number(allowanceCost.val() ? allowanceCost.val() : 0) + Number(hotelCost.val() ? hotelCost.val() : 0) + Number(otherCost.val() ? otherCost.val() : 0);
+      } else {
+        total = Number(localTransport.val() ? localTransport.val() : 0) + Number(allowanceCost.val() ? allowanceCost.val() : 0) + Number(hotelCost.val() ? hotelCost.val() : 0) + Number(otherCost.val() ? otherCost.val() : 0) + Number(incentiveCost.val() ? incentiveCost.val() : 0);
+      }
+      total = theFixedNumTwo(total);
+      overallCost.val(total);
+      var uppercaseCost = $(&quot;[name=extendDataFormInfo.value(fd_grand_total_upper)]&quot;);
+      var uppercaseText = XForm_GetChinaValue(total);
+      uppercaseCost.val(uppercaseText);
+      var unrelatedConditionalTarget = $(&quot;[name=extendDataFormInfo.value(fd_description_text)]&quot;);
+      unrelatedConditionalTarget.val(&quot;must remain explicit&quot;);
+      refreshReceivers();
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_unsafe_conditional_branch&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function unsafeOverallCosts() {
+      var localTransport = $(&quot;[name=extendDataFormInfo.value(fd_local_transport_cost)]&quot;);
+      var allowanceCost = $(&quot;[name=extendDataFormInfo.value(fd_allowance_cost)]&quot;);
+      var hotelCost = $(&quot;[name=extendDataFormInfo.value(fd_hotel_cost)]&quot;);
+      var otherCost = $(&quot;[name=extendDataFormInfo.value(fd_other_cost)]&quot;);
+      var incentiveCost = $(&quot;[name=extendDataFormInfo.value(fd_incentive_cost)]&quot;);
+      var overallCost = $(&quot;[name=extendDataFormInfo.value(fd_grand_total)]&quot;);
+      var uppercaseCost = $(&quot;[name=extendDataFormInfo.value(fd_grand_total_upper)]&quot;);
+      var branchSideEffect = $(&quot;[name=extendDataFormInfo.value(fd_description_text)]&quot;);
+      var total;
+      if (fixtureTravelScope == 0) {
+        total = Number(localTransport.val() ? localTransport.val() : 0) + Number(allowanceCost.val() ? allowanceCost.val() : 0) + Number(hotelCost.val() ? hotelCost.val() : 0) + Number(otherCost.val() ? otherCost.val() : 0);
+        branchSideEffect.val(&quot;must remain manual&quot;);
+      } else {
+        total = Number(localTransport.val() ? localTransport.val() : 0) + Number(allowanceCost.val() ? allowanceCost.val() : 0) + Number(hotelCost.val() ? hotelCost.val() : 0) + Number(otherCost.val() ? otherCost.val() : 0) + Number(incentiveCost.val() ? incentiveCost.val() : 0);
+      }
+      total = theFixedNumTwo(total);
+      overallCost.val(total);
+      var uppercaseText = XForm_GetChinaValue(total);
+      uppercaseCost.val(uppercaseText);
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_unsafe_conditional_order&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function unsafeOrderedCosts() {
+      var localTransport = $(&quot;[name=extendDataFormInfo.value(fd_local_transport_cost)]&quot;);
+      var allowanceCost = $(&quot;[name=extendDataFormInfo.value(fd_allowance_cost)]&quot;);
+      var hotelCost = $(&quot;[name=extendDataFormInfo.value(fd_hotel_cost)]&quot;);
+      var otherCost = $(&quot;[name=extendDataFormInfo.value(fd_other_cost)]&quot;);
+      var incentiveCost = $(&quot;[name=extendDataFormInfo.value(fd_incentive_cost)]&quot;);
+      var overallCost = $(&quot;[name=extendDataFormInfo.value(fd_grand_total)]&quot;);
+      var uppercaseCost = $(&quot;[name=extendDataFormInfo.value(fd_grand_total_upper)]&quot;);
+      var total;
+      if (fixtureTravelScope == 0) {
+        total = Number(localTransport.val() ? localTransport.val() : 0) + Number(allowanceCost.val() ? allowanceCost.val() : 0) + Number(hotelCost.val() ? hotelCost.val() : 0) + Number(otherCost.val() ? otherCost.val() : 0);
+      } else {
+        total = Number(localTransport.val() ? localTransport.val() : 0) + Number(allowanceCost.val() ? allowanceCost.val() : 0) + Number(hotelCost.val() ? hotelCost.val() : 0) + Number(otherCost.val() ? otherCost.val() : 0) + Number(incentiveCost.val() ? incentiveCost.val() : 0);
+      }
+      overallCost.val(total);
+      total = theFixedNumTwo(total);
+      var uppercaseText = XForm_GetChinaValue(total);
+      uppercaseCost.val(uppercaseText);
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_unsafe_conditional_mutation&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function unsafeMutatedCosts() {
+      var localTransport = $(&quot;[name=extendDataFormInfo.value(fd_local_transport_cost)]&quot;);
+      var allowanceCost = $(&quot;[name=extendDataFormInfo.value(fd_allowance_cost)]&quot;);
+      var hotelCost = $(&quot;[name=extendDataFormInfo.value(fd_hotel_cost)]&quot;);
+      var otherCost = $(&quot;[name=extendDataFormInfo.value(fd_other_cost)]&quot;);
+      var incentiveCost = $(&quot;[name=extendDataFormInfo.value(fd_incentive_cost)]&quot;);
+      var overallCost = $(&quot;[name=extendDataFormInfo.value(fd_grand_total)]&quot;);
+      var uppercaseCost = $(&quot;[name=extendDataFormInfo.value(fd_grand_total_upper)]&quot;);
+      var total;
+      if (fixtureTravelScope == 0) {
+        total = Number(localTransport.val() ? localTransport.val() : 0) + Number(allowanceCost.val() ? allowanceCost.val() : 0) + Number(hotelCost.val() ? hotelCost.val() : 0) + Number(otherCost.val() ? otherCost.val() : 0);
+      } else {
+        total = Number(localTransport.val() ? localTransport.val() : 0) + Number(allowanceCost.val() ? allowanceCost.val() : 0) + Number(hotelCost.val() ? hotelCost.val() : 0) + Number(otherCost.val() ? otherCost.val() : 0) + Number(incentiveCost.val() ? incentiveCost.val() : 0);
+      }
+      total += 5;
+      total = theFixedNumTwo(total);
+      overallCost.val(total);
+      var uppercaseText = XForm_GetChinaValue(total);
+      uppercaseCost.val(uppercaseText);
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_person_text_recipe&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function composeTripSummary() {
+      return getFormFieldValue(&quot;fd_traveler_text&quot;) + getFormFieldValue(&quot;fd_destination_text&quot;) + getFormFieldValue(&quot;fd_reason_text&quot;);
+    }
+    function refreshTripSummary() {
+      SetXFormFieldValueById(&quot;fd_description_text&quot;, composeTripSummary());
+    }
+    function parseTravelersAndRecalculate() {
+      refreshTripSummary();
+      var sourceText = getFormFieldValue(&quot;fd_traveler_text&quot;);
+      sourceText = sourceText.replace(/，/g, &quot;、&quot;).replace(/,/g, &quot;、&quot;).replace(/\//g, &quot;、&quot;).replace(/\\/g, &quot;、&quot;);
+      var peopleList = sourceText.split(&quot;、&quot;);
+      var peopleCount = 0;
+      for (var i = 0; i &lt; peopleList.length; i++) {
+        if (peopleList[i]) { peopleCount++ }
+      }
+      if (peopleCount &gt; 0) {
+        SetXFormFieldValueById(&quot;fd_people&quot;, peopleCount);
+        receiptTotal();
+        trafficOvernightDaysCal();
+        allowanceCalBG();
+      }
+    }
+    Com_AddEventListener(window, &quot;load&quot;, refreshTripSummary);
+    AttachXFormValueChangeEventById(&quot;fd_traveler_text&quot;, function(value) { parseTravelersAndRecalculate(); });
+    AttachXFormValueChangeEventById(&quot;fd_destination_text&quot;, function(value) { refreshTripSummary(); });
+    AttachXFormValueChangeEventById(&quot;fd_reason_text&quot;, function(value) { refreshTripSummary(); });
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_trip_mode&quot; label=&quot;出差模式&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_package_mode&quot; label=&quot;包干模式&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_trip_start&quot; label=&quot;开始日期&quot; type=&quot;Date&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_trip_end&quot; label=&quot;结束日期&quot; type=&quot;Date&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_people&quot; label=&quot;人数&quot; type=&quot;Double&quot; scale=&quot;0&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_daily_rate&quot; label=&quot;日标准&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_overnights&quot; label=&quot;过夜天数&quot; type=&quot;Double&quot; scale=&quot;0&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_allowance_days&quot; label=&quot;津贴天数&quot; type=&quot;Double&quot; scale=&quot;0&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_regular_allowance&quot; label=&quot;常规津贴&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_package_allowance&quot; label=&quot;包干津贴&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_radiation_allowance&quot; label=&quot;附加津贴&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_allowance_total&quot; label=&quot;津贴合计&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_receipt_result&quot; label=&quot;票据核定额&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_lookup_date&quot; label=&quot;查表日期&quot; type=&quot;Date&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_traveler_text&quot; label=&quot;出差人员文本&quot; type=&quot;String&quot; length=&quot;500&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_destination_text&quot; label=&quot;出差地点文本&quot; type=&quot;String&quot; length=&quot;500&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_reason_text&quot; label=&quot;出差事由文本&quot; type=&quot;String&quot; length=&quot;500&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_description_text&quot; label=&quot;出差描述&quot; type=&quot;String&quot; length=&quot;1000&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_local_transport_cost&quot; label=&quot;垫付交通费&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_allowance_cost&quot; label=&quot;津贴费用&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_hotel_cost&quot; label=&quot;住宿费用&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_other_cost&quot; label=&quot;其他费用&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_incentive_cost&quot; label=&quot;激励费用&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_grand_total&quot; label=&quot;费用总计&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_grand_total_upper&quot; label=&quot;费用总计大写&quot; type=&quot;String&quot; relatedid=&quot;fd_grand_total&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_group_count&quot; label=&quot;乙类张数&quot; type=&quot;Double&quot; scale=&quot;0&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_group_alpha&quot; label=&quot;甲类合计&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_group_beta&quot; label=&quot;乙类合计&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_group_gamma&quot; label=&quot;丙类合计&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_group_tax&quot; label=&quot;乙类税额&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_group_total&quot; label=&quot;分类总额&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_group_domestic&quot; label=&quot;垫付总额&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_group_travel_tax&quot; label=&quot;分类总税额&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_receipts&quot; label=&quot;票据明细&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_receipt_kind&quot; label=&quot;票据类别&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_receipt_value&quot; label=&quot;票据金额&quot; type=&quot;String&quot; length=&quot;200&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_lookup_lines&quot; label=&quot;激励明细&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_destination&quot; label=&quot;目的地&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_paid&quot; label=&quot;实付&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_base&quot; label=&quot;基准&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_reward&quot; label=&quot;激励&quot; type=&quot;Double&quot; scale=&quot;0&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

@@ -216,7 +216,7 @@
       "description": "NewOA/MK native calculated numeric field backed by formRule.compute.",
       "usage": "Use only for source calculation controls whose arithmetic or detail aggregate semantics are explicit.",
       "negativeUsage": "Do not infer calculations from labels or unsupported legacy functions.",
-      "allowedScopes": ["field"],
+      "allowedScopes": ["field", "detailColumn"],
       "target": { "desktop": "@elem/xform-calculate", "mobile": "@elem/xform-m-calculate" },
       "propsSchema": {
         "type": "object",

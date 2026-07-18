@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-calculation-migration-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Calculation Migration Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-calculation-migration-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_main_left&quot;,label:&quot;主表左值&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_main_right&quot;,label:&quot;主表右值&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot; colSpan=&quot;2&quot;&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_main_total&quot;,label:&quot;主表公式&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,formula:&quot;$fd_main_left$ + $fd_main_right$&quot;,defaultValue:&quot;$主表左值$ + $主表右值$&quot;,reCalculate:&quot;true&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;2&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_lines&quot;,label:&quot;费用明细&quot;}&apos;&gt;&lt;tbody&gt;
+       &lt;tr&gt;
+        &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_quantity&quot;,content:&quot;数量&quot;}&apos;&gt;数量&lt;/label&gt;&lt;/td&gt;
+        &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_price&quot;,content:&quot;单价&quot;}&apos;&gt;单价&lt;/label&gt;&lt;/td&gt;
+        &lt;td row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_line_total&quot;,content:&quot;行金额&quot;}&apos;&gt;行金额&lt;/label&gt;&lt;/td&gt;
+        &lt;td row=&quot;0&quot; column=&quot;3&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_threshold_kind&quot;,content:&quot;阈值类别&quot;}&apos;&gt;阈值类别&lt;/label&gt;&lt;/td&gt;
+        &lt;td row=&quot;0&quot; column=&quot;4&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_threshold_input&quot;,content:&quot;阈值输入&quot;}&apos;&gt;阈值输入&lt;/label&gt;&lt;/td&gt;
+        &lt;td row=&quot;0&quot; column=&quot;5&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_threshold_result&quot;,content:&quot;阈值结果&quot;}&apos;&gt;阈值结果&lt;/label&gt;&lt;/td&gt;
+       &lt;/tr&gt;
+       &lt;tr type=&quot;templateRow&quot;&gt;
+        &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_quantity&quot;,label:&quot;数量&quot;,tableName:&quot;fd_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+        &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_unit_price&quot;,label:&quot;单价&quot;,tableName:&quot;fd_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+        &lt;td row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_line_total&quot;,label:&quot;行金额&quot;,tableName:&quot;fd_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,formula:&quot;$fd_quantity$ * $fd_unit_price$&quot;,defaultValue:&quot;$数量$ * $单价$&quot;,reCalculate:&quot;true&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+        &lt;td row=&quot;1&quot; column=&quot;3&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_threshold_kind&quot;,label:&quot;阈值类别&quot;,tableName:&quot;fd_lines&quot;,items:&quot;普通|normal&amp;#10;特殊|special&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+        &lt;td row=&quot;1&quot; column=&quot;4&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_threshold_input&quot;,label:&quot;阈值输入&quot;,tableName:&quot;fd_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+        &lt;td row=&quot;1&quot; column=&quot;5&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_threshold_result&quot;,label:&quot;阈值结果&quot;,tableName:&quot;fd_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;0&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;/tr&gt;
+      &lt;/tbody&gt;&lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;3&quot; column=&quot;0&quot; colSpan=&quot;2&quot;&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_detail_sum&quot;,label:&quot;明细合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,autoCalculate:&quot;true&quot;,expression_id:&quot;$XForm_CalculatioFuns_Sum$($fd_lines.fd_line_total$)&quot;,expression_name:&quot;$列表.求和$($费用明细.行金额$)&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;4&quot; column=&quot;0&quot; colSpan=&quot;2&quot;&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_clamped_sum&quot;,label:&quot;非负明细合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_recompute_input&quot;,label:&quot;重算输入&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;5&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_recompute_output&quot;,label:&quot;重算结果&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_unsafe_selector_sum&quot;,label:&quot;不安全选择器合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;6&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_unsafe_mutated_sum&quot;,label:&quot;不安全改写合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;7&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_unsafe_diff&quot;,label:&quot;不安全改写差额&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;7&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_unsafe_duplicate_sum&quot;,label:&quot;不安全重复函数合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;8&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_inference_conflict&quot;,label:&quot;冲突推断&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;8&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_unsafe_conditional_sum&quot;,label:&quot;条件合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;9&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_unsafe_cond_diff&quot;,label:&quot;条件差额&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;9&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_unsafe_comment_sum&quot;,label:&quot;注释绑定合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div id=&quot;jsp_recompute&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    AttachXFormValueChangeEventById(&quot;fd_recompute_input&quot;, function(value) {
+      SetXFormFieldValueById(&quot;fd_recompute_output&quot;, Number(value || 0) * 2);
+    });
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_detail_threshold&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function calculateThresholdRow(value, domElement) {
+      var rowField = domElement;
+      var thresholdInput = GetXFormSameRowFieldById(rowField, &quot;fd_threshold_input&quot;)[0];
+      var thresholdResult = GetXFormSameRowFieldById(rowField, &quot;fd_threshold_result&quot;)[0];
+      var operand = thresholdInput.value;
+      thresholdResult.value = operand &gt; 0 ? 100 : 0;
+    }
+    AttachXFormValueChangeEventById(&quot;fd_threshold_kind&quot;, function(value, domElement) {
+      calculateThresholdRow(value, domElement[0]);
+    });
+    AttachXFormValueChangeEventById(&quot;fd_threshold_input&quot;, function(value, domElement) {
+      calculateThresholdRow(value, domElement);
+    });
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+   &lt;div id=&quot;jsp_clamped_sum&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    var clampedTableId = &quot;fd_lines&quot;;
+    function sumAndClamp(tableId, controlId, calculation) {
+      var tab_id = &quot;TABLE_DL_&quot; + tableId;
+      var tbInfo = DocList_TableInfo[tab_id];
+      var sum = 0;
+      if (typeof tbInfo != &quot;undefined&quot;) {
+        for (var i = 0; i &lt; tbInfo.lastIndex - 1; i++) {
+          var child_id = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+          var currentValue = $(&quot;input[name=extendDataFormInfo.value(&quot; + child_id + &quot;)]&quot;).val();
+          sum = sum + Number(currentValue);
+        }
+      }
+      calculation.value = Math.max(sum, 0);
+      return sum;
+    }
+    function refreshClampedSum() {
+      var total = $(&quot;input[name=extendDataFormInfo.value(fd_clamped_sum)]&quot;);
+      sumAndClamp(clampedTableId, &quot;fd_line_total&quot;, total);
+    }
+    function nativeMainTotalMirror() {
+      var left = $(&quot;input[name=extendDataFormInfo.value(fd_main_left)]&quot;);
+      var right = $(&quot;input[name=extendDataFormInfo.value(fd_main_right)]&quot;);
+      var nativeTarget = $(&quot;input[name=extendDataFormInfo.value(fd_main_total)]&quot;);
+      var unrelatedTarget = $(&quot;input[name=extendDataFormInfo.value(fd_recompute_output)]&quot;);
+      var total = Number(left.val() ? left.val() : 0) + Number(right.val() ? right.val() : 0);
+      nativeTarget.val(total);
+      unrelatedTarget.val(Math.round(total * 3));
+    }
+    var runtimeTableId = &quot;fd_lines&quot;;
+    var runtimeOtherFieldId = &quot;fd_recompute_input&quot;;
+    // var commentedTableId = &quot;fd_lines&quot;;
+    function runtimeDetailSum(tableId, controlId) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+        sum = sum + Number(currentValue);
+      }
+      return sum;
+    }
+    function validRuntimeDifference() {
+      var sum = runtimeDetailSum(runtimeTableId, &quot;fd_line_total&quot;);
+      var sumTarget = $(&quot;input[name=extendDataFormInfo.value(fd_detail_sum)]&quot;);
+      sumTarget.val(sum);
+      var otherValue = getFormFieldValue(runtimeOtherFieldId);
+      var diffAmount = sum - Number(otherValue);
+      var diffTarget = $(&quot;input[name=extendDataFormInfo.value(fd_recompute_output)]&quot;);
+      diffTarget.val(diffAmount);
+    }
+    function sameLocalNameCollision() {
+      var sumTarget = $(&quot;input[name=extendDataFormInfo.value(fd_clamped_sum)]&quot;);
+      var diffTarget = $(&quot;input[name=extendDataFormInfo.value(fd_main_total)]&quot;);
+    }
+    function invalidRuntimeDifferenceOrder() {
+      var otherValue = getFormFieldValue(runtimeOtherFieldId);
+      var diffAmount = sum - Number(otherValue);
+      var sum = runtimeDetailSum(runtimeTableId, &quot;fd_line_total&quot;);
+      var sumTarget = $(&quot;input[name=extendDataFormInfo.value(fd_detail_sum)]&quot;);
+      sumTarget.val(sum);
+      var invalidTarget = $(&quot;input[name=extendDataFormInfo.value(fd_clamped_sum)]&quot;);
+      invalidTarget.val(diffAmount);
+    }
+    function unsafeSelectorDetailSum(tableId, controlId, calculation) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+        var currentValue = $(differentSelector(rowId)).val();
+        sum = sum + Number(currentValue);
+      }
+      calculation.val(sum);
+      return sum;
+    }
+    function useUnsafeSelectorDetailSum() {
+      var unsafeSelectorTarget = $(&quot;input[name=extendDataFormInfo.value(fd_unsafe_selector_sum)]&quot;);
+      unsafeSelectorDetailSum(runtimeTableId, &quot;fd_line_total&quot;, unsafeSelectorTarget);
+    }
+    function unsafeMutatedAggregate() {
+      var sum = runtimeDetailSum(runtimeTableId, &quot;fd_line_total&quot;);
+      sum *= 2;
+      var unsafeMutatedTarget = $(&quot;input[name=extendDataFormInfo.value(fd_unsafe_mutated_sum)]&quot;);
+      unsafeMutatedTarget.val(sum);
+    }
+    function unsafeMutatedRuntimeDifference() {
+      var sum = runtimeDetailSum(runtimeTableId, &quot;fd_line_total&quot;);
+      var otherValue = getFormFieldValue(runtimeOtherFieldId);
+      sum *= 2;
+      var diffAmount = sum - Number(otherValue);
+      var unsafeDifferenceTarget = $(&quot;input[name=extendDataFormInfo.value(fd_unsafe_diff)]&quot;);
+      unsafeDifferenceTarget.val(diffAmount);
+    }
+    function duplicatedDetailSum(tableId, controlId, calculation) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+        sum = sum + Number(currentValue);
+      }
+      calculation.val(sum);
+      return sum;
+    }
+    function duplicatedDetailSum(tableId, controlId, calculation) {
+      return 999;
+    }
+    function useDuplicatedDetailSum() {
+      var duplicateTarget = $(&quot;input[name=extendDataFormInfo.value(fd_unsafe_duplicate_sum)]&quot;);
+      duplicatedDetailSum(runtimeTableId, &quot;fd_line_total&quot;, duplicateTarget);
+    }
+    function conflictLineSum(tableId, controlId, calculation) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+        sum = sum + Number(currentValue);
+      }
+      calculation.val(sum);
+      return sum;
+    }
+    function applyConflictLineSum() {
+      var conflictTarget = $(&quot;input[name=extendDataFormInfo.value(fd_inference_conflict)]&quot;);
+      conflictLineSum(runtimeTableId, &quot;fd_line_total&quot;, conflictTarget);
+    }
+    function conflictQuantitySum(tableId, controlId, calculation) {
+      var tabId = &quot;TABLE_DL_&quot; + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+        var currentValue = $(&quot;[name=extendDataFormInfo.value(&quot; + rowId + &quot;)]&quot;).val();
+        sum = sum + Number(currentValue);
+      }
+      calculation.val(sum);
+      return sum;
+    }
+    function applyConflictQuantitySum() {
+      var conflictTarget = $(&quot;input[name=extendDataFormInfo.value(fd_inference_conflict)]&quot;);
+      conflictQuantitySum(runtimeTableId, &quot;fd_quantity&quot;, conflictTarget);
+    }
+    function conditionalAggregateWrapper() {
+      var conditionalTarget = $(&quot;input[name=extendDataFormInfo.value(fd_unsafe_conditional_sum)]&quot;);
+      if (conditionalFlag) {
+        var sum = runtimeDetailSum(runtimeTableId, &quot;fd_line_total&quot;);
+        conditionalTarget.val(sum);
+      }
+    }
+    function conditionalRuntimeDifference() {
+      if (conditionalFlag) {
+        var sum = runtimeDetailSum(runtimeTableId, &quot;fd_line_total&quot;);
+        var otherValue = getFormFieldValue(runtimeOtherFieldId);
+        var diffAmount = sum - Number(otherValue);
+        var conditionalDiffTarget = $(&quot;input[name=extendDataFormInfo.value(fd_unsafe_cond_diff)]&quot;);
+        conditionalDiffTarget.val(diffAmount);
+      }
+    }
+    function commentOnlyTableBinding() {
+      var sum = runtimeDetailSum(commentedTableId, &quot;fd_line_total&quot;);
+      var commentTarget = $(&quot;input[name=extendDataFormInfo.value(fd_unsafe_comment_sum)]&quot;);
+      commentTarget.val(sum);
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_main_left&quot; label=&quot;主表左值&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_main_right&quot; label=&quot;主表右值&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_main_total&quot; label=&quot;主表公式&quot; type=&quot;Double&quot; scale=&quot;2&quot; formula=&quot;true&quot; defaultValue=&quot;$fd_main_left$ + $fd_main_right$&quot; recalculateOnSave=&quot;true&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_lines&quot; label=&quot;费用明细&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_quantity&quot; label=&quot;数量&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_unit_price&quot; label=&quot;单价&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_line_total&quot; label=&quot;行金额&quot; type=&quot;Double&quot; scale=&quot;2&quot; formula=&quot;true&quot; defaultValue=&quot;$fd_quantity$ * $fd_unit_price$&quot; recalculateOnSave=&quot;true&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_threshold_kind&quot; label=&quot;阈值类别&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_threshold_input&quot; label=&quot;阈值输入&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_threshold_result&quot; label=&quot;阈值结果&quot; type=&quot;Double&quot; scale=&quot;0&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_detail_sum&quot; label=&quot;明细合计&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_clamped_sum&quot; label=&quot;非负明细合计&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_recompute_input&quot; label=&quot;重算输入&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_recompute_output&quot; label=&quot;重算结果&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_unsafe_selector_sum&quot; label=&quot;不安全选择器合计&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_unsafe_mutated_sum&quot; label=&quot;不安全改写合计&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_unsafe_diff&quot; label=&quot;不安全改写差额&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_unsafe_duplicate_sum&quot; label=&quot;不安全重复函数合计&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_inference_conflict&quot; label=&quot;冲突推断&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_unsafe_conditional_sum&quot; label=&quot;条件合计&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_unsafe_cond_diff&quot; label=&quot;条件差额&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_unsafe_comment_sum&quot; label=&quot;注释绑定合计&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

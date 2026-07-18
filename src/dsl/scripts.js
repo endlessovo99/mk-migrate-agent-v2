@@ -59,6 +59,17 @@ export function resolveScriptControlTarget(form = {}, action = {}) {
   }
 
   if (tableId) {
+    if (tableId === controlId && index.detailTables.has(tableId)) {
+      const field = index.detailTables.get(tableId);
+      return {
+        ok: true,
+        kind: "detailTable",
+        tableId,
+        controlId,
+        table: field,
+        field
+      };
+    }
     const target = index.detailColumns.get(`${tableId}.${controlId}`);
     if (!target) {
       return {
@@ -95,6 +106,11 @@ export function resolveScriptControlTarget(form = {}, action = {}) {
       controlId,
       field
     };
+  }
+
+  if (index.detailTables.has(controlId)) {
+    const field = index.detailTables.get(controlId);
+    return { ok: true, kind: "detailTable", tableId: controlId, controlId, table: field, field };
   }
 
   if (index.detailColumnIds.has(controlId)) {
@@ -157,6 +173,11 @@ export function resolveControlEventSupport(target, event) {
       supportedEvents: entry.events || [],
       reason: "detail-column event support has not been verified"
     };
+  }
+
+
+  if (target?.kind === "detailTable") {
+    return eventSupported(entry, event, "detailTable");
   }
 
   return eventSupported(entry, event, "field");

@@ -88,26 +88,74 @@ export function summarizeNativeFormRuleConfig(formRule = {}) {
 
 function buildNativeComputeRules(form = {}, nativeIndex) {
   const calculations = [];
-  for (const field of form.fields || []) {
-    if (field?.type === "detailTable") continue;
-    if (!field?.props?.calculation) continue;
-    const target = nativeIndex.byRef.get(field.id);
+  for (const entry of calculationFields(form)) {
+    const { field, tableId, ref } = entry;
+    const target = nativeIndex.byRef.get(ref);
     if (!target) continue;
     const item = buildNativeComputeItem(field, target, nativeIndex);
     if (!item) continue;
     calculations.push({
-      id: stableId("compute-rule", field.id),
-      ruleName: `${GENERATED_RULE_PREFIX}compute:${field.id}`,
+      id: stableId("compute-rule", ref),
+      ruleName: `${GENERATED_RULE_PREFIX}compute:${ref}`,
       active: true,
       choices: { items: [item] },
       meta: {
         generatedBy: GENERATED_BY,
         sourceFieldId: field.id,
+        ...(tableId ? { sourceTableId: tableId } : {}),
         ruleType: "compute"
       }
     });
   }
   return calculations;
+}
+
+function calculationFields(form = {}) {
+  const entries = (form.fields || []).flatMap((field) => {
+    if (field?.type !== "detailTable") {
+      return field?.props?.calculation ? [{ field, ref: field.id }] : [];
+    }
+    return (field.columns || [])
+      .filter((column) => column?.props?.calculation)
+      .map((column) => ({
+        field: column,
+        tableId: field.id,
+        ref: `${field.id}.${column.id}`
+      }));
+  });
+  const knownRefs = new Set(entries.map((entry) => entry.ref));
+  const pending = entries.map((entry) => ({
+    ...entry,
+    dependencies: nativeCalculationDependencies(entry, knownRefs)
+  }));
+  const ordered = [];
+  const emitted = new Set();
+
+  while (pending.length) {
+    const index = pending.findIndex((entry) => entry.dependencies.every((ref) => emitted.has(ref)));
+    if (index === -1) {
+      const error = new Error("Native calculation dependency cycle detected.");
+      error.code = "projection.form.calculation_dependency_cycle";
+      error.details = { fieldRefs: pending.map((entry) => entry.ref) };
+      throw error;
+    }
+    const [entry] = pending.splice(index, 1);
+    ordered.push(entry);
+    emitted.add(entry.ref);
+  }
+  return ordered;
+}
+
+function nativeCalculationDependencies(entry, knownRefs) {
+  const calculation = entry.field.props.calculation;
+  if (calculation.kind === "aggregate") {
+    const ref = `${calculation.tableId}.${calculation.fieldId}`;
+    return knownRefs.has(ref) ? [ref] : [];
+  }
+  if (calculation.kind !== "formula") return [];
+  return (calculation.fieldIds || [])
+    .map((fieldId) => entry.tableId ? `${entry.tableId}.${fieldId}` : fieldId)
+    .filter((ref) => knownRefs.has(ref));
 }
 
 function buildNativeComputeItem(field, target, nativeIndex) {

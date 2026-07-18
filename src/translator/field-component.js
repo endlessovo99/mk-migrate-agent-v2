@@ -22,12 +22,6 @@ export function componentForSourceType(type, source = {}) {
 }
 
 function isSourceCalculation(type, source) {
-  const isDetailColumn = Boolean(
-    String(source.sourceRef || "").startsWith("source.form.detailTable.") ||
-    source.sourceProps?.designerTableName ||
-    source.sourceProps?.designerValues?.tableName
-  );
-  if (isDetailColumn) return false;
   if (String(source.sourceProps?.designerType || "").toLowerCase() === "calculation") return true;
   if (type !== "number") return false;
   const designerFormula = String(source.sourceProps?.designerValues?.formula || "").trim();

@@ -204,6 +204,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
 
   return {
     fields: expectedFields,
+    calculationOrder: expectedCalculationOrder(form, diagnostics),
     layoutRows,
     subjectRule: {},
     persistence: {
@@ -224,6 +225,51 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
         }))
     }
   };
+}
+
+function expectedCalculationOrder(form = {}, diagnostics = []) {
+  const entries = (form.fields || []).flatMap((field) => {
+    if (field?.type !== "detailTable") {
+      return field?.props?.calculation ? [{ field, ref: field.id }] : [];
+    }
+    return (field.columns || [])
+      .filter((column) => column?.props?.calculation)
+      .map((column) => ({ field: column, tableId: field.id, ref: `${field.id}.${column.id}` }));
+  });
+  const knownRefs = new Set(entries.map((entry) => entry.ref));
+  const pending = entries.map((entry) => ({
+    ...entry,
+    dependencies: expectedCalculationDependencies(entry, knownRefs)
+  }));
+  const order = [];
+  const emitted = new Set();
+  while (pending.length) {
+    const index = pending.findIndex((entry) => entry.dependencies.every((ref) => emitted.has(ref)));
+    if (index === -1) {
+      diagnostics.push(projectionError(
+        "projection.form.calculation_dependency_cycle",
+        "Native calculation dependency cycle detected.",
+        { fieldRefs: pending.map((entry) => entry.ref) }
+      ));
+      return [...order, ...pending.map((entry) => entry.ref)];
+    }
+    const [entry] = pending.splice(index, 1);
+    order.push(entry.ref);
+    emitted.add(entry.ref);
+  }
+  return order;
+}
+
+function expectedCalculationDependencies(entry, knownRefs) {
+  const calculation = entry.field.props.calculation;
+  if (calculation.kind === "aggregate") {
+    const ref = `${calculation.tableId}.${calculation.fieldId}`;
+    return knownRefs.has(ref) ? [ref] : [];
+  }
+  if (calculation.kind !== "formula") return [];
+  return (calculation.fieldIds || [])
+    .map((fieldId) => entry.tableId ? `${entry.tableId}.${fieldId}` : fieldId)
+    .filter((ref) => knownRefs.has(ref));
 }
 
 function executableProps(field = {}) {
@@ -424,12 +470,22 @@ function buildExpectedScripts(scripts = {}, form = {}, mainTableName, diagnostic
     }
     const event = action.event || action.name;
     const renderedBody = renderExpectedScriptBody(action.function, detailTableNames);
+    const scope = action.scope || "global";
+    const controlId = action.tableId && action.controlId === action.tableId
+      ? detailTableNames[action.tableId]
+      : action.controlId || undefined;
+    const physicalTableName = action.tableId
+      ? detailTableNames[action.tableId]
+      : mainTableName;
     actions.push({
       id: action.id,
       omitted: false,
       event,
-      scope: action.scope || "global",
-      controlId: action.controlId || undefined,
+      scope,
+      controlId,
+      controlKey: scope === "control" && controlId
+        ? `${physicalTableName}.${controlId}`
+        : undefined,
       tableId: action.tableId || undefined,
       runWhen: action.runWhen ? clone(action.runWhen) : undefined,
       bodyDigest: digestText(canonicalizeScriptBody(renderedBody)),

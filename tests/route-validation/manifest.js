@@ -119,6 +119,54 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "calculation-migration-success",
+      source: {
+        kind: "form-only",
+        relativePath: "calculation-migration/route-calculation-migration_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "calculation-script-recipes-success",
+      source: {
+        kind: "form-only",
+        relativePath: "calculation-script-recipes/route-calculation-script-recipes_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "finance-detail-generation-success",
+      source: {
+        kind: "form-only",
+        relativePath: "finance-detail-generation/route-finance-detail-generation_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "multi-batch-review-success",
       source: {
         kind: "form-only",

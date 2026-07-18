@@ -15,7 +15,10 @@ import {
   buildFieldIdMap
 } from "./field-id-remap.js";
 import { SOURCE_DRAFT_VERSION } from "./source-draft.js";
-import { draftMkScriptsFromSourceScripts } from "./sysform-jsp-scripts.js";
+import {
+  draftMkScriptsFromSourceScripts,
+  sourceNumericDetailFieldInferences
+} from "./sysform-jsp-scripts.js";
 import {
   classifyWorkflowDynamicParticipant,
   classifyWorkflowFormulaParticipant
@@ -25,6 +28,8 @@ import {
   isSupportedConditionalParallelCondition
 } from "./conditional-parallel.js";
 import { componentForSourceType } from "./field-component.js";
+import { conditionalTotalCalculationModel } from "./conditional-total-calculation.js";
+import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -36,7 +41,13 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     throw new Error("draft requires a source-draft artifact");
   }
 
-  const rawForm = draftForm(sourceDraft.form || {});
+  const rawForm = applySourceNumericDetailInferences(
+    applyNativeCalculationInferences(
+      draftForm(sourceDraft.form || {}),
+      sourceDraft.scripts
+    ),
+    sourceDraft.scripts
+  );
   const fieldIdMap = buildFieldIdMap(rawForm);
   const form = applyFieldIdMapToForm(rawForm, fieldIdMap);
   const knownSourceFieldIds = collectFormFieldIds(rawForm);
@@ -44,10 +55,11 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     applyFieldIdMapToSourceFormRules(sourceDraft.formRules, fieldIdMap),
     form
   );
-  const scripts = applyFieldIdMapToScripts(
+  const mappedScripts = applyFieldIdMapToScripts(
     draftMkScriptsFromSourceScripts(sourceDraft.scripts, { form, formRules }),
     fieldIdMap
   );
+  const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
   const workflow = sourceDraft.workflow
     ? applyFieldIdMapToWorkflow(draftWorkflow(sourceDraft.workflow, knownSourceFieldIds), fieldIdMap)
     : undefined;
@@ -90,6 +102,43 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   });
 }
 
+function applySourceNumericDetailInferences(form, sourceScripts) {
+  const inferences = sourceNumericDetailFieldInferences(sourceScripts, form);
+  const byRef = new Map(inferences.map((inference) => [
+    `${inference.tableId}.${inference.fieldId}`,
+    inference
+  ]));
+  if (!byRef.size) return form;
+  return {
+    ...form,
+    fields: (form.fields || []).map((field) => {
+      if (field.type !== "detailTable") return field;
+      return {
+        ...field,
+        columns: (field.columns || []).map((column) => {
+          const inference = byRef.get(`${field.id}.${column.id}`);
+          if (!inference || column.type !== "text" || column.componentId !== "xform-input") return column;
+          return {
+            ...column,
+            type: "number",
+            componentId: "xform-number",
+            sourceProps: {
+              ...(column.sourceProps || {}),
+              numericCalculationInference: {
+                classification: "source",
+                originalType: column.type,
+                originalComponentId: column.componentId,
+                sourceRef: inference.sourceRef,
+                evidence: inference.evidence
+              }
+            }
+          };
+        })
+      };
+    })
+  };
+}
+
 function collectFormFieldIds(form = {}) {
   const fieldIds = new Set();
   for (const field of form.fields || []) {
@@ -99,6 +148,395 @@ function collectFormFieldIds(form = {}) {
     }
   }
   return fieldIds;
+}
+
+function attachCalculationDecisions(scripts, form, sourceScripts = {}) {
+  const actions = scripts?.actions || [];
+  const decisions = [];
+  const coveredRangesBySourceRef = new Map();
+  const nativeFormulaCoverage = nativeFormulaSourceCoverage(sourceScripts, form);
+  const nativeSourceCoverageByTarget = nativeFormulaCoverage.rangesByTarget;
+  const scriptResidualKeys = new Set();
+  const fields = (form.fields || []).flatMap((field) =>
+    field.type === "detailTable"
+      ? (field.columns || []).map((column) => ({ field: column, tableId: field.id }))
+      : [{ field }]
+  );
+
+  for (const { field, tableId } of fields) {
+    const calculation = field.props?.calculation;
+    if (!calculation) continue;
+    const inferred = field.sourceProps?.inferredCalculation;
+    const targetRef = tableId ? `${tableId}.${field.id}` : field.id;
+    const nativeSourceCoverage = nativeSourceCoverageByTarget.get(targetRef) || [];
+    const dependentCallSemantics = (inferred?.dependentCalls || []).map((name) => {
+      const targets = [...(nativeFormulaCoverage.targetsByFunctionName.get(name) || [])];
+      const nativeTarget = targets.length === 1 && nativeFormulaDependsOnRef(form, targets[0], targetRef)
+        ? targets[0]
+        : undefined;
+      return {
+        name,
+        handling: nativeTarget ? "native_dependency_recalculation" : "manual",
+        ...(nativeTarget ? { nativeTarget } : {})
+      };
+    });
+    const sourceRefs = uniqueStrings([
+      field.sourceRef,
+      inferred?.sourceRef,
+      ...nativeSourceCoverage.map((range) => range.sourceRef)
+    ]);
+    addCoveredCalculationRanges(coveredRangesBySourceRef, inferred?.coveredCalculationRanges);
+    addCoveredCalculationRanges(coveredRangesBySourceRef, nativeSourceCoverage);
+    decisions.push({
+      id: `calculation.native.${tableId ? `${tableId}.` : ""}${field.id}`,
+      classification: "native",
+      sourceRefs,
+      targetRefs: [targetRef],
+      evidence: inferred?.evidence || calculation.expression ||
+        `${calculation.operation}(${calculation.tableId}.${calculation.fieldId})`,
+      semantics: {
+        ...calculation,
+        ...(dependentCallSemantics.length ? { sourceDependentCalls: dependentCallSemantics } : {})
+      }
+    });
+    for (const call of dependentCallSemantics.filter((item) => item.handling === "manual")) {
+      decisions.push({
+        id: `calculation.manual.${tableId ? `${tableId}.` : ""}${field.id}.dependent-call.${call.name}`,
+        classification: "manual",
+        sourceRefs,
+        targetRefs: [targetRef],
+        evidence: `${call.name}();`,
+        reason: `The source aggregate invokes ${call.name}(); no unique downstream native calculation proves equivalent dependent recalculation.`,
+        code: "calculation.dependent_call_unmapped"
+      });
+    }
+    for (const [index, residual] of (inferred?.residuals || []).entries()) {
+      decisions.push({
+        id: `calculation.manual.${tableId ? `${tableId}.` : ""}${field.id}.${index + 1}`,
+        classification: "manual",
+        sourceRefs,
+        targetRefs: [tableId ? `${tableId}.${field.id}` : field.id],
+        evidence: inferred.evidence,
+        reason: residual.reason,
+        code: residual.code
+      });
+    }
+  }
+
+  for (const action of actions) {
+    if (
+      action.translationStatus !== "mapped" ||
+      !(action.functionMappings || []).some((mapping) =>
+        /calculation|finance-detail-generation/u.test(String(mapping.basis || mapping.source || ""))
+      )
+    ) continue;
+    for (const range of action.semanticHints?.coveredCalculationRanges || []) {
+      addCoveredCalculationRanges(coveredRangesBySourceRef, [range]);
+    }
+    decisions.push({
+      id: `calculation.script.${action.id}`,
+      classification: "script",
+      sourceRefs: action.sourceRefs || [],
+      triggerRefs: [action.tableId ? `${action.tableId}.${action.controlId}` : action.controlId].filter(Boolean),
+      targetRefs: uniqueStrings([
+        ...calculationScriptTargetRefs(action.function),
+        action.semanticHints?.targetDetailTableId
+      ]),
+      evidence: (action.functionMappings || []).map((mapping) => mapping.source).filter(Boolean).join("; "),
+      actionId: action.id
+    });
+    for (const residual of (action.functionMappings || []).flatMap((mapping) => mapping.manualResiduals || [])) {
+      const sourceKey = (action.sourceRefs || []).join("|");
+      const residualKey = `${sourceKey}|${residual.code || residual.reason}`;
+      if (scriptResidualKeys.has(residualKey)) continue;
+      scriptResidualKeys.add(residualKey);
+      decisions.push({
+        id: `calculation.manual.${String(action.sourceRefs?.[0] || action.id).replace(/[^A-Za-z0-9_.-]+/gu, "-")}.${residual.code || "residual"}`,
+        classification: "manual",
+        sourceRefs: action.sourceRefs || [],
+        targetRefs: calculationScriptTargetRefs(action.function),
+        evidence: (action.functionMappings || []).map((mapping) => mapping.source).filter(Boolean).join("; "),
+        reason: residual.reason,
+        code: residual.code
+      });
+    }
+  }
+
+  const sourceFieldMap = sourceToTargetFieldMap(form);
+  for (const source of sourceScripts?.sources || []) {
+    const residualSource = sourceWithoutCoveredRanges(
+      source.javascript,
+      coveredRangesBySourceRef.get(source.sourceRef)
+    );
+    if (!hasUncoveredCalculationBehavior(residualSource)) continue;
+    const targetRefs = uniqueStrings(
+      [...String(residualSource || "").matchAll(/\bfd_[A-Za-z0-9_]+\b/gu)]
+        .map((match) => sourceFieldMap.get(match[0]))
+        .filter(Boolean)
+    );
+    if (!targetRefs.length) continue;
+    decisions.push({
+      id: `calculation.manual.${String(source.sourceRef || "source").replace(/[^A-Za-z0-9_.-]+/gu, "-")}`,
+      classification: "manual",
+      sourceRefs: [source.sourceRef].filter(Boolean),
+      targetRefs,
+      evidence: calculationEvidencePreview(residualSource),
+      reason: "The source calculation uses branching, detail lifecycle, DOM state, or a helper closure that is not yet proven equivalent in the constrained MK native/script catalogs."
+    });
+  }
+
+  if (!scripts && !decisions.length) return scripts;
+  return {
+    ...(scripts || { source: sourceScripts?.source || "sysform-jsp", actions: [], warnings: [], javascript: "" }),
+    calculationDecisions: decisions
+  };
+}
+
+function nativeFormulaSourceCoverage(sourceScripts = {}, form = {}) {
+  const formulaFieldByTarget = new Map(
+    (form.fields || [])
+      .filter((field) => field.type !== "detailTable" && field.props?.calculation?.kind === "formula")
+      .map((field) => [field.id, field])
+  );
+  const rangesByTarget = new Map();
+  const targetsByFunctionName = new Map();
+  for (const source of sourceScripts?.sources || []) {
+    const text = String(source.javascript || "");
+    for (const fn of namedCalculationFunctions(text)) {
+      const model = additiveSourceFunctionModel(fn.body);
+      if (!model) continue;
+      const field = formulaFieldByTarget.get(model.targetFieldId);
+      if (!isEquivalentAdditiveFormula(field?.props?.calculation, model.dependencyFieldIds)) continue;
+      if (model.roundsToTwo && field?.props?.precision !== 2) continue;
+      const ranges = rangesByTarget.get(model.targetFieldId) || [];
+      ranges.push(...model.coveredRanges.map((range) => sourceRange(
+        source,
+        fn.bodyStart + range.start,
+        fn.bodyStart + range.end,
+        `${fn.name}.${range.name}`
+      )));
+      rangesByTarget.set(model.targetFieldId, ranges);
+      const targets = targetsByFunctionName.get(fn.name) || new Set();
+      targets.add(model.targetFieldId);
+      targetsByFunctionName.set(fn.name, targets);
+    }
+  }
+  return { rangesByTarget, targetsByFunctionName };
+}
+
+function nativeFormulaDependsOnRef(form, formulaTargetId, dependencyRef) {
+  const field = (form.fields || []).find((candidate) => candidate.id === formulaTargetId);
+  if (field?.type === "detailTable" || field?.props?.calculation?.kind !== "formula") return false;
+  return (field.props.calculation.fieldIds || []).includes(dependencyRef);
+}
+
+function additiveSourceFunctionModel(body) {
+  const selected = selectedFieldIdVariables(body);
+  if (selected.size < 3) return undefined;
+  if (/\b(?:if|else|switch|for|while|do|try|catch|finally|return|throw)\b/u.test(stripSourceComments(body))) {
+    return undefined;
+  }
+  const assignmentPattern = /(?:^|[;\n])\s*(?:var\s+)?([A-Za-z_$][\w$]*)\s*=\s*([^;]+)\s*;/gu;
+  const numericTerm = /Number\(\s*([A-Za-z_$][\w$]*)\.val\(\)\s*\?\s*\1\.val\(\)\s*:\s*0\s*\)/gu;
+  for (const assignment of body.matchAll(assignmentPattern)) {
+    const resultVariable = assignment[1];
+    const rhs = assignment[2];
+    const dependencyVariables = [...rhs.matchAll(numericTerm)].map((match) => match[1]);
+    if (dependencyVariables.length < 2) continue;
+    const normalized = rhs.replace(numericTerm, "1").replace(/[\s()]/gu, "");
+    if (!/^1(?:\+1)+$/u.test(normalized)) continue;
+    const dependencyFieldIds = dependencyVariables.map((variable) => selected.get(variable));
+    if (dependencyFieldIds.some((fieldId) => !fieldId)) continue;
+    for (const [targetVariable, targetFieldId] of selected) {
+      if (dependencyVariables.includes(targetVariable)) continue;
+      const targetWrite = new RegExp(
+        `\\b${escapeRegExp(targetVariable)}\\s*\\.\\s*val\\(\\s*${escapeRegExp(resultVariable)}\\s*\\)`,
+        "u"
+      );
+      const targetMatch = targetWrite.exec(body);
+      if (!targetMatch) continue;
+      if (targetMatch.index <= assignment.index + assignment[0].length) continue;
+      const rounding = new RegExp(
+        `\\b${escapeRegExp(resultVariable)}\\s*=\\s*theFixedNumTwo\\(\\s*${escapeRegExp(resultVariable)}\\s*\\)\\s*;`,
+        "u"
+      ).exec(body);
+      const betweenStart = assignment.index + assignment[0].length;
+      const betweenEnd = targetMatch.index;
+      const between = body.slice(betweenStart, betweenEnd).split("");
+      const roundingBetween = rounding && rounding.index >= betweenStart && rounding.index < betweenEnd;
+      if (rounding && !roundingBetween) continue;
+      if (roundingBetween) {
+        const localStart = rounding.index - betweenStart;
+        for (let index = localStart; index < localStart + rounding[0].length; index += 1) {
+          if (between[index] !== "\n" && between[index] !== "\r") between[index] = " ";
+        }
+      }
+      const resultMutation = new RegExp(
+        `\\b${escapeRegExp(resultVariable)}\\s*(?:[+\\-*/%]?=|\\+\\+|--)`,
+        "u"
+      );
+      if (resultMutation.test(between.join(""))) continue;
+      return {
+        targetFieldId,
+        dependencyFieldIds,
+        roundsToTwo: Boolean(roundingBetween),
+        coveredRanges: [
+          {
+            name: "additive-assignment",
+            start: assignment.index,
+            end: assignment.index + assignment[0].length
+          },
+          ...(rounding ? [{
+            name: "fixed-two-rounding",
+            start: rounding.index,
+            end: rounding.index + rounding[0].length
+          }] : []),
+          {
+            name: "target-write",
+            start: targetMatch.index,
+            end: targetMatch.index + targetMatch[0].length
+          }
+        ]
+      };
+    }
+  }
+  return undefined;
+}
+
+function isEquivalentAdditiveFormula(calculation, dependencyFieldIds) {
+  if (calculation?.kind !== "formula") return false;
+  const expected = [...String(calculation.expression || "").matchAll(/\$([A-Za-z_][\w]*)\$/gu)]
+    .map((match) => match[1])
+    .sort();
+  const observed = [...dependencyFieldIds].sort();
+  if (JSON.stringify(expected) !== JSON.stringify(observed)) return false;
+  const remainder = String(calculation.expression || "")
+    .replace(/\$[A-Za-z_][\w]*\$/gu, "1")
+    .replace(/[\s()]/gu, "");
+  return /^1(?:\+1)+$/u.test(remainder);
+}
+
+function stripSourceComments(value) {
+  return String(value || "")
+    .replace(/\/\*[\s\S]*?\*\//gu, "")
+    .replace(/\/\/[^\r\n]*/gu, "");
+}
+
+function maskSourceComments(value) {
+  const characters = String(value || "").split("");
+  let quote = "";
+  let escaped = false;
+  for (let index = 0; index < characters.length; index += 1) {
+    const char = characters[index];
+    const next = characters[index + 1];
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === quote) quote = "";
+      continue;
+    }
+    if (char === "\"" || char === "'" || char === "`") {
+      quote = char;
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      for (; index < characters.length && characters[index] !== "\n" && characters[index] !== "\r"; index += 1) {
+        characters[index] = " ";
+      }
+      index -= 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      characters[index] = " ";
+      characters[index + 1] = " ";
+      index += 2;
+      while (index < characters.length && !(characters[index] === "*" && characters[index + 1] === "/")) {
+        if (characters[index] !== "\n" && characters[index] !== "\r") characters[index] = " ";
+        index += 1;
+      }
+      if (index < characters.length) {
+        characters[index] = " ";
+        characters[index + 1] = " ";
+        index += 1;
+      }
+    }
+  }
+  return characters.join("");
+}
+
+function namedCalculationFunctions(text) {
+  const functions = [];
+  const pattern = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{/gu;
+  for (const match of String(text).matchAll(pattern)) {
+    const open = match.index + match[0].length - 1;
+    const close = balancedBraceClose(text, open);
+    if (close <= open) continue;
+    functions.push({
+      name: match[1],
+      body: text.slice(open + 1, close),
+      bodyStart: open + 1,
+      start: match.index,
+      end: close + 1
+    });
+  }
+  return functions;
+}
+
+function addCoveredCalculationRanges(rangesBySourceRef, ranges = []) {
+  for (const range of ranges || []) {
+    if (!range?.sourceRef || !Number.isInteger(range.start) || !Number.isInteger(range.end)) continue;
+    const values = rangesBySourceRef.get(range.sourceRef) || [];
+    values.push({ start: range.start, end: range.end, name: range.name });
+    rangesBySourceRef.set(range.sourceRef, values);
+  }
+}
+
+function sourceWithoutCoveredRanges(source, ranges = []) {
+  const characters = String(source || "").split("");
+  if (!Array.isArray(ranges) || !ranges.length) return characters.join("");
+  for (const range of ranges) {
+    const start = Math.max(0, Math.min(characters.length, range.start));
+    const end = Math.max(start, Math.min(characters.length, range.end));
+    for (let index = start; index < end; index += 1) {
+      if (characters[index] !== "\n" && characters[index] !== "\r") characters[index] = " ";
+    }
+  }
+  return characters.join("");
+}
+
+function sourceToTargetFieldMap(form = {}) {
+  const values = new Map();
+  for (const field of form.fields || []) {
+    values.set(field.sourceProps?.originalId || field.id, field.id);
+    for (const column of field.columns || []) {
+      values.set(column.sourceProps?.originalId || column.id, `${field.id}.${column.id}`);
+    }
+  }
+  return values;
+}
+
+function calculationScriptTargetRefs(source = "") {
+  const targets = [];
+  for (const match of String(source).matchAll(/MKXFORM\.(?:setValue|updateControl)\(\s*(["'])([^"']+)\1/gu)) {
+    targets.push(match[2].replace(/^\$\{table:([^}]+)\}\./u, "$1."));
+  }
+  return uniqueStrings(targets);
+}
+
+function hasUncoveredCalculationBehavior(source = "") {
+  const text = String(source);
+  const numericEvidence = /(?:\b(?:sum|total|amount|price|tax|allowance|inspire)\b|\b[A-Za-z_$][\w$]*(?:Sum|Total|Amount|Price|Tax|Allowance|Inspire)\s*\(|Math\.(?:min|max|round|pow)|\.toFixed\s*\(|theFixedNum|XForm_CalculatioFuns_Sum)/iu.test(text);
+  const writeEvidence = /(?:SetXFormFieldValueById|\.val\s*\(|\.value\s*=)/u.test(text);
+  const executableEvidence = /(?:AttachXFormValueChangeEventById|Com_Parameter\.event|function\s+[A-Za-z_$][\w$]*\s*\()/u.test(text);
+  return numericEvidence && writeEvidence && executableEvidence;
+}
+
+function calculationEvidencePreview(source = "") {
+  const line = String(source)
+    .split(/\r?\n/u)
+    .map((value) => value.trim())
+    .find((value) => /(?:Math\.|theFixedNum|\.toFixed\s*\(|\bsum\b|\btotal\b)/iu.test(value));
+  return String(line || source).replace(/\s+/gu, " ").trim().slice(0, 320);
 }
 
 function draftForm(sourceForm) {
@@ -275,10 +713,13 @@ function parseLegacyLiteralDefault(value, source) {
 
 function legacyCalculationFromSource(source) {
   const values = source.sourceProps?.designerValues || {};
+  const metadata = source.sourceProps?.metadataAttributes || {};
   const expression = firstNonEmptyExpression(
     values.expression_id,
     values.formula,
-    source.sourceProps?.metadataAttributes?.defaultValue
+    String(metadata.formula || "").toLowerCase() === "true"
+      ? metadata.defaultValue
+      : undefined
   );
   if (!expression) return undefined;
 
@@ -300,6 +741,604 @@ function legacyCalculationFromSource(source) {
     displayExpression: normalizeLegacyExpression(values.expression_name || values.defaultValue) || undefined,
     fieldIds: uniqueStrings(fieldIds)
   });
+}
+
+function applyNativeCalculationInferences(form, sourceScripts = {}) {
+  const candidatesByTarget = new Map();
+  for (const source of sourceScripts?.sources || []) {
+    const sums = inferDetailSumCalculations(source);
+    const conditionalTotal = inferConditionalTotalCalculation(source, sourceScripts);
+    for (const inference of [
+      ...sums,
+      ...inferRuntimeFormulaCalculations(source, sums),
+      ...(conditionalTotal ? [conditionalTotal] : [])
+    ]) {
+      const candidates = candidatesByTarget.get(inference.targetFieldId) || [];
+      candidates.push(inference);
+      candidatesByTarget.set(inference.targetFieldId, candidates);
+    }
+  }
+  const inferredByTarget = new Map();
+  for (const [targetFieldId, candidates] of candidatesByTarget) {
+    const semanticKeys = new Set(candidates.map(nativeInferenceSemanticKey));
+    if (semanticKeys.size !== 1) continue;
+    inferredByTarget.set(targetFieldId, mergeEquivalentNativeInferences(candidates));
+  }
+  if (!inferredByTarget.size) return form;
+
+  const usedFieldIds = new Set((form.fields || []).map((field) => field.id));
+  const generatedFields = [];
+
+  const fields = (form.fields || []).map((field) => {
+      const inference = inferredByTarget.get(field.id);
+      if (!inference || field.type === "detailTable") return field;
+      if (inference.postTransform?.kind === "clamp" && inference.kind === "aggregate") {
+        const helperId = allocateGeneratedCalculationFieldId(field.id, usedFieldIds);
+        const helperTitle = `${field.title}原始合计`;
+        const aggregateCalculation = {
+          kind: "aggregate",
+          operation: "sum",
+          tableId: inference.tableId,
+          fieldId: inference.sourceFieldId
+        };
+        generatedFields.push({
+          id: helperId,
+          title: helperTitle,
+          type: "number",
+          componentId: "xform-calculate",
+          dataOnly: true,
+          props: {
+            ...(Number.isInteger(field.props?.precision) ? { precision: field.props.precision } : {}),
+            defaultValue: { kind: "literal", value: 0 },
+            calculation: aggregateCalculation
+          },
+          sourceProps: {
+            generatedCalculation: {
+              role: "aggregateInput",
+              targetFieldId: field.id,
+              sourceRef: inference.sourceRef,
+              transform: inference.postTransform
+            },
+            inferredCalculation: inferredCalculationEvidence({ ...inference, dependentCalls: [] })
+          },
+          sourceRef: inference.sourceRef,
+          generated: true,
+          reason: `Generated raw aggregate for ${inference.postTransform.kind} post-processing on ${field.id}.`
+        });
+        const min = Number(inference.postTransform.min);
+        const expression = `Math.max($${helperId}$, ${min})`;
+        return {
+          ...field,
+          type: "number",
+          componentId: "xform-calculate",
+          props: {
+            ...(field.props || {}),
+            calculation: {
+              kind: "formula",
+              expression,
+              displayExpression: `MAX($${helperTitle}$, ${min})`,
+              fieldIds: [helperId]
+            }
+          },
+          sourceProps: {
+            ...(field.sourceProps || {}),
+            inferredCalculation: inferredCalculationEvidence({
+              ...inference,
+              kind: "formula",
+              composition: {
+                aggregate: aggregateCalculation,
+                postTransform: inference.postTransform,
+                helperFieldId: helperId
+              }
+            }, field.props?.calculation)
+          }
+        };
+      }
+      if (field.props?.calculation && inference.runtimeOverride !== true) {
+        if (!sameNativeCalculation(field.props.calculation, inference)) return field;
+        return {
+          ...field,
+          sourceProps: {
+            ...(field.sourceProps || {}),
+            inferredCalculation: inferredCalculationEvidence(inference)
+          }
+        };
+      }
+      const calculation = inference.kind === "formula"
+        ? {
+            kind: "formula",
+            expression: inference.expression,
+            displayExpression: inference.displayExpression || inference.expression,
+            fieldIds: inference.fieldIds
+          }
+        : {
+            kind: "aggregate",
+            operation: "sum",
+            tableId: inference.tableId,
+            fieldId: inference.sourceFieldId
+          };
+      return {
+        ...field,
+        type: "number",
+        componentId: "xform-calculate",
+        props: {
+          ...(field.props || {}),
+          calculation
+        },
+        sourceProps: {
+          ...(field.sourceProps || {}),
+          inferredCalculation: inferredCalculationEvidence(inference, field.props?.calculation)
+        }
+      };
+    });
+
+  return {
+    ...form,
+    fields: [...fields, ...generatedFields]
+  };
+}
+
+function nativeInferenceSemanticKey(inference) {
+  return JSON.stringify({
+    kind: inference.kind,
+    ...(inference.kind === "aggregate" ? {
+      tableId: inference.tableId,
+      sourceFieldId: inference.sourceFieldId
+    } : {
+      expression: inference.expression,
+      fieldIds: inference.fieldIds
+    }),
+    postTransform: inference.postTransform || null,
+    composition: inference.composition || null,
+    dependentCalls: [...(inference.dependentCalls || [])].sort()
+  });
+}
+
+function mergeEquivalentNativeInferences(candidates) {
+  const [first] = candidates;
+  return {
+    ...first,
+    evidence: uniqueStrings(candidates.map(candidate => candidate.evidence)).join(" | "),
+    coveredCalculationRanges: candidates.flatMap(candidate => candidate.coveredCalculationRanges || []),
+    dependentCalls: uniqueStrings(candidates.flatMap(candidate => candidate.dependentCalls || [])),
+    residuals: candidates.flatMap(candidate => candidate.residuals || [])
+  };
+}
+
+function inferConditionalTotalCalculation(source, sourceScripts) {
+  const model = conditionalTotalCalculationModel(source, sourceScripts);
+  if (!model) return undefined;
+  const branchExpression = `($${model.modeFieldId}$ == ${model.modeValue} ? (${model.trueFieldIds.map((fieldId) => `$${fieldId}$`).join(" + ")}) : (${model.falseFieldIds.map((fieldId) => `$${fieldId}$`).join(" + ")}))`;
+  return {
+    kind: "formula",
+    targetFieldId: model.totalTargetFieldId,
+    expression: `Math.round((${branchExpression}) * 100) / 100`,
+    displayExpression: "travel-scope conditional total",
+    fieldIds: uniqueStrings([model.modeFieldId, ...model.sourceFieldIds]),
+    sourceRef: model.sourceRef,
+    evidence: model.evidence,
+    coveredCalculationRanges: model.coveredCalculationRanges,
+    runtimeOverride: true,
+    residuals: []
+  };
+}
+
+function allocateGeneratedCalculationFieldId(targetFieldId, usedFieldIds) {
+  const stem = `fd_mig_raw_${String(targetFieldId).replace(/^fd_/u, "")}`;
+  let candidate = stem;
+  let suffix = 1;
+  while (usedFieldIds.has(candidate)) {
+    candidate = `${stem}_${suffix}`;
+    suffix += 1;
+  }
+  usedFieldIds.add(candidate);
+  return candidate;
+}
+
+function inferredCalculationEvidence(inference, sourceFormulaOverride) {
+  return {
+    classification: "native",
+    kind: inference.kind,
+    sourceRef: inference.sourceRef,
+    evidence: inference.evidence,
+    ...(inference.coveredCalculationRanges?.length
+      ? { coveredCalculationRanges: inference.coveredCalculationRanges }
+      : {}),
+    ...(inference.dependentCalls?.length ? { dependentCalls: inference.dependentCalls } : {}),
+    ...(inference.runtimeOverride && sourceFormulaOverride ? { sourceFormulaOverride } : {}),
+    ...(inference.composition ? { composition: inference.composition } : {}),
+    ...(inference.postTransform ? { postTransform: inference.postTransform } : {}),
+    ...(inference.residuals?.length ? { residuals: inference.residuals } : {})
+  };
+}
+
+function sameNativeCalculation(calculation, inference) {
+  return calculation?.kind === "aggregate" &&
+    inference.kind === "aggregate" &&
+    calculation.operation === "sum" &&
+    calculation.tableId === inference.tableId &&
+    calculation.fieldId === inference.sourceFieldId;
+}
+
+function inferDetailSumCalculations(source = {}) {
+  const text = maskSourceComments(String(source.javascript || ""));
+  if (!text) return [];
+  const outerTableVars = topLevelAssignedFieldIdVariables(text);
+  const results = [];
+
+  const assignedCall = /\b([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)\s*,\s*(["'])(fd_[A-Za-z0-9_]+)\3\s*,\s*([A-Za-z_$][\w$]*)\s*\)/gu;
+  for (const match of text.matchAll(assignedCall)) {
+    const caller = sourceFunctionAtIndex(text, match.index);
+    if (!caller) continue;
+    const localCallStart = match.index - caller.bodyStart;
+    if (isWithinControlFlow(caller.body, localCallStart, localCallStart + match[0].length)) continue;
+    const helper = sourceFunction(text, match[1]);
+    const semantics = detailSumHelperSemantics(helper);
+    const tableId = resolveAssignedFieldId(caller.body, outerTableVars, match[2]);
+    const targetFieldId = uniqueSelectedFieldIdVariables(caller.body).get(match[5]);
+    if (!tableId || !targetFieldId || !semantics) continue;
+    results.push(detailSumInference(source, tableId, match[4], targetFieldId, match[0], semantics, [
+      sourceRange(source, match.index, match.index + match[0].length, match[1]),
+      sourceFunctionRange(source, helper)
+    ], match[1]));
+  }
+
+  const returnedCall = /var\s+([A-Za-z_$][\w$]*)\s*=\s*([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)\s*,\s*(["'])(fd_[A-Za-z0-9_]+)\4\s*\)/gu;
+  for (const match of text.matchAll(returnedCall)) {
+    if (/\bMath\.min\s*\(/u.test(text)) continue;
+    const helper = sourceFunction(text, match[2]);
+    const semantics = detailSumHelperSemantics(helper);
+    const caller = sourceFunctionAtIndex(text, match.index);
+    if (!caller) continue;
+    const tableId = resolveAssignedFieldId(caller.body, outerTableVars, match[3]);
+    if (!tableId || !semantics) continue;
+    const localAfterCall = match.index - caller.bodyStart + match[0].length;
+    const callerRemainder = caller.body.slice(localAfterCall);
+    for (const [variable, targetFieldId] of uniqueSelectedFieldIdVariables(caller.body)) {
+      const assignment = new RegExp(`\\b${escapeRegExp(variable)}\\s*\\.\\s*val\\(\\s*${escapeRegExp(match[1])}\\s*\\)`, "u");
+      const assignmentMatch = assignment.exec(callerRemainder);
+      if (!assignmentMatch) continue;
+      const localCallStart = match.index - caller.bodyStart;
+      const localWriteEnd = localAfterCall + assignmentMatch.index + assignmentMatch[0].length;
+      if (isWithinControlFlow(caller.body, localCallStart, localWriteEnd)) continue;
+      if (hasUnsafeInterveningBehavior(
+        caller.body,
+        localAfterCall,
+        localAfterCall + assignmentMatch.index + assignmentMatch[0].length,
+        [match[1]]
+      )) continue;
+      const assignmentStart = caller.bodyStart + localAfterCall + assignmentMatch.index;
+      results.push(detailSumInference(source, tableId, match[5], targetFieldId, match[0], semantics, [
+        sourceRange(source, match.index, match.index + match[0].length, match[2]),
+        sourceRange(source, assignmentStart, assignmentStart + assignmentMatch[0].length, "aggregate-target"),
+        sourceFunctionRange(source, helper)
+      ], match[2]));
+    }
+  }
+  return dedupeBy(results, (item) => `${item.targetFieldId}:${item.tableId}:${item.sourceFieldId}`);
+}
+
+function detailSumInference(source, tableId, sourceFieldId, targetFieldId, evidence, semantics = {}, coveredCalculationRanges = [], helperName) {
+  return {
+    kind: "aggregate",
+    tableId,
+    sourceFieldId,
+    targetFieldId,
+    sourceRef: source.sourceRef,
+    helperName,
+    evidence: String(evidence).replace(/\s+/gu, " ").trim(),
+    coveredCalculationRanges: coveredCalculationRanges.filter(Boolean),
+    residuals: semantics.residuals || [],
+    ...(semantics.dependentCalls?.length ? { dependentCalls: semantics.dependentCalls } : {}),
+    ...(semantics.postTransform ? { postTransform: semantics.postTransform } : {})
+  };
+}
+
+function inferRuntimeFormulaCalculations(source = {}, sumInferences = []) {
+  const text = maskSourceComments(String(source.javascript || ""));
+  const outerAssignedIds = topLevelAssignedFieldIdVariables(text);
+  const results = [];
+
+  for (const sum of sumInferences) {
+    const sumAssignments = [...text.matchAll(/var\s+([A-Za-z_$][\w$]*)\s*=\s*([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)\s*,\s*(["'])(fd_[A-Za-z0-9_]+)\4\s*\)/gu)]
+      .filter((match) => {
+        const candidateCaller = sourceFunctionAtIndex(text, match.index);
+        return candidateCaller &&
+          resolveAssignedFieldId(candidateCaller.body, outerAssignedIds, match[3]) === sum.tableId &&
+          match[2] === sum.helperName &&
+          match[5] === sum.sourceFieldId;
+      });
+    for (const sumAssignment of sumAssignments) {
+      const caller = sourceFunctionAtIndex(text, sumAssignment.index);
+      if (!caller) continue;
+      const callerAssignments = sumAssignments.filter((candidate) =>
+        sourceFunctionAtIndex(text, candidate.index)?.start === caller.start
+      );
+      if (callerAssignments.length !== 1) continue;
+      const sumVariable = sumAssignment[1];
+      const differences = [...caller.body.matchAll(new RegExp(
+      `var\\s+([A-Za-z_$][\\w$]*)\\s*=\\s*${escapeRegExp(sumVariable)}\\s*-\\s*Number\\(\\s*([A-Za-z_$][\\w$]*)\\s*\\)\\s*;`,
+      "gu"
+      ))];
+      if (differences.length !== 1) continue;
+      const [difference] = differences;
+
+      const otherReads = [...caller.body.matchAll(new RegExp(
+      `var\\s+${escapeRegExp(difference[2])}\\s*=\\s*getFormFieldValue\\(\\s*(["']?)([A-Za-z_$][\\w$]*)\\1\\s*\\)\\s*;`,
+      "gu"
+      ))];
+      if (otherReads.length !== 1) continue;
+      const [otherRead] = otherReads;
+      const otherFieldId = otherRead[1]
+        ? otherRead[2]
+        : resolveAssignedFieldId(caller.body, outerAssignedIds, otherRead[2]);
+      if (!otherFieldId) continue;
+
+      const targetWrites = [];
+      for (const [targetVariable, targetFieldId] of uniqueSelectedFieldIdVariables(caller.body)) {
+        const targetAssignment = new RegExp(
+          `\\b${escapeRegExp(targetVariable)}\\s*\\.\\s*val\\(\\s*${escapeRegExp(difference[1])}\\s*\\)`,
+          "gu"
+        );
+        for (const match of caller.body.matchAll(targetAssignment)) targetWrites.push({ targetFieldId, match });
+      }
+      if (targetWrites.length !== 1) continue;
+      const [{ targetFieldId, match: targetMatch }] = targetWrites;
+      const localSumIndex = sumAssignment.index - caller.bodyStart;
+      if (!(localSumIndex < difference.index && otherRead.index < difference.index && difference.index < targetMatch.index)) {
+        continue;
+      }
+      if (
+        isWithinControlFlow(
+          caller.body,
+          Math.min(localSumIndex, otherRead.index),
+          targetMatch.index + targetMatch[0].length
+        ) ||
+        hasUnsafeInterveningBehavior(
+          caller.body,
+          localSumIndex + sumAssignment[0].length,
+          difference.index,
+          [sumVariable]
+        ) ||
+        hasUnsafeInterveningBehavior(
+          caller.body,
+          otherRead.index + otherRead[0].length,
+          difference.index,
+          [difference[2]]
+        ) ||
+        hasUnsafeInterveningBehavior(
+          caller.body,
+          difference.index + difference[0].length,
+          targetMatch.index + targetMatch[0].length,
+          [difference[1]]
+        )
+      ) continue;
+      results.push({
+        kind: "formula",
+        targetFieldId,
+        expression: `$${sum.targetFieldId}$ - $${otherFieldId}$`,
+        fieldIds: [sum.targetFieldId, otherFieldId],
+        sourceRef: source.sourceRef,
+        evidence: difference[0].replace(/\s+/gu, " ").trim(),
+        coveredCalculationRanges: [
+          sourceRange(source, sumAssignment.index, sumAssignment.index + sumAssignment[0].length, sumAssignment[2]),
+          sourceRange(source, caller.bodyStart + difference.index, caller.bodyStart + difference.index + difference[0].length, "difference"),
+          sourceRange(source, caller.bodyStart + targetMatch.index, caller.bodyStart + targetMatch.index + targetMatch[0].length, "formula-target")
+        ],
+        runtimeOverride: true,
+        residuals: []
+      });
+    }
+  }
+  return dedupeBy(results, (item) => item.targetFieldId);
+}
+
+function assignedFieldIdVariables(text) {
+  const values = new Map();
+  for (const match of text.matchAll(/\bvar\s+([A-Za-z_$][\w$]*)\s*=\s*(["'])(fd_[A-Za-z0-9_]+)\2\s*;/gu)) {
+    values.set(match[1], match[3]);
+  }
+  return values;
+}
+
+function uniqueAssignedFieldIdVariables(text) {
+  return uniqueVariableValues(
+    [...String(text).matchAll(/\bvar\s+([A-Za-z_$][\w$]*)\s*=\s*(["'])(fd_[A-Za-z0-9_]+)\2\s*;/gu)]
+      .map((match) => [match[1], match[3]])
+  );
+}
+
+function topLevelAssignedFieldIdVariables(text) {
+  const commentFree = maskSourceComments(String(text || ""));
+  const characters = commentFree.split("");
+  for (const fn of namedCalculationFunctions(commentFree)) {
+    for (let index = fn.start; index < fn.end; index += 1) {
+      if (characters[index] !== "\n" && characters[index] !== "\r") characters[index] = " ";
+    }
+  }
+  return uniqueAssignedFieldIdVariables(characters.join(""));
+}
+
+function resolveAssignedFieldId(callerBody, outerValues, variable) {
+  const localValues = uniqueAssignedFieldIdVariables(callerBody);
+  if (declaresVariable(callerBody, variable)) return localValues.get(variable);
+  return outerValues.get(variable);
+}
+
+function declaresVariable(text, variable) {
+  return new RegExp(`\\bvar\\s+${escapeRegExp(variable)}\\b`, "u").test(text);
+}
+
+function selectedFieldIdVariables(text) {
+  const values = new Map();
+  const pattern = /\bvar\s+([A-Za-z_$][\w$]*)\s*=\s*\$\([^\n;]*?extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)[^\n;]*[;\n]/gu;
+  for (const match of text.matchAll(pattern)) values.set(match[1], match[2]);
+  return values;
+}
+
+function uniqueSelectedFieldIdVariables(text) {
+  const pattern = /\bvar\s+([A-Za-z_$][\w$]*)\s*=\s*\$\([^\n;]*?extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)[^\n;]*[;\n]/gu;
+  return uniqueVariableValues([...String(text).matchAll(pattern)].map((match) => [match[1], match[2]]));
+}
+
+function uniqueVariableValues(entries) {
+  const values = new Map();
+  const ambiguous = new Set();
+  for (const [name, value] of entries) {
+    if (values.has(name) && values.get(name) !== value) ambiguous.add(name);
+    else if (!ambiguous.has(name)) values.set(name, value);
+  }
+  for (const name of ambiguous) values.delete(name);
+  return values;
+}
+
+function detailSumHelperSemantics(helper) {
+  const analysis = analyzeLegacyDetailSumHelper(helper);
+  if (!analysis) return undefined;
+  return {
+    residuals: [],
+    dependentCalls: analysis.dependentCalls,
+    ...(analysis.postTransform ? { postTransform: analysis.postTransform } : {})
+  };
+}
+
+function sourceFunction(text, name) {
+  const pattern = new RegExp(`\\bfunction\\s+${escapeRegExp(name)}\\s*\\(([^)]*)\\)\\s*\\{`, "gu");
+  const definitions = [];
+  for (const match of String(text).matchAll(pattern)) {
+    const open = match.index + match[0].length - 1;
+    const close = balancedBraceClose(text, open);
+    if (close <= open) return undefined;
+    definitions.push({
+      name,
+      params: match[1].split(","),
+      body: text.slice(open + 1, close),
+      start: match.index,
+      end: close + 1
+    });
+  }
+  return definitions.length === 1 ? definitions[0] : undefined;
+}
+
+function hasUnsafeInterveningBehavior(body, start, end, variables) {
+  const fragment = String(body).slice(start, end);
+  if (/\b(?:if|else|switch|for|while|do|try|catch|continue|break|return|throw)\b/u.test(stripSourceComments(fragment))) {
+    return true;
+  }
+  return variables.some((variable) => new RegExp(
+    `\\b(?:var\\s+)?${escapeRegExp(variable)}\\s*(?:[+\\-*/%]?=|\\+\\+|--)`,
+    "u"
+  ).test(fragment));
+}
+
+function isWithinControlFlow(body, start, end) {
+  const text = maskSourceComments(String(body || ""));
+  const control = /\b(if|else|switch|for|while|do|try|catch)\b/gu;
+  for (const match of text.matchAll(control)) {
+    let cursor = match.index + match[0].length;
+    while (/\s/u.test(text[cursor] || "")) cursor += 1;
+    if (["if", "switch", "for", "while", "catch"].includes(match[1])) {
+      if (text[cursor] !== "(") continue;
+      cursor = balancedDelimiterClose(text, cursor, "(", ")") + 1;
+      if (cursor <= 0) continue;
+      while (/\s/u.test(text[cursor] || "")) cursor += 1;
+    }
+    if (text[cursor] === "{") {
+      const close = balancedBraceClose(text, cursor);
+      if (cursor < start && end <= close) return true;
+      continue;
+    }
+    const statementEnd = statementSemicolon(text, cursor);
+    if (cursor <= start && end <= statementEnd) return true;
+  }
+  return false;
+}
+
+function balancedDelimiterClose(text, open, opening, closing) {
+  let depth = 0;
+  let quote = "";
+  let escaped = false;
+  for (let index = open; index < text.length; index += 1) {
+    const char = text[index];
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === quote) quote = "";
+      continue;
+    }
+    if (char === "\"" || char === "'" || char === "`") {
+      quote = char;
+      continue;
+    }
+    if (char === opening) depth += 1;
+    if (char === closing && --depth === 0) return index;
+  }
+  return -1;
+}
+
+function statementSemicolon(text, start) {
+  let quote = "";
+  let escaped = false;
+  for (let index = start; index < text.length; index += 1) {
+    const char = text[index];
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === quote) quote = "";
+      continue;
+    }
+    if (char === "\"" || char === "'" || char === "`") quote = char;
+    else if (char === ";") return index + 1;
+  }
+  return text.length;
+}
+
+function sourceFunctionAtIndex(text, index) {
+  return namedCalculationFunctions(text).find((fn) => fn.bodyStart <= index && index < fn.end);
+}
+
+function sourceFunctionRange(source, fn) {
+  return fn ? sourceRange(source, fn.start, fn.end, fn.name) : undefined;
+}
+
+function sourceRange(source, start, end, name) {
+  return { sourceRef: source.sourceRef, name, start, end };
+}
+
+function balancedBraceClose(text, open) {
+  let depth = 0;
+  let quote = "";
+  let escaped = false;
+  for (let index = open; index < text.length; index += 1) {
+    const char = text[index];
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === quote) quote = "";
+      continue;
+    }
+    if (char === "\"" || char === "'" || char === "`") {
+      quote = char;
+      continue;
+    }
+    if (char === "{") depth += 1;
+    if (char === "}" && --depth === 0) return index;
+  }
+  return -1;
+}
+
+function dedupeBy(values, keyFor) {
+  const seen = new Set();
+  return values.filter((value) => {
+    const key = keyFor(value);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function firstNonEmptyExpression(...values) {
@@ -1019,6 +2058,7 @@ function splitRelatedNodeIds(value = "") {
 
 function normalizeFieldType(type) {
   return {
+    calculate: "number",
     date: "dateTime",
     RestDialog: "text",
     LinkLabel: "description"
