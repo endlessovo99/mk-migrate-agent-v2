@@ -588,6 +588,15 @@ function isManualBranch(node) {
   return node?.type === "manualBranch";
 }
 
+function isLegacyManualConditionBranch(node) {
+  return node?.type === "conditionBranch" &&
+    String(node?.sourceType || "").toLowerCase().includes("manualbranch");
+}
+
+function usesManualBranchRoutes(node) {
+  return isManualBranch(node) || isLegacyManualConditionBranch(node);
+}
+
 function buildConditionBranchNode(node, routes) {
   const attrs = sourceAttributes(node);
   const defaultRoute = routes.find((route) => route.defaultTrend);
@@ -806,13 +815,15 @@ function buildEdgeElement(edge, index, branchRoute) {
 function buildBranchRoutes(nodes, outgoingEdges, context) {
   const bySource = new Map();
   const byEdge = new Map();
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
 
   for (const node of nodes) {
     if (!["conditionBranch", "manualBranch"].includes(mapNodeType(node.type)) && !isConditionalParallelSplit(node)) continue;
 
+    const manual = usesManualBranchRoutes(node);
     const sourceEdges = (outgoingEdges.get(node.id) || [])
-      .filter((edge) => edgeConditionText(edge) || edge.name || isExplicitDefaultRoute(edge));
-    const routes = sourceEdges.map((edge, index) => buildBranchRoute(node, edge, index, context, sourceEdges));
+      .filter((edge) => manual || edgeConditionText(edge) || edge.name || isExplicitDefaultRoute(edge));
+    const routes = sourceEdges.map((edge, index) => buildBranchRoute(node, edge, index, context, sourceEdges, nodeById));
     const defaultEdge = selectDefaultBranchEdge(sourceEdges);
     const defaultRoute = defaultEdge
       ? routes.find((route) => route.lineId === defaultEdge.id)
@@ -833,10 +844,11 @@ function isConditionalParallelSplit(node) {
     String(sourceAttributes(node).splitType || "").trim().toLowerCase() === "condition";
 }
 
-function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
-  const manual = isManualBranch(node);
+function buildBranchRoute(node, edge, index, context, siblingEdges = [], nodeById = new Map()) {
+  const manual = usesManualBranchRoutes(node);
   const conditionText = edgeConditionText(edge);
-  const lineName = edge.name || edge.id;
+  const targetNodeName = nodeById.get(edge.target)?.name;
+  const lineName = edge.name || (manual && targetNodeName) || edge.id;
   const resultCode = manual
     ? (conditionText || lineName)
     : conditionText;
@@ -902,7 +914,7 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
     resultCode,
     formulaConfig,
     manual: asManual,
-    manualBranch: manual,
+    manualBranch: isManualBranch(node),
     manualFallback,
     defaultTrend: false,
     explicitDefault,
