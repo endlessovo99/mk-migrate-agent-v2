@@ -102,10 +102,11 @@ export function buildFormRuleRefIndex(form = {}) {
     if (!sourceMarkers.length) continue;
     const refIds = (row.children || []).flatMap((child) => childRefIds(child));
     for (const marker of sourceMarkers) {
-      addRef(markerRefs, marker, {
+      addMarkerRef(markerRefs, marker, {
         kind: "rowMarker",
         marker,
         rowId: row.id,
+        rowIds: [row.id],
         refIds
       });
     }
@@ -229,4 +230,22 @@ function childRefIds(child) {
 function addRef(map, key, value) {
   const normalized = normalizeRef(key);
   if (normalized && !map.has(normalized)) map.set(normalized, value);
+}
+
+function addMarkerRef(map, key, value) {
+  const normalized = normalizeRef(key);
+  if (!normalized) return;
+  const existing = map.get(normalized);
+  if (!existing) {
+    map.set(normalized, value);
+    return;
+  }
+  existing.rowIds = [...new Set([
+    ...(existing.rowIds || [existing.rowId]).filter(Boolean),
+    ...(value.rowIds || [value.rowId]).filter(Boolean)
+  ])];
+  existing.refIds = [...new Set([
+    ...(existing.refIds || []),
+    ...(value.refIds || [])
+  ])];
 }

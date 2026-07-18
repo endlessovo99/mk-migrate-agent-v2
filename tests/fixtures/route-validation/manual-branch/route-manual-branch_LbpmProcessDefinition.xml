@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>fdKey</string>
+   <string>reviewMainDoc</string>
+  </void>
+  <void method="put">
+   <string>class</string>
+   <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string>
+  </void>
+  <void method="put">
+   <string>fdContent</string>
+   <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-manual-branch-template&amp;amp;lbpmTmpId=route-manual-branch-lbpm&quot; fdId=&quot;route-manual-branch-process&quot; linesIndex=&quot;6&quot; nodesIndex=&quot;4&quot; notifyType=&quot;todo&quot;&gt;
+&lt;nodes&gt;
+&lt;startNode id=&quot;N1&quot; name=&quot;开始&quot; x=&quot;100&quot; y=&quot;40&quot;/&gt;
+&lt;manualBranchNode decidedBranchOnDraft=&quot;false&quot; id=&quot;N35&quot; name=&quot;人工决策&quot; x=&quot;100&quot; y=&quot;100&quot;/&gt;
+&lt;manualBranchNode decidedBranchOnDraft=&quot;true&quot; id=&quot;N36&quot; name=&quot;起草人决策&quot; x=&quot;100&quot; y=&quot;140&quot;/&gt;
+&lt;endNode id=&quot;N99&quot; name=&quot;结束&quot; x=&quot;100&quot; y=&quot;180&quot;/&gt;
+&lt;/nodes&gt;
+&lt;lines&gt;
+&lt;line endNodeId=&quot;N35&quot; id=&quot;L29&quot; startNodeId=&quot;N1&quot;/&gt;
+&lt;line endNodeId=&quot;N36&quot; id=&quot;L44&quot; name=&quot;上汽&quot; priority=&quot;1&quot; startNodeId=&quot;N35&quot;/&gt;
+&lt;line endNodeId=&quot;N36&quot; id=&quot;L45&quot; name=&quot;上发&quot; priority=&quot;2&quot; startNodeId=&quot;N35&quot;/&gt;
+&lt;line endNodeId=&quot;N36&quot; id=&quot;L46&quot; name=&quot;上辅&quot; priority=&quot;3&quot; startNodeId=&quot;N35&quot;/&gt;
+&lt;line endNodeId=&quot;N99&quot; id=&quot;L47&quot; name=&quot;起草分支A&quot; priority=&quot;1&quot; startNodeId=&quot;N36&quot;/&gt;
+&lt;line endNodeId=&quot;N99&quot; id=&quot;L48&quot; name=&quot;起草分支B&quot; priority=&quot;2&quot; startNodeId=&quot;N36&quot;/&gt;
+&lt;/lines&gt;
+&lt;/process&gt;</string>
+  </void>
+ </object>
+</java>

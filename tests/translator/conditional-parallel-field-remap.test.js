@@ -44,8 +44,8 @@ describe("conditional-parallel field identity remapping", () => {
     const workflow = JSON.parse(prepared.update.mechanisms.lbpmTemplate[0].fdContent);
     for (const edgeId of ["QE21", "QE22"]) {
       const persistedCondition = workflow.elements.find((element) => element.id === edgeId).formula;
-      assert.match(persistedCondition, new RegExp(`\\$${mappedField.id}\\$`));
-      assert.doesNotMatch(persistedCondition, new RegExp(`\\$${sourceFieldId}\\$`));
+      assert.match(persistedCondition, new RegExp(`template-id-${mappedField.id}`));
+      assert.doesNotMatch(persistedCondition, new RegExp(`template-id-${sourceFieldId}`));
     }
 
     const nativeReadback = structuredClone(prepared.update);
@@ -55,8 +55,8 @@ describe("conditional-parallel field identity remapping", () => {
 
     const staleSourceIdReadback = structuredClone(nativeReadback);
     const staleWorkflow = JSON.parse(staleSourceIdReadback.mechanisms.lbpmTemplate[0].fdContent);
-    staleWorkflow.elements.find((element) => element.id === "QE21").formula =
-      `$${sourceFieldId}$.equals("A") || $${sourceFieldId}$ == "B"`;
+    const staleEdge = staleWorkflow.elements.find((element) => element.id === "QE21");
+    staleEdge.formula = staleEdge.formula.replaceAll(mappedField.id, sourceFieldId);
     staleSourceIdReadback.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(staleWorkflow);
     assert.equal(
       prepared.verify(staleSourceIdReadback).diagnostics.some((item) =>

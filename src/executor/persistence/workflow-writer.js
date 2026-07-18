@@ -331,6 +331,7 @@ const EXECUTABLE_NODE_TYPES = new Set([
   "startSubProcess",
   "recoverSubProcess",
   "conditionBranch",
+  "manualBranch",
   "split",
   "join"
 ]);
@@ -338,7 +339,21 @@ const EXECUTABLE_NODE_TYPES = new Set([
 export function workflowMappingDiagnostics(workflow) {
   const diagnostics = [];
   for (const node of workflow?.nodes || []) {
-    if (EXECUTABLE_NODE_TYPES.has(node.type)) continue;
+    if (EXECUTABLE_NODE_TYPES.has(node.type)) {
+      if (node.type === "manualBranch" && !["1", "2"].includes(node.decisionType)) {
+        diagnostics.push({
+          level: "error",
+          code: "projection.workflow.manual_branch_decision_type_unsupported",
+          message: `Workflow manual branch ${node.id} has unsupported decisionType ${node.decisionType}.`,
+          path: "/workflow/nodes",
+          details: {
+            nodeId: node.id,
+            decisionType: node.decisionType
+          }
+        });
+      }
+      continue;
+    }
     diagnostics.push({
       level: "error",
       code: "projection.workflow.node_type_unsupported",
@@ -367,7 +382,7 @@ function mapNodeElement(type = "") {
   const mapped = mapNodeType(type);
   if (mapped === "generalStart") return "startEvent";
   if (mapped === "generalEnd") return "endEvent";
-  if (mapped === "conditionBranch") return "exclusiveGateway";
+  if (mapped === "conditionBranch" || mapped === "manualBranch") return "exclusiveGateway";
   if (mapped === "split" || mapped === "join") return "parallelGateway";
   if (mapped === "robot") return "robot";
   if (mapped === "startSubProcess" || mapped === "recoverSubProcess") return "subProcess";
@@ -381,7 +396,14 @@ function buildNodeElement(node, index, outgoingEdges, nodeById, branchRoutes, co
     generalEnd: buildEndNode,
     draft: buildDraftNode,
     conditionBranch: (value) => buildConditionBranchNode(value, branchRoutes),
-    split: (value, valueIndex) => buildParallelGatewayNode(value, valueIndex, "split", nodeById),
+    manualBranch: buildManualBranchNode,
+    split: (value, valueIndex) => buildParallelGatewayNode(
+      value,
+      valueIndex,
+      "split",
+      nodeById,
+      branchRoutes
+    ),
     join: (value, valueIndex) => buildParallelGatewayNode(value, valueIndex, "join", nodeById),
     send: (value) => buildArtificialNode(value, "send", context),
     robot: buildRobotNode,
@@ -389,7 +411,20 @@ function buildNodeElement(node, index, outgoingEdges, nodeById, branchRoutes, co
     review: (value) => buildArtificialNode(value, "review", context)
   };
   const builder = builders[mappedType] || builders.review;
-  return builder(node, index);
+  return withNativeNodeHelp(builder(node, index), node);
+}
+
+function withNativeNodeHelp(element, node) {
+  const help = typeof node.help === "string" ? node.help.trim() : "";
+  if (!help) return element;
+  return {
+    ...element,
+    description: help,
+    language: {
+      ...(element.language || {}),
+      descriptionCn: help
+    }
+  };
 }
 
 function buildStartSubProcessNode(node, index) {
@@ -549,14 +584,14 @@ function legacyRobotKey(sourceUnid) {
   return match ? match[1] : sourceUnid;
 }
 
-function isManualConditionBranch(node) {
-  return String(node?.sourceType || "").toLowerCase().includes("manualbranch");
+function isManualBranch(node) {
+  return node?.type === "manualBranch";
 }
 
 function buildConditionBranchNode(node, routes) {
   const attrs = sourceAttributes(node);
   const defaultRoute = routes.find((route) => route.defaultTrend);
-  const manual = isManualConditionBranch(node) || routes.some((route) => route.manual);
+  const manual = routes.some((route) => route.manual);
   const displayName = node.name || attrs.name || (manual ? "人工决策" : "条件分支");
   const element = {
     ...baseNode(node, 0, "conditionBranch", "exclusiveGateway", 34, 34),
@@ -591,6 +626,20 @@ function buildConditionBranchNode(node, routes) {
   return element;
 }
 
+function buildManualBranchNode(node) {
+  const attrs = sourceAttributes(node);
+  const displayName = node.name || attrs.name || "人工分支";
+  return {
+    ...baseNode(node, 0, "manualBranch", "exclusiveGateway", 34, 34),
+    decisionType: node.decisionType,
+    simpleName: displayName,
+    number: node.id,
+    relateId: node.id,
+    scope: "branch",
+    language: { nameCn: displayName, nameUs: "Manual Branch" }
+  };
+}
+
 function buildManualBranchRuleConfig(node, routes) {
   const firstRoute = routes[0];
   const routeValue = firstRoute?.resultCode || firstRoute?.lineName || node?.id || "manualBranch";
@@ -613,7 +662,7 @@ function buildManualBranchRuleConfig(node, routes) {
   };
 }
 
-function buildParallelGatewayNode(node, index, type, nodeById) {
+function buildParallelGatewayNode(node, index, type, nodeById, routes = []) {
   const attrs = sourceAttributes(node);
   const relatedId = singleRelatedNodeId(attrs) || node.id;
   const relatedNode = nodeById.get(relatedId);
@@ -628,9 +677,10 @@ function buildParallelGatewayNode(node, index, type, nodeById) {
   };
 
   if (type === "split") {
-    return {
+    const conditional = isConditionalParallelSplit(node);
+    const split = {
       ...element,
-      splitType: "1",
+      splitType: conditional ? "3" : "1",
       scope: "branch",
       relation: relatedNode ? {
         name: relatedNode.name || name,
@@ -641,6 +691,13 @@ function buildParallelGatewayNode(node, index, type, nodeById) {
         bounds: boundsFor(relatedNode, index, 34, 34)
       } : undefined
     };
+    if (conditional) {
+      split.conditionType = "1";
+      split.conditionValue = JSON.stringify({
+        formulas: routes.map((route) => route.conditionValue)
+      });
+    }
+    return split;
   }
 
   return {
@@ -721,7 +778,10 @@ function buildEdgeElement(edge, index, branchRoute) {
     element.language = { nameCn: edge.name || "" };
     // Auto conditionBranch outlets must persist Batch JSON with formulaType=formula.
     // Never fall back to formulaType=rule for non-manual branches — that corrupts readback.
-    if (branchRoute.manual) {
+    if (branchRoute.manualBranch) {
+      element.formulaName = ruleText;
+      element.formulaType = "rule";
+    } else if (branchRoute.manual) {
       element.formulaName = hasFormulaConfig ? "" : ruleText;
       element.formulaType = hasFormulaConfig ? "formula" : rulePayload ? "rule" : "formula";
       element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : rulePayload;
@@ -748,7 +808,7 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
   const byEdge = new Map();
 
   for (const node of nodes) {
-    if (mapNodeType(node.type) !== "conditionBranch") continue;
+    if (!["conditionBranch", "manualBranch"].includes(mapNodeType(node.type)) && !isConditionalParallelSplit(node)) continue;
 
     const sourceEdges = (outgoingEdges.get(node.id) || [])
       .filter((edge) => edgeConditionText(edge) || edge.name || isExplicitDefaultRoute(edge));
@@ -768,8 +828,13 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
   return { bySource, byEdge };
 }
 
+function isConditionalParallelSplit(node) {
+  return node?.type === "split" &&
+    String(sourceAttributes(node).splitType || "").trim().toLowerCase() === "condition";
+}
+
 function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
-  const manual = isManualConditionBranch(node);
+  const manual = isManualBranch(node);
   const conditionText = edgeConditionText(edge);
   const lineName = edge.name || edge.id;
   const resultCode = manual
@@ -837,6 +902,7 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = []) {
     resultCode,
     formulaConfig,
     manual: asManual,
+    manualBranch: manual,
     manualFallback,
     defaultTrend: false,
     explicitDefault,

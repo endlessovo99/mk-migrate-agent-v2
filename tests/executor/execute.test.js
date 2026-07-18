@@ -132,6 +132,75 @@ describe("executeDsl", () => {
     assert.equal(result.readback.workflow.invalidEdgeCount, 0);
   });
 
+  it("updates an explicitly targeted existing MK_TEST draft without creating another template", async () => {
+    const client = new FakeNewoaClient();
+    const dsl = sampleTrustedDsl();
+    const created = await executeDsl(dsl, {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      now: new Date("2026-07-05T01:02:03.000Z")
+    });
+    assert.equal(created.ok, true);
+
+    client.calls = [];
+    const updated = await executeDsl(dsl, {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      targetTemplateId: created.templateId
+    });
+
+    assert.equal(updated.ok, true);
+    assert.equal(updated.templateId, created.templateId);
+    assert.deepEqual(updated.createdFdIds, []);
+    assert.deepEqual(updated.updatedFdIds, [created.templateId]);
+    assert.equal(client.calls.some((call) => call.name === "initTemplate"), false);
+    assert.equal(client.calls.some((call) => call.name === "generateTableName"), false);
+    assert.equal(client.calls.some((call) => call.name === "loadParentCategory"), false);
+    assert.equal(client.calls.some((call) => call.name === "addTemplate"), false);
+    assert.equal(client.calls.filter((call) => call.name === "updateTemplate").length, 1);
+    assert.equal(
+      updated.apiStages.some((stage) =>
+        stage.name === "validateTargetTemplate" && stage.status === "ok"
+      ),
+      true
+    );
+  });
+
+  it("blocks targeted updates unless the existing template is an MK_TEST draft", async () => {
+    const client = new FakeNewoaClient();
+    const dsl = sampleTrustedDsl();
+    const created = await executeDsl(dsl, {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      now: new Date("2026-07-05T01:02:03.000Z")
+    });
+    client.savedTemplate.fdName = "生产模板";
+    client.savedTemplate.fdSimpleName = "生产模板";
+    client.calls = [];
+
+    const result = await executeDsl(dsl, {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      targetTemplateId: created.templateId
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.status, "blocked");
+    assert.equal(result.diagnostics.some((item) =>
+      item.code === "safety.target_template_mk_test_required"
+    ), true);
+    assert.equal(client.calls.some((call) => call.name === "updateTemplate"), false);
+    assert.equal(client.calls.some((call) => call.name === "addTemplate"), false);
+  });
+
   it("keeps form-only execution off the LBPM definition save path", async () => {
     const client = new FakeNewoaClient();
     const dsl = sampleTrustedDsl();
@@ -1809,11 +1878,13 @@ describe("executeDsl", () => {
     assert.equal(noInvoiceRoute.formula.vo.data.fdList[0].fdList[1].fdVarValue, "template-id-fd_way");
   });
 
-  it("writes manualBranchNode gateways as conditionType 2 named rules", () => {
+  it("writes manualBranchNode gateways as native manual branches", () => {
     const workflow = sampleConditionBranchWorkflow();
     workflow.nodes[1] = {
       ...workflow.nodes[1],
       id: "N35",
+      type: "manualBranch",
+      decisionType: "1",
       name: "人工决策",
       sourceType: "manualBranchNode",
       attributes: { decidedBranchOnDraft: "false", id: "N35", name: "人工决策" },
@@ -1854,20 +1925,16 @@ describe("executeDsl", () => {
     }), baseTemplate());
     const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
     const branch = content.elements.find((element) => element.id === "N35");
-    const conditionValue = JSON.parse(branch.conditionValue);
     const edge = content.elements.find((element) => element.id === "L44");
 
-    assert.equal(branch.conditionType, "2");
-    assert.equal(conditionValue.formulas, undefined);
-    assert.equal(conditionValue.rules.length, 3);
-    assert.deepEqual(conditionValue.rules.map((rule) => rule.lineName), ["上汽", "上发", "上辅"]);
-    assert.equal(conditionValue.rules[0].type, "rules");
-    assert.equal(conditionValue.rules[0].formulaType, "rule");
-    assert.equal(conditionValue.rules[0].formula, "上汽");
-    assert.equal(conditionValue.ruleConfig.vo.mode, "rule");
+    assert.equal(branch.type, "manualBranch");
+    assert.equal(branch.decisionType, "1");
+    assert.equal(branch.conditionType, undefined);
+    assert.equal(branch.conditionValue, undefined);
+    assert.equal(branch.resultSetMapping, undefined);
     assert.equal(edge.formulaType, "rule");
-    assert.equal(edge.formula, "上汽");
-    assert.equal(JSON.parse(branch.resultSetMapping)[0].resultCode, "上汽");
+    assert.equal(edge.formulaName, "上汽");
+    assert.equal(edge.formula, undefined);
   });
 
   it("writes numeric relational comparisons through formula config", () => {

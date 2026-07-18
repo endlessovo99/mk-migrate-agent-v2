@@ -1,0 +1,62 @@
+{
+  "source": {
+    "kind": "NewOA-native-contract",
+    "formComponent": "@elem/xform-number/config/controlProps/numberFormat",
+    "formFontExtendData": "numberFormat unit token",
+    "formLanguageEntry": "fdConfig.lang numberFormat content",
+    "workflowHelpKeys": [
+      "lbpmTemplate.fdContent.elements[].description",
+      "lbpmTemplate.fdContent.elements[].language.descriptionCn"
+    ]
+  },
+  "formControl": {
+    "fieldId": "fd_amount",
+    "unit": "元",
+    "unitToken": "!{native-number-format-unit}",
+    "controlProps": {
+      "showCount": true,
+      "numberFormat": {
+        "formatType": "base",
+        "precision": null,
+        "groupingUsed": null,
+        "symbol": null,
+        "unit": "!{native-number-format-unit}",
+        "percentage": false
+      },
+      "defaultValueType": "formula"
+    },
+    "fontExtendData": {
+      "passValue": false,
+      "showCount": true,
+      "trace": false,
+      "defaultValueType": "formula",
+      "percentage": false,
+      "precision": null,
+      "groupingUsed": null,
+      "symbol": null,
+      "unit": "!{native-number-format-unit}",
+      "formatType": "base"
+    },
+    "langEntry": {
+      "prop": "numberFormat",
+      "name": "fd_amount",
+      "type": "input",
+      "content": {
+        "Cn": "元",
+        "default": "元"
+      }
+    }
+  },
+  "workflowNode": {
+    "id": "N2",
+    "name": "起草节点",
+    "type": "draft",
+    "element": "manualTask",
+    "description": "请核对起草节点处理人。",
+    "language": {
+      "nameCn": "起草节点",
+      "nameUs": "Drafting Node",
+      "descriptionCn": "请核对起草节点处理人。"
+    }
+  }
+}

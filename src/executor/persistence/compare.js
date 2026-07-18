@@ -38,16 +38,16 @@ function compareWorkflowPartition(expected, observed, diagnostics) {
   if (!expected?.expected) {
     return "not_expected";
   }
+  if (observed.status === "decode_failed") {
+    diagnostics.push(...(observed.diagnostics || []));
+    return "decode_failed";
+  }
   if (observed.status === "not_expected" || !observed.value) {
     diagnostics.push(mismatch("workflow", "readback.workflow.missing", "Readback workflow content is missing.", {
       invariantKey: "workflow.readable",
       path: "/readback/workflow"
     }));
     return "mismatch";
-  }
-  if (observed.status === "decode_failed") {
-    diagnostics.push(...(observed.diagnostics || []));
-    return "decode_failed";
   }
   const before = diagnostics.length;
   compareWorkflow(expected, observed.value, diagnostics);
@@ -129,6 +129,11 @@ function compareForm(expected, actual, diagnostics) {
       continue;
     }
     if (actualField.attributeCorrupt) {
+      diagnostics.push(mismatch("form", "readback.decode.fdAttribute.invalid_json", "Readback field native attribute JSON is malformed.", {
+        invariantKey: `form.fields.${field.id}.nativeAttribute`,
+        path: `/mechanisms/sys-xform/fdConfig/dataModel/${field.id}/fdAttribute`,
+        details: { fieldId: field.id }
+      }));
       diagnostics.push(mismatch("form", "readback.form.required_mismatch", "Readback field attribute is corrupt and cannot prove required persistence.", {
         invariantKey: `form.fields.${field.id}.props.required`,
         path: `/readback/form/fields/${field.id}`,
@@ -149,6 +154,17 @@ function compareForm(expected, actual, diagnostics) {
     compareProps(diagnostics, "form", `form.fields.${field.id}.props`, field.props, actualField.props, `/readback/form/fields/${field.id}/props`);
 
     if (field.type === "detailTable") {
+      const expectedColumnOrder = (field.columns || []).map((column) => column.id);
+      const actualColumnOrder = (actualField.columns || []).map((column) => column.id);
+      if (stableStringify(expectedColumnOrder) !== stableStringify(actualColumnOrder)) {
+        diagnostics.push(mismatch("form", "readback.form.detail_column_order_mismatch", "Readback detail column order does not match the DSL.", {
+          invariantKey: `form.fields.${field.id}.columnOrder`,
+          path: `/readback/form/fields/${field.id}/columns`,
+          expected: expectedColumnOrder,
+          actual: actualColumnOrder,
+          details: { fieldId: field.id }
+        }));
+      }
       const actualColumns = new Map((actualField.columns || []).map((column) => [column.id, column]));
       const expectedColumnIds = new Set((field.columns || []).map((column) => column.id));
       for (const column of field.columns || []) {
@@ -656,6 +672,15 @@ function compareWorkflow(expected, actual, diagnostics) {
         actual: actualNode.name
       }));
     }
+    if (node.help !== undefined && node.help !== actualNode.help) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.node_help_mismatch", "Readback workflow node help mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.help`,
+        path: `/readback/workflow/nodes/${node.id}/help`,
+        expected: node.help,
+        actual: actualNode.help,
+        details: { nodeId: node.id }
+      }));
+    }
     if (node.ignoreOnSameIdentity !== undefined &&
       node.ignoreOnSameIdentity !== actualNode.ignoreOnSameIdentity) {
       diagnostics.push(mismatch("workflow", "readback.workflow.same_identity_policy_mismatch", "Readback workflow same-identity policy mismatch.", {
@@ -709,6 +734,16 @@ function compareWorkflow(expected, actual, diagnostics) {
         path: `/readback/workflow/nodes/${node.id}/sendConfig`,
         expected: node.sendConfig,
         actual: actualNode.sendConfig
+      }));
+    }
+    if (node.manualBranch &&
+      stableStringify(node.manualBranch) !== stableStringify(actualNode.manualBranch || {})) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.manual_branch_mismatch", "Readback manual-branch configuration mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.manualBranch`,
+        path: `/readback/workflow/nodes/${node.id}/manualBranch`,
+        expected: node.manualBranch,
+        actual: actualNode.manualBranch,
+        details: { nodeId: node.id }
       }));
     }
     if (node.parallelGateway &&

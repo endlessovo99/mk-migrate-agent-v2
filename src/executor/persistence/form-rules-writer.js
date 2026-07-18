@@ -35,6 +35,7 @@ export function buildNativeFormRuleConfig(formRules, form, dataModels) {
   const nativeIndex = buildNativeFieldIndex(dataModels);
   const display = [];
   const require = [];
+  const compute = buildNativeComputeRules(form, nativeIndex);
 
   linkage.forEach((rule, ruleIndex) => {
     const ruleId = rule.id || `linkage-${ruleIndex + 1}`;
@@ -55,6 +56,7 @@ export function buildNativeFormRuleConfig(formRules, form, dataModels) {
   return {
     display,
     require,
+    compute,
     summary: summarizeFormRules({ ...(formRules || {}), linkage })
   };
 }
@@ -65,19 +67,91 @@ export function mergeNativeFormRules(existingFormRule, generated) {
     ...current,
     pattern: current.pattern && typeof current.pattern === "object" ? current.pattern : {},
     display: mergeGeneratedRules(current.display, generated.display),
-    require: mergeGeneratedRules(current.require, generated.require)
+    require: mergeGeneratedRules(current.require, generated.require),
+    compute: mergeGeneratedRules(current.compute, generated.compute)
   };
 }
 
 export function summarizeNativeFormRuleConfig(formRule = {}) {
   const display = Array.isArray(formRule.display) ? formRule.display : [];
   const require = Array.isArray(formRule.require) ? formRule.require : [];
+  const compute = Array.isArray(formRule.compute) ? formRule.compute : [];
   return {
     displayRuleCount: display.length,
     requireRuleCount: require.length,
+    computeRuleCount: compute.length,
     displayRules: display.map(summarizeNativeRule),
-    requireRules: require.map(summarizeNativeRule)
+    requireRules: require.map(summarizeNativeRule),
+    computeRules: compute.map(summarizeNativeRule)
   };
+}
+
+function buildNativeComputeRules(form = {}, nativeIndex) {
+  const calculations = [];
+  for (const field of form.fields || []) {
+    if (field?.type === "detailTable") continue;
+    if (!field?.props?.calculation) continue;
+    const target = nativeIndex.byRef.get(field.id);
+    if (!target) continue;
+    const item = buildNativeComputeItem(field, target, nativeIndex);
+    if (!item) continue;
+    calculations.push({
+      id: stableId("compute-rule", field.id),
+      ruleName: `${GENERATED_RULE_PREFIX}compute:${field.id}`,
+      active: true,
+      choices: { items: [item] },
+      meta: {
+        generatedBy: GENERATED_BY,
+        sourceFieldId: field.id,
+        ruleType: "compute"
+      }
+    });
+  }
+  return calculations;
+}
+
+function buildNativeComputeItem(field, target, nativeIndex) {
+  const calculation = field.props.calculation;
+  const base = {
+    autoCompute: "",
+    fieldKey: target.controlId || target.fieldKey,
+    formula: "",
+    label: target.label,
+    fieldName: target.fieldName
+  };
+
+  if (calculation.kind === "formula") {
+    const expression = String(calculation.expression || "").trim();
+    if (!expression) return undefined;
+    const fieldIds = Array.isArray(calculation.fieldIds) ? calculation.fieldIds : [];
+    return {
+      ...base,
+      type: "FORMULA",
+      statisticField: "",
+      value: {
+        type: "Eval",
+        script: expression.replace(/\$([A-Za-z_][\w]*)\$/gu, (_, fieldId) => `\${data.biz.${fieldId}}`),
+        vo: {
+          mode: "formula",
+          content: calculation.displayExpression || expression
+        },
+        varIds: fieldIds
+      }
+    };
+  }
+
+  if (calculation.kind === "aggregate" && calculation.operation === "sum") {
+    const source = nativeIndex.byRef.get(`${calculation.tableId}.${calculation.fieldId}`);
+    if (!source?.tableName) return undefined;
+    return {
+      ...base,
+      type: "SUM",
+      statisticField: [`${source.tableName}.${source.fieldName}`],
+      value: ""
+    };
+  }
+
+  return undefined;
 }
 
 function buildBranch(rule, ruleId, branch, conditionItems, effects, formIndex, nativeIndex) {
@@ -260,6 +334,7 @@ function buildNativeFieldIndex(dataModels = []) {
         tableType: model.fdType || (isDetail ? "detail" : "main"),
         type: isDetail ? model.fdTableName : "main",
         tableName: model.fdTableName,
+        controlId: controlProps.id || controlProps.name || field.fdName,
         field,
         model
       };

@@ -34,12 +34,31 @@ const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "get-readback"
 ]);
 
+const DRAFT_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
+  SUCCESS_OPERATIONS[0],
+  ...SUCCESS_OPERATIONS.slice(1, -1),
+  "save-workflow-draft",
+  "get-workflow-detail",
+  "get-readback"
+]);
+
 const CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "login",
   "search-org",
   "get-element-info",
   "search-org",
   "search-org",
+  "get-element-info",
+  ...SUCCESS_OPERATIONS.slice(1, -1),
+  "save-workflow-draft",
+  "get-workflow-detail",
+  "get-readback"
+]);
+
+const CONDITIONAL_PARALLEL_SUCCESS_OPERATIONS = Object.freeze([
+  "login",
+  "get-element-info",
+  "get-element-info",
   "get-element-info",
   ...SUCCESS_OPERATIONS.slice(1, -1),
   "save-workflow-draft",
@@ -65,6 +84,38 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "passed",
         executionStatus: "written",
         operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "option-normalization-success",
+      source: {
+        kind: "form-only",
+        relativePath: "option-normalization/route-option-normalization_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "semantic-props-success",
+      source: {
+        kind: "paired",
+        relativePath: "semantic-props"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: DRAFT_WORKFLOW_SUCCESS_OPERATIONS
       }
     },
     {
@@ -114,6 +165,38 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "needs_manual",
         executionStatus: "written_with_warnings",
         operations: WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "conditional-parallel-success",
+      source: {
+        kind: "paired",
+        relativePath: "conditional-parallel"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: CONDITIONAL_PARALLEL_SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "manual-branch-success",
+      source: {
+        kind: "paired",
+        relativePath: "manual-branch"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: DRAFT_WORKFLOW_SUCCESS_OPERATIONS
       }
     },
     {

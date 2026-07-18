@@ -189,12 +189,28 @@ function propsFromSource(source) {
   if (componentSupportsProp(componentId, "placeholder") && typeof inlineHint === "string" && inlineHint.trim()) {
     props.placeholder = inlineHint;
   }
+  const inlineUnit = source.sourceProps?.inlineUnit?.content;
+  if (componentId === "xform-number" && typeof inlineUnit === "string" && inlineUnit.trim()) {
+    props.unit = inlineUnit.trim();
+  }
   if (Array.isArray(source.options) && source.options.length) {
-    props.options = source.options.map((option) => ({ label: option.label, value: option.value }));
+    props.options = targetOptionsFromSource(source.options);
   }
 
-  const defaultValue = legacyDefaultValueFromSource(source);
-  if (defaultValue) props.defaultValue = defaultValue;
+  if (componentSupportsProp(componentId, "defaultValue")) {
+    const defaultValue = legacyDefaultValueFromSource(source);
+    if (defaultValue) props.defaultValue = defaultValue;
+  }
+
+  if (["xform-number", "xform-calculate"].includes(componentId)) {
+    const precision = nonNegativeInteger(source.sourceProps?.designerValues?.decimal);
+    if (precision !== undefined) props.precision = precision;
+  }
+
+  if (componentId === "xform-calculate") {
+    const calculation = legacyCalculationFromSource(source);
+    if (calculation) props.calculation = calculation;
+  }
 
   if (componentId === "xform-textarea") {
     const maxLength = positiveInteger(
@@ -211,6 +227,21 @@ function propsFromSource(source) {
   return props;
 }
 
+function targetOptionsFromSource(options) {
+  const byValue = new Map();
+  const targetOptions = [];
+
+  for (const option of options) {
+    const targetOption = { label: option.label, value: option.value };
+    const existing = byValue.get(targetOption.value);
+    if (existing?.label === targetOption.label) continue;
+    byValue.set(targetOption.value, targetOption);
+    targetOptions.push(targetOption);
+  }
+
+  return targetOptions;
+}
+
 function legacyDefaultValueFromSource(source) {
   const candidates = [
     source.sourceProps?.metadataAttributes?.defaultValue,
@@ -219,11 +250,69 @@ function legacyDefaultValueFromSource(source) {
   ];
 
   for (const candidate of candidates) {
-    const defaultValue = parseLegacyContextDefaultExpression(candidate, source);
-    if (defaultValue) return defaultValue;
+    const contextDefault = parseLegacyContextDefaultExpression(candidate, source);
+    if (contextDefault) return contextDefault;
+    const literalDefault = parseLegacyLiteralDefault(candidate, source);
+    if (literalDefault) return literalDefault;
   }
 
   return undefined;
+}
+
+function parseLegacyLiteralDefault(value, source) {
+  const expression = normalizeLegacyExpression(value);
+  if (!expression || /^(?:null|undefined|nowTime)$/i.test(expression)) return undefined;
+  if (/[\$()]/u.test(expression) || /Function\s*\./i.test(expression)) return undefined;
+  if (isLegacyAddressSource(source)) return undefined;
+
+  if (source.sourceType === "number" || String(source.sourceProps?.designerValues?.dataType || "").toLowerCase() === "double") {
+    const number = Number(expression);
+    if (Number.isFinite(number)) return { kind: "literal", value: number };
+  }
+
+  return { kind: "literal", value: expression };
+}
+
+function legacyCalculationFromSource(source) {
+  const values = source.sourceProps?.designerValues || {};
+  const expression = firstNonEmptyExpression(
+    values.expression_id,
+    values.formula,
+    source.sourceProps?.metadataAttributes?.defaultValue
+  );
+  if (!expression) return undefined;
+
+  const aggregate = expression.match(/^\$XForm_CalculatioFuns_Sum\$\s*\(\s*\$([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\$\s*\)$/u);
+  if (aggregate) {
+    return {
+      kind: "aggregate",
+      operation: "sum",
+      tableId: aggregate[1],
+      fieldId: aggregate[2]
+    };
+  }
+
+  if (!isSupportedArithmeticExpression(expression)) return undefined;
+  const fieldIds = [...expression.matchAll(/\$([A-Za-z_][\w]*)\$/gu)].map((match) => match[1]);
+  return pruneUndefined({
+    kind: "formula",
+    expression,
+    displayExpression: normalizeLegacyExpression(values.expression_name || values.defaultValue) || undefined,
+    fieldIds: uniqueStrings(fieldIds)
+  });
+}
+
+function firstNonEmptyExpression(...values) {
+  for (const value of values) {
+    const expression = normalizeLegacyExpression(value);
+    if (expression) return expression;
+  }
+  return "";
+}
+
+function isSupportedArithmeticExpression(expression) {
+  const withoutFields = String(expression).replace(/\$[A-Za-z_][\w]*\$/gu, "1");
+  return /\d/u.test(withoutFields) && /^[\d\s+\-*/().]+$/u.test(withoutFields);
 }
 
 function descriptionStyleFromSource(source) {
@@ -602,6 +691,10 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
         type: nodeType.type,
         element: nodeType.element,
         name: node.name || "",
+        ...(nodeType.type === "manualBranch"
+          ? { decisionType: manualBranchDecisionType(node) }
+          : {}),
+        help: node.help,
         sourceType: node.sourceType,
         sourceRef: node.sourceRef,
         attributes: node.attributes || {},
@@ -839,6 +932,10 @@ function booleanAttribute(attributes, key) {
   return String(attributes[key]).trim().toLowerCase() === "true";
 }
 
+function manualBranchDecisionType(node) {
+  return booleanAttribute(sourceNodeAttributes(node), "decidedBranchOnDraft") === true ? "2" : "1";
+}
+
 function mapWorkflowNodeType(node = {}, nodeById = new Map()) {
   const sourceType = node.sourceType || "";
   const normalized = String(sourceType).toLowerCase();
@@ -851,6 +948,7 @@ function mapWorkflowNodeType(node = {}, nodeById = new Map()) {
   if (normalized.includes("draft")) return { type: "draft", element: "manualTask" };
   if (normalized.includes("send") || normalized.includes("cc")) return { type: "send", element: "manualTask" };
   if (normalized.includes("end")) return { type: "generalEnd", element: "endEvent" };
+  if (normalized.includes("manualbranch")) return { type: "manualBranch", element: "exclusiveGateway" };
   if (normalized.includes("gateway") || normalized.includes("branch")) return { type: "conditionBranch", element: "exclusiveGateway" };
   if (normalized.includes("robot")) return { type: "robot", element: "robot" };
   if (normalized.includes("review") || normalized.includes("manual") || normalized.includes("task") || normalized.includes("approval")) {
@@ -972,6 +1070,12 @@ function positiveInteger(value) {
   if (value === undefined || value === null) return undefined;
   const number = typeof value === "number" ? value : Number.parseInt(String(value).trim(), 10);
   return Number.isSafeInteger(number) && number > 0 ? number : undefined;
+}
+
+function nonNegativeInteger(value) {
+  if (value === undefined || value === null || String(value).trim() === "") return undefined;
+  const number = typeof value === "number" ? value : Number.parseInt(String(value).trim(), 10);
+  return Number.isSafeInteger(number) && number >= 0 ? number : undefined;
 }
 
 function splitList(value = "") {

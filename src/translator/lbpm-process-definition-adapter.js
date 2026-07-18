@@ -273,12 +273,22 @@ function buildDirectedAcyclicGraph(process) {
 }
 
 function nodeFromAttributes(type, attributes, definition, sourceXml, handlerIndex) {
+  const help = normalizeNodeHelp(attributes.description);
   const node = {
     id: attributes.id || "",
     type,
     name: attributes.name || "",
     attributes,
-    sourceXml
+    sourceXml,
+    ...(help
+      ? {
+          help,
+          helpEvidence: {
+            sourceAttribute: "description",
+            normalization: "safe-text-v1"
+          }
+        }
+      : {})
   };
 
   if (definition) {
@@ -291,6 +301,28 @@ function nodeFromAttributes(type, attributes, definition, sourceXml, handlerInde
   if (optionalHandlerEntities.length) node.optionalHandlerEntities = optionalHandlerEntities;
 
   return node;
+}
+
+function normalizeNodeHelp(value = "") {
+  let text = String(value || "");
+  for (let index = 0; index < 3; index += 1) {
+    const decoded = decodeEntities(text);
+    if (decoded === text) break;
+    text = decoded;
+  }
+  text = text
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(?:div|p|pre|li|tr|h[1-6])\s*>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
+
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/[ \t\f\v]+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n");
 }
 
 function indexNodeDefinitionHandlers(value) {

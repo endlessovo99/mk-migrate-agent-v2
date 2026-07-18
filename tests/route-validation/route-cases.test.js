@@ -171,6 +171,43 @@ describe("offline Route-validation", { concurrency: false }, () => {
     );
   });
 
+  it("preserves condition-matching parallel fan-out through native readback", async () => {
+    const result = await runRouteCase("conditional-parallel-success");
+    const split = result.dsl.workflow.nodes.find((node) => node.id === "PX20");
+    const routes = result.dsl.workflow.edges.filter((edge) => edge.source === split.id);
+
+    assert.equal(split.type, "split");
+    assert.equal(split.attributes.splitType, "condition");
+    assert.equal(routes.length, 2);
+    assert.equal(routes.every((edge) => edge.condition.translationStatus === "executable"), true);
+    assert.equal(result.execution.ok, true);
+    assert.equal(result.execution.readback.partitions.workflow, "verified");
+    assert.equal(result.execution.status, "written_with_warnings");
+  });
+
+  it("preserves an N35 manual decision as a native manual branch", async () => {
+    const result = await runRouteCase("manual-branch-success");
+    const dslBranch = result.dsl.workflow.nodes.find((node) => node.id === "N35");
+    const nativeBranch = result.execution.readback.workflow.nodes.find((node) => node.id === "N35");
+    const dslDrafterBranch = result.dsl.workflow.nodes.find((node) => node.id === "N36");
+    const nativeDrafterBranch = result.execution.readback.workflow.nodes.find((node) => node.id === "N36");
+
+    assert.equal(dslBranch.sourceType, "manualBranchNode");
+    assert.equal(dslBranch.attributes.decidedBranchOnDraft, "false");
+    assert.equal(dslBranch.decisionType, "1");
+    assert.equal(dslBranch.type, "manualBranch");
+    assert.equal(dslBranch.element, "exclusiveGateway");
+    assert.equal(nativeBranch.type, "manualBranch");
+    assert.equal(nativeBranch.element, "exclusiveGateway");
+    assert.equal(nativeBranch.decisionType, "1");
+    assert.equal(dslDrafterBranch.attributes.decidedBranchOnDraft, "true");
+    assert.equal(dslDrafterBranch.decisionType, "2");
+    assert.equal(nativeDrafterBranch.type, "manualBranch");
+    assert.equal(nativeDrafterBranch.decisionType, "2");
+    assert.equal(result.execution.readback.partitions.workflow, "verified");
+    assert.equal(result.execution.status, "written_with_warnings");
+  });
+
   it("keeps a warning-only review executable", async () => {
     const result = await runRouteCase("warning-but-executable");
 

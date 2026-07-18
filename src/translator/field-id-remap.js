@@ -141,6 +141,7 @@ function remapFieldLike(field, idMap) {
   return {
     ...field,
     id: nextId,
+    props: remapStructuredValue(field.props, idMap),
     sourceProps: nextId === field.id
       ? field.sourceProps
       : {

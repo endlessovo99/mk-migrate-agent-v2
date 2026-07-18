@@ -31,11 +31,44 @@ export async function executeDsl(input, options = {}) {
   const apiStages = [];
   let templateId = "";
   let executableDsl = input;
+  const targetTemplateId = nonEmptyString(options.targetTemplateId)
+    ? options.targetTemplateId.trim()
+    : "";
+  const updatesExistingTemplate = Boolean(targetTemplateId);
+  let targetTemplateDetail;
 
   try {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    if (updatesExistingTemplate) {
+      templateId = targetTemplateId;
+      apiStages.push({ name: "getTargetTemplate", status: "started", templateId });
+      targetTemplateDetail = await client.getTemplate(templateId);
+      apiStages[apiStages.length - 1].status = "ok";
+      apiStages.push({ name: "validateTargetTemplate", status: "started", templateId });
+      const targetDiagnostics = validateExistingTargetTemplate(targetTemplateDetail, {
+        templateId,
+        targetCategoryId: options.targetCategoryId
+      });
+      if (targetDiagnostics.length) {
+        apiStages[apiStages.length - 1].status = "failed";
+        return {
+          ok: false,
+          status: "blocked",
+          stage: "validateTargetTemplate",
+          failedAt: "validateTargetTemplate",
+          baseUrl,
+          templateId,
+          createdFdIds: [],
+          updatedFdIds: [],
+          diagnostics: [...diagnostics, ...targetDiagnostics],
+          apiStages,
+          plan
+        };
+      }
+      apiStages[apiStages.length - 1].status = "ok";
+    }
     apiStages.push({ name: "resolveWorkflowParticipants", status: "started" });
     const participantResolution = await resolveWorkflowParticipants(input, {
       client,
@@ -115,111 +148,168 @@ export async function executeDsl(input, options = {}) {
         }
       });
     }
-    apiStages.push({ name: "init", status: "started" });
-    const baseTemplate = await client.initTemplate();
-    apiStages[apiStages.length - 1].status = "ok";
-    apiStages.push({ name: "generateTableName", status: "started" });
-    const fdTableName = await client.generateTableName();
-    apiStages[apiStages.length - 1].status = "ok";
-    apiStages[apiStages.length - 1].fdTableName = fdTableName || undefined;
-    apiStages.push({ name: "loadParentCategory", status: "started" });
-    const parentCategory = await client.loadParentCategory(options.targetCategoryId);
-    apiStages[apiStages.length - 1].status = "ok";
-    const createPayload = buildCreatePayload(baseTemplate, executableDsl, options, {
-      fdTableName,
-      parentCategory
-    });
+    let detail;
+    let templateName;
+    let tableName;
+    let prepared;
+    const createdFdIds = [];
+    const updatedFdIds = [];
 
-    apiStages.push({ name: "projectionPreflight", status: "started" });
-    const preflight = preparePersistedTemplate({
-      dsl: executableDsl,
-      envelope: buildExecutionEnvelope({
-        templateId: "__projection_preflight_template_id__",
-        templateName: createPayload.fdName,
-        categoryId: options.targetCategoryId,
-        tableName: fdTableName || createPayload.fdTableName,
-        detail: preflightTemplateDetail(createPayload, {
-          templateId: "__projection_preflight_template_id__",
-          workflowTemplateId: "__projection_preflight_workflow_id__",
-          fdTableName
-        })
-      }),
-      baseTemplate: preflightTemplateDetail(createPayload, {
+    if (updatesExistingTemplate) {
+      detail = targetTemplateDetail;
+      templateName = detail.fdName;
+      tableName = detail.fdTableName || detail.mechanisms?.["sys-xform"]?.fdTableName || "";
+      apiStages.push({ name: "projectionPreflight", status: "started", templateId });
+      try {
+        prepared = preparePersistedTemplate({
+          dsl: executableDsl,
+          envelope: buildExecutionEnvelope({
+            templateId,
+            templateName,
+            categoryId: options.targetCategoryId,
+            tableName,
+            detail
+          }),
+          baseTemplate: detail
+        });
+      } catch (error) {
+        apiStages[apiStages.length - 1].status = "failed";
+        return projectionFailure({
+          plan,
+          diagnostics,
+          apiStages,
+          templateId,
+          baseUrl,
+          credentials,
+          createdFdIds,
+          updatedFdIds,
+          error
+        });
+      }
+      if (!prepared.ok) {
+        apiStages[apiStages.length - 1].status = "failed";
+        return {
+          ok: false,
+          status: "failed",
+          stage: "projection",
+          failedAt: "projection",
+          baseUrl,
+          templateId,
+          createdFdIds,
+          updatedFdIds,
+          cleanup: { attempted: false, reason: "the explicitly targeted draft was not created by this execution" },
+          diagnostics: [...diagnostics, ...prepared.diagnostics],
+          apiStages,
+          plan
+        };
+      }
+      apiStages[apiStages.length - 1].status = "ok";
+      updatedFdIds.push(templateId);
+    } else {
+      apiStages.push({ name: "init", status: "started" });
+      const baseTemplate = await client.initTemplate();
+      apiStages[apiStages.length - 1].status = "ok";
+      apiStages.push({ name: "generateTableName", status: "started" });
+      const fdTableName = await client.generateTableName();
+      apiStages[apiStages.length - 1].status = "ok";
+      apiStages[apiStages.length - 1].fdTableName = fdTableName || undefined;
+      apiStages.push({ name: "loadParentCategory", status: "started" });
+      const parentCategory = await client.loadParentCategory(options.targetCategoryId);
+      apiStages[apiStages.length - 1].status = "ok";
+      const createPayload = buildCreatePayload(baseTemplate, executableDsl, options, {
+        fdTableName,
+        parentCategory
+      });
+
+      apiStages.push({ name: "projectionPreflight", status: "started" });
+      const preflightDetail = preflightTemplateDetail(createPayload, {
         templateId: "__projection_preflight_template_id__",
         workflowTemplateId: "__projection_preflight_workflow_id__",
         fdTableName
-      })
-    });
-    if (!preflight.ok) {
-      apiStages[apiStages.length - 1].status = "failed";
-      return {
-        ok: false,
-        status: "failed",
-        stage: "projection",
-        failedAt: "projection",
-        baseUrl,
-        createdFdIds: [],
-        cleanup: { attempted: false, reason: "projection preflight failed before template creation" },
-        diagnostics: [...diagnostics, ...preflight.diagnostics],
-        apiStages,
-        plan
-      };
-    }
-    apiStages[apiStages.length - 1].status = "ok";
-
-    apiStages.push({ name: "add", status: "started" });
-    const created = await client.addTemplate(createPayload);
-    templateId = created.fdId;
-    apiStages[apiStages.length - 1].status = "ok";
-    apiStages[apiStages.length - 1].templateId = templateId;
-    apiStages.push({ name: "get", status: "started", templateId });
-    const detail = await client.getTemplate(templateId);
-    apiStages[apiStages.length - 1].status = "ok";
-    const templateName = createPayload.fdName;
-    const tableName = fdTableName || detail.fdTableName || detail.mechanisms?.["sys-xform"]?.fdTableName || "";
-    const createdFdIds = [templateId].filter(Boolean);
-
-    const envelope = buildExecutionEnvelope({
-      templateId,
-      templateName,
-      categoryId: options.targetCategoryId,
-      tableName,
-      detail
-    });
-
-    let prepared;
-    try {
-      prepared = preparePersistedTemplate({
+      });
+      const preflight = preparePersistedTemplate({
         dsl: executableDsl,
-        envelope,
-        baseTemplate: detail
+        envelope: buildExecutionEnvelope({
+          templateId: "__projection_preflight_template_id__",
+          templateName: createPayload.fdName,
+          categoryId: options.targetCategoryId,
+          tableName: fdTableName || createPayload.fdTableName,
+          detail: preflightDetail
+        }),
+        baseTemplate: preflightDetail
       });
-    } catch (error) {
-      return projectionFailure({
-        plan,
-        diagnostics,
-        apiStages,
-        templateId,
-        baseUrl,
-        credentials,
-        error
-      });
-    }
+      if (!preflight.ok) {
+        apiStages[apiStages.length - 1].status = "failed";
+        return {
+          ok: false,
+          status: "failed",
+          stage: "projection",
+          failedAt: "projection",
+          baseUrl,
+          createdFdIds,
+          updatedFdIds,
+          cleanup: { attempted: false, reason: "projection preflight failed before template creation" },
+          diagnostics: [...diagnostics, ...preflight.diagnostics],
+          apiStages,
+          plan
+        };
+      }
+      apiStages[apiStages.length - 1].status = "ok";
 
-    if (!prepared.ok) {
-      return {
-        ok: false,
-        status: "failed",
-        stage: "projection",
-        failedAt: "projection",
-        baseUrl,
-        templateId,
-        createdFdIds,
-        cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
-        diagnostics: [...diagnostics, ...prepared.diagnostics],
-        apiStages,
-        plan
-      };
+      apiStages.push({ name: "add", status: "started" });
+      const created = await client.addTemplate(createPayload);
+      templateId = created.fdId;
+      createdFdIds.push(templateId);
+      apiStages[apiStages.length - 1].status = "ok";
+      apiStages[apiStages.length - 1].templateId = templateId;
+      apiStages.push({ name: "get", status: "started", templateId });
+      detail = await client.getTemplate(templateId);
+      apiStages[apiStages.length - 1].status = "ok";
+      templateName = createPayload.fdName;
+      tableName = fdTableName || detail.fdTableName || detail.mechanisms?.["sys-xform"]?.fdTableName || "";
+
+      try {
+        prepared = preparePersistedTemplate({
+          dsl: executableDsl,
+          envelope: buildExecutionEnvelope({
+            templateId,
+            templateName,
+            categoryId: options.targetCategoryId,
+            tableName,
+            detail
+          }),
+          baseTemplate: detail
+        });
+      } catch (error) {
+        return projectionFailure({
+          plan,
+          diagnostics,
+          apiStages,
+          templateId,
+          baseUrl,
+          credentials,
+          createdFdIds,
+          updatedFdIds,
+          error
+        });
+      }
+
+      if (!prepared.ok) {
+        return {
+          ok: false,
+          status: "failed",
+          stage: "projection",
+          failedAt: "projection",
+          baseUrl,
+          templateId,
+          createdFdIds,
+          updatedFdIds,
+          cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
+          diagnostics: [...diagnostics, ...prepared.diagnostics],
+          apiStages,
+          plan
+        };
+      }
     }
 
     const savePayload = prepared.update;
@@ -269,7 +359,13 @@ export async function executeDsl(input, options = {}) {
         baseUrl,
         templateId,
         createdFdIds,
-        cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
+        updatedFdIds,
+        cleanup: {
+          attempted: false,
+          reason: updatesExistingTemplate
+            ? "the explicitly targeted draft was not created by this execution"
+            : "automatic rollback is out of scope for v2 route-validation"
+        },
         diagnostics,
         apiStages,
         plan,
@@ -283,6 +379,7 @@ export async function executeDsl(input, options = {}) {
       baseUrl,
       templateId,
       createdFdIds,
+      updatedFdIds,
       validationPolicy: input?.validationPolicy,
       catalogs: input?.catalogs,
       diagnostics,
@@ -301,8 +398,18 @@ export async function executeDsl(input, options = {}) {
       failedAt: error?.stage || inferFailureStage(error),
       baseUrl,
       templateId: templateId || undefined,
-      createdFdIds: [templateId].filter(Boolean),
-      cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
+      createdFdIds: apiStages.some((stage) => stage.name === "add" && stage.status === "ok")
+        ? [templateId].filter(Boolean)
+        : [],
+      updatedFdIds: apiStages.some((stage) => stage.name === "update" && stage.status === "ok")
+        ? [templateId].filter(Boolean)
+        : [],
+      cleanup: {
+        attempted: false,
+        reason: updatesExistingTemplate
+          ? "the explicitly targeted draft was not created by this execution"
+          : "automatic rollback is out of scope for v2 route-validation"
+      },
       validationPolicy: input?.validationPolicy,
       catalogs: input?.catalogs,
       diagnostics: [
@@ -323,7 +430,17 @@ export async function executeDsl(input, options = {}) {
   }
 }
 
-function projectionFailure({ plan, diagnostics, apiStages, templateId, baseUrl, credentials, error }) {
+function projectionFailure({
+  plan,
+  diagnostics,
+  apiStages,
+  templateId,
+  baseUrl,
+  credentials,
+  createdFdIds = [],
+  updatedFdIds = [],
+  error
+}) {
   return {
     ok: false,
     status: "failed",
@@ -331,7 +448,8 @@ function projectionFailure({ plan, diagnostics, apiStages, templateId, baseUrl, 
     failedAt: "projection",
     baseUrl,
     templateId,
-    createdFdIds: [templateId].filter(Boolean),
+    createdFdIds,
+    updatedFdIds,
     cleanup: { attempted: false, reason: "automatic rollback is out of scope for v2 route-validation" },
     diagnostics: [
       ...diagnostics,
@@ -383,6 +501,90 @@ function validateSafety(options, baseUrlDiagnostics = []) {
   }
   diagnostics.push(...baseUrlDiagnostics);
   return diagnostics;
+}
+
+function validateExistingTargetTemplate(template, { templateId, targetCategoryId }) {
+  const diagnostics = [];
+  if (template?.fdId !== templateId) {
+    diagnostics.push({
+      level: "error",
+      code: "safety.target_template_id_mismatch",
+      message: "The targeted template readback belongs to a different template.",
+      path: "/targetTemplateId",
+      details: { expected: templateId, actual: template?.fdId }
+    });
+  }
+  if (!String(template?.fdName || "").startsWith("MK_TEST_")) {
+    diagnostics.push({
+      level: "error",
+      code: "safety.target_template_mk_test_required",
+      message: "Targeted updates are allowed only for an existing MK_TEST_ template.",
+      path: "/targetTemplate/fdName",
+      details: { actual: template?.fdName }
+    });
+  }
+  if (!isDraftStatus(template?.fdStatus)) {
+    diagnostics.push({
+      level: "error",
+      code: "safety.target_template_draft_required",
+      message: "Targeted updates are allowed only while the MK_TEST_ template remains a draft.",
+      path: "/targetTemplate/fdStatus",
+      details: { actual: template?.fdStatus }
+    });
+  }
+  const xform = template?.mechanisms?.["sys-xform"];
+  if (xform?.fdStatus !== undefined && !isDraftStatus(xform.fdStatus)) {
+    diagnostics.push({
+      level: "error",
+      code: "safety.target_xform_draft_required",
+      message: "Targeted updates require the existing XForm to remain a draft.",
+      path: "/targetTemplate/mechanisms/sys-xform/fdStatus",
+      details: { actual: xform.fdStatus }
+    });
+  }
+  const workflow = template?.mechanisms?.lbpmTemplate?.[0];
+  if (workflow?.fdStatus !== undefined && !isDraftStatus(workflow.fdStatus)) {
+    diagnostics.push({
+      level: "error",
+      code: "safety.target_workflow_draft_required",
+      message: "Targeted updates require the existing workflow to remain a draft.",
+      path: "/targetTemplate/mechanisms/lbpmTemplate/0/fdStatus",
+      details: { actual: workflow.fdStatus }
+    });
+  }
+  if (workflow?.isDraft === false) {
+    diagnostics.push({
+      level: "error",
+      code: "safety.target_workflow_draft_required",
+      message: "Targeted updates require the existing workflow draft marker.",
+      path: "/targetTemplate/mechanisms/lbpmTemplate/0/isDraft",
+      details: { actual: workflow.isDraft }
+    });
+  }
+  const actualCategoryId = template?.fdCategory?.fdId;
+  if (actualCategoryId !== targetCategoryId) {
+    diagnostics.push({
+      level: "error",
+      code: "safety.target_template_category_mismatch",
+      message: "The targeted MK_TEST_ template must already belong to the explicitly requested category.",
+      path: "/targetTemplate/fdCategory/fdId",
+      details: { expected: targetCategoryId, actual: actualCategoryId }
+    });
+  }
+  const tableName = template?.fdTableName || xform?.fdTableName;
+  if (!nonEmptyString(tableName)) {
+    diagnostics.push({
+      level: "error",
+      code: "safety.target_template_table_required",
+      message: "The targeted MK_TEST_ draft must retain its generated physical table name.",
+      path: "/targetTemplate/fdTableName"
+    });
+  }
+  return diagnostics;
+}
+
+function isDraftStatus(value) {
+  return value === 0 || value === "0" || String(value || "").toLowerCase() === "draft";
 }
 
 function resolveBaseUrl(value) {

@@ -10,6 +10,10 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
     ...(componentSupportsProp(field.component, "placeholder") && field.props?.placeholder !== undefined
       ? { placeholder: field.props.placeholder }
       : {}),
+    ...(componentSupportsProp(field.component, "unit") && field.props?.unit !== undefined
+      ? { unit: field.props.unit }
+      : {}),
+    ...summarizeSemanticProps(field),
     style: field.props?.style,
     dataOnly: field.dataOnly === true,
     columns: (field.columns || []).map((column) => ({
@@ -20,7 +24,11 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
       required: column.props?.required === true,
       ...(componentSupportsProp(column.component, "placeholder") && column.props?.placeholder !== undefined
         ? { placeholder: column.props.placeholder }
-        : {})
+        : {}),
+      ...(componentSupportsProp(column.component, "unit") && column.props?.unit !== undefined
+        ? { unit: column.props.unit }
+        : {}),
+      ...summarizeSemanticProps(column)
     }))
   }));
   const layoutRows = (observedForm?.layoutRows || []).map((row) => ({
@@ -87,6 +95,20 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
   };
 }
 
+function summarizeSemanticProps(field) {
+  const props = {};
+  if (componentSupportsProp(field.component, "precision") && field.props?.precision !== undefined) {
+    props.precision = field.props.precision;
+  }
+  if (componentSupportsProp(field.component, "defaultValue") && field.props?.defaultValue !== undefined) {
+    props.defaultValue = field.props.defaultValue;
+  }
+  if (componentSupportsProp(field.component, "calculation") && field.props?.calculation !== undefined) {
+    props.calculation = field.props.calculation;
+  }
+  return props;
+}
+
 export function buildWorkflowSummary(observedWorkflow) {
   if (!observedWorkflow) return undefined;
   const nodes = observedWorkflow.nodes || [];
@@ -108,6 +130,10 @@ export function buildWorkflowSummary(observedWorkflow) {
       id: node.id,
       type: node.type,
       element: node.element,
+      ...(node.manualBranch?.decisionType !== undefined
+        ? { decisionType: node.manualBranch.decisionType }
+        : {}),
+      ...(node.help !== undefined ? { help: node.help } : {}),
       ignoreOnSameIdentity: node.ignoreOnSameIdentity,
       ...(summarizeWorkflowParticipants(node.participants)
         ? { participants: summarizeWorkflowParticipants(node.participants) }

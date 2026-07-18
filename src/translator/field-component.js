@@ -1,4 +1,7 @@
 export function componentForSourceType(type, source = {}) {
+  if (isSourceCalculation(type, source)) {
+    return "xform-calculate";
+  }
   if (source.sourceProps?.designerType === "address") return "xform-address";
   return {
     text: source.sourceProps?.metadataKind === "element" ? "xform-address" : "xform-input",
@@ -16,4 +19,22 @@ export function componentForSourceType(type, source = {}) {
     LinkLabel: "xform-description",
     button: "xform-button"
   }[type] || "xform-input";
+}
+
+function isSourceCalculation(type, source) {
+  const isDetailColumn = Boolean(
+    String(source.sourceRef || "").startsWith("source.form.detailTable.") ||
+    source.sourceProps?.designerTableName ||
+    source.sourceProps?.designerValues?.tableName
+  );
+  if (isDetailColumn) return false;
+  if (String(source.sourceProps?.designerType || "").toLowerCase() === "calculation") return true;
+  if (type !== "number") return false;
+  const designerFormula = String(source.sourceProps?.designerValues?.formula || "").trim();
+  const metadata = source.sourceProps?.metadataAttributes || {};
+  const metadataFormula = String(metadata.defaultValue || "").trim();
+  return Boolean(
+    (designerFormula.includes("$") && designerFormula.trim()) ||
+    (String(metadata.formula || "").toLowerCase() === "true" && metadataFormula.includes("$"))
+  );
 }

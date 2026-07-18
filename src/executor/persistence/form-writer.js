@@ -31,7 +31,7 @@ export function applyFormPayload(template, dsl) {
   const lang = parseJsonObject(config.lang || "{}");
   const summary = summarizeDslForm(form, dsl.formRules);
   const mainModel = buildMainModel(next, xform, config, form, lang);
-  const detailModels = buildDetailModels(next, form, mainModel);
+  const detailModels = buildDetailModels(next, form, mainModel, lang);
   const dataModels = [mainModel, ...detailModels];
   const detailModelsByField = new Map(
     detailModels.map((model) => [model.dynamicProps?.detailFieldName, model]).filter(([fieldId]) => Boolean(fieldId))
@@ -477,7 +477,7 @@ function buildMainModel(template, xform, config, form, lang) {
   return main;
 }
 
-function buildDetailModels(template, form, mainModel) {
+function buildDetailModels(template, form, mainModel, lang) {
   return (form.fields || [])
     .filter((field) => field.type === "detailTable")
     .map((field) => {
@@ -497,7 +497,7 @@ function buildDetailModels(template, form, mainModel) {
         fdFontExtendData: "{\"passValue\":false}"
       };
       model.fdFields = [
-        ...(field.columns || []).map((column, index) => canonicalField(column, template, model, index + 1, "detail")),
+        ...(field.columns || []).map((column, index) => canonicalField(column, template, model, index + 1, "detail", lang)),
         ...detailSystemFields(model)
       ];
       model.fdAttribute = JSON.stringify(detailModelAttribute(field, model));
@@ -563,6 +563,16 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
   if (componentSupportsProp(field.componentId, "placeholder") && typeof field.props?.placeholder === "string") {
     controlProps.placeholder = field.props.placeholder;
   }
+  if (componentSupportsProp(field.componentId, "unit") && typeof field.props?.unit === "string") {
+    const unit = field.props.unit.trim();
+    const unitToken = nativeLangToken(field.id, "numberFormat");
+    lang[unitToken] = nativeNumberFormatLangEntry(field.id, unit);
+    Object.assign(controlProps, {
+      showCount: true,
+      numberFormat: nativeNumberFormat(unitToken),
+      defaultValueType: "formula"
+    });
+  }
   if (field.props?.options?.length) {
     controlProps.options = field.props.options.map((option) => ({
       label: option.label ?? option.text ?? option.value,
@@ -595,6 +605,18 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
   if (spec.attrType === "address") {
     controlProps.org = { types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"] };
   }
+  if (["number", "calculate"].includes(spec.attrType) && Number.isInteger(field.props?.precision)) {
+    controlProps.valueType = {
+      formatType: "decimal",
+      groupingUsed: false,
+      precision: field.props.precision
+    };
+    if (controlProps.numberFormat) controlProps.numberFormat.precision = field.props.precision;
+  }
+  if (spec.attrType === "calculate") {
+    controlProps.statisticMode = nativeStatisticMode(field.props?.calculation);
+    if (!controlProps.defaultValueType) controlProps.defaultValueType = "empty";
+  }
   if (spec.attrType === "desc") {
     const content = field.props?.content || field.title || "";
     Object.assign(controlProps, {
@@ -622,7 +644,7 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     });
   }
 
-  applyContextDefaultToControlProps(controlProps, field, template, spec);
+  applyDefaultValueToControlProps(controlProps, field, template, spec);
 
   const isDescription = spec.attrType === "desc";
   const isButton = spec.attrType === "button";
@@ -679,9 +701,57 @@ function nativeLangEntry(prop, name, text) {
   return { prop, name, type: "input", content: { Cn: String(text || "") } };
 }
 
-function applyContextDefaultToControlProps(controlProps, field, template, spec) {
+function nativeNumberFormatLangEntry(fieldId, unit) {
+  return {
+    prop: "numberFormat",
+    name: fieldId,
+    type: "input",
+    content: { Cn: unit, default: unit }
+  };
+}
+
+function nativeNumberFormat(unitToken) {
+  return {
+    formatType: "base",
+    precision: null,
+    groupingUsed: null,
+    symbol: null,
+    unit: unitToken,
+    percentage: false
+  };
+}
+
+function applyDefaultValueToControlProps(controlProps, field, template, spec) {
   const contextDefault = contextDefaultFormula(field, template, spec);
-  if (!contextDefault) return;
+  if (contextDefault) {
+    applyContextDefaultToControlProps(controlProps, contextDefault, spec);
+    return;
+  }
+
+  const literalDefault = normalizeLiteralDefault(field.props?.defaultValue);
+  if (!literalDefault) return;
+
+  if (["radio", "checkbox", "select"].includes(spec.attrType)) {
+    controlProps.defaultValueType = "fixed";
+    controlProps.defaultValue = cloneLiteral(literalDefault.value);
+    if (Array.isArray(controlProps.options)) {
+      const selected = new Set(Array.isArray(literalDefault.value) ? literalDefault.value : [literalDefault.value]);
+      controlProps.options = controlProps.options.map((option) => ({
+        ...option,
+        checked: selected.has(option.value)
+      }));
+    }
+    return;
+  }
+
+  if (["text", "textarea", "number", "calculate"].includes(spec.attrType)) {
+    controlProps.defaultValueType = "formula";
+    controlProps.defaultValueFormulaVO = literalDefaultFormula(literalDefault.value);
+    if (spec.attrType === "text") controlProps.maxLength = controlProps.maxLength || 200;
+  }
+}
+
+function applyContextDefaultToControlProps(controlProps, contextDefault, spec) {
 
   if (spec.attrType === "address") {
     Object.assign(controlProps, {
@@ -708,11 +778,45 @@ function applyContextDefaultToControlProps(controlProps, field, template, spec) 
 }
 
 function fieldFontExtendData(field, template, spec) {
-  const contextDefault = contextDefaultFormula(field, template, spec);
-  if (!contextDefault) return {};
+  const data = {};
+  if (
+    spec.attrType === "number" &&
+    componentSupportsProp(field.componentId, "unit") &&
+    typeof field.props?.unit === "string" &&
+    field.props.unit.trim()
+  ) {
+    const unitToken = nativeLangToken(field.id, "numberFormat");
+    Object.assign(data, {
+      passValue: false,
+      showCount: true,
+      trace: false,
+      defaultValueType: "formula",
+      percentage: false,
+      precision: null,
+      groupingUsed: null,
+      symbol: null,
+      unit: unitToken,
+      formatType: "base"
+    });
+  }
 
-  if (spec.attrType === "address") {
+  if (["number", "calculate"].includes(spec.attrType) && Number.isInteger(field.props?.precision)) {
+    data.precision = field.props.precision;
+    if (!data.formatType) {
+      data.groupingUsed = false;
+      data.formatType = "decimal";
+    }
+  }
+
+  if (spec.attrType === "calculate") {
+    data.statisticMode = nativeStatisticMode(field.props?.calculation);
+    if (!data.defaultValueType) data.defaultValueType = "empty";
+  }
+
+  const contextDefault = contextDefaultFormula(field, template, spec);
+  if (contextDefault && spec.attrType === "address") {
     return {
+      ...data,
       orgTypeArr: contextDefault.orgTypeArr,
       defaultValueType: "formula",
       multi: false,
@@ -721,8 +825,9 @@ function fieldFontExtendData(field, template, spec) {
     };
   }
 
-  if (spec.attrType === "text") {
+  if (contextDefault && spec.attrType === "text") {
     return {
+      ...data,
       passValue: false,
       trace: false,
       encrypt: false,
@@ -733,7 +838,66 @@ function fieldFontExtendData(field, template, spec) {
     };
   }
 
-  return {};
+  const literalDefault = normalizeLiteralDefault(field.props?.defaultValue);
+  if (!literalDefault) return data;
+
+  if (["radio", "checkbox", "select"].includes(spec.attrType)) {
+    const selected = new Set(Array.isArray(literalDefault.value) ? literalDefault.value : [literalDefault.value]);
+    return {
+      ...data,
+      passValue: false,
+      trace: false,
+      defaultValueType: "fixed",
+      defaultValue: cloneLiteral(literalDefault.value),
+      options: (field.props?.options || []).map((option) => ({
+        label: option.label ?? option.text ?? option.value,
+        value: option.value ?? option.label ?? option.text,
+        checked: selected.has(option.value ?? option.label ?? option.text)
+      }))
+    };
+  }
+
+  if (["text", "textarea", "number", "calculate"].includes(spec.attrType)) {
+    return {
+      ...data,
+      passValue: false,
+      trace: false,
+      defaultValueType: "formula",
+      defaultValueFormulaVO: literalDefaultFormula(literalDefault.value)
+    };
+  }
+
+  return data;
+}
+
+function normalizeLiteralDefault(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  if (value.kind !== "literal" || !Object.hasOwn(value, "value")) return undefined;
+  const literal = value.value;
+  if (!["string", "number", "boolean"].includes(typeof literal) && !Array.isArray(literal)) return undefined;
+  return { value: cloneLiteral(literal) };
+}
+
+function cloneLiteral(value) {
+  return Array.isArray(value) ? JSON.parse(JSON.stringify(value)) : value;
+}
+
+function literalDefaultFormula(value) {
+  const script = typeof value === "string" ? JSON.stringify(value) : String(value);
+  return {
+    type: "Eval",
+    script,
+    vo: {
+      mode: "formula",
+      content: String(value)
+    }
+  };
+}
+
+function nativeStatisticMode(calculation) {
+  return calculation?.kind === "aggregate"
+    ? String(calculation.operation || "sum").toUpperCase()
+    : "FORMULA";
 }
 
 function contextDefaultFormula(field, template, spec) {
@@ -1212,6 +1376,7 @@ function componentFromDataField(field) {
     "@elem/xform-select~multi": "xform-select~multi",
     "@elem/xform-datetime": "xform-datetime",
     "@elem/xform-number": "xform-number",
+    "@elem/xform-calculate": "xform-calculate",
     "@elem/xform-address": "xform-address",
     "@elem/xform-attach": "xform-attach",
     "@elem/xform-subject": "xform-subject",
@@ -1230,6 +1395,7 @@ function componentForFdType(type) {
     select: "xform-select",
     timestamp: "xform-datetime",
     number: "xform-number",
+    calculate: "xform-calculate",
     address: "xform-address",
     attachment: "xform-attach",
     subject: "xform-subject",
@@ -1265,6 +1431,9 @@ function componentSpec(field) {
   }
   if (component === "xform-number") {
     return specForComponent(component, "number", "number", "numberDict", "number", "@elem/xform-number", "@elem/xform-m-number");
+  }
+  if (component === "xform-calculate") {
+    return specForComponent(component, "calculate", "number", "numberDict", "calculate", "@elem/xform-calculate", "@elem/xform-m-calculate");
   }
   if (component === "xform-attach") {
     return specForComponent(component, "attachment", "varchar", "attachmentDict", "attachment", "@elem/xform-attach", "@elem/xform-m-attach");

@@ -1,11 +1,87 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { buildFormRuleRefIndex, resolveEffectTarget } from "../../src/dsl/form-rules.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 
 const fixture =
   "tests/fixtures/route-validation/structural-recovery/route-structural-recovery-inline-content_SysFormTemplate.xml";
 
 describe("detail-table Route-validation", () => {
+  it("preserves nested standard-table rows instead of widening them to the eight-column limit", () => {
+    const sourceDraft = cleanSourceFile(fixture);
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const nestedSourceRows = sourceDraft.form.layout.rows.filter((row) =>
+      row.id.startsWith("row-15.nested-0.row-")
+    );
+    const nestedTargetRows = dslDraft.form.layout.mkTree.filter((row) =>
+      row.sourceRef.includes("row-15.nested-0.row-")
+    );
+    const refs = (row) => row.children.flatMap((child) => child.refIds);
+    const sourceRefs = (row) => row.cells.flatMap((cell) =>
+      cell.references.map((reference) => reference.referenceId)
+    );
+
+    assert.equal(nestedSourceRows.length, 4);
+    assert.deepEqual(nestedSourceRows.map(sourceRefs), [
+      ["nested_layout_heading"],
+      ["fd_nested_detail"],
+      ["fd_nested_alpha", "fd_nested_bravo"],
+      ["fd_nested_charlie"]
+    ]);
+    assert.equal(nestedTargetRows.length, 4);
+    assert.deepEqual(nestedTargetRows.map(refs), [
+      ["nested_layout_heading"],
+      ["fd_nested_detail"],
+      ["fd_nested_alpha", "fd_nested_bravo"],
+      ["fd_nested_charlie"]
+    ]);
+    assert.deepEqual(
+      nestedTargetRows.map((row) => ({ componentId: row.componentId, props: row.props })),
+      [
+        { componentId: "xform-flex-1-1-layout", props: { columns: 1, sourceColumns: 4 } },
+        { componentId: "xform-flex-1-1-layout", props: { columns: 1, sourceColumns: 4 } },
+        { componentId: "xform-flex-1-2-layout", props: { columns: 2, sourceColumns: 4 } },
+        { componentId: "xform-flex-1-1-layout", props: { columns: 1, sourceColumns: 4 } }
+      ]
+    );
+    assert.equal(
+      nestedTargetRows.some((row) => row.componentId === "xform-multi-row-table-layout"),
+      false
+    );
+
+    const nestedSourceDetail = sourceDraft.form.detailTables.find((table) =>
+      table.id === "fd_nested_detail"
+    );
+    const nestedTargetDetail = dslDraft.form.fields.find((field) =>
+      field.id === "fd_nested_detail"
+    );
+    assert.deepEqual(
+      nestedSourceDetail?.columns.map((column) => ({
+        id: column.id,
+        sourceType: column.sourceType,
+        designerType: column.sourceProps?.designerType
+      })),
+      [{ id: "fd_nested_detail_mode", sourceType: "radio", designerType: "inputRadio" }]
+    );
+    assert.deepEqual(
+      nestedTargetDetail?.columns.map((column) => ({
+        id: column.id,
+        type: column.type,
+        componentId: column.componentId
+      })),
+      [{ id: "fd_nested_detail_mode", type: "radio", componentId: "xform-radio" }]
+    );
+
+    const markerTarget = resolveEffectTarget(
+      buildFormRuleRefIndex(dslDraft.form),
+      "nested_layout_row"
+    );
+    assert.deepEqual(
+      markerTarget?.targets.map((target) => target.id),
+      ["fd_nested_alpha", "fd_nested_bravo", "fd_nested_charlie"]
+    );
+  });
+
   it("merges only an owned hint and projects every detail table into exactly one full-width row", () => {
     const sourceDraft = cleanSourceFile(fixture);
     const dslDraft = draftSourceDraft(sourceDraft);

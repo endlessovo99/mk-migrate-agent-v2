@@ -98,6 +98,36 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "catalog.function_unsupported"), true);
   });
 
+  it("rejects option lists that reuse one target value for different labels", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.fields[0] = {
+      ...dsl.form.fields[0],
+      type: "singleSelect",
+      componentId: "xform-select",
+      props: {
+        options: [
+          { label: "North", value: "N" },
+          { label: "Northern region", value: "N" }
+        ]
+      }
+    };
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+    const diagnostic = result.diagnostics.find((item) =>
+      item.code === "dsl.form.option_value_duplicate"
+    );
+
+    assert.equal(result.ok, false);
+    assert.equal(diagnostic?.path, "/form/fields/0/props/options/1/value");
+    assert.deepEqual(diagnostic?.details, {
+      value: "N",
+      firstIndex: 0,
+      duplicateIndex: 1,
+      firstLabel: "North",
+      duplicateLabel: "Northern region"
+    });
+  });
+
   it("rejects trusted layouts without mkTree and invalid child references", () => {
     const missingTree = validateMigrationDsl(sampleTrustedDsl({ form: { layout: { mkTree: [] } } }), { mode: "execute" });
     const missingField = validateMigrationDsl(sampleTrustedDsl({

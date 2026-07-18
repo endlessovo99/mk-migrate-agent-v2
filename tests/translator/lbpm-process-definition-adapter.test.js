@@ -129,6 +129,22 @@ describe("translateLbpmProcessDefinitionXml", () => {
       index: 0
     }]);
   });
+
+  it("normalizes node help to meaningful text without retaining executable markup", () => {
+    const process = '<process fdId="help-process"><nodes><draftNode id="N2" name="起草" description="&lt;pre&gt;第一行&lt;br/&gt;第二行&lt;script&gt;alert(1)&lt;/script&gt;&lt;style&gt;.x{}&lt;/style&gt;&lt;/pre&gt;"/><draftNode id="N3" name="起草2" description="安全内容&lt;script&gt;doBadThing()"/></nodes><lines/></process>';
+    const xml = `<java><object><void method="put"><string>fdContent</string><string>${encodeXml(process)}</string></void></object></java>`;
+    const graph = parseLbpmProcessDefinitionXml(xml);
+    const node = graph.nodes.find((candidate) => candidate.id === "N2");
+
+    assert.equal(node.help, "第一行\n第二行");
+    assert.deepEqual(node.helpEvidence, {
+      sourceAttribute: "description",
+      normalization: "safe-text-v1"
+    });
+    assert.equal(node.help.includes("alert"), false);
+    assert.equal(node.help.includes(".x"), false);
+    assert.equal(graph.nodes.find((candidate) => candidate.id === "N3").help, "安全内容");
+  });
 });
 
 function handlerEntityFixture() {

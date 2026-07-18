@@ -50,7 +50,7 @@ export const FIELD_TYPES = new Set([
 ]);
 
 const SCRIPT_COVERAGE_STATUSES = new Set(["none", "partial", "uncovered", "covered", "translated"]);
-const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "robot", "startSubProcess", "recoverSubProcess", "conditionBranch", "split", "join", "generalEnd"]);
+const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "robot", "startSubProcess", "recoverSubProcess", "conditionBranch", "manualBranch", "split", "join", "generalEnd"]);
 const WORKFLOW_NODE_ELEMENTS = new Set(["startEvent", "manualTask", "exclusiveGateway", "parallelGateway", "subProcess", "robot", "endEvent"]);
 const WORKFLOW_PARTICIPANT_MODES = new Set([
   "empty",
@@ -292,6 +292,7 @@ function validateFieldLike(field, diagnostics, path, ids, scope) {
     scope,
     path
   }, diagnostics);
+  validateUniqueOptionValues(field.props?.options, diagnostics, `${path}/props/options`);
 
   if (!isRecord(field.sourceProps)) {
     diagnostics.push(error("dsl.field.source_props_required", "sourceProps is required for audit and must be an object.", `${path}/sourceProps`));
@@ -313,6 +314,32 @@ function validateFieldLike(field, diagnostics, path, ids, scope) {
   if (field.dataOnly === true && field.props?.required === true) {
     diagnostics.push(error("dsl.field.data_only_required_forbidden", "Data-only fields cannot be required because they have no rendered input control.", `${path}/props/required`));
   }
+}
+
+function validateUniqueOptionValues(options, diagnostics, path) {
+  if (!Array.isArray(options)) return;
+  const firstByValue = new Map();
+
+  options.forEach((option, index) => {
+    if (!isRecord(option) || typeof option.value !== "string") return;
+    const first = firstByValue.get(option.value);
+    if (!first) {
+      firstByValue.set(option.value, { index, label: option.label });
+      return;
+    }
+    diagnostics.push(error(
+      "dsl.form.option_value_duplicate",
+      "Option values must be unique within one field.",
+      `${path}/${index}/value`,
+      {
+        value: option.value,
+        firstIndex: first.index,
+        duplicateIndex: index,
+        firstLabel: first.label,
+        duplicateLabel: option.label
+      }
+    ));
+  });
 }
 
 function validateDetailColumns(columns, diagnostics, path) {
@@ -1290,8 +1317,19 @@ function validateWorkflowNodes(nodes, diagnostics, context) {
         current: node.element
       }));
     }
+    if (node.type === "manualBranch" && !["1", "2"].includes(node.decisionType)) {
+      diagnostics.push(error(
+        "dsl.workflow.manual_branch.decision_type",
+        "Manual branches must select the previous artificial node (1) or the drafter node (2).",
+        `${path}/decisionType`,
+        { current: node.decisionType }
+      ));
+    }
     if (!nonEmptyString(node.sourceRef) && node.generated !== true) {
       diagnostics.push(error("dsl.workflow.node.source_ref_required", "Workflow node sourceRef is required unless generated is true.", `${path}/sourceRef`));
+    }
+    if (node.help !== undefined && !nonEmptyString(node.help)) {
+      diagnostics.push(error("dsl.workflow.node.help_type", "Workflow node help must be a non-empty string when provided.", `${path}/help`));
     }
     validateWorkflowCredentialMaterial(node, diagnostics, path);
     validateParticipants(node.participants, diagnostics, `${path}/participants`, context);

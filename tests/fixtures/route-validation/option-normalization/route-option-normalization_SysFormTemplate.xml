@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-option-normalization-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Route Option Normalization</string></void>
+  <void method="put"><string>fdModelId</string><string>route-option-normalization-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0,1&quot;&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_items&quot;,label:&quot;Items&quot;}&apos;&gt;
+       &lt;tbody&gt;&lt;tr&gt;&lt;td&gt;
+        &lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;fd_location&quot;,label:&quot;Location&quot;,items:&quot;North|N&amp;#10;South|S&amp;#10;North|N&quot;}&apos;&gt;&lt;/div&gt;
+       &lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;
+      &lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;confirm_hint&quot;,content:&quot;Confirm the related detail value&quot;,color:&quot;#FF0000&quot;}&apos;&gt;Confirm the related detail value&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;
+      &lt;table fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_confirm&quot;,label:&quot;Confirm&quot;,required:&quot;true&quot;,items:&quot;Confirm|confirmed&quot;}&apos;&gt;&lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSubTableProperty name=&quot;fd_items&quot; label=&quot;Items&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_location&quot; label=&quot;Location&quot; enumValues=&quot;North|N;South|S;North|N&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_confirm&quot; label=&quot;Confirm&quot; notNull=&quot;true&quot; enumValues=&quot;Confirm|confirmed&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

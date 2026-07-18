@@ -135,6 +135,43 @@ describe("detail persistence readback contract", () => {
     assert.equal(readback.ok, false);
     assert.equal(hasCode(readback, "readback.form.detail_table_cross_model_conflict"), true);
   });
+
+  it("uses native fdOrder for detail layout and rejects a changed business order", () => {
+    const dsl = sampleTrustedDsl({ workflow: null });
+    const detail = dsl.form.fields.find((field) => field.id === "fd_detail");
+    detail.columns.push({
+      id: "fd_quantity",
+      title: "数量",
+      type: "number",
+      componentId: "xform-number",
+      props: {},
+      sourceRef: "source.form.detailTable.fd_detail.column.fd_quantity",
+      generated: false
+    });
+    const prepared = prepareSample(dsl);
+    const reorderedArray = structuredClone(prepared.update);
+    const reorderedConfig = xformConfig(reorderedArray);
+    const reorderedModel = detailModel(reorderedConfig);
+    reorderedModel.fdFields = [
+      ...businessFields(reorderedModel).reverse(),
+      ...reorderedModel.fdFields.filter((field) => field.fdIsSystem === true)
+    ];
+    reorderedArray.mechanisms["sys-xform"].fdConfig = JSON.stringify(reorderedConfig);
+
+    const arrayOnlyReadback = prepared.verify(reorderedArray);
+    assert.equal(arrayOnlyReadback.ok, true, JSON.stringify(arrayOnlyReadback.diagnostics));
+
+    const changedOrder = structuredClone(reorderedArray);
+    const changedConfig = xformConfig(changedOrder);
+    const changedModel = detailModel(changedConfig);
+    const fields = businessFields(changedModel);
+    [fields[0].fdOrder, fields[1].fdOrder] = [fields[1].fdOrder, fields[0].fdOrder];
+    changedOrder.mechanisms["sys-xform"].fdConfig = JSON.stringify(changedConfig);
+    const changedReadback = prepared.verify(changedOrder);
+
+    assert.equal(changedReadback.ok, false);
+    assert.equal(hasCode(changedReadback, "readback.form.detail_column_order_mismatch"), true);
+  });
 });
 
 function verifyMutated(mutateConfig) {

@@ -112,7 +112,7 @@ function dataOnlyFieldFromMetadata(metadataField, designerField, warnings) {
 function parseDesignerLayout(html, metadataFields, warnings) {
   const decoded = decodeEntities(html);
   const rows = splitMainFormRows(decoded);
-  const duplicateBoundLabelIds = designerDuplicateBoundLabelIds(decoded);
+  const boundCaptions = designerBoundCaptions(decoded);
   const metadataContext = metadataMatchContext(metadataFields);
   const fields = [];
   const fieldIds = new Set();
@@ -121,68 +121,23 @@ function parseDesignerLayout(html, metadataFields, warnings) {
   const layoutRows = [];
 
   rows.forEach((rowHtml, rowIndex) => {
-    const cells = [];
-    const sourceMarkers = extractRowMarkers(rowHtml, warnings);
-    const sourceCells = splitDirectChildCells(rowHtml);
-    const sourceColumns = sourceCells.reduce((max, cell, cellIndex) => {
-      const column = parseColumnSpec(cell.attrs.column, cellIndex);
-      return Math.max(max, column.column + column.colspan);
-    }, 1);
-
-    sourceCells.forEach((cell, cellIndex) => {
-      const controls = extractLayoutCellControls(cell.body, duplicateBoundLabelIds, metadataContext);
-      if (!controls.length) return;
-      const column = parseColumnSpec(cell.attrs.column, cellIndex);
-      const controlGroups = groupLayoutCellControls(controls);
-      controlGroups.forEach((group, groupIndex) => {
-        const cellFieldIds = [];
-        for (const control of group) {
-          if (control.source?.designerHidden) {
-            if (!hiddenFieldIds.has(control.id)) {
-              hiddenFieldIds.add(control.id);
-              hiddenFields.push(control);
-            }
-            continue;
-          }
-          if (fieldIds.has(control.id)) continue;
-          fieldIds.add(control.id);
-          fields.push(control);
-          cellFieldIds.push(control.id);
-        }
-        if (!cellFieldIds.length) return;
-
-        cells.push({
-          id: `row-${rowIndex}-cell-${column.column}${groupIndex ? `-${groupIndex}` : ""}`,
-          fieldId: cellFieldIds[0],
-          fieldIds: cellFieldIds,
-          column: column.column,
-          colspan: column.colspan
-        });
-      });
-    });
-
-    if (!cells.length && sourceMarkers.length) {
-      const description = descriptionFieldFromMarkedRow(rowHtml, sourceMarkers[0], fieldIds);
-      if (description && !fieldIds.has(description.id)) {
-        fieldIds.add(description.id);
-        fields.push(description);
-        cells.push({
-          id: `row-${rowIndex}-cell-0`,
-          fieldId: description.id,
-          fieldIds: [description.id],
-          column: 0,
-          colspan: sourceColumns
-        });
-      }
-    }
-
-    if (cells.length) {
-      layoutRows.push({
-        id: `row-${rowIndex}`,
-        sourceRow: String(rowIndex),
-        ...(sourceMarkers.length ? { sourceMarkers } : {}),
-        columns: Math.max(sourceColumns, ...cells.map((cell) => cell.column + cell.colspan), 1),
-        cells
+    const rowDescriptors = nestedLayoutRowDescriptors(
+      rowHtml,
+      rowIndex,
+      boundCaptions,
+      metadataContext,
+      warnings
+    );
+    for (const descriptor of rowDescriptors) {
+      appendDesignerLayoutRow(descriptor, {
+        boundCaptions,
+        metadataContext,
+        warnings,
+        fields,
+        fieldIds,
+        hiddenFields,
+        hiddenFieldIds,
+        layoutRows
       });
     }
   });
@@ -213,6 +168,151 @@ function parseDesignerLayout(html, metadataFields, warnings) {
       rows: layoutRows
     }
   };
+}
+
+function nestedLayoutRowDescriptors(
+  rowHtml,
+  rowIndex,
+  boundCaptions,
+  metadataContext,
+  warnings
+) {
+  const base = {
+    html: rowHtml,
+    id: `row-${rowIndex}`,
+    sourceRow: String(rowIndex),
+    inheritedMarkers: []
+  };
+  const sourceCells = splitDirectChildCells(rowHtml);
+  if (sourceCells.length !== 1) return [base];
+
+  const nestedTables = directStandardTableFragments(sourceCells[0].body);
+  if (nestedTables.length !== 1) return [base];
+  const nested = nestedTables[0];
+  const outside = `${sourceCells[0].body.slice(0, nested.start)}${sourceCells[0].body.slice(nested.end)}`;
+  const outsideControls = extractLayoutCellControls(outside, boundCaptions, metadataContext)
+    .filter((control) => !control.source?.designerHidden);
+  if (outsideControls.length) return [base];
+
+  const nestedRows = splitDirectChildRows(extractFirstTbodyContent(nested.html) || nested.html);
+  if (!nestedRows.length) return [base];
+  const inheritedMarkers = extractRowMarkers(outside, warnings);
+  const preservePlainLabels = /<table\b[^>]*\bfd_type\s*=\s*(["'])detailsTable\1/i.test(nested.html);
+  return nestedRows.map((html, nestedRowIndex) => ({
+    html,
+    id: `row-${rowIndex}.nested-0.row-${nestedRowIndex}`,
+    sourceRow: `${rowIndex}.${nestedRowIndex}`,
+    inheritedMarkers,
+    preservePlainLabels
+  }));
+}
+
+function directStandardTableFragments(html) {
+  const fragments = [];
+  let tableDepth = 0;
+  for (const token of scanHtmlTags(html)) {
+    if (token.name !== "table") continue;
+    if (token.closing) {
+      tableDepth = Math.max(0, tableDepth - 1);
+      continue;
+    }
+    if (tableDepth === 0 && attrValue(token.attrs, "fd_type").toLowerCase() === "standardtable") {
+      const closeStart = findMatchingCloseTag(html, token.end, "table");
+      const end = closeStart >= token.end
+        ? closeStart + "</table>".length
+        : token.end;
+      fragments.push({
+        html: html.slice(token.start, end),
+        start: token.start,
+        end
+      });
+    }
+    tableDepth += 1;
+  }
+  return fragments;
+}
+
+function appendDesignerLayoutRow(descriptor, context) {
+  const {
+    boundCaptions,
+    metadataContext,
+    warnings,
+    fields,
+    fieldIds,
+    hiddenFields,
+    hiddenFieldIds,
+    layoutRows
+  } = context;
+  const rowHtml = descriptor.html;
+  const cells = [];
+  const sourceMarkers = [...new Set([
+    ...(descriptor.inheritedMarkers || []),
+    ...extractRowMarkers(rowHtml, warnings)
+  ])];
+  const sourceCells = splitDirectChildCells(rowHtml);
+  const sourceColumns = sourceCells.reduce((max, cell, cellIndex) => {
+    const column = parseColumnSpec(cell.attrs.column, cellIndex);
+    return Math.max(max, column.column + column.colspan);
+  }, 1);
+
+  sourceCells.forEach((cell, cellIndex) => {
+    const controls = extractLayoutCellControls(cell.body, boundCaptions, metadataContext, {
+      preservePlainLabels: descriptor.preservePlainLabels === true
+    });
+    if (!controls.length) return;
+    const column = parseColumnSpec(cell.attrs.column, cellIndex);
+    const controlGroups = groupLayoutCellControls(controls);
+    controlGroups.forEach((group, groupIndex) => {
+      const cellFieldIds = [];
+      for (const control of group) {
+        if (control.source?.designerHidden) {
+          if (!hiddenFieldIds.has(control.id)) {
+            hiddenFieldIds.add(control.id);
+            hiddenFields.push(control);
+          }
+          continue;
+        }
+        if (fieldIds.has(control.id)) continue;
+        fieldIds.add(control.id);
+        fields.push(control);
+        cellFieldIds.push(control.id);
+      }
+      if (!cellFieldIds.length) return;
+
+      cells.push({
+        id: `${descriptor.id}-cell-${column.column}${groupIndex ? `-${groupIndex}` : ""}`,
+        fieldId: cellFieldIds[0],
+        fieldIds: cellFieldIds,
+        column: column.column,
+        colspan: column.colspan
+      });
+    });
+  });
+
+  if (!cells.length && sourceMarkers.length) {
+    const description = descriptionFieldFromMarkedRow(rowHtml, sourceMarkers[0], fieldIds);
+    if (description && !fieldIds.has(description.id)) {
+      fieldIds.add(description.id);
+      fields.push(description);
+      cells.push({
+        id: `${descriptor.id}-cell-0`,
+        fieldId: description.id,
+        fieldIds: [description.id],
+        column: 0,
+        colspan: sourceColumns
+      });
+    }
+  }
+
+  if (cells.length) {
+    layoutRows.push({
+      id: descriptor.id,
+      sourceRow: descriptor.sourceRow,
+      ...(sourceMarkers.length ? { sourceMarkers } : {}),
+      columns: Math.max(sourceColumns, ...cells.map((cell) => cell.column + cell.colspan), 1),
+      cells
+    });
+  }
 }
 
 function recoverDesignerAttachments(html, fields, fieldIds, layoutRows, warnings) {
@@ -339,12 +439,39 @@ function enrichDesignerField(field, metadataField, warnings) {
   }
 
   if (field.type === "detailTable") {
-    next.columns = Array.isArray(metadataField.columns) && metadataField.columns.length
-      ? metadataField.columns
-      : field.columns;
+    next.columns = mergeDetailColumns(field.columns, metadataField.columns, warnings);
   }
 
   return next;
+}
+
+function mergeDetailColumns(designerColumns = [], metadataColumns = [], warnings) {
+  const metadataById = new Map(
+    (Array.isArray(metadataColumns) ? metadataColumns : []).map((column) => [column.id, column])
+  );
+  const merged = [];
+  const seen = new Set();
+
+  for (const column of Array.isArray(designerColumns) ? designerColumns : []) {
+    if (!column?.id || seen.has(column.id)) continue;
+    seen.add(column.id);
+    const metadataColumn = metadataById.get(column.id);
+    const enriched = enrichDesignerField(column, metadataColumn, warnings);
+    // The designer is authoritative for the visible control family. Metadata
+    // enum values describe the stored value domain, but do not prove that an
+    // inputRadio was rendered as a select. enrichDesignerField still applies
+    // compatible scalar refinements (for example text -> number/date) and
+    // supplements options/requiredness without replacing radio/checkbox/select.
+    merged.push(enriched);
+  }
+
+  for (const column of Array.isArray(metadataColumns) ? metadataColumns : []) {
+    if (!column?.id || seen.has(column.id)) continue;
+    seen.add(column.id);
+    merged.push(column);
+  }
+
+  return merged;
 }
 
 function warnSuspiciousDetailTableTitles(fields, warnings) {
@@ -402,14 +529,14 @@ function metadataMatchContext(metadataFields = []) {
   };
 }
 
-function extractLayoutCellControls(html, crossCellBoundLabelIds = new Set(), metadataContext) {
+function extractLayoutCellControls(html, crossCellBoundCaptions = new Map(), metadataContext, options = {}) {
   const extractedEntries = extractDesignerFieldControlEntries(html, {
     includeHidden: true,
     includeTextLabels: true
-  });
+  }).map((entry) => withBoundCaptionEntry(entry, crossCellBoundCaptions));
   const entries = extractedEntries.filter((entry) =>
     !isSourceDescriptionControl(entry.control) ||
-    !crossCellBoundLabelIds.has(entry.control.id)
+    !crossCellBoundCaptions.has(entry.control.id)
   );
   const controls = entries.map((entry) => entry.control);
   const detailTables = controls.filter((control) => control.type === "detailTable");
@@ -466,13 +593,90 @@ function extractLayoutCellControls(html, crossCellBoundLabelIds = new Set(), met
   // Label-only cells: keep styled/hint textLabels as descriptions; skip plain field titles.
   return semanticControls.filter((control) =>
     isSourceDescriptionControl(control) &&
-    (isStyledSourceDescriptionControl(control) || String(control.source?.designerType || "").toLowerCase() === "linklabel")
+    (
+      options.preservePlainLabels === true ||
+      isStyledSourceDescriptionControl(control) ||
+      String(control.source?.designerType || "").toLowerCase() === "linklabel"
+    )
   );
 }
 
 function foldInlineCellSemantics(html, entries, metadataContext) {
-  return foldInlineHints(html, foldInlineCaptions(html, entries), metadataContext)
+  const captions = foldInlineCaptions(html, entries);
+  const units = foldInlineNumberUnits(html, captions, metadataContext);
+  return foldInlineHints(html, units, metadataContext)
     .map((entry) => entry.control);
+}
+
+function foldInlineNumberUnits(html, entries, metadataContext) {
+  const folded = [];
+
+  for (let index = 0; index < entries.length;) {
+    const current = entries[index];
+    const next = entries[index + 1];
+    if (
+      next &&
+      !current.control.source?.designerHidden &&
+      !next.control.source?.designerHidden &&
+      !isSourceDescriptionControl(current.control) &&
+      isNumberControl(current.control, metadataContext) &&
+      isPlainInlineCaption(next.control) &&
+      hasOnlyInlineUnitGap(html, current, next) &&
+      isSafeInlineUnit(next.control.title)
+    ) {
+      folded.push(mergeControlEntries(
+        current,
+        next,
+        withInlineUnit(current.control, next.control)
+      ));
+      index += 2;
+      continue;
+    }
+
+    folded.push(current);
+    index += 1;
+  }
+
+  return folded;
+}
+
+function isNumberControl(control, metadataContext) {
+  if (control?.type === "number") return true;
+  const metadataField = metadataContext?.byId?.get(control?.id) || (
+    metadataContext
+      ? matchMetadataField(control, metadataContext.byId, metadataContext.byTitle)
+      : undefined
+  );
+  return metadataField?.type === "number";
+}
+
+function isSafeInlineUnit(value) {
+  const unit = cleanText(value);
+  return [...unit].length > 0 &&
+    [...unit].length <= 12 &&
+    /^[\p{L}\p{N}%‰°℃℉¥￥/$²³·]+$/u.test(unit);
+}
+
+function hasOnlyInlineUnitGap(html, left, right) {
+  const between = String(html || "").slice(left.end, right.start);
+  if (directElementFragments(between).length) return false;
+  return between
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/(?:\s|&#(?:x[0-9a-f]+|\d+);|&nbsp;)+/gi, "") === "";
+}
+
+function withInlineUnit(control, unit) {
+  return {
+    ...control,
+    source: {
+      ...control.source,
+      inlineUnit: {
+        id: unit.id,
+        content: cleanText(unit.title),
+        relation: "immediately-adjacent-plain-text-in-same-cell"
+      }
+    }
+  };
 }
 
 function foldInlineCaptions(html, entries) {
@@ -736,7 +940,7 @@ function withInlineHint(control, hint) {
   };
 }
 
-function designerDuplicateBoundLabelIds(html) {
+function designerBoundCaptions(html) {
   const controls = extractDesignerFieldControls(html, {
     includeHidden: true,
     includeTextLabels: true
@@ -746,20 +950,42 @@ function designerDuplicateBoundLabelIds(html) {
       .filter((control) => isSourceDescriptionControl(control))
       .map((control) => [control.id, control])
   );
-  const duplicateIds = controls
+  const references = controls
     .filter((control) =>
       !isSourceDescriptionControl(control) && !control.source?.designerHidden
     )
-    .map((control) => {
-      const labelId = control.source?.designerValues?._label_bind_id;
-      const label = descriptionsById.get(labelId);
-      if (!label || normalizeMatchText(label.title) !== normalizeMatchText(control.title)) {
-        return undefined;
-      }
-      return labelId;
-    })
+    .map((control) => control.source?.designerValues?._label_bind_id)
     .filter(Boolean);
-  return new Set(duplicateIds);
+  const referenceCounts = new Map();
+  for (const labelId of references) {
+    referenceCounts.set(labelId, (referenceCounts.get(labelId) || 0) + 1);
+  }
+  return new Map(
+    [...referenceCounts.entries()]
+      .filter(([labelId, count]) => count === 1 && descriptionsById.has(labelId))
+      .map(([labelId]) => [labelId, descriptionsById.get(labelId)])
+  );
+}
+
+function withBoundCaptionEntry(entry, boundCaptions) {
+  const labelId = entry.control?.source?.designerValues?._label_bind_id;
+  const caption = boundCaptions.get(labelId);
+  if (!caption || isSourceDescriptionControl(entry.control)) return entry;
+  return {
+    ...entry,
+    control: {
+      ...entry.control,
+      title: cleanText(caption.title),
+      source: {
+        ...entry.control.source,
+        boundCaption: {
+          id: caption.id,
+          content: cleanText(caption.title),
+          relation: "explicit-label-bind-id"
+        }
+      }
+    }
+  };
 }
 
 function appendMissingControls(controls, additions) {
@@ -898,19 +1124,90 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
 function extractDesignerDetailTableColumns(tableHtml, tableId) {
   if (!tableHtml) return [];
 
+  const rows = splitDirectChildRows(extractFirstTbodyContent(tableHtml) || tableHtml);
+  const headerSemantics = detailHeaderSemanticsByColumn(rows);
   const columns = [];
   const seen = new Set();
-  for (const row of splitDirectChildRows(extractFirstTbodyContent(tableHtml) || tableHtml)) {
-    for (const cell of splitDirectChildCells(row)) {
+  for (const row of rows) {
+    const cells = splitDirectChildCells(row);
+    for (const [cellIndex, cell] of cells.entries()) {
       if (isNonDataDetailCell(cell.attrs)) continue;
+      const sourceColumn = parseColumnSpec(cell.attrs.column, cellIndex).column;
       for (const control of extractDesignerFieldControls(cell.body)) {
         if (!isDetailColumnControl(control, tableId) || seen.has(control.id)) continue;
         seen.add(control.id);
-        columns.push(control);
+        columns.push(withDetailHeaderSemantics(control, headerSemantics.get(sourceColumn)));
       }
     }
   }
   return columns;
+}
+
+function detailHeaderSemanticsByColumn(rows) {
+  const candidates = new Map();
+  const ambiguous = new Set();
+
+  for (const row of rows) {
+    const cells = splitDirectChildCells(row);
+    for (const [cellIndex, cell] of cells.entries()) {
+      const semantics = detailHeaderSemantics(cell.body);
+      if (!semantics) continue;
+      const sourceColumn = parseColumnSpec(cell.attrs.column, cellIndex).column;
+      if (candidates.has(sourceColumn)) {
+        candidates.delete(sourceColumn);
+        ambiguous.add(sourceColumn);
+      } else if (!ambiguous.has(sourceColumn)) {
+        candidates.set(sourceColumn, semantics);
+      }
+    }
+  }
+
+  return candidates;
+}
+
+function detailHeaderSemantics(html) {
+  const entries = extractDesignerFieldControlEntries(html, { includeTextLabels: true });
+  if (!entries.length || entries.some((entry) => !isSourceDescriptionControl(entry.control))) {
+    return undefined;
+  }
+  const captions = entries.filter((entry) => isPlainInlineCaption(entry.control));
+  if (captions.length !== 1) return undefined;
+  const hints = entries.filter((entry) =>
+    entry.control.id !== captions[0].control.id &&
+    isStyledSourceDescriptionControl(entry.control)
+  );
+  const hint = hints.length === 1 && hasDirectDesignerBreakBetween(html, captions[0], hints[0])
+    ? hints[0].control
+    : undefined;
+  return {
+    caption: captions[0].control,
+    hint
+  };
+}
+
+function withDetailHeaderSemantics(control, semantics) {
+  if (!semantics) return control;
+  return {
+    ...control,
+    title: cleanText(semantics.caption.title),
+    source: {
+      ...control.source,
+      detailHeaderCaption: {
+        id: semantics.caption.id,
+        content: cleanText(semantics.caption.title),
+        relation: "same-detail-column-header"
+      },
+      ...(semantics.hint
+        ? {
+            inlineHint: {
+              id: semantics.hint.id,
+              content: cleanText(semantics.hint.title),
+              relation: "same-detail-column-header-post-break-styled-text"
+            }
+          }
+        : {})
+    }
+  };
 }
 
 function extractDetailTableFooterControls(tableHtml, tableId) {

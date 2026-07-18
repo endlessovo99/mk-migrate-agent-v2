@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-07-17.v3",
+  "version": "2026-07-17.v4",
   "components": [
     {
       "componentId": "xform-button",
@@ -34,7 +34,7 @@
         "properties": {
           "required": { "type": "boolean" },
           "placeholder": { "type": "string" },
-          "defaultValue": { "$ref": "#/$defs/contextDefaultValue" }
+          "defaultValue": { "$ref": "#/$defs/defaultValue" }
         }
       },
       "defaultPolicy": { "executorDefaults": ["placeholder"] },
@@ -55,7 +55,7 @@
         "properties": {
           "required": { "type": "boolean" },
           "placeholder": { "type": "string" },
-          "defaultValue": { "$ref": "#/$defs/contextDefaultValue" }
+          "defaultValue": { "$ref": "#/$defs/defaultValue" }
         }
       },
       "defaultPolicy": {},
@@ -76,7 +76,8 @@
         "properties": {
           "required": { "type": "boolean" },
           "placeholder": { "type": "string" },
-          "maxLength": { "type": "integer", "minimum": 1 }
+          "maxLength": { "type": "integer", "minimum": 1 },
+          "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
       },
       "defaultPolicy": { "executorDefaults": ["placeholder"] },
@@ -96,7 +97,8 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
-          "options": { "$ref": "#/$defs/options" }
+          "options": { "$ref": "#/$defs/options" },
+          "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
       },
       "defaultPolicy": {},
@@ -116,7 +118,8 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
-          "options": { "$ref": "#/$defs/options" }
+          "options": { "$ref": "#/$defs/options" },
+          "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
       },
       "defaultPolicy": {},
@@ -136,7 +139,8 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
-          "options": { "$ref": "#/$defs/options" }
+          "options": { "$ref": "#/$defs/options" },
+          "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
       },
       "defaultPolicy": { "executorDefaults": ["multi:false"] },
@@ -156,7 +160,8 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
-          "options": { "$ref": "#/$defs/options" }
+          "options": { "$ref": "#/$defs/options" },
+          "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
       },
       "defaultPolicy": { "executorDefaults": ["multi:true"] },
@@ -196,11 +201,35 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
-          "precision": { "type": "integer", "minimum": 0 }
+          "precision": { "type": "integer", "minimum": 0 },
+          "unit": { "type": "string", "minLength": 1 },
+          "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
       },
       "defaultPolicy": {},
-      "omitPolicy": { "omitWhenAbsent": ["precision"] }
+      "omitPolicy": { "omitWhenAbsent": ["precision", "unit"] }
+    },
+    {
+      "componentId": "xform-calculate",
+      "kind": "field",
+      "label": "计算字段",
+      "description": "NewOA/MK native calculated numeric field backed by formRule.compute.",
+      "usage": "Use only for source calculation controls whose arithmetic or detail aggregate semantics are explicit.",
+      "negativeUsage": "Do not infer calculations from labels or unsupported legacy functions.",
+      "allowedScopes": ["field"],
+      "target": { "desktop": "@elem/xform-calculate", "mobile": "@elem/xform-m-calculate" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "precision": { "type": "integer", "minimum": 0 },
+          "defaultValue": { "$ref": "#/$defs/literalDefaultValue" },
+          "calculation": { "$ref": "#/$defs/calculation" }
+        }
+      },
+      "defaultPolicy": {},
+      "omitPolicy": { "omitWhenAbsent": ["precision", "defaultValue", "calculation"] }
     },
     {
       "componentId": "xform-address",
@@ -412,6 +441,27 @@
         }
       }
     },
+    "defaultValue": {
+      "anyOf": [
+        { "$ref": "#/$defs/contextDefaultValue" },
+        { "$ref": "#/$defs/literalDefaultValue" }
+      ]
+    },
+    "literalDefaultValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["literal"] },
+        "value": {
+          "anyOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" }
+          ]
+        }
+      }
+    },
     "contextDefaultValue": {
       "type": "object",
       "additionalProperties": false,
@@ -420,6 +470,34 @@
         "kind": { "type": "string", "enum": ["context"] },
         "source": { "type": "string", "enum": ["creator", "creatorDept"] },
         "property": { "type": "string", "enum": ["fdName"] }
+      }
+    },
+    "calculation": {
+      "anyOf": [
+        { "$ref": "#/$defs/formulaCalculation" },
+        { "$ref": "#/$defs/aggregateCalculation" }
+      ]
+    },
+    "formulaCalculation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "expression", "fieldIds"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["formula"] },
+        "expression": { "type": "string", "minLength": 1 },
+        "displayExpression": { "type": "string", "minLength": 1 },
+        "fieldIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "aggregateCalculation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "operation", "tableId", "fieldId"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["aggregate"] },
+        "operation": { "type": "string", "enum": ["sum"] },
+        "tableId": { "type": "string", "minLength": 1 },
+        "fieldId": { "type": "string", "minLength": 1 }
       }
     }
   }

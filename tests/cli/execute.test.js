@@ -65,6 +65,14 @@ describe("execute CLI", () => {
     assert.equal(output.join("\n").includes(credentials.encryptedPassword), false);
   });
 
+  it("passes an explicitly targeted MK_TEST draft id to the executor", async () => {
+    const { request } = await runExecuteCli({
+      argv: ["--target-template-id", "mk-test-template-id"]
+    });
+
+    assert.equal(request.options.targetTemplateId, "mk-test-template-id");
+  });
+
   it("passes configured fallback fdIds from the environment to the executor", async () => {
     const { request } = await runExecuteCli({
       env: {

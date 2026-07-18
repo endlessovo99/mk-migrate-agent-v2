@@ -11,7 +11,9 @@
       "name": "Conditional fan-out",
       "type": "split",
       "element": "parallelGateway",
-      "splitType": "1",
+      "splitType": "3",
+      "conditionType": "1",
+      "conditionValue": "{\"formulas\":[{\"lineId\":\"QE21\"},{\"lineId\":\"QE22\"}]}",
       "relateId": "QX50",
       "gatewayDirection": "diverging"
     },
@@ -91,9 +93,9 @@
       "targetRef": "QX31",
       "priority": 2,
       "defaultTrend": false,
-      "formulaType": "rule",
+      "formulaType": "formula",
       "formulaName": "$Route selection$ is Alpha or Beta",
-      "formula": "$fd_fd955d37adee43fc66d73d$.equals(\"A\") || $fd_fd955d37adee43fc66d73d$ == \"B\""
+      "formula": "{\"result\":{\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"(${data.$VAR.QE21_route_1} || ${data.$VAR.QE21_route_2})\"},\"type\":\"Batch\",\"vars\":[{\"key\":\"QE21_route_1\",\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"${data.template-id-fd_fd955d37adee43fc66d73d} == \\\"A\\\"\"},{\"key\":\"QE21_route_2\",\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"${data.template-id-fd_fd955d37adee43fc66d73d} == \\\"B\\\"\"}],\"vo\":{\"mode\":\"simple\",\"modeType\":\"simpleRule\",\"data\":{\"key\":\"ROOT\",\"fdList\":[{\"fdKey\":\"QE21_group\",\"fdType\":\"OR\",\"metaType\":\"GROUP\",\"fdList\":[{\"fdKey\":\"QE21_route_1\",\"metaType\":\"RULE\",\"fdSymbol\":\"==\"},{\"fdKey\":\"QE21_route_2\",\"metaType\":\"RULE\",\"fdSymbol\":\"==\"}]}]}}}"
     },
     {
       "id": "QE22",
@@ -102,9 +104,9 @@
       "targetRef": "QX32",
       "priority": 3,
       "defaultTrend": false,
-      "formulaType": "rule",
+      "formulaType": "formula",
       "formulaName": "$Route selection$ is Gamma",
-      "formula": "$fd_fd955d37adee43fc66d73d$.equals(\"C\")"
+      "formula": "{\"result\":{\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"(${data.$VAR.QE22_route})\"},\"type\":\"Batch\",\"vars\":[{\"key\":\"QE22_route\",\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"${data.template-id-fd_fd955d37adee43fc66d73d} == \\\"C\\\"\"}],\"vo\":{\"mode\":\"simple\",\"modeType\":\"simpleRule\",\"data\":{\"key\":\"ROOT\",\"fdList\":[{\"fdKey\":\"QE22_group\",\"fdType\":\"OR\",\"metaType\":\"GROUP\",\"fdList\":[{\"fdKey\":\"QE22_route\",\"metaType\":\"RULE\",\"fdSymbol\":\"==\"}]}]}}}"
     },
     {
       "id": "QE31",

@@ -1,0 +1,83 @@
+{
+  "elements": [
+    {
+      "id": "N1",
+      "name": "开始",
+      "type": "generalStart",
+      "element": "startEvent"
+    },
+    {
+      "id": "N35",
+      "number": "N35",
+      "relateId": "N35",
+      "name": "人工分支",
+      "simpleName": "人工分支",
+      "type": "manualBranch",
+      "decisionType": "1",
+      "element": "exclusiveGateway",
+      "scope": "branch"
+    },
+    {
+      "id": "N44",
+      "name": "上汽",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    {
+      "id": "N45",
+      "name": "上发",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    {
+      "id": "N46",
+      "name": "上辅",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    {
+      "id": "L29",
+      "type": "sequenceFlow",
+      "element": "sequenceFlow",
+      "sourceRef": "N1",
+      "targetRef": "N35",
+      "name": ""
+    },
+    {
+      "id": "L44",
+      "type": "sequenceFlow",
+      "element": "sequenceFlow",
+      "sourceRef": "N35",
+      "targetRef": "N44",
+      "name": "上汽",
+      "priority": 1,
+      "defaultTrend": false,
+      "formulaName": "上汽",
+      "formulaType": "rule"
+    },
+    {
+      "id": "L45",
+      "type": "sequenceFlow",
+      "element": "sequenceFlow",
+      "sourceRef": "N35",
+      "targetRef": "N45",
+      "name": "上发",
+      "priority": 2,
+      "defaultTrend": false,
+      "formulaName": "上发",
+      "formulaType": "rule"
+    },
+    {
+      "id": "L46",
+      "type": "sequenceFlow",
+      "element": "sequenceFlow",
+      "sourceRef": "N35",
+      "targetRef": "N46",
+      "name": "上辅",
+      "priority": 3,
+      "defaultTrend": false,
+      "formulaName": "上辅",
+      "formulaType": "rule"
+    }
+  ]
+}

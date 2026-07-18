@@ -10,6 +10,8 @@ import { EXECUTABLE_WORKFLOW_NODE_TYPE_SET, INVARIANT_VERSION } from "./invarian
 import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "./normalize.js";
 import { projectionError } from "./diagnostics.js";
 import {
+  edgeConditionText,
+  isExplicitDefaultEdge,
   isTautologyCondition as sharedIsTautologyCondition,
   selectDefaultBranchEdge
 } from "./branch-defaults.js";
@@ -230,6 +232,9 @@ function executableProps(field = {}) {
   if (componentSupportsProp(field.componentId, "placeholder") && typeof field.props?.placeholder === "string") {
     props.placeholder = normalizeScalar(field.props.placeholder);
   }
+  if (componentSupportsProp(field.componentId, "unit") && typeof field.props?.unit === "string") {
+    props.unit = normalizeScalar(field.props.unit);
+  }
   if (Array.isArray(field.props?.options) && field.props.options.length) {
     props.options = field.props.options.map((option) => ({
       label: normalizeScalar(option.label ?? option.text ?? option.value),
@@ -237,6 +242,15 @@ function executableProps(field = {}) {
     }));
   }
   if (field.componentId === "xform-select~multi") props.multi = true;
+  if (componentSupportsProp(field.componentId, "precision") && Number.isInteger(field.props?.precision)) {
+    props.precision = field.props.precision;
+  }
+  if (componentSupportsProp(field.componentId, "defaultValue") && field.props?.defaultValue !== undefined) {
+    props.defaultValue = cloneJson(field.props.defaultValue);
+  }
+  if (componentSupportsProp(field.componentId, "calculation") && field.props?.calculation !== undefined) {
+    props.calculation = cloneJson(field.props.calculation);
+  }
   if (field.props?.content !== undefined) props.content = normalizeScalar(field.props.content);
   if (field.props?.maxLength !== undefined) props.maxLength = field.props.maxLength;
   if (field.componentId === "xform-description") {
@@ -246,6 +260,10 @@ function executableProps(field = {}) {
   const catalog = COMPONENTS_BY_ID.get(field.componentId);
   if (catalog?.componentId) props.componentId = catalog.componentId;
   return props;
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
 }
 
 function descriptionStyle(value) {
@@ -457,7 +475,7 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
   for (const nodeId of formulaParticipantNodeIds) initiatorSelectTargetNodeIds.delete(nodeId);
   const defaultEdgeIds = collectDefaultEdgeIds(nodes, edges);
   const conditionBranchNodeIds = new Set(
-    nodes.filter((node) => node?.type === "conditionBranch").map((node) => node.id)
+    nodes.filter(isNativeFormulaGatewayNode).map((node) => node.id)
   );
   const expectedNodes = nodes.map((node, index) => {
     if (!nonEmptyString(node?.id)) {
@@ -505,6 +523,7 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       name: normalizeScalar(node.name),
       type: node.type,
       element: node.element || defaultElementForType(node.type),
+      help: nonEmptyString(node.help) ? normalizeScalar(node.help) : undefined,
       mustModifyHandlerNodeIds: splitRelatedNodeIds(attributes.mustModifyHandlerNodeIds)
         .filter((nodeId) => !formulaParticipantNodeIds.has(nodeId)),
       canModifyHandlerNodeIds: splitRelatedNodeIds(attributes.canModifyHandlerNodeIds)
@@ -512,7 +531,8 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id), context),
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),
-      parallelGateway: summarizeExpectedParallelGateway(node),
+      manualBranch: summarizeExpectedManualBranch(node),
+      parallelGateway: summarizeExpectedParallelGateway(node, edges),
       dataAuthority: summarizeDataAuthority(node),
       ignoreOnSameIdentity: expectedIgnoreOnSameIdentity(node),
       subProcess: node.type === "startSubProcess" ? summarizeExpectedSubProcess(node.subProcess) : undefined
@@ -572,7 +592,7 @@ function isFormulaParticipantMode(mode) {
 
 function collectDefaultEdgeIds(nodes = [], edges = []) {
   const conditionBranchNodeIds = new Set(
-    nodes.filter((node) => node?.type === "conditionBranch").map((node) => node.id)
+    nodes.filter(isNativeFormulaGatewayNode).map((node) => node.id)
   );
   const edgesBySource = new Map();
   for (const edge of edges) {
@@ -900,14 +920,38 @@ function summarizeSendConfig(node) {
   };
 }
 
-function summarizeExpectedParallelGateway(node) {
+function summarizeExpectedParallelGateway(node, edges = []) {
   if (!node || !["split", "join"].includes(node.type)) return undefined;
   const attrs = sourceAttributes(node);
+  const conditional = isConditionalParallelSplit(node);
   return {
-    mode: "1",
+    mode: conditional ? "3" : "1",
     relatedNodeId: splitRelatedNodeIds(attrs.relatedNodeIds)[0] || "",
-    direction: node.type === "split" ? "diverging" : "converging"
+    direction: node.type === "split" ? "diverging" : "converging",
+    ...(conditional ? {
+      conditionType: "1",
+      conditionRouteIds: edges
+        .filter((edge) => edge?.source === node.id && (
+          edgeConditionText(edge) || edge.name || isExplicitDefaultEdge(edge)
+        ))
+        .map((edge) => edge.id)
+        .sort()
+    } : {})
   };
+}
+
+function summarizeExpectedManualBranch(node) {
+  if (node?.type !== "manualBranch") return undefined;
+  return { decisionType: normalizeScalar(node.decisionType) };
+}
+
+function isNativeFormulaGatewayNode(node) {
+  return node?.type === "conditionBranch" || isConditionalParallelSplit(node);
+}
+
+function isConditionalParallelSplit(node) {
+  return node?.type === "split" &&
+    String(sourceAttributes(node).splitType || "").trim().toLowerCase() === "condition";
 }
 
 function summarizeCondition(edge, conditionBranch, context = {}) {
@@ -963,7 +1007,7 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
   }
 
   const parsedAst = parseExpectedContextConditionExpression(sourceText);
-  if (parsedAst && collectConditionTerms(parsedAst).some((term) => conditionContextSemantic(term.field))) {
+  if (parsedAst) {
     return expectedContextConditionSemantics(parsedAst, context);
   }
 
@@ -1136,6 +1180,10 @@ function parseExpectedContextConditionTerm(value) {
   if (legacyEquals) {
     return { value: legacyEquals[1], field: legacyEquals[2].trim(), symbol: "==", expressionType: "==" };
   }
+  const fieldMethodEquals = text.match(/^\$([^$]+)\$\s*\.\s*equals\s*\(\s*["']([^"']*)["']\s*\)$/i);
+  if (fieldMethodEquals) {
+    return { field: fieldMethodEquals[1].trim(), value: fieldMethodEquals[2], symbol: "==", expressionType: "==" };
+  }
   const fieldEqualsString = text.match(/^\$([^$]+)\$\s*={2,3}\s*["']([^"']*)["']$/);
   if (fieldEqualsString) {
     return { field: fieldEqualsString[1].trim(), value: fieldEqualsString[2], symbol: "==", expressionType: "==" };
@@ -1239,7 +1287,7 @@ function negateExpectedCompareSymbol(symbol) {
 function defaultElementForType(type) {
   if (type === "generalStart") return "startEvent";
   if (type === "generalEnd") return "endEvent";
-  if (type === "conditionBranch") return "exclusiveGateway";
+  if (type === "conditionBranch" || type === "manualBranch") return "exclusiveGateway";
   if (type === "split" || type === "join") return "parallelGateway";
   if (type === "robot") return "robot";
   if (type === "startSubProcess" || type === "recoverSubProcess") return "subProcess";

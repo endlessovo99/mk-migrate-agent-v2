@@ -494,7 +494,7 @@ describe("generic structural form recovery", () => {
     );
   });
 
-  it("removes only same-title cross-cell labels without deleting real descriptions", () => {
+  it("uses unambiguous bound captions while preserving unbound real descriptions", () => {
     const source = cleanSourceFile(fixture);
     const dsl = draftSourceDraft(source);
     const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
@@ -513,19 +513,20 @@ describe("generic structural form recovery", () => {
       ["unbound_same_title", "fd_shared_wording"]
     );
 
-    assert.equal(fields.get("different_bound_caption")?.componentId, "xform-description");
+    assert.equal(fields.has("different_bound_caption"), false);
     assert.equal(fields.get("fd_machine_named_value")?.componentId, "xform-input");
-    assert.equal(fields.get("fd_machine_named_value")?.title, "Machine field 1");
+    assert.equal(fields.get("fd_machine_named_value")?.title, "Human-readable caption");
     assert.deepEqual(
       rowRefs.find((references) => references.includes("fd_machine_named_value")),
-      ["different_bound_caption", "fd_machine_named_value"]
+      ["fd_machine_named_value"]
     );
 
-    assert.equal(fields.get("detail_companion_caption")?.componentId, "xform-description");
+    assert.equal(fields.has("detail_companion_caption"), false);
     assert.equal(fields.get("fd_detail_companion_total")?.componentId, "xform-input");
+    assert.equal(fields.get("fd_detail_companion_total")?.title, "Readable total");
     assert.deepEqual(
       rowRefs.find((references) => references.includes("fd_detail_companion_total")),
-      ["fd_detail_with_caption", "detail_companion_caption", "fd_detail_companion_total"]
+      ["fd_detail_with_caption", "fd_detail_companion_total"]
     );
   });
 
@@ -566,7 +567,15 @@ describe("generic structural form recovery", () => {
 
     assert.deepEqual(
       sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
-      ["fd_detail_with_caption", "detail_companion_caption", "fd_detail_companion_total"]
+      ["fd_detail_with_caption", "fd_detail_companion_total"]
+    );
+    assert.deepEqual(
+      dsl.form.fields.find((field) => field.id === "fd_detail_companion_total")?.sourceProps.boundCaption,
+      {
+        id: "detail_companion_caption",
+        content: "Readable total",
+        relation: "explicit-label-bind-id"
+      }
     );
     assert.equal(sourceRow?.cells.length, 1);
     assert.equal(detailRowIndex >= 0, true);
