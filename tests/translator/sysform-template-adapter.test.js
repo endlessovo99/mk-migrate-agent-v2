@@ -415,6 +415,125 @@ describe("translateSysFormTemplateXml", () => {
     );
   });
 
+  it("uses an unbound detail title-row label instead of the text input display label", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0">
+              <table fd_type="detailsTable" fd_values='{id:"fd_detail",label:"预算明细"}'>
+                <tbody>
+                  <tr type="titleRow">
+                    <td row="0" column="0"><label attach="fd_detail">序号</label></td>
+                    <td row="0" column="1">
+                      <label fd_type="textLabel" fd_values='{id:"fd_cost_title",content:"成本中心编码"}'>成本中心编码</label>
+                    </td>
+                  </tr>
+                  <tr type="templateRow">
+                    <td row="1" column="0"><label attach="fd_detail">1</label></td>
+                    <td row="1" column="1">
+                      <div fd_type="inputText" fd_values='{id:"fd_cost_code",_label_bind:"false",_label_bind_id:"fd_cost_title",label:"成本中心编码（可控费用追加）",required:"true"}'>
+                        <input id="fd_cost_code" tableName="fd_detail" required="true"/>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendTableProperty name="fd_detail" label="预算明细">
+          <extendSimpleProperty name="fd_cost_code" label="成本中心编码（可控费用追加）" type="String" notNull="true"/>
+        </extendTableProperty>
+      </metadata>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }));
+    const detailTable = dsl.form.fields.find((field) => field.id === "fd_detail");
+
+    assert.equal(detailTable?.columns.find((column) => column.id === "fd_cost_code")?.title, "成本中心编码");
+  });
+
+  it("preserves designer linkLabel controls as descriptions with their target URLs", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0">
+              <label fd_type="textLabel" fd_values='{id:"label_purchase_template",content:"采购需求清单模板"}'>采购需求清单模板</label>
+            </td>
+            <td row="0" column="1">
+              <label fd_type="linkLabel" fd_values='{id:"fd_purchase_template_link",content:"请点击查看采购需求清单模板",link:"//kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&amp;amp;amp;fdId=18e5f7972ce8d1c7e96e8354bc69fea5",color:"#FF0000",b:"true"}'>
+                <a href="//kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&amp;amp;amp;fdId=18e5f7972ce8d1c7e96e8354bc69fea5" target="_blank">请点击查看采购需求清单模板</a>
+              </label>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const sourceDraft = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: "<metadata/>" }));
+    const field = sourceDraft.form.fields.find((item) => item.id === "fd_purchase_template_link");
+
+    assert.equal(field?.type, "LinkLabel");
+    assert.equal(field?.source?.designerType, "linkLabel");
+    assert.equal(
+      field?.source?.designerValues?.content,
+      "请点击查看采购需求清单模板\n//kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&fdId=18e5f7972ce8d1c7e96e8354bc69fea5"
+    );
+    assert.deepEqual(sourceDraft.form.layout.rows.map((row) => row.cells.map((cell) => cell.fieldId)), [
+      ["fd_purchase_template_link"]
+    ]);
+  });
+
+  it("extracts SQLDialog detail controls as text fields while preserving lookup evidence", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0">
+              <table fd_type="detailsTable" fd_values='{id:"fd_pur_pay_req",label:"明细表1"}'>
+                <tbody>
+                  <tr type="titleRow">
+                    <td row="0" column="0">
+                      <label fd_type="textLabel" fd_values='{id:"fd_wbs_title",content:"WBS编号（如WBS号为T-2802*，请填写内部订单号）"}'>WBS编号（如WBS号为T-2802*，请填写内部订单号）</label>
+                    </td>
+                  </tr>
+                  <tr type="templateRow">
+                    <td row="1" column="0">
+                      <label fd_values="{id:"wbsCode",_label_bind:"false",label:"WBS编号",_label_bind_id:"fd_wbs_title",required:"true",businessType:"SQLDialog",sqlResource:"187ff24de4fe24a18bd66ce43189e0f2",sqlvalue:"select projectCode from p_book_project_list",_outputParams:"{&apos;outputParams&apos;:[{&apos;name&apos;:&apos;PROJECTCODE&apos;,&apos;isUse&apos;:&apos;true&apos;,&apos;idField&apos;:&apos;$fd_pur_pay_req.fd_project_code$&apos;}]}"}" fd_type="SQLDialog">
+                        <input id="wbsCode" tableName="fd_pur_pay_req" required="true"/>
+                      </label>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendTableProperty name="fd_pur_pay_req" label="明细表1">
+          <extendSimpleProperty name="wbsCode" label="WBS编号" type="String" notNull="true"/>
+        </extendTableProperty>
+      </metadata>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }));
+    const detailTable = dsl.form.fields.find((field) => field.id === "fd_pur_pay_req");
+    const column = detailTable?.columns.find((item) => item.id === "wbsCode");
+
+    assert.equal(column?.type, "text");
+    assert.equal(column?.title, "WBS编号（如WBS号为T-2802*，请填写内部订单号）");
+    assert.equal(column?.source?.designerType, "SQLDialog");
+    assert.equal(column?.source?.designerValues?.businessType, "SQLDialog");
+    assert.equal(column?.source?.designerValues?.sqlResource, "187ff24de4fe24a18bd66ce43189e0f2");
+    assert.equal(column?.source?.designerValues?.sqlvalue, "select projectCode from p_book_project_list");
+  });
+
   it("does not cross non-string put values while reading fdDesignerHtml", () => {
     const xml = `
       <java>

@@ -1870,6 +1870,55 @@ describe("executeDsl", () => {
     assert.equal(JSON.parse(branch.resultSetMapping)[0].resultCode, "上汽");
   });
 
+  it("keeps unnamed manualBranchNode outgoing edges as target-named manual rules", () => {
+    const workflow = sampleConditionBranchWorkflow();
+    workflow.nodes[1] = {
+      ...workflow.nodes[1],
+      id: "N35",
+      name: "人工决策",
+      sourceType: "manualBranchNode",
+      attributes: { id: "N35", name: "人工决策" },
+      sourceRef: "source.workflow.node.N35"
+    };
+    workflow.edges[0] = { ...workflow.edges[0], target: "N35" };
+    workflow.edges[1] = {
+      id: "L44",
+      source: "N35",
+      target: "N411",
+      name: "",
+      sourceRef: "source.workflow.edge.L44",
+      condition: { sourceText: "", displayText: "", targetText: "", translationStatus: "executable" }
+    };
+    workflow.edges[2] = {
+      id: "L45",
+      source: "N35",
+      target: "N413",
+      name: "",
+      sourceRef: "source.workflow.edge.L45",
+      condition: { sourceText: "", displayText: "", targetText: "", translationStatus: "executable" }
+    };
+    workflow.edges = workflow.edges.filter((edge) => edge.id !== "L544");
+
+    const payload = projectTemplate(sampleTrustedDsl({
+      form: sampleConditionBranchForm(),
+      workflow
+    }), baseTemplate());
+    const content = JSON.parse(payload.mechanisms.lbpmTemplate[0].fdContent);
+    const branch = content.elements.find((element) => element.id === "N35");
+    const conditionValue = JSON.parse(branch.conditionValue);
+    const firstEdge = content.elements.find((element) => element.id === "L44");
+    const secondEdge = content.elements.find((element) => element.id === "L45");
+
+    assert.equal(branch.conditionType, "2");
+    assert.deepEqual(conditionValue.rules.map((rule) => rule.lineName), ["海南", "辽宁、东营"]);
+    assert.deepEqual(conditionValue.rules.map((rule) => rule.formula), ["海南", "辽宁、东营"]);
+    assert.deepEqual(JSON.parse(branch.resultSetMapping).map((item) => item.resultCode), ["海南", "辽宁、东营"]);
+    assert.equal(firstEdge.formulaType, "rule");
+    assert.equal(firstEdge.formula, "海南");
+    assert.equal(secondEdge.formulaType, "rule");
+    assert.equal(secondEdge.formula, "辽宁、东营");
+  });
+
   it("writes numeric relational comparisons through formula config", () => {
     const form = sampleConditionBranchForm();
     form.fields.push({

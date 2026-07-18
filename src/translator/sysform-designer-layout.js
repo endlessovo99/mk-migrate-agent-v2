@@ -336,12 +336,31 @@ function enrichDesignerField(field, metadataField, warnings) {
   }
 
   if (field.type === "detailTable") {
-    next.columns = Array.isArray(metadataField.columns) && metadataField.columns.length
-      ? metadataField.columns
-      : field.columns;
+    next.columns = mergeDesignerDetailColumns(field.columns, metadataField.columns, warnings);
   }
 
   return next;
+}
+
+function mergeDesignerDetailColumns(designerColumns = [], metadataColumns = [], warnings = []) {
+  const metadataById = new Map((Array.isArray(metadataColumns) ? metadataColumns : [])
+    .filter((column) => column?.id)
+    .map((column) => [column.id, column]));
+  const matchedMetadataIds = new Set();
+  const columns = [];
+
+  for (const column of Array.isArray(designerColumns) ? designerColumns : []) {
+    const metadataColumn = metadataById.get(column.id);
+    if (metadataColumn) matchedMetadataIds.add(metadataColumn.id);
+    columns.push(metadataColumn ? enrichDesignerField(column, metadataColumn, warnings) : column);
+  }
+
+  for (const column of Array.isArray(metadataColumns) ? metadataColumns : []) {
+    if (column?.id && matchedMetadataIds.has(column.id)) continue;
+    columns.push(column);
+  }
+
+  return columns;
 }
 
 function warnSuspiciousDetailTableTitles(fields, warnings) {
@@ -831,8 +850,23 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
   }
   if (normalized === "linklabel") {
     const content = cleanText(values.content || title);
-    if (!content) return undefined;
-    return { id, title: content, type: "LinkLabel", required: false, source };
+    const link = normalizeDesignerLink(values.link || linkHrefFromHtml(context.html || ""));
+    const descriptionContent = [content, link].filter(Boolean).join("\n");
+    if (!descriptionContent) return undefined;
+    return {
+      id,
+      title: content || link || id,
+      type: "LinkLabel",
+      required: false,
+      source: {
+        ...source,
+        designerValues: {
+          ...source.designerValues,
+          content: descriptionContent,
+          ...(link ? { link } : {})
+        }
+      }
+    };
   }
 
   if (normalized === "detailstable") {
@@ -867,7 +901,7 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
   if (normalized === "attachment") {
     return { id, title, type: "attachment", required, mk: mkForFieldType("attachment"), source };
   }
-  if (["inputtext", "calculation"].includes(normalized)) {
+  if (["inputtext", "calculation", "sqldialog"].includes(normalized)) {
     return { id, title, type: "text", required, mk: mkForFieldType("text"), source };
   }
   if (normalized === "restdialog") {
@@ -882,22 +916,73 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
   return undefined;
 }
 
+function normalizeDesignerLink(value) {
+  const decoded = decodeDesignerValue(value);
+  return cleanText(decoded);
+}
+
+function decodeDesignerValue(value) {
+  let current = String(value || "");
+  for (let index = 0; index < 5; index += 1) {
+    const next = decodeEntities(current);
+    if (next === current) return current;
+    current = next;
+  }
+  return current;
+}
+
+function linkHrefFromHtml(html) {
+  const match = String(html || "").match(/<a\b[^>]*\bhref\s*=\s*(["'])([\s\S]*?)\1/i);
+  return match ? match[2] : "";
+}
+
 function extractDesignerDetailTableColumns(tableHtml, tableId) {
   if (!tableHtml) return [];
 
   const columns = [];
   const seen = new Set();
-  for (const row of splitDirectChildRows(extractFirstTbodyContent(tableHtml) || tableHtml)) {
+  const rows = splitDirectChildRows(extractFirstTbodyContent(tableHtml) || tableHtml);
+  const titleLabels = detailTitleLabelsById(rows);
+  for (const row of rows) {
     for (const cell of splitDirectChildCells(row)) {
       if (isNonDataDetailCell(cell.attrs)) continue;
       for (const control of extractDesignerFieldControls(cell.body)) {
         if (!isDetailColumnControl(control, tableId) || seen.has(control.id)) continue;
         seen.add(control.id);
-        columns.push(control);
+        columns.push(detailColumnWithTitleLabel(control, titleLabels));
       }
     }
   }
   return columns;
+}
+
+function detailTitleLabelsById(rows) {
+  const labels = new Map();
+  for (const row of rows) {
+    if (!isDetailTitleRow(row)) continue;
+    for (const cell of splitDirectChildCells(row)) {
+      for (const label of extractDesignerFieldControls(cell.body, { includeTextLabels: true })) {
+        if (label.type !== "description" || !label.id || !label.title) continue;
+        labels.set(label.id, label.title);
+      }
+    }
+  }
+  return labels;
+}
+
+function isDetailTitleRow(rowHtml) {
+  return /^<tr\b[^>]*\btype\s*=\s*(["'])titleRow\1/i.test(String(rowHtml || ""));
+}
+
+function detailColumnWithTitleLabel(control, titleLabels) {
+  const values = control.source?.designerValues || {};
+  if (String(values._label_bind).toLowerCase() !== "false") return control;
+  const title = titleLabels.get(values._label_bind_id);
+  if (!title) return control;
+  return {
+    ...control,
+    title
+  };
 }
 
 function extractDetailTableFooterControls(tableHtml, tableId) {
