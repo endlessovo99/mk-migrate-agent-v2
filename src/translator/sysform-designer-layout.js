@@ -1225,14 +1225,15 @@ function detailHeaderSemantics(html) {
 
 function withDetailHeaderSemantics(control, semantics) {
   if (!semantics) return control;
-  return {
+  const headerContent = cleanText(semantics.caption.title);
+  return withUnboundDetailDisplayText({
     ...control,
-    title: cleanText(semantics.caption.title),
+    title: headerContent,
     source: {
       ...control.source,
       detailHeaderCaption: {
         id: semantics.caption.id,
-        content: cleanText(semantics.caption.title),
+        content: headerContent,
         relation: "same-detail-column-header"
       },
       ...(semantics.hint
@@ -1245,7 +1246,7 @@ function withDetailHeaderSemantics(control, semantics) {
           }
         : {})
     }
-  };
+  }, headerContent);
 }
 
 function detailTitleLabelsById(rows) {
@@ -1271,9 +1272,27 @@ function detailColumnWithTitleLabel(control, titleLabels) {
   if (String(values._label_bind).toLowerCase() !== "false") return control;
   const title = titleLabels.get(values._label_bind_id);
   if (!title) return control;
-  return {
+  return withUnboundDetailDisplayText({
     ...control,
     title
+  }, title);
+}
+
+function withUnboundDetailDisplayText(control, headerContent) {
+  const values = control.source?.designerValues || {};
+  if (String(values._label_bind).toLowerCase() !== "false") return control;
+  const content = cleanText(values.label);
+  const header = cleanText(headerContent);
+  if (!content || !header || content === header) return control;
+  return {
+    ...control,
+    source: {
+      ...control.source,
+      displayText: {
+        content,
+        relation: "unbound-detail-control-display-text-distinct-from-header"
+      }
+    }
   };
 }
 function extractDetailTableFooterControls(tableHtml, tableId) {

@@ -283,6 +283,7 @@ function sourcePropsFromField(field) {
     detailTitleHint: field.source?.detailTitleHint,
     boundCaption: field.source?.boundCaption,
     detailHeaderCaption: field.source?.detailHeaderCaption,
+    displayText: field.source?.displayText,
     inlineCaption: field.source?.inlineCaption,
     inlineHint: field.source?.inlineHint,
     inlineUnit: field.source?.inlineUnit,

@@ -453,8 +453,13 @@ describe("translateSysFormTemplateXml", () => {
     `;
     const dsl = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }));
     const detailTable = dsl.form.fields.find((field) => field.id === "fd_detail");
+    const costCode = detailTable?.columns.find((column) => column.id === "fd_cost_code");
 
-    assert.equal(detailTable?.columns.find((column) => column.id === "fd_cost_code")?.title, "成本中心编码");
+    assert.equal(costCode?.title, "成本中心编码");
+    assert.deepEqual(costCode?.source?.displayText, {
+      content: "成本中心编码（可控费用追加）",
+      relation: "unbound-detail-control-display-text-distinct-from-header"
+    });
   });
 
   it("preserves designer linkLabel controls as descriptions with their target URLs", () => {

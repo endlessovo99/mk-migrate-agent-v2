@@ -40,6 +40,23 @@ describe("semantic source props Route case", { concurrency: false }, () => {
     assert.equal(dslSite.title, "风场名称");
   });
 
+  it("maps unbound detail display text into the MK placeholder and verifies native readback", async () => {
+    const { source, dsl } = stages();
+    const sourceSite = source.form.detailTables[0].columns.find((field) => field.id === "fd_site");
+    const dslSite = dsl.form.fields.find((field) => field.id === "fd_detail")
+      .columns.find((field) => field.id === "fd_site");
+    const result = await runRouteCase("semantic-props-success");
+    const readbackSite = result.execution.readback.form.fields.find((field) => field.id === "fd_detail")
+      .columns.find((field) => field.id === "fd_site");
+
+    assert.deepEqual(sourceSite.sourceProps.displayText, {
+      content: "风场名称2",
+      relation: "unbound-detail-control-display-text-distinct-from-header"
+    });
+    assert.equal(dslSite.props.placeholder, "风场名称2");
+    assert.equal(readbackSite.placeholder, "风场名称2");
+  });
+
   it("folds an adjacent number unit and verifies it through native readback", async () => {
     const { source, dsl } = stages();
     const sourceAmount = source.form.controls.find((field) => field.id === "fd_estimate");

@@ -625,8 +625,12 @@ function propsFromSource(source) {
   const props = {};
   if (source.required) props.required = true;
   const inlineHint = source.sourceProps?.inlineHint?.content;
-  if (componentSupportsProp(componentId, "placeholder") && typeof inlineHint === "string" && inlineHint.trim()) {
-    props.placeholder = inlineHint;
+  const displayText = source.sourceProps?.displayText?.content;
+  const placeholder = typeof inlineHint === "string" && inlineHint.trim()
+    ? inlineHint
+    : displayText;
+  if (componentSupportsProp(componentId, "placeholder") && typeof placeholder === "string" && placeholder.trim()) {
+    props.placeholder = placeholder;
   }
   const inlineUnit = source.sourceProps?.inlineUnit?.content;
   if (componentId === "xform-number" && typeof inlineUnit === "string" && inlineUnit.trim()) {

@@ -35,7 +35,7 @@
        &lt;tr type=&quot;templateRow&quot;&gt;
         &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_wbs&quot;,label:&quot;WBS/成本中心&quot;,tableName:&quot;fd_detail&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
         &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_ebeln&quot;,label:&quot;采购订单号&quot;,tableName:&quot;fd_detail&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
-        &lt;td row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_site&quot;,label:&quot;风场名称2&quot;,tableName:&quot;fd_detail&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+        &lt;td row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_site&quot;,label:&quot;风场名称2&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;header_site&quot;,tableName:&quot;fd_detail&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
         &lt;td row=&quot;1&quot; column=&quot;3&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_detail_amount&quot;,label:&quot;金额&quot;,tableName:&quot;fd_detail&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0.00&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
        &lt;/tr&gt;
       &lt;/tbody&gt;&lt;/table&gt;
