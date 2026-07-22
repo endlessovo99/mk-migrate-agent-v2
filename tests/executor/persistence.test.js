@@ -53,6 +53,35 @@ describe("preparePersistedTemplate interface", () => {
     assert.equal(readback.partitions.workflow, "not_expected");
     assert.equal(readback.workflow, undefined);
   });
+
+  it("rejects native control identity collisions across main and detail fields", () => {
+    const form = sampleForm();
+    form.fields.find((field) => field.id === "fd_detail").columns.push({
+      id: "fd_amount",
+      title: "明细金额",
+      type: "text",
+      componentId: "xform-input",
+      props: {},
+      sourceProps: { metadataKind: "simple" },
+      sourceRef: "source.form.detailTable.fd_detail.column.fd_amount"
+    });
+
+    const prepared = preparePersistedTemplate({
+      dsl: sampleTrustedDsl({ form, workflow: null }),
+      envelope: sampleEnvelope(),
+      baseTemplate: sampleBaseTemplate()
+    });
+
+    assert.equal(prepared.ok, false);
+    assert.equal(
+      prepared.diagnostics.some((item) =>
+        item.code === "projection.form.native_control_id_collision" &&
+        item.details?.fieldRefs?.includes("fd_amount") &&
+        item.details?.fieldRefs?.includes("fd_detail.fd_amount")
+      ),
+      true
+    );
+  });
 });
 
 describe("envelope mutations", () => {
@@ -796,6 +825,121 @@ describe("form rules mutations", () => {
     });
   }
 
+  function gatedDslWithRules() {
+    const dsl = dslWithRules();
+    dsl.formRules.linkage[0].meta = {
+      sourceJsp: "source.form.jsp.subject",
+      sourceActionKey: "source.form.jsp.subject#onChange@0",
+      displayGate: "xform:editShow",
+      runWhen: { viewStatusIn: ["add", "edit"] },
+      conditionSource: "event:value",
+      nativeProjection: { kind: "view-status-formula", version: 1 },
+      conditionSemantics: [{
+        origin: "event:value",
+        transforms: [],
+        predicate: "indexOf"
+      }]
+    };
+    dsl.scripts = {
+      actions: [{
+        id: "fd_subject.onChange.1",
+        name: "onChange",
+        event: "onChange",
+        scope: "control",
+        controlId: "fd_subject",
+        sourceRefs: ["source.form.jsp.subject"],
+        sourceActionKey: "source.form.jsp.subject#onChange@0",
+        function: "function onChange(value) { MKXFORM.getValue('fd_subject') }",
+        translationStatus: "mapped",
+        coverage: { status: "translated", nativeRules: [], residuals: [] },
+        functionMappings: [{
+          source: "GetXFormFieldById",
+          target: "MKXFORM.getValue",
+          basis: "semantic-translation",
+          reviewRequired: false
+        }],
+        runWhen: { viewStatusIn: ["add", "edit"] }
+      }]
+    };
+    return dsl;
+  }
+
+  it("refuses to project a gated linkage without a statically proven native projection", () => {
+    const dsl = dslWithRules();
+    dsl.formRules.linkage[0].meta = { runWhen: { viewStatusIn: ["add", "edit"] } };
+    const prepared = preparePersistedTemplate({
+      dsl,
+      envelope: sampleEnvelope(),
+      baseTemplate: sampleBaseTemplate()
+    });
+
+    assert.equal(prepared.ok, false);
+    assert.equal(
+      prepared.diagnostics.some((item) => item.code === "projection.form_rule.run_when_not_persistable"),
+      true
+    );
+  });
+
+  it("persists a proven edit-gated linkage as one formula condition per branch", () => {
+    const dsl = dslWithRules();
+    dsl.formRules.linkage[0].meta = {
+      sourceJsp: "source.form.jsp.subject",
+      displayGate: "xform:editShow",
+      runWhen: { viewStatusIn: ["add", "edit"] },
+      conditionSource: "event:value",
+      sourceActionKey: "source.form.jsp.subject#onChange@0",
+      nativeProjection: { kind: "view-status-formula", version: 1 },
+      conditionSemantics: [{
+        origin: "event:value",
+        transforms: [],
+        predicate: "indexOf"
+      }]
+    };
+    dsl.scripts = {
+      actions: [{
+        id: "fd_subject.onChange.1",
+        name: "onChange",
+        event: "onChange",
+        scope: "control",
+        controlId: "fd_subject",
+        sourceRefs: ["source.form.jsp.subject"],
+        sourceActionKey: "source.form.jsp.subject#onChange@0",
+        function: "function onChange(value) { MKXFORM.getValue('fd_subject') }",
+        translationStatus: "mapped",
+        coverage: { status: "translated", nativeRules: [], residuals: [] },
+        functionMappings: [{
+          source: "GetXFormFieldById",
+          target: "MKXFORM.getValue",
+          basis: "semantic-translation",
+          reviewRequired: false
+        }],
+        runWhen: { viewStatusIn: ["add", "edit"] }
+      }]
+    };
+    const prepared = preparePersistedTemplate({
+      dsl,
+      envelope: sampleEnvelope(),
+      baseTemplate: sampleBaseTemplate()
+    });
+
+    assert.equal(prepared.ok, true);
+    const formRule = formAttr(prepared.update).formRule;
+    assert.equal(formRule.display.length, 2);
+    assert.equal(formRule.require.length, 2);
+    for (const rule of [...formRule.display, ...formRule.require]) {
+      assert.equal(rule.choices.items.length, 1);
+      assert.equal(rule.choices.items[0].condNodeType, "formula");
+      assert.deepEqual(rule.choices.items[0].value.varIds, ["fd_subject"]);
+      assert.match(rule.choices.items[0].value.script, /MKXFORM\.viewStatus/);
+      assert.match(rule.choices.items[0].value.script, /\$\{data\.biz\.fd_subject\}/);
+    }
+    const whenFormula = formRule.display.find((rule) => rule.meta.branch === "when").choices.items[0].value.script;
+    const elseFormula = formRule.display.find((rule) => rule.meta.branch === "else").choices.items[0].value.script;
+    assert.match(whenFormula, /^\(MKXFORM\.viewStatus/);
+    assert.match(elseFormula, /^\(MKXFORM\.viewStatus/);
+    assert.doesNotMatch(elseFormula, /^!\(\(MKXFORM\.viewStatus/);
+  });
+
   it("fails when rule counts match but conditions are wrong", () => {
     const { readback } = persistAndVerify(dslWithRules(), {
       mutate(template) {
@@ -815,6 +959,175 @@ describe("form rules mutations", () => {
     assert.equal(readback.diagnostics.some((item) => item.code === "readback.form_rules.semantic_missing"), true);
   });
 
+  it("fails readback when an expected native rule is inactive", () => {
+    const { readback } = persistAndVerify(dslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display[0].active = false;
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.semantic_missing"),
+      true
+    );
+  });
+
+  it("preserves an explicitly inactive DSL rule", () => {
+    const dsl = dslWithRules();
+    dsl.formRules.linkage[0].active = false;
+    const { template, readback } = persistAndVerify(dsl);
+    const attr = formAttr(template);
+
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.equal([...attr.formRule.display, ...attr.formRule.require].every((rule) => rule.active === false), true);
+  });
+
+  it("fails readback when a persisted formula loses its view-status gate", () => {
+    const { readback } = persistAndVerify(gatedDslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        for (const rule of [...attr.formRule.display, ...attr.formRule.require]) {
+          const formula = rule.choices.items[0].value;
+          formula.script = formula.script.replace(
+            /^\(MKXFORM\.viewStatus === "add" \|\| MKXFORM\.viewStatus === "edit"\) && /,
+            ""
+          );
+          formula.vo.content = formula.script;
+        }
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.semantic_missing"),
+      true
+    );
+  });
+
+  it("fails readback when a formula condition valueType is no longer formula", () => {
+    const { readback } = persistAndVerify(gatedDslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display[0].choices.items[0].valueType = "fixed";
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.semantic_missing"),
+      true
+    );
+  });
+
+  it("fails readback when a formula condition value is no longer Eval", () => {
+    const { readback } = persistAndVerify(gatedDslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display[0].choices.items[0].value.type = "Literal";
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.semantic_missing"),
+      true
+    );
+  });
+
+  it("fails readback when a formula condition vo mode is no longer formula", () => {
+    const { readback } = persistAndVerify(gatedDslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display[0].choices.items[0].value.vo.mode = "script";
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.semantic_missing"),
+      true
+    );
+  });
+
+  it("fails readback when formula vo content diverges from its script", () => {
+    const { readback } = persistAndVerify(gatedDslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display[0].choices.items[0].value.vo.content = "true";
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.semantic_missing"),
+      true
+    );
+  });
+
+  it("fails readback when formula variable bindings change", () => {
+    const { readback } = persistAndVerify(gatedDslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display[0].choices.items[0].value.varIds = ["fd_amount"];
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.semantic_missing"),
+      true
+    );
+  });
+
+  it("fails readback when a detail-table display result loses its complete fieldName list", () => {
+    const { readback } = persistAndVerify(dslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display[0].result[0].fieldName = ["all"];
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.semantic_missing"),
+      true
+    );
+  });
+
   it("passes when unrelated manual rules coexist", () => {
     const { readback } = persistAndVerify(dslWithRules(), {
       mutate(template) {
@@ -826,7 +1139,13 @@ describe("form rules mutations", () => {
           active: true,
           condition: "1",
           choices: { items: [] },
-          result: []
+          result: [{
+            fieldName: "fd_amount",
+            fieldKey: "fd_amount",
+            tableType: "main",
+            type: "main",
+            displayFlag: "hide"
+          }]
         });
         config.attribute.formAttr = JSON.stringify(attr);
         template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
@@ -834,6 +1153,117 @@ describe("form rules mutations", () => {
       }
     });
     assert.equal(readback.ok, true);
+  });
+
+  it("fails when a stale generated native rule remains after current rules match", () => {
+    const { readback } = persistAndVerify(dslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display.push({
+          id: "stale-generated-rule",
+          ruleName: "retired rule",
+          active: true,
+          condition: "1",
+          choices: { items: [] },
+          result: [],
+          meta: {
+            generatedBy: "mk-migrate-agent-v2",
+            sourceRuleId: "retired-linkage",
+            branch: "when",
+            ruleType: "display"
+          }
+        });
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.unexpected_generated"),
+      true
+    );
+  });
+
+  it("fails when an extra rule retains the generator ruleName prefix", () => {
+    const { readback } = persistAndVerify(dslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display.push({
+          id: "stale-generated-name",
+          ruleName: "mk-migrate-agent-v2:retired:when:display",
+          active: true,
+          condition: "1",
+          choices: { items: [] },
+          result: []
+        });
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.unexpected_generated"),
+      true
+    );
+  });
+
+  it("fails when a stale generated rule retains only its stable generated id", () => {
+    const { readback } = persistAndVerify(dslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        attr.formRule.display.push({
+          id: "rule-0123456789abcdef",
+          ruleName: "renamed retired rule",
+          active: true,
+          condition: "1",
+          choices: { items: [] },
+          result: []
+        });
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.unexpected_generated"),
+      true
+    );
+  });
+
+  it("fails when an extra manual rule conflicts with an expected target and dimension", () => {
+    const { readback } = persistAndVerify(dslWithRules(), {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        const expectedResult = attr.formRule.display[0].result[0];
+        attr.formRule.display.push({
+          id: "manual-conflict",
+          ruleName: "manual conflict",
+          active: true,
+          condition: "1",
+          choices: { items: [] },
+          result: [{ ...expectedResult, displayFlag: "hide" }]
+        });
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(
+      readback.diagnostics.some((item) => item.code === "readback.form_rules.unexpected_target_conflict"),
+      true
+    );
   });
 
   it("passes when a semantically equivalent rule lacks provenance markers", () => {
@@ -900,6 +1330,46 @@ describe("script mutations", () => {
     assert.equal(readback.ok, false);
     assert.equal(readback.diagnostics.some((item) => item.code === "readback.scripts.run_when_mismatch"), true);
   });
+
+  for (const [scenario, relocateGuard] of [
+    [
+      "inside an unreachable branch",
+      (functionText, guardBlock) => functionText.replace(
+        guardBlock,
+        `if (false) {\n${guardBlock}\n}`
+      )
+    ],
+    [
+      "after a side effect",
+      (functionText, guardBlock) => functionText
+        .replace(guardBlock, "")
+        .replace(
+          "MKXFORM.setValue('fd_subject', 'x')",
+          `MKXFORM.setValue('fd_subject', 'x')\n${guardBlock}`
+        )
+    ]
+  ]) {
+    it(`rejects a canonical-looking view-status guard ${scenario}`, () => {
+      const { readback } = persistAndVerify(dslWithScripts(), {
+        mutate(template) {
+          const config = xformConfig(template);
+          const attr = JSON.parse(config.attribute.formAttr);
+          const action = attr.controlAction.global.onLoad[0];
+          const guardMatch = action.function.match(
+            /\/\*\s*mk-migrate:view-status=add,edit\s*\*\/\s*if \(MKXFORM\.viewStatus !== "add" && MKXFORM\.viewStatus !== "edit"\) return;/
+          );
+          assert.ok(guardMatch);
+          action.function = relocateGuard(action.function, guardMatch[0]);
+          config.attribute.formAttr = JSON.stringify(attr);
+          template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+          return template;
+        }
+      });
+
+      assert.equal(readback.ok, false);
+      assert.equal(readback.diagnostics.some((item) => item.code === "readback.scripts.run_when_mismatch"), true);
+    });
+  }
 
   it("fails when an omitted action is unexpectedly present as a top-level id", () => {
     const { readback } = persistAndVerify(dslWithScripts(), {

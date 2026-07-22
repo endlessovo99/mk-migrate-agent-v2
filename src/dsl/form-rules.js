@@ -97,16 +97,34 @@ export function buildFormRuleRefIndex(form = {}) {
   }
 
   const rows = Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : [];
+  // A single legacy row can become multiple native rows when a detail table
+  // has ordinary sibling controls (for example a footer total). The segments
+  // deliberately share sourceRef while only one owns the runtime marker.
+  // Resolve that marker through the whole source-row group without copying it
+  // onto sibling rows and creating duplicate runtime locators.
+  const sourceRowGroups = new Map();
+  for (const row of rows) {
+    const sourceRef = normalizeRef(row?.sourceRef);
+    if (!sourceRef) continue;
+    const group = sourceRowGroups.get(sourceRef) || { rowIds: [], refIds: [] };
+    group.rowIds.push(row.id);
+    group.refIds.push(...(row.children || []).flatMap((child) => childRefIds(child)));
+    sourceRowGroups.set(sourceRef, group);
+  }
+
   for (const row of rows) {
     const sourceMarkers = Array.isArray(row?.sourceMarkers) ? row.sourceMarkers : [];
     if (!sourceMarkers.length) continue;
-    const refIds = (row.children || []).flatMap((child) => childRefIds(child));
+    const ownRefIds = (row.children || []).flatMap((child) => childRefIds(child));
+    const sourceGroup = sourceRowGroups.get(normalizeRef(row.sourceRef));
+    const rowIds = [...new Set((sourceGroup?.rowIds || [row.id]).filter(Boolean))];
+    const refIds = [...new Set((sourceGroup?.refIds || ownRefIds).filter(Boolean))];
     for (const marker of sourceMarkers) {
       addMarkerRef(markerRefs, marker, {
         kind: "rowMarker",
         marker,
         rowId: row.id,
-        rowIds: [row.id],
+        rowIds,
         refIds
       });
     }

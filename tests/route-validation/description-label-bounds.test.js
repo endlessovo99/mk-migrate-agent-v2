@@ -15,6 +15,7 @@ describe("long description route projection", () => {
     const dslDraft = draftSourceDraft(sourceDraft);
     const description = dslDraft.form.fields.find((field) => field.id === fieldId);
     delete dslDraft.workflow;
+    delete dslDraft.formRules;
     dslDraft.scripts.actions = [];
 
     assert.equal(description.type, "description");

@@ -6,6 +6,8 @@ import {
 } from "../dsl/catalogs.js";
 import { translateLegacyConditionContextReferences } from "../dsl/condition-context.js";
 import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../dsl/form-rules.js";
+import { inspectNativeFormRuleProjection } from "../dsl/native-form-rule-projection.js";
+import { deterministicManualResidualDecisionId } from "../dsl/deterministic-script-translations.js";
 import { packLayoutGrid } from "../dsl/layout-pack.js";
 import {
   applyFieldIdMapToForm,
@@ -225,34 +227,37 @@ function attachCalculationDecisions(scripts, form, sourceScripts = {}) {
   }
 
   for (const action of actions) {
-    if (
-      action.translationStatus !== "mapped" ||
-      !(action.functionMappings || []).some((mapping) =>
-        /calculation|finance-detail-generation/u.test(String(mapping.basis || mapping.source || ""))
-      )
-    ) continue;
+    const mappingManualResiduals = (action.functionMappings || [])
+      .flatMap((mapping) => mapping.manualResiduals || []);
+    if (action.translationStatus !== "mapped") continue;
+    const recordsScriptCalculation = (action.functionMappings || []).some((mapping) =>
+      /calculation|finance-detail-generation/u.test(String(mapping.basis || mapping.source || ""))
+    );
+    if (!recordsScriptCalculation && !mappingManualResiduals.length) continue;
     for (const range of action.semanticHints?.coveredCalculationRanges || []) {
       addCoveredCalculationRanges(coveredRangesBySourceRef, [range]);
     }
-    decisions.push({
-      id: `calculation.script.${action.id}`,
-      classification: "script",
-      sourceRefs: action.sourceRefs || [],
-      triggerRefs: [action.tableId ? `${action.tableId}.${action.controlId}` : action.controlId].filter(Boolean),
-      targetRefs: uniqueStrings([
-        ...calculationScriptTargetRefs(action.function),
-        action.semanticHints?.targetDetailTableId
-      ]),
-      evidence: (action.functionMappings || []).map((mapping) => mapping.source).filter(Boolean).join("; "),
-      actionId: action.id
-    });
-    for (const residual of (action.functionMappings || []).flatMap((mapping) => mapping.manualResiduals || [])) {
+    if (recordsScriptCalculation) {
+      decisions.push({
+        id: `calculation.script.${action.id}`,
+        classification: "script",
+        sourceRefs: action.sourceRefs || [],
+        triggerRefs: [action.tableId ? `${action.tableId}.${action.controlId}` : action.controlId].filter(Boolean),
+        targetRefs: uniqueStrings([
+          ...calculationScriptTargetRefs(action.function),
+          action.semanticHints?.targetDetailTableId
+        ]),
+        evidence: (action.functionMappings || []).map((mapping) => mapping.source).filter(Boolean).join("; "),
+        actionId: action.id
+      });
+    }
+    for (const residual of mappingManualResiduals) {
       const sourceKey = (action.sourceRefs || []).join("|");
       const residualKey = `${sourceKey}|${residual.code || residual.reason}`;
       if (scriptResidualKeys.has(residualKey)) continue;
       scriptResidualKeys.add(residualKey);
       decisions.push({
-        id: `calculation.manual.${String(action.sourceRefs?.[0] || action.id).replace(/[^A-Za-z0-9_.-]+/gu, "-")}.${residual.code || "residual"}`,
+        id: deterministicManualResidualDecisionId(action, residual),
         classification: "manual",
         sourceRefs: action.sourceRefs || [],
         targetRefs: calculationScriptTargetRefs(action.function),
@@ -1482,14 +1487,24 @@ function draftFormRules(sourceFormRules, form) {
   const linkage = Array.isArray(sourceFormRules?.linkage) ? sourceFormRules.linkage : [];
   if (!linkage.length) return undefined;
   const refIndex = buildFormRuleRefIndex(form || {});
+  const overlapIssues = mergeRuleIssueMaps(
+    baselineDeltaTargetOverlapIssues(linkage, refIndex),
+    independentNativeTargetWriterIssues(linkage, refIndex)
+  );
   const targetIssues = [];
+  const executionIssues = [];
   const classifiedLinkage = linkage.map((rule) => {
-    const ruleTargetIssues = formRuleTargetIssues(rule, refIndex);
+    const ruleTargetIssues = [
+      ...formRuleTargetIssues(rule, refIndex),
+      ...(overlapIssues.get(rule.id) || [])
+    ];
+    const ruleExecutionIssues = formRuleRunWhenIssues(rule);
     targetIssues.push(...ruleTargetIssues);
-    return draftLinkageRule(rule, refIndex, ruleTargetIssues);
+    executionIssues.push(...ruleExecutionIssues);
+    return draftLinkageRule(rule, refIndex, ruleTargetIssues, ruleExecutionIssues);
   });
-  const excludedLinkage = classifiedLinkage.filter(hasTargetIssue);
-  const draftedLinkage = mergeEquivalentOrRules(classifiedLinkage.filter((rule) => !hasTargetIssue(rule)));
+  const excludedLinkage = classifiedLinkage.filter(hasRuleIssue);
+  const draftedLinkage = mergeEquivalentOrRules(classifiedLinkage.filter((rule) => !hasRuleIssue(rule)));
   const mergedRules = draftedLinkage
     .filter((rule) => (rule.meta?.sourceRuleIds || []).length > 1)
     .map((rule) => ({ ruleId: rule.id, sourceRuleIds: rule.meta.sourceRuleIds }));
@@ -1501,27 +1516,135 @@ function draftFormRules(sourceFormRules, form) {
     review: pruneUndefined({
       ...(sourceFormRules.review || {}),
       targetIssues: targetIssues.length ? targetIssues : undefined,
+      executionIssues: executionIssues.length ? executionIssues : undefined,
       excludedRules: excludedLinkage.length ? excludedLinkage.map(excludedRuleSummary) : undefined,
       mergedRules: mergedRules.length ? mergedRules : undefined
     })
   };
 }
 
-function hasTargetIssue(rule) {
-  return (rule.review?.targetIssues || []).length > 0;
+function baselineDeltaTargetOverlapIssues(linkage, refIndex) {
+  const groups = new Map();
+  for (const rule of linkage) {
+    const groupId = rule.meta?.baselineDeltaGroup;
+    if (!groupId) continue;
+    if (!groups.has(groupId)) groups.set(groupId, []);
+    groups.get(groupId).push(rule);
+  }
+
+  const issues = new Map();
+  for (const rules of groups.values()) {
+    if (rules.length < 2) continue;
+    const ownersByTarget = new Map();
+    for (const rule of rules) {
+      for (const effect of rule.effects || []) {
+        const resolved = resolveEffectTarget(refIndex, effect.target);
+        for (const target of resolved?.targets || []) {
+          const targetKey = [effect.type, target.kind, target.parentId, target.id]
+            .filter(Boolean)
+            .join(":");
+          if (!ownersByTarget.has(targetKey)) ownersByTarget.set(targetKey, []);
+          ownersByTarget.get(targetKey).push({ rule, effect, target });
+        }
+      }
+    }
+
+    for (const owners of ownersByTarget.values()) {
+      const ruleIds = uniqueStrings(owners.map((owner) => owner.rule.id));
+      if (ruleIds.length < 2) continue;
+      for (const owner of owners) {
+        if (!issues.has(owner.rule.id)) issues.set(owner.rule.id, []);
+        const ruleIssues = issues.get(owner.rule.id);
+        const duplicateKey = `${owner.effect.type}:${owner.target.kind}:${owner.target.parentId || ""}:${owner.target.id}`;
+        if (ruleIssues.some((issue) => issue.duplicateKey === duplicateKey)) continue;
+        ruleIssues.push({
+          code: "form_rule.baseline_delta_target_overlap",
+          ruleId: owner.rule.id,
+          target: owner.effect.target,
+          resolvedTarget: owner.target.id,
+          conflictingRuleIds: ruleIds.filter((ruleId) => ruleId !== owner.rule.id),
+          duplicateKey,
+          message: "Mutually exclusive baseline-delta branches resolve to the same native target and cannot be evaluated independently."
+        });
+      }
+    }
+  }
+  return issues;
+}
+
+function independentNativeTargetWriterIssues(linkage, refIndex) {
+  const ownersByTarget = new Map();
+  for (const rule of linkage) {
+    const seen = new Set();
+    for (const effect of [...(rule.effects || []), ...(rule.else || [])]) {
+      const resolved = resolveEffectTarget(refIndex, effect.target);
+      for (const target of resolved?.targets || []) {
+        const targetKey = [effect.type, target.kind, target.parentId, target.id]
+          .filter(Boolean)
+          .join(":");
+        if (seen.has(targetKey)) continue;
+        seen.add(targetKey);
+        if (!ownersByTarget.has(targetKey)) ownersByTarget.set(targetKey, []);
+        ownersByTarget.get(targetKey).push({ rule, effect, target });
+      }
+    }
+  }
+
+  const issues = new Map();
+  for (const owners of ownersByTarget.values()) {
+    const ruleIds = uniqueStrings(owners.map((owner) => owner.rule.id));
+    if (ruleIds.length < 2) continue;
+    const baselineGroups = uniqueStrings(owners.map((owner) => owner.rule.meta?.baselineDeltaGroup));
+    if (baselineGroups.length === 1 && owners.every((owner) => owner.rule.meta?.baselineDeltaGroup)) {
+      continue;
+    }
+    for (const owner of owners) {
+      if (!issues.has(owner.rule.id)) issues.set(owner.rule.id, []);
+      issues.get(owner.rule.id).push({
+        code: "form_rule.native_target_writer_conflict",
+        ruleId: owner.rule.id,
+        target: owner.effect.target,
+        resolvedTarget: owner.target.id,
+        conflictingRuleIds: ruleIds.filter((ruleId) => ruleId !== owner.rule.id),
+        message: "Multiple independently evaluated native rules write the same target dimension; final runtime state depends on rule evaluation order."
+      });
+    }
+  }
+  return issues;
+}
+
+function mergeRuleIssueMaps(...maps) {
+  const merged = new Map();
+  for (const map of maps) {
+    for (const [ruleId, issues] of map) {
+      if (!merged.has(ruleId)) merged.set(ruleId, []);
+      merged.get(ruleId).push(...issues);
+    }
+  }
+  return merged;
+}
+
+function hasRuleIssue(rule) {
+  return (rule.review?.targetIssues || []).length > 0 ||
+    (rule.review?.executionIssues || []).length > 0;
 }
 
 function excludedRuleSummary(rule) {
-  const issues = rule.review?.targetIssues || [];
+  const issues = [
+    ...(rule.review?.targetIssues || []),
+    ...(rule.review?.executionIssues || [])
+  ];
   const targets = uniqueStrings(issues.map((issue) => issue.target));
   return pruneUndefined({
     ruleId: rule.id,
     code: issues[0]?.code,
+    source: rule.source,
     target: targets.length === 1 ? targets[0] : undefined,
     targets: targets.length > 1 ? targets : undefined,
     detailTableRefs: uniqueStrings(issues.flatMap((issue) => issue.detailTableRefs || [])),
     sourceJsp: rule.meta?.sourceJsp,
     displayGate: rule.meta?.displayGate,
+    runWhen: rule.meta?.runWhen,
     message: issues[0]?.message
   });
 }
@@ -1529,13 +1652,19 @@ function excludedRuleSummary(rule) {
 function mergeEquivalentOrRules(rules) {
   const groups = new Map();
   for (const rule of rules) {
+    const cannotFlattenAsOr =
+      (rule.logic === "and" && (rule.when || []).length > 1) ||
+      Array.isArray(rule.meta?.conditionSemantics);
     const key = JSON.stringify({
       trigger: rule.trigger,
+      source: rule.source,
+      sourceJsp: rule.meta?.sourceJsp,
       displayGate: rule.meta?.displayGate,
       runWhen: rule.meta?.runWhen,
       effects: rule.effects,
       else: rule.else,
-      translationStatus: rule.translationStatus
+      translationStatus: rule.translationStatus,
+      ...(cannotFlattenAsOr ? { mutuallyExclusiveRuleId: rule.id } : {})
     });
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(rule);
@@ -1581,8 +1710,9 @@ function dedupeConditions(conditions) {
   });
 }
 
-function draftLinkageRule(rule, refIndex, targetIssues = []) {
-  const translationStatus = targetIssues.length && (rule.translationStatus || "executable") === "executable"
+function draftLinkageRule(rule, refIndex, targetIssues = [], executionIssues = []) {
+  const reviewIssues = [...targetIssues, ...executionIssues];
+  const translationStatus = reviewIssues.length && (rule.translationStatus || "executable") === "executable"
     ? "needs_review"
     : rule.translationStatus || "executable";
   const canonicalSource = resolveDirectRef(refIndex, rule.source)?.id || rule.source;
@@ -1603,7 +1733,10 @@ function draftLinkageRule(rule, refIndex, targetIssues = []) {
     effects: draftRuleEffects(rule.effects),
     else: draftRuleEffects(rule.else),
     meta: rule.meta,
-    review: targetIssues.length ? { targetIssues } : undefined,
+    review: reviewIssues.length ? pruneUndefined({
+      targetIssues: targetIssues.length ? targetIssues : undefined,
+      executionIssues: executionIssues.length ? executionIssues : undefined
+    }) : undefined,
     translationStatus
   });
 }
@@ -1611,6 +1744,7 @@ function draftLinkageRule(rule, refIndex, targetIssues = []) {
 function formRuleTargetIssues(rule, refIndex) {
   const result = [];
   for (const [branch, effects] of [["effects", rule.effects], ["else", rule.else]]) {
+    const valuesByResolvedTarget = new Map();
     for (const [effectIndex, effect] of (Array.isArray(effects) ? effects : []).entries()) {
       if (!effect?.target) continue;
       const resolved = resolveEffectTarget(refIndex, effect.target);
@@ -1638,10 +1772,49 @@ function formRuleTargetIssues(rule, refIndex) {
             .map((target) => target.id),
           message: "Form rule visibility/required effects cannot target data-only fields."
         }));
+      } else {
+        for (const target of resolved.targets) {
+          const targetKey = [effect.type, target.kind, target.parentId, target.id]
+            .filter(Boolean)
+            .join(":");
+          if (!valuesByResolvedTarget.has(targetKey)) valuesByResolvedTarget.set(targetKey, new Set());
+          valuesByResolvedTarget.get(targetKey).add(effect.value);
+        }
       }
+    }
+    for (const [targetKey, values] of valuesByResolvedTarget) {
+      if (values.size < 2) continue;
+      result.push({
+        code: "form_rule.branch_effect_conflict",
+        ruleId: rule.id,
+        branch,
+        resolvedTarget: targetKey,
+        values: [...values],
+        message: "One native rule branch resolves to conflicting values for the same target dimension."
+      });
     }
   }
   return result;
+}
+
+function formRuleRunWhenIssues(rule) {
+  if (rule?.meta?.runWhen === undefined) return [];
+  const inspection = inspectNativeFormRuleProjection(rule);
+  if (inspection.ok) return [];
+  const capabilityMissing = inspection.issues.includes("native_projection_capability_missing");
+  return [{
+    code: capabilityMissing
+      ? "form_rule.run_when_not_persistable"
+      : "form_rule.native_projection_unproven",
+    ruleId: rule.id,
+    sourceJsp: rule.meta?.sourceJsp,
+    displayGate: rule.meta?.displayGate,
+    runWhen: rule.meta.runWhen,
+    issues: inspection.issues,
+    message: capabilityMissing
+      ? "A view-gated native form rule requires the versioned formula-condition projection capability."
+      : "The native formula-condition projection is not traceable to the matching control onChange input."
+  }];
 }
 
 function draftRuleEffects(effects) {

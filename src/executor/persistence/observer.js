@@ -13,6 +13,7 @@ import {
   markedDispatcherActionFunction,
   renderDispatcherInvocation
 } from "./script-dispatcher-contract.js";
+import { inspectLeadingViewStatusGuard } from "./view-status-guard.js";
 
 /**
  * Independently observe native persisted template semantics.
@@ -627,18 +628,34 @@ function observeRules(formRule, detailModels = [], diagnostics) {
 
 function observeNativeRule(rule, kind, detailByTable = new Map()) {
   if (!rule || typeof rule !== "object") return null;
-  const conditions = (rule.choices?.items || []).map((item) => ({
-    field: normalizeScalar(item.fieldName || item.fieldKey),
-    op: denormalizeOperator(item.operate),
-    value: item.value?.script === "" || item.value?.script === undefined
-      ? ""
-      : normalizeRuleValue(item.value?.script ?? item.value)
-  }));
+  const conditions = (rule.choices?.items || []).map((item) => (
+    item?.condNodeType === "formula"
+      ? {
+          field: "$formula",
+          op: "formula",
+          valueType: normalizeScalar(item.valueType),
+          evalType: normalizeScalar(item.value?.type),
+          voMode: normalizeScalar(item.value?.vo?.mode),
+          voContent: normalizeScalar(item.value?.vo?.content),
+          value: normalizeScalar(item.value?.script),
+          varIds: (Array.isArray(item.value?.varIds) ? item.value.varIds : []).map(normalizeScalar)
+        }
+      : {
+          field: normalizeScalar(item.fieldName || item.fieldKey),
+          op: denormalizeOperator(item.operate),
+          value: item.value?.script === "" || item.value?.script === undefined
+            ? ""
+            : normalizeRuleValue(item.value?.script ?? item.value)
+        }
+  ));
   const effects = (Array.isArray(rule.result) ? rule.result : []).map((result) => {
     const target = observeRuleResultTarget(result, detailByTable);
     if (kind === "display") {
       return {
         target,
+        ...(isWholeDetailDisplayResult(result, detailByTable)
+          ? { nativeFieldNames: result.fieldName.map(normalizeScalar) }
+          : {}),
         visible: result.displayFlag !== "hide"
       };
     }
@@ -649,18 +666,22 @@ function observeNativeRule(rule, kind, detailByTable = new Map()) {
   });
   return {
     kind,
+    active: typeof rule.active === "boolean" ? rule.active : null,
     logic: rule.condition === "2" ? "or" : "and",
     conditions,
     effects,
-    // provenance ignored for verification; retained only for debugging summaries
-    provenanceIgnored: true
+    nativeIdentity: {
+      id: normalizeScalar(rule.id),
+      ruleName: normalizeScalar(rule.ruleName),
+      generatedBy: normalizeScalar(rule.meta?.generatedBy),
+      sourceRuleId: normalizeScalar(rule.meta?.sourceRuleId),
+      branch: normalizeScalar(rule.meta?.branch),
+      ruleType: normalizeScalar(rule.meta?.ruleType)
+    }
   };
 }
 
 function observeRuleResultTarget(result, detailByTable) {
-  if (result?.tableType === "detail" && result?.type && detailByTable.has(result.type)) {
-    return normalizeScalar(detailByTable.get(result.type));
-  }
   if (Array.isArray(result?.fieldName)) {
     if (result.fieldName[0] === "all" && result?.type && detailByTable.has(result.type)) {
       return normalizeScalar(detailByTable.get(result.type));
@@ -668,6 +689,14 @@ function observeRuleResultTarget(result, detailByTable) {
     return normalizeScalar(result.fieldName.find((name) => name && name !== "all") || result.fieldName[0]);
   }
   return normalizeScalar(result?.fieldName || result?.fieldKey);
+}
+
+function isWholeDetailDisplayResult(result, detailByTable) {
+  return result?.tableType === "detail" &&
+    Array.isArray(result?.fieldName) &&
+    result.fieldName[0] === "all" &&
+    Boolean(result?.type) &&
+    detailByTable.has(result.type);
 }
 
 function detailFieldNameForModel(model) {
@@ -757,7 +786,7 @@ function observePersistedActions(action, context) {
       scope: context.scope,
       controlKey: context.controlKey,
       bodyDigest: digestText(canonicalizeScriptBody(part.function)),
-      runWhen: observeRunWhenFromFunction(part.function),
+      runWhen: observeRunWhenFromFunction(part.function, context.event),
       hasCanonicalGuard: hasCanonicalGuard(part.function, context.event),
       rawFunction: part.function
     }));
@@ -769,7 +798,7 @@ function observePersistedActions(action, context) {
     scope: context.scope,
     controlKey: context.controlKey,
     bodyDigest: digestText(canonicalizeScriptBody(functionText)),
-    runWhen: observeRunWhenFromFunction(functionText),
+    runWhen: observeRunWhenFromFunction(functionText, context.event),
     hasCanonicalGuard: hasCanonicalGuard(functionText, context.event),
     rawFunction: functionText
   }];
@@ -817,25 +846,18 @@ function observeDispatcherStrategy(event, functionText, invocationText, childNam
     : ORDERED_DISPATCH_STRATEGY;
 }
 
-function observeRunWhenFromFunction(source = "") {
-  const statuses = extractViewStatusGuard(source);
+function observeRunWhenFromFunction(source = "", event) {
+  const statuses = extractViewStatusGuard(source, event);
   if (!statuses?.length) return undefined;
   return { viewStatusIn: statuses };
 }
 
-function extractViewStatusGuard(source = "") {
-  const text = String(source);
-  const matches = [...text.matchAll(/MKXFORM\.viewStatus\s*!==\s*["']([^"']+)["']/g)];
-  if (!matches.length) return undefined;
-  return matches.map((match) => match[1]);
+function extractViewStatusGuard(source = "", event) {
+  return inspectLeadingViewStatusGuard(source, { event })?.statuses;
 }
 
 function hasCanonicalGuard(source, event) {
-  const statuses = extractViewStatusGuard(source);
-  if (!statuses?.length) return false;
-  const fallback = event === "onBeforeSubmit" ? "return true" : "return";
-  const condition = statuses.map((status) => `MKXFORM.viewStatus !== ${JSON.stringify(status)}`).join(" && ");
-  return String(source).includes(`if (${condition}) ${fallback}`);
+  return Boolean(inspectLeadingViewStatusGuard(source, { event }));
 }
 
 function observeWorkflow(lbpm) {

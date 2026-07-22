@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 export const NEWOA_SIT_BASE_URL = "https://p-sit.onewo.com";
 export const NEWOA_POC_BASE_URL = "http://mkpaaspoc.shanghai-electric.com";
 export const NEWOA_SHANGHAI_ELECTRIC_DEV_BASE_URL = "http://oa-dev.shanghai-electric.com:8088";
@@ -63,6 +65,62 @@ export class NewoaClient {
       throw new Error("template init response did not include data");
     }
     return body.data;
+  }
+
+  async getXFormDesktopDigest() {
+    let response;
+    try {
+      response = await this.fetch(`${this.baseUrl}/web/sys-xform/desktop/digest.json`, {
+        method: "GET",
+        cache: "no-store",
+        headers: {
+          accept: "application/json, text/plain, */*",
+          ...(this.cookie ? { cookie: this.cookie } : {}),
+          ...(this.token ? { Authorization: `Bearer ${this.token}` } : {})
+        }
+      });
+      const result = await readResponse(response);
+      if (!response.ok || !isRecord(result.body)) {
+        const error = new Error(`NewOA XForm desktop digest failed: ${response.status}`);
+        error.response = result;
+        throw error;
+      }
+      return result.body;
+    } catch (error) {
+      throw assignClientStage(error, "getXFormDesktopDigest");
+    }
+  }
+
+  async getXFormDesktopModuleSha256({ modulePath, releaseHash }) {
+    if (!/^[A-Za-z0-9/_-]+$/.test(String(modulePath || ""))) {
+      throw clientStageError("getXFormDesktopModuleSha256", "invalid XForm module path");
+    }
+    if (!/^[a-f0-9]{32}$/i.test(String(releaseHash || ""))) {
+      throw clientStageError("getXFormDesktopModuleSha256", "invalid XForm module release hash");
+    }
+    try {
+      const response = await this.fetch(
+        `${this.baseUrl}/web/${modulePath}/index.js?${releaseHash}`,
+        {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            accept: "application/javascript, text/javascript, */*",
+            ...(this.cookie ? { cookie: this.cookie } : {}),
+            ...(this.token ? { Authorization: `Bearer ${this.token}` } : {})
+          }
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`NewOA XForm desktop module failed: ${response.status}`);
+      }
+      const bytes = typeof response.arrayBuffer === "function"
+        ? Buffer.from(await response.arrayBuffer())
+        : Buffer.from(await response.text(), "utf8");
+      return createHash("sha256").update(bytes).digest("hex");
+    } catch (error) {
+      throw assignClientStage(error, "getXFormDesktopModuleSha256");
+    }
   }
 
   async generateTableName() {
@@ -269,6 +327,10 @@ function tokenFromBody(body) {
     body?.data?.access_token ||
     body?.data?.accessToken ||
     "";
+}
+
+function isRecord(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function assignClientStage(error, stage) {

@@ -15,6 +15,10 @@ import {
   renderDispatcherInvocation,
   singletonDispatcherContract
 } from "./script-dispatcher-contract.js";
+import {
+  findScriptFunctionBody,
+  hasEquivalentLeadingViewStatusGuard
+} from "./view-status-guard.js";
 
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
@@ -33,6 +37,7 @@ export function applyFormPayload(template, dsl) {
   const mainModel = buildMainModel(next, xform, config, form, lang);
   const detailModels = buildDetailModels(next, form, mainModel, lang);
   const dataModels = [mainModel, ...detailModels];
+  assertUniqueNativeControlIds(dataModels);
   const detailModelsByField = new Map(
     detailModels.map((model) => [model.dynamicProps?.detailFieldName, model]).filter(([fieldId]) => Boolean(fieldId))
   );
@@ -44,7 +49,7 @@ export function applyFormPayload(template, dsl) {
     mainModel,
     detailModelsByField
   });
-  const nativeFormRules = buildNativeFormRuleConfig(dsl.formRules, form, dataModels);
+  const nativeFormRules = buildNativeFormRuleConfig(dsl.formRules, form, dataModels, dsl.scripts);
   const formAttr = {
     subjectRule: {},
     formRule: mergeNativeFormRules(existingFormAttr.formRule || { pattern: {} }, nativeFormRules),
@@ -417,18 +422,22 @@ function injectViewStatusGuard(source, action = {}) {
   if (!Array.isArray(statuses) || !statuses.length) return source;
   const marker = viewStatusMarker(statuses);
   const condition = viewStatusGuardCondition(statuses);
-  const fallback = (action.event || action.name) === "onBeforeSubmit" ? "return true" : "return";
-  if (source.includes(marker) && source.includes(`if (${condition}) ${fallback}`)) return source;
-
-  const functionName = escapeRegExp(action.name || action.event || "");
-  const declaration = new RegExp(`function\\s+${functionName}\\s*\\([^)]*\\)\\s*\\{`);
-  const match = declaration.exec(source);
-  if (!match) {
+  const event = action.event || action.name;
+  const functionName = action.name || action.event || "";
+  const fallback = event === "onBeforeSubmit" ? "return true" : "return";
+  const functionBody = findScriptFunctionBody(source, functionName);
+  if (!functionBody) {
     throw new Error(`cannot inject view-status guard: named function ${action.name || action.event || "<missing>"} was not found`);
   }
-  const insertAt = match.index + match[0].length;
-  const guard = `\n  ${marker}\n  if (${condition}) ${fallback};`;
-  return `${source.slice(0, insertAt)}${guard}${source.slice(insertAt)}`;
+  const hasLeadingGuard = hasEquivalentLeadingViewStatusGuard(source, statuses, { event, functionName });
+  const markerStatuses = viewStatusMarkerFromFunction(source);
+  const hasCanonicalMarker = markerStatuses && sameStrings(markerStatuses, statuses);
+  if (hasLeadingGuard && hasCanonicalMarker) return source;
+
+  const guard = hasLeadingGuard
+    ? `\n  ${marker}`
+    : `\n  ${marker}\n  if (${condition}) ${fallback};`;
+  return `${source.slice(0, functionBody.bodyStart)}${guard}${source.slice(functionBody.bodyStart)}`;
 }
 
 function viewStatusMarker(statuses) {
@@ -445,8 +454,11 @@ function viewStatusMarkerFromFunction(source = "") {
 }
 
 function hasCanonicalViewStatusGuard(source, statuses, event) {
-  const fallback = event === "onBeforeSubmit" ? "return true" : "return";
-  return String(source).includes(`if (${viewStatusGuardCondition(statuses)}) ${fallback}`);
+  return hasEquivalentLeadingViewStatusGuard(source, statuses, { event });
+}
+
+function sameStrings(left, right) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function buildMainModel(template, xform, config, form, lang) {
@@ -507,6 +519,38 @@ function buildDetailModels(template, form, mainModel, lang) {
       model.fdAttribute = JSON.stringify(detailModelAttribute(field, model));
       return model;
     });
+}
+
+function assertUniqueNativeControlIds(dataModels) {
+  const refsByControlId = new Map();
+
+  for (const model of dataModels) {
+    const detailTableId = model?.fdType === "detail"
+      ? model.dynamicProps?.detailFieldName
+      : undefined;
+    for (const field of model?.fdFields || []) {
+      if (!field?.fdName || field.fdIsSystem) continue;
+      const controlId = parseJsonObject(field.fdAttribute).config?.controlProps?.id;
+      if (typeof controlId !== "string" || !controlId.trim()) continue;
+      const fieldRef = detailTableId
+        ? `${detailTableId}.${field.fdName}`
+        : field.fdName;
+      const refs = refsByControlId.get(controlId) || [];
+      refs.push(fieldRef);
+      refsByControlId.set(controlId, refs);
+    }
+  }
+
+  for (const [controlId, fieldRefs] of refsByControlId) {
+    const uniqueRefs = [...new Set(fieldRefs)];
+    if (uniqueRefs.length <= 1) continue;
+    const error = new Error(
+      `Native control id ${controlId} is shared by multiple DSL fields.`,
+    );
+    error.code = "projection.form.native_control_id_collision";
+    error.details = { controlId, fieldRefs: uniqueRefs };
+    throw error;
+  }
 }
 
 function canonicalField(field, template, model, order, tableType, lang) {

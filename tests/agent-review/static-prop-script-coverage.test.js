@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { runAgentReview } from "../../src/agent-review/index.js";
 import { buildAgentReviewPrompt } from "../../src/agent-review/prompt.js";
+import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
 import { sampleDraftDsl, sampleSourceDraft } from "../helpers/sample-dsl.js";
 
 const sourceRef = "source.form.jsp.required-only.script.1";
@@ -101,6 +102,11 @@ function dslDraft() {
         scope: "global",
         function: "function onLoad() {\n  // source required-only onLoad\n}",
         sourceRefs: [sourceRef],
+        branchProvenance: buildScriptBranchProvenance({
+          event: "onLoad",
+          source: sourceDraft().scripts.sources[0].javascript,
+          sourceRef
+        }),
         translationStatus: "needs_review",
         coverage: staticCoverage(),
         functionMappings: []

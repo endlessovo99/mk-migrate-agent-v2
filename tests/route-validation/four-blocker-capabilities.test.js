@@ -50,6 +50,14 @@ describe("four blocking route capabilities", () => {
 
     const lifecycle = actionFor("detail_row_lifecycle");
     assert.equal(lifecycle.coverage.status, "partial");
+    assert.deepEqual(lifecycle.coverage.nativeRules, ["linkage.fd_trigger.contains.restricted"]);
+    assert.equal(
+      lifecycle.coverage.residuals.some((item) =>
+        item.code === "script.residual.detail_row_lifecycle_review_required"
+      ),
+      true
+    );
+    assert.deepEqual(lifecycle.recipe.reviewRuleIds, []);
     assert.deepEqual(lifecycle.recipe.rowLifecycle, {
       existingRows: "on_load_initialization",
       addedRows: "native_detail_control_event",
@@ -71,7 +79,10 @@ describe("four blocking route capabilities", () => {
     assert.equal(opportunities.includes("attachment_non_empty_candidate"), true);
     assert.equal(opportunities.includes("detail_row_visibility_candidate"), true);
     assert.equal(opportunities.includes("detail_row_load_initialization_candidate"), true);
-    assert.equal(prompt.context.dslDraft.scripts.actions.every((action) => action.recipe), true);
+    const gatedRowAction = prompt.context.dslDraft.scripts.actions.find((action) =>
+      action.coverage?.nativeRules?.includes("linkage.fd_trigger.contains.restricted")
+    );
+    assert.deepEqual(gatedRowAction.runWhen, { viewStatusIn: ["add", "edit"] });
   });
 
   it("maps a minimal start/recover pair to one executable native subprocess node", () => {

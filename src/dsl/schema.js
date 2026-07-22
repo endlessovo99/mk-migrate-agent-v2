@@ -13,6 +13,20 @@ import {
   resolveEffectTarget
 } from "./form-rules.js";
 import {
+  nativeFormRuleBelongsToAction,
+  nativeFormRuleProjectionDiagnostic
+} from "./native-form-rule-projection.js";
+import {
+  analyzeScriptBranchConditions,
+  inspectMappedScriptBranchProvenance,
+  inspectScriptBranchProvenanceEvidence
+} from "./script-branch-provenance.js";
+import {
+  claimsDeterministicScriptTranslation,
+  hasVerifiedDeterministicScriptBranchProof,
+  inspectDeterministicScriptBranchProof
+} from "./deterministic-script-translations.js";
+import {
   SCRIPT_EVENTS,
   SCRIPT_GLOBAL_EVENTS,
   SCRIPT_SCOPES,
@@ -99,8 +113,13 @@ export function validateMigrationDsl(input, options = {}) {
   validateCatalogVersions(root, diagnostics);
   validateTemplate(root.template, diagnostics);
   const formContext = validateForm(root.form, diagnostics);
-  validateFormRules(root.formRules, diagnostics, { mode, form: root.form });
-  validateScripts(root.scripts, diagnostics, { mode, form: root.form, formRules: root.formRules });
+  validateFormRules(root.formRules, diagnostics, { mode, form: root.form, scripts: root.scripts });
+  validateScripts(root.scripts, diagnostics, {
+    mode,
+    form: root.form,
+    formRules: root.formRules,
+    scripts: root.scripts
+  });
   validateReview(root.review, diagnostics, root.trust?.level);
   if (root.workflow !== undefined) {
     validateWorkflow(root.workflow, diagnostics, {
@@ -716,6 +735,27 @@ function validateLinkageRule(rule, ruleIndex, diagnostics, context) {
   if (context.mode === "execute" && rule.translationStatus !== "executable") {
     diagnostics.push(error("dsl.form_rules.linkage_not_executable", "Executable DSL cannot contain formRules.linkage entries that still need review.", `${path}/translationStatus`));
   }
+  if (
+    context.mode === "execute" &&
+    rule.translationStatus === "executable" &&
+    rule.meta?.runWhen !== undefined
+  ) {
+    const projectionIssue = nativeFormRuleProjectionDiagnostic(rule, context.scripts);
+    if (projectionIssue) {
+      diagnostics.push(error(
+        projectionIssue.code === "form_rule.run_when_not_persistable"
+          ? "dsl.form_rules.run_when_not_persistable"
+          : "dsl.form_rules.native_projection_unproven",
+        projectionIssue.message,
+        `${path}/meta/nativeProjection`,
+        {
+          ruleId: rule.id,
+          runWhen: rule.meta.runWhen,
+          issues: projectionIssue.issues
+        }
+      ));
+    }
+  }
 
   validateLinkageConditions(rule.when, `${path}/when`, diagnostics, context, rule);
   validateLinkageEffects(rule.effects, `${path}/effects`, diagnostics, context, rule);
@@ -931,6 +971,7 @@ function validateScripts(scripts, diagnostics, context) {
         actual: action.coverage?.status
       }));
     }
+    validateOmittedNativeRuleCoverage(action, path, diagnostics, context);
     if (
       action.translationStatus === "omitted" &&
       action.coverage?.staticProps !== undefined &&
@@ -955,12 +996,125 @@ function validateScripts(scripts, diagnostics, context) {
     }
     validateScriptActionTarget(action, path, diagnostics, context);
     validateScriptActionFunction(action, path, diagnostics, context);
+    validateScriptBranchProvenance(action, path, diagnostics, context);
     if (context.mode === "execute" && ["needs_review", "manual"].includes(action.translationStatus)) {
       diagnostics.push(error("dsl.scripts.needs_review", "Executable DSL cannot contain script actions that still need review or manual handling.", `${path}/translationStatus`, {
         actual: action.translationStatus
       }));
     }
   });
+}
+
+function validateScriptBranchProvenance(action, path, diagnostics, context) {
+  const deterministicClaim = claimsDeterministicScriptTranslation(action);
+  if (action.deterministicBranchProof !== undefined) {
+    const proof = inspectDeterministicScriptBranchProof(action, {
+      calculationDecisions: context.scripts?.calculationDecisions
+    });
+    if (!proof.ok) {
+      diagnostics.push(error(
+        "dsl.scripts.deterministic_branch_proof_invalid",
+        "Compiler-generated deterministic branch proof no longer matches the action function, binding, mappings, or source recipe evidence.",
+        `${path}/deterministicBranchProof`,
+        { reason: proof.reason }
+      ));
+    }
+  }
+  if (deterministicClaim && action.deterministicBranchProof === undefined) {
+    diagnostics.push(error(
+      "dsl.scripts.deterministic_branch_proof_missing",
+      "A deterministic mapping claim requires a compiler proof bound to its source recipe; arbitrary deterministic-* labels are not trusted.",
+      `${path}/deterministicBranchProof`
+    ));
+  }
+  if (action.branchProvenance === undefined) {
+    const relevantEvent = ["onChange", "onLoad"].includes(action.event);
+    const deterministicTranslation = hasVerifiedDeterministicScriptBranchProof(action, {
+      calculationDecisions: context.scripts?.calculationDecisions
+    });
+    const targetHasOrMayHaveBranches = !deterministicTranslation &&
+      action.translationStatus === "mapped" &&
+      analyzeScriptBranchConditions(action.function, { event: action.event }).status !== "none";
+    const semanticBranchClaim = (action.functionMappings || []).some((mapping) => (
+      ["semantic-translation", "native-form-rule", "static-form-prop"].includes(mapping?.basis)
+    ));
+    if (
+      relevantEvent &&
+      !deterministicTranslation &&
+      (
+        nonEmptyString(action.sourceActionKey) ||
+        targetHasOrMayHaveBranches ||
+        semanticBranchClaim
+      )
+    ) {
+      diagnostics.push(error(
+        "dsl.scripts.branch_provenance_missing",
+        "Executable onChange/onLoad actions require immutable action-local branch provenance; missing evidence is fail-closed.",
+        `${path}/branchProvenance`
+      ));
+    }
+    return;
+  }
+  const evidence = inspectScriptBranchProvenanceEvidence(action.branchProvenance, action);
+  if (!evidence.ok) {
+    diagnostics.push(error(
+      "dsl.scripts.branch_provenance_invalid",
+      "scripts.actions[].branchProvenance must be immutable action-local evidence with a supported version, event binding, source identity, and condition shape.",
+      `${path}/branchProvenance`,
+      { reason: evidence.reason }
+    ));
+    return;
+  }
+  if (
+    action.translationStatus === "omitted" &&
+    action.branchProvenance.status === "unproven"
+  ) {
+    diagnostics.push(error(
+      "dsl.scripts.condition_operand_provenance_unverified",
+      "A script with unproven source branch provenance cannot be omitted; keep it needs_review until exact native or static coverage is proven.",
+      `${path}/translationStatus`,
+      { reason: "source_branch_provenance_unproven" }
+    ));
+    return;
+  }
+  if (action.translationStatus !== "mapped") return;
+
+  const inspection = inspectMappedScriptBranchProvenance(action, action.branchProvenance);
+  if (inspection.ok) return;
+  diagnostics.push(error(
+    "dsl.scripts.condition_operand_provenance_unverified",
+    "Mapped script branch conditions must preserve action-local operand provenance: onChange derives from its input value and onLoad derives from the original source field read.",
+    `${path}/function`,
+    {
+      reason: inspection.reason,
+      expected: inspection.expected,
+      observed: inspection.observed
+    }
+  ));
+}
+
+function validateOmittedNativeRuleCoverage(action, path, diagnostics, context) {
+  if (context.mode !== "execute" || action.translationStatus !== "omitted") return;
+  const nativeRules = Array.isArray(action.coverage?.nativeRules) ? action.coverage.nativeRules : [];
+  if (!nativeRules.length) return;
+
+  const eligibleRuleIds = nativeRuleIdsForAction(action, context.formRules);
+  const incompatible = nativeRules.filter((ruleId) => !eligibleRuleIds.has(ruleId));
+  if (!incompatible.length) return;
+
+  diagnostics.push(error(
+    "dsl.scripts.native_rule_action_mismatch",
+    "Omitted script native-rule coverage must belong to the same control onChange action and source evidence.",
+    `${path}/coverage/nativeRules`,
+    {
+      actionId: action.id,
+      event: action.event,
+      scope: action.scope,
+      controlId: action.controlId,
+      sourceRefs: Array.isArray(action.sourceRefs) ? action.sourceRefs : [],
+      incompatible
+    }
+  ));
 }
 
 function validateScriptRecipe(action, path, diagnostics, context) {
@@ -976,7 +1130,7 @@ function hasCompleteOmissionCoverage(action, context) {
   const nativeRules = Array.isArray(action.coverage?.nativeRules) ? action.coverage.nativeRules : [];
   const staticProps = Array.isArray(action.coverage?.staticProps) ? action.coverage.staticProps : [];
   return nativeRules.length + staticProps.length > 0 &&
-    nativeRulesAreExecutable(nativeRules, context.formRules) &&
+    nativeRulesBelongToAction(nativeRules, action, context.formRules) &&
     staticProps.every((entry) => staticPropCoverageSatisfied(entry, context.form));
 }
 
@@ -986,7 +1140,7 @@ function hasCompleteExecutableNativeCoverage(action, formRules) {
   if (!Array.isArray(action.coverage?.residuals) || action.coverage.residuals.length) return false;
   const nativeRules = Array.isArray(action.coverage?.nativeRules) ? action.coverage.nativeRules : [];
   if (!nativeRules.length) return false;
-  return nativeRulesAreExecutable(nativeRules, formRules);
+  return nativeRulesBelongToAction(nativeRules, action, formRules);
 }
 
 function hasLegacyRuntimeNoopCoverage(action) {
@@ -999,13 +1153,31 @@ function hasLegacyRuntimeNoopCoverage(action) {
     .some((mapping) => mapping?.basis === "legacy-runtime-noop" && mapping.reviewRequired === false);
 }
 
-function nativeRulesAreExecutable(nativeRules, formRules) {
-  const executableRuleIds = new Set(
+function nativeRulesBelongToAction(nativeRules, action, formRules) {
+  const eligibleRuleIds = nativeRuleIdsForAction(action, formRules);
+  return nativeRules.every((ruleId) => eligibleRuleIds.has(ruleId));
+}
+
+function nativeRuleIdsForAction(action, formRules) {
+  const actionSourceRefs = new Set(
+    (Array.isArray(action?.sourceRefs) ? action.sourceRefs : []).filter(nonEmptyString)
+  );
+  if (
+    action?.event !== "onChange" ||
+    action?.scope !== "control" ||
+    !nonEmptyString(action?.controlId) ||
+    actionSourceRefs.size === 0
+  ) return new Set();
+
+  return new Set(
     (Array.isArray(formRules?.linkage) ? formRules.linkage : [])
-      .filter((rule) => rule?.translationStatus === "executable" && nonEmptyString(rule.id))
+      .filter((rule) => (
+        rule?.translationStatus === "executable" &&
+        nonEmptyString(rule.id) &&
+        nativeFormRuleBelongsToAction(rule, action)
+      ))
       .map((rule) => rule.id)
   );
-  return nativeRules.every((ruleId) => executableRuleIds.has(ruleId));
 }
 
 function validateStaticPropCoverage(staticProps, form, path, diagnostics) {

@@ -65,7 +65,19 @@ it("routes a nested JSP click handler to an executable MK button draft", () => {
     reviewRequired: false
   }];
   executableDraft.scripts.actions = [executableClick, beforeSubmit];
-  const trusted = createTrustedMigrationDsl(sourceDraft, executableDraft, {
+  delete executableDraft.formRules;
+  // This route case intentionally exercises only the button and one submit
+  // action. Scope its authoritative script input to the same two actions so
+  // trust validation does not silently approve dropping unrelated actions
+  // from the much larger real-world fixture.
+  const trustSourceDraft = structuredClone(sourceDraft);
+  trustSourceDraft.scripts.buttons = trustSourceDraft.scripts.buttons.filter((item) =>
+    executableClick.sourceRefs.includes(item.sourceRef)
+  );
+  trustSourceDraft.scripts.sources = trustSourceDraft.scripts.sources.filter((item) =>
+    beforeSubmit.sourceRefs.includes(item.sourceRef)
+  );
+  const trusted = createTrustedMigrationDsl(trustSourceDraft, executableDraft, {
     externalAgentReviewed: true,
     decisions: [{
       id: "jsp-button-sync-script-route",
@@ -78,7 +90,8 @@ it("routes a nested JSP click handler to an executable MK button draft", () => {
     }]
   });
 
-  assert.equal(checkTrust(sourceDraft, trusted).ok, true);
+  const trustResult = checkTrust(trustSourceDraft, trusted);
+  assert.equal(trustResult.ok, true, JSON.stringify(trustResult.diagnostics));
   const native = projectTemplate(trusted);
   const nativeFormAttr = JSON.parse(xformConfig(native).attribute.formAttr);
   const dispatcher = nativeFormAttr.controlAction.global.onBeforeSubmit[0].function;
@@ -87,13 +100,13 @@ it("routes a nested JSP click handler to an executable MK button draft", () => {
 
   const asyncRoute = structuredClone(trusted);
   asyncRoute.scripts.actions[1].function = "async function onBeforeSubmit(context) { if (context.isDraft) return true; await MKXFORM.validateFields(); return true; }";
-  assert.equal(checkTrust(sourceDraft, asyncRoute).diagnostics.some((item) =>
+  assert.equal(checkTrust(trustSourceDraft, asyncRoute).diagnostics.some((item) =>
     item.code === "dsl.scripts.mk_async_syntax_forbidden"
   ), true);
 
   const promiseRoute = structuredClone(trusted);
   promiseRoute.scripts.actions[1].function = "function onBeforeSubmit(context) { if (context.isDraft) return true; return (\nPromise.resolve(true)\n); }";
-  assert.equal(checkTrust(sourceDraft, promiseRoute).diagnostics.some((item) =>
+  assert.equal(checkTrust(trustSourceDraft, promiseRoute).diagnostics.some((item) =>
     item.code === "dsl.scripts.before_submit_promise_forbidden"
   ), true);
 });

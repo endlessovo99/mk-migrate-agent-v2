@@ -99,9 +99,18 @@ export function detailRowLifecycleCandidate(parts, formRules, sourceRef) {
       scriptSourceFamily(rule.meta?.sourceJsp) === sourceFamily
     )
     .map((rule) => rule.id);
-  if (!nativeRules.length) return undefined;
+  const reviewRules = (formRules?.review?.excludedRules || [])
+    .filter((rule) =>
+      rule?.code === "form_rule.run_when_not_persistable" &&
+      sourceFamily &&
+      scriptSourceFamily(rule.sourceJsp) === sourceFamily
+    )
+    .map((rule) => rule.ruleId)
+    .filter(Boolean);
+  if (!nativeRules.length && !reviewRules.length) return undefined;
   const recipe = detailRowRecipe("detail_row_lifecycle", parts, {
     nativeRuleIds: nativeRules,
+    reviewRuleIds: reviewRules,
     rowLifecycle: {
       existingRows: "on_load_initialization",
       addedRows: "native_detail_control_event",
@@ -111,14 +120,24 @@ export function detailRowLifecycleCandidate(parts, formRules, sourceRef) {
   });
   return {
     coverage: {
-      status: "partial",
+      status: nativeRules.length ? "partial" : "uncovered",
       nativeRules,
-      residuals: [{
-        code: "script.residual.detail_row_lifecycle_review_required",
-        type: "detailRowLifecycleReviewRequired",
-        message: "Native rules cover row linkage, but Agent Review must decide how to translate existing-row initialization and lifecycle semantics.",
-        evidence: sourceRef
-      }]
+      residuals: [
+        ...reviewRules.map((ruleId) => ({
+          code: "script.residual.form_rule_needs_review",
+          type: "formRuleNeedsReview",
+          message: `Gated form rule ${ruleId} must remain view-status guarded script behavior.`,
+          evidence: ruleId
+        })),
+        {
+          code: "script.residual.detail_row_lifecycle_review_required",
+          type: "detailRowLifecycleReviewRequired",
+          message: nativeRules.length
+            ? "Native rules cover row linkage, but Agent Review must decide how to translate existing-row initialization and lifecycle semantics."
+            : "Agent Review must translate gated row linkage together with existing-row initialization and lifecycle semantics.",
+          evidence: sourceRef
+        }
+      ]
     },
     recipe
   };

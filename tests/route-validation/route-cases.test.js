@@ -250,20 +250,29 @@ describe("offline Route-validation", { concurrency: false }, () => {
 
     assert.equal(result.execution.readback.form.formRules.displayRuleCount, 2);
     assert.equal(result.execution.readback.form.formRules.requireRuleCount, 2);
+    const nativeRules = [
+      ...result.execution.readback.form.formRules.displayRules,
+      ...result.execution.readback.form.formRules.requireRules
+    ];
     assert.equal(
-      result.execution.readback.form.formRules.displayRules.every((rule) =>
-        rule.effects.length === 1 && rule.effects[0].target === "fd_route_detail"
-      ),
-      true
-    );
-    assert.equal(
-      result.execution.readback.form.formRules.requireRules.every((rule) =>
-        rule.effects.length === 1 && rule.effects[0].target === "fd_route_detail"
-      ),
+      nativeRules.every((rule) => (
+        rule.effects.length === 1 &&
+        rule.effects[0].target === "fd_route_detail" &&
+        rule.conditions.length === 1 &&
+        rule.conditions[0].field === "$formula" &&
+        rule.conditions[0].value.includes("MKXFORM.viewStatus") &&
+        rule.conditions[0].value.includes("${data.biz.fd_route_type}") &&
+        JSON.stringify(rule.conditions[0].varIds) === JSON.stringify(["fd_route_type"])
+      )),
       true
     );
     assert.equal(result.dsl.scripts.actions[0].translationStatus, "omitted");
-    assert.deepEqual(result.dsl.scripts.actions[0].coverage.nativeRules, ["linkage.fd_route_type.contains.A"]);
+    assert.deepEqual(result.dsl.scripts.actions[0].coverage, {
+      status: "covered",
+      nativeRules: ["linkage.fd_route_type.contains.A"],
+      residuals: []
+    });
+    assert.equal(result.execution.readback.form.scripts.persistedActionCount, 0);
 
     const conditionStage = result.execution.apiStages.find((stage) => stage.name === "resolveConditionOrgs");
     assert.deepEqual(conditionStage, {

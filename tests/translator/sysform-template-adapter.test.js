@@ -268,6 +268,10 @@ describe("translateSysFormTemplateXml", () => {
       [["fd_detail", "detailTable"], ["fd_total", "number"]]
     );
     assert.deepEqual(
+      dsl.form.fields.find((field) => field.id === "fd_detail")?.columns.map((column) => column.id),
+      ["fd_amount"]
+    );
+    assert.deepEqual(
       dsl.form.layout.rows[0].cells.map((cell) => cell.fieldIds),
       [["fd_detail", "fd_total"]]
     );

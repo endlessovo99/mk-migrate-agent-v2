@@ -136,6 +136,43 @@ describe("executor data-only fields and view gates", () => {
     assert.equal(verifyTemplate(dsl, template).ok, true);
   });
 
+  for (const [scenario, functionText] of [
+    [
+      "inside an unreachable branch",
+      `function onLoad() {
+        if (false) {
+          /* mk-migrate:view-status=add,edit */
+          if (MKXFORM.viewStatus !== "add" && MKXFORM.viewStatus !== "edit") return;
+        }
+        MKXFORM.setValue("fd_subject", "leaked");
+      }`
+    ],
+    [
+      "after a side effect",
+      `function onLoad() {
+        MKXFORM.setValue("fd_subject", "leaked");
+        /* mk-migrate:view-status=add,edit */
+        if (MKXFORM.viewStatus !== "add" && MKXFORM.viewStatus !== "edit") return;
+      }`
+    ]
+  ]) {
+    it(`injects a real leading guard when matching guard text appears ${scenario}`, () => {
+      const dsl = sampleTrustedDsl({
+        workflow: null,
+        scripts: {
+          actions: [mappedLoadAction("edit-load", { viewStatusIn: ["add", "edit"] }, functionText)]
+        }
+      });
+      const template = projectTemplate(dsl);
+      const config = xformConfig(template);
+      const attr = JSON.parse(config.attribute.formAttr);
+      const persisted = attr.controlAction.global.onLoad[0];
+
+      assert.deepEqual(runPersistedAction(persisted, "view"), []);
+      assert.equal(verifyTemplate(dsl, template).ok, true);
+    });
+  }
+
   it("fails readback when a data-only field becomes displayable or enters layout", () => {
     const dsl = dataOnlyDsl();
     const displayable = persistAndVerify(dsl, {

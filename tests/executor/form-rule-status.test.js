@@ -31,10 +31,9 @@ describe("native form-rule materialization", () => {
     );
   });
 
-  localCorpusIt("writes nine target-fixture linkage rules including detail-table containers", () => {
+  localCorpusIt("writes only non-conflicting target-fixture linkage rules with formula gates", () => {
     const dsl = draftSourceDraft(cleanSourceFile(targetFixture));
     const executable = dsl.formRules.linkage.filter((rule) => rule.translationStatus === "executable");
-    const mergedJsx = executable.find((rule) => rule.meta.sourceRuleIds?.length === 4);
     const template = projectTemplate(dsl);
     const formRule = formAttr(template).formRule;
     const allRules = [...formRule.display, ...formRule.require];
@@ -43,8 +42,9 @@ describe("native form-rule materialization", () => {
       .map((model) => model.fdTableName)
       .sort();
 
-    assert.equal(formRule.display.length, 18);
-    assert.equal(formRule.require.length, 18);
+    assert.equal(executable.length, 8);
+    assert.equal(formRule.display.length, 16);
+    assert.equal(formRule.require.length, 16);
     assert.deepEqual(
       [...new Set(allRules.map((rule) => rule.meta.sourceRuleId))].sort(),
       executable.map((rule) => rule.id).sort()
@@ -69,15 +69,14 @@ describe("native form-rule materialization", () => {
       ["fd_3e501d840bbb6e", "fd_3e501d85c8795a", "fd_3e501d87ae5c80"].sort()
     );
 
-    const mergedDisplayRules = formRule.display.filter((rule) => rule.meta.sourceRuleId === mergedJsx.id);
-    const whenRule = mergedDisplayRules.find((rule) => rule.meta.branch === "when");
-    const elseRule = mergedDisplayRules.find((rule) => rule.meta.branch === "else");
-    assert.equal(whenRule.condition, "2");
-    assert.equal(whenRule.choices.items.length, 4);
-    assert.equal(whenRule.choices.items.every((item) => item.operate === "include"), true);
-    assert.equal(elseRule.condition, "1");
-    assert.equal(elseRule.choices.items.length, 4);
-    assert.equal(elseRule.choices.items.every((item) => item.operate === "notInclude"), true);
+    assert.equal(allRules.every((rule) => rule.condition === "1"), true);
+    assert.equal(allRules.every((rule) => rule.choices.items.length === 1), true);
+    assert.equal(allRules.every((rule) => rule.choices.items[0].condNodeType === "formula"), true);
+    assert.equal(allRules.every((rule) => /MKXFORM\.viewStatus/.test(rule.choices.items[0].value.script)), true);
+    assert.equal(
+      allRules.some((rule) => rule.result.some((result) => result.fieldName === "fd_jsx_row")),
+      false
+    );
   });
 });
 

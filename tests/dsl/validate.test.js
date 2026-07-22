@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { validateMigrationDsl } from "../../src/dsl/schema.js";
+import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
 import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("validateMigrationDsl", () => {
@@ -557,7 +558,12 @@ describe("validateMigrationDsl", () => {
           ...pendingAction,
           function: "",
           translationStatus: "omitted",
-          coverage: { status: "covered", nativeRules: ["linkage.fd_subject.contains.A"], residuals: [] }
+          coverage: {
+            status: "covered",
+            nativeRules: [],
+            staticProps: [{ fieldId: "fd_subject", prop: "required", value: true }],
+            residuals: []
+          }
         }]
       }
     }), { mode: "execute" });
@@ -613,7 +619,7 @@ describe("validateMigrationDsl", () => {
       }
     }), { mode: "execute" });
 
-    assert.equal(accepted.ok, true);
+    assert.equal(accepted.ok, true, JSON.stringify(accepted.diagnostics));
     assert.equal(rejected.ok, false);
     assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.scripts.dom_api_forbidden"), true);
   });
@@ -630,6 +636,10 @@ describe("validateMigrationDsl", () => {
           tableId: "fd_detail",
           controlId: "fd_name",
           function: "function onChange(value, rowNum, parentRowNum) {\n  MKXFORM.updateControlStyle(\"${table:fd_detail}.fd_name\", rowNum, { display: value === \"gh\" ? \"block\" : \"none\" })\n}",
+          branchProvenance: buildScriptBranchProvenance({
+            event: "onChange",
+            source: "function onChange(value, rowNum, parentRowNum) { return value === 'gh' ? 'block' : 'none' }"
+          }),
           translationStatus: "mapped",
           coverage: { status: "translated", nativeRules: [], residuals: [] },
           functionMappings: [{
@@ -727,7 +737,7 @@ describe("validateMigrationDsl", () => {
       }
     }), { mode: "execute" });
 
-    assert.equal(accepted.ok, true);
+    assert.equal(accepted.ok, true, JSON.stringify(accepted.diagnostics));
     assert.deepEqual(accepted.diagnostics, []);
     assert.equal(rejected.ok, false);
     assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.scripts.call_unsupported"), true);
@@ -735,6 +745,64 @@ describe("validateMigrationDsl", () => {
       rejected.diagnostics.some((item) => item.details?.calls?.some((call) => call.name === "localStorage.getItem")),
       true
     );
+  });
+
+  it("rejects coercion-hook and logical-assignment branches that bypass action input provenance", () => {
+    const sourceProvenance = buildScriptBranchProvenance({
+      event: "onChange",
+      source: "AttachXFormValueChangeEventById('fd_subject', function(value) { legacySync(value); })"
+    });
+    const functions = [
+      [
+        "function onChange(value) {",
+        "  String({ toString: function() {",
+        "    var unrelated = MKXFORM.getValue('fd_amount')",
+        "    if (unrelated === 'A') MKXFORM.setValue('fd_subject', 'matched')",
+        "    return ''",
+        "  } })",
+        "}"
+      ].join("\n"),
+      [
+        "function onChange(value) {",
+        "  var object = {}",
+        "  object.toString = function() {",
+        "    var unrelated = MKXFORM.getValue('fd_amount')",
+        "    if (unrelated === 'A') MKXFORM.setValue('fd_subject', 'matched')",
+        "    return ''",
+        "  }",
+        "  String(object)",
+        "}"
+      ].join("\n"),
+      ...["&&=", "||=", "??="].map((operator) => [
+        "function onChange(value) {",
+        "  var unrelated = MKXFORM.getValue('fd_amount')",
+        `  unrelated ${operator} MKXFORM.setValue('fd_subject', 'matched')`,
+        "}"
+      ].join("\n"))
+    ];
+
+    for (const functionText of functions) {
+      const result = validateMigrationDsl(sampleTrustedDsl({
+        workflow: undefined,
+        scripts: {
+          actions: [mappedAction({
+            id: "fd_subject.hiddenBranch",
+            controlId: "fd_subject",
+            function: functionText,
+            branchProvenance: sourceProvenance
+          })]
+        }
+      }), { mode: "execute" });
+
+      assert.equal(result.ok, false, functionText);
+      assert.equal(
+        result.diagnostics.some((item) => (
+          item.code === "dsl.scripts.condition_operand_provenance_unverified"
+        )),
+        true,
+        JSON.stringify(result.diagnostics)
+      );
+    }
   });
 
   it("requires coverage and mapping evidence for every mapped script", () => {
@@ -787,7 +855,7 @@ describe("validateMigrationDsl", () => {
       }
     }), { mode: "execute" });
 
-    assert.equal(accepted.ok, true);
+    assert.equal(accepted.ok, true, JSON.stringify(accepted.diagnostics));
     assert.deepEqual(accepted.diagnostics, []);
     assert.equal(rejected.ok, false);
     assert.equal(
@@ -947,7 +1015,7 @@ describe("validateMigrationDsl", () => {
     assert.equal(rejectedTablePlaceholder.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
     assert.equal(rejectedDetailId.ok, false);
     assert.equal(rejectedDetailId.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
-    assert.equal(acceptedMarker.ok, true);
+    assert.equal(acceptedMarker.ok, true, JSON.stringify(acceptedMarker.diagnostics));
     assert.equal(rejectedRowId.ok, false);
     assert.equal(rejectedRowId.diagnostics.some((item) => item.code === "dsl.scripts.set_field_attr_target_invalid"), true);
     assert.equal(rejectedSecondaryMarker.ok, false);
@@ -1498,14 +1566,15 @@ function mappedAction(overrides = {}) {
   const fallbackFunction = overrides.tableId
     ? `function ${name}(value, rowNum) {\n  MKXFORM.setValue('fd_amount', value)\n}`
     : `function ${name}(value) {\n  MKXFORM.setValue('fd_amount', value)\n}`;
-  return {
+  const functionText = overrides.function || fallbackFunction;
+  const action = {
     id: overrides.id || `${overrides.controlId || "fd_subject"}.${event}`,
     name,
     event,
     scope: "control",
     controlId: overrides.controlId || "fd_subject",
     tableId: overrides.tableId,
-    function: overrides.function || fallbackFunction,
+    function: functionText,
     translationStatus: "mapped",
     coverage: overrides.coverage || { status: "translated", nativeRules: [], residuals: [] },
     functionMappings: overrides.functionMappings || [{
@@ -1515,6 +1584,13 @@ function mappedAction(overrides = {}) {
       reviewRequired: false
     }]
   };
+  if (["onChange", "onLoad"].includes(event)) {
+    action.branchProvenance = overrides.branchProvenance || buildScriptBranchProvenance({
+      event,
+      source: functionText
+    });
+  }
+  return action;
 }
 
 function selectForm() {

@@ -5,7 +5,9 @@ import { join } from "node:path";
 import { runAgentReview } from "../../src/agent-review/index.js";
 import { buildAgentReviewPrompt } from "../../src/agent-review/prompt.js";
 import { OpenAIResponsesReviewProvider } from "../../src/agent-review/provider.js";
+import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
 import { main } from "../../src/cli/main.js";
+import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
 import { checkTrust } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
@@ -26,7 +28,7 @@ describe("agent-review", () => {
     });
     const trust = checkTrust(sourceDraft, result.dsl);
 
-    assert.equal(result.ok, true);
+    assert.equal(result.ok, true, JSON.stringify(result.report?.diagnostics || result.diagnostics));
     assert.equal(result.dsl.artifact, "migration-dsl");
     assert.equal(result.dsl.trust.level, "trusted");
     assert.equal(result.dsl.trust.executable, true);
@@ -243,37 +245,30 @@ describe("agent-review", () => {
       ...form.layout.mkTree[1],
       sourceMarkers: ["fd_detail_row"]
     };
+    const sourceDraft = sampleSourceDraft({
+      workflow: undefined,
+      scripts: {
+        source: "sysform-jsp",
+        sources: [{
+          id: "fd_jsp.script.1",
+          sourceRef: "source.form.jsp.fd_jsp.script.1",
+          javascript: "AttachXFormValueChangeEventById('fd_subject', function(value){ common_dom_row_set_show_required_reset(\"fd_detail_row\", true, true, false); })",
+          functionAudit: { matched: [], violations: [] }
+        }]
+      }
+    });
+    const sourceAction = onlyDraftedScriptAction(sourceDraft);
     const dslDraft = sampleDraftDsl({
       form,
       workflow: undefined,
       scripts: {
         source: "sysform-jsp",
         actions: [{
-          id: "fd_subject.onChange.1",
-          name: "onChange",
-          event: "onChange",
-          scope: "control",
-          controlId: "fd_subject",
+          ...sourceAction,
           function: "function onChange(value) {\n  // Source JSP JavaScript:\n  // common_dom_row_set_show_required_reset(\"fd_detail_row\", true, true, false);\n}",
           translationStatus: "needs_review",
-          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
           coverage: { status: "none", nativeRules: [], residuals: [] },
           functionMappings: []
-        }]
-      }
-    });
-    const sourceDraft = sampleSourceDraft({
-      form: {
-        ...sampleSourceDraft().form,
-        jsps: [{
-          id: "fd_jsp",
-          sourceRef: "source.form.jsp.fd_jsp",
-          scripts: [{
-            id: "fd_jsp.script.1",
-            sourceRef: "source.form.jsp.fd_jsp.script.1",
-            javascript: "common_dom_row_set_show_required_reset(\"fd_detail_row\", true, true, false);",
-            functionAudit: { matched: [], violations: [] }
-          }]
         }]
       }
     });
@@ -298,7 +293,7 @@ describe("agent-review", () => {
           {
             op: "replace",
             path: "/scripts/actions/0/function",
-            value: "function onChange(value) {\n  MKXFORM.setFieldAttr(\"fd_detail_row\", value ? 5 : 4)\n  MKXFORM.setFieldAttr(\"fd_detail_row\", value ? 3 : 6)\n}",
+            value: "function onChange(value) {\n  MKXFORM.setFieldAttr(\"fd_detail_row\", 5)\n  MKXFORM.setFieldAttr(\"fd_detail_row\", 3)\n}",
             sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
             evidence: ["Legacy common_dom_row_set_show_required_reset targets fd_detail_row."],
             confidence: 0.91,
@@ -371,7 +366,7 @@ describe("agent-review", () => {
       reviewedAt: "2026-07-06T00:00:00.000Z"
     });
 
-    assert.equal(result.ok, true);
+    assert.equal(result.ok, true, JSON.stringify(result.report?.diagnostics || result.diagnostics));
     assert.equal(provider.repairCalls.length, 1);
     assert.equal(provider.repairCalls[0].attempt, 1);
     assert.equal(provider.repairCalls[0].diagnostics.some((item) => item.code === "agent.patch.path_missing"), true);
@@ -421,6 +416,7 @@ describe("agent-review", () => {
 
   it("applies guarded script translation patches", async () => {
     const sourceDraft = sampleSourceDraft({
+      workflow: undefined,
       scripts: {
         source: "sysform-jsp",
         sources: [{
@@ -439,18 +435,15 @@ describe("agent-review", () => {
         }]
       }
     });
+    const sourceAction = onlyDraftedScriptAction(sourceDraft);
     const dslDraft = sampleDraftDsl({
       workflow: undefined,
       scripts: {
         source: "sysform-jsp",
         actions: [{
-          id: "fd_jsp.script.1.event.1",
-          name: "onLoad",
-          event: "onLoad",
-          scope: "global",
+          ...sourceAction,
           function: "function onLoad() {\n  // review required\n}",
           translationStatus: "needs_review",
-          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
           coverage: { status: "uncovered", nativeRules: [], residuals: [] },
           functionMappings: []
         }]
@@ -578,43 +571,52 @@ describe("agent-review", () => {
   });
 
   it("allows native-covered script actions to be omitted with empty function text", async () => {
+    const sourceRef = "source.form.jsp.fd_jsp.script.1";
+    const sourceActionKey = `${sourceRef}#onChange@0`;
+    const nativeRule = {
+      id: "linkage.fd_amount.contains.A",
+      trigger: "change",
+      source: "fd_amount",
+      logic: "and",
+      when: [{ field: "fd_amount", op: "contains", value: "A" }],
+      effects: [
+        { type: "visible", target: "fd_subject_row", value: true },
+        { type: "required", target: "fd_subject_row", value: true }
+      ],
+      else: [
+        { type: "visible", target: "fd_subject_row", value: false },
+        { type: "required", target: "fd_subject_row", value: false }
+      ],
+      meta: { sourceJsp: sourceRef, sourceActionKey },
+      translationStatus: "executable"
+    };
     const sourceDraft = sampleSourceDraft({
+      workflow: undefined,
+      formRules: { linkage: [nativeRule] },
       scripts: {
         source: "sysform-jsp",
         sources: [{
           id: "fd_jsp.script.1",
-          sourceRef: "source.form.jsp.fd_jsp.script.1",
-          javascript: "AttachXFormValueChangeEventById('fd_amount', function(value){ common_dom_row_set_show_required_reset('fd_subject_row', true, true, false) })",
+          sourceRef,
+          javascript: "AttachXFormValueChangeEventById('fd_amount', function(value){ if (value.indexOf('A') >= 0) { common_dom_row_set_show_required_reset('fd_subject_row', true, true, false); } else { common_dom_row_set_show_required_reset('fd_subject_row', false, false, false); } })",
           functionAudit: { matched: [], violations: [] }
         }]
       }
     });
+    sourceDraft.form.layout.rows[0].sourceMarkers = ["fd_subject_row"];
+    const sourceAction = onlyDraftedScriptAction(sourceDraft);
+    const form = sampleForm();
+    form.layout.mkTree[0].sourceMarkers = ["fd_subject_row"];
     const dslDraft = sampleDraftDsl({
+      form,
       workflow: undefined,
-      formRules: {
-        linkage: [{
-          id: "linkage.fd_amount.contains.A",
-          trigger: "change",
-          source: "fd_amount",
-          logic: "and",
-          when: [{ field: "fd_amount", op: "contains", value: "A" }],
-          effects: [{ type: "visible", target: "fd_subject", value: true }],
-          else: [{ type: "visible", target: "fd_subject", value: false }],
-          meta: { sourceJsp: "source.form.jsp.fd_jsp.script.1" },
-          translationStatus: "executable"
-        }]
-      },
+      formRules: { linkage: [nativeRule] },
       scripts: {
         source: "sysform-jsp",
         actions: [{
-          id: "fd_jsp.script.1.event.1",
-          name: "onChange",
-          event: "onChange",
-          scope: "control",
-          controlId: "fd_amount",
+          ...sourceAction,
           function: "function onChange(value) {\n  // review required\n}",
           translationStatus: "needs_review",
-          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
           coverage: { status: "uncovered", nativeRules: [], residuals: [] },
           functionMappings: []
         }]
@@ -654,20 +656,76 @@ describe("agent-review", () => {
       }))
     });
 
-    assert.equal(result.ok, true);
+    assert.equal(result.ok, true, JSON.stringify(result.report?.diagnostics || result.diagnostics));
     assert.equal(result.dsl.scripts.actions[0].translationStatus, "omitted");
     assert.equal(result.dsl.scripts.actions[0].function, "");
     assert.equal(result.dsl.scripts.actions[0].coverage.status, "covered");
   });
 
-  it("closes already native-covered JSP actions even when source contains DOM helper noise", async () => {
+  it("rejects gated form rules as Agent Review native coverage", () => {
+    const sourceRef = "source.form.jsp.fd_jsp.script.gated";
+    const ruleId = "linkage.fd_amount.contains.A";
+    const dslDraft = sampleDraftDsl({
+      workflow: undefined,
+      formRules: {
+        linkage: [{
+          id: ruleId,
+          trigger: "change",
+          source: "fd_amount",
+          logic: "and",
+          when: [{ field: "fd_amount", op: "contains", value: "A" }],
+          effects: [{ type: "visible", target: "fd_subject", value: true }],
+          else: [{ type: "visible", target: "fd_subject", value: false }],
+          meta: {
+            sourceJsp: sourceRef,
+            runWhen: { viewStatusIn: ["add", "edit"] }
+          },
+          translationStatus: "executable"
+        }]
+      },
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_jsp.script.gated.event.1",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          controlId: "fd_amount",
+          function: "function onChange(value) { /* review */ }",
+          translationStatus: "needs_review",
+          sourceRefs: [sourceRef],
+          coverage: { status: "uncovered", nativeRules: [], residuals: [] },
+          functionMappings: [],
+          runWhen: { viewStatusIn: ["add", "edit"] }
+        }]
+      }
+    });
+    const result = applyEvidenceBackedPatches(dslDraft, [{
+      op: "replace",
+      path: "/scripts/actions/0/coverage",
+      value: { status: "covered", nativeRules: [ruleId], residuals: [] },
+      sourceRefs: [sourceRef],
+      evidence: ["The rule has matching control and source evidence but carries an unpersistable gate."],
+      confidence: 0.91,
+      rationale: "Attempt to reuse a gated form rule as native coverage."
+    }], { sourceRefs: new Set([sourceRef]) });
+
+    assert.equal(result.ok, false);
+    assert.equal(
+      result.diagnostics.some((item) => item.code === "agent.patch.native_rule_action_mismatch"),
+      true
+    );
+  });
+
+  it("rejects native rule coverage attached to a different action event", async () => {
+    const sourceRef = "source.form.jsp.fd_jsp.script.1";
     const sourceDraft = sampleSourceDraft({
       scripts: {
         source: "sysform-jsp",
         sources: [{
           id: "fd_jsp.script.1",
-          sourceRef: "source.form.jsp.fd_jsp.script.1",
-          javascript: "AttachXFormValueChangeEventById('fd_amount', function(value){ setITTableValidate(); common_dom_row_set_show_required_reset('fd_subject_row', true, true, false); document.getElementsByTagName('img')[0].setAttribute('onclick','x') })",
+          sourceRef,
+          javascript: "Com_AddEventListener(window, 'load', function(){ /* review */ })",
           functionAudit: { matched: [], violations: [] }
         }]
       }
@@ -683,7 +741,713 @@ describe("agent-review", () => {
           when: [{ field: "fd_amount", op: "contains", value: "A" }],
           effects: [{ type: "visible", target: "fd_subject", value: true }],
           else: [{ type: "visible", target: "fd_subject", value: false }],
-          meta: { sourceJsp: "source.form.jsp.fd_jsp.script.1" },
+          meta: { sourceJsp: sourceRef },
+          translationStatus: "executable"
+        }]
+      },
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_jsp.script.1.event.1",
+          name: "onLoad",
+          event: "onLoad",
+          scope: "global",
+          function: "function onLoad() { /* review */ }",
+          translationStatus: "needs_review",
+          sourceRefs: [sourceRef],
+          coverage: { status: "uncovered", nativeRules: [], residuals: [] },
+          functionMappings: []
+        }]
+      }
+    });
+    const result = await runAgentReview(sourceDraft, dslDraft, {
+      provider: new FakeReviewProvider(reviewResponse({
+        patches: [{
+          op: "replace",
+          path: "/scripts/actions/0/coverage",
+          value: { status: "covered", nativeRules: ["linkage.fd_amount.contains.A"], residuals: [] },
+          sourceRefs: [sourceRef],
+          evidence: ["The rule and action occur in the same JSP source."],
+          confidence: 0.91,
+          rationale: "Incorrectly reuse control-change coverage for onLoad."
+        }]
+      }))
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(
+      result.report.diagnostics.some((item) => item.code === "agent.patch.native_rule_action_mismatch"),
+      true
+    );
+  });
+
+  it("rejects shrinking deterministic native rule coverage or omitting its residual behavior", async () => {
+    const sourceRef = "source.form.jsp.fd_jsp.script.1";
+    const sourceDraft = sampleSourceDraft({
+      scripts: {
+        source: "sysform-jsp",
+        sources: [{
+          id: "fd_jsp.script.1",
+          sourceRef,
+          javascript: "AttachXFormValueChangeEventById('fd_amount', function(value){ /* A/B */ })",
+          functionAudit: { matched: [], violations: [] }
+        }]
+      }
+    });
+    const rules = ["A", "B"].map((value) => ({
+      id: `linkage.fd_amount.contains.${value}`,
+      trigger: "change",
+      source: "fd_amount",
+      logic: "and",
+      when: [{ field: "fd_amount", op: "contains", value }],
+      effects: [{ type: "visible", target: "fd_subject", value: true }],
+      else: [{ type: "visible", target: "fd_subject", value: false }],
+      meta: { sourceJsp: sourceRef },
+      translationStatus: "executable"
+    }));
+    const dslDraft = sampleDraftDsl({
+      workflow: undefined,
+      formRules: { linkage: rules },
+      scripts: {
+        source: "sysform-jsp",
+        actions: [{
+          id: "fd_jsp.script.1.event.1",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          controlId: "fd_amount",
+          function: "function onChange(value) { /* review */ }",
+          translationStatus: "needs_review",
+          sourceRefs: [sourceRef],
+          coverage: {
+            status: "partial",
+            nativeRules: rules.map((rule) => rule.id),
+            residuals: [{ code: "script.residual.field_value_assignment" }]
+          },
+          functionMappings: []
+        }]
+      }
+    });
+    const result = await runAgentReview(sourceDraft, dslDraft, {
+      provider: new FakeReviewProvider(reviewResponse({
+        patches: [{
+          op: "replace",
+          path: "/scripts/actions/0/coverage",
+          value: { status: "covered", nativeRules: [rules[1].id], residuals: [] },
+          sourceRefs: [sourceRef],
+          evidence: ["Only the final B branch was selected."],
+          confidence: 0.91,
+          rationale: "Incorrectly claim one branch as complete coverage."
+        }]
+      }))
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(
+      result.report.diagnostics.some((item) =>
+        item.code === "agent.patch.native_rules_deterministic_evidence_changed" ||
+        item.code === "agent.patch.native_rules_incomplete"
+      ),
+      true
+    );
+
+    const omission = await runAgentReview(sourceDraft, dslDraft, {
+      provider: new FakeReviewProvider(reviewResponse({
+        patches: [
+          {
+            op: "replace",
+            path: "/scripts/actions/0/function",
+            value: "",
+            sourceRefs: [sourceRef],
+            evidence: ["The native rules cover visibility but not the helper assignment."],
+            confidence: 0.91,
+            rationale: "Incorrectly omit the remaining helper assignment."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/translationStatus",
+            value: "omitted",
+            sourceRefs: [sourceRef],
+            evidence: ["All native rule ids are retained."],
+            confidence: 0.91,
+            rationale: "Incorrectly close an action with deterministic residual behavior."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/functionMappings",
+            value: [{
+              source: "legacy row visibility",
+              target: "native formRules.linkage",
+              basis: "native-form-rule",
+              reviewRequired: false
+            }],
+            sourceRefs: [sourceRef],
+            evidence: ["The row visibility portion is native."],
+            confidence: 0.91,
+            rationale: "Record only the native portion."
+          },
+          {
+            op: "replace",
+            path: "/scripts/actions/0/coverage",
+            value: { status: "covered", nativeRules: rules.map((rule) => rule.id), residuals: [] },
+            sourceRefs: [sourceRef],
+            evidence: ["All matching native rule ids are present."],
+            confidence: 0.91,
+            rationale: "Incorrectly clear a deterministic field assignment residual."
+          }
+        ]
+      }))
+    });
+
+    assert.equal(omission.ok, false);
+    assert.equal(
+      omission.report.diagnostics.some((item) => item.code === "agent.patch.deterministic_residual_omitted"),
+      true
+    );
+  });
+
+  it("rejects a non-empty D-only helper assignment that clears the real A/B/C/D/empty residual branches", async () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" &&
+      action.coverage?.residuals?.filter((residual) => (
+        residual.code === "script.residual.field_value_assignment"
+      )).length === 5
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const assignmentResiduals = action.coverage.residuals.filter((residual) => (
+      residual.code === "script.residual.field_value_assignment"
+    ));
+    assert.deepEqual(
+      assignmentResiduals.map((residual) => residual.evidence),
+      [
+        "isTypeC.value=\"A\"",
+        "isTypeC.value=\"B\"",
+        "isTypeC.value=\"C\"",
+        "isTypeC.value=\"D\"",
+        "isTypeC.value=\"\""
+      ]
+    );
+    const target = assignmentResiduals[0].target;
+    const dOnlyFunction = [
+      "function onChange(value) {",
+      `  // MKXFORM.setValue(${JSON.stringify(target)}, \"A\") is only a comment`,
+      `  var fakeBranch = ${JSON.stringify(`MKXFORM.setValue(${JSON.stringify(target)}, \"B\")`)}`,
+      `  MKXFORM.setValue(${JSON.stringify(target)}, \"D\")`,
+      "}"
+    ].join("\n");
+    const rejected = applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, dOnlyFunction),
+      {
+        sourceRefs: collectSourceRefs(sourceDraft),
+        sourceDraft
+      }
+    );
+
+    assert.equal(rejected.ok, false);
+    const diagnostic = rejected.diagnostics.find((item) => (
+      item.code === "agent.patch.field_value_assignment_incomplete"
+    ));
+    assert.ok(diagnostic);
+    assert.deepEqual(
+      diagnostic.details.missingAssignments.map((assignment) => assignment.value),
+      ["\"A\"", "\"B\"", "\"C\"", "\"\""]
+    );
+    assert.deepEqual(diagnostic.details.observedAssignments, [{ target, value: "\"D\"" }]);
+  });
+
+  it("rejects the former A/B/C-only onLoad mapping that hard-hides the D row", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onLoad" && action.runWhen?.viewStatusIn?.includes("edit")
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const incompleteFunction = [
+      "function onLoad() {",
+      "  var value = MKXFORM.getValue(\"fd_3c66895473ff5c\")",
+      "  var showOne = value === \"A\"",
+      "  var showTwo = value === \"B\"",
+      "  var showThree = value === \"C\"",
+      "  MKXFORM.setFieldAttr(\"fd_one_row\", showOne ? 5 : 4)",
+      "  MKXFORM.setFieldAttr(\"fd_one_row\", showOne ? 3 : 6)",
+      "  MKXFORM.setFieldAttr(\"fd_two_row\", showTwo ? 5 : 4)",
+      "  MKXFORM.setFieldAttr(\"fd_two_row\", showTwo ? 3 : 6)",
+      "  MKXFORM.setFieldAttr(\"fd_three_row\", showThree ? 5 : 4)",
+      "  MKXFORM.setFieldAttr(\"fd_three_row\", showThree ? 3 : 6)",
+      "  MKXFORM.setFieldAttr(\"fd_four_row\", 4)",
+      "  MKXFORM.setFieldAttr(\"fd_four_row\", 6)",
+      "}"
+    ].join("\n");
+    const rejected = applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, incompleteFunction),
+      {
+        sourceRefs: collectSourceRefs(sourceDraft),
+        sourceDraft
+      }
+    );
+
+    assert.equal(rejected.ok, false);
+    const diagnostic = rejected.diagnostics.find((item) => (
+      item.code === "agent.patch.row_marker_effect_incomplete"
+    ));
+    assert.ok(diagnostic);
+    assert.deepEqual(diagnostic.details.missingEffects, [
+      { target: "fd_four_row", attribute: 5 },
+      { target: "fd_four_row", attribute: 3 }
+    ]);
+  });
+
+  it("accepts edit onLoad only when row conditions derive from the original source field", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onLoad" && action.runWhen?.viewStatusIn?.includes("edit")
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const reviewedFunction = (fieldId) => [
+      "function onLoad() {",
+      `  var rawValue = MKXFORM.getValue(${JSON.stringify(fieldId)})`,
+      "  var value = Array.isArray(rawValue) ? rawValue[0] : rawValue",
+      ...completeOnLoadRowBranch("if", "A", "fd_one_row"),
+      ...completeOnLoadRowBranch("else if", "B", "fd_two_row"),
+      ...completeOnLoadRowBranch("else if", "C", "fd_three_row"),
+      ...completeOnLoadRowBranch("else if", "D", "fd_four_row"),
+      ...completeOnLoadRowBranch("else", "", undefined),
+      "}"
+    ].join("\n");
+    const apply = (fieldId) => applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, reviewedFunction(fieldId)),
+      { sourceRefs: collectSourceRefs(sourceDraft), sourceDraft }
+    );
+
+    const correct = apply("fd_3c66895473ff5c");
+    const wrong = apply("fd_3c6a790de91eb0");
+
+    assert.equal(correct.ok, true, JSON.stringify(correct.diagnostics));
+    assert.equal(wrong.ok, false);
+    assert.equal(
+      wrong.diagnostics.some((item) => (
+        item.code === "agent.patch.row_marker_semantics_unverified" &&
+        item.details.conditionalReason === "target_row_condition_chain_changed" &&
+        item.details.conditionalDetails?.observedConditions?.every((condition) => (
+          condition.operand === "field:fd_3c6a790de91eb0"
+        ))
+      )),
+      true,
+      JSON.stringify(wrong.diagnostics)
+    );
+  });
+
+  it("rejects complete assignment and row calls hidden in an unreachable if(false) branch", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" &&
+      action.coverage?.residuals?.filter((residual) => (
+        residual.code === "script.residual.field_value_assignment"
+      )).length === 5
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const target = action.coverage.residuals.find((residual) => (
+      residual.code === "script.residual.field_value_assignment"
+    )).target;
+    const deadCodeFunction = [
+      "function onChange(value) {",
+      "  if (false) {",
+      ...["A", "B", "C", "D", ""].map((value) => (
+        `    MKXFORM.setValue(${JSON.stringify(target)}, ${JSON.stringify(value)})`
+      )),
+      ...["fd_one_row", "fd_two_row", "fd_three_row", "fd_four_row"].flatMap((marker) => [
+        `    MKXFORM.setFieldAttr(${JSON.stringify(marker)}, 5)`,
+        `    MKXFORM.setFieldAttr(${JSON.stringify(marker)}, 4)`,
+        `    MKXFORM.setFieldAttr(${JSON.stringify(marker)}, 3)`,
+        `    MKXFORM.setFieldAttr(${JSON.stringify(marker)}, 6)`
+      ]),
+      "  }",
+      "}"
+    ].join("\n");
+    const rejected = applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, deadCodeFunction),
+      {
+        sourceRefs: collectSourceRefs(sourceDraft),
+        sourceDraft
+      }
+    );
+
+    assert.equal(rejected.ok, false);
+    assert.equal(
+      rejected.diagnostics.some((item) => (
+        item.code === "agent.patch.field_value_assignment_semantics_unverified"
+      )),
+      true
+    );
+    assert.equal(
+      rejected.diagnostics.some((item) => item.code === "agent.patch.row_marker_native_effect_duplicated"),
+      true
+    );
+  });
+
+  it("rejects unconditional assignment and row-state enumeration without source branch association", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" &&
+      action.coverage?.residuals?.filter((residual) => (
+        residual.code === "script.residual.field_value_assignment"
+      )).length === 5
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const target = action.coverage.residuals.find((residual) => (
+      residual.code === "script.residual.field_value_assignment"
+    )).target;
+    const enumeratedFunction = [
+      "function onChange(value) {",
+      ...["A", "B", "C", "D", ""].map((value) => (
+        `  MKXFORM.setValue(${JSON.stringify(target)}, ${JSON.stringify(value)})`
+      )),
+      ...["fd_one_row", "fd_two_row", "fd_three_row", "fd_four_row"].flatMap((marker) => [
+        `  MKXFORM.setFieldAttr(${JSON.stringify(marker)}, 5)`,
+        `  MKXFORM.setFieldAttr(${JSON.stringify(marker)}, 4)`,
+        `  MKXFORM.setFieldAttr(${JSON.stringify(marker)}, 3)`,
+        `  MKXFORM.setFieldAttr(${JSON.stringify(marker)}, 6)`
+      ]),
+      "}"
+    ].join("\n");
+    const rejected = applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, enumeratedFunction),
+      {
+        sourceRefs: collectSourceRefs(sourceDraft),
+        sourceDraft
+      }
+    );
+
+    assert.equal(rejected.ok, false);
+    assert.equal(
+      rejected.diagnostics.some((item) => (
+        item.code === "agent.patch.field_value_assignment_semantics_unverified"
+      )),
+      true
+    );
+    assert.equal(
+      rejected.diagnostics.some((item) => item.code === "agent.patch.row_marker_native_effect_duplicated"),
+      true
+    );
+  });
+
+  it("rejects reordered else-if branches even when every assignment and row state is present", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" &&
+      action.coverage?.residuals?.filter((residual) => (
+        residual.code === "script.residual.field_value_assignment"
+      )).length === 5
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const target = action.coverage.residuals.find((residual) => (
+      residual.code === "script.residual.field_value_assignment"
+    )).target;
+    const reorderedFunction = [
+      "function onChange(value) {",
+      ...completeVisibilityBranch("if", "B", "fd_two_row", target),
+      ...completeVisibilityBranch("else if", "A", "fd_one_row", target),
+      ...completeVisibilityBranch("else if", "C", "fd_three_row", target),
+      ...completeVisibilityBranch("else if", "D", "fd_four_row", target),
+      ...completeVisibilityBranch("else", "", undefined, target),
+      "}"
+    ].join("\n");
+    const rejected = applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, reorderedFunction),
+      {
+        sourceRefs: collectSourceRefs(sourceDraft),
+        sourceDraft
+      }
+    );
+
+    assert.equal(rejected.ok, false);
+    const assignmentDiagnostic = rejected.diagnostics.find((item) => (
+      item.code === "agent.patch.field_value_assignment_semantics_unverified"
+    ));
+    assert.ok(assignmentDiagnostic);
+    assert.equal(assignmentDiagnostic.details.reason, "condition_chain_changed");
+    assert.equal(
+      rejected.diagnostics.some((item) => item.code === "agent.patch.row_marker_native_effect_duplicated"),
+      true
+    );
+  });
+
+  it("rejects condition operands that are undefined or declared from an unrelated field", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" &&
+      action.coverage?.residuals?.filter((residual) => (
+        residual.code === "script.residual.field_value_assignment"
+      )).length === 5
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const target = action.coverage.residuals.find((residual) => (
+      residual.code === "script.residual.field_value_assignment"
+    )).target;
+    const validLines = [
+      "function onChange(value) {",
+      ...completeVisibilityBranch("if", "A", "fd_one_row", target),
+      ...completeVisibilityBranch("else if", "B", "fd_two_row", target),
+      ...completeVisibilityBranch("else if", "C", "fd_three_row", target),
+      ...completeVisibilityBranch("else if", "D", "fd_four_row", target),
+      ...completeVisibilityBranch("else", "", undefined, target),
+      "}"
+    ];
+    const cases = [
+      ["undefined operand", [], "condition_not_statically_supported"],
+      ["declared unrelated field operand", [
+        `  var wrong = MKXFORM.getValue(${JSON.stringify(target)})`
+      ], "condition_chain_changed"]
+    ];
+
+    for (const [label, declarations, expectedReason] of cases) {
+      const reviewedFunction = [
+        validLines[0],
+        ...declarations,
+        ...validLines.slice(1)
+      ].join("\n").replaceAll("value.indexOf", "wrong.indexOf");
+      const rejected = applyEvidenceBackedPatches(
+        dslDraft,
+        assignmentClosurePatches(actionIndex, action, reviewedFunction),
+        {
+          sourceRefs: collectSourceRefs(sourceDraft),
+          sourceDraft
+        }
+      );
+
+      assert.equal(rejected.ok, false, label);
+      const diagnostic = rejected.diagnostics.find((item) => (
+        item.code === "agent.patch.field_value_assignment_semantics_unverified"
+      ));
+      assert.ok(diagnostic, label);
+      assert.equal(diagnostic.details.reason, expectedReason, label);
+      assert.equal(
+        rejected.diagnostics.some((item) => item.code === "agent.patch.row_marker_native_effect_duplicated"),
+        true,
+        label
+      );
+    }
+  });
+
+  it("rejects arbitrary member access derived from the onChange value parameter", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" &&
+      action.coverage?.residuals?.filter((residual) => (
+        residual.code === "script.residual.field_value_assignment"
+      )).length === 5
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const target = action.coverage.residuals.find((residual) => (
+      residual.code === "script.residual.field_value_assignment"
+    )).target;
+    const memberFunction = [
+      "function onChange(value) {",
+      ...completeVisibilityBranch("if", "A", "fd_one_row", target),
+      ...completeVisibilityBranch("else if", "B", "fd_two_row", target),
+      ...completeVisibilityBranch("else if", "C", "fd_three_row", target),
+      ...completeVisibilityBranch("else if", "D", "fd_four_row", target),
+      ...completeVisibilityBranch("else", "", undefined, target),
+      "}"
+    ].join("\n").replaceAll("value.indexOf", "value.foo.indexOf");
+    const rejected = applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, memberFunction),
+      {
+        sourceRefs: collectSourceRefs(sourceDraft),
+        sourceDraft
+      }
+    );
+
+    assert.equal(rejected.ok, false);
+    assert.equal(
+      rejected.diagnostics.some((item) => (
+        item.code === "agent.patch.field_value_assignment_semantics_unverified" &&
+        item.details.reason === "condition_not_statically_supported"
+      )),
+      true
+    );
+    assert.equal(
+      rejected.diagnostics.some((item) => item.code === "agent.patch.row_marker_native_effect_duplicated"),
+      true
+    );
+  });
+
+  it("accepts a renamed parameter through alias, Array.isArray first-value, and String defaulting", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" &&
+      action.coverage?.residuals?.filter((residual) => (
+        residual.code === "script.residual.field_value_assignment"
+      )).length === 5
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const target = action.coverage.residuals.find((residual) => (
+      residual.code === "script.residual.field_value_assignment"
+    )).target;
+    const normalizedFunction = [
+      "function onChange(changedValue) {",
+      "  var firstValue = Array.isArray(changedValue) ? changedValue[0] : changedValue",
+      "  var alias = firstValue",
+      ...completeAssignmentBranch("if", "A", target),
+      ...completeAssignmentBranch("else if", "B", target),
+      ...completeAssignmentBranch("else if", "C", target),
+      ...completeAssignmentBranch("else if", "D", target),
+      ...completeAssignmentBranch("else", "", target),
+      "}"
+    ].join("\n").replaceAll(
+      "value.indexOf",
+      "String(alias || \"\").indexOf"
+    );
+    const accepted = applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, normalizedFunction),
+      {
+        sourceRefs: collectSourceRefs(sourceDraft),
+        sourceDraft
+      }
+    );
+
+    assert.equal(accepted.ok, true, JSON.stringify(accepted.diagnostics));
+  });
+
+  it("accepts clearing assignment residuals when every evidenced target/value pair is executable", async () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" &&
+      action.coverage?.residuals?.some((residual) => (
+        residual.code === "script.residual.field_value_assignment"
+      ))
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const target = action.coverage.residuals.find((residual) => (
+      residual.code === "script.residual.field_value_assignment"
+    )).target;
+    const completeFunction = [
+      "function onChange(value) {",
+      ...completeAssignmentBranch("if", "A", target),
+      ...completeAssignmentBranch("else if", "B", target),
+      ...completeAssignmentBranch("else if", "C", target),
+      ...completeAssignmentBranch("else if", "D", target),
+      ...completeAssignmentBranch("else", "", target),
+      "}"
+    ].join("\n");
+    const accepted = applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, completeFunction),
+      {
+        sourceRefs: collectSourceRefs(sourceDraft),
+        sourceDraft
+      }
+    );
+
+    assert.equal(accepted.ok, true, JSON.stringify(accepted.diagnostics));
+    assert.equal(accepted.dslDraft.scripts.actions[actionIndex].translationStatus, "mapped");
+    assert.deepEqual(accepted.dslDraft.scripts.actions[actionIndex].coverage.residuals, []);
+  });
+
+  it("fails closed when helper-only JavaScript relies on incomplete native row coverage", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/18bd737e9c30fcbc3aeff0a48aab8fac");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" && action.coverage?.nativeRules?.length === 4
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const target = action.coverage.residuals.find((residual) => (
+      residual.code === "script.residual.field_value_assignment"
+    )).target;
+    const incompleteRule = dslDraft.formRules.linkage.find((rule) => (
+      rule.id === action.coverage.nativeRules[0]
+    ));
+    incompleteRule.else = incompleteRule.else.filter((effect) => effect.type !== "required");
+    const helperOnly = [
+      "function onChange(value) {",
+      ...completeAssignmentBranch("if", "A", target),
+      ...completeAssignmentBranch("else if", "B", target),
+      ...completeAssignmentBranch("else if", "C", target),
+      ...completeAssignmentBranch("else if", "D", target),
+      ...completeAssignmentBranch("else", "", target),
+      "}"
+    ].join("\n");
+
+    const rejected = applyEvidenceBackedPatches(
+      dslDraft,
+      assignmentClosurePatches(actionIndex, action, helperOnly),
+      { sourceRefs: collectSourceRefs(sourceDraft), sourceDraft }
+    );
+
+    assert.equal(rejected.ok, false);
+    assert.equal(
+      rejected.diagnostics.some((item) => item.code === "agent.patch.row_marker_native_coverage_incomplete"),
+      true,
+      JSON.stringify(rejected.diagnostics)
+    );
+  });
+
+  it("closes already native-covered JSP actions even when source contains DOM helper noise", async () => {
+    const sourceDraft = sampleSourceDraft({
+      scripts: {
+        source: "sysform-jsp",
+        sources: [{
+          id: "fd_jsp.script.1",
+          sourceRef: "source.form.jsp.fd_jsp.script.1",
+          javascript: "AttachXFormValueChangeEventById('fd_amount', function(value){ if (value.indexOf('A') >= 0) { common_dom_row_set_show_required_reset('fd_subject_row', true, true, false); } else { common_dom_row_set_show_required_reset('fd_subject_row', false, false, false); } setITTableValidate(); document.getElementsByTagName('img')[0].setAttribute('onclick','x') })",
+          functionAudit: { matched: [], violations: [] }
+        }]
+      }
+    });
+    sourceDraft.form.layout.rows[0].sourceMarkers = ["fd_subject_row"];
+    const form = sampleForm();
+    form.layout.mkTree[0].sourceMarkers = ["fd_subject_row"];
+    const dslDraft = sampleDraftDsl({
+      form,
+      workflow: undefined,
+      formRules: {
+        linkage: [{
+          id: "linkage.fd_amount.contains.A",
+          trigger: "change",
+          source: "fd_amount",
+          logic: "and",
+          when: [{ field: "fd_amount", op: "contains", value: "A" }],
+          effects: [
+            { type: "visible", target: "fd_subject_row", value: true },
+            { type: "required", target: "fd_subject_row", value: true }
+          ],
+          else: [
+            { type: "visible", target: "fd_subject_row", value: false },
+            { type: "required", target: "fd_subject_row", value: false }
+          ],
+          meta: {
+            sourceJsp: "source.form.jsp.fd_jsp.script.1",
+            sourceActionKey: "source.form.jsp.fd_jsp.script.1#onChange@0"
+          },
           translationStatus: "executable"
         }]
       },
@@ -695,9 +1459,16 @@ describe("agent-review", () => {
           event: "onChange",
           scope: "control",
           controlId: "fd_amount",
-          function: "function onChange(value) {\n  // Source JSP JavaScript:\n  // AttachXFormValueChangeEventById('fd_amount', function(value){ setITTableValidate(); common_dom_row_set_show_required_reset('fd_subject_row', true, true, false); document.getElementsByTagName('img')[0].setAttribute('onclick','x') })\n}",
+          function: "function onChange(value) {\n  // Source JSP JavaScript includes complementary fd_subject_row visible/required branches.\n  if (value.indexOf('A') >= 0) {\n    common_dom_row_set_show_required_reset('fd_subject_row', true, true, false)\n  } else {\n    common_dom_row_set_show_required_reset('fd_subject_row', false, false, false)\n  }\n}",
           translationStatus: "needs_review",
           sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
+          sourceActionKey: "source.form.jsp.fd_jsp.script.1#onChange@0",
+          branchProvenance: buildScriptBranchProvenance({
+            event: "onChange",
+            source: "AttachXFormValueChangeEventById('fd_amount', function(value){ if (value.indexOf('A') >= 0) { common_dom_row_set_show_required_reset('fd_subject_row', true, true, false); } else { common_dom_row_set_show_required_reset('fd_subject_row', false, false, false); } setITTableValidate(); document.getElementsByTagName('img')[0].setAttribute('onclick','x') })",
+            sourceRef: "source.form.jsp.fd_jsp.script.1",
+            sourceActionKey: "source.form.jsp.fd_jsp.script.1#onChange@0"
+          }),
           coverage: { status: "covered", nativeRules: ["linkage.fd_amount.contains.A"], residuals: [] },
           functionMappings: []
         }]
@@ -758,7 +1529,7 @@ describe("agent-review", () => {
       }))
     });
 
-    assert.equal(result.ok, true);
+    assert.equal(result.ok, true, JSON.stringify(result.report?.diagnostics || result.diagnostics));
     assert.equal(result.dsl.scripts.actions[0].translationStatus, "omitted");
     assert.equal(result.dsl.scripts.actions[0].function, "");
     assert.equal(result.dsl.scripts.actions[0].functionMappings[0].basis, "native-form-rule");
@@ -766,6 +1537,22 @@ describe("agent-review", () => {
   });
 
   it("accepts semantic detail-row visibility patches without treating onclick binding as residual", async () => {
+    const sourceJavascript = [
+      "function controlDisplay(value,i){",
+      "var hidden=document.getElementsByName(\"extendDataFormInfo.value(fd_detail.\"+i+\".fd_isout_val)\")[0];",
+      "if(value==\"gh\") {",
+      "hidden.value=\"true\";",
+      "document.getElementsByName(\"extendDataFormInfo.value(fd_detail.\"+i+\".fd_replacement_asset)\")[0].style.display=\"\";",
+      "document.getElementsByName(\"extendDataFormInfo.value(fd_detail.\"+i+\".fd_replacement_asset)\")[0].setAttribute(\"validate\",\"required\");",
+      "} else {",
+      "hidden.value=\"\";",
+      "document.getElementsByName(\"extendDataFormInfo.value(fd_detail.\"+i+\".fd_replacement_asset)\")[0].style.display=\"none\";",
+      "document.getElementsByName(\"extendDataFormInfo.value(fd_detail.\"+i+\".fd_replacement_asset)\")[0].setAttribute(\"validate\",\"\");",
+      "}",
+      "}",
+      "var xg=document.getElementsByName(\"extendDataFormInfo.value(fd_detail.\"+i+\".fd_choice)\")[0];",
+      "xg.setAttribute(\"onclick\",\"__xformDispatch(this.value);controlDisplay(this.value,\"+i+\")\");"
+    ].join(" ");
     const form = sampleForm();
     form.fields[2].columns.push(
       {
@@ -827,37 +1614,23 @@ describe("agent-review", () => {
         sources: [{
           id: "fd_jsp.script.1",
           sourceRef: "source.form.jsp.fd_jsp.script.1",
-          javascript: "function controlDisplay(value,i){ var hidden=document.getElementsByName('extendDataFormInfo.value(fd_detail.'+i+'.fd_isout_val)')[0]; if(value=='gh'){ hidden.value='true'; document.getElementsByName('extendDataFormInfo.value(fd_detail.'+i+'.fd_replacement_asset)')[0].style.display=''; document.getElementsByName('extendDataFormInfo.value(fd_detail.'+i+'.fd_replacement_asset)')[0].setAttribute('validate','required'); } else { hidden.value=''; document.getElementsByName('extendDataFormInfo.value(fd_detail.'+i+'.fd_replacement_asset)')[0].style.display='none'; document.getElementsByName('extendDataFormInfo.value(fd_detail.'+i+'.fd_replacement_asset)')[0].setAttribute('validate',''); } } var xg=document.getElementsByName('extendDataFormInfo.value(fd_detail.'+i+'.fd_choice)')[0]; xg.setAttribute('onclick','__xformDispatch(this.value);controlDisplay(this.value,'+i+')');",
+          javascript: sourceJavascript,
           functionAudit: { matched: [], violations: [] }
         }]
       }
     });
+    const sourceAction = onlyDraftedScriptAction(sourceDraft);
     const dslDraft = sampleDraftDsl({
       workflow: undefined,
       form,
       scripts: {
         source: "sysform-jsp",
         actions: [{
-          id: "fd_jsp.script.1.event.1",
-          name: "onChange",
-          event: "onChange",
-          scope: "control",
-          tableId: "fd_detail",
-          controlId: "fd_choice",
+          ...sourceAction,
           function: "function onChange(value, rowNum, parentRowNum) {\n  // Source JSP JavaScript:\n  // function controlDisplay(value,i){ hidden.value='true'; style.display=''; setAttribute('validate','required'); }\n  // xg.setAttribute('onclick','__xformDispatch(this.value);controlDisplay(this.value,'+i+')');\n}",
           translationStatus: "needs_review",
-          sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
           coverage: { status: "none", nativeRules: [], residuals: [] },
-          functionMappings: [],
-          semanticHints: [{
-            kind: "detail_row_visibility",
-            triggerTableId: "fd_detail",
-            triggerControlId: "fd_choice",
-            targetControlId: "fd_replacement_asset",
-            hiddenControlId: "fd_isout_val",
-            targetApiCandidates: ["MKXFORM.updateControl", "MKXFORM.updateControlStyle", "MKXFORM.setDetailFieldItemAttr"],
-            evidence: "Legacy action-local controlDisplay writes hidden state, display, and required state."
-          }]
+          functionMappings: []
         }]
       }
     });
@@ -916,7 +1689,7 @@ describe("agent-review", () => {
       }))
     });
 
-    assert.equal(result.ok, true);
+    assert.equal(result.ok, true, JSON.stringify(result.report?.diagnostics || result.diagnostics));
     assert.equal(result.dsl.scripts.actions[0].translationStatus, "mapped");
     assert.equal(result.dsl.scripts.actions[0].function.includes("MKXFORM.setDetailFieldItemAttr"), true);
     assert.equal(result.dsl.scripts.actions[0].coverage.status, "translated");
@@ -1167,6 +1940,12 @@ class FakeReviewProvider {
   }
 }
 
+function onlyDraftedScriptAction(sourceDraft) {
+  const actions = draftSourceDraft(sourceDraft).scripts?.actions || [];
+  assert.equal(actions.length, 1, "fixture must draft exactly one source-bound script action");
+  return actions[0];
+}
+
 function reviewResponse(overrides = {}) {
   return JSON.stringify({
     summary: "Reviewed form DSL and proposed semantic repairs.",
@@ -1185,6 +1964,101 @@ function titlePatch(path, value, sourceRef) {
     confidence: 0.86,
     rationale: "The draft title is placeholder-like and source evidence supports the replacement."
   };
+}
+
+function assignmentClosurePatches(actionIndex, action, functionText) {
+  const patch = (property, value, evidence, rationale) => ({
+    op: "replace",
+    path: `/scripts/actions/${actionIndex}/${property}`,
+    value,
+    sourceRefs: action.sourceRefs,
+    evidence: [evidence],
+    confidence: 0.91,
+    rationale
+  });
+  return [
+    patch(
+      "function",
+      functionText,
+      "Translate the helper field assignments with MKXFORM.setValue.",
+      "Preserve the source helper-value behavior in the control action."
+    ),
+    patch(
+      "translationStatus",
+      "mapped",
+      "The proposed function claims to translate all residual assignments.",
+      "Mark the action mapped only if closure validation confirms the claim."
+    ),
+    patch(
+      "functionMappings",
+      [{
+        source: "legacy field .value assignments",
+        target: "MKXFORM.setValue",
+        basis: "semantic-translation",
+        reviewRequired: false
+      }],
+      "Legacy field assignments map to the supported MKXFORM.setValue API.",
+      "Record the proposed assignment mapping."
+    ),
+    patch(
+      "coverage",
+      {
+        status: "translated",
+        nativeRules: action.coverage.nativeRules,
+        residuals: []
+      },
+      "All native rule ids are retained and assignment residuals are claimed translated.",
+      "Clear residuals only after validating every evidenced assignment pair."
+    )
+  ];
+}
+
+function completeVisibilityBranch(prefix, value, activeMarker, helperTarget) {
+  const rowMarkers = ["fd_one_row", "fd_two_row", "fd_three_row", "fd_four_row"];
+  const header = prefix === "else"
+    ? "  else {"
+    : `  ${prefix} (value.indexOf(${JSON.stringify(value)}) >= 0) {`;
+  return [
+    header,
+    `    MKXFORM.setValue(${JSON.stringify(helperTarget)}, ${JSON.stringify(value)})`,
+    ...rowMarkers.flatMap((rowMarker) => {
+      const active = rowMarker === activeMarker;
+      return [
+        `    MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, ${active ? 5 : 4})`,
+        `    MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, ${active ? 3 : 6})`
+      ];
+    }),
+    "  }"
+  ];
+}
+
+function completeAssignmentBranch(prefix, value, helperTarget) {
+  const header = prefix === "else"
+    ? "  else {"
+    : `  ${prefix} (value.indexOf(${JSON.stringify(value)}) >= 0) {`;
+  return [
+    header,
+    `    MKXFORM.setValue(${JSON.stringify(helperTarget)}, ${JSON.stringify(value)})`,
+    "  }"
+  ];
+}
+
+function completeOnLoadRowBranch(prefix, value, activeMarker) {
+  const rowMarkers = ["fd_one_row", "fd_two_row", "fd_three_row", "fd_four_row"];
+  const header = prefix === "else"
+    ? "  else {"
+    : `  ${prefix} (String(value || "") === ${JSON.stringify(value)}) {`;
+  return [
+    header,
+    ...rowMarkers.flatMap((rowMarker) => {
+      const active = rowMarker === activeMarker;
+      return [
+        `    MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, ${active ? 5 : 4})`,
+        `    MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, ${active ? 3 : 6})`
+      ];
+    }),
+    "  }"
+  ];
 }
 
 function cleanTempDir(name) {

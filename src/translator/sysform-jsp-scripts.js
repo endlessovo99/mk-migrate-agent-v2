@@ -1,6 +1,12 @@
 import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitelist.js";
+import { buildScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
+import { buildDeterministicScriptBranchProof } from "../dsl/deterministic-script-translations.js";
 import { resolveScriptControlTarget } from "../dsl/scripts.js";
-import { analyzeLegacyScriptFormRules } from "./sysform-form-rules.js";
+import {
+  analyzeLegacyScriptFormRules,
+  provenPlatformValueChangeCallStarts
+} from "./sysform-form-rules.js";
+import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
 import { attrValue, decodeEntities } from "./xml-utils.js";
 import {
   attachmentNonEmptyCandidate,
@@ -61,7 +67,10 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
   const actions = [];
   const warnings = [];
   candidates.forEach((candidate, index) => {
-    const action = mkActionFromCandidate(candidate, index, options);
+    const action = canonicalizeLandrayScriptTarget(
+      mkActionFromCandidate(candidate, index, options),
+      options.form
+    );
     const target = scriptTargetWarning(action, options.form);
     if (target) {
       warnings.push(target);
@@ -75,6 +84,19 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
     warnings,
     javascript: actions.map((action) => action.function).filter(Boolean).join("\n\n")
   };
+}
+
+function canonicalizeLandrayScriptTarget(action, form) {
+  if (!action || action.scope !== "control" || action.tableId || !/^d_[A-Za-z0-9_]+$/.test(action.controlId || "")) {
+    return action;
+  }
+  const canonicalId = `f${action.controlId}`;
+  const fields = Array.isArray(form?.fields) ? form.fields : [];
+  const targetExists = fields.some((field) =>
+    field?.type !== "detailTable" &&
+    [field.id, field.sourceProps?.originalId].includes(canonicalId)
+  );
+  return targetExists ? { ...action, controlId: canonicalId } : action;
 }
 
 export function sourceNumericDetailFieldInferences(sourceScripts = {}, form = {}) {
@@ -497,6 +519,7 @@ function mkActionFromCandidate(candidate, index, options = {}) {
   const coverage = scriptCoverageForExecutableFormRules(candidate.coverage || scriptCoverageFromSource({
     javascript: candidate.javascript,
     sourceRef: candidate.source.sourceRef,
+    sourceActionKey: candidate.sourceActionKey,
     displayGate: candidate.source.displayGate,
     form: options.form
   }), options.formRules);
@@ -513,6 +536,38 @@ function mkActionFromCandidate(candidate, index, options = {}) {
   const fn = translationStatus === "omitted"
     ? ""
     : candidate.function || buildMkFunction(candidate, effectiveMappings, candidate.source.functionAudit?.violations || []);
+  const sourceRefs = uniqueStrings([candidate.source.sourceRef, ...(candidate.sourceRefs || [])]);
+  const deterministicBranchProof = buildDeterministicScriptBranchProof({
+    event: candidate.event,
+    scope: candidate.scope,
+    controlId: candidate.controlId,
+    tableId: candidate.tableId,
+    sourceRefs,
+    sourceActionKey: candidate.sourceActionKey,
+    function: fn,
+    translationStatus,
+    coverage,
+    functionMappings: effectiveMappings,
+    semanticHints: candidate.semanticHints
+  });
+  const requiresBranchProvenance = ["onChange", "onLoad"].includes(candidate.event) &&
+    !deterministicBranchProof;
+  const analyzedBranchProvenance = requiresBranchProvenance
+      ? buildScriptBranchProvenance({
+          event: candidate.event,
+          source: candidate.branchSource || candidate.javascript,
+          sourceRef: candidate.source.sourceRef,
+          sourceActionKey: candidate.sourceActionKey,
+          eventFunctionName: candidate.branchFunctionName,
+          eventFunctionStart: candidate.branchFunctionStart,
+          programIsEntrypoint: candidate.branchProgramIsEntrypoint
+        })
+    : undefined;
+  const branchProvenance = analyzedBranchProvenance?.status === "unproven" &&
+    translationStatus === "omitted" &&
+    effectiveMappings.every((mapping) => mapping?.basis === "legacy-runtime-noop")
+      ? undefined
+      : analyzedBranchProvenance;
 
   return pruneUndefined({
     id: stableActionId(candidate.id || `${candidate.event}.${index + 1}`),
@@ -523,7 +578,10 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     tableId: candidate.tableId,
     runWhen: runWhenFromDisplayGate(candidate.source.displayGate),
     function: fn,
-    sourceRefs: uniqueStrings([candidate.source.sourceRef, ...(candidate.sourceRefs || [])]),
+    sourceRefs,
+    sourceActionKey: candidate.sourceActionKey,
+    branchProvenance,
+    deterministicBranchProof,
     translationStatus,
     coverage,
     functionMappings: effectiveMappings,
@@ -535,10 +593,10 @@ function mkActionFromCandidate(candidate, index, options = {}) {
 
 function scriptCoverageForExecutableFormRules(coverage, formRules) {
   const nativeRules = Array.isArray(coverage?.nativeRules) ? coverage.nativeRules : [];
-  if (!nativeRules.length || !Array.isArray(formRules?.linkage)) return coverage;
+  if (!nativeRules.length) return coverage;
 
   const rulesByEvidenceId = new Map();
-  for (const rule of formRules.linkage) {
+  for (const rule of Array.isArray(formRules?.linkage) ? formRules.linkage : []) {
     for (const evidenceId of uniqueStrings([rule.id, ...(rule.meta?.sourceRuleIds || [])])) {
       rulesByEvidenceId.set(evidenceId, rule);
     }
@@ -803,9 +861,11 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
 function simpleCalculationAssignmentCandidates(source, form) {
   const text = String(source.javascript || "");
   const candidates = [];
+  const platformCallStarts = provenPlatformValueChangeCallStarts(text);
   const bindingPattern = /AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*,\s*function\s*\(([^)]*)\)\s*\{/g;
 
   for (const match of text.matchAll(bindingPattern)) {
+    if (!platformCallStarts.has(match.index)) continue;
     const bodyStart = match.index + match[0].length;
     const bodyEnd = findBalancedClose(text, bodyStart - 1, "{", "}");
     if (bodyEnd < bodyStart) continue;
@@ -823,6 +883,7 @@ function simpleCalculationAssignmentCandidates(source, form) {
 
     candidates.push({
       index: match.index,
+      sourceActionKey: inlineOnChangeSourceActionKey(source.sourceRef || source.id, match.index),
       event: "onChange",
       scope: "control",
       controlId: triggerId,
@@ -1109,8 +1170,10 @@ function detailThresholdCalculationCandidates(source, form) {
 
 function valueChangeBindingsCalling(text, functionName) {
   const bindings = [];
+  const platformCallStarts = provenPlatformValueChangeCallStarts(text);
   const pattern = /AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*,\s*function\s*\([^)]*\)\s*\{/gu;
   for (const match of text.matchAll(pattern)) {
+    if (!platformCallStarts.has(match.index)) continue;
     const open = match.index + match[0].length - 1;
     const close = findBalancedClose(text, open, "{", "}");
     if (close <= open) continue;
@@ -1983,8 +2046,10 @@ function personCountingFunctionModel(fn, description) {
 
 function personTextValueChangeBindings(text) {
   const bindings = [];
+  const platformCallStarts = provenPlatformValueChangeCallStarts(text);
   const pattern = /AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*,\s*/gu;
   for (const match of String(text).matchAll(pattern)) {
+    if (!platformCallStarts.has(match.index)) continue;
     const rest = text.slice(match.index + match[0].length);
     const named = rest.match(/^([A-Za-z_$][\w$]*)\s*\)/u);
     if (named) {
@@ -2281,8 +2346,10 @@ function coveredFunctionRanges(text, sourceRef, names = []) {
 
 function inlineValueChangeBindings(text) {
   const bindings = [];
+  const platformCallStarts = provenPlatformValueChangeCallStarts(text);
   const pattern = /AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*,\s*function\s*\([^)]*\)\s*\{/gu;
   for (const match of String(text).matchAll(pattern)) {
+    if (!platformCallStarts.has(match.index)) continue;
     const open = match.index + match[0].length - 1;
     const close = findBalancedClose(text, open, "{", "}");
     if (close <= open) continue;
@@ -2531,7 +2598,9 @@ function legacyRequiredToggle(text) {
   if (!/\.attr\(\s*(["'])validate\1\s*,\s*(["'])\s*\2\s*\)/.test(text)) return undefined;
 
   const bindingPattern = /AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*,\s*function\s*\(([^)]*)\)\s*\{/g;
+  const platformCallStarts = provenPlatformValueChangeCallStarts(text);
   for (const match of text.matchAll(bindingPattern)) {
+    if (!platformCallStarts.has(match.index)) continue;
     const bodyStart = match.index + match[0].length;
     const bodyEnd = findBalancedClose(text, bodyStart - 1, "{", "}");
     if (bodyEnd < bodyStart) continue;
@@ -2709,23 +2778,29 @@ function hasExecutableJavascript(value = "") {
 function extractValueChangeCandidates(source) {
   const text = source.javascript || "";
   const candidates = [];
+  const platformCallStarts = provenPlatformValueChangeCallStarts(text);
   const inlinePattern = /AttachXFormValueChangeEventById\(\s*(["'])([^"']+)\1\s*,\s*function\s*\(([^)]*)\)\s*\{/g;
   for (const match of text.matchAll(inlinePattern)) {
+    if (!platformCallStarts.has(match.index)) continue;
     const bodyStart = match.index + match[0].length;
     const bodyEnd = findBalancedClose(text, bodyStart - 1, "{", "}");
     if (bodyEnd < bodyStart) continue;
     const end = findCallEnd(text, bodyEnd + 1);
     candidates.push({
       index: match.index,
+      sourceActionKey: inlineOnChangeSourceActionKey(source.sourceRef || source.id, match.index),
       event: "onChange",
       scope: "control",
       controlId: match[2],
-      javascript: text.slice(match.index, end).trim()
+      javascript: text.slice(match.index, end).trim(),
+      branchSource: text,
+      branchFunctionStart: match.index + match[0].lastIndexOf("function")
     });
   }
 
   const namedPattern = /AttachXFormValueChangeEventById\(\s*(["'])([^"']+)\1\s*,\s*([A-Za-z_$][\w$]*)\s*\)/g;
   for (const match of text.matchAll(namedPattern)) {
+    if (!platformCallStarts.has(match.index)) continue;
     const fn = findNamedFunction(text, match[3]);
     const end = findCallEnd(text, match.index + match[0].length);
     candidates.push({
@@ -2733,6 +2808,8 @@ function extractValueChangeCandidates(source) {
       event: "onChange",
       scope: "control",
       controlId: match[2],
+      branchFunctionName: match[3],
+      branchSource: text,
       javascript: [fn, text.slice(match.index, end).trim()].filter(Boolean).join("\n")
     });
   }
@@ -2753,6 +2830,7 @@ function extractDetailControlDisplayCandidates(source) {
     scope: "control",
     tableId: parts.trigger.tableId,
     controlId: parts.trigger.controlId,
+    branchFunctionName: "controlDisplay",
     dedupeKey: `detail-control-display:${parts.trigger.tableId}.${parts.trigger.controlId}:${parts.target.controlId}`,
     javascript: [parts.functionText, binding].filter(Boolean).join("\n\n"),
     ...recipeCandidate,
@@ -2849,6 +2927,8 @@ function extractWindowLoadCandidates(source, options = {}) {
       event: "onLoad",
       scope: "global",
       javascript: text.slice(match.index, end).trim(),
+      branchSource: text,
+      branchFunctionStart: match.index + match[0].lastIndexOf("function"),
       ...(lifecycle || {}),
       ...(detailDisplay ? {
         semanticHints: [{
@@ -2918,6 +2998,7 @@ function fallbackCandidate(source) {
     index: 0,
     event,
     scope: "global",
+    branchProgramIsEntrypoint: true,
     javascript: source.javascript || ""
   };
 }

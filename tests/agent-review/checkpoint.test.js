@@ -5,9 +5,10 @@ import { join } from "node:path";
 import { applyEvidenceBackedPatches, runAgentReview } from "../../src/agent-review/index.js";
 import { hmacSha256Digest, sha256Digest } from "../../src/agent-review/digest.js";
 import { main } from "../../src/cli/main.js";
+import { draftSourceDraft } from "../../src/translator/dsl-draft.js";
 import { sampleDraftDsl, sampleSourceDraft } from "../helpers/sample-dsl.js";
 
-const actionIds = ["checkpoint.action.1", "checkpoint.action.2"];
+const actionIds = ["checkpoint-1.event.1", "checkpoint-2.event.1"];
 const sourceRefs = ["source.form.jsp.checkpoint.1", "source.form.jsp.checkpoint.2"];
 const CHECKPOINT_SIGNING_KEY = "test-agent-review-checkpoint-key-32-bytes";
 
@@ -383,7 +384,11 @@ function sourceDraft() {
       sources: sourceRefs.map((sourceRef, index) => ({
         id: `checkpoint-${index + 1}`,
         sourceRef,
-        javascript: `SetXFormFieldValueById('fd_subject', 'value-${index + 1}')`,
+        javascript: [
+          "Com_AddEventListener(window, 'load', function() {",
+          `  SetXFormFieldValueById('fd_subject', 'value-${index + 1}');`,
+          "});"
+        ].join("\n"),
         functionAudit: { matched: [], violations: [] }
       }))
     }
@@ -391,21 +396,9 @@ function sourceDraft() {
 }
 
 function dslDraft() {
+  const rebuiltScripts = draftSourceDraft(sourceDraft()).scripts;
   return sampleDraftDsl({
-    scripts: {
-      source: "sysform-jsp",
-      actions: actionIds.map((id, index) => ({
-        id,
-        name: "onLoad",
-        event: "onLoad",
-        scope: "global",
-        function: `function onLoad() {\n  // review checkpoint-${index + 1}\n}`,
-        translationStatus: "needs_review",
-        sourceRefs: [sourceRefs[index]],
-        coverage: { status: "uncovered", nativeRules: [], residuals: [] },
-        functionMappings: []
-      }))
-    }
+    scripts: rebuiltScripts
   });
 }
 

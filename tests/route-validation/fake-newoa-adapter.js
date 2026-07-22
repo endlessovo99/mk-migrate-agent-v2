@@ -3,6 +3,7 @@ import { integrityError } from "./integrity.js";
 import { appendTranscriptEntry, sanitizedTranscript } from "./transcript.js";
 import { SIT_PARTICIPANT_FALLBACKS } from "../../src/executor/participant-resolver.js";
 import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-resolver.js";
+import { NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY } from "../../src/executor/native-form-rule-runtime-capability.js";
 
 const CREATED_TEMPLATE_ID = "route-created-template";
 const CREATED_WORKFLOW_TEMPLATE_ID = "route-created-workflow-template";
@@ -44,6 +45,29 @@ export class FakeNewoaAdapter {
   async login() {
     this.record({ operation: "login" });
     return { ok: true };
+  }
+
+  async getXFormDesktopDigest() {
+    this.record({ operation: "get-xform-desktop-digest" });
+    return {
+      [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeModule]: {
+        hash: NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeHash
+      },
+      [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideModule]: {
+        hash: NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideHash
+      }
+    };
+  }
+
+  async getXFormDesktopModuleSha256({ modulePath }) {
+    this.record({ operation: "get-xform-desktop-module-sha256", modulePath });
+    if (modulePath === NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimePath) {
+      return NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeSha256;
+    }
+    if (modulePath === NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.idePath) {
+      return NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideSha256;
+    }
+    return "unknown";
   }
 
   async searchOrg(key) {
@@ -174,6 +198,13 @@ export class FakeNewoaAdapter {
   }
 
   record(entry) {
+    if (
+      entry?.operation === "get-xform-desktop-digest" ||
+      entry?.operation === "get-xform-desktop-module-sha256"
+    ) {
+      this.entries.push(clone(entry));
+      return;
+    }
     appendTranscriptEntry(this.entries, entry);
   }
 }

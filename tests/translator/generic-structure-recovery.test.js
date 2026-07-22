@@ -321,6 +321,10 @@ describe("generic structural form recovery", () => {
     );
     assert.deepEqual(detailRow?.sourceMarkers, ["post_detail_row"]);
     assert.equal(targetRows.filter((row) => row.sourceMarkers?.includes("post_detail_row")).length, 1);
+    assert.deepEqual(
+      resolveEffectTarget(buildFormRuleRefIndex(dsl.form), "post_detail_row")?.targets.map((target) => target.id),
+      ["fd_before_post_detail", "fd_post_hint_table", "post_detail_hint", "fd_after_post_detail"]
+    );
   });
 
   it("keeps a hint standalone when metadata refines the owner to a component without placeholder support", () => {

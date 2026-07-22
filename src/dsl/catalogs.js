@@ -9,6 +9,7 @@ export const CONTROL_EVENTS_CATALOG = loadCatalog("catalogs/mk-control-events.v1
 export const FUNCTION_CATALOG = loadCatalog("catalogs/functions.v1.json");
 export const JS_METHOD_CATALOG = loadCatalog("catalogs/js-methods.v1.json");
 export const MK_JS_SNIPPETS_CATALOG = loadCatalog("catalogs/mk-js-snippets.v1.json");
+export const MK_FORM_RULE_RUNTIME_CATALOG = loadCatalog("catalogs/mk-form-rule-runtime.v1.json");
 export const VALIDATION_POLICY = loadCatalog("catalogs/validation-policy.v1.json");
 
 export const CATALOG_VERSIONS = {

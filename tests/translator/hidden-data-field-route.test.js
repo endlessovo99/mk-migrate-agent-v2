@@ -37,7 +37,7 @@ describe("hidden data field route", () => {
     assert.equal(checkDraft(dslDraft).ok, true);
   });
 
-  it("preserves JSP edit/view gates and resolved native form rules", () => {
+  it("preserves JSP gates while projecting provable gated form rules as native formulas", () => {
     const sourceDraft = cleanSourceFile(fixture);
     const dslDraft = draftSourceDraft(sourceDraft);
     const sourceGates = sourceDraft.scripts.sources.map((source) => source.displayGate);
@@ -48,8 +48,21 @@ describe("hidden data field route", () => {
     assert.equal(sourceDraft.formRules.linkage.length, 1);
     assert.equal(sourceDraft.formRules.linkage[0].meta.displayGate, "xform:editShow");
     assert.equal(dslDraft.formRules.linkage.length, 1);
-    assert.equal(dslDraft.formRules.linkage[0].translationStatus, "executable");
-    assert.equal(dslDraft.formRules.review?.excludedRules, undefined);
+    assert.deepEqual(dslDraft.formRules.review, {});
+    assert.deepEqual(dslDraft.formRules.linkage[0].meta.runWhen, { viewStatusIn: ["add", "edit"] });
+    assert.equal(dslDraft.formRules.linkage[0].meta.conditionSource, "event:value");
+    assert.equal(
+      dslDraft.formRules.linkage[0].meta.sourceActionKey,
+      editAction.sourceActionKey
+    );
+    assert.deepEqual(editAction.coverage.nativeRules, ["linkage.fd_mode.contains.A"]);
+    assert.equal(editAction.coverage.status, "partial");
+    assert.equal(
+      editAction.coverage.residuals.some((item) =>
+        item.code === "script.residual.field_value_assignment" && item.target === "fd_shift"
+      ),
+      true
+    );
     assert.deepEqual(editAction.runWhen, { viewStatusIn: ["add", "edit"] });
     assert.deepEqual(viewAction.runWhen, { viewStatusIn: ["view"] });
   });
@@ -62,8 +75,8 @@ describe("hidden data field route", () => {
     );
 
     assert.equal(modeRow?.cells[0]?.references[0]?.referenceId, "fd_mode");
+    assert.equal(sourceDraft.formRules.linkage[0].effects[0].target, "mode_row");
     assert.equal(dslDraft.formRules.linkage.length, 1);
     assert.equal(dslDraft.formRules.linkage[0].translationStatus, "executable");
-    assert.equal(dslDraft.formRules.review?.excludedRules, undefined);
   });
 });

@@ -99,6 +99,7 @@ The executable DSL is checked against versioned catalogs under `catalogs/`. When
 - `mk-components.v1.json`: target MK form/layout components and executable props.
 - `mk-control-events.v1.json`: target control/global script events by MK component and scope.
 - `mk-js-snippets.v1.json`: browser-verified MK editor JS snippets, including `MKXFORM.*` usage examples by snippet category.
+- `mk-form-rule-runtime.v1.json`: verified XForm native-rule formula projection semantics plus the exact runtime/IDE release and bundle identities required before write.
 - `jsp-translation-playbook.v1.json`: Agent-review playbook for semantic JSP behavior translation, coverage decisions, forbidden output, and few-shot patch shapes.
 - `js-methods.v1.json`: base JavaScript globals, static methods, and instance methods allowed inside translated MK form scripts.
 - `functions.v1.json`: legacy source JSP functions and their MK migration intent.

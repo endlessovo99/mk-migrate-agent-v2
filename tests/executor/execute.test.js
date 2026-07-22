@@ -1,6 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
+import { NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY } from "../../src/executor/native-form-rule-runtime-capability.js";
 import { executeDsl } from "../../src/executor/execute.js";
 import {
   buildWorkflowContent,
@@ -31,6 +33,7 @@ describe("executeDsl", () => {
 
     assert.equal(result.ok, true);
     assert.deepEqual(client.calls[0], { name: "login", payload: {} });
+    assert.equal(client.calls.some((call) => call.name === "getXFormDesktopDigest"), false);
     assert.equal(JSON.stringify({ calls: client.calls, result }).includes(TEST_CREDENTIALS.username), false);
     assert.equal(JSON.stringify({ calls: client.calls, result }).includes(TEST_CREDENTIALS.encryptedPassword), false);
   });
@@ -2740,6 +2743,55 @@ describe("executeDsl", () => {
     assert.deepEqual(client.calls, []);
   });
 
+  it("rejects a branch operand provenance mismatch before any NewOA call", async () => {
+    const sourceRef = "source.form.jsp.branch-mismatch";
+    const sourceActionKey = `${sourceRef}#onChange@0`;
+    const client = new FakeNewoaClient();
+    const result = await executeDsl(sampleTrustedDsl({
+      workflow: undefined,
+      scripts: {
+        actions: [{
+          id: "fd_subject.onChange.branch-mismatch",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          controlId: "fd_subject",
+          sourceRefs: [sourceRef],
+          sourceActionKey,
+          branchProvenance: buildScriptBranchProvenance({
+            event: "onChange",
+            source: "AttachXFormValueChangeEventById('fd_subject', function(value) { if (value === 'A') legacySet(); })",
+            sourceRef,
+            sourceActionKey
+          }),
+          function: "function onChange(value) { var unrelated = MKXFORM.getValue('fd_amount'); if (unrelated === 'A') MKXFORM.setValue('fd_subject', 'matched') }",
+          translationStatus: "mapped",
+          coverage: { status: "translated", nativeRules: [], residuals: [] },
+          functionMappings: [{
+            source: "legacy conditional action",
+            target: "MKXFORM.setValue",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }]
+        }]
+      }
+    }), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.status, "invalid");
+    assert.equal(
+      result.diagnostics.some((diagnostic) => diagnostic.code === "dsl.scripts.condition_operand_provenance_unverified"),
+      true,
+      JSON.stringify(result.diagnostics)
+    );
+    assert.deepEqual(client.calls, []);
+  });
+
   it("rejects unresolved form rule targets before any NewOA login or write call", async () => {
     const client = new FakeNewoaClient();
     const result = await executeDsl(sampleTrustedDsl({
@@ -3322,6 +3374,76 @@ describe("executeDsl", () => {
     assert.equal(result.readback.form.formRules.requireRuleCount, 2);
   });
 
+  it("probes the pinned XForm runtime capability before writing gated native rules", async () => {
+    const client = new FakeNewoaClient();
+    const result = await executeDsl(sampleTrustedDslWithGatedFormRules(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    assert.deepEqual(client.calls.slice(0, 2).map((call) => call.name), [
+      "login",
+      "getXFormDesktopDigest"
+    ]);
+    const capabilityStage = result.apiStages.find((stage) => (
+      stage.name === "verifyNativeFormRuleFormulaCapability"
+    ));
+    assert.equal(capabilityStage?.status, "ok");
+    assert.equal(
+      capabilityStage?.catalogId,
+      NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.catalogId
+    );
+    assert.equal(
+      capabilityStage?.catalogVersion,
+      NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.catalogVersion
+    );
+  });
+
+  it("blocks gated native-rule writes when the XForm runtime capability is unverified", async () => {
+    for (const [label, configure] of [
+      ["hash-mismatch", (client) => {
+        client.xformDesktopDigest = {
+          ...knownXFormDesktopDigest(),
+          [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeModule]: { hash: "unknown" }
+        };
+      }],
+      ["method-missing", (client) => {
+        client.getXFormDesktopDigest = undefined;
+      }],
+      ["request-failed", (client) => {
+        client.xformDesktopDigestError = new Error("digest unavailable");
+      }]
+    ]) {
+      const client = new FakeNewoaClient();
+      configure(client);
+      const result = await executeDsl(sampleTrustedDslWithGatedFormRules(), {
+        client,
+        credentials: TEST_CREDENTIALS,
+        confirmWrite: true,
+        targetCategoryId: "category-1"
+      });
+
+      assert.equal(result.ok, false, label);
+      assert.equal(result.status, "blocked", label);
+      assert.equal(result.stage, "verifyNativeFormRuleFormulaCapability", label);
+      assert.equal(
+        result.diagnostics.some((item) => (
+          item.code === "safety.native_form_rule_formula_capability_unverified"
+        )),
+        true,
+        label
+      );
+      assert.equal(
+        client.calls.some((call) => ["initTemplate", "addTemplate", "updateTemplate"].includes(call.name)),
+        false,
+        label
+      );
+    }
+  });
+
   it("preserves manual form rules while replacing generated native rules", () => {
     const payload = projectTemplate(sampleTrustedDslWithFormRules(), baseTemplateWithExistingFormRules());
     const config = JSON.parse(payload.mechanisms["sys-xform"].fdConfig);
@@ -3730,6 +3852,66 @@ function sampleTrustedDslWithFormRules() {
   });
 }
 
+function sampleTrustedDslWithGatedFormRules() {
+  const dsl = sampleTrustedDslWithFormRules();
+  dsl.formRules.linkage[0].meta = {
+    sourceJsp: "source.form.jsp.gated-subject",
+    sourceActionKey: "source.form.jsp.gated-subject#onChange@0",
+    displayGate: "xform:editShow",
+    runWhen: { viewStatusIn: ["add", "edit"] },
+    conditionSource: "event:value",
+    nativeProjection: { kind: "view-status-formula", version: 1 },
+    conditionSemantics: [{
+      origin: "event:value",
+      transforms: [],
+      predicate: "indexOf"
+    }]
+  };
+  dsl.scripts = {
+    actions: [{
+      id: "fd_subject.onChange.gated",
+      name: "onChange",
+      event: "onChange",
+      scope: "control",
+      controlId: "fd_subject",
+      sourceRefs: ["source.form.jsp.gated-subject"],
+      sourceActionKey: "source.form.jsp.gated-subject#onChange@0",
+      runWhen: { viewStatusIn: ["add", "edit"] },
+      function: "",
+      branchProvenance: buildScriptBranchProvenance({
+        event: "onChange",
+        source: "AttachXFormValueChangeEventById('fd_subject', function(value) { if (value.indexOf('A') >= 0) legacySet(); })",
+        sourceRef: "source.form.jsp.gated-subject",
+        sourceActionKey: "source.form.jsp.gated-subject#onChange@0"
+      }),
+      translationStatus: "omitted",
+      coverage: {
+        status: "covered",
+        nativeRules: ["linkage.subject.detail"],
+        residuals: []
+      },
+      functionMappings: [{
+        source: "legacy JSP row visibility/required behavior",
+        target: "native formRules.linkage",
+        basis: "native-form-rule",
+        reviewRequired: false
+      }]
+    }]
+  };
+  return dsl;
+}
+
+function knownXFormDesktopDigest() {
+  return {
+    [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeModule]: {
+      hash: NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeHash
+    },
+    [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideModule]: {
+      hash: NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideHash
+    }
+  };
+}
+
 class FakeNewoaClient {
   constructor(options = {}) {
     this.calls = [];
@@ -3741,6 +3923,8 @@ class FakeNewoaClient {
     this.expectedCredentials = options.expectedCredentials;
     this.loginError = options.loginError;
     this.generatedTableName = options.generatedTableName ?? "generated_table_name";
+    this.xformDesktopDigest = options.xformDesktopDigest ?? knownXFormDesktopDigest();
+    this.xformDesktopDigestError = options.xformDesktopDigestError;
   }
 
   async login(credentials) {
@@ -3750,6 +3934,26 @@ class FakeNewoaClient {
     this.calls.push({ name: "login", payload: {} });
     if (this.loginError) throw this.loginError;
     return { ok: true };
+  }
+
+  async getXFormDesktopDigest() {
+    this.calls.push({ name: "getXFormDesktopDigest", payload: {} });
+    if (this.xformDesktopDigestError) throw this.xformDesktopDigestError;
+    return structuredClone(this.xformDesktopDigest);
+  }
+
+  async getXFormDesktopModuleSha256({ modulePath, releaseHash }) {
+    this.calls.push({
+      name: "getXFormDesktopModuleSha256",
+      payload: { modulePath, releaseHash }
+    });
+    if (modulePath === NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimePath) {
+      return NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeSha256;
+    }
+    if (modulePath === NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.idePath) {
+      return NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideSha256;
+    }
+    return "unknown";
   }
 
   async initTemplate() {

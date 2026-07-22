@@ -284,7 +284,13 @@ describe("Shanghai Electric 18e2 route regression", () => {
 
     assert.equal(decisions.filter((decision) => decision.classification === "native").length, 9);
     assert.equal(decisions.filter((decision) => decision.classification === "script").length, 28);
-    assert.equal(decisions.filter((decision) => decision.classification === "manual").length, 3);
+    assert.equal(decisions.filter((decision) => decision.classification === "manual").length, 4);
+    assert.ok(decisions.some((decision) =>
+      decision.id === "calculation.manual.source.form.jsp.fd_3bba8d3507d72e.script.1.calculation.dependent_call_unmapped" &&
+      decision.classification === "manual" &&
+      decision.code === "calculation.dependent_call_unmapped" &&
+      decision.sourceRefs.includes("source.form.jsp.fd_3bba8d3507d72e.script.1")
+    ));
     for (const targetRef of ["fd_train_total", "fd_flight_total_inspire"]) {
       const decision = decisions.find(candidate =>
         candidate.classification === "native" && candidate.targetRefs.includes(targetRef)

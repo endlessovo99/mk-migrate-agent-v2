@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
@@ -8,6 +9,79 @@ import {
 } from "../../src/executor/newoa-client.js";
 
 describe("NewoaClient", () => {
+  it("reads the authenticated XForm desktop digest as a no-cache GET", async () => {
+    const calls = [];
+    const digest = {
+      "@module:sys-xform/desktop/api/XFormRuntime": { hash: "runtime-hash" },
+      "@module:sys-xform/desktop/api/XFormIDE": { hash: "ide-hash" }
+    };
+    const responses = [
+      jsonResponse({ success: true, token: "digest-token" }, {
+        cookies: ["JSESSIONID=digest-session; Path=/"]
+      }),
+      jsonResponse(digest)
+    ];
+    const client = new NewoaClient({
+      fetchImpl: async (url, options) => {
+        calls.push({ url, options });
+        return responses.shift();
+      }
+    });
+
+    await client.login({ username: "digest-user", encryptedPassword: "digest-password" });
+    assert.deepEqual(await client.getXFormDesktopDigest(), digest);
+    assert.equal(calls[1].url, `${NEWOA_SIT_BASE_URL}/web/sys-xform/desktop/digest.json`);
+    assert.equal(calls[1].options.method, "GET");
+    assert.equal(calls[1].options.cache, "no-store");
+    assert.equal(calls[1].options.body, undefined);
+    assert.equal(calls[1].options.headers["content-type"], undefined);
+    assert.equal(calls[1].options.headers.cookie, "JSESSIONID=digest-session");
+    assert.equal(calls[1].options.headers.Authorization, "Bearer digest-token");
+  });
+
+  it("fails the XForm digest contract closed for non-object responses", async () => {
+    const client = new NewoaClient({
+      fetchImpl: async () => jsonResponse("not-an-object")
+    });
+    await assert.rejects(
+      () => client.getXFormDesktopDigest(),
+      (error) => {
+        assert.equal(error.stage, "getXFormDesktopDigest");
+        return true;
+      }
+    );
+  });
+
+  it("hashes the exact XForm module bytes loaded by the advertised release key", async () => {
+    const calls = [];
+    const source = "window.__xformRuntimeEvidence = true;\n";
+    const client = new NewoaClient({
+      fetchImpl: async (url, options) => {
+        calls.push({ url, options });
+        return {
+          ok: true,
+          status: 200,
+          text: async () => source
+        };
+      }
+    });
+    const sha256 = await client.getXFormDesktopModuleSha256({
+      modulePath: "sys-xform/desktop/api/XFormRuntime",
+      releaseHash: "06684988eea27cdb6cba70e8085e4ac6"
+    });
+
+    assert.equal(
+      sha256,
+      createHash("sha256").update(source, "utf8").digest("hex")
+    );
+    assert.equal(
+      calls[0].url,
+      `${NEWOA_SIT_BASE_URL}/web/sys-xform/desktop/api/XFormRuntime/index.js?06684988eea27cdb6cba70e8085e4ac6`
+    );
+    assert.equal(calls[0].options.method, "GET");
+    assert.equal(calls[0].options.cache, "no-store");
+  });
+
   it("uses injected fetch for the complete authenticated template contract", async () => {
     const calls = [];
     const responses = [

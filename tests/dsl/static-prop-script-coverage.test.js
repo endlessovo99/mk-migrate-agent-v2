@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { validateMigrationDsl } from "../../src/dsl/schema.js";
+import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("static form-property script coverage validation", () => {
@@ -59,6 +60,11 @@ function dslWithCoverage(staticProps) {
         event: "onLoad",
         scope: "global",
         function: "",
+        branchProvenance: buildScriptBranchProvenance({
+          event: "onLoad",
+          source: "function onLoad() { legacyRequired('fd_subject') }",
+          sourceRef: "source.form.jsp.required-only.script.1"
+        }),
         translationStatus: "omitted",
         sourceRefs: ["source.form.jsp.required-only.script.1"],
         coverage: {

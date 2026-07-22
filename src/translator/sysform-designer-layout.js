@@ -1166,6 +1166,11 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
   const columns = [];
   const seen = new Set();
   for (const row of rows) {
+    // A noFoot marker classifies the whole direct-child row as a detail footer.
+    // The marker and its main-model total commonly occupy sibling cells, so
+    // filtering only the marked cell would also retain the footer total as a
+    // row-scoped detail column.
+    if (isDetailFooterRow(row)) continue;
     const cells = splitDirectChildCells(row);
     for (const [cellIndex, cell] of cells.entries()) {
       if (isNonDataDetailCell(cell.attrs)) continue;

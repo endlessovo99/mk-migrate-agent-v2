@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { buildDeterministicScriptBranchProof } from "../dsl/deterministic-script-translations.js";
 
 export const MK_FIELD_ID_MAX_LENGTH = 25;
 
@@ -76,14 +77,23 @@ export function applyFieldIdMapToScripts(scripts, idMap) {
   const actions = Array.isArray(scripts.actions) ? scripts.actions : [];
   return {
     ...scripts,
-    actions: actions.map((action) => ({
-      ...action,
-      controlId: mapFieldId(action.controlId, idMap),
-      tableId: mapFieldId(action.tableId, idMap),
-      function: replaceFieldIdsInText(action.function, idMap),
-      coverage: remapCoverage(action.coverage, idMap),
-      recipe: remapStructuredValue(action.recipe, idMap)
-    }))
+    actions: actions.map((action) => {
+      const remapped = {
+        ...action,
+        controlId: mapFieldId(action.controlId, idMap),
+        tableId: mapFieldId(action.tableId, idMap),
+        function: replaceFieldIdsInText(action.function, idMap),
+        coverage: remapCoverage(action.coverage, idMap),
+        recipe: remapStructuredValue(action.recipe, idMap),
+        branchProvenance: remapStructuredValue(action.branchProvenance, idMap)
+      };
+      return {
+        ...remapped,
+        deterministicBranchProof: action.deterministicBranchProof === undefined
+          ? undefined
+          : buildDeterministicScriptBranchProof(remapped)
+      };
+    })
   };
 }
 

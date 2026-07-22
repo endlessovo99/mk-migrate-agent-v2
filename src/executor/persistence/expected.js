@@ -6,6 +6,11 @@ import {
   resolveDirectRef,
   resolveEffectTarget
 } from "../../dsl/form-rules.js";
+import {
+  compileNativeFormRuleFormula,
+  inspectNativeFormRuleActionBinding,
+  inspectNativeFormRuleProjection
+} from "../../dsl/native-form-rule-projection.js";
 import { EXECUTABLE_WORKFLOW_NODE_TYPE_SET, INVARIANT_VERSION } from "./invariants.js";
 import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "./normalize.js";
 import { projectionError } from "./diagnostics.js";
@@ -33,7 +38,12 @@ export function buildExpectedInvariants(dsl, envelope) {
   const diagnostics = [];
   const envelopeExpected = buildExpectedEnvelope(envelope, diagnostics, Boolean(dsl?.workflow));
   const formExpected = buildExpectedForm(dsl?.form || {}, envelope?.tableName, diagnostics);
-  const rulesExpected = buildExpectedRules(dsl?.formRules, dsl?.form || {}, diagnostics);
+  const rulesExpected = buildExpectedRules(
+    dsl?.formRules,
+    dsl?.form || {},
+    dsl?.scripts,
+    diagnostics
+  );
   const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, envelope?.tableName, diagnostics);
   const workflowExpected = dsl?.workflow
     ? buildExpectedWorkflow(dsl.workflow, diagnostics, {
@@ -320,7 +330,7 @@ function descriptionStyle(value) {
   return Object.keys(style).length ? style : undefined;
 }
 
-function buildExpectedRules(formRules = {}, form = {}, diagnostics) {
+function buildExpectedRules(formRules = {}, form = {}, scripts = {}, diagnostics) {
   const linkage = (Array.isArray(formRules?.linkage) ? formRules.linkage : [])
     .filter((rule) => rule?.translationStatus === "executable");
   const formIndex = buildFormRuleRefIndex(form || {});
@@ -329,22 +339,50 @@ function buildExpectedRules(formRules = {}, form = {}, diagnostics) {
   for (const [index, rule] of linkage.entries()) {
     const ruleId = rule.id || `linkage-${index + 1}`;
     const when = Array.isArray(rule.when) ? rule.when : [];
+    const projection = inspectNativeFormRuleProjection(rule);
+    const actionBinding = inspectNativeFormRuleActionBinding(rule, scripts);
+    if (!projection.ok || !actionBinding.ok) {
+      diagnostics.push(projectionError(
+        rule.meta?.runWhen === undefined
+          ? "projection.form_rule.native_projection_unproven"
+          : "projection.form_rule.run_when_not_persistable",
+        "Expected native form-rule semantics are not statically projectable.",
+        { ruleId, issues: [...(projection.issues || []), ...(actionBinding.issues || [])] }
+      ));
+      continue;
+    }
+    const whenFormula = projection.kind === "view-status-formula"
+      ? compileNativeFormRuleFormula(rule, {
+          branch: "when",
+          resolveFieldName: (field) => resolveConditionFieldName(formIndex, field)
+        })
+      : undefined;
     pushRuleSemantics(rules, {
       ruleId,
       branch: "when",
+      active: rule.active !== false,
       logic: rule.logic === "or" ? "or" : "and",
       when,
       effects: Array.isArray(rule.effects) ? rule.effects : [],
-      formIndex
+      formIndex,
+      nativeFormula: whenFormula
     }, diagnostics);
     if (Array.isArray(rule.else) && rule.else.length) {
+      const elseFormula = projection.kind === "view-status-formula"
+        ? compileNativeFormRuleFormula(rule, {
+            branch: "else",
+            resolveFieldName: (field) => resolveConditionFieldName(formIndex, field)
+          })
+        : undefined;
       pushRuleSemantics(rules, {
         ruleId,
         branch: "else",
+        active: rule.active !== false,
         logic: rule.logic === "or" ? "and" : "or",
         when: invertClauses(when),
         effects: rule.else,
-        formIndex
+        formIndex,
+        nativeFormula: elseFormula
       }, diagnostics);
     }
   }
@@ -352,7 +390,16 @@ function buildExpectedRules(formRules = {}, form = {}, diagnostics) {
   return { rules };
 }
 
-function pushRuleSemantics(rules, { ruleId, branch, logic, when, effects, formIndex }, diagnostics) {
+function pushRuleSemantics(rules, {
+  ruleId,
+  branch,
+  active,
+  logic,
+  when,
+  effects,
+  formIndex,
+  nativeFormula
+}, diagnostics) {
   const displayEffects = [];
   const requireEffects = [];
   for (const effect of effects) {
@@ -360,29 +407,42 @@ function pushRuleSemantics(rules, { ruleId, branch, logic, when, effects, formIn
     for (const target of targets) {
       if (effect?.type === "visible") {
         displayEffects.push({
-          target,
+          ...target,
           visible: effect.value !== false
         });
       }
       if (effect?.type === "required") {
         requireEffects.push({
-          target,
+          target: target.target,
           required: effect.value !== false
         });
       }
     }
   }
-  const conditions = when.map((clause) => ({
-    field: resolveConditionFieldName(formIndex, clause.field),
-    op: normalizeScalar(clause.op),
-    value: normalizeRuleValue(clause.value)
-  }));
+  const conditions = nativeFormula
+    ? [{
+        field: "$formula",
+        op: "formula",
+        valueType: "formula",
+        evalType: "Eval",
+        voMode: "formula",
+        voContent: normalizeScalar(nativeFormula.script),
+        value: normalizeScalar(nativeFormula.script),
+        varIds: nativeFormula.varIds.map(normalizeScalar)
+      }]
+    : when.map((clause) => ({
+        field: resolveConditionFieldName(formIndex, clause.field),
+        op: normalizeScalar(clause.op),
+        value: normalizeRuleValue(clause.value)
+      }));
+  const nativeLogic = nativeFormula ? "and" : logic;
   if (displayEffects.length) {
     rules.push({
       kind: "display",
       ruleId,
       branch,
-      logic,
+      active,
+      logic: nativeLogic,
       conditions,
       effects: displayEffects
     });
@@ -392,7 +452,8 @@ function pushRuleSemantics(rules, { ruleId, branch, logic, when, effects, formIn
       kind: "require",
       ruleId,
       branch,
-      logic,
+      active,
+      logic: nativeLogic,
       conditions,
       effects: requireEffects
     });
@@ -409,7 +470,17 @@ function resolveEffectFieldNames(formIndex, ref, diagnostics, ruleId) {
     ));
     return [];
   }
-  return resolved.targets.map((target) => normalizeScalar(target.id));
+  return resolved.targets.map((target) => ({
+    target: normalizeScalar(target.id),
+    ...(target.kind === "detailTable"
+      ? {
+          nativeFieldNames: [
+            "all",
+            ...(target.columns || []).map((column) => normalizeScalar(column.id))
+          ]
+        }
+      : {})
+  }));
 }
 
 function resolveConditionFieldName(formIndex, ref) {
@@ -1376,6 +1447,7 @@ function clone(value) {
 export function expectedRuleFingerprint(rule) {
   return stableStringify({
     kind: rule.kind,
+    active: rule.active,
     logic: rule.logic,
     conditions: rule.conditions,
     effects: rule.effects

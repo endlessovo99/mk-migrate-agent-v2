@@ -1,8 +1,14 @@
 import { checkDraft } from "../dsl/checks.js";
 import { FIELD_TYPES } from "../dsl/schema.js";
-import { validateSetFieldAttrTargets } from "../dsl/scripts.js";
+import { nativeFormRuleBelongsToAction } from "../dsl/native-form-rule-projection.js";
+import { inspectMappedScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
+import { analyzeScriptFunction, validateSetFieldAttrTargets } from "../dsl/scripts.js";
 import { AGENT_REVIEW_PROMPT_VERSION } from "./prompt.js";
 import { classifyActionRowMarkers } from "./row-marker-policy.js";
+import {
+  validateAssignmentBranchSemantics,
+  validateRowMarkerBranchSemantics
+} from "./script-semantic-closure.js";
 
 const TOP_LEVEL_KEYS = new Set(["summary", "patches", "diagnostics"]);
 const PATCH_KEYS = ["op", "path", "value", "sourceRefs", "evidence", "confidence", "rationale"];
@@ -177,14 +183,29 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     acceptedPatches,
     sourceDraft
   );
-  if (rowMarkerDiagnostics.length) {
+  const residualDiagnostics = validateDeterministicResidualClosures(
+    dslDraft,
+    patchedDraft,
+    acceptedPatches
+  );
+  const branchProvenanceDiagnostics = validateActionBranchProvenanceClosures(
+    dslDraft,
+    patchedDraft,
+    acceptedPatches
+  );
+  const closureDiagnostics = [
+    ...rowMarkerDiagnostics,
+    ...residualDiagnostics,
+    ...branchProvenanceDiagnostics
+  ];
+  if (closureDiagnostics.length) {
     return {
       ok: false,
-      diagnostics: rowMarkerDiagnostics,
+      diagnostics: closureDiagnostics,
       rejectedPatches: acceptedPatches
         .map((patch, index) => ({ patch, index }))
         .filter(({ patch }) => /^\/scripts\/actions\/\d+\//.test(patch.path))
-        .map(({ patch, index }) => patchSummary(patch, index, rowMarkerDiagnostics))
+        .map(({ patch, index }) => patchSummary(patch, index, closureDiagnostics))
     };
   }
 
@@ -195,6 +216,366 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     rejectedPatches,
     decisions
   };
+}
+
+function validateActionBranchProvenanceClosures(dslDraft, patchedDraft, patches) {
+  const touchedActionIndexes = new Set(patches.flatMap((patch) => {
+    const match = String(patch?.path || "").match(/^\/scripts\/actions\/(\d+)\//);
+    return match ? [Number(match[1])] : [];
+  }));
+  const diagnostics = [];
+
+  for (const actionIndex of touchedActionIndexes) {
+    const sourceAction = dslDraft?.scripts?.actions?.[actionIndex];
+    const reviewedAction = patchedDraft?.scripts?.actions?.[actionIndex];
+    if (!sourceAction?.branchProvenance) {
+      const semanticClaim = (reviewedAction?.functionMappings || []).some((mapping) => (
+        ["semantic-translation", "native-form-rule", "static-form-prop"].includes(mapping?.basis)
+      ));
+      if (
+        !sourceAction?.deterministicBranchProof &&
+        ["onChange", "onLoad"].includes(sourceAction?.event) &&
+        ["mapped", "omitted"].includes(reviewedAction?.translationStatus) &&
+        semanticClaim
+      ) {
+        diagnostics.push(error(
+          "agent.patch.branch_provenance_missing",
+          "An onChange/onLoad action without immutable source provenance must remain needs_review.",
+          `/scripts/actions/${actionIndex}/translationStatus`,
+          { actionIndex, actionId: sourceAction.id, event: sourceAction.event }
+        ));
+      }
+      continue;
+    }
+    let inspection;
+    if (
+      reviewedAction?.translationStatus === "omitted" &&
+      sourceAction.branchProvenance.status === "unproven"
+    ) {
+      inspection = {
+        ok: false,
+        reason: "source_branch_provenance_unproven",
+        expected: sourceAction.branchProvenance
+      };
+    } else if (reviewedAction?.translationStatus === "mapped") {
+      inspection = inspectMappedScriptBranchProvenance(
+        reviewedAction,
+        sourceAction.branchProvenance
+      );
+    } else continue;
+    if (inspection.ok) continue;
+    diagnostics.push(error(
+      "agent.patch.condition_operand_provenance_unverified",
+      "A reviewed mapped script may preserve source branches only when every condition operand is statically traceable to the action-local source: onChange uses its input value and onLoad uses the original source field read.",
+      `/scripts/actions/${actionIndex}/function`,
+      {
+        actionIndex,
+        actionId: sourceAction.id,
+        event: sourceAction.event,
+        reason: inspection.reason,
+        expected: inspection.expected,
+        observed: inspection.observed
+      }
+    ));
+  }
+  return diagnostics;
+}
+
+function validateDeterministicResidualClosures(dslDraft, patchedDraft, patches) {
+  const protectedResidualCodes = new Set([
+    "script.residual.field_value_assignment",
+    "script.residual.form_rule_chain_untranslated"
+  ]);
+  const touchedActionIndexes = new Set(patches.flatMap((patch) => {
+    const match = String(patch?.path || "").match(/^\/scripts\/actions\/(\d+)\//);
+    return match ? [Number(match[1])] : [];
+  }));
+  const diagnostics = [];
+
+  for (const actionIndex of touchedActionIndexes) {
+    const sourceAction = dslDraft?.scripts?.actions?.[actionIndex];
+    const reviewedAction = patchedDraft?.scripts?.actions?.[actionIndex];
+    const protectedResiduals = (Array.isArray(sourceAction?.coverage?.residuals)
+      ? sourceAction.coverage.residuals
+      : []).filter((residual) => protectedResidualCodes.has(residual?.code));
+    if (!protectedResiduals.length) continue;
+    const reviewedResiduals = Array.isArray(reviewedAction?.coverage?.residuals)
+      ? reviewedAction.coverage.residuals
+      : [];
+    const removedResiduals = subtractResidualEvidence(protectedResiduals, reviewedResiduals);
+    if (!removedResiduals.length) continue;
+
+    const clearedAssignments = removedResiduals.filter((residual) => (
+      residual?.code === "script.residual.field_value_assignment"
+    ));
+    const functionText = reviewedAction?.function;
+    if (
+      !nonEmptyString(functionText) ||
+      (clearedAssignments.length > 0 && reviewedAction?.translationStatus !== "mapped")
+    ) {
+      diagnostics.push(error(
+        "agent.patch.deterministic_residual_omitted",
+        "Agent Review must translate deterministic field-assignment or unlowered row behavior into a non-empty mapped function before clearing its residual evidence.",
+        `/scripts/actions/${actionIndex}/function`,
+        {
+          actionIndex,
+          translationStatus: reviewedAction?.translationStatus,
+          residualCodes: [...new Set(removedResiduals.map((residual) => residual.code))],
+          residualTargets: [...new Set(removedResiduals.map((residual) => residual.target).filter(nonEmptyString))]
+        }
+      ));
+      continue;
+    }
+
+    if (clearedAssignments.length) {
+      const assignmentCheck = validateFieldValueAssignmentClosure(
+        protectedResiduals.filter((residual) => residual?.code === "script.residual.field_value_assignment"),
+        functionText
+      );
+      if (!assignmentCheck.ok) {
+        diagnostics.push(error(
+          "agent.patch.field_value_assignment_incomplete",
+          "A mapped script may clear field-value-assignment residuals only when its executable MKXFORM.setValue calls preserve every evidenced target/value assignment branch.",
+          `/scripts/actions/${actionIndex}/function`,
+          {
+            actionIndex,
+            missingAssignments: assignmentCheck.missingAssignments,
+            observedAssignments: assignmentCheck.observedAssignments
+          }
+        ));
+      } else {
+        const semanticCheck = validateAssignmentBranchSemantics({
+          sourceFunction: sourceAction?.function,
+          reviewedFunction: functionText,
+          residuals: protectedResiduals.filter((residual) => (
+            residual?.code === "script.residual.field_value_assignment"
+          ))
+        });
+        if (!semanticCheck.ok) {
+          diagnostics.push(error(
+            "agent.patch.field_value_assignment_semantics_unverified",
+            "A mapped script may clear field-value-assignment residuals only when a statically verified if/else-if/else chain preserves each assignment's source branch and priority.",
+            `/scripts/actions/${actionIndex}/function`,
+            {
+              actionIndex,
+              reason: semanticCheck.reason,
+              expectedConditions: semanticCheck.expectedConditions,
+              observedConditions: semanticCheck.observedConditions,
+              expectedBranches: semanticCheck.expectedBranches,
+              observedBranches: semanticCheck.observedBranches
+            }
+          ));
+        }
+      }
+    }
+  }
+  return diagnostics;
+}
+
+function subtractResidualEvidence(sourceResiduals, reviewedResiduals) {
+  const unmatched = [...reviewedResiduals];
+  return sourceResiduals.filter((sourceResidual) => {
+    const matchIndex = unmatched.findIndex((reviewedResidual) => (
+      sameResidualEvidence(sourceResidual, reviewedResidual)
+    ));
+    if (matchIndex < 0) return true;
+    unmatched.splice(matchIndex, 1);
+    return false;
+  });
+}
+
+function sameResidualEvidence(left, right) {
+  if (left?.code !== right?.code) return false;
+  for (const key of ["type", "sourceRef", "target", "evidence"]) {
+    if ((left?.[key] ?? undefined) !== (right?.[key] ?? undefined)) return false;
+  }
+  return true;
+}
+
+function validateFieldValueAssignmentClosure(residuals, functionText) {
+  const expectedAssignments = residuals.map(parseResidualAssignment);
+  const observedAssignments = extractSetValueAssignments(functionText);
+  const unmatchedObserved = [...observedAssignments];
+  const missingAssignments = [];
+
+  for (const expected of expectedAssignments) {
+    if (!expected.target || !expected.valueSignature) {
+      missingAssignments.push({
+        target: expected.target,
+        evidence: expected.evidence,
+        reason: "assignment_evidence_unparseable"
+      });
+      continue;
+    }
+    const matchIndex = unmatchedObserved.findIndex((observed) => (
+      observed.target === expected.target && observed.valueSignature === expected.valueSignature
+    ));
+    if (matchIndex < 0) {
+      missingAssignments.push({
+        target: expected.target,
+        evidence: expected.evidence,
+        value: expected.value
+      });
+      continue;
+    }
+    unmatchedObserved.splice(matchIndex, 1);
+  }
+
+  return {
+    ok: missingAssignments.length === 0,
+    missingAssignments,
+    observedAssignments: observedAssignments.map((assignment) => ({
+      target: assignment.target,
+      value: assignment.value
+    }))
+  };
+}
+
+function parseResidualAssignment(residual) {
+  const evidence = String(residual?.evidence || "").trim();
+  const match = evidence.match(/\.\s*value\s*=\s*([\s\S]+?)\s*;?$/);
+  const value = match?.[1]?.trim();
+  return {
+    target: nonEmptyString(residual?.target) ? residual.target : undefined,
+    evidence: residual?.evidence,
+    value,
+    valueSignature: valueExpressionSignature(value)
+  };
+}
+
+function extractSetValueAssignments(functionText) {
+  const source = String(functionText || "");
+  const analysis = analyzeScriptFunction(source);
+  return analysis.calls
+    .filter((call) => call.name === "MKXFORM.setValue")
+    .flatMap((call) => {
+      const args = parseCallArguments(source, call.index, call.name);
+      if (!args || args.length < 2) return [];
+      const target = staticStringValue(args[0]);
+      const valueSignature = valueExpressionSignature(args[1]);
+      if (target === undefined || !valueSignature) return [];
+      return [{ target, value: args[1].trim(), valueSignature }];
+    });
+}
+
+function parseCallArguments(source, callIndex, callName) {
+  let index = callIndex + callName.length;
+  while (/\s/.test(source[index] || "")) index += 1;
+  if (source[index] !== "(") return undefined;
+
+  const args = [];
+  let start = index + 1;
+  let parenDepth = 1;
+  let bracketDepth = 0;
+  let braceDepth = 0;
+  let quote = "";
+  let lineComment = false;
+  let blockComment = false;
+
+  for (index += 1; index < source.length; index += 1) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (lineComment) {
+      if (char === "\n") lineComment = false;
+      continue;
+    }
+    if (blockComment) {
+      if (char === "*" && next === "/") {
+        blockComment = false;
+        index += 1;
+      }
+      continue;
+    }
+    if (quote) {
+      if (char === "\\") {
+        index += 1;
+      } else if (char === quote) {
+        quote = "";
+      }
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      lineComment = true;
+      index += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      blockComment = true;
+      index += 1;
+      continue;
+    }
+    if (["'", "\"", "`"].includes(char)) {
+      quote = char;
+      continue;
+    }
+    if (char === "(") parenDepth += 1;
+    else if (char === ")") {
+      parenDepth -= 1;
+      if (parenDepth === 0) {
+        args.push(source.slice(start, index).trim());
+        return args;
+      }
+    } else if (char === "[") bracketDepth += 1;
+    else if (char === "]") bracketDepth -= 1;
+    else if (char === "{") braceDepth += 1;
+    else if (char === "}") braceDepth -= 1;
+    else if (char === "," && parenDepth === 1 && bracketDepth === 0 && braceDepth === 0) {
+      args.push(source.slice(start, index).trim());
+      start = index + 1;
+    }
+  }
+  return undefined;
+}
+
+function valueExpressionSignature(expression) {
+  if (!nonEmptyString(expression)) return undefined;
+  const text = expression.trim().replace(/;\s*$/, "").trim();
+  const stringValue = staticStringValue(text);
+  if (stringValue !== undefined) return `string:${JSON.stringify(stringValue)}`;
+  if (/^(?:true|false|null|undefined|-?(?:\d+(?:\.\d*)?|\.\d+))$/.test(text)) {
+    return `primitive:${text}`;
+  }
+  return `expression:${text.replace(/\s+/g, "")}`;
+}
+
+function staticStringValue(expression) {
+  if (!nonEmptyString(expression)) return undefined;
+  const text = expression.trim();
+  const quote = text[0];
+  if (!["'", "\"", "`"].includes(quote) || text.at(-1) !== quote) return undefined;
+  if (quote === "`" && text.includes("${")) return undefined;
+  let result = "";
+  for (let index = 1; index < text.length - 1; index += 1) {
+    const char = text[index];
+    if (char !== "\\") {
+      result += char;
+      continue;
+    }
+    index += 1;
+    if (index >= text.length - 1) return undefined;
+    const escaped = text[index];
+    const simpleEscapes = {
+      "0": "\0",
+      b: "\b",
+      f: "\f",
+      n: "\n",
+      r: "\r",
+      t: "\t",
+      v: "\v"
+    };
+    if (Object.hasOwn(simpleEscapes, escaped)) {
+      result += simpleEscapes[escaped];
+    } else if (escaped === "x" && /^[0-9a-fA-F]{2}$/.test(text.slice(index + 1, index + 3))) {
+      result += String.fromCharCode(Number.parseInt(text.slice(index + 1, index + 3), 16));
+      index += 2;
+    } else if (escaped === "u" && /^[0-9a-fA-F]{4}$/.test(text.slice(index + 1, index + 5))) {
+      result += String.fromCharCode(Number.parseInt(text.slice(index + 1, index + 5), 16));
+      index += 4;
+    } else {
+      result += escaped;
+    }
+  }
+  return result;
 }
 
 function normalizePatchSourceRefs(patch, dslDraft) {
@@ -227,32 +608,394 @@ function validateRowMarkerClosures(dslDraft, patchedDraft, patches, sourceDraft)
     const reviewedAction = patchedDraft?.scripts?.actions?.[actionIndex];
     if (!sourceAction || !reviewedAction) continue;
     if (!["mapped", "omitted"].includes(reviewedAction.translationStatus)) continue;
-    if (isCompleteNativeRuleClosure(reviewedAction)) continue;
 
     const policy = classifyActionRowMarkers(sourceAction, dslDraft?.form, sourceDraft);
-    if (!policy.unresolvedMarkers.length) continue;
-    diagnostics.push(error(
-      "agent.patch.row_marker_orphan_evidence_invalid",
-      "Agent Review cannot close a script action while missing row markers lack exact auditable orphan evidence.",
-      `/scripts/actions/${actionIndex}/translationStatus`,
-      {
-        actionIndex,
-        sourceRefs: sourceAction.sourceRefs || [],
-        orphanRowMarkers: policy.orphanMarkers,
-        unresolvedRowMarkers: policy.unresolvedMarkers
-      }
+    if (policy.unresolvedMarkers.length) {
+      diagnostics.push(error(
+        "agent.patch.row_marker_orphan_evidence_invalid",
+        "Agent Review cannot close a script action while missing row markers lack exact auditable orphan evidence.",
+        `/scripts/actions/${actionIndex}/translationStatus`,
+        {
+          actionIndex,
+          sourceRefs: sourceAction.sourceRefs || [],
+          orphanRowMarkers: policy.orphanMarkers,
+          unresolvedRowMarkers: policy.unresolvedMarkers
+        }
+      ));
+      continue;
+    }
+    if (!policy.resolvedMarkers.length) continue;
+
+    const resetMarkers = policy.markers.filter((marker) => (
+      marker.reset === true && policy.resolvedMarkers.includes(marker.rowId)
     ));
+    if (resetMarkers.length) {
+      diagnostics.push(error(
+        "agent.patch.row_marker_reset_untranslated",
+        "Agent Review cannot close a resolved row-helper action whose reset=true side effect has no verified MK target mapping.",
+        `/scripts/actions/${actionIndex}/function`,
+        {
+          actionIndex,
+          markers: uniqueRowMarkerEvidence(resetMarkers)
+        }
+      ));
+      continue;
+    }
+
+    const expectedEffects = expectedRowMarkerEffects(policy, dslDraft?.form);
+    const observedEffects = extractSetFieldAttrEffects(reviewedAction.function);
+    const nativeClosure = proveNativeRowEffectClosure({
+      sourceAction,
+      reviewedAction,
+      formRules: dslDraft?.formRules,
+      policy,
+      form: dslDraft?.form,
+      expectedEffects
+    });
+    if (nativeClosure.candidateRuleIds.length) {
+      if (!nativeClosure.complete) {
+        diagnostics.push(error(
+          "agent.patch.row_marker_native_coverage_incomplete",
+          "Native row-rule credit is all-or-nothing: every resolved row dimension must have one action-bound executable rule with complementary when/else states.",
+          `/scripts/actions/${actionIndex}/coverage/nativeRules`,
+          {
+            actionIndex,
+            candidateRuleIds: nativeClosure.candidateRuleIds,
+            issues: nativeClosure.issues,
+            expectedEffects,
+            coveredEffects: nativeClosure.coveredEffects
+          }
+        ));
+        continue;
+      }
+      const duplicateTargets = extractSetFieldAttrTargets(reviewedAction.function)
+        .map((target) => nativeClosure.primaryMarkerByAlias.get(target) || target)
+        .filter((target) => nativeClosure.coveredTargets.has(target));
+      if (duplicateTargets.length) {
+        diagnostics.push(error(
+          "agent.patch.row_marker_native_effect_duplicated",
+          "Residual JavaScript must not rewrite row dimensions already owned by verified native form rules.",
+          `/scripts/actions/${actionIndex}/function`,
+          {
+            actionIndex,
+            duplicateTargets: [...new Set(duplicateTargets)]
+          }
+        ));
+      }
+      continue;
+    }
+    const observedKeys = new Set(observedEffects.map(rowMarkerEffectKey));
+    const missingEffects = expectedEffects.filter((effect) => !observedKeys.has(rowMarkerEffectKey(effect)));
+    if (missingEffects.length) {
+      diagnostics.push(error(
+        "agent.patch.row_marker_effect_incomplete",
+        "A mapped row-visibility script must preserve every evidenced show/hide and required/non-required state for each resolved row marker.",
+        `/scripts/actions/${actionIndex}/function`,
+        {
+          actionIndex,
+          missingEffects,
+          observedEffects
+        }
+      ));
+      continue;
+    }
+
+    const semanticCheck = validateRowMarkerBranchSemantics({
+      sourceFunction: sourceAction.function,
+      reviewedFunction: reviewedAction.function,
+      resolvedMarkers: policy.resolvedMarkers,
+      primaryMarkerByAlias: primaryLayoutMarkerByAlias(dslDraft?.form)
+    });
+    if (!semanticCheck.ok) {
+      diagnostics.push(error(
+        "agent.patch.row_marker_semantics_unverified",
+        "A mapped row-visibility script must keep each row state associated with the same statically verified source condition branch; dead-code or unconditional state enumeration is not coverage.",
+        `/scripts/actions/${actionIndex}/function`,
+        {
+          actionIndex,
+          reason: semanticCheck.reason,
+          conditionalReason: semanticCheck.conditionalReason,
+          ternaryReason: semanticCheck.ternaryReason,
+          conditionalDetails: semanticCheck.conditionalDetails,
+          ternaryDetails: semanticCheck.ternaryDetails,
+          scenario: semanticCheck.scenario,
+          state: semanticCheck.state,
+          expected: semanticCheck.expected,
+          observed: semanticCheck.observed
+        }
+      ));
+    }
   }
 
   return diagnostics;
 }
 
-function isCompleteNativeRuleClosure(action) {
-  return action?.translationStatus === "omitted" &&
-    String(action?.function || "").trim() === "" &&
-    action?.coverage?.status === "covered" &&
-    Array.isArray(action.coverage.nativeRules) && action.coverage.nativeRules.length > 0 &&
-    Array.isArray(action.coverage.residuals) && action.coverage.residuals.length === 0;
+function expectedRowMarkerEffects(policy, form) {
+  const resolved = new Set(policy.resolvedMarkers || []);
+  const primaryByAlias = primaryLayoutMarkerByAlias(form);
+  const effects = [];
+  const seen = new Set();
+  for (const marker of policy.markers || []) {
+    if (!resolved.has(marker.rowId)) continue;
+    const target = primaryByAlias.get(marker.rowId) || marker.rowId;
+    for (const attribute of [marker.visible ? 5 : 4, marker.required ? 3 : 6]) {
+      const effect = { target, attribute };
+      const key = rowMarkerEffectKey(effect);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      effects.push(effect);
+    }
+  }
+  return effects;
+}
+
+function extractSetFieldAttrEffects(functionText) {
+  const source = String(functionText || "");
+  const effects = [];
+  const seen = new Set();
+  for (const call of analyzeScriptFunction(source).calls) {
+    if (call.name !== "MKXFORM.setFieldAttr") continue;
+    const args = parseCallArguments(source, call.index, call.name);
+    if (!args || args.length < 2) continue;
+    const target = staticStringValue(args[0]);
+    if (!nonEmptyString(target)) continue;
+    for (const attribute of possibleFieldAttributeValues(args[1])) {
+      const effect = { target, attribute };
+      const key = rowMarkerEffectKey(effect);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      effects.push(effect);
+    }
+  }
+  return effects;
+}
+
+function extractSetFieldAttrTargets(functionText) {
+  const source = String(functionText || "");
+  const targets = [];
+  for (const call of analyzeScriptFunction(source).calls) {
+    if (call.name !== "MKXFORM.setFieldAttr") continue;
+    const args = parseCallArguments(source, call.index, call.name);
+    const target = args ? staticStringValue(args[0]) : undefined;
+    if (nonEmptyString(target)) targets.push(target);
+  }
+  return targets;
+}
+
+function proveNativeRowEffectClosure({
+  sourceAction,
+  reviewedAction,
+  formRules,
+  policy,
+  form,
+  expectedEffects
+}) {
+  const candidateRuleIds = uniqueStrings(sourceAction?.coverage?.nativeRules || []);
+  const primaryMarkerByAlias = primaryLayoutMarkerByAlias(form);
+  const resolvedTargets = new Set((policy.resolvedMarkers || []).map((marker) => (
+    primaryMarkerByAlias.get(marker) || marker
+  )));
+  const result = {
+    candidateRuleIds,
+    complete: false,
+    issues: [],
+    coveredEffects: [],
+    coveredTargets: new Set(),
+    primaryMarkerByAlias
+  };
+  if (!candidateRuleIds.length) return result;
+
+  const reviewedRuleIds = new Set(reviewedAction?.coverage?.nativeRules || []);
+  const rules = Array.isArray(formRules?.linkage) ? formRules.linkage : [];
+  const rulesById = new Map();
+  for (const rule of rules) {
+    if (!rulesById.has(rule.id)) rulesById.set(rule.id, []);
+    rulesById.get(rule.id).push(rule);
+  }
+  const ownersByDimension = new Map();
+  const coveredEffects = [];
+
+  for (const ruleId of candidateRuleIds) {
+    const matches = rulesById.get(ruleId) || [];
+    if (!reviewedRuleIds.has(ruleId)) {
+      result.issues.push({ ruleId, reason: "reviewed_coverage_missing" });
+      continue;
+    }
+    if (matches.length !== 1) {
+      result.issues.push({ ruleId, reason: matches.length ? "rule_id_ambiguous" : "rule_missing" });
+      continue;
+    }
+    const rule = matches[0];
+    if (rule.translationStatus !== "executable" || !nativeFormRuleBelongsToAction(rule, sourceAction)) {
+      result.issues.push({ ruleId, reason: "rule_not_executable_or_action_bound" });
+      continue;
+    }
+
+    const whenByDimension = rowEffectsByDimension(rule.effects, primaryMarkerByAlias, resolvedTargets);
+    const elseByDimension = rowEffectsByDimension(rule.else, primaryMarkerByAlias, resolvedTargets);
+    const dimensions = new Set([...whenByDimension.keys(), ...elseByDimension.keys()]);
+    for (const dimension of dimensions) {
+      const when = whenByDimension.get(dimension) || [];
+      const otherwise = elseByDimension.get(dimension) || [];
+      if (
+        when.length !== 1 ||
+        otherwise.length !== 1 ||
+        when[0].value === otherwise[0].value
+      ) {
+        result.issues.push({ ruleId, dimension, reason: "when_else_not_complementary" });
+        continue;
+      }
+      if (ownersByDimension.has(dimension)) {
+        result.issues.push({
+          ruleId,
+          dimension,
+          reason: "multiple_native_writers",
+          conflictingRuleId: ownersByDimension.get(dimension)
+        });
+        continue;
+      }
+      ownersByDimension.set(dimension, ruleId);
+      for (const effect of [when[0], otherwise[0]]) {
+        coveredEffects.push({
+          target: effect.target,
+          attribute: effect.type === "visible"
+            ? (effect.value ? 5 : 4)
+            : (effect.value ? 3 : 6)
+        });
+        result.coveredTargets.add(effect.target);
+      }
+    }
+  }
+
+  result.coveredEffects = dedupeRowMarkerEffects(coveredEffects);
+  const expectedKeys = new Set(expectedEffects.map(rowMarkerEffectKey));
+  const coveredKeys = new Set(result.coveredEffects.map(rowMarkerEffectKey));
+  if (
+    result.issues.length === 0 &&
+    expectedKeys.size === coveredKeys.size &&
+    [...expectedKeys].every((key) => coveredKeys.has(key))
+  ) {
+    result.complete = true;
+  } else if (result.issues.length === 0) {
+    result.issues.push({ reason: "native_effect_set_incomplete" });
+  }
+  return result;
+}
+
+function rowEffectsByDimension(effects, primaryMarkerByAlias, resolvedTargets) {
+  const result = new Map();
+  for (const effect of Array.isArray(effects) ? effects : []) {
+    if (!["visible", "required"].includes(effect?.type) || typeof effect.value !== "boolean") continue;
+    const target = primaryMarkerByAlias.get(effect.target) || effect.target;
+    if (!resolvedTargets.has(target)) continue;
+    const dimension = `${target}:${effect.type}`;
+    if (!result.has(dimension)) result.set(dimension, []);
+    result.get(dimension).push({ ...effect, target });
+  }
+  return result;
+}
+
+function dedupeRowMarkerEffects(effects) {
+  const seen = new Set();
+  return effects.filter((effect) => {
+    const key = rowMarkerEffectKey(effect);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function possibleFieldAttributeValues(expression) {
+  const code = codeWithoutStringsAndComments(String(expression || ""));
+  return [...new Set(
+    [...code.matchAll(/(?:^|[^\w.])([3-6])(?=$|[^\w.])/g)].map((match) => Number(match[1]))
+  )];
+}
+
+function codeWithoutStringsAndComments(source) {
+  let output = "";
+  let quote = "";
+  let lineComment = false;
+  let blockComment = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (lineComment) {
+      if (char === "\n") {
+        lineComment = false;
+        output += "\n";
+      } else {
+        output += " ";
+      }
+      continue;
+    }
+    if (blockComment) {
+      if (char === "*" && next === "/") {
+        blockComment = false;
+        output += "  ";
+        index += 1;
+      } else {
+        output += char === "\n" ? "\n" : " ";
+      }
+      continue;
+    }
+    if (quote) {
+      if (char === "\\") {
+        output += "  ";
+        index += 1;
+      } else if (char === quote) {
+        quote = "";
+        output += " ";
+      } else {
+        output += char === "\n" ? "\n" : " ";
+      }
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      lineComment = true;
+      output += "  ";
+      index += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      blockComment = true;
+      output += "  ";
+      index += 1;
+      continue;
+    }
+    if (["'", "\"", "`"].includes(char)) {
+      quote = char;
+      output += " ";
+      continue;
+    }
+    output += char;
+  }
+  return output;
+}
+
+function primaryLayoutMarkerByAlias(form) {
+  const primaryByAlias = new Map();
+  for (const row of Array.isArray(form?.layout?.mkTree) ? form.layout.mkTree : []) {
+    const markers = (Array.isArray(row?.sourceMarkers) ? row.sourceMarkers : [])
+      .filter(nonEmptyString);
+    if (!markers.length) continue;
+    for (const marker of markers) primaryByAlias.set(marker, markers[0]);
+  }
+  return primaryByAlias;
+}
+
+function uniqueRowMarkerEvidence(markers) {
+  const seen = new Set();
+  return markers.filter((marker) => {
+    const key = `${marker.rowId}:${marker.evidence}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).map((marker) => ({ rowId: marker.rowId, evidence: marker.evidence }));
+}
+
+function rowMarkerEffectKey(effect) {
+  return `${effect.target}:${effect.attribute}`;
 }
 
 export function collectSourceRefs(value) {
@@ -452,6 +1195,14 @@ function validateScriptPatchValue(patch, target, path, currentValue, dslDraft) {
     }
     if (patch.value.nativeRules !== undefined && !Array.isArray(patch.value.nativeRules)) {
       diagnostics.push(error("agent.patch.value_coverage_native_rules_invalid", "Script coverage.nativeRules must be an array when present.", `${path}/value/nativeRules`));
+    } else {
+      diagnostics.push(...validateNativeRulePatchCoverage(
+        patch.value.nativeRules,
+        patch.value.status,
+        action,
+        dslDraft?.formRules,
+        `${path}/value/nativeRules`
+      ));
     }
     diagnostics.push(...validateStaticPropPatchCoverage(
       patch.value.staticProps,
@@ -465,6 +1216,90 @@ function validateScriptPatchValue(patch, target, path, currentValue, dslDraft) {
     return diagnostics;
   }
   return [];
+}
+
+function validateNativeRulePatchCoverage(proposedNativeRules, proposedStatus, action, formRules, path) {
+  const currentNativeRules = Array.isArray(action?.coverage?.nativeRules)
+    ? action.coverage.nativeRules
+    : [];
+  if (!Array.isArray(proposedNativeRules)) {
+    return currentNativeRules.length
+      ? [error(
+          "agent.patch.native_rules_deterministic_evidence_changed",
+          "Agent Review must preserve every deterministically identified native form rule.",
+          path,
+          { current: currentNativeRules, proposed: proposedNativeRules }
+        )]
+      : [];
+  }
+
+  const diagnostics = [];
+  const invalidIds = proposedNativeRules.filter((ruleId) => !nonEmptyString(ruleId));
+  if (invalidIds.length) {
+    diagnostics.push(error(
+      "agent.patch.native_rule_id_invalid",
+      "Script coverage.nativeRules entries must be non-empty rule ids.",
+      path,
+      { invalidIds }
+    ));
+  }
+  const proposedSet = new Set(proposedNativeRules.filter(nonEmptyString));
+  if (proposedSet.size !== proposedNativeRules.length) {
+    diagnostics.push(error(
+      "agent.patch.native_rule_id_duplicate",
+      "Script coverage.nativeRules must not contain duplicate rule ids.",
+      path
+    ));
+  }
+
+  const missingDeterministic = currentNativeRules.filter((ruleId) => !proposedSet.has(ruleId));
+  if (missingDeterministic.length) {
+    diagnostics.push(error(
+      "agent.patch.native_rules_deterministic_evidence_changed",
+      "Agent Review must preserve every deterministically identified native form rule.",
+      path,
+      { current: currentNativeRules, proposed: proposedNativeRules, missing: missingDeterministic }
+    ));
+  }
+
+  const eligibleRules = (Array.isArray(formRules?.linkage) ? formRules.linkage : [])
+    .filter((rule) => {
+      if (
+        rule?.translationStatus !== "executable" ||
+        !nativeFormRuleBelongsToAction(rule, action)
+      ) return false;
+      return true;
+    });
+  const eligibleById = new Map(eligibleRules.map((rule) => [rule.id, rule]));
+  const incompatible = proposedNativeRules.filter((ruleId) => !eligibleById.has(ruleId));
+  if (incompatible.length) {
+    diagnostics.push(error(
+      "agent.patch.native_rule_action_mismatch",
+      "Native form-rule coverage must belong to the same control onChange action and source evidence.",
+      path,
+      {
+        actionId: action?.id,
+        event: action?.event,
+        controlId: action?.controlId,
+        incompatible
+      }
+    ));
+  }
+
+  if (proposedStatus === "covered" && proposedNativeRules.length) {
+    const missingEligible = eligibleRules
+      .map((rule) => rule.id)
+      .filter((ruleId) => !proposedSet.has(ruleId));
+    if (missingEligible.length) {
+      diagnostics.push(error(
+        "agent.patch.native_rules_incomplete",
+        "Covered native form-rule evidence must include every executable rule for the same control action.",
+        path,
+        { missing: missingEligible }
+      ));
+    }
+  }
+  return diagnostics;
 }
 
 function getScriptAction(dslDraft, actionIndex) {
@@ -761,4 +1596,8 @@ function isRecord(value) {
 
 function nonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function uniqueStrings(values) {
+  return [...new Set((Array.isArray(values) ? values : []).filter(nonEmptyString))];
 }

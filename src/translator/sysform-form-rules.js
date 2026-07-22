@@ -1,3 +1,15 @@
+import { parse, tokenizer } from "acorn";
+import {
+  buildConditionOperandResolver,
+  parseProvenanceCondition
+} from "../dsl/script-condition-provenance.js";
+import { nativeFormRuleProjectionRef } from "../dsl/native-form-rule-projection.js";
+import { isProvablyInertVariableDeclaration } from "./pure-declarations.js";
+import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
+
+const VALUE_CHANGE_API = "AttachXFormValueChangeEventById";
+const ROW_EFFECT_HELPER = "common_dom_row_set_show_required_reset";
+
 export function sourceFormRulesFromLegacyScripts(scripts) {
   const sources = Array.isArray(scripts?.sources) ? scripts.sources : [];
   const linkageById = new Map();
@@ -5,11 +17,19 @@ export function sourceFormRulesFromLegacyScripts(scripts) {
   for (const source of sources) {
     if (source.displayGate === "xform:viewShow") continue;
     for (const rule of analyzeLegacyScriptFormRules(source).linkage) {
-      mergeLinkageRule(linkageById, rule);
+      mergeLinkageRule(
+        linkageById,
+        rule,
+        JSON.stringify([
+          source.sourceRef || source.id || "source-unproven",
+          rule.meta?.sourceActionKey || "action-unproven",
+          rule.id
+        ])
+      );
     }
   }
 
-  const linkage = [...linkageById.values()];
+  const linkage = globallyUniqueRuleIds([...linkageById.entries()]);
   if (!linkage.length) return undefined;
   return {
     linkage,
@@ -19,57 +39,355 @@ export function sourceFormRulesFromLegacyScripts(scripts) {
   };
 }
 
+function globallyUniqueRuleIds(entries) {
+  const counts = new Map();
+  for (const [, rule] of entries) {
+    const baseId = rule.meta?.sourceRuleIds?.[0] || rule.id;
+    counts.set(baseId, (counts.get(baseId) || 0) + 1);
+  }
+  return entries.map(([, rule]) => {
+    const baseId = rule.meta?.sourceRuleIds?.[0] || rule.id;
+    if (counts.get(baseId) > 1) return rule;
+    return {
+      ...rule,
+      id: baseId,
+      meta: {
+        ...rule.meta,
+        sourceRuleIds: [rule.id]
+      }
+    };
+  });
+}
+
 export function analyzeLegacyScriptFormRules(source) {
   const javascript = source?.javascript || "";
-  const callbacks = extractXFormValueChangeCallbacks(javascript);
+  const callbackExtraction = extractXFormValueChangeCallbacks(javascript, source);
+  const callbacks = callbackExtraction.callbacks;
   const linkageById = new Map();
+  const conflictedRuleIds = new Set();
+  const provenRowEffectCallStarts = provenUnshadowedDirectCallStarts(
+    javascript,
+    ROW_EFFECT_HELPER
+  );
+  const untranslatedRowEffects = callbackExtraction.unprovenBindings.map((binding) => residual({
+    code: "script.residual.value_change_binding_unproven",
+    type: "valueChangeBindingUnproven",
+    message: `${VALUE_CHANGE_API} is not proven to be the unshadowed platform global at this call site.`,
+    sourceRef: source.sourceRef,
+    trigger: binding.trigger,
+    evidence: binding.evidence
+  }));
 
   for (const callback of callbacks) {
-    for (const block of extractTopLevelIfElseBlocks(callback.body)) {
-      const condition = conditionSpec(block.condition, callback.source);
-      if (!condition) continue;
-
-      const effects = extractDirectRowEffects(block.thenBody);
-      const elseEffects = extractDirectRowEffects(block.elseBody);
-      if (!effects.length || !elseEffects.length) continue;
-
-      mergeLinkageRule(linkageById, {
-        id: `linkage.${callback.source}.${condition.idPart}`,
-        trigger: "change",
-        source: callback.source,
-        logic: condition.logic,
-        when: condition.when,
-        effects,
-        else: elseEffects,
-        meta: pruneUndefined({
-          sourceJsp: source.sourceRef,
-          displayGate: source.displayGate,
-          runWhen: runWhenFromDisplayGate(source.displayGate)
-        }),
-        translationStatus: "executable"
-      });
+    const resolveOperand = buildConditionOperandResolver(callback.body, {
+      eventParameter: callback.parameter
+    });
+    let loweredRowCallCount = 0;
+    const nativeChainStarts = new Set();
+    const rowEffectContext = {
+      absoluteBodyStart: callback.bodyStart,
+      provenCallStarts: provenRowEffectCallStarts
+    };
+    for (const chain of extractTopLevelConditionalChains(callback.body)) {
+      const conditionSourceUnproven = chain.branches.some((branch) => !conditionSpec(
+        branch.condition,
+        callback.source,
+        resolveOperand,
+        branch.conditionStart
+      ));
+      const rules = conditionSourceUnproven
+        ? []
+        : lowerConditionalChain(
+            chain,
+            callback.source,
+            source,
+            resolveOperand,
+            callback.sourceActionKey,
+            rowEffectContext
+          );
+      if (conditionSourceUnproven) {
+        untranslatedRowEffects.push(residual({
+          code: "script.residual.form_rule_condition_source_unproven",
+          type: "formRuleConditionSourceUnproven",
+          message: "The branch condition cannot be proven to derive from this onChange action input.",
+          sourceRef: source.sourceRef,
+          trigger: callback.source,
+          evidence: oneLine(chain.branches.map((branch) => branch.condition).join(" | "))
+        }));
+      }
+      if (rules.length) {
+        loweredRowCallCount += countDirectRowEffectCallsInChain(chain, rowEffectContext);
+        nativeChainStarts.add(chain.start);
+      }
+      for (const rule of rules) {
+        if (conflictedRuleIds.has(rule.id)) continue;
+        const existing = linkageById.get(rule.id);
+        if (
+          existing &&
+          existing.meta?.sourceActionKey !== rule.meta?.sourceActionKey
+        ) {
+          linkageById.delete(rule.id);
+          conflictedRuleIds.add(rule.id);
+          untranslatedRowEffects.push(residual({
+            code: "script.residual.form_rule_action_identity_collision",
+            type: "formRuleActionIdentityCollision",
+            message: "Equivalent native-rule ids were produced by different source callbacks and cannot be assigned to one action.",
+            sourceRef: source.sourceRef,
+            trigger: callback.source,
+            evidence: rule.id
+          }));
+          continue;
+        }
+        mergeLinkageRule(linkageById, rule);
+        if (linkageRuleHasConflictingBranchEffects(linkageById.get(rule.id))) {
+          linkageById.delete(rule.id);
+          conflictedRuleIds.add(rule.id);
+          untranslatedRowEffects.push(residual({
+            code: "script.residual.form_rule_effect_conflict",
+            type: "formRuleEffectConflict",
+            message: "One native rule branch writes conflicting values to the same target dimension.",
+            sourceRef: source.sourceRef,
+            trigger: callback.source,
+            evidence: rule.id
+          }));
+        }
+      }
+    }
+    const sourceRowCallCount = countRowEffectCalls(callback.body);
+    if (loweredRowCallCount < sourceRowCallCount) {
+      untranslatedRowEffects.push(residual({
+        code: "script.residual.form_rule_chain_untranslated",
+        type: "formRuleChainUntranslated",
+        message: `${sourceRowCallCount - loweredRowCallCount} of ${sourceRowCallCount} row visibility/required calls could not be represented by native formRules.`,
+        sourceRef: source.sourceRef,
+        trigger: callback.source,
+        evidence: `${loweredRowCallCount}/${sourceRowCallCount} row visibility/required calls lowered for ${callback.source}`
+      }));
+    }
+    const uncoveredBehavior = uncoveredNativeCallbackBehavior(
+      callback.body,
+      nativeChainStarts,
+      resolveOperand
+    );
+    if (uncoveredBehavior.length) {
+      untranslatedRowEffects.push(residual({
+        code: "script.residual.form_rule_behavior_uncovered",
+        type: "formRuleBehaviorUncovered",
+        message: "The onChange callback contains behavior outside the proven native row-rule projection.",
+        sourceRef: source.sourceRef,
+        trigger: callback.source,
+        evidence: uncoveredBehavior.slice(0, 3).join(" | ")
+      }));
     }
   }
 
   return {
-    linkage: [...linkageById.values()],
-    residuals: extractScriptResiduals(source)
+    linkage: [...linkageById.values()].map(actionScopedRule),
+    residuals: [...extractScriptResiduals(source), ...untranslatedRowEffects]
   };
 }
 
-function mergeLinkageRule(linkageById, rule) {
-  const existing = linkageById.get(rule.id);
-  if (!existing) {
-    linkageById.set(rule.id, {
-      ...rule,
-      effects: dedupeEffects(rule.effects),
-      else: dedupeEffects(rule.else)
+function actionScopedRule(rule) {
+  const identity = JSON.stringify([
+    rule.meta?.sourceJsp || "source-unproven",
+    rule.meta?.sourceActionKey || "action-unproven",
+    rule.id
+  ]);
+  return {
+    ...rule,
+    id: `${rule.id}.origin.~${Buffer.from(identity, "utf8").toString("hex")}`,
+    meta: {
+      ...rule.meta,
+      sourceRuleIds: [rule.id]
+    }
+  };
+}
+
+function linkageRuleHasConflictingBranchEffects(rule) {
+  return [rule?.effects, rule?.else].some((effects) => {
+    const valuesByTarget = new Map();
+    for (const effect of Array.isArray(effects) ? effects : []) {
+      const key = `${effect?.type || ""}:${effect?.target || ""}`;
+      if (!valuesByTarget.has(key)) valuesByTarget.set(key, new Set());
+      valuesByTarget.get(key).add(effect?.value);
+    }
+    return [...valuesByTarget.values()].some((values) => values.size > 1);
+  });
+}
+
+function lowerConditionalChain(
+  chain,
+  field,
+  source,
+  resolveOperand,
+  sourceActionKey,
+  rowEffectContext
+) {
+  // A conditional chain is one ordered behavior. Emitting native rules for
+  // only the reset=false/literal subset lets those independent rules race the
+  // residual script and can reverse the legacy final state. Require every row
+  // helper call in the chain to be directly representable before lowering any
+  // part of it.
+  if (
+    countDirectRowEffectCallsInChain(chain, rowEffectContext) !==
+    countRowEffectCallsInChain(chain)
+  ) {
+    return [];
+  }
+  const branches = chain.branches.map((branch) => ({
+    condition: conditionSpec(branch.condition, field, resolveOperand, branch.conditionStart),
+    effects: extractDirectRowEffects(branch.body, rowEffectContext, branch.bodyStart)
+  }));
+  const elseEffects = extractDirectRowEffects(
+    chain.elseBody,
+    rowEffectContext,
+    chain.elseBodyStart
+  );
+  if (
+    !branches.length ||
+    branches.some((branch) => !branch.condition || !branch.effects.length) ||
+    !elseEffects.length
+  ) return [];
+
+  const runWhen = runWhenFromDisplayGate(source.displayGate);
+  const meta = pruneUndefined({
+    sourceJsp: source.sourceRef,
+    displayGate: source.displayGate,
+    runWhen,
+    conditionSource: "event:value",
+    sourceActionKey,
+    nativeProjection: runWhen ? nativeFormRuleProjectionRef() : undefined
+  });
+
+  if (branches.length === 1) {
+    const [{ condition, effects }] = branches;
+    if (!effectValueMap(effects) || !effectValueMap(elseEffects)) return [];
+    return [{
+      id: `linkage.${field}.${condition.idPart}`,
+      trigger: "change",
+      source: field,
+      logic: condition.logic,
+      when: condition.when,
+      effects,
+      else: elseEffects,
+      meta: { ...meta, conditionSemantics: condition.semantics },
+      translationStatus: "executable"
+    }];
+  }
+
+  // NewOA evaluates every native rule independently. Lower a chain as deltas
+  // from its final else baseline so non-matching rules cannot overwrite the
+  // active branch. Fail closed unless each state key has a complete baseline
+  // and is changed by at most one branch.
+  if (branches.some((branch) => branch.condition.when.length !== 1)) return [];
+  const baseline = effectValueMap(elseEffects);
+  if (!baseline) return [];
+  const baselineDeltaGroup = [
+    "baseline-delta",
+    source.sourceRef,
+    field,
+    ...branches.map((branch) => branch.condition.idPart)
+  ].filter(Boolean).join(":");
+  const branchDeltas = [];
+  const changedKeys = new Set();
+  for (const branch of branches) {
+    const values = effectValueMap(branch.effects);
+    if (!values || values.size !== baseline.size) return [];
+    if ([...baseline.keys()].some((key) => !values.has(key))) return [];
+    const effects = branch.effects.filter((effect) =>
+      effect.value !== baseline.get(effectKey(effect))
+    );
+    if (!effects.length) return [];
+    for (const effect of effects) {
+      const key = effectKey(effect);
+      if (changedKeys.has(key)) return [];
+      changedKeys.add(key);
+    }
+    branchDeltas.push({
+      ...branch,
+      effects,
+      elseEffects: effects.map((effect) => ({
+        ...effect,
+        value: baseline.get(effectKey(effect))
+      }))
     });
+  }
+  if (changedKeys.size !== baseline.size) return [];
+
+  const inversePrefix = [];
+  const inverseSemantics = [];
+  const rules = [];
+  for (const { condition, effects, elseEffects: branchElse } of branchDeltas) {
+    const clause = condition.when[0];
+    const inverse = invertConditionClause(clause);
+    if (!inverse) return [];
+    const when = [...inversePrefix, clause];
+    rules.push({
+      id: `linkage.${field}.${when.map(conditionClauseIdPart).join(".and.")}`,
+      trigger: "change",
+      source: field,
+      logic: "and",
+      when,
+      effects,
+      else: branchElse,
+      meta: {
+        ...meta,
+        baselineDeltaGroup,
+        conditionSemantics: [...inverseSemantics, condition.semantics[0]]
+      },
+      translationStatus: "executable"
+    });
+    inversePrefix.push(inverse);
+    inverseSemantics.push(condition.semantics[0]);
+  }
+  return rules;
+}
+
+function effectValueMap(effects) {
+  const values = new Map();
+  for (const effect of effects || []) {
+    const key = effectKey(effect);
+    if (!key || values.has(key)) return undefined;
+    values.set(key, effect.value);
+  }
+  return values;
+}
+
+function effectKey(effect) {
+  return effect?.type && effect?.target ? `${effect.type}:${effect.target}` : undefined;
+}
+
+function conditionClauseIdPart(clause) {
+  const value = Array.isArray(clause?.value) ? clause.value.join("_") : clause?.value;
+  return `${stableIdPart(clause?.op)}${value === undefined ? "" : `.${stableIdPart(value)}`}`;
+}
+
+function invertConditionClause(clause) {
+  const inverse = {
+    eq: "ne",
+    ne: "eq",
+    contains: "notContains",
+    notContains: "contains",
+    empty: "notEmpty",
+    notEmpty: "empty"
+  }[clause?.op];
+  return inverse ? { ...clause, op: inverse } : undefined;
+}
+
+function mergeLinkageRule(linkageById, rule, identity = rule.id) {
+  const existing = linkageById.get(identity);
+  if (!existing) {
+    const next = {
+      ...rule,
+      effects: dedupeEffects(rule.effects)
+    };
+    if (Array.isArray(rule.else)) next.else = dedupeEffects(rule.else);
+    linkageById.set(identity, next);
     return;
   }
 
   existing.effects = mergeEffects(existing.effects, rule.effects);
-  existing.else = mergeEffects(existing.else, rule.else);
+  if (Array.isArray(rule.else)) existing.else = mergeEffects(existing.else, rule.else);
   existing.meta = mergeRuleMeta(existing.meta, rule.meta);
 }
 
@@ -195,65 +513,234 @@ function residual(input) {
   });
 }
 
-function extractXFormValueChangeCallbacks(javascript) {
+function extractXFormValueChangeCallbacks(javascript, source = {}) {
   const callbacks = [];
-  const pattern = /AttachXFormValueChangeEventById\(\s*(["'])([^"']+)\1\s*,\s*function\s*\([^)]*\)\s*\{/g;
+  const unprovenBindings = [];
+  const pattern = /AttachXFormValueChangeEventById\(\s*(["'])([^"']+)\1\s*,\s*function\s*\(([^)]*)\)\s*\{/g;
+  const codeMask = javascriptCodeMask(javascript);
+  const platformCallStarts = provenPlatformValueChangeCallStarts(javascript);
 
   for (const match of javascript.matchAll(pattern)) {
+    if (!codeMask.startsWith("AttachXFormValueChangeEventById", match.index)) continue;
+    if (!platformCallStarts.has(match.index)) {
+      unprovenBindings.push({
+        trigger: match[2],
+        evidence: oneLine(javascript.slice(match.index, Math.min(javascript.length, match.index + 180)))
+      });
+      continue;
+    }
     const bodyStart = match.index + match[0].length;
-    const bodyEnd = findBalancedClose(javascript, bodyStart - 1, "{", "}");
+    const bodyEnd = findBalancedClose(codeMask, bodyStart - 1, "{", "}");
     if (bodyEnd < bodyStart) continue;
     callbacks.push({
       source: match[2],
+      parameter: firstParameter(match[3]),
+      sourceActionKey: source.sourceActionKey || inlineOnChangeSourceActionKey(
+        source.sourceRef || source.id,
+        match.index
+      ),
+      bodyStart,
       body: javascript.slice(bodyStart, bodyEnd)
     });
   }
 
-  return callbacks;
+  return { callbacks, unprovenBindings };
 }
 
-function extractTopLevelIfElseBlocks(body) {
-  const blocks = [];
+function firstParameter(parameters) {
+  const first = String(parameters || "").split(",")[0]?.trim();
+  return /^[A-Za-z_$][\w$]*$/.test(first) ? first : undefined;
+}
+
+function extractTopLevelConditionalChains(body) {
+  const chains = [];
+  const codeMask = javascriptCodeMask(body);
   let cursor = 0;
 
   while (cursor < body.length) {
-    const nextIf = findNextTopLevelIf(body, cursor);
+    const nextIf = findNextTopLevelIf(codeMask, cursor);
     if (nextIf < 0) break;
-    const conditionOpen = body.indexOf("(", nextIf);
-    if (conditionOpen < 0) break;
-    const conditionClose = findBalancedClose(body, conditionOpen, "(", ")");
-    if (conditionClose < 0) break;
-    const thenOpen = skipWhitespace(body, conditionClose + 1);
-    if (body[thenOpen] !== "{") {
-      cursor = conditionClose + 1;
-      continue;
-    }
-    const thenClose = findBalancedClose(body, thenOpen, "{", "}");
-    if (thenClose < 0) break;
-    const afterThen = skipWhitespace(body, thenClose + 1);
+    const branches = [];
     let elseBody = "";
-    let afterElse = thenClose + 1;
+    let elseBodyStart = 0;
+    let branchStart = nextIf;
+    let chainEnd = nextIf + 2;
 
-    if (body.slice(afterThen, afterThen + 4) === "else") {
-      const elseOpen = skipWhitespace(body, afterThen + 4);
-      if (body[elseOpen] === "{") {
-        const elseClose = findBalancedClose(body, elseOpen, "{", "}");
+    while (branchStart >= 0) {
+      const conditionOpen = codeMask.indexOf("(", branchStart + 2);
+      if (conditionOpen < 0) break;
+      const conditionClose = findBalancedClose(codeMask, conditionOpen, "(", ")");
+      if (conditionClose < 0) break;
+      const thenOpen = skipWhitespace(codeMask, conditionClose + 1);
+      if (codeMask[thenOpen] !== "{") break;
+      const thenClose = findBalancedClose(codeMask, thenOpen, "{", "}");
+      if (thenClose < 0) break;
+      branches.push({
+        condition: body.slice(conditionOpen + 1, conditionClose),
+        conditionStart: conditionOpen + 1,
+        bodyStart: thenOpen + 1,
+        body: body.slice(thenOpen + 1, thenClose)
+      });
+      chainEnd = thenClose + 1;
+
+      const afterThen = skipWhitespace(codeMask, thenClose + 1);
+      if (!isKeywordAt(codeMask, afterThen, "else")) break;
+      const afterElse = skipWhitespace(codeMask, afterThen + 4);
+      if (isKeywordAt(codeMask, afterElse, "if")) {
+        branchStart = afterElse;
+        continue;
+      }
+      if (codeMask[afterElse] === "{") {
+        const elseClose = findBalancedClose(codeMask, afterElse, "{", "}");
         if (elseClose >= 0) {
-          elseBody = body.slice(elseOpen + 1, elseClose);
-          afterElse = elseClose + 1;
+          elseBodyStart = afterElse + 1;
+          elseBody = body.slice(afterElse + 1, elseClose);
+          chainEnd = elseClose + 1;
         }
       }
+      break;
     }
 
-    blocks.push({
-      condition: body.slice(conditionOpen + 1, conditionClose),
-      thenBody: body.slice(thenOpen + 1, thenClose),
-      elseBody
+    if (branches.length) chains.push({
+      start: nextIf,
+      end: chainEnd,
+      branches,
+      elseBody,
+      elseBodyStart
     });
-    cursor = afterElse;
+    cursor = Math.max(chainEnd, nextIf + 2);
   }
 
-  return blocks;
+  return chains;
+}
+
+export function provenPlatformValueChangeCallStarts(javascript = "") {
+  return provenUnshadowedDirectCallStarts(javascript, VALUE_CHANGE_API);
+}
+
+function provenUnshadowedDirectCallStarts(javascript, functionName) {
+  const text = String(javascript || "");
+  let ast;
+  try {
+    ast = parse(text, {
+      ecmaVersion: "latest",
+      sourceType: "script",
+      allowAwaitOutsideFunction: true,
+      allowReturnOutsideFunction: true,
+      allowHashBang: true
+    });
+  } catch {
+    return new Set();
+  }
+  const resolver = buildConditionOperandResolver(text);
+  const starts = new Set();
+  walkJavaScriptAst(ast, (node) => {
+    if (
+      node.type === "CallExpression" &&
+      node.callee?.type === "Identifier" &&
+      node.callee.name === functionName &&
+      resolver.isUnshadowedGlobal(functionName, node.callee.start)
+    ) {
+      starts.add(node.callee.start);
+    }
+  });
+  return starts;
+}
+
+function uncoveredNativeCallbackBehavior(body, nativeChainStarts, resolveOperand) {
+  if (!nativeChainStarts.size) return [];
+  let ast;
+  try {
+    ast = parse(String(body || ""), {
+      ecmaVersion: "latest",
+      sourceType: "script",
+      allowAwaitOutsideFunction: true,
+      allowReturnOutsideFunction: true
+    });
+  } catch {
+    return [oneLine(body)];
+  }
+
+  const uncovered = [];
+  for (const statement of ast.body) {
+    if (statement.type === "IfStatement" && nativeChainStarts.has(statement.start)) {
+      collectUncoveredNativeConditionalStatements(statement, body, resolveOperand, uncovered);
+      continue;
+    }
+    if (isCoveredCallbackStatement(statement, body, resolveOperand)) continue;
+    uncovered.push(oneLine(body.slice(statement.start, statement.end)));
+  }
+  return uncovered.filter(Boolean);
+}
+
+function collectUncoveredNativeConditionalStatements(statement, body, resolveOperand, uncovered) {
+  collectUncoveredNativeBranchStatements(statement.consequent, body, resolveOperand, uncovered);
+  let alternate = statement.alternate;
+  while (alternate?.type === "IfStatement") {
+    collectUncoveredNativeBranchStatements(alternate.consequent, body, resolveOperand, uncovered);
+    alternate = alternate.alternate;
+  }
+  if (alternate) collectUncoveredNativeBranchStatements(alternate, body, resolveOperand, uncovered);
+}
+
+function collectUncoveredNativeBranchStatements(statement, body, resolveOperand, uncovered) {
+  const statements = statement?.type === "BlockStatement" ? statement.body : [statement];
+  for (const child of statements.filter(Boolean)) {
+    if (isNativeRowEffectStatement(child, resolveOperand)) continue;
+    if (isCoveredCallbackStatement(child, body, resolveOperand)) continue;
+    uncovered.push(oneLine(body.slice(child.start, child.end)));
+  }
+}
+
+function isCoveredCallbackStatement(statement, body, resolveOperand) {
+  if (!statement || statement.type === "EmptyStatement" || statement.directive) return true;
+  if (statement.type !== "VariableDeclaration") return false;
+  const source = body.slice(statement.start, statement.end);
+  if (isProvablyInertVariableDeclaration(source)) return true;
+  return statement.declarations.every((declaration) => {
+    if (declaration.id?.type !== "Identifier") return false;
+    if (!declaration.init) return true;
+    const trace = resolveOperand.trace(
+      body.slice(declaration.init.start, declaration.init.end),
+      { beforeIndex: declaration.init.start }
+    );
+    return trace?.origin === "event:value";
+  });
+}
+
+function isNativeRowEffectStatement(statement, resolveOperand) {
+  const call = statement?.type === "ExpressionStatement" ? statement.expression : undefined;
+  if (
+    call?.type !== "CallExpression" ||
+    call.callee?.type !== "Identifier" ||
+    call.callee.name !== "common_dom_row_set_show_required_reset" ||
+    !resolveOperand.isUnshadowedGlobal(call.callee.name, call.callee.start) ||
+    call.arguments?.length !== 4
+  ) return false;
+  const [target, visible, required, reset] = call.arguments;
+  return target?.type === "Literal" && typeof target.value === "string" &&
+    visible?.type === "Literal" && typeof visible.value === "boolean" &&
+    required?.type === "Literal" && typeof required.value === "boolean" &&
+    reset?.type === "Literal" && reset.value === false;
+}
+
+function walkJavaScriptAst(node, visit) {
+  if (!node || typeof node !== "object") return;
+  if (typeof node.type === "string") visit(node);
+  for (const [key, value] of Object.entries(node)) {
+    if (["start", "end", "loc"].includes(key)) continue;
+    if (Array.isArray(value)) {
+      for (const child of value) walkJavaScriptAst(child, visit);
+    } else if (value && typeof value === "object") {
+      walkJavaScriptAst(value, visit);
+    }
+  }
+}
+
+function isKeywordAt(text, index, keyword) {
+  return text.slice(index, index + keyword.length) === keyword &&
+    !/[A-Za-z0-9_$]/.test(text[index - 1] || "") &&
+    !/[A-Za-z0-9_$]/.test(text[index + keyword.length] || "");
 }
 
 function findNextTopLevelIf(text, start) {
@@ -275,36 +762,42 @@ function findNextTopLevelIf(text, start) {
   return -1;
 }
 
-function conditionSpec(condition, field) {
-  const text = String(condition || "");
-  const regexTest = text.match(/\/\[([^\]]+)\]\/[gimsuy]*\.test\(\s*[A-Za-z_$][\w$]*\s*\)/);
-  if (regexTest && /^[A-Za-z0-9]+$/.test(regexTest[1])) {
-    const values = uniqueStrings([...regexTest[1]]);
+function conditionSpec(condition, field, resolveOperand, beforeIndex) {
+  const parsed = parseProvenanceCondition(condition, resolveOperand, { beforeIndex });
+  if (!parsed || parsed.operand !== "event:value") return undefined;
+  if (parsed.kind === "regex-set") {
+    const values = uniqueStrings(parsed.values);
     return {
       idPart: `eq.${values.map(stableIdPart).join("_")}`,
       logic: values.length > 1 ? "or" : "and",
-      when: values.map((value) => ({ field, op: "eq", value }))
+      when: values.map((value) => ({ field, op: "eq", value })),
+      semantics: values.map(() => conditionSemantic(parsed))
     };
   }
-
-  const contains = text.match(/\.indexOf\(\s*(["'])([^"']+)\1\s*\)\s*(?:>=\s*0|>\s*-1|!==?\s*-1)/);
-  if (contains) {
+  if (parsed.kind === "contains") {
     return {
-      idPart: `contains.${stableIdPart(contains[2])}`,
+      idPart: `contains.${stableIdPart(parsed.value)}`,
       logic: "and",
-      when: [{ field, op: "contains", value: contains[2] }]
+      when: [{ field, op: "contains", value: parsed.value }],
+      semantics: [conditionSemantic(parsed)]
     };
   }
-
-  const equality = text.match(/(?:^|[^\w$])[\w$]+\s*={2,3}\s*(["'])([^"']+)\1/);
-  const reversed = text.match(/(["'])([^"']+)\1\s*={2,3}\s*[\w$]+/);
-  const value = equality?.[2] || reversed?.[2];
-  if (!value) return undefined;
+  if (parsed.kind !== "eq") return undefined;
   return {
-    idPart: `eq.${stableIdPart(value)}`,
+    idPart: `eq.${stableIdPart(parsed.value)}`,
     logic: "and",
-    when: [{ field, op: "eq", value }]
+    when: [{ field, op: "eq", value: parsed.value }],
+    semantics: [conditionSemantic(parsed)]
   };
+}
+
+function conditionSemantic(parsed) {
+  return pruneUndefined({
+    origin: parsed.operand,
+    transforms: parsed.transforms?.length ? parsed.transforms : [],
+    predicate: parsed.predicate,
+    pattern: parsed.pattern
+  });
 }
 
 function runWhenFromDisplayGate(displayGate) {
@@ -313,13 +806,11 @@ function runWhenFromDisplayGate(displayGate) {
   return undefined;
 }
 
-function extractDirectRowEffects(body) {
-  const directBody = stripNestedBlocks(body);
+function extractDirectRowEffects(body, context, bodyStart) {
   const effects = [];
   const seen = new Set();
-  const pattern = /common_dom_row_set_show_required_reset\(\s*(["'])([^"']+)\1\s*,\s*(true|false)\s*,\s*(true|false)\s*,\s*(?:true|false)\s*\)/g;
 
-  for (const match of directBody.matchAll(pattern)) {
+  for (const match of directRowEffectMatches(body, context, bodyStart)) {
     const target = match[2];
     const visible = match[3] === "true";
     const required = match[4] === "true";
@@ -330,21 +821,92 @@ function extractDirectRowEffects(body) {
   return effects;
 }
 
+function countDirectRowEffectCallsInChain(chain, context) {
+  return chain.branches.reduce(
+    (count, branch) => count + directRowEffectMatches(
+      branch.body,
+      context,
+      branch.bodyStart
+    ).length,
+    directRowEffectMatches(chain.elseBody, context, chain.elseBodyStart).length
+  );
+}
+
+function countRowEffectCallsInChain(chain) {
+  return chain.branches.reduce(
+    (count, branch) => count + countRowEffectCalls(branch.body),
+    countRowEffectCalls(chain.elseBody)
+  );
+}
+
+function directRowEffectMatches(body, context, bodyStart = 0) {
+  const directBody = stripNestedBlocks(body);
+  // The last argument resets the row value. Native display/required rules do
+  // not implement that destructive side effect, so only reset=false is safe
+  // to lower; reset=true remains explicit residual script behavior.
+  const pattern = /\bcommon_dom_row_set_show_required_reset\(\s*(["'])([^"']+)\1\s*,\s*(true|false)\s*,\s*(true|false)\s*,\s*false\s*\)/g;
+  const codeMask = javascriptCodeMask(directBody);
+  return [...directBody.matchAll(pattern)].filter((match) =>
+    codeMask.startsWith(ROW_EFFECT_HELPER, match.index) &&
+    context?.provenCallStarts?.has(
+      context.absoluteBodyStart + bodyStart + match.index
+    )
+  );
+}
+
+function countRowEffectCalls(body) {
+  const text = String(body || "");
+  const codeMask = javascriptCodeMask(text);
+  return [...text.matchAll(/\bcommon_dom_row_set_show_required_reset\s*\(/g)]
+    .filter((match) => codeMask.startsWith("common_dom_row_set_show_required_reset", match.index))
+    .length;
+}
+
 function stripNestedBlocks(text) {
-  let output = "";
+  const source = String(text || "");
+  const codeMask = javascriptCodeMask(source);
+  const output = [...source];
   let depth = 0;
-  for (const char of String(text || "")) {
+  for (let index = 0; index < codeMask.length; index += 1) {
+    const char = codeMask[index];
     if (char === "{") {
+      output[index] = " ";
       depth += 1;
       continue;
     }
     if (char === "}") {
+      output[index] = " ";
       depth = Math.max(0, depth - 1);
       continue;
     }
-    if (depth === 0) output += char;
+    if (depth > 0 && source[index] !== "\n" && source[index] !== "\r") output[index] = " ";
   }
-  return output;
+  return output.join("");
+}
+
+function javascriptCodeMask(source) {
+  const text = String(source || "");
+  const output = [...text].map((char) => char === "\n" || char === "\r" ? char : " ");
+  try {
+    const tokens = tokenizer(text, {
+      ecmaVersion: "latest",
+      sourceType: "script",
+      allowAwaitOutsideFunction: true,
+      allowHashBang: true
+    });
+    while (true) {
+      const token = tokens.getToken();
+      if (token.type.label === "eof") break;
+      if (["string", "regexp", "template", "`"].includes(token.type.label)) continue;
+      for (let index = token.start; index < token.end; index += 1) {
+        output[index] = text[index];
+      }
+    }
+  } catch {
+    // An un-tokenizable script is not safe to lower. Returning an empty mask
+    // keeps extraction fail-closed while retaining source offsets.
+  }
+  return output.join("");
 }
 
 function addEffect(effects, seen, effect) {
@@ -387,7 +949,11 @@ function skipWhitespace(text, index) {
 }
 
 function stableIdPart(value) {
-  return String(value || "value").replace(/[^A-Za-z0-9_.-]/g, "_");
+  const text = String(value || "value");
+  if (/^[A-Za-z0-9_-]+$/.test(text)) return text;
+  // "~" is outside the unchanged alphabet, so the UTF-8 hex branch cannot
+  // collide with an unchanged source value (unlike lossy underscore folding).
+  return `~${Buffer.from(text, "utf8").toString("hex")}`;
 }
 
 function uniqueStrings(values) {

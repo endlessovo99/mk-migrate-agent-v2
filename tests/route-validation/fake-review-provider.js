@@ -30,7 +30,8 @@ export function createFakeReviewProvider(scenario) {
               : "Accepted by the deterministic offline Route reviewer.",
             patches: [
               ...staticPropertyClosurePatches(dslDraft, reviewScope),
-              ...nativeFormRuleClosurePatches(dslDraft, reviewScope)
+              ...nativeFormRuleClosurePatches(dslDraft, reviewScope),
+              ...gatedFormRuleScriptPatches(sourceDraft, dslDraft, reviewScope)
             ],
             diagnostics: scenario === "warning"
               ? [{
@@ -53,6 +54,106 @@ export function createFakeReviewProvider(scenario) {
       };
     }
   };
+}
+
+function gatedFormRuleScriptPatches(sourceDraft, dslDraft, reviewScope) {
+  const sourceRules = new Map(
+    (sourceDraft?.formRules?.linkage || []).map((rule) => [rule.id, rule])
+  );
+  const primaryMarkerByAlias = new Map();
+  for (const row of dslDraft?.form?.layout?.mkTree || []) {
+    const markers = (row.sourceMarkers || []).filter(Boolean);
+    for (const marker of markers) primaryMarkerByAlias.set(marker, markers[0]);
+  }
+
+  return (dslDraft?.scripts?.actions || []).flatMap((action, actionIndex) => {
+    if (!actionIsInReviewScope(actionIndex, reviewScope)) return [];
+    const residuals = Array.isArray(action.coverage?.residuals) ? action.coverage.residuals : [];
+    if (
+      action.event !== "onChange" ||
+      action.scope !== "control" ||
+      !residuals.length ||
+      residuals.some((residual) => residual.code !== "script.residual.form_rule_needs_review")
+    ) {
+      return [];
+    }
+    const rules = residuals
+      .map((residual) => sourceRules.get(residual.evidence))
+      .filter(Boolean);
+    if (rules.length !== residuals.length || rules.some((rule) => !rule.effects?.length || !rule.else?.length)) {
+      return [];
+    }
+
+    const functionText = buildGatedRuleFunction(rules, primaryMarkerByAlias);
+    const common = {
+      op: "replace",
+      sourceRefs: action.sourceRefs || [],
+      evidence: ["The source-gated row rule is translated to MKXFORM.setFieldAttr inside the immutable action runWhen guard."],
+      confidence: 0.99,
+      rationale: "Preserve the complete gated show/hide and required/non-required branches as reviewed JavaScript."
+    };
+    return [
+      { ...common, path: `/scripts/actions/${actionIndex}/function`, value: functionText },
+      { ...common, path: `/scripts/actions/${actionIndex}/translationStatus`, value: "mapped" },
+      {
+        ...common,
+        path: `/scripts/actions/${actionIndex}/functionMappings`,
+        value: [{
+          source: "gated legacy row visibility/required behavior",
+          target: "MKXFORM.setFieldAttr",
+          basis: "semantic-translation",
+          reviewRequired: false
+        }]
+      },
+      {
+        ...common,
+        path: `/scripts/actions/${actionIndex}/coverage`,
+        value: { status: "translated", nativeRules: [], residuals: [] }
+      }
+    ];
+  });
+}
+
+function buildGatedRuleFunction(rules, primaryMarkerByAlias) {
+  const lines = [
+    "function onChange(value, rowNum, parentRowNum) {",
+    "  var selectedValue = Array.isArray(value) ? value[0] : value",
+    "  selectedValue = selectedValue == null ? \"\" : String(selectedValue)"
+  ];
+  for (const rule of rules) {
+    lines.push(`  if (${ruleConditionExpression(rule)}) {`);
+    lines.push(...ruleEffectLines(rule.effects, primaryMarkerByAlias, "    "));
+    lines.push("  } else {");
+    lines.push(...ruleEffectLines(rule.else, primaryMarkerByAlias, "    "));
+    lines.push("  }");
+  }
+  lines.push("}");
+  return lines.join("\n");
+}
+
+function ruleConditionExpression(rule) {
+  const clauses = (rule.when || []).map((condition) => {
+    const value = JSON.stringify(condition.value ?? "");
+    if (condition.op === "eq") return `selectedValue === ${value}`;
+    if (condition.op === "ne") return `selectedValue !== ${value}`;
+    if (condition.op === "contains") return `selectedValue.indexOf(${value}) >= 0`;
+    if (condition.op === "notContains") return `selectedValue.indexOf(${value}) < 0`;
+    if (condition.op === "empty") return "selectedValue === \"\"";
+    if (condition.op === "notEmpty") return "selectedValue !== \"\"";
+    throw integrityError("route.review.form_rule_operator_unsupported", `Unsupported fake-review form-rule operator: ${condition.op}`);
+  });
+  const joiner = rule.logic === "or" ? " || " : " && ";
+  return clauses.length > 1 ? `(${clauses.join(joiner)})` : clauses[0];
+}
+
+function ruleEffectLines(effects, primaryMarkerByAlias, indent) {
+  return effects.flatMap((effect) => {
+    const target = primaryMarkerByAlias.get(effect.target) || effect.target;
+    const attribute = effect.type === "visible"
+      ? (effect.value ? 5 : 4)
+      : (effect.value ? 3 : 6);
+    return `${indent}MKXFORM.setFieldAttr(${JSON.stringify(target)}, ${attribute})`;
+  });
 }
 
 function nativeFormRuleClosurePatches(dslDraft, reviewScope) {

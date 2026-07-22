@@ -46,7 +46,10 @@ describe("static form-property execution and readback", () => {
       .map((action) => ({ ...action, function: "", translationStatus: "omitted" }));
     const dsl = {
       form: draft.form,
-      formRules: draft.formRules,
+      // Keep this regression scoped to static required props. The fixture also
+      // contains independently tested gated native rules whose source actions
+      // are intentionally absent from this reduced DSL.
+      formRules: { linkage: [] },
       scripts: { source: draft.scripts.source, actions: staticActions }
     };
     const result = verifyTemplate(dsl, projectTemplate(dsl));

@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
+import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
 import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("buildDryRunPlan", () => {
@@ -39,6 +40,10 @@ describe("buildDryRunPlan", () => {
           event: "onLoad",
           scope: "global",
           function: "function onLoad(context) {}",
+          branchProvenance: buildScriptBranchProvenance({
+            event: "onLoad",
+            source: "function onLoad(context) {}"
+          }),
           translationStatus: "mapped",
           coverage: { status: "translated", nativeRules: [], residuals: [] },
           functionMappings: [{

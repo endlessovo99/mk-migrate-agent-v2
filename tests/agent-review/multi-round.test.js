@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { runAgentReview } from "../../src/agent-review/index.js";
+import { draftSourceDraft } from "../../src/translator/dsl-draft.js";
 import { sampleDraftDsl, sampleSourceDraft } from "../helpers/sample-dsl.js";
 
 const actionIds = [
-  "script-1.event-1",
-  "script-2.event-1",
-  "script-3.event-1"
+  "script-1.event.1",
+  "script-2.event.1",
+  "script-3.event.1"
 ];
 
 const sourceRefs = [
@@ -277,7 +278,12 @@ function sourceDraft() {
       sources: sourceRefs.map((sourceRef, index) => ({
         id: `script-${index + 1}`,
         sourceRef,
-        javascript: `SetXFormFieldValueById('fd_subject', 'value-${index + 1}')`,
+        javascript: [
+          "AttachXFormValueChangeEventById('fd_amount', function(value) {",
+          `  SetXFormFieldValueById('fd_subject', 'value-${index + 1}');`,
+          "  value = String(value);",
+          "});"
+        ].join("\n"),
         functionAudit: {
           matched: [{
             name: "SetXFormFieldValueById",
@@ -293,21 +299,9 @@ function sourceDraft() {
 }
 
 function dslDraft() {
+  const rebuiltScripts = draftSourceDraft(sourceDraft()).scripts;
   return sampleDraftDsl({
-    scripts: {
-      source: "sysform-jsp",
-      actions: actionIds.map((id, index) => ({
-        id,
-        name: "onLoad",
-        event: "onLoad",
-        scope: "global",
-        function: `function onLoad() {\n  // review script-${index + 1}\n}`,
-        translationStatus: "needs_review",
-        sourceRefs: [sourceRefs[index]],
-        coverage: { status: "uncovered", nativeRules: [], residuals: [] },
-        functionMappings: []
-      }))
-    }
+    scripts: rebuiltScripts
   });
 }
 
@@ -326,7 +320,7 @@ function scriptClosurePatches(actionIndex) {
   return [
     patch(
       "function",
-      `function onLoad() {\n  MKXFORM.setValue('fd_subject', 'value-${actionIndex + 1}')\n}`,
+      `function onChange(value) {\n  MKXFORM.setValue('fd_subject', 'value-${actionIndex + 1}')\n}`,
       "Translate the source assignment to the cataloged MK API."
     ),
     patch(

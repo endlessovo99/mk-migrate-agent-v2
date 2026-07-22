@@ -1,0 +1,62 @@
+{
+  "id": "mk-form-rule-runtime",
+  "version": "2026-07-22.v1",
+  "activeCapabilityId": "mk-xform.form-rule-formula.v1",
+  "capabilities": [
+    {
+      "id": "mk-xform.form-rule-formula.v1",
+      "projection": {
+        "kind": "view-status-formula",
+        "version": 1,
+        "displayGate": "xform:editShow",
+        "viewStatusIn": [
+          "add",
+          "edit"
+        ],
+        "trigger": "change",
+        "conditionSource": "event:value",
+        "operators": [
+          "eq",
+          "ne",
+          "contains",
+          "notContains"
+        ],
+        "transforms": [
+          "array-first",
+          "index-first",
+          "default-empty",
+          "nullish-empty",
+          "string"
+        ],
+        "predicates": [
+          "indexOf",
+          "includes",
+          "strict-equality",
+          "loose-equality",
+          "strict-numeric-equality",
+          "loose-numeric-equality",
+          "regex-char-set"
+        ]
+      },
+      "modules": {
+        "runtime": {
+          "digestKey": "@module:sys-xform/desktop/api/XFormRuntime",
+          "path": "sys-xform/desktop/api/XFormRuntime",
+          "release": "06684988eea27cdb6cba70e8085e4ac6",
+          "sha256": "d4c5bf14e064bf65e03d039491348f7173d50b71963bb4f2655b6f185e0055de"
+        },
+        "ide": {
+          "digestKey": "@module:sys-xform/desktop/api/XFormIDE",
+          "path": "sys-xform/desktop/api/XFormIDE",
+          "release": "702bda59bf4c80937ea2e18ad572311f",
+          "sha256": "c41c8152caefc8c4c981b3abd5d184698e691d62ff5259baf54b6f74fc4659c4"
+        }
+      },
+      "evidence": {
+        "scope": "NewOA desktop XForm native display/required formula rules",
+        "verifiedAt": "2026-07-22",
+        "notes": "Both loader release identities and downloaded bundle SHA-256 values must match before a formula-backed native rule can be written."
+      }
+    }
+  ]
+}

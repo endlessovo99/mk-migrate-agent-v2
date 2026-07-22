@@ -519,6 +519,7 @@ function compareRules(expected, actual, diagnostics) {
     const fingerprint = expectedRuleFingerprint(rule);
     const index = observed.findIndex((candidate) => expectedRuleFingerprint({
       kind: candidate.kind,
+      active: candidate.active,
       logic: candidate.logic,
       conditions: candidate.conditions,
       effects: candidate.effects
@@ -537,7 +538,61 @@ function compareRules(expected, actual, diagnostics) {
     }
     observed.splice(index, 1);
   }
-  // Open-world: leftover observed rules are allowed (manual additions).
+  const expectedTargetsByKind = expectedFormRuleTargetsByKind(expected?.rules || []);
+  for (const leftover of observed) {
+    if (hasGeneratedFormRuleMarker(leftover)) {
+      diagnostics.push(mismatch(
+        "rules",
+        "readback.form_rules.unexpected_generated",
+        "Readback contains a stale or unexpected generated form rule.",
+        {
+          invariantKey: `rules.${leftover.kind}.unexpectedGenerated`,
+          path: "/readback/form/formRules",
+          actual: leftover.nativeIdentity
+        }
+      ));
+      continue;
+    }
+    const protectedTargets = expectedTargetsByKind.get(leftover.kind) || new Set();
+    const conflictingTargets = [...new Set(
+      (leftover.effects || [])
+        .map((effect) => effect?.target)
+        .filter((target) => target && protectedTargets.has(target))
+    )];
+    if (!conflictingTargets.length) continue;
+    diagnostics.push(mismatch(
+      "rules",
+      "readback.form_rules.unexpected_target_conflict",
+      "Readback contains an extra form rule that conflicts with an expected target and rule dimension.",
+      {
+        invariantKey: `rules.${leftover.kind}.targets`,
+        path: "/readback/form/formRules",
+        details: {
+          kind: leftover.kind,
+          targets: conflictingTargets,
+          nativeIdentity: leftover.nativeIdentity
+        }
+      }
+    ));
+  }
+}
+
+function expectedFormRuleTargetsByKind(rules) {
+  const byKind = new Map();
+  for (const rule of rules) {
+    const targets = byKind.get(rule.kind) || new Set();
+    for (const effect of rule.effects || []) {
+      if (effect?.target) targets.add(effect.target);
+    }
+    byKind.set(rule.kind, targets);
+  }
+  return byKind;
+}
+
+function hasGeneratedFormRuleMarker(rule) {
+  return rule?.nativeIdentity?.generatedBy === "mk-migrate-agent-v2" ||
+    String(rule?.nativeIdentity?.ruleName || "").startsWith("mk-migrate-agent-v2:") ||
+    /^rule-[0-9a-f]{16}$/u.test(String(rule?.nativeIdentity?.id || ""));
 }
 
 function compareScripts(expected, actual, diagnostics) {

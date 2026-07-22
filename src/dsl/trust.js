@@ -1,8 +1,12 @@
 import { catalogRefs, validationPolicyRef, validateCatalogVersions } from "./catalogs.js";
 import { validateMigrationDsl } from "./schema.js";
-import { MIGRATION_DSL_VERSION } from "../translator/dsl-draft.js";
+import { draftSourceDraft, MIGRATION_DSL_VERSION } from "../translator/dsl-draft.js";
 import { SOURCE_DRAFT_VERSION } from "../translator/source-draft.js";
 import { inspectWorkflowFormulaProvenance } from "../translator/workflow-formula-participants.js";
+import {
+  claimsDeterministicScriptTranslation,
+  deterministicManualResidualDecisionIds
+} from "./deterministic-script-translations.js";
 
 export function createTrustedMigrationDsl(sourceDraft, dslDraft, options = {}) {
   if (sourceDraft?.version !== SOURCE_DRAFT_VERSION || sourceDraft?.artifact !== "source-draft") {
@@ -66,11 +70,185 @@ export function checkTrust(sourceDraft, migrationDsl) {
   validateDerivedFrom(sourceDraft, migrationDsl, diagnostics);
   validateCoreProvenance(migrationDsl, sourceRefs, diagnostics);
   validateWorkflowFormulaProvenance(sourceDraft, migrationDsl, diagnostics);
+  validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics);
 
   const executionValidation = validateMigrationDsl(migrationDsl, { mode: "execute" });
   diagnostics.push(...executionValidation.diagnostics);
 
   return finalize("trust", diagnostics);
+}
+
+function validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics) {
+  const actualActions = migrationDsl?.scripts?.actions || [];
+  const sourceHasScripts = Array.isArray(sourceDraft?.scripts?.sources) &&
+    sourceDraft.scripts.sources.length > 0;
+  if (!actualActions.length && !sourceHasScripts) return;
+
+  let expectedDraft;
+  try {
+    expectedDraft = draftSourceDraft(sourceDraft);
+  } catch (error) {
+    diagnostics.push(error(
+      "trust.script_source_rebuild_failed",
+      "Script provenance could not be independently rebuilt from the Source Draft.",
+      "/scripts/actions",
+      { error: String(error?.message || error) }
+    ));
+    return;
+  }
+
+  const expectedActions = expectedDraft?.scripts?.actions || [];
+  validateScriptActionSourceBindings(
+    expectedActions.filter(isSourceBoundScriptAction),
+    actualActions.filter(isSourceBoundScriptAction),
+    diagnostics
+  );
+  validateOrdinaryScriptBranchSourceProvenance(expectedActions, actualActions, diagnostics);
+  validateDeterministicScriptSourceProvenance(
+    expectedDraft,
+    migrationDsl,
+    diagnostics
+  );
+}
+
+function validateScriptActionSourceBindings(expectedActions, actualActions, diagnostics) {
+  const expectedCounts = actionBindingCounts(expectedActions);
+  const actualCounts = actionBindingCounts(actualActions);
+  if (canonicalJson(expectedCounts) === canonicalJson(actualCounts)) return;
+
+  diagnostics.push(error(
+    "trust.script_action_source_mismatch",
+    "Trusted script actions must retain the exact action identities independently rebuilt from the Source Draft.",
+    "/scripts/actions",
+    {
+      expectedActionCount: expectedActions.length,
+      actualActionCount: actualActions.length,
+      missing: bindingCountDifference(expectedCounts, actualCounts),
+      unexpected: bindingCountDifference(actualCounts, expectedCounts)
+    }
+  ));
+}
+
+function validateOrdinaryScriptBranchSourceProvenance(expectedActions, actualActions, diagnostics) {
+  const actualByBinding = new Map();
+  for (const action of actualActions) {
+    const key = scriptActionSourceBindingKey(action);
+    if (!actualByBinding.has(key)) actualByBinding.set(key, []);
+    actualByBinding.get(key).push(action);
+  }
+
+  expectedActions.forEach((expected, expectedIndex) => {
+    if (expected?.deterministicBranchProof !== undefined) return;
+    const candidates = actualByBinding.get(scriptActionSourceBindingKey(expected)) || [];
+    const action = candidates.length === 1 ? candidates[0] : undefined;
+    if (!action) return;
+    if (
+      expected?.branchProvenance === undefined && action.branchProvenance === undefined
+    ) return;
+    if (
+      canonicalJson(expected.branchProvenance) !== canonicalJson(action.branchProvenance)
+    ) {
+      diagnostics.push(error(
+        "trust.script_branch_source_mismatch",
+        "Branch provenance must exactly match the action independently rebuilt from the authoritative Source Draft.",
+        `/scripts/actions/${actualActions.indexOf(action)}/branchProvenance`,
+        {
+          actionId: action?.id,
+          expectedActionIndex: expectedIndex,
+          actualActionCount: candidates.length
+        }
+      ));
+    }
+  });
+}
+
+function validateDeterministicScriptSourceProvenance(expectedDraft, migrationDsl, diagnostics) {
+  const actualActions = (migrationDsl?.scripts?.actions || []).filter((action) => (
+    action?.deterministicBranchProof !== undefined || claimsDeterministicScriptTranslation(action)
+  ));
+  if (!actualActions.length) return;
+
+  const expectedById = new Map();
+  for (const action of expectedDraft?.scripts?.actions || []) {
+    if (!expectedById.has(action?.id)) expectedById.set(action?.id, []);
+    expectedById.get(action?.id).push(action);
+  }
+  const actualDecisions = new Map(
+    (migrationDsl?.scripts?.calculationDecisions || []).map((decision) => [decision?.id, decision])
+  );
+  const expectedDecisions = new Map(
+    (expectedDraft?.scripts?.calculationDecisions || []).map((decision) => [decision?.id, decision])
+  );
+
+  actualActions.forEach((action, actionIndex) => {
+    const candidates = expectedById.get(action?.id) || [];
+    const expected = candidates.length === 1 ? candidates[0] : undefined;
+    if (
+      !expected?.deterministicBranchProof ||
+      canonicalJson(expected.deterministicBranchProof) !== canonicalJson(action.deterministicBranchProof)
+    ) {
+      diagnostics.push(error(
+        "trust.deterministic_script_source_mismatch",
+        "A deterministic script proof must exactly match the action independently rebuilt from the authoritative Source Draft.",
+        `/scripts/actions/${actionIndex}/deterministicBranchProof`,
+        {
+          actionId: action?.id,
+          expectedActionCount: candidates.length
+        }
+      ));
+      return;
+    }
+
+    for (const decisionId of deterministicManualResidualDecisionIds(action)) {
+      if (
+        !expectedDecisions.has(decisionId) ||
+        canonicalJson(expectedDecisions.get(decisionId)) !== canonicalJson(actualDecisions.get(decisionId))
+      ) {
+        diagnostics.push(error(
+          "trust.deterministic_script_manual_residual_mismatch",
+          "Deterministic script manual residual closure must match the Source Draft calculation decision.",
+          `/scripts/calculationDecisions/${decisionId}`,
+          { actionId: action?.id, decisionId }
+        ));
+      }
+    }
+  });
+}
+
+function actionBindingCounts(actions) {
+  const counts = {};
+  for (const action of actions || []) {
+    const key = scriptActionSourceBindingKey(action);
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  return counts;
+}
+
+function bindingCountDifference(left, right) {
+  return Object.entries(left)
+    .flatMap(([key, count]) => Array(Math.max(0, count - (right[key] || 0))).fill(key));
+}
+
+function scriptActionSourceBindingKey(action = {}) {
+  return canonicalJson({
+    id: action.id,
+    name: action.name,
+    event: action.event,
+    scope: action.scope,
+    controlId: action.controlId,
+    tableId: action.tableId,
+    runWhen: action.runWhen,
+    sourceRefs: action.sourceRefs,
+    sourceActionKey: action.sourceActionKey,
+    recipe: action.recipe,
+    semanticHints: action.semanticHints
+  });
+}
+
+function isSourceBoundScriptAction(action) {
+  return action?.branchProvenance !== undefined ||
+    action?.deterministicBranchProof !== undefined ||
+    claimsDeterministicScriptTranslation(action);
 }
 
 function validateWorkflowFormulaProvenance(sourceDraft, migrationDsl, diagnostics) {
@@ -255,6 +433,15 @@ function pruneUndefined(value) {
       .filter(([, entry]) => entry !== undefined)
       .map(([key, entry]) => [key, pruneUndefined(entry)])
   );
+}
+
+function canonicalJson(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).filter((key) => value[key] !== undefined).sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
 }
 
 function error(code, message, path, details) {

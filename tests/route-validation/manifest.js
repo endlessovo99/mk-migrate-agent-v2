@@ -44,6 +44,9 @@ const DRAFT_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
 
 const CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "login",
+  "get-xform-desktop-digest",
+  "get-xform-desktop-module-sha256",
+  "get-xform-desktop-module-sha256",
   "search-org",
   "get-element-info",
   "search-org",

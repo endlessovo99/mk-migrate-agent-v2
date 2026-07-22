@@ -39,6 +39,19 @@ describe("legacy required toggle scripts", () => {
       runWhen: { viewStatusIn: ["add", "edit"] },
       function: "function onChange(value, rowNum, parentRowNum) {\n  const required = String(value || \"\").indexOf(\"quote\") >= 0\n  MKXFORM.setFieldAttr(\"fd_amount\", required ? 3 : 6)\n}",
       sourceRefs: ["source.form.jsp.required-toggle.script.1"],
+      branchProvenance: {
+        version: 3,
+        event: "onChange",
+        sourceRef: "source.form.jsp.required-toggle.script.1",
+        status: "proven",
+        conditions: [{
+          kind: "contains",
+          value: "quote",
+          origin: "event:value",
+          transforms: [],
+          predicate: "indexOf"
+        }]
+      },
       translationStatus: "mapped",
       coverage: { status: "translated", nativeRules: [], residuals: [] },
       functionMappings: [{

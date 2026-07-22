@@ -21,5 +21,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "acorn": "^8.17.0"
   }
 }

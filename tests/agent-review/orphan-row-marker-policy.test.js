@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { runAgentReview } from "../../src/agent-review/index.js";
 import { buildAgentReviewPrompt } from "../../src/agent-review/prompt.js";
+import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
 import { sampleDraftDsl, sampleSourceDraft } from "../helpers/sample-dsl.js";
 
 const sourceRef = "source.form.jsp.invoice-way.script.1";
@@ -11,6 +12,24 @@ const secondResolvedMarker = "invoice_row4";
 const orphanMarker = "invoice_row11";
 
 describe("Agent Review orphan row-marker policy", () => {
+  it("requires an explicit action-body boundary before treating a bare program as onLoad", () => {
+    const implicit = buildScriptBranchProvenance({
+      event: "onLoad",
+      source: sourceJavascript(),
+      sourceRef
+    });
+    const explicitButUnrelatedOnChange = buildScriptBranchProvenance({
+      event: "onChange",
+      source: "var unrelated = '11'; if (unrelated === '11') { doSomething(); }",
+      sourceRef,
+      programIsEntrypoint: true
+    });
+
+    assert.equal(implicit.status, "unproven");
+    assert.equal(implicit.reason, "action_entrypoint_unproven");
+    assert.equal(explicitButUnrelatedOnChange.status, "unproven");
+  });
+
   it("separates resolved markers from warning-proven auditable orphan no-ops", () => {
     const prompt = buildAgentReviewPrompt(sourceDraft(), dslDraft());
     const action = prompt.context.dslDraft.scripts.actions[0];
@@ -159,6 +178,12 @@ function dslDraft() {
         scope: "global",
         function: sourceBackedPlaceholder(),
         sourceRefs: [sourceRef],
+        branchProvenance: buildScriptBranchProvenance({
+          event: "onLoad",
+          source: sourceJavascript(),
+          sourceRef,
+          programIsEntrypoint: true
+        }),
         translationStatus: "needs_review",
         coverage: { status: "uncovered", nativeRules: [], residuals: [] },
         functionMappings: []

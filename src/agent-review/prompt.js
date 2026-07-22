@@ -7,7 +7,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v6";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v7";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -52,15 +52,17 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Use sourceRef strings from the provided source draft. Do not use raw XML or invent source evidence.",
       "Title patches require confidence >= 0.7. Type, componentId, and props patches require confidence >= 0.85.",
       "Script patches require confidence >= 0.85 and must preserve the deterministic action boundary. Do not create, delete, or retarget script actions.",
+      "scripts.actions[].branchProvenance is immutable deterministic evidence. For mapped onChange branches every condition operand must derive from the action value input; for mapped onLoad branches it must derive from the exact original source field recorded there. If equivalence is not statically provable, keep needs_review.",
       "scripts.actions[].runWhen is immutable source-derived execution context. Never patch, remove, or reproduce it inside the reviewed business function; the executor injects the canonical MKXFORM.viewStatus guard.",
-      "Gated native coverage may remove only the action-local behavior covered by executable formRules; it does not remove or weaken the immutable runWhen audit context.",
+      "A gated native formRule is valid only when its immutable metadata proves the versioned view-status-formula projection, its conditionSource is event:value, and it binds to exactly one same-control onChange action/sourceRef/runWhen. Otherwise fail closed and keep the behavior in reviewed JavaScript.",
       "Keep runWhen on any residual JavaScript, and translate only residual behavior such as marker setValue or effects not represented by native/static coverage.",
       "Do not duplicate visible or required effects already covered by native formRules in residual JavaScript.",
-      "A gated action may be omitted only when its function is empty, coverage.status=\"covered\", coverage.nativeRules references executable rules, coverage.residuals is empty, and native coverage fully covers the action-local behavior; preserve runWhen as audit evidence.",
+      "A gated action may be omitted only when every effect is covered by action-local executable native rules whose formula gate and event-input provenance are already deterministically proven; otherwise retain guarded JavaScript and preserve runWhen.",
       "Translate JSP scripts semantically using jspTranslationPlaybook, functionCatalog, source evidence, formRules evidence, and targetApi. Pattern matching is evidence extraction only, not the translation authority.",
       "Trusted mapped scripts must not use document/window DOM APIs.",
       "Use dslDraft.scripts.actions[].actionSource as the action-local JSP excerpt. Treat sourceDraft.scripts.sources[].javascriptWindows as background context; do not charge helper definitions or other callbacks to a specific action unless the action-local excerpt invokes them and their behavior is not otherwise covered.",
       "Use reviewOpportunities only as evidence scaffolding. They are not deterministic translation results; accept them only when action-local source, formRules, targetApi, and playbook coverage standards agree.",
+      "coverage.nativeRules is action-local evidence: preserve every eligible rule id already present, never attach control-change rules to a global onLoad action, accept a rule carrying meta.runWhen only with the deterministic view-status-formula proof, and never omit an eligible executable rule for the same control/source when claiming status=covered.",
       "Native-covered closure rule: when action-local behavior is fully covered, coverage.status=\"covered\", coverage.nativeRules references executable rules, and coverage.residuals is empty, close that action as native-covered omitted while preserving runWhen audit evidence. Patch function:\"\", translationStatus:\"omitted\", functionMappings to native-form-rule evidence, and preserve covered coverage/nativeRules/residuals. Do not invent residuals from DOM/helper noise for these already-covered actions.",
       "Static-property closure rule: when an ungated action only sets a form property already present in the DSL, coverage.staticProps records the exact {fieldId,prop,value} evidence. If coverage.status=\"covered\" and residuals is empty, patch function:\"\", translationStatus:\"omitted\", functionMappings with basis static-form-prop, and preserve nativeRules:[], staticProps, and residuals:[]; never invent a formRule id.",
       "For detail-row visibility candidates, legacy onclick/setAttribute/__xformDispatch snippets are event-binding scaffolding when the DSL action already has event=onChange and matching tableId/controlId. Do not treat that scaffolding as residual; translate the action-local business function body instead.",
@@ -76,8 +78,10 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Only the first sourceMarker on a layout row is persisted as migrationRowId. When a row lists multiple sourceMarkers, rewrite every co-located alias to that primary marker in MKXFORM.setFieldAttr calls.",
       "Treat a literal missing row marker as an auditable orphan no-op only when sourceDraft.issues contains source.sysform.script_row_marker_orphan_noop for the action sourceRef and its proof says absentFromLayout=true, onlyHelperTarget=true, resetValuesAudited=true, and dynamicDomCreationDetected=false. Exact reset values remain audit evidence, but cannot mutate a target proven absent at every call.",
       "Never generate MKXFORM.setFieldAttr for an orphan marker. Translate every remaining resolved marker and helper behavior, use coverage.status=translated only when no unresolved residual remains, and preserve the Source Draft warning in the Trusted DSL audit record.",
+      "When clearing field_value_assignment residuals, emit an executable MKXFORM.setValue call for every evidenced target and right-hand-side value branch; comments, string examples, or a D-only fallback are not coverage.",
+      "When mapping row visibility in JavaScript, every resolved marker must retain every evidenced show/hide and required/non-required state, including the final branch; do not hard-hide the last marker while mapping only earlier branches.",
       "If native formRules already cover a JSP visibility/required rule, do not duplicate that rule in generated JavaScript.",
-      "If native formRules.linkage entries with meta.sourceJsp or meta.sourceJsps matching the action sourceRefs fully cover the action-local JSP behavior, patch the action to function:\"\", translationStatus:\"omitted\", and coverage:{status:\"covered\",nativeRules:[executable rule ids],residuals:[]}; preserve runWhen.",
+      "If control onChange native formRules.linkage entries have the same control source, matching meta.sourceJsp/sourceJsps evidence, and the exact same immutable meta.sourceActionKey as the action.sourceActionKey, and fully cover the action-local JSP behavior, patch the action to function:\"\", translationStatus:\"omitted\", and coverage:{status:\"covered\",nativeRules:[all matching executable rule ids],residuals:[]}; preserve runWhen.",
       "When native formRules cover only part of an action, retain mapped residual JavaScript for uncovered setValue or other behavior, preserve runWhen, exclude covered visible/required calls, and close coverage with the executable native rule ids plus no remaining residuals.",
       "When generated JavaScript alone covers source JSP behavior, patch coverage to {status:\"translated\", nativeRules:[], residuals:[]}.",
       "Do not patch coverage for existing deterministic mapped or coverage-backed omitted actions to partial, uncovered, or residual-bearing coverage.",
@@ -708,6 +712,7 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
         tableId: action.tableId,
         runWhen: action.runWhen,
         sourceRefs: action.sourceRefs,
+        branchProvenance: action.branchProvenance,
         translationStatus: action.translationStatus,
         coverage: coverageSummary(action.coverage, focused ? 4 : 0),
         functionMappings: functionMappingSummary(action.functionMappings, focused ? 8 : 0),

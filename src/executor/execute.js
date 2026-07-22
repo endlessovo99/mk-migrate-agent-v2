@@ -3,6 +3,14 @@ import { NewoaClient, normalizeBaseUrl } from "./newoa-client.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { preparePersistedTemplate, buildWorkflowDraftPayload } from "./persistence.js";
+import {
+  requiresNativeFormRuleFormula
+} from "../dsl/native-form-rule-projection.js";
+import {
+  inspectNativeFormRuleRuntimeBundleHashes,
+  inspectNativeFormRuleRuntimeDigest,
+  NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY
+} from "./native-form-rule-runtime-capability.js";
 
 export async function executeDsl(input, options = {}) {
   const plan = buildDryRunPlan(input);
@@ -41,6 +49,78 @@ export async function executeDsl(input, options = {}) {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    if (requiresNativeFormRuleFormula(input)) {
+      const stage = {
+        name: "verifyNativeFormRuleFormulaCapability",
+        status: "started"
+      };
+      apiStages.push(stage);
+      let capability;
+      try {
+        if (typeof client.getXFormDesktopDigest !== "function") {
+          capability = {
+            ok: false,
+            issues: ["xform_desktop_digest_client_method_missing"]
+          };
+        } else {
+          capability = inspectNativeFormRuleRuntimeDigest(
+            await client.getXFormDesktopDigest()
+          );
+          if (capability.ok) {
+            if (typeof client.getXFormDesktopModuleSha256 !== "function") {
+              capability = {
+                ...capability,
+                ok: false,
+                issues: ["xform_desktop_module_hash_client_method_missing"]
+              };
+            } else {
+              const runtimeSha256 = await client.getXFormDesktopModuleSha256({
+                modulePath: NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimePath,
+                releaseHash: capability.runtimeHash
+              });
+              const ideSha256 = await client.getXFormDesktopModuleSha256({
+                modulePath: NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.idePath,
+                releaseHash: capability.ideHash
+              });
+              capability = {
+                ...capability,
+                ...inspectNativeFormRuleRuntimeBundleHashes({ runtimeSha256, ideSha256 })
+              };
+            }
+          }
+        }
+      } catch (error) {
+        capability = {
+          ok: false,
+          issues: [error?.stage === "getXFormDesktopModuleSha256"
+            ? "xform_desktop_module_hash_request_failed"
+            : "xform_desktop_digest_request_failed"],
+          error: redactCredentialValues(
+            error instanceof Error ? error.message : String(error),
+            credentials
+          )
+        };
+      }
+      if (!capability.ok) {
+        stage.status = "failed";
+        stage.issues = capability.issues;
+        return nativeFormulaCapabilityBlocked({
+          plan,
+          diagnostics,
+          apiStages,
+          baseUrl,
+          capability
+        });
+      }
+      stage.status = "ok";
+      stage.capabilityId = capability.capabilityId;
+      stage.catalogId = capability.catalogId;
+      stage.catalogVersion = capability.catalogVersion;
+      stage.runtimeHash = capability.runtimeHash;
+      stage.ideHash = capability.ideHash;
+      stage.runtimeSha256 = capability.runtimeSha256;
+      stage.ideSha256 = capability.ideSha256;
+    }
     if (updatesExistingTemplate) {
       templateId = targetTemplateId;
       apiStages.push({ name: "getTargetTemplate", status: "started", templateId });
@@ -428,6 +508,37 @@ export async function executeDsl(input, options = {}) {
       plan
     };
   }
+}
+
+function nativeFormulaCapabilityBlocked({ plan, diagnostics, apiStages, baseUrl, capability }) {
+  return {
+    ok: false,
+    status: "blocked",
+    stage: "verifyNativeFormRuleFormulaCapability",
+    failedAt: "verifyNativeFormRuleFormulaCapability",
+    baseUrl,
+    createdFdIds: [],
+    updatedFdIds: [],
+    diagnostics: [
+      ...diagnostics,
+      {
+        level: "error",
+        code: "safety.native_form_rule_formula_capability_unverified",
+        message: "The target XForm runtime/IDE bundle is not a verified formula-condition capability pair; gated native rules will not be written.",
+        path: "/formRules/linkage",
+        details: {
+          issues: capability.issues || [],
+          runtimeHash: capability.runtimeHash,
+          ideHash: capability.ideHash,
+          runtimeSha256: capability.runtimeSha256,
+          ideSha256: capability.ideSha256,
+          error: capability.error
+        }
+      }
+    ],
+    apiStages,
+    plan
+  };
 }
 
 function projectionFailure({

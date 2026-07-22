@@ -118,7 +118,7 @@ describe("source directory stages", () => {
     assert.equal(text.includes("@elem/"), false);
   });
 
-  localCorpusIt("drafts JSP source scripts into MK script actions for review", () => {
+  localCorpusIt("keeps mixed native and residual JSP behavior in review", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const action = dslDraft.scripts.actions.find((item) => item.controlId === "fd_371229d0cbd2cc");
@@ -131,16 +131,19 @@ describe("source directory stages", () => {
     assert.equal(action.scope, "control");
     assert.equal(action.event, "onChange");
     assert.equal(action.controlId, "fd_371229d0cbd2cc");
-    assert.equal(action.translationStatus, "omitted");
+    assert.equal(action.translationStatus, "needs_review");
     assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
-    assert.equal(action.coverage.status, "covered");
+    assert.equal(action.coverage.status, "partial");
     assert.deepEqual(action.coverage.nativeRules, [
       "linkage.fd_371229d0cbd2cc.contains.sb",
       "linkage.fd_371229d0cbd2cc.contains.hc",
       "linkage.fd_371229d0cbd2cc.contains.wx",
       "linkage.fd_371229d0cbd2cc.contains.wb"
     ]);
-    assert.equal(action.functionMappings.some((mapping) => mapping.basis === "native-form-rule"), true);
+    assert.equal(action.coverage.residuals.some((residual) => (
+      residual.code === "script.residual.form_rule_behavior_uncovered"
+    )), true);
+    assert.match(action.function, /setPorvertyTableNoValidate/);
 
     assert.equal(detailActions.length, 1);
     assert.equal(detailActions.every((item) => item.scope === "control" && item.event === "onChange"), true);
@@ -614,15 +617,13 @@ describe("source directory stages", () => {
     assert.equal(fwqDescription.props.content.includes("废木质品"), true);
   });
 
-  localCorpusIt("keeps hidden-helper JSP row scripts reviewable after native row-rule lowering", () => {
+  localCorpusIt("fails hidden-helper JSP row rules closed when their source behavior is not provable", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e");
     const dslDraft = draftSourceDraft(sourceDraft);
     const actionsById = new Map(dslDraft.scripts.actions.map((action) => [action.id, action]));
 
-    assert.equal(sourceDraft.formRules.linkage.length, 1);
-    assert.equal(dslDraft.formRules.linkage.length, 1);
-    assert.equal(dslDraft.formRules.linkage[0].id, "linkage.fd_376d6cbc433bfe.contains.A");
-    assert.equal((dslDraft.formRules.review.excludedRules || []).length, 0);
+    assert.equal(sourceDraft.formRules, undefined);
+    assert.equal(dslDraft.formRules, undefined);
 
     const rowRuleAction = actionsById.get("fd_3a0a0882cb93b0.script.1.event.1");
     assert.equal(rowRuleAction.translationStatus, "needs_review");
@@ -630,10 +631,10 @@ describe("source directory stages", () => {
     assert.equal(rowRuleAction.event, "onChange");
     assert.equal(rowRuleAction.controlId, "fd_376d6cbc433bfe");
     assert.deepEqual(rowRuleAction.runWhen, { viewStatusIn: ["add", "edit"] });
-    assert.equal(rowRuleAction.coverage.status, "partial");
-    assert.deepEqual(rowRuleAction.coverage.nativeRules, ["linkage.fd_376d6cbc433bfe.contains.A"]);
+    assert.equal(rowRuleAction.coverage.status, "uncovered");
+    assert.deepEqual(rowRuleAction.coverage.nativeRules, []);
     assert.equal(rowRuleAction.coverage.residuals.some((item) => item.code === "script.residual.field_value_assignment"), true);
-    assert.equal(rowRuleAction.coverage.residuals.some((item) => item.code === "script.residual.form_rule_needs_review"), false);
+    assert.equal(rowRuleAction.coverage.residuals.some((item) => item.code === "script.residual.form_rule_needs_review"), true);
 
     assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").translationStatus, "needs_review");
     assert.equal(actionsById.get("fd_3a0a0882cb93b0.script.2.event.1").runWhen, undefined);

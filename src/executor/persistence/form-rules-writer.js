@@ -4,6 +4,11 @@ import {
   resolveEffectTarget,
   summarizeFormRules
 } from "../../dsl/form-rules.js";
+import {
+  compileNativeFormRuleFormula,
+  inspectNativeFormRuleProjection,
+  nativeFormRuleProjectionDiagnostic
+} from "../../dsl/native-form-rule-projection.js";
 
 const GENERATED_BY = "mk-migrate-agent-v2";
 const GENERATED_RULE_PREFIX = "mk-migrate-agent-v2:";
@@ -28,9 +33,30 @@ const INVERT_OPERATOR_MAP = {
   notEmpty: "empty"
 };
 
-export function buildNativeFormRuleConfig(formRules, form, dataModels) {
-  const linkage = (Array.isArray(formRules?.linkage) ? formRules.linkage : [])
-    .filter((rule) => rule?.translationStatus === "executable");
+export function buildNativeFormRuleConfig(formRules, form, dataModels, scripts) {
+  const sourceLinkage = Array.isArray(formRules?.linkage) ? formRules.linkage : [];
+  const gatedProjectionIssues = sourceLinkage
+    .filter((rule) => rule?.translationStatus === "executable" && rule.meta?.runWhen !== undefined)
+    .map((rule) => nativeFormRuleProjectionDiagnostic(rule, scripts))
+    .filter(Boolean);
+  if (gatedProjectionIssues.length) {
+    const capabilityMissing = gatedProjectionIssues.some((issue) => (
+      issue.code === "form_rule.run_when_not_persistable"
+    ));
+    const error = new Error(
+      capabilityMissing
+        ? "A gated native form rule lacks the versioned formula-condition projection capability."
+        : "A gated native form rule is not traceable to exactly one matching control onChange action."
+    );
+    error.code = capabilityMissing
+      ? "projection.form_rule.run_when_not_persistable"
+      : "projection.form_rule.native_projection_unproven";
+    error.details = {
+      issues: gatedProjectionIssues
+    };
+    throw error;
+  }
+  const linkage = sourceLinkage.filter((rule) => rule?.translationStatus === "executable");
   const formIndex = buildFormRuleRefIndex(form || {});
   const nativeIndex = buildNativeFieldIndex(dataModels);
   const display = [];
@@ -40,13 +66,18 @@ export function buildNativeFormRuleConfig(formRules, form, dataModels) {
   linkage.forEach((rule, ruleIndex) => {
     const ruleId = rule.id || `linkage-${ruleIndex + 1}`;
     const when = Array.isArray(rule.when) ? rule.when : [];
-    const conditionItems = buildConditionItems(when, formIndex, nativeIndex, `${ruleId}:when`);
+    const projection = inspectNativeFormRuleProjection(rule);
+    const conditionItems = projection.kind === "view-status-formula"
+      ? [buildFormulaConditionItem(rule, "when", formIndex, nativeIndex)]
+      : buildConditionItems(when, formIndex, nativeIndex, `${ruleId}:when`);
     const branch = buildBranch(rule, ruleId, "when", conditionItems, rule.effects, formIndex, nativeIndex);
     display.push(...branch.display);
     require.push(...branch.require);
 
     if (Array.isArray(rule.else) && rule.else.length) {
-      const elseConditions = buildConditionItems(invertClauses(when), formIndex, nativeIndex, `${ruleId}:else`);
+      const elseConditions = projection.kind === "view-status-formula"
+        ? [buildFormulaConditionItem(rule, "else", formIndex, nativeIndex)]
+        : buildConditionItems(invertClauses(when), formIndex, nativeIndex, `${ruleId}:else`);
       const elseBranch = buildBranch({ ...rule, logic: invertLogic(rule.logic) }, ruleId, "else", elseConditions, rule.else, formIndex, nativeIndex);
       display.push(...elseBranch.display);
       require.push(...elseBranch.require);
@@ -240,7 +271,9 @@ function buildNativeRule(rule, ruleId, branch, type, conditionItems, result) {
     id: stableId("rule", seed),
     ruleName: `${GENERATED_RULE_PREFIX}${ruleId}:${branch}:${type}`,
     active: rule.active !== false,
-    condition: rule.logic === "or" ? "2" : "1",
+    condition: conditionItems.some((item) => item.condNodeType === "formula")
+      ? "1"
+      : rule.logic === "or" ? "2" : "1",
     choices: {
       items: conditionItems.map((item, index) => ({
         ...item,
@@ -259,6 +292,34 @@ function buildNativeRule(rule, ruleId, branch, type, conditionItems, result) {
       branch,
       ruleType: type
     }
+  };
+}
+
+function buildFormulaConditionItem(rule, branch, formIndex, nativeIndex) {
+  const formula = compileNativeFormRuleFormula(rule, {
+    branch,
+    resolveFieldName(fieldRef) {
+      const dslTarget = resolveDirectRef(formIndex, fieldRef);
+      const nativeTarget = dslTarget ? nativeTargetForDslTarget(dslTarget, nativeIndex) : undefined;
+      return nativeTarget?.fieldName;
+    }
+  });
+  return {
+    condNodeType: "formula",
+    fieldName: "",
+    fieldKey: "",
+    label: "",
+    tableType: "main",
+    type: "main",
+    operate: "",
+    valueType: "formula",
+    value: {
+      type: "Eval",
+      script: formula.script,
+      vo: { mode: "formula", content: formula.script },
+      varIds: formula.varIds
+    },
+    fieldType: "current"
   };
 }
 
