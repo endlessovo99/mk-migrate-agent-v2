@@ -244,7 +244,7 @@ function observeForm(config, xform) {
 function observeDataField(field, lang) {
   const attributeResult = decodeFieldAttribute(field.fdAttribute);
   const controlProps = attributeResult?.config?.controlProps || {};
-  const props = observeExecutableProps(controlProps, { field, lang });
+  const props = observeExecutableProps(controlProps, { field, lang, attribute: attributeResult });
   // Malformed attributes cannot prove required/component persistence.
   if (attributeResult === null && field.fdDisplay !== false) {
     return {
@@ -293,7 +293,7 @@ function observeDetailField(model, modelIndex, lang) {
         title: normalizeScalar(field.fdLabel || controlProps.title || ""),
         type: inferFieldType(field, controlProps),
         component: inferComponent(field, controlProps),
-        props: observeExecutableProps(controlProps, { field, lang }),
+        props: observeExecutableProps(controlProps, { field, lang, attribute }),
         persistence: {
           fieldIndex,
           mechanismType: normalizeScalar(field.fdMechanismType),
@@ -382,12 +382,92 @@ function observeExecutableProps(controlProps = {}, native = {}) {
     }));
   }
   if (controlProps.multi === true) props.multi = true;
-  if (Number.isInteger(controlProps.valueType?.precision)) props.precision = controlProps.valueType.precision;
+  const precision = observeNativeNumberPrecision(controlProps, native, unit);
+  if (precision !== undefined) props.precision = precision;
   const defaultValue = observeNativeDefaultValue(controlProps, native.field);
   if (defaultValue) props.defaultValue = defaultValue;
   if (controlProps.content !== undefined) props.content = normalizeScalar(controlProps.content);
   if (controlProps.maxLength !== undefined) props.maxLength = controlProps.maxLength;
   return props;
+}
+
+function observeNativeNumberPrecision(controlProps, native, observedUnit) {
+  const valueType = controlProps.valueType;
+  const valuePrecision = nativePrecisionValue(valueType?.precision);
+  if (
+    valuePrecision === undefined ||
+    valueType?.formatType !== "decimal" ||
+    valueType?.groupingUsed !== false
+  ) {
+    return undefined;
+  }
+
+  const fontExtendData = safeParseObject(native.field?.fdFontExtendData);
+  if (native.field?.fdType === "calculate") {
+    if (
+      native.attribute?.config?.type !== "@elem/xform-calculate" ||
+      controlProps.numberFormat !== undefined ||
+      nativePrecisionValue(fontExtendData.precision) !== valuePrecision ||
+      fontExtendData.formatType !== "decimal" ||
+      fontExtendData.groupingUsed !== false
+    ) {
+      return undefined;
+    }
+    return valuePrecision;
+  }
+
+  if (
+    native.field?.fdType !== "number" ||
+    native.attribute?.config?.type !== "numbertext"
+  ) {
+    return undefined;
+  }
+
+  const numberFormat = controlProps.numberFormat;
+  if (
+    !numberFormat ||
+    nativePrecisionValue(numberFormat.precision) !== valuePrecision ||
+    nativePrecisionValue(fontExtendData.precision) !== valuePrecision ||
+    numberFormat.formatType !== fontExtendData.formatType ||
+    controlProps.showCount !== true ||
+    fontExtendData.showCount !== true ||
+    controlProps.defaultValueType !== "formula" ||
+    fontExtendData.defaultValueType !== "formula"
+  ) {
+    return undefined;
+  }
+
+  if (
+    numberFormat.formatType !== "decimal" ||
+    numberFormat.groupingUsed !== false ||
+    fontExtendData.groupingUsed !== false ||
+    numberFormat.percentage !== null ||
+    fontExtendData.percentage !== null ||
+    numberFormat.symbol !== null ||
+    fontExtendData.symbol !== null
+  ) {
+    return undefined;
+  }
+  if (observedUnit === undefined) {
+    if (numberFormat.unit !== "" || fontExtendData.unit !== "") return undefined;
+  } else if (
+    !normalizeScalar(numberFormat.unit) ||
+    normalizeScalar(numberFormat.unit) !== normalizeScalar(fontExtendData.unit)
+  ) {
+    return undefined;
+  }
+  return valuePrecision;
+}
+
+function nativePrecisionString(value) {
+  if (typeof value !== "string" || !/^(?:0|[1-9]\d*)$/u.test(value)) return undefined;
+  const precision = Number(value);
+  return Number.isSafeInteger(precision) ? precision : undefined;
+}
+
+function nativePrecisionValue(value) {
+  if (Number.isSafeInteger(value) && value >= 0) return value;
+  return nativePrecisionString(value);
 }
 
 function observeNativeDefaultValue(controlProps, field) {
@@ -488,12 +568,13 @@ function cloneValue(value) {
 function observeNativeNumberUnit(controlProps, field, lang = {}) {
   const numberFormat = controlProps?.numberFormat;
   const unitToken = normalizeScalar(numberFormat?.unit);
-  if (!unitToken || numberFormat?.formatType !== "base") return undefined;
+  if (!unitToken || !["base", "decimal"].includes(numberFormat?.formatType)) return undefined;
 
   const fontExtendData = safeParseObject(field?.fdFontExtendData);
   if (
     normalizeScalar(fontExtendData.unit) !== unitToken ||
-    fontExtendData.formatType !== "base"
+    fontExtendData.formatType !== numberFormat.formatType ||
+    !hasMatchingNativeNumberFormatProfile(numberFormat, fontExtendData)
   ) {
     return undefined;
   }
@@ -511,6 +592,23 @@ function observeNativeNumberUnit(controlProps, field, lang = {}) {
     return undefined;
   }
   return unit;
+}
+
+function hasMatchingNativeNumberFormatProfile(numberFormat, fontExtendData) {
+  if (numberFormat.formatType === "base") {
+    return numberFormat.percentage === false &&
+      fontExtendData.percentage === false &&
+      numberFormat.groupingUsed === null &&
+      fontExtendData.groupingUsed === null &&
+      numberFormat.symbol === null &&
+      fontExtendData.symbol === null;
+  }
+  return numberFormat.percentage === null &&
+    fontExtendData.percentage === null &&
+    numberFormat.groupingUsed === false &&
+    fontExtendData.groupingUsed === false &&
+    numberFormat.symbol === null &&
+    fontExtendData.symbol === null;
 }
 
 function applyViewControlStyles(fields, viewModel) {

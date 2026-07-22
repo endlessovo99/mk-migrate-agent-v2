@@ -3044,6 +3044,10 @@ describe("executeDsl", () => {
       name: field.fdName,
       attribute: JSON.parse(field.fdAttribute)
     }));
+    const nativeControlDesktopTypes = new Map([
+      ["desc", "@elem/xform-description"],
+      ["numbertext", "@elem/xform-number"]
+    ]);
 
     assert.deepEqual(
       dslFields
@@ -3061,7 +3065,7 @@ describe("executeDsl", () => {
       attributes
         .filter(({ attribute }) => {
           const type = String(attribute.config?.type || "");
-          return type !== "desc" && !type.startsWith("@elem/xform-");
+          return !nativeControlDesktopTypes.has(type) && !type.startsWith("@elem/xform-");
         })
         .map(({ name, attribute }) => [name, attribute.config?.type]),
       []
@@ -3071,9 +3075,7 @@ describe("executeDsl", () => {
         .filter(({ attribute }) => {
           const type = attribute.config?.type;
           const desktopType = attribute.config?.controlProps?.desktop?.type;
-          return type === "desc"
-            ? desktopType !== "@elem/xform-description"
-            : type !== desktopType;
+          return (nativeControlDesktopTypes.get(type) || type) !== desktopType;
         })
         .map(({ name, attribute }) => [name, attribute.config?.type, attribute.config?.controlProps?.desktop?.type]),
       []

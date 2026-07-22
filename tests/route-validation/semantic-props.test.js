@@ -100,6 +100,21 @@ describe("semantic source props Route case", { concurrency: false }, () => {
     assert.deepEqual(detailAmount.defaultValue, { kind: "literal", value: 0 });
   });
 
+  it("projects detail numeric scale through every stage and verifies native readback", async () => {
+    const { source, dsl } = stages();
+    const sourceAmount = source.form.detailTables.find((field) => field.id === "fd_detail")
+      .columns.find((field) => field.id === "fd_detail_amount");
+    const dslAmount = dsl.form.fields.find((field) => field.id === "fd_detail")
+      .columns.find((field) => field.id === "fd_detail_amount");
+    const result = await runRouteCase("semantic-props-success");
+    const readbackAmount = result.execution.readback.form.fields.find((field) => field.id === "fd_detail")
+      .columns.find((field) => field.id === "fd_detail_amount");
+
+    assert.equal(sourceAmount.sourceProps.designerValues.decimal, "2");
+    assert.equal(dslAmount.props.precision, 2);
+    assert.equal(readbackAmount.precision, 2);
+  });
+
   it("projects main arithmetic and detail SUM as Native calculation rules and readback", async () => {
     const { dsl } = stages();
     const formula = dsl.form.fields.find((field) => field.id === "fd_formula_total");

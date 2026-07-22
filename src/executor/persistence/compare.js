@@ -185,9 +185,10 @@ function compareForm(expected, actual, diagnostics) {
           }));
           continue;
         }
-        assertEqual(diagnostics, "form", "readback.form.detail_column_title", `form.fields.${field.id}.columns.${column.id}.title`, column.title, actualColumn.title);
-        assertEqual(diagnostics, "form", "readback.form.detail_column_component", `form.fields.${field.id}.columns.${column.id}.component`, column.component, actualColumn.component);
-        compareProps(diagnostics, "form", `form.fields.${field.id}.columns.${column.id}.props`, column.props, actualColumn.props);
+        const columnPath = `/readback/form/fields/${field.id}/columns/${column.id}`;
+        assertEqual(diagnostics, "form", "readback.form.detail_column_title", `form.fields.${field.id}.columns.${column.id}.title`, column.title, actualColumn.title, `${columnPath}/title`);
+        assertEqual(diagnostics, "form", "readback.form.detail_column_component", `form.fields.${field.id}.columns.${column.id}.component`, column.component, actualColumn.component, `${columnPath}/component`);
+        compareProps(diagnostics, "form", `form.fields.${field.id}.columns.${column.id}.props`, column.props, actualColumn.props, `${columnPath}/props`);
       }
       for (const column of actualField.columns || []) {
         if (!expectedColumnIds.has(column.id)) {

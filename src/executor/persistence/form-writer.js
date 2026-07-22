@@ -653,13 +653,33 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
   if (spec.attrType === "address") {
     controlProps.org = { types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"] };
   }
-  if (["number", "calculate"].includes(spec.attrType) && Number.isInteger(field.props?.precision)) {
+  if (spec.attrType === "number" && hasNativeNumberPrecision(field)) {
+    const precision = field.props.precision;
+    controlProps.valueType = {
+      formatType: "decimal",
+      groupingUsed: false,
+      precision
+    };
+    Object.assign(controlProps, {
+      maxLength: controlProps.maxLength || 200,
+      "$$allowCustomValue": true,
+      type: spec.desktop,
+      showCount: true,
+      numberFormat: nativeDecimalNumberFormat(
+        precision,
+        typeof controlProps.numberFormat?.unit === "string"
+          ? controlProps.numberFormat.unit
+          : ""
+      ),
+      defaultValueType: controlProps.defaultValueType || "formula"
+    });
+  }
+  if (spec.attrType === "calculate" && hasNativeNumberPrecision(field)) {
     controlProps.valueType = {
       formatType: "decimal",
       groupingUsed: false,
       precision: field.props.precision
     };
-    if (controlProps.numberFormat) controlProps.numberFormat.precision = field.props.precision;
   }
   if (spec.attrType === "calculate") {
     controlProps.statisticMode = nativeStatisticMode(field.props?.calculation);
@@ -700,7 +720,13 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     uuid: field.id,
     config: {
       key: controlId,
-      type: isDescription ? "desc" : isButton ? "button" : spec.desktop,
+      type: isDescription
+        ? "desc"
+        : isButton
+          ? "button"
+          : spec.attrType === "number" && hasNativeNumberPrecision(field)
+            ? "numbertext"
+            : spec.desktop,
       controlProps,
       kind: "control",
       label,
@@ -767,6 +793,21 @@ function nativeNumberFormat(unitToken) {
     unit: unitToken,
     percentage: false
   };
+}
+
+function nativeDecimalNumberFormat(precision, unit = "") {
+  return {
+    formatType: "decimal",
+    percentage: null,
+    precision: String(precision),
+    groupingUsed: false,
+    symbol: null,
+    unit
+  };
+}
+
+function hasNativeNumberPrecision(field) {
+  return Number.isSafeInteger(field.props?.precision) && field.props.precision >= 0;
 }
 
 function applyDefaultValueToControlProps(controlProps, field, template, spec) {
@@ -848,7 +889,21 @@ function fieldFontExtendData(field, template, spec) {
     });
   }
 
-  if (["number", "calculate"].includes(spec.attrType) && Number.isInteger(field.props?.precision)) {
+  if (spec.attrType === "number" && hasNativeNumberPrecision(field)) {
+    Object.assign(data, {
+      precision: String(field.props.precision),
+      groupingUsed: false,
+      formatType: "decimal",
+      passValue: false,
+      showCount: true,
+      defaultValueType: "formula",
+      percentage: null,
+      symbol: null,
+      unit: typeof data.unit === "string" ? data.unit : ""
+    });
+  }
+
+  if (spec.attrType === "calculate" && hasNativeNumberPrecision(field)) {
     data.precision = field.props.precision;
     if (!data.formatType) {
       data.groupingUsed = false;

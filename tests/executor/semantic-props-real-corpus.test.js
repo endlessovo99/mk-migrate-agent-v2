@@ -72,7 +72,7 @@ describe("real source 167 semantic props regression", () => {
       field.columns?.some((column) => column.id === "fd_38e4722c9c90ba")
     ), false);
     assert.equal(amount.props.unit, "元");
-    assertNativeNumberUnit(template, amount.id, "元");
+    assertNativeNumberUnit(template, amount.id, "元", amount.props.precision);
     assert.equal(readback.form.fields.find((field) => field.id === amount.id).unit, "元");
 
     assert.equal(source.workflow.nodes.find((node) => node.id === "N2").help, help);
@@ -93,7 +93,7 @@ function nativeControlProps(template, fieldId) {
   return JSON.parse(field.fdAttribute).config.controlProps;
 }
 
-function assertNativeNumberUnit(template, fieldId, unit) {
+function assertNativeNumberUnit(template, fieldId, unit, precision) {
   const { config, field } = nativeField(template, fieldId);
   const controlProps = JSON.parse(field.fdAttribute).config.controlProps;
   const fontExtendData = JSON.parse(field.fdFontExtendData);
@@ -102,9 +102,15 @@ function assertNativeNumberUnit(template, fieldId, unit) {
 
   assert.equal(controlProps.unit, undefined);
   assert.match(unitToken, /^!\{[^}]+\}$/u);
-  assert.equal(controlProps.numberFormat.formatType, "base");
+  const expectedFormat = Number.isInteger(precision) ? "decimal" : "base";
+  assert.equal(controlProps.numberFormat.formatType, expectedFormat);
   assert.equal(fontExtendData.unit, unitToken);
-  assert.equal(fontExtendData.formatType, "base");
+  assert.equal(fontExtendData.formatType, expectedFormat);
+  if (Number.isInteger(precision)) {
+    assert.equal(controlProps.valueType.precision, precision);
+    assert.equal(controlProps.numberFormat.precision, String(precision));
+    assert.equal(fontExtendData.precision, String(precision));
+  }
   assert.deepEqual(lang[unitToken], {
     prop: "numberFormat",
     name: fieldId,
