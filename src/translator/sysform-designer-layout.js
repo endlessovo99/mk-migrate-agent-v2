@@ -11,6 +11,11 @@ import {
   isStyledSourceDescriptionControl
 } from "./source-description-control.js";
 import {
+  foldInlineCaptions,
+  isPlainInlineCaption
+} from "./inline-caption-recovery.js";
+import { isSafeInlineUnit } from "./source-text-predicates.js";
+import {
   applyAdjacentDetailTableTitles,
   applyAdjacentRowDetailTableTitles,
   attachmentContextControls
@@ -251,6 +256,7 @@ function appendDesignerLayoutRow(descriptor, context) {
     ...extractRowMarkers(rowHtml, warnings)
   ])];
   const sourceCells = splitDirectChildCells(rowHtml);
+  const boundCaptionCellIndexes = indexBoundCaptionCells(sourceCells, boundCaptions);
   const sourceColumns = sourceCells.reduce((max, cell, cellIndex) => {
     const column = parseColumnSpec(cell.attrs.column, cellIndex);
     return Math.max(max, column.column + column.colspan);
@@ -258,7 +264,12 @@ function appendDesignerLayoutRow(descriptor, context) {
 
   sourceCells.forEach((cell, cellIndex) => {
     const controls = extractLayoutCellControls(cell.body, boundCaptions, metadataContext, {
-      preservePlainLabels: descriptor.preservePlainLabels === true
+      preservePlainLabels: descriptor.preservePlainLabels === true,
+      crossCellBoundCaptionIds: new Set(
+        [...boundCaptionCellIndexes]
+          .filter(([, captionCellIndex]) => captionCellIndex !== cellIndex)
+          .map(([captionId]) => captionId)
+      )
     });
     if (!controls.length) return;
     const column = parseColumnSpec(cell.attrs.column, cellIndex);
@@ -314,6 +325,20 @@ function appendDesignerLayoutRow(descriptor, context) {
       cells
     });
   }
+}
+
+function indexBoundCaptionCells(sourceCells, boundCaptions) {
+  const indexes = new Map();
+  sourceCells.forEach((cell, cellIndex) => {
+    const controls = extractDesignerFieldControls(cell.body, {
+      includeHidden: true,
+      includeTextLabels: true
+    });
+    for (const control of controls) {
+      if (boundCaptions.has(control.id)) indexes.set(control.id, cellIndex);
+    }
+  });
+  return indexes;
 }
 
 function recoverDesignerAttachments(html, fields, fieldIds, layoutRows, warnings) {
@@ -577,7 +602,7 @@ function extractLayoutCellControls(html, crossCellBoundCaptions = new Map(), met
     });
   }
 
-  const semanticControls = foldInlineCellSemantics(html, entries, metadataContext);
+  const semanticControls = foldInlineCellSemantics(html, entries, metadataContext, options);
   const fieldControls = semanticControls.filter((control) => !isSourceDescriptionControl(control));
   if (fieldControls.length) {
     const cellBoundLabelIds = new Set(
@@ -601,8 +626,10 @@ function extractLayoutCellControls(html, crossCellBoundCaptions = new Map(), met
   );
 }
 
-function foldInlineCellSemantics(html, entries, metadataContext) {
-  const captions = foldInlineCaptions(html, entries);
+function foldInlineCellSemantics(html, entries, metadataContext, options) {
+  const captions = foldInlineCaptions(html, entries, {
+    crossCellBoundCaptionIds: options?.crossCellBoundCaptionIds
+  });
   const units = foldInlineNumberUnits(html, captions, metadataContext);
   return foldInlineHints(html, units, metadataContext)
     .map((entry) => entry.control);
@@ -621,7 +648,7 @@ function foldInlineNumberUnits(html, entries, metadataContext) {
       !isSourceDescriptionControl(current.control) &&
       isNumberControl(current.control, metadataContext) &&
       isPlainInlineCaption(next.control) &&
-      hasOnlyInlineUnitGap(html, current, next) &&
+      hasOnlyInlineWhitespaceGap(html, current, next) &&
       isSafeInlineUnit(next.control.title)
     ) {
       folded.push(mergeControlEntries(
@@ -650,14 +677,7 @@ function isNumberControl(control, metadataContext) {
   return metadataField?.type === "number";
 }
 
-function isSafeInlineUnit(value) {
-  const unit = cleanText(value);
-  return [...unit].length > 0 &&
-    [...unit].length <= 12 &&
-    /^[\p{L}\p{N}%‰°℃℉¥￥/$²³·]+$/u.test(unit);
-}
-
-function hasOnlyInlineUnitGap(html, left, right) {
+function hasOnlyInlineWhitespaceGap(html, left, right) {
   const between = String(html || "").slice(left.end, right.start);
   if (directElementFragments(between).length) return false;
   return between
@@ -674,119 +694,6 @@ function withInlineUnit(control, unit) {
         id: unit.id,
         content: cleanText(unit.title),
         relation: "immediately-adjacent-plain-text-in-same-cell"
-      }
-    }
-  };
-}
-
-function foldInlineCaptions(html, entries) {
-  const folded = [];
-
-  for (let index = 0; index < entries.length;) {
-    const current = entries[index];
-    const next = entries[index + 1];
-    if (!next || current.control.source?.designerHidden || next.control.source?.designerHidden) {
-      folded.push(current);
-      index += 1;
-      continue;
-    }
-
-    const separatedByBreak = hasDesignerBreakBetween(html, current, next);
-    if (
-      !isSourceDescriptionControl(current.control) &&
-      isPlainInlineCaption(next.control) &&
-      !separatedByBreak
-    ) {
-      const canonicalTitle = ordinalCaptionTitle(current.control.title, next.control.title);
-      if (canonicalTitle) {
-        folded.push(mergeControlEntries(
-          current,
-          next,
-          withInlineCaption(current.control, next.control, canonicalTitle, "trailing-ordinal-caption")
-        ));
-        index += 2;
-        continue;
-      }
-
-      if (captionMatchesExactTitle(next.control.title, current.control.title)) {
-        folded.push(mergeControlEntries(
-          current,
-          next,
-          withInlineCaption(
-            current.control,
-            next.control,
-            current.control.title,
-            "trailing-duplicate-caption"
-          )
-        ));
-        index += 2;
-        continue;
-      }
-    }
-
-    if (
-      isPlainInlineCaption(current.control) &&
-      !isSourceDescriptionControl(next.control) &&
-      !separatedByBreak &&
-      captionMatchesTitleEnd(current.control.title, next.control.title)
-    ) {
-      folded.push(mergeControlEntries(
-        current,
-        next,
-        withInlineCaption(next.control, current.control, next.control.title, "leading-title-segment")
-      ));
-      index += 2;
-      continue;
-    }
-
-    // Visible plain textLabel + unbound input subject: UI title is the caption;
-    // designer/metadata label is only the field subject, not a second title.
-    if (
-      isPlainInlineCaption(current.control) &&
-      !isSourceDescriptionControl(next.control) &&
-      !separatedByBreak &&
-      isUnboundSubjectField(next.control) &&
-      !isSafeInlineUnit(current.control.title)
-    ) {
-      folded.push(mergeControlEntries(
-        current,
-        next,
-        withUnboundSubjectCaption(next.control, current.control)
-      ));
-      index += 2;
-      continue;
-    }
-
-    folded.push(current);
-    index += 1;
-  }
-
-  return folded;
-}
-
-function isUnboundSubjectField(control) {
-  return String(control?.source?.designerValues?._label_bind || "").toLowerCase() === "false";
-}
-
-function withUnboundSubjectCaption(control, caption) {
-  const subject = cleanText(control.source?.designerValues?.label || control.title);
-  const displayTitle = inlineCaptionText(caption.title);
-  const folded = withInlineCaption(
-    control,
-    caption,
-    displayTitle,
-    "leading-unbound-subject-caption"
-  );
-  if (!subject || normalizeSemanticText(subject) === normalizeSemanticText(displayTitle)) {
-    return folded;
-  }
-  return {
-    ...folded,
-    source: {
-      ...folded.source,
-      subjectLabel: {
-        content: subject,
-        relation: "unbound-control-subject-distinct-from-visible-caption"
       }
     }
   };
@@ -824,12 +731,6 @@ function foldInlineHints(html, entries, metadataContext) {
   return folded;
 }
 
-function isPlainInlineCaption(control) {
-  return isSourceDescriptionControl(control) &&
-    String(control.source?.designerType || "").toLowerCase() === "textlabel" &&
-    !isStyledSourceDescriptionControl(control);
-}
-
 function supportsInlinePlaceholder(control, metadataContext) {
   const metadataField = metadataContext
     ? matchMetadataField(control, metadataContext.byId, metadataContext.byTitle)
@@ -846,11 +747,6 @@ function supportsInlinePlaceholder(control, metadataContext) {
     }
   });
   return componentSupportsProp(component, "placeholder") || control?.type === "RestDialog";
-}
-
-function hasDesignerBreakBetween(html, left, right) {
-  const between = String(html || "").slice(left.end, right.start);
-  return /\bfd_type\s*=\s*(["'])brcontrol\1/i.test(between);
 }
 
 function hasDirectDesignerBreakBetween(html, left, right) {
@@ -921,54 +817,6 @@ function mergeControlEntries(left, right, control) {
     control,
     start: left.start,
     end: right.end
-  };
-}
-
-function ordinalCaptionTitle(fieldTitle, captionTitle) {
-  const title = cleanText(fieldTitle);
-  const match = /^(.*\S)([0-9０-９]+)$/u.exec(title);
-  if (!match) return undefined;
-  const caption = inlineCaptionText(captionTitle);
-  if (!caption || normalizeSemanticText(match[1]) !== normalizeSemanticText(caption)) return undefined;
-  return caption;
-}
-
-function captionMatchesTitleEnd(captionTitle, fieldTitle) {
-  const caption = normalizeSemanticText(inlineCaptionText(captionTitle));
-  if (!caption) return false;
-  const segments = cleanText(fieldTitle)
-    .split(/\s*[-–—/／|｜:：]\s*/u)
-    .map(normalizeSemanticText)
-    .filter(Boolean);
-  return segments.length > 0 && segments.at(-1) === caption;
-}
-
-function captionMatchesExactTitle(captionTitle, fieldTitle) {
-  const caption = normalizeSemanticText(inlineCaptionText(captionTitle));
-  const field = normalizeSemanticText(inlineCaptionText(fieldTitle));
-  return Boolean(caption && field && caption === field);
-}
-
-function inlineCaptionText(value) {
-  return cleanText(value).replace(/^[\s:：,，;；]+|[\s:：,，;；]+$/gu, "");
-}
-
-function normalizeSemanticText(value) {
-  return normalizeMatchText(value).toLocaleLowerCase();
-}
-
-function withInlineCaption(control, caption, title, relation) {
-  return {
-    ...control,
-    title,
-    source: {
-      ...control.source,
-      inlineCaption: {
-        id: caption.id,
-        content: inlineCaptionText(caption.title),
-        relation
-      }
-    }
   };
 }
 

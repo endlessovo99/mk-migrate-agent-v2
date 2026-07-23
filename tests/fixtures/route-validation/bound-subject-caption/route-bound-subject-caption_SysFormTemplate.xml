@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-bound-subject-caption-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Bound Subject Caption</string></void>
+  <void method="put"><string>fdModelId</string><string>route-bound-subject-caption-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_invoice_info&quot;,content:&quot;发票信息&quot;}&apos;&gt;发票信息&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_invoice_number&quot;,content:&quot;发票号码：&quot;}&apos;&gt;发票号码：&lt;/label&gt; &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_invoice_number&quot;,label:&quot;发票信息&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;label_invoice_info&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_impact&quot;,content:&quot;具体影响&quot;}&apos;&gt;具体影响&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_instruction&quot;,content:&quot;填写说明：&quot;}&apos;&gt;填写说明：&lt;/label&gt; &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_impact&quot;,label:&quot;具体影响&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;label_impact&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_contract_number&quot;,content:&quot;合同-号码&quot;}&apos;&gt;合同-号码&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;1&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_number&quot;,content:&quot;号码：&quot;}&apos;&gt;号码：&lt;/label&gt; &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_contract_number&quot;,label:&quot;合同-号码&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;label_contract_number&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_invoice_number&quot; label=&quot;发票信息&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_impact&quot; label=&quot;具体影响&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_contract_number&quot; label=&quot;合同-号码&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>
