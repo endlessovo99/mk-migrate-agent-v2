@@ -1,13 +1,22 @@
 import {
+  applyExpressionFormulaVoToModels,
   buildNativeFormRuleConfig,
   mergeNativeFormRules,
   summarizeNativeFormRuleConfig
 } from "./form-rules-writer.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { projectLayoutGrid } from "../../dsl/layout-pack.js";
+import {
+  detailTableEditOperations,
+  detailTableViewOperations
+} from "./detail-auth.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { persistedFieldLabel } from "./field-labels.js";
-import { SCRIPT_SINGLETON_GLOBAL_EVENTS, analyzeScriptFunction } from "../../dsl/scripts.js";
+import {
+  SCRIPT_SINGLETON_GLOBAL_EVENTS,
+  analyzeScriptFunction,
+  compileSetFieldAttrRowMarkerTargets
+} from "../../dsl/scripts.js";
 import {
   dispatcherActionEndMarker,
   dispatcherActionStartMarker,
@@ -47,9 +56,12 @@ export function applyFormPayload(template, dsl) {
   const existingFormAttr = parseJsonObject(config.attribute?.formAttr || "{}");
   const controlAction = buildControlAction(existingFormAttr.controlAction, dsl.scripts, {
     mainModel,
-    detailModelsByField
+    detailModelsByField,
+    form
   });
-  const nativeFormRules = buildNativeFormRuleConfig(dsl.formRules, form, dataModels, dsl.scripts);
+  const nativeFormRules = buildNativeFormRuleConfig(dsl.formRules, form, dataModels, dsl.scripts, {
+    templateName: next.fdName
+  });
   const formAttr = {
     subjectRule: {},
     formRule: mergeNativeFormRules(existingFormAttr.formRule || { pattern: {} }, nativeFormRules),
@@ -65,7 +77,7 @@ export function applyFormPayload(template, dsl) {
 
   const nextConfig = {
     authFilter: config.authFilter || { detailAuthDefine: {} },
-    auth: buildAuth(mainModel.fdTableName, fieldAuth, form),
+    auth: buildAuth(mainModel.fdTableName, fieldAuth, form, detailModels),
     attribute: {
       ...(config.attribute || {}),
       formAttr: JSON.stringify(formAttr)
@@ -85,6 +97,15 @@ export function applyFormPayload(template, dsl) {
       scripts: summarizeDslScripts(dsl.scripts),
       formRules: nativeFormRules.summary
     }
+  };
+  applyExpressionFormulaVoToModels({
+    dataModels,
+    computeRules: formAttr.formRule.compute,
+    config: nextConfig
+  });
+  nextConfig.attribute = {
+    ...(config.attribute || {}),
+    formAttr: JSON.stringify(formAttr)
   };
 
   xform.fdConfig = JSON.stringify(nextConfig);
@@ -409,7 +430,8 @@ function controlActionKey(action, context) {
 }
 
 function renderScriptFunction(source, context = {}, action = {}) {
-  const rendered = String(source || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
+  const compiled = compileSetFieldAttrRowMarkerTargets(source, context.form);
+  const rendered = String(compiled || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
     const sourceTableId = String(tableId || "").trim();
     const model = context.detailModelsByField?.get(sourceTableId);
     return model?.fdTableName || sourceTableId;
@@ -586,6 +608,7 @@ function canonicalField(field, template, model, order, tableType, lang) {
 
 function fieldLengthFromDsl(field, spec) {
   if (["desc", "button"].includes(spec.attrType)) return 0;
+  if (spec.attrType === "hyperlinks") return undefined;
   if (spec.attrType === "textarea") {
     return textareaMaxLengthFromDsl(field);
   }
@@ -646,6 +669,13 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     if (maxLength !== undefined) {
       controlProps.maxLength = maxLength;
     }
+  }
+  if (spec.attrType === "hyperlinks") {
+    Object.assign(controlProps, {
+      largestSet: field.props?.largestSet ?? 1,
+      editable: field.props?.editable ?? false,
+      defaultValueType: "fixed"
+    });
   }
   if (spec.attrType === "timestamp") {
     Object.assign(controlProps, { placeholder: "请选择", displayPattern: "yyyy-MM-dd HH:mm" });
@@ -1279,7 +1309,7 @@ function buildGridItem(row, cell, index, detailModelsByField) {
       row: gridRow + 1,
       id: itemId,
       style: { backgroundColor: "" },
-      // Audit-only markers; observers must not treat these as verification evidence.
+      // Audit-only markers; script persistence compiles them to concrete control ids.
       migrationRowId,
       migrationFieldId: firstRefId,
       migrationFieldIds: refIds,
@@ -1292,7 +1322,7 @@ function buildGridItem(row, cell, index, detailModelsByField) {
   };
 }
 
-/** Prefer layout sourceMarkers so MKXFORM.setFieldAttr(rowMarker) resolves at runtime. */
+/** Preserve the primary legacy marker as audit metadata only. */
 function migrationRowIdFor(row = {}) {
   const markers = Array.isArray(row.sourceMarkers)
     ? row.sourceMarkers.map((marker) => String(marker || "").trim()).filter(Boolean)
@@ -1302,32 +1332,105 @@ function migrationRowIdFor(row = {}) {
 
 function buildFieldAuth(mainModel, detailModels, form) {
   const required = new Set((form.fields || []).filter((field) => field.props?.required).map((field) => field.id));
-  return Object.fromEntries(
-    [...(mainModel.fdFields || []), ...detailModels.flatMap((model) => model.fdFields || [])]
-      .map((field) => [field.fdName, {
-        visible: true,
-        editable: !field.fdIsSystem && field.fdType !== "desc",
-        required: required.has(field.fdName),
-        hide: false
-      }])
+  const authEntry = (field) => ({
+    visible: true,
+    editable: !field.fdIsSystem && field.fdType !== "desc",
+    required: required.has(field.fdName),
+    hide: false
+  });
+
+  const mainFields = Object.fromEntries(
+    (mainModel.fdFields || []).map((field) => [field.fdName, authEntry(field)])
   );
+  const flatDetailFields = {};
+  const detailByTable = {};
+  for (const model of detailModels) {
+    const nestedFields = {};
+    for (const field of model.fdFields || []) {
+      const entry = authEntry(field);
+      flatDetailFields[field.fdName] = entry;
+      if (!field.fdIsSystem) nestedFields[field.fdName] = entry;
+    }
+    detailByTable[model.fdTableName] = nestedFields;
+  }
+
+  return {
+    mainFields,
+    flatDetailFields,
+    detailByTable
+  };
 }
 
-function buildAuth(tableName, fieldAuth, form) {
+function buildAuth(tableName, fieldAuth, form, detailModels = []) {
   const editOnly = new Set((form.fields || [])
     .filter((field) => field.sourceProps?.displayGate === "xform:editShow")
     .map((field) => field.id));
-  const viewFields = Object.fromEntries(Object.keys(fieldAuth).map((fieldName) => [fieldName, {
-    visible: !editOnly.has(fieldName),
-    hide: editOnly.has(fieldName)
-  }]));
+  const editOperations = detailTableEditOperations();
+  const viewOperations = detailTableViewOperations();
+
+  const detailTableRefs = Object.fromEntries(
+    detailModels.map((model) => [model.fdTableName, {
+      visible: true,
+      editable: true,
+      required: false,
+      operations: editOperations.map((operation) => ({ ...operation })),
+      hide: false
+    }])
+  );
+  const detailTableViewRefs = Object.fromEntries(
+    detailModels.map((model) => [model.fdTableName, {
+      visible: true,
+      operations: viewOperations.map((operation) => ({ ...operation })),
+      hide: false
+    }])
+  );
+
+  const mainEditFields = {
+    ...fieldAuth.mainFields,
+    ...detailTableRefs,
+    ...fieldAuth.flatDetailFields
+  };
+  const mainViewFields = Object.fromEntries(
+    Object.entries({
+      ...fieldAuth.mainFields,
+      ...detailTableViewRefs,
+      ...fieldAuth.flatDetailFields
+    }).map(([fieldName, entry]) => {
+      if (detailTableViewRefs[fieldName]) {
+        return [fieldName, detailTableViewRefs[fieldName]];
+      }
+      return [fieldName, {
+        visible: !editOnly.has(fieldName),
+        hide: editOnly.has(fieldName)
+      }];
+    })
+  );
+
+  const addEdit = { [tableName]: { fields: mainEditFields } };
+  const view = { [tableName]: { fields: mainViewFields } };
+  for (const [detailTable, fields] of Object.entries(fieldAuth.detailByTable || {})) {
+    addEdit[detailTable] = {
+      fields: { ...fields },
+      operations: editOperations.map((operation) => ({ ...operation }))
+    };
+    view[detailTable] = {
+      fields: Object.fromEntries(
+        Object.keys(fields).map((fieldName) => [fieldName, {
+          visible: !editOnly.has(fieldName),
+          hide: editOnly.has(fieldName)
+        }])
+      ),
+      operations: viewOperations.map((operation) => ({ ...operation }))
+    };
+  }
+
   return [{
     fdName: ":publicLang.sysFormAuth",
     authOrg: [],
     fdIsAvailable: true,
-    add: { [tableName]: { fields: fieldAuth } },
-    edit: { [tableName]: { fields: fieldAuth } },
-    view: { [tableName]: { fields: viewFields } }
+    add: { ...addEdit },
+    edit: { ...addEdit },
+    view
   }];
 }
 
@@ -1483,6 +1586,7 @@ function componentFromDataField(field) {
     "@elem/xform-address": "xform-address",
     "@elem/xform-attach": "xform-attach",
     "@elem/xform-subject": "xform-subject",
+    "@elem/xform-hyperlinks": "xform-hyperlinks",
     "@elem/xform-description": "xform-description"
   }[desktopType] || field.component || componentForFdType(field.fdType);
   if (component === "xform-select" && controlProps.multi === true) return "xform-select~multi";
@@ -1502,6 +1606,7 @@ function componentForFdType(type) {
     address: "xform-address",
     attachment: "xform-attach",
     subject: "xform-subject",
+    hyperlinks: "xform-hyperlinks",
     desc: "xform-description"
   }[type] || "xform-input";
 }
@@ -1528,6 +1633,9 @@ function componentSpec(field) {
   }
   if (component === "xform-textarea") {
     return specForComponent(component, "textarea", "clob", "simpleDict", "textarea", "@elem/xform-textarea", "@elem/xform-m-textarea");
+  }
+  if (component === "xform-hyperlinks") {
+    return specForComponent(component, "hyperlinks", "clob", "HyperLinkDict", "hyperlinks", "@elem/xform-hyperlinks", "@elem/xform-m-hyperlinks");
   }
   if (component === "xform-datetime") {
     return specForComponent(component, "timestamp", "timestamp", "dateDict", "timestamp", "@elem/xform-datetime", "@elem/xform-m-datetime");

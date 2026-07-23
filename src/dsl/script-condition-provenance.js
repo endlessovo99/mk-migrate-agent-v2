@@ -27,6 +27,24 @@ export function buildConditionOperandResolver(source, options = {}) {
     ) {
       return { origin: `field:${legacyValue[2]}`, transforms: [] };
     }
+    const legacyElementMember = value.match(/^([A-Za-z_$][\w$]*)\s*\.\s*value$/);
+    if (legacyElementMember) {
+      const declaration = bindings.stableInitializer(legacyElementMember[1], {
+        beforeIndex,
+        sameFunction: true
+      });
+      const elementGetter = stripOuterParentheses(String(declaration?.expression || "").trim()).match(
+        /^GetXFormFieldById\(\s*(["'`])([^"'`]+)\1\s*\)(?:\s*\[\s*0\s*\])?$/
+      );
+      if (
+        declaration &&
+        elementGetter &&
+        bindings.isUnshadowedGlobal("GetXFormFieldById", declaration.expressionIndex) &&
+        staticCapturedLiteral(elementGetter[1], elementGetter[2])
+      ) {
+        return { origin: `field:${elementGetter[2]}`, transforms: [] };
+      }
+    }
     const legacyJqueryValue = value.match(/^\$\(\s*(["'`])([\s\S]*)\1\s*\)\s*\.\s*val\(\s*\)$/);
     if (
       legacyJqueryValue &&

@@ -6,6 +6,10 @@ import { subProcessContract } from "../../dsl/subprocess.js";
 import { SCRIPT_SINGLETON_GLOBAL_EVENTS } from "../../dsl/scripts.js";
 import { normalizeRuleConditionText } from "./condition-rule.js";
 import {
+  authFieldIdFromKey,
+  isPhysicalDetailTableAuthKey
+} from "./detail-auth.js";
+import {
   BEFORE_SUBMIT_DISPATCH_STRATEGY,
   ORDERED_DISPATCH_STRATEGY,
   dispatcherCallNames,
@@ -53,7 +57,9 @@ export function observeNativeTemplate(template) {
       diagnostics: []
     };
   } else {
-    const formObserved = observeForm(configResult.value, xform);
+    const formObserved = observeForm(configResult.value, xform, {
+      templateName: normalizeScalar(template?.fdName)
+    });
     partitions.form = formObserved.form;
     partitions.rules = formObserved.rules;
     partitions.scripts = formObserved.scripts;
@@ -120,10 +126,11 @@ function observeEnvelope(template) {
   };
 }
 
-function observeForm(config, xform) {
+function observeForm(config, xform, options = {}) {
   const formDiagnostics = [];
   const rulesDiagnostics = [];
   const scriptsDiagnostics = [];
+  const templateName = normalizeScalar(options.templateName);
 
   const dataModelResult = requireArray(config.dataModel, {
     partition: "form",
@@ -198,7 +205,9 @@ function observeForm(config, xform) {
   } else {
     const formAttr = formAttrResult.value;
     subjectRule = formAttr.subjectRule;
-    calculationOrder = applyObservedComputations(fields, formAttr.formRule || {}, detailModels);
+    calculationOrder = applyObservedComputations(fields, formAttr.formRule || {}, detailModels, {
+      templateName
+    });
     rulesValue = observeRules(formAttr.formRule || {}, detailModels, rulesDiagnostics);
     scriptsValue = observeScripts(formAttr.controlAction || {}, scriptsDiagnostics, {
       mainModel,
@@ -382,6 +391,10 @@ function observeExecutableProps(controlProps = {}, native = {}) {
     }));
   }
   if (controlProps.multi === true) props.multi = true;
+  if (native.field?.fdType === "hyperlinks" || controlProps.desktop?.type === "@elem/xform-hyperlinks") {
+    if (controlProps.largestSet !== undefined) props.largestSet = controlProps.largestSet;
+    if (typeof controlProps.editable === "boolean") props.editable = controlProps.editable;
+  }
   const precision = observeNativeNumberPrecision(controlProps, native, unit);
   if (precision !== undefined) props.precision = precision;
   const defaultValue = observeNativeDefaultValue(controlProps, native.field);
@@ -505,8 +518,9 @@ function observeNativeDefaultValue(controlProps, field) {
   return undefined;
 }
 
-function applyObservedComputations(fields, formRule, detailModels) {
+function applyObservedComputations(fields, formRule, detailModels, options = {}) {
   const compute = Array.isArray(formRule?.compute) ? formRule.compute : [];
+  const templateName = normalizeScalar(options.templateName);
   const fieldById = new Map(fields.filter((field) => field?.type !== "detailTable").map((field) => [field.id, field]));
   const detailFieldByControlId = new Map(
     fields
@@ -529,14 +543,19 @@ function applyObservedComputations(fields, formRule, detailModels) {
       calculationOrder.push(detailTarget?.ref || field.id);
       if (item.type === "FORMULA" && item.value && typeof item.value === "object") {
         const script = String(item.value.script || "");
+        const observedDisplay = normalizeObservedFormulaDisplay(
+          String(item.value.vo?.content || "").trim(),
+          templateName
+        );
         field.props.calculation = {
           kind: "formula",
-          expression: script.replace(/\$\{data\.biz\.([A-Za-z_][\w]*)\}/gu, (_, fieldId) => `$${fieldId}$`),
-          ...(String(item.value.vo?.content || "").trim()
-            ? { displayExpression: String(item.value.vo.content).trim() }
-            : {}),
+          expression: script.replace(
+            /\$\{data\.biz\.([A-Za-z_][\w.]*)\}/gu,
+            (_, refPath) => `$${leafFormulaFieldId(refPath)}$`
+          ),
+          ...(observedDisplay ? { displayExpression: observedDisplay } : {}),
           fieldIds: Array.isArray(item.value.varIds)
-            ? item.value.varIds.map((fieldId) => normalizeScalar(fieldId)).filter(Boolean)
+            ? item.value.varIds.map((fieldId) => leafFormulaFieldId(fieldId)).filter(Boolean)
             : []
         };
         continue;
@@ -559,6 +578,37 @@ function applyObservedComputations(fields, formRule, detailModels) {
     }
   }
   return calculationOrder;
+}
+
+function leafFormulaFieldId(ref) {
+  const text = String(ref || "").trim();
+  if (!text) return "";
+  const segments = text.split(".").map((part) => part.trim()).filter(Boolean);
+  return segments.at(-1) || "";
+}
+
+function normalizeObservedFormulaDisplay(content, templateName) {
+  let expression = String(content || "").trim();
+  if (!expression) return "";
+  if (templateName) {
+    const escaped = escapeRegExp(templateName);
+    expression = expression.replace(
+      new RegExp(`\\$${escaped}\\.([^$]+)\\$`, "gu"),
+      (_, rest) => `$${rest}$`
+    );
+  }
+  // Native detail formulas use "$明细表1.金额$"; DSL display keeps the leaf title "$金额$".
+  return expression.replace(/\$([^$]+)\$/gu, (_, inner) => {
+    const segments = String(inner)
+      .split(".")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    return `$${segments.at(-1) || ""}$`;
+  });
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function cloneValue(value) {
@@ -1380,15 +1430,22 @@ function splitRelatedNodeIds(value = "") {
 
 function observeDataAuthority(auth) {
   if (!auth || typeof auth !== "object") return undefined;
+  const fields = {};
+  for (const [key, value] of Object.entries(auth)) {
+    // Skip physical detail-table aggregate entries (operations / table-level flags).
+    if (isPhysicalDetailTableAuthKey(key)) continue;
+    const fieldId = authFieldIdFromKey(key);
+    if (!fieldId) continue;
+    fields[fieldId] = {
+      visible: normalizeBoolean(value?.isShow),
+      editable: normalizeBoolean(value?.isEdit),
+      required: normalizeBoolean(value?.isRequire)
+    };
+  }
+  if (!Object.keys(fields).length) return undefined;
   return {
     enabled: true,
-    fields: Object.fromEntries(
-      Object.entries(auth).map(([fieldId, value]) => [fieldId, {
-        visible: normalizeBoolean(value?.isShow),
-        editable: normalizeBoolean(value?.isEdit),
-        required: normalizeBoolean(value?.isRequire)
-      }])
-    )
+    fields
   };
 }
 

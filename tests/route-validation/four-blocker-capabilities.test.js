@@ -26,44 +26,51 @@ describe("four blocking route capabilities", () => {
       "detail_row_control_state",
       "detail_row_lifecycle"
     ]);
-    assert.equal(recipeActions.every((action) => action.translationStatus === "needs_review"), true);
     assert.equal(recipeActions.every((action) =>
       !action.functionMappings?.some((mapping) => mapping.basis === "semantic-recipe")
     ), true);
 
     const dependent = actionFor("dependent_select_options", "onChange");
+    assert.equal(dependent.translationStatus, "needs_review");
     assert.equal(dependent.controlId, "fd_trigger");
     assert.equal(dependent.recipe.targetFieldId, "fd_target");
     assert.deepEqual(dependent.recipe.cases[0].options.map((option) => option.value), ["1", "2", "3"]);
     assert.deepEqual(dependent.recipe.defaultOptions.map((option) => option.value), ["1", "2", "3", "4"]);
 
     const attachment = actionFor("attachment_non_empty");
+    assert.equal(attachment.translationStatus, "needs_review");
     assert.equal(attachment.event, "onBeforeSubmit");
     assert.equal(attachment.recipe.fieldId, "fd_attach");
     assert.equal(attachment.recipe.message, "Attachment is required");
 
     const detail = actionFor("detail_row_control_state");
+    assert.equal(detail.translationStatus, "mapped");
+    assert.equal(detail.coverage.status, "translated");
     assert.equal(detail.tableId, "fd_detail");
     assert.equal(detail.controlId, "fd_detail_trigger");
     assert.equal(detail.recipe.targetControlId, "fd_target_detail");
     assert.equal(detail.recipe.hiddenControlId, "fd_hidden");
-
-    const lifecycle = actionFor("detail_row_lifecycle");
-    assert.equal(lifecycle.coverage.status, "partial");
-    assert.deepEqual(lifecycle.coverage.nativeRules, ["linkage.fd_trigger.contains.restricted"]);
     assert.equal(
-      lifecycle.coverage.residuals.some((item) =>
-        item.code === "script.residual.detail_row_lifecycle_review_required"
-      ),
+      detail.functionMappings?.some((mapping) => mapping.basis === "deterministic-detail-row-control-state"),
       true
     );
-    assert.deepEqual(lifecycle.recipe.reviewRuleIds, []);
+
+    const lifecycle = actionFor("detail_row_lifecycle");
+    assert.equal(lifecycle.translationStatus, "mapped");
+    assert.equal(lifecycle.coverage.status, "translated");
+    assert.deepEqual(lifecycle.coverage.nativeRules, []);
+    assert.deepEqual(lifecycle.coverage.residuals, []);
+    assert.equal(lifecycle.recipe.reviewRuleIds == null, true);
     assert.deepEqual(lifecycle.recipe.rowLifecycle, {
       existingRows: "on_load_initialization",
       addedRows: "native_detail_control_event",
       deletedRows: "native_detail_runtime",
       legacyDomCleanup: "not_applicable_native_runtime"
     });
+    assert.equal(
+      lifecycle.functionMappings?.some((mapping) => mapping.basis === "deterministic-detail-row-lifecycle"),
+      true
+    );
 
     const actionIndexes = draft.scripts.actions
       .map((action, index) => ({ action, index }))
@@ -77,12 +84,13 @@ describe("four blocking route capabilities", () => {
     );
     assert.equal(opportunities.includes("dependent_select_options_candidate"), true);
     assert.equal(opportunities.includes("attachment_non_empty_candidate"), true);
-    assert.equal(opportunities.includes("detail_row_visibility_candidate"), true);
-    assert.equal(opportunities.includes("detail_row_load_initialization_candidate"), true);
-    const gatedRowAction = prompt.context.dslDraft.scripts.actions.find((action) =>
+    assert.equal(opportunities.includes("detail_row_visibility_candidate"), false);
+    assert.equal(opportunities.includes("detail_row_load_initialization_candidate"), false);
+    const gatedRowAction = draft.scripts.actions.find((action) =>
       action.coverage?.nativeRules?.includes("linkage.fd_trigger.contains.restricted")
     );
-    assert.deepEqual(gatedRowAction.runWhen, { viewStatusIn: ["add", "edit"] });
+    assert.equal(gatedRowAction?.translationStatus, "omitted");
+    assert.deepEqual(gatedRowAction?.runWhen, { viewStatusIn: ["add", "edit"] });
   });
 
   it("maps a minimal start/recover pair to one executable native subprocess node", () => {

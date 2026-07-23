@@ -7,6 +7,11 @@ import {
 } from "./branch-defaults.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import { isAddressField } from "../condition-org-resolver.js";
+import {
+  buildDetailColumnIndex,
+  detailTableNodeOperations,
+  physicalDetailTableName
+} from "./detail-auth.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
 import { projectSubProcessWorkflow } from "../../dsl/subprocess.js";
@@ -47,7 +52,10 @@ export function applyWorkflowPayload(template, dsl) {
   lbpm.isDraft = true;
   lbpm.fdReaders = next.fdReaders || lbpm.fdReaders || [];
   lbpm.fdEditors = next.fdEditors || lbpm.fdEditors || [];
-  const templateFormAuths = buildTemplateFormAuths(dsl.workflow);
+  const templateFormAuths = buildTemplateFormAuths(dsl.workflow, {
+    form: dsl.form,
+    mainTableName: next.mechanisms["sys-xform"]?.fdTableName || next.fdTableName || ""
+  });
   if (Object.keys(templateFormAuths).length) {
     lbpm.fdTemplateFormAuths = templateFormAuths;
   }
@@ -299,17 +307,49 @@ export function summarizeDslWorkflow(workflow = {}) {
   };
 }
 
-function buildTemplateFormAuths(workflow = {}) {
+function buildTemplateFormAuths(workflow = {}, { form, mainTableName } = {}) {
+  const columnIndex = buildDetailColumnIndex(form);
   const auths = {};
   for (const node of workflow.nodes || []) {
     if (!hasDataAuthority(node)) continue;
-    auths[node.id] = Object.fromEntries(
-      Object.entries(node.dataAuthority.fields || {}).map(([fieldId, value]) => [fieldId, {
+    const nodeAuth = {};
+    const detailTables = new Map();
+
+    for (const [fieldId, value] of Object.entries(node.dataAuthority.fields || {})) {
+      const entry = {
         isShow: Boolean(value.visible),
         isEdit: Boolean(value.editable),
         isRequire: Boolean(value.required)
-      }])
-    );
+      };
+      const detailFieldId = columnIndex.get(fieldId);
+      if (detailFieldId && mainTableName) {
+        const physicalTable = physicalDetailTableName(mainTableName, detailFieldId);
+        const dottedKey = `${physicalTable}.${fieldId}`;
+        nodeAuth[dottedKey] = entry;
+        const aggregate = detailTables.get(physicalTable) || {
+          anyVisible: false,
+          anyEditable: false
+        };
+        if (entry.isShow || entry.isEdit) aggregate.anyVisible = true;
+        if (entry.isEdit) aggregate.anyEditable = true;
+        detailTables.set(physicalTable, aggregate);
+        continue;
+      }
+      nodeAuth[fieldId] = entry;
+    }
+
+    for (const [physicalTable, aggregate] of detailTables.entries()) {
+      nodeAuth[physicalTable] = {
+        isShow: Boolean(aggregate.anyVisible || aggregate.anyEditable),
+        isEdit: Boolean(aggregate.anyEditable),
+        isRequire: false,
+        operations: JSON.stringify(detailTableNodeOperations({
+          editable: Boolean(aggregate.anyEditable)
+        }))
+      };
+    }
+
+    auths[node.id] = nodeAuth;
   }
   return auths;
 }

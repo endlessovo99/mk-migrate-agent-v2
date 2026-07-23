@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-07-17.v4",
+  "version": "2026-07-22.v5",
   "components": [
     {
       "componentId": "xform-button",
@@ -38,6 +38,31 @@
         }
       },
       "defaultPolicy": { "executorDefaults": ["placeholder"] },
+      "omitPolicy": { "omitWhenAbsent": [] }
+    },
+    {
+      "componentId": "xform-hyperlinks",
+      "kind": "field",
+      "label": "链接",
+      "description": "NewOA/MK stored hyperlink-list field.",
+      "usage": "Use for validated link-array JSON values when a route-validation fixture projects a source URL into a native link control.",
+      "negativeUsage": "Do not persist raw HTML, javascript: URLs, or arbitrary unvalidated objects as hyperlink values.",
+      "allowedScopes": ["field"],
+      "target": { "desktop": "@elem/xform-hyperlinks", "mobile": "@elem/xform-m-hyperlinks" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "largestSet": {
+            "anyOf": [
+              { "type": "integer", "enum": [1, 3, 5, 10, 20] },
+              { "type": "string", "enum": ["infinit"] }
+            ]
+          },
+          "editable": { "type": "boolean" }
+        }
+      },
+      "defaultPolicy": { "executorDefaults": ["largestSet", "editable", "defaultValueType"] },
       "omitPolicy": { "omitWhenAbsent": [] }
     },
     {

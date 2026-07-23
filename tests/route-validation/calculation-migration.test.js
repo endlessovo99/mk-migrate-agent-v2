@@ -45,6 +45,19 @@ describe("calculation migration Route case", () => {
     });
   });
 
+  it("normalizes detail-qualified expression_id arithmetic into row-local formula refs", () => {
+    const { dsl } = stages();
+    const unitFromTotal = detailColumn(dsl, "fd_lines", "fd_unit_from_total");
+
+    assert.equal(unitFromTotal.componentId, "xform-calculate");
+    assert.deepEqual(unitFromTotal.props.calculation, {
+      kind: "formula",
+      expression: "$fd_line_total$ / $fd_quantity$",
+      displayExpression: "$行金额$ / $数量$",
+      fieldIds: ["fd_line_total", "fd_quantity"]
+    });
+  });
+
   it("maps a main-table SUM over a calculated detail column", () => {
     const { dsl } = stages();
 
@@ -249,8 +262,13 @@ describe("calculation migration Route case", () => {
       "fd_lines.fd_line_total",
       "fd_detail_sum",
       "fd_clamped_sum",
-      "fd_recompute_output"
+      "fd_recompute_output",
+      "fd_lines.fd_unit_from_total"
     ]);
+    assert.deepEqual(
+      detailColumn(result.execution.readback.form, "fd_lines", "fd_unit_from_total").calculation,
+      detailColumn(result.dsl, "fd_lines", "fd_unit_from_total").props.calculation
+    );
     assert.equal(action.event, "onChange");
     assert.match(action.controlKey, /\.fd_recompute_input$/);
     assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });

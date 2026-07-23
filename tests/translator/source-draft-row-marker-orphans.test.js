@@ -186,4 +186,56 @@ describe("Source Draft script row-marker reconciliation", () => {
       dynamicDomCreationDetected: false
     });
   });
+
+  it("removes only proof-audited orphan effects from otherwise executable native rules", () => {
+    const sourceRef = "source.form.jsp.native-with-orphan";
+    const javascript = `
+      AttachXFormValueChangeEventById("fd_way", function(value) {
+        if (value == 11) {
+          common_dom_row_set_show_required_reset("invoice_row", true, true, false);
+          common_dom_row_set_show_required_reset("stale_row", true, true, false);
+        } else {
+          common_dom_row_set_show_required_reset("invoice_row", false, false, false);
+          common_dom_row_set_show_required_reset("stale_row", false, false, false);
+        }
+      });
+    `;
+    const sourceDraft = sourceDraftFromLegacyDsl({
+      source: { fdModelId: "model-native-orphan" },
+      template: { name: "native-row-marker-orphan" },
+      form: {
+        fields: [{ id: "fd_way", title: "Way", type: "text", props: {} }],
+        layout: {
+          rows: [{
+            id: "invoice-row",
+            sourceMarkers: ["invoice_row"],
+            cells: [{ id: "invoice-cell", references: [{ referenceId: "fd_way" }] }]
+          }]
+        }
+      },
+      scripts: {
+        sources: [{
+          id: "native-with-orphan",
+          sourceRef,
+          displayGate: "xform:editShow",
+          javascript,
+          semanticFacts: {
+            rowMarkers: [
+              { rowId: "invoice_row", visible: true, required: true, reset: false },
+              { rowId: "stale_row", visible: true, required: true, reset: false },
+              { rowId: "invoice_row", visible: false, required: false, reset: false },
+              { rowId: "stale_row", visible: false, required: false, reset: false }
+            ]
+          }
+        }]
+      }
+    });
+
+    assert.equal(sourceDraft.formRules.linkage.length, 1);
+    const rule = sourceDraft.formRules.linkage[0];
+    assert.deepEqual([...new Set([...rule.effects, ...rule.else].map((effect) => effect.target))], [
+      "invoice_row"
+    ]);
+    assert.deepEqual(rule.meta.auditedOrphanNoopTargets, ["stale_row"]);
+  });
 });

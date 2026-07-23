@@ -60,6 +60,7 @@ export const FIELD_TYPES = new Set([
   "attachment",
   "description",
   "button",
+  "hyperlinks",
   "detailTable"
 ]);
 
@@ -1069,6 +1070,15 @@ function validateScriptBranchProvenance(action, path, diagnostics, context) {
     action.translationStatus === "omitted" &&
     action.branchProvenance.status === "unproven"
   ) {
+    // Soft-cover / legacy-noop may omit without proven provenance when exact
+    // executable native (or legacy-runtime-noop) coverage is already attached.
+    // staticProps-only coverage is intentionally NOT enough (agent-review tests).
+    if (
+      hasCompleteExecutableNativeCoverage(action, context.formRules) ||
+      hasLegacyRuntimeNoopCoverage(action)
+    ) {
+      return;
+    }
     diagnostics.push(error(
       "dsl.scripts.condition_operand_provenance_unverified",
       "A script with unproven source branch provenance cannot be omitted; keep it needs_review until exact native or static coverage is proven.",
@@ -1081,6 +1091,7 @@ function validateScriptBranchProvenance(action, path, diagnostics, context) {
 
   const inspection = inspectMappedScriptBranchProvenance(action, action.branchProvenance);
   if (inspection.ok) return;
+  if (nativeRulesOwnAllMappedBranchConditions(action, context.formRules, inspection)) return;
   diagnostics.push(error(
     "dsl.scripts.condition_operand_provenance_unverified",
     "Mapped script branch conditions must preserve action-local operand provenance: onChange derives from its input value and onLoad derives from the original source field read.",
@@ -1091,6 +1102,30 @@ function validateScriptBranchProvenance(action, path, diagnostics, context) {
       observed: inspection.observed
     }
   ));
+}
+
+function nativeRulesOwnAllMappedBranchConditions(action, formRules, inspection) {
+  if (
+    action?.event !== "onChange" ||
+    action?.coverage?.status !== "translated" ||
+    inspection?.reason !== "target_branch_provenance_unproven" ||
+    inspection?.observed?.status !== "none" ||
+    !Array.isArray(action?.coverage?.residuals) ||
+    action.coverage.residuals.length !== 0
+  ) return false;
+  const nativeRules = new Set(
+    (Array.isArray(action?.coverage?.nativeRules) ? action.coverage.nativeRules : [])
+      .filter(nonEmptyString)
+  );
+  const eligible = nativeRuleIdsForAction(action, formRules);
+  if (
+    nativeRules.size === 0 ||
+    nativeRules.size !== eligible.size ||
+    [...eligible].some((ruleId) => !nativeRules.has(ruleId))
+  ) return false;
+  const analysis = analyzeScriptFunction(action.function);
+  if (analysis.calls.some((call) => call.name === "MKXFORM.setFieldAttr")) return false;
+  return true;
 }
 
 function validateOmittedNativeRuleCoverage(action, path, diagnostics, context) {

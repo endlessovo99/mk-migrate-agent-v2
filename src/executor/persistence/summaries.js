@@ -135,6 +135,7 @@ export function buildWorkflowSummary(observedWorkflow) {
         ? { decisionType: node.manualBranch.decisionType }
         : {}),
       ...(node.help !== undefined ? { help: node.help } : {}),
+      ...(node.dataAuthority !== undefined ? { dataAuthority: node.dataAuthority } : {}),
       ignoreOnSameIdentity: node.ignoreOnSameIdentity,
       ...(summarizeWorkflowParticipants(node.participants)
         ? { participants: summarizeWorkflowParticipants(node.participants) }

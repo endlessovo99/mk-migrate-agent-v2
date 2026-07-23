@@ -361,6 +361,13 @@ describe("translateSysFormTemplateXml", () => {
       { viewStatusIn: ["add", "edit"] }
     ]);
     assert.equal(detailActions[0].recipe.kind, "detail_row_control_state");
+    assert.equal(detailActions[0].translationStatus, "mapped");
+    assert.equal(
+      detailActions[0].functionMappings?.some((mapping) =>
+        mapping.basis === "deterministic-detail-row-control-state"
+      ),
+      true
+    );
   });
 
   it("preserves edit, view, and ungated JSP display contexts on drafted actions", () => {

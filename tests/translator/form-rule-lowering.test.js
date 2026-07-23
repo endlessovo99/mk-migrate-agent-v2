@@ -479,6 +479,47 @@ describe("legacy JSP native form-rule lowering", () => {
     );
   });
 
+  it("keeps dimensions that are constant across every else-if branch in the native projection", () => {
+    const analysis = analyzeLegacyScriptFormRules({
+      sourceRef: "source.form.jsp.constant-dimension",
+      displayGate: "xform:editShow",
+      javascript: `
+        AttachXFormValueChangeEventById("fd_way", function(value) {
+          if (value == 11) {
+            common_dom_row_set_show_required_reset("file_row", false, false, false);
+            common_dom_row_set_show_required_reset("invoice_row", true, true, false);
+          } else if (value == 22) {
+            common_dom_row_set_show_required_reset("file_row", true, false, false);
+            common_dom_row_set_show_required_reset("invoice_row", false, false, false);
+          } else {
+            common_dom_row_set_show_required_reset("file_row", false, false, false);
+            common_dom_row_set_show_required_reset("invoice_row", false, false, false);
+          }
+        });
+      `
+    });
+
+    assert.equal(analysis.linkage.length, 2);
+    const effects = analysis.linkage.flatMap((rule) => rule.effects);
+    const otherwise = analysis.linkage.flatMap((rule) => rule.else);
+    assert.equal(
+      effects.some((effect) => (
+        effect.type === "required" && effect.target === "file_row" && effect.value === false
+      )),
+      true
+    );
+    assert.equal(
+      otherwise.some((effect) => (
+        effect.type === "required" && effect.target === "file_row" && effect.value === false
+      )),
+      true
+    );
+    assert.equal(
+      analysis.residuals.some((item) => item.code === "script.residual.form_rule_chain_untranslated"),
+      false
+    );
+  });
+
   it("keeps unsupported row-effect chains as explicit residual coverage", () => {
     const legacySource = {
       id: "mixed-branches",

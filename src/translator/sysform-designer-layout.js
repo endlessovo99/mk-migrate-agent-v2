@@ -739,11 +739,57 @@ function foldInlineCaptions(html, entries) {
       continue;
     }
 
+    // Visible plain textLabel + unbound input subject: UI title is the caption;
+    // designer/metadata label is only the field subject, not a second title.
+    if (
+      isPlainInlineCaption(current.control) &&
+      !isSourceDescriptionControl(next.control) &&
+      !separatedByBreak &&
+      isUnboundSubjectField(next.control) &&
+      !isSafeInlineUnit(current.control.title)
+    ) {
+      folded.push(mergeControlEntries(
+        current,
+        next,
+        withUnboundSubjectCaption(next.control, current.control)
+      ));
+      index += 2;
+      continue;
+    }
+
     folded.push(current);
     index += 1;
   }
 
   return folded;
+}
+
+function isUnboundSubjectField(control) {
+  return String(control?.source?.designerValues?._label_bind || "").toLowerCase() === "false";
+}
+
+function withUnboundSubjectCaption(control, caption) {
+  const subject = cleanText(control.source?.designerValues?.label || control.title);
+  const displayTitle = inlineCaptionText(caption.title);
+  const folded = withInlineCaption(
+    control,
+    caption,
+    displayTitle,
+    "leading-unbound-subject-caption"
+  );
+  if (!subject || normalizeSemanticText(subject) === normalizeSemanticText(displayTitle)) {
+    return folded;
+  }
+  return {
+    ...folded,
+    source: {
+      ...folded.source,
+      subjectLabel: {
+        content: subject,
+        relation: "unbound-control-subject-distinct-from-visible-caption"
+      }
+    }
+  };
 }
 
 function foldInlineHints(html, entries, metadataContext) {

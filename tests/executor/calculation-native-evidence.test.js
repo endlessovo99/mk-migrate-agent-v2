@@ -50,9 +50,27 @@ describe("independent native calculation evidence", () => {
 
     assert.deepEqual(native.order, evidence.calculationOrder);
     assertFormula(native.byRef.get(evidence.mainFormula.targetField), evidence.mainFormula);
-    assertFormula(
-      native.byRef.get(`${evidence.detailFormula.tableId}.${evidence.detailFormula.targetField}`),
-      evidence.detailFormula
+    const detailFormula = native.byRef.get(
+      `${evidence.detailFormula.tableId}.${evidence.detailFormula.targetField}`
+    );
+    assertFormula(detailFormula, {
+      ...evidence.detailFormula,
+      script: evidence.detailFormula.script
+        .replace(/\$\{data\.biz\.([A-Za-z_][\w]*)\}/gu, (_, fieldId) =>
+          `\${data.biz.${native.detailTableName}.${fieldId}}`
+        ),
+      fieldIds: evidence.detailFormula.fieldIds.map(
+        (fieldId) => `${native.detailTableName}.${fieldId}`
+      )
+    });
+    assert.deepEqual(detailFormula.item.value.resultType, { type: "number" });
+    assert.deepEqual(
+      JSON.parse(native.detailField.fdAttribute).config.controlProps.expressionFormulaVO,
+      detailFormula.item.value
+    );
+    assert.equal(
+      native.config.sign.formula[`${evidence.detailFormula.targetField}.expressionFormulaVO`],
+      detailFormula.item.value.script
     );
 
     const aggregate = native.byRef.get(evidence.aggregate.targetField);
@@ -340,4 +358,7 @@ function assertFormula(actual, expected) {
   assert.equal(actual.item.value.script, expected.script);
   assert.equal(actual.item.value.vo.content, expected.display);
   assert.deepEqual(actual.item.value.varIds, expected.fieldIds);
+  if (expected.resultType) {
+    assert.deepEqual(actual.item.value.resultType, expected.resultType);
+  }
 }

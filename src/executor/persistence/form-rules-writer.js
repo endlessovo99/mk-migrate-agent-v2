@@ -33,7 +33,7 @@ const INVERT_OPERATOR_MAP = {
   notEmpty: "empty"
 };
 
-export function buildNativeFormRuleConfig(formRules, form, dataModels, scripts) {
+export function buildNativeFormRuleConfig(formRules, form, dataModels, scripts, options = {}) {
   const sourceLinkage = Array.isArray(formRules?.linkage) ? formRules.linkage : [];
   const gatedProjectionIssues = sourceLinkage
     .filter((rule) => rule?.translationStatus === "executable" && rule.meta?.runWhen !== undefined)
@@ -61,7 +61,9 @@ export function buildNativeFormRuleConfig(formRules, form, dataModels, scripts) 
   const nativeIndex = buildNativeFieldIndex(dataModels);
   const display = [];
   const require = [];
-  const compute = buildNativeComputeRules(form, nativeIndex);
+  const compute = buildNativeComputeRules(form, nativeIndex, {
+    templateName: options.templateName
+  });
 
   linkage.forEach((rule, ruleIndex) => {
     const ruleId = rule.id || `linkage-${ruleIndex + 1}`;
@@ -117,13 +119,16 @@ export function summarizeNativeFormRuleConfig(formRule = {}) {
   };
 }
 
-function buildNativeComputeRules(form = {}, nativeIndex) {
+function buildNativeComputeRules(form = {}, nativeIndex, options = {}) {
   const calculations = [];
   for (const entry of calculationFields(form)) {
     const { field, tableId, ref } = entry;
     const target = nativeIndex.byRef.get(ref);
     if (!target) continue;
-    const item = buildNativeComputeItem(field, target, nativeIndex);
+    const item = buildNativeComputeItem(field, target, nativeIndex, {
+      templateName: options.templateName,
+      tableId
+    });
     if (!item) continue;
     calculations.push({
       id: stableId("compute-rule", ref),
@@ -189,7 +194,7 @@ function nativeCalculationDependencies(entry, knownRefs) {
     .filter((ref) => knownRefs.has(ref));
 }
 
-function buildNativeComputeItem(field, target, nativeIndex) {
+function buildNativeComputeItem(field, target, nativeIndex, options = {}) {
   const calculation = field.props.calculation;
   const base = {
     autoCompute: "",
@@ -203,18 +208,28 @@ function buildNativeComputeItem(field, target, nativeIndex) {
     const expression = String(calculation.expression || "").trim();
     if (!expression) return undefined;
     const fieldIds = Array.isArray(calculation.fieldIds) ? calculation.fieldIds : [];
+    const formulaOptions = {
+      templateName: options.templateName,
+      tableId: options.tableId,
+      nativeIndex
+    };
+    const nativeFieldIds = fieldIds.map((fieldId) => nativeFormulaFieldRef(fieldId, formulaOptions));
     return {
       ...base,
       type: "FORMULA",
       statisticField: "",
       value: {
         type: "Eval",
-        script: expression.replace(/\$([A-Za-z_][\w]*)\$/gu, (_, fieldId) => `\${data.biz.${fieldId}}`),
+        script: expression.replace(
+          /\$([A-Za-z_][\w]*)\$/gu,
+          (_, fieldId) => `\${data.biz.${nativeFormulaFieldRef(fieldId, formulaOptions)}}`
+        ),
         vo: {
           mode: "formula",
-          content: calculation.displayExpression || expression
+          content: nativeFormulaDisplayContent(expression, formulaOptions)
         },
-        varIds: fieldIds
+        resultType: { type: "number" },
+        varIds: nativeFieldIds
       }
     };
   }
@@ -231,6 +246,81 @@ function buildNativeComputeItem(field, target, nativeIndex) {
   }
 
   return undefined;
+}
+
+function nativeFormulaFieldRef(fieldId, options = {}) {
+  const tableId = options.tableId;
+  const nativeIndex = options.nativeIndex;
+  if (!nativeIndex?.byRef) return fieldId;
+  const ref = tableId
+    ? (nativeIndex.byRef.get(`${tableId}.${fieldId}`) || nativeIndex.byRef.get(fieldId))
+    : nativeIndex.byRef.get(fieldId);
+  if (ref?.tableType === "detail" && ref.tableName) {
+    return `${ref.tableName}.${fieldId}`;
+  }
+  return fieldId;
+}
+
+function nativeFormulaDisplayContent(expression, options = {}) {
+  const templateName = String(options.templateName || "").trim() || "表单";
+  const tableId = options.tableId;
+  const nativeIndex = options.nativeIndex || { byRef: new Map(), byDetailTable: new Map() };
+  const tableTitle = tableId
+    ? (
+      nativeIndex.byDetailTable?.get(tableId)?.label ||
+      nativeIndex.byRef.get(tableId)?.label ||
+      tableId
+    )
+    : undefined;
+
+  return String(expression || "").replace(/\$([A-Za-z_][\w]*)\$/gu, (_, fieldId) => {
+    const ref = tableId
+      ? (nativeIndex.byRef.get(`${tableId}.${fieldId}`) || nativeIndex.byRef.get(fieldId))
+      : nativeIndex.byRef.get(fieldId);
+    const fieldTitle = String(ref?.label || fieldId).trim() || fieldId;
+    if (tableTitle) return `$${templateName}.${tableTitle}.${fieldTitle}$`;
+    return `$${templateName}.${fieldTitle}$`;
+  });
+}
+
+/**
+ * Copy FORMULA Eval payloads onto calculate controls' expressionFormulaVO
+ * and config.sign.formula["{field}.expressionFormulaVO"] (native UI contract).
+ */
+export function applyExpressionFormulaVoToModels({ dataModels = [], computeRules = [], config = {} } = {}) {
+  const sign = config.sign && typeof config.sign === "object" ? config.sign : {};
+  const formulaSign = sign.formula && typeof sign.formula === "object" ? { ...sign.formula } : {};
+  const fieldsByName = new Map();
+  for (const model of dataModels) {
+    for (const field of model?.fdFields || []) {
+      if (field?.fdName) fieldsByName.set(field.fdName, field);
+    }
+  }
+
+  for (const rule of computeRules) {
+    for (const item of Array.isArray(rule?.choices?.items) ? rule.choices.items : []) {
+      if (item?.type !== "FORMULA" || !item.value || typeof item.value !== "object") continue;
+      const fieldName = String(item.fieldName || "").trim();
+      if (!fieldName) continue;
+      const field = fieldsByName.get(fieldName);
+      if (field) {
+        const attribute = parseJsonObject(field.fdAttribute);
+        const controlProps = attribute.config?.controlProps || {};
+        controlProps.expressionFormulaVO = item.value;
+        attribute.config = {
+          ...(attribute.config || {}),
+          controlProps
+        };
+        field.fdAttribute = JSON.stringify(attribute);
+      }
+      if (typeof item.value.script === "string" && item.value.script.trim()) {
+        formulaSign[`${fieldName}.expressionFormulaVO`] = item.value.script;
+      }
+    }
+  }
+
+  config.sign = { ...sign, formula: formulaSign };
+  return config;
 }
 
 function buildBranch(rule, ruleId, branch, conditionItems, effects, formIndex, nativeIndex) {

@@ -25,7 +25,10 @@ import { projectSubProcessWorkflow, subProcessContract } from "../../dsl/subproc
 import { persistedFieldLabel } from "./field-labels.js";
 import { isAddressField } from "../condition-org-resolver.js";
 import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
-import { SCRIPT_SINGLETON_GLOBAL_EVENTS } from "../../dsl/scripts.js";
+import {
+  SCRIPT_SINGLETON_GLOBAL_EVENTS,
+  compileSetFieldAttrRowMarkerTargets
+} from "../../dsl/scripts.js";
 import { singletonDispatcherContract } from "./script-dispatcher-contract.js";
 import { normalizeRuleConditionText } from "./condition-rule.js";
 
@@ -144,7 +147,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
         type: "detailTable",
         component: field.componentId,
         dataOnly: false,
-        props: executableProps(field),
+        props: executableProps(field, form),
         columns: (Array.isArray(field.columns) ? field.columns : []).map((column, columnIndex) => {
           if (!nonEmptyString(column?.id)) {
             diagnostics.push(projectionError(
@@ -159,7 +162,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
             title: normalizeScalar(persistedFieldLabel(column)),
             type: column.type,
             component: column.componentId,
-            props: executableProps(column)
+            props: executableProps(column, form)
           };
         }).filter(Boolean)
       };
@@ -170,7 +173,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
       type: field.type,
       component: field.componentId,
       dataOnly: field.dataOnly === true,
-      props: executableProps(field),
+      props: executableProps(field, form),
       columns: []
     };
   }).filter(Boolean);
@@ -282,7 +285,7 @@ function expectedCalculationDependencies(entry, knownRefs) {
     .filter((ref) => knownRefs.has(ref));
 }
 
-function executableProps(field = {}) {
+function executableProps(field = {}, form = {}) {
   const props = {};
   if (field.props?.required === true) props.required = true;
   if (componentSupportsProp(field.componentId, "placeholder") && typeof field.props?.placeholder === "string") {
@@ -298,6 +301,10 @@ function executableProps(field = {}) {
     }));
   }
   if (field.componentId === "xform-select~multi") props.multi = true;
+  if (field.componentId === "xform-hyperlinks") {
+    props.largestSet = field.props?.largestSet ?? 1;
+    props.editable = field.props?.editable ?? false;
+  }
   if (componentSupportsProp(field.componentId, "precision") && Number.isInteger(field.props?.precision)) {
     props.precision = field.props.precision;
   }
@@ -305,7 +312,7 @@ function executableProps(field = {}) {
     props.defaultValue = cloneJson(field.props.defaultValue);
   }
   if (componentSupportsProp(field.componentId, "calculation") && field.props?.calculation !== undefined) {
-    props.calculation = cloneJson(field.props.calculation);
+    props.calculation = expectedCalculation(field.props.calculation, form);
   }
   if (field.props?.content !== undefined) props.content = normalizeScalar(field.props.content);
   if (field.props?.maxLength !== undefined) props.maxLength = field.props.maxLength;
@@ -316,6 +323,32 @@ function executableProps(field = {}) {
   const catalog = COMPONENTS_BY_ID.get(field.componentId);
   if (catalog?.componentId) props.componentId = catalog.componentId;
   return props;
+}
+
+function expectedCalculation(calculation, form = {}) {
+  const next = cloneJson(calculation);
+  if (next?.kind !== "formula") return next;
+  const display = String(next.displayExpression || "").trim();
+  if (!display) return next;
+  const titles = formulaDisplayTitleIndex(form);
+  next.displayExpression = display.replace(/\$([A-Za-z_][\w]*)\$/gu, (_, fieldId) => (
+    `$${titles.get(fieldId) || fieldId}$`
+  ));
+  return next;
+}
+
+function formulaDisplayTitleIndex(form = {}) {
+  const titles = new Map();
+  for (const field of form.fields || []) {
+    if (field?.type === "detailTable") {
+      for (const column of field.columns || []) {
+        if (column?.id) titles.set(column.id, normalizeScalar(persistedFieldLabel(column)) || column.id);
+      }
+      continue;
+    }
+    if (field?.id) titles.set(field.id, normalizeScalar(persistedFieldLabel(field)) || field.id);
+  }
+  return titles;
 }
 
 function cloneJson(value) {
@@ -436,7 +469,9 @@ function pushRuleSemantics(rules, {
         value: normalizeRuleValue(clause.value)
       }));
   const nativeLogic = nativeFormula ? "and" : logic;
-  if (displayEffects.length) {
+  const uniqueDisplayEffects = uniqueRuleEffects(displayEffects);
+  const uniqueRequireEffects = uniqueRuleEffects(requireEffects);
+  if (uniqueDisplayEffects.length) {
     rules.push({
       kind: "display",
       ruleId,
@@ -444,10 +479,10 @@ function pushRuleSemantics(rules, {
       active,
       logic: nativeLogic,
       conditions,
-      effects: displayEffects
+      effects: uniqueDisplayEffects
     });
   }
-  if (requireEffects.length) {
+  if (uniqueRequireEffects.length) {
     rules.push({
       kind: "require",
       ruleId,
@@ -455,9 +490,19 @@ function pushRuleSemantics(rules, {
       active,
       logic: nativeLogic,
       conditions,
-      effects: requireEffects
+      effects: uniqueRequireEffects
     });
   }
+}
+
+function uniqueRuleEffects(effects) {
+  const seen = new Set();
+  return effects.filter((effect) => {
+    const key = stableStringify(effect);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function resolveEffectFieldNames(formIndex, ref, diagnostics, ruleId) {
@@ -540,7 +585,7 @@ function buildExpectedScripts(scripts = {}, form = {}, mainTableName, diagnostic
       continue;
     }
     const event = action.event || action.name;
-    const renderedBody = renderExpectedScriptBody(action.function, detailTableNames);
+    const renderedBody = renderExpectedScriptBody(action.function, detailTableNames, form);
     const scope = action.scope || "global";
     const controlId = action.tableId && action.controlId === action.tableId
       ? detailTableNames[action.tableId]
@@ -584,8 +629,9 @@ function expectedSingletonDispatchers(scriptActions = []) {
   return [...grouped.entries()].map(([event, actions]) => singletonDispatcherContract(event, actions));
 }
 
-function renderExpectedScriptBody(source, detailTableNames = {}) {
-  return String(source || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
+function renderExpectedScriptBody(source, detailTableNames = {}, form = {}) {
+  const compiled = compileSetFieldAttrRowMarkerTargets(source, form);
+  return String(compiled || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
     const sourceTableId = String(tableId || "").trim();
     return detailTableNames[sourceTableId] || sourceTableId;
   });

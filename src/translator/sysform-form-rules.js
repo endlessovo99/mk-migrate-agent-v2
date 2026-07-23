@@ -105,7 +105,10 @@ export function analyzeLegacyScriptFormRules(source) {
             callback.sourceActionKey,
             rowEffectContext
           );
-      if (conditionSourceUnproven) {
+      if (
+        conditionSourceUnproven &&
+        !isScaffoldingOnlyConditionalChain(chain, resolveOperand)
+      ) {
         untranslatedRowEffects.push(residual({
           code: "script.residual.form_rule_condition_source_unproven",
           type: "formRuleConditionSourceUnproven",
@@ -311,6 +314,18 @@ function lowerConditionalChain(
         value: baseline.get(effectKey(effect))
       }))
     });
+  }
+  // A dimension can be explicitly written to the same value in every branch
+  // (for example file_row.required=false). It still belongs to the source
+  // behavior, but it does not produce a delta against the final else
+  // baseline. Attach each such constant dimension to the first mutually
+  // exclusive rule with the same value in both branches so the native rules
+  // preserve it without introducing another independent writer.
+  const constantEffects = elseEffects.filter((effect) => !changedKeys.has(effectKey(effect)));
+  if (branchDeltas.length && constantEffects.length) {
+    branchDeltas[0].effects.push(...constantEffects);
+    branchDeltas[0].elseEffects.push(...constantEffects);
+    for (const effect of constantEffects) changedKeys.add(effectKey(effect));
   }
   if (changedKeys.size !== baseline.size) return [];
 
@@ -694,18 +709,254 @@ function collectUncoveredNativeBranchStatements(statement, body, resolveOperand,
 
 function isCoveredCallbackStatement(statement, body, resolveOperand) {
   if (!statement || statement.type === "EmptyStatement" || statement.directive) return true;
-  if (statement.type !== "VariableDeclaration") return false;
-  const source = body.slice(statement.start, statement.end);
-  if (isProvablyInertVariableDeclaration(source)) return true;
-  return statement.declarations.every((declaration) => {
+  if (statement.type === "BreakStatement" || statement.type === "ContinueStatement") return true;
+  if (statement.type === "ExpressionStatement") {
+    return isScaffoldingExpressionStatement(statement.expression);
+  }
+  if (statement.type === "VariableDeclaration") {
+    const source = body.slice(statement.start, statement.end);
+    if (isProvablyInertVariableDeclaration(source)) return true;
+    if (isScaffoldingVariableDeclaration(statement)) return true;
+    return statement.declarations.every((declaration) => {
+      if (declaration.id?.type !== "Identifier") return false;
+      if (!declaration.init) return true;
+      const trace = resolveOperand.trace(
+        body.slice(declaration.init.start, declaration.init.end),
+        { beforeIndex: declaration.init.start }
+      );
+      return trace?.origin === "event:value";
+    });
+  }
+  if (statement.type === "ForStatement" || statement.type === "WhileStatement") {
+    return isScaffoldingLoopStatement(statement, body, resolveOperand);
+  }
+  if (statement.type === "IfStatement") {
+    return isScaffoldingOnlyIfStatement(statement, body, resolveOperand);
+  }
+  return false;
+}
+
+function isScaffoldingOnlyConditionalChain(chain, resolveOperand) {
+  const bodies = [
+    ...(Array.isArray(chain?.branches) ? chain.branches.map((branch) => branch.body) : []),
+    ...(chain?.elseBody ? [chain.elseBody] : [])
+  ].filter((body) => String(body || "").trim());
+  if (!bodies.length) return false;
+  return bodies.every((bodyText) => isScaffoldingOnlyBodyText(bodyText, resolveOperand));
+}
+
+function isScaffoldingOnlyBodyText(bodyText, resolveOperand) {
+  let ast;
+  try {
+    ast = parse(String(bodyText || ""), {
+      ecmaVersion: "latest",
+      sourceType: "script",
+      allowAwaitOutsideFunction: true,
+      allowReturnOutsideFunction: true
+    });
+  } catch {
+    return false;
+  }
+  const statements = ast.body.filter((statement) => statement.type !== "EmptyStatement");
+  if (!statements.length) return false;
+  return statements.every((statement) => {
+    if (isNativeRowEffectStatement(statement, resolveOperand)) return false;
+    return isCoveredCallbackStatement(statement, bodyText, resolveOperand);
+  });
+}
+
+function isScaffoldingOnlyIfStatement(statement, body, resolveOperand) {
+  if (isNativeRowEffectStatement(statement.consequent, resolveOperand)) return false;
+  if (!isScaffoldingBranchBody(statement.consequent, body, resolveOperand)) return false;
+  let alternate = statement.alternate;
+  while (alternate?.type === "IfStatement") {
+    if (!isScaffoldingBranchBody(alternate.consequent, body, resolveOperand)) return false;
+    alternate = alternate.alternate;
+  }
+  if (alternate && !isScaffoldingBranchBody(alternate, body, resolveOperand)) return false;
+  return true;
+}
+
+function isScaffoldingBranchBody(statement, body, resolveOperand) {
+  const statements = statement?.type === "BlockStatement"
+    ? statement.body
+    : [statement];
+  const filtered = statements.filter(Boolean).filter((child) => child.type !== "EmptyStatement");
+  if (!filtered.length) return false;
+  return filtered.every((child) => {
+    if (isNativeRowEffectStatement(child, resolveOperand)) return false;
+    return isCoveredCallbackStatement(child, body, resolveOperand);
+  });
+}
+
+function isScaffoldingLoopStatement(statement, body, resolveOperand) {
+  const loopBody = statement.body;
+  const statements = loopBody?.type === "BlockStatement" ? loopBody.body : [loopBody];
+  const filtered = (statements || []).filter(Boolean).filter((child) => child.type !== "EmptyStatement");
+  if (!filtered.length) return false;
+  return filtered.every((child) => {
+    if (isNativeRowEffectStatement(child, resolveOperand)) return false;
+    return isCoveredCallbackStatement(child, body, resolveOperand);
+  });
+}
+
+function isScaffoldingExpressionStatement(expression) {
+  if (!expression) return false;
+  if (isTableValidateCall(expression)) return true;
+  if (
+    expression.type === "AssignmentExpression" &&
+    isGetXFormFieldByIdCall(expression.right)
+  ) return true;
+  if (isLocalValueCaptureAssignment(expression)) return true;
+  if (isDetailFieldStyleDisplayAssignment(expression)) return true;
+  if (isOnclickSetAttributeCall(expression)) return true;
+  if (isDetailFieldPlaceholderSetAttributeCall(expression)) return true;
+  return false;
+}
+
+function isLocalValueCaptureAssignment(expression) {
+  if (
+    expression?.type !== "AssignmentExpression" ||
+    expression.operator !== "=" ||
+    expression.left?.type !== "Identifier"
+  ) return false;
+  const right = expression.right;
+  if (right?.type !== "MemberExpression") return false;
+  const name = propertyName(right.property);
+  return name === "value" || name === "checked";
+}
+
+function isScaffoldingVariableDeclaration(statement) {
+  return (statement.declarations || []).every((declaration) => {
     if (declaration.id?.type !== "Identifier") return false;
     if (!declaration.init) return true;
-    const trace = resolveOperand.trace(
-      body.slice(declaration.init.start, declaration.init.end),
-      { beforeIndex: declaration.init.start }
-    );
-    return trace?.origin === "event:value";
+    if (isNullLiteral(declaration.init)) return true;
+    if (isGetXFormFieldByIdCall(declaration.init)) return true;
+    if (isDetailTableDomLookup(declaration.init)) return true;
+    if (isImgCollectionLookup(declaration.init)) return true;
+    if (isDetailFieldNameLookup(declaration.init)) return true;
+    return false;
   });
+}
+
+function isTableValidateCall(expression) {
+  return expression?.type === "CallExpression" &&
+    expression.callee?.type === "Identifier" &&
+    /^set\w*(Table)?(No)?Validate$/i.test(expression.callee.name) &&
+    (expression.arguments || []).length === 0;
+}
+
+function isGetXFormFieldByIdCall(expression) {
+  return expression?.type === "CallExpression" &&
+    expression.callee?.type === "Identifier" &&
+    expression.callee.name === "GetXFormFieldById" &&
+    (expression.arguments || []).length >= 1;
+}
+
+function isDetailTableDomLookup(expression) {
+  return expression?.type === "CallExpression" &&
+    expression.callee?.type === "MemberExpression" &&
+    expression.callee.object?.type === "Identifier" &&
+    expression.callee.object.name === "document" &&
+    propertyName(expression.callee.property) === "getElementById" &&
+    expression.arguments?.[0]?.type === "Literal" &&
+    /^TABLE_DL_/i.test(String(expression.arguments[0].value || ""));
+}
+
+function isImgCollectionLookup(expression) {
+  return expression?.type === "CallExpression" &&
+    expression.callee?.type === "MemberExpression" &&
+    expression.callee.object?.type === "Identifier" &&
+    expression.callee.object.name === "document" &&
+    propertyName(expression.callee.property) === "getElementsByTagName" &&
+    expression.arguments?.[0]?.type === "Literal" &&
+    String(expression.arguments[0].value || "").toLowerCase() === "img";
+}
+
+function isDetailFieldNameLookup(expression) {
+  if (
+    expression?.type === "MemberExpression" &&
+    expression.computed &&
+    isDetailFieldNameLookup(expression.object)
+  ) return true;
+  return expression?.type === "CallExpression" &&
+    expression.callee?.type === "MemberExpression" &&
+    expression.callee.object?.type === "Identifier" &&
+    expression.callee.object.name === "document" &&
+    propertyName(expression.callee.property) === "getElementsByName" &&
+    expressionContainsDetailFieldName(expression.arguments?.[0]);
+}
+
+function expressionContainsDetailFieldName(expression) {
+  if (!expression) return false;
+  if (expression.type === "Literal") {
+    return /extendDataFormInfo\.value\(/.test(String(expression.value || ""));
+  }
+  if (expression.type === "BinaryExpression" && expression.operator === "+") {
+    return expressionContainsDetailFieldName(expression.left) ||
+      expressionContainsDetailFieldName(expression.right);
+  }
+  if (expression.type === "TemplateLiteral") {
+    return (expression.quasis || []).some((quasi) =>
+      /extendDataFormInfo\.value\(/.test(String(quasi.value?.cooked || quasi.value?.raw || ""))
+    );
+  }
+  return false;
+}
+
+function isDetailFieldElementAccess(expression) {
+  return expression?.type === "MemberExpression" &&
+    expression.computed &&
+    isDetailFieldNameLookup(expression.object);
+}
+
+function isDetailFieldStyleDisplayAssignment(expression) {
+  if (expression?.type !== "AssignmentExpression" || expression.operator !== "=") return false;
+  const left = expression.left;
+  if (
+    left?.type !== "MemberExpression" ||
+    propertyName(left.property) !== "display"
+  ) return false;
+  const styleObject = left.object;
+  if (
+    styleObject?.type !== "MemberExpression" ||
+    propertyName(styleObject.property) !== "style"
+  ) return false;
+  return isDetailFieldElementAccess(styleObject.object);
+}
+
+function isOnclickSetAttributeCall(expression) {
+  if (
+    expression?.type !== "CallExpression" ||
+    expression.callee?.type !== "MemberExpression" ||
+    propertyName(expression.callee.property) !== "setAttribute"
+  ) return false;
+  const attr = expression.arguments?.[0];
+  return attr?.type === "Literal" && String(attr.value || "").toLowerCase() === "onclick";
+}
+
+function isDetailFieldPlaceholderSetAttributeCall(expression) {
+  if (
+    expression?.type !== "CallExpression" ||
+    expression.callee?.type !== "MemberExpression" ||
+    propertyName(expression.callee.property) !== "setAttribute"
+  ) return false;
+  const attr = expression.arguments?.[0];
+  if (attr?.type !== "Literal" || String(attr.value || "").toLowerCase() !== "placeholder") {
+    return false;
+  }
+  return isDetailFieldElementAccess(expression.callee.object);
+}
+
+function isNullLiteral(expression) {
+  return expression?.type === "Literal" && expression.value === null;
+}
+
+function propertyName(node) {
+  if (!node) return "";
+  if (node.type === "Identifier") return node.name;
+  if (node.type === "Literal") return String(node.value || "");
+  return "";
 }
 
 function isNativeRowEffectStatement(statement, resolveOperand) {

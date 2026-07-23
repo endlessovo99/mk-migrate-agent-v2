@@ -771,6 +771,30 @@ describe("form layout projection", () => {
     );
   });
 
+  it("nests detail-table field auth and row operations under fdConfig.auth", () => {
+    const detailTable = "mk_model_test_d_a47d94a5";
+    const prepared = prepareSample(sampleTrustedDsl({ workflow: null }));
+    assert.equal(prepared.ok, true);
+    const config = xformConfig(prepared.update);
+    const auth = config.auth[0];
+
+    assert.ok(auth.add[detailTable]);
+    assert.ok(auth.add[detailTable].fields.fd_name);
+    assert.equal(auth.add[detailTable].fields.fd_name.visible, true);
+    assert.equal(auth.add[detailTable].fields.fd_name.editable, true);
+    assert.deepEqual(
+      auth.add[detailTable].operations.map((operation) => operation.id),
+      ["canAddRow", "canDeleteRow", "canImport"]
+    );
+    assert.deepEqual(
+      auth.view[detailTable].operations.map((operation) => operation.id),
+      ["canExport"]
+    );
+    assert.ok(auth.add.mk_model_test.fields[detailTable]);
+    assert.equal(auth.add.mk_model_test.fields[detailTable].editable, true);
+    assert.ok(auth.add.mk_model_test.fields.fd_name);
+  });
+
   it("fails readback when the empty subjectRule is replaced", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl({ workflow: null }), {
       mutate(template) {
@@ -863,6 +887,26 @@ describe("form rules mutations", () => {
     };
     return dsl;
   }
+
+  it("verifies equivalent row markers that resolve to the same native targets", () => {
+    const dsl = dslWithRules();
+    dsl.form.layout.mkTree[1].sourceMarkers.push("fd_detail_row_alias");
+    dsl.formRules.linkage[0].effects.push(
+      { type: "visible", target: "fd_detail_row_alias", value: true },
+      { type: "required", target: "fd_detail_row_alias", value: true }
+    );
+    dsl.formRules.linkage[0].else.push(
+      { type: "visible", target: "fd_detail_row_alias", value: false },
+      { type: "required", target: "fd_detail_row_alias", value: false }
+    );
+
+    const { template, readback } = persistAndVerify(dsl);
+    const rules = formAttr(template).formRule;
+
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.equal(rules.display.every((rule) => rule.result.length === 1), true);
+    assert.equal(rules.require.every((rule) => rule.result.length === 1), true);
+  });
 
   it("refuses to project a gated linkage without a statically proven native projection", () => {
     const dsl = dslWithRules();

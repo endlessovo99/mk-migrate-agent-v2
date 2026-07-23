@@ -1,4 +1,6 @@
+import { parse } from "acorn";
 import { CONTROL_EVENTS_BY_COMPONENT, CONTROL_EVENTS_CATALOG, JS_METHOD_CATALOG } from "./catalogs.js";
+import { resolveRowMarkerControlIds } from "./form-rules.js";
 import {
   isExecutableTargetApi,
   resolveTargetApiCall,
@@ -437,6 +439,82 @@ export function validateSetFieldAttrTargets(functionText = "", form = {}) {
   }
 
   return issues;
+}
+
+/**
+ * Compile DSL-level row-marker setFieldAttr calls into concrete NewOA control
+ * calls. A marker can cover multiple ordinary fields or a detail-table
+ * container, so one source call may expand into a comma expression containing
+ * several target calls while preserving the original attribute expression.
+ */
+export function compileSetFieldAttrRowMarkerTargets(functionText = "", form = {}) {
+  const source = String(functionText || "");
+  let ast;
+  try {
+    ast = parse(source, {
+      ecmaVersion: "latest",
+      sourceType: "script",
+      allowAwaitOutsideFunction: true,
+      allowReturnOutsideFunction: true
+    });
+  } catch {
+    return source;
+  }
+
+  const replacements = [];
+  walkJavaScriptAst(ast, (node) => {
+    if (
+      node?.type !== "CallExpression" ||
+      node.callee?.type !== "MemberExpression" ||
+      node.callee.computed ||
+      node.callee.object?.type !== "Identifier" ||
+      node.callee.object.name !== "MKXFORM" ||
+      node.callee.property?.name !== "setFieldAttr" ||
+      node.arguments?.length !== 2
+    ) return;
+    const target = staticAcornString(node.arguments[0]);
+    if (!target) return;
+    const controlIds = resolveRowMarkerControlIds(form, target);
+    if (!controlIds.length) return;
+    const attribute = source.slice(node.arguments[1].start, node.arguments[1].end);
+    const calls = controlIds.map((controlId) => (
+      `MKXFORM.setFieldAttr(${JSON.stringify(controlId)}, ${attribute})`
+    ));
+    replacements.push({
+      start: node.start,
+      end: node.end,
+      value: calls.length === 1 ? calls[0] : `(${calls.join(", ")})`
+    });
+  });
+
+  return replacements
+    .sort((left, right) => right.start - left.start)
+    .reduce((compiled, replacement) => (
+      `${compiled.slice(0, replacement.start)}${replacement.value}${compiled.slice(replacement.end)}`
+    ), source);
+}
+
+function staticAcornString(node) {
+  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
+  if (
+    node?.type === "TemplateLiteral" &&
+    node.expressions?.length === 0 &&
+    node.quasis?.length === 1
+  ) return node.quasis[0].value?.cooked;
+  return undefined;
+}
+
+function walkJavaScriptAst(node, visit) {
+  if (!node || typeof node !== "object") return;
+  if (typeof node.type === "string") visit(node);
+  for (const [key, value] of Object.entries(node)) {
+    if (["start", "end", "loc"].includes(key)) continue;
+    if (Array.isArray(value)) {
+      for (const child of value) walkJavaScriptAst(child, visit);
+    } else if (value && typeof value === "object") {
+      walkJavaScriptAst(value, visit);
+    }
+  }
 }
 
 function extractSetFieldAttrCalls(text = "") {

@@ -173,6 +173,16 @@
     &lt;/tr&gt;
     &lt;tr&gt;
      &lt;td row=&quot;15&quot; column=&quot;0,1,2,3&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;bsp_province_cap&quot;,content:&quot;建筑服务发生省市：&quot;,color:&quot;&quot;,b:&quot;false&quot;}&apos;&gt;建筑服务发生省市：&lt;/label&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_bsp_province&quot;,label:&quot;建筑服务省市&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;bsp_section&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;bsp_address_cap&quot;,content:&quot;建筑服务发生所在详细地址：&quot;,color:&quot;&quot;,b:&quot;false&quot;}&apos;&gt;建筑服务发生所在详细地址：&lt;/label&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_bsp_address&quot;,label:&quot;建筑服务详细地址&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;bsp_section&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;bsp_yen_unit&quot;,content:&quot;¥&quot;,color:&quot;&quot;,b:&quot;false&quot;}&apos;&gt;¥&lt;/label&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_bsp_amount&quot;,label:&quot;Amount subject&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;bsp_section&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;16&quot; column=&quot;0,1,2,3&quot;&gt;
       &lt;table fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;nested_layout_table&quot;,label:&quot;Nested layout&quot;}&apos;&gt;&lt;tbody&gt;
        &lt;tr&gt;
         &lt;td row=&quot;0&quot; column=&quot;0,1,2,3&quot;&gt;
@@ -247,6 +257,9 @@
     &lt;extendSimpleProperty name=&quot;fd_address_province&quot; label=&quot;Address province&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_address_city&quot; label=&quot;Address city&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_address_district&quot; label=&quot;Address district&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_bsp_province&quot; label=&quot;建筑服务省市&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_bsp_address&quot; label=&quot;建筑服务详细地址&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_bsp_amount&quot; label=&quot;Amount subject&quot; type=&quot;String&quot;/&gt;
     &lt;extendSubTableProperty name=&quot;fd_nested_detail&quot; label=&quot;Nested detail&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_nested_detail_mode&quot; label=&quot;Nested detail mode&quot; type=&quot;String&quot; enumValues=&quot;Alpha|A&amp;#13;&amp;#10;Beta|B&quot;/&gt;&lt;/extendSubTableProperty&gt;
     &lt;extendSimpleProperty name=&quot;fd_nested_alpha&quot; label=&quot;Nested alpha&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_nested_bravo&quot; label=&quot;Nested bravo&quot; type=&quot;String&quot;/&gt;

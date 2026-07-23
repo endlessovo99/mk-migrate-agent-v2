@@ -264,6 +264,9 @@ function validateActionBranchProvenanceClosures(dslDraft, patchedDraft, patches)
       );
     } else continue;
     if (inspection.ok) continue;
+    if (nativeRowBranchesOwnAllReviewedConditions(sourceAction, reviewedAction, inspection)) {
+      continue;
+    }
     diagnostics.push(error(
       "agent.patch.condition_operand_provenance_unverified",
       "A reviewed mapped script may preserve source branches only when every condition operand is statically traceable to the action-local source: onChange uses its input value and onLoad uses the original source field read.",
@@ -279,6 +282,39 @@ function validateActionBranchProvenanceClosures(dslDraft, patchedDraft, patches)
     ));
   }
   return diagnostics;
+}
+
+function nativeRowBranchesOwnAllReviewedConditions(sourceAction, reviewedAction, inspection) {
+  if (
+    sourceAction?.event !== "onChange" ||
+    inspection?.reason !== "target_branch_provenance_unproven" ||
+    inspection?.observed?.status !== "none"
+  ) return false;
+  const sourceNativeRules = uniqueStrings(sourceAction?.coverage?.nativeRules || []);
+  const reviewedNativeRules = uniqueStrings(reviewedAction?.coverage?.nativeRules || []);
+  if (
+    !sourceNativeRules.length ||
+    sourceNativeRules.length !== reviewedNativeRules.length ||
+    sourceNativeRules.some((ruleId) => !reviewedNativeRules.includes(ruleId))
+  ) return false;
+  if (extractSetFieldAttrTargets(reviewedAction?.function).length) return false;
+
+  const residuals = Array.isArray(sourceAction?.coverage?.residuals)
+    ? sourceAction.coverage.residuals
+    : [];
+  if (!residuals.length) return true;
+  const expectedAssignments = residuals.map((residual) => {
+    if (residual?.code !== "script.residual.form_rule_behavior_uncovered") return undefined;
+    const match = String(residual.evidence || "").match(
+      /^SetXFormFieldValueById\(\s*(["'])([^"']+)\1\s*,\s*value\s*,\s*false\s*\);?$/
+    );
+    return match?.[2];
+  });
+  if (expectedAssignments.some((target) => !target)) return false;
+  const observedAssignments = extractSetValueAssignments(reviewedAction?.function);
+  return expectedAssignments.every((target) => observedAssignments.some((assignment) => (
+    assignment.target === target && assignment.valueSignature === "expression:value"
+  )));
 }
 
 function validateDeterministicResidualClosures(dslDraft, patchedDraft, patches) {
@@ -837,11 +873,7 @@ function proveNativeRowEffectClosure({
     for (const dimension of dimensions) {
       const when = whenByDimension.get(dimension) || [];
       const otherwise = elseByDimension.get(dimension) || [];
-      if (
-        when.length !== 1 ||
-        otherwise.length !== 1 ||
-        when[0].value === otherwise[0].value
-      ) {
+      if (when.length !== 1 || otherwise.length !== 1) {
         result.issues.push({ ruleId, dimension, reason: "when_else_not_complementary" });
         continue;
       }

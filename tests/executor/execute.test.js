@@ -1178,6 +1178,119 @@ describe("executeDsl", () => {
     assert.equal(content.elements.find((element) => element.id === "N1").openDataAuthority, false);
   });
 
+  it("writes detail-table column rights as dotted keys plus table-level operations", () => {
+    const detailTable = "mk_model_test_d_a47d94a5";
+    const trusted = sampleTrustedDsl({
+      workflow: {
+        process: { id: "process-detail-auth" },
+        nodes: [
+          {
+            id: "N1",
+            type: "generalStart",
+            element: "startEvent",
+            name: "开始",
+            sourceType: "startNode",
+            sourceRef: "source.workflow.node.N1",
+            attributes: {},
+            translationStatus: "executable"
+          },
+          {
+            id: "N29",
+            type: "review",
+            element: "manualTask",
+            name: "部门固定资产管理",
+            sourceType: "reviewNode",
+            sourceRef: "source.workflow.node.N29",
+            attributes: {},
+            translationStatus: "executable",
+            dataAuthority: {
+              enabled: true,
+              fields: {
+                fd_subject: {
+                  visible: true,
+                  editable: false,
+                  required: false
+                },
+                fd_name: {
+                  visible: true,
+                  editable: true,
+                  required: false
+                }
+              }
+            }
+          },
+          {
+            id: "N2",
+            type: "generalEnd",
+            element: "endEvent",
+            name: "结束",
+            sourceType: "endNode",
+            sourceRef: "source.workflow.node.N2",
+            attributes: {},
+            translationStatus: "executable"
+          }
+        ],
+        edges: [
+          {
+            id: "L1",
+            source: "N1",
+            target: "N29",
+            name: "",
+            sourceRef: "source.workflow.edge.L1",
+            attributes: {},
+            condition: { sourceText: "", displayText: "", targetText: "", translationStatus: "executable" }
+          },
+          {
+            id: "L2",
+            source: "N29",
+            target: "N2",
+            name: "",
+            sourceRef: "source.workflow.edge.L2",
+            attributes: {},
+            condition: { sourceText: "", displayText: "", targetText: "", translationStatus: "executable" }
+          }
+        ],
+        topologicalOrder: ["N1", "N29", "N2"]
+      }
+    });
+    const payload = projectTemplate(trusted, baseTemplate());
+    const auth = payload.mechanisms.lbpmTemplate[0].fdTemplateFormAuths.N29;
+    const dottedKey = `${detailTable}.fd_name`;
+    const tableOps = JSON.parse(auth[detailTable].operations);
+
+    assert.deepEqual(auth.fd_subject, {
+      isShow: true,
+      isEdit: false,
+      isRequire: false
+    });
+    assert.deepEqual(auth[dottedKey], {
+      isShow: true,
+      isEdit: true,
+      isRequire: false
+    });
+    assert.equal(auth.fd_name, undefined);
+    assert.equal(auth[detailTable].isShow, true);
+    assert.equal(auth[detailTable].isEdit, true);
+    assert.equal(
+      tableOps.some((operation) => operation.id === "canAddRow" && operation.enable === true),
+      true
+    );
+    assert.equal(
+      tableOps.some((operation) => operation.id === "canExport" && operation.enable === false),
+      true
+    );
+
+    const readback = verifyTemplate(trusted, payload);
+    assert.equal(readback.ok, true);
+    assert.deepEqual(readback.workflow.nodes.find((node) => node.id === "N29").dataAuthority, {
+      enabled: true,
+      fields: {
+        fd_subject: { visible: true, editable: false, required: false },
+        fd_name: { visible: true, editable: true, required: false }
+      }
+    });
+  });
+
   it("forces ignoreOnSameIdentity=1 when node form auth has required fields", () => {
     const workflow = {
       process: { id: "process-same-identity-required" },

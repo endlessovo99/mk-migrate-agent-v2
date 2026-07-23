@@ -32,6 +32,7 @@ import {
 import { componentForSourceType } from "./field-component.js";
 import { conditionalTotalCalculationModel } from "./conditional-total-calculation.js";
 import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
+import { projectDynamicHyperlinkForm } from "./dynamic-hyperlink.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -43,9 +44,12 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     throw new Error("draft requires a source-draft artifact");
   }
 
-  const rawForm = applySourceNumericDetailInferences(
-    applyNativeCalculationInferences(
-      draftForm(sourceDraft.form || {}),
+  const rawForm = projectDynamicHyperlinkForm(
+    applySourceNumericDetailInferences(
+      applyNativeCalculationInferences(
+        draftForm(sourceDraft.form || {}),
+        sourceDraft.scripts
+      ),
       sourceDraft.scripts
     ),
     sourceDraft.scripts
@@ -599,7 +603,7 @@ function draftDetailTableFromSource(table) {
       title: column.title,
       type: normalizeFieldType(column.sourceType),
       componentId: componentForSourceType(column.sourceType, column),
-      props: propsFromSource(column),
+      props: propsFromSource(column, { detailTableId: table.id }),
       sourceProps: column.sourceProps || {},
       sourceRef: column.sourceRef,
       generated: false
@@ -614,7 +618,7 @@ function targetDetailTableTitle(table) {
   return hint ? `${baseTitle}(${hint})` : baseTitle;
 }
 
-function propsFromSource(source) {
+function propsFromSource(source, options = {}) {
   const componentId = componentForSourceType(source.sourceType, source);
 
   // Description is display-only; catalog allows only content/style.
@@ -656,7 +660,7 @@ function propsFromSource(source) {
   }
 
   if (componentId === "xform-calculate") {
-    const calculation = legacyCalculationFromSource(source);
+    const calculation = legacyCalculationFromSource(source, options);
     if (calculation) props.calculation = calculation;
   }
 
@@ -682,8 +686,16 @@ function targetOptionsFromSource(options) {
   for (const option of options) {
     const targetOption = { label: option.label, value: option.value };
     const existing = byValue.get(targetOption.value);
-    if (existing?.label === targetOption.label) continue;
-    byValue.set(targetOption.value, targetOption);
+    if (existing) {
+      if (existing.labels.has(targetOption.label)) continue;
+      existing.labels.add(targetOption.label);
+      existing.option.label = [...existing.labels].join(" / ");
+      continue;
+    }
+    byValue.set(targetOption.value, {
+      option: targetOption,
+      labels: new Set([targetOption.label])
+    });
     targetOptions.push(targetOption);
   }
 
@@ -721,7 +733,7 @@ function parseLegacyLiteralDefault(value, source) {
   return { kind: "literal", value: expression };
 }
 
-function legacyCalculationFromSource(source) {
+function legacyCalculationFromSource(source, options = {}) {
   const values = source.sourceProps?.designerValues || {};
   const metadata = source.sourceProps?.metadataAttributes || {};
   const expression = firstNonEmptyExpression(
@@ -743,14 +755,65 @@ function legacyCalculationFromSource(source) {
     };
   }
 
-  if (!isSupportedArithmeticExpression(expression)) return undefined;
-  const fieldIds = [...expression.matchAll(/\$([A-Za-z_][\w]*)\$/gu)].map((match) => match[1]);
+  const arithmetic = normalizeArithmeticCalculationExpression(expression, {
+    detailTableId: options.detailTableId ||
+      values.tableName ||
+      source.sourceProps?.designerTableName
+  });
+  if (!arithmetic) return undefined;
   return pruneUndefined({
     kind: "formula",
-    expression,
-    displayExpression: normalizeLegacyExpression(values.expression_name || values.defaultValue) || undefined,
-    fieldIds: uniqueStrings(fieldIds)
+    expression: arithmetic.expression,
+    displayExpression: normalizeLegacyDisplayExpression(
+      values.expression_name || values.defaultValue
+    ) || undefined,
+    fieldIds: arithmetic.fieldIds
   });
+}
+
+function normalizeLegacyDisplayExpression(value) {
+  const expression = normalizeLegacyExpression(value);
+  if (!expression) return "";
+  // DSL keeps leaf labels ("$金额$"); the executor expands them to
+  // "$Template.明细表1.金额$" when writing native formula vo.content.
+  return expression.replace(/\$([^$.\s]+)\.([^$]+)\$/gu, (_, _table, field) => `$${field}$`);
+}
+
+function normalizeArithmeticCalculationExpression(expression, options = {}) {
+  const sourceExpression = String(expression || "");
+  if (!isSupportedArithmeticExpression(sourceExpression)) return undefined;
+
+  const fieldIds = [];
+  let qualifiedTableId;
+  let mixedTables = false;
+  const rewritten = sourceExpression.replace(
+    /\$([A-Za-z_][\w]*)(?:\.([A-Za-z_][\w]*))?\$/gu,
+    (token, left, right) => {
+      if (right) {
+        if (qualifiedTableId && qualifiedTableId !== left) {
+          mixedTables = true;
+          return token;
+        }
+        qualifiedTableId = left;
+        fieldIds.push(right);
+        return `$${right}$`;
+      }
+      fieldIds.push(left);
+      return token;
+    }
+  );
+  if (mixedTables) return undefined;
+
+  if (qualifiedTableId) {
+    const detailTableId = options.detailTableId;
+    if (detailTableId && qualifiedTableId !== detailTableId) return undefined;
+    if (!isSupportedArithmeticExpression(rewritten)) return undefined;
+  }
+
+  return {
+    expression: rewritten,
+    fieldIds: uniqueStrings(fieldIds)
+  };
 }
 
 function applyNativeCalculationInferences(form, sourceScripts = {}) {
@@ -1304,7 +1367,10 @@ function firstNonEmptyExpression(...values) {
 }
 
 function isSupportedArithmeticExpression(expression) {
-  const withoutFields = String(expression).replace(/\$[A-Za-z_][\w]*\$/gu, "1");
+  const withoutFields = String(expression).replace(
+    /\$[A-Za-z_][\w]*(?:\.[A-Za-z_][\w]*)?\$/gu,
+    "1"
+  );
   return /\d/u.test(withoutFields) && /^[\d\s+\-*/().]+$/u.test(withoutFields);
 }
 

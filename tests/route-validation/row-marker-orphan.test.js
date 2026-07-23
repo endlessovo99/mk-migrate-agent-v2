@@ -5,6 +5,7 @@ import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js
 import { createFakeReviewProvider } from "./fake-review-provider.js";
 import { resolveRouteFixture } from "./fixture.js";
 import { runRouteCase } from "./run-route-case.js";
+import { formAttr, projectTemplate } from "../helpers/persistence.js";
 
 describe("audited orphan row-marker Route case", { concurrency: false }, () => {
   it("proves reset-bearing missing row markers inert from minimal source evidence", () => {
@@ -84,6 +85,16 @@ describe("audited orphan row-marker Route case", { concurrency: false }, () => {
     assert.match(translatedJavascript, /MKXFORM\.setFieldAttr\(["']invoice_row4["']/);
     assert.match(translatedJavascript, /MKXFORM\.(?:getValue|setValue)\(["']wayTemp["']/);
     assert.doesNotMatch(translatedJavascript, /invoice_row11|invoice_row111/);
+
+    const persistedActions = JSON.stringify(
+      formAttr(projectTemplate(result.dsl)).controlAction
+    );
+    assert.match(persistedActions, /MKXFORM\.setFieldAttr\(\\"fd_recipient\\"/);
+    assert.match(persistedActions, /MKXFORM\.setFieldAttr\(\\"fd_remark\\"/);
+    assert.doesNotMatch(
+      persistedActions,
+      /MKXFORM\.setFieldAttr\(\\"(?:invoice_row10|invoice_row4)\\"/
+    );
 
     assert.equal(result.dsl.review.warnings.some((item) =>
       item.code === "source.sysform.row_marker_id_name_mismatch"

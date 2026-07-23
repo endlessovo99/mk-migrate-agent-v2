@@ -8,6 +8,7 @@ import { OpenAIResponsesReviewProvider } from "../../src/agent-review/provider.j
 import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
 import { main } from "../../src/cli/main.js";
 import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
+import { checkDraft } from "../../src/dsl/checks.js";
 import { checkTrust } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
@@ -1408,6 +1409,46 @@ describe("agent-review", () => {
       rejected.diagnostics.some((item) => item.code === "agent.patch.row_marker_native_coverage_incomplete"),
       true,
       JSON.stringify(rejected.diagnostics)
+    );
+  });
+
+  it("accepts helper-only JavaScript when native row rules include an explicit constant dimension", () => {
+    const sourceDraft = cleanSourceFile(
+      "tests/fixtures/source/18aac2e235a65c382f6fe264e1dba521"
+    );
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actionIndex = dslDraft.scripts.actions.findIndex((action) => (
+      action.event === "onChange" &&
+      action.controlId === "fd_way" &&
+      action.coverage?.nativeRules?.length === 2
+    ));
+    assert.notEqual(actionIndex, -1);
+    const action = dslDraft.scripts.actions[actionIndex];
+    const helperOnly = [
+      "function onChange(value, rowNum, parentRowNum) {",
+      '  MKXFORM.setValue("wayTemp", value)',
+      "}"
+    ].join("\n");
+
+    const patches = assignmentClosurePatches(actionIndex, action, helperOnly);
+    patches.find((patch) => patch.path.endsWith("/functionMappings")).value.push({
+      source: "common_dom_row_set_show_required_reset",
+      target: "native formRules.linkage",
+      basis: "native-form-rule",
+      reviewRequired: false
+    });
+    const accepted = applyEvidenceBackedPatches(
+      dslDraft,
+      patches,
+      { sourceRefs: collectSourceRefs(sourceDraft), sourceDraft }
+    );
+
+    assert.equal(accepted.ok, true, JSON.stringify(accepted.diagnostics));
+    const drafted = checkDraft(accepted.dslDraft);
+    assert.equal(drafted.ok, true, JSON.stringify(drafted.diagnostics));
+    assert.deepEqual(
+      accepted.dslDraft.scripts.actions[actionIndex].coverage.nativeRules,
+      ["linkage.fd_way.eq.11", "linkage.fd_way.ne.11.and.eq.22"]
     );
   });
 

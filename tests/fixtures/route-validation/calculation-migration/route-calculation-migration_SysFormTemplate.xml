@@ -24,6 +24,7 @@
         &lt;td row=&quot;0&quot; column=&quot;3&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_threshold_kind&quot;,content:&quot;阈值类别&quot;}&apos;&gt;阈值类别&lt;/label&gt;&lt;/td&gt;
         &lt;td row=&quot;0&quot; column=&quot;4&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_threshold_input&quot;,content:&quot;阈值输入&quot;}&apos;&gt;阈值输入&lt;/label&gt;&lt;/td&gt;
         &lt;td row=&quot;0&quot; column=&quot;5&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_threshold_result&quot;,content:&quot;阈值结果&quot;}&apos;&gt;阈值结果&lt;/label&gt;&lt;/td&gt;
+        &lt;td row=&quot;0&quot; column=&quot;6&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_unit_from_total&quot;,content:&quot;反算单价&quot;}&apos;&gt;反算单价&lt;/label&gt;&lt;/td&gt;
        &lt;/tr&gt;
        &lt;tr type=&quot;templateRow&quot;&gt;
         &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_quantity&quot;,label:&quot;数量&quot;,tableName:&quot;fd_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
@@ -32,6 +33,7 @@
         &lt;td row=&quot;1&quot; column=&quot;3&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_threshold_kind&quot;,label:&quot;阈值类别&quot;,tableName:&quot;fd_lines&quot;,items:&quot;普通|normal&amp;#10;特殊|special&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
         &lt;td row=&quot;1&quot; column=&quot;4&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_threshold_input&quot;,label:&quot;阈值输入&quot;,tableName:&quot;fd_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
         &lt;td row=&quot;1&quot; column=&quot;5&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_threshold_result&quot;,label:&quot;阈值结果&quot;,tableName:&quot;fd_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;0&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+        &lt;td row=&quot;1&quot; column=&quot;6&quot;&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_unit_from_total&quot;,label:&quot;反算单价&quot;,tableName:&quot;fd_lines&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,autoCalculate:&quot;true&quot;,expression_id:&quot;$fd_lines.fd_line_total$ / $fd_lines.fd_quantity$&quot;,expression_name:&quot;$费用明细.行金额$ / $费用明细.数量$&quot;,reCalculate:&quot;false&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
        &lt;/tr&gt;
       &lt;/tbody&gt;&lt;/table&gt;
      &lt;/td&gt;
@@ -262,6 +264,7 @@
      &lt;extendSimpleProperty name=&quot;fd_quantity&quot; label=&quot;数量&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
      &lt;extendSimpleProperty name=&quot;fd_unit_price&quot; label=&quot;单价&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
      &lt;extendSimpleProperty name=&quot;fd_line_total&quot; label=&quot;行金额&quot; type=&quot;Double&quot; scale=&quot;2&quot; formula=&quot;true&quot; defaultValue=&quot;$fd_quantity$ * $fd_unit_price$&quot; recalculateOnSave=&quot;true&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_unit_from_total&quot; label=&quot;反算单价&quot; type=&quot;Double&quot; scale=&quot;2&quot; formula=&quot;true&quot; defaultValue=&quot;$fd_lines.fd_line_total$ / $fd_lines.fd_quantity$&quot;/&gt;
      &lt;extendSimpleProperty name=&quot;fd_threshold_kind&quot; label=&quot;阈值类别&quot; type=&quot;String&quot;/&gt;
      &lt;extendSimpleProperty name=&quot;fd_threshold_input&quot; label=&quot;阈值输入&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
      &lt;extendSimpleProperty name=&quot;fd_threshold_result&quot; label=&quot;阈值结果&quot; type=&quot;Double&quot; scale=&quot;0&quot; defaultValue=&quot;0&quot;/&gt;

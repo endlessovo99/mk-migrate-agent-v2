@@ -7,11 +7,15 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-calculation-assignment",
   "deterministic-clamped-detail-aggregate",
   "deterministic-conditional-total-uppercase",
+  "deterministic-detail-row-control-state",
   "deterministic-detail-row-expansion",
+  "deterministic-detail-row-lifecycle",
   "deterministic-detail-lookup-calculation",
   "deterministic-detail-threshold-calculation",
+  "deterministic-dynamic-hyperlink",
   "deterministic-finance-detail-generation",
   "deterministic-grouped-detail-calculation",
+  "deterministic-local-currency-helper",
   "deterministic-person-text-calculation"
 ]);
 

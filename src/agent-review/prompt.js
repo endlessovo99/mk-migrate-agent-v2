@@ -7,7 +7,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v7";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v8";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -79,6 +79,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Treat a literal missing row marker as an auditable orphan no-op only when sourceDraft.issues contains source.sysform.script_row_marker_orphan_noop for the action sourceRef and its proof says absentFromLayout=true, onlyHelperTarget=true, resetValuesAudited=true, and dynamicDomCreationDetected=false. Exact reset values remain audit evidence, but cannot mutate a target proven absent at every call.",
       "Never generate MKXFORM.setFieldAttr for an orphan marker. Translate every remaining resolved marker and helper behavior, use coverage.status=translated only when no unresolved residual remains, and preserve the Source Draft warning in the Trusted DSL audit record.",
       "When clearing field_value_assignment residuals, emit an executable MKXFORM.setValue call for every evidenced target and right-hand-side value branch; comments, string examples, or a D-only fallback are not coverage.",
+      "Never combine distinct evidenced assignment values into a conditional or ternary MKXFORM.setValue argument. Preserve the source branch shape with explicit if/else-if/else blocks and a separate literal MKXFORM.setValue call in every evidenced branch.",
       "When mapping row visibility in JavaScript, every resolved marker must retain every evidenced show/hide and required/non-required state, including the final branch; do not hard-hide the last marker while mapping only earlier branches.",
       "If native formRules already cover a JSP visibility/required rule, do not duplicate that rule in generated JavaScript.",
       "If control onChange native formRules.linkage entries have the same control source, matching meta.sourceJsp/sourceJsps evidence, and the exact same immutable meta.sourceActionKey as the action.sourceActionKey, and fully cover the action-local JSP behavior, patch the action to function:\"\", translationStatus:\"omitted\", and coverage:{status:\"covered\",nativeRules:[all matching executable rule ids],residuals:[]}; preserve runWhen.",
@@ -1029,7 +1030,13 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
     }
   }
 
-  const rowMarkerOpportunity = rowMarkerVisibilityOpportunity(action, actionIndex, form, sourceDraft);
+  const fullyNativeCovered = coverage.status === "covered" &&
+    Array.isArray(coverage.nativeRules) &&
+    coverage.nativeRules.length > 0 &&
+    residuals.length === 0;
+  const rowMarkerOpportunity = fullyNativeCovered
+    ? undefined
+    : rowMarkerVisibilityOpportunity(action, actionIndex, form, sourceDraft);
   if (rowMarkerOpportunity) opportunities.push(rowMarkerOpportunity);
 
   return opportunities.length ? opportunities : undefined;
@@ -1056,6 +1063,53 @@ function rowMarkerVisibilityOpportunity(action = {}, actionIndex, form = {}, sou
   const persistedMarkers = uniqueStrings(
     resolvedMarkers.map((marker) => primaryByAlias.get(marker) || marker)
   );
+  const nativeRules = uniqueStrings(action?.coverage?.nativeRules || []);
+  const assignmentResiduals = (Array.isArray(action?.coverage?.residuals)
+    ? action.coverage.residuals
+    : [])
+    .filter((residual) => residual?.code === "script.residual.field_value_assignment")
+    .map(assignmentResidualSummary);
+  const nativeResidualFunction = explicitNativeResidualAssignmentFunction(action, assignmentResiduals);
+  if (nativeRules.length > 0) {
+    return {
+      kind: "row_marker_visibility_candidate",
+      actionIndex,
+      targetApis: ["MKXFORM.setValue"],
+      nativeRules,
+      requiredAssignments: assignmentResiduals,
+      rowMarkers: persistedMarkers,
+      resolvedRowMarkers: persistedMarkers,
+      orphanRowMarkers: orphanMarkers,
+      unresolvedRowMarkers: unresolvedMarkers,
+      requiredBusinessSemantics: [
+        "Preserve every listed nativeRules id and do not emit MKXFORM.setFieldAttr for its row visibility/required effects.",
+        "Translate only the remaining helper-field assignments with MKXFORM.setValue.",
+        "Preserve the source if/else-if/else branch order and use a separate literal MKXFORM.setValue call for every requiredAssignments entry.",
+        "Do not compress distinct assignment branches into a conditional or ternary setValue argument."
+      ],
+      safeDecision: "Keep the native formRules as the sole owner of row visibility/required state and map only the explicit residual field assignments. Never attach another action's native rule.",
+      suggestedPatchShape: nativeResidualFunction && unresolvedMarkers.length === 0 ? {
+        function: nativeResidualFunction,
+        translationStatus: "mapped",
+        functionMappings: [
+          {
+            source: "common_dom_row_set_show_required_reset",
+            target: "native formRules.linkage",
+            basis: "native-form-rule",
+            reviewRequired: false
+          },
+          {
+            source: "legacy helper-field value assignment",
+            target: "MKXFORM.setValue",
+            basis: "semantic-translation",
+            reviewRequired: false
+          }
+        ],
+        coverage: { status: "translated", nativeRules, residuals: [] }
+      } : undefined,
+      coverageDecision: "Use coverage.status translated with the exact action-local nativeRules and empty residuals only when every required assignment branch is represented by a separate literal MKXFORM.setValue call. Otherwise keep needs_review."
+    };
+  }
   const markerEffectLines = persistedMarkers.flatMap((marker) => [
     `  MKXFORM.setFieldAttr(${JSON.stringify(marker)}, active ? 5 : 4)`,
     `  MKXFORM.setFieldAttr(${JSON.stringify(marker)}, active ? 3 : 6)`
@@ -1074,6 +1128,37 @@ ${markerEffectLines}
   var active = /* compare normalizedValue with the legacy trigger values */
 ${markerEffectLines}
 }`;
+  const branchRowEffects = exactBranchRowEffects(
+    markers,
+    persistedMarkers,
+    primaryByAlias,
+    (action.branchProvenance?.conditions?.length || 0) + 1
+  );
+  const exactFunctionShape = explicitNonNativeResidualFunction(
+    action,
+    branchRowEffects,
+    assignmentResiduals
+  ) || explicitUnconditionalRowEffectFunction(
+    action,
+    markers,
+    persistedMarkers,
+    primaryByAlias,
+    assignmentResiduals
+  );
+  const functionMappings = [{
+    source: "common_dom_row_set_show_required_reset",
+    target: "MKXFORM.setFieldAttr",
+    basis: "semantic-translation",
+    reviewRequired: false
+  }];
+  if (assignmentResiduals.length > 0) {
+    functionMappings.push({
+      source: "legacy helper-field value assignment",
+      target: "MKXFORM.setValue",
+      basis: "semantic-translation",
+      reviewRequired: false
+    });
+  }
 
   return {
     kind: "row_marker_visibility_candidate",
@@ -1083,6 +1168,8 @@ ${markerEffectLines}
     resolvedRowMarkers: persistedMarkers,
     orphanRowMarkers: orphanMarkers,
     unresolvedRowMarkers: unresolvedMarkers,
+    requiredAssignments: assignmentResiduals,
+    branchRowEffects,
     requiredBusinessSemantics: [
       "Use the persisted primary layout sourceMarker (first entry in sourceMarkers / persistedMarker) as the MKXFORM.setFieldAttr target.",
       "When multiple sourceMarkers share one layout row, collapse co-located aliases to that primary marker; do not call setFieldAttr on aliasMarkers.",
@@ -1092,18 +1179,211 @@ ${markerEffectLines}
     ],
     safeDecision: "Map resolvedRowMarkers with setFieldAttr, omit only warning-proven orphanRowMarkers as auditable no-ops, and translate any remaining helper behavior. Never invent a target for unresolvedRowMarkers.",
     suggestedPatchShape: persistedMarkers.length && unresolvedMarkers.length === 0 ? {
-      function: functionShape,
+      function: exactFunctionShape || functionShape,
       translationStatus: "mapped",
-      functionMappings: [{
-        source: "common_dom_row_set_show_required_reset",
-        target: "MKXFORM.setFieldAttr",
-        basis: "semantic-translation",
-        reviewRequired: false
-      }],
+      functionMappings,
       coverage: { status: "translated", nativeRules: [], residuals: [] }
     } : undefined,
     coverageDecision: "Use coverage.status translated with empty residuals only when every resolved row toggle and remaining helper behavior is translated, every omitted marker is listed in orphanRowMarkers, and unresolvedRowMarkers is empty; preserve the Source Draft warning. Otherwise keep needs_review."
   };
+}
+
+function exactBranchRowEffects(
+  markers = [],
+  persistedMarkers = [],
+  primaryByAlias = new Map(),
+  branchCount = 2
+) {
+  const persisted = new Set(persistedMarkers);
+  const effectsByMarker = new Map(persistedMarkers.map((marker) => [marker, []]));
+  for (const effect of markers) {
+    const marker = primaryByAlias.get(effect.rowId) || effect.rowId;
+    if (!persisted.has(marker)) continue;
+    effectsByMarker.get(marker).push({
+      marker,
+      visible: effect.visible,
+      required: effect.required,
+      reset: effect.reset
+    });
+  }
+  if ([...effectsByMarker.values()].some((effects) => (
+    effects.length !== branchCount || effects.some((effect) => effect.reset)
+  ))) {
+    return undefined;
+  }
+  return {
+    branches: Array.from({ length: branchCount }, (_, branchIndex) => (
+      persistedMarkers.map((marker) => effectsByMarker.get(marker)[branchIndex])
+    ))
+  };
+}
+
+function explicitUnconditionalRowEffectFunction(
+  action = {},
+  markers = [],
+  persistedMarkers = [],
+  primaryByAlias = new Map(),
+  assignments = []
+) {
+  if (
+    action.branchProvenance?.status !== "none" ||
+    assignments.length !== 0 ||
+    !["onChange", "onLoad"].includes(action.event) ||
+    markers.some((effect) => effect.reset)
+  ) {
+    return undefined;
+  }
+  const persisted = new Set(persistedMarkers);
+  const effects = markers.map((effect) => ({
+    marker: primaryByAlias.get(effect.rowId) || effect.rowId,
+    visible: effect.visible,
+    required: effect.required
+  })).filter((effect) => persisted.has(effect.marker));
+  if (
+    effects.length !== persistedMarkers.length ||
+    new Set(effects.map((effect) => effect.marker)).size !== persistedMarkers.length
+  ) {
+    return undefined;
+  }
+  const signature = action.event === "onChange"
+    ? "function onChange(value, rowNum, parentRowNum)"
+    : "function onLoad()";
+  return `${signature} {
+${branchEffectLines(effects).replace(/^ {4}/gm, "  ")}
+}`;
+}
+
+function explicitNonNativeResidualFunction(action = {}, rowEffects, assignments = []) {
+  const conditions = action.branchProvenance?.conditions || [];
+  const branchCount = conditions.length + 1;
+  if (
+    !rowEffects ||
+    action.branchProvenance?.status !== "proven" ||
+    conditions.length === 0 ||
+    rowEffects.branches?.length !== branchCount ||
+    ![0, branchCount].includes(assignments.length) ||
+    (assignments.length === branchCount && (
+      !assignments.every((assignment) => assignment.target && assignment.value !== undefined) ||
+      assignments.some((assignment) => assignment.target !== assignments[0].target)
+    ))
+  ) {
+    return undefined;
+  }
+
+  const contexts = conditions.map((condition) => branchConditionContext(action, condition));
+  if (contexts.some((context) => !context)) return undefined;
+  const [{ signature, initialization }] = contexts;
+  if (contexts.some((context) => (
+    context.signature !== signature || context.initialization !== initialization
+  ))) return undefined;
+
+  const branchBlocks = contexts.map((context, branchIndex) => [
+    branchIndex === 0 ? `  if (${context.expression}) {` : `  } else if (${context.expression}) {`,
+    branchEffectLines(rowEffects.branches[branchIndex], assignments[branchIndex])
+  ].join("\n"));
+  branchBlocks.push(
+    "  } else {",
+    branchEffectLines(rowEffects.branches.at(-1), assignments.at(-1)),
+    "  }"
+  );
+  return `${signature} {
+${initialization ? `${initialization}\n` : ""}${branchBlocks.join("\n")}
+}`;
+}
+
+function branchConditionContext(action = {}, condition = {}) {
+  if ((condition.transforms || []).length > 0) return undefined;
+  if (action.event === "onChange" && condition.origin === "event:value") {
+    const expression = conditionExpression(condition, "value");
+    return expression ? {
+      signature: "function onChange(value, rowNum, parentRowNum)",
+      expression
+    } : undefined;
+  }
+  const fieldMatch = action.event === "onLoad" &&
+    typeof condition.origin === "string" &&
+    condition.origin.match(/^field:([A-Za-z_][A-Za-z0-9_]*)$/);
+  if (!fieldMatch) return undefined;
+  const expression = conditionExpression(condition, "normalizedValue");
+  return expression ? {
+    signature: "function onLoad()",
+    initialization: `  var normalizedValue = MKXFORM.getValue(${JSON.stringify(fieldMatch[1])})`,
+    expression
+  } : undefined;
+}
+
+function conditionExpression(condition = {}, variable) {
+  if (condition.kind === "contains" && typeof condition.value === "string") {
+    return `${variable}.indexOf(${JSON.stringify(condition.value)}) >= 0`;
+  }
+  if (condition.kind === "eq" && typeof condition.value === "string") {
+    return `${variable} == ${JSON.stringify(condition.value)}`;
+  }
+  if (condition.kind === "regex-set" && typeof condition.pattern === "string") {
+    const pattern = condition.pattern.replaceAll("/", "\\/");
+    return `/${pattern}/.test(${variable})`;
+  }
+  return undefined;
+}
+
+function branchEffectLines(rowEffects = [], assignment) {
+  const lines = [];
+  if (assignment) {
+    lines.push(`    MKXFORM.setValue(${JSON.stringify(assignment.target)}, ${JSON.stringify(assignment.value)})`);
+  }
+  for (const effect of rowEffects) {
+    lines.push(`    MKXFORM.setFieldAttr(${JSON.stringify(effect.marker)}, ${effect.visible ? 5 : 4})`);
+    lines.push(`    MKXFORM.setFieldAttr(${JSON.stringify(effect.marker)}, ${effect.required ? 3 : 6})`);
+  }
+  return lines.join("\n");
+}
+
+function assignmentResidualSummary(residual = {}) {
+  const evidence = String(residual.evidence || "").trim();
+  const match = evidence.match(/=\s*(["'])([\s\S]*?)\1\s*;?\s*$/);
+  return pruneUndefined({
+    target: residual.target,
+    value: match ? match[2] : undefined,
+    evidence
+  });
+}
+
+function explicitNativeResidualAssignmentFunction(action = {}, assignments = []) {
+  if (
+    action.event !== "onChange" ||
+    action.branchProvenance?.status !== "proven" ||
+    action.branchProvenance?.conditions?.length !== 1 ||
+    assignments.length !== 2 ||
+    !assignments.every((assignment) => assignment.target && assignment.value !== undefined) ||
+    assignments[0].target !== assignments[1].target
+  ) {
+    return undefined;
+  }
+  const condition = eventValueConditionExpression(action.branchProvenance.conditions[0]);
+  if (!condition) return undefined;
+  const target = JSON.stringify(assignments[0].target);
+  return `function onChange(value, rowNum, parentRowNum) {
+  if (${condition}) {
+    MKXFORM.setValue(${target}, ${JSON.stringify(assignments[0].value)})
+  } else {
+    MKXFORM.setValue(${target}, ${JSON.stringify(assignments[1].value)})
+  }
+}`;
+}
+
+function eventValueConditionExpression(condition = {}) {
+  if (condition.origin !== "event:value" || (condition.transforms || []).length > 0) return undefined;
+  if (condition.kind === "contains" && typeof condition.value === "string") {
+    return `value.indexOf(${JSON.stringify(condition.value)}) >= 0`;
+  }
+  if (condition.kind === "eq" && typeof condition.value === "string") {
+    return `value == ${JSON.stringify(condition.value)}`;
+  }
+  if (condition.kind === "regex-set" && typeof condition.pattern === "string") {
+    const pattern = condition.pattern.replaceAll("/", "\\/");
+    return `/${pattern}/.test(value)`;
+  }
+  return undefined;
 }
 
 function nativeRuleSummaries(formRules = {}, ruleIds = []) {
@@ -1319,6 +1599,9 @@ function compactResidual(residual) {
     type: residual.type,
     message: residual.message,
     sourceRef: residual.sourceRef,
+    target: residual.target,
+    trigger: residual.trigger,
+    callback: residual.callback,
     evidence: previewText(residual.evidence, 260)
   });
 }

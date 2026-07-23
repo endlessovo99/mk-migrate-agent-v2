@@ -187,6 +187,18 @@ export function resolveEffectTarget(index, ref) {
   };
 }
 
+/**
+ * Resolve a legacy layout row marker to the concrete NewOA controls rendered
+ * inside that row. Script functions may keep the marker as a DSL-level source
+ * reference, but the executor must compile it away before persistence because
+ * MKXFORM.setFieldAttr accepts control ids, not layout metadata ids.
+ */
+export function resolveRowMarkerControlIds(form = {}, ref) {
+  const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), ref);
+  if (resolved?.source !== "rowMarker" || resolved.unresolved?.length) return [];
+  return [...new Set((resolved.targets || []).map((target) => target?.id).filter(Boolean))];
+}
+
 export function normalizeRef(ref) {
   return typeof ref === "string" && ref.trim() ? ref.trim() : undefined;
 }

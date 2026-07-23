@@ -51,6 +51,11 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
     jspButtons
   );
   const scripts = sourceScriptsFromLegacy(legacyDsl.scripts);
+  const rowMarkerOrphanIssues = sourceScriptRowMarkerOrphanIssues(scripts, layout);
+  const formRules = omitAuditedOrphanRowRuleEffects(
+    sourceFormRulesFromLegacyScripts(legacyDsl.scripts),
+    rowMarkerOrphanIssues
+  );
   const workflow = legacyDsl.workflow ? sourceWorkflowFromLegacyWorkflow(legacyDsl.workflow, {
     nodeDataAuthorities: legacyDsl.form?.nodeDataAuthorities,
     fields: allFields
@@ -70,14 +75,71 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
       detailTables,
       layout
     },
-    formRules: sourceFormRulesFromLegacyScripts(legacyDsl.scripts),
+    formRules,
     scripts,
     workflow,
     issues: [
       ...sourceIssuesFromReview(legacyDsl.review),
-      ...sourceScriptRowMarkerOrphanIssues(scripts, layout)
+      ...rowMarkerOrphanIssues
     ]
   });
+}
+
+function omitAuditedOrphanRowRuleEffects(formRules, issues = []) {
+  if (!formRules?.linkage?.length) return formRules;
+  const orphanMarkersBySourceRef = new Map();
+  for (const issue of issues) {
+    const proof = issue?.evidence?.proof;
+    const sourceRef = issue?.evidence?.sourceRef;
+    if (
+      issue?.level !== "warning" ||
+      issue?.code !== ORPHAN_ROW_MARKER_WARNING_CODE ||
+      !sourceRef ||
+      proof?.absentFromLayout !== true ||
+      proof?.onlyHelperTarget !== true ||
+      proof?.resetValuesAudited !== true ||
+      proof?.dynamicDomCreationDetected !== false
+    ) continue;
+    orphanMarkersBySourceRef.set(
+      sourceRef,
+      new Set((issue.evidence.markers || []).map((marker) => marker?.rowId).filter(Boolean))
+    );
+  }
+  if (!orphanMarkersBySourceRef.size) return formRules;
+
+  const linkage = formRules.linkage.flatMap((rule) => {
+    const sourceRefs = [...new Set([
+      rule?.meta?.sourceJsp,
+      ...(rule?.meta?.sourceJsps || [])
+    ].filter(Boolean))];
+    if (!sourceRefs.length) return [rule];
+    const omittedTargets = new Set();
+    const keepEffect = (effect) => {
+      const auditedByEverySource = sourceRefs.every((sourceRef) => (
+        orphanMarkersBySourceRef.get(sourceRef)?.has(effect?.target)
+      ));
+      if (auditedByEverySource) omittedTargets.add(effect.target);
+      return !auditedByEverySource;
+    };
+    const effects = (rule.effects || []).filter(keepEffect);
+    const otherwise = (rule.else || []).filter(keepEffect);
+    // Keep a fully orphan-only rule in review instead of erasing the source
+    // behavior. We only prune audited no-op targets when the remaining rule
+    // still has executable behavior on both sides of the branch.
+    if (!effects.length || !otherwise.length) return [rule];
+    return [{
+      ...rule,
+      effects,
+      else: otherwise,
+      meta: omittedTargets.size
+        ? {
+            ...(rule.meta || {}),
+            auditedOrphanNoopTargets: [...omittedTargets]
+          }
+        : rule.meta
+    }];
+  });
+  return { ...formRules, linkage };
 }
 
 function sourceDataFieldFromField(field) {
@@ -284,6 +346,7 @@ function sourcePropsFromField(field) {
     boundCaption: field.source?.boundCaption,
     detailHeaderCaption: field.source?.detailHeaderCaption,
     displayText: field.source?.displayText,
+    subjectLabel: field.source?.subjectLabel,
     inlineCaption: field.source?.inlineCaption,
     inlineHint: field.source?.inlineHint,
     inlineUnit: field.source?.inlineUnit,

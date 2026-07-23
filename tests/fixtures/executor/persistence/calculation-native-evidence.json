@@ -4,20 +4,22 @@
     "fd_lines.fd_line_total",
     "fd_detail_sum",
     "fd_clamped_sum",
-    "fd_recompute_output"
+    "fd_recompute_output",
+    "fd_lines.fd_unit_from_total"
   ],
   "mainFormula": {
     "targetField": "fd_main_total",
     "script": "${data.biz.fd_main_left} + ${data.biz.fd_main_right}",
-    "display": "$主表左值$ + $主表右值$",
+    "display": "$MK_TEST_示例流程_20260710120000.主表左值$ + $MK_TEST_示例流程_20260710120000.主表右值$",
     "fieldIds": ["fd_main_left", "fd_main_right"]
   },
   "detailFormula": {
     "tableId": "fd_lines",
     "targetField": "fd_line_total",
     "script": "${data.biz.fd_quantity} * ${data.biz.fd_unit_price}",
-    "display": "$数量$ * $单价$",
-    "fieldIds": ["fd_quantity", "fd_unit_price"]
+    "display": "$MK_TEST_示例流程_20260710120000.费用明细.数量$ * $MK_TEST_示例流程_20260710120000.费用明细.单价$",
+    "fieldIds": ["fd_quantity", "fd_unit_price"],
+    "notes": "Native write qualifies script/varIds with physical detail tableName (see test)."
   },
   "aggregate": {
     "targetField": "fd_detail_sum",
@@ -54,7 +56,7 @@
   "runtimeDifferenceFormula": {
     "targetField": "fd_recompute_output",
     "script": "${data.biz.fd_detail_sum} - ${data.biz.fd_recompute_input}",
-    "display": "$fd_detail_sum$ - $fd_recompute_input$",
+    "display": "$MK_TEST_示例流程_20260710120000.明细合计$ - $MK_TEST_示例流程_20260710120000.重算输入$",
     "fieldIds": ["fd_detail_sum", "fd_recompute_input"]
   },
   "onChange": {

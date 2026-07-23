@@ -118,10 +118,11 @@ describe("source directory stages", () => {
     assert.equal(text.includes("@elem/"), false);
   });
 
-  localCorpusIt("keeps mixed native and residual JSP behavior in review", () => {
+  localCorpusIt("maps detail-row scripts and soft-covers native-backed JSP residuals", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const action = dslDraft.scripts.actions.find((item) => item.controlId === "fd_371229d0cbd2cc");
+    const budgetAction = dslDraft.scripts.actions.find((item) => item.controlId === "fd_37122a14d44caa");
     const detailActions = dslDraft.scripts.actions.filter((item) =>
       item.tableId === "fd_371228ebe5dec2" && item.controlId === "fd_371576f83b26d8"
     );
@@ -131,33 +132,54 @@ describe("source directory stages", () => {
     assert.equal(action.scope, "control");
     assert.equal(action.event, "onChange");
     assert.equal(action.controlId, "fd_371229d0cbd2cc");
-    assert.equal(action.translationStatus, "needs_review");
+    assert.equal(action.translationStatus, "omitted");
     assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
-    assert.equal(action.coverage.status, "partial");
+    assert.equal(action.coverage.status, "covered");
     assert.deepEqual(action.coverage.nativeRules, [
       "linkage.fd_371229d0cbd2cc.contains.sb",
       "linkage.fd_371229d0cbd2cc.contains.hc",
       "linkage.fd_371229d0cbd2cc.contains.wx",
       "linkage.fd_371229d0cbd2cc.contains.wb"
     ]);
-    assert.equal(action.coverage.residuals.some((residual) => (
-      residual.code === "script.residual.form_rule_behavior_uncovered"
-    )), true);
+    assert.deepEqual(action.coverage.residuals, []);
     assert.match(action.function, /setPorvertyTableNoValidate/);
+
+    assert.equal(budgetAction.translationStatus, "omitted");
+    assert.equal(budgetAction.coverage.status, "covered");
+    assert.deepEqual(budgetAction.coverage.residuals, []);
 
     assert.equal(detailActions.length, 1);
     assert.equal(detailActions.every((item) => item.scope === "control" && item.event === "onChange"), true);
-    assert.equal(detailActions.every((item) => item.translationStatus === "needs_review"), true);
-    assert.equal(detailActions.every((item) => item.semanticHints.some((hint) => hint.kind === "detail_row_visibility")), true);
+    assert.equal(detailActions.every((item) => item.translationStatus === "mapped"), true);
+    assert.equal(
+      detailActions.every((item) =>
+        item.functionMappings?.some((mapping) => mapping.basis === "deterministic-detail-row-control-state")
+      ),
+      true
+    );
+    assert.equal(
+      detailActions.every((item) =>
+        Array.isArray(item.semanticHints?.coveredCalculationRanges) &&
+        item.semanticHints.coveredCalculationRanges.length > 0
+      ),
+      true
+    );
     assert.deepEqual(detailActions.map((item) => item.runWhen), [{ viewStatusIn: ["add", "edit"] }]);
     assert.equal(detailActions[0].recipe.kind, "detail_row_control_state");
 
     assert.equal(loadAction.scope, "global");
-    assert.equal(loadAction.runWhen, undefined);
-    assert.equal(loadAction.translationStatus, "needs_review");
-    assert.equal(loadAction.semanticHints.some((hint) => hint.kind === "detail_row_load_initialization"), true);
-    assert.equal(loadAction.coverage.status, "partial");
+    assert.equal(loadAction.translationStatus, "mapped");
+    assert.equal(loadAction.coverage.status, "translated");
     assert.equal(loadAction.recipe.kind, "detail_row_lifecycle");
+    assert.equal(
+      loadAction.functionMappings?.some((mapping) => mapping.basis === "deterministic-detail-row-lifecycle"),
+      true
+    );
+    assert.equal(
+      Array.isArray(loadAction.semanticHints?.coveredCalculationRanges) &&
+      loadAction.semanticHints.coveredCalculationRanges.length > 0,
+      true
+    );
     assert.equal(sourceDraft.scripts.sources.some((source) => source.semanticFacts?.legacyFunctionCalls?.length), true);
   });
 

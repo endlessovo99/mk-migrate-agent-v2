@@ -578,7 +578,9 @@ function buildOperandResolver(source, masked = maskStringsAndComments(source)) {
 
 function conditionSpec(expression, resolveOperand, beforeIndex) {
   const parsed = parseProvenanceCondition(expression, resolveOperand, { beforeIndex });
-  return parsed && ["eq", "contains"].includes(parsed.kind) ? parsed : undefined;
+  return parsed && ["eq", "contains", "regex-set"].includes(parsed.kind)
+    ? parsed
+    : undefined;
 }
 
 function guardedBinaryEqualityDomain(source, expectedConditions, observedKeys, resolveOperand) {
@@ -607,7 +609,12 @@ function guardedBinaryEqualityDomain(source, expectedConditions, observedKeys, r
 }
 
 function conditionKey(condition) {
-  return `${condition.operand}:${condition.kind}:${JSON.stringify(condition.value)}`;
+  return JSON.stringify({
+    operand: condition.operand,
+    kind: condition.kind,
+    value: condition.value,
+    values: condition.values
+  });
 }
 
 function attributeDimension(attribute) {

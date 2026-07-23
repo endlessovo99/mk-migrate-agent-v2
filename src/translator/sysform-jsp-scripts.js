@@ -18,6 +18,16 @@ import { isProvablyInertVariableDeclaration } from "./pure-declarations.js";
 import { conditionalTotalCalculationModel } from "./conditional-total-calculation.js";
 import { financeDetailGenerationTranslation } from "./finance-detail-generation.js";
 import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
+import { namedValueChangeAssignmentCandidates } from "./named-value-change-assignment.js";
+import { localCurrencyHelperCandidates } from "./local-currency-helper.js";
+import { dynamicHyperlinkCandidates } from "./dynamic-hyperlink.js";
+import {
+  buildDetailRowControlStateFunction,
+  buildDetailRowLifecycleFunction,
+  coveredRangesForText,
+  detailMatchValue as detailControlMatchValue,
+  isCompleteDetailControlDisplay
+} from "./detail-row-control-state.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -726,7 +736,28 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }));
   }
 
-  const calculationAssignments = simpleCalculationAssignmentCandidates(source, options.form);
+  const localCurrencyHelpers = localCurrencyHelperCandidates(source, options.form);
+  if (localCurrencyHelpers.length) {
+    return localCurrencyHelpers.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const dynamicHyperlinks = dynamicHyperlinkCandidates(source, options.form);
+  if (dynamicHyperlinks.length) {
+    return dynamicHyperlinks.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const calculationAssignments = [
+    ...simpleCalculationAssignmentCandidates(source, options.form),
+    ...namedValueChangeAssignmentCandidates(source, options.form)
+  ];
   if (calculationAssignments.length) {
     return calculationAssignments.map((candidate, index) => ({
       ...candidate,
@@ -2823,8 +2854,8 @@ function extractDetailControlDisplayCandidates(source) {
   if (!parts) return [];
 
   const binding = snippetAround(text, parts.trigger.index, 420);
-  const recipeCandidate = detailRowControlStateCandidate(parts);
-  return [{
+  const javascript = [parts.functionText, binding].filter(Boolean).join("\n\n");
+  const base = {
     index: text.indexOf(parts.functionText),
     event: "onChange",
     scope: "control",
@@ -2832,7 +2863,50 @@ function extractDetailControlDisplayCandidates(source) {
     controlId: parts.trigger.controlId,
     branchFunctionName: "controlDisplay",
     dedupeKey: `detail-control-display:${parts.trigger.tableId}.${parts.trigger.controlId}:${parts.target.controlId}`,
-    javascript: [parts.functionText, binding].filter(Boolean).join("\n\n"),
+    javascript
+  };
+
+  if (isCompleteDetailControlDisplay(parts.functionText) && parts.hiddenControlId) {
+    const matchValue = detailControlMatchValue(parts.functionText);
+    const mappedParts = {
+      ...parts,
+      tableId: parts.trigger.tableId,
+      matchValue,
+      targetControlId: parts.target.controlId
+    };
+    const fn = buildDetailRowControlStateFunction(mappedParts);
+    const sourceRef = source.sourceRef || source.id;
+    return [{
+      ...base,
+      function: fn,
+      translationStatus: "mapped",
+      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      functionMappings: [{
+        source: "exact detail-row controlDisplay hidden/display/validate toggle",
+        target: "control onChange + MKXFORM.updateControl/updateControlStyle/setDetailFieldItemAttr",
+        basis: "deterministic-detail-row-control-state",
+        reviewRequired: false
+      }],
+      recipe: {
+        kind: "detail_row_control_state",
+        tableId: parts.trigger.tableId,
+        triggerControlId: parts.trigger.controlId,
+        targetControlId: parts.target.controlId,
+        hiddenControlId: parts.hiddenControlId,
+        matchValue
+      },
+      semanticHints: {
+        coveredCalculationRanges: coveredRangesForText(text, parts.functionText, {
+          sourceRef,
+          name: "controlDisplay"
+        })
+      }
+    }];
+  }
+
+  const recipeCandidate = detailRowControlStateCandidate(parts);
+  return [{
+    ...base,
     ...recipeCandidate,
     semanticHints: [{
       kind: "detail_row_visibility",
@@ -2919,16 +2993,71 @@ function extractWindowLoadCandidates(source, options = {}) {
     if (bodyEnd < bodyStart) continue;
     const end = findCallEnd(text, bodyEnd + 1);
     const detailDisplay = detailControlDisplayParts(text);
+    const javascript = text.slice(match.index, end).trim();
+    const base = {
+      index: match.index,
+      event: "onLoad",
+      scope: "global",
+      javascript,
+      branchSource: text,
+      branchFunctionStart: match.index + match[0].lastIndexOf("function")
+    };
+
+    if (
+      detailDisplay &&
+      isCompleteDetailControlDisplay(detailDisplay.functionText) &&
+      detailDisplay.hiddenControlId
+    ) {
+      const matchValue = detailControlMatchValue(detailDisplay.functionText);
+      const mappedParts = {
+        ...detailDisplay,
+        tableId: detailDisplay.trigger.tableId,
+        triggerControlId: detailDisplay.trigger.controlId,
+        targetControlId: detailDisplay.target.controlId,
+        matchValue
+      };
+      const fn = buildDetailRowLifecycleFunction(mappedParts);
+      const sourceRef = source.sourceRef || source.id;
+      candidates.push({
+        ...base,
+        function: fn,
+        translationStatus: "mapped",
+        coverage: { status: "translated", nativeRules: [], residuals: [] },
+        functionMappings: [{
+          source: "exact window-load detail-row controlDisplay initialization",
+          target: "global onLoad + MKXFORM.getValue/updateControl/updateControlStyle/setDetailFieldItemAttr",
+          basis: "deterministic-detail-row-lifecycle",
+          reviewRequired: false
+        }],
+        recipe: {
+          kind: "detail_row_lifecycle",
+          tableId: detailDisplay.trigger.tableId,
+          triggerControlId: detailDisplay.trigger.controlId,
+          targetControlId: detailDisplay.target.controlId,
+          hiddenControlId: detailDisplay.hiddenControlId,
+          matchValue,
+          rowLifecycle: {
+            existingRows: "on_load_initialization",
+            addedRows: "native_detail_control_event",
+            deletedRows: "native_detail_runtime",
+            legacyDomCleanup: "not_applicable_native_runtime"
+          }
+        },
+        semanticHints: {
+          coveredCalculationRanges: coveredRangesForText(text, javascript, {
+            sourceRef,
+            name: "window.load"
+          })
+        }
+      });
+      continue;
+    }
+
     const lifecycle = detailDisplay
       ? detailRowLifecycleCandidate(detailDisplay, options.formRules, source.sourceRef)
       : undefined;
     candidates.push({
-      index: match.index,
-      event: "onLoad",
-      scope: "global",
-      javascript: text.slice(match.index, end).trim(),
-      branchSource: text,
-      branchFunctionStart: match.index + match[0].lastIndexOf("function"),
+      ...base,
       ...(lifecycle || {}),
       ...(detailDisplay ? {
         semanticHints: [{

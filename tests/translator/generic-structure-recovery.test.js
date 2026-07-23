@@ -478,6 +478,48 @@ describe("generic structural form recovery", () => {
     });
   });
 
+  it("promotes leading unbound visible captions over distinct input subjects", () => {
+    const source = cleanSourceFile(inlineContentFixture);
+    const dsl = draftSourceDraft(source);
+    const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
+    const sourceRow = source.form.layout.rows.find((row) =>
+      row.cells.some((cell) =>
+        cell.references.some((reference) => reference.referenceId === "fd_bsp_province")
+      )
+    );
+    const mkRow = dsl.form.layout.mkTree.find((row) =>
+      row.children.some((cell) => cell.refIds.includes("fd_bsp_province"))
+    );
+
+    assert.equal(fields.get("fd_bsp_province")?.title, "建筑服务发生省市");
+    assert.deepEqual(fields.get("fd_bsp_province")?.sourceProps.inlineCaption, {
+      id: "bsp_province_cap",
+      content: "建筑服务发生省市",
+      relation: "leading-unbound-subject-caption"
+    });
+    assert.deepEqual(fields.get("fd_bsp_province")?.sourceProps.subjectLabel, {
+      content: "建筑服务省市",
+      relation: "unbound-control-subject-distinct-from-visible-caption"
+    });
+    assert.equal(fields.get("fd_bsp_address")?.title, "建筑服务发生所在详细地址");
+    assert.deepEqual(fields.get("fd_bsp_address")?.sourceProps.subjectLabel, {
+      content: "建筑服务详细地址",
+      relation: "unbound-control-subject-distinct-from-visible-caption"
+    });
+    assert.equal(fields.has("bsp_province_cap"), false);
+    assert.equal(fields.has("bsp_address_cap"), false);
+    assert.equal(fields.get("fd_bsp_amount")?.title, "Amount subject");
+    assert.equal(fields.get("bsp_yen_unit")?.props?.content, "¥");
+    assert.deepEqual(
+      sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      ["fd_bsp_province", "fd_bsp_address", "bsp_yen_unit", "fd_bsp_amount"]
+    );
+    assert.deepEqual(
+      mkRow?.children.flatMap((cell) => cell.refIds),
+      ["fd_bsp_province", "fd_bsp_address", "bsp_yen_unit", "fd_bsp_amount"]
+    );
+  });
+
   it("deduplicates recovered attachment candidates by natural source ID in wrapper order", () => {
     const source = cleanSourceFile(duplicateAttachmentFixture);
     const dsl = draftSourceDraft(source);
