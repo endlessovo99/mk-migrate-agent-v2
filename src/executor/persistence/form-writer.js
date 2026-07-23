@@ -854,10 +854,10 @@ function applyDefaultValueToControlProps(controlProps, field, template, spec) {
     controlProps.defaultValueType = "fixed";
     controlProps.defaultValue = cloneLiteral(literalDefault.value);
     if (Array.isArray(controlProps.options)) {
-      const selected = new Set(Array.isArray(literalDefault.value) ? literalDefault.value : [literalDefault.value]);
+      const selected = normalizedOptionValueSet(literalDefault.value);
       controlProps.options = controlProps.options.map((option) => ({
         ...option,
-        checked: selected.has(option.value)
+        checked: selected.has(normalizedOptionValue(option.value))
       }));
     }
     return;
@@ -975,7 +975,7 @@ function fieldFontExtendData(field, template, spec) {
   if (!literalDefault) return data;
 
   if (["radio", "checkbox", "select"].includes(spec.attrType)) {
-    const selected = new Set(Array.isArray(literalDefault.value) ? literalDefault.value : [literalDefault.value]);
+    const selected = normalizedOptionValueSet(literalDefault.value);
     return {
       ...data,
       passValue: false,
@@ -985,7 +985,7 @@ function fieldFontExtendData(field, template, spec) {
       options: (field.props?.options || []).map((option) => ({
         label: option.label ?? option.text ?? option.value,
         value: option.value ?? option.label ?? option.text,
-        checked: selected.has(option.value ?? option.label ?? option.text)
+        checked: selected.has(normalizedOptionValue(option.value ?? option.label ?? option.text))
       }))
     };
   }
@@ -1001,6 +1001,15 @@ function fieldFontExtendData(field, template, spec) {
   }
 
   return data;
+}
+
+function normalizedOptionValueSet(value) {
+  const values = Array.isArray(value) ? value : [value];
+  return new Set(values.map(normalizedOptionValue));
+}
+
+function normalizedOptionValue(value) {
+  return typeof value === "number" && Number.isFinite(value) ? String(value) : value;
 }
 
 function normalizeLiteralDefault(value) {
