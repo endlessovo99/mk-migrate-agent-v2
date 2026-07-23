@@ -14,6 +14,11 @@ import {
 } from "./detail-auth.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
+import {
+  canRenderEvalConditionFormula,
+  conditionAstUsesFieldSum,
+  renderEvalConditionFormula
+} from "./condition-eval-formula.js";
 import { projectSubProcessWorkflow } from "../../dsl/subprocess.js";
 import { buildNativeSubProcessFields } from "./subprocess-writer.js";
 
@@ -816,6 +821,8 @@ function buildEdgeElement(edge, index, branchRoute) {
   if (branchRoute) {
     const hasFormulaConfig = Boolean(branchRoute.formulaConfig);
     const isScriptFormula = branchRoute.formulaConfig?.type === "Script";
+    const isEvalFormula = branchRoute.formulaConfig?.type === "Eval" &&
+      branchRoute.formulaConfig?.vo?.mode === "formula";
     const ruleText = branchRoute.manual
       ? (displayText || branchRoute.resultCode || branchRoute.lineName || edge.name || "")
       : (displayText || branchRoute.resultCode || "");
@@ -825,7 +832,7 @@ function buildEdgeElement(edge, index, branchRoute) {
     element.priority = branchRoute.priority;
     element.defaultTrend = branchRoute.defaultTrend;
     element.language = { nameCn: edge.name || "" };
-    // Auto conditionBranch outlets must persist Batch JSON with formulaType=formula.
+    // Auto conditionBranch outlets must persist Batch/Eval/Script JSON with formulaType=formula.
     // Never fall back to formulaType=rule for non-manual branches — that corrupts readback.
     if (branchRoute.manualBranch) {
       element.formulaName = ruleText;
@@ -835,7 +842,9 @@ function buildEdgeElement(edge, index, branchRoute) {
       element.formulaType = hasFormulaConfig ? "formula" : rulePayload ? "rule" : "formula";
       element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : rulePayload;
     } else {
-      element.formulaName = isScriptFormula ? branchRoute.formulaConfig.vo?.content || "" : "";
+      element.formulaName = (isScriptFormula || isEvalFormula)
+        ? branchRoute.formulaConfig.vo?.content || ""
+        : "";
       element.formulaType = "formula";
       element.formula = hasFormulaConfig ? JSON.stringify(branchRoute.formulaConfig) : "";
     }
@@ -931,13 +940,17 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = [], nodeByI
       lineName,
       priority: parseInteger(edge.priority || edge.attributes?.priority, index + 1),
       formula: formulaConfig || resultCode || "",
-      formulaName: formulaConfig?.type === "Script"
+      formulaName: formulaConfig?.type === "Script" || isEvalFormulaConfig(formulaConfig)
         ? formulaConfig.vo?.content || ""
         : formulaConfig
           ? ""
           : edge.condition?.displayText || edge.displayCondition || resultCode || "",
       formulaType: "formula",
-      mode: formulaConfig?.type === "Script" ? "script" : "simple",
+      mode: formulaConfig?.type === "Script"
+        ? "script"
+        : isEvalFormulaConfig(formulaConfig)
+          ? "formula"
+          : "simple",
       defaultTrend: false,
       type: "formulas"
     };
@@ -1162,6 +1175,10 @@ function branchFieldForNode(node, context) {
   return undefined;
 }
 
+function isEvalFormulaConfig(formulaConfig) {
+  return formulaConfig?.type === "Eval" && formulaConfig?.vo?.mode === "formula";
+}
+
 function buildFormulaDesignerConfig(edge, context) {
   const parsedAst = parseConditionExpression(edgeConditionText(edge));
   if (!parsedAst) return undefined;
@@ -1169,6 +1186,12 @@ function buildFormulaDesignerConfig(edge, context) {
   const templateId = context.templateId || "";
   const rootKey = formulaVariableKey(edge.id, "ROOT");
   if (!templateId) return undefined;
+
+  // Field sums cannot be represented faithfully in NewOA simple-rule RULE metadata
+  // (fdVarValue collapses to the left field). Emit formula-designer Eval instead.
+  if (conditionAstUsesFieldSum(parsedAst) && canRenderEvalConditionFormula(parsedAst)) {
+    return buildEvalFormulaDesignerConfig(parsedAst, context);
+  }
 
   const sourceTerms = collectConditionTerms(parsedAst);
   const terms = sourceTerms.map((term, index) => {
@@ -1277,6 +1300,24 @@ function resolveConditionField(fieldId, context) {
     };
   }
   return undefined;
+}
+
+function buildEvalFormulaDesignerConfig(parsedAst, context) {
+  const parts = renderEvalConditionFormula(parsedAst, {
+    templateId: context.templateId,
+    resolveField(fieldId) {
+      return resolveConditionField(fieldId, context);
+    }
+  });
+  if (!parts) return undefined;
+  return {
+    type: "Eval",
+    script: parts.script,
+    vo: {
+      mode: "formula",
+      content: parts.content
+    }
+  };
 }
 
 function buildFieldSumCompareTerm(term, options) {

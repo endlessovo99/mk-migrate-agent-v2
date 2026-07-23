@@ -80,16 +80,19 @@ describe("workflow current-native readback", () => {
     );
   });
 
-  it("rejects valid Batch shapes whose field-sum or constant semantics changed", () => {
-    for (const dsl of [fieldSumBranchDsl(), constantFalseBranchDsl()]) {
-      const healthy = persistAndVerify(dsl);
-      assert.equal(healthy.readback.ok, true, JSON.stringify(healthy.readback.diagnostics));
-
-      const mutated = persistAndVerify(dsl, {
-        mutate(template) {
-          const content = workflowContent(template);
-          const branchEdge = edge(content, "L541");
-          const formula = JSON.parse(branchEdge.formula);
+  it("rejects valid native shapes whose field-sum or constant semantics changed", () => {
+    const cases = [
+      {
+        // Field sums persist as Eval formula scripts; a script collapsed to the
+        // left field alone is the exact NewOA corruption this readback guards.
+        dsl: fieldSumBranchDsl(),
+        mutateFormula(formula) {
+          formula.script = "${data.template-id-fd_cost_a} < 300000";
+        }
+      },
+      {
+        dsl: constantFalseBranchDsl(),
+        mutateFormula(formula) {
           formula.result.value = "true";
           formula.vars = [];
           formula.vo = {
@@ -97,6 +100,20 @@ describe("workflow current-native readback", () => {
             modeType: "simpleRule",
             data: { key: "ROOT", fdKey: "L541_ROOT", leavel: "1", fdList: [] }
           };
+        }
+      }
+    ];
+
+    for (const testCase of cases) {
+      const healthy = persistAndVerify(testCase.dsl);
+      assert.equal(healthy.readback.ok, true, JSON.stringify(healthy.readback.diagnostics));
+
+      const mutated = persistAndVerify(testCase.dsl, {
+        mutate(template) {
+          const content = workflowContent(template);
+          const branchEdge = edge(content, "L541");
+          const formula = JSON.parse(branchEdge.formula);
+          testCase.mutateFormula(formula);
           branchEdge.formula = JSON.stringify(formula);
           persistWorkflowContent(template, content);
           return template;

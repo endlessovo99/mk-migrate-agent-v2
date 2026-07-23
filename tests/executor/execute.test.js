@@ -2233,18 +2233,28 @@ describe("executeDsl", () => {
 
     assert.equal(high.formulaType, "formula");
     assert.equal(low.formulaType, "formula");
-    assert.equal(highRoute.formula.type, "Batch");
-    assert.equal(lowRoute.formula.type, "Batch");
+    // Field sums cannot survive the Batch simple-rule designer (fdVarValue
+    // collapses to the left field), so these outlets persist Eval formulas.
+    assert.equal(highRoute.formula.type, "Eval");
+    assert.equal(lowRoute.formula.type, "Eval");
+    assert.equal(highRoute.formula.vo.mode, "formula");
+    assert.equal(lowRoute.formula.vo.mode, "formula");
     assert.equal(
-      highRoute.formula.vars.some((item) => item.value === "(${data.template-id-fd_cost_a} + ${data.template-id-fd_cost_b}) < \"300000\""),
-      true,
-      JSON.stringify(highRoute.formula.vars)
+      highRoute.formula.script,
+      "${data.template-id-fd_total} < 1000000 && ${data.template-id-fd_khfl} == 3 && ${data.template-id-fd_cost_a} + ${data.template-id-fd_cost_b} < 300000"
     );
     assert.equal(
-      lowRoute.formula.vars.some((item) => item.value === "(${data.template-id-fd_cost_a} + ${data.template-id-fd_cost_b}) == \"0\""),
-      true,
-      JSON.stringify(lowRoute.formula.vars)
+      lowRoute.formula.script,
+      "${data.template-id-fd_cost_a} + ${data.template-id-fd_cost_b} == 0 && ${data.template-id-fd_total} < 200000 && ${data.template-id-fd_khfl} == 1"
     );
+    assert.equal(
+      lowRoute.formula.vo.content,
+      "$内置表单.本次预投外采成本$ + $内置表单.历次预投外采成本$ == 0 && $内置表单.累计预投成本$ < 200000 && $内置表单.客户分类$ == 1"
+    );
+    assert.equal(low.formulaName, lowRoute.formula.vo.content);
+    assert.equal(lowRoute.mode, "formula");
+    assert.equal(lowRoute.formula.vars, undefined);
+    assert.equal(lowRoute.formula.result, undefined);
     assert.equal(
       verification.diagnostics.some((item) => item.code === "readback.workflow.edge_condition_native_corrupt"),
       false,
@@ -2261,12 +2271,10 @@ describe("executeDsl", () => {
     const negatedContent = buildWorkflowContent(workflow, { templateId: "template-id", form });
     const negatedBranch = negatedContent.elements.find((element) => element.id === "N410");
     const negatedRoute = JSON.parse(negatedBranch.conditionValue).formulas.find((route) => route.lineId === "L541");
+    assert.equal(negatedRoute.formula.type, "Eval");
     assert.equal(
-      negatedRoute.formula.vars.some((item) =>
-        item.value === "(${data.template-id-fd_cost_a} + ${data.template-id-fd_cost_b}) >= \"300000\""
-      ),
-      true,
-      JSON.stringify(negatedRoute.formula.vars)
+      negatedRoute.formula.script,
+      "${data.template-id-fd_cost_a} + ${data.template-id-fd_cost_b} >= 300000"
     );
   });
 

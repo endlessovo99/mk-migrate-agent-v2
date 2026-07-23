@@ -8,8 +8,9 @@ import { prepareSample, xformConfig } from "../helpers/persistence.js";
 
 const fixtureDir = join(dirname(fileURLToPath(import.meta.url)), "../fixtures/executor/persistence");
 
-describe("native Batch condition evidence", () => {
-  it("loads an independently authored Batch condition workflow", () => {
+describe("native condition formula evidence", () => {
+  // Field sums persist as Eval formula scripts; constant branches stay Batch.
+  it("loads an independently authored native condition workflow", () => {
     const prepared = prepareSample(nativeBatchConditionDsl());
     const template = JSON.parse(readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8"));
     const workflow = JSON.parse(readFileSync(join(fixtureDir, "batch-conditions-native-workflow.json"), "utf8"));

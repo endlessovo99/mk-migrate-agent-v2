@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { runRouteCase } from "./run-route-case.js";
 
 describe("conditional formula Route case", { concurrency: false }, () => {
-  it("preserves source formulas and reads every automatic branch as a native Batch formula", async () => {
+  it("preserves source formulas and reads every automatic branch as a native formula", async () => {
     const result = await runRouteCase("conditional-detail-success");
     const dslEdges = new Map(result.dsl.workflow.edges.map((edge) => [edge.id, edge]));
 
@@ -73,8 +73,9 @@ describe("conditional formula Route case", { concurrency: false }, () => {
       functionIds: ["global.isEmpty"],
       orgIds: []
     });
+    // Field-sum comparisons persist as formula-designer Eval scripts.
     assert.deepEqual(readbackEdges.get("L9")?.condition, {
-      nativeKind: "batch_formula",
+      nativeKind: "eval_formula",
       nativeStatus: "ok",
       functionIds: [],
       orgIds: []

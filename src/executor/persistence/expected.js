@@ -26,6 +26,11 @@ import { persistedFieldLabel } from "./field-labels.js";
 import { isAddressField } from "../condition-org-resolver.js";
 import { collectConditionTerms, createConditionExpressionParser } from "./condition-expression.js";
 import {
+  canRenderEvalConditionFormula,
+  conditionAstUsesFieldSum,
+  renderEvalConditionFormula
+} from "./condition-eval-formula.js";
+import {
   SCRIPT_SINGLETON_GLOBAL_EVENTS,
   compileSetFieldAttrRowMarkerTargets
 } from "../../dsl/scripts.js";
@@ -35,6 +40,11 @@ import { normalizeRuleConditionText } from "./condition-rule.js";
 const parseExpectedContextConditionExpression = createConditionExpressionParser({
   parseTerm: parseExpectedContextConditionTerm,
   negateTerm: negateExpectedContextConditionTerm
+});
+
+const parseExpectedEvalConditionExpression = createConditionExpressionParser({
+  parseTerm: parseExpectedEvalConditionTerm,
+  negateTerm: negateExpectedEvalConditionTerm
 });
 
 export function buildExpectedInvariants(dsl, envelope) {
@@ -1145,9 +1155,11 @@ function summarizeCondition(edge, conditionBranch, context = {}) {
   const nativeKind = conditionBranch
     ? scriptSemantics
       ? "script_formula"
-      : nativeSemantics || sharedIsTautologyCondition(sourceText)
-        ? "batch_formula"
-        : undefined
+      : nativeSemantics?.recipe === "eval_formula"
+        ? "eval_formula"
+        : nativeSemantics || sharedIsTautologyCondition(sourceText)
+          ? "batch_formula"
+          : undefined
     : "rule";
   return {
     sourceText: normalizeScalar(sourceText),
@@ -1179,6 +1191,10 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
     return { resultShape: "false", varCount: 0 };
   }
 
+  // Field sums are written as formula-designer Eval scripts, never Batch RULEs.
+  const evalSemantics = expectedEvalConditionSemantics(sourceText, context);
+  if (evalSemantics) return evalSemantics;
+
   const parsedAst = parseExpectedContextConditionExpression(sourceText);
   if (parsedAst) {
     return expectedContextConditionSemantics(parsedAst, context);
@@ -1186,23 +1202,6 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
 
   const negated = unwrapExpectedNegation(compact);
   const text = negated.text;
-  const fieldSum = text.match(
-    /^\(?\$([^$]+)\$\+\$([^$]+)\$\)?(>=|<=|>|<|==|!=)(-?\d+(?:\.\d+)?)$/
-  );
-  if (fieldSum) {
-    if (!expectedConditionFieldExists(context, fieldSum[1]) || !expectedConditionFieldExists(context, fieldSum[2])) {
-      return undefined;
-    }
-    const leftRef = expectedFormulaFieldRef(context.templateId, fieldSum[1]);
-    const rightRef = expectedFormulaFieldRef(context.templateId, fieldSum[2]);
-    const symbol = negated.negated ? negateExpectedCompareSymbol(fieldSum[3]) : fieldSum[3];
-    return {
-      resultShape: "(${VAR})",
-      evalExpressions: [`(\${data.${leftRef}} + \${data.${rightRef}}) ${symbol} ${JSON.stringify(fieldSum[4])}`],
-      ruleSymbols: [symbol]
-    };
-  }
-
   const orgFdNo = text.match(/^\$([^$]+)\$\.fdNo\.equals\(["']([^"']+)["']\)$/i);
   if (orgFdNo) {
     if (!expectedConditionFieldExists(context, orgFdNo[1])) return undefined;
@@ -1261,6 +1260,109 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
   }
 
   return undefined;
+}
+
+function expectedEvalConditionSemantics(sourceText, context = {}) {
+  if (!context.templateId) return undefined;
+  const ast = parseExpectedEvalConditionExpression(sourceText);
+  if (!ast || !conditionAstUsesFieldSum(ast) || !canRenderEvalConditionFormula(ast)) return undefined;
+  const parts = renderEvalConditionFormula(ast, {
+    templateId: context.templateId,
+    resolveField(fieldId) {
+      return expectedEvalConditionField(context, fieldId);
+    }
+  });
+  if (!parts?.script) return undefined;
+  return { recipe: "eval_formula", script: parts.script };
+}
+
+function expectedEvalConditionField(context, fieldId) {
+  const field = expectedConditionField(context.form, fieldId);
+  if (field) return field;
+  const semantic = conditionContextSemantic(fieldId);
+  if (semantic?.source === "creatorDept" && semantic.property === "fdName") {
+    return { id: "fdCreatorDept.fdName", title: "创建者部门名称" };
+  }
+  return undefined;
+}
+
+// Mirrors the writer's parseSimpleCondition for the term shapes the Eval
+// renderer supports (field sums plus plain comparisons). Everything else
+// delegates to the context parser so contains/equals idioms keep parsing;
+// non-renderable terms make canRenderEvalConditionFormula reject the AST.
+function parseExpectedEvalConditionTerm(value) {
+  const text = String(value || "").trim();
+
+  const fieldSumCompare = text.match(
+    /^\(\s*\$([^$]+)\$\s*\+\s*\$([^$]+)\$\s*\)\s*(>=|<=|>|<|==|!=)\s*(-?\d+(?:\.\d+)?)$/
+  ) || text.match(
+    /^\$([^$]+)\$\s*\+\s*\$([^$]+)\$\s*(>=|<=|>|<|==|!=)\s*(-?\d+(?:\.\d+)?)$/
+  );
+  if (fieldSumCompare) {
+    const leftField = fieldSumCompare[1].trim();
+    const rightField = fieldSumCompare[2].trim();
+    return {
+      field: leftField,
+      fields: [leftField, rightField],
+      value: fieldSumCompare[4],
+      symbol: fieldSumCompare[3],
+      expressionType: "fieldSumCompare",
+      operator: "+"
+    };
+  }
+
+  const fieldCompareNumber = text.match(/^\$([^$]+)\$\s*(>=|<=|>|<)\s*(-?\d+(?:\.\d+)?)$/);
+  if (fieldCompareNumber) {
+    return {
+      field: fieldCompareNumber[1].trim(),
+      value: fieldCompareNumber[3],
+      symbol: fieldCompareNumber[2],
+      expressionType: fieldCompareNumber[2]
+    };
+  }
+
+  const valueCompareNumber = text.match(/^(-?\d+(?:\.\d+)?)\s*(>=|<=|>|<)\s*\$([^$]+)\$$/);
+  if (valueCompareNumber) {
+    const symbol = flipExpectedCompareSymbol(valueCompareNumber[2]);
+    return {
+      value: valueCompareNumber[1],
+      field: valueCompareNumber[3].trim(),
+      symbol,
+      expressionType: symbol
+    };
+  }
+
+  const fieldNotEquals = text.match(/^\$([^$]+)\$\s*!={1,2}\s*["']([^"']*)["']$/) ||
+    text.match(/^\$([^$]+)\$\s*!={1,2}\s*(-?\d+(?:\.\d+)?)$/);
+  if (fieldNotEquals) {
+    return {
+      field: fieldNotEquals[1].trim(),
+      value: fieldNotEquals[2],
+      symbol: "!=",
+      expressionType: "!="
+    };
+  }
+
+  return parseExpectedContextConditionTerm(text);
+}
+
+function negateExpectedEvalConditionTerm(term) {
+  if (term.expressionType === "fieldSumCompare") {
+    return { ...term, symbol: negateExpectedCompareSymbol(term.symbol) };
+  }
+  if (["==", "!=", ">", ">=", "<", "<="].includes(term.symbol)) {
+    const symbol = negateExpectedCompareSymbol(term.symbol);
+    return { ...term, symbol, expressionType: symbol };
+  }
+  return negateExpectedContextConditionTerm(term);
+}
+
+function flipExpectedCompareSymbol(symbol) {
+  if (symbol === ">") return "<";
+  if (symbol === "<") return ">";
+  if (symbol === ">=") return "<=";
+  if (symbol === "<=") return ">=";
+  return symbol;
 }
 
 function expectedContextConditionSemantics(ast, context) {

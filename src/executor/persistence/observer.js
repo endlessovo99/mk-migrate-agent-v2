@@ -1516,6 +1516,36 @@ function observeEdgeCondition(edge, autoConditionBranch = false) {
     });
   }
 
+  // Formula-designer Eval scripts (field-sum comparisons). These are valid
+  // native formulas and must not fall through to the Batch shape validator.
+  if (parsedFormula?.type === "Eval" && parsedFormula?.vo?.mode === "formula") {
+    if (autoConditionBranch && edge?.formulaType !== "formula") {
+      return withConditionProvenance(edge, {
+        nativeKind: "eval_formula",
+        nativeStatus: "corrupt",
+        reason: "condition_branch_formula_type",
+        hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+      });
+    }
+    const script = normalizeScalar(parsedFormula.script || "");
+    if (!script) {
+      return withConditionProvenance(edge, {
+        nativeKind: "eval_formula",
+        nativeStatus: "corrupt",
+        reason: "missing_script",
+        hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+      });
+    }
+    return withConditionProvenance(edge, {
+      nativeKind: "eval_formula",
+      nativeStatus: "ok",
+      recipe: "eval_formula",
+      script,
+      formulaDigest: digestText(normalizeScalar(trimmedFormula)),
+      hasForbiddenLiteral: hasForbiddenConditionLiteral(trimmedFormula)
+    });
+  }
+
   const looksLikeBatch = autoConditionBranch ||
     edge?.formulaType === "formula" ||
     trimmedFormula.startsWith("{") ||

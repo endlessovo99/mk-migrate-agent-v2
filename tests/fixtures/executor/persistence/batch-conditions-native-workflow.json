@@ -37,7 +37,8 @@
       "sourceRef": "N2",
       "targetRef": "N3",
       "formulaType": "formula",
-      "formula": "{\"result\":{\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"(${data.$VAR.L2_amount_sum})\"},\"type\":\"Batch\",\"vars\":[{\"key\":\"L2_amount_sum\",\"resultType\":{\"type\":\"boolean\"},\"type\":\"Eval\",\"value\":\"(${data.template-id-fd_subject} + ${data.template-id-fd_amount}) < \\\"300000\\\"\"}],\"vo\":{\"mode\":\"simple\",\"modeType\":\"simpleRule\",\"data\":{\"key\":\"ROOT\",\"fdKey\":\"L2_ROOT\",\"leavel\":\"1\",\"fdList\":[{\"fdKey\":\"L2_group\",\"fdType\":\"OR\",\"metaType\":\"GROUP\",\"fdList\":[{\"fdKey\":\"L2_amount_sum\",\"metaType\":\"RULE\",\"fdVarValue\":\"template-id-fd_subject\",\"fdDataType\":\"number\",\"fdLabel\":\"$主题$+$金额$\",\"fdSymbol\":\"<\",\"fdValue\":300000}]}]}}}"
+      "formulaName": "$内置表单.主题$ + $内置表单.金额$ < 300000",
+      "formula": "{\"type\":\"Eval\",\"script\":\"${data.template-id-fd_subject} + ${data.template-id-fd_amount} < 300000\",\"vo\":{\"mode\":\"formula\",\"content\":\"$内置表单.主题$ + $内置表单.金额$ < 300000\"}}"
     },
     {
       "id": "L3",
