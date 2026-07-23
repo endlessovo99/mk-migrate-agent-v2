@@ -27,11 +27,13 @@ describe("radio default values Route case", () => {
         [expectedValue],
         fieldId
       );
+      assert.equal(props.defaultValue, expectedValue, `${fieldId}.defaultValue`);
       assert.deepEqual(
         fontData.options.filter((option) => option.checked).map((option) => option.value),
         [expectedValue],
         `${fieldId}.font`
       );
+      assert.equal(fontData.defaultValue, expectedValue, `${fieldId}.font.defaultValue`);
     }
   });
 });

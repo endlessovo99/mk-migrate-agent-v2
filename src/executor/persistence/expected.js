@@ -36,6 +36,7 @@ import {
 } from "../../dsl/scripts.js";
 import { singletonDispatcherContract } from "./script-dispatcher-contract.js";
 import { normalizeRuleConditionText } from "./condition-rule.js";
+import { isOptionComponent, normalizeOptionDefaultValue } from "./option-defaults.js";
 
 const parseExpectedContextConditionExpression = createConditionExpressionParser({
   parseTerm: parseExpectedContextConditionTerm,
@@ -319,7 +320,15 @@ function executableProps(field = {}, form = {}) {
     props.precision = field.props.precision;
   }
   if (componentSupportsProp(field.componentId, "defaultValue") && field.props?.defaultValue !== undefined) {
-    props.defaultValue = cloneJson(field.props.defaultValue);
+    const defaultValue = field.props.defaultValue;
+    props.defaultValue = cloneJson(
+      isOptionComponent(field.componentId)
+        ? {
+            ...defaultValue,
+            value: normalizeOptionDefaultValue(defaultValue.value, field.props.options || [])
+          }
+        : defaultValue
+    );
   }
   if (componentSupportsProp(field.componentId, "calculation") && field.props?.calculation !== undefined) {
     props.calculation = expectedCalculation(field.props.calculation, form);

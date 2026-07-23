@@ -28,6 +28,11 @@ import {
   findScriptFunctionBody,
   hasEquivalentLeadingViewStatusGuard
 } from "./view-status-guard.js";
+import {
+  normalizeOptionDefaultValue,
+  normalizeOptionValue,
+  optionValueSet
+} from "./option-defaults.js";
 
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
@@ -851,13 +856,14 @@ function applyDefaultValueToControlProps(controlProps, field, template, spec) {
   if (!literalDefault) return;
 
   if (["radio", "checkbox", "select"].includes(spec.attrType)) {
+    const defaultValue = normalizeOptionDefaultValue(literalDefault.value, controlProps.options);
     controlProps.defaultValueType = "fixed";
-    controlProps.defaultValue = cloneLiteral(literalDefault.value);
+    controlProps.defaultValue = cloneLiteral(defaultValue);
     if (Array.isArray(controlProps.options)) {
-      const selected = normalizedOptionValueSet(literalDefault.value);
+      const selected = optionValueSet(defaultValue);
       controlProps.options = controlProps.options.map((option) => ({
         ...option,
-        checked: selected.has(normalizedOptionValue(option.value))
+        checked: selected.has(normalizeOptionValue(option.value))
       }));
     }
     return;
@@ -975,17 +981,19 @@ function fieldFontExtendData(field, template, spec) {
   if (!literalDefault) return data;
 
   if (["radio", "checkbox", "select"].includes(spec.attrType)) {
-    const selected = normalizedOptionValueSet(literalDefault.value);
+    const options = field.props?.options || [];
+    const defaultValue = normalizeOptionDefaultValue(literalDefault.value, options);
+    const selected = optionValueSet(defaultValue);
     return {
       ...data,
       passValue: false,
       trace: false,
       defaultValueType: "fixed",
-      defaultValue: cloneLiteral(literalDefault.value),
-      options: (field.props?.options || []).map((option) => ({
+      defaultValue: cloneLiteral(defaultValue),
+      options: options.map((option) => ({
         label: option.label ?? option.text ?? option.value,
         value: option.value ?? option.label ?? option.text,
-        checked: selected.has(normalizedOptionValue(option.value ?? option.label ?? option.text))
+        checked: selected.has(normalizeOptionValue(option.value ?? option.label ?? option.text))
       }))
     };
   }
@@ -1001,15 +1009,6 @@ function fieldFontExtendData(field, template, spec) {
   }
 
   return data;
-}
-
-function normalizedOptionValueSet(value) {
-  const values = Array.isArray(value) ? value : [value];
-  return new Set(values.map(normalizedOptionValue));
-}
-
-function normalizedOptionValue(value) {
-  return typeof value === "number" && Number.isFinite(value) ? String(value) : value;
 }
 
 function normalizeLiteralDefault(value) {
