@@ -31,7 +31,12 @@ describe("four blocking route capabilities", () => {
     ), true);
 
     const dependent = actionFor("dependent_select_options", "onChange");
-    assert.equal(dependent.translationStatus, "needs_review");
+    assert.equal(dependent.translationStatus, "omitted");
+    assert.equal(dependent.coverage.status, "covered");
+    assert.equal(
+      dependent.functionMappings?.some((mapping) => mapping.basis === "legacy-runtime-noop"),
+      true
+    );
     assert.equal(dependent.controlId, "fd_trigger");
     assert.equal(dependent.recipe.targetFieldId, "fd_target");
     assert.deepEqual(dependent.recipe.cases[0].options.map((option) => option.value), ["1", "2", "3"]);
@@ -82,7 +87,7 @@ describe("four blocking route capabilities", () => {
     const opportunities = prompt.context.dslDraft.scripts.actions.flatMap((action) =>
       action.reviewOpportunities?.map((item) => item.kind) || []
     );
-    assert.equal(opportunities.includes("dependent_select_options_candidate"), true);
+    assert.equal(opportunities.includes("dependent_select_options_candidate"), false);
     assert.equal(opportunities.includes("attachment_non_empty_candidate"), true);
     assert.equal(opportunities.includes("detail_row_visibility_candidate"), false);
     assert.equal(opportunities.includes("detail_row_load_initialization_candidate"), false);

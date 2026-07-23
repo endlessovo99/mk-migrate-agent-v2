@@ -16,6 +16,7 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-finance-detail-generation",
   "deterministic-grouped-detail-calculation",
   "deterministic-local-currency-helper",
+  "deterministic-multi-radio-row-helper",
   "deterministic-person-text-calculation"
 ]);
 

@@ -1042,6 +1042,7 @@ function validateScriptBranchProvenance(action, path, diagnostics, context) {
     if (
       relevantEvent &&
       !deterministicTranslation &&
+      !hasLegacyRuntimeNoopCoverage(action) &&
       (
         nonEmptyString(action.sourceActionKey) ||
         targetHasOrMayHaveBranches ||

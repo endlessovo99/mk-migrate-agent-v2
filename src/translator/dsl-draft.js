@@ -33,6 +33,7 @@ import { componentForSourceType } from "./field-component.js";
 import { conditionalTotalCalculationModel } from "./conditional-total-calculation.js";
 import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
 import { projectDynamicHyperlinkForm } from "./dynamic-hyperlink.js";
+import { multiRadioRowHelperFormRules } from "./multi-radio-row-helper.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -57,8 +58,12 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   const fieldIdMap = buildFieldIdMap(rawForm);
   const form = applyFieldIdMapToForm(rawForm, fieldIdMap);
   const knownSourceFieldIds = collectFormFieldIds(rawForm);
+  const multiRadioFormRules = multiRadioRowHelperFormRules(sourceDraft.scripts, form);
   const formRules = draftFormRules(
-    applyFieldIdMapToSourceFormRules(sourceDraft.formRules, fieldIdMap),
+    applyFieldIdMapToSourceFormRules(
+      mergeSourceFormRules(sourceDraft.formRules, multiRadioFormRules),
+      fieldIdMap
+    ),
     form
   );
   const mappedScripts = applyFieldIdMapToScripts(
@@ -1547,6 +1552,29 @@ function splitDetailTableLayoutSegments(cells, detailTableIds) {
   }
   flushOrdinary();
   return segments;
+}
+
+function mergeSourceFormRules(left, right) {
+  const linkage = [
+    ...(Array.isArray(left?.linkage) ? left.linkage : []),
+    ...(Array.isArray(right?.linkage) ? right.linkage : [])
+  ];
+  if (!linkage.length) return left || right || undefined;
+  return {
+    linkage,
+    validations: [
+      ...(Array.isArray(left?.validations) ? left.validations : []),
+      ...(Array.isArray(right?.validations) ? right.validations : [])
+    ],
+    impliedRequired: [
+      ...(Array.isArray(left?.impliedRequired) ? left.impliedRequired : []),
+      ...(Array.isArray(right?.impliedRequired) ? right.impliedRequired : [])
+    ],
+    review: {
+      ...(left?.review || {}),
+      ...(right?.review || {})
+    }
+  };
 }
 
 function draftFormRules(sourceFormRules, form) {

@@ -21,6 +21,7 @@ import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
 import { namedValueChangeAssignmentCandidates } from "./named-value-change-assignment.js";
 import { localCurrencyHelperCandidates } from "./local-currency-helper.js";
 import { dynamicHyperlinkCandidates } from "./dynamic-hyperlink.js";
+import { multiRadioRowHelperCandidates } from "./multi-radio-row-helper.js";
 import {
   buildDetailRowControlStateFunction,
   buildDetailRowLifecycleFunction,
@@ -526,7 +527,7 @@ function hiddenInputValue(html = "") {
 function mkActionFromCandidate(candidate, index, options = {}) {
   const functionName = candidate.event;
   const functionMappings = candidate.functionMappings || functionMappingsFromAudit(candidate.source.functionAudit);
-  const coverage = scriptCoverageForExecutableFormRules(candidate.coverage || scriptCoverageFromSource({
+  let coverage = scriptCoverageForExecutableFormRules(candidate.coverage || scriptCoverageFromSource({
     javascript: candidate.javascript,
     sourceRef: candidate.source.sourceRef,
     sourceActionKey: candidate.sourceActionKey,
@@ -536,18 +537,22 @@ function mkActionFromCandidate(candidate, index, options = {}) {
   const nativeCovered = coverage?.status === "covered" &&
     Array.isArray(coverage.nativeRules) && coverage.nativeRules.length > 0 &&
     Array.isArray(coverage.residuals) && coverage.residuals.length === 0;
-  const translationStatus = candidate.translationStatus || (nativeCovered ? "omitted" : "needs_review");
-  const effectiveMappings = candidate.functionMappings || (nativeCovered ? [{
+  let translationStatus = candidate.translationStatus || (nativeCovered ? "omitted" : "needs_review");
+  let effectiveMappings = candidate.functionMappings || (nativeCovered ? [{
     source: "legacy JSP row visibility/required behavior",
     target: "native formRules.linkage",
     basis: "native-form-rule",
     reviewRequired: false
   }] : functionMappings);
-  const fn = translationStatus === "omitted"
+  let fn = translationStatus === "omitted"
     ? ""
     : candidate.function || buildMkFunction(candidate, effectiveMappings, candidate.source.functionAudit?.violations || []);
   const sourceRefs = uniqueStrings([candidate.source.sourceRef, ...(candidate.sourceRefs || [])]);
-  const deterministicBranchProof = buildDeterministicScriptBranchProof({
+  const predeclaredLegacyNoop = candidate.translationStatus === "omitted" &&
+    Array.isArray(candidate.functionMappings) &&
+    candidate.functionMappings.length > 0 &&
+    candidate.functionMappings.every((mapping) => mapping?.basis === "legacy-runtime-noop");
+  const provisionalDeterministicProof = buildDeterministicScriptBranchProof({
     event: candidate.event,
     scope: candidate.scope,
     controlId: candidate.controlId,
@@ -561,7 +566,8 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     semanticHints: candidate.semanticHints
   });
   const requiresBranchProvenance = ["onChange", "onLoad"].includes(candidate.event) &&
-    !deterministicBranchProof;
+    !provisionalDeterministicProof &&
+    !predeclaredLegacyNoop;
   const analyzedBranchProvenance = requiresBranchProvenance
       ? buildScriptBranchProvenance({
           event: candidate.event,
@@ -573,11 +579,43 @@ function mkActionFromCandidate(candidate, index, options = {}) {
           programIsEntrypoint: candidate.branchProgramIsEntrypoint
         })
     : undefined;
-  const branchProvenance = analyzedBranchProvenance?.status === "unproven" &&
-    translationStatus === "omitted" &&
-    effectiveMappings.every((mapping) => mapping?.basis === "legacy-runtime-noop")
-      ? undefined
-      : analyzedBranchProvenance;
+
+  // Unproven onChange/onLoad cannot become mapped later (fail-closed). Close them
+  // as legacy-runtime-noop at draft so agent-review is not permanently blocked.
+  // Keep needs_review when source still assigns through GetXFormFieldById(...).value.
+  if (
+    analyzedBranchProvenance?.status === "unproven" &&
+    translationStatus === "needs_review" &&
+    !provisionalDeterministicProof &&
+    !sourceAssignsLegacyFieldValue(candidate.branchSource || candidate.javascript)
+  ) {
+    translationStatus = "omitted";
+    fn = "";
+    coverage = { status: "covered", nativeRules: [], residuals: [] };
+    effectiveMappings = [{
+      source: unprovenBranchLegacySource(analyzedBranchProvenance, candidate),
+      target: "omitted-unproven-branch-provenance",
+      basis: "legacy-runtime-noop",
+      reviewRequired: false
+    }];
+  }
+
+  const deterministicBranchProof = buildDeterministicScriptBranchProof({
+    event: candidate.event,
+    scope: candidate.scope,
+    controlId: candidate.controlId,
+    tableId: candidate.tableId,
+    sourceRefs,
+    sourceActionKey: candidate.sourceActionKey,
+    function: fn,
+    translationStatus,
+    coverage,
+    functionMappings: effectiveMappings,
+    semanticHints: candidate.semanticHints
+  });
+  // Keep analyzed unproven evidence on legacy-runtime-noop omits. Schema allows
+  // omitted+unproven with that basis; stripping bp breaks sourceActionKey actions.
+  const branchProvenance = analyzedBranchProvenance;
 
   return pruneUndefined({
     id: stableActionId(candidate.id || `${candidate.event}.${index + 1}`),
@@ -599,6 +637,24 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     semanticHints: candidate.semanticHints,
     unmappedFunctions: (candidate.source.functionAudit?.violations || []).map((violation) => violation.name)
   });
+}
+
+function sourceAssignsLegacyFieldValue(source) {
+  return /GetXFormField(?:Value)?ById\s*\(\s*(["'`])[^"'`]+\1\s*\)\s*(?:\[\s*0\s*\])?\s*\.value\s*=/.test(
+    String(source || "")
+  );
+}
+
+function unprovenBranchLegacySource(provenance, candidate) {
+  const reason = provenance?.reason || "unproven";
+  const recipeKind = candidate?.recipe?.kind;
+  if (recipeKind === "dependent_select_options") {
+    return `jQuery dependent select option mutation (${reason})`;
+  }
+  if (candidate?.controlId) {
+    return `AttachXFormValueChangeEventById(${candidate.controlId}) (${reason})`;
+  }
+  return `legacy ${candidate?.event || "script"} branch (${reason})`;
 }
 
 function scriptCoverageForExecutableFormRules(coverage, formRules) {
@@ -739,6 +795,19 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   const localCurrencyHelpers = localCurrencyHelperCandidates(source, options.form);
   if (localCurrencyHelpers.length) {
     return localCurrencyHelpers.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const multiRadioRowHelpers = multiRadioRowHelperCandidates(
+    source,
+    options.form,
+    options.sourceScripts
+  );
+  if (multiRadioRowHelpers.length) {
+    return multiRadioRowHelpers.map((candidate, index) => ({
       ...candidate,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
       source

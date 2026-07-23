@@ -1835,7 +1835,7 @@ function denormalizeOperator(operate) {
 }
 
 function normalizeRuleValue(value) {
-  if (Array.isArray(value)) return value.map((item) => normalizeScalar(item));
+  if (Array.isArray(value)) return value.map((item) => normalizeScalar(item)).join(",");
   return normalizeScalar(value);
 }
 

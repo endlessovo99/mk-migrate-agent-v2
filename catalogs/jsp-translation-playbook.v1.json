@@ -1,6 +1,6 @@
 {
   "id": "jsp-translation-playbook",
-  "version": "2026-07-12.v6",
+  "version": "2026-07-23.v2",
   "goal": "Guide the Agent to semantically translate legacy EKP/JSP form scripts into restricted NewOA/MK DSL script patches. Deterministic code extracts evidence only; the Agent decides whether a patch is safe.",
   "principles": [
     "Translate behavior, not source syntax. Legacy function names and regex-like shapes are evidence, not completion criteria.",
@@ -147,6 +147,28 @@
     "none": "No source behavior was identified for coverage accounting."
   },
   "fewShotExamples": [
+    {
+      "id": "multi-radio-hideall-judgemethod",
+      "sourceBehavior": "A closed template-local pair hideAll()+judgeMethod(input1,input2,input3) writes three dataOnly helper fields, resets many layout sourceMarkers, then shows one marker from multi-radio AND/OR conditions. editShow wires window load plus three AttachXFormValueChangeEventById callbacks; one callback also toggles fd_jjzlsj_row from value.indexOf. Deterministic drafting emits native formRules.linkage for the visibility/required matrix and thin mapped setValue scripts (basis deterministic-multi-radio-row-helper) for fd_*_con sync; Agent Review must not reopen those proof-bound actions or reintroduce setFieldAttr for the matrix.",
+      "safePatchShape": {
+        "function": "function onChange(value, rowNum, parentRowNum) {\n  var input1 = MKXFORM.getValue('fd_radio_qylb')\n  var input2 = value\n  var input3 = MKXFORM.getValue('fd_radio_yxlb')\n  MKXFORM.setValue('fd_qylb_con', input1)\n  MKXFORM.setValue('fd_sjlb_con', input2)\n  MKXFORM.setValue('fd_yxlb_con', input3)\n}",
+        "translationStatus": "mapped",
+        "functionMappings": [
+          {
+            "source": "multi-radio hideAll/judgeMethod helper field sync",
+            "target": "native formRules.linkage + MKXFORM.setValue",
+            "basis": "deterministic-multi-radio-row-helper",
+            "reviewRequired": false
+          }
+        ],
+        "coverage": {
+          "status": "translated",
+          "nativeRules": [],
+          "residuals": []
+        }
+      },
+      "auditGuidance": "Prefer native formRules.linkage against layout sourceMarkers for the hideAll/judgeMethod matrix. Keep only fd_*_con MKXFORM.setValue in mapped scripts. Do not emit forEach/dynamic setFieldAttr targets or reopen proof-bound deterministic-multi-radio-row-helper actions."
+    },
     {
       "id": "row-load-hidden-by-default",
       "sourceBehavior": "onLoad callback only calls common_dom_row_set_show_required_reset(\"fd_jsx_row\", false, false, false).",

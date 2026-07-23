@@ -1577,7 +1577,7 @@ describe("agent-review", () => {
     assert.deepEqual(result.dsl.scripts.actions[0].coverage.nativeRules, ["linkage.fd_amount.contains.A"]);
   });
 
-  it("accepts semantic detail-row visibility patches without treating onclick binding as residual", async () => {
+  it("maps complete detail-row controlDisplay deterministically without treating onclick binding as residual", async () => {
     const sourceJavascript = [
       "function controlDisplay(value,i){",
       "var hidden=document.getElementsByName(\"extendDataFormInfo.value(fd_detail.\"+i+\".fd_isout_val)\")[0];",
@@ -1661,79 +1661,32 @@ describe("agent-review", () => {
       }
     });
     const sourceAction = onlyDraftedScriptAction(sourceDraft);
+    assert.equal(sourceAction.translationStatus, "mapped");
+    assert.equal(sourceAction.functionMappings[0].basis, "deterministic-detail-row-control-state");
+    assert.equal(sourceAction.function.includes("MKXFORM.setDetailFieldItemAttr"), true);
+    assert.equal(sourceAction.coverage?.status, "translated");
+    assert.equal(sourceAction.coverage?.residuals?.length || 0, 0);
+
     const dslDraft = sampleDraftDsl({
       workflow: undefined,
       form,
       scripts: {
         source: "sysform-jsp",
-        actions: [{
-          ...sourceAction,
-          function: "function onChange(value, rowNum, parentRowNum) {\n  // Source JSP JavaScript:\n  // function controlDisplay(value,i){ hidden.value='true'; style.display=''; setAttribute('validate','required'); }\n  // xg.setAttribute('onclick','__xformDispatch(this.value);controlDisplay(this.value,'+i+')');\n}",
-          translationStatus: "needs_review",
-          coverage: { status: "none", nativeRules: [], residuals: [] },
-          functionMappings: []
-        }]
+        actions: [sourceAction]
       }
     });
     const prompt = buildAgentReviewPrompt(sourceDraft, dslDraft);
-    const opportunity = prompt.context.dslDraft.scripts.actions[0].reviewOpportunities[0];
-
     assert.equal(prompt.system.includes("legacy onclick/setAttribute/__xformDispatch snippets are event-binding scaffolding"), true);
-    assert.equal(opportunity.eventScaffoldingPolicy.includes("DSL action already preserves event=onChange"), true);
-    assert.equal(opportunity.targetApis.includes("MKXFORM.setDetailFieldItemAttr"), true);
 
     const result = await runAgentReview(sourceDraft, dslDraft, {
-      provider: new FakeReviewProvider(reviewResponse({
-        patches: [
-          {
-            op: "replace",
-            path: "/scripts/actions/0/function",
-            value: "function onChange(value, rowNum, parentRowNum) {\n  var selectedValue = Array.isArray(value) ? value[0] : value\n  var isReplacement = selectedValue === 'gh'\n  var targetField = '${table:fd_detail}.fd_replacement_asset'\n  var hiddenField = '${table:fd_detail}.fd_isout_val'\n  MKXFORM.updateControl(hiddenField, rowNum, isReplacement ? 'true' : '')\n  MKXFORM.updateControlStyle(targetField, rowNum, { display: isReplacement ? 'block' : 'none' })\n  MKXFORM.setDetailFieldItemAttr(targetField, rowNum, isReplacement ? 3 : 6)\n}",
-            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
-            evidence: ["Action-local controlDisplay writes hidden state, display, and validate=required for the same detail row."],
-            confidence: 0.91,
-            rationale: "Legacy onclick binding is event scaffolding because the DSL action already preserves onChange table/control boundary."
-          },
-          {
-            op: "replace",
-            path: "/scripts/actions/0/translationStatus",
-            value: "mapped",
-            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
-            evidence: ["The translated function uses only targetApi calls and preserves rowNum."],
-            confidence: 0.91,
-            rationale: "TargetApi covers the action-local hidden value, display, and required semantics."
-          },
-          {
-            op: "replace",
-            path: "/scripts/actions/0/functionMappings",
-            value: [{
-              source: "detail-row DOM hidden value/display/required behavior",
-              target: "MKXFORM.updateControl + MKXFORM.updateControlStyle + MKXFORM.setDetailFieldItemAttr",
-              basis: "semantic-translation",
-              reviewRequired: false
-            }],
-            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
-            evidence: ["targetApi catalog allows updateControl, updateControlStyle, and setDetailFieldItemAttr."],
-            confidence: 0.91,
-            rationale: "Record semantic targetApi mapping."
-          },
-          {
-            op: "replace",
-            path: "/scripts/actions/0/coverage",
-            value: { status: "translated", nativeRules: [], residuals: [] },
-            sourceRefs: ["source.form.jsp.fd_jsp.script.1"],
-            evidence: ["No residual business behavior remains after excluding legacy event-binding scaffolding."],
-            confidence: 0.91,
-            rationale: "The translated function covers action-local business behavior."
-          }
-        ]
-      }))
+      provider: new FakeReviewProvider(reviewResponse({ patches: [] }))
     });
 
     assert.equal(result.ok, true, JSON.stringify(result.report?.diagnostics || result.diagnostics));
     assert.equal(result.dsl.scripts.actions[0].translationStatus, "mapped");
     assert.equal(result.dsl.scripts.actions[0].function.includes("MKXFORM.setDetailFieldItemAttr"), true);
     assert.equal(result.dsl.scripts.actions[0].coverage.status, "translated");
+    assert.equal(result.dsl.scripts.actions[0].functionMappings[0].basis, "deterministic-detail-row-control-state");
   });
 
   it("blocks error diagnostics from the model before trusted output", async () => {
@@ -1927,7 +1880,7 @@ describe("agent-review", () => {
     assert.equal(prompt.system.includes("Pattern matching is evidence extraction only"), true);
     assert.equal(prompt.system.includes("Whole-row or whole detail-table container visibility/required state must prefer native formRules.linkage"), true);
     assert.equal(prompt.context.jspTranslationPlaybook.id, "jsp-translation-playbook");
-    assert.equal(prompt.context.jspTranslationPlaybook.version, "2026-07-12.v6");
+    assert.equal(prompt.context.jspTranslationPlaybook.version, "2026-07-23.v2");
     assert.equal(prompt.context.jspTranslationPlaybook.fewShotExamples.some((example) => example.id === "row-load-guarded-by-value"), true);
     assert.equal(prompt.context.scriptTranslationPolicy.commonDomRowPattern, undefined);
     assert.equal(prompt.context.sourceDraft.scripts.sources.some((source) => source.semanticFacts?.rowMarkers?.length), true);

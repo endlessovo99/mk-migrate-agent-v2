@@ -537,7 +537,9 @@ function conditionKey(condition) {
 
 function validCondition(condition, event) {
   if (!condition || typeof condition !== "object" || Array.isArray(condition)) return false;
-  if (!["eq", "contains", "regex-set", "truthy"].includes(condition.kind)) return false;
+  if (!["eq", "contains", "regex-set", "truthy", "lt", "lte", "gt", "gte"].includes(condition.kind)) {
+    return false;
+  }
   if (condition.kind === "regex-set") {
     if (!Array.isArray(condition.values) || !condition.values.length || condition.values.some((value) => typeof value !== "string")) {
       return false;

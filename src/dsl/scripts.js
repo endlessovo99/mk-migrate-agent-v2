@@ -480,10 +480,13 @@ export function compileSetFieldAttrRowMarkerTargets(functionText = "", form = {}
     const calls = controlIds.map((controlId) => (
       `MKXFORM.setFieldAttr(${JSON.stringify(controlId)}, ${attribute})`
     ));
+    // Prefer statement-safe joins over `(a, b)`: a parenthesized comma expression
+    // after a newline without semicolon is parsed as a call (ASI), which aborts the
+    // whole onLoad/onChange and drops row visibility side effects.
     replacements.push({
       start: node.start,
       end: node.end,
-      value: calls.length === 1 ? calls[0] : `(${calls.join(", ")})`
+      value: calls.length === 1 ? calls[0] : calls.join("; ")
     });
   });
 

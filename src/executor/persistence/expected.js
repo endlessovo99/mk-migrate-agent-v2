@@ -338,10 +338,13 @@ function executableProps(field = {}, form = {}) {
 function expectedCalculation(calculation, form = {}) {
   const next = cloneJson(calculation);
   if (next?.kind !== "formula") return next;
-  const display = String(next.displayExpression || "").trim();
-  if (!display) return next;
+  // NewOA persists formula display text from control titles. Derive expected
+  // displayExpression from the executable field-id expression so source
+  // expression_name short labels cannot drift from readback titles.
+  const expression = String(next.expression || "").trim();
+  if (!expression) return next;
   const titles = formulaDisplayTitleIndex(form);
-  next.displayExpression = display.replace(/\$([A-Za-z_][\w]*)\$/gu, (_, fieldId) => (
+  next.displayExpression = expression.replace(/\$([A-Za-z_][\w]*)\$/gu, (_, fieldId) => (
     `$${titles.get(fieldId) || fieldId}$`
   ));
   return next;
@@ -560,7 +563,8 @@ function invertClauses(clauses) {
 }
 
 function normalizeRuleValue(value) {
-  if (Array.isArray(value)) return value.map((item) => normalizeScalar(item));
+  // Persistable ordinary conditions store multi-value `in` as a comma string.
+  if (Array.isArray(value)) return value.map((item) => normalizeScalar(item)).join(",");
   return normalizeScalar(value);
 }
 

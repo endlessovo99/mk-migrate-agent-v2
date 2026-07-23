@@ -270,6 +270,85 @@ describe("action-level branch operand provenance", () => {
     }
   });
 
+  it("keeps direct event:value reads proven after an alias is passed into an unknown helper", () => {
+    const source = [
+      "function onChange(value, domElement) {",
+      "  var current2 = value;",
+      "  judgeMethod(current2);",
+      "  if (value.indexOf(\"jjzlsj\") >= 0) {",
+      "    MKXFORM.setFieldAttr(\"fd_jjzlsj_row\", 5);",
+      "  }",
+      "}"
+    ].join("\n");
+    const observed = analyzeScriptBranchConditions(source, { event: "onChange" });
+    assert.equal(observed.status, "proven", JSON.stringify(observed));
+    assert.deepEqual(observed.conditions, [{
+      kind: "contains",
+      value: "jjzlsj",
+      origin: "event:value",
+      transforms: [],
+      predicate: "indexOf"
+    }]);
+  });
+
+  it("still fails closed when the event parameter itself escapes or a poisoned alias is read", () => {
+    const directEscape = [
+      "function onChange(value) {",
+      "  judgeMethod(value);",
+      "  if (value.indexOf(\"jjzlsj\") >= 0) {",
+      "    MKXFORM.setFieldAttr(\"fd_jjzlsj_row\", 5);",
+      "  }",
+      "}"
+    ].join("\n");
+    const aliasRead = [
+      "function onChange(value) {",
+      "  var current2 = value;",
+      "  judgeMethod(current2);",
+      "  if (current2.indexOf(\"jjzlsj\") >= 0) {",
+      "    MKXFORM.setFieldAttr(\"fd_jjzlsj_row\", 5);",
+      "  }",
+      "}"
+    ].join("\n");
+    assert.equal(
+      analyzeScriptBranchConditions(directEscape, { event: "onChange" }).status,
+      "unproven"
+    );
+    assert.equal(
+      analyzeScriptBranchConditions(aliasRead, { event: "onChange" }).status,
+      "unproven"
+    );
+  });
+
+  it("proves numeric relational comparisons on event:value including Number() wrappers", () => {
+    const direct = analyzeScriptBranchConditions(
+      "function onChange(value) { if (value < 0) { MKXFORM.modal({ title: 't', content: 'c' }); } }",
+      { event: "onChange" }
+    );
+    assert.equal(direct.status, "proven", JSON.stringify(direct));
+    assert.deepEqual(direct.conditions, [{
+      kind: "lt",
+      value: "0",
+      origin: "event:value",
+      transforms: [],
+      predicate: "numeric-<"
+    }]);
+
+    const wrapped = analyzeScriptBranchConditions([
+      "function onChange(value) {",
+      "  var num = Number(value);",
+      "  if (num <= 0) { MKXFORM.modal({ title: 't', content: 'c' }); }",
+      "}"
+    ].join("\n"), { event: "onChange" });
+    assert.equal(wrapped.status, "proven", JSON.stringify(wrapped));
+    assert.deepEqual(wrapped.conditions, [{
+      kind: "lte",
+      value: "0",
+      origin: "event:value",
+      transforms: ["number"],
+      predicate: "numeric-<="
+    }]);
+  });
+
   it("rejects shadowed field readers and built-in derivation helpers", () => {
     const scripts = [
       "function onLoad(MKXFORM) { if (MKXFORM.getValue('fd_subject') === 'A') {} }",

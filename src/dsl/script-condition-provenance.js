@@ -61,6 +61,10 @@ export function buildConditionOperandResolver(source, options = {}) {
     if (stringWrapper && bindings.isUnshadowedGlobal("String", beforeIndex)) {
       return appendTransform(resolveTrace(stringWrapper[1], context, seen), "string");
     }
+    const numberWrapper = value.match(/^Number\(\s*([\s\S]+)\s*\)$/);
+    if (numberWrapper && bindings.isUnshadowedGlobal("Number", beforeIndex)) {
+      return appendTransform(resolveTrace(numberWrapper[1], context, seen), "number");
+    }
     const defaulted = value.match(/^([A-Za-z_$][\w$]*)\s*\|\|\s*(["'`])\2$/);
     if (defaulted) return appendTransform(resolveTrace(defaulted[1], context, seen), "default-empty");
     const normalizedArray = value.match(
@@ -235,7 +239,49 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
         : "loose-numeric-equality"
     };
   }
+
+  const relational = text.match(/^([\s\S]+?)\s*(<=|>=|<|>)\s*(-?(?:\d+(?:\.\d*)?|\.\d+))$/);
+  const relationalTrace = relational
+    ? operandTrace(resolveOperand, relational[1], context)
+    : undefined;
+  if (relationalTrace?.origin) {
+    return {
+      kind: relationalKind(relational[2]),
+      value: relational[3],
+      operand: relationalTrace.origin,
+      transforms: relationalTrace.transforms,
+      predicate: `numeric-${relational[2]}`
+    };
+  }
+
+  const reversedRelational = text.match(/^(-?(?:\d+(?:\.\d*)?|\.\d+))\s*(<=|>=|<|>)\s*([\s\S]+)$/);
+  const reversedRelationalTrace = reversedRelational
+    ? operandTrace(resolveOperand, reversedRelational[3], context)
+    : undefined;
+  if (reversedRelationalTrace?.origin) {
+    return {
+      kind: reverseRelationalKind(reversedRelational[2]),
+      value: reversedRelational[1],
+      operand: reversedRelationalTrace.origin,
+      transforms: reversedRelationalTrace.transforms,
+      predicate: `numeric-reversed-${reversedRelational[2]}`
+    };
+  }
   return undefined;
+}
+
+function relationalKind(operator) {
+  if (operator === "<") return "lt";
+  if (operator === "<=") return "lte";
+  if (operator === ">") return "gt";
+  return "gte";
+}
+
+function reverseRelationalKind(operator) {
+  if (operator === "<") return "gt";
+  if (operator === "<=") return "gte";
+  if (operator === ">") return "lt";
+  return "lte";
 }
 
 function operandTrace(resolveOperand, expression, context) {

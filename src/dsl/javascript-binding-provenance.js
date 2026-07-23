@@ -224,7 +224,11 @@ export function buildJavaScriptBindingModel(source, {
     binding === eventBinding &&
     !binding.ambiguous &&
     binding.declarations.length === 0 &&
-    !hasAffectingEffect(binding, useScope, binding.scope.start, beforeIndex)
+    // Direct event-parameter reads stay stable when only an alias was passed into an
+    // unknown helper. Alias mutation/write and escapes of the parameter itself still fail closed.
+    !hasAffectingEffect(binding, useScope, binding.scope.start, beforeIndex, {
+      ignoreAliasEscape: true
+    })
   );
 
   return {
@@ -600,10 +604,17 @@ function visibleBinding(scope, name) {
   return undefined;
 }
 
-function hasAffectingEffect(binding, useScope, startIndex, beforeIndex) {
+function hasAffectingEffect(binding, useScope, startIndex, beforeIndex, options = {}) {
   const connected = aliasClosure(binding);
   return [...connected].some((candidate) => candidate.effects.some((effect) => {
     if (candidate !== binding && !["mutation", "escape"].includes(effect.kind)) return false;
+    if (
+      options.ignoreAliasEscape === true &&
+      candidate !== binding &&
+      effect.kind === "escape"
+    ) {
+      return false;
+    }
     if (effect.scope.functionScope !== useScope.functionScope) return true;
     return effect.index > startIndex && effect.index < beforeIndex;
   }));

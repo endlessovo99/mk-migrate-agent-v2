@@ -940,7 +940,8 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
     });
   }
 
-  for (const hint of action.semanticHints || []) {
+  const semanticHints = Array.isArray(action.semanticHints) ? action.semanticHints : [];
+  for (const hint of semanticHints) {
     if (hint.kind === "dependent_select_options") {
       const recipe = action.recipe || {};
       opportunities.push({
@@ -1378,6 +1379,10 @@ function eventValueConditionExpression(condition = {}) {
   }
   if (condition.kind === "eq" && typeof condition.value === "string") {
     return `value == ${JSON.stringify(condition.value)}`;
+  }
+  if (["lt", "lte", "gt", "gte"].includes(condition.kind) && typeof condition.value === "string") {
+    const operator = { lt: "<", lte: "<=", gt: ">", gte: ">=" }[condition.kind];
+    return `value ${operator} ${condition.value}`;
   }
   if (condition.kind === "regex-set" && typeof condition.pattern === "string") {
     const pattern = condition.pattern.replaceAll("/", "\\/");
