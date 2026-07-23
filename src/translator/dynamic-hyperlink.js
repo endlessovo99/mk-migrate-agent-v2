@@ -55,11 +55,34 @@ function dynamicHyperlinkModel(source = {}) {
   const binding = loadBinding(statements[0].expression);
   if (!binding) return undefined;
   const body = nonEmptyStatements(binding.callback.body?.body);
-  if (body.length !== 3) return undefined;
-
   const urlDeclaration = legacyFieldDeclaration(body[0]);
+  if (!urlDeclaration) return undefined;
+
+  if (body.length === 2) {
+    const branch = body[1];
+    if (branch?.type !== "IfStatement" || !isIdentifier(branch.test, urlDeclaration.name)) return undefined;
+    const consequent = nonEmptyStatements(branch.consequent?.body);
+    const alternate = nonEmptyStatements(branch.alternate?.body);
+    if (consequent.length !== 1 || alternate.length !== 0) return undefined;
+    const anchor = dynamicAnchorAssignment(consequent[0], urlDeclaration.name);
+    if (!anchor || anchor.label !== "查看发票") return undefined;
+    return {
+      source: text,
+      sourceRef: source.sourceRef || source.id,
+      bindingStart: statements[0].start,
+      bindingEnd: statements[0].end,
+      sourceUrlFieldId: urlDeclaration.fieldId,
+      urlVariable: urlDeclaration.name,
+      containerId: anchor.containerId,
+      label: anchor.label,
+      generatedFieldId: generatedHyperlinkFieldId(urlDeclaration.fieldId),
+      variant: "url-only"
+    };
+  }
+
+  if (body.length !== 3) return undefined;
   const conditionDeclaration = legacyFieldDeclaration(body[1]);
-  if (!urlDeclaration || !conditionDeclaration || urlDeclaration.name === conditionDeclaration.name) return undefined;
+  if (!conditionDeclaration || urlDeclaration.name === conditionDeclaration.name) return undefined;
   const branch = body[2];
   if (branch?.type !== "IfStatement") return undefined;
   const allowedValues = exactConditionValues(branch.test, urlDeclaration.name, conditionDeclaration.name);
@@ -92,7 +115,8 @@ function dynamicHyperlinkModel(source = {}) {
     rowMarker: activeRow.marker,
     containerId: anchor.containerId,
     label: anchor.label,
-    generatedFieldId: generatedHyperlinkFieldId(urlDeclaration.fieldId)
+    generatedFieldId: generatedHyperlinkFieldId(urlDeclaration.fieldId),
+    variant: "conditioned"
   };
 }
 
@@ -207,8 +231,12 @@ function flattenStringConcat(node) {
 
 function canProjectModel(form, model) {
   const fields = mainFields(form);
-  if (!fields.has(model.sourceUrlFieldId) || !fields.has(model.conditionFieldId)) return false;
+  if (
+    !fields.has(model.sourceUrlFieldId) ||
+    (model.conditionFieldId && !fields.has(model.conditionFieldId))
+  ) return false;
   if (fields.has(model.generatedFieldId)) return false;
+  if (model.variant === "url-only") return true;
   const rows = markerRows(form, model.rowMarker);
   return rows.length === 1 &&
     rows[0].componentId === "xform-flex-1-1-layout" &&
@@ -219,6 +247,15 @@ function canProjectModel(form, model) {
 function hasProjectedModel(form, model) {
   const fields = mainFields(form);
   const field = fields.get(model.generatedFieldId);
+  if (model.variant === "url-only") {
+    return fields.has(model.sourceUrlFieldId) &&
+      field?.componentId === "xform-hyperlinks" &&
+      field?.sourceProps?.dynamicHyperlinkProjection?.sourceRef === model.sourceRef &&
+      (form?.layout?.mkTree || []).some((row) => (
+        row?.sourceRef === model.sourceRef &&
+        row?.children?.some((child) => child?.refIds?.includes(model.generatedFieldId))
+      ));
+  }
   const rows = markerRows(form, model.rowMarker);
   return fields.has(model.sourceUrlFieldId) &&
     fields.has(model.conditionFieldId) &&
@@ -230,19 +267,51 @@ function hasProjectedModel(form, model) {
 
 function projectModel(form, model) {
   const evidence = projectionEvidence(model);
+  const generatedField = {
+    id: model.generatedFieldId,
+    title: model.label,
+    type: "hyperlinks",
+    componentId: "xform-hyperlinks",
+    props: { largestSet: 1, editable: false },
+    sourceProps: { dynamicHyperlinkProjection: evidence },
+    sourceRef: model.sourceRef,
+    generated: true,
+    reason: GENERATED_REASON
+  };
+  if (model.variant === "url-only") {
+    const rowId = `layout.generated-${model.generatedFieldId}`;
+    return {
+      ...form,
+      fields: [...(form.fields || []), generatedField],
+      layout: {
+        ...(form.layout || {}),
+        mkTree: [
+          ...(form.layout?.mkTree || []),
+          {
+            id: rowId,
+            componentId: "xform-flex-1-1-layout",
+            props: { columns: 1 },
+            children: [{
+              id: `${rowId}-cell`,
+              refType: "field",
+              refIds: [model.generatedFieldId],
+              sourceRef: model.sourceRef,
+              generated: true,
+              reason: GENERATED_REASON,
+              column: 0,
+              colspan: 1
+            }],
+            sourceRef: model.sourceRef,
+            generated: true,
+            reason: GENERATED_REASON
+          }
+        ]
+      }
+    };
+  }
   return {
     ...form,
-    fields: [...(form.fields || []), {
-      id: model.generatedFieldId,
-      title: model.label,
-      type: "hyperlinks",
-      componentId: "xform-hyperlinks",
-      props: { largestSet: 1, editable: false },
-      sourceProps: { dynamicHyperlinkProjection: evidence },
-      sourceRef: model.sourceRef,
-      generated: true,
-      reason: GENERATED_REASON
-    }],
+    fields: [...(form.fields || []), generatedField],
     layout: {
       ...(form.layout || {}),
       mkTree: (form.layout?.mkTree || []).map((row) => {
@@ -268,6 +337,19 @@ function projectModel(form, model) {
 }
 
 function compiledDynamicHyperlinkFunction(model) {
+  if (model.variant === "url-only") {
+    return [
+      "function onLoad() {",
+      `  var ${model.urlVariable} = String(MKXFORM.getValue(${JSON.stringify(model.sourceUrlFieldId)}) || "").trim()`,
+      `  var safeUrl = ${model.urlVariable}.indexOf("https://") === 0 || ${model.urlVariable}.indexOf("http://") === 0`,
+      "  if (safeUrl) {",
+      `    MKXFORM.setValue(${JSON.stringify(model.generatedFieldId)}, JSON.stringify([{ linkTitle: ${JSON.stringify(model.label)}, url: ${model.urlVariable} }]))`,
+      "  } else {",
+      `    MKXFORM.setValue(${JSON.stringify(model.generatedFieldId)}, "")`,
+      "  }",
+      "}"
+    ].join("\n");
+  }
   const values = model.allowedValues.map((value) => (
     `${model.conditionVariable} == ${JSON.stringify(value)}`
   )).join(" || ");
@@ -301,6 +383,10 @@ function projectionEvidence(model) {
     generatedFieldId: model.generatedFieldId,
     urlPolicy: "http-or-https"
   };
+}
+
+function isIdentifier(node, name) {
+  return node?.type === "Identifier" && node.name === name;
 }
 
 function generatedHyperlinkFieldId(sourceUrlFieldId) {

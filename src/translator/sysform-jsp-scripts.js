@@ -587,7 +587,8 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     analyzedBranchProvenance?.status === "unproven" &&
     translationStatus === "needs_review" &&
     !provisionalDeterministicProof &&
-    !sourceAssignsLegacyFieldValue(candidate.branchSource || candidate.javascript)
+    !sourceAssignsLegacyFieldValue(candidate.branchSource || candidate.javascript) &&
+    !hasUnrecordedFunctionViolations(candidate)
   ) {
     translationStatus = "omitted";
     fn = "";
@@ -637,6 +638,18 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     semanticHints: candidate.semanticHints,
     unmappedFunctions: (candidate.source.functionAudit?.violations || []).map((violation) => violation.name)
   });
+}
+
+function hasUnrecordedFunctionViolations(candidate) {
+  const recordedViolations = candidate.source?.functionAudit?.violations;
+  if (!Array.isArray(recordedViolations)) return false;
+  const recordedNames = new Set(recordedViolations.map((violation) => violation?.name).filter(Boolean));
+  const currentAudit = auditFunctionWhitelist(
+    candidate.branchSource || candidate.javascript,
+    loadFunctionWhitelist(),
+    { path: candidate.source?.sourceRef || "" }
+  );
+  return currentAudit.violations.some((violation) => !recordedNames.has(violation.name));
 }
 
 function sourceAssignsLegacyFieldValue(source) {

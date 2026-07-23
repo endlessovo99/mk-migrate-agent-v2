@@ -6,6 +6,9 @@ import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js
 const fixturePath = "tests/fixtures/source/18aac2e235a65c382f6fe264e1dba521";
 const sourceRef = "source.form.jsp.fd_3bd8452009532c.script.1";
 const actionId = "fd_3bd8452009532c.script.1.event.1";
+const urlOnlyFixturePath = "tests/fixtures/source/189438c54dee44ba9869deb439dbc163";
+const urlOnlySourceRef = "source.form.jsp.fd_3bf55db0a67936.script.1";
+const urlOnlyActionId = "fd_3bf55db0a67936.script.1.event.1";
 
 describe("dynamic invoice hyperlink Route case", () => {
   it("projects the exact legacy anchor into a native hyperlink field and proof-bound onLoad", () => {
@@ -50,6 +53,39 @@ describe("dynamic invoice hyperlink Route case", () => {
         diagnostic.code === "dsl.scripts.deterministic_branch_proof_invalid"
       )),
       true
+    );
+  });
+
+  it("projects a URL-only legacy anchor into a generated native hyperlink row", () => {
+    const dslDraft = draftSourceDraft(cleanSourceFile(urlOnlyFixturePath));
+    const sourceUrl = dslDraft.form.fields.find((field) => field.id === "invoiceUrl");
+    const hyperlink = dslDraft.form.fields.find((field) => field.id === "invoiceLink");
+    const row = dslDraft.form.layout.mkTree.find((candidate) => (
+      candidate.sourceRef === urlOnlySourceRef &&
+      candidate.children?.some((child) => child.refIds?.includes("invoiceLink"))
+    ));
+    const action = dslDraft.scripts.actions.find((candidate) => candidate.id === urlOnlyActionId);
+
+    assert.equal(sourceUrl.dataOnly, true);
+    assert.deepEqual(hyperlink.props, { largestSet: 1, editable: false });
+    assert.equal(hyperlink.type, "hyperlinks");
+    assert.equal(hyperlink.componentId, "xform-hyperlinks");
+    assert.equal(hyperlink.generated, true);
+    assert.equal(hyperlink.sourceProps.dynamicHyperlinkProjection.urlPolicy, "http-or-https");
+    assert.equal(row.componentId, "xform-flex-1-1-layout");
+    assert.equal(row.generated, true);
+
+    assert.equal(action.translationStatus, "mapped");
+    assert.equal(action.functionMappings[0].basis, "deterministic-dynamic-hyperlink");
+    assert.equal(action.deterministicBranchProof.basis, "deterministic-dynamic-hyperlink");
+    assert.match(action.function, /JSON\.stringify\(\[\{ linkTitle: "查看发票", url: url \}\]\)/u);
+    assert.match(action.function, /url\.indexOf\("https:\/\/"\) === 0/u);
+    assert.match(action.function, /MKXFORM\.setValue\("invoiceLink"/u);
+    assert.doesNotMatch(action.function, /document|innerHTML/u);
+    assert.doesNotThrow(() => Function("MKXFORM", `${action.function}; return onLoad;`));
+    assert.equal(
+      checkDraft(dslDraft).diagnostics.some((diagnostic) => diagnostic.level === "error"),
+      false
     );
   });
 
