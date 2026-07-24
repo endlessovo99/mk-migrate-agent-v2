@@ -33,17 +33,32 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
   }));
   const layoutRows = (observedForm?.layoutRows || []).map((row) => ({
     id: row.id,
+    rootNodeId: row.rootNodeId,
     rows: row.rows,
     columns: row.columns,
+    colsStyle: row.colsStyle,
     fields: (row.cells || []).flatMap((cell) => cell.fieldIds || []),
     cells: (row.cells || []).map((cell) => ({
       fieldId: (cell.fieldIds || [])[0],
       fieldIds: cell.fieldIds || [],
+      ownerNodeId: cell.ownerNodeId,
+      ownerNodePath: cell.ownerNodePath,
+      refType: cell.refType,
+      markerRefType: cell.markerRefType,
       row: cell.row,
       column: cell.column,
-      colspan: cell.colspan
+      colspan: cell.colspan,
+      rowspan: cell.rowspan ?? 1
     }))
   }));
+  const observedLayoutNodeIds = new Set(
+    layoutRows.flatMap((row) => [
+      row.rootNodeId,
+      ...(row.cells || []).flatMap((cell) => cell.ownerNodePath || [])
+    ]).filter(Boolean)
+  );
+  const layoutRootCount = layoutRows.length;
+  const layoutNodeCount = Math.max(layoutRootCount, observedLayoutNodeIds.size);
   const rules = observedRules?.rules || [];
   const displayRules = rules.filter((rule) => rule.kind === "display");
   const requireRules = rules.filter((rule) => rule.kind === "require");
@@ -62,7 +77,10 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
       }))
     },
     detailTableCount: fields.filter((field) => field.type === "detailTable").length,
-    layoutRowCount: layoutRows.length,
+    layoutRowCount: layoutRootCount,
+    layoutRootCount,
+    layoutNodeCount,
+    nestedLayoutCount: Math.max(0, layoutNodeCount - layoutRootCount),
     layoutRows,
     scripts: {
       actionCount: actions.length,

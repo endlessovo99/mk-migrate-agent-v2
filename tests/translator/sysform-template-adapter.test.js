@@ -663,6 +663,118 @@ describe("translateSysFormTemplateXml", () => {
     assert.equal(dsl.form.dataFields.some((field) => field.id === "fd_hidden_column"), false);
   });
 
+  it("keeps a designer-hidden sibling when expanding a nested standard table", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0">
+              <div class="inputhidden" fd_type="inputText" fd_values='{id:"fd_hidden_sibling",label:"隐藏字段"}'></div>
+            </td>
+            <td row="0" column="1">
+              <table fd_type="standardTable">
+                <tbody>
+                  <tr>
+                    <td row="0" column="0">
+                      <div fd_type="inputText" fd_values='{id:"fd_nested_visible",label:"嵌套可见字段"}'></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="fd_hidden_sibling" label="隐藏字段" type="String"/>
+        <extendSimpleProperty name="fd_nested_visible" label="嵌套可见字段" type="String"/>
+      </metadata>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({
+      fdDesignerHtml: designerHtml,
+      fdMetadataXml: metadataXml
+    }));
+
+    assert.deepEqual(
+      dsl.form.dataFields.map((field) => [field.id, field.dataOnly]),
+      [["fd_hidden_sibling", true]]
+    );
+    assert.deepEqual(
+      dsl.form.layout.rows.flatMap((row) =>
+        row.cells.flatMap((cell) => cell.fieldIds || [])
+      ),
+      ["fd_nested_visible"]
+    );
+    assert.deepEqual(dsl.form.layout.rows.map((row) => row.id), [
+      "row-0",
+      "row-0.nested-0.row-0"
+    ]);
+    assert.deepEqual(dsl.form.layout.rows[0].cells, [{
+      id: "row-0-cell-1",
+      layoutRowIds: ["row-0.nested-0.row-0"],
+      column: 1,
+      colspan: 1
+    }]);
+  });
+
+  it("does not treat multiple preceding descriptions as one nested-table partition title", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0">
+              <label fd_type="textLabel" fd_values='{id:"note_one",content:"说明一",b:"true"}'>说明一</label>
+              <label fd_type="textLabel" fd_values='{id:"note_two",content:"说明二",b:"true"}'>说明二</label>
+            </td>
+            <td row="0" column="1">
+              <table fd_type="standardTable">
+                <tbody>
+                  <tr>
+                    <td row="0" column="0">
+                      <div fd_type="inputText" fd_values='{id:"fd_nested_visible",label:"嵌套可见字段"}'></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="fd_nested_visible" label="嵌套可见字段" type="String"/>
+      </metadata>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({
+      fdDesignerHtml: designerHtml,
+      fdMetadataXml: metadataXml
+    }));
+
+    assert.deepEqual(dsl.form.fields.map((field) => field.id), [
+      "note_one",
+      "note_two",
+      "fd_nested_visible"
+    ]);
+    assert.deepEqual(dsl.form.layout.rows.map((row) => row.id), [
+      "row-0",
+      "row-0.nested-0.row-0"
+    ]);
+    assert.deepEqual(dsl.form.layout.rows[0].cells.map((cell) => ({
+      fieldIds: cell.fieldIds,
+      layoutRowIds: cell.layoutRowIds,
+      column: cell.column
+    })), [
+      { fieldIds: ["note_one", "note_two"], layoutRowIds: undefined, column: 0 },
+      { fieldIds: undefined, layoutRowIds: ["row-0.nested-0.row-0"], column: 1 }
+    ]);
+    assert.deepEqual(dsl.form.layout.rows[1].cells.map((cell) => cell.fieldIds), [
+      ["fd_nested_visible"]
+    ]);
+  });
+
   it("prefers hidden-input name when row-marker id and name diverge", () => {
     // Landray designer stores row markers as unquoted type=hidden JSP payloads.
     const designerHtml = `

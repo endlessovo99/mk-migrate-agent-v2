@@ -35,7 +35,7 @@ describe("preparePersistedTemplate interface", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl());
     assert.equal(readback.ok, true);
     assert.equal(readback.status, "verified");
-    assert.equal(readback.invariantVersion, 14);
+    assert.equal(readback.invariantVersion, 16);
     assert.deepEqual(readback.partitions, {
       envelope: "verified",
       form: "verified",
@@ -686,12 +686,12 @@ describe("form layout projection", () => {
     assert.deepEqual(
       grid.children.map((item) => ({
         column: item.controlProps.column,
-        colSpan: item.controlProps.colSpan,
+        columnSpan: item.controlProps.columnSpan,
         field: item.controlProps.migrationFieldId
       })),
       [
-        { column: 1, colSpan: 1, field: "fd_subject" },
-        { column: 2, colSpan: 1, field: "fd_amount" }
+        { column: 1, columnSpan: 1, field: "fd_subject" },
+        { column: 2, columnSpan: 1, field: "fd_amount" }
       ]
     );
   });

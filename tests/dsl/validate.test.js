@@ -151,6 +151,94 @@ describe("validateMigrationDsl", () => {
     assert.equal(missingField.diagnostics.some((item) => item.code === "dsl.form.layout.field_missing"), true);
   });
 
+  it("validates nested-layout references as a two-pass acyclic ownership graph", () => {
+    const nestedNode = {
+      id: "layout.nested",
+      componentId: "xform-flex-1-1-layout",
+      props: { columns: 1, sourceColumns: 1 },
+      sourceRef: "source.form.layout.row.nested",
+      children: [{
+        id: "layout.nested.field",
+        refType: "field",
+        refIds: ["fd_subject"],
+        sourceRef: "source.form.layout.cell.nested-field",
+        column: 0,
+        colspan: 1
+      }]
+    };
+    const parentNode = {
+      id: "layout.parent",
+      componentId: "xform-flex-1-1-layout",
+      props: { columns: 1, sourceColumns: 1 },
+      sourceRef: "source.form.layout.row.parent",
+      children: [{
+        id: "layout.parent.nested",
+        refType: "layout",
+        refIds: ["layout.nested"],
+        sourceRef: "source.form.layout.cell.parent-nested",
+        column: 0,
+        colspan: 1
+      }]
+    };
+    const valid = sampleTrustedDsl();
+    valid.form.layout.mkTree.unshift(parentNode, nestedNode);
+
+    assert.equal(validateMigrationDsl(valid, { mode: "execute" }).ok, true);
+
+    const missing = structuredClone(valid);
+    missing.form.layout.mkTree[0].children[0].refIds = ["layout.missing"];
+    const self = structuredClone(valid);
+    self.form.layout.mkTree[0].children[0].refIds = ["layout.parent"];
+    const cycle = structuredClone(valid);
+    cycle.form.layout.mkTree[1].children[0] = {
+      ...cycle.form.layout.mkTree[1].children[0],
+      refType: "layout",
+      refIds: ["layout.parent"]
+    };
+    const duplicate = structuredClone(valid);
+    duplicate.form.layout.mkTree[0].children[0].refIds = [
+      "layout.nested",
+      "layout.nested"
+    ];
+    const multiParent = structuredClone(valid);
+    multiParent.form.layout.mkTree.push({
+      ...structuredClone(parentNode),
+      id: "layout.second-parent",
+      sourceRef: "source.form.layout.row.second-parent"
+    });
+
+    assert.equal(
+      validateMigrationDsl(missing, { mode: "execute" }).diagnostics.some((item) =>
+        item.code === "dsl.form.layout.layout_ref_missing"
+      ),
+      true
+    );
+    assert.equal(
+      validateMigrationDsl(self, { mode: "execute" }).diagnostics.some((item) =>
+        item.code === "dsl.form.layout.layout_ref_self"
+      ),
+      true
+    );
+    assert.equal(
+      validateMigrationDsl(cycle, { mode: "execute" }).diagnostics.some((item) =>
+        item.code === "dsl.form.layout.layout_cycle"
+      ),
+      true
+    );
+    assert.equal(
+      validateMigrationDsl(duplicate, { mode: "execute" }).diagnostics.some((item) =>
+        item.code === "dsl.form.layout.layout_ref_duplicate"
+      ),
+      true
+    );
+    assert.equal(
+      validateMigrationDsl(multiParent, { mode: "execute" }).diagnostics.some((item) =>
+        item.code === "dsl.form.layout.layout_multi_parent"
+      ),
+      true
+    );
+  });
+
   it("rejects a detail table that does not own a one-cell target row", () => {
     const dsl = sampleTrustedDsl();
     dsl.form.layout.mkTree = [{

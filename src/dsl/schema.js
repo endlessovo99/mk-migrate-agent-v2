@@ -408,9 +408,109 @@ function validateFormLayout(layout, refs, diagnostics) {
     return layoutNodeIds;
   }
 
-  layout.mkTree.forEach((node, index) => validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds));
+  layout.mkTree.forEach((node, index) => {
+    if (!isRecord(node) || !nonEmptyString(node.id)) return;
+    if (layoutNodeIds.has(node.id)) {
+      diagnostics.push(error(
+        "dsl.form.layout.mk_tree.node_id_duplicate",
+        "mkTree node id must be unique.",
+        `/form/layout/mkTree/${index}/id`,
+        { id: node.id }
+      ));
+      return;
+    }
+    layoutNodeIds.add(node.id);
+  });
+  const layoutRefs = { ...refs, layoutNodeIds };
+  layout.mkTree.forEach((node, index) =>
+    validateMkTreeNode(node, index, layoutRefs, diagnostics)
+  );
+  validateLayoutReferenceGraph(layout.mkTree, layoutNodeIds, diagnostics);
   validateDetailTableLayoutCardinality(layout.mkTree, refs.detailTableIds, diagnostics);
   return layoutNodeIds;
+}
+
+function validateLayoutReferenceGraph(mkTree, layoutNodeIds, diagnostics) {
+  const ownerIdsByLayoutId = new Map();
+  const adjacency = new Map(
+    [...layoutNodeIds].map((layoutId) => [layoutId, []])
+  );
+  const seenEdges = new Set();
+
+  (mkTree || []).forEach((node, nodeIndex) => {
+    if (!isRecord(node) || !nonEmptyString(node.id)) return;
+    const children = Array.isArray(node.children) ? node.children : [];
+    children.forEach((child, childIndex) => {
+      if (!isRecord(child) || child.refType !== "layout") return;
+      const refIds = Array.isArray(child.refIds)
+        ? child.refIds
+        : [child.refId].filter(Boolean);
+      refIds.forEach((layoutId, refIndex) => {
+        if (!nonEmptyString(layoutId) || !layoutNodeIds.has(layoutId) || layoutId === node.id) {
+          return;
+        }
+        const path = Array.isArray(child.refIds)
+          ? `/form/layout/mkTree/${nodeIndex}/children/${childIndex}/refIds/${refIndex}`
+          : `/form/layout/mkTree/${nodeIndex}/children/${childIndex}/refId`;
+        const edgeKey = `${node.id}\u0000${layoutId}`;
+        if (seenEdges.has(edgeKey)) {
+          diagnostics.push(error(
+            "dsl.form.layout.layout_ref_duplicate",
+            "A parent layout node must not reference the same child layout more than once.",
+            path,
+            { parentId: node.id, layoutId }
+          ));
+          return;
+        }
+        seenEdges.add(edgeKey);
+        adjacency.get(node.id)?.push({ layoutId, path });
+        const owners = ownerIdsByLayoutId.get(layoutId) || new Set();
+        owners.add(node.id);
+        ownerIdsByLayoutId.set(layoutId, owners);
+      });
+    });
+  });
+
+  for (const [layoutId, ownerIds] of ownerIdsByLayoutId) {
+    if (ownerIds.size <= 1) continue;
+    diagnostics.push(error(
+      "dsl.form.layout.layout_multi_parent",
+      "Each nested layout node must be owned by at most one parent layout node.",
+      "/form/layout/mkTree",
+      { layoutId, parentIds: [...ownerIds] }
+    ));
+  }
+
+  const states = new Map();
+  const stack = [];
+  const reportedCycles = new Set();
+  const visit = (layoutId) => {
+    states.set(layoutId, 1);
+    stack.push(layoutId);
+    for (const edge of adjacency.get(layoutId) || []) {
+      if (states.get(edge.layoutId) === 1) {
+        const cycleStart = stack.indexOf(edge.layoutId);
+        const cycle = [...stack.slice(Math.max(cycleStart, 0)), edge.layoutId];
+        const cycleKey = cycle.join("\u0000");
+        if (!reportedCycles.has(cycleKey)) {
+          reportedCycles.add(cycleKey);
+          diagnostics.push(error(
+            "dsl.form.layout.layout_cycle",
+            "Nested layout references must form an acyclic graph.",
+            edge.path,
+            { cycle }
+          ));
+        }
+        continue;
+      }
+      if (!states.has(edge.layoutId)) visit(edge.layoutId);
+    }
+    stack.pop();
+    states.set(layoutId, 2);
+  };
+  for (const layoutId of layoutNodeIds) {
+    if (!states.has(layoutId)) visit(layoutId);
+  }
 }
 
 function validateDetailTableLayoutCardinality(mkTree, detailTableIds, diagnostics) {
@@ -443,7 +543,7 @@ function validateDetailTableLayoutCardinality(mkTree, detailTableIds, diagnostic
   }
 }
 
-function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
+function validateMkTreeNode(node, index, refs, diagnostics) {
   const path = `/form/layout/mkTree/${index}`;
   if (!isRecord(node)) {
     diagnostics.push(error("dsl.form.layout.mk_tree.node_type", "mkTree node must be an object.", path));
@@ -451,10 +551,6 @@ function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
   }
   if (!nonEmptyString(node.id)) {
     diagnostics.push(error("dsl.form.layout.mk_tree.node_id_required", "mkTree node id is required.", `${path}/id`));
-  } else if (layoutNodeIds.has(node.id)) {
-    diagnostics.push(error("dsl.form.layout.mk_tree.node_id_duplicate", "mkTree node id must be unique.", `${path}/id`, { id: node.id }));
-  } else {
-    layoutNodeIds.add(node.id);
   }
 
   const component = validateComponentProps({
@@ -517,7 +613,7 @@ function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
   const cellCount = node.children.reduce((count, child) => {
     if (!isRecord(child)) return count + 1;
     const refIds = Array.isArray(child.refIds) ? child.refIds.filter(Boolean) : [child.refId].filter(Boolean);
-    return count + Math.max(refIds.length, 1);
+    return count + (child.refType === "layout" ? 1 : Math.max(refIds.length, 1));
   }, 0);
   const exceedsCapacity = validColumns && validRows && cellCount > columns * rows;
   if (exceedsCapacity) {
@@ -672,6 +768,22 @@ function validateMkTreeNode(node, index, refs, diagnostics, layoutNodeIds) {
       }
       if (child.refType === "detailTable" && !refs.detailTableIds.has(refId)) {
         diagnostics.push(error("dsl.form.layout.detail_table_missing", "mkTree child detail-table reference must exist in form.fields.", refPath, { refId }));
+      }
+      if (child.refType === "layout" && !refs.layoutNodeIds.has(refId)) {
+        diagnostics.push(error(
+          "dsl.form.layout.layout_ref_missing",
+          "mkTree child layout reference must exist in form.layout.mkTree.",
+          refPath,
+          { refId }
+        ));
+      }
+      if (child.refType === "layout" && refId === node.id) {
+        diagnostics.push(error(
+          "dsl.form.layout.layout_ref_self",
+          "A layout node must not reference itself.",
+          refPath,
+          { layoutId: node.id }
+        ));
       }
     });
   });

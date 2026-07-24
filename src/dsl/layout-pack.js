@@ -95,6 +95,7 @@ function positiveInteger(value) {
 }
 
 function splitCellReferences(cell = {}, cellIndex) {
+  if (isLayoutReferenceCell(cell)) return [cell];
   for (const key of ["references", "refIds", "fieldIds"]) {
     const references = Array.isArray(cell[key]) ? cell[key].filter(Boolean) : [];
     if (references.length <= 1) continue;
@@ -110,4 +111,10 @@ function splitCellReferences(cell = {}, cellIndex) {
     });
   }
   return [cell];
+}
+
+function isLayoutReferenceCell(cell) {
+  if (cell?.refType === "layout") return true;
+  return Array.isArray(cell?.references) &&
+    cell.references.some((reference) => reference?.referenceType === "layout");
 }

@@ -388,17 +388,22 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
       sourceMarkers: Array.isArray(row.sourceMarkers) && row.sourceMarkers.length ? row.sourceMarkers : undefined,
       columns: row.columns,
       cells: (row.cells || []).map((cell, cellIndex) => {
-        const refs = cellFieldIds(cell).map((fieldId) => ({
+        const fieldRefs = cellFieldIds(cell).map((fieldId) => ({
           referenceType: detailTableIds.has(fieldId) ? "detailTable" : "control",
           referenceId: fieldId,
           sourceRef: sourceRef(detailTableIds.has(fieldId) ? "form.detailTable" : "form.control", fieldId)
+        }));
+        const layoutRefs = cellLayoutRowIds(cell).map((layoutRowId) => ({
+          referenceType: "layout",
+          referenceId: layoutRowId,
+          sourceRef: sourceRef("form.layout.row", layoutRowId)
         }));
         return pruneUndefined({
           id: cell.id || `${row.id || `row-${rowIndex}`}-cell-${cellIndex}`,
           sourceRef: sourceRef("form.layout.cell", cell.id || `${row.id || `row-${rowIndex}`}-cell-${cellIndex}`),
           column: cell.column,
           colspan: cell.colspan,
-          references: refs,
+          references: [...fieldRefs, ...layoutRefs],
           evidence: {
             row: row.sourceRow ?? String(rowIndex),
             column: cell.column,
@@ -708,6 +713,12 @@ function sourceRef(scope, id) {
 function cellFieldIds(cell) {
   if (Array.isArray(cell.fieldIds) && cell.fieldIds.length) return cell.fieldIds;
   return cell.fieldId ? [cell.fieldId] : [];
+}
+
+function cellLayoutRowIds(cell) {
+  return Array.isArray(cell.layoutRowIds)
+    ? cell.layoutRowIds.filter(Boolean)
+    : [];
 }
 
 function cloneOptions(options) {

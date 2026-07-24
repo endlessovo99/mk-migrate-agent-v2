@@ -183,34 +183,74 @@ function nestedLayoutRowDescriptors(
   metadataContext,
   warnings
 ) {
-  const base = {
+  return expandNestedLayoutRowDescriptor({
     html: rowHtml,
     id: `row-${rowIndex}`,
     sourceRow: String(rowIndex),
     inheritedMarkers: []
-  };
-  const sourceCells = splitDirectChildCells(rowHtml);
-  if (sourceCells.length !== 1) return [base];
+  }, boundCaptions, metadataContext, warnings);
+}
 
-  const nestedTables = directStandardTableFragments(sourceCells[0].body);
-  if (nestedTables.length !== 1) return [base];
+function expandNestedLayoutRowDescriptor(
+  descriptor,
+  boundCaptions,
+  metadataContext,
+  warnings
+) {
+  const sourceCells = splitDirectChildCells(descriptor.html);
+  const nestedTables = sourceCells.flatMap((cell, sourceCellIndex) =>
+    directStandardTableFragments(cell.body).map((table) => ({
+      ...table,
+      sourceCellIndex
+    }))
+  );
+  if (nestedTables.length !== 1) return [descriptor];
   const nested = nestedTables[0];
-  const outside = `${sourceCells[0].body.slice(0, nested.start)}${sourceCells[0].body.slice(nested.end)}`;
-  const outsideControls = extractLayoutCellControls(outside, boundCaptions, metadataContext)
-    .filter((control) => !control.source?.designerHidden);
-  if (outsideControls.length) return [base];
-
   const nestedRows = splitDirectChildRows(extractFirstTbodyContent(nested.html) || nested.html);
-  if (!nestedRows.length) return [base];
-  const inheritedMarkers = extractRowMarkers(outside, warnings);
-  const preservePlainLabels = /<table\b[^>]*\bfd_type\s*=\s*(["'])detailsTable\1/i.test(nested.html);
-  return nestedRows.map((html, nestedRowIndex) => ({
+  if (!nestedRows.length) return [descriptor];
+
+  const preservePlainLabels =
+    /<table\b[^>]*\bfd_type\s*=\s*(["'])detailsTable\1/i.test(nested.html);
+  const nestedRootDescriptors = nestedRows.map((html, nestedRowIndex) => ({
     html,
-    id: `row-${rowIndex}.nested-0.row-${nestedRowIndex}`,
-    sourceRow: `${rowIndex}.${nestedRowIndex}`,
-    inheritedMarkers,
+    id: `${descriptor.id}.nested-0.row-${nestedRowIndex}`,
+    sourceRow: `${descriptor.sourceRow}.${nestedRowIndex}`,
+    inheritedMarkers: [],
     preservePlainLabels
   }));
+  const nestedDescriptors = nestedRootDescriptors.flatMap((nestedDescriptor) =>
+    expandNestedLayoutRowDescriptor(
+      nestedDescriptor,
+      boundCaptions,
+      metadataContext,
+      warnings
+    )
+  );
+  const outsideCells = sourceCells.map((cell, sourceCellIndex) => ({
+    ...cell,
+    body: sourceCellIndex === nested.sourceCellIndex
+      ? `${cell.body.slice(0, nested.start)}${cell.body.slice(nested.end)}`
+      : cell.body
+  }));
+  const parentCells = outsideCells.map((cell, sourceCellIndex) => ({
+    ...cell,
+    controls: extractLayoutCellControls(cell.body, boundCaptions, metadataContext, {
+      preservePlainLabels:
+        descriptor.preservePlainLabels === true ||
+        sourceCellIndex < nested.sourceCellIndex
+    }),
+    ...(sourceCellIndex === nested.sourceCellIndex
+      ? { layoutRowIds: nestedRootDescriptors.map((row) => row.id) }
+      : {})
+  }));
+  return [
+    {
+      ...descriptor,
+      html: outsideCells.map((cell) => cell.body).join(""),
+      sourceCells: parentCells
+    },
+    ...nestedDescriptors
+  ];
 }
 
 function directStandardTableFragments(html) {
@@ -255,25 +295,30 @@ function appendDesignerLayoutRow(descriptor, context) {
     ...(descriptor.inheritedMarkers || []),
     ...extractRowMarkers(rowHtml, warnings)
   ])];
-  const sourceCells = splitDirectChildCells(rowHtml);
-  const boundCaptionCellIndexes = indexBoundCaptionCells(sourceCells, boundCaptions);
+  const sourceCells = Array.isArray(descriptor.sourceCells)
+    ? descriptor.sourceCells
+    : splitDirectChildCells(rowHtml);
+  const boundCaptionCellIndexes = Array.isArray(descriptor.sourceCells)
+    ? new Map()
+    : indexBoundCaptionCells(sourceCells, boundCaptions);
   const sourceColumns = sourceCells.reduce((max, cell, cellIndex) => {
     const column = parseColumnSpec(cell.attrs.column, cellIndex);
     return Math.max(max, column.column + column.colspan);
   }, 1);
 
   sourceCells.forEach((cell, cellIndex) => {
-    const controls = extractLayoutCellControls(cell.body, boundCaptions, metadataContext, {
-      preservePlainLabels: descriptor.preservePlainLabels === true,
-      crossCellBoundCaptionIds: new Set(
-        [...boundCaptionCellIndexes]
-          .filter(([, captionCellIndex]) => captionCellIndex !== cellIndex)
-          .map(([captionId]) => captionId)
-      )
-    });
-    if (!controls.length) return;
+    const controls = Array.isArray(cell.controls)
+      ? cell.controls
+      : extractLayoutCellControls(cell.body, boundCaptions, metadataContext, {
+          preservePlainLabels: descriptor.preservePlainLabels === true,
+          crossCellBoundCaptionIds: new Set(
+            [...boundCaptionCellIndexes]
+              .filter(([, captionCellIndex]) => captionCellIndex !== cellIndex)
+              .map(([captionId]) => captionId)
+          )
+        });
     const column = parseColumnSpec(cell.attrs.column, cellIndex);
-    const controlGroups = groupLayoutCellControls(controls);
+    const controlGroups = controls.length ? groupLayoutCellControls(controls) : [];
     controlGroups.forEach((group, groupIndex) => {
       const cellFieldIds = [];
       for (const control of group) {
@@ -299,6 +344,21 @@ function appendDesignerLayoutRow(descriptor, context) {
         colspan: column.colspan
       });
     });
+
+    const layoutRowIds = Array.isArray(cell.layoutRowIds)
+      ? [...new Set(cell.layoutRowIds.filter(Boolean))]
+      : [];
+    if (layoutRowIds.length) {
+      const baseId = `${descriptor.id}-cell-${column.column}`;
+      cells.push({
+        id: cells.some((layoutCell) => layoutCell.id === baseId)
+          ? `${baseId}-layout`
+          : baseId,
+        layoutRowIds,
+        column: column.column,
+        colspan: column.colspan
+      });
+    }
   });
 
   if (!cells.length && sourceMarkers.length) {
@@ -1340,23 +1400,64 @@ function fallbackLayout(fields, source) {
 }
 
 function removeDataOnlyFieldsFromLayout(layout, dataOnlyIds) {
-  if (!dataOnlyIds.size) return layout;
-  return {
-    ...layout,
-    rows: (layout.rows || []).map((row) => {
+  let rows = (layout.rows || []).map((row) => {
+    const cells = (row.cells || []).map((cell) => {
+      const fieldIds = (cell.fieldIds || [cell.fieldId]).filter((fieldId) =>
+        fieldId && !dataOnlyIds.has(fieldId)
+      );
+      const layoutRowIds = Array.isArray(cell.layoutRowIds)
+        ? cell.layoutRowIds.filter(Boolean)
+        : [];
+      return rebuildLayoutCell(cell, fieldIds, layoutRowIds);
+    }).filter(Boolean);
+    return cells.length ? { ...row, cells } : undefined;
+  }).filter(Boolean);
+
+  // A raw nested table can contain empty or data-only rows that never become
+  // registry nodes. Remove their references to a fixed point so every parent
+  // layout edge resolves to a materialized row.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const rowIds = new Set(rows.map((row) => row.id).filter(Boolean));
+    rows = rows.map((row) => {
       const cells = (row.cells || []).map((cell) => {
-        const fieldIds = (cell.fieldIds || [cell.fieldId]).filter((fieldId) =>
-          fieldId && !dataOnlyIds.has(fieldId)
-        );
-        if (!fieldIds.length) return undefined;
-        return {
-          ...cell,
-          fieldId: fieldIds[0],
-          fieldIds
-        };
+        const fieldIds = (cell.fieldIds || [cell.fieldId]).filter(Boolean);
+        const layoutRowIds = Array.isArray(cell.layoutRowIds)
+          ? cell.layoutRowIds.filter((layoutRowId) => rowIds.has(layoutRowId))
+          : [];
+        if (
+          layoutRowIds.length !== (Array.isArray(cell.layoutRowIds)
+            ? cell.layoutRowIds.filter(Boolean).length
+            : 0)
+        ) {
+          changed = true;
+        }
+        return rebuildLayoutCell(cell, fieldIds, layoutRowIds);
       }).filter(Boolean);
-      return cells.length ? { ...row, cells } : undefined;
-    }).filter(Boolean)
+      if (!cells.length) {
+        changed = true;
+        return undefined;
+      }
+      return { ...row, cells };
+    }).filter(Boolean);
+  }
+
+  return { ...layout, rows };
+}
+
+function rebuildLayoutCell(cell, fieldIds, layoutRowIds) {
+  if (!fieldIds.length && !layoutRowIds.length) return undefined;
+  const {
+    fieldId: _fieldId,
+    fieldIds: _fieldIds,
+    layoutRowIds: _layoutRowIds,
+    ...cellWithoutRefs
+  } = cell;
+  return {
+    ...cellWithoutRefs,
+    ...(fieldIds.length ? { fieldId: fieldIds[0], fieldIds } : {}),
+    ...(layoutRowIds.length ? { layoutRowIds } : {})
   };
 }
 

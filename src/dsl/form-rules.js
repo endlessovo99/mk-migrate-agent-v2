@@ -97,6 +97,9 @@ export function buildFormRuleRefIndex(form = {}) {
   }
 
   const rows = Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : [];
+  const layoutRowsById = new Map(
+    rows.filter((row) => row?.id).map((row) => [row.id, row])
+  );
   // A single legacy row can become multiple native rows when a detail table
   // has ordinary sibling controls (for example a footer total). The segments
   // deliberately share sourceRef while only one owns the runtime marker.
@@ -108,14 +111,14 @@ export function buildFormRuleRefIndex(form = {}) {
     if (!sourceRef) continue;
     const group = sourceRowGroups.get(sourceRef) || { rowIds: [], refIds: [] };
     group.rowIds.push(row.id);
-    group.refIds.push(...(row.children || []).flatMap((child) => childRefIds(child)));
+    group.refIds.push(...descendantLeafRefIds(row, layoutRowsById));
     sourceRowGroups.set(sourceRef, group);
   }
 
   for (const row of rows) {
     const sourceMarkers = Array.isArray(row?.sourceMarkers) ? row.sourceMarkers : [];
     if (!sourceMarkers.length) continue;
-    const ownRefIds = (row.children || []).flatMap((child) => childRefIds(child));
+    const ownRefIds = descendantLeafRefIds(row, layoutRowsById);
     const sourceGroup = sourceRowGroups.get(normalizeRef(row.sourceRef));
     const rowIds = [...new Set((sourceGroup?.rowIds || [row.id]).filter(Boolean))];
     const refIds = [...new Set((sourceGroup?.refIds || ownRefIds).filter(Boolean))];
@@ -255,6 +258,31 @@ function childRefIds(child) {
   if (Array.isArray(child?.refIds) && child.refIds.length) return child.refIds;
   if (child?.refId) return [child.refId];
   return [];
+}
+
+function descendantLeafRefIds(row, layoutRowsById, ancestors = new Set()) {
+  if (!row || ancestors.has(row.id)) return [];
+  const nextAncestors = new Set(ancestors);
+  if (row.id) nextAncestors.add(row.id);
+  const refs = [];
+  for (const child of row.children || []) {
+    const childIds = childRefIds(child);
+    if (child?.refType !== "layout") {
+      refs.push(...childIds);
+      continue;
+    }
+    for (const layoutId of childIds) {
+      const nested = layoutRowsById.get(layoutId);
+      if (nested) {
+        refs.push(...descendantLeafRefIds(nested, layoutRowsById, nextAncestors));
+      } else {
+        // Keep a missing layout id unresolved so form-rule validation does not
+        // silently erase a source target when the layout graph is invalid.
+        refs.push(layoutId);
+      }
+    }
+  }
+  return refs;
 }
 
 function addRef(map, key, value) {

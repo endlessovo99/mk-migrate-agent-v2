@@ -5,7 +5,7 @@ import {
   summarizeNativeFormRuleConfig
 } from "./form-rules-writer.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
-import { projectLayoutGrid } from "../../dsl/layout-pack.js";
+import { projectNativeLayoutRows } from "./layout-projection.js";
 import {
   detailTableEditOperations,
   detailTableViewOperations
@@ -154,7 +154,9 @@ export function summarizeFormFromTemplate(template) {
 
 export function summarizeDslForm(form = {}, formRules = {}) {
   const fields = Array.isArray(form.fields) ? form.fields : [];
-  const rows = Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : [];
+  const nodes = Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : [];
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const rows = projectNativeLayoutRows(nodes);
   const sourceRules = Array.isArray(formRules?.linkage) ? formRules.linkage : [];
   const branchRuleCount = (type) => sourceRules.reduce((count, rule) => {
     const branches = [rule.effects, rule.else].filter(Array.isArray);
@@ -182,15 +184,24 @@ export function summarizeDslForm(form = {}, formRules = {}) {
     })),
     detailTableCount: fields.filter((field) => field.type === "detailTable").length,
     layoutRowCount: rows.length,
+    layoutRootCount: rows.length,
+    layoutNodeCount: nodes.length,
+    nestedLayoutCount: Math.max(0, nodes.length - rows.length),
     layoutRows: rows.map((row) => ({
       id: row.id,
-      componentId: row.componentId,
-      fields: (row.children || []).flatMap((cell) => childRefIds(cell)),
-      cells: (row.children || []).map((cell) => ({
+      componentId: nodesById.get(row.id)?.componentId,
+      colsStyle: row.colsStyle,
+      fields: (row.cells || []).flatMap((cell) => childRefIds(cell)),
+      cells: (row.cells || []).map((cell) => ({
         fieldId: childRefIds(cell)[0],
         fieldIds: childRefIds(cell),
+        ownerNodeId: cell.ownerNodeId,
+        ownerNodePath: cell.ownerNodePath,
+        refType: cell.refType,
+        row: cell.row,
         column: cell.column,
-        colspan: cell.colspan
+        colspan: cell.colspan,
+        rowspan: cell.rowspan
       }))
     })),
     formRules: {
@@ -1291,20 +1302,20 @@ function appearanceNode(tableName, mainContainer) {
 }
 
 function buildRows(rows, detailModelsByField) {
-  return rows.map((row) => buildLayoutGridRow(row, detailModelsByField));
+  const rowsById = new Map(rows.map((row) => [row.id, row]));
+  return projectNativeLayoutRows(rows).map((projection) =>
+    buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField)
+  );
 }
 
-function buildLayoutGridRow(row, detailModelsByField) {
-  const packed = projectLayoutGrid(row.children || [], {
-    columns: row.props?.columns,
-    rows: row.componentId === "xform-multi-row-table-layout" ? row.props?.rows : 1
-  });
-  const cells = packed.cells;
+function buildLayoutGridRow(row, projection, rowsById, detailModelsByField) {
+  const cells = projection.cells;
   const layoutId = `layout~${stableShortId(row.id)}`;
   const gridId = `@elem/layout-grid~${stableShortId(`${row.id}:grid`)}`;
-  const displayColumns = packed.columns;
-  const displayRows = packed.rows;
+  const displayColumns = projection.columns;
+  const displayRows = projection.rows;
   const migrationRowId = migrationRowIdFor(row);
+  const isNestedProjection = cells.some((cell) => cell.ownerNodeId !== row.id);
   return {
     key: layoutId,
     type: "layout",
@@ -1312,6 +1323,7 @@ function buildLayoutGridRow(row, detailModelsByField) {
     controlProps: {
       id: layoutId,
       migrationRowId,
+      migrationRootNodeId: row.id,
       migrationLayoutComponentId: row.componentId,
       migrationLayoutType: `@elem/${row.componentId}`,
       migrationSourceColumns: row.props?.sourceColumns || cells.length || 1,
@@ -1325,28 +1337,66 @@ function buildLayoutGridRow(row, detailModelsByField) {
         controlProps: {
           columns: displayColumns,
           rows: displayRows,
-          id: gridId
+          id: gridId,
+          ...(Array.isArray(projection.colsStyle)
+            ? { colsStyle: structuredClone(projection.colsStyle) }
+            : {})
         },
-        children: cells.map((cell, index) => buildGridItem(row, cell, index, detailModelsByField))
+        children: cells
+          .filter((cell) => cell.refType !== "layout")
+          .map((cell, index) => buildGridItem(
+            row,
+            cell,
+            index,
+            rowsById,
+            detailModelsByField,
+            { explicitRowSpan: isNestedProjection }
+          ))
       }
     ]
   };
 }
 
-function buildGridItem(row, cell, index, detailModelsByField) {
+function buildGridItem(
+  row,
+  cell,
+  index,
+  rowsById,
+  detailModelsByField,
+  options = {}
+) {
   const refIds = childRefIds(cell);
   const firstRefId = refIds[0];
-  const itemId = `@elem/layout-grid.GridItem~${stableShortId(`${row.id}:${cell.id || firstRefId || index}`)}`;
+  const ownerNodeId = cell.ownerNodeId || row.id;
+  const ownerNodePath = Array.isArray(cell.ownerNodePath)
+    ? [...cell.ownerNodePath]
+    : undefined;
+  const ownerRow = rowsById.get(ownerNodeId) || row;
+  const itemIdentity = ownerNodeId === row.id
+    ? `${row.id}:${cell.id || firstRefId || index}`
+    : `${row.id}:${ownerNodeId}:${cell.id || firstRefId || index}`;
+  const itemId = `@elem/layout-grid.GridItem~${stableShortId(itemIdentity)}`;
   const detailModel = detailModelsByField.get(firstRefId);
-  const migrationRowId = migrationRowIdFor(row);
-  const fieldRef = {
-    key: detailModel?.fdTableName || firstRefId,
+  const migrationRowId = migrationRowIdFor(ownerRow);
+  const rowspan = Number.isInteger(cell.rowspan) && cell.rowspan >= 1 ? cell.rowspan : 1;
+  const migrationAudit = {
+    migrationRowId,
+    migrationRootNodeId: row.id,
+    migrationOwnerNodeId: ownerNodeId,
+    migrationOwnerLayoutId: ownerNodeId,
+    migrationOwnerNodePath: ownerNodePath,
+    migrationCellId: cell.id,
     migrationFieldId: firstRefId,
     migrationFieldIds: refIds,
     migrationRefType: cell.refType,
     migrationColumn: cell.column,
     migrationColspan: cell.colspan,
     migrationGridRow: cell.row,
+    migrationRowspan: rowspan
+  };
+  const fieldRef = {
+    key: detailModel?.fdTableName || firstRefId,
+    ...migrationAudit,
     ...(detailModel
       ? { children: detailModel.fdFields.filter((field) => !field.fdIsSystem).map((field) => ({ key: field.fdName })) }
       : {})
@@ -1360,18 +1410,13 @@ function buildGridItem(row, cell, index, detailModelsByField) {
     kind: "container",
     controlProps: {
       column: column + 1,
-      colSpan: colspan,
+      columnSpan: colspan,
       row: gridRow + 1,
       id: itemId,
       style: { backgroundColor: "" },
+      ...(rowspan > 1 || options.explicitRowSpan ? { rowSpan: rowspan } : {}),
       // Audit-only markers; script persistence compiles them to concrete control ids.
-      migrationRowId,
-      migrationFieldId: firstRefId,
-      migrationFieldIds: refIds,
-      migrationRefType: cell.refType,
-      migrationColumn: cell.column,
-      migrationColspan: cell.colspan,
-      migrationGridRow: cell.row
+      ...migrationAudit
     },
     children: [fieldRef]
   };

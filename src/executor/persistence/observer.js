@@ -184,7 +184,9 @@ function observeForm(config, xform, options = {}) {
   if (!viewModelResult.ok) {
     formDiagnostics.push(viewModelResult.diagnostic);
   } else {
-    layoutRows = observeLayoutRows(viewModelResult.value[0], detailModels, formDiagnostics);
+    layoutRows = observeLayoutRows(viewModelResult.value[0], detailModels, formDiagnostics, {
+      fieldIds: new Set(fields.map((field) => field.id).filter(Boolean))
+    });
     applyViewControlStyles(fields, viewModelResult.value[0]);
   }
 
@@ -710,10 +712,11 @@ function applyViewControlStyles(fields, viewModel) {
   }
 }
 
-function observeLayoutRows(viewModel, detailModels, diagnostics) {
+function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
   const detailByTable = new Map(
     detailModels.map((model) => [model.fdTableName, detailFieldNameForModel(model)])
   );
+  const fieldIds = options.fieldIds instanceof Set ? options.fieldIds : new Set();
   const sceneConfigResult = decodeRequiredJsonObject(viewModel?.fdConfig, {
     partition: "form",
     decodePath: "/mechanisms/sys-xform/fdConfig/viewModel/0/fdConfig",
@@ -739,10 +742,16 @@ function observeLayoutRows(viewModel, detailModels, diagnostics) {
 
   const main = (root.children || []).find((child) => child?.key === "main") || root.children?.[0];
   const rows = Array.isArray(main?.children) ? main.children : [];
-  return rows.map((row, rowIndex) => observeNativeLayoutRow(row, rowIndex, detailByTable)).filter(Boolean);
+  return rows.map((row, rowIndex) => observeNativeLayoutRow(
+    row,
+    rowIndex,
+    detailByTable,
+    fieldIds,
+    diagnostics
+  )).filter(Boolean);
 }
 
-function observeNativeLayoutRow(row, rowIndex, detailByTable) {
+function observeNativeLayoutRow(row, rowIndex, detailByTable, knownFieldIds, diagnostics) {
   if (row?.type !== "layout") return undefined;
   const grid = (row.children || []).find((child) => child?.type === "@elem/layout-grid");
   if (!grid) return undefined;
@@ -760,37 +769,136 @@ function observeNativeLayoutRow(row, rowIndex, detailByTable) {
     // Structural identity is order + membership; native keys are not DSL row ids.
     id: `row-${rowIndex}`,
     order: rowIndex,
+    rootNodeId: nonEmptyMarker(row.controlProps?.migrationRootNodeId),
     rows: Number.isInteger(grid.controlProps?.rows) ? grid.controlProps.rows : 1,
     columns: Number.isInteger(grid.controlProps?.columns) ? grid.controlProps.columns : 1,
+    colsStyle: observeGridStyles(grid.controlProps?.colsStyle),
     cells: gridItems.map((item, cellIndex) => {
-      const fieldIds = (Array.isArray(item.children) ? item.children : [])
-        .flatMap((fieldRef) => nativeFieldIdsFromRef(fieldRef, detailByTable))
+      const refs = Array.isArray(item.children) ? item.children : [];
+      const fieldIds = refs
+        .flatMap((fieldRef, refIndex) => nativeFieldIdsFromRef(
+          fieldRef,
+          detailByTable,
+          knownFieldIds,
+          diagnostics,
+          `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/children/${refIndex}`
+        ))
         .filter(Boolean);
+      const inferredRefTypes = refs
+        .map((fieldRef) => nativeRefType(fieldRef, detailByTable, knownFieldIds))
+        .filter(Boolean);
+      const refType = inferredRefTypes.length === 1
+        ? inferredRefTypes[0]
+        : undefined;
       const column = Number.isInteger(item.controlProps?.column)
         ? item.controlProps.column - 1
         : cellIndex;
       const gridRow = Number.isInteger(item.controlProps?.row)
         ? item.controlProps.row - 1
         : 0;
-      const colspan = Number.isInteger(item.controlProps?.colSpan)
-        ? item.controlProps.colSpan
+      const colspan = Number.isInteger(item.controlProps?.columnSpan)
+        ? item.controlProps.columnSpan
+        : 1;
+      const rowspan = Number.isInteger(item.controlProps?.rowSpan)
+        ? item.controlProps.rowSpan
         : 1;
       return {
         id: normalizeScalar(item.key || `cell-${cellIndex}`),
+        ownerNodeId: nonEmptyMarker(
+          item.controlProps?.migrationOwnerNodeId ||
+          refs.find((ref) => ref?.migrationOwnerNodeId)?.migrationOwnerNodeId
+        ),
+        ownerNodePath: ownerNodePathMarker(
+          item.controlProps?.migrationOwnerNodePath ??
+          refs.find((ref) => ref?.migrationOwnerNodePath)?.migrationOwnerNodePath
+        ),
+        refType,
+        markerRefType: nonEmptyMarker(
+          item.controlProps?.migrationRefType ||
+          refs.find((ref) => ref?.migrationRefType)?.migrationRefType
+        ),
         fieldIds,
         row: gridRow,
         column,
-        colspan
+        colspan,
+        rowspan
       };
     })
   };
 }
 
-function nativeFieldIdsFromRef(fieldRef, detailByTable) {
+function observeGridStyles(value) {
+  if (!Array.isArray(value)) return undefined;
+  return value.map((style) => ({
+    startIndex: style?.startIndex,
+    count: style?.count,
+    value: style?.value
+  }));
+}
+
+function nativeFieldIdsFromRef(
+  fieldRef,
+  detailByTable,
+  knownFieldIds,
+  diagnostics,
+  decodePath
+) {
   if (!fieldRef || typeof fieldRef !== "object") return [];
+  if (fieldRef.migrationRefType === "layout") {
+    diagnostics.push(diagnostic({
+      level: "error",
+      code: "readback.decode.layout.layout_ref_persisted_as_control",
+      message: "Readback native grid persists a DSL layout reference as a control.",
+      partition: "form",
+      decodePath,
+      details: { key: normalizeScalar(fieldRef.key) }
+    }));
+    return [];
+  }
   if (detailByTable.has(fieldRef.key)) return [normalizeScalar(detailByTable.get(fieldRef.key))];
-  if (fieldRef.key) return [normalizeScalar(fieldRef.key)];
+  if (knownFieldIds.has(fieldRef.key)) return [normalizeScalar(fieldRef.key)];
+  if (fieldRef.key) {
+    diagnostics.push(diagnostic({
+      level: "warning",
+      code: "readback.decode.layout.unknown_control_ref",
+      message: "Readback layout cell references an unknown native control.",
+      partition: "form",
+      decodePath,
+      details: { key: normalizeScalar(fieldRef.key) }
+    }));
+    // Keep the opaque key in the observed closed-world layout. Comparison can
+    // then report the precise missing/unexpected field or table invariant
+    // instead of suppressing the whole form partition as a decode failure.
+    return [normalizeScalar(fieldRef.key)];
+  }
   return [];
+}
+
+function nativeRefType(fieldRef, detailByTable, knownFieldIds) {
+  if (!fieldRef || typeof fieldRef !== "object") return undefined;
+  if (fieldRef.migrationRefType === "layout") return undefined;
+  if (detailByTable.has(fieldRef.key)) return "detailTable";
+  if (knownFieldIds.has(fieldRef.key)) return "field";
+  return undefined;
+}
+
+function nonEmptyMarker(value) {
+  const normalized = normalizeScalar(value);
+  return normalized ? normalized : undefined;
+}
+
+function ownerNodePathMarker(value) {
+  let candidate = value;
+  if (typeof candidate === "string") {
+    try {
+      candidate = JSON.parse(candidate);
+    } catch {
+      return undefined;
+    }
+  }
+  if (!Array.isArray(candidate) || candidate.length === 0) return undefined;
+  const path = candidate.map(nonEmptyMarker);
+  return path.every(Boolean) ? path : undefined;
 }
 
 function observeRules(formRule, detailModels = [], diagnostics) {

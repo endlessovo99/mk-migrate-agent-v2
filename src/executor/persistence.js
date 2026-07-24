@@ -113,6 +113,9 @@ function emptyFormSummary() {
     subjectRule: undefined,
     persistence: { mainTableName: "", detailTables: [] },
     layoutRowCount: 0,
+    layoutRootCount: 0,
+    layoutNodeCount: 0,
+    nestedLayoutCount: 0,
     layoutRows: [],
     scripts: { actionCount: 0, events: [], controlEvents: [], actions: [] },
     formRules: { displayRuleCount: 0, requireRuleCount: 0, displayRules: [], requireRules: [] }

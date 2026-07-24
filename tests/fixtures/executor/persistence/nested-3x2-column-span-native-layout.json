@@ -1,0 +1,164 @@
+{
+  "evidence": {
+    "source": "sanitized user-supplied native NewOA update request",
+    "capturedAt": "2026-07-24",
+    "note": "The native nested-layout result is one 3x2 layout-grid with five direct field references. It is not a grid nested inside another GridItem."
+  },
+  "nativeLayout": {
+    "key": "layout~captured-nested-3x2",
+    "type": "layout",
+    "kind": "container",
+    "controlProps": {
+      "id": "layout~captured-nested-3x2"
+    },
+    "children": [
+      {
+        "key": "@elem/layout-grid~captured-nested-3x2",
+        "type": "@elem/layout-grid",
+        "kind": "container",
+        "controlProps": {
+          "columns": 3,
+          "rows": 2,
+          "id": "@elem/layout-grid~captured-nested-3x2",
+          "colsStyle": [
+            {
+              "startIndex": 0,
+              "count": 1,
+              "value": "20.00078150679918%"
+            },
+            {
+              "startIndex": 1,
+              "count": 1,
+              "value": "35.950148595406766%"
+            },
+            {
+              "startIndex": 2,
+              "count": 1,
+              "value": "44.05%"
+            }
+          ],
+          "rowsStyle": [
+            {
+              "startIndex": 0,
+              "count": 1,
+              "value": 0
+            },
+            {
+              "startIndex": 1,
+              "count": 1,
+              "value": "72.59375px"
+            }
+          ]
+        },
+        "children": [
+          {
+            "key": "@elem/layout-grid.GridItem~captured-left",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": {
+              "column": 1,
+              "row": 1,
+              "id": "@elem/layout-grid.GridItem~captured-left",
+              "style": {
+                "backgroundColor": "",
+                "borderBottom": "",
+                "borderRight": ""
+              },
+              "columnSpan": 1,
+              "rowSpan": 2
+            },
+            "children": [
+              {
+                "key": "fd_nested_left"
+              }
+            ]
+          },
+          {
+            "key": "@elem/layout-grid.GridItem~captured-top-middle",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": {
+              "column": 2,
+              "row": 1,
+              "id": "@elem/layout-grid.GridItem~captured-top-middle",
+              "style": {
+                "backgroundColor": "",
+                "borderBottom": "",
+                "borderRight": ""
+              },
+              "columnSpan": 1,
+              "rowSpan": 1
+            },
+            "children": [
+              {
+                "key": "fd_nested_top_middle"
+              }
+            ]
+          },
+          {
+            "key": "@elem/layout-grid.GridItem~captured-top-right",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": {
+              "column": 3,
+              "row": 1,
+              "id": "@elem/layout-grid.GridItem~captured-top-right",
+              "style": {
+                "backgroundColor": "",
+                "borderBottom": ""
+              },
+              "columnSpan": 1,
+              "rowSpan": 1
+            },
+            "children": [
+              {
+                "key": "fd_nested_top_right"
+              }
+            ]
+          },
+          {
+            "key": "@elem/layout-grid.GridItem~captured-bottom-middle",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": {
+              "column": 2,
+              "row": 2,
+              "id": "@elem/layout-grid.GridItem~captured-bottom-middle",
+              "style": {
+                "backgroundColor": "",
+                "borderRight": ""
+              },
+              "columnSpan": 1,
+              "rowSpan": 1
+            },
+            "children": [
+              {
+                "key": "fd_nested_bottom_middle"
+              }
+            ]
+          },
+          {
+            "key": "@elem/layout-grid.GridItem~captured-bottom-right",
+            "type": "@elem/layout-grid.GridItem",
+            "kind": "container",
+            "controlProps": {
+              "column": 3,
+              "row": 2,
+              "id": "@elem/layout-grid.GridItem~captured-bottom-right",
+              "style": {
+                "backgroundColor": ""
+              },
+              "columnSpan": 1,
+              "rowSpan": 1
+            },
+            "children": [
+              {
+                "key": "fd_nested_bottom_right"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

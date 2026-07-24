@@ -1,6 +1,5 @@
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
-import { projectLayoutGrid } from "../../dsl/layout-pack.js";
 import {
   buildFormRuleRefIndex,
   resolveDirectRef,
@@ -37,6 +36,7 @@ import {
 import { singletonDispatcherContract } from "./script-dispatcher-contract.js";
 import { normalizeRuleConditionText } from "./condition-rule.js";
 import { isOptionComponent, normalizeOptionDefaultValue } from "./option-defaults.js";
+import { projectNativeLayoutRows } from "./layout-projection.js";
 
 const parseExpectedContextConditionExpression = createConditionExpressionParser({
   parseTerm: parseExpectedContextConditionTerm,
@@ -189,42 +189,64 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     };
   }).filter(Boolean);
 
-  const layoutRows = rows.map((row, rowIndex) => {
+  rows.forEach((row, rowIndex) => {
     if (!nonEmptyString(row?.id)) {
       diagnostics.push(projectionError(
         "projection.form.layout_row_id_missing",
         "DSL layout row is missing an id.",
         { index: rowIndex }
       ));
-      return null;
     }
-    const packed = projectLayoutGrid(Array.isArray(row.children) ? row.children : [], {
-      columns: row.props?.columns,
-      rows: row.componentId === "xform-multi-row-table-layout" ? row.props?.rows : 1
-    });
+  });
+  const projectedLayoutRows = projectNativeLayoutRows(rows, { maxColumns: 8 });
+  const layoutRows = projectedLayoutRows.map((row, rowIndex) => {
+    const requiresTopologyMarkers = row.cells.some((cell) => cell.ownerNodeId !== row.id);
     return {
       id: row.id,
-      rows: packed.rows,
-      columns: packed.columns,
-      cells: packed.cells.map((cell, cellIndex) => {
-        const fieldIdsForCell = childRefIds(cell);
+      rootNodeId: requiresTopologyMarkers ? row.id : undefined,
+      requiresTopologyMarkers,
+      rows: row.rows,
+      columns: row.columns,
+      colsStyle: Array.isArray(row.colsStyle)
+        ? row.colsStyle.map((style) => ({ ...style }))
+        : undefined,
+      cells: row.cells.map((cell, cellIndex) => {
+        const fieldIdsForCell = cell.refType === "layout"
+          ? []
+          : (Array.isArray(cell.refIds) ? cell.refIds.filter(Boolean) : []);
         if (!fieldIdsForCell.length) {
           diagnostics.push(projectionError(
             "projection.form.layout_cell_empty",
-            "DSL layout cell has no field references.",
+            "Projected native layout cell has no executable field references.",
             { rowId: row.id, index: cellIndex }
+          ));
+        }
+        if (
+          requiresTopologyMarkers &&
+          (!Array.isArray(cell.ownerNodePath) || cell.ownerNodePath.length === 0)
+        ) {
+          diagnostics.push(projectionError(
+            "projection.form.layout_cell_owner_path_missing",
+            "Projected nested layout cell is missing its complete owner-node path.",
+            { rowId: row.id, index: cellIndex, ownerNodeId: cell.ownerNodeId }
           ));
         }
         return {
           id: cell.id || `${row.id}-cell-${cellIndex}`,
+          ownerNodeId: requiresTopologyMarkers ? cell.ownerNodeId : undefined,
+          ownerNodePath: requiresTopologyMarkers && Array.isArray(cell.ownerNodePath)
+            ? [...cell.ownerNodePath]
+            : undefined,
+          refType: cell.refType,
           fieldIds: fieldIdsForCell,
           row: cell.row,
           column: cell.column,
-          colspan: cell.colspan
+          colspan: cell.colspan,
+          rowspan: cell.rowspan ?? 1
         };
       })
     };
-  }).filter(Boolean);
+  });
 
   return {
     fields: expectedFields,
@@ -1595,12 +1617,6 @@ function canonicalizeScriptBody(source) {
     .replace(/\bfunction\s+[A-Za-z0-9_]+\s*\(/g, "function __fn(")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function childRefIds(cell = {}) {
-  if (Array.isArray(cell.refIds) && cell.refIds.length) return cell.refIds.filter(Boolean);
-  if (cell.refId) return [cell.refId];
-  return [];
 }
 
 function nonEmptyString(value) {

@@ -9,6 +9,7 @@ export function buildDryRunPlan(input) {
   const dataOnlyFieldCount = fields.filter((field) => field?.dataOnly === true).length;
   const renderedFieldCount = fields.length - dataOnlyFieldCount;
   const layoutRows = Array.isArray(input?.form?.layout?.mkTree) ? input.form.layout.mkTree : [];
+  const layout = summarizeLayoutGraph(layoutRows);
   const scriptActions = Array.isArray(input?.scripts?.actions) ? input.scripts.actions : [];
   const scriptSupport = summarizeScriptActionSupport(scriptActions, input?.form);
   const formRuleSummary = summarizeFormRules(input?.formRules);
@@ -68,7 +69,10 @@ export function buildDryRunPlan(input) {
         fieldCount: fields.length,
         dataOnlyFieldCount,
         renderedFieldCount,
-        layoutRows: layoutRows.length
+        layoutRows: layout.rootCount,
+        layoutRootCount: layout.rootCount,
+        layoutNodeCount: layout.nodeCount,
+        nestedLayoutCount: layout.nestedCount
       },
       ...formRuleSteps,
       ...scriptSteps,
@@ -86,8 +90,28 @@ export function buildDryRunPlan(input) {
         expectedFieldCount: fields.length,
         expectedDataOnlyFieldCount: dataOnlyFieldCount,
         expectedRenderedFieldCount: renderedFieldCount,
-        expectedLayoutRows: layoutRows.length
+        expectedLayoutRows: layout.rootCount,
+        expectedLayoutRootCount: layout.rootCount,
+        expectedLayoutNodeCount: layout.nodeCount,
+        expectedNestedLayoutCount: layout.nestedCount
       }
     ]
+  };
+}
+
+function summarizeLayoutGraph(nodes = []) {
+  const nodeIds = new Set(nodes.map((node) => node?.id).filter(Boolean));
+  const referenced = new Set(
+    nodes.flatMap((node) =>
+      (node?.children || [])
+        .filter((cell) => cell?.refType === "layout")
+        .flatMap((cell) => cell.refIds || [])
+    ).filter((nodeId) => nodeIds.has(nodeId))
+  );
+  const rootCount = nodes.filter((node) => nodeIds.has(node?.id) && !referenced.has(node.id)).length;
+  return {
+    rootCount,
+    nodeCount: nodeIds.size,
+    nestedCount: Math.max(0, nodeIds.size - rootCount)
   };
 }

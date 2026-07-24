@@ -439,6 +439,17 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
   expectedRows.forEach((expectedRow, rowIndex) => {
     const actualRow = actualRows[rowIndex];
     if (!actualRow) return;
+    if (
+      expectedRow.rootNodeId !== undefined &&
+      expectedRow.rootNodeId !== actualRow.rootNodeId
+    ) {
+      diagnostics.push(mismatch("form", "readback.form.layout_root_owner_mismatch", "Readback native layout root does not match the projected DSL root.", {
+        invariantKey: `form.layout.rows.${rowIndex}.rootNodeId`,
+        path: `/readback/form/layoutRows/${rowIndex}/rootNodeId`,
+        expected: expectedRow.rootNodeId,
+        actual: actualRow.rootNodeId
+      }));
+    }
     if (expectedRow.rows !== actualRow.rows || expectedRow.columns !== actualRow.columns) {
       diagnostics.push(mismatch("form", "readback.form.layout_grid_size_mismatch", "Readback form layout grid size does not match DSL.", {
         invariantKey: `form.layout.rows.${rowIndex}.grid`,
@@ -446,6 +457,22 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
         expected: { rows: expectedRow.rows, columns: expectedRow.columns },
         actual: { rows: actualRow.rows, columns: actualRow.columns }
       }));
+    }
+    if (
+      expectedRow.colsStyle !== undefined &&
+      stableStringify(expectedRow.colsStyle) !== stableStringify(actualRow.colsStyle)
+    ) {
+      diagnostics.push(mismatch(
+        "form",
+        "readback.form.layout_column_styles_mismatch",
+        "Readback form layout column widths do not match the projected DSL proportions.",
+        {
+          invariantKey: `form.layout.rows.${rowIndex}.colsStyle`,
+          path: `/readback/form/layoutRows/${rowIndex}/colsStyle`,
+          expected: expectedRow.colsStyle,
+          actual: actualRow.colsStyle
+        }
+      ));
     }
     if ((expectedRow.cells || []).length !== (actualRow.cells || []).length) {
       diagnostics.push(mismatch("form", "readback.form.layout_cells_mismatch", "Readback form layout cell count does not match DSL.", {
@@ -459,6 +486,47 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
     (expectedRow.cells || []).forEach((expectedCell, cellIndex) => {
       const actualCell = actualRow.cells[cellIndex];
       if (!actualCell) return;
+      if (expectedCell.refType !== actualCell.refType) {
+        diagnostics.push(mismatch("form", "readback.form.layout_cell_ref_type_mismatch", "Readback form layout cell reference type does not match DSL.", {
+          invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.refType`,
+          path: `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/refType`,
+          expected: expectedCell.refType,
+          actual: actualCell.refType
+        }));
+      }
+      if (
+        expectedCell.ownerNodeId !== undefined &&
+        expectedCell.ownerNodeId !== actualCell.ownerNodeId
+      ) {
+        diagnostics.push(mismatch("form", "readback.form.layout_cell_owner_mismatch", "Readback form layout cell was lowered from the wrong DSL layout node.", {
+          invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.ownerNodeId`,
+          path: `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/ownerNodeId`,
+          expected: expectedCell.ownerNodeId,
+          actual: actualCell.ownerNodeId
+        }));
+      }
+      if (
+        expectedCell.ownerNodePath !== undefined &&
+        stableStringify(expectedCell.ownerNodePath) !== stableStringify(actualCell.ownerNodePath)
+      ) {
+        diagnostics.push(mismatch("form", "readback.form.layout_cell_owner_path_mismatch", "Readback form layout cell is missing part of its DSL layout ancestry.", {
+          invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.ownerNodePath`,
+          path: `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/ownerNodePath`,
+          expected: expectedCell.ownerNodePath,
+          actual: actualCell.ownerNodePath
+        }));
+      }
+      if (
+        expectedRow.requiresTopologyMarkers === true &&
+        expectedCell.refType !== actualCell.markerRefType
+      ) {
+        diagnostics.push(mismatch("form", "readback.form.layout_cell_ref_type_marker_mismatch", "Readback form layout cell reference-type marker does not match DSL topology.", {
+          invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.markerRefType`,
+          path: `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/markerRefType`,
+          expected: expectedCell.refType,
+          actual: actualCell.markerRefType
+        }));
+      }
       if (stableStringify(expectedCell.fieldIds || []) !== stableStringify(actualCell.fieldIds || [])) {
         diagnostics.push(mismatch("form", "readback.form.layout_cell_fields_mismatch", "Readback form layout cell fields do not match DSL.", {
           invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.fieldIds`,
@@ -470,13 +538,24 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
       if (
         expectedCell.row !== actualCell.row ||
         expectedCell.column !== actualCell.column ||
-        expectedCell.colspan !== actualCell.colspan
+        expectedCell.colspan !== actualCell.colspan ||
+        (expectedCell.rowspan ?? 1) !== (actualCell.rowspan ?? 1)
       ) {
         diagnostics.push(mismatch("form", "readback.form.layout_cell_position_mismatch", "Readback form layout cell position does not match DSL.", {
           invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.position`,
           path: `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}`,
-          expected: { row: expectedCell.row, column: expectedCell.column, colspan: expectedCell.colspan },
-          actual: { row: actualCell.row, column: actualCell.column, colspan: actualCell.colspan }
+          expected: {
+            row: expectedCell.row,
+            column: expectedCell.column,
+            colspan: expectedCell.colspan,
+            rowspan: expectedCell.rowspan ?? 1
+          },
+          actual: {
+            row: actualCell.row,
+            column: actualCell.column,
+            colspan: actualCell.colspan,
+            rowspan: actualCell.rowspan ?? 1
+          }
         }));
       }
     });

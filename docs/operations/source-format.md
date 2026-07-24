@@ -78,6 +78,34 @@ The trusted DSL form section contains both field definitions and explicit target
 }
 ```
 
+`form.layout.mkTree` is an ordered layout-node registry, not a flat list of
+rendered top-level rows. A child may use `refType: "layout"` with one or more
+ordered `refIds` to own a vertical stack of nested layout nodes. Nodes that are
+not referenced by another layout node are native roots. Layout references must
+resolve, remain acyclic, and have at most one parent; duplicate references are
+invalid.
+
+NewOA's native layout grid does not persist a grid inside a `GridItem`.
+Execution therefore lowers each nested root to one native multi-row grid:
+ordinary sibling cells retain their proportional region and use native
+`rowSpan`/`columnSpan` across the nested stack, while nested leaf controls are
+direct children of sibling `GridItem` nodes. The executor may use a
+one-to-eight-column integer lattice internally to calculate exact fractional
+boundaries, but it collapses unused boundaries before persistence and writes
+the resulting non-uniform widths as native `colsStyle`. An internal
+eight-column calculation therefore becomes five visible columns when only five
+semantic width segments exist; it is not exposed as an arbitrary eight-column
+designer layout. Ordinary non-nested rows retain their reviewed DSL grid. If
+no exact nested calculation exists within eight internal units, the root's
+original column count is retained and controls wrap inside their owned region
+instead of overlapping or widening unrelated rows.
+
+Each lowered native cell carries its complete layout ownership path from the
+native root to the leaf owner. Readback compares that path, the reference type,
+coordinates, and `rowSpan`; dropping an intermediate nesting level is therefore
+a topology mismatch even when the visible field and final coordinates still
+match.
+
 `form.fields[].id` is the canonical designer control id from `fdDesignerHtml`. If `fdMetadataXml` uses a different id for the same title/type, the metadata id is preserved in source audit data and translation emits a warning.
 
 Every translated form field and detail-table column must include target `componentId + props + sourceProps + sourceRef`. `props` are executable and validated against `catalogs/mk-components.v1.json`. `sourceProps` are audit-only; the executor must not consume them. Unknown props are errors. Textarea `height` is never carried into DSL or execution payloads; `maxLength` remains omitted unless explicitly present in executable `props`; `maxLength: 0` is invalid.

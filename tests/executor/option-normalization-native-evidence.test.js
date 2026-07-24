@@ -61,11 +61,11 @@ describe("option normalization native evidence", () => {
       confirmationRow.children[0].children.map((cell) => ({
         fieldId: cell.controlProps.migrationFieldId,
         column: cell.controlProps.column,
-        colSpan: cell.controlProps.colSpan
+        columnSpan: cell.controlProps.columnSpan
       })),
       [
-        { fieldId: "confirm_hint", column: 1, colSpan: 1 },
-        { fieldId: "fd_confirm", column: 2, colSpan: 1 }
+        { fieldId: "confirm_hint", column: 1, columnSpan: 1 },
+        { fieldId: "fd_confirm", column: 2, columnSpan: 1 }
       ]
     );
     assert.deepEqual(mobileRows, desktopRows);

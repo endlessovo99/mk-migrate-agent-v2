@@ -8,7 +8,7 @@ import { translateLegacyConditionContextReferences } from "../dsl/condition-cont
 import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../dsl/form-rules.js";
 import { inspectNativeFormRuleProjection } from "../dsl/native-form-rule-projection.js";
 import { deterministicManualResidualDecisionId } from "../dsl/deterministic-script-translations.js";
-import { packLayoutGrid } from "../dsl/layout-pack.js";
+import { packLayoutGrid, projectLayoutGrid } from "../dsl/layout-pack.js";
 import {
   applyFieldIdMapToForm,
   applyFieldIdMapToScripts,
@@ -1479,24 +1479,42 @@ function normalizeLegacyExpression(value) {
 
 function draftMkTree(layout, detailTableIds) {
   const rows = Array.isArray(layout.rows) ? layout.rows : [];
-  return rows.flatMap((row, rowIndex) => {
+  const projectedRows = rows.map((row, rowIndex) => {
     const sourceCells = Array.isArray(row.cells) ? row.cells : [];
     const sourceRowId = row.id || `row-${rowIndex}`;
-    const sourcePacked = packLayoutGrid(sourceCells);
+    const sourceColumns = Math.max(
+      Number.isInteger(row.columns) ? row.columns : 0,
+      ...sourceCells.map((cell) =>
+        (Number.isInteger(cell.column) ? cell.column : 0) +
+        (Number.isInteger(cell.colspan) ? cell.colspan : 1)
+      ),
+      1
+    );
+    const preserveNestedGeometry =
+      sourceCells.some(hasLayoutReference) &&
+      sourceCells.every((cell) =>
+        hasLayoutReference(cell) ||
+        (Array.isArray(cell.references) ? cell.references.length : 0) <= 1
+      );
+    const sourcePacked = preserveNestedGeometry
+      ? projectLayoutGrid(sourceCells, { rows: 1, columns: sourceColumns })
+      : packLayoutGrid(sourceCells);
     const segments = splitDetailTableLayoutSegments(sourcePacked.cells, detailTableIds);
     const baseSegmentIndex = Math.max(
       segments.findIndex((segment) => segment.kind === "detailTable"),
       0
     );
 
-    return segments.map((segment, segmentIndex) => {
+    const nodes = segments.map((segment, segmentIndex) => {
       // sourcePacked has already expanded every inline reference into one cell.
       // Preserve one source <tr> as one logical target grid. The table layout
       // caps each native row at its catalog capability and keeps overflow in
       // additional rows of that same grid so row-marker ownership stays intact.
-      const packed = packLayoutGrid(segment.cells, {
-        columns: Math.max(Math.min(segment.cells.length, TABLE_LAYOUT_MAX_COLUMNS), 1)
-      });
+      const packed = preserveNestedGeometry
+        ? projectLayoutGrid(segment.cells, { rows: 1, columns: sourceColumns })
+        : packLayoutGrid(segment.cells, {
+            columns: Math.max(Math.min(segment.cells.length, TABLE_LAYOUT_MAX_COLUMNS), 1)
+          });
       const tableLayout = packed.rows > 1 || packed.columns > 4;
       const baseSegment = segmentIndex === baseSegmentIndex;
       const segmentSuffix = segments.length > 1 && !baseSegment
@@ -1520,9 +1538,10 @@ function draftMkTree(layout, detailTableIds) {
             : undefined,
         children: packed.cells.map((cell, cellIndex) => {
           const references = Array.isArray(cell.references) ? cell.references : [];
+          const refType = layoutCellRefType(references, detailTableIds);
           return {
             id: `layout.${cell.id || `${sourceRowId}.cell.${cellIndex}`}`,
-            refType: references.some((ref) => detailTableIds.has(ref.referenceId)) ? "detailTable" : "field",
+            refType,
             refIds: references.map((ref) => ref.referenceId),
             sourceRef: cell.sourceRef,
             ...(tableLayout ? { row: cell.row } : {}),
@@ -1532,7 +1551,44 @@ function draftMkTree(layout, detailTableIds) {
         })
       };
     });
+    return { sourceRowId, nodes };
   });
+
+  const targetNodeIdsBySourceRowId = new Map(
+    projectedRows.map(({ sourceRowId, nodes }) => [
+      sourceRowId,
+      nodes.map((node) => node.id)
+    ])
+  );
+  return projectedRows.flatMap(({ nodes }) =>
+    nodes.map((node) => ({
+      ...node,
+      children: node.children.map((child) => child.refType === "layout"
+        ? {
+            ...child,
+            refIds: child.refIds.flatMap((sourceRowId) =>
+              targetNodeIdsBySourceRowId.get(sourceRowId) ||
+              [sourceRowId.startsWith("layout.") ? sourceRowId : `layout.${sourceRowId}`]
+            )
+          }
+        : child)
+    }))
+  );
+}
+
+function hasLayoutReference(cell) {
+  return Array.isArray(cell?.references) &&
+    cell.references.some((reference) => reference?.referenceType === "layout");
+}
+
+function layoutCellRefType(references, detailTableIds) {
+  if (references.length && references.every((reference) => reference.referenceType === "layout")) {
+    return "layout";
+  }
+  if (references.some((reference) => detailTableIds.has(reference.referenceId))) {
+    return "detailTable";
+  }
+  return "field";
 }
 
 function tableLayoutMaxColumns() {
