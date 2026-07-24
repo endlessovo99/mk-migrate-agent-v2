@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>class</string><string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string></void>
+  <void method="put"><string>fdId</string><string>route-workflow-data-authority-sysform-id</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+  <void method="put"><string>fdName</string><string>流程数据权限归一化</string></void>
+  <void method="put"><string>fdModelName</string><string>com.landray.kmss.km.review.model.KmReviewTemplate</string></void>
+  <void method="put"><string>fdModelId</string><string>route-workflow-data-authority-template-id</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;
+     &lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;result_right&quot;}&apos; mode_n2=&quot;hidden&quot; mode_n404=&quot;view&quot;&gt;
+      &lt;div fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;resultCaption&quot;,content:&quot;传输结果：&quot;,b:&quot;true&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;httpCode&quot;,label:&quot;请求 code&quot;,required:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;httpCode&quot;/&gt;&lt;/div&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;exactField&quot;,label:&quot;精确节点字段&quot;,required:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;exactField&quot;/&gt;&lt;/div&gt;
+     &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+     &lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;exact_right&quot;}&apos; mode_N2=&quot;edit&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;exactField&quot;,label:&quot;精确节点字段&quot;,required:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;exactField&quot;/&gt;&lt;/div&gt;
+     &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;
+     &lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;empty_right&quot;}&apos; mode_N2=&quot;view&quot;&gt;
+      &lt;div fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;designer_helper&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;httpCode&quot; label=&quot;请求 code&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;exactField&quot; label=&quot;精确节点字段&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

@@ -12,7 +12,9 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   const metadata = parseMetadataXml(template.fdMetadataXml || "");
   const warnings = [];
   const form = buildDesignerFirstForm(template.fdDesignerHtml || "", metadata, warnings);
-  const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template);
+  const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
+    knownFieldIds: collectDataAuthorityFieldIds(form)
+  });
   if (Object.keys(nodeDataAuthorities.nodeDataAuthorities || {}).length) {
     form.nodeDataAuthorities = nodeDataAuthorities.nodeDataAuthorities;
   }
@@ -45,6 +47,7 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   if (functionWhitelist?.violations.length) {
     warnings.push(...functionWhitelistErrors(functionWhitelist, "/fdDesignerHtml"));
   }
+  warnings.push(...nodeDataAuthorities.warnings);
   errors.push(...nodeDataAuthorities.errors);
   for (const source of scripts?.sources || []) {
     if (source.functionAudit?.violations?.length) {
@@ -74,6 +77,18 @@ export function translateSysFormTemplateXml(xml, options = {}) {
       ...(functionWhitelist ? { functionWhitelist } : {})
     }
   };
+}
+
+function collectDataAuthorityFieldIds(form = {}) {
+  const ids = new Set();
+  for (const field of [...(form.fields || []), ...(form.dataFields || [])]) {
+    if (field?.id) ids.add(field.id);
+    if (field?.type !== "detailTable") continue;
+    for (const column of field.columns || []) {
+      if (column?.id) ids.add(column.id);
+    }
+  }
+  return ids;
 }
 
 export function parseSysFormTemplateXml(xml = "") {

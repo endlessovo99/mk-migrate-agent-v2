@@ -7,6 +7,11 @@ import { translateSysFormTemplateXml } from "./sysform-template-adapter.js";
 import { cleanText, parseRootHashMapStringPuts } from "./xml-utils.js";
 
 export const SOURCE_DRAFT_VERSION = "2.0-source-draft";
+const FORM_RIGHT_MODE_RESTRICTIVENESS = new Map([
+  ["hidden", 0],
+  ["view", 1],
+  ["edit", 2]
+]);
 
 export function cleanSourceFile(path, options = {}) {
   const stat = statSync(path);
@@ -56,8 +61,14 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
     sourceFormRulesFromLegacyScripts(legacyDsl.scripts),
     rowMarkerOrphanIssues
   );
+  const nodeDataAuthorityResolution = legacyDsl.workflow
+    ? reconcileNodeDataAuthorities(
+        legacyDsl.form?.nodeDataAuthorities,
+        legacyDsl.workflow.nodes
+      )
+    : { nodeDataAuthorities: {}, issues: [] };
   const workflow = legacyDsl.workflow ? sourceWorkflowFromLegacyWorkflow(legacyDsl.workflow, {
-    nodeDataAuthorities: legacyDsl.form?.nodeDataAuthorities,
+    nodeDataAuthorities: nodeDataAuthorityResolution.nodeDataAuthorities,
     fields: allFields
   }) : undefined;
 
@@ -80,7 +91,8 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
     workflow,
     issues: [
       ...sourceIssuesFromReview(legacyDsl.review),
-      ...rowMarkerOrphanIssues
+      ...rowMarkerOrphanIssues,
+      ...nodeDataAuthorityResolution.issues
     ]
   });
 }
@@ -439,6 +451,137 @@ function sourceWorkflowFromLegacyWorkflow(workflow, context = {}) {
     edges,
     topologicalOrder: workflow.topologicalOrder || []
   };
+}
+
+function reconcileNodeDataAuthorities(nodeDataAuthorities = {}, workflowNodes = []) {
+  const actualNodeIds = (workflowNodes || [])
+    .map((node) => String(node?.id || "").trim())
+    .filter(Boolean);
+  const actualNodeIdSet = new Set(actualNodeIds);
+  const actualNodeIdsByFoldedId = new Map();
+  for (const nodeId of actualNodeIds) {
+    const foldedId = nodeId.toLowerCase();
+    const ids = actualNodeIdsByFoldedId.get(foldedId) || [];
+    ids.push(nodeId);
+    actualNodeIdsByFoldedId.set(foldedId, ids);
+  }
+
+  const reconciled = {};
+  const reconciledOrigins = {};
+  const issues = [];
+  for (const [sourceNodeId, authority] of Object.entries(nodeDataAuthorities || {})) {
+    const foldedMatches = actualNodeIdsByFoldedId.get(sourceNodeId.toLowerCase()) || [];
+    const exactMatch = actualNodeIdSet.has(sourceNodeId);
+    const targetNodeId = exactMatch
+      ? sourceNodeId
+      : foldedMatches.length === 1
+        ? foldedMatches[0]
+        : undefined;
+
+    if (!targetNodeId) {
+      const sourceRefs = authoritySourceRefs(authority);
+      if (foldedMatches.length > 1) {
+        issues.push({
+          level: "error",
+          code: "source.form_right.node_ambiguous",
+          message: `Form right node reference ${sourceNodeId} matches multiple workflow nodes by case.`,
+          sourcePath: `/form/nodeDataAuthorities/${sourceNodeId}`,
+          evidence: {
+            nodeId: sourceNodeId,
+            matchingNodeIds: foldedMatches,
+            sourceRefs
+          }
+        });
+      } else {
+        issues.push({
+          level: "warning",
+          code: "source.form_right.node_missing",
+          message: `Form right node reference ${sourceNodeId} does not match a workflow node.`,
+          sourcePath: `/form/nodeDataAuthorities/${sourceNodeId}`,
+          evidence: {
+            nodeId: sourceNodeId,
+            sourceRefs
+          }
+        });
+      }
+      continue;
+    }
+
+    reconciled[targetNodeId] ||= { fields: {} };
+    reconciledOrigins[targetNodeId] ||= {};
+    for (const [fieldId, entry] of Object.entries(authority?.fields || {})) {
+      const previous = reconciled[targetNodeId].fields[fieldId];
+      const previousOrigin = reconciledOrigins[targetNodeId][fieldId];
+      const currentOrigin = {
+        matchKind: exactMatch ? "exact" : "casefold",
+        sourceNodeId,
+        entry
+      };
+      if (!previous) {
+        reconciled[targetNodeId].fields[fieldId] = entry;
+        reconciledOrigins[targetNodeId][fieldId] = currentOrigin;
+        continue;
+      }
+
+      if (previous.mode === entry?.mode) {
+        continue;
+      }
+
+      if (currentOrigin.matchKind !== previousOrigin.matchKind) {
+        const selected = moreRestrictiveAuthorityOrigin(previousOrigin, currentOrigin);
+        const discarded = selected === currentOrigin ? previousOrigin : currentOrigin;
+        reconciled[targetNodeId].fields[fieldId] = selected.entry;
+        reconciledOrigins[targetNodeId][fieldId] = selected;
+        issues.push({
+          level: "warning",
+          code: "source.form_right.case_variant_conflict",
+          message: `Form right node references ${selected.sourceNodeId} and ${discarded.sourceNodeId} assign conflicting modes to ${fieldId}; the more restrictive mode is preserved.`,
+          sourcePath: `/form/nodeDataAuthorities/${discarded.sourceNodeId}/fields/${fieldId}`,
+          evidence: {
+            nodeId: targetNodeId,
+            fieldId,
+            selectedNodeId: selected.sourceNodeId,
+            discardedNodeId: discarded.sourceNodeId,
+            modes: [selected.entry?.mode, discarded.entry?.mode],
+            sourceRefs: [selected.entry?.sourceRef, discarded.entry?.sourceRef].filter(Boolean)
+          }
+        });
+        continue;
+      }
+
+      issues.push({
+        level: "error",
+        code: "source.form_right.conflict",
+        message: `Form right sections assign conflicting modes to ${fieldId} on ${targetNodeId}.`,
+        sourcePath: `/form/nodeDataAuthorities/${sourceNodeId}/fields/${fieldId}`,
+        evidence: {
+          nodeId: targetNodeId,
+          fieldId,
+          modes: [previous.mode, entry?.mode],
+          sourceRefs: [previous.sourceRef, entry?.sourceRef].filter(Boolean)
+        }
+      });
+    }
+  }
+
+  return {
+    nodeDataAuthorities: reconciled,
+    issues
+  };
+}
+
+function moreRestrictiveAuthorityOrigin(left, right) {
+  const leftRank = FORM_RIGHT_MODE_RESTRICTIVENESS.get(left.entry?.mode) ?? Number.POSITIVE_INFINITY;
+  const rightRank = FORM_RIGHT_MODE_RESTRICTIVENESS.get(right.entry?.mode) ?? Number.POSITIVE_INFINITY;
+  return rightRank < leftRank ? right : left;
+}
+
+function authoritySourceRefs(authority) {
+  return [...new Set(
+    Object.values(authority?.fields || {})
+      .map((entry) => entry?.sourceRef)
+      .filter(Boolean)
+  )];
 }
 
 function sourceNodeDataAuthority(authority, requiredFields) {

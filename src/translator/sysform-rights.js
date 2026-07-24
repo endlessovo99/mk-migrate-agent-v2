@@ -2,8 +2,13 @@ import { attrValue, decodeEntities, parseFdValues, parseXmlAttributes, propertyF
 
 const SUPPORTED_RIGHT_MODES = new Set(["hidden", "view", "edit"]);
 
-export function extractSysFormNodeDataAuthorities(template = {}) {
+export function extractSysFormNodeDataAuthorities(template = {}, options = {}) {
   const errors = [];
+  const warnings = [];
+  const warningKeys = new Set();
+  const knownFieldIds = options.knownFieldIds instanceof Set
+    ? options.knownFieldIds
+    : undefined;
   const designerSections = extractDesignerRightSections(template.fdDesignerHtml || "");
   const sections = designerSections.length
     ? designerSections
@@ -13,8 +18,29 @@ export function extractSysFormNodeDataAuthorities(template = {}) {
   const seen = new Map();
 
   sections.forEach((section, sectionIndex) => {
-    const fieldIds = [...new Set(section.fieldIds || [])].filter((fieldId) => fieldId !== section.id);
-    if (!fieldIds.length) return;
+    const candidateFieldIds = [...new Set(section.fieldIds || [])]
+      .filter((fieldId) => fieldId !== section.id);
+    const fieldIds = candidateFieldIds
+      .filter((fieldId) => !knownFieldIds || knownFieldIds.has(fieldId));
+    const nodeIds = Object.keys(section.nodeModes || {});
+    if (!fieldIds.length) {
+      const warningKey = `${section.sourceRef}:fields_unresolved`;
+      if (nodeIds.length && !warningKeys.has(warningKey)) {
+        warningKeys.add(warningKey);
+        warnings.push({
+          code: "source.form_right.fields_unresolved",
+          message: `Form right section ${section.id || sectionIndex + 1} does not contain a mapped form field.`,
+          path: section.path,
+          details: {
+            sectionId: section.id,
+            nodeIds,
+            candidateFieldIds,
+            sourceRef: section.sourceRef
+          }
+        });
+      }
+      return;
+    }
 
     for (const [nodeId, mode] of Object.entries(section.nodeModes || {})) {
       if (!isWorkflowNodeId(nodeId)) continue;
@@ -59,6 +85,7 @@ export function extractSysFormNodeDataAuthorities(template = {}) {
 
   return {
     nodeDataAuthorities: pruneEmptyNodes(nodes),
+    warnings,
     errors
   };
 }
@@ -130,7 +157,7 @@ function extractDesignerFieldIds(fragment = "", sectionId = "") {
 
   for (const match of fragment.matchAll(controlPattern)) {
     const fdType = String(match[4] || "").toLowerCase();
-    if (["right", "textlabel", "jsp"].includes(fdType)) continue;
+    if (fdType === "right") continue;
 
     const attrs = match[2];
     const values = parseFdValues(attrValue(attrs, "fd_values"));
@@ -154,7 +181,7 @@ function extractDisplayFieldIds(fragment = "") {
 }
 
 function addFieldId(ids, seen, id, sectionId) {
-  if (!id || id === sectionId || !/^fd_[A-Za-z0-9_]+$/.test(id) || seen.has(id)) return;
+  if (!id || id === sectionId || seen.has(id)) return;
   seen.add(id);
   ids.push(id);
 }
@@ -169,7 +196,7 @@ function sourceRefBase(source, id) {
 }
 
 function isWorkflowNodeId(value) {
-  return /^N[A-Za-z0-9_-]*$/.test(String(value || ""));
+  return /^N[A-Za-z0-9_-]*$/i.test(String(value || ""));
 }
 
 function pruneEmptyNodes(nodes) {
