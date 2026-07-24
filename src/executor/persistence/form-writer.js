@@ -34,6 +34,11 @@ import {
   optionValueSet
 } from "./option-defaults.js";
 
+const CURRENT_TIME_INITIALIZER = 'function(e){var t=(e||{}).controlProps||{},r=t.defaultValueType,n=t.value;if("now"===r&&void 0===n){var o=(new Date).valueOf();return e.controlProps.value=o,o}}';
+const DATE_TIME_OUTPUT_PATTERN = "yyyy-MM-dd hh:mm";
+const NATIVE_DATE_TIME_DATA_PATTERN = "yyyy-MM-dd HH/mm";
+const NATIVE_DATE_TIME_DISPLAY_PATTERN = "yyyy年MM月DD日 HH点mm分";
+
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
   const form = dsl.form || {};
@@ -683,7 +688,20 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     });
   }
   if (spec.attrType === "timestamp") {
-    Object.assign(controlProps, { placeholder: "请选择", displayPattern: "yyyy-MM-dd HH:mm" });
+    Object.assign(controlProps, {
+      placeholder: "请选择",
+      ...(nativeDateTimePatterns(field) || { displayPattern: "yyyy-MM-dd HH:mm" })
+    });
+    if (hasCurrentTimeDefault(field)) {
+      Object.assign(controlProps, {
+        maxLength: 200,
+        "$$allowCustomValue": true,
+        type: spec.desktop,
+        defaultValueType: "now",
+        "$$init": CURRENT_TIME_INITIALIZER,
+        recalculate: false
+      });
+    }
   }
   if (spec.attrType === "address") {
     controlProps.org = { types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"] };
@@ -904,6 +922,17 @@ function applyContextDefaultToControlProps(controlProps, contextDefault, spec) {
 
 function fieldFontExtendData(field, template, spec) {
   const data = {};
+  if (spec.attrType === "timestamp") {
+    Object.assign(data, nativeDateTimePatterns(field));
+    if (hasCurrentTimeDefault(field)) {
+      Object.assign(data, {
+        passValue: false,
+        trace: false,
+        defaultValueType: "now",
+        recalculate: false
+      });
+    }
+  }
   if (
     spec.attrType === "number" &&
     componentSupportsProp(field.componentId, "unit") &&
@@ -1009,6 +1038,24 @@ function fieldFontExtendData(field, template, spec) {
   }
 
   return data;
+}
+
+function nativeDateTimePatterns(field) {
+  if (field.props?.displayPattern !== DATE_TIME_OUTPUT_PATTERN) return undefined;
+  return {
+    dataPattern: NATIVE_DATE_TIME_DATA_PATTERN,
+    displayPattern: NATIVE_DATE_TIME_DISPLAY_PATTERN
+  };
+}
+
+function hasCurrentTimeDefault(field) {
+  const value = field.props?.defaultValue;
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    value.kind === "currentTime"
+  );
 }
 
 function normalizeLiteralDefault(value) {

@@ -319,6 +319,12 @@ function executableProps(field = {}, form = {}) {
   if (componentSupportsProp(field.componentId, "precision") && Number.isInteger(field.props?.precision)) {
     props.precision = field.props.precision;
   }
+  if (
+    componentSupportsProp(field.componentId, "displayPattern") &&
+    typeof field.props?.displayPattern === "string"
+  ) {
+    props.displayPattern = normalizeScalar(field.props.displayPattern);
+  }
   if (componentSupportsProp(field.componentId, "defaultValue") && field.props?.defaultValue !== undefined) {
     const defaultValue = field.props.defaultValue;
     props.defaultValue = cloneJson(

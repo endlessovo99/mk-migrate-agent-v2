@@ -19,6 +19,11 @@ import {
 } from "./script-dispatcher-contract.js";
 import { inspectLeadingViewStatusGuard } from "./view-status-guard.js";
 
+const CURRENT_TIME_INITIALIZER = 'function(e){var t=(e||{}).controlProps||{},r=t.defaultValueType,n=t.value;if("now"===r&&void 0===n){var o=(new Date).valueOf();return e.controlProps.value=o,o}}';
+const DATE_TIME_OUTPUT_PATTERN = "yyyy-MM-dd hh:mm";
+const NATIVE_DATE_TIME_DATA_PATTERN = "yyyy-MM-dd HH/mm";
+const NATIVE_DATE_TIME_DISPLAY_PATTERN = "yyyy年MM月DD日 HH点mm分";
+
 /**
  * Independently observe native persisted template semantics.
  * Must not import writer traversal/serialization helpers or trust migration markers.
@@ -397,6 +402,8 @@ function observeExecutableProps(controlProps = {}, native = {}) {
   }
   const precision = observeNativeNumberPrecision(controlProps, native, unit);
   if (precision !== undefined) props.precision = precision;
+  const displayPattern = observeNativeDateTimeDisplayPattern(controlProps, native.field);
+  if (displayPattern !== undefined) props.displayPattern = displayPattern;
   const defaultValue = observeNativeDefaultValue(controlProps, native.field);
   if (defaultValue) props.defaultValue = defaultValue;
   if (controlProps.content !== undefined) props.content = normalizeScalar(controlProps.content);
@@ -486,6 +493,18 @@ function nativePrecisionValue(value) {
 function observeNativeDefaultValue(controlProps, field) {
   const font = safeParseObject(field?.fdFontExtendData);
   const type = controlProps.defaultValueType || font.defaultValueType;
+  if (type === "now") {
+    if (
+      controlProps.defaultValueType !== "now" ||
+      font.defaultValueType !== "now" ||
+      controlProps.$$init !== CURRENT_TIME_INITIALIZER ||
+      controlProps.recalculate !== false ||
+      font.recalculate !== false
+    ) {
+      return undefined;
+    }
+    return { kind: "currentTime" };
+  }
   if (type === "fixed" && Object.hasOwn(controlProps, "defaultValue")) {
     return { kind: "literal", value: cloneValue(controlProps.defaultValue) };
   }
@@ -516,6 +535,20 @@ function observeNativeDefaultValue(controlProps, field) {
     // Formula expressions are not literal defaults.
   }
   return undefined;
+}
+
+function observeNativeDateTimeDisplayPattern(controlProps, field) {
+  if (field?.fdType !== "timestamp") return undefined;
+  const font = safeParseObject(field.fdFontExtendData);
+  if (
+    controlProps.dataPattern !== NATIVE_DATE_TIME_DATA_PATTERN ||
+    controlProps.displayPattern !== NATIVE_DATE_TIME_DISPLAY_PATTERN ||
+    font.dataPattern !== NATIVE_DATE_TIME_DATA_PATTERN ||
+    font.displayPattern !== NATIVE_DATE_TIME_DISPLAY_PATTERN
+  ) {
+    return undefined;
+  }
+  return DATE_TIME_OUTPUT_PATTERN;
 }
 
 function applyObservedComputations(fields, formRule, detailModels, options = {}) {

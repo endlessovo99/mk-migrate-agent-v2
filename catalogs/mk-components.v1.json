@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-07-22.v5",
+  "version": "2026-07-24.v6",
   "components": [
     {
       "componentId": "xform-button",
@@ -206,11 +206,12 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
-          "displayPattern": { "type": "string" }
+          "displayPattern": { "type": "string", "enum": ["yyyy-MM-dd hh:mm"] },
+          "defaultValue": { "$ref": "#/$defs/dateTimeDefaultValue" }
         }
       },
       "defaultPolicy": { "executorDefaults": ["displayPattern"] },
-      "omitPolicy": { "omitWhenAbsent": [] }
+      "omitPolicy": { "omitWhenAbsent": ["defaultValue"] }
     },
     {
       "componentId": "xform-number",
@@ -495,6 +496,14 @@
         "kind": { "type": "string", "enum": ["context"] },
         "source": { "type": "string", "enum": ["creator", "creatorDept"] },
         "property": { "type": "string", "enum": ["fdName"] }
+      }
+    },
+    "dateTimeDefaultValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["currentTime"] }
       }
     },
     "calculation": {

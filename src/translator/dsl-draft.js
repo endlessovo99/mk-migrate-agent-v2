@@ -39,6 +39,7 @@ export const MIGRATION_DSL_VERSION = "2.0-migration";
 
 const TABLE_LAYOUT_COMPONENT_ID = "xform-multi-row-table-layout";
 const TABLE_LAYOUT_MAX_COLUMNS = tableLayoutMaxColumns();
+const LEGACY_DATE_TIME_DISPLAY_PATTERN = "yyyy-MM-dd hh:mm";
 
 export function draftSourceDraft(sourceDraft, options = {}) {
   if (sourceDraft?.version !== SOURCE_DRAFT_VERSION || sourceDraft?.artifact !== "source-draft") {
@@ -658,6 +659,9 @@ function propsFromSource(source, options = {}) {
     const defaultValue = legacyDefaultValueFromSource(source);
     if (defaultValue) props.defaultValue = defaultValue;
   }
+  if (componentId === "xform-datetime" && source.sourceType === "dateTime") {
+    props.displayPattern = LEGACY_DATE_TIME_DISPLAY_PATTERN;
+  }
 
   if (["xform-number", "xform-calculate"].includes(componentId)) {
     const precision = nonNegativeInteger(source.sourceProps?.designerValues?.decimal);
@@ -715,12 +719,23 @@ function legacyDefaultValueFromSource(source) {
   ];
 
   for (const candidate of candidates) {
+    const dateTimeDefault = parseLegacyDateTimeDefaultExpression(candidate, source);
+    if (dateTimeDefault) return dateTimeDefault;
     const contextDefault = parseLegacyContextDefaultExpression(candidate, source);
     if (contextDefault) return contextDefault;
     const literalDefault = parseLegacyLiteralDefault(candidate, source);
     if (literalDefault) return literalDefault;
   }
 
+  return undefined;
+}
+
+function parseLegacyDateTimeDefaultExpression(value, source) {
+  if (!["date", "dateTime"].includes(source.sourceType)) return undefined;
+  const expression = normalizeLegacyExpression(value).replace(/\s+/gu, "");
+  if (/^(?:nowTime|DateTimeFunction\.getNow\(\))$/i.test(expression)) {
+    return { kind: "currentTime" };
+  }
   return undefined;
 }
 
