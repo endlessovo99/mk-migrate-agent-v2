@@ -187,6 +187,7 @@ export function buildWorkflowDraftPayload(template) {
 
 export function buildWorkflowContent(workflow, context = {}) {
   const projectedWorkflow = projectSubProcessWorkflow(workflow);
+  const completionNotifications = workflow.process?.completionNotifications || {};
   const nodes = projectedWorkflow.nodes;
   const edges = projectedWorkflow.edges;
   const outgoingEdges = groupEdgesBySource(edges);
@@ -232,8 +233,8 @@ export function buildWorkflowContent(workflow, context = {}) {
     default: [],
     diagram: "",
     flowType: "0",
-    notifyDrafterOnEnd: "false",
-    notifyParticipantOnEnd: "false",
+    notifyDrafterOnEnd: completionNotifications.drafter === true ? "true" : "false",
+    notifyParticipantOnEnd: completionNotifications.participants === true ? "true" : "false",
     notifyDrafterOnException: "false",
     notifyAdminOnException: "false",
     notifyCurrentHandlerOnDraftRetract: "false",

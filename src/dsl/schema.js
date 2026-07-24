@@ -1565,6 +1565,7 @@ function validateWorkflow(workflow, diagnostics, context) {
   } else if (!nonEmptyString(process.id)) {
     diagnostics.push(error("dsl.workflow.process.id_required", "workflow.process.id is required.", "/workflow/process/id"));
   }
+  validateWorkflowCompletionNotifications(process.completionNotifications, diagnostics);
 
   const nodeMap = validateWorkflowNodes(workflow.nodes, diagnostics, context);
   validateWorkflowParticipantNodeReferences(workflow.nodes, nodeMap, diagnostics);
@@ -1574,6 +1575,28 @@ function validateWorkflow(workflow, diagnostics, context) {
   validateWorkflowConditions(edges, diagnostics, context);
   validateParallelGateways(workflow.nodes, nodeMap, diagnostics);
   validateSubProcessPairs(workflow.nodes, workflow.edges, diagnostics, context);
+}
+
+function validateWorkflowCompletionNotifications(value, diagnostics) {
+  if (value === undefined) return;
+  const path = "/workflow/process/completionNotifications";
+  if (!isRecord(value)) {
+    diagnostics.push(error(
+      "dsl.workflow.completion_notifications.type",
+      "Workflow completionNotifications must be an object.",
+      path
+    ));
+    return;
+  }
+  for (const key of ["drafter", "participants"]) {
+    if (typeof value[key] !== "boolean") {
+      diagnostics.push(error(
+        "dsl.workflow.completion_notifications.boolean_required",
+        "Workflow completion-notification values must be booleans.",
+        `${path}/${key}`
+      ));
+    }
+  }
 }
 
 function validateSubProcessPairs(nodes, edges, diagnostics, context) {

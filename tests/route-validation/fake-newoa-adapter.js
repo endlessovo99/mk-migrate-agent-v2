@@ -173,7 +173,9 @@ export class FakeNewoaAdapter {
     this.record({
       operation: "save-workflow-draft",
       templateId: payload.fdId,
-      draft: payload.isDraft === true
+      draft: payload.isDraft === true,
+      notifyDrafterOnEnd: payload.notifyDrafterOnEnd,
+      notifyParticipantOnEnd: payload.notifyParticipantOnEnd
     });
     this.workflowDraft = clone(payload);
     return { fdId: CREATED_WORKFLOW_TEMPLATE_ID };

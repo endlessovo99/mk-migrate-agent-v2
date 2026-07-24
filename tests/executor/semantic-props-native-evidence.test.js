@@ -238,7 +238,11 @@ function independentNativeReadback() {
     latestDefinitionStatus: 0,
     isDraft: true,
     fdTemplateForms: [],
-    fdContent: JSON.stringify({ elements: workflowElements })
+    fdContent: JSON.stringify({
+      notifyDrafterOnEnd: "false",
+      notifyParticipantOnEnd: "false",
+      elements: workflowElements
+    })
   }];
   return template;
 }

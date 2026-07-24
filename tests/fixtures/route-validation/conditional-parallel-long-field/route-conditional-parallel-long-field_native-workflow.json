@@ -1,4 +1,6 @@
 {
+  "notifyDrafterOnEnd": "false",
+  "notifyParticipantOnEnd": "false",
   "elements": [
     {
       "id": "QX10",

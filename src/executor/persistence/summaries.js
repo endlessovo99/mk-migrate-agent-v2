@@ -145,6 +145,7 @@ export function buildWorkflowSummary(observedWorkflow) {
   return {
     nodeCount: nodes.length,
     edgeCount: edges.length,
+    completionNotifications: observedWorkflow.completionNotifications,
     conditionEdgeCount: edges.filter(hasCondition).length,
     invalidEdgeCount: edges.filter((edge) => !edge.source || !edge.target || !nodeIds.has(edge.source) || !nodeIds.has(edge.target)).length,
     initiatorSelectNodeIds: nodes

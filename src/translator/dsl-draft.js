@@ -2003,7 +2003,7 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
   const subProcessByNodeId = draftSubProcessPairs(sourceNodes);
   const participantSelections = participantSelectionsFromWorkflowNodes(sourceNodes);
   return {
-    process: sourceWorkflow.process || {},
+    process: draftWorkflowProcess(sourceWorkflow.process),
     nodes: sourceNodes.map((node) => {
       const nodeType = mapWorkflowNodeType(node, nodeById);
       const participants = nodeType.participants === false
@@ -2058,6 +2058,24 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
       };
     }),
     topologicalOrder: sourceWorkflow.topologicalOrder || []
+  };
+}
+
+function draftWorkflowProcess(process = {}) {
+  const completionNotifications = completionNotificationsFromSourceAttributes(process.attributes);
+  return pruneUndefined({
+    ...process,
+    completionNotifications
+  });
+}
+
+function completionNotificationsFromSourceAttributes(attributes = {}) {
+  const drafter = booleanAttribute(attributes, "notifyDraftOnFinish", { strict: true });
+  const participants = booleanAttribute(attributes, "notifyOnFinish", { strict: true });
+  if (drafter === undefined && participants === undefined) return undefined;
+  return {
+    drafter: drafter === true,
+    participants: participants === true
   };
 }
 
@@ -2253,9 +2271,13 @@ function participantSelectionSemantics(selection) {
   return `${nodeKind} ${selection.sourceNodeId} ${selection.attribute} includes ${selection.targetNodeId}`;
 }
 
-function booleanAttribute(attributes, key) {
+function booleanAttribute(attributes, key, { strict = false } = {}) {
   if (!Object.prototype.hasOwnProperty.call(attributes, key)) return undefined;
-  return String(attributes[key]).trim().toLowerCase() === "true";
+  const normalized = String(attributes[key] ?? "").trim().toLowerCase();
+  if (!strict) return normalized === "true";
+  if (normalized === "true" || normalized === "1") return true;
+  if (normalized === "false" || normalized === "0") return false;
+  return undefined;
 }
 
 function manualBranchDecisionType(node) {

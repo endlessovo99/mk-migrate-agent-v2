@@ -4,6 +4,8 @@
   "isDraft": true,
   "fdTemplateForms": [],
   "content": {
+    "notifyDrafterOnEnd": "false",
+    "notifyParticipantOnEnd": "false",
     "elements": [
       {
         "id": "N1",

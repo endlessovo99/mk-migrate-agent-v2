@@ -1,5 +1,10 @@
 import { PLATFORM_OWNED } from "./invariants.js";
-import { decodeRequiredJsonObject, requireArray, requireRecord } from "./decode.js";
+import {
+  decodeRequiredJsonObject,
+  requireArray,
+  requireNativeBooleanString,
+  requireRecord
+} from "./decode.js";
 import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "./normalize.js";
 import { diagnostic } from "./diagnostics.js";
 import { subProcessContract } from "../../dsl/subprocess.js";
@@ -1178,6 +1183,29 @@ function observeWorkflow(lbpm) {
     };
   }
 
+  const completionNotificationResults = {
+    drafter: requireNativeBooleanString(content.notifyDrafterOnEnd, {
+      partition: "workflow",
+      decodePath: "/mechanisms/lbpmTemplate/0/fdContent/notifyDrafterOnEnd",
+      code: "readback.decode.workflow.completion_notification_drafter"
+    }),
+    participants: requireNativeBooleanString(content.notifyParticipantOnEnd, {
+      partition: "workflow",
+      decodePath: "/mechanisms/lbpmTemplate/0/fdContent/notifyParticipantOnEnd",
+      code: "readback.decode.workflow.completion_notification_participants"
+    })
+  };
+  diagnostics.push(...Object.values(completionNotificationResults)
+    .filter((result) => !result.ok)
+    .map((result) => result.diagnostic));
+  if (diagnostics.length) {
+    return {
+      status: "decode_failed",
+      value: null,
+      diagnostics
+    };
+  }
+
   const elements = elementsResult.value;
   const nodes = elements.filter((element) => element && element.type !== "sequenceFlow");
   const edges = elements.filter((element) => element && element.type === "sequenceFlow");
@@ -1196,6 +1224,10 @@ function observeWorkflow(lbpm) {
 
   const value = {
     readable: true,
+    completionNotifications: {
+      drafter: completionNotificationResults.drafter.value,
+      participants: completionNotificationResults.participants.value
+    },
     nodes: nodes.map((node) => ({
       id: normalizeScalar(node.id),
       name: normalizeScalar(node.name || node.attributes?.name || ""),

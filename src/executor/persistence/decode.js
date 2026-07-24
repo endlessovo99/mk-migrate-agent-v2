@@ -102,6 +102,33 @@ export function requireRecord(value, { partition, decodePath, code }) {
   };
 }
 
+export function requireNativeBooleanString(value, {
+  partition,
+  decodePath,
+  code
+}) {
+  if (value === "true") return { ok: true, value: true };
+  if (value === "false") return { ok: true, value: false };
+
+  const reason = value === undefined || value === null || value === ""
+    ? "missing"
+    : typeof value === "string"
+      ? "invalid_value"
+      : "wrong_type";
+  return {
+    ok: false,
+    diagnostic: diagnostic({
+      level: "error",
+      code: `${code || `readback.decode.${partition}.boolean_string_required`}.${reason}`,
+      message: `Required native ${partition} boolean string is ${reason.replace("_", " ")}.`,
+      partition,
+      decodePath,
+      path: decodePath,
+      actual: reason === "missing" ? undefined : value
+    })
+  };
+}
+
 function typeName(value) {
   if (value === null) return "null";
   if (Array.isArray(value)) return "array";

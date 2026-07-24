@@ -235,6 +235,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "workflow-completion-notifications-success",
+      source: {
+        kind: "paired",
+        relativePath: "workflow-completion-notifications"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: DRAFT_WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "conditional-parallel-success",
       source: {
         kind: "paired",

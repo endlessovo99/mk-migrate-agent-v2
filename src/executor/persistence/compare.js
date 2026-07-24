@@ -812,6 +812,18 @@ function compareWorkflow(expected, actual, diagnostics) {
     return;
   }
 
+  for (const key of ["drafter", "participants"]) {
+    assertEqual(
+      diagnostics,
+      "workflow",
+      "readback.workflow.completion_notification_mismatch",
+      `workflow.completionNotifications.${key}`,
+      expected.completionNotifications?.[key],
+      actual.completionNotifications?.[key],
+      `/readback/workflow/completionNotifications/${key}`
+    );
+  }
+
   const actualNodes = new Map((actual.nodes || []).map((node) => [node.id, node]));
   const expectedNodeIds = new Set((expected.nodes || []).map((node) => node.id));
   for (const node of expected.nodes || []) {

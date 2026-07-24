@@ -785,6 +785,10 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
   return {
     expected: true,
     readable: true,
+    completionNotifications: {
+      drafter: workflow.process?.completionNotifications?.drafter === true,
+      participants: workflow.process?.completionNotifications?.participants === true
+    },
     nodes: expectedNodes,
     edges: expectedEdges
   };

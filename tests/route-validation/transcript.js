@@ -10,7 +10,13 @@ const ENTRY_KEYS_BY_OPERATION = new Map([
   ["add", new Set(["operation", "templateId", "templateName", "draft"])],
   ["get-before-update", new Set(["operation", "templateId"])],
   ["update", new Set(["operation", "templateId"])],
-  ["save-workflow-draft", new Set(["operation", "templateId", "draft"])],
+  ["save-workflow-draft", new Set([
+    "operation",
+    "templateId",
+    "draft",
+    "notifyDrafterOnEnd",
+    "notifyParticipantOnEnd"
+  ])],
   ["get-workflow-detail", new Set(["operation", "templateId", "definitionId"])],
   ["get-readback", new Set(["operation", "templateId"])]
 ]);
@@ -35,6 +41,11 @@ export function appendTranscriptEntry(transcript, entry) {
   }
   if (Object.hasOwn(entry, "draft") && typeof entry.draft !== "boolean") {
     throw integrityError("route.transcript.invalid", "Transcript draft must be a boolean.");
+  }
+  for (const key of ["notifyDrafterOnEnd", "notifyParticipantOnEnd"]) {
+    if (Object.hasOwn(entry, key) && !["true", "false"].includes(entry[key])) {
+      throw integrityError("route.transcript.invalid", `Transcript ${key} must be a native boolean string.`);
+    }
   }
   if (Object.hasOwn(entry, "targets") && (
     !Array.isArray(entry.targets) ||
