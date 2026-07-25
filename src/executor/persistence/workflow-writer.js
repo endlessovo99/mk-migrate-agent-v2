@@ -214,18 +214,11 @@ export function buildWorkflowContent(workflow, context = {}) {
     branchRoutes.bySource.get(node.id) || [],
     workflowContext
   ));
-  for (const element of nodeElements) {
-    for (const key of ["mustModifyHandlerNodes", "canModifyHandlerNodes"]) {
-      if (!element[key]) continue;
-      const retained = splitRelatedNodeIds(element[key]).filter((nodeId) => !formulaParticipantNodeIds.has(nodeId));
-      if (retained.length) element[key] = retained.join(",");
-      else delete element[key];
-    }
-  }
   const edgeElements = edges.map((edge, index) => buildEdgeElement(edge, index, branchRoutes.byEdge.get(edge.id)));
 
   return {
     name: workflow.process?.name || workflow.process?.id || "流程模板",
+    ...processNativeConfig(workflow.process),
     elements: [...nodeElements, ...edgeElements],
     operSubmitValidators: [],
     aiCheckConfig: [],
@@ -777,12 +770,60 @@ function baseNode(node, index, type, element, width, height) {
     openDataAuthority: hasDataAuthority(node),
     operations: [],
     timeoutStrategies: "[]",
+    ...nodeTimeoutNativeConfig(attrs),
     config: "{}",
     componentOriginalValue: "{}",
     migrationSource: migrationNodeSource(node),
     ...(mustModifyHandlerNodes ? { mustModifyHandlerNodes } : {}),
     ...(canModifyHandlerNodes ? { canModifyHandlerNodes } : {})
   };
+}
+
+const PROCESS_NATIVE_CONFIG_KEYS = Object.freeze([
+  "privilegerIds",
+  "privilegerNames",
+  "dayOfNotifyPrivileger",
+  "hourOfNotifyPrivileger",
+  "minuteOfNotifyPrivileger",
+  "notifyType"
+]);
+
+function processNativeConfig(process = {}) {
+  return pickNonEmptyStringProperties(process.attributes || {}, PROCESS_NATIVE_CONFIG_KEYS);
+}
+
+const NODE_TIMEOUT_NATIVE_CONFIG_KEYS = Object.freeze([
+  "dayOfNotify",
+  "hourOfNotify",
+  "minuteOfNotify",
+  "dayOfPass",
+  "hourOfPass",
+  "minuteOfPass",
+  "tranNotifyDraft",
+  "hourOfTranNotifyDraft",
+  "minuteOfTranNotifyDraft",
+  "tranNotifyPrivate",
+  "hourOfTranNotifyPrivate",
+  "minuteOfTranNotifyPrivate",
+  "rejectNotifyDraft",
+  "hourOfRejectNotifyDraft",
+  "minuteOfRejectNotifyDraft"
+]);
+
+function nodeTimeoutNativeConfig(attrs = {}) {
+  return pickNonEmptyStringProperties(attrs, NODE_TIMEOUT_NATIVE_CONFIG_KEYS);
+}
+
+function pickNonEmptyStringProperties(source = {}, keys = []) {
+  const result = {};
+  for (const key of keys) {
+    const value = source[key];
+    if (value === undefined || value === null) continue;
+    const text = String(value);
+    if (!text.trim() && text !== "0") continue;
+    result[key] = text;
+  }
+  return result;
 }
 
 function buildEdgeElement(edge, index, branchRoute) {

@@ -121,7 +121,9 @@ export function auditFunctionWhitelist(text, whitelist, options = {}) {
     };
   }
 
-  const calls = extractFunctionCalls(text);
+  const calls = extractFunctionCalls(text, {
+    localFunctionNames: options.localFunctionNames
+  });
   const matched = [];
   const violations = [];
 
@@ -161,12 +163,13 @@ export function functionWhitelistErrors(audit, path = "/review/functionWhitelist
   }));
 }
 
-export function extractFunctionCalls(text = "") {
+export function extractFunctionCalls(text = "", options = {}) {
   const decoded = decodeEntities(String(text));
   const searchable = maskLegacyFormulaExpressions(maskStringsAndComments(decoded));
   const localFunctions = new Set([
     ...extractLocalFunctionNames(decoded),
-    ...extractLocalFunctionNames(searchable)
+    ...extractLocalFunctionNames(searchable),
+    ...iterableStrings(options.localFunctionNames)
   ]);
   const calls = new Map();
   const pattern = /([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*\(/g;
@@ -197,6 +200,11 @@ export function extractFunctionCalls(text = "") {
   }
 
   return [...calls.values()].sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function iterableStrings(value) {
+  if (!value) return [];
+  return [...value].map((item) => String(item || "").trim()).filter(Boolean);
 }
 
 function extractLocalFunctionNames(text) {

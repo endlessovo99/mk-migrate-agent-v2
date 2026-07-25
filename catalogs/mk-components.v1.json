@@ -9,7 +9,7 @@
       "description": "NewOA/MK native JavaScript button control.",
       "usage": "Use when a source JSP exposes an explicit user-click action that can be translated to MK JavaScript.",
       "negativeUsage": "Do not use for passive JSP content or unreviewed arbitrary HTML.",
-      "allowedScopes": ["field"],
+      "allowedScopes": ["field", "detailColumn"],
       "target": { "desktop": "@elem/xform-button", "mobile": "@elem/xform-m-button" },
       "propsSchema": {
         "type": "object",
@@ -60,11 +60,31 @@
               { "type": "string", "enum": ["infinit"] }
             ]
           },
-          "editable": { "type": "boolean" }
+          "editable": { "type": "boolean" },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string" },
+                "url": { "type": "string" }
+              },
+              "required": ["name", "url"]
+            }
+          },
+          "style": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "color": { "type": "string" },
+              "fontWeight": { "type": "string" }
+            }
+          }
         }
       },
       "defaultPolicy": { "executorDefaults": ["largestSet", "editable", "defaultValueType"] },
-      "omitPolicy": { "omitWhenAbsent": [] }
+      "omitPolicy": { "omitWhenAbsent": ["links", "style"] }
     },
     {
       "componentId": "xform-subject",
@@ -108,6 +128,26 @@
         }
       },
       "defaultPolicy": { "executorDefaults": ["placeholder"] },
+      "omitPolicy": { "omitWhenAbsent": ["maxLength"], "forbiddenDefaults": { "maxLength": 0 } }
+    },
+    {
+      "componentId": "xform-rich-text",
+      "kind": "field",
+      "label": "富文本",
+      "description": "NewOA/MK rich text field.",
+      "usage": "Use for legacy RTF/rich-text source controls that must preserve rich text editing semantics.",
+      "negativeUsage": "Do not use for plain textarea controls.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-rich-text", "mobile": "@elem/xform-m-rich-text" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "maxLength": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "defaultPolicy": {},
       "omitPolicy": { "omitWhenAbsent": ["maxLength"], "forbiddenDefaults": { "maxLength": 0 } }
     },
     {
@@ -208,7 +248,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
-          "displayPattern": { "type": "string", "enum": ["yyyy-MM-dd hh:mm"] },
+          "displayPattern": { "type": "string" },
           "defaultValue": { "$ref": "#/$defs/dateTimeDefaultValue" }
         }
       },
@@ -496,17 +536,30 @@
       "required": ["kind", "source"],
       "properties": {
         "kind": { "type": "string", "enum": ["context"] },
-        "source": { "type": "string", "enum": ["creator", "creatorDept"] },
+        "source": { "type": "string", "enum": ["creator", "creatorDept", "creatorPost", "now"] },
         "property": { "type": "string", "enum": ["fdName"] }
       }
     },
     "dateTimeDefaultValue": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind"],
-      "properties": {
-        "kind": { "type": "string", "enum": ["currentTime"] }
-      }
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "type": "string", "enum": ["currentTime"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "source"],
+          "properties": {
+            "kind": { "type": "string", "enum": ["context"] },
+            "source": { "type": "string", "enum": ["now"] }
+          }
+        }
+      ]
     },
     "calculation": {
       "anyOf": [

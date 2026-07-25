@@ -87,12 +87,12 @@ function validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics) 
   let expectedDraft;
   try {
     expectedDraft = draftSourceDraft(sourceDraft);
-  } catch (error) {
+  } catch (cause) {
     diagnostics.push(error(
       "trust.script_source_rebuild_failed",
       "Script provenance could not be independently rebuilt from the Source Draft.",
       "/scripts/actions",
-      { error: String(error?.message || error) }
+      { error: String(cause?.message || cause) }
     ));
     return;
   }

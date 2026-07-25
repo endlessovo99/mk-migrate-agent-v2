@@ -272,6 +272,7 @@ function observeDataField(field, lang) {
   const attributeResult = decodeFieldAttribute(field.fdAttribute);
   const controlProps = attributeResult?.config?.controlProps || {};
   const props = observeExecutableProps(controlProps, { field, lang, attribute: attributeResult });
+  const component = inferComponent(field, controlProps);
   // Malformed attributes cannot prove required/component persistence.
   if (attributeResult === null && field.fdDisplay !== false) {
     return {
@@ -287,13 +288,19 @@ function observeDataField(field, lang) {
   }
   return {
     id: normalizeScalar(field.fdName),
-    title: normalizeScalar(field.fdLabel || controlProps.title || ""),
+    title: observedFieldTitle(field, controlProps, component),
     type: inferFieldType(field, controlProps),
-    component: inferComponent(field, controlProps),
+    component,
     dataOnly: field.fdDisplay === false,
     props,
     columns: []
   };
+}
+
+function observedFieldTitle(field, controlProps, component) {
+  const title = normalizeScalar(field?.fdLabel || controlProps?.title || "");
+  if (component !== "xform-hyperlinks") return title;
+  return title.split(/\r?\n/u)[0].trim();
 }
 
 function decodeFieldAttribute(value) {
@@ -430,6 +437,17 @@ function observeExecutableProps(controlProps = {}, native = {}) {
   const defaultValue = observeNativeDefaultValue(controlProps, native.field);
   if (defaultValue) props.defaultValue = defaultValue;
   if (controlProps.content !== undefined) props.content = normalizeScalar(controlProps.content);
+  if (Array.isArray(controlProps.links) && controlProps.links.length) {
+    props.links = controlProps.links.map((link) => ({
+      name: normalizeScalar(link.name),
+      url: normalizeScalar(link.url)
+    }));
+  } else if (Array.isArray(controlProps.options) && controlProps.options.length && inferComponent(native.field, controlProps) === "xform-hyperlinks") {
+    props.links = controlProps.options.map((option) => ({
+      name: normalizeScalar(option.label ?? option.name ?? option.text ?? option.value),
+      url: normalizeScalar(option.value ?? option.url ?? option.label)
+    }));
+  }
   if (controlProps.maxLength !== undefined) props.maxLength = controlProps.maxLength;
   return props;
 }
@@ -581,7 +599,12 @@ function observeNativeDateTimeDisplayPattern(controlProps, field) {
     font.dataPattern !== NATIVE_DATE_TIME_DATA_PATTERN ||
     font.displayPattern !== NATIVE_DATE_TIME_DISPLAY_PATTERN
   ) {
-    return undefined;
+    const displayPattern = typeof controlProps.displayPattern === "string"
+      ? controlProps.displayPattern.trim()
+      : "";
+    return displayPattern && font.displayPattern === displayPattern
+      ? displayPattern
+      : undefined;
   }
   return DATE_TIME_OUTPUT_PATTERN;
 }
@@ -1246,6 +1269,7 @@ function observeWorkflow(lbpm) {
       .map((node) => node.id)
   );
   const initiatorSelectTargetNodeIds = collectInitiatorSelectTargetNodeIds(nodes);
+  for (const nodeId of collectFormulaHandlerNodeIds(nodes)) initiatorSelectTargetNodeIds.delete(nodeId);
   const formAuths = lbpm.fdTemplateFormAuths && typeof lbpm.fdTemplateFormAuths === "object"
     ? lbpm.fdTemplateFormAuths
     : {};
@@ -1256,6 +1280,7 @@ function observeWorkflow(lbpm) {
       drafter: completionNotificationResults.drafter.value,
       participants: completionNotificationResults.participants.value
     },
+    process: observeProcessConfig(content),
     nodes: nodes.map((node) => ({
       id: normalizeScalar(node.id),
       name: normalizeScalar(node.name || node.attributes?.name || ""),
@@ -1270,6 +1295,7 @@ function observeWorkflow(lbpm) {
       manualBranch: observeManualBranch(node),
       parallelGateway: observeParallelGateway(node),
       dataAuthority: observeDataAuthority(formAuths[node.id]),
+      timeout: observeNodeTimeoutConfig(node),
       ignoreOnSameIdentity: node.ignoreOnSameIdentity === undefined
         ? undefined
         : normalizeScalar(node.ignoreOnSameIdentity),
@@ -1308,6 +1334,53 @@ function observeNativeNodeHelp(node) {
   return description && localized === description ? description : undefined;
 }
 
+const PROCESS_CONFIG_KEYS = Object.freeze([
+  "privilegerIds",
+  "privilegerNames",
+  "dayOfNotifyPrivileger",
+  "hourOfNotifyPrivileger",
+  "minuteOfNotifyPrivileger",
+  "notifyType"
+]);
+
+function observeProcessConfig(content = {}) {
+  return pickNonEmptyStringProperties(content, PROCESS_CONFIG_KEYS);
+}
+
+const NODE_TIMEOUT_CONFIG_KEYS = Object.freeze([
+  "dayOfNotify",
+  "hourOfNotify",
+  "minuteOfNotify",
+  "dayOfPass",
+  "hourOfPass",
+  "minuteOfPass",
+  "tranNotifyDraft",
+  "hourOfTranNotifyDraft",
+  "minuteOfTranNotifyDraft",
+  "tranNotifyPrivate",
+  "hourOfTranNotifyPrivate",
+  "minuteOfTranNotifyPrivate",
+  "rejectNotifyDraft",
+  "hourOfRejectNotifyDraft",
+  "minuteOfRejectNotifyDraft"
+]);
+
+function observeNodeTimeoutConfig(node = {}) {
+  return pickNonEmptyStringProperties(node, NODE_TIMEOUT_CONFIG_KEYS);
+}
+
+function pickNonEmptyStringProperties(source = {}, keys = []) {
+  const result = {};
+  for (const key of keys) {
+    const value = source[key];
+    if (value === undefined || value === null) continue;
+    const text = normalizeScalar(value);
+    if (!text.trim() && text !== "0") continue;
+    result[key] = text;
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
 function observeParallelGateway(node) {
   if (!node || !["split", "join"].includes(node.type)) return undefined;
   const conditional = node.type === "split" && normalizeScalar(node.splitType) === "3";
@@ -1329,6 +1402,17 @@ function observeParallelGateway(node) {
 function observeManualBranch(node) {
   if (normalizeScalar(node?.type) !== "manualBranch") return undefined;
   return { decisionType: normalizeScalar(node.decisionType) };
+}
+
+function collectFormulaHandlerNodeIds(nodes = []) {
+  return new Set(nodes
+    .filter((node) =>
+      String(node?.handlerSelectType || "").toLowerCase() === "formula" ||
+      String(node?.handlers?.source || "") === "2" ||
+      String(node?.handlers?.type || "").toLowerCase() === "formula"
+    )
+    .map((node) => normalizeScalar(node.id))
+    .filter(Boolean));
 }
 
 function observeSubProcess(node) {
@@ -2003,6 +2087,7 @@ function inferComponent(field, controlProps) {
   }
   if (normalized.startsWith("xform-")) return multi && normalized === "xform-select" ? "xform-select~multi" : normalized;
   if (normalized === "textarea") return "xform-textarea";
+  if (normalized === "richtext" || normalized === "rich-text") return "xform-rich-text";
   if (normalized === "attachment") return "xform-attachment";
   if (normalized === "datetime" || normalized === "timestamp") return "xform-datetime";
   if (normalized === "address") return "xform-address";

@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { loadFunctionWhitelist } from "../../src/translator/function-whitelist.js";
+import { draftSourceDraft } from "../../src/translator/index.js";
+import { sourceDraftFromLegacyDsl } from "../../src/translator/source-draft.js";
 import { sourceFormRulesFromLegacyScripts } from "../../src/translator/sysform-form-rules.js";
 import { draftMkScriptsFromSourceScripts } from "../../src/translator/sysform-jsp-scripts.js";
 import { parseSysFormTemplateXml, translateSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
@@ -473,7 +475,7 @@ describe("translateSysFormTemplateXml", () => {
     });
   });
 
-  it("preserves designer linkLabel controls as descriptions with their target URLs", () => {
+  it("preserves designer linkLabel controls as MK hyperlinks with their target URLs", () => {
     const designerHtml = `
       <table fd_type="standardTable">
         <tbody>
@@ -491,7 +493,9 @@ describe("translateSysFormTemplateXml", () => {
       </table>
     `;
     const sourceDraft = translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: "<metadata/>" }));
+    const dslDraft = draftSourceDraft(sourceDraftFromLegacyDsl(sourceDraft));
     const field = sourceDraft.form.fields.find((item) => item.id === "fd_purchase_template_link");
+    const dslField = dslDraft.form.fields.find((item) => item.id === "fd_purchase_template_link");
 
     assert.equal(field?.type, "LinkLabel");
     assert.equal(field?.source?.designerType, "linkLabel");
@@ -499,6 +503,12 @@ describe("translateSysFormTemplateXml", () => {
       field?.source?.designerValues?.content,
       "请点击查看采购需求清单模板\n//kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&fdId=18e5f7972ce8d1c7e96e8354bc69fea5"
     );
+    assert.equal(dslField?.type, "description");
+    assert.equal(dslField?.componentId, "xform-hyperlinks");
+    assert.deepEqual(dslField?.props.links, [{
+      name: "请点击查看采购需求清单模板",
+      url: "//kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&fdId=18e5f7972ce8d1c7e96e8354bc69fea5"
+    }]);
     assert.deepEqual(sourceDraft.form.layout.rows.map((row) => row.cells.map((cell) => cell.fieldId)), [
       ["fd_purchase_template_link"]
     ]);
@@ -548,6 +558,123 @@ describe("translateSysFormTemplateXml", () => {
     assert.equal(column?.source?.designerValues?.businessType, "SQLDialog");
     assert.equal(column?.source?.designerValues?.sqlResource, "187ff24de4fe24a18bd66ce43189e0f2");
     assert.equal(column?.source?.designerValues?.sqlvalue, "select projectCode from p_book_project_list");
+  });
+
+  it("preserves legacy address post org type and current-post defaults", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0"><label fd_type="textLabel" fd_values='{id:"fd_post_title",content:"岗位"}'>岗位</label></td>
+            <td row="0" column="1">
+              <label fd_type="address" fd_values='{id:"fd_apply_post",_label_bind:"true",label:"岗位",_label_bind_id:"fd_post_title",_orgType:"ORG_TYPE_POST",_org_post:"true",required:"true",businessType:"addressDialog",multiSelect:"false",defaultValue:"ORG_TYPE_POST"}'>
+                <input id="fd_apply_post"/>
+              </label>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendElementProperty name="fd_apply_post" label="岗位" type="com.landray.kmss.sys.organization.model.SysOrgElement" notNull="true" defaultValue="OrgFunction.getCurrentPost()" formula="true"/>
+      </metadata>
+    `;
+    const sourceDraft = sourceDraftFromLegacyDsl(translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml })));
+    const dsl = draftSourceDraft(sourceDraft);
+    const field = dsl.form.fields.find((item) => item.id === "fd_apply_post");
+
+    assert.equal(field?.componentId, "xform-address");
+    assert.deepEqual(field?.props?.orgTypes, ["ORG_TYPE_POST"]);
+    assert.deepEqual(field?.props?.defaultValue, { kind: "context", source: "creatorPost" });
+  });
+
+  it("preserves datetime display pattern and current-time default", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0"><label fd_type="textLabel" fd_values='{id:"fd_event_time_title",content:"事件发生时间"}'>事件发生时间</label></td>
+            <td row="0" column="1">
+              <div fd_type="datetime" fd_values='{id:"fd_event_time",_label_bind:"true",label:"事件发生时间",_label_bind_id:"fd_event_time_title",required:"false",businessType:"datetimeDialog",defaultValue:"null"}'>
+                <input id="fd_event_time"/>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td row="1" column="0"><label fd_type="textLabel" fd_values='{id:"fd_report_time_title",content:"报告时间"}'>报告时间</label></td>
+            <td row="1" column="1">
+              <div fd_type="datetime" fd_values='{id:"fd_report_time",_label_bind:"true",label:"报告时间",_label_bind_id:"fd_report_time_title",required:"false",businessType:"datetimeDialog",defaultValue:"nowTime"}'>
+                <input id="fd_report_time"/>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="fd_event_time" label="事件发生时间" type="DateTime"/>
+        <extendSimpleProperty name="fd_report_time" label="报告时间" type="DateTime" formula="true" defaultValue="DateTimeFunction.getNow()"/>
+      </metadata>
+    `;
+    const dsl = draftSourceDraft(sourceDraftFromLegacyDsl(translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }))));
+    const eventTime = dsl.form.fields.find((item) => item.id === "fd_event_time");
+    const reportTime = dsl.form.fields.find((item) => item.id === "fd_report_time");
+
+    assert.equal(eventTime?.componentId, "xform-datetime");
+    assert.deepEqual(eventTime?.props, { displayPattern: "yyyy-MM-dd hh:mm" });
+    assert.equal(reportTime?.componentId, "xform-datetime");
+    assert.deepEqual(reportTime?.props, {
+      defaultValue: { kind: "currentTime" },
+      displayPattern: "yyyy-MM-dd hh:mm"
+    });
+  });
+
+  it("maps legacy rtf controls to rich text instead of multiline text", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0"><label fd_type="textLabel" fd_values='{id:"fd_rtf_title",content:"合同付款条款"}'>合同付款条款</label></td>
+            <td row="0" column="1">
+              <img fd_type="rtf" fd_values='{id:"fd_contract_terms",_label_bind:"true",label:"合同付款条款",_label_bind_id:"fd_rtf_title",width:"80%",height:"220"}'/>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="fd_contract_terms" label="合同付款条款" type="RTF" length="1000000"/>
+      </metadata>
+    `;
+    const dsl = draftSourceDraft(sourceDraftFromLegacyDsl(translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: metadataXml }))));
+    const field = dsl.form.fields.find((item) => item.id === "fd_contract_terms");
+
+    assert.equal(field?.type, "longText");
+    assert.equal(field?.componentId, "xform-rich-text");
+  });
+
+  it("keeps full-row plain note textLabels as descriptions", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0,1,2,3" colSpan="4">
+              <label fd_type="textLabel" fd_values='{id:"fd_note",content:"注：&#13;&#10;1、根据合同要求操作相关付款事宜&#13;&#10;2、项目阶段性完成，需附完工报告或验收文档",b:"false",color:""}'>
+                注：<br/>1、根据合同要求操作相关付款事宜<br/>2、项目阶段性完成，需附完工报告或验收文档
+              </label>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const dsl = draftSourceDraft(sourceDraftFromLegacyDsl(translateSysFormTemplateXml(sysFormXml({ fdDesignerHtml: designerHtml, fdMetadataXml: "<metadata/>" }))));
+    const note = dsl.form.fields.find((field) => field.id === "fd_note");
+
+    assert.equal(note?.componentId, "xform-description");
+    assert.match(note?.props?.content || "", /项目阶段性完成/);
   });
 
   it("does not cross non-string put values while reading fdDesignerHtml", () => {
@@ -841,6 +968,41 @@ describe("translateSysFormTemplateXml", () => {
     assert.equal(dsl.review.functionWhitelist.violations[0].name, "UnknownLegacyFunction");
     assert.equal(dsl.review.warnings.find((item) => item.code === "source.function_not_whitelisted")?.details.functionName, "UnknownLegacyFunction");
     assert.equal(dsl.review.errors, undefined);
+  });
+
+  it("does not require review for executable designer-only controls missing from metadata", () => {
+    const designerHtml = `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0"><label fd_type="textLabel" fd_values='{id:"label_radio",content:"影响类别"}'>影响类别</label></td>
+            <td row="0" column="1">
+              <div fd_type="inputRadio" fd_values='{id:"fd_designer_radio",label:"影响类别",_label_bind:"true",_label_bind_id:"label_radio",required:"true",items:"品牌影响|ppyx\\r\\n项目影响|xmyx"}'></div>
+            </td>
+          </tr>
+          <tr>
+            <td row="1" column="0"><label fd_type="textLabel" fd_values='{id:"label_attach",content:"附件"}'>附件</label></td>
+            <td row="1" column="1">
+              <div fd_type="attachment" fd_values='{id:"fd_designer_attach",label:"附件",_label_bind:"true",_label_bind_id:"label_attach"}'></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const dsl = translateSysFormTemplateXml(sysFormXml({
+      fdDesignerHtml: designerHtml,
+      fdMetadataXml: "<metadata></metadata>"
+    }));
+    const byId = new Map(dsl.form.fields.map((field) => [field.id, field]));
+
+    assert.equal(byId.get("fd_designer_radio")?.mk.component, "xform-radio");
+    assert.equal(byId.get("fd_designer_attach")?.mk.component, "xform-attach");
+    assert.equal(byId.get("fd_designer_radio")?.source.metadataMissing, true);
+    assert.equal(byId.get("fd_designer_attach")?.source.metadataMissing, true);
+    assert.equal(
+      dsl.review.warnings.some((item) => item.code === "source.sysform.metadata_field_missing"),
+      false
+    );
   });
 });
 

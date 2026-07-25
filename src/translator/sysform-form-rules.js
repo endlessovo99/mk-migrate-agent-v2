@@ -9,13 +9,16 @@ import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
 
 const VALUE_CHANGE_API = "AttachXFormValueChangeEventById";
 const ROW_EFFECT_HELPER = "common_dom_row_set_show_required_reset";
-
 export function sourceFormRulesFromLegacyScripts(scripts) {
   const sources = Array.isArray(scripts?.sources) ? scripts.sources : [];
   const linkageById = new Map();
+  const bridgeAssignments = extractSupplementalBridgeAssignments(sources);
 
   for (const source of sources) {
     if (source.displayGate === "xform:viewShow") continue;
+    for (const rule of supplementalWindowLoadRules(source, bridgeAssignments)) {
+      mergeLinkageRule(linkageById, rule);
+    }
     for (const rule of analyzeLegacyScriptFormRules(source).linkage) {
       mergeLinkageRule(
         linkageById,
@@ -37,6 +40,145 @@ export function sourceFormRulesFromLegacyScripts(scripts) {
     impliedRequired: [],
     review: {}
   };
+}
+
+function extractSupplementalBridgeAssignments(sources) {
+  const bridges = new Map();
+  for (const source of sources) {
+    const { callbacks } = extractXFormValueChangeCallbacks(source?.javascript || "", source);
+    for (const callback of callbacks) {
+      const resolveOperand = buildConditionOperandResolver(callback.body, {
+        eventParameter: callback.parameter
+      });
+      for (const chain of extractTopLevelConditionalChains(callback.body)) {
+        for (const branch of chain.branches) {
+          const condition = conditionSpec(
+            branch.condition,
+            callback.source,
+            resolveOperand,
+            branch.conditionStart
+          );
+          if (!condition) continue;
+          const effects = extractSupplementalDirectRowEffects(branch.body);
+          for (const assignment of extractSetFieldValueAssignments(branch.body)) {
+            bridges.set(`${assignment.field}:${assignment.value}`, {
+              condition: { ...condition, source: callback.source },
+              effects
+            });
+          }
+        }
+      }
+    }
+  }
+  return bridges;
+}
+
+function supplementalWindowLoadRules(source, bridgeAssignments) {
+  const rules = [];
+  for (const callback of extractWindowLoadCallbacks(source?.javascript || "")) {
+    for (const chain of extractTopLevelConditionalChains(callback.body)) {
+      if (chain.branches.length !== 1 || !chain.elseBody) continue;
+      const branch = chain.branches[0];
+      let condition = supplementalConditionSpec(branch.condition);
+      if (!condition) continue;
+      let effects = extractSupplementalDirectRowEffects(branch.body);
+      let elseEffects = extractSupplementalDirectRowEffects(chain.elseBody);
+      if (!effects.length || !elseEffects.length) continue;
+
+      const bridged = bridgeAssignments.get(
+        `${condition.source}:${condition.when?.[0]?.value}`
+      );
+      if (bridged && sameEffectTargets(effects, bridged.effects)) {
+        condition = bridged.condition;
+        effects = effects.filter((effect) => effect.type === "visible");
+        elseEffects = elseEffects.filter((effect) => effect.type === "visible");
+      }
+      const sourceField = condition.source || condition.when?.[0]?.field;
+      rules.push({
+        id: `linkage.${sourceField}.${condition.idPart}${bridged ? ".load" : ""}`,
+        trigger: "load",
+        source: sourceField,
+        logic: condition.logic,
+        when: condition.when,
+        effects,
+        else: elseEffects,
+        meta: pruneUndefined({
+          sourceJsp: source.sourceRef,
+          displayGate: source.displayGate,
+          runWhen: runWhenFromDisplayGate(source.displayGate),
+          sourceRuleIds: [`linkage.${sourceField}.${condition.idPart}${bridged ? ".load" : ""}`]
+        }),
+        translationStatus: "executable"
+      });
+    }
+  }
+  return rules;
+}
+
+function extractWindowLoadCallbacks(javascript) {
+  const callbacks = [];
+  const text = String(javascript || "");
+  const codeMask = javascriptCodeMask(text);
+  const pattern = /Com_AddEventListener\(\s*window\s*,\s*(["'])load\1\s*,\s*function\s*\([^)]*\)\s*\{/g;
+  for (const match of text.matchAll(pattern)) {
+    if (!codeMask.startsWith("Com_AddEventListener", match.index)) continue;
+    const bodyStart = match.index + match[0].length;
+    const bodyEnd = findBalancedClose(codeMask, bodyStart - 1, "{", "}");
+    if (bodyEnd < bodyStart) continue;
+    callbacks.push({ body: text.slice(bodyStart, bodyEnd) });
+  }
+  return callbacks;
+}
+
+function supplementalConditionSpec(condition) {
+  const text = String(condition || "");
+  const direct = text.match(
+    /GetXFormFieldValueById\(\s*(["'])([^"']+)\1\s*\)\s*={2,3}\s*(["'])([^"']+)\3/
+  );
+  const reversed = text.match(
+    /(["'])([^"']+)\1\s*={2,3}\s*GetXFormFieldValueById\(\s*(["'])([^"']+)\3\s*\)/
+  );
+  const source = direct?.[2] || reversed?.[4];
+  const value = direct?.[4] || reversed?.[2];
+  if (!source || value === undefined) return undefined;
+  return {
+    source,
+    idPart: `eq.${stableIdPart(value)}`,
+    logic: "and",
+    when: [{ field: source, op: "eq", value }]
+  };
+}
+
+function extractSetFieldValueAssignments(body) {
+  return [...String(body || "").matchAll(
+    /SetXFormFieldValueById\(\s*(["'])([^"']+)\1\s*,\s*(["'])([^"']*)\3\s*\)/g
+  )].map((match) => ({ field: match[2], value: match[4] }));
+}
+
+function extractSupplementalDirectRowEffects(body) {
+  const effects = [];
+  const seen = new Set();
+  const directBody = stripNestedBlocks(body);
+  const pattern = /\bcommon_dom_row_set_show_required_reset\(\s*(["'])([^"']+)\1\s*,\s*(true|false)\s*,\s*(true|false)\s*,\s*false\s*\)/g;
+  for (const match of directBody.matchAll(pattern)) {
+    addEffect(effects, seen, {
+      type: "visible",
+      target: match[2],
+      value: match[3] === "true"
+    });
+    addEffect(effects, seen, {
+      type: "required",
+      target: match[2],
+      value: match[4] === "true"
+    });
+  }
+  return effects;
+}
+
+function sameEffectTargets(left = [], right = []) {
+  const leftTargets = new Set(left.map((effect) => effect?.target).filter(Boolean));
+  const rightTargets = new Set(right.map((effect) => effect?.target).filter(Boolean));
+  return [...leftTargets].some((target) => rightTargets.has(target));
 }
 
 function globallyUniqueRuleIds(entries) {

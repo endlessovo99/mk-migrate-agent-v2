@@ -650,6 +650,7 @@ function sourceScriptsFromLegacy(scripts) {
       fragmentId: source.fragmentId,
       displayGate: source.displayGate,
       javascript: source.javascript,
+      helperJavascript: source.helperJavascript,
       functionAudit: source.functionAudit,
       semanticFacts: source.semanticFacts
     }))

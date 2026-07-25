@@ -1,4 +1,5 @@
 export function componentForSourceType(type, source = {}) {
+  if (String(source.sourceProps?.designerType || "").toLowerCase() === "rtf") return "xform-rich-text";
   if (isSourceCalculation(type, source)) {
     return "xform-calculate";
   }
@@ -16,7 +17,9 @@ export function componentForSourceType(type, source = {}) {
     attachment: "xform-attach",
     description: "xform-description",
     RestDialog: "xform-input",
-    LinkLabel: "xform-description",
+    LinkLabel: String(source.sourceProps?.designerValues?.link || "").trim()
+      ? "xform-hyperlinks"
+      : "xform-description",
     button: "xform-button"
   }[type] || "xform-input";
 }

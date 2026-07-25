@@ -711,6 +711,12 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
       defaultValueType: "fixed"
     });
   }
+  if (spec.attrType === "richtext") {
+    const maxLength = textareaMaxLengthFromDsl(field);
+    if (maxLength !== undefined) {
+      controlProps.maxLength = maxLength;
+    }
+  }
   if (spec.attrType === "timestamp") {
     Object.assign(controlProps, {
       placeholder: "请选择",
@@ -774,6 +780,24 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
       defaultTextValue: content,
       content,
       alignDesc: "left",
+      maxLength: 0
+    });
+    delete controlProps.span;
+  }
+  if (spec.attrType === "hyperlinks") {
+    const links = Array.isArray(field.props?.links) ? field.props.links : [];
+    const normalizedLinks = links
+      .map((link) => ({
+        name: String(link?.name || "").trim(),
+        url: String(link?.url || "").trim()
+      }))
+      .filter((link) => link.name && link.url);
+    Object.assign(controlProps, {
+      links: normalizedLinks,
+      options: normalizedLinks.map((link) => ({
+        label: link.name,
+        value: link.url
+      })),
       maxLength: 0
     });
     delete controlProps.span;
@@ -924,7 +948,7 @@ function applyDefaultValueToControlProps(controlProps, field, template, spec) {
     return;
   }
 
-  if (["text", "textarea", "number", "calculate"].includes(spec.attrType)) {
+  if (["text", "textarea", "number", "calculate", "timestamp"].includes(spec.attrType)) {
     controlProps.defaultValueType = "formula";
     controlProps.defaultValueFormulaVO = literalDefaultFormula(literalDefault.value);
     if (spec.attrType === "text") controlProps.maxLength = controlProps.maxLength || 200;
@@ -957,6 +981,11 @@ function applyContextDefaultToControlProps(controlProps, contextDefault, spec, f
     controlProps.defaultValueType = "formula";
     controlProps.defaultValueFormulaVO = contextDefault.formula;
     controlProps.maxLength = controlProps.maxLength || 200;
+  }
+
+  if (spec.attrType === "timestamp" && contextDefault.source === "now") {
+    controlProps.defaultValueType = "formula";
+    controlProps.defaultValueFormulaVO = contextDefault.formula;
   }
 }
 
@@ -1046,6 +1075,16 @@ function fieldFontExtendData(field, template, spec) {
     };
   }
 
+  if (contextDefault && spec.attrType === "timestamp" && contextDefault.source === "now") {
+    return {
+      ...data,
+      passValue: false,
+      trace: false,
+      defaultValueType: "formula",
+      defaultValueFormulaVO: contextDefault.formula
+    };
+  }
+
   const literalDefault = normalizeLiteralDefault(field.props?.defaultValue);
   if (!literalDefault) return data;
 
@@ -1081,11 +1120,17 @@ function fieldFontExtendData(field, template, spec) {
 }
 
 function nativeDateTimePatterns(field) {
-  if (field.props?.displayPattern !== DATE_TIME_OUTPUT_PATTERN) return undefined;
-  return {
-    dataPattern: NATIVE_DATE_TIME_DATA_PATTERN,
-    displayPattern: NATIVE_DATE_TIME_DISPLAY_PATTERN
-  };
+  const displayPattern = typeof field.props?.displayPattern === "string"
+    ? field.props.displayPattern.trim()
+    : "";
+  if (!displayPattern) return undefined;
+  if (displayPattern === DATE_TIME_OUTPUT_PATTERN) {
+    return {
+      dataPattern: NATIVE_DATE_TIME_DATA_PATTERN,
+      displayPattern: NATIVE_DATE_TIME_DISPLAY_PATTERN
+    };
+  }
+  return { displayPattern };
 }
 
 function hasCurrentTimeDefault(field) {
@@ -1131,26 +1176,48 @@ function nativeStatisticMode(calculation) {
 function contextDefaultFormula(field, template, spec) {
   const defaultValue = normalizeContextDefault(field.props?.defaultValue);
   if (!defaultValue) return undefined;
+  if (defaultValue.source === "now" && spec.attrType === "timestamp") {
+    return {
+      source: "now",
+      formula: {
+        type: "Eval",
+        script: "new Date()",
+        vo: {
+          mode: "formula",
+          content: "当前时间"
+        },
+        varIds: []
+      }
+    };
+  }
+
   if (!["address", "text"].includes(spec.attrType)) return undefined;
 
   const property = spec.attrType === "text" ? defaultValue.property : undefined;
   if (spec.attrType === "text" && property !== "fdName") return undefined;
 
-  const sourceField = defaultValue.source === "creator" ? "fdCreator" : "fdCreatorDept";
+  const sourceDefaults = {
+    creator: { sourceField: "fdCreator", sourceLabel: "创建人", orgTypeArr: ["8"] },
+    creatorDept: { sourceField: "fdCreatorDept", sourceLabel: "创建者部门", orgTypeArr: ["2"] },
+    creatorPost: { sourceField: "fdCreator.post", sourceLabel: "创建人岗位", orgTypeArr: ["4"] }
+  };
+  const sourceDefault = sourceDefaults[defaultValue.source];
+  if (!sourceDefault) return undefined;
+
+  const sourceField = sourceDefault.sourceField;
   const scriptPath = property === "fdName" ? `${sourceField}.fdName` : sourceField;
-  const sourceLabel = defaultValue.source === "creator" ? "创建人" : "创建者部门";
   const propertyLabel = property === "fdName" ? ".名称" : "";
   const templateName = String(template?.fdName || "表单").trim() || "表单";
 
   return {
     source: defaultValue.source,
-    orgTypeArr: defaultValue.source === "creator" ? ["8"] : ["2"],
+    orgTypeArr: sourceDefault.orgTypeArr,
     formula: {
       type: "Eval",
       script: `\${data.biz.${scriptPath}}`,
       vo: {
         mode: "formula",
-        content: `$${templateName}.${sourceLabel}${propertyLabel}$`
+        content: `$${templateName}.${sourceDefault.sourceLabel}${propertyLabel}$`
       },
       varIds: [scriptPath]
     }
@@ -1160,12 +1227,20 @@ function contextDefaultFormula(field, template, spec) {
 function normalizeContextDefault(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   if (value.kind !== "context") return undefined;
-  if (!["creator", "creatorDept"].includes(value.source)) return undefined;
+  if (!["creator", "creatorDept", "creatorPost", "now"].includes(value.source)) return undefined;
   if (value.property !== undefined && value.property !== "fdName") return undefined;
   return {
     source: value.source,
     property: value.property
   };
+}
+
+function addressOrgTypesFromDsl(field) {
+  const sourceTypes = Array.isArray(field.props?.orgTypes) ? field.props.orgTypes : [];
+  const types = sourceTypes
+    .map((type) => String(type || "").trim())
+    .filter((type) => /^ORG_TYPE_[A-Z_]+$/.test(type));
+  return types.length ? Array.from(new Set(types)) : ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"];
 }
 
 function textareaMaxLengthFromDsl(field) {
@@ -1705,6 +1780,7 @@ function componentFromDataField(field) {
   const component = {
     "@elem/xform-input": "xform-input",
     "@elem/xform-textarea": "xform-textarea",
+    "@elem/xform-rich-text": "xform-rich-text",
     "@elem/xform-radio": "xform-radio",
     "@elem/xform-checkbox": "xform-checkbox",
     "@elem/xform-select": "xform-select",
@@ -1726,6 +1802,8 @@ function componentForFdType(type) {
   return {
     text: "xform-input",
     textarea: "xform-textarea",
+    richtext: "xform-rich-text",
+    richText: "xform-rich-text",
     radio: "xform-radio",
     checkbox: "xform-checkbox",
     select: "xform-select",
@@ -1765,6 +1843,9 @@ function componentSpec(field) {
   }
   if (component === "xform-hyperlinks") {
     return specForComponent(component, "hyperlinks", "clob", "HyperLinkDict", "hyperlinks", "@elem/xform-hyperlinks", "@elem/xform-m-hyperlinks");
+  }
+  if (component === "xform-rich-text") {
+    return specForComponent(component, "richtext", "clob", "simpleDict", "richtext", "@elem/xform-rich-text", "@elem/xform-m-rich-text");
   }
   if (component === "xform-datetime") {
     return specForComponent(component, "timestamp", "timestamp", "dateDict", "timestamp", "@elem/xform-datetime", "@elem/xform-m-datetime");

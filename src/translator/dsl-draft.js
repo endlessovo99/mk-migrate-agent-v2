@@ -649,6 +649,15 @@ function propsFromSource(source, options = {}) {
     return props;
   }
 
+  if (componentId === "xform-hyperlinks") {
+    const props = {};
+    const values = source.sourceProps?.designerValues || {};
+    const name = String(source.title || values.content || "").trim();
+    const url = String(values.link || "").trim();
+    if (name && url) props.links = [{ name, url }];
+    return props;
+  }
+
   const props = {};
   if (source.required) props.required = true;
   if (
@@ -686,6 +695,11 @@ function propsFromSource(source, options = {}) {
     if (orgTypes.length) props.orgTypes = orgTypes;
   }
 
+  if (componentId === "xform-datetime") {
+    const displayPattern = legacyDateDisplayPatternFromSource(source);
+    if (displayPattern) props.displayPattern = displayPattern;
+  }
+
   if (["xform-number", "xform-calculate"].includes(componentId)) {
     const precision = nonNegativeInteger(source.sourceProps?.designerValues?.decimal);
     if (precision !== undefined) props.precision = precision;
@@ -696,7 +710,7 @@ function propsFromSource(source, options = {}) {
     if (calculation) props.calculation = calculation;
   }
 
-  if (componentId === "xform-textarea") {
+  if (componentId === "xform-textarea" || componentId === "xform-rich-text") {
     const maxLength = positiveInteger(
       source.sourceProps?.designerValues?.maxLength ??
         source.sourceProps?.designerValues?.maxlength ??
@@ -712,20 +726,21 @@ function propsFromSource(source, options = {}) {
 }
 
 function legacyAddressOrgTypes(source) {
-  const value = source.sourceProps?.designerValues?._orgType;
-  if (typeof value !== "string") return [];
   const supported = new Set([
     "ORG_TYPE_PERSON",
     "ORG_TYPE_DEPT",
     "ORG_TYPE_ORG",
     "ORG_TYPE_POST"
   ]);
-  return [...new Set(
-    value
-      .split(/[|,;\s]+/u)
-      .map((entry) => entry.trim().toUpperCase())
-      .filter((entry) => supported.has(entry))
-  )];
+  const candidates = [
+    source.sourceProps?.designerValues?._orgType,
+    source.sourceProps?.designerValues?.orgType,
+    source.sourceProps?.metadataAttributes?.dialogJS
+  ];
+  return [...new Set(candidates.flatMap((candidate) =>
+    String(candidate || "")
+      .match(/ORG_TYPE_[A-Z_]+/g) || []
+  ).filter((entry) => supported.has(entry)))];
 }
 
 function targetOptionsFromSource(options) {
@@ -1464,12 +1479,20 @@ function parseLegacyContextDefaultExpression(value, source) {
   const expression = normalizeLegacyExpression(value);
   if (!expression) return undefined;
 
+  if (source.sourceType === "dateTime" && /^(?:nowTime|DateTimeFunction\s*\.\s*getNow\s*\(\s*\))$/i.test(expression)) {
+    return { kind: "context", source: "now" };
+  }
+
   if (isLegacyAddressSource(source) && /^ORG_TYPE_PERSON$/i.test(expression)) {
     return { kind: "context", source: "creator" };
   }
 
   if (isLegacyAddressSource(source) && /^ORG_TYPE_DEPT$/i.test(expression)) {
     return { kind: "context", source: "creatorDept" };
+  }
+
+  if (isLegacyAddressSource(source) && /^ORG_TYPE_POST$/i.test(expression)) {
+    return { kind: "context", source: "creatorPost" };
   }
 
   if (/^\$(?:docCreator|申请人)\$\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
@@ -1500,11 +1523,28 @@ function parseLegacyContextDefaultExpression(value, source) {
     return { kind: "context", source: "creatorDept" };
   }
 
+  if (isLegacyAddressSource(source) && /^OrgFunction\s*\.\s*getCurrentPost\s*\(\s*\)$/i.test(expression)) {
+    return { kind: "context", source: "creatorPost" };
+  }
+
   return undefined;
 }
 
 function isLegacyAddressSource(source) {
   return source.sourceProps?.designerType === "address" || source.sourceProps?.metadataKind === "element";
+}
+
+function legacyDateDisplayPatternFromSource(source) {
+  const designerValues = source.sourceProps?.designerValues || {};
+  const businessType = String(designerValues.businessType || "").toLowerCase();
+  const metadataType = String(source.sourceProps?.metadataAttributes?.type || "").toLowerCase();
+  if (businessType === "datedialog" || metadataType === "date" || source.sourceType === "date") {
+    return "yyyy-MM-dd";
+  }
+  if (businessType === "datetimedialog" || metadataType === "datetime" || source.sourceType === "dateTime") {
+    return LEGACY_DATE_TIME_DISPLAY_PATTERN;
+  }
+  return undefined;
 }
 
 function normalizeLegacyExpression(value) {

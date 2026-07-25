@@ -13,7 +13,7 @@ import {
 } from "../helpers/persistence.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
-import { sampleDraftDsl, sampleForm, sampleTrustedDsl } from "../helpers/sample-dsl.js";
+import { sampleDraftDsl, sampleForm, sampleTrustedDsl, sampleWorkflow } from "../helpers/sample-dsl.js";
 
 const TEST_CREDENTIALS = Object.freeze({
   username: "route-test-user",
@@ -1116,6 +1116,133 @@ describe("executeDsl", () => {
     const rejected = verifyTemplate(trusted, template);
     assert.equal(rejected.ok, false);
     assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"), true);
+  });
+
+  it("preserves draft selection links even when the target uses a formula handler", () => {
+    const workflow = sampleInitiatorSelectWorkflow();
+    const target = workflow.nodes.find((node) => node.id === "N16");
+    target.attributes = { handlerSelectType: "formula", handlerIds: "$fd_handler$", handlerNames: "$处理人$" };
+    target.participants = {
+      mode: "form_field",
+      fieldId: "fd_handler",
+      sourceExpression: "$fd_handler$",
+      sourceNameExpression: "$处理人$"
+    };
+    const trusted = sampleTrustedDsl({
+      form: {
+        ...sampleForm(),
+        fields: [
+          ...sampleForm().fields,
+          { id: "fd_handler", title: "处理人", type: "text", componentId: "xform-address", props: {}, sourceProps: {}, sourceRef: "source.form.control.fd_handler" }
+        ]
+      },
+      workflow
+    });
+    const template = projectTemplate(trusted, baseTemplate());
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+
+    assert.equal(content.elements.find((element) => element.id === "N2").canModifyHandlerNodes, "N16");
+    assert.equal(verifyTemplate(trusted, template).ok, true);
+
+    delete content.elements.find((element) => element.id === "N2").canModifyHandlerNodes;
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+    const rejected = verifyTemplate(trusted, template);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.participant_mismatch"), true);
+  });
+
+  it("preserves process privileged users and privileged timeout notification settings", () => {
+    const workflow = sampleWorkflow();
+    workflow.process = {
+      id: "process-privileged",
+      attributes: {
+        privilegerIds: "post-privileged",
+        privilegerNames: "流程特权岗位",
+        dayOfNotifyPrivileger: "15",
+        hourOfNotifyPrivileger: "0",
+        minuteOfNotifyPrivileger: "30",
+        notifyType: "todo"
+      },
+      privilegerEntities: [{
+        id: "post-privileged",
+        name: "流程特权岗位",
+        orgType: 4,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPost"
+      }]
+    };
+    const trusted = sampleTrustedDsl({ workflow });
+    const template = projectTemplate(trusted, baseTemplate());
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+
+    assert.equal(content.privilegerIds, "post-privileged");
+    assert.equal(content.privilegerNames, "流程特权岗位");
+    assert.equal(content.dayOfNotifyPrivileger, "15");
+    assert.equal(content.hourOfNotifyPrivileger, "0");
+    assert.equal(content.minuteOfNotifyPrivileger, "30");
+    assert.equal(content.notifyType, "todo");
+    assert.equal(verifyTemplate(trusted, template).ok, true);
+
+    delete content.privilegerIds;
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+    const rejected = verifyTemplate(trusted, template);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.process_config_mismatch"), true);
+  });
+
+  it("preserves node timeout and timeout-notification settings", () => {
+    const workflow = sampleWorkflow();
+    const node = workflow.nodes[0];
+    node.definition = {
+      attributes: {
+        dayOfNotify: "3",
+        hourOfNotify: "1",
+        minuteOfNotify: "30",
+        dayOfPass: "2",
+        hourOfPass: "0",
+        minuteOfPass: "0",
+        tranNotifyDraft: "3",
+        hourOfTranNotifyDraft: "0",
+        minuteOfTranNotifyDraft: "5",
+        tranNotifyPrivate: "3",
+        hourOfTranNotifyPrivate: "0",
+        minuteOfTranNotifyPrivate: "10"
+      }
+    };
+    const trusted = sampleTrustedDsl({ workflow });
+    const template = projectTemplate(trusted, baseTemplate());
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    const persisted = content.elements.find((element) => element.id === node.id);
+
+    assert.equal(persisted.dayOfNotify, "3");
+    assert.equal(persisted.hourOfNotify, "1");
+    assert.equal(persisted.minuteOfNotify, "30");
+    assert.equal(persisted.dayOfPass, "2");
+    assert.equal(persisted.tranNotifyDraft, "3");
+    assert.equal(persisted.tranNotifyPrivate, "3");
+    assert.equal(verifyTemplate(trusted, template).ok, true);
+
+    persisted.dayOfNotify = "0";
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+    const rejected = verifyTemplate(trusted, template);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.node_timeout_mismatch"), true);
+  });
+
+  localCorpusIt("keeps procurement payment finance branch conditions as native Batch formulas", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/1887a98750756b5ba35b02047e6a6a30");
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const content = buildWorkflowContent(dslDraft.workflow, {
+      form: dslDraft.form,
+      templateId: "template-id",
+      mainTableName: "mk_model_test"
+    });
+
+    for (const edgeId of ["L33", "L53"]) {
+      const edge = content.elements.find((element) => element.id === edgeId);
+      assert.equal(edge.formulaType, "formula");
+      assert.equal(JSON.parse(edge.formula).type, "Batch");
+      assert.equal(edge.formula.includes("global.contains"), true);
+    }
   });
 
   localCorpusIt("projects the related-leader role line through the configured execution fallback", () => {
@@ -3230,23 +3357,37 @@ describe("executeDsl", () => {
         fields: [
           { id: "fd_creator_text", title: "起草人姓名-文本", type: "text", componentId: "xform-input", props: { defaultValue: { kind: "context", source: "creator", property: "fdName" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_text" },
           { id: "fd_creator_dept_text", title: "起草部门-文本", type: "text", componentId: "xform-input", props: { defaultValue: { kind: "context", source: "creatorDept", property: "fdName" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_dept_text" },
+          { id: "fd_now_time", title: "报告时间", type: "dateTime", componentId: "xform-datetime", props: { displayPattern: "yyyy-MM-dd HH:mm", defaultValue: { kind: "context", source: "now" } }, sourceProps: {}, sourceRef: "source.form.control.fd_now_time" },
           { id: "fd_creator_address", title: "起草人地址本", type: "text", componentId: "xform-address", props: { defaultValue: { kind: "context", source: "creator" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_address" },
-          { id: "fd_creator_dept_address", title: "起草部门地址本", type: "text", componentId: "xform-address", props: { defaultValue: { kind: "context", source: "creatorDept" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_dept_address" }
+          { id: "fd_creator_dept_address", title: "起草部门地址本", type: "text", componentId: "xform-address", props: { defaultValue: { kind: "context", source: "creatorDept" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_dept_address" },
+          { id: "fd_creator_post_address", title: "岗位", type: "text", componentId: "xform-address", props: { orgTypes: ["ORG_TYPE_POST"], defaultValue: { kind: "context", source: "creatorPost" } }, sourceProps: {}, sourceRef: "source.form.control.fd_creator_post_address" }
         ],
         layout: {
           sourceGrid: { rows: [] },
-          mkTree: [{
-            id: "layout.row-0",
-            componentId: "xform-flex-1-4-layout",
-            props: { columns: 4 },
-            sourceRef: "source.form.layout.row.row-0",
-            children: [
-              { id: "c1", refType: "field", refIds: ["fd_creator_text"], sourceRef: "source.form.layout.cell.c1", column: 0, colspan: 1 },
-              { id: "c2", refType: "field", refIds: ["fd_creator_dept_text"], sourceRef: "source.form.layout.cell.c2", column: 1, colspan: 1 },
-              { id: "c3", refType: "field", refIds: ["fd_creator_address"], sourceRef: "source.form.layout.cell.c3", column: 2, colspan: 1 },
-              { id: "c4", refType: "field", refIds: ["fd_creator_dept_address"], sourceRef: "source.form.layout.cell.c4", column: 3, colspan: 1 }
-            ]
-          }]
+          mkTree: [
+            {
+              id: "layout.row-0",
+              componentId: "xform-flex-1-4-layout",
+              props: { columns: 4 },
+              sourceRef: "source.form.layout.row.row-0",
+              children: [
+                { id: "c1", refType: "field", refIds: ["fd_creator_text"], sourceRef: "source.form.layout.cell.c1", column: 0, colspan: 1 },
+                { id: "c2", refType: "field", refIds: ["fd_creator_dept_text"], sourceRef: "source.form.layout.cell.c2", column: 1, colspan: 1 },
+                { id: "c3", refType: "field", refIds: ["fd_now_time"], sourceRef: "source.form.layout.cell.c3", column: 2, colspan: 1 },
+                { id: "c4", refType: "field", refIds: ["fd_creator_address"], sourceRef: "source.form.layout.cell.c4", column: 3, colspan: 1 }
+              ]
+            },
+            {
+              id: "layout.row-1",
+              componentId: "xform-flex-1-2-layout",
+              props: { columns: 2 },
+              sourceRef: "source.form.layout.row.row-1",
+              children: [
+                { id: "c5", refType: "field", refIds: ["fd_creator_dept_address"], sourceRef: "source.form.layout.cell.c5", column: 0, colspan: 1 },
+                { id: "c6", refType: "field", refIds: ["fd_creator_post_address"], sourceRef: "source.form.layout.cell.c6", column: 1, colspan: 1 }
+              ]
+            }
+          ]
         }
       }
     });
@@ -3266,8 +3407,10 @@ describe("executeDsl", () => {
       .dataModel.find((model) => model.fdType === "main").fdFields;
     const creatorText = fieldControlProps(fields, "fd_creator_text");
     const creatorDeptText = fieldControlProps(fields, "fd_creator_dept_text");
+    const nowTime = fieldControlProps(fields, "fd_now_time");
     const creatorAddress = fieldControlProps(fields, "fd_creator_address");
     const creatorDeptAddress = fieldControlProps(fields, "fd_creator_dept_address");
+    const creatorPostAddress = fieldControlProps(fields, "fd_creator_post_address");
 
     assert.equal(creatorText.defaultValueType, "formula");
     assert.equal(creatorText.defaultValueFormulaVO.script, "${data.biz.fdCreator.fdName}");
@@ -3276,6 +3419,11 @@ describe("executeDsl", () => {
     assert.equal(creatorDeptText.defaultValueFormulaVO.script, "${data.biz.fdCreatorDept.fdName}");
     assert.deepEqual(creatorDeptText.defaultValueFormulaVO.varIds, ["fdCreatorDept.fdName"]);
     assert.equal(creatorDeptText.defaultValueFormulaVO.vo.content, "$MK_TEST_测试模板.创建者部门.名称$");
+    assert.equal(nowTime.displayPattern, "yyyy-MM-dd HH:mm");
+    assert.equal(nowTime.defaultValueType, "formula");
+    assert.equal(nowTime.defaultValueFormulaVO.script, "new Date()");
+    assert.deepEqual(nowTime.defaultValueFormulaVO.varIds, []);
+    assert.equal(nowTime.defaultValueFormulaVO.vo.content, "当前时间");
 
     assert.deepEqual(creatorAddress.org.orgTypeArr, ["8"]);
     assert.equal(creatorAddress.org.defaultValueType, "formula");
@@ -3285,10 +3433,50 @@ describe("executeDsl", () => {
     assert.deepEqual(creatorDeptAddress.org.orgTypeArr, ["2"]);
     assert.equal(creatorDeptAddress.defaultValueFormulaVO.script, "${data.biz.fdCreatorDept}");
     assert.equal(creatorDeptAddress.defaultValueFormulaVO.vo.content, "$MK_TEST_测试模板.创建者部门$");
+    assert.deepEqual(creatorPostAddress.org.orgTypeArr, ["4"]);
+    assert.equal(creatorPostAddress.defaultValueFormulaVO.script, "${data.biz.fdCreator.post}");
+    assert.deepEqual(creatorPostAddress.defaultValueFormulaVO.varIds, ["fdCreator.post"]);
+    assert.equal(creatorPostAddress.defaultValueFormulaVO.vo.content, "$MK_TEST_测试模板.创建人岗位$");
 
     assert.equal(fieldFontExtendData(fields, "fd_creator_text").defaultValueFormulaVO.script, "${data.biz.fdCreator.fdName}");
+    assert.equal(fieldFontExtendData(fields, "fd_now_time").defaultValueFormulaVO.script, "new Date()");
     assert.deepEqual(fieldFontExtendData(fields, "fd_creator_address").orgTypeArr, ["8"]);
     assert.deepEqual(fieldFontExtendData(fields, "fd_creator_dept_address").relation, []);
+    assert.deepEqual(fieldFontExtendData(fields, "fd_creator_post_address").orgTypeArr, ["4"]);
+  });
+
+  it("writes rich text fields as native MK richtext controls", () => {
+    const dsl = sampleTrustedDsl({
+      workflow: undefined,
+      form: {
+        fields: [
+          { id: "fd_terms", title: "合同付款条款", type: "longText", componentId: "xform-rich-text", props: { maxLength: 1000000 }, sourceProps: {}, sourceRef: "source.form.control.fd_terms" }
+        ],
+        layout: {
+          sourceGrid: { rows: [] },
+          mkTree: [{
+            id: "layout.row-0",
+            componentId: "xform-flex-1-1-layout",
+            props: { columns: 1 },
+            sourceRef: "source.form.layout.row.row-0",
+            children: [
+              { id: "c1", refType: "field", refIds: ["fd_terms"], sourceRef: "source.form.layout.cell.c1", column: 0, colspan: 1 }
+            ]
+          }]
+        }
+      }
+    });
+    const payload = projectTemplate(dsl, baseTemplate());
+    const fields = JSON.parse(payload.mechanisms["sys-xform"].fdConfig)
+      .dataModel.find((model) => model.fdType === "main").fdFields;
+    const field = fields.find((item) => item.fdName === "fd_terms");
+    const attribute = JSON.parse(field.fdAttribute);
+
+    assert.equal(field.fdType, "richtext");
+    assert.equal(attribute.config.type, "@elem/xform-rich-text");
+    assert.equal(attribute.config.controlProps.desktop.type, "@elem/xform-rich-text");
+    assert.equal(attribute.config.controlProps.mobile.type, "@elem/xform-m-rich-text");
+    assert.equal(attribute.config.controlProps.maxLength, 1000000);
   });
 
   it("writes translated JSP scripts into MK xform control actions", () => {

@@ -315,6 +315,8 @@ function appendDesignerLayoutRow(descriptor, context) {
       : extractLayoutCellControls(cell.body, captionContext, metadataContext, {
           preservePlainLabels: descriptor.preservePlainLabels === true,
           preserveStandalonePlainLabels: descriptor.preserveStandalonePlainLabels !== false,
+          cell,
+          sourceColumns,
           crossCellBoundCaptionIds: new Set(
             [...boundCaptionCellIndexes]
               .filter(([, captionCellIndex]) => captionCellIndex !== cellIndex)
@@ -565,7 +567,7 @@ function enrichDesignerField(field, metadataField, warnings) {
   }
 
   if (!metadataField) {
-    if (field.type !== "description") {
+    if (field.type !== "description" && !isExecutableDesignerOnlyField(field)) {
       warnings.push({
         code: "source.sysform.metadata_field_missing",
         message: `Designer field ${field.id} (${field.title}) did not match fdMetadataXml.`,
@@ -576,7 +578,13 @@ function enrichDesignerField(field, metadataField, warnings) {
         }
       });
     }
-    return field;
+    return {
+      ...field,
+      source: {
+        ...field.source,
+        metadataMissing: true
+      }
+    };
   }
 
   const next = {
@@ -621,6 +629,23 @@ function enrichDesignerField(field, metadataField, warnings) {
   }
 
   return next;
+}
+
+function isExecutableDesignerOnlyField(field) {
+  if (!field || field.type === "RestDialog") return false;
+  if (field.mk?.component) return true;
+  return [
+    "attachment",
+    "checkbox",
+    "date",
+    "dateTime",
+    "longText",
+    "multiSelect",
+    "number",
+    "radio",
+    "singleSelect",
+    "text"
+  ].includes(field.type);
 }
 
 function mergeDetailColumns(designerColumns = [], metadataColumns = [], warnings) {
@@ -783,11 +808,12 @@ function extractLayoutCellControls(html, captionContext, metadataContext, option
       options.preservePlainLabels === true ||
       externalRightPromptIds.has(control.id) ||
       isStyledSourceDescriptionControl(control) ||
-      String(control.source?.designerType || "").toLowerCase() === "linklabel" ||
+      isLinkLabelControl(control) ||
       (
         options.preserveStandalonePlainLabels !== false &&
         isStandalonePlainDescription(control, metadataContext)
-      )
+      ) ||
+      isFullRowPlainHintTextLabel(control, options)
     )
   );
 }
@@ -800,10 +826,30 @@ function isStandalonePlainDescription(control, metadataContext) {
   return Boolean(title && !(metadataContext?.byTitle?.get(title) || []).length);
 }
 
-function foldInlineCellSemantics(html, entries, metadataContext, options) {
+function isLinkLabelControl(control) {
+  return String(control.source?.designerType || "").toLowerCase() === "linklabel";
+}
+
+function isFullRowPlainHintTextLabel(control, context = {}) {
+  if (!isSourceDescriptionControl(control)) return false;
+  if (String(control.source?.designerType || "").toLowerCase() !== "textlabel") return false;
+  if (isStyledSourceDescriptionControl(control)) return false;
+
+  const content = cleanText(control.source?.designerValues?.content || control.title || "");
+  if (!content) return false;
+
+  const column = parseColumnSpec(context.cell?.attrs?.column, 0);
+  const sourceColumns = Math.max(1, Number(context.sourceColumns) || 1);
+  const wideCell = column.colspan > 1 || column.colspan >= sourceColumns;
+  if (!wideCell) return false;
+
+  return content.includes("\n") || content.length >= 24 || /^[注备][注忘录]?[：:]/.test(content);
+}
+
+function foldInlineCellSemantics(html, entries, metadataContext, options = {}) {
   const captions = foldInlineCaptions(html, entries, {
-    crossCellBoundCaptionIds: options?.crossCellBoundCaptionIds,
-    preserveCaptionIds: options?.preserveCaptionIds
+    crossCellBoundCaptionIds: options.crossCellBoundCaptionIds,
+    preserveCaptionIds: options.preserveCaptionIds
   });
   const units = foldInlineNumberUnits(html, captions, metadataContext);
   return foldInlineHints(html, units, metadataContext)

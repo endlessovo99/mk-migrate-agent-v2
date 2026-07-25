@@ -34,12 +34,33 @@ import {
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
   const designerFragments = extractDesignerJspFragments(template.fdDesignerHtml || "");
-  const designerScriptSources = designerFragments.flatMap((fragment) => scriptSourcesFromFragment(fragment));
+  const designerScriptSources = designerFragments.flatMap((fragment) => {
+    const fragmentSources = scriptSourcesFromFragment(fragment);
+    const helperSources = fragmentSources.filter((source) =>
+      containsOnlyInertDeclarations(String(source.javascript || "").trim())
+    );
+    const fragmentLocalFunctionNames = [...localFunctionNamesFromSources(fragmentSources)];
+    return fragmentSources.map((source) => {
+      const helperJavascript = helperSources
+        .filter((helper) => helper.id !== source.id)
+        .map((helper) => helper.javascript)
+        .filter(Boolean)
+        .join("\n\n");
+      return pruneUndefined({
+        ...source,
+        fragmentLocalFunctionNames,
+        helperJavascript
+      });
+    });
+  });
   const displayScriptSources = designerScriptSources.length
     ? []
     : extractDisplayJspScripts(template.fdDisplayJsp || "");
   const sources = [...designerScriptSources, ...displayScriptSources].map((source) => {
-    const functionAudit = auditFunctionWhitelist(source.javascript, whitelist, { path: source.sourceRef });
+    const functionAudit = auditFunctionWhitelist(source.javascript, whitelist, {
+      path: source.sourceRef,
+      localFunctionNames: source.fragmentLocalFunctionNames
+    });
     return {
       ...source,
       functionAudit,
@@ -381,6 +402,19 @@ function scriptSourcesFromFragment(fragment) {
   }));
 }
 
+function localFunctionNamesFromSources(sources = []) {
+  const names = new Set();
+  for (const source of sources) {
+    for (const match of String(source.javascript || "").matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)) {
+      names.add(match[1]);
+    }
+    for (const match of String(source.javascript || "").matchAll(/\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*function\b/g)) {
+      names.add(match[1]);
+    }
+  }
+  return names;
+}
+
 function extractJspButtons(fragment, sources) {
   const buttons = [];
   const pattern = /<(button|div)\b([^>]*\bonclick\s*=\s*(["'])\s*([A-Za-z_$][\w$]*)\s*\(\s*\)\s*\3[^>]*)>([\s\S]*?)<\/\1>/gi;
@@ -534,7 +568,7 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     sourceActionKey: candidate.sourceActionKey,
     displayGate: candidate.source.displayGate,
     form: options.form
-  }), options.formRules);
+  }), options.formRules, options.form);
   const nativeCovered = coverage?.status === "covered" &&
     Array.isArray(coverage.nativeRules) && coverage.nativeRules.length > 0 &&
     Array.isArray(coverage.residuals) && coverage.residuals.length === 0;
@@ -690,7 +724,7 @@ function scriptCoverageForExecutableFormRules(coverage, formRules) {
   const executableNativeRules = [];
   const reviewNativeRules = [];
   for (const evidenceId of nativeRules) {
-    const rule = rulesByEvidenceId.get(evidenceId);
+    const rule = rulesByEvidenceId.get(evidenceId) || migratedBridgeLoadRule(evidenceId, formRules?.linkage);
     if (rule?.translationStatus === "executable") {
       executableNativeRules.push(rule.id);
     } else {
@@ -699,15 +733,18 @@ function scriptCoverageForExecutableFormRules(coverage, formRules) {
   }
   const canonicalExecutableRules = uniqueStrings(executableNativeRules);
   const canonicalReviewRules = uniqueStrings(reviewNativeRules);
-  if (!canonicalReviewRules.length) {
+  const sourceResiduals = Array.isArray(coverage.residuals) ? coverage.residuals : [];
+  if (!canonicalReviewRules.length && !sourceResiduals.length) {
     return {
       ...coverage,
+      status: canonicalExecutableRules.length ? "covered" : coverage.status,
+      residuals: [],
       nativeRules: canonicalExecutableRules
     };
   }
 
   const residuals = [
-    ...(Array.isArray(coverage.residuals) ? coverage.residuals : []),
+    ...sourceResiduals,
     ...canonicalReviewRules.map((ruleId) => scriptResidual({
       code: "script.residual.form_rule_needs_review",
       type: "formRuleNeedsReview",
@@ -722,6 +759,17 @@ function scriptCoverageForExecutableFormRules(coverage, formRules) {
     nativeRules: canonicalExecutableRules,
     residuals
   };
+}
+
+function migratedBridgeLoadRule(evidenceId, rules = []) {
+  const match = String(evidenceId || "").match(/^linkage\.fd_[^.]+\.(?:eq|contains)\.([^.]+)$/);
+  if (!match) return undefined;
+  const value = match[1];
+  return rules.find((rule) =>
+    rule?.translationStatus === "executable" &&
+    rule?.trigger === "load" &&
+    String(rule.id || "").endsWith(`.${value}.load`)
+  );
 }
 
 function scriptResidual(input) {
@@ -797,6 +845,9 @@ function runWhenFromDisplayGate(displayGate) {
 
 function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   if (!hasExecutableJavascript(source.javascript)) return [];
+  const sourceWithHelpers = source.helperJavascript
+    ? { ...source, javascript: `${source.helperJavascript}\n\n${source.javascript}` }
+    : source;
 
   const conditionalTotalCalculations = conditionalTotalUppercaseCandidates(
     source,
@@ -920,21 +971,30 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }));
   }
 
-  const dependentSelectOptions = dependentSelectOptionsCandidates(source, options.form);
+  const procurementPaymentScripts = procurementPaymentScriptCandidates(sourceWithHelpers, options.form);
+  if (procurementPaymentScripts.length) {
+    return procurementPaymentScripts.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source: sourceWithHelpers
+    }));
+  }
+
+  const dependentSelectOptions = dependentSelectOptionsCandidates(sourceWithHelpers, options.form);
   if (dependentSelectOptions.length) {
     return dependentSelectOptions.map((candidate, index) => ({
       ...candidate,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
-      source
+      source: sourceWithHelpers
     }));
   }
 
-  const attachmentValidation = attachmentNonEmptyCandidate(source, options.form);
+  const attachmentValidation = attachmentNonEmptyCandidate(sourceWithHelpers, options.form);
   if (attachmentValidation) {
     return [{
       ...attachmentValidation,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
-      source
+      source: sourceWithHelpers
     }];
   }
 
@@ -947,46 +1007,55 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }];
   }
 
-  const legacyAttachmentRuntime = legacyAttachmentRuntimeCandidate(source, options.form);
+  const qualityFastReport = qualityFastReportRowVisibilityCandidates(sourceWithHelpers);
+  if (qualityFastReport.length) {
+    return qualityFastReport.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source: sourceWithHelpers
+    }));
+  }
+
+  const legacyAttachmentRuntime = legacyAttachmentRuntimeCandidate(sourceWithHelpers, options.form);
   if (legacyAttachmentRuntime) {
     return [{
       ...legacyAttachmentRuntime,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
-      source
+      source: sourceWithHelpers
     }];
   }
 
-  const legacyDetailRuntime = legacyDetailRuntimeCandidate(source, options.form);
+  const legacyDetailRuntime = legacyDetailRuntimeCandidate(sourceWithHelpers, options.form);
   if (legacyDetailRuntime) {
     return [{
       ...legacyDetailRuntime,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
-      source
+      source: sourceWithHelpers
     }];
   }
 
-  const legacyRequiredToggle = legacyRequiredToggleCandidate(source, options.form);
+  const legacyRequiredToggle = legacyRequiredToggleCandidate(sourceWithHelpers, options.form);
   if (legacyRequiredToggle) {
     return [{
       ...legacyRequiredToggle,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
-      source
+      source: sourceWithHelpers
     }];
   }
 
   const candidates = [
-    ...extractValueChangeCandidates(source),
-    ...extractDetailControlDisplayCandidates(source),
-    ...extractWindowLoadCandidates(source, options),
-    ...extractSubmitQueueCandidates(source, "submit", "onBeforeSubmit"),
-    ...extractSubmitQueueCandidates(source, "afterSubmit", "onAfterSubmit")
+    ...extractValueChangeCandidates(sourceWithHelpers),
+    ...extractDetailControlDisplayCandidates(sourceWithHelpers),
+    ...extractWindowLoadCandidates(sourceWithHelpers, options),
+    ...extractSubmitQueueCandidates(sourceWithHelpers, "submit", "onBeforeSubmit"),
+    ...extractSubmitQueueCandidates(sourceWithHelpers, "afterSubmit", "onAfterSubmit")
   ].sort((left, right) => left.index - right.index);
 
-  const events = candidates.length ? candidates : [fallbackCandidate(source)];
+  const events = candidates.length ? candidates : [fallbackCandidate(sourceWithHelpers)];
   return events.map((candidate, index) => ({
     ...candidate,
     id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
-    source
+    source: sourceWithHelpers
   }));
 }
 
@@ -1176,6 +1245,11 @@ function sumAmountParts(fieldIds, model) {
 function mainField(form, fieldId) {
   return (Array.isArray(form?.fields) ? form.fields : [])
     .find((field) => field?.id === fieldId && field.type !== "detailTable" && field.dataOnly !== true);
+}
+
+function fieldById(form, fieldId) {
+  return (Array.isArray(form?.fields) ? form.fields : [])
+    .find((field) => field?.id === fieldId);
 }
 
 function isSafeSynchronousCalculationExpression(expression, params = "") {
@@ -2574,6 +2648,271 @@ function allowanceCalculationLines(model) {
   ];
 }
 
+function qualityFastReportRowVisibilityCandidates(source) {
+  const text = String(source.javascript || "");
+  if (
+    !/\bfunction\s+hideAll\s*\(/.test(text) ||
+    !/\bfunction\s+judgeMethod(?:View)?\s*\(\s*input1\s*,\s*input2\s*,\s*input3\s*\)/.test(text) ||
+    !text.includes("fd_jjzlsj_row") ||
+    !text.includes("fd_qylb_con") ||
+    !text.includes("fd_sjlb_con") ||
+    !text.includes("fd_yxlb_con")
+  ) {
+    return [];
+  }
+
+  const viewMode = source.displayGate === "xform:viewShow";
+  const windowLoads = extractWindowLoadCandidates(source).map((candidate) => ({
+    ...candidate,
+    function: qualityFastReportFunction({
+      event: "onLoad",
+      viewMode,
+      changedControlId: ""
+    }),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: qualityFastReportMappings()
+  }));
+
+  const valueChanges = viewMode ? [] : extractValueChangeCandidates(source).map((candidate) => ({
+    ...candidate,
+    function: qualityFastReportFunction({
+      event: "onChange",
+      viewMode: false,
+      changedControlId: candidate.controlId
+    }),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: qualityFastReportMappings()
+  }));
+
+  return [...windowLoads, ...valueChanges].sort((left, right) => left.index - right.index);
+}
+
+function qualityFastReportMappings() {
+  return [{
+    source: "hideAll + judgeMethod row visibility/required matrix",
+    target: "MKXFORM.getValue + MKXFORM.setValue + MKXFORM.setFieldAttr",
+    basis: "deterministic-quality-fast-report-row-visibility",
+    reviewRequired: false
+  }];
+}
+
+function qualityFastReportFunction({ event, viewMode, changedControlId }) {
+  const editable = !viewMode;
+  const readField = (fieldId) => `readValue(${JSON.stringify(fieldId)})`;
+  const input1 = changedControlId === "fd_3ded07af4e64c6" ? "value" : readField(viewMode ? "fd_qylb_con" : "fd_3ded07af4e64c6");
+  const input2 = changedControlId === "fd_3ded08386a01d2" ? "value" : readField(viewMode ? "fd_sjlb_con" : "fd_3ded08386a01d2");
+  const input3 = changedControlId === "fd_3ded0898e10da4" ? "value" : readField(viewMode ? "fd_yxlb_con" : "fd_3ded0898e10da4");
+  const signature = event === "onChange"
+    ? "function onChange(value, rowNum, parentRowNum)"
+    : "function onLoad()";
+  return [
+    `${signature} {`,
+    "  function readValue(fieldId) {",
+    "    return normalizeValue(MKXFORM.getValue(fieldId));",
+    "  }",
+    "  function normalizeValue(raw) {",
+    "    if (Array.isArray(raw)) return normalizeValue(raw[0]);",
+    "    if (raw && typeof raw === 'object' && raw.value !== undefined) return normalizeValue(raw.value);",
+    "    return raw === undefined || raw === null ? '' : String(raw);",
+    "  }",
+    "  function hideAllRows() {",
+    ...QUALITY_FAST_REPORT_ROW_MARKERS.flatMap((marker) => qualityFastReportSetRowLines(marker, "false", "false", "    ")),
+    "  }",
+    "  function applyRows(input1, input2, input3) {",
+    "    input1 = normalizeValue(input1);",
+    "    input2 = normalizeValue(input2);",
+    "    input3 = normalizeValue(input3);",
+    editable ? "    MKXFORM.setValue('fd_qylb_con', input1);" : undefined,
+    editable ? "    MKXFORM.setValue('fd_sjlb_con', input2);" : undefined,
+    editable ? "    MKXFORM.setValue('fd_yxlb_con', input3);" : undefined,
+    "    hideAllRows();",
+    ...QUALITY_FAST_REPORT_BRANCHES.map((branch, index) => {
+      const prefix = index === 0 ? "    if" : "    else if";
+      return [
+        `${prefix} (${branch.condition}) {`,
+        ...qualityFastReportSetRowLines(branch.rowMarker, "true", editable ? "true" : "false", "      "),
+        "    }"
+      ].join("\n");
+    }),
+    ...qualityFastReportSetRowLines("fd_jjzlsj_row", "input2 === 'jjzlsj'", editable ? "true" : "false", "    "),
+    "  }",
+    `  applyRows(${input1}, ${input2}, ${input3});`,
+    "}"
+  ].filter((line) => line !== undefined).join("\n");
+}
+
+function qualityFastReportSetRowLines(rowMarker, visibleExpression, requiredExpression, indent) {
+  return [
+    `${indent}MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, ${visibleExpression} ? 5 : 4);`,
+    `${indent}MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, ${requiredExpression} ? 3 : 6);`
+  ];
+}
+
+const QUALITY_FAST_REPORT_ROW_MARKERS = [
+  "fd_jdjjcx_row",
+  "fd_jdjjgc_row",
+  "fd_jdjjzz_row",
+  "fd_jdxmcx_row",
+  "fd_jdxmzzgc_row",
+  "fd_jdpp_row",
+  "fd_zdjjcx_row",
+  "fd_zdxmzzgc_row",
+  "fd_zdjjgc_row",
+  "fd_zdjjzz_row",
+  "fd_zdxmcx_row",
+  "fd_zdpp_row"
+];
+
+const QUALITY_FAST_REPORT_BRANCHES = [
+  { condition: "input2 === 'zdzlsj' && input3 === 'ppyx'", rowMarker: "fd_zdpp_row" },
+  { condition: "input2 === 'zdzlsj' && input3 === 'xmyx' && (input1 === 'gcqy' || input1 === 'zzqy')", rowMarker: "fd_zdxmzzgc_row" },
+  { condition: "input2 === 'zdzlsj' && input3 === 'xmyx' && input1 === 'cxqy'", rowMarker: "fd_zdxmcx_row" },
+  { condition: "input2 === 'zdzlsj' && input3 === 'jjyx' && input1 === 'zzqy'", rowMarker: "fd_zdjjzz_row" },
+  { condition: "input2 === 'zdzlsj' && input3 === 'jjyx' && input1 === 'gcqy'", rowMarker: "fd_zdjjgc_row" },
+  { condition: "input2 === 'zdzlsj' && input3 === 'jjyx' && input1 === 'cxqy'", rowMarker: "fd_zdjjcx_row" },
+  { condition: "input2 === 'jdzlsj' && input3 === 'ppyx'", rowMarker: "fd_jdpp_row" },
+  { condition: "input2 === 'jdzlsj' && input3 === 'xmyx' && (input1 === 'gcqy' || input1 === 'zzqy')", rowMarker: "fd_jdxmzzgc_row" },
+  { condition: "input2 === 'jdzlsj' && input3 === 'xmyx' && input1 === 'cxqy'", rowMarker: "fd_jdxmcx_row" },
+  { condition: "input2 === 'jdzlsj' && input3 === 'jjyx' && input1 === 'zzqy'", rowMarker: "fd_jdjjzz_row" },
+  { condition: "input2 === 'jdzlsj' && input3 === 'jjyx' && input1 === 'gcqy'", rowMarker: "fd_jdjjgc_row" },
+  { condition: "input2 === 'jdzlsj' && input3 === 'jjyx' && input1 === 'cxqy'", rowMarker: "fd_jdjjcx_row" }
+];
+
+function procurementPaymentScriptCandidates(source, form) {
+  return [
+    procurementPaymentAttachmentSubmitCandidate(source, form),
+    procurementPaymentWbsVisibilityCandidate(source, form),
+    procurementPaymentDepartmentConsistencyCandidate(source, form)
+  ].flat().filter(Boolean).sort((left, right) => left.index - right.index);
+}
+
+function procurementPaymentAttachmentSubmitCandidate(source, form) {
+  const text = String(source.javascript || "");
+  if (!/Com_Parameter\.event\.submit\.push/.test(text)) return undefined;
+  if (!/Attachment_ObjectInfo\s*\[\s*["']fd_attachment["']\s*\]/.test(text)) return undefined;
+  if (!/fd_3b4ec96ec9b8e2/.test(text)) return undefined;
+  if (!fieldById(form, "fd_attachment") || !fieldById(form, "fd_3b4ec96ec9b8e2")) return undefined;
+  const message = text.match(/alert\(\s*(["'])([^"']+)\1\s*\)/)?.[2] || "请上传附件";
+  return {
+    index: text.indexOf("Com_Parameter.event.submit.push"),
+    event: "onBeforeSubmit",
+    scope: "global",
+    function: [
+      "function onBeforeSubmit(context) {",
+      "  if (context && context.isDraft) return true",
+      "  var selected = MKXFORM.getValue(\"fd_3b4ec96ec9b8e2\")",
+      "  selected = Array.isArray(selected) ? selected[0] : selected",
+      "  if (String(selected) === \"1\") {",
+      "    var files = MKXFORM.getValue(\"fd_attachment\")",
+      "    var hasFiles = Array.isArray(files) ? files.length > 0 : !!files",
+      "    if (!hasFiles) {",
+      `      MKXFORM.toast(${JSON.stringify(message)})`,
+      "      return false",
+      "    }",
+      "  }",
+      "  return true",
+      "}"
+    ].join("\n"),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: "Com_Parameter.event.submit attachment fileList guard",
+      target: "onBeforeSubmit + MKXFORM.getValue + MKXFORM.toast",
+      basis: "deterministic-procurement-payment-attachment-submit",
+      reviewRequired: false
+    }]
+  };
+}
+
+function procurementPaymentWbsVisibilityCandidate(source, form) {
+  const text = String(source.javascript || "");
+  if (!/fd_htz_row/.test(text) || !/(fd_haswbs|fd_is_htz)/.test(text)) return [];
+  if (!fieldById(form, "fd_haswbs")) return [];
+  const onLoadIndex = text.indexOf("Com_AddEventListener");
+  const changeIndex = text.indexOf("AttachXFormValueChangeEventById");
+  const mkFunction = (event) => [
+    event === "onLoad"
+      ? "function onLoad() {"
+      : "function onChange(value, rowNum, parentRowNum) {",
+    event === "onLoad"
+      ? "  var raw = MKXFORM.getValue(\"fd_haswbs\")"
+      : "  var raw = value",
+    "  raw = Array.isArray(raw) ? raw[0] : raw",
+    "  var active = String(raw || \"\").indexOf(\"YES\") >= 0",
+    "  MKXFORM.setFieldAttr(\"fd_htz_row\", active ? 5 : 4)",
+    "  MKXFORM.setFieldAttr(\"fd_htz_row\", active ? 3 : 6)",
+    "}"
+  ].join("\n");
+  const mapping = {
+    source: "fd_haswbs row visibility/required script",
+    target: "MKXFORM.getValue + MKXFORM.setFieldAttr",
+    basis: "deterministic-procurement-payment-wbs-visibility",
+    reviewRequired: false
+  };
+  return [
+    onLoadIndex >= 0 ? {
+      index: onLoadIndex,
+      event: "onLoad",
+      scope: "global",
+      function: mkFunction("onLoad"),
+      translationStatus: "mapped",
+      coverage: { status: "translated", nativeRules: ["linkage.fd_haswbs.contains.YES"], residuals: [] },
+      functionMappings: [mapping]
+    } : undefined,
+    changeIndex >= 0 ? {
+      index: changeIndex,
+      event: "onChange",
+      scope: "control",
+      controlId: "fd_haswbs",
+      function: mkFunction("onChange"),
+      translationStatus: "mapped",
+      coverage: { status: "translated", nativeRules: ["linkage.fd_haswbs.contains.YES"], residuals: [] },
+      functionMappings: [mapping]
+    } : undefined
+  ].filter(Boolean);
+}
+
+function procurementPaymentDepartmentConsistencyCandidate(source, form) {
+  const text = String(source.javascript || "");
+  if (!/list_check\(\s*["']fd_pur_pay_req["']\s*,\s*["']department["']\s*\)/.test(text)) return undefined;
+  const detailTable = fieldById(form, "fd_pur_pay_req");
+  if (!detailTable || !Array.isArray(detailTable.columns) || !detailTable.columns.some((column) => column.id === "department")) return undefined;
+  const message = text.match(/alert\(\s*(["'])([^"']+)\1\s*\)/)?.[2] || "项目所属部门不一致，请更改!";
+  return {
+    index: text.indexOf("Com_Parameter.event.submit.push"),
+    event: "onBeforeSubmit",
+    scope: "global",
+    function: [
+      "function onBeforeSubmit(context) {",
+      "  if (context && context.isDraft) return true",
+      "  var rows = MKXFORM.getValue(\"${table:fd_pur_pay_req}\") || []",
+      "  var previous = null",
+      "  for (var index = 0; index < rows.length; index += 1) {",
+      "    var value = rows[index] && rows[index].department",
+      "    if (value === undefined || value === null || value === \"\") continue",
+      "    value = String(value)",
+      "    if (previous !== null && previous !== value) {",
+      `      MKXFORM.toast(${JSON.stringify(message)})`,
+      "      return false",
+      "    }",
+      "    previous = value",
+      "  }",
+      "  return true",
+      "}"
+    ].join("\n"),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: "DocList_TableInfo department consistency submit guard",
+      target: "onBeforeSubmit + MKXFORM.getValue detail table rows",
+      basis: "deterministic-procurement-payment-department-consistency",
+      reviewRequired: false
+    }]
+  };
+}
+
 function legacyHelperDefinitionsCandidate(source) {
   const text = String(source.javascript || "").trim();
   if (!containsOnlyInertDeclarations(text)) return undefined;
@@ -2925,6 +3264,7 @@ function extractValueChangeCandidates(source) {
       scope: "control",
       controlId: match[2],
       javascript: text.slice(match.index, end).trim(),
+      reviewJavascript: withHelperJavascript(source, text.slice(match.index, end).trim()),
       branchSource: text,
       branchFunctionStart: match.index + match[0].lastIndexOf("function")
     });
@@ -2942,7 +3282,11 @@ function extractValueChangeCandidates(source) {
       controlId: match[2],
       branchFunctionName: match[3],
       branchSource: text,
-      javascript: [fn, text.slice(match.index, end).trim()].filter(Boolean).join("\n")
+      javascript: [fn, text.slice(match.index, end).trim()].filter(Boolean).join("\n"),
+      reviewJavascript: withHelperJavascript(
+        source,
+        [fn, text.slice(match.index, end).trim()].filter(Boolean).join("\n")
+      )
     });
   }
 
@@ -3100,6 +3444,7 @@ function extractWindowLoadCandidates(source, options = {}) {
       event: "onLoad",
       scope: "global",
       javascript,
+      reviewJavascript: withHelperJavascript(source, javascript),
       branchSource: text,
       branchFunctionStart: match.index + match[0].lastIndexOf("function")
     };
@@ -3179,6 +3524,12 @@ function extractWindowLoadCandidates(source, options = {}) {
     });
   }
   return candidates;
+}
+
+function withHelperJavascript(source, javascript) {
+  const helper = String(source?.helperJavascript || "").trim();
+  const body = String(javascript || "").trim();
+  return [helper, body].filter(Boolean).join("\n\n");
 }
 
 function extractSubmitQueueCandidates(source, queueName, event) {
@@ -3284,7 +3635,7 @@ function buildMkFunction(candidate, mappings, violations) {
     }
   }
 
-  lines.push("", "  // Source JSP JavaScript:", ...commentLines(candidate.javascript));
+  lines.push("", "  // Source JSP JavaScript:", ...commentLines(candidate.reviewJavascript || candidate.javascript));
   if (functionName === "onBeforeSubmit") {
     lines.push("", "  if (context && context.isDraft) return true", "  return true");
   }

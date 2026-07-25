@@ -372,6 +372,12 @@ function executableProps(field = {}, form = {}) {
     props.calculation = expectedCalculation(field.props.calculation, form);
   }
   if (field.props?.content !== undefined) props.content = normalizeScalar(field.props.content);
+  if (Array.isArray(field.props?.links) && field.props.links.length) {
+    props.links = field.props.links.map((link) => ({
+      name: normalizeScalar(link.name),
+      url: normalizeScalar(link.url)
+    }));
+  }
   if (field.props?.maxLength !== undefined) props.maxLength = field.props.maxLength;
   if (field.componentId === "xform-description") {
     const style = descriptionStyle(field.props?.style);
@@ -758,16 +764,15 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       type: node.type,
       element: node.element || defaultElementForType(node.type),
       help: nonEmptyString(node.help) ? normalizeScalar(node.help) : undefined,
-      mustModifyHandlerNodeIds: splitRelatedNodeIds(attributes.mustModifyHandlerNodeIds)
-        .filter((nodeId) => !formulaParticipantNodeIds.has(nodeId)),
-      canModifyHandlerNodeIds: splitRelatedNodeIds(attributes.canModifyHandlerNodeIds)
-        .filter((nodeId) => !formulaParticipantNodeIds.has(nodeId)),
+      mustModifyHandlerNodeIds: splitRelatedNodeIds(attributes.mustModifyHandlerNodeIds),
+      canModifyHandlerNodeIds: splitRelatedNodeIds(attributes.canModifyHandlerNodeIds),
       participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id), context),
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),
       manualBranch: summarizeExpectedManualBranch(node),
       parallelGateway: summarizeExpectedParallelGateway(node, edges),
       dataAuthority: summarizeDataAuthority(node),
+      timeout: summarizeNodeTimeoutConfig(attributes),
       ignoreOnSameIdentity: expectedIgnoreOnSameIdentity(node),
       subProcess: node.type === "startSubProcess" ? summarizeExpectedSubProcess(node.subProcess) : undefined
     };
@@ -799,9 +804,57 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       drafter: workflow.process?.completionNotifications?.drafter === true,
       participants: workflow.process?.completionNotifications?.participants === true
     },
+    process: summarizeProcessConfig(workflow.process),
     nodes: expectedNodes,
     edges: expectedEdges
   };
+}
+
+const PROCESS_CONFIG_KEYS = Object.freeze([
+  "privilegerIds",
+  "privilegerNames",
+  "dayOfNotifyPrivileger",
+  "hourOfNotifyPrivileger",
+  "minuteOfNotifyPrivileger",
+  "notifyType"
+]);
+
+function summarizeProcessConfig(process = {}) {
+  return pickNonEmptyStringProperties(process.attributes || {}, PROCESS_CONFIG_KEYS);
+}
+
+const NODE_TIMEOUT_CONFIG_KEYS = Object.freeze([
+  "dayOfNotify",
+  "hourOfNotify",
+  "minuteOfNotify",
+  "dayOfPass",
+  "hourOfPass",
+  "minuteOfPass",
+  "tranNotifyDraft",
+  "hourOfTranNotifyDraft",
+  "minuteOfTranNotifyDraft",
+  "tranNotifyPrivate",
+  "hourOfTranNotifyPrivate",
+  "minuteOfTranNotifyPrivate",
+  "rejectNotifyDraft",
+  "hourOfRejectNotifyDraft",
+  "minuteOfRejectNotifyDraft"
+]);
+
+function summarizeNodeTimeoutConfig(attrs = {}) {
+  return pickNonEmptyStringProperties(attrs, NODE_TIMEOUT_CONFIG_KEYS);
+}
+
+function pickNonEmptyStringProperties(source = {}, keys = []) {
+  const result = {};
+  for (const key of keys) {
+    const value = source[key];
+    if (value === undefined || value === null) continue;
+    const text = String(value);
+    if (!text.trim() && text !== "0") continue;
+    result[key] = text;
+  }
+  return Object.keys(result).length ? result : undefined;
 }
 
 function summarizeExpectedSubProcess(value = {}) {

@@ -862,6 +862,153 @@ describe("legacy JSP native form-rule lowering", () => {
     assert.deepEqual(action.coverage.nativeRules, [dslDraft.formRules.linkage[0].id]);
   });
 
+  it("lowers window-load row visibility from GetXFormFieldValueById to native load rules", () => {
+    const formRules = sourceFormRulesFromLegacyScripts({
+      sources: [{
+        id: "load-row",
+        sourceRef: "source.form.jsp.load-row",
+        displayGate: "xform:editShow",
+        javascript: `
+          Com_AddEventListener(window, "load", function(){
+            common_dom_row_set_show_required_reset("fd_ZSM_row", false, false, false);
+            if (GetXFormFieldValueById("fd_is_ZSM") == "ZSM") {
+              common_dom_row_set_show_required_reset("fd_ZSM_row", true, false, false);
+            } else {
+              common_dom_row_set_show_required_reset("fd_ZSM_row", false, false, false);
+            }
+          });
+        `
+      }]
+    });
+
+    assert.equal(formRules.linkage.length, 1);
+    assert.equal(formRules.linkage[0].id, "linkage.fd_is_ZSM.eq.ZSM");
+    assert.equal(formRules.linkage[0].trigger, "load");
+    assert.equal(formRules.linkage[0].source, "fd_is_ZSM");
+    assert.deepEqual(formRules.linkage[0].when, [{ field: "fd_is_ZSM", op: "eq", value: "ZSM" }]);
+    assert.deepEqual(formRules.linkage[0].effects, [
+      { type: "visible", target: "fd_ZSM_row", value: true },
+      { type: "required", target: "fd_ZSM_row", value: false }
+    ]);
+    assert.deepEqual(formRules.linkage[0].else, [
+      { type: "visible", target: "fd_ZSM_row", value: false },
+      { type: "required", target: "fd_ZSM_row", value: false }
+    ]);
+  });
+
+  it("rewrites load rules through hidden bridge fields back to the business trigger", () => {
+    const formRules = sourceFormRulesFromLegacyScripts({
+      sources: [{
+        id: "bridge-row",
+        sourceRef: "source.form.jsp.bridge-row",
+        displayGate: "xform:editShow",
+        javascript: `
+          AttachXFormValueChangeEventById("fd_seal_type", function(value) {
+            if (value.indexOf("ZSM") >= 0) {
+              SetXFormFieldValueById("fd_is_ZSM", "ZSM");
+              common_dom_row_set_show_required_reset("fd_ZSM_row", true, true, false);
+            } else {
+              SetXFormFieldValueById("fd_is_ZSM", "");
+              common_dom_row_set_show_required_reset("fd_ZSM_row", false, false, false);
+            }
+          });
+          Com_AddEventListener(window, "load", function(){
+            common_dom_row_set_show_required_reset("fd_ZSM_row", false, false, false);
+            if (GetXFormFieldValueById("fd_is_ZSM") == "ZSM") {
+              common_dom_row_set_show_required_reset("fd_ZSM_row", true, false, false);
+            } else {
+              common_dom_row_set_show_required_reset("fd_ZSM_row", false, false, false);
+            }
+          });
+        `
+      }]
+    });
+
+    assert.equal(formRules.linkage.length, 2);
+    const load = formRules.linkage.find((rule) => rule.trigger === "load");
+    assert.equal(load.id, "linkage.fd_seal_type.contains.ZSM.load");
+    assert.equal(load.source, "fd_seal_type");
+    assert.deepEqual(load.when, [{ field: "fd_seal_type", op: "contains", value: "ZSM" }]);
+    assert.deepEqual(load.effects, [{ type: "visible", target: "fd_ZSM_row", value: true }]);
+    assert.deepEqual(load.else, [{ type: "visible", target: "fd_ZSM_row", value: false }]);
+    assert.equal(formRules.linkage.some((rule) => rule.source === "fd_is_ZSM"), false);
+  });
+
+  it("rewrites hidden bridge load rules across split JSP sources", () => {
+    const formRules = sourceFormRulesFromLegacyScripts({
+      sources: [
+        {
+          id: "bridge-change",
+          sourceRef: "source.form.jsp.bridge-change",
+          displayGate: "xform:editShow",
+          javascript: `
+            AttachXFormValueChangeEventById("fd_seal_type", function(value) {
+              if (value.indexOf("ZSM") >= 0) {
+                SetXFormFieldValueById("fd_is_ZSM", "ZSM");
+                common_dom_row_set_show_required_reset("fd_ZSM_row", true, true, false);
+              } else {
+                SetXFormFieldValueById("fd_is_ZSM", "");
+                common_dom_row_set_show_required_reset("fd_ZSM_row", false, false, false);
+              }
+            });
+          `
+        },
+        {
+          id: "bridge-load",
+          sourceRef: "source.form.jsp.bridge-load",
+          javascript: `
+            Com_AddEventListener(window, "load", function(){
+              common_dom_row_set_show_required_reset("fd_ZSM_row", false, false, false);
+              if (GetXFormFieldValueById("fd_is_ZSM") == "ZSM") {
+                common_dom_row_set_show_required_reset("fd_ZSM_row", true, false, false);
+              } else {
+                common_dom_row_set_show_required_reset("fd_ZSM_row", false, false, false);
+              }
+            });
+          `
+        }
+      ]
+    });
+
+    assert.equal(formRules.linkage.length, 2);
+    const load = formRules.linkage.find((rule) => rule.trigger === "load");
+    assert.equal(load.source, "fd_seal_type");
+    assert.deepEqual(load.when, [{ field: "fd_seal_type", op: "contains", value: "ZSM" }]);
+    assert.equal(formRules.linkage.some((rule) => rule.source === "fd_is_ZSM"), false);
+  });
+
+  it("does not lower multi-radio helpers without form-backed row-marker proof", () => {
+    const formRules = sourceFormRulesFromLegacyScripts({
+      sources: [{
+        id: "quality-fast-report",
+        sourceRef: "source.form.jsp.quality-fast-report",
+        displayGate: "xform:editShow",
+        helperJavascript: `
+          function hideAll(){
+            common_dom_row_set_show_required_reset("fd_zdpp_row", false, false, false);
+            common_dom_row_set_show_required_reset("fd_jjzlsj_row", false, false, false);
+          }
+          function judgeMethod(input1,input2,input3){
+            document.getElementById("fd_qylb_con").value=input1;
+            document.getElementById("fd_sjlb_con").value=input2;
+            document.getElementById("fd_yxlb_con").value=input3;
+            if(input2=="zdzlsj"&&input3=="ppyx"){
+              common_dom_row_set_show_required_reset("fd_zdpp_row", true, true, false);
+            }
+          }
+        `,
+        javascript: `
+          AttachXFormValueChangeEventById("fd_3ded08386a01d2", function(value) {
+            hideAll();
+            judgeMethod("zzqy", value, "ppyx");
+          });
+        `
+      }]
+    });
+
+    assert.equal(formRules, undefined);
+  });
+
   it("excludes visibility rules whose resolved target is data-only", () => {
     const sourceDraft = {
       version: "2.0-source-draft",

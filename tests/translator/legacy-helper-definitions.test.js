@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { draftMkScriptsFromSourceScripts } from "../../src/translator/sysform-jsp-scripts.js";
+import {
+  draftMkScriptsFromSourceScripts,
+  extractSysFormJspScripts
+} from "../../src/translator/sysform-jsp-scripts.js";
 
 describe("legacy helper-only scripts", () => {
   it("omits script blocks that only define helper functions", () => {
@@ -108,6 +111,102 @@ describe("legacy helper-only scripts", () => {
     });
 
     assert.equal(scripts.actions[0].translationStatus, "omitted");
+  });
+
+  it("does not flag helper functions defined in another script block of the same JSP fragment", () => {
+    const scripts = extractSysFormJspScripts({
+      fdDesignerHtml: `
+        <DIV id="fd_jsp" fd_type="jsp">
+          <LABEL>
+            <INPUT type="hidden" value='
+              <script>
+                function hideAll(){
+                  common_dom_row_set_show_required_reset("fd_row", false, false, false);
+                }
+              </script>
+              <xform:editShow>
+                <script>
+                  Com_AddEventListener(window, "load", function(){
+                    hideAll();
+                    common_dom_row_set_show_required_reset("fd_row", true, true, false);
+                  });
+                </script>
+              </xform:editShow>
+            '>
+          </LABEL>
+        </DIV>
+      `
+    });
+
+    const editScript = scripts.sources.find((item) => item.displayGate === "xform:editShow");
+    assert.ok(editScript);
+    assert.equal(
+      editScript.functionAudit.violations.some((item) => item.name === "hideAll"),
+      false
+    );
+
+    const drafted = draftMkScriptsFromSourceScripts(scripts);
+    const reviewAction = drafted.actions.find((item) => item.translationStatus === "needs_review");
+    assert.match(reviewAction.function, /function hideAll\s*\(\s*\)/);
+    assert.match(reviewAction.function, /hideAll\(\);/);
+  });
+
+  it("maps quality fast report row visibility helper without dynamic setFieldAttr targets", () => {
+    const scripts = extractSysFormJspScripts({
+      fdDesignerHtml: `
+        <DIV id="fd_quality_jsp" fd_type="jsp">
+          <LABEL>
+            <INPUT type="hidden" value='
+              <script>
+                function hideAll(){
+                  common_dom_row_set_show_required_reset("fd_zdpp_row", false, false, false);
+                  common_dom_row_set_show_required_reset("fd_jjzlsj_row", false, false, false);
+                }
+                function judgeMethod(input1,input2,input3){
+                  document.getElementById("fd_qylb_con").value = input1;
+                  document.getElementById("fd_sjlb_con").value = input2;
+                  document.getElementById("fd_yxlb_con").value = input3;
+                  if(input2=="zdzlsj" && input3=="ppyx"){
+                    common_dom_row_set_show_required_reset("fd_zdpp_row", true, true, false);
+                  }
+                }
+              </script>
+              <xform:editShow>
+                <script>
+                  Com_AddEventListener(window, "load", function(){
+                    hideAll();
+                    judgeMethod(
+                      document.getElementById("fd_3ded07af4e64c6").value,
+                      document.getElementById("fd_3ded08386a01d2").value,
+                      document.getElementById("fd_3ded0898e10da4").value
+                    );
+                  });
+                  AttachXFormValueChangeEventById("fd_3ded08386a01d2", function(value, rowNum, parentRowNum){
+                    hideAll();
+                    judgeMethod(
+                      document.getElementById("fd_3ded07af4e64c6").value,
+                      value,
+                      document.getElementById("fd_3ded0898e10da4").value
+                    );
+                  });
+                </script>
+              </xform:editShow>
+            '>
+          </LABEL>
+        </DIV>
+      `
+    });
+
+    const drafted = draftMkScriptsFromSourceScripts(scripts);
+    const mappedActions = drafted.actions.filter((action) => action.translationStatus === "mapped");
+    assert.equal(mappedActions.length, 2);
+    assert.equal(drafted.actions.some((action) => action.translationStatus === "needs_review"), false);
+    for (const action of mappedActions) {
+      assert.equal(action.coverage.status, "translated");
+      assert.doesNotMatch(action.function, /setFieldAttr\(rowMarker/);
+      assert.match(action.function, /MKXFORM\.setFieldAttr\("fd_zdpp_row"/);
+      assert.match(action.function, /MKXFORM\.setFieldAttr\("fd_jjzlsj_row"/);
+    }
   });
 });
 

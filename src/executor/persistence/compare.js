@@ -823,6 +823,14 @@ function compareWorkflow(expected, actual, diagnostics) {
       `/readback/workflow/completionNotifications/${key}`
     );
   }
+  if (expected.process && stableStringify(expected.process) !== stableStringify(actual.process || {})) {
+    diagnostics.push(mismatch("workflow", "readback.workflow.process_config_mismatch", "Readback workflow process configuration mismatch.", {
+      invariantKey: "workflow.process.config",
+      path: "/readback/workflow/process",
+      expected: expected.process,
+      actual: actual.process
+    }));
+  }
 
   const actualNodes = new Map((actual.nodes || []).map((node) => [node.id, node]));
   const expectedNodeIds = new Set((expected.nodes || []).map((node) => node.id));
@@ -938,6 +946,14 @@ function compareWorkflow(expected, actual, diagnostics) {
           actual: actualNode.dataAuthority
         }));
       }
+    }
+    if (node.timeout && stableStringify(node.timeout) !== stableStringify(actualNode.timeout || {})) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.node_timeout_mismatch", "Readback workflow node timeout configuration mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.timeout`,
+        path: `/readback/workflow/nodes/${node.id}/timeout`,
+        expected: node.timeout,
+        actual: actualNode.timeout
+      }));
     }
     if (node.subProcess && stableStringify(node.subProcess) !== stableStringify(actualNode.subProcess || {})) {
       diagnostics.push(mismatch("workflow", "readback.workflow.subprocess_mismatch", "Readback subprocess native configuration mismatch.", {
