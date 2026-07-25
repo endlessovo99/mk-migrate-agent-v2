@@ -3,6 +3,7 @@ import {
   isExplicitDefaultEdge,
   isNamedOtherEdge,
   isTautologyCondition as sharedIsTautologyCondition,
+  normalizeOneEqualsOneCondition,
   selectDefaultBranchEdge
 } from "./branch-defaults.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
@@ -905,6 +906,7 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = [], nodeByI
   const explicitDefault = isExplicitDefaultRoute(edge);
   const namedOther = isOtherRoute(edge);
   const tautologicalDefault = isTautologyCondition(conditionText);
+  const oneEqualsOne = normalizeOneEqualsOneCondition(conditionText);
   const parsedFormula = manual ? undefined : buildFormulaDesignerConfig(edge, context);
   const scriptFormula = manual || parsedFormula
     ? undefined
@@ -914,14 +916,16 @@ function buildBranchRoute(node, edge, index, context, siblingEdges = [], nodeByI
     tautologicalDefault || contradictionDefault || (namedOther && !String(conditionText || "").trim())
   );
   const formulaConfig = parsedFormula || scriptFormula ||
-    (contradictionDefault
-      ? buildConstantBooleanFormulaDesignerConfig(edge, false)
-      : needsSyntheticDefaultFormula
-        ? (
-          buildOtherDefaultFormulaDesignerConfig(node, edge, context, siblingEdges) ||
-          buildConstantBooleanFormulaDesignerConfig(edge, true)
-        )
-        : undefined);
+    (oneEqualsOne
+      ? buildConstantEvalFormulaDesignerConfig(oneEqualsOne)
+      : contradictionDefault
+        ? buildConstantBooleanFormulaDesignerConfig(edge, false)
+        : needsSyntheticDefaultFormula
+          ? (
+            buildOtherDefaultFormulaDesignerConfig(node, edge, context, siblingEdges) ||
+            buildConstantBooleanFormulaDesignerConfig(edge, true)
+          )
+          : undefined);
   const manualFallback = !manual && String(conditionText || "").trim() && !formulaConfig;
   const asManual = manual || manualFallback;
   const conditionValue = asManual
@@ -1107,6 +1111,17 @@ function buildConstantBooleanFormulaDesignerConfig(edge, value) {
         leavel: "1",
         fdList: []
       }
+    }
+  };
+}
+
+function buildConstantEvalFormulaDesignerConfig(script) {
+  return {
+    type: "Eval",
+    script,
+    vo: {
+      mode: "formula",
+      content: script
     }
   };
 }
@@ -2365,11 +2380,15 @@ function emptyOrgHandlers() {
 }
 
 function scriptFormulaHandlerRuleKey(participants, context = {}) {
-  const binding = detailScriptFormulaBinding(participants, context);
+  const binding = participants.recipe === "main_field_contains_login_names"
+    ? mainFieldScriptFormulaBinding(participants, context)
+    : detailScriptFormulaBinding(participants, context);
   const dataRef = `\${data.${binding.variableId}}`;
   let script;
 
-  if (participants.recipe === "detail_login_names_to_persons") {
+  if (participants.recipe === "main_field_contains_login_names") {
+    script = mainFieldLoginMapScript(dataRef, participants.branches);
+  } else if (participants.recipe === "detail_login_names_to_persons") {
     script = `var values = ${dataRef} || []; var handlers = []; var seen = {}; for (var i = 0; i < values.length; i++) { var loginName = String(values[i] || ""); if (!loginName || seen[loginName]) { continue; } seen[loginName] = true; var found = \${func.sysorg.getPersonByLoginName}(loginName) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); } } return handlers;`;
   } else if (participants.recipe === "first_detail_department_code_to_head") {
     script = `var values = ${dataRef} || []; if (!values.length) { return []; } var departments = \${func.sysorg.getElementByNo}(String(values[0]), "2") || []; return \${func.sysorg.getDepartmentHead}(departments) || [];`;
@@ -2384,6 +2403,44 @@ function scriptFormulaHandlerRuleKey(participants, context = {}) {
     vo: { mode: "script", content },
     resultType: workflowOrgArrayResultType()
   };
+}
+
+function mainFieldScriptFormulaBinding(participants, context = {}) {
+  const fieldId = String(participants.fieldId || "").trim();
+  const templateId = String(context.templateId || "").trim();
+  const field = context.formFieldById?.get(fieldId) ||
+    (context.form?.fields || []).find((item) => item?.id === fieldId);
+  if (!templateId || !field) {
+    const error = new Error("Workflow Script formula main-field binding is incomplete.");
+    error.code = "projection.workflow.script_formula_main_field_binding_invalid";
+    error.details = { fieldId, templateId };
+    throw error;
+  }
+  return {
+    variableId: `${templateId}-${fieldId}`,
+    displayRef: `$内置表单.${participants.fieldTitle || field.title || fieldId}$`
+  };
+}
+
+function mainFieldLoginMapScript(dataRef, branches = []) {
+  const prefix = `var values = ${dataRef} || []; if (Object.prototype.toString.call(values) !== "[object Array]") { values = [values]; } var selected = {}; for (var i = 0; i < values.length; i++) { selected[String(values[i])] = true; } var handlers = []; var seen = {};`;
+  const branchScripts = branches.map((branch) => {
+    const conditions = [
+      `selected[${JSON.stringify(branch.value)}]`,
+      ...(branch.requireUnseen || []).map((loginName) => `!seen[${JSON.stringify(loginName)}]`)
+    ];
+    const markSeen = (branch.markSeen || [])
+      .map((loginName) => `seen[${JSON.stringify(loginName)}] = true;`)
+      .join(" ");
+    const addHandlers = (branch.addLoginNames || [])
+      .map((loginName) => {
+        const literal = JSON.stringify(loginName);
+        return `var found = \${func.sysorg.getPersonByLoginName}(${literal}) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); }`;
+      })
+      .join(" ");
+    return `if (${conditions.join(" && ")}) { ${markSeen}${markSeen && addHandlers ? " " : ""}${addHandlers} }`;
+  });
+  return `${prefix} ${branchScripts.join(" ")} return handlers;`;
 }
 
 function detailScriptFormulaBinding(participants, context = {}) {
@@ -2670,8 +2727,15 @@ function parseInteger(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function normalizeSameIdentity(value) {
-  if (value === "false") return "1";
+function normalizeSameIdentity(attrs = {}) {
+  if (attrs.ignoreOnHandlerSame === "false") return "1";
+  if (
+    attrs.ignoreOnHandlerSame === "true" &&
+    attrs.onAdjoinHandlerSame === "true" &&
+    attrs.processType === "0"
+  ) {
+    return "3";
+  }
   return "2";
 }
 
@@ -2681,7 +2745,7 @@ function resolveIgnoreOnSameIdentity(node, attrs = {}) {
   if (nodeForbidsSameIdentitySkip(node, attrs)) {
     return "1";
   }
-  return normalizeSameIdentity(attrs.ignoreOnHandlerSame);
+  return normalizeSameIdentity(attrs);
 }
 
 function nodeForbidsSameIdentitySkip(node, attrs = {}) {

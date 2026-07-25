@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { buildFormRuleRefIndex, resolveEffectTarget } from "../../src/dsl/form-rules.js";
 import { validateMigrationDsl } from "../../src/dsl/schema.js";
 import { projectNativeLayoutRows } from "../../src/executor/persistence/layout-projection.js";
+import { inlineRadioRowEffectCandidates } from "../../src/translator/inline-radio-row-effects.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 
 const fixture =
@@ -474,6 +475,49 @@ describe("detail-table Route-validation", () => {
         item.code === "dsl.form.layout.layout_ref_missing"
       ),
       false
+    );
+  });
+
+  it("deterministically translates employee-notice radio row effects without legacy DOM access", () => {
+    const sourceDraft = cleanSourceFile(nestedEmptyRowsFixture);
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const actions = dslDraft.scripts.actions;
+    const validation = validateMigrationDsl(dslDraft, { mode: "draft" });
+
+    assert.equal(actions.length, 3);
+    assert.deepEqual(
+      actions.map((action) => action.event),
+      ["onChange", "onChange", "onLoad"]
+    );
+    assert.equal(actions.every((action) => action.translationStatus === "mapped"), true);
+    assert.equal(actions.every((action) => action.coverage?.status === "translated"), true);
+    assert.equal(actions.every((action) =>
+      action.deterministicBranchProof?.basis === "deterministic-inline-radio-row-effects"
+    ), true);
+    assert.equal(actions.every((action) =>
+      action.function.includes("MKXFORM.setFieldAttr(") &&
+      !/common_dom_row_set_show_required_reset|GetXFormFieldById|document\./u.test(action.function)
+    ), true);
+    assert.equal(
+      validation.diagnostics.some((item) =>
+        item.code.startsWith("dsl.scripts.deterministic_branch_")
+      ),
+      false
+    );
+
+    const loadSource = sourceDraft.scripts.sources.find((source) =>
+      source.sourceRef.endsWith(".script.2")
+    );
+    const unsafeLoadSource = {
+      ...loadSource,
+      javascript: loadSource.javascript.replace(
+        "function(){",
+        "function(){\nwindow.unknownSideEffect = true;"
+      )
+    };
+    assert.deepEqual(
+      inlineRadioRowEffectCandidates(unsafeLoadSource, dslDraft.form),
+      []
     );
   });
 

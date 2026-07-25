@@ -77,4 +77,38 @@ describe("unproven branch draft closure", () => {
       predicate: "numeric-<"
     }]);
   });
+
+  it("keeps unproven legacy row effects reviewable instead of declaring them no-ops", () => {
+    const scripts = draftMkScriptsFromSourceScripts({
+      source: "sysform-jsp",
+      sources: [{
+        id: "row-effect.script.1",
+        sourceRef: "source.form.jsp.row-effect.script.1",
+        javascript: [
+          "Com_AddEventListener(window, 'load', function(){",
+          "  if (legacyFlag === 1) {",
+          "    common_dom_row_set_show_required_reset('fd_detail_row', true, true, false);",
+          "  }",
+          "});"
+        ].join("\n"),
+        functionAudit: { matched: [], violations: [] }
+      }]
+    }, {
+      form: {
+        fields: [
+          { id: "fd_detail", title: "明细", type: "text", componentId: "xform-input", props: {} }
+        ]
+      }
+    });
+
+    const action = scripts.actions[0];
+    assert.equal(action.event, "onLoad");
+    assert.equal(action.branchProvenance?.status, "unproven");
+    assert.equal(action.translationStatus, "needs_review");
+    assert.equal(action.coverage.status, "uncovered");
+    assert.equal(
+      action.functionMappings.some((mapping) => mapping.basis === "legacy-runtime-noop"),
+      false
+    );
+  });
 });

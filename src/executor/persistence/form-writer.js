@@ -38,6 +38,12 @@ const CURRENT_TIME_INITIALIZER = 'function(e){var t=(e||{}).controlProps||{},r=t
 const DATE_TIME_OUTPUT_PATTERN = "yyyy-MM-dd hh:mm";
 const NATIVE_DATE_TIME_DATA_PATTERN = "yyyy-MM-dd HH/mm";
 const NATIVE_DATE_TIME_DISPLAY_PATTERN = "yyyy年MM月DD日 HH点mm分";
+const NATIVE_ORG_TYPE_CODE = new Map([
+  ["ORG_TYPE_ORG", "1"],
+  ["ORG_TYPE_DEPT", "2"],
+  ["ORG_TYPE_POST", "4"],
+  ["ORG_TYPE_PERSON", "8"]
+]);
 
 export function applyFormPayload(template, dsl) {
   const next = clone(template);
@@ -652,6 +658,13 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
   };
 
   if (field.props?.required) controlProps.required = true;
+  const hiddenLabel = componentSupportsProp(field.componentId, "hiddenLabel") &&
+    field.props?.hiddenLabel === true;
+  if (hiddenLabel) {
+    controlProps.desktop.hiddenLabel = true;
+    controlProps.mobile.hiddenLabel = true;
+    controlProps.showText = false;
+  }
   if (componentSupportsProp(field.componentId, "placeholder") && typeof field.props?.placeholder === "string") {
     controlProps.placeholder = field.props.placeholder;
   }
@@ -715,7 +728,13 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     }
   }
   if (spec.attrType === "address") {
-    controlProps.org = { types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"] };
+    const orgTypes = Array.isArray(field.props?.orgTypes) && field.props.orgTypes.length
+      ? field.props.orgTypes
+      : ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"];
+    controlProps.org = {
+      orgTypeArr: orgTypes.map((orgType) => NATIVE_ORG_TYPE_CODE.get(orgType)),
+      defaultValueType: "null"
+    };
   }
   if (spec.attrType === "number" && hasNativeNumberPrecision(field)) {
     const precision = field.props.precision;
@@ -803,7 +822,14 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
           }
         : isButton
           ? { desktop: {}, showText: false, title: label, mobile: {} }
-          : { desktop: {}, title: label, mobile: {} }
+          : hiddenLabel
+            ? {
+                desktop: { hiddenLabel: true },
+                showText: false,
+                title: label,
+                mobile: { hiddenLabel: true }
+              }
+            : { desktop: {}, title: label, mobile: {} }
     },
     env: isDescription ? ["xform", "print"] : ["xform"]
   };
@@ -877,7 +903,7 @@ function hasNativeNumberPrecision(field) {
 function applyDefaultValueToControlProps(controlProps, field, template, spec) {
   const contextDefault = contextDefaultFormula(field, template, spec);
   if (contextDefault) {
-    applyContextDefaultToControlProps(controlProps, contextDefault, spec);
+    applyContextDefaultToControlProps(controlProps, contextDefault, spec, field);
     return;
   }
 
@@ -905,9 +931,12 @@ function applyDefaultValueToControlProps(controlProps, field, template, spec) {
   }
 }
 
-function applyContextDefaultToControlProps(controlProps, contextDefault, spec) {
+function applyContextDefaultToControlProps(controlProps, contextDefault, spec, field) {
 
   if (spec.attrType === "address") {
+    const explicitOrgTypeArr = Array.isArray(field.props?.orgTypes) && field.props.orgTypes.length
+      ? field.props.orgTypes.map((orgType) => NATIVE_ORG_TYPE_CODE.get(orgType))
+      : undefined;
     Object.assign(controlProps, {
       multi: false,
       preSelectType: "fixed",
@@ -918,7 +947,7 @@ function applyContextDefaultToControlProps(controlProps, contextDefault, spec) {
     });
     controlProps.org = {
       ...(controlProps.org || {}),
-      orgTypeArr: contextDefault.orgTypeArr,
+      orgTypeArr: explicitOrgTypeArr || contextDefault.orgTypeArr,
       defaultValueType: "formula"
     };
     return;

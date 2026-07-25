@@ -296,7 +296,7 @@ describe("workflow current-native readback", () => {
     assert.deepEqual(conditionDiagnostics, []);
   });
 
-  it("writes a native Batch fallback when sibling conditions reference multiple fields", () => {
+  it("preserves a native 1==1 Eval default when sibling conditions reference multiple fields", () => {
     const { template, readback } = persistAndVerify(multiFieldDefaultDsl());
     const content = workflowContent(template);
     const fallback = edge(content, "L4");
@@ -304,11 +304,14 @@ describe("workflow current-native readback", () => {
     assert.equal(fallback.defaultTrend, true);
     assert.equal(fallback.formulaType, "formula");
     const nativeFormula = JSON.parse(fallback.formula);
-    assert.equal(nativeFormula.type, "Batch");
-    assert.equal(
-      nativeFormula.vo.data.fdList[0].fdList[0].fdVarValue,
-      "template-id-fd_subject"
-    );
+    assert.deepEqual(nativeFormula, {
+      type: "Eval",
+      script: "1==1",
+      vo: {
+        mode: "formula",
+        content: "1==1"
+      }
+    });
     assert.equal(
       readback.diagnostics.some((item) =>
         item.code === "readback.workflow.edge_condition_native_corrupt" &&

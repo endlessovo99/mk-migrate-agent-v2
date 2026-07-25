@@ -584,7 +584,7 @@ function draftDataFieldFromSource(field) {
 function draftFieldFromSourceControl(control) {
   return pruneUndefined({
     id: control.id,
-    title: control.title,
+    title: targetFieldTitle(control),
     type: normalizeFieldType(control.sourceType),
     componentId: componentForSourceType(control.sourceType, control),
     props: propsFromSource(control),
@@ -592,6 +592,18 @@ function draftFieldFromSourceControl(control) {
     sourceRef: control.sourceRef,
     generated: false
   });
+}
+
+function targetFieldTitle(control) {
+  if (!hasActiveExternalRightPrompt(control)) {
+    return control.title;
+  }
+  return control.sourceProps?.rightContainer?.name || control.id;
+}
+
+function hasActiveExternalRightPrompt(control) {
+  return control.sourceProps?.boundCaption?.relation === "external-right-prompt" &&
+    String(control.sourceProps?.designerValues?._label_bind || "").toLowerCase() === "true";
 }
 
 function draftDetailTableFromSource(table) {
@@ -639,6 +651,13 @@ function propsFromSource(source, options = {}) {
 
   const props = {};
   if (source.required) props.required = true;
+  if (
+    hasActiveExternalRightPrompt(source) &&
+    source.sourceProps?.rightContainer &&
+    componentSupportsProp(componentId, "hiddenLabel")
+  ) {
+    props.hiddenLabel = true;
+  }
   const inlineHint = source.sourceProps?.inlineHint?.content;
   const displayText = source.sourceProps?.displayText?.content;
   const placeholder = typeof inlineHint === "string" && inlineHint.trim()
@@ -661,6 +680,10 @@ function propsFromSource(source, options = {}) {
   }
   if (componentId === "xform-datetime" && source.sourceType === "dateTime") {
     props.displayPattern = LEGACY_DATE_TIME_DISPLAY_PATTERN;
+  }
+  if (componentId === "xform-address") {
+    const orgTypes = legacyAddressOrgTypes(source);
+    if (orgTypes.length) props.orgTypes = orgTypes;
   }
 
   if (["xform-number", "xform-calculate"].includes(componentId)) {
@@ -686,6 +709,23 @@ function propsFromSource(source, options = {}) {
   }
 
   return props;
+}
+
+function legacyAddressOrgTypes(source) {
+  const value = source.sourceProps?.designerValues?._orgType;
+  if (typeof value !== "string") return [];
+  const supported = new Set([
+    "ORG_TYPE_PERSON",
+    "ORG_TYPE_DEPT",
+    "ORG_TYPE_ORG",
+    "ORG_TYPE_POST"
+  ]);
+  return [...new Set(
+    value
+      .split(/[|,;\s]+/u)
+      .map((entry) => entry.trim().toUpperCase())
+      .filter((entry) => supported.has(entry))
+  )];
 }
 
 function targetOptionsFromSource(options) {
@@ -1491,7 +1531,10 @@ function draftMkTree(layout, detailTableIds) {
       1
     );
     const preserveNestedGeometry =
-      sourceCells.some(hasLayoutReference) &&
+      (
+        sourceCells.some(hasLayoutReference) ||
+        row.preserveSourceGeometry === true
+      ) &&
       sourceCells.every((cell) =>
         hasLayoutReference(cell) ||
         (Array.isArray(cell.references) ? cell.references.length : 0) <= 1

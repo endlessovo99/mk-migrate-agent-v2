@@ -118,7 +118,7 @@ function dataOnlyFieldFromMetadata(metadataField, designerField, warnings) {
 function parseDesignerLayout(html, metadataFields, warnings) {
   const decoded = decodeEntities(html);
   const rows = splitMainFormRows(decoded);
-  const boundCaptions = designerBoundCaptions(decoded);
+  const captionContext = designerBoundCaptionContext(decoded);
   const metadataContext = metadataMatchContext(metadataFields);
   const fields = [];
   const fieldIds = new Set();
@@ -130,13 +130,13 @@ function parseDesignerLayout(html, metadataFields, warnings) {
     const rowDescriptors = nestedLayoutRowDescriptors(
       rowHtml,
       rowIndex,
-      boundCaptions,
+      captionContext,
       metadataContext,
       warnings
     );
     for (const descriptor of rowDescriptors) {
       appendDesignerLayoutRow(descriptor, {
-        boundCaptions,
+        captionContext,
         metadataContext,
         warnings,
         fields,
@@ -147,6 +147,7 @@ function parseDesignerLayout(html, metadataFields, warnings) {
       });
     }
   });
+  applyRowspanLayoutNesting(layoutRows);
 
   const adjacentRowTitles = applyAdjacentRowDetailTableTitles(
     fields,
@@ -179,7 +180,7 @@ function parseDesignerLayout(html, metadataFields, warnings) {
 function nestedLayoutRowDescriptors(
   rowHtml,
   rowIndex,
-  boundCaptions,
+  captionContext,
   metadataContext,
   warnings
 ) {
@@ -188,12 +189,12 @@ function nestedLayoutRowDescriptors(
     id: `row-${rowIndex}`,
     sourceRow: String(rowIndex),
     inheritedMarkers: []
-  }, boundCaptions, metadataContext, warnings);
+  }, captionContext, metadataContext, warnings);
 }
 
 function expandNestedLayoutRowDescriptor(
   descriptor,
-  boundCaptions,
+  captionContext,
   metadataContext,
   warnings
 ) {
@@ -216,12 +217,13 @@ function expandNestedLayoutRowDescriptor(
     id: `${descriptor.id}.nested-0.row-${nestedRowIndex}`,
     sourceRow: `${descriptor.sourceRow}.${nestedRowIndex}`,
     inheritedMarkers: [],
-    preservePlainLabels
+    preservePlainLabels,
+    preserveStandalonePlainLabels: preservePlainLabels
   }));
   const nestedDescriptors = nestedRootDescriptors.flatMap((nestedDescriptor) =>
     expandNestedLayoutRowDescriptor(
       nestedDescriptor,
-      boundCaptions,
+      captionContext,
       metadataContext,
       warnings
     )
@@ -234,10 +236,11 @@ function expandNestedLayoutRowDescriptor(
   }));
   const parentCells = outsideCells.map((cell, sourceCellIndex) => ({
     ...cell,
-    controls: extractLayoutCellControls(cell.body, boundCaptions, metadataContext, {
+    controls: extractLayoutCellControls(cell.body, captionContext, metadataContext, {
       preservePlainLabels:
         descriptor.preservePlainLabels === true ||
-        sourceCellIndex < nested.sourceCellIndex
+        sourceCellIndex < nested.sourceCellIndex,
+      preserveStandalonePlainLabels: descriptor.preserveStandalonePlainLabels !== false
     }),
     ...(sourceCellIndex === nested.sourceCellIndex
       ? { layoutRowIds: nestedRootDescriptors.map((row) => row.id) }
@@ -280,7 +283,7 @@ function directStandardTableFragments(html) {
 
 function appendDesignerLayoutRow(descriptor, context) {
   const {
-    boundCaptions,
+    captionContext,
     metadataContext,
     warnings,
     fields,
@@ -300,7 +303,7 @@ function appendDesignerLayoutRow(descriptor, context) {
     : splitDirectChildCells(rowHtml);
   const boundCaptionCellIndexes = Array.isArray(descriptor.sourceCells)
     ? new Map()
-    : indexBoundCaptionCells(sourceCells, boundCaptions);
+    : indexBoundCaptionCells(sourceCells, captionContext.boundCaptions);
   const sourceColumns = sourceCells.reduce((max, cell, cellIndex) => {
     const column = parseColumnSpec(cell.attrs.column, cellIndex);
     return Math.max(max, column.column + column.colspan);
@@ -309,8 +312,9 @@ function appendDesignerLayoutRow(descriptor, context) {
   sourceCells.forEach((cell, cellIndex) => {
     const controls = Array.isArray(cell.controls)
       ? cell.controls
-      : extractLayoutCellControls(cell.body, boundCaptions, metadataContext, {
+      : extractLayoutCellControls(cell.body, captionContext, metadataContext, {
           preservePlainLabels: descriptor.preservePlainLabels === true,
+          preserveStandalonePlainLabels: descriptor.preserveStandalonePlainLabels !== false,
           crossCellBoundCaptionIds: new Set(
             [...boundCaptionCellIndexes]
               .filter(([, captionCellIndex]) => captionCellIndex !== cellIndex)
@@ -318,6 +322,7 @@ function appendDesignerLayoutRow(descriptor, context) {
           )
         });
     const column = parseColumnSpec(cell.attrs.column, cellIndex);
+    const rowspan = parseRowspan(cell.attrs.rowspan ?? cell.attrs.rowSpan);
     const controlGroups = controls.length ? groupLayoutCellControls(controls) : [];
     controlGroups.forEach((group, groupIndex) => {
       const cellFieldIds = [];
@@ -341,7 +346,8 @@ function appendDesignerLayoutRow(descriptor, context) {
         fieldId: cellFieldIds[0],
         fieldIds: cellFieldIds,
         column: column.column,
-        colspan: column.colspan
+        colspan: column.colspan,
+        ...(rowspan > 1 ? { rowspan } : {})
       });
     });
 
@@ -356,7 +362,8 @@ function appendDesignerLayoutRow(descriptor, context) {
           : baseId,
         layoutRowIds,
         column: column.column,
-        colspan: column.colspan
+        colspan: column.colspan,
+        ...(rowspan > 1 ? { rowspan } : {})
       });
     }
   });
@@ -384,6 +391,91 @@ function appendDesignerLayoutRow(descriptor, context) {
       columns: Math.max(sourceColumns, ...cells.map((cell) => cell.column + cell.colspan), 1),
       cells
     });
+  }
+}
+
+function applyRowspanLayoutNesting(layoutRows) {
+  for (let rowIndex = 0; rowIndex < layoutRows.length; rowIndex += 1) {
+    const row = layoutRows[rowIndex];
+    if (!/^\d+$/.test(String(row.sourceRow ?? ""))) continue;
+    const spanningCells = (row.cells || []).filter((cell) => parseRowspan(cell.rowspan) > 1);
+    if (spanningCells.length !== 1) continue;
+
+    const spanningCell = spanningCells[0];
+    const rowspan = parseRowspan(spanningCell.rowspan);
+    const coveredRows = layoutRows.slice(rowIndex, rowIndex + rowspan);
+    if (coveredRows.length !== rowspan) continue;
+
+    const regionColumn = spanningCell.column + spanningCell.colspan;
+    const firstRegionCells = row.cells.filter((cell) => cell !== spanningCell);
+    if (
+      spanningCell.column !== Math.min(...row.cells.map((cell) => cell.column)) ||
+      !firstRegionCells.length ||
+      firstRegionCells.some((cell) => cell.column < regionColumn) ||
+      coveredRows.slice(1).some((coveredRow) =>
+        !(coveredRow.cells || []).length ||
+        coveredRow.cells.some((cell) => cell.column < regionColumn)
+      )
+    ) {
+      continue;
+    }
+
+    const regionEnd = Math.max(
+      row.columns || 1,
+      ...coveredRows.flatMap((coveredRow) =>
+        (coveredRow.cells || []).map((cell) => cell.column + cell.colspan)
+      )
+    );
+    const regionColumns = regionEnd - regionColumn;
+    if (regionColumns < 1) continue;
+
+    const nestedFirstId = `${row.id}.rowspan-${spanningCell.column}.row-0`;
+    const normalizeNestedRow = (sourceRow, id, sourceRowValue, keepMarkers) => ({
+      ...sourceRow,
+      id,
+      sourceRow: sourceRowValue,
+      ...(keepMarkers ? {} : { sourceMarkers: undefined }),
+      preserveSourceGeometry: true,
+      columns: regionColumns,
+      cells: (sourceRow.cells || [])
+        .filter((cell) => cell !== spanningCell)
+        .map((cell) => ({
+          ...cell,
+          column: cell.column - regionColumn
+        }))
+    });
+    const nestedRows = [
+      normalizeNestedRow(
+        { ...row, cells: firstRegionCells },
+        nestedFirstId,
+        `${row.sourceRow}.rowspan-${spanningCell.column}`,
+        false
+      ),
+      ...coveredRows.slice(1).map((coveredRow) =>
+        normalizeNestedRow(
+          coveredRow,
+          coveredRow.id,
+          coveredRow.sourceRow,
+          true
+        )
+      )
+    ];
+    const outer = {
+      ...row,
+      columns: regionEnd,
+      cells: [
+        spanningCell,
+        {
+          id: `${row.id}-cell-${regionColumn}-rowspan-layout`,
+          layoutRowIds: nestedRows.map((nestedRow) => nestedRow.id),
+          column: regionColumn,
+          colspan: regionColumns
+        }
+      ]
+    };
+
+    layoutRows.splice(rowIndex, rowspan, outer, ...nestedRows);
+    rowIndex += nestedRows.length;
   }
 }
 
@@ -614,14 +706,17 @@ function metadataMatchContext(metadataFields = []) {
   };
 }
 
-function extractLayoutCellControls(html, crossCellBoundCaptions = new Map(), metadataContext, options = {}) {
+function extractLayoutCellControls(html, captionContext, metadataContext, options = {}) {
+  const boundCaptions = captionContext?.boundCaptions || new Map();
+  const externalRightPromptIds = captionContext?.externalRightPromptIds || new Set();
   const extractedEntries = extractDesignerFieldControlEntries(html, {
     includeHidden: true,
     includeTextLabels: true
-  }).map((entry) => withBoundCaptionEntry(entry, crossCellBoundCaptions));
+  }).map((entry) => withBoundCaptionEntry(entry, captionContext));
   const entries = extractedEntries.filter((entry) =>
     !isSourceDescriptionControl(entry.control) ||
-    !crossCellBoundCaptions.has(entry.control.id)
+    !boundCaptions.has(entry.control.id) ||
+    externalRightPromptIds.has(entry.control.id)
   );
   const controls = entries.map((entry) => entry.control);
   const detailTables = controls.filter((control) => control.type === "detailTable");
@@ -662,7 +757,10 @@ function extractLayoutCellControls(html, crossCellBoundCaptions = new Map(), met
     });
   }
 
-  const semanticControls = foldInlineCellSemantics(html, entries, metadataContext, options);
+  const semanticControls = foldInlineCellSemantics(html, entries, metadataContext, {
+    ...options,
+    preserveCaptionIds: externalRightPromptIds
+  });
   const fieldControls = semanticControls.filter((control) => !isSourceDescriptionControl(control));
   if (fieldControls.length) {
     const cellBoundLabelIds = new Set(
@@ -671,24 +769,41 @@ function extractLayoutCellControls(html, crossCellBoundCaptions = new Map(), met
         .filter(Boolean)
     );
     return semanticControls.filter((control) =>
-      !isSourceDescriptionControl(control) || !cellBoundLabelIds.has(control.id)
+      !isSourceDescriptionControl(control) ||
+      !cellBoundLabelIds.has(control.id) ||
+      externalRightPromptIds.has(control.id)
     );
   }
 
-  // Label-only cells: keep styled/hint textLabels as descriptions; skip plain field titles.
+  // Bound captions were removed above. Preserve remaining standalone text,
+  // while retaining the legacy guard against ordinary field-title labels.
   return semanticControls.filter((control) =>
     isSourceDescriptionControl(control) &&
     (
       options.preservePlainLabels === true ||
+      externalRightPromptIds.has(control.id) ||
       isStyledSourceDescriptionControl(control) ||
-      String(control.source?.designerType || "").toLowerCase() === "linklabel"
+      String(control.source?.designerType || "").toLowerCase() === "linklabel" ||
+      (
+        options.preserveStandalonePlainLabels !== false &&
+        isStandalonePlainDescription(control, metadataContext)
+      )
     )
   );
 }
 
+function isStandalonePlainDescription(control, metadataContext) {
+  const designerType = String(control?.source?.designerType || "").toLowerCase();
+  if (designerType !== "textlabel") return false;
+  if (/(?:^label(?:_|$)|_label$)/i.test(String(control.id || ""))) return false;
+  const title = normalizeMatchText(control.title);
+  return Boolean(title && !(metadataContext?.byTitle?.get(title) || []).length);
+}
+
 function foldInlineCellSemantics(html, entries, metadataContext, options) {
   const captions = foldInlineCaptions(html, entries, {
-    crossCellBoundCaptionIds: options?.crossCellBoundCaptionIds
+    crossCellBoundCaptionIds: options?.crossCellBoundCaptionIds,
+    preserveCaptionIds: options?.preserveCaptionIds
   });
   const units = foldInlineNumberUnits(html, captions, metadataContext);
   return foldInlineHints(html, units, metadataContext)
@@ -894,7 +1009,7 @@ function withInlineHint(control, hint) {
   };
 }
 
-function designerBoundCaptions(html) {
+function designerBoundCaptionContext(html) {
   const controls = extractDesignerFieldControls(html, {
     includeHidden: true,
     includeTextLabels: true
@@ -914,29 +1029,66 @@ function designerBoundCaptions(html) {
   for (const labelId of references) {
     referenceCounts.set(labelId, (referenceCounts.get(labelId) || 0) + 1);
   }
-  return new Map(
+  const boundCaptions = new Map(
     [...referenceCounts.entries()]
       .filter(([labelId, count]) => count === 1 && descriptionsById.has(labelId))
       .map(([labelId]) => [labelId, descriptionsById.get(labelId)])
   );
+  const rightContainerByControlId = new Map(
+    controls
+      .filter((control) => control.source?.rightContainer)
+      .map((control) => [control.id, control.source.rightContainer])
+  );
+  const externalRightPromptIds = new Set();
+  for (const control of controls) {
+    if (isSourceDescriptionControl(control)) continue;
+    const labelId = control.source?.designerValues?._label_bind_id;
+    const rightContainer = rightContainerByControlId.get(control.id);
+    const captionRightContainer = descriptionsById.get(labelId)?.source?.rightContainer;
+    if (
+      labelId &&
+      boundCaptions.has(labelId) &&
+      rightContainer &&
+      rightContainer.id !== captionRightContainer?.id
+    ) {
+      externalRightPromptIds.add(labelId);
+    }
+  }
+  return {
+    boundCaptions,
+    externalRightPromptIds,
+    rightContainerByControlId
+  };
 }
 
-function withBoundCaptionEntry(entry, boundCaptions) {
+function withBoundCaptionEntry(entry, captionContext) {
   const labelId = entry.control?.source?.designerValues?._label_bind_id;
+  const boundCaptions = captionContext?.boundCaptions || new Map();
   const caption = boundCaptions.get(labelId);
   if (!caption || isSourceDescriptionControl(entry.control)) return entry;
+  const rightContainer = captionContext?.rightContainerByControlId?.get(entry.control.id);
+  const captionRightContainer = caption.source?.rightContainer;
+  const externalRightPrompt = Boolean(
+    rightContainer &&
+    rightContainer.id !== captionRightContainer?.id
+  );
   return {
     ...entry,
     control: {
       ...entry.control,
-      title: cleanText(caption.title),
+      ...(externalRightPrompt ? {} : { title: cleanText(caption.title) }),
       source: {
         ...entry.control.source,
         boundCaption: {
           id: caption.id,
           content: cleanText(caption.title),
-          relation: "explicit-label-bind-id"
-        }
+          relation: externalRightPrompt
+            ? "external-right-prompt"
+            : "explicit-label-bind-id"
+        },
+        ...(externalRightPrompt
+          ? { rightContainer }
+          : {})
       }
     }
   };
@@ -966,6 +1118,7 @@ function extractDesignerFieldControls(html, options = {}) {
 function extractDesignerFieldControlEntries(html, options = {}) {
   const controls = [];
   const hiddenRanges = hiddenAncestorRanges(html);
+  const rightRanges = designerRightContainerRanges(html);
   const controlPattern = /<([a-zA-Z][\w:-]*)\b([^>]*\bfd_type\s*=\s*(["'])([^"']+)\3[^>]*)>/gi;
 
   for (const match of html.matchAll(controlPattern)) {
@@ -979,7 +1132,8 @@ function extractDesignerFieldControlEntries(html, options = {}) {
     if (hidden && !options.includeHidden) continue;
     const field = designerFieldFromControl(fdType, values, match[2], {
       html: fragment,
-      hidden
+      hidden,
+      rightContainer: rightContainerAt(rightRanges, match.index)
     });
     if (field) controls.push({
       control: field,
@@ -989,6 +1143,37 @@ function extractDesignerFieldControlEntries(html, options = {}) {
   }
 
   return controls;
+}
+
+function designerRightContainerRanges(html) {
+  const ranges = [];
+  const rightPattern = /<([a-zA-Z][\w:-]*)\b([^>]*\bfd_type\s*=\s*(["'])right\3[^>]*)>/gi;
+  for (const match of String(html || "").matchAll(rightPattern)) {
+    const values = parseDesignerFdValues(match[2]);
+    const id = values.id || attrValue(match[2], "id");
+    if (!id) continue;
+    const fragment = matchingElementFragment(html, match);
+    ranges.push({
+      start: match.index,
+      end: match.index + fragment.length,
+      container: {
+        id,
+        ...(cleanText(values.rightName || "")
+          ? { name: cleanText(values.rightName) }
+          : {})
+      }
+    });
+  }
+  return ranges;
+}
+
+function rightContainerAt(ranges, offset) {
+  let nearest;
+  for (const range of ranges) {
+    if (offset < range.start || offset >= range.end) continue;
+    if (!nearest || range.start >= nearest.start) nearest = range;
+  }
+  return nearest?.container;
 }
 
 function designerFieldFromControl(fdType, values, attrs, context = {}) {
@@ -1006,6 +1191,7 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
     designerValues: sanitizeDesignerValues(normalized, values),
     designerTableName: attrValue(attrs, "tableName") || undefined,
     designerShowStatus: attrValue(attrs, "showStatus") || undefined,
+    ...(context.rightContainer ? { rightContainer: context.rightContainer } : {}),
     ...(normalized === "restdialog" ? { restDialog: restDialogEvidence(values) } : {}),
     ...(context.hidden ? { designerHidden: true } : {})
   };
@@ -1497,6 +1683,11 @@ function parseColumnSpec(value, fallback) {
     column: parts[0],
     colspan: Math.max(parts.length, 1)
   };
+}
+
+function parseRowspan(value) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1;
 }
 
 function normalizeMatchText(value = "") {

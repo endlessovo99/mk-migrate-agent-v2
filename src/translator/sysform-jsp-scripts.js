@@ -7,6 +7,7 @@ import {
   provenPlatformValueChangeCallStarts
 } from "./sysform-form-rules.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
+import { inlineRadioRowEffectCandidates } from "./inline-radio-row-effects.js";
 import { attrValue, decodeEntities } from "./xml-utils.js";
 import {
   attachmentNonEmptyCandidate,
@@ -587,6 +588,7 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     analyzedBranchProvenance?.status === "unproven" &&
     translationStatus === "needs_review" &&
     !provisionalDeterministicProof &&
+    !sourceContainsLegacyRowEffect(candidate.branchSource || candidate.javascript) &&
     !sourceAssignsLegacyFieldValue(candidate.branchSource || candidate.javascript) &&
     !hasUnrecordedFunctionViolations(candidate)
   ) {
@@ -656,6 +658,10 @@ function sourceAssignsLegacyFieldValue(source) {
   return /GetXFormField(?:Value)?ById\s*\(\s*(["'`])[^"'`]+\1\s*\)\s*(?:\[\s*0\s*\])?\s*\.value\s*=/.test(
     String(source || "")
   );
+}
+
+function sourceContainsLegacyRowEffect(source) {
+  return /\bcommon_dom_row_set_show_required_reset\s*\(/.test(String(source || ""));
 }
 
 function unprovenBranchLegacySource(provenance, candidate) {
@@ -821,6 +827,19 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   );
   if (multiRadioRowHelpers.length) {
     return multiRadioRowHelpers.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const inlineRadioRowEffects = inlineRadioRowEffectCandidates(
+    source,
+    options.form,
+    options.formRules
+  );
+  if (inlineRadioRowEffects.length) {
+    return inlineRadioRowEffects.map((candidate, index) => ({
       ...candidate,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
       source

@@ -160,13 +160,17 @@ export async function executeDsl(input, options = {}) {
     apiStages[apiStages.length - 1].resolvedCount = participantResolution.resolvedCount;
     apiStages[apiStages.length - 1].identityCount = participantResolution.identityCount;
     if (participantResolution.fallbackCount > 0) {
+      const fallbackTargetsByOrgType = redactFallbackTargetNames(
+        participantResolution.fallbackTargetsByOrgType,
+        credentials
+      );
       apiStages[apiStages.length - 1].fallbackCount = participantResolution.fallbackCount;
       apiStages[apiStages.length - 1].fallbackIdentityCount = participantResolution.fallbackIdentityCount;
       apiStages[apiStages.length - 1].fallbackTargetIds = participantResolution.fallbackTargetIds;
       if (participantResolution.fallbackTargetId) {
         apiStages[apiStages.length - 1].fallbackTargetId = participantResolution.fallbackTargetId;
       }
-      apiStages[apiStages.length - 1].fallbackTargetsByOrgType = participantResolution.fallbackTargetsByOrgType;
+      apiStages[apiStages.length - 1].fallbackTargetsByOrgType = fallbackTargetsByOrgType;
       diagnostics.push({
         level: "warning",
         code: "workflow.participant_sit_fallback_applied",
@@ -176,7 +180,7 @@ export async function executeDsl(input, options = {}) {
           referenceCount: participantResolution.fallbackCount,
           identityCount: participantResolution.fallbackIdentityCount,
           targetFdIds: participantResolution.fallbackTargetIds,
-          targetsByOrgType: participantResolution.fallbackTargetsByOrgType
+          targetsByOrgType: fallbackTargetsByOrgType
         }
       });
     }
@@ -889,6 +893,18 @@ function redactCredentialValues(value, credentials = {}) {
     result = result.split(secret).join("[REDACTED]");
   }
   return result;
+}
+
+function redactFallbackTargetNames(targetsByOrgType = {}, credentials = {}) {
+  return Object.fromEntries(Object.entries(targetsByOrgType).map(([orgType, target]) => [
+    orgType,
+    {
+      ...target,
+      ...(target?.targetName
+        ? { targetName: redactCredentialValues(target.targetName, credentials) }
+        : {})
+    }
+  ]));
 }
 
 function redactParticipantIssues(issues, credentials) {

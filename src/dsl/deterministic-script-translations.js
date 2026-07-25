@@ -15,6 +15,7 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-dynamic-hyperlink",
   "deterministic-finance-detail-generation",
   "deterministic-grouped-detail-calculation",
+  "deterministic-inline-radio-row-effects",
   "deterministic-local-currency-helper",
   "deterministic-multi-radio-row-helper",
   "deterministic-person-text-calculation"

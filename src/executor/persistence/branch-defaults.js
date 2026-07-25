@@ -30,6 +30,12 @@ export function isTautologyCondition(condition) {
   return /^(?:1\s*={2,3}\s*1|true|return\s+true\s*;?)$/i.test(String(condition || "").trim());
 }
 
+export function normalizeOneEqualsOneCondition(condition) {
+  return /^1\s*={2,3}\s*1$/i.test(String(condition || "").trim())
+    ? "1==1"
+    : undefined;
+}
+
 export function edgeConditionText(edge) {
   if (edge?.condition && typeof edge.condition === "object") {
     return edge.condition.targetText || edge.condition.sourceText || edge.condition.displayText || "";

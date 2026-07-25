@@ -116,6 +116,15 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
 
 function summarizeSemanticProps(field) {
   const props = {};
+  if (
+    componentSupportsProp(field.component, "hiddenLabel") &&
+    field.props?.hiddenLabel === true
+  ) {
+    props.hiddenLabel = true;
+  }
+  if (componentSupportsProp(field.component, "orgTypes") && Array.isArray(field.props?.orgTypes)) {
+    props.orgTypes = [...field.props.orgTypes];
+  }
   if (componentSupportsProp(field.component, "precision") && field.props?.precision !== undefined) {
     props.precision = field.props.precision;
   }

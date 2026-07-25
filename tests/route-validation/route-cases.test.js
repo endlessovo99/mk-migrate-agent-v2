@@ -335,9 +335,9 @@ describe("offline Route-validation", { concurrency: false }, () => {
     const defaultEdge = result.execution.readback.workflow.edges.find((edge) => edge.id === "L4");
     assert.equal(defaultEdge.isDefault, true);
     assert.deepEqual(defaultEdge.condition, {
-      nativeKind: "batch_formula",
+      nativeKind: "eval_formula",
       nativeStatus: "ok",
-      functionIds: ["global.isEmpty"],
+      functionIds: [],
       orgIds: []
     });
   });

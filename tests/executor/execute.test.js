@@ -1562,7 +1562,7 @@ describe("executeDsl", () => {
     assert.equal(routes.find((route) => route.lineId === "L549").defaultTrend, false);
   });
 
-  it("infers synthetic other formulas from sibling route fields when branch title is generic", () => {
+  it("preserves a tautological other formula when the branch title is generic", () => {
     const workflow = sampleConditionBranchWorkflow();
     workflow.nodes.find((node) => node.id === "N410").name = "条件分支";
     workflow.nodes.find((node) => node.id === "N410").attributes.name = "条件分支";
@@ -1591,7 +1591,15 @@ describe("executeDsl", () => {
     const sequence = content.elements.find((element) => element.id === "L542");
     assert.equal(branch.default, "L542");
     assert.equal(route.defaultTrend, true);
-    assert.equal(route.formula.result.value, "(!${data.$VAR.L542_fd_seller_notempty})");
+    assert.deepEqual(route.formula, {
+      type: "Eval",
+      script: "1==1",
+      vo: {
+        mode: "formula",
+        content: "1==1"
+      }
+    });
+    assert.equal(route.formulaName, "1==1");
     assert.equal(sequence.formulaType, "formula");
   });
 
@@ -1706,7 +1714,7 @@ describe("executeDsl", () => {
     assert.deepEqual(JSON.parse(negatedRule.fdValue), [org]);
   });
 
-  it("writes parenthesized bang-equals and tautology/contradiction branch routes as Batch formulas", () => {
+  it("writes parenthesized bang-equals and contradiction routes as Batch while preserving tautology as Eval", () => {
     const form = sampleConditionBranchForm();
     form.fields.push({
       id: "fd_cat3",
@@ -1785,7 +1793,14 @@ describe("executeDsl", () => {
     assert.equal(complex.formulaType, "formula");
     assert.equal(JSON.parse(complex.formula).type, "Batch");
     assert.equal(always.formulaType, "formula");
-    assert.equal(JSON.parse(always.formula).type, "Batch");
+    assert.deepEqual(JSON.parse(always.formula), {
+      type: "Eval",
+      script: "1==1",
+      vo: {
+        mode: "formula",
+        content: "1==1"
+      }
+    });
     assert.equal(never.formulaType, "formula");
     assert.equal(JSON.parse(never.formula).type, "Batch");
     assert.equal(JSON.parse(never.formula).result?.value, "false");
@@ -2692,7 +2707,7 @@ describe("executeDsl", () => {
     assert.deepEqual(invalidDefaultRoutes, []);
   });
 
-  it("writes tautological other routes as not-empty alternate routes for the branch field", () => {
+  it("preserves tautological other routes as native Eval formulas", () => {
     const workflow = sampleConditionBranchWorkflow();
     delete workflow.edges.find((edge) => edge.id === "L544").attributes.isDefault;
     workflow.edges.splice(1, 0, {
@@ -2719,31 +2734,29 @@ describe("executeDsl", () => {
     const route = conditionValue.formulas.find((item) => item.lineId === "L542");
     const sequence = content.elements.find((element) => element.id === "L542");
     const routeFormula = route.formula;
-    const rule = routeFormula.vo.data.fdList[0].fdList[0];
 
     assert.equal(branch.default, "L542");
     assert.equal(branch.conditionId, "L542");
     assert.equal(route.defaultTrend, true);
-    assert.equal(route.formulaName, "");
-    assert.deepEqual(route.conditionSimpleData, route.formula);
+    assert.equal(route.formulaName, "1==1");
+    assert.equal(route.conditionSimpleData, undefined);
     assert.deepEqual(route.formulaConfig, route.formula);
-    assert.equal(routeFormula.type, "Batch");
-    assert.equal(routeFormula.result.value, "(!${data.$VAR.L542_fd_seller_notempty})");
-    assert.equal(routeFormula.vars[0].type, "Function");
-    assert.equal(routeFormula.vars[0].value, "global.isEmpty");
-    assert.equal(routeFormula.vars[0].arguments[0].value, "template-id-fd_seller");
-    assert.equal(rule.fdVarValue, "template-id-fd_seller");
-    assert.equal(rule.fdLabel, "$合同卖方$");
-    assert.equal(rule.fdSymbol, "notempty");
-    assert.equal(rule.fdFunctionId, "global.isEmpty");
+    assert.deepEqual(routeFormula, {
+      type: "Eval",
+      script: "1==1",
+      vo: {
+        mode: "formula",
+        content: "1==1"
+      }
+    });
     assert.equal(sequence.defaultTrend, true);
     assert.equal(sequence.formulaType, "formula");
-    assert.equal(sequence.formulaName, "");
+    assert.equal(sequence.formulaName, "1==1");
     assert.deepEqual(JSON.parse(sequence.formula), routeFormula);
     assert.equal(sequence.style, "sequenceFlow;marker");
   });
 
-  it("writes a non-named tautological default as a native Batch formula", () => {
+  it("writes a non-named tautological default as a native Eval formula", () => {
     const form = sampleConditionBranchForm();
     const workflow = sampleConditionBranchWorkflow();
     const branch = workflow.nodes.find((node) => node.id === "N410");
@@ -2773,7 +2786,14 @@ describe("executeDsl", () => {
     assert.equal(sequence.defaultTrend, true);
     assert.equal(sequence.formulaType, "formula");
     const nativeFormula = JSON.parse(sequence.formula);
-    assert.equal(nativeFormula.type, "Batch");
+    assert.deepEqual(nativeFormula, {
+      type: "Eval",
+      script: "1==1",
+      vo: {
+        mode: "formula",
+        content: "1==1"
+      }
+    });
     assert.equal(verification.ok, true, JSON.stringify(verification.diagnostics));
 
     const corrupt = structuredClone(template);

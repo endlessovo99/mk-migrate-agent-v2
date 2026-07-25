@@ -754,7 +754,7 @@ describe("executeDsl participant resolution seam", () => {
 
     const result = await executeDsl(dsl, {
       client,
-      credentials: { username: "route-user", encryptedPassword: "route-password" },
+      credentials: { username: SIT_FALLBACK_PERSON.fdName, encryptedPassword: "route-password" },
       confirmWrite: true,
       targetCategoryId: "category-1",
       baseUrl: NEWOA_SIT_BASE_URL,
@@ -780,6 +780,13 @@ describe("executeDsl participant resolution seam", () => {
     assert.equal(stage.fallbackIdentityCount, 1);
     assert.equal(stage.fallbackTargetId, SIT_FALLBACK_PERSON.fdId);
     assert.deepEqual(stage.fallbackTargetIds, [SIT_FALLBACK_PERSON.fdId]);
+    assert.equal(stage.fallbackTargetsByOrgType["8"].targetName, "[REDACTED]");
+    assert.equal(
+      result.diagnostics.find((item) => item.code === "workflow.participant_sit_fallback_applied")
+        .details.targetsByOrgType["8"].targetName,
+      "[REDACTED]"
+    );
+    assert.equal(JSON.stringify(result).includes(SIT_FALLBACK_PERSON.fdName), false);
     assert.equal(
       result.diagnostics.some((item) => item.code === "workflow.participant_sit_fallback_applied"),
       true

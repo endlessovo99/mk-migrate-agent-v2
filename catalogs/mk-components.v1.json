@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-07-24.v6",
+  "version": "2026-07-24.v7",
   "components": [
     {
       "componentId": "xform-button",
@@ -33,6 +33,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "hiddenLabel": { "type": "boolean" },
           "placeholder": { "type": "string" },
           "defaultValue": { "$ref": "#/$defs/defaultValue" }
         }
@@ -100,6 +101,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "hiddenLabel": { "type": "boolean" },
           "placeholder": { "type": "string" },
           "maxLength": { "type": "integer", "minimum": 1 },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
@@ -273,7 +275,7 @@
           "required": { "type": "boolean" },
           "orgTypes": {
             "type": "array",
-            "items": { "type": "string", "enum": ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT", "ORG_TYPE_ORG"] }
+            "items": { "type": "string", "enum": ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT", "ORG_TYPE_ORG", "ORG_TYPE_POST"] }
           },
           "defaultValue": { "$ref": "#/$defs/contextDefaultValue" }
         }

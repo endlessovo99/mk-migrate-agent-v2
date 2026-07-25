@@ -125,6 +125,7 @@ export function validateMigrationDsl(input, options = {}) {
   if (root.workflow !== undefined) {
     validateWorkflow(root.workflow, diagnostics, {
       mode,
+      form: root.form,
       fieldIds: formContext.fieldIds,
       dataAuthorityFieldIds: formContext.dataAuthorityFieldIds,
       detailTableIds: formContext.detailTableIds,
@@ -2011,7 +2012,10 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
     }
   }
   if (participants.mode === "script_formula") {
-    if (!["detail_login_names_to_persons", "first_detail_department_code_to_head"].includes(participants.recipe)) {
+    const detailRecipe = ["detail_login_names_to_persons", "first_detail_department_code_to_head"]
+      .includes(participants.recipe);
+    const mainFieldRecipe = participants.recipe === "main_field_contains_login_names";
+    if (!detailRecipe && !mainFieldRecipe) {
       diagnostics.push(error(
         "workflow.participants.script_formula_recipe_unsupported",
         "Script formula participants require a supported deterministic recipe.",
@@ -2025,7 +2029,7 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         "Script formula participants require fieldId and sourceFieldId.",
         `${path}/fieldId`
       ));
-    } else if (
+    } else if (detailRecipe &&
       context.dataAuthorityFieldIds instanceof Set &&
       !context.dataAuthorityFieldIds.has(participants.fieldId)
     ) {
@@ -2035,14 +2039,21 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         `${path}/fieldId`,
         { fieldId: participants.fieldId }
       ));
+    } else if (mainFieldRecipe && context.fieldIds instanceof Set && !context.fieldIds.has(participants.fieldId)) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_main_field_missing",
+        "Main-field Script formula participant fieldId must reference an existing form field.",
+        `${path}/fieldId`,
+        { fieldId: participants.fieldId }
+      ));
     }
-    if (!nonEmptyString(participants.detailTableId)) {
+    if (detailRecipe && !nonEmptyString(participants.detailTableId)) {
       diagnostics.push(error(
         "workflow.participants.script_formula_detail_table_required",
         "Script formula participants require detailTableId.",
         `${path}/detailTableId`
       ));
-    } else if (
+    } else if (detailRecipe &&
       context.detailTableIds instanceof Set &&
       !context.detailTableIds.has(participants.detailTableId)
     ) {
@@ -2052,7 +2063,7 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         `${path}/detailTableId`,
         { detailTableId: participants.detailTableId }
       ));
-    } else if (
+    } else if (detailRecipe &&
       context.detailColumnIdsByTable instanceof Map &&
       !context.detailColumnIdsByTable.get(participants.detailTableId)?.has(participants.fieldId)
     ) {
@@ -2063,6 +2074,9 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         { detailTableId: participants.detailTableId, fieldId: participants.fieldId }
       ));
     }
+    if (mainFieldRecipe) {
+      validateMainFieldLoginMapParticipant(participants, context, diagnostics, path);
+    }
     if (!nonEmptyString(participants.sourceExpression)) {
       diagnostics.push(error(
         "workflow.participants.script_formula_source_required",
@@ -2071,6 +2085,66 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
       ));
     }
   }
+}
+
+function validateMainFieldLoginMapParticipant(participants, context, diagnostics, path) {
+  const field = (context.form?.fields || []).find((item) => item?.id === participants.fieldId);
+  if (field && field.componentId !== "xform-select~multi") {
+    diagnostics.push(error(
+      "workflow.participants.script_formula_main_field_component",
+      "Main-field login mapping requires an xform-select~multi source field.",
+      `${path}/fieldId`,
+      { fieldId: participants.fieldId, componentId: field.componentId }
+    ));
+  }
+
+  const optionValues = new Set((field?.props?.options || []).map((option) => String(option?.value ?? "")));
+  if (!Array.isArray(participants.branches) || participants.branches.length === 0 || participants.branches.length > 50) {
+    diagnostics.push(error(
+      "workflow.participants.script_formula_branches_required",
+      "Main-field login mapping requires between 1 and 50 branches.",
+      `${path}/branches`
+    ));
+    return;
+  }
+
+  const seenValues = new Set();
+  participants.branches.forEach((branch, index) => {
+    const branchPath = `${path}/branches/${index}`;
+    if (!isRecord(branch) || !nonEmptyString(branch.value) || seenValues.has(branch.value)) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_branch_value_invalid",
+        "Each main-field login mapping branch requires a unique non-empty value.",
+        `${branchPath}/value`
+      ));
+      return;
+    }
+    seenValues.add(branch.value);
+    if (optionValues.size && !optionValues.has(branch.value)) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_branch_value_missing",
+        "Main-field login mapping branch value must exist in the field options.",
+        `${branchPath}/value`,
+        { value: branch.value }
+      ));
+    }
+
+    for (const key of ["requireUnseen", "addLoginNames", "markSeen"]) {
+      const values = branch[key];
+      if (
+        !Array.isArray(values) ||
+        (key === "addLoginNames" && values.length === 0) ||
+        new Set(values).size !== values.length ||
+        values.some((value) => !nonEmptyString(value) || !/^[A-Za-z0-9._-]+$/.test(value))
+      ) {
+        diagnostics.push(error(
+          "workflow.participants.script_formula_branch_login_names_invalid",
+          "Branch login-name lists must contain unique safe non-empty values.",
+          `${branchPath}/${key}`
+        ));
+      }
+    }
+  });
 }
 
 function validateWorkflowEdges(edges, nodeMap, diagnostics) {

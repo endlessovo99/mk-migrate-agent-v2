@@ -14,7 +14,7 @@ describe("Shanghai Electric 18e2 route regression", () => {
       .flatMap((candidate) => [candidate, ...(candidate.columns || [])])
       .find((candidate) => candidate.id === originalId || candidate.sourceProps?.originalId === originalId)?.id;
 
-    assert.equal(dsl.form.fields.length, 96);
+    assert.equal(dsl.form.fields.length, 100);
     assert.equal(field("fd_person_name").title, "出差人员");
 
     assert.deepEqual(field("fd_bkpf_waers").props.defaultValue, {

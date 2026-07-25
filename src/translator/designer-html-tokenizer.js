@@ -1,4 +1,4 @@
-import { parseXmlAttributes } from "./xml-utils.js";
+import { attrValue, parseXmlAttributes } from "./xml-utils.js";
 
 export function matchingElementFragment(html, match) {
   const tagName = match[1];
@@ -110,8 +110,14 @@ export function splitDirectChildCells(rowHtml) {
       const cellHtml = rowHtml.slice(cell.start, token.end);
       const openMatch = cellHtml.match(/^<(td|th)\b([^>]*)>/i);
       const bodyStart = openMatch ? openMatch[0].length : 0;
+      const attributesText = cell.attrs || openMatch?.[2] || "";
+      const attrs = parseXmlAttributes(attributesText);
+      const rowspan = attrValue(attributesText, "rowspan");
+      if (rowspan && attrs.rowspan === undefined && attrs.rowSpan === undefined) {
+        attrs.rowspan = rowspan;
+      }
       cells.push({
-        attrs: parseXmlAttributes(cell.attrs || openMatch?.[2] || ""),
+        attrs,
         body: cellHtml.slice(bodyStart, token.start - cell.start)
       });
       cell = undefined;

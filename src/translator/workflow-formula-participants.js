@@ -10,6 +10,7 @@ const FORMULA_PARTICIPANT_KEYS = Object.freeze([
   "departmentRole",
   "fallbackKind",
   "reason",
+  "branches",
   "sourceExpression",
   "sourceNameExpression"
 ]);
@@ -37,7 +38,8 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
 
   const handlerIds = splitList(attributes.handlerIds);
   const handlerNames = splitList(attributes.handlerNames);
-  return detailScriptParticipant(attributes) ||
+  return mainFieldLoginMapParticipant(attributes) ||
+    detailScriptParticipant(attributes) ||
     nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) ||
     fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) ||
     configuredPersonFallbackParticipant(attributes, handlerIds, handlerNames) ||
@@ -165,6 +167,132 @@ function parseFieldRoleLineFormula(value) {
   return { subject, companyRole, departmentRole };
 }
 
+function mainFieldLoginMapParticipant(attributes) {
+  const parsed = parseMainFieldLoginMapFormula(attributes.handlerIds);
+  if (!parsed || !parsed.fieldId.startsWith("fd_")) return undefined;
+
+  const nameParsed = parseMainFieldLoginMapFormula(attributes.handlerNames);
+  if (
+    nameParsed &&
+    JSON.stringify(nameParsed.branches) !== JSON.stringify(parsed.branches)
+  ) {
+    return undefined;
+  }
+
+  return {
+    mode: "script_formula",
+    recipe: "main_field_contains_login_names",
+    fieldId: parsed.fieldId,
+    sourceFieldId: parsed.fieldId,
+    fieldTitle: nameParsed?.fieldId && !nameParsed.fieldId.startsWith("fd_")
+      ? nameParsed.fieldId
+      : parsed.fieldId,
+    branches: parsed.branches,
+    sourceExpression: String(attributes.handlerIds || ""),
+    sourceNameExpression: String(attributes.handlerNames || "")
+  };
+}
+
+function parseMainFieldLoginMapFormula(value) {
+  const expression = normalizeLegacyExpression(value);
+  const preamble = expression.match(
+    /^(?:import\s+[A-Za-z0-9_.]+\s*;\s*)*List\s+handlers\s*=\s*new\s+ArrayList\s*\(\s*\)\s*;\s*String\s+perCodes\s*=\s*""\s*;\s*(?:String\s+perCodes1\s*=\s*""\s*;\s*)?String\s+name\s*=\s*\$([^$]+)\$\s*;\s*/
+  );
+  if (!preamble) return undefined;
+
+  const branches = [];
+  let remainder = expression.slice(preamble[0].length);
+  while (/^if\s*\(/.test(remainder)) {
+    const parsedIf = takeIfBlock(remainder);
+    if (!parsedIf) return undefined;
+    const valueMatch = parsedIf.condition.match(/^name\.contains\s*\(\s*"([^"\\]*)"\s*\)$/);
+    if (!valueMatch || branches.some((branch) => branch.value === valueMatch[1])) return undefined;
+    const branch = parseLoginMapBranch(valueMatch[1], parsedIf.body);
+    if (!branch) return undefined;
+    branches.push(branch);
+    remainder = parsedIf.remainder.trimStart();
+  }
+
+  if (!branches.length || !/^return\s+handlers\s*;\s*$/.test(remainder)) return undefined;
+  return { fieldId: preamble[1].trim(), branches };
+}
+
+function takeIfBlock(value) {
+  const text = String(value || "");
+  const openParen = text.indexOf("(");
+  if (openParen < 0) return undefined;
+  const closeParen = findBalancedClose(text, openParen, "(", ")");
+  if (closeParen < 0) return undefined;
+  let openBrace = closeParen + 1;
+  while (/\s/.test(text[openBrace] || "")) openBrace += 1;
+  if (text[openBrace] !== "{") return undefined;
+  const closeBrace = findBalancedClose(text, openBrace, "{", "}");
+  if (closeBrace < 0) return undefined;
+  return {
+    condition: text.slice(openParen + 1, closeParen).trim(),
+    body: text.slice(openBrace + 1, closeBrace).trim(),
+    remainder: text.slice(closeBrace + 1)
+  };
+}
+
+function findBalancedClose(text, openIndex, open, close) {
+  let depth = 0;
+  let quote = "";
+  for (let index = openIndex; index < text.length; index += 1) {
+    const char = text[index];
+    const previous = text[index - 1];
+    if (quote) {
+      if (char === quote && previous !== "\\") quote = "";
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      quote = char;
+    } else if (char === open) {
+      depth += 1;
+    } else if (char === close) {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
+}
+
+function parseLoginMapBranch(value, body) {
+  let requireUnseen = [];
+  let statements = body;
+  if (/^if\s*\(/.test(statements)) {
+    const guard = takeIfBlock(statements);
+    if (!guard || guard.remainder.trim()) return undefined;
+    const guardParts = guard.condition.split(/\s*&&\s*/);
+    requireUnseen = guardParts.map((part) => {
+      const match = part.match(/^!perCodes\.contains\s*\(\s*"([^"\\]+)"\s*\)$/);
+      return match?.[1];
+    });
+    if (requireUnseen.some((item) => !item) || new Set(requireUnseen).size !== requireUnseen.length) {
+      return undefined;
+    }
+    statements = guard.body;
+  }
+
+  const addLoginNames = [];
+  const markSeen = [];
+  const statementPattern = /\s*(?:(perCodes|perCodes1)\s*=\s*perCodes\s*\+\s*";([^"\\]+)"|handlers\.add\s*\(\s*\$组织架构\.根据登录名取用户\$\s*\(\s*"([^"\\]+)"\s*\)\s*\))\s*;/gy;
+  let offset = 0;
+  while (offset < statements.length) {
+    statementPattern.lastIndex = offset;
+    const match = statementPattern.exec(statements);
+    if (!match || match.index !== offset) return undefined;
+    if (match[1] === "perCodes") markSeen.push(match[2]);
+    if (match[3]) addLoginNames.push(match[3]);
+    offset = statementPattern.lastIndex;
+  }
+
+  if (!addLoginNames.length) return undefined;
+  const allValues = [...requireUnseen, ...addLoginNames, ...markSeen];
+  if (allValues.some((item) => !/^[A-Za-z0-9._-]+$/.test(item))) return undefined;
+  return { value, requireUnseen, addLoginNames, markSeen };
+}
+
 function nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) {
   if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
 
@@ -244,7 +372,11 @@ export function workflowFormulaParticipantMatches(attributes, participants, hand
   const expectedSourceFieldId = expected.sourceFieldId || expected.fieldId;
   const actualSourceFieldId = participants.sourceFieldId || participants.fieldId;
   return expectedSourceFieldId === actualSourceFieldId &&
-    FORMULA_PARTICIPANT_KEYS.every((key) => expected[key] === participants[key]);
+    FORMULA_PARTICIPANT_KEYS.every((key) =>
+      key === "branches"
+        ? JSON.stringify(expected[key]) === JSON.stringify(participants[key])
+        : expected[key] === participants[key]
+    );
 }
 
 export function inspectWorkflowFormulaProvenance(sourceDraft, dslDraft) {

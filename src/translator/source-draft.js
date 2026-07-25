@@ -356,6 +356,7 @@ function sourcePropsFromField(field) {
     explicitTitle: field.source?.explicitTitle,
     detailTitleHint: field.source?.detailTitleHint,
     boundCaption: field.source?.boundCaption,
+    rightContainer: field.source?.rightContainer,
     detailHeaderCaption: field.source?.detailHeaderCaption,
     displayText: field.source?.displayText,
     subjectLabel: field.source?.subjectLabel,
@@ -386,6 +387,7 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
       sourceRef: sourceRef("form.layout.row", row.id || `row-${rowIndex}`),
       sourceRow: row.sourceRow ?? String(rowIndex),
       sourceMarkers: Array.isArray(row.sourceMarkers) && row.sourceMarkers.length ? row.sourceMarkers : undefined,
+      preserveSourceGeometry: row.preserveSourceGeometry === true ? true : undefined,
       columns: row.columns,
       cells: (row.cells || []).map((cell, cellIndex) => {
         const fieldRefs = cellFieldIds(cell).map((fieldId) => ({
@@ -403,11 +405,13 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
           sourceRef: sourceRef("form.layout.cell", cell.id || `${row.id || `row-${rowIndex}`}-cell-${cellIndex}`),
           column: cell.column,
           colspan: cell.colspan,
+          rowspan: cell.rowspan,
           references: [...fieldRefs, ...layoutRefs],
           evidence: {
             row: row.sourceRow ?? String(rowIndex),
             column: cell.column,
-            colspan: cell.colspan
+            colspan: cell.colspan,
+            rowspan: cell.rowspan
           }
         });
       })

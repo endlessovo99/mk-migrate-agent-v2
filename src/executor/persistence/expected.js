@@ -17,6 +17,7 @@ import {
   edgeConditionText,
   isExplicitDefaultEdge,
   isTautologyCondition as sharedIsTautologyCondition,
+  normalizeOneEqualsOneCondition,
   selectDefaultBranchEdge
 } from "./branch-defaults.js";
 import { detailTableNameFor } from "./detail-table-names.js";
@@ -321,11 +322,20 @@ function expectedCalculationDependencies(entry, knownRefs) {
 function executableProps(field = {}, form = {}) {
   const props = {};
   if (field.props?.required === true) props.required = true;
+  if (
+    componentSupportsProp(field.componentId, "hiddenLabel") &&
+    field.props?.hiddenLabel === true
+  ) {
+    props.hiddenLabel = true;
+  }
   if (componentSupportsProp(field.componentId, "placeholder") && typeof field.props?.placeholder === "string") {
     props.placeholder = normalizeScalar(field.props.placeholder);
   }
   if (componentSupportsProp(field.componentId, "unit") && typeof field.props?.unit === "string") {
     props.unit = normalizeScalar(field.props.unit);
+  }
+  if (componentSupportsProp(field.componentId, "orgTypes") && Array.isArray(field.props?.orgTypes)) {
+    props.orgTypes = field.props.orgTypes.map(normalizeScalar);
   }
   if (Array.isArray(field.props?.options) && field.props.options.length) {
     props.options = field.props.options.map((option) => ({
@@ -976,9 +986,13 @@ function expectedParticipantFormula(participants, context = {}) {
     ruleMode = "script";
     ruleKeyMode = "";
   } else if (participants?.mode === "script_formula") {
-    const binding = expectedDetailScriptFormulaBinding(participants, context);
+    const binding = participants.recipe === "main_field_contains_login_names"
+      ? expectedMainFieldScriptFormulaBinding(participants, context)
+      : expectedDetailScriptFormulaBinding(participants, context);
     const dataRef = `\${data.${binding.variableId}}`;
-    if (participants.recipe === "detail_login_names_to_persons") {
+    if (participants.recipe === "main_field_contains_login_names") {
+      script = expectedMainFieldLoginMapScript(dataRef, participants.branches);
+    } else if (participants.recipe === "detail_login_names_to_persons") {
       script = `var values = ${dataRef} || []; var handlers = []; var seen = {}; for (var i = 0; i < values.length; i++) { var loginName = String(values[i] || ""); if (!loginName || seen[loginName]) { continue; } seen[loginName] = true; var found = \${func.sysorg.getPersonByLoginName}(loginName) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); } } return handlers;`;
     } else if (participants.recipe === "first_detail_department_code_to_head") {
       script = `var values = ${dataRef} || []; if (!values.length) { return []; } var departments = \${func.sysorg.getElementByNo}(String(values[0]), "2") || []; return \${func.sysorg.getDepartmentHead}(departments) || [];`;
@@ -1016,6 +1030,36 @@ function expectedParticipantFormula(participants, context = {}) {
       ? "org_array"
       : "none"
   };
+}
+
+function expectedMainFieldScriptFormulaBinding(participants, context = {}) {
+  const fieldId = String(participants?.fieldId || "").trim();
+  const field = (context.form?.fields || []).find((item) => item?.id === fieldId);
+  return {
+    variableId: `${context.templateId}-${fieldId}`,
+    displayRef: `$内置表单.${participants?.fieldTitle || field?.title || fieldId}$`
+  };
+}
+
+function expectedMainFieldLoginMapScript(dataRef, branches = []) {
+  const prefix = `var values = ${dataRef} || []; if (Object.prototype.toString.call(values) !== "[object Array]") { values = [values]; } var selected = {}; for (var i = 0; i < values.length; i++) { selected[String(values[i])] = true; } var handlers = []; var seen = {};`;
+  const branchScripts = branches.map((branch) => {
+    const conditions = [
+      `selected[${JSON.stringify(branch.value)}]`,
+      ...(branch.requireUnseen || []).map((loginName) => `!seen[${JSON.stringify(loginName)}]`)
+    ];
+    const markSeen = (branch.markSeen || [])
+      .map((loginName) => `seen[${JSON.stringify(loginName)}] = true;`)
+      .join(" ");
+    const addHandlers = (branch.addLoginNames || [])
+      .map((loginName) => {
+        const literal = JSON.stringify(loginName);
+        return `var found = \${func.sysorg.getPersonByLoginName}(${literal}) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); }`;
+      })
+      .join(" ");
+    return `if (${conditions.join(" && ")}) { ${markSeen}${markSeen && addHandlers ? " " : ""}${addHandlers} }`;
+  });
+  return `${prefix} ${branchScripts.join(" ")} return handlers;`;
 }
 
 function expectedDetailScriptFormulaBinding(participants, context = {}) {
@@ -1116,7 +1160,15 @@ function expectedIgnoreOnSameIdentity(node) {
   const eSign = attrs.eSignConfig || node.eSignConfig;
   const hasEnabledESign = eSign && (eSign.enable === true || eSign.enable === "true");
   if (hasRequiredField || hasMustModifyHandlerNodes || hasCanModifyHandlerNodes || hasEnabledESign) return "1";
-  return attrs.ignoreOnHandlerSame === "false" ? "1" : "2";
+  if (attrs.ignoreOnHandlerSame === "false") return "1";
+  if (
+    attrs.ignoreOnHandlerSame === "true" &&
+    attrs.onAdjoinHandlerSame === "true" &&
+    attrs.processType === "0"
+  ) {
+    return "3";
+  }
+  return "2";
 }
 
 function splitRelatedNodeIds(value = "") {
@@ -1232,6 +1284,10 @@ function expectedCreatorParentPathContainsScriptSemantics(sourceText) {
 
 function expectedBatchConditionSemantics(sourceText, context = {}) {
   const compact = String(sourceText || "").replace(/\s+/g, "");
+  const oneEqualsOne = normalizeOneEqualsOneCondition(sourceText);
+  if (oneEqualsOne) {
+    return { recipe: "eval_formula", script: oneEqualsOne };
+  }
   if (/^(?:1={2,3}2|1!={1,2}1|false)$/i.test(compact)) {
     return { resultShape: "false", varCount: 0 };
   }

@@ -9,6 +9,7 @@ import { translateLegacyConditionContextReferences } from "../../src/dsl/conditi
 const ROLE_LINE_SOURCE = "tests/fixtures/source/19ca1bf6a201d607679a76d4609a3e87";
 const CREATOR_PATH_SOURCE = "tests/fixtures/source/195023f8389d40797436b304835a3525";
 const CREATOR_DEPT_SOURCE = "tests/fixtures/source/191e3d177105738cef50e6545cd8c01f";
+const MAIN_FIELD_LOGIN_MAP_SOURCE = "tests/fixtures/source/168a79d763649dc1121721141b5b2616";
 
 describe("workflow Script recipes", () => {
   it("translates legacy fdDepartment conditions to the NewOA creator-department context", () => {
@@ -87,6 +88,140 @@ describe("workflow Script recipes", () => {
       translateLegacyConditionContextReferences(condition),
       '$字符串.包含$($context.creatorDept.fdName$, "literal $fdDepartment$")'
     );
+  });
+
+  it("maps a main multi-select field to login-name handlers through a deterministic Script recipe", () => {
+    const sourceDraft = cleanSourceFile(MAIN_FIELD_LOGIN_MAP_SOURCE);
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const node = dslDraft.workflow.nodes.find((item) => item.id === "N25");
+
+    assert.equal(node.participants.mode, "script_formula");
+    assert.equal(node.participants.recipe, "main_field_contains_login_names");
+    assert.equal(node.participants.fieldId, "fd_3ddc891890c9aa");
+    assert.deepEqual(node.participants.branches, [
+      { value: "0", requireUnseen: ["68300215"], addLoginNames: ["68300215"], markSeen: ["68300215"] },
+      { value: "1", requireUnseen: ["10219823"], addLoginNames: ["10219823"], markSeen: ["10219823"] },
+      { value: "2", requireUnseen: ["10100891"], addLoginNames: ["10100891"], markSeen: ["10100891"] },
+      { value: "3", requireUnseen: ["10219823"], addLoginNames: ["10219823"], markSeen: ["10219823"] },
+      { value: "4", requireUnseen: [], addLoginNames: ["68300296"], markSeen: [] },
+      { value: "5", requireUnseen: ["10100891"], addLoginNames: ["10100891"], markSeen: ["10100891"] },
+      { value: "6", requireUnseen: ["68300046"], addLoginNames: ["68300046"], markSeen: ["68300046"] },
+      { value: "7", requireUnseen: ["68300046"], addLoginNames: ["68300046"], markSeen: ["68300046"] },
+      { value: "8", requireUnseen: ["68300046", "68300325"], addLoginNames: ["68300046", "68300325"], markSeen: ["68300046"] },
+      { value: "9", requireUnseen: ["68300215"], addLoginNames: ["68300215"], markSeen: ["68300215"] }
+    ]);
+    assert.equal(node.translationStatus, "executable");
+
+    const workflow = {
+      process: { id: "main-field-login-map" },
+      nodes: [
+        workflowNode("N_LOGIN_START", "generalStart", "startEvent", "startNode"),
+        node,
+        workflowNode("N_LOGIN_END", "generalEnd", "endEvent", "endNode")
+      ],
+      edges: [
+        workflowEdge("L_LOGIN_IN", "N_LOGIN_START", node.id),
+        workflowEdge("L_LOGIN_OUT", node.id, "N_LOGIN_END")
+      ],
+      topologicalOrder: ["N_LOGIN_START", node.id, "N_LOGIN_END"]
+    };
+    const trusted = sampleTrustedDsl({
+      template: dslDraft.template,
+      form: dslDraft.form,
+      workflow
+    });
+    assert.equal(validateMigrationDsl(trusted, { mode: "execute" }).ok, true);
+
+    const template = projectTemplate(trusted);
+    const verified = verifyTemplate(trusted, template);
+    assert.equal(verified.ok, true, JSON.stringify(verified.diagnostics, null, 2));
+
+    const content = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    const projected = content.elements.find((item) => item.id === "N25");
+    const rule = JSON.parse(projected.handlers.ruleKey);
+    assert.equal(rule.type, "Script");
+    assert.match(rule.script, /template-id-fd_3ddc891890c9aa/);
+    assert.match(rule.script, /func\.sysorg\.getPersonByLoginName/);
+    assert.match(rule.script, /68300325/);
+  });
+
+  it("keeps adjacent-only duplicate identity skipping distinct from global skipping", () => {
+    const dslDraft = draftSourceDraft(cleanSourceFile(MAIN_FIELD_LOGIN_MAP_SOURCE));
+    const content = buildWorkflowContent(dslDraft.workflow, {
+      templateId: "template-id",
+      form: dslDraft.form
+    });
+    const departmentLeader = content.elements.find((item) => item.id === "N4");
+    const systemHandlers = content.elements.find((item) => item.id === "N25");
+
+    assert.equal(departmentLeader.cooperateType, "0");
+    assert.equal(departmentLeader.ignoreOnSameIdentity, "3");
+    assert.equal(systemHandlers.cooperateType, "2");
+    assert.equal(systemHandlers.ignoreOnSameIdentity, "2");
+
+    const workflow = {
+      process: { id: "same-identity-policy" },
+      nodes: [
+        workflowNode("N_POLICY_START", "generalStart", "startEvent", "startNode"),
+        {
+          ...workflowNode("N4", "review", "manualTask", "reviewNode"),
+          definition: {
+            sourceType: "reviewNode",
+            attributes: {
+              ignoreOnHandlerSame: "true",
+              onAdjoinHandlerSame: "true",
+              processType: "0"
+            }
+          }
+        },
+        {
+          ...workflowNode("N25", "review", "manualTask", "reviewNode"),
+          definition: {
+            sourceType: "reviewNode",
+            attributes: {
+              ignoreOnHandlerSame: "true",
+              onAdjoinHandlerSame: "true",
+              processType: "2"
+            }
+          }
+        },
+        workflowNode("N_POLICY_END", "generalEnd", "endEvent", "endNode")
+      ],
+      edges: [
+        workflowEdge("L_POLICY_1", "N_POLICY_START", "N4"),
+        workflowEdge("L_POLICY_2", "N4", "N25"),
+        workflowEdge("L_POLICY_3", "N25", "N_POLICY_END")
+      ],
+      topologicalOrder: ["N_POLICY_START", "N4", "N25", "N_POLICY_END"]
+    };
+    const trusted = sampleTrustedDsl({ workflow });
+    const template = projectTemplate(trusted);
+    const verified = verifyTemplate(trusted, template);
+    assert.equal(verified.ok, true, JSON.stringify(verified.diagnostics, null, 2));
+    assert.equal(
+      verified.workflow.nodes.find((item) => item.id === "N4").ignoreOnSameIdentity,
+      "3"
+    );
+    assert.equal(
+      verified.workflow.nodes.find((item) => item.id === "N25").ignoreOnSameIdentity,
+      "2"
+    );
+  });
+
+  it("keeps a main-field login map unmapped when the source formula has an extra side effect", () => {
+    const sourceDraft = cleanSourceFile(MAIN_FIELD_LOGIN_MAP_SOURCE);
+    const node = sourceDraft.workflow.nodes.find((item) => item.id === "N25");
+    for (const attributes of [node.attributes, node.definition.attributes]) {
+      attributes.handlerIds = attributes.handlerIds.replace(
+        "return handlers;",
+        "handlers.clear(); return handlers;"
+      );
+    }
+
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const mapped = dslDraft.workflow.nodes.find((item) => item.id === "N25");
+    assert.equal(mapped.participants.mode, "unmapped_formula");
+    assert.equal(mapped.translationStatus, "pending_review");
   });
 
   it("maps common field role lines and routes related leaders to the configured person fallback", () => {

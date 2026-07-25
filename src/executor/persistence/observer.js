@@ -28,6 +28,12 @@ const CURRENT_TIME_INITIALIZER = 'function(e){var t=(e||{}).controlProps||{},r=t
 const DATE_TIME_OUTPUT_PATTERN = "yyyy-MM-dd hh:mm";
 const NATIVE_DATE_TIME_DATA_PATTERN = "yyyy-MM-dd HH/mm";
 const NATIVE_DATE_TIME_DISPLAY_PATTERN = "yyyy年MM月DD日 HH点mm分";
+const ORG_TYPE_BY_NATIVE_CODE = new Map([
+  ["1", "ORG_TYPE_ORG"],
+  ["2", "ORG_TYPE_DEPT"],
+  ["4", "ORG_TYPE_POST"],
+  ["8", "ORG_TYPE_PERSON"]
+]);
 
 /**
  * Independently observe native persisted template semantics.
@@ -391,11 +397,21 @@ function observeNativeControlBinding(value) {
 function observeExecutableProps(controlProps = {}, native = {}) {
   const props = {};
   if (controlProps.required === true) props.required = true;
+  if (hasCompleteHiddenLabelEvidence(controlProps, native.attribute)) {
+    props.hiddenLabel = true;
+  }
   if (typeof controlProps.placeholder === "string") {
     props.placeholder = normalizeScalar(controlProps.placeholder);
   }
   const unit = observeNativeNumberUnit(controlProps, native.field, native.lang);
   if (unit !== undefined) props.unit = unit;
+  if (Array.isArray(controlProps.org?.orgTypeArr)) {
+    props.orgTypes = controlProps.org.orgTypeArr.map((code) =>
+      ORG_TYPE_BY_NATIVE_CODE.get(String(code)) || normalizeScalar(code)
+    );
+  } else if (Array.isArray(controlProps.org?.types)) {
+    props.orgTypes = controlProps.org.types.map(normalizeScalar);
+  }
   if (Array.isArray(controlProps.options) && controlProps.options.length) {
     props.options = controlProps.options.map((option) => ({
       label: normalizeScalar(option.label ?? option.text ?? option.value),
@@ -416,6 +432,18 @@ function observeExecutableProps(controlProps = {}, native = {}) {
   if (controlProps.content !== undefined) props.content = normalizeScalar(controlProps.content);
   if (controlProps.maxLength !== undefined) props.maxLength = controlProps.maxLength;
   return props;
+}
+
+function hasCompleteHiddenLabelEvidence(controlProps, attribute) {
+  const labelProps = attribute?.config?.labelProps;
+  return Boolean(
+    controlProps?.desktop?.hiddenLabel === true &&
+    controlProps?.mobile?.hiddenLabel === true &&
+    controlProps?.showText === false &&
+    labelProps?.desktop?.hiddenLabel === true &&
+    labelProps?.mobile?.hiddenLabel === true &&
+    labelProps?.showText === false
+  );
 }
 
 function observeNativeNumberPrecision(controlProps, native, observedUnit) {
@@ -1494,8 +1522,10 @@ function observeParticipants(node, initiatorSelectTarget) {
       };
     }
     if (ruleKey.type === "Script") {
-      const recipe = /getPersonByLoginName/.test(script)
-        ? "detail_login_names_to_persons"
+      const recipe = /getPersonByLoginName/.test(script) && /var selected = \{\};/.test(script)
+        ? "main_field_contains_login_names"
+        : /getPersonByLoginName/.test(script)
+          ? "detail_login_names_to_persons"
         : /getElementByNo/.test(script) && /getDepartmentHead/.test(script)
           ? "first_detail_department_code_to_head"
           : "unknown";

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { projectTemplate } from "../helpers/persistence.js";
 import { runRouteCase } from "./run-route-case.js";
 
 describe("conditional formula Route case", { concurrency: false }, () => {
@@ -87,5 +88,53 @@ describe("conditional formula Route case", { concurrency: false }, () => {
       orgIds: []
     });
     assert.equal(readbackEdges.get("L10")?.isDefault, false);
+
+    const template = projectTemplate(result.dsl);
+    const workflow = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+    const persistedBranch = workflow.elements.find((element) => element.id === "N3");
+    const persistedDefaultEdge = workflow.elements.find((element) => element.id === "L4");
+    const defaultFormula = JSON.parse(persistedDefaultEdge.formula);
+    const branchConditionValue = JSON.parse(persistedBranch.conditionValue);
+    const branchRoutes = branchConditionValue.formulas || branchConditionValue.rules;
+
+    assert.deepEqual(defaultFormula, {
+      type: "Eval",
+      script: "1==1",
+      vo: {
+        mode: "formula",
+        content: "1==1"
+      }
+    });
+    assert.equal(persistedDefaultEdge.formulaName, "1==1");
+    assert.equal(persistedDefaultEdge.formulaType, "formula");
+    assert.equal(persistedDefaultEdge.defaultTrend, true);
+    assert.equal(persistedBranch.default, "L4");
+    assert.equal(persistedBranch.conditionId, "L4");
+    assert.deepEqual(
+      JSON.parse(persistedBranch.resultSetMapping).find((entry) => entry.id === "L4"),
+      { id: "L4", resultCode: "1==1" }
+    );
+    assert.deepEqual(
+      branchRoutes.find((entry) => entry.lineId === "L4"),
+      {
+        lineId: "L4",
+        lineName: "默认业务路径",
+        priority: 3,
+        formula: defaultFormula,
+        formulaName: "1==1",
+        formulaType: "formula",
+        mode: "formula",
+        defaultTrend: true,
+        type: "formulas",
+        formulaConfig: defaultFormula
+      }
+    );
+    assert.deepEqual(readbackEdges.get("L4")?.condition, {
+      nativeKind: "eval_formula",
+      nativeStatus: "ok",
+      functionIds: [],
+      orgIds: []
+    });
+    assert.equal(readbackEdges.get("L4")?.isDefault, true);
   });
 });

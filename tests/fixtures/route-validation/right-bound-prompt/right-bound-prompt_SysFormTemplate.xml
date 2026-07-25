@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-right-bound-prompt-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Right Bound Prompt Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-right-bound-prompt-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;external_prompt&quot;,content:&quot;Return all issued equipment&quot;}&apos;&gt;Return all issued equipment&lt;/label&gt;
+     &lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;right_container&quot;,rightName:&quot;Department decision&quot;}&apos;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_right_decision&quot;,label:&quot;Return all issued equipment&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;external_prompt&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;textarea_prompt&quot;,content:&quot;Archive all supporting records&quot;}&apos;&gt;Archive all supporting records&lt;/label&gt;
+     &lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;textarea_right&quot;}&apos;&gt;
+      &lt;div fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_right_notes&quot;,label:&quot;Archive all supporting records&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;textarea_prompt&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;
+     &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;inactive_prompt&quot;,content:&quot;Finance preparation&quot;}&apos;&gt;Finance preparation&lt;/label&gt;
+     &lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;inactive_right&quot;}&apos;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;active_radio_caption&quot;,content:&quot;Include in cost&quot;}&apos;&gt;Include in cost&lt;/label&gt;
+      &lt;table fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_inactive_binding&quot;,label:&quot;Include in cost&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;inactive_prompt&quot;,items:&quot;Yes|1&amp;#10;No|0&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;/table&gt;
+     &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_right_decision&quot; label=&quot;Return all issued equipment&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_right_notes&quot; label=&quot;Archive all supporting records&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_inactive_binding&quot; label=&quot;Include in cost&quot; enumValues=&quot;Yes|1;No|0&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

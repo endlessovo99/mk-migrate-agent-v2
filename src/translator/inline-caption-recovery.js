@@ -20,6 +20,14 @@ export function foldInlineCaptions(html, entries, options = {}) {
       index += 1;
       continue;
     }
+    if (
+      isPreservedCaption(current.control, options.preserveCaptionIds) ||
+      isPreservedCaption(next.control, options.preserveCaptionIds)
+    ) {
+      folded.push(current);
+      index += 1;
+      continue;
+    }
 
     const separatedByBreak = hasDesignerBreakBetween(html, current, next);
     if (
@@ -116,6 +124,11 @@ export function foldInlineCaptions(html, entries, options = {}) {
   }
 
   return folded;
+}
+
+function isPreservedCaption(control, preserveCaptionIds) {
+  return isSourceDescriptionControl(control) &&
+    preserveCaptionIds?.has(control.id);
 }
 
 export function isPlainInlineCaption(control) {
