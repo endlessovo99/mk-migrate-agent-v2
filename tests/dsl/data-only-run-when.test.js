@@ -89,6 +89,38 @@ describe("data-only fields and view-status gates", () => {
     assert.equal(viewResult.ok, true);
   });
 
+  it("accepts script-populated required data-only detail columns but rejects event hosts", () => {
+    const form = sampleForm();
+    form.fields[2].columns[0].dataOnly = true;
+    form.fields[2].columns[0].props.required = true;
+    const accepted = validateMigrationDsl(sampleTrustedDsl({ form }), { mode: "execute" });
+
+    const eventBound = validateMigrationDsl(sampleTrustedDsl({
+      form,
+      scripts: {
+        actions: [{
+          ...mappedGlobalAction(),
+          id: "fd_detail.fd_name.onChange.1",
+          name: "onChange",
+          event: "onChange",
+          scope: "control",
+          tableId: "fd_detail",
+          controlId: "fd_name",
+          function: "function onChange(value, rowNum, parentRowNum) { return value }"
+        }]
+      }
+    }), { mode: "execute" });
+
+    assert.equal(accepted.ok, true, JSON.stringify(accepted.diagnostics));
+    assert.equal(eventBound.ok, false);
+    assert.equal(
+      eventBound.diagnostics.some((item) =>
+        item.code === "dsl.scripts.data_only_control_action_forbidden"
+      ),
+      true
+    );
+  });
+
   it("rejects rendering or control-event binding for a data-only field", () => {
     const renderedForm = formWithDataOnlyField();
     renderedForm.layout.mkTree[0].children[0].refIds.push("fd_shift");

@@ -10,6 +10,7 @@ import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import { isAddressField } from "../condition-org-resolver.js";
 import {
   buildDetailColumnIndex,
+  deriveDetailTableAuthority,
   detailTableNodeOperations,
   physicalDetailTableName
 } from "./detail-auth.js";
@@ -313,7 +314,7 @@ function buildTemplateFormAuths(workflow = {}, { form, mainTableName } = {}) {
   for (const node of workflow.nodes || []) {
     if (!hasDataAuthority(node)) continue;
     const nodeAuth = {};
-    const detailTables = new Map();
+    const authorityFields = {};
 
     for (const [fieldId, value] of Object.entries(node.dataAuthority.fields || {})) {
       const entry = {
@@ -321,30 +322,31 @@ function buildTemplateFormAuths(workflow = {}, { form, mainTableName } = {}) {
         isEdit: Boolean(value.editable),
         isRequire: Boolean(value.required)
       };
+      authorityFields[fieldId] = {
+        visible: entry.isShow,
+        editable: entry.isEdit,
+        required: entry.isRequire
+      };
       const detailFieldId = columnIndex.get(fieldId);
       if (detailFieldId && mainTableName) {
         const physicalTable = physicalDetailTableName(mainTableName, detailFieldId);
         const dottedKey = `${physicalTable}.${fieldId}`;
         nodeAuth[dottedKey] = entry;
-        const aggregate = detailTables.get(physicalTable) || {
-          anyVisible: false,
-          anyEditable: false
-        };
-        if (entry.isShow || entry.isEdit) aggregate.anyVisible = true;
-        if (entry.isEdit) aggregate.anyEditable = true;
-        detailTables.set(physicalTable, aggregate);
         continue;
       }
       nodeAuth[fieldId] = entry;
     }
 
-    for (const [physicalTable, aggregate] of detailTables.entries()) {
+    const detailTables = deriveDetailTableAuthority(form, authorityFields, {
+      mainTableName
+    });
+    for (const [physicalTable, authority] of Object.entries(detailTables)) {
       nodeAuth[physicalTable] = {
-        isShow: Boolean(aggregate.anyVisible || aggregate.anyEditable),
-        isEdit: Boolean(aggregate.anyEditable),
-        isRequire: false,
+        isShow: authority.visible,
+        isEdit: authority.editable,
+        isRequire: authority.required,
         operations: JSON.stringify(detailTableNodeOperations({
-          editable: Boolean(aggregate.anyEditable)
+          editable: authority.editable
         }))
       };
     }
@@ -1250,6 +1252,12 @@ function buildFormulaDesignerConfig(edge, context) {
     return buildEvalFormulaDesignerConfig(parsedAst, context);
   }
 
+  const addressNameContainsFormula = buildAddressNameContainsEvalFormulaConfig(
+    parsedAst,
+    context
+  );
+  if (addressNameContainsFormula) return addressNameContainsFormula;
+
   const sourceTerms = collectConditionTerms(parsedAst);
   const terms = sourceTerms.map((term, index) => {
     if (term.expressionType === "fieldSumCompare") {
@@ -1373,6 +1381,38 @@ function buildEvalFormulaDesignerConfig(parsedAst, context) {
     vo: {
       mode: "formula",
       content: parts.content
+    }
+  };
+}
+
+function buildAddressNameContainsEvalFormulaConfig(parsedAst, context) {
+  const terms = collectConditionTerms(parsedAst);
+  if (terms.length !== 1) return undefined;
+
+  const term = terms[0];
+  if (term.expressionType !== "contains" || term.fieldProperty !== "fdName") {
+    return undefined;
+  }
+
+  const field = resolveConditionField(term.field, context);
+  if (!field || !isAddressField(field) || lookupConditionOrg(context, term.value)) {
+    return undefined;
+  }
+
+  const fieldRef = `${context.templateId}-${field.id}.fdName`;
+  const fieldLabel = field.title || field.id;
+  const valueLiteral = JSON.stringify(String(term.value));
+  const call = `\${func.global.contains}(\${data.${fieldRef}}, ${valueLiteral})`;
+  const displayCall =
+    `#字符串或字符串数组比较#($内置表单.${fieldLabel}.名称$, ${valueLiteral})`;
+  const prefix = term.negateResult ? "!" : "";
+
+  return {
+    type: "Eval",
+    script: `${prefix}${call}`,
+    vo: {
+      mode: "formula",
+      content: `${prefix}${displayCall}`
     }
   };
 }
@@ -1507,12 +1547,13 @@ function parseSimpleCondition(condition) {
   const text = String(condition || "").trim();
   if (!text) return undefined;
 
-  const contains = text.match(/^(!\s*)?\$(?:字符串|列表)\.包含\$\(\s*\$([^$]+)\$(?:\s*\.\s*getFdName\s*\(\s*\))?\s*,\s*(["'])([\s\S]*?)\3\s*\)$/);
+  const contains = text.match(/^(!\s*)?\$(?:字符串|列表)\.包含\$\(\s*\$([^$]+)\$(\s*\.\s*getFdName\s*\(\s*\))?\s*,\s*(["'])([\s\S]*?)\4\s*\)$/);
   if (contains) {
     const negated = Boolean(contains[1]);
     return {
       field: contains[2].trim(),
-      value: contains[4],
+      fieldProperty: contains[3] ? "fdName" : undefined,
+      value: contains[5],
       symbol: negated ? "notcontain" : "contain",
       expressionType: "contains",
       functionId: "global.contains",

@@ -340,6 +340,7 @@ function sourceDetailTableFromField(field) {
       title: column.title,
       sourceType: column.type,
       required: Boolean(column.required),
+      dataOnly: column.dataOnly === true ? true : undefined,
       options: cloneOptions(column.options),
       sourceProps: sourcePropsFromField(column),
       evidence: evidenceForField(column)

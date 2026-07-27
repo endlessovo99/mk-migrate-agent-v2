@@ -25,6 +25,44 @@ describe("source directory stages", () => {
     ), true);
   });
 
+  it("preserves sparse detail-column authority from the 1927955 route", () => {
+    const sourceDraft = cleanSourceFile(
+      "tests/fixtures/source/1927955f6e544383f46970f48468a743"
+    );
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const detailTable = sourceDraft.form.detailTables.find(
+      (table) => table.id === "fd_3d69cf2b1acb52"
+    );
+    const detailColumnIds = new Set(detailTable.columns.map((column) => column.id));
+    const sourceNode = sourceDraft.workflow.nodes.find((node) => node.id === "N2");
+    const dslNode = dslDraft.workflow.nodes.find((node) => node.id === "N2");
+    const detailAuthority = Object.fromEntries(
+      Object.entries(sourceNode.dataAuthority.fields).filter(([fieldId]) =>
+        detailColumnIds.has(fieldId)
+      )
+    );
+
+    assert.equal(detailTable.columns.length, 17);
+    assert.deepEqual(Object.keys(detailAuthority).sort(), [
+      "fd_bz",
+      "fd_pos1",
+      "fd_pos12",
+      "fd_pos21",
+      "fd_pos22",
+      "fd_pos31",
+      "fd_pos32"
+    ]);
+    assert.equal(
+      Object.values(detailAuthority).every((authority) =>
+        authority.sourceMode === "hidden" &&
+        authority.visible === false &&
+        authority.editable === false
+      ),
+      true
+    );
+    assert.deepEqual(dslNode.dataAuthority, sourceNode.dataAuthority);
+  });
+
   it("drafts a JSP click control as a native MK button action", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/1927955f6e544383f46970f48468a743");
     const dslDraft = draftSourceDraft(sourceDraft);

@@ -314,6 +314,25 @@ function validateFieldLike(field, diagnostics, path, ids, scope) {
     path
   }, diagnostics);
   validateUniqueOptionValues(field.props?.options, diagnostics, `${path}/props/options`);
+  if (
+    field.props?.rowOptions !== undefined &&
+    (
+      scope !== "detailColumn" ||
+      field.type !== "singleSelect" ||
+      field.componentId !== "xform-select"
+    )
+  ) {
+    diagnostics.push(error(
+      "dsl.field.row_options_scope_invalid",
+      "rowOptions is supported only on detail-table single-select columns.",
+      `${path}/props/rowOptions`,
+      {
+        scope,
+        fieldType: field.type,
+        componentId: field.componentId
+      }
+    ));
+  }
 
   if (!isRecord(field.sourceProps)) {
     diagnostics.push(error("dsl.field.source_props_required", "sourceProps is required for audit and must be an object.", `${path}/sourceProps`));
@@ -327,13 +346,13 @@ function validateFieldLike(field, diagnostics, path, ids, scope) {
   if (field.dataOnly !== undefined && typeof field.dataOnly !== "boolean") {
     diagnostics.push(error("dsl.field.data_only_type", "Field dataOnly must be a boolean when present.", `${path}/dataOnly`));
   }
-  if (field.dataOnly === true && scope !== "field") {
-    diagnostics.push(error("dsl.field.data_only_scope", "dataOnly is supported only on ordinary main-form fields.", `${path}/dataOnly`, {
+  if (field.dataOnly === true && !["field", "detailColumn"].includes(scope)) {
+    diagnostics.push(error("dsl.field.data_only_scope", "dataOnly is supported only on ordinary main-form fields and detail columns.", `${path}/dataOnly`, {
       scope
     }));
   }
-  if (field.dataOnly === true && field.props?.required === true) {
-    diagnostics.push(error("dsl.field.data_only_required_forbidden", "Data-only fields cannot be required because they have no rendered input control.", `${path}/props/required`));
+  if (field.dataOnly === true && scope === "field" && field.props?.required === true) {
+    diagnostics.push(error("dsl.field.data_only_required_forbidden", "Main-form data-only fields cannot be required because they have no rendered input control.", `${path}/props/required`));
   }
 }
 
@@ -377,6 +396,122 @@ function validateDetailColumns(columns, diagnostics, path) {
     }
     validateFieldLike(column, diagnostics, columnPath, ids, "detailColumn");
   });
+  columns.forEach((column, index) => {
+    validateDetailRowOptions(column, ids, diagnostics, `${path}/${index}`);
+  });
+}
+
+function validateDetailRowOptions(column, columnIds, diagnostics, path) {
+  const rowOptions = column?.props?.rowOptions;
+  if (!isRecord(rowOptions)) return;
+
+  const dependencyFieldId = rowOptions.dependencyFieldId;
+  if (typeof dependencyFieldId === "string") {
+    if (dependencyFieldId === column?.id) {
+      diagnostics.push(error(
+        "dsl.field.row_options_dependency_self",
+        "rowOptions dependencyFieldId must reference another column in the same detail table.",
+        `${path}/props/rowOptions/dependencyFieldId`,
+        { columnId: column?.id, dependencyFieldId }
+      ));
+    } else if (!columnIds.has(dependencyFieldId)) {
+      diagnostics.push(error(
+        "dsl.field.row_options_dependency_missing",
+        "rowOptions dependencyFieldId must reference a column in the same detail table.",
+        `${path}/props/rowOptions/dependencyFieldId`,
+        {
+          columnId: column?.id,
+          dependencyFieldId,
+          availableColumnIds: [...columnIds]
+        }
+      ));
+    }
+  }
+
+  const staticOptions = Array.isArray(column?.props?.options)
+    ? column.props.options
+    : [];
+  const staticOptionPairs = new Set(
+    staticOptions
+      .filter((option) =>
+        isRecord(option) &&
+        typeof option.label === "string" &&
+        typeof option.value === "string"
+      )
+      .map((option) => optionPairKey(option))
+  );
+  const firstCaseByValue = new Map();
+
+  (Array.isArray(rowOptions.cases) ? rowOptions.cases : []).forEach((entry, caseIndex) => {
+    if (!isRecord(entry)) return;
+    if (typeof entry.value === "string") {
+      const firstIndex = firstCaseByValue.get(entry.value);
+      if (firstIndex !== undefined) {
+        diagnostics.push(error(
+          "dsl.field.row_options_case_value_duplicate",
+          "rowOptions case values must be unique.",
+          `${path}/props/rowOptions/cases/${caseIndex}/value`,
+          {
+            value: entry.value,
+            firstIndex,
+            duplicateIndex: caseIndex
+          }
+        ));
+      } else {
+        firstCaseByValue.set(entry.value, caseIndex);
+      }
+    }
+    validateUniqueOptionValues(
+      entry.options,
+      diagnostics,
+      `${path}/props/rowOptions/cases/${caseIndex}/options`
+    );
+    validateRowOptionSubset(
+      entry.options,
+      staticOptionPairs,
+      diagnostics,
+      `${path}/props/rowOptions/cases/${caseIndex}/options`
+    );
+  });
+
+  validateUniqueOptionValues(
+    rowOptions.defaultOptions,
+    diagnostics,
+    `${path}/props/rowOptions/defaultOptions`
+  );
+  validateRowOptionSubset(
+    rowOptions.defaultOptions,
+    staticOptionPairs,
+    diagnostics,
+    `${path}/props/rowOptions/defaultOptions`
+  );
+}
+
+function validateRowOptionSubset(options, staticOptionPairs, diagnostics, path) {
+  if (!Array.isArray(options)) return;
+  options.forEach((option, index) => {
+    if (
+      !isRecord(option) ||
+      typeof option.label !== "string" ||
+      typeof option.value !== "string" ||
+      staticOptionPairs.has(optionPairKey(option))
+    ) {
+      return;
+    }
+    diagnostics.push(error(
+      "dsl.field.row_options_option_not_static",
+      "Every rowOptions option must exactly match an option in props.options.",
+      `${path}/${index}`,
+      {
+        label: option.label,
+        value: option.value
+      }
+    ));
+  });
+}
+
+function optionPairKey(option) {
+  return JSON.stringify([option.label, option.value]);
 }
 
 function collectDataAuthorityFieldIds(fields) {

@@ -1,0 +1,693 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>3</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/17544f974fd7d7afd20481b4d8bac89a/17544f974fd7d7afd20481b4d8bac89a_v3</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_38f4d66ba58c38 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_38f4d66ba5663c&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38f4d66cf6d0c4&quot;,content:&quot;用印&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;用印&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 198px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_fxk&quot;,_label_bind:&quot;false&quot;,label:&quot;用印1&quot;,_label_bind_id:&quot;fd_38f4d66cf6d0c4&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;合同章|1&amp;#13;&amp;#10;法人章|2&amp;#13;&amp;#10;手签章|3&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputCheckbox&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=1 label=&quot;用印1&quot; itemValues=&quot;1;2;3&quot; items=&quot;合同章;法人章;手签章&quot; tableName=&quot;fd_38f4d66ba58c38&quot; required=&quot;false&quot; alignment=&quot;H&quot; defaultValue=&quot;&quot; _required=&quot;false&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;合同章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=2 attach=&quot;fd_fxk&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;法人章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=3 attach=&quot;fd_fxk&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;手签章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_text&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;用印2&quot;,_label_bind_id:&quot;fd_38f4d66cf6d0c4&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_text class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly label=&quot;用印2&quot; tableName=&quot;fd_38f4d66ba58c38&quot; required=&quot;false&quot; _required=&quot;false&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; ?&gt;&lt;/DIV&gt;&#13;
+&lt;DIV id=fd_38f4d6974c0ae6 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38f4d6974c0ae6&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;script&gt;&amp;#13;&amp;#10;function func(){&amp;#13;&amp;#10; var obj = GetXFormFieldById(&quot;fd_fxk&quot;);&amp;#13;&amp;#10; var is_qtfy=GetXFormFieldById(&quot;fd_text&quot;)[0];&amp;#13;&amp;#10; var check_val = [];&amp;#13;&amp;#10; for(k in obj){&amp;#13;&amp;#10;     if (obj[k].checked)&amp;#13;&amp;#10;         check_val.push(obj[k].value);&amp;#13;&amp;#10;&amp;#9;&amp;#9; is_qtfy.value=check_val;}&amp;#13;&amp;#10; alert(check_val);&amp;#13;&amp;#10; is_qtfy.value=check_val;&amp;#13;&amp;#10; is_qtfy.value = is_qtfy.value.replace(/,/g, &quot;&quot;);&amp;#13;&amp;#10; if(is_qtfy.length==3){&amp;#13;&amp;#10; alert(&quot;不准全选&quot;);}&amp;#13;&amp;#10; &amp;#13;&amp;#10;}&amp;#13;&amp;#10;AttachXFormValueChangeEventById(&quot;fd_fxk&quot;, func);&amp;#13;&amp;#10;&lt;/script&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=200 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=429 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>17544ff2412821c20506718433f98b5d</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/17544f974fd7d7afd20481b4d8bac89a/17544f974fd7d7afd20481b4d8bac89a_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp;&#13;
+&lt;TABLE id=fd_38f4d66ba58c38 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_38f4d66ba5663c&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38f4d66cf6d0c4&quot;,content:&quot;用印&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;用印&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 198px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_fxk&quot;,_label_bind:&quot;false&quot;,label:&quot;用印1&quot;,_label_bind_id:&quot;fd_38f4d66cf6d0c4&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;合同章|1&amp;#13;&amp;#10;法人章|2&amp;#13;&amp;#10;手签章|3&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputCheckbox&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=1 label=&quot;用印1&quot; itemValues=&quot;1;2;3&quot; items=&quot;合同章;法人章;手签章&quot; tableName=&quot;fd_38f4d66ba58c38&quot; required=&quot;false&quot; alignment=&quot;H&quot; defaultValue=&quot;&quot; _required=&quot;false&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;合同章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=2 attach=&quot;fd_fxk&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;法人章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=3 attach=&quot;fd_fxk&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;手签章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_text&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;用印2&quot;,_label_bind_id:&quot;fd_38f4d66cf6d0c4&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_text class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;用印2&quot; tableName=&quot;fd_38f4d66ba58c38&quot; canShow=&quot;true&quot; required=&quot;false&quot; _required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV id=fd_38f4d6974c0ae6 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38f4d6974c0ae6&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;script&gt;&amp;#13;&amp;#10;function func(){&amp;#13;&amp;#10; var obj = GetXFormFieldById(&quot;fd_fxk&quot;);&amp;#13;&amp;#10; var is_qtfy=GetXFormFieldById(&quot;fd_text&quot;)[0];&amp;#13;&amp;#10; var check_val = [];&amp;#13;&amp;#10; for(k in obj){&amp;#13;&amp;#10;     if (obj[k].checked)&amp;#13;&amp;#10;         check_val.push(obj[k].value);&amp;#13;&amp;#10;&amp;#9;&amp;#9; is_qtfy.value=check_val;}&amp;#13;&amp;#10; alert(check_val);&amp;#13;&amp;#10; is_qtfy.value=check_val;&amp;#13;&amp;#10; is_qtfy.value = is_qtfy.value.replace(/,/g, &quot;&quot;);&amp;#13;&amp;#10; if(is_qtfy.length==3){&amp;#13;&amp;#10; alert(&quot;不准全选&quot;);}&amp;#13;&amp;#10; &amp;#13;&amp;#10;}&amp;#13;&amp;#10;AttachXFormValueChangeEventById(&quot;fd_fxk&quot;, func);&amp;#13;&amp;#10;&lt;/script&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>17544f974fd7d7afd20481b4d8bac89a</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>17544ff243503e0d301049a4d718a950</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1603180373058</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_38f4d66ba58c38 class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;用印&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;xform:checkbox  property=&quot;extendDataFormInfo.value(fd_fxk)&quot; dataType=&quot;String&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;用印1&quot; title=&quot;用印1&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;合同章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;法人章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;手签章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:checkbox&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_text)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;用印2&quot; title=&quot;用印2&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&lt;script&gt;&#13;
+function func(){&#13;
+ var obj = GetXFormFieldById(&quot;fd_fxk&quot;);&#13;
+ var is_qtfy=GetXFormFieldById(&quot;fd_text&quot;)[0];&#13;
+ var check_val = [];&#13;
+ for(k in obj){&#13;
+     if (obj[k].checked)&#13;
+         check_val.push(obj[k].value);&#13;
+		 is_qtfy.value=check_val;}&#13;
+ alert(check_val);&#13;
+ is_qtfy.value=check_val;&#13;
+ is_qtfy.value = is_qtfy.value.replace(/,/g, &quot;&quot;);&#13;
+ if(is_qtfy.length==3){&#13;
+ alert(&quot;不准全选&quot;);}&#13;
+ &#13;
+}&#13;
+AttachXFormValueChangeEventById(&quot;fd_fxk&quot;, func);&#13;
+&lt;/script&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=223 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=520 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_fxk&quot; label=&quot;用印1&quot; enumValues=&quot;合同章|1;法人章|2;手签章|3&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_text&quot; label=&quot;用印2&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>17544ff2412821c20506718433f98b5d</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>2</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/17544f974fd7d7afd20481b4d8bac89a/17544f974fd7d7afd20481b4d8bac89a_v2</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_38f4d66ba58c38 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_38f4d66ba5663c&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=193 column=&quot;0&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_38f4d66cf6d0c4&quot;,content:&quot;用印&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;用印&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=464 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 198px; DISPLAY: inline&quot; fd_type=&quot;inputCheckbox&quot; fd_values=&apos;{id:&quot;fd_fxk&quot;,_label_bind:&quot;false&quot;,label:&quot;用印1&quot;,_label_bind_id:&quot;fd_38f4d66cf6d0c4&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;合同章|1&amp;#13;&amp;#10;法人章|2&amp;#13;&amp;#10;手签章|3&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=1 label=&quot;用印1&quot; _required=&quot;false&quot; defaultValue=&quot;&quot; alignment=&quot;H&quot; required=&quot;false&quot; tableName=&quot;fd_38f4d66ba58c38&quot; items=&quot;合同章;法人章;手签章&quot; itemValues=&quot;1;2;3&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;合同章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=2 attach=&quot;fd_fxk&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;法人章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=3 attach=&quot;fd_fxk&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;手签章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_text&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;用印2&quot;,_label_bind_id:&quot;fd_38f4d66cf6d0c4&quot;,canShow:&quot;false&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;false&quot;&gt;&lt;INPUT id=fd_text class=inputhidden style=&quot;WIDTH: 120px&quot; readOnly label=&quot;用印2&quot; ? _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_38f4d66ba58c38&quot; canShow=&quot;false&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV id=fd_38f4d6974c0ae6 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;fd_38f4d6974c0ae6&quot;}&apos; formDesign=&quot;landray&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;script&gt;&amp;#13;&amp;#10;function func(){&amp;#13;&amp;#10; var obj = GetXFormFieldById(&quot;fd_fxk&quot;);&amp;#13;&amp;#10; var is_qtfy=GetXFormFieldById(&quot;fd_text&quot;)[0];&amp;#13;&amp;#10; var check_val = [];&amp;#13;&amp;#10; for(k in obj){&amp;#13;&amp;#10;     if (obj[k].checked)&amp;#13;&amp;#10;         check_val.push(obj[k].value);&amp;#13;&amp;#10;&amp;#9;&amp;#9; is_qtfy.value=check_val;}&amp;#13;&amp;#10; alert(check_val);&amp;#13;&amp;#10; is_qtfy.value=check_val;&amp;#13;&amp;#10; is_qtfy.value = is_qtfy.value.replace(/,/g, &quot;&quot;);&amp;#13;&amp;#10; if(is_qtfy.length==3){&amp;#13;&amp;#10; alert(&quot;不准全选&quot;);}&amp;#13;&amp;#10; &amp;#13;&amp;#10;}&amp;#13;&amp;#10;AttachXFormValueChangeEventById(&quot;fd_fxk&quot;, func);&amp;#13;&amp;#10;&lt;/script&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=191 column=&quot;2&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=420 column=&quot;3&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=193 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=464 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=191 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=420 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=193 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=464 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=191 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=420 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=193 column=&quot;0&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=470 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=202 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=454 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>17544f974fd7d7afd20481b4d8bac89a</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>178f2d3e9ee7ab092a48910429ba311e</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1618981677551</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_38f4d66ba58c38 class=tb_normal  align=center label=&quot;主表&quot;   layout2col=&quot;undefined&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=193 column=&quot;0&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;用印&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=464 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+&#13;
+			&lt;xform:checkbox  property=&quot;extendDataFormInfo.value(fd_fxk)&quot; dataType=&quot;String&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;用印1&quot; title=&quot;用印1&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;合同章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;法人章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;手签章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:checkbox&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;display:none;&quot;    canShow=&quot;false&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_text)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; showStatus=&quot;noShow&quot; subject=&quot;用印2&quot; title=&quot;用印2&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&lt;script&gt;&#13;
+function func(){&#13;
+ var obj = GetXFormFieldById(&quot;fd_fxk&quot;);&#13;
+ var is_qtfy=GetXFormFieldById(&quot;fd_text&quot;)[0];&#13;
+ var check_val = [];&#13;
+ for(k in obj){&#13;
+     if (obj[k].checked)&#13;
+         check_val.push(obj[k].value);&#13;
+		 is_qtfy.value=check_val;}&#13;
+ alert(check_val);&#13;
+ is_qtfy.value=check_val;&#13;
+ is_qtfy.value = is_qtfy.value.replace(/,/g, &quot;&quot;);&#13;
+ if(is_qtfy.length==3){&#13;
+ alert(&quot;不准全选&quot;);}&#13;
+ &#13;
+}&#13;
+AttachXFormValueChangeEventById(&quot;fd_fxk&quot;, func);&#13;
+&lt;/script&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=191 column=&quot;2&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=420 column=&quot;3&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=193 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=464 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=191 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=420 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=193 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=464 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=191 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=420 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=193 column=&quot;0&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=470 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=202 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=454 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_fxk&quot; label=&quot;用印1&quot; enumValues=&quot;合同章|1;法人章|2;手签章|3&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_text&quot; label=&quot;用印2&quot; type=&quot;String&quot; length=&quot;200&quot; canDisplay=&quot;false&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>17544ff2412821c20506718433f98b5d</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>3</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/17544f974fd7d7afd20481b4d8bac89a/17544f974fd7d7afd20481b4d8bac89a_v3</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_38f4d66ba58c38 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_38f4d66ba5663c&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38f4d66cf6d0c4&quot;,content:&quot;用印&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;用印&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 198px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_fxk&quot;,_label_bind:&quot;false&quot;,label:&quot;用印1&quot;,_label_bind_id:&quot;fd_38f4d66cf6d0c4&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;合同章|1&amp;#13;&amp;#10;法人章|2&amp;#13;&amp;#10;手签章|3&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputCheckbox&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=1 label=&quot;用印1&quot; itemValues=&quot;1;2;3&quot; items=&quot;合同章;法人章;手签章&quot; tableName=&quot;fd_38f4d66ba58c38&quot; required=&quot;false&quot; alignment=&quot;H&quot; defaultValue=&quot;&quot; _required=&quot;false&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;合同章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=2 attach=&quot;fd_fxk&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;法人章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_fxk type=checkbox value=3 attach=&quot;fd_fxk&quot;&gt;&lt;LABEL attach=&quot;fd_fxk&quot;&gt;手签章&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_text&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;用印2&quot;,_label_bind_id:&quot;fd_38f4d66cf6d0c4&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_text class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly label=&quot;用印2&quot; tableName=&quot;fd_38f4d66ba58c38&quot; required=&quot;false&quot; _required=&quot;false&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; ?&gt;&lt;/DIV&gt;&#13;
+&lt;DIV id=fd_38f4d6974c0ae6 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38f4d6974c0ae6&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;script&gt;&amp;#13;&amp;#10;function func(){&amp;#13;&amp;#10; var obj = GetXFormFieldById(&quot;fd_fxk&quot;);&amp;#13;&amp;#10; var is_qtfy=GetXFormFieldById(&quot;fd_text&quot;)[0];&amp;#13;&amp;#10; var check_val = [];&amp;#13;&amp;#10; for(k in obj){&amp;#13;&amp;#10;     if (obj[k].checked)&amp;#13;&amp;#10;         check_val.push(obj[k].value);&amp;#13;&amp;#10;&amp;#9;&amp;#9; is_qtfy.value=check_val;}&amp;#13;&amp;#10; alert(check_val);&amp;#13;&amp;#10; is_qtfy.value=check_val;&amp;#13;&amp;#10; is_qtfy.value = is_qtfy.value.replace(/,/g, &quot;&quot;);&amp;#13;&amp;#10; if(is_qtfy.length==3){&amp;#13;&amp;#10; alert(&quot;不准全选&quot;);}&amp;#13;&amp;#10; &amp;#13;&amp;#10;}&amp;#13;&amp;#10;AttachXFormValueChangeEventById(&quot;fd_fxk&quot;, func);&amp;#13;&amp;#10;&lt;/script&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=200 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=429 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>17544f974fd7d7afd20481b4d8bac89a</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>178f2d64e53c50703c855a64557bc0a7</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1618981834323</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_38f4d66ba58c38 class=tb_normal  align=center  layout2col=&quot;undefined&quot;   label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;用印&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;xform:checkbox  property=&quot;extendDataFormInfo.value(fd_fxk)&quot; dataType=&quot;String&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;用印1&quot; title=&quot;用印1&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;合同章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;法人章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;手签章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:checkbox&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_text)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;用印2&quot; title=&quot;用印2&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&lt;script&gt;&#13;
+function func(){&#13;
+ var obj = GetXFormFieldById(&quot;fd_fxk&quot;);&#13;
+ var is_qtfy=GetXFormFieldById(&quot;fd_text&quot;)[0];&#13;
+ var check_val = [];&#13;
+ for(k in obj){&#13;
+     if (obj[k].checked)&#13;
+         check_val.push(obj[k].value);&#13;
+		 is_qtfy.value=check_val;}&#13;
+ alert(check_val);&#13;
+ is_qtfy.value=check_val;&#13;
+ is_qtfy.value = is_qtfy.value.replace(/,/g, &quot;&quot;);&#13;
+ if(is_qtfy.length==3){&#13;
+ alert(&quot;不准全选&quot;);}&#13;
+ &#13;
+}&#13;
+AttachXFormValueChangeEventById(&quot;fd_fxk&quot;, func);&#13;
+&lt;/script&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=200 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=429 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_fxk&quot; label=&quot;用印1&quot; enumValues=&quot;合同章|1;法人章|2;手签章|3&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_text&quot; label=&quot;用印2&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>17544f974fd7d7afd20481b4d8bac89a</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>17544ff2412821c20506718433f98b5d</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1618981834339</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_38f4d66ba58c38 class=tb_normal  align=center  layout2col=&quot;undefined&quot;   label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;用印&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;xform:checkbox  property=&quot;extendDataFormInfo.value(fd_fxk)&quot; dataType=&quot;String&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;用印1&quot; title=&quot;用印1&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;合同章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;法人章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;手签章&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:checkbox&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_text)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;用印2&quot; title=&quot;用印2&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&lt;script&gt;&#13;
+function func(){&#13;
+ var obj = GetXFormFieldById(&quot;fd_fxk&quot;);&#13;
+ var is_qtfy=GetXFormFieldById(&quot;fd_text&quot;)[0];&#13;
+ var check_val = [];&#13;
+ for(k in obj){&#13;
+     if (obj[k].checked)&#13;
+         check_val.push(obj[k].value);&#13;
+		 is_qtfy.value=check_val;}&#13;
+ alert(check_val);&#13;
+ is_qtfy.value=check_val;&#13;
+ is_qtfy.value = is_qtfy.value.replace(/,/g, &quot;&quot;);&#13;
+ if(is_qtfy.length==3){&#13;
+ alert(&quot;不准全选&quot;);}&#13;
+ &#13;
+}&#13;
+AttachXFormValueChangeEventById(&quot;fd_fxk&quot;, func);&#13;
+&lt;/script&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=421 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=190 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=458 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=200 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=429 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_fxk&quot; label=&quot;用印1&quot; enumValues=&quot;合同章|1;法人章|2;手签章|3&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_text&quot; label=&quot;用印2&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1603180373059</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

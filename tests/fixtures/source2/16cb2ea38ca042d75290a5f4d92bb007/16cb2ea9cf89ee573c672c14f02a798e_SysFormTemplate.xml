@@ -1,0 +1,1067 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>101-EKP-GUOAIL</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>14c72d2eb8e184d6c44b4b24f6593173</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-EKP-JXH</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>181613a6b7a65d02648affa4c23aff18</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/16cb2ea38ca042d75290a5f4d92bb007/16cb2ea38ca042d75290a5f4d92bb007_v1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_3294a7dbf94780 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_3294a7dbf91812&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a83136ecb2&quot;,content:&quot;申请部门&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;申请部门&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=451 colSpan=2 row=&quot;0&quot; column=&quot;1,2&quot;&gt;&lt;LABEL style=&quot;WIDTH: 276px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a85fec8fa0&quot;,width:&quot;248&quot;,_label_bind:&quot;true&quot;,label:&quot;申请部门&quot;,_label_bind_id:&quot;fd_3294a83136ecb2&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;null&quot;,_org_org:&quot;true&quot;}&apos; fd_type=&quot;address&quot;&gt;&lt;INPUT id=fd_3294a85fec8fa0 class=inputsgl style=&quot;WIDTH: 248px&quot; readOnly ? label=&quot;申请部门&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; multiSelect=&quot;false&quot; businessType=&quot;addressDialog&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot; defaultValue=&quot;null&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 218px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=220 row=&quot;0&quot; column=&quot;3&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a83214e744&quot;,content:&quot;申请岗位&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;申请岗位&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=390 colSpan=2 row=&quot;0&quot; column=&quot;4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 238px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294adde25e08a&quot;,width:&quot;238&quot;,_label_bind:&quot;true&quot;,label:&quot;申请岗位&quot;,_label_bind_id:&quot;fd_3294a83214e744&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294adde25e08a class=inputsgl style=&quot;WIDTH: 238px&quot; readOnly ? label=&quot;申请岗位&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a83369a152&quot;,content:&quot;拟需人数&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;拟需人数&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 246px&quot; width=237 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae6de14caa&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;拟需人数&quot;,_label_bind_id:&quot;fd_3294a83369a152&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;0&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294ae6de14caa class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:0}&quot; ? label=&quot;拟需人数&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; dataType=&quot;number&quot; endNum=&quot;&quot; beginNum=&quot;&quot; scale=&quot;0&quot; _dataType=&quot;Double&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 216px&quot; width=214 row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a834a82094&quot;,content:&quot;申请时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;申请时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 218px&quot; width=220 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 148px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae6bd32b9c&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;申请时间&quot;,_label_bind_id:&quot;fd_3294a834a82094&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_3294ae6bd32b9c class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;申请时间&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 206px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=200 row=&quot;1&quot; column=&quot;4&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a835f1bafc&quot;,content:&quot;薪酬范围&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;薪酬范围&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 187px&quot; width=190 row=&quot;1&quot; column=&quot;5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 64px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae3d897c30&quot;,width:&quot;64&quot;,_label_bind:&quot;false&quot;,label:&quot;薪酬范围起&quot;,_label_bind_id:&quot;fd_3294a835f1bafc&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;0&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294ae3d897c30 class=inputsgl style=&quot;WIDTH: 64px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:0}&quot; ? label=&quot;薪酬范围起&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; dataType=&quot;number&quot; endNum=&quot;&quot; beginNum=&quot;&quot; scale=&quot;0&quot; _dataType=&quot;Double&quot;&gt;&lt;/DIV&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae3f18a8bc&quot;,content:&quot;到&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;到&lt;/LABEL&gt; &#13;
+&lt;DIV style=&quot;WIDTH: 68px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae40b7c302&quot;,width:&quot;68&quot;,_label_bind:&quot;true&quot;,label:&quot;薪酬范围&quot;,_label_bind_id:&quot;fd_3294a835f1bafc&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;0&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294ae40b7c302 class=inputsgl style=&quot;WIDTH: 68px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:0}&quot; ? label=&quot;薪酬范围&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; dataType=&quot;number&quot; endNum=&quot;&quot; beginNum=&quot;&quot; scale=&quot;0&quot; _dataType=&quot;Double&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aeb330a8f4&quot;,content:&quot;招聘原因&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;招聘原因&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;2&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 849px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aec1e6a3b4&quot;,width:&quot;849&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;招聘原因&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_3294aeb330a8f4&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3294aec1e6a3b4 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 849px&quot; ? label=&quot;招聘原因&amp;#13;&amp;#10;&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aec98574d4&quot;,content:&quot;岗位职责&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;岗位职责&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;3&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 848px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aed5b7ef58&quot;,width:&quot;848&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;岗位职责&quot;,_label_bind_id:&quot;fd_3294aec98574d4&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3294aed5b7ef58 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 848px&quot; ? label=&quot;岗位职责&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aedfe1f376&quot;,content:&quot;工作环境、职业病危害&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;工作环境、职业病危害&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;4&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 846px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aee7b4ebde&quot;,width:&quot;846&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;工作环境、职业病危害&quot;,_label_bind_id:&quot;fd_3294aedfe1f376&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3294aee7b4ebde class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 846px&quot; ? label=&quot;工作环境、职业病危害&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;HEIGHT: auto; WIDTH: 197px&quot; rowSpan=7 width=156 row=&quot;5,6,7,8,9,10,11&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afdf483c78&quot;,content:&quot;应具备资格条件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应具备资格条件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;5&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294af9b7581a8&quot;,content:&quot;教育程度&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;教育程度&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;5&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 304px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b015103fd8&quot;,_label_bind:&quot;true&quot;,label:&quot;教育程度&quot;,_label_bind_id:&quot;fd_3294af9b7581a8&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;技校|jx&amp;#13;&amp;#10;大专|dz&amp;#13;&amp;#10;本科|bk&amp;#13;&amp;#10;硕士及以上学历 |ssjys&amp;#13;&amp;#10;其他|other&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputCheckbox&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=jx label=&quot;教育程度&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;&quot; itemValues=&quot;jx;dz;bk;ssjys;other&quot; items=&quot;技校;大专;本科;硕士及以上学历 ;其他&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;技校&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=dz attach=&quot;fd_3294b015103fd8&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;大专&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=bk attach=&quot;fd_3294b015103fd8&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;本科&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=ssjys attach=&quot;fd_3294b015103fd8&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;硕士及以上学历 &lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=other attach=&quot;fd_3294b015103fd8&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;其他&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;6&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa266adae&quot;,content:&quot;工作年限&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;工作年限&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;6&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 280px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0395bfa34&quot;,_label_bind:&quot;true&quot;,label:&quot;工作年限&quot;,_label_bind_id:&quot;fd_3294afa266adae&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;应届毕业生|y&amp;#13;&amp;#10;1年|1&amp;#13;&amp;#10;3年|3&amp;#13;&amp;#10;5年|5&amp;#13;&amp;#10;8年以上|8&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=y label=&quot;工作年限&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; itemValues=&quot;y;1;3;5;8&quot; items=&quot;应届毕业生;1年;3年;5年;8年以上&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;应届毕业生&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=1 attach=&quot;fd_3294b0395bfa34&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;1年&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=3 attach=&quot;fd_3294b0395bfa34&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;3年&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=5 attach=&quot;fd_3294b0395bfa34&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;5年&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=8 attach=&quot;fd_3294b0395bfa34&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;8年以上&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;7&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa420b500&quot;,content:&quot;毕业院校及专业&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;毕业院校及专业&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;7&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE id=fd_3294b05cf6d4b4 class=tb_normal style=&quot;WIDTH: 100%&quot; width=&quot;100%&quot; align=center label=&quot;明细表1&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{cell:&quot;4&quot;,_label_bind:&quot;false&quot;,label:&quot;明细表1&quot;,id:&quot;fd_3294b05cf6d4b4&quot;,width:&quot;100%&quot;,showRow:&quot;1&quot;}&apos; fd_type=&quot;detailsTable&quot; tableName=&quot;fd_3294a7dbf94780&quot; showIndex=&quot;true&quot; showRow=&quot;1&quot; showStatisticRow=&quot;undefined&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR class=tr_normal_title type=&quot;titleRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;0&quot; column=&quot;0&quot; colType=&quot;noTitle&quot;&gt;&lt;LABEL attach=&quot;fd_3294b05cf6d4b4&quot;&gt;序号&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0628d2a88&quot;,content:&quot;毕业院校&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;毕业院校&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b06423c862&quot;,content:&quot;专业一&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;专业一&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD row=&quot;0&quot; column=&quot;3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b065a31c42&quot;,content:&quot;专业二&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;专业二&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;0&quot; column=&quot;4&quot; colType=&quot;addTitle&quot;&gt;&lt;IMG src=&quot;//scoptest.shanghai-electric.com:8080/ekp/resource/style/default/icons/add.gif&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;1&quot; column=&quot;0&quot; colType=&quot;noTemplate&quot;&gt;&lt;LABEL attach=&quot;fd_3294b05cf6d4b4&quot;&gt;1&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 249px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b07a55f444&quot;,width:&quot;249&quot;,_label_bind:&quot;true&quot;,label:&quot;毕业院校&quot;,_label_bind_id:&quot;fd_3294b0628d2a88&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b07a55f444 class=inputsgl style=&quot;WIDTH: 249px&quot; readOnly ? label=&quot;毕业院校&quot; tableName=&quot;fd_3294b05cf6d4b4&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b07b7fce2a&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;专业一&quot;,_label_bind_id:&quot;fd_3294b06423c862&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b07b7fce2a class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;专业一&quot; tableName=&quot;fd_3294b05cf6d4b4&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b07cfdf3f6&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;专业二&quot;,_label_bind_id:&quot;fd_3294b065a31c42&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b07cfdf3f6 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;专业二&quot; tableName=&quot;fd_3294b05cf6d4b4&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;1&quot; column=&quot;4&quot; colType=&quot;delCol&quot;&gt;&lt;NOBR&gt;&lt;IMG src=&quot;//scoptest.shanghai-electric.com:8080/ekp/resource/style/default/icons/delete.gif&quot;&gt;&lt;IMG src=&quot;//scoptest.shanghai-electric.com:8080/ekp/resource/style/default/icons/up.gif&quot;&gt;&lt;IMG src=&quot;//scoptest.shanghai-electric.com:8080/ekp/resource/style/default/icons/down.gif&quot;&gt;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR type=&quot;statisticRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;2&quot; column=&quot;0&quot; colType=&quot;noFoot&quot;&gt;&lt;LABEL attach=&quot;fd_3294b05cf6d4b4&quot;&gt;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;2&quot; column=&quot;4&quot; colType=&quot;emptyCell&quot;&gt;&lt;LABEL attach=&quot;fd_3294b05cf6d4b4&quot;&gt;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;8&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa47863d4&quot;,content:&quot;技能要求&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;技能要求&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;8&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 609px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b08b1ed71e&quot;,width:&quot;609&quot;,_label_bind:&quot;true&quot;,label:&quot;技能要求&quot;,_label_bind_id:&quot;fd_3294afa47863d4&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b08b1ed71e class=inputsgl style=&quot;WIDTH: 609px&quot; readOnly ? label=&quot;技能要求&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;9&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa4dba6b2&quot;,content:&quot;外语要求&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;外语要求&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;9&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 608px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b08f18cf80&quot;,width:&quot;608&quot;,_label_bind:&quot;true&quot;,label:&quot;外语要求&quot;,_label_bind_id:&quot;fd_3294afa4dba6b2&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b08f18cf80 class=inputsgl style=&quot;WIDTH: 608px&quot; readOnly ? label=&quot;外语要求&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;10&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa54ba70c&quot;,content:&quot;工作地点&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;工作地点&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: 216px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 row=&quot;10&quot; column=&quot;2&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0b29b2c8a&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;工作地点&quot;,_label_bind_id:&quot;fd_3294afa54ba70c&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b0b29b2c8a class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;工作地点&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 218px&quot; width=220 row=&quot;10&quot; column=&quot;3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afaa01a1c2&quot;,content:&quot;到岗时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;到岗时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=390 colSpan=2 row=&quot;10&quot; column=&quot;4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0b5dbc8d8&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;到岗时间&quot;,_label_bind_id:&quot;fd_3294afaa01a1c2&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b0b5dbc8d8 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;到岗时间&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;11&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa5ecc4b2&quot;,content:&quot;其他要求&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;其他要求&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;11&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 610px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0bdecffc4&quot;,width:&quot;610&quot;,_label_bind:&quot;true&quot;,label:&quot;其他要求&quot;,_label_bind_id:&quot;fd_3294afa5ecc4b2&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b0bdecffc4 class=inputsgl style=&quot;WIDTH: 610px&quot; readOnly ? label=&quot;其他要求&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;12&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0d629d882&quot;,content:&quot;专业素质要求&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;专业素质要求&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;12&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 660px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0e54993a8&quot;,width:&quot;660&quot;,_label_bind:&quot;true&quot;,label:&quot;专业素质要求&quot;,_label_bind_id:&quot;fd_3294b0d629d882&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b0e54993a8 class=inputsgl style=&quot;WIDTH: 660px&quot; readOnly ? label=&quot;专业素质要求&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;HEIGHT: auto; WIDTH: 197px&quot; rowSpan=2 width=156 row=&quot;13,14&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b11da63c84&quot;,content:&quot;用工属性&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;用工属性&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;13&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b1503159f0&quot;,content:&quot;招聘途径&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;招聘途径&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;13&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 240px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b166009916&quot;,_label_bind:&quot;true&quot;,label:&quot;招聘途径&quot;,_label_bind_id:&quot;fd_3294b1503159f0&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;外部招聘|w&amp;#13;&amp;#10;内部调动|n&amp;#13;&amp;#10;集团内部调动|jn&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b166009916 type=radio value=w label=&quot;招聘途径&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; itemValues=&quot;w;n;jn&quot; items=&quot;外部招聘;内部调动;集团内部调动&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3294b166009916&quot;&gt;外部招聘&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b166009916 type=radio value=n attach=&quot;fd_3294b166009916&quot;&gt;&lt;LABEL attach=&quot;fd_3294b166009916&quot;&gt;内部调动&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b166009916 type=radio value=jn attach=&quot;fd_3294b166009916&quot;&gt;&lt;LABEL attach=&quot;fd_3294b166009916&quot;&gt;集团内部调动&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;14&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b15963f864&quot;,content:&quot;用工性质&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;用工性质&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;14&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 252px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b29f8bbf54&quot;,_label_bind:&quot;true&quot;,label:&quot;用工性质&quot;,_label_bind_id:&quot;fd_3294b15963f864&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;正式员工|zs&amp;#13;&amp;#10;退聘|tp&amp;#13;&amp;#10;协议借用|xy&amp;#13;&amp;#10;劳务工|lwg&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b29f8bbf54 type=radio value=zs label=&quot;用工性质&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; itemValues=&quot;zs;tp;xy;lwg&quot; items=&quot;正式员工;退聘;协议借用;劳务工&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3294b29f8bbf54&quot;&gt;正式员工&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b29f8bbf54 type=radio value=tp attach=&quot;fd_3294b29f8bbf54&quot;&gt;&lt;LABEL attach=&quot;fd_3294b29f8bbf54&quot;&gt;退聘&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b29f8bbf54 type=radio value=xy attach=&quot;fd_3294b29f8bbf54&quot;&gt;&lt;LABEL attach=&quot;fd_3294b29f8bbf54&quot;&gt;协议借用&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b29f8bbf54 type=radio value=lwg attach=&quot;fd_3294b29f8bbf54&quot;&gt;&lt;LABEL attach=&quot;fd_3294b29f8bbf54&quot;&gt;劳务工&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;15&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b2d251721a&quot;,content:&quot;相关附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;相关附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;15&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV id=fd_3294b2de261b72 style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; label=&quot;相关附件&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b2de261b72&quot;,_label_bind:&quot;true&quot;,label:&quot;相关附件&quot;,_label_bind_id:&quot;fd_3294b2d251721a&quot;}&apos; fd_type=&quot;attachment&quot; tableName=&quot;fd_3294a7dbf94780&quot; enabledFileType fdMulti=&quot;true&quot;&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>16cb2ea9cf89ee573c672c14f02a798e</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/16cb2ea38ca042d75290a5f4d92bb007/16cb2ea38ca042d75290a5f4d92bb007_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_3294a7dbf94780 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_3294a7dbf91812&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a83136ecb2&quot;,content:&quot;申请部门&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;申请部门&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=451 colSpan=2 row=&quot;0&quot; column=&quot;1,2&quot;&gt;&lt;LABEL style=&quot;WIDTH: 276px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a85fec8fa0&quot;,width:&quot;248&quot;,_label_bind:&quot;true&quot;,label:&quot;申请部门&quot;,_label_bind_id:&quot;fd_3294a83136ecb2&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;null&quot;,_org_org:&quot;true&quot;}&apos; fd_type=&quot;address&quot;&gt;&lt;INPUT id=fd_3294a85fec8fa0 class=inputsgl style=&quot;WIDTH: 248px&quot; readOnly ? label=&quot;申请部门&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; multiSelect=&quot;false&quot; businessType=&quot;addressDialog&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot; defaultValue=&quot;null&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 218px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=220 row=&quot;0&quot; column=&quot;3&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a83214e744&quot;,content:&quot;申请岗位&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;申请岗位&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=390 colSpan=2 row=&quot;0&quot; column=&quot;4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 238px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294adde25e08a&quot;,width:&quot;238&quot;,_label_bind:&quot;true&quot;,label:&quot;申请岗位&quot;,_label_bind_id:&quot;fd_3294a83214e744&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294adde25e08a class=inputsgl style=&quot;WIDTH: 238px&quot; readOnly ? label=&quot;申请岗位&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a83369a152&quot;,content:&quot;拟需人数&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;拟需人数&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 246px&quot; width=237 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae6de14caa&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;拟需人数&quot;,_label_bind_id:&quot;fd_3294a83369a152&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;0&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294ae6de14caa class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:0}&quot; ? label=&quot;拟需人数&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; dataType=&quot;number&quot; endNum=&quot;&quot; beginNum=&quot;&quot; scale=&quot;0&quot; _dataType=&quot;Double&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 216px&quot; width=214 row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a834a82094&quot;,content:&quot;申请时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;申请时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 218px&quot; width=220 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 148px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae6bd32b9c&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;申请时间&quot;,_label_bind_id:&quot;fd_3294a834a82094&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_3294ae6bd32b9c class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;申请时间&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 206px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=200 row=&quot;1&quot; column=&quot;4&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294a835f1bafc&quot;,content:&quot;薪酬范围&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;薪酬范围&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 187px&quot; width=190 row=&quot;1&quot; column=&quot;5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 64px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae3d897c30&quot;,width:&quot;64&quot;,_label_bind:&quot;false&quot;,label:&quot;薪酬范围起&quot;,_label_bind_id:&quot;fd_3294a835f1bafc&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;0&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294ae3d897c30 class=inputsgl style=&quot;WIDTH: 64px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:0}&quot; ? label=&quot;薪酬范围起&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; dataType=&quot;number&quot; endNum=&quot;&quot; beginNum=&quot;&quot; scale=&quot;0&quot; _dataType=&quot;Double&quot;&gt;&lt;/DIV&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae3f18a8bc&quot;,content:&quot;到&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;到&lt;/LABEL&gt; &#13;
+&lt;DIV style=&quot;WIDTH: 68px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294ae40b7c302&quot;,width:&quot;68&quot;,_label_bind:&quot;true&quot;,label:&quot;薪酬范围&quot;,_label_bind_id:&quot;fd_3294a835f1bafc&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;0&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294ae40b7c302 class=inputsgl style=&quot;WIDTH: 68px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:0}&quot; ? label=&quot;薪酬范围&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; dataType=&quot;number&quot; endNum=&quot;&quot; beginNum=&quot;&quot; scale=&quot;0&quot; _dataType=&quot;Double&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aeb330a8f4&quot;,content:&quot;招聘原因&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;招聘原因&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;2&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 849px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aec1e6a3b4&quot;,width:&quot;849&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;招聘原因&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_3294aeb330a8f4&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3294aec1e6a3b4 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 849px&quot; ? label=&quot;招聘原因&amp;#13;&amp;#10;&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aec98574d4&quot;,content:&quot;岗位职责&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;岗位职责&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;3&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 848px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aed5b7ef58&quot;,width:&quot;848&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;岗位职责&quot;,_label_bind_id:&quot;fd_3294aec98574d4&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3294aed5b7ef58 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 848px&quot; ? label=&quot;岗位职责&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aedfe1f376&quot;,content:&quot;工作环境、职业病危害&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;工作环境、职业病危害&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;4&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 846px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294aee7b4ebde&quot;,width:&quot;846&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;工作环境、职业病危害&quot;,_label_bind_id:&quot;fd_3294aedfe1f376&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3294aee7b4ebde class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 846px&quot; ? label=&quot;工作环境、职业病危害&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;HEIGHT: auto; WIDTH: 197px&quot; rowSpan=7 width=156 row=&quot;5,6,7,8,9,10,11&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afdf483c78&quot;,content:&quot;应具备资格条件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应具备资格条件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;5&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294af9b7581a8&quot;,content:&quot;教育程度&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;教育程度&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;5&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 304px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b015103fd8&quot;,_label_bind:&quot;true&quot;,label:&quot;教育程度&quot;,_label_bind_id:&quot;fd_3294af9b7581a8&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;技校|jx&amp;#13;&amp;#10;大专|dz&amp;#13;&amp;#10;本科|bk&amp;#13;&amp;#10;硕士及以上学历 |ssjys&amp;#13;&amp;#10;其他|other&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputCheckbox&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=jx label=&quot;教育程度&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;&quot; itemValues=&quot;jx;dz;bk;ssjys;other&quot; items=&quot;技校;大专;本科;硕士及以上学历 ;其他&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;技校&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=dz attach=&quot;fd_3294b015103fd8&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;大专&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=bk attach=&quot;fd_3294b015103fd8&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;本科&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=ssjys attach=&quot;fd_3294b015103fd8&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;硕士及以上学历 &lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT onclick=&quot;return false;&quot; id=fd_3294b015103fd8 type=checkbox value=other attach=&quot;fd_3294b015103fd8&quot;&gt;&lt;LABEL attach=&quot;fd_3294b015103fd8&quot;&gt;其他&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;6&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa266adae&quot;,content:&quot;工作年限&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;工作年限&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;6&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 280px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0395bfa34&quot;,_label_bind:&quot;true&quot;,label:&quot;工作年限&quot;,_label_bind_id:&quot;fd_3294afa266adae&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;应届毕业生|y&amp;#13;&amp;#10;1年|1&amp;#13;&amp;#10;3年|3&amp;#13;&amp;#10;5年|5&amp;#13;&amp;#10;8年以上|8&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=y label=&quot;工作年限&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; itemValues=&quot;y;1;3;5;8&quot; items=&quot;应届毕业生;1年;3年;5年;8年以上&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;应届毕业生&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=1 attach=&quot;fd_3294b0395bfa34&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;1年&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=3 attach=&quot;fd_3294b0395bfa34&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;3年&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=5 attach=&quot;fd_3294b0395bfa34&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;5年&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b0395bfa34 type=radio value=8 attach=&quot;fd_3294b0395bfa34&quot;&gt;&lt;LABEL attach=&quot;fd_3294b0395bfa34&quot;&gt;8年以上&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;7&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa420b500&quot;,content:&quot;毕业院校及专业&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;毕业院校及专业&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;7&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE id=fd_3294b05cf6d4b4 class=tb_normal style=&quot;WIDTH: 100%&quot; width=&quot;100%&quot; align=center label=&quot;明细表1&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{cell:&quot;4&quot;,_label_bind:&quot;false&quot;,label:&quot;明细表1&quot;,id:&quot;fd_3294b05cf6d4b4&quot;,width:&quot;100%&quot;,showRow:&quot;1&quot;}&apos; fd_type=&quot;detailsTable&quot; tableName=&quot;fd_3294a7dbf94780&quot; showIndex=&quot;true&quot; showRow=&quot;1&quot; showStatisticRow=&quot;undefined&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR class=tr_normal_title type=&quot;titleRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;0&quot; column=&quot;0&quot; colType=&quot;noTitle&quot;&gt;&lt;LABEL attach=&quot;fd_3294b05cf6d4b4&quot;&gt;序号&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0628d2a88&quot;,content:&quot;毕业院校&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;毕业院校&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b06423c862&quot;,content:&quot;专业一&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;专业一&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD row=&quot;0&quot; column=&quot;3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b065a31c42&quot;,content:&quot;专业二&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;专业二&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;0&quot; column=&quot;4&quot; colType=&quot;addTitle&quot;&gt;&lt;IMG src=&quot;//scoptest.shanghai-electric.com:8080/ekp/resource/style/default/icons/add.gif&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;1&quot; column=&quot;0&quot; colType=&quot;noTemplate&quot;&gt;&lt;LABEL attach=&quot;fd_3294b05cf6d4b4&quot;&gt;1&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 249px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b07a55f444&quot;,width:&quot;249&quot;,_label_bind:&quot;true&quot;,label:&quot;毕业院校&quot;,_label_bind_id:&quot;fd_3294b0628d2a88&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b07a55f444 class=inputsgl style=&quot;WIDTH: 249px&quot; readOnly ? label=&quot;毕业院校&quot; tableName=&quot;fd_3294b05cf6d4b4&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b07b7fce2a&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;专业一&quot;,_label_bind_id:&quot;fd_3294b06423c862&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b07b7fce2a class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;专业一&quot; tableName=&quot;fd_3294b05cf6d4b4&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b07cfdf3f6&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;专业二&quot;,_label_bind_id:&quot;fd_3294b065a31c42&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b07cfdf3f6 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;专业二&quot; tableName=&quot;fd_3294b05cf6d4b4&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;1&quot; column=&quot;4&quot; colType=&quot;delCol&quot;&gt;&lt;NOBR&gt;&lt;IMG src=&quot;//scoptest.shanghai-electric.com:8080/ekp/resource/style/default/icons/delete.gif&quot;&gt;&lt;IMG src=&quot;//scoptest.shanghai-electric.com:8080/ekp/resource/style/default/icons/up.gif&quot;&gt;&lt;IMG src=&quot;//scoptest.shanghai-electric.com:8080/ekp/resource/style/default/icons/down.gif&quot;&gt;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR type=&quot;statisticRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;2&quot; column=&quot;0&quot; colType=&quot;noFoot&quot;&gt;&lt;LABEL attach=&quot;fd_3294b05cf6d4b4&quot;&gt;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;2&quot; column=&quot;4&quot; colType=&quot;emptyCell&quot;&gt;&lt;LABEL attach=&quot;fd_3294b05cf6d4b4&quot;&gt;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;8&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa47863d4&quot;,content:&quot;技能要求&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;技能要求&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;8&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 609px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b08b1ed71e&quot;,width:&quot;609&quot;,_label_bind:&quot;true&quot;,label:&quot;技能要求&quot;,_label_bind_id:&quot;fd_3294afa47863d4&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b08b1ed71e class=inputsgl style=&quot;WIDTH: 609px&quot; readOnly ? label=&quot;技能要求&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;9&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa4dba6b2&quot;,content:&quot;外语要求&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;外语要求&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;9&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 608px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b08f18cf80&quot;,width:&quot;608&quot;,_label_bind:&quot;true&quot;,label:&quot;外语要求&quot;,_label_bind_id:&quot;fd_3294afa4dba6b2&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b08f18cf80 class=inputsgl style=&quot;WIDTH: 608px&quot; readOnly ? label=&quot;外语要求&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;10&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa54ba70c&quot;,content:&quot;工作地点&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;工作地点&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: 216px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 row=&quot;10&quot; column=&quot;2&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0b29b2c8a&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;工作地点&quot;,_label_bind_id:&quot;fd_3294afa54ba70c&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b0b29b2c8a class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;工作地点&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 218px&quot; width=220 row=&quot;10&quot; column=&quot;3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afaa01a1c2&quot;,content:&quot;到岗时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;到岗时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=390 colSpan=2 row=&quot;10&quot; column=&quot;4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0b5dbc8d8&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;到岗时间&quot;,_label_bind_id:&quot;fd_3294afaa01a1c2&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b0b5dbc8d8 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;到岗时间&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;11&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294afa5ecc4b2&quot;,content:&quot;其他要求&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;其他要求&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;11&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 610px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0bdecffc4&quot;,width:&quot;610&quot;,_label_bind:&quot;true&quot;,label:&quot;其他要求&quot;,_label_bind_id:&quot;fd_3294afa5ecc4b2&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b0bdecffc4 class=inputsgl style=&quot;WIDTH: 610px&quot; readOnly ? label=&quot;其他要求&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;12&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0d629d882&quot;,content:&quot;专业素质要求&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;专业素质要求&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;12&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 660px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b0e54993a8&quot;,width:&quot;660&quot;,_label_bind:&quot;true&quot;,label:&quot;专业素质要求&quot;,_label_bind_id:&quot;fd_3294b0d629d882&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3294b0e54993a8 class=inputsgl style=&quot;WIDTH: 660px&quot; readOnly ? label=&quot;专业素质要求&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;HEIGHT: auto; WIDTH: 197px&quot; rowSpan=2 width=156 row=&quot;13,14&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b11da63c84&quot;,content:&quot;用工属性&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;用工属性&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;13&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b1503159f0&quot;,content:&quot;招聘途径&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;招聘途径&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;13&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 240px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b166009916&quot;,_label_bind:&quot;true&quot;,label:&quot;招聘途径&quot;,_label_bind_id:&quot;fd_3294b1503159f0&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;外部招聘|w&amp;#13;&amp;#10;内部调动|n&amp;#13;&amp;#10;集团内部调动|jn&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b166009916 type=radio value=w label=&quot;招聘途径&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; itemValues=&quot;w;n;jn&quot; items=&quot;外部招聘;内部调动;集团内部调动&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3294b166009916&quot;&gt;外部招聘&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b166009916 type=radio value=n attach=&quot;fd_3294b166009916&quot;&gt;&lt;LABEL attach=&quot;fd_3294b166009916&quot;&gt;内部调动&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b166009916 type=radio value=jn attach=&quot;fd_3294b166009916&quot;&gt;&lt;LABEL attach=&quot;fd_3294b166009916&quot;&gt;集团内部调动&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;14&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b15963f864&quot;,content:&quot;用工性质&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;用工性质&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;14&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 252px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b29f8bbf54&quot;,_label_bind:&quot;true&quot;,label:&quot;用工性质&quot;,_label_bind_id:&quot;fd_3294b15963f864&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;正式员工|zs&amp;#13;&amp;#10;退聘|tp&amp;#13;&amp;#10;协议借用|xy&amp;#13;&amp;#10;劳务工|lwg&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b29f8bbf54 type=radio value=zs label=&quot;用工性质&quot; tableName=&quot;fd_3294a7dbf94780&quot; _required=&quot;false&quot; required=&quot;false&quot; itemValues=&quot;zs;tp;xy;lwg&quot; items=&quot;正式员工;退聘;协议借用;劳务工&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3294b29f8bbf54&quot;&gt;正式员工&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b29f8bbf54 type=radio value=tp attach=&quot;fd_3294b29f8bbf54&quot;&gt;&lt;LABEL attach=&quot;fd_3294b29f8bbf54&quot;&gt;退聘&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b29f8bbf54 type=radio value=xy attach=&quot;fd_3294b29f8bbf54&quot;&gt;&lt;LABEL attach=&quot;fd_3294b29f8bbf54&quot;&gt;协议借用&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3294b29f8bbf54 type=radio value=lwg attach=&quot;fd_3294b29f8bbf54&quot;&gt;&lt;LABEL attach=&quot;fd_3294b29f8bbf54&quot;&gt;劳务工&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;15&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b2d251721a&quot;,content:&quot;相关附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;相关附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;15&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&lt;DIV id=fd_3294b2de261b72 style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; label=&quot;相关附件&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3294b2de261b72&quot;,_label_bind:&quot;true&quot;,label:&quot;相关附件&quot;,_label_bind_id:&quot;fd_3294b2d251721a&quot;}&apos; fd_type=&quot;attachment&quot; tableName=&quot;fd_3294a7dbf94780&quot; enabledFileType fdMulti=&quot;true&quot;&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>16cb2ea38ca042d75290a5f4d92bb007</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16cb2ea9d387ccce64ea2c4498884b38</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1722392606407</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_3294a7dbf94780 class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请部门&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=451 colSpan=2 row=&quot;0&quot; column=&quot;1,2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 276px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3294a85fec8fa0.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3294a85fec8fa0.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;申请部门&quot; title=&quot;申请部门&quot; style=&quot;WIDTH: 248px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 218px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=220 row=&quot;0&quot; column=&quot;3&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请岗位&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=390 colSpan=2 row=&quot;0&quot; column=&quot;4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 238px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294adde25e08a)&quot; style=&quot;WIDTH: 238px&quot; required=&quot;false&quot; subject=&quot;申请岗位&quot; title=&quot;申请岗位&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;拟需人数&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 246px&quot; width=237 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294ae6de14caa)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;拟需人数&quot; title=&quot;拟需人数&quot; validators=&quot; number number scaleLength(0)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 216px&quot; width=214 row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 218px&quot; width=220 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 148px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_3294ae6bd32b9c)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;申请时间&quot; title=&quot;申请时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 206px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=200 row=&quot;1&quot; column=&quot;4&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;薪酬范围&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 187px&quot; width=190 row=&quot;1&quot; column=&quot;5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 64px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294ae3d897c30)&quot; style=&quot;WIDTH: 64px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;薪酬范围起&quot; title=&quot;薪酬范围起&quot; validators=&quot; number number scaleLength(0)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;到&lt;/LABEL&gt;&#13;
+ &#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 68px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294ae40b7c302)&quot; style=&quot;WIDTH: 68px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;薪酬范围&quot; title=&quot;薪酬范围&quot; validators=&quot; number number scaleLength(0)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;2&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;招聘原因&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;2&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 849px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3294aec1e6a3b4)&quot; style=&quot;HEIGHT: 80px; WIDTH: 849px&quot; required=&quot;false&quot; subject=&quot;招聘原因&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;招聘原因&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;3&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;岗位职责&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;3&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 848px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3294aed5b7ef58)&quot; style=&quot;HEIGHT: 80px; WIDTH: 848px&quot; required=&quot;false&quot; subject=&quot;岗位职责&quot; title=&quot;岗位职责&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;4&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;工作环境、职业病危害&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;4&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 846px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3294aee7b4ebde)&quot; style=&quot;HEIGHT: 80px; WIDTH: 846px&quot; required=&quot;false&quot; subject=&quot;工作环境、职业病危害&quot; title=&quot;工作环境、职业病危害&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;HEIGHT: auto; WIDTH: 197px&quot; rowSpan=7 width=156 row=&quot;5,6,7,8,9,10,11&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应具备资格条件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;5&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;教育程度&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;5&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;xform:checkbox  property=&quot;extendDataFormInfo.value(fd_3294b015103fd8)&quot; dataType=&quot;String&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;教育程度&quot; title=&quot;教育程度&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;jx&quot;&gt;技校&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;dz&quot;&gt;大专&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;bk&quot;&gt;本科&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;ssjys&quot;&gt;硕士及以上学历&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;other&quot;&gt;其他&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:checkbox&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;6&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;工作年限&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;6&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3294b0395bfa34)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;工作年限&quot; title=&quot;工作年限&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;y&quot;&gt;应届毕业生&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;1年&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;3年&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;5&quot;&gt;5年&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;8&quot;&gt;8年以上&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;7&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;毕业院校及专业&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;7&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+&lt;script&gt;Com_IncludeFile(&apos;doclist.js&apos;);&lt;/script&gt;&lt;script&gt;DocList_Info.push(&apos;TABLE_DL_fd_3294b05cf6d4b4&apos;);&lt;/script&gt;&#13;
+&lt;xform:editShow&gt;&lt;c:if test=&quot;${empty _xformForm.extendDataFormInfo.formData.fd_3294b05cf6d4b4}&quot;&gt;&lt;script&gt;Com_AddEventListener(window, &apos;load&apos;, function(){ setTimeout(function() {for (var i = 0; i &lt; 1; i ++) {DocList_AddRow(document.getElementById(&apos;TABLE_DL_fd_3294b05cf6d4b4&apos;))};}, 500);});&lt;/script&gt;&lt;/c:if&gt;&lt;/xform:editShow&gt;&lt;script&gt;$(function(){var tb=document.getElementById(&apos;TABLE_DL_fd_3294b05cf6d4b4&apos;);var totalWidth=0;var tds=$(tb).find(&quot;tr[type=&apos;titleRow&apos;]&quot;).children();var hasPercent=false;tds.each(function(){if(!this.width||this.width+&apos;&apos;.indexOf(&apos;%&apos;)&gt;=0){totalWidth+=$(this).width();hasPercent=true;}else{	totalWidth+=parseInt(this.width);}});	var tdWidth=$(tb).parents(&apos;td&apos;).width();if(!hasPercent&amp;&amp;totalWidth&gt;tdWidth)$(tb).css(&apos;width&apos;,totalWidth+&apos;px&apos;);var tb_div=document.getElementById(&apos;TABLE_DL_fd_3294b05cf6d4b4_div&apos;);$(tb_div).css(&apos;width&apos;,&apos;100%&apos;);});&lt;/script&gt;&lt;div id=&apos;TABLE_DL_fd_3294b05cf6d4b4_div&apos; style=&apos;overflow:auto;&apos;&gt;&#13;
+&lt;TABLE id=TABLE_DL_fd_3294b05cf6d4b4 class=tb_normal style=&quot;WIDTH: 100%&quot; width=&quot;100%&quot; align=center label=&quot;明细表1&quot;  layout2col=&quot;undefined&quot;   tableName=&quot;fd_3294a7dbf94780&quot; showIndex=&quot;true&quot; showRow=&quot;1&quot; showStatisticRow=&quot;undefined&quot;&gt;&#13;
+&lt;TR class=tr_normal_title type=&quot;titleRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;0&quot; column=&quot;0&quot; colType=&quot;noTitle&quot;&gt;&lt;kmss:message key=&quot;page.serial&quot; /&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;毕业院校&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;0&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;专业一&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;专业二&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&lt;TD style=&quot;width:48px;&quot; align=center row=&quot;0&quot; column=&quot;4&quot; colType=&quot;addTitle&quot;&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/add.gif&apos;/&gt;&apos; title=&apos;添加行&apos; onclick=&apos;DocList_AddRow();XFom_RestValidationElements();&apos;&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&lt;/TR&gt;&#13;
+&lt;%-- 基准行 --%&gt;&#13;
+&lt;TR KMSS_IsReferRow=&quot;1&quot; style=&quot;display:none&quot;  type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;1&quot; column=&quot;0&quot; colType=&quot;noTemplate&quot; KMSS_IsRowIndex=1&gt;{1}&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 249px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.!{index}.fd_3294b07a55f444)&quot; style=&quot;WIDTH: 249px&quot; required=&quot;false&quot; subject=&quot;毕业院校&quot; title=&quot;毕业院校&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;%-- 明细表行ID --%&gt;&#13;
+			&lt;xform:text showStatus=&quot;noShow&quot;  property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.!{index}.fdId)&quot; /&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.!{index}.fd_3294b07b7fce2a)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;专业一&quot; title=&quot;专业一&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.!{index}.fd_3294b07cfdf3f6)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;专业二&quot; title=&quot;专业二&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;1&quot; column=&quot;4&quot; colType=&quot;delCol&quot;&gt;&lt;nobr&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/delete.gif&apos;/&gt;&apos; title=删除行 onclick=&apos;DocList_DeleteRow_ClearLast();XFom_RestValidationElements();&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/up.gif&apos;/&gt;&apos; title=上移 onclick=&apos;DocList_MoveRow(-1);&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/down.gif&apos;/&gt;&apos; title=下移 onclick=&apos;DocList_MoveRow(1);&apos;&gt;&lt;/nobr&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TR&gt;&#13;
+&lt;%-- 内容行 --%&gt;&#13;
+&lt;c:forEach items=&quot;${_xformForm.extendDataFormInfo.formData.fd_3294b05cf6d4b4}&quot; var=&quot;_xformEachBean&quot; varStatus=&quot;vstatus&quot;&gt;&#13;
+&lt;TR KMSS_IsContentRow=&quot;1&quot;  type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;1&quot; column=&quot;0&quot; colType=&quot;noTemplate&quot; KMSS_IsRowIndex=1&gt;${vstatus.index + 1}&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 249px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.${vstatus.index}.fd_3294b07a55f444)&quot; style=&quot;WIDTH: 249px&quot; required=&quot;false&quot; subject=&quot;毕业院校&quot; title=&quot;毕业院校&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;%-- 明细表行ID --%&gt;&#13;
+			&lt;xform:text showStatus=&quot;noShow&quot;  property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.${vstatus.index}.fdId)&quot; /&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.${vstatus.index}.fd_3294b07b7fce2a)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;专业一&quot; title=&quot;专业一&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.${vstatus.index}.fd_3294b07cfdf3f6)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;专业二&quot; title=&quot;专业二&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;1&quot; column=&quot;4&quot; colType=&quot;delCol&quot;&gt;&lt;nobr&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/delete.gif&apos;/&gt;&apos; title=删除行 onclick=&apos;DocList_DeleteRow_ClearLast();XFom_RestValidationElements();&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/up.gif&apos;/&gt;&apos; title=上移 onclick=&apos;DocList_MoveRow(-1);&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/down.gif&apos;/&gt;&apos; title=下移 onclick=&apos;DocList_MoveRow(1);&apos;&gt;&lt;/nobr&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TR&gt;&#13;
+&lt;/c:forEach&gt;&#13;
+&lt;TR type=&quot;statisticRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;2&quot; column=&quot;0&quot; colType=&quot;noFoot&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;2&quot; column=&quot;4&quot; colType=&quot;emptyCell&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&lt;/TR&gt;&#13;
+			&lt;/TABLE&gt;&#13;
+&lt;/div&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;8&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;技能要求&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;8&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 609px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b08b1ed71e)&quot; style=&quot;WIDTH: 609px&quot; required=&quot;false&quot; subject=&quot;技能要求&quot; title=&quot;技能要求&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;9&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;外语要求&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;9&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 608px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b08f18cf80)&quot; style=&quot;WIDTH: 608px&quot; required=&quot;false&quot; subject=&quot;外语要求&quot; title=&quot;外语要求&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;10&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;工作地点&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: 216px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 row=&quot;10&quot; column=&quot;2&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b0b29b2c8a)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;工作地点&quot; title=&quot;工作地点&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 218px&quot; width=220 row=&quot;10&quot; column=&quot;3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;到岗时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=390 colSpan=2 row=&quot;10&quot; column=&quot;4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b0b5dbc8d8)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;到岗时间&quot; title=&quot;到岗时间&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;11&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;其他要求&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;11&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 610px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b0bdecffc4)&quot; style=&quot;WIDTH: 610px&quot; required=&quot;false&quot; subject=&quot;其他要求&quot; title=&quot;其他要求&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;12&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;专业素质要求&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;12&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 660px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b0e54993a8)&quot; style=&quot;WIDTH: 660px&quot; required=&quot;false&quot; subject=&quot;专业素质要求&quot; title=&quot;专业素质要求&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;HEIGHT: auto; WIDTH: 197px&quot; rowSpan=2 width=156 row=&quot;13,14&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;用工属性&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;13&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;招聘途径&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;13&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3294b166009916)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;招聘途径&quot; title=&quot;招聘途径&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;w&quot;&gt;外部招聘&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;n&quot;&gt;内部调动&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;jn&quot;&gt;集团内部调动&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;14&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;用工性质&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;14&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3294b29f8bbf54)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;用工性质&quot; title=&quot;用工性质&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;zs&quot;&gt;正式员工&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;tp&quot;&gt;退聘&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;xy&quot;&gt;协议借用&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;lwg&quot;&gt;劳务工&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;15&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;相关附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;15&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_3294b2de261b72&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_3294a85fec8fa0&quot; label=&quot;申请部门&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294adde25e08a&quot; label=&quot;申请岗位&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294ae6de14caa&quot; label=&quot;拟需人数&quot; type=&quot;Double&quot; length=&quot;10&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294ae6bd32b9c&quot; label=&quot;申请时间&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294ae3d897c30&quot; label=&quot;薪酬范围起&quot; type=&quot;Double&quot; length=&quot;10&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294ae40b7c302&quot; label=&quot;薪酬范围&quot; type=&quot;Double&quot; length=&quot;10&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294aec1e6a3b4&quot; label=&quot;招聘原因&#13;
+&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294aed5b7ef58&quot; label=&quot;岗位职责&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294aee7b4ebde&quot; label=&quot;工作环境、职业病危害&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b015103fd8&quot; label=&quot;教育程度&quot; enumValues=&quot;技校|jx;大专|dz;本科|bk;硕士及以上学历 |ssjys;其他|other&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0395bfa34&quot; label=&quot;工作年限&quot; enumValues=&quot;应届毕业生|y;1年|1;3年|3;5年|5;8年以上|8&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSubTableProperty name=&quot;fd_3294b05cf6d4b4&quot; label=&quot;明细表1&quot; &gt;&#13;
+&lt;idProperty&gt;&lt;generator type=&quot;assigned&quot; /&gt;&lt;/idProperty&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b07a55f444&quot; label=&quot;毕业院校&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b07b7fce2a&quot; label=&quot;专业一&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b07cfdf3f6&quot; label=&quot;专业二&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;/extendSubTableProperty&gt;&#13;
+&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b08b1ed71e&quot; label=&quot;技能要求&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b08f18cf80&quot; label=&quot;外语要求&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0b29b2c8a&quot; label=&quot;工作地点&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0b5dbc8d8&quot; label=&quot;到岗时间&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0bdecffc4&quot; label=&quot;其他要求&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0e54993a8&quot; label=&quot;专业素质要求&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b166009916&quot; label=&quot;招聘途径&quot; enumValues=&quot;外部招聘|w;内部调动|n;集团内部调动|jn&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b29f8bbf54&quot; label=&quot;用工性质&quot; enumValues=&quot;正式员工|zs;退聘|tp;协议借用|xy;劳务工|lwg&quot; type=&quot;String&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>16cb2ea38ca042d75290a5f4d92bb007</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>16cb2ea9cf89ee573c672c14f02a798e</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1722392606407</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_3294a7dbf94780 class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请部门&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=451 colSpan=2 row=&quot;0&quot; column=&quot;1,2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 276px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3294a85fec8fa0.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3294a85fec8fa0.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;申请部门&quot; title=&quot;申请部门&quot; style=&quot;WIDTH: 248px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 218px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=220 row=&quot;0&quot; column=&quot;3&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请岗位&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=390 colSpan=2 row=&quot;0&quot; column=&quot;4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 238px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294adde25e08a)&quot; style=&quot;WIDTH: 238px&quot; required=&quot;false&quot; subject=&quot;申请岗位&quot; title=&quot;申请岗位&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;拟需人数&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 246px&quot; width=237 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294ae6de14caa)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;拟需人数&quot; title=&quot;拟需人数&quot; validators=&quot; number number scaleLength(0)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 216px&quot; width=214 row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 218px&quot; width=220 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 148px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_3294ae6bd32b9c)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;申请时间&quot; title=&quot;申请时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 206px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=200 row=&quot;1&quot; column=&quot;4&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;薪酬范围&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 187px&quot; width=190 row=&quot;1&quot; column=&quot;5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 64px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294ae3d897c30)&quot; style=&quot;WIDTH: 64px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;薪酬范围起&quot; title=&quot;薪酬范围起&quot; validators=&quot; number number scaleLength(0)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;到&lt;/LABEL&gt;&#13;
+ &#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 68px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294ae40b7c302)&quot; style=&quot;WIDTH: 68px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;薪酬范围&quot; title=&quot;薪酬范围&quot; validators=&quot; number number scaleLength(0)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;2&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;招聘原因&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;2&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 849px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3294aec1e6a3b4)&quot; style=&quot;HEIGHT: 80px; WIDTH: 849px&quot; required=&quot;false&quot; subject=&quot;招聘原因&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;招聘原因&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;3&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;岗位职责&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;3&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 848px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3294aed5b7ef58)&quot; style=&quot;HEIGHT: 80px; WIDTH: 848px&quot; required=&quot;false&quot; subject=&quot;岗位职责&quot; title=&quot;岗位职责&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;4&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;工作环境、职业病危害&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;4&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 846px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3294aee7b4ebde)&quot; style=&quot;HEIGHT: 80px; WIDTH: 846px&quot; required=&quot;false&quot; subject=&quot;工作环境、职业病危害&quot; title=&quot;工作环境、职业病危害&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;HEIGHT: auto; WIDTH: 197px&quot; rowSpan=7 width=156 row=&quot;5,6,7,8,9,10,11&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应具备资格条件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;5&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;教育程度&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;5&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;xform:checkbox  property=&quot;extendDataFormInfo.value(fd_3294b015103fd8)&quot; dataType=&quot;String&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;教育程度&quot; title=&quot;教育程度&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;jx&quot;&gt;技校&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;dz&quot;&gt;大专&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;bk&quot;&gt;本科&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;ssjys&quot;&gt;硕士及以上学历&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;other&quot;&gt;其他&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:checkbox&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;6&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;工作年限&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;6&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3294b0395bfa34)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;工作年限&quot; title=&quot;工作年限&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;y&quot;&gt;应届毕业生&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;1年&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;3年&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;5&quot;&gt;5年&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;8&quot;&gt;8年以上&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;7&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;毕业院校及专业&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;7&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+&lt;script&gt;Com_IncludeFile(&apos;doclist.js&apos;);&lt;/script&gt;&lt;script&gt;DocList_Info.push(&apos;TABLE_DL_fd_3294b05cf6d4b4&apos;);&lt;/script&gt;&#13;
+&lt;xform:editShow&gt;&lt;c:if test=&quot;${empty _xformForm.extendDataFormInfo.formData.fd_3294b05cf6d4b4}&quot;&gt;&lt;script&gt;Com_AddEventListener(window, &apos;load&apos;, function(){ setTimeout(function() {for (var i = 0; i &lt; 1; i ++) {DocList_AddRow(document.getElementById(&apos;TABLE_DL_fd_3294b05cf6d4b4&apos;))};}, 500);});&lt;/script&gt;&lt;/c:if&gt;&lt;/xform:editShow&gt;&lt;script&gt;$(function(){var tb=document.getElementById(&apos;TABLE_DL_fd_3294b05cf6d4b4&apos;);var totalWidth=0;var tds=$(tb).find(&quot;tr[type=&apos;titleRow&apos;]&quot;).children();var hasPercent=false;tds.each(function(){if(!this.width||this.width+&apos;&apos;.indexOf(&apos;%&apos;)&gt;=0){totalWidth+=$(this).width();hasPercent=true;}else{	totalWidth+=parseInt(this.width);}});	var tdWidth=$(tb).parents(&apos;td&apos;).width();if(!hasPercent&amp;&amp;totalWidth&gt;tdWidth)$(tb).css(&apos;width&apos;,totalWidth+&apos;px&apos;);var tb_div=document.getElementById(&apos;TABLE_DL_fd_3294b05cf6d4b4_div&apos;);$(tb_div).css(&apos;width&apos;,&apos;100%&apos;);});&lt;/script&gt;&lt;div id=&apos;TABLE_DL_fd_3294b05cf6d4b4_div&apos; style=&apos;overflow:auto;&apos;&gt;&#13;
+&lt;TABLE id=TABLE_DL_fd_3294b05cf6d4b4 class=tb_normal style=&quot;WIDTH: 100%&quot; width=&quot;100%&quot; align=center label=&quot;明细表1&quot;  layout2col=&quot;undefined&quot;   tableName=&quot;fd_3294a7dbf94780&quot; showIndex=&quot;true&quot; showRow=&quot;1&quot; showStatisticRow=&quot;undefined&quot;&gt;&#13;
+&lt;TR class=tr_normal_title type=&quot;titleRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;0&quot; column=&quot;0&quot; colType=&quot;noTitle&quot;&gt;&lt;kmss:message key=&quot;page.serial&quot; /&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;毕业院校&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;0&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;专业一&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;专业二&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&lt;TD style=&quot;width:48px;&quot; align=center row=&quot;0&quot; column=&quot;4&quot; colType=&quot;addTitle&quot;&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/add.gif&apos;/&gt;&apos; title=&apos;添加行&apos; onclick=&apos;DocList_AddRow();XFom_RestValidationElements();&apos;&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&lt;/TR&gt;&#13;
+&lt;%-- 基准行 --%&gt;&#13;
+&lt;TR KMSS_IsReferRow=&quot;1&quot; style=&quot;display:none&quot;  type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;1&quot; column=&quot;0&quot; colType=&quot;noTemplate&quot; KMSS_IsRowIndex=1&gt;{1}&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 249px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.!{index}.fd_3294b07a55f444)&quot; style=&quot;WIDTH: 249px&quot; required=&quot;false&quot; subject=&quot;毕业院校&quot; title=&quot;毕业院校&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;%-- 明细表行ID --%&gt;&#13;
+			&lt;xform:text showStatus=&quot;noShow&quot;  property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.!{index}.fdId)&quot; /&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.!{index}.fd_3294b07b7fce2a)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;专业一&quot; title=&quot;专业一&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.!{index}.fd_3294b07cfdf3f6)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;专业二&quot; title=&quot;专业二&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;1&quot; column=&quot;4&quot; colType=&quot;delCol&quot;&gt;&lt;nobr&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/delete.gif&apos;/&gt;&apos; title=删除行 onclick=&apos;DocList_DeleteRow_ClearLast();XFom_RestValidationElements();&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/up.gif&apos;/&gt;&apos; title=上移 onclick=&apos;DocList_MoveRow(-1);&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/down.gif&apos;/&gt;&apos; title=下移 onclick=&apos;DocList_MoveRow(1);&apos;&gt;&lt;/nobr&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TR&gt;&#13;
+&lt;%-- 内容行 --%&gt;&#13;
+&lt;c:forEach items=&quot;${_xformForm.extendDataFormInfo.formData.fd_3294b05cf6d4b4}&quot; var=&quot;_xformEachBean&quot; varStatus=&quot;vstatus&quot;&gt;&#13;
+&lt;TR KMSS_IsContentRow=&quot;1&quot;  type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;1&quot; column=&quot;0&quot; colType=&quot;noTemplate&quot; KMSS_IsRowIndex=1&gt;${vstatus.index + 1}&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 249px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.${vstatus.index}.fd_3294b07a55f444)&quot; style=&quot;WIDTH: 249px&quot; required=&quot;false&quot; subject=&quot;毕业院校&quot; title=&quot;毕业院校&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;%-- 明细表行ID --%&gt;&#13;
+			&lt;xform:text showStatus=&quot;noShow&quot;  property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.${vstatus.index}.fdId)&quot; /&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.${vstatus.index}.fd_3294b07b7fce2a)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;专业一&quot; title=&quot;专业一&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b05cf6d4b4.${vstatus.index}.fd_3294b07cfdf3f6)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;专业二&quot; title=&quot;专业二&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;1&quot; column=&quot;4&quot; colType=&quot;delCol&quot;&gt;&lt;nobr&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/delete.gif&apos;/&gt;&apos; title=删除行 onclick=&apos;DocList_DeleteRow_ClearLast();XFom_RestValidationElements();&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/up.gif&apos;/&gt;&apos; title=上移 onclick=&apos;DocList_MoveRow(-1);&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/down.gif&apos;/&gt;&apos; title=下移 onclick=&apos;DocList_MoveRow(1);&apos;&gt;&lt;/nobr&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TR&gt;&#13;
+&lt;/c:forEach&gt;&#13;
+&lt;TR type=&quot;statisticRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center row=&quot;2&quot; column=&quot;0&quot; colType=&quot;noFoot&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&lt;TD style=&quot;WIDTH: 48px&quot; align=center row=&quot;2&quot; column=&quot;4&quot; colType=&quot;emptyCell&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&lt;/TR&gt;&#13;
+			&lt;/TABLE&gt;&#13;
+&lt;/div&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;8&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;技能要求&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;8&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 609px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b08b1ed71e)&quot; style=&quot;WIDTH: 609px&quot; required=&quot;false&quot; subject=&quot;技能要求&quot; title=&quot;技能要求&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;9&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;外语要求&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;9&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 608px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b08f18cf80)&quot; style=&quot;WIDTH: 608px&quot; required=&quot;false&quot; subject=&quot;外语要求&quot; title=&quot;外语要求&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;10&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;工作地点&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: 216px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 row=&quot;10&quot; column=&quot;2&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b0b29b2c8a)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;工作地点&quot; title=&quot;工作地点&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 218px&quot; width=220 row=&quot;10&quot; column=&quot;3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;到岗时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=390 colSpan=2 row=&quot;10&quot; column=&quot;4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b0b5dbc8d8)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;到岗时间&quot; title=&quot;到岗时间&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;11&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;其他要求&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;11&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 610px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b0bdecffc4)&quot; style=&quot;WIDTH: 610px&quot; required=&quot;false&quot; subject=&quot;其他要求&quot; title=&quot;其他要求&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;12&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;专业素质要求&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;12&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 660px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3294b0e54993a8)&quot; style=&quot;WIDTH: 660px&quot; required=&quot;false&quot; subject=&quot;专业素质要求&quot; title=&quot;专业素质要求&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;HEIGHT: auto; WIDTH: 197px&quot; rowSpan=2 width=156 row=&quot;13,14&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;用工属性&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;13&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;招聘途径&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;13&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3294b166009916)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;招聘途径&quot; title=&quot;招聘途径&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;w&quot;&gt;外部招聘&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;n&quot;&gt;内部调动&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;jn&quot;&gt;集团内部调动&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 246px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=237 row=&quot;14&quot; column=&quot;1&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;用工性质&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=824 colSpan=4 row=&quot;14&quot; column=&quot;2,3,4,5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3294b29f8bbf54)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;用工性质&quot; title=&quot;用工性质&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;zs&quot;&gt;正式员工&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;tp&quot;&gt;退聘&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;xy&quot;&gt;协议借用&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;lwg&quot;&gt;劳务工&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 197px&quot; width=156 row=&quot;15&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;相关附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1061 colSpan=5 row=&quot;15&quot; column=&quot;1,2,3,4,5&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_3294b2de261b72&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_3294a85fec8fa0&quot; label=&quot;申请部门&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294adde25e08a&quot; label=&quot;申请岗位&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294ae6de14caa&quot; label=&quot;拟需人数&quot; type=&quot;Double&quot; length=&quot;10&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294ae6bd32b9c&quot; label=&quot;申请时间&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294ae3d897c30&quot; label=&quot;薪酬范围起&quot; type=&quot;Double&quot; length=&quot;10&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294ae40b7c302&quot; label=&quot;薪酬范围&quot; type=&quot;Double&quot; length=&quot;10&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294aec1e6a3b4&quot; label=&quot;招聘原因&#13;
+&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294aed5b7ef58&quot; label=&quot;岗位职责&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294aee7b4ebde&quot; label=&quot;工作环境、职业病危害&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b015103fd8&quot; label=&quot;教育程度&quot; enumValues=&quot;技校|jx;大专|dz;本科|bk;硕士及以上学历 |ssjys;其他|other&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0395bfa34&quot; label=&quot;工作年限&quot; enumValues=&quot;应届毕业生|y;1年|1;3年|3;5年|5;8年以上|8&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSubTableProperty name=&quot;fd_3294b05cf6d4b4&quot; label=&quot;明细表1&quot; &gt;&#13;
+&lt;idProperty&gt;&lt;generator type=&quot;assigned&quot; /&gt;&lt;/idProperty&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b07a55f444&quot; label=&quot;毕业院校&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b07b7fce2a&quot; label=&quot;专业一&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b07cfdf3f6&quot; label=&quot;专业二&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;/extendSubTableProperty&gt;&#13;
+&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b08b1ed71e&quot; label=&quot;技能要求&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b08f18cf80&quot; label=&quot;外语要求&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0b29b2c8a&quot; label=&quot;工作地点&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0b5dbc8d8&quot; label=&quot;到岗时间&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0bdecffc4&quot; label=&quot;其他要求&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b0e54993a8&quot; label=&quot;专业素质要求&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b166009916&quot; label=&quot;招聘途径&quot; enumValues=&quot;外部招聘|w;内部调动|n;集团内部调动|jn&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3294b29f8bbf54&quot; label=&quot;用工性质&quot; enumValues=&quot;正式员工|zs;退聘|tp;协议借用|xy;劳务工|lwg&quot; type=&quot;String&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1566369815866</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

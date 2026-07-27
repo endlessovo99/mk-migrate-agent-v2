@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/178671ba7493e3a9d35d8f740e28fd89/178671ba7493e3a9d35d8f740e28fd89_v1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_36dff644c0c608 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_36dff644c0bc22&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1801 colSpan=2 align=right column=&quot;0,1&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=963 column=&quot;0&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_36dffcbbb184d8&quot;,content:&quot;所属年月&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;所属年月&lt;/LABEL&gt; &#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_report_department&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;部门编码&quot;,_label_bind_id:&quot;&quot;,canShow:&quot;false&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;false&quot;&gt;&lt;INPUT id=fd_report_department class=inputhidden style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;部门编码&quot; canShow=&quot;false&quot; tableName=&quot;fd_36dff644c0c608&quot; _required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; required&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD width=839 align=left column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 126px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_year_month&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;月份&quot;,_label_bind_id:&quot;&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_year_month class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;月份&quot; canShow=&quot;true&quot; tableName=&quot;fd_36dff644c0c608&quot; _required=&quot;true&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; required=&quot;true&quot;&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&#13;
+&lt;DIV id=fd_36dffcc6415756 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;fd_36dffcc6415756&quot;}&apos; formDesign=&quot;landray&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&quot;&lt;div class=&amp;quot;inputdatetime&amp;quot;&gt;&lt;/div&gt;&amp;#13;&amp;#10;&lt;script src=&amp;quot;${LUI_ContextPath}/resource/laydate/laydate.js&amp;quot;&gt;&lt;/script&gt; &lt;!-- 改成你的路径 --&gt;  &amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;                                lay(&apos;#version&apos;).html(&apos;-v&apos;+ laydate.v);&amp;#13;&amp;#10;                                //执行一个laydate实例&amp;#13;&amp;#10;                                laydate.render({&amp;#13;&amp;#10;                                    elem:document.getElementsByName(&apos;extendDataFormInfo.value(fd_year_month)&apos;)[0]&amp;#13;&amp;#10;                                    ,type: &apos;month&apos;&amp;#13;&amp;#10;                                });&amp;#13;&amp;#10;                            &lt;/script&gt;&quot;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=963 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=839 align=left column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>178671c2131809a185ecc54408f9eef5</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/178671ba7493e3a9d35d8f740e28fd89/178671ba7493e3a9d35d8f740e28fd89_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_36dff644c0c608 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_36dff644c0bc22&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1801 colSpan=2 align=right column=&quot;0,1&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=963 column=&quot;0&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_36dffcbbb184d8&quot;,content:&quot;所属年月&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;所属年月&lt;/LABEL&gt; &#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_report_department&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;部门编码&quot;,_label_bind_id:&quot;&quot;,canShow:&quot;false&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;false&quot;&gt;&lt;INPUT id=fd_report_department class=inputhidden style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;部门编码&quot; canShow=&quot;false&quot; tableName=&quot;fd_36dff644c0c608&quot; _required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; required&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD width=839 align=left column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 126px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_year_month&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;月份&quot;,_label_bind_id:&quot;&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_year_month class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;月份&quot; canShow=&quot;true&quot; tableName=&quot;fd_36dff644c0c608&quot; _required=&quot;true&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; required=&quot;true&quot;&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&#13;
+&lt;DIV id=fd_36dffcc6415756 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;fd_36dffcc6415756&quot;}&apos; formDesign=&quot;landray&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&quot;&lt;div class=&amp;quot;inputdatetime&amp;quot;&gt;&lt;/div&gt;&amp;#13;&amp;#10;&lt;script src=&amp;quot;${LUI_ContextPath}/resource/laydate/laydate.js&amp;quot;&gt;&lt;/script&gt; &lt;!-- 改成你的路径 --&gt;  &amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;                                lay(&apos;#version&apos;).html(&apos;-v&apos;+ laydate.v);&amp;#13;&amp;#10;                                //执行一个laydate实例&amp;#13;&amp;#10;                                laydate.render({&amp;#13;&amp;#10;                                    elem:document.getElementsByName(&apos;extendDataFormInfo.value(fd_year_month)&apos;)[0]&amp;#13;&amp;#10;                                    ,type: &apos;month&apos;&amp;#13;&amp;#10;                                });&amp;#13;&amp;#10;                            &lt;/script&gt;&quot;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=963 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=839 align=left column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>178671ba7493e3a9d35d8f740e28fd89</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>178671c2158a9ecd4468f92466bb237b</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1616638122087</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_36dff644c0c608 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1801 colSpan=2 align=right column=&quot;0,1&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=963 column=&quot;0&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;所属年月&lt;/LABEL&gt;&#13;
+ &#13;
+&#13;
+			&lt;DIV style=&quot;display:none;&quot;    canShow=&quot;false&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_report_department)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; showStatus=&quot;noShow&quot; subject=&quot;部门编码&quot; title=&quot;部门编码&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=839 align=left column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 126px; DISPLAY: inline&quot;    canShow=&quot;true&quot; _required=true&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_year_month)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;true&quot; subject=&quot;月份&quot; title=&quot;月份&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&lt;div class=&quot;inputdatetime&quot;&gt;&lt;/div&gt;&#13;
+&lt;script src=&quot;${LUI_ContextPath}/resource/laydate/laydate.js&quot;&gt;&lt;/script&gt; &lt;!-- 改成你的路径 --&gt;  &#13;
+&lt;script&gt;&#13;
+                                lay(&apos;#version&apos;).html(&apos;-v&apos;+ laydate.v);&#13;
+                                //执行一个laydate实例&#13;
+                                laydate.render({&#13;
+                                    elem:document.getElementsByName(&apos;extendDataFormInfo.value(fd_year_month)&apos;)[0]&#13;
+                                    ,type: &apos;month&apos;&#13;
+                                });&#13;
+                            &lt;/script&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=963 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=839 align=left column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_report_department&quot; label=&quot;部门编码&quot; type=&quot;String&quot; length=&quot;200&quot; canDisplay=&quot;false&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_year_month&quot; label=&quot;月份&quot; type=&quot;String&quot; length=&quot;200&quot; notNull=&quot;true&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>178671ba7493e3a9d35d8f740e28fd89</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>178671c2131809a185ecc54408f9eef5</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1616638122102</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_36dff644c0c608 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1801 colSpan=2 align=right column=&quot;0,1&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=963 column=&quot;0&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;所属年月&lt;/LABEL&gt;&#13;
+ &#13;
+&#13;
+			&lt;DIV style=&quot;display:none;&quot;    canShow=&quot;false&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_report_department)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; showStatus=&quot;noShow&quot; subject=&quot;部门编码&quot; title=&quot;部门编码&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=839 align=left column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 126px; DISPLAY: inline&quot;    canShow=&quot;true&quot; _required=true&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_year_month)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;true&quot; subject=&quot;月份&quot; title=&quot;月份&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&lt;div class=&quot;inputdatetime&quot;&gt;&lt;/div&gt;&#13;
+&lt;script src=&quot;${LUI_ContextPath}/resource/laydate/laydate.js&quot;&gt;&lt;/script&gt; &lt;!-- 改成你的路径 --&gt;  &#13;
+&lt;script&gt;&#13;
+                                lay(&apos;#version&apos;).html(&apos;-v&apos;+ laydate.v);&#13;
+                                //执行一个laydate实例&#13;
+                                laydate.render({&#13;
+                                    elem:document.getElementsByName(&apos;extendDataFormInfo.value(fd_year_month)&apos;)[0]&#13;
+                                    ,type: &apos;month&apos;&#13;
+                                });&#13;
+                            &lt;/script&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=963 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=839 align=left column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_report_department&quot; label=&quot;部门编码&quot; type=&quot;String&quot; length=&quot;200&quot; canDisplay=&quot;false&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_year_month&quot; label=&quot;月份&quot; type=&quot;String&quot; length=&quot;200&quot; notNull=&quot;true&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1616637600105</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

@@ -23,6 +23,7 @@ import { namedValueChangeAssignmentCandidates } from "./named-value-change-assig
 import { localCurrencyHelperCandidates } from "./local-currency-helper.js";
 import { dynamicHyperlinkCandidates } from "./dynamic-hyperlink.js";
 import { multiRadioRowHelperCandidates } from "./multi-radio-row-helper.js";
+import { detailCascadeActionCandidates } from "./detail-cascade-actions.js";
 import {
   buildDetailRowControlStateFunction,
   buildDetailRowLifecycleFunction,
@@ -661,7 +662,7 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     scope: candidate.scope,
     controlId: candidate.controlId,
     tableId: candidate.tableId,
-    runWhen: runWhenFromDisplayGate(candidate.source.displayGate),
+    runWhen: candidate.runWhen || runWhenFromDisplayGate(candidate.source.displayGate),
     function: fn,
     sourceRefs,
     sourceActionKey: candidate.sourceActionKey,
@@ -848,6 +849,19 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   const sourceWithHelpers = source.helperJavascript
     ? { ...source, javascript: `${source.helperJavascript}\n\n${source.javascript}` }
     : source;
+
+  const detailCascadeActions = detailCascadeActionCandidates(
+    source,
+    options.form,
+    options.sourceScripts
+  );
+  if (detailCascadeActions.length) {
+    return detailCascadeActions.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
 
   const conditionalTotalCalculations = conditionalTotalUppercaseCandidates(
     source,
@@ -2822,7 +2836,13 @@ function procurementPaymentAttachmentSubmitCandidate(source, form) {
       target: "onBeforeSubmit + MKXFORM.getValue + MKXFORM.toast",
       basis: "deterministic-procurement-payment-attachment-submit",
       reviewRequired: false
-    }]
+    }],
+    semanticHints: {
+      coveredCalculationRanges: coveredRangesForText(text, "", {
+        sourceRef: source.sourceRef,
+        name: "procurement_payment_attachment_submit"
+      })
+    }
   };
 }
 
@@ -2851,6 +2871,12 @@ function procurementPaymentWbsVisibilityCandidate(source, form) {
     basis: "deterministic-procurement-payment-wbs-visibility",
     reviewRequired: false
   };
+  const semanticHints = {
+    coveredCalculationRanges: coveredRangesForText(text, "", {
+      sourceRef: source.sourceRef,
+      name: "procurement_payment_wbs_visibility"
+    })
+  };
   return [
     onLoadIndex >= 0 ? {
       index: onLoadIndex,
@@ -2858,18 +2884,21 @@ function procurementPaymentWbsVisibilityCandidate(source, form) {
       scope: "global",
       function: mkFunction("onLoad"),
       translationStatus: "mapped",
-      coverage: { status: "translated", nativeRules: ["linkage.fd_haswbs.contains.YES"], residuals: [] },
-      functionMappings: [mapping]
+      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      functionMappings: [mapping],
+      semanticHints
     } : undefined,
     changeIndex >= 0 ? {
       index: changeIndex,
       event: "onChange",
       scope: "control",
       controlId: "fd_haswbs",
+      sourceActionKey: inlineOnChangeSourceActionKey(source.sourceRef, changeIndex),
       function: mkFunction("onChange"),
       translationStatus: "mapped",
-      coverage: { status: "translated", nativeRules: ["linkage.fd_haswbs.contains.YES"], residuals: [] },
-      functionMappings: [mapping]
+      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      functionMappings: [mapping],
+      semanticHints
     } : undefined
   ].filter(Boolean);
 }
@@ -2909,7 +2938,13 @@ function procurementPaymentDepartmentConsistencyCandidate(source, form) {
       target: "onBeforeSubmit + MKXFORM.getValue detail table rows",
       basis: "deterministic-procurement-payment-department-consistency",
       reviewRequired: false
-    }]
+    }],
+    semanticHints: {
+      coveredCalculationRanges: coveredRangesForText(text, "", {
+        sourceRef: source.sourceRef,
+        name: "procurement_payment_department_consistency"
+      })
+    }
   };
 }
 

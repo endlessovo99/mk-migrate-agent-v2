@@ -475,7 +475,7 @@ describe("translateSysFormTemplateXml", () => {
     });
   });
 
-  it("preserves designer linkLabel controls as MK hyperlinks with their target URLs", () => {
+  it("preserves designer linkLabel controls as linked MK descriptions", () => {
     const designerHtml = `
       <table fd_type="standardTable">
         <tbody>
@@ -504,11 +504,12 @@ describe("translateSysFormTemplateXml", () => {
       "请点击查看采购需求清单模板\n//kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&fdId=18e5f7972ce8d1c7e96e8354bc69fea5"
     );
     assert.equal(dslField?.type, "description");
-    assert.equal(dslField?.componentId, "xform-hyperlinks");
-    assert.deepEqual(dslField?.props.links, [{
-      name: "请点击查看采购需求清单模板",
-      url: "//kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&fdId=18e5f7972ce8d1c7e96e8354bc69fea5"
-    }]);
+    assert.equal(dslField?.componentId, "xform-description");
+    assert.deepEqual(dslField?.props, {
+      content: "请点击查看采购需求清单模板",
+      hasLink: true,
+      link: "http://kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&fdId=18e5f7972ce8d1c7e96e8354bc69fea5"
+    });
     assert.deepEqual(sourceDraft.form.layout.rows.map((row) => row.cells.map((cell) => cell.fieldId)), [
       ["fd_purchase_template_link"]
     ]);
@@ -654,6 +655,68 @@ describe("translateSysFormTemplateXml", () => {
 
     assert.equal(field?.type, "longText");
     assert.equal(field?.componentId, "xform-rich-text");
+  });
+
+  it("does not promote conditionally rendered or strongly hidden rtf controls", () => {
+    const designerHtml = (extraValues = "") => `
+      <table fd_type="standardTable">
+        <tbody>
+          <tr>
+            <td row="0" column="0"><label fd_type="textLabel" fd_values='{id:"fd_rtf_title",content:"合同付款条款"}'>合同付款条款</label></td>
+            <td row="0" column="1">
+              <img fd_type="rtf" fd_values='{id:"fd_contract_terms",_label_bind:"true",label:"合同付款条款",_label_bind_id:"fd_rtf_title",canShow:"false"${extraValues}}'/>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const metadataXml = `
+      <metadata>
+        <extendSimpleProperty name="fd_contract_terms" label="合同付款条款" type="RTF" length="1000000"/>
+      </metadata>
+    `;
+    const displayVariants = [
+      "<xform:editShow><xform:rtf property=\"extendDataFormInfo.value(fd_contract_terms)\"/></xform:editShow>",
+      "<xform:right><xform:rtf property=\"extendDataFormInfo.value(fd_contract_terms)\"/></xform:right>",
+      "<c:if test=\"\${allowed}\"><xform:rtf property=\"extendDataFormInfo.value(fd_contract_terms)\"/></c:if>"
+    ];
+
+    for (const fdDisplayJsp of displayVariants) {
+      const sourceDraft = sourceDraftFromLegacyDsl(translateSysFormTemplateXml(sysFormXml({
+        fdDesignerHtml: designerHtml(),
+        fdDisplayJsp,
+        fdMetadataXml: metadataXml
+      })));
+      const dsl = draftSourceDraft(sourceDraft);
+      const field = dsl.form.fields.find((item) => item.id === "fd_contract_terms");
+
+      assert.equal(field?.dataOnly, true, fdDisplayJsp);
+      assert.equal(
+        sourceDraft.issues.some((issue) =>
+          issue.code === "source.sysform.display_jsp_visibility_override"
+        ),
+        false,
+        fdDisplayJsp
+      );
+    }
+
+    const stronglyHiddenSource = sourceDraftFromLegacyDsl(translateSysFormTemplateXml(sysFormXml({
+      fdDesignerHtml: designerHtml(',showStatus:"noShow"'),
+      fdDisplayJsp: "<xform:rtf property=\"extendDataFormInfo.value(fd_contract_terms)\"/>",
+      fdMetadataXml: metadataXml
+    })));
+    const stronglyHiddenDsl = draftSourceDraft(stronglyHiddenSource);
+
+    assert.equal(
+      stronglyHiddenDsl.form.fields.find((item) => item.id === "fd_contract_terms")?.dataOnly,
+      true
+    );
+    assert.equal(
+      stronglyHiddenSource.issues.some((issue) =>
+        issue.code === "source.sysform.display_jsp_visibility_override"
+      ),
+      false
+    );
   });
 
   it("keeps full-row plain note textLabels as descriptions", () => {
@@ -1014,6 +1077,9 @@ function sysFormXml(values) {
         <void method="put"><string>fdName</string><string>设计器优先表单</string></void>
         <void method="put"><string>fdModelId</string><string>template-id</string></void>
         <void method="put"><string>fdDesignerHtml</string><string>${escapeXml(values.fdDesignerHtml)}</string></void>
+        ${values.fdDisplayJsp === undefined
+          ? ""
+          : `<void method="put"><string>fdDisplayJsp</string><string>${escapeXml(values.fdDisplayJsp)}</string></void>`}
         <void method="put"><string>fdMetadataXml</string><string>${escapeXml(values.fdMetadataXml)}</string></void>
       </object>
     </java>

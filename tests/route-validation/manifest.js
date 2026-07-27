@@ -34,6 +34,15 @@ const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "get-readback"
 ]);
 
+const PARTICIPANT_OVERRIDE_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
+  SUCCESS_OPERATIONS[0],
+  "get-element-info",
+  ...SUCCESS_OPERATIONS.slice(1, -1),
+  "save-workflow-draft",
+  "get-workflow-detail",
+  "get-readback"
+]);
+
 const DRAFT_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
   ...SUCCESS_OPERATIONS.slice(1, -1),
@@ -78,6 +87,38 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         kind: "form-only",
         relativePath: "form-only/route-form-only_SysFormTemplate.xml",
         templateName: "原流程模板"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "link-label-description-success",
+      source: {
+        kind: "form-only",
+        relativePath: "link-label-description/route-link-label-description_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "hidden-detail-data-column-success",
+      source: {
+        kind: "form-only",
+        relativePath: "hidden-detail-data-column/route-hidden-detail-data-column_SysFormTemplate.xml"
       },
       reviewScenario: "accept",
       newoaScenario: "persist",
@@ -170,6 +211,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "detail-cascade-actions-success",
+      source: {
+        kind: "form-only",
+        relativePath: "detail-cascade-actions/route-detail-cascade-actions_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "multi-batch-review-success",
       source: {
         kind: "form-only",
@@ -216,6 +273,26 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "needs_manual",
         executionStatus: "written_with_warnings",
         operations: WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "participant-explicit-override-success",
+      source: {
+        kind: "paired",
+        relativePath: "paired"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      participantOverrides: [{
+        sourceId: "legacy-route-reviewer",
+        targetFdId: "route-explicit-person-override"
+      }],
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: PARTICIPANT_OVERRIDE_WORKFLOW_SUCCESS_OPERATIONS
       }
     },
     {
@@ -472,6 +549,10 @@ export function validateRouteManifest(manifest) {
     if (routeCase.fallbackFdIds !== undefined && !validFallbackFdIds(routeCase.fallbackFdIds)) {
       throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has invalid fallback fdIds.`);
     }
+    if (routeCase.participantOverrides !== undefined &&
+        !validParticipantOverrides(routeCase.participantOverrides)) {
+      throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has invalid participant overrides.`);
+    }
     const expected = routeCase.expected;
     const reviewTerminal = expected.terminalStage === "review";
     if (!nonEmptyString(expected.reviewStatus) ||
@@ -533,4 +614,20 @@ function validFallbackFdIds(value) {
   const allowed = new Set(["person", "organization", "group", "post"]);
   const entries = Object.entries(value);
   return entries.length > 0 && entries.every(([kind, fdId]) => allowed.has(kind) && nonEmptyString(fdId));
+}
+
+function validParticipantOverrides(value) {
+  if (!Array.isArray(value) || value.length === 0) return false;
+  const sourceIds = new Set();
+  return value.every((override) => {
+    if (!isPlainRecord(override) ||
+        !nonEmptyString(override.sourceId) ||
+        !nonEmptyString(override.targetFdId) ||
+        Object.keys(override).some((key) => !["sourceId", "targetFdId"].includes(key)) ||
+        sourceIds.has(override.sourceId)) {
+      return false;
+    }
+    sourceIds.add(override.sourceId);
+    return true;
+  });
 }

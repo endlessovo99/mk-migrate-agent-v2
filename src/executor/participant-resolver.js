@@ -29,7 +29,12 @@ export class ParticipantResolutionError extends Error {
   }
 }
 
-export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, fallbackFdIds } = {}) {
+export async function resolveWorkflowParticipants(dsl, {
+  client,
+  targetBaseUrl,
+  fallbackFdIds,
+  participantOverrides
+} = {}) {
   const nextDsl = structuredClone(dsl);
   const configuredFallbacks = resolveTemporaryOrgFallbacks(fallbackFdIds);
   const elementCache = new Map();
@@ -40,16 +45,19 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
     elementCache
   });
   const identities = collectParticipantIdentities(nextDsl);
+  const explicitOverrides = prepareParticipantOverrides(identities, participantOverrides);
   if (identities.size === 0) {
     return {
       dsl: nextDsl,
       resolvedCount: 0,
       identityCount: 0,
       fallbackCount: 0,
-      fallbackIdentityCount: 0
+      fallbackIdentityCount: 0,
+      overrideCount: 0,
+      overrideIdentityCount: 0
     };
   }
-  const capabilityIssues = requiredClientCapabilityIssues(identities, client);
+  const capabilityIssues = requiredClientCapabilityIssues(identities, client, explicitOverrides);
   if (capabilityIssues.length) {
     throw new ParticipantResolutionError(capabilityIssues);
   }
@@ -59,18 +67,30 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
     [...identities.values()],
     1,
     async (identity) => {
+      const explicitOverride = explicitOverrides.get(normalizeText(identity.member?.sourceId));
       try {
+        if (explicitOverride) {
+          return await resolveExplicitParticipantOverride(
+            identity,
+            explicitOverride,
+            client,
+            elementCache
+          );
+        }
         return await resolveIdentity(identity, client, { searchCache, elementCache });
       } catch (error) {
         if (error instanceof ParticipantResolutionError) throw error;
         return {
           ...identity,
           issue: {
-          reason: identity.kind === "target" ? "target_validation_failed" : "search_failed",
-          name: identity.member.name,
-          sourceId: identity.member.sourceId,
-          paths: identity.paths,
-          message: error instanceof Error ? error.message : String(error)
+            reason: explicitOverride
+              ? "override_target_validation_failed"
+              : identity.kind === "target" ? "target_validation_failed" : "search_failed",
+            name: identity.member.name,
+            sourceId: identity.member.sourceId,
+            ...(explicitOverride ? { targetId: explicitOverride.targetFdId } : {}),
+            paths: identity.paths,
+            message: error instanceof Error ? error.message : String(error)
           }
         };
       }
@@ -128,8 +148,14 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
     throw new ParticipantResolutionError(issues);
   }
 
+  const overrideResolutions = resolutions.filter((resolution) => resolution.override);
+  const overrideAudits = overrideResolutions.map(buildParticipantOverrideAudit);
+  const overrideTargetIds = [...new Set(
+    overrideResolutions.map((resolution) => resolution.target.fdId)
+  )].sort();
   let resolvedCount = 0;
   let fallbackCount = configuredFormulaFallback.referenceCount;
+  let overrideCount = 0;
   for (const resolution of resolutions) {
     for (const member of resolution.members) {
       member.id = resolution.target.fdId;
@@ -137,6 +163,7 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
       member.targetOrgType = resolution.target.fdOrgType;
       if (resolution.kind === "source") resolvedCount += 1;
       if (resolution.fallback) fallbackCount += 1;
+      if (resolution.override) overrideCount += 1;
     }
   }
   deduplicateResolvedParticipantCollections(nextDsl);
@@ -152,11 +179,183 @@ export async function resolveWorkflowParticipants(dsl, { client, targetBaseUrl, 
     identityCount: identities.size,
     fallbackCount,
     fallbackIdentityCount: configuredFormulaFallback.identityCount + fallbackResolutions.length,
+    overrideCount,
+    overrideIdentityCount: overrideResolutions.length,
+    ...(overrideCount ? {
+      overrideTargetIds,
+      overrides: overrideAudits
+    } : {}),
     ...(fallbackCount ? {
       fallbackTargetIds,
       fallbackTargetsByOrgType,
       ...(fallbackTargetIds.length === 1 ? { fallbackTargetId: fallbackTargetIds[0] } : {})
     } : {})
+  };
+}
+
+function prepareParticipantOverrides(identities, overrides) {
+  if (overrides === undefined) return new Map();
+  if (!Array.isArray(overrides)) {
+    throw new ParticipantResolutionError([{
+      reason: "override_configuration_invalid",
+      message: "Explicit participant overrides must be an array of sourceId/targetFdId mappings.",
+      paths: ["/execute/participantOverrides"]
+    }]);
+  }
+
+  const bySourceId = new Map();
+  const issues = [];
+  overrides.forEach((override, index) => {
+    const path = `/execute/participantOverrides/${index}`;
+    const sourceId = normalizeText(override?.sourceId);
+    const targetFdId = normalizeText(override?.targetFdId);
+    if (!override || typeof override !== "object" || !sourceId || !targetFdId) {
+      issues.push({
+        reason: "override_configuration_invalid",
+        sourceId,
+        targetId: targetFdId,
+        paths: [path],
+        message: "Each explicit participant override requires non-empty sourceId and targetFdId."
+      });
+      return;
+    }
+    if (bySourceId.has(sourceId)) {
+      issues.push({
+        reason: "override_source_duplicate",
+        sourceId,
+        targetId: targetFdId,
+        paths: [path],
+        message: "A source participant may be explicitly overridden only once."
+      });
+      return;
+    }
+    bySourceId.set(sourceId, { sourceId, targetFdId, path });
+  });
+
+  const presentSourceIds = new Set(
+    [...identities.values()]
+      .filter((identity) => identity.kind === "source")
+      .map((identity) => normalizeText(identity.member?.sourceId))
+      .filter(Boolean)
+  );
+  for (const override of bySourceId.values()) {
+    const matchingIdentities = [...identities.values()].filter((identity) => (
+      identity.kind === "source" &&
+      normalizeText(identity.member?.sourceId) === override.sourceId
+    ));
+    if (!presentSourceIds.has(override.sourceId)) {
+      issues.push({
+        reason: "override_source_not_found",
+        sourceId: override.sourceId,
+        targetId: override.targetFdId,
+        paths: [override.path],
+        message: "Explicit participant override sourceId does not exist in the trusted DSL."
+      });
+    } else if (matchingIdentities.length !== 1) {
+      issues.push({
+        reason: "override_source_ambiguous",
+        sourceId: override.sourceId,
+        targetId: override.targetFdId,
+        paths: [
+          override.path,
+          ...matchingIdentities.flatMap((identity) => identity.paths)
+        ],
+        message: "Explicit participant override sourceId refers to multiple distinct source identities."
+      });
+    }
+  }
+  if (issues.length) throw new ParticipantResolutionError(issues);
+  return bySourceId;
+}
+
+async function resolveExplicitParticipantOverride(identity, override, client, elementCache) {
+  const evidenceIssue = validateSourceEvidence(identity);
+  if (evidenceIssue) {
+    return {
+      ...identity,
+      issue: {
+        ...evidenceIssue,
+        reason: "override_source_evidence_invalid",
+        targetId: override.targetFdId
+      }
+    };
+  }
+
+  let candidatesPromise = elementCache.get(override.targetFdId);
+  if (!candidatesPromise) {
+    candidatesPromise = Promise.resolve(client.getElementInfo([override.targetFdId]));
+    elementCache.set(override.targetFdId, candidatesPromise);
+  }
+  const candidates = currentElementCandidates(await candidatesPromise);
+  const exactMatches = candidates.filter((candidate) => (
+    normalizeText(candidate.fdId) === override.targetFdId
+  ));
+  if (candidates.length !== 1 || exactMatches.length !== 1) {
+    return {
+      ...identity,
+      issue: {
+        reason: exactMatches.length === 0 ? "override_target_not_found" : "override_target_ambiguous",
+        name: identity.member.name,
+        sourceId: override.sourceId,
+        sourceOrgType: identity.member.sourceOrgType,
+        targetId: override.targetFdId,
+        paths: identity.paths,
+        candidateIds: candidates.map((candidate) => candidate.fdId)
+      }
+    };
+  }
+
+  const target = exactMatches[0];
+  const sourceOrgType = normalizeOrgType(identity.member.sourceOrgType);
+  const targetOrgType = normalizeOrgType(target.fdOrgType);
+  if (targetOrgType !== sourceOrgType) {
+    return {
+      ...identity,
+      issue: {
+        reason: "override_target_type_mismatch",
+        name: identity.member.name,
+        sourceId: override.sourceId,
+        sourceOrgType: identity.member.sourceOrgType,
+        targetId: override.targetFdId,
+        targetOrgType: target.fdOrgType,
+        expectedOrgType: identity.member.sourceOrgType,
+        paths: identity.paths
+      }
+    };
+  }
+
+  return {
+    ...identity,
+    target,
+    override: true,
+    overrideSpec: override
+  };
+}
+
+function buildParticipantOverrideAudit(resolution) {
+  const member = resolution.member;
+  return {
+    sourceEvidence: {
+      sourceId: normalizeText(member.sourceId),
+      name: normalizeText(member.name),
+      sourceOrgType: member.sourceOrgType,
+      ...(normalizeText(member.sourceOrgClass)
+        ? { sourceOrgClass: normalizeText(member.sourceOrgClass) }
+        : {}),
+      ...(normalizeText(member.sourceParentName)
+        ? { sourceParentName: normalizeText(member.sourceParentName) }
+        : {}),
+      ...(normalizeText(member.sourceLoginName)
+        ? { sourceLoginName: normalizeText(member.sourceLoginName) }
+        : {})
+    },
+    target: {
+      fdId: normalizeText(resolution.target.fdId),
+      fdName: normalizeText(resolution.target.fdName),
+      fdOrgType: resolution.target.fdOrgType
+    },
+    referenceCount: resolution.members.length,
+    paths: [...resolution.paths]
   };
 }
 
@@ -619,21 +818,37 @@ function hasSourceEvidence(member) {
   ].some((key) => Object.hasOwn(member, key));
 }
 
-function requiredClientCapabilityIssues(identities, client) {
+function requiredClientCapabilityIssues(identities, client, explicitOverrides = new Map()) {
   const issues = [];
   const values = [...identities.values()];
-  if (values.some((identity) => identity.kind === "source") && typeof client?.searchOrg !== "function") {
+  const searchedSources = values.filter((identity) => (
+    identity.kind === "source" &&
+    !explicitOverrides.has(normalizeText(identity.member?.sourceId))
+  ));
+  const overriddenSources = values.filter((identity) => (
+    identity.kind === "source" &&
+    explicitOverrides.has(normalizeText(identity.member?.sourceId))
+  ));
+  if (searchedSources.length > 0 && typeof client?.searchOrg !== "function") {
     issues.push({
       reason: "search_unavailable",
       message: "NewOA client does not provide current organization search.",
-      paths: values.filter((identity) => identity.kind === "source").flatMap((identity) => identity.paths)
+      paths: searchedSources.flatMap((identity) => identity.paths)
     });
   }
-  if (values.some((identity) => identity.kind === "target") && typeof client?.getElementInfo !== "function") {
+  const targetIdentities = values.filter((identity) => identity.kind === "target");
+  if (targetIdentities.length > 0 && typeof client?.getElementInfo !== "function") {
     issues.push({
       reason: "target_validation_unavailable",
       message: "NewOA client does not provide current organization element validation.",
-      paths: values.filter((identity) => identity.kind === "target").flatMap((identity) => identity.paths)
+      paths: targetIdentities.flatMap((identity) => identity.paths)
+    });
+  }
+  if (overriddenSources.length > 0 && typeof client?.getElementInfo !== "function") {
+    issues.push({
+      reason: "override_target_validation_unavailable",
+      message: "NewOA client does not provide explicit participant override target validation.",
+      paths: overriddenSources.flatMap((identity) => identity.paths)
     });
   }
   return issues;

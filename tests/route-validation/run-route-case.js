@@ -67,6 +67,7 @@ export async function runRouteCase(caseId) {
       targetCategoryId: "route-category-id",
       baseUrl: routeCase.baseUrl ?? NEWOA_SIT_BASE_URL,
       fallbackFdIds: routeCase.fallbackFdIds,
+      participantOverrides: routeCase.participantOverrides,
       now: new Date(FIXED_NOW)
     });
     const transcript = adapter.transcript();

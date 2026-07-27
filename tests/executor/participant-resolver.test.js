@@ -565,6 +565,171 @@ describe("resolveWorkflowParticipants", () => {
     assert.deepEqual(client.elementCalls, [["current-target-id"]]);
   });
 
+  it("applies an explicit sourceId override only after exact current-target validation", async () => {
+    const sourceId = "legacy-ambiguous-person";
+    const targetFdId = "current-mkpaas-person";
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "叶明明",
+      sourceId,
+      sourceOrgType: 8,
+      sourceParentName: "审批部"
+    })]);
+    const client = new SearchClient({
+      叶明明: [
+        currentOrg({ fdId: "same-name-a", fdName: "叶明明", fdOrgType: 8, fdParentName: "审批部" }),
+        currentOrg({ fdId: "same-name-b", fdName: "叶明明", fdOrgType: 8, fdParentName: "审批部" })
+      ]
+    }, {
+      [targetFdId]: [currentOrg({
+        fdId: targetFdId,
+        fdName: "mkpaas",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      participantOverrides: [{ sourceId, targetFdId }]
+    });
+    const member = result.dsl.workflow.nodes[1].participants.members[0];
+
+    assert.equal(member.id, targetFdId);
+    assert.equal(member.name, "mkpaas");
+    assert.equal(member.targetOrgType, 8);
+    assert.equal(member.sourceId, sourceId);
+    assert.equal(member.sourceOrgType, 8);
+    assert.equal(member.sourceParentName, "审批部");
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[targetFdId]]);
+    assert.equal(result.overrideCount, 1);
+    assert.equal(result.overrideIdentityCount, 1);
+    assert.deepEqual(result.overrideTargetIds, [targetFdId]);
+    assert.deepEqual(result.overrides, [{
+      sourceEvidence: {
+        sourceId,
+        name: "叶明明",
+        sourceOrgType: 8,
+        sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        sourceParentName: "审批部"
+      },
+      target: {
+        fdId: targetFdId,
+        fdName: "mkpaas",
+        fdOrgType: 8
+      },
+      referenceCount: 1,
+      paths: ["/workflow/nodes/1/participants/members/0"]
+    }]);
+  });
+
+  it("rejects an explicit participant override whose current target has an incompatible org type", async () => {
+    const sourceId = "legacy-person-for-wrong-target";
+    const targetFdId = "current-department-target";
+    const dsl = dslWithExplicitMembers([sourceMember({ sourceId, sourceOrgType: 8 })]);
+    const client = new SearchClient({}, {
+      [targetFdId]: [currentOrg({
+        fdId: targetFdId,
+        fdName: "错误部门目标",
+        fdOrgType: 2
+      })]
+    });
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        participantOverrides: [{ sourceId, targetFdId }]
+      }),
+      (error) => {
+        assert.equal(error instanceof ParticipantResolutionError, true);
+        assert.deepEqual(error.issues.map((issue) => issue.reason), ["override_target_type_mismatch"]);
+        assert.equal(error.issues[0].expectedOrgType, 8);
+        assert.equal(error.issues[0].targetOrgType, 2);
+        return true;
+      }
+    );
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[targetFdId]]);
+  });
+
+  it("rejects unknown and ambiguous sourceIds in explicit participant override configuration", async () => {
+    const dsl = dslWithExplicitMembers([
+      sourceMember({ name: "审批人甲", sourceId: "shared-source-id", sourceParentName: "甲部门" }),
+      sourceMember({ name: "审批人乙", sourceId: "shared-source-id", sourceParentName: "乙部门" })
+    ]);
+    const client = new SearchClient();
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        participantOverrides: [{
+          sourceId: "shared-source-id",
+          targetFdId: "target-person-id"
+        }]
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) => issue.reason === "override_source_ambiguous")
+    );
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        participantOverrides: [{
+          sourceId: "missing-source-id",
+          targetFdId: "target-person-id"
+        }]
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) => issue.reason === "override_source_not_found")
+    );
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, []);
+  });
+
+  it("keeps explicit-override and temporary-fallback accounting separate when they share a target", async () => {
+    const targetFdId = "shared-current-person";
+    const explicitSourceId = "legacy-explicit-person";
+    const dsl = dslWithExplicitMembers([
+      sourceMember({
+        name: "明确覆盖人员",
+        sourceId: explicitSourceId,
+        sourceParentName: "审批部"
+      }),
+      sourceMember({
+        name: "当前环境缺失人员",
+        sourceId: "legacy-missing-person",
+        sourceParentName: "审批部"
+      })
+    ]);
+    const client = new SearchClient({
+      当前环境缺失人员: []
+    }, {
+      [targetFdId]: [currentOrg({
+        fdId: targetFdId,
+        fdName: "mkpaas",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: NEWOA_SIT_BASE_URL,
+      fallbackFdIds: { person: targetFdId },
+      participantOverrides: [{ sourceId: explicitSourceId, targetFdId }]
+    });
+
+    assert.equal(result.overrideCount, 1);
+    assert.equal(result.overrideIdentityCount, 1);
+    assert.equal(result.fallbackCount, 1);
+    assert.equal(result.fallbackIdentityCount, 1);
+    assert.deepEqual(result.overrideTargetIds, [targetFdId]);
+    assert.deepEqual(result.fallbackTargetIds, [targetFdId]);
+    assert.deepEqual(client.calls, ["当前环境缺失人员"]);
+    assert.deepEqual(client.elementCalls, [[targetFdId]]);
+    assert.deepEqual(
+      result.dsl.workflow.nodes[1].participants.members.map((member) => member.id),
+      [targetFdId]
+    );
+  });
+
   it("requires exact name, parent, and type for other organization kinds", async () => {
     const dsl = dslWithExplicitMembers([sourceMember({
       name: "区域角色",
@@ -828,6 +993,56 @@ describe("executeDsl participant resolution seam", () => {
       result.apiStages.find((stage) => stage.name === "resolveWorkflowParticipants").fallbackTargetIds,
       [personFdId]
     );
+  });
+
+  it("reports an audited warning when execution applies an explicit participant override", async () => {
+    const sourceId = "legacy-explicit-person";
+    const targetFdId = "current-explicit-person";
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "叶明明",
+      sourceId,
+      sourceOrgType: 8,
+      sourceParentName: "审批部"
+    })]);
+    const client = new CompleteSearchClient({}, {
+      [targetFdId]: [currentOrg({
+        fdId: targetFdId,
+        fdName: "mkpaas",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await executeDsl(dsl, {
+      client,
+      credentials: { username: "route-user", encryptedPassword: "route-password" },
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      participantOverrides: [{ sourceId, targetFdId }],
+      now: new Date("2026-07-10T10:00:00.000Z")
+    });
+    const workflow = JSON.parse(client.savedTemplate.mechanisms.lbpmTemplate[0].fdContent);
+    const members = workflow.elements.find((element) => element.id === "N-review").handlers.members;
+    const stage = result.apiStages.find((item) => item.name === "resolveWorkflowParticipants");
+    const warning = result.diagnostics.find((item) => (
+      item.code === "workflow.participant_explicit_override_applied"
+    ));
+
+    assert.equal(result.ok, true);
+    assert.equal(result.status, "written_with_warnings");
+    assert.deepEqual(members.map(({ id, name }) => ({ id, name })), [{
+      id: targetFdId,
+      name: "mkpaas"
+    }]);
+    assert.equal(stage.overrideCount, 1);
+    assert.equal(stage.overrideIdentityCount, 1);
+    assert.deepEqual(stage.overrideTargetIds, [targetFdId]);
+    assert.equal(stage.overrides[0].sourceEvidence.sourceId, sourceId);
+    assert.equal(stage.overrides[0].sourceEvidence.name, "叶明明");
+    assert.equal(stage.overrides[0].target.fdId, targetFdId);
+    assert.equal(warning.details.referenceCount, 1);
+    assert.equal(warning.details.overrides[0].sourceEvidence.sourceParentName, "审批部");
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[targetFdId]]);
   });
 
   it("projects current NewOA participant ids instead of the source ids", async () => {

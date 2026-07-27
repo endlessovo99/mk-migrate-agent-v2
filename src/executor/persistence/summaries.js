@@ -1,4 +1,5 @@
 import { componentSupportsProp } from "../../dsl/catalogs.js";
+import { digestText } from "./normalize.js";
 
 export function buildFormSummary(observedForm, observedRules, observedScripts) {
   const fields = (observedForm?.fields || []).map((field) => ({
@@ -16,12 +17,26 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
     ...summarizeSemanticProps(field),
     style: field.props?.style,
     dataOnly: field.dataOnly === true,
+    ...(Array.isArray(field.renderedColumnIds)
+      ? { renderedColumnIds: [...field.renderedColumnIds] }
+      : {}),
+    ...(field.renderedColumnIdsByScene &&
+      typeof field.renderedColumnIdsByScene === "object"
+      ? {
+          renderedColumnIdsByScene: Object.fromEntries(
+            Object.entries(field.renderedColumnIdsByScene)
+              .filter(([, columnIds]) => Array.isArray(columnIds))
+              .map(([scene, columnIds]) => [scene, [...columnIds]])
+          )
+        }
+      : {}),
     columns: (field.columns || []).map((column) => ({
       id: column.id,
       title: column.title,
       type: column.type,
       component: column.component,
       required: column.props?.required === true,
+      dataOnly: column.dataOnly === true,
       ...(componentSupportsProp(column.component, "placeholder") && column.props?.placeholder !== undefined
         ? { placeholder: column.props.placeholder }
         : {}),
@@ -139,6 +154,29 @@ function summarizeSemanticProps(field) {
   }
   if (componentSupportsProp(field.component, "calculation") && field.props?.calculation !== undefined) {
     props.calculation = field.props.calculation;
+  }
+  if (componentSupportsProp(field.component, "content") && field.props?.content !== undefined) {
+    props.content = field.props.content;
+  }
+  if (componentSupportsProp(field.component, "hasLink") && field.props?.hasLink === true) {
+    props.hasLink = true;
+  }
+  if (componentSupportsProp(field.component, "link") && field.props?.link !== undefined) {
+    props.link = field.props.link;
+  }
+  if (
+    componentSupportsProp(field.component, "rowOptions") &&
+    field.props?.rowOptions
+  ) {
+    const rowOptions = field.props.rowOptions;
+    props.rowOptions = {
+      dependencyFieldId: rowOptions.dependencyFieldId,
+      dependencyRef: rowOptions.dependencyRef,
+      cases: rowOptions.cases,
+      defaultOptions: rowOptions.defaultOptions,
+      optionSource: rowOptions.optionSource,
+      jsDigest: digestText(rowOptions.js)
+    };
   }
   return props;
 }

@@ -23,6 +23,7 @@ import {
   renderDispatcherInvocation
 } from "./script-dispatcher-contract.js";
 import { inspectLeadingViewStatusGuard } from "./view-status-guard.js";
+import { componentSupportsProp } from "../../dsl/catalogs.js";
 
 const CURRENT_TIME_INITIALIZER = 'function(e){var t=(e||{}).controlProps||{},r=t.defaultValueType,n=t.value;if("now"===r&&void 0===n){var o=(new Date).valueOf();return e.controlProps.value=o,o}}';
 const DATE_TIME_OUTPUT_PATTERN = "yyyy-MM-dd hh:mm";
@@ -185,6 +186,10 @@ function observeForm(config, xform, options = {}) {
     .map((field) => observeDataField(field, lang));
   const detailFields = detailModels.map((model) => observeDetailField(model, models.indexOf(model), lang));
   const fields = [...mainFields, ...detailFields];
+  const renderedDetailColumnsByScene = {
+    desktop: new Map(),
+    mobile: new Map()
+  };
 
   const viewModelResult = requireArray(config.viewModel, {
     partition: "form",
@@ -196,8 +201,21 @@ function observeForm(config, xform, options = {}) {
     formDiagnostics.push(viewModelResult.diagnostic);
   } else {
     layoutRows = observeLayoutRows(viewModelResult.value[0], detailModels, formDiagnostics, {
-      fieldIds: new Set(fields.map((field) => field.id).filter(Boolean))
+      fieldIds: new Set(fields.map((field) => field.id).filter(Boolean)),
+      renderedDetailColumnsByScene
     });
+    for (const field of detailFields) {
+      field.renderedColumnIdsByScene = Object.fromEntries(
+        Object.entries(renderedDetailColumnsByScene).flatMap(([scene, columnsByField]) =>
+          columnsByField.has(field.id)
+            ? [[scene, [...columnsByField.get(field.id)]]]
+            : []
+        )
+      );
+      field.renderedColumnIds = [...new Set(
+        Object.values(field.renderedColumnIdsByScene).flat()
+      )];
+    }
     applyViewControlStyles(fields, viewModelResult.value[0]);
   }
 
@@ -327,6 +345,7 @@ function observeDetailField(model, modelIndex, lang) {
         title: normalizeScalar(field.fdLabel || controlProps.title || ""),
         type: inferFieldType(field, controlProps),
         component: inferComponent(field, controlProps),
+        dataOnly: field.fdDisplay === false,
         props: observeExecutableProps(controlProps, { field, lang, attribute }),
         persistence: {
           fieldIndex,
@@ -403,6 +422,7 @@ function observeNativeControlBinding(value) {
 
 function observeExecutableProps(controlProps = {}, native = {}) {
   const props = {};
+  const component = inferComponent(native.field, controlProps);
   if (controlProps.required === true) props.required = true;
   if (hasCompleteHiddenLabelEvidence(controlProps, native.attribute)) {
     props.hiddenLabel = true;
@@ -425,6 +445,17 @@ function observeExecutableProps(controlProps = {}, native = {}) {
       value: normalizeScalar(option.value ?? option.label ?? option.text)
     }));
   }
+  if (
+    controlProps["$$tableType"] === "detail" &&
+    inferComponent(native.field, controlProps) === "xform-select" &&
+    controlProps.multi !== true &&
+    (
+      controlProps.optionSource !== undefined ||
+      controlProps.js !== undefined
+    )
+  ) {
+    props.rowOptions = observeNativeDetailRowOptions(controlProps);
+  }
   if (controlProps.multi === true) props.multi = true;
   if (native.field?.fdType === "hyperlinks" || controlProps.desktop?.type === "@elem/xform-hyperlinks") {
     if (controlProps.largestSet !== undefined) props.largestSet = controlProps.largestSet;
@@ -436,7 +467,19 @@ function observeExecutableProps(controlProps = {}, native = {}) {
   if (displayPattern !== undefined) props.displayPattern = displayPattern;
   const defaultValue = observeNativeDefaultValue(controlProps, native.field);
   if (defaultValue) props.defaultValue = defaultValue;
-  if (controlProps.content !== undefined) props.content = normalizeScalar(controlProps.content);
+  if (controlProps.content !== undefined) {
+    props.content = normalizeScalar(controlProps.content);
+  } else if (component === "xform-description" && controlProps.defaultTextValue !== undefined) {
+    props.content = observedDescriptionContent(controlProps.defaultTextValue, native.lang);
+  }
+  if (
+    component === "xform-description" &&
+    controlProps.hasLink === true &&
+    typeof controlProps.link === "string"
+  ) {
+    props.hasLink = true;
+    props.link = normalizeScalar(controlProps.link);
+  }
   if (Array.isArray(controlProps.links) && controlProps.links.length) {
     props.links = controlProps.links.map((link) => ({
       name: normalizeScalar(link.name),
@@ -448,8 +491,147 @@ function observeExecutableProps(controlProps = {}, native = {}) {
       url: normalizeScalar(option.value ?? option.url ?? option.label)
     }));
   }
-  if (controlProps.maxLength !== undefined) props.maxLength = controlProps.maxLength;
+  if (
+    controlProps.maxLength !== undefined &&
+    componentSupportsProp(component, "maxLength")
+  ) {
+    props.maxLength = controlProps.maxLength;
+  }
   return props;
+}
+
+function observedDescriptionContent(value, lang = {}) {
+  const token = normalizeScalar(value);
+  const content = lang?.[token]?.content;
+  if (content && typeof content === "object" && !Array.isArray(content)) {
+    return normalizeScalar(content.Cn ?? content.default ?? token);
+  }
+  return token;
+}
+
+function observeNativeDetailRowOptions(controlProps) {
+  const optionSource = controlProps.optionSource;
+  const js = typeof controlProps.js === "string" ? controlProps.js : "";
+  const parsed = parseCanonicalDetailRowOptionsJs(js);
+  const tableName = normalizeScalar(controlProps["$$tableName"]);
+  const dependencyPrefix = `${tableName}.`;
+  if (
+    !parsed ||
+    !tableName ||
+    !parsed.dependencyRef.startsWith(dependencyPrefix) ||
+    parsed.dependencyRef.length <= dependencyPrefix.length
+  ) {
+    return {
+      dependencyFieldId: "",
+      dependencyRef: parsed?.dependencyRef || "",
+      cases: parsed?.cases || [],
+      defaultOptions: parsed?.defaultOptions || [],
+      optionSource,
+      js,
+      canonical: false
+    };
+  }
+  return {
+    dependencyFieldId: parsed.dependencyRef.slice(dependencyPrefix.length),
+    dependencyRef: parsed.dependencyRef,
+    cases: parsed.cases,
+    defaultOptions: parsed.defaultOptions,
+    optionSource,
+    js
+  };
+}
+
+function parseCanonicalDetailRowOptionsJs(js) {
+  const prefix = "function (controlProps, rowNum, MKXFORM) {var cases=";
+  if (typeof js !== "string" || !js.startsWith(prefix)) return undefined;
+
+  const cases = readJsonValue(js, prefix.length);
+  if (!cases || !Array.isArray(cases.value)) return undefined;
+  const defaultPrefix = ";var defaultOptions=";
+  if (!js.startsWith(defaultPrefix, cases.end)) return undefined;
+
+  const defaultOptions = readJsonValue(js, cases.end + defaultPrefix.length);
+  if (!defaultOptions || !Array.isArray(defaultOptions.value)) return undefined;
+  const valuePrefix = ";var value=MKXFORM.getValue(";
+  if (!js.startsWith(valuePrefix, defaultOptions.end)) return undefined;
+
+  const dependency = readJsonValue(js, defaultOptions.end + valuePrefix.length);
+  if (!dependency || typeof dependency.value !== "string") return undefined;
+  const middle =
+    ",{detailRowIndex:rowNum});var options=defaultOptions;" +
+    "for(var index=0;index<cases.length;index+=1){" +
+    "if(cases[index].value===String(value)){options=cases[index].options;break;}}" +
+    "return {options:options,deps:[";
+  if (!js.startsWith(middle, dependency.end)) return undefined;
+
+  const depsDependency = readJsonValue(js, dependency.end + middle.length);
+  if (
+    !depsDependency ||
+    typeof depsDependency.value !== "string" ||
+    depsDependency.value !== dependency.value ||
+    js.slice(depsDependency.end) !== "]};}"
+  ) {
+    return undefined;
+  }
+
+  return {
+    dependencyRef: dependency.value,
+    cases: cases.value,
+    defaultOptions: defaultOptions.value
+  };
+}
+
+function readJsonValue(text, offset) {
+  const opening = text[offset];
+  if (!["[", "{", '"'].includes(opening)) return undefined;
+  const stack = [];
+  let inString = false;
+  let escaped = false;
+
+  for (let index = offset; index < text.length; index += 1) {
+    const char = text[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+        if (opening === '"' && stack.length === 0) {
+          return parseJsonSlice(text, offset, index + 1);
+        }
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === "[" || char === "{") {
+      stack.push(char);
+      continue;
+    }
+    if (char === "]" || char === "}") {
+      const expectedOpening = char === "]" ? "[" : "{";
+      if (stack.pop() !== expectedOpening) return undefined;
+      if (stack.length === 0) {
+        return parseJsonSlice(text, offset, index + 1);
+      }
+    }
+  }
+  return undefined;
+}
+
+function parseJsonSlice(text, start, end) {
+  try {
+    return {
+      value: JSON.parse(text.slice(start, end)),
+      end
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 function hasCompleteHiddenLabelEvidence(controlProps, attribute) {
@@ -565,6 +747,9 @@ function observeNativeDefaultValue(controlProps, field) {
   const formula = controlProps.defaultValueFormulaVO || font.defaultValueFormulaVO;
   if (type !== "formula" || !formula || typeof formula !== "object") return undefined;
   const script = String(formula.script ?? "").trim();
+  if (script === "${data.biz.fdCreator.post}") {
+    return { kind: "context", source: "creatorPost" };
+  }
   const context = script.match(/^\$\{data\.biz\.(fdCreator|fdCreatorDept)(?:\.(fdName))?\}$/u);
   if (context) {
     return {
@@ -773,6 +958,19 @@ function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
     detailModels.map((model) => [model.fdTableName, detailFieldNameForModel(model)])
   );
   const fieldIds = options.fieldIds instanceof Set ? options.fieldIds : new Set();
+  const renderedDetailColumnsByScene =
+    options.renderedDetailColumnsByScene &&
+    typeof options.renderedDetailColumnsByScene === "object"
+      ? options.renderedDetailColumnsByScene
+      : {};
+  const desktopRenderedDetailColumns =
+    renderedDetailColumnsByScene.desktop instanceof Map
+      ? renderedDetailColumnsByScene.desktop
+      : new Map();
+  const mobileRenderedDetailColumns =
+    renderedDetailColumnsByScene.mobile instanceof Map
+      ? renderedDetailColumnsByScene.mobile
+      : new Map();
   const sceneConfigResult = decodeRequiredJsonObject(viewModel?.fdConfig, {
     partition: "form",
     decodePath: "/mechanisms/sys-xform/fdConfig/viewModel/0/fdConfig",
@@ -798,16 +996,76 @@ function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
 
   const main = (root.children || []).find((child) => child?.key === "main") || root.children?.[0];
   const rows = Array.isArray(main?.children) ? main.children : [];
-  return rows.map((row, rowIndex) => observeNativeLayoutRow(
+  const observedRows = rows.map((row, rowIndex) => observeNativeLayoutRow(
     row,
     rowIndex,
     detailByTable,
     fieldIds,
+    desktopRenderedDetailColumns,
     diagnostics
   )).filter(Boolean);
+  const mobileRoots = sceneConfigResult.value?.view?.render?.mobile;
+  if (mobileRoots === undefined || mobileRoots === null) {
+    diagnostics.push(diagnostic({
+      level: "error",
+      code: "readback.decode.viewModel.render_scene_missing",
+      message: "Readback viewModel is missing mobile render.",
+      partition: "form",
+      decodePath: "/mechanisms/sys-xform/fdConfig/viewModel/0/fdConfig/view/render/mobile",
+      details: { scene: "mobile" }
+    }));
+    return observedRows;
+  }
+  if (!Array.isArray(mobileRoots)) {
+    diagnostics.push(diagnostic({
+      level: "error",
+      code: "readback.decode.viewModel.render_scene_array_required",
+      message: "Readback mobile render must be an array.",
+      partition: "form",
+      decodePath: "/mechanisms/sys-xform/fdConfig/viewModel/0/fdConfig/view/render/mobile",
+      details: {
+        scene: "mobile",
+        actual: nativeValueType(mobileRoots)
+      }
+    }));
+    return observedRows;
+  }
+  if (
+    mobileRoots.length === 0 ||
+    mobileRoots.some((mobileRoot) =>
+      !mobileRoot ||
+      typeof mobileRoot !== "object" ||
+      Array.isArray(mobileRoot)
+    )
+  ) {
+    diagnostics.push(diagnostic({
+      level: "error",
+      code: "readback.decode.viewModel.render_scene_root_required",
+      message: "Readback mobile render must contain object roots.",
+      partition: "form",
+      decodePath: "/mechanisms/sys-xform/fdConfig/viewModel/0/fdConfig/view/render/mobile",
+      details: { scene: "mobile" }
+    }));
+    return observedRows;
+  }
+  for (const mobileRoot of mobileRoots) {
+    collectRenderedDetailColumns(
+      mobileRoot,
+      detailByTable,
+      mobileRenderedDetailColumns
+    );
+  }
+  return observedRows;
 }
 
-function observeNativeLayoutRow(row, rowIndex, detailByTable, knownFieldIds, diagnostics) {
+function observeNativeLayoutRow(
+  row,
+  rowIndex,
+  detailByTable,
+  knownFieldIds,
+  renderedDetailColumns,
+  diagnostics
+) {
   if (row?.type !== "layout") return undefined;
   const grid = (row.children || []).find((child) => child?.type === "@elem/layout-grid");
   if (!grid) return undefined;
@@ -836,6 +1094,7 @@ function observeNativeLayoutRow(row, rowIndex, detailByTable, knownFieldIds, dia
           fieldRef,
           detailByTable,
           knownFieldIds,
+          renderedDetailColumns,
           diagnostics,
           `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/children/${refIndex}`
         ))
@@ -896,6 +1155,7 @@ function nativeFieldIdsFromRef(
   fieldRef,
   detailByTable,
   knownFieldIds,
+  renderedDetailColumns,
   diagnostics,
   decodePath
 ) {
@@ -911,7 +1171,15 @@ function nativeFieldIdsFromRef(
     }));
     return [];
   }
-  if (detailByTable.has(fieldRef.key)) return [normalizeScalar(detailByTable.get(fieldRef.key))];
+  if (detailByTable.has(fieldRef.key)) {
+    const detailFieldId = normalizeScalar(detailByTable.get(fieldRef.key));
+    observeRenderedDetailColumns(
+      fieldRef,
+      detailFieldId,
+      renderedDetailColumns
+    );
+    return [detailFieldId];
+  }
   if (knownFieldIds.has(fieldRef.key)) return [normalizeScalar(fieldRef.key)];
   if (fieldRef.key) {
     diagnostics.push(diagnostic({
@@ -928,6 +1196,34 @@ function nativeFieldIdsFromRef(
     return [normalizeScalar(fieldRef.key)];
   }
   return [];
+}
+
+function observeRenderedDetailColumns(
+  fieldRef,
+  detailFieldId,
+  renderedDetailColumns
+) {
+  const columnIds = Array.isArray(fieldRef.children)
+    ? fieldRef.children.map((child) => normalizeScalar(child?.key)).filter(Boolean)
+    : [];
+  renderedDetailColumns.set(
+    detailFieldId,
+    [...new Set([...(renderedDetailColumns.get(detailFieldId) || []), ...columnIds])]
+  );
+}
+
+function collectRenderedDetailColumns(value, detailByTable, renderedDetailColumns) {
+  if (!value || typeof value !== "object") return;
+  if (detailByTable.has(value.key)) {
+    observeRenderedDetailColumns(
+      value,
+      normalizeScalar(detailByTable.get(value.key)),
+      renderedDetailColumns
+    );
+  }
+  for (const child of Array.isArray(value) ? value : Object.values(value)) {
+    collectRenderedDetailColumns(child, detailByTable, renderedDetailColumns);
+  }
 }
 
 function nativeRefType(fieldRef, detailByTable, knownFieldIds) {
@@ -1270,9 +1566,15 @@ function observeWorkflow(lbpm) {
   );
   const initiatorSelectTargetNodeIds = collectInitiatorSelectTargetNodeIds(nodes);
   for (const nodeId of collectFormulaHandlerNodeIds(nodes)) initiatorSelectTargetNodeIds.delete(nodeId);
-  const formAuths = lbpm.fdTemplateFormAuths && typeof lbpm.fdTemplateFormAuths === "object"
-    ? lbpm.fdTemplateFormAuths
-    : {};
+  const formAuthsResult = lbpm.fdTemplateFormAuths === undefined
+    ? { ok: true, value: {} }
+    : requireRecord(lbpm.fdTemplateFormAuths, {
+      partition: "workflow",
+      decodePath: "/mechanisms/lbpmTemplate/0/fdTemplateFormAuths",
+      code: "readback.decode.workflow.data_authority.form_auths_object_required"
+    });
+  if (!formAuthsResult.ok) diagnostics.push(formAuthsResult.diagnostic);
+  const formAuths = formAuthsResult.ok ? formAuthsResult.value : {};
 
   const value = {
     readable: true,
@@ -1294,7 +1596,10 @@ function observeWorkflow(lbpm) {
       sendConfig: observeSendConfig(node),
       manualBranch: observeManualBranch(node),
       parallelGateway: observeParallelGateway(node),
-      dataAuthority: observeDataAuthority(formAuths[node.id]),
+      dataAuthority: observeDataAuthority(formAuths[node.id], {
+        diagnostics,
+        nodeId: normalizeScalar(node.id)
+      }),
       timeout: observeNodeTimeoutConfig(node),
       ignoreOnSameIdentity: node.ignoreOnSameIdentity === undefined
         ? undefined
@@ -1715,25 +2020,217 @@ function splitRelatedNodeIds(value = "") {
   )];
 }
 
-function observeDataAuthority(auth) {
-  if (!auth || typeof auth !== "object") return undefined;
+function observeDataAuthority(auth, context = {}) {
+  if (auth === undefined || auth === null) return undefined;
+  if (typeof auth !== "object" || Array.isArray(auth)) {
+    pushDataAuthorityDecodeDiagnostic(context, {
+      code: "readback.decode.workflow.data_authority.object_required",
+      message: "Readback workflow data authority must be an object.",
+      decodePath: dataAuthorityDecodePath(context.nodeId),
+      actual: nativeValueType(auth)
+    });
+    return undefined;
+  }
   const fields = {};
+  const detailColumnBindings = {};
+  const detailTables = {};
   for (const [key, value] of Object.entries(auth)) {
-    // Skip physical detail-table aggregate entries (operations / table-level flags).
-    if (isPhysicalDetailTableAuthKey(key)) continue;
+    const entryPath = dataAuthorityDecodePath(context.nodeId, key);
+    const authority = observeDataAuthorityFlags(value, {
+      ...context,
+      decodePath: entryPath
+    });
+    if (isPhysicalDetailTableAuthKey(key)) {
+      detailTables[key] = {
+        ...authority,
+        operations: observeDetailTableOperationState(value?.operations, {
+          ...context,
+          decodePath: `${entryPath}/operations`
+        })
+      };
+      continue;
+    }
     const fieldId = authFieldIdFromKey(key);
     if (!fieldId) continue;
-    fields[fieldId] = {
-      visible: normalizeBoolean(value?.isShow),
-      editable: normalizeBoolean(value?.isEdit),
-      required: normalizeBoolean(value?.isRequire)
-    };
+    if (Object.hasOwn(fields, fieldId)) {
+      pushDataAuthorityDecodeDiagnostic(context, {
+        code: "readback.decode.workflow.data_authority.field_id_duplicate",
+        message: "Readback workflow data authority contains duplicate canonical field ids.",
+        decodePath: entryPath,
+        actual: fieldId
+      });
+      continue;
+    }
+    fields[fieldId] = authority;
+    const separatorIndex = key.lastIndexOf(".");
+    if (separatorIndex >= 0) {
+      detailColumnBindings[fieldId] = key.slice(0, separatorIndex);
+    }
   }
-  if (!Object.keys(fields).length) return undefined;
+  if (!Object.keys(fields).length && !Object.keys(detailTables).length) return undefined;
   return {
     enabled: true,
-    fields
+    fields,
+    ...(Object.keys(detailColumnBindings).length ? { detailColumnBindings } : {}),
+    ...(Object.keys(detailTables).length ? { detailTables } : {})
   };
+}
+
+function observeDataAuthorityFlags(value, context) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    pushDataAuthorityDecodeDiagnostic(context, {
+      code: "readback.decode.workflow.data_authority.entry_object_required",
+      message: "Readback workflow data-authority entry must be an object.",
+      decodePath: context.decodePath,
+      actual: nativeValueType(value)
+    });
+    return { visible: false, editable: false, required: false };
+  }
+
+  return {
+    visible: observeDataAuthorityBoolean(value.isShow, {
+      ...context,
+      decodePath: `${context.decodePath}/isShow`
+    }),
+    editable: observeDataAuthorityBoolean(value.isEdit, {
+      ...context,
+      decodePath: `${context.decodePath}/isEdit`
+    }),
+    required: observeDataAuthorityBoolean(value.isRequire, {
+      ...context,
+      decodePath: `${context.decodePath}/isRequire`
+    })
+  };
+}
+
+function observeDataAuthorityBoolean(value, context) {
+  if (typeof value === "boolean") return value;
+  pushDataAuthorityDecodeDiagnostic(context, {
+    code: value === undefined
+      ? "readback.decode.workflow.data_authority.boolean_missing"
+      : "readback.decode.workflow.data_authority.boolean_wrong_type",
+    message: value === undefined
+      ? "Readback workflow data-authority boolean is missing."
+      : "Readback workflow data-authority boolean has the wrong type.",
+    decodePath: context.decodePath,
+    actual: value === undefined ? undefined : nativeValueType(value)
+  });
+  return false;
+}
+
+function observeDetailTableOperationState(value, context) {
+  if (typeof value !== "string") {
+    pushDataAuthorityDecodeDiagnostic(context, {
+      code: value === undefined
+        ? "readback.decode.workflow.data_authority.operations_missing"
+        : "readback.decode.workflow.data_authority.operations_wrong_type",
+      message: value === undefined
+        ? "Readback detail-table operations are missing."
+        : "Readback detail-table operations must be JSON text.",
+      decodePath: context.decodePath,
+      actual: value === undefined ? undefined : nativeValueType(value)
+    });
+    return {};
+  }
+
+  let operations;
+  try {
+    operations = JSON.parse(value);
+  } catch (error) {
+    pushDataAuthorityDecodeDiagnostic(context, {
+      code: "readback.decode.workflow.data_authority.operations_invalid_json",
+      message: "Readback detail-table operations JSON is malformed.",
+      decodePath: context.decodePath,
+      details: { reason: error instanceof Error ? error.message : String(error) }
+    });
+    return {};
+  }
+  if (!Array.isArray(operations)) {
+    pushDataAuthorityDecodeDiagnostic(context, {
+      code: "readback.decode.workflow.data_authority.operations_array_required",
+      message: "Readback detail-table operations JSON must decode to an array.",
+      decodePath: context.decodePath,
+      actual: nativeValueType(operations)
+    });
+    return {};
+  }
+
+  const supported = new Set(["canAddRow", "canDeleteRow", "canImport", "canExport"]);
+  const seen = new Set();
+  const state = {};
+  for (const [index, operation] of operations.entries()) {
+    const operationPath = `${context.decodePath}/${index}`;
+    if (!operation || typeof operation !== "object" || Array.isArray(operation)) {
+      pushDataAuthorityDecodeDiagnostic(context, {
+        code: "readback.decode.workflow.data_authority.operation_object_required",
+        message: "Readback detail-table operation must be an object.",
+        decodePath: operationPath,
+        actual: nativeValueType(operation)
+      });
+      continue;
+    }
+    if (
+      typeof operation.id !== "string" ||
+      !operation.id.trim() ||
+      operation.id !== operation.id.trim()
+    ) {
+      pushDataAuthorityDecodeDiagnostic(context, {
+        code: "readback.decode.workflow.data_authority.operation_id_invalid",
+        message: "Readback detail-table operation id must be an exact non-empty string.",
+        decodePath: `${operationPath}/id`,
+        actual: operation.id === undefined ? undefined : operation.id
+      });
+      continue;
+    }
+    const id = operation.id;
+    if (!supported.has(id)) {
+      pushDataAuthorityDecodeDiagnostic(context, {
+        code: "readback.decode.workflow.data_authority.operation_id_unknown",
+        message: "Readback detail-table operation id is unsupported.",
+        decodePath: `${operationPath}/id`,
+        actual: id
+      });
+      continue;
+    }
+    if (seen.has(id)) {
+      pushDataAuthorityDecodeDiagnostic(context, {
+        code: "readback.decode.workflow.data_authority.operation_id_duplicate",
+        message: "Readback detail-table operation id is duplicated.",
+        decodePath: `${operationPath}/id`,
+        actual: id
+      });
+      continue;
+    }
+    seen.add(id);
+    state[id] = observeDataAuthorityBoolean(operation.enable, {
+      ...context,
+      decodePath: `${operationPath}/enable`
+    });
+  }
+  return state;
+}
+
+function pushDataAuthorityDecodeDiagnostic(context, values) {
+  context.diagnostics?.push(diagnostic({
+    level: "error",
+    partition: "workflow",
+    ...values
+  }));
+}
+
+function dataAuthorityDecodePath(nodeId, key) {
+  const base = `/mechanisms/lbpmTemplate/0/fdTemplateFormAuths/${jsonPointerToken(nodeId)}`;
+  return key === undefined ? base : `${base}/${jsonPointerToken(key)}`;
+}
+
+function jsonPointerToken(value) {
+  return String(value ?? "").replaceAll("~", "~0").replaceAll("/", "~1");
+}
+
+function nativeValueType(value) {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "array";
+  return typeof value;
 }
 
 function observeSendConfig(node) {

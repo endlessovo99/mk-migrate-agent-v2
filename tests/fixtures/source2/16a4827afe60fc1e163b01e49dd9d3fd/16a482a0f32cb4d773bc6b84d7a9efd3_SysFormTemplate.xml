@@ -1,0 +1,1158 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>2</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>101-EKP-GUOAIL</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>14c72d2eb8e184d6c44b4b24f6593173</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-EKP-JXH</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>181613a6b7a65d02648affa4c23aff18</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/16a4827afe60fc1e163b01e49dd9d3fd/16a4827afe60fc1e163b01e49dd9d3fd_v2</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 393px; WIDTH: 1px; POSITION: absolute; LEFT: 14px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 85px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;left&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 393px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 1525px; Z-INDEX: 1; DISPLAY: none; TOP: 85px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;right&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 1512px; POSITION: absolute; LEFT: 14px; Z-INDEX: 1; DISPLAY: none; TOP: 85px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;leftUp&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;up&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;rightUp&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 1512px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 14px; Z-INDEX: 1; DISPLAY: none; TOP: 476px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;leftDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;rightDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;down&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE id=fd_334a6c0e221494 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_334a6c0e220806&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1583 colSpan=4 row=&quot;0&quot; column=&quot;0,1,2,3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: bold; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b31edd537c0&quot;,content:&quot;主体发布流程信息：&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;true&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;主体发布流程信息：&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=304 row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0bc65a14f552&quot;,content:&quot;系统名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;系统名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1263 colSpan=3 row=&quot;1&quot; column=&quot;1,2,3&quot;&gt;&lt;LABEL style=&quot;WIDTH: 408px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&quot;{id:&amp;quot;fd_3b0bc65c83662a&amp;quot;,_inputParams:&amp;quot;{&apos;inputParams&apos;:[]}&amp;quot;,_outputParams:&amp;quot;{&apos;outputParams&apos;:[{&apos;name&apos;:&apos;APP_CODE&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;DISPLAYNAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;Z_APP_NAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;Z_CN_SHORT_NAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;}]}&amp;quot;,width:&amp;quot;369&amp;quot;,_label_bind:&amp;quot;true&amp;quot;,label:&amp;quot;系统名称&amp;quot;,_label_bind_id:&amp;quot;fd_3b0bc65a14f552&amp;quot;,txtReadOnly:&amp;quot;false&amp;quot;,required:&amp;quot;true&amp;quot;,showType:&amp;quot;false&amp;quot;,multiSelect:&amp;quot;false&amp;quot;,isRelevanceReview:&amp;quot;false&amp;quot;,urlRelevance:&amp;quot;&amp;quot;,businessType:&amp;quot;SQLDialog&amp;quot;,isShowTree:&amp;quot;false&amp;quot;,selectNodeLevel:&amp;quot;&amp;quot;,parentNodeIdColumn:&amp;quot;&amp;quot;,isLoadData:&amp;quot;true&amp;quot;,sqlResource:&amp;quot;&amp;quot;,sqlvalue:&amp;quot;select app_code,app_code||&apos; &apos;||z_app_name as displayName,z_app_name,z_cn_short_name from EKP.applicationdata_to_scop where rownum&lt;=10&amp;quot;,queryColumn:&amp;quot;z_app_name,z_cn_short_name,app_code&amp;quot;,orderByValue:&amp;quot;app_code&amp;quot;,SQLValueChangeBefore:&amp;quot;&amp;quot;,SQLValueChangeAfter:&amp;quot;&amp;quot;}&quot; fd_type=&quot;SQLDialog&quot;&gt;&lt;INPUT id=fd_3b0bc65c83662a class=inputsgl style=&quot;WIDTH: 369px&quot; readOnly ? label=&quot;系统名称&quot; canShow=&quot;true&quot; required=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; isLoadData=&quot;true&quot; isShowTree=&quot;false&quot; multiSelect=&quot;false&quot; businessType=&quot;SQLDialog&quot; SQLValueChangeAfter=&quot;&quot; SQLValueChangeBefore=&quot;&quot; outputParams=&quot;{&apos;outputParams&apos;:[{&apos;name&apos;:&apos;APP_CODE&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;DISPLAYNAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;Z_APP_NAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;Z_CN_SHORT_NAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;}]}&quot; inputParams=&quot;{&apos;inputParams&apos;:[]}&quot; selectNodeLevel=&quot;&quot; orderByValue=&quot;app_code&quot; queryColumn=&quot;z_app_name,z_cn_short_name,app_code&quot; sqlvalue=&quot;select app_code,app_code||&apos; &apos;||z_app_name as displayName,z_app_name,z_cn_short_name from EKP.applicationdata_to_scop where rownum&lt;=10&quot; parentNodeIdColumn=&quot;&quot; urlRelevance=&quot;&quot; isRelevanceReview=&quot;false&quot; sqlResource=&quot;&quot; txtReadOnly=&quot;false&quot; showType=&quot;false&quot;&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=321 row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b31fed7475e&quot;,content:&quot;应用发布（预发布、正式发布）流程地址  &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应用发布（预发布、正式发布）流程地址&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1246 colSpan=3 row=&quot;2&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 984px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b320492f7c4&quot;,width:&quot;984&quot;,_label_bind:&quot;true&quot;,label:&quot;应用发布（预发布、正式发布）流程地址  &quot;,_label_bind_id:&quot;fd_334b31fed7475e&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_334b320492f7c4 class=inputsgl style=&quot;WIDTH: 984px&quot; readOnly ? label=&quot;应用发布（预发布、正式发布）流程地址  &quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=338 row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2d6975ad8e&quot;,content:&quot;发布范围 &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;发布范围&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_is_jsx&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;是否开具介绍信1&quot;,_label_bind_id:&quot;&quot;,canShow:&quot;false&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;false&quot;&gt;&lt;INPUT id=fd_is_jsx class=inputhidden style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;是否开具介绍信1&quot; canShow=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1229 colSpan=3 row=&quot;3&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 111px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_intro_type&quot;,_label_bind:&quot;true&quot;,label:&quot;发布范围 &quot;,_label_bind_id:&quot;fd_3b0b2d6975ad8e&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;公网|1&amp;#13;&amp;#10;内网|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_intro_type type=radio value=1 label=&quot;发布范围 &quot; required=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;true&quot; itemValues=&quot;1;2&quot; items=&quot;公网;内网&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_intro_type&quot;&gt;公网&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_intro_type type=radio value=2 attach=&quot;fd_intro_type&quot;&gt;&lt;LABEL attach=&quot;fd_intro_type&quot;&gt;内网&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV id=fd_3b0cb91495d9f0 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb91495d9f0&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;xform:editShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;//默认隐藏公网发布模式 &amp;#13;&amp;#10;Com_AddEventListener(window, &quot;load&quot;,&amp;#13;&amp;#10;     function(){&amp;#13;&amp;#10;        common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false);&amp;#13;&amp;#10;     });&amp;#13;&amp;#10;&amp;#13;&amp;#10;//如果选择公网，则显示公网发布模式 &amp;#13;&amp;#10;AttachXFormValueChangeEventById(&quot;fd_intro_type&quot;, function(value, domElement){&amp;#13;&amp;#10;     var isHtz=GetXFormFieldById(&quot;fd_is_jsx&quot;)[0];&amp;#13;&amp;#10;      if(value.indexOf(&quot;1&quot;)&gt;=0){&amp;#13;&amp;#10;          isHtz.value=&quot;1&quot;;&amp;#13;&amp;#10;          common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,true,true,false); &amp;#13;&amp;#10;          common_dom_row_set_show_required_reset(&quot;fd_bg_row&quot;,false,false,false);          &amp;#13;&amp;#10;    }else{&amp;#13;&amp;#10;          isHtz.value=&quot;&quot;;&amp;#13;&amp;#10;          common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false); &amp;#13;&amp;#10;          common_dom_row_set_show_required_reset(&quot;fd_bg_row&quot;,true,true,false);      &amp;#13;&amp;#10;   }&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:editShow&gt;&amp;#13;&amp;#10;&lt;xform:viewShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;//默认隐藏公网发布模式 &amp;#13;&amp;#10;Com_AddEventListener(window, &quot;load&quot;,&amp;#13;&amp;#10;     function(){&amp;#13;&amp;#10;       if(GetXFormFieldValueById(&quot;fd_is_jsx&quot;)[0]==&quot;1&quot;) {    &amp;#13;&amp;#10;            common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,true,false,false);&amp;#13;&amp;#10;     }else{&amp;#13;&amp;#10;             common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false);&amp;#13;&amp;#10;       }&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:viewShow&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=355 row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2d6f37cd30&quot;,content:&quot;新应用发布或常规变更&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;新应用发布或常规变更&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1212 colSpan=3 row=&quot;4&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 181px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_intro_type1&quot;,_label_bind:&quot;true&quot;,label:&quot;新应用发布或常规变更&quot;,_label_bind_id:&quot;fd_3b0b2d6f37cd30&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;新应用发布|1&amp;#13;&amp;#10;常规变更|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_intro_type1 type=radio value=1 label=&quot;新应用发布或常规变更&quot; required=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;true&quot; itemValues=&quot;1;2&quot; items=&quot;新应用发布;常规变更&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_intro_type1&quot;&gt;新应用发布&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_intro_type1 type=radio value=2 attach=&quot;fd_intro_type1&quot;&gt;&lt;LABEL attach=&quot;fd_intro_type1&quot;&gt;常规变更&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=372 row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2db10337ca&quot;,content:&quot;公网发布模式 &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;公网发布模式&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8e21b1450 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8e21b1450&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1195 colSpan=3 row=&quot;5&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 174px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2dc29ce6a4&quot;,_label_bind:&quot;true&quot;,label:&quot;公网发布模式 &quot;,_label_bind_id:&quot;fd_3b0b2db10337ca&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;常规模式|1&amp;#13;&amp;#10;腾讯云发布|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3b0b2dc29ce6a4 type=radio value=1 label=&quot;公网发布模式 &quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;false&quot; itemValues=&quot;1;2&quot; items=&quot;常规模式;腾讯云发布&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3b0b2dc29ce6a4&quot;&gt;常规模式&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3b0b2dc29ce6a4 type=radio value=2 attach=&quot;fd_3b0b2dc29ce6a4&quot;&gt;&lt;LABEL attach=&quot;fd_3b0b2dc29ce6a4&quot;&gt;腾讯云发布&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=389 row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0bc621ba84e6&quot;,content:&quot;变更说明&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;变更说明&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb988618efc title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb988618efc&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_bg_row&quot; name=&quot;fd_bg_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1178 colSpan=3 row=&quot;6&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0bc62d1416a8&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;变更说明&quot;,_label_bind_id:&quot;fd_3b0bc621ba84e6&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0bc62d1416a8 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;变更说明&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=406 row=&quot;7&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b320cb448cc&quot;,content:&quot;网络开放需求清单（源地址-目标地址端口） &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;网络开放需求清单（源地址-目标地址端口）&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8e80d7f42 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8e80d7f42&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;7&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2da47cc138&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;网络开放需求清单（源地址-目标地址端口） &quot;,_label_bind_id:&quot;fd_334b320cb448cc&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2da47cc138 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;网络开放需求清单（源地址-目标地址端口） &quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;8&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2daf4051b2&quot;,content:&quot;内网域名清单（对应解析地址）&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;内网域名清单（对应解析地址）&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8e8b27956 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8e8b27956&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;8&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e20941bd0&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;内网域名清单（对应解析地址）&quot;,_label_bind_id:&quot;fd_3b0b2daf4051b2&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e20941bd0 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;内网域名清单（对应解析地址）&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;9&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2db030cece&quot;,content:&quot;公网域名清单&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;公网域名清单&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8e926cc08 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8e926cc08&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;9&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e2128af16&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;公网域名清单&quot;,_label_bind_id:&quot;fd_3b0b2db030cece&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e2128af16 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;公网域名清单&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;10&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2db2004434&quot;,content:&quot;是否有独立证书&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;是否有独立证书&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ea03e29e title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ea03e29e&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;10&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 83px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2ddf881e06&quot;,_label_bind:&quot;true&quot;,label:&quot;是否有独立证书&quot;,_label_bind_id:&quot;fd_3b0b2db2004434&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;是|1&amp;#13;&amp;#10;否|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3b0b2ddf881e06 type=radio value=1 label=&quot;是否有独立证书&quot; required=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;true&quot; itemValues=&quot;1;2&quot; items=&quot;是;否&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3b0b2ddf881e06&quot;&gt;是&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3b0b2ddf881e06 type=radio value=2 attach=&quot;fd_3b0b2ddf881e06&quot;&gt;&lt;LABEL attach=&quot;fd_3b0b2ddf881e06&quot;&gt;否&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;11&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b322523e866&quot;,content:&quot;应用服务器地址清单 &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应用服务器地址清单&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ea6987d8 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ea6987d8&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=table_select style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;11&quot; column=&quot;1,2,3&quot; oldClassName&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_33584b35990032&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;应用服务器地址清单 &quot;,_label_bind_id:&quot;fd_334b322523e866&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_33584b35990032 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;应用服务器地址清单 &quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;12&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0fdbafa8f874&quot;,content:&quot;反向代理配置&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;反向代理配置&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0fdbb137227e title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0fdbb137227e&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;12&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0fdbb24ffd26&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;反向代理配置&quot;,_label_bind_id:&quot;fd_3b0fdbafa8f874&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0fdbb24ffd26 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;反向代理配置&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 99px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;13&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2dfe161f32&quot;,content:&quot;应用访问地址（漏扫用） &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应用访问地址（漏扫用）&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8eb1441f4 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8eb1441f4&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;13&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e22542d9c&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;应用访问地址（漏扫用） &quot;,_label_bind_id:&quot;fd_3b0b2dfe161f32&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e22542d9c class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;应用访问地址（漏扫用） &quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 35px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;14&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e050b5802&quot;,content:&quot;应用监控项清单&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应用监控项清单&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8eb7c8032 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8eb7c8032&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;14&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e26325266&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;应用监控项清单&quot;,_label_bind_id:&quot;fd_3b0b2e050b5802&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e26325266 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;应用监控项清单&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;15&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e05f6d930&quot;,content:&quot;备份机制及策略&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;备份机制及策略&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ec23a4b2 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ec23a4b2&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;15&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e2362402c&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;备份机制及策略&quot;,_label_bind_id:&quot;fd_3b0b2e05f6d930&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e2362402c class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;备份机制及策略&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;16&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e06cc6e32&quot;,content:&quot;日志保留策略&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;日志保留策略&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ec846670 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ec846670&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;16&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e2719c8b6&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;日志保留策略&quot;,_label_bind_id:&quot;fd_3b0b2e06cc6e32&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e2719c8b6 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;日志保留策略&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;17&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e07bbfc22&quot;,content:&quot;收费企业&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;收费企业&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ed24bc74 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ed24bc74&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;17&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e27ab43ea&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;收费企业&quot;,_label_bind_id:&quot;fd_3b0b2e07bbfc22&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e27ab43ea class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;收费企业&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;18&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_33584b197647f6&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;18&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV id=fd_33584b1745a3a2 style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; label=&quot;附件&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_33584b1745a3a2&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_33584b197647f6&quot;}&apos; fd_type=&quot;attachment&quot; tableName=&quot;fd_334a6c0e221494&quot; enabledFileType fdMulti=&quot;true&quot;&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=1583 colSpan=4 row=&quot;19&quot; column=&quot;0,1,2,3&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>16a482a0f32cb4d773bc6b84d7a9efd3</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/16a4827afe60fc1e163b01e49dd9d3fd/16a4827afe60fc1e163b01e49dd9d3fd_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 393px; WIDTH: 1px; POSITION: absolute; LEFT: 14px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 85px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;left&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 393px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 1525px; Z-INDEX: 1; DISPLAY: none; TOP: 85px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;right&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 1512px; POSITION: absolute; LEFT: 14px; Z-INDEX: 1; DISPLAY: none; TOP: 85px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;leftUp&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;up&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;rightUp&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 1512px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 14px; Z-INDEX: 1; DISPLAY: none; TOP: 476px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;leftDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;rightDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;down&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE id=fd_334a6c0e221494 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_334a6c0e220806&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1216 colSpan=4 column=&quot;0,1,2,3&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: bold; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_334b31edd537c0&quot;,content:&quot;主体发布流程信息：&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;true&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;主体发布流程信息：&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=214 column=&quot;0&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_334b31fed7475e&quot;,content:&quot;流程编号&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;流程编号&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1003 colSpan=3 column=&quot;1,2,3&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 984px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_334b320492f7c4&quot;,width:&quot;984&quot;,_label_bind:&quot;true&quot;,label:&quot;流程编号&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_334b31fed7475e&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_334b320492f7c4 class=inputsgl style=&quot;WIDTH: 984px&quot; readOnly ? label=&quot;流程编号&amp;#13;&amp;#10;&quot; canShow=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=214 column=&quot;0&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_334b320cb448cc&quot;,content:&quot;流程链接&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;流程链接&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1003 colSpan=3 column=&quot;1,2,3&quot; row=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 986px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_334b321085a8f4&quot;,width:&quot;986&quot;,_label_bind:&quot;true&quot;,label:&quot;流程链接&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_334b320cb448cc&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_334b321085a8f4 class=inputsgl style=&quot;WIDTH: 986px&quot; readOnly ? label=&quot;流程链接&amp;#13;&amp;#10;&quot; canShow=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 column=&quot;0&quot; row=&quot;3&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_334b322523e866&quot;,content:&quot;各管理员在发布过程中，根据系统应用发布（运营支持）信息记录向导，对涉及的变更配置和数据更新进行信息维护。&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;各管理员在发布过程中，根据系统应用发布（运营支持）信息记录向导，对涉及的变更配置和数据更新进行信息维护。&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=table_select style=&quot;WIDTH: auto&quot; width=1003 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot; oldClassName&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_33584b35990032&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;各管理员在发布过程中，根据系统应用发布（运营支持）信息记录向导，对涉及的变更配置和数据更新进行信息维护。&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_334b322523e866&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;TEXTAREA id=fd_33584b35990032 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;各管理员在发布过程中，根据系统应用发布（运营支持）信息记录向导，对涉及的变更配置和数据更新进行信息维护。&amp;#13;&amp;#10;&quot; canShow=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 column=&quot;0&quot; row=&quot;4&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_33584b197647f6&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1003 colSpan=3 column=&quot;1,2,3&quot; row=&quot;4&quot;&gt;&#13;
+&lt;DIV id=fd_33584b1745a3a2 style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_33584b1745a3a2&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_33584b197647f6&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;附件&quot; tableName=&quot;fd_334a6c0e221494&quot; fdMulti=&quot;true&quot; enabledFileType&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=1216 colSpan=4 column=&quot;0,1,2,3&quot; row=&quot;5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>16a4827afe60fc1e163b01e49dd9d3fd</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16a482a0f3e32843742960b4bc4a7221</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1656913427503</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_334a6c0e221494 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1216 colSpan=4 column=&quot;0,1,2,3&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: bold; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;主体发布流程信息：&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=214 column=&quot;0&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;流程编号&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1003 colSpan=3 column=&quot;1,2,3&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 984px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_334b320492f7c4)&quot; style=&quot;WIDTH: 984px&quot; required=&quot;false&quot; subject=&quot;流程编号&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;流程编号&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=214 column=&quot;0&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;流程链接&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1003 colSpan=3 column=&quot;1,2,3&quot; row=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 986px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_334b321085a8f4)&quot; style=&quot;WIDTH: 986px&quot; required=&quot;false&quot; subject=&quot;流程链接&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;流程链接&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 column=&quot;0&quot; row=&quot;3&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;各管理员在发布过程中，根据系统应用发布（运营支持）信息记录向导，对涉及的变更配置和数据更新进行信息维护。&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=table_select style=&quot;WIDTH: auto&quot; width=1003 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot; oldClassName&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_33584b35990032)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;各管理员在发布过程中，根据系统应用发布（运营支持）信息记录向导，对涉及的变更配置和数据更新进行信息维护。&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;各管理员在发布过程中，根据系统应用发布（运营支持）信息记录向导，对涉及的变更配置和数据更新进行信息维护。&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 column=&quot;0&quot; row=&quot;4&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1003 colSpan=3 column=&quot;1,2,3&quot; row=&quot;4&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_33584b1745a3a2&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=1216 colSpan=4 column=&quot;0,1,2,3&quot; row=&quot;5&quot; style_textAlign=&quot;left&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_334b320492f7c4&quot; label=&quot;流程编号&#13;
+&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_334b321085a8f4&quot; label=&quot;流程链接&#13;
+&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_33584b35990032&quot; label=&quot;各管理员在发布过程中，根据系统应用发布（运营支持）信息记录向导，对涉及的变更配置和数据更新进行信息维护。&#13;
+&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>16a482a0f32cb4d773bc6b84d7a9efd3</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>2</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/16a4827afe60fc1e163b01e49dd9d3fd/16a4827afe60fc1e163b01e49dd9d3fd_v2</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 393px; WIDTH: 1px; POSITION: absolute; LEFT: 14px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 85px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;left&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 393px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 1525px; Z-INDEX: 1; DISPLAY: none; TOP: 85px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;right&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 1512px; POSITION: absolute; LEFT: 14px; Z-INDEX: 1; DISPLAY: none; TOP: 85px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;leftUp&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;up&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;rightUp&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 1512px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 14px; Z-INDEX: 1; DISPLAY: none; TOP: 476px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;leftDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;rightDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;down&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE id=fd_334a6c0e221494 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_334a6c0e220806&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1583 colSpan=4 row=&quot;0&quot; column=&quot;0,1,2,3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: bold; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b31edd537c0&quot;,content:&quot;主体发布流程信息：&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;true&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;主体发布流程信息：&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=304 row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0bc65a14f552&quot;,content:&quot;系统名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;系统名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1263 colSpan=3 row=&quot;1&quot; column=&quot;1,2,3&quot;&gt;&lt;LABEL style=&quot;WIDTH: 408px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&quot;{id:&amp;quot;fd_3b0bc65c83662a&amp;quot;,_inputParams:&amp;quot;{&apos;inputParams&apos;:[]}&amp;quot;,_outputParams:&amp;quot;{&apos;outputParams&apos;:[{&apos;name&apos;:&apos;APP_CODE&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;DISPLAYNAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;Z_APP_NAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;Z_CN_SHORT_NAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;}]}&amp;quot;,width:&amp;quot;369&amp;quot;,_label_bind:&amp;quot;true&amp;quot;,label:&amp;quot;系统名称&amp;quot;,_label_bind_id:&amp;quot;fd_3b0bc65a14f552&amp;quot;,txtReadOnly:&amp;quot;false&amp;quot;,required:&amp;quot;true&amp;quot;,showType:&amp;quot;false&amp;quot;,multiSelect:&amp;quot;false&amp;quot;,isRelevanceReview:&amp;quot;false&amp;quot;,urlRelevance:&amp;quot;&amp;quot;,businessType:&amp;quot;SQLDialog&amp;quot;,isShowTree:&amp;quot;false&amp;quot;,selectNodeLevel:&amp;quot;&amp;quot;,parentNodeIdColumn:&amp;quot;&amp;quot;,isLoadData:&amp;quot;true&amp;quot;,sqlResource:&amp;quot;&amp;quot;,sqlvalue:&amp;quot;select app_code,app_code||&apos; &apos;||z_app_name as displayName,z_app_name,z_cn_short_name from EKP.applicationdata_to_scop where rownum&lt;=10&amp;quot;,queryColumn:&amp;quot;z_app_name,z_cn_short_name,app_code&amp;quot;,orderByValue:&amp;quot;app_code&amp;quot;,SQLValueChangeBefore:&amp;quot;&amp;quot;,SQLValueChangeAfter:&amp;quot;&amp;quot;}&quot; fd_type=&quot;SQLDialog&quot;&gt;&lt;INPUT id=fd_3b0bc65c83662a class=inputsgl style=&quot;WIDTH: 369px&quot; readOnly ? label=&quot;系统名称&quot; canShow=&quot;true&quot; required=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; isLoadData=&quot;true&quot; isShowTree=&quot;false&quot; multiSelect=&quot;false&quot; businessType=&quot;SQLDialog&quot; SQLValueChangeAfter=&quot;&quot; SQLValueChangeBefore=&quot;&quot; outputParams=&quot;{&apos;outputParams&apos;:[{&apos;name&apos;:&apos;APP_CODE&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;DISPLAYNAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;Z_APP_NAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;},{&apos;name&apos;:&apos;Z_CN_SHORT_NAME&apos;,&apos;isUse&apos;:&apos;false&apos;,&apos;idField&apos;:&apos;&apos;,&apos;nameField&apos;:&apos;&apos;}]}&quot; inputParams=&quot;{&apos;inputParams&apos;:[]}&quot; selectNodeLevel=&quot;&quot; orderByValue=&quot;app_code&quot; queryColumn=&quot;z_app_name,z_cn_short_name,app_code&quot; sqlvalue=&quot;select app_code,app_code||&apos; &apos;||z_app_name as displayName,z_app_name,z_cn_short_name from EKP.applicationdata_to_scop where rownum&lt;=10&quot; parentNodeIdColumn=&quot;&quot; urlRelevance=&quot;&quot; isRelevanceReview=&quot;false&quot; sqlResource=&quot;&quot; txtReadOnly=&quot;false&quot; showType=&quot;false&quot;&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=321 row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b31fed7475e&quot;,content:&quot;应用发布（预发布、正式发布）流程地址  &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应用发布（预发布、正式发布）流程地址&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1246 colSpan=3 row=&quot;2&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 984px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b320492f7c4&quot;,width:&quot;984&quot;,_label_bind:&quot;true&quot;,label:&quot;应用发布（预发布、正式发布）流程地址  &quot;,_label_bind_id:&quot;fd_334b31fed7475e&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_334b320492f7c4 class=inputsgl style=&quot;WIDTH: 984px&quot; readOnly ? label=&quot;应用发布（预发布、正式发布）流程地址  &quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=338 row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2d6975ad8e&quot;,content:&quot;发布范围 &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;发布范围&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_is_jsx&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;是否开具介绍信1&quot;,_label_bind_id:&quot;&quot;,canShow:&quot;false&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;false&quot;&gt;&lt;INPUT id=fd_is_jsx class=inputhidden style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;是否开具介绍信1&quot; canShow=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1229 colSpan=3 row=&quot;3&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 111px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_intro_type&quot;,_label_bind:&quot;true&quot;,label:&quot;发布范围 &quot;,_label_bind_id:&quot;fd_3b0b2d6975ad8e&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;公网|1&amp;#13;&amp;#10;内网|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_intro_type type=radio value=1 label=&quot;发布范围 &quot; required=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;true&quot; itemValues=&quot;1;2&quot; items=&quot;公网;内网&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_intro_type&quot;&gt;公网&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_intro_type type=radio value=2 attach=&quot;fd_intro_type&quot;&gt;&lt;LABEL attach=&quot;fd_intro_type&quot;&gt;内网&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV id=fd_3b0cb91495d9f0 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb91495d9f0&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;xform:editShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;//默认隐藏公网发布模式 &amp;#13;&amp;#10;Com_AddEventListener(window, &quot;load&quot;,&amp;#13;&amp;#10;     function(){&amp;#13;&amp;#10;        common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false);&amp;#13;&amp;#10;     });&amp;#13;&amp;#10;&amp;#13;&amp;#10;//如果选择公网，则显示公网发布模式 &amp;#13;&amp;#10;AttachXFormValueChangeEventById(&quot;fd_intro_type&quot;, function(value, domElement){&amp;#13;&amp;#10;     var isHtz=GetXFormFieldById(&quot;fd_is_jsx&quot;)[0];&amp;#13;&amp;#10;      if(value.indexOf(&quot;1&quot;)&gt;=0){&amp;#13;&amp;#10;          isHtz.value=&quot;1&quot;;&amp;#13;&amp;#10;          common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,true,true,false); &amp;#13;&amp;#10;          common_dom_row_set_show_required_reset(&quot;fd_bg_row&quot;,false,false,false);          &amp;#13;&amp;#10;    }else{&amp;#13;&amp;#10;          isHtz.value=&quot;&quot;;&amp;#13;&amp;#10;          common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false); &amp;#13;&amp;#10;          common_dom_row_set_show_required_reset(&quot;fd_bg_row&quot;,true,true,false);      &amp;#13;&amp;#10;   }&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:editShow&gt;&amp;#13;&amp;#10;&lt;xform:viewShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;//默认隐藏公网发布模式 &amp;#13;&amp;#10;Com_AddEventListener(window, &quot;load&quot;,&amp;#13;&amp;#10;     function(){&amp;#13;&amp;#10;       if(GetXFormFieldValueById(&quot;fd_is_jsx&quot;)[0]==&quot;1&quot;) {    &amp;#13;&amp;#10;            common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,true,false,false);&amp;#13;&amp;#10;     }else{&amp;#13;&amp;#10;             common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false);&amp;#13;&amp;#10;       }&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:viewShow&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=355 row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2d6f37cd30&quot;,content:&quot;新应用发布或常规变更&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;新应用发布或常规变更&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1212 colSpan=3 row=&quot;4&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 181px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_intro_type1&quot;,_label_bind:&quot;true&quot;,label:&quot;新应用发布或常规变更&quot;,_label_bind_id:&quot;fd_3b0b2d6f37cd30&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;新应用发布|1&amp;#13;&amp;#10;常规变更|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_intro_type1 type=radio value=1 label=&quot;新应用发布或常规变更&quot; required=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;true&quot; itemValues=&quot;1;2&quot; items=&quot;新应用发布;常规变更&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_intro_type1&quot;&gt;新应用发布&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_intro_type1 type=radio value=2 attach=&quot;fd_intro_type1&quot;&gt;&lt;LABEL attach=&quot;fd_intro_type1&quot;&gt;常规变更&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=372 row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2db10337ca&quot;,content:&quot;公网发布模式 &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;公网发布模式&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8e21b1450 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8e21b1450&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1195 colSpan=3 row=&quot;5&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 174px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2dc29ce6a4&quot;,_label_bind:&quot;true&quot;,label:&quot;公网发布模式 &quot;,_label_bind_id:&quot;fd_3b0b2db10337ca&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;常规模式|1&amp;#13;&amp;#10;腾讯云发布|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3b0b2dc29ce6a4 type=radio value=1 label=&quot;公网发布模式 &quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;false&quot; itemValues=&quot;1;2&quot; items=&quot;常规模式;腾讯云发布&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3b0b2dc29ce6a4&quot;&gt;常规模式&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3b0b2dc29ce6a4 type=radio value=2 attach=&quot;fd_3b0b2dc29ce6a4&quot;&gt;&lt;LABEL attach=&quot;fd_3b0b2dc29ce6a4&quot;&gt;腾讯云发布&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=389 row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0bc621ba84e6&quot;,content:&quot;变更说明&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;变更说明&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb988618efc title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb988618efc&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_bg_row&quot; name=&quot;fd_bg_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1178 colSpan=3 row=&quot;6&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0bc62d1416a8&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;变更说明&quot;,_label_bind_id:&quot;fd_3b0bc621ba84e6&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0bc62d1416a8 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;变更说明&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=406 row=&quot;7&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b320cb448cc&quot;,content:&quot;网络开放需求清单（源地址-目标地址端口） &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;网络开放需求清单（源地址-目标地址端口）&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8e80d7f42 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8e80d7f42&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;7&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2da47cc138&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;网络开放需求清单（源地址-目标地址端口） &quot;,_label_bind_id:&quot;fd_334b320cb448cc&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2da47cc138 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;网络开放需求清单（源地址-目标地址端口） &quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;8&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2daf4051b2&quot;,content:&quot;内网域名清单（对应解析地址）&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;内网域名清单（对应解析地址）&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8e8b27956 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8e8b27956&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;8&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e20941bd0&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;内网域名清单（对应解析地址）&quot;,_label_bind_id:&quot;fd_3b0b2daf4051b2&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e20941bd0 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;内网域名清单（对应解析地址）&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;9&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2db030cece&quot;,content:&quot;公网域名清单&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;公网域名清单&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8e926cc08 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8e926cc08&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;9&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e2128af16&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;公网域名清单&quot;,_label_bind_id:&quot;fd_3b0b2db030cece&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e2128af16 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;公网域名清单&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;10&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2db2004434&quot;,content:&quot;是否有独立证书&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;是否有独立证书&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ea03e29e title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ea03e29e&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;10&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 83px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2ddf881e06&quot;,_label_bind:&quot;true&quot;,label:&quot;是否有独立证书&quot;,_label_bind_id:&quot;fd_3b0b2db2004434&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;是|1&amp;#13;&amp;#10;否|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3b0b2ddf881e06 type=radio value=1 label=&quot;是否有独立证书&quot; required=&quot;true&quot; tableName=&quot;fd_334a6c0e221494&quot; _required=&quot;true&quot; itemValues=&quot;1;2&quot; items=&quot;是;否&quot; alignment=&quot;H&quot;&gt;&lt;LABEL attach=&quot;fd_3b0b2ddf881e06&quot;&gt;是&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3b0b2ddf881e06 type=radio value=2 attach=&quot;fd_3b0b2ddf881e06&quot;&gt;&lt;LABEL attach=&quot;fd_3b0b2ddf881e06&quot;&gt;否&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;11&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_334b322523e866&quot;,content:&quot;应用服务器地址清单 &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应用服务器地址清单&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ea6987d8 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ea6987d8&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=table_select style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;11&quot; column=&quot;1,2,3&quot; oldClassName&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_33584b35990032&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;应用服务器地址清单 &quot;,_label_bind_id:&quot;fd_334b322523e866&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_33584b35990032 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;应用服务器地址清单 &quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;12&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0fdbafa8f874&quot;,content:&quot;反向代理配置&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;反向代理配置&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0fdbb137227e title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0fdbb137227e&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;12&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0fdbb24ffd26&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;反向代理配置&quot;,_label_bind_id:&quot;fd_3b0fdbafa8f874&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0fdbb24ffd26 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;反向代理配置&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 99px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;13&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2dfe161f32&quot;,content:&quot;应用访问地址（漏扫用） &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应用访问地址（漏扫用）&amp;nbsp;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8eb1441f4 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8eb1441f4&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;13&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e22542d9c&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;应用访问地址（漏扫用） &quot;,_label_bind_id:&quot;fd_3b0b2dfe161f32&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e22542d9c class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;应用访问地址（漏扫用） &quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 35px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;14&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e050b5802&quot;,content:&quot;应用监控项清单&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;应用监控项清单&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8eb7c8032 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8eb7c8032&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;14&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e26325266&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;应用监控项清单&quot;,_label_bind_id:&quot;fd_3b0b2e050b5802&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e26325266 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;应用监控项清单&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;15&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e05f6d930&quot;,content:&quot;备份机制及策略&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;备份机制及策略&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ec23a4b2 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ec23a4b2&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;15&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e2362402c&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;备份机制及策略&quot;,_label_bind_id:&quot;fd_3b0b2e05f6d930&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e2362402c class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;备份机制及策略&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;16&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e06cc6e32&quot;,content:&quot;日志保留策略&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;日志保留策略&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ec846670 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ec846670&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;16&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e2719c8b6&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;日志保留策略&quot;,_label_bind_id:&quot;fd_3b0b2e06cc6e32&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e2719c8b6 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;日志保留策略&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;17&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e07bbfc22&quot;,content:&quot;收费企业&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;收费企业&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3b0cb8ed24bc74 title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0cb8ed24bc74&quot;}&apos; fd_type=&quot;jsp&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&apos;&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&apos;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;17&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 980px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3b0b2e27ab43ea&quot;,width:&quot;980&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;收费企业&quot;,_label_bind_id:&quot;fd_3b0b2e07bbfc22&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_3b0b2e27ab43ea class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; ? label=&quot;收费企业&quot; canShow=&quot;true&quot; required=&quot;false&quot; tableName=&quot;fd_334a6c0e221494&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;18&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_33584b197647f6&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;18&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV id=fd_33584b1745a3a2 style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; label=&quot;附件&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_33584b1745a3a2&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_33584b197647f6&quot;}&apos; fd_type=&quot;attachment&quot; tableName=&quot;fd_334a6c0e221494&quot; enabledFileType fdMulti=&quot;true&quot;&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=1583 colSpan=4 row=&quot;19&quot; column=&quot;0,1,2,3&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>16a4827afe60fc1e163b01e49dd9d3fd</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1830ba798776dc6fb1a36d345468e18b</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1782101139108</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_334a6c0e221494 class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1583 colSpan=4 row=&quot;0&quot; column=&quot;0,1,2,3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: bold; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;主体发布流程信息：&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=304 row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;系统名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1263 colSpan=3 row=&quot;1&quot; column=&quot;1,2,3&quot;&gt;&lt;label  style=&quot;display: inline;&quot;&gt;&lt;xform:text property=&quot;extendDataFormInfo.value(fd_3b0bc65c83662a)&quot; showStatus=&quot;noShow&quot;/&gt;&lt;xform:text property=&quot;extendDataFormInfo.value(fd_3b0bc65c83662a_name)&quot; subject=&quot;系统名称&quot; title=&quot;系统名称&quot; style=&quot;WIDTH: 369px&quot; required=&quot;true&quot;/&gt;&lt;script type=&apos;text/javascript&apos;&gt;function _sqlSelectAfterCallBackFun_fd_3b0bc65c83662a(rtnVal){if(rtnVal == null || rtnVal == &apos;undefined&apos;){return;}var hashMapArray = rtnVal.GetHashMapArray();for(var i = 0;i&lt;hashMapArray.length;i++){ }if(rtnVal == null || rtnVal == &apos;undefined&apos;){return;}var hashMapArray = rtnVal.GetHashMapArray();if(hashMapArray.length==0){ }}; function getSqlValue_fd_3b0bc65c83662a(sql){var targetSql = sql;return targetSql; }; String.prototype.replaceAll  = function(s1,s2){return this.replace(new RegExp(s1,&quot;gm&quot;),s2);};  function _clickSqlSelect_fd_3b0bc65c83662a(){var sqlvalue = encodeURIComponent(getSqlValue_fd_3b0bc65c83662a(&quot;select app_code,app_code||&apos; &apos;||z_app_name as displayName,z_app_name,z_cn_short_name from EKP.applicationdata_to_scop where rownum&lt;=10&quot;)); Dialog_List(false, &quot;extendDataFormInfo.value(fd_3b0bc65c83662a)&quot;,&quot;extendDataFormInfo.value(fd_3b0bc65c83662a_name)&quot;, &quot;;&quot;,&quot;SQLDialogXMLData&amp;isLoadData=true&amp;orderby=app_code&amp;sqlResource=&amp;sqlValue=&quot;+sqlvalue,_sqlSelectAfterCallBackFun_fd_3b0bc65c83662a,&quot;SQLDialogXMLData&amp;keyword=!{keyword}&amp;column=z_app_name,z_cn_short_name,app_code&amp;orderby=app_code&amp;sqlResource=&amp;sqlValue=&quot;+sqlvalue); return false; }; &lt;/script&gt;&lt;xform:editShow&gt;&lt;span&gt;&lt;a href=&quot;javascript:void(0)&quot; onclick=&quot;_clickSqlSelect_fd_3b0bc65c83662a()&quot;&gt;&lt;kmss:message key=&quot;dialog.selectOther&quot; /&gt;&lt;/a&gt;&lt;/span&gt;&lt;/xform:editShow&gt;&lt;/label&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=321 row=&quot;2&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应用发布（预发布、正式发布）流程地址&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1246 colSpan=3 row=&quot;2&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 984px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_334b320492f7c4)&quot; style=&quot;WIDTH: 984px&quot; required=&quot;false&quot; subject=&quot;应用发布（预发布、正式发布）流程地址  &quot; title=&quot;应用发布（预发布、正式发布）流程地址  &quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=338 row=&quot;3&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;发布范围&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&#13;
+			&lt;DIV style=&quot;display:none;&quot;    canShow=&quot;false&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_is_jsx)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; showStatus=&quot;noShow&quot; subject=&quot;是否开具介绍信1&quot; title=&quot;是否开具介绍信1&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1229 colSpan=3 row=&quot;3&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_intro_type)&quot; alignment=&quot;H&quot; required=&quot;true&quot; subject=&quot;发布范围 &quot; title=&quot;发布范围 &quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;公网&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;内网&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;script&gt;&#13;
+//默认隐藏公网发布模式 &#13;
+Com_AddEventListener(window, &quot;load&quot;,&#13;
+     function(){&#13;
+        common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false);&#13;
+     });&#13;
+&#13;
+//如果选择公网，则显示公网发布模式 &#13;
+AttachXFormValueChangeEventById(&quot;fd_intro_type&quot;, function(value, domElement){&#13;
+     var isHtz=GetXFormFieldById(&quot;fd_is_jsx&quot;)[0];&#13;
+      if(value.indexOf(&quot;1&quot;)&gt;=0){&#13;
+          isHtz.value=&quot;1&quot;;&#13;
+          common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,true,true,false); &#13;
+          common_dom_row_set_show_required_reset(&quot;fd_bg_row&quot;,false,false,false);          &#13;
+    }else{&#13;
+          isHtz.value=&quot;&quot;;&#13;
+          common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false); &#13;
+          common_dom_row_set_show_required_reset(&quot;fd_bg_row&quot;,true,true,false);      &#13;
+   }&#13;
+});&#13;
+&lt;/script&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;xform:viewShow&gt;&#13;
+&lt;script&gt;&#13;
+//默认隐藏公网发布模式 &#13;
+Com_AddEventListener(window, &quot;load&quot;,&#13;
+     function(){&#13;
+       if(GetXFormFieldValueById(&quot;fd_is_jsx&quot;)[0]==&quot;1&quot;) {    &#13;
+            common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,true,false,false);&#13;
+     }else{&#13;
+             common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false);&#13;
+       }&#13;
+});&#13;
+&lt;/script&gt;&#13;
+&lt;/xform:viewShow&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=355 row=&quot;4&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;新应用发布或常规变更&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1212 colSpan=3 row=&quot;4&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_intro_type1)&quot; alignment=&quot;H&quot; required=&quot;true&quot; subject=&quot;新应用发布或常规变更&quot; title=&quot;新应用发布或常规变更&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;新应用发布&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;常规变更&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=372 row=&quot;5&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;公网发布模式&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1195 colSpan=3 row=&quot;5&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3b0b2dc29ce6a4)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;公网发布模式 &quot; title=&quot;公网发布模式 &quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;常规模式&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;腾讯云发布&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=389 row=&quot;6&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;变更说明&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_bg_row&quot; name=&quot;fd_bg_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1178 colSpan=3 row=&quot;6&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0bc62d1416a8)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;变更说明&quot; title=&quot;变更说明&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=406 row=&quot;7&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;网络开放需求清单（源地址-目标地址端口）&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;7&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2da47cc138)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;网络开放需求清单（源地址-目标地址端口） &quot; title=&quot;网络开放需求清单（源地址-目标地址端口） &quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;8&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;内网域名清单（对应解析地址）&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;8&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e20941bd0)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;内网域名清单（对应解析地址）&quot; title=&quot;内网域名清单（对应解析地址）&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;9&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;公网域名清单&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;9&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e2128af16)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;公网域名清单&quot; title=&quot;公网域名清单&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;10&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;是否有独立证书&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;10&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3b0b2ddf881e06)&quot; alignment=&quot;H&quot; required=&quot;true&quot; subject=&quot;是否有独立证书&quot; title=&quot;是否有独立证书&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;是&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;否&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;11&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应用服务器地址清单&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=table_select style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;11&quot; column=&quot;1,2,3&quot; oldClassName&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_33584b35990032)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;应用服务器地址清单 &quot; title=&quot;应用服务器地址清单 &quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;12&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;反向代理配置&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;12&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0fdbb24ffd26)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;反向代理配置&quot; title=&quot;反向代理配置&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 99px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;13&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应用访问地址（漏扫用）&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;13&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e22542d9c)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;应用访问地址（漏扫用） &quot; title=&quot;应用访问地址（漏扫用） &quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 35px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;14&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应用监控项清单&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;14&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e26325266)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;应用监控项清单&quot; title=&quot;应用监控项清单&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;15&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;备份机制及策略&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;15&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e2362402c)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;备份机制及策略&quot; title=&quot;备份机制及策略&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;16&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;日志保留策略&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;16&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e2719c8b6)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;日志保留策略&quot; title=&quot;日志保留策略&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;17&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;收费企业&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;17&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e27ab43ea)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;收费企业&quot; title=&quot;收费企业&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;18&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;18&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_33584b1745a3a2&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=1583 colSpan=4 row=&quot;19&quot; column=&quot;0,1,2,3&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0bc65c83662a&quot; label=&quot;系统名称&quot; type=&quot;String&quot; notNull=&quot;true&quot; /&gt;&lt;extendSimpleProperty name=&quot;fd_3b0bc65c83662a_name&quot; label=&quot;系统名称_name&quot; type=&quot;String&quot; notNull=&quot;true&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_334b320492f7c4&quot; label=&quot;应用发布（预发布、正式发布）流程地址  &quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_is_jsx&quot; label=&quot;是否开具介绍信1&quot; type=&quot;String&quot; length=&quot;200&quot; canDisplay=&quot;false&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_intro_type&quot; label=&quot;发布范围 &quot; notNull=&quot;true&quot; enumValues=&quot;公网|1;内网|2&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_intro_type1&quot; label=&quot;新应用发布或常规变更&quot; notNull=&quot;true&quot; enumValues=&quot;新应用发布|1;常规变更|2&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2dc29ce6a4&quot; label=&quot;公网发布模式 &quot; enumValues=&quot;常规模式|1;腾讯云发布|2&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0bc62d1416a8&quot; label=&quot;变更说明&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2da47cc138&quot; label=&quot;网络开放需求清单（源地址-目标地址端口） &quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e20941bd0&quot; label=&quot;内网域名清单（对应解析地址）&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e2128af16&quot; label=&quot;公网域名清单&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2ddf881e06&quot; label=&quot;是否有独立证书&quot; notNull=&quot;true&quot; enumValues=&quot;是|1;否|2&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_33584b35990032&quot; label=&quot;应用服务器地址清单 &quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0fdbb24ffd26&quot; label=&quot;反向代理配置&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e22542d9c&quot; label=&quot;应用访问地址（漏扫用） &quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e26325266&quot; label=&quot;应用监控项清单&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e2362402c&quot; label=&quot;备份机制及策略&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e2719c8b6&quot; label=&quot;日志保留策略&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e27ab43ea&quot; label=&quot;收费企业&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>16a4827afe60fc1e163b01e49dd9d3fd</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>16a482a0f32cb4d773bc6b84d7a9efd3</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1782101139109</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_334a6c0e221494 class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1583 colSpan=4 row=&quot;0&quot; column=&quot;0,1,2,3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: bold; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;主体发布流程信息：&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=304 row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;系统名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1263 colSpan=3 row=&quot;1&quot; column=&quot;1,2,3&quot;&gt;&lt;label  style=&quot;display: inline;&quot;&gt;&lt;xform:text property=&quot;extendDataFormInfo.value(fd_3b0bc65c83662a)&quot; showStatus=&quot;noShow&quot;/&gt;&lt;xform:text property=&quot;extendDataFormInfo.value(fd_3b0bc65c83662a_name)&quot; subject=&quot;系统名称&quot; title=&quot;系统名称&quot; style=&quot;WIDTH: 369px&quot; required=&quot;true&quot;/&gt;&lt;script type=&apos;text/javascript&apos;&gt;function _sqlSelectAfterCallBackFun_fd_3b0bc65c83662a(rtnVal){if(rtnVal == null || rtnVal == &apos;undefined&apos;){return;}var hashMapArray = rtnVal.GetHashMapArray();for(var i = 0;i&lt;hashMapArray.length;i++){ }if(rtnVal == null || rtnVal == &apos;undefined&apos;){return;}var hashMapArray = rtnVal.GetHashMapArray();if(hashMapArray.length==0){ }}; function getSqlValue_fd_3b0bc65c83662a(sql){var targetSql = sql;return targetSql; }; String.prototype.replaceAll  = function(s1,s2){return this.replace(new RegExp(s1,&quot;gm&quot;),s2);};  function _clickSqlSelect_fd_3b0bc65c83662a(){var sqlvalue = encodeURIComponent(getSqlValue_fd_3b0bc65c83662a(&quot;select app_code,app_code||&apos; &apos;||z_app_name as displayName,z_app_name,z_cn_short_name from EKP.applicationdata_to_scop where rownum&lt;=10&quot;)); Dialog_List(false, &quot;extendDataFormInfo.value(fd_3b0bc65c83662a)&quot;,&quot;extendDataFormInfo.value(fd_3b0bc65c83662a_name)&quot;, &quot;;&quot;,&quot;SQLDialogXMLData&amp;isLoadData=true&amp;orderby=app_code&amp;sqlResource=&amp;sqlValue=&quot;+sqlvalue,_sqlSelectAfterCallBackFun_fd_3b0bc65c83662a,&quot;SQLDialogXMLData&amp;keyword=!{keyword}&amp;column=z_app_name,z_cn_short_name,app_code&amp;orderby=app_code&amp;sqlResource=&amp;sqlValue=&quot;+sqlvalue); return false; }; &lt;/script&gt;&lt;xform:editShow&gt;&lt;span&gt;&lt;a href=&quot;javascript:void(0)&quot; onclick=&quot;_clickSqlSelect_fd_3b0bc65c83662a()&quot;&gt;&lt;kmss:message key=&quot;dialog.selectOther&quot; /&gt;&lt;/a&gt;&lt;/span&gt;&lt;/xform:editShow&gt;&lt;/label&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=321 row=&quot;2&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应用发布（预发布、正式发布）流程地址&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1246 colSpan=3 row=&quot;2&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 984px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_334b320492f7c4)&quot; style=&quot;WIDTH: 984px&quot; required=&quot;false&quot; subject=&quot;应用发布（预发布、正式发布）流程地址  &quot; title=&quot;应用发布（预发布、正式发布）流程地址  &quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=338 row=&quot;3&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;发布范围&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&#13;
+			&lt;DIV style=&quot;display:none;&quot;    canShow=&quot;false&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_is_jsx)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; showStatus=&quot;noShow&quot; subject=&quot;是否开具介绍信1&quot; title=&quot;是否开具介绍信1&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1229 colSpan=3 row=&quot;3&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_intro_type)&quot; alignment=&quot;H&quot; required=&quot;true&quot; subject=&quot;发布范围 &quot; title=&quot;发布范围 &quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;公网&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;内网&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;script&gt;&#13;
+//默认隐藏公网发布模式 &#13;
+Com_AddEventListener(window, &quot;load&quot;,&#13;
+     function(){&#13;
+        common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false);&#13;
+     });&#13;
+&#13;
+//如果选择公网，则显示公网发布模式 &#13;
+AttachXFormValueChangeEventById(&quot;fd_intro_type&quot;, function(value, domElement){&#13;
+     var isHtz=GetXFormFieldById(&quot;fd_is_jsx&quot;)[0];&#13;
+      if(value.indexOf(&quot;1&quot;)&gt;=0){&#13;
+          isHtz.value=&quot;1&quot;;&#13;
+          common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,true,true,false); &#13;
+          common_dom_row_set_show_required_reset(&quot;fd_bg_row&quot;,false,false,false);          &#13;
+    }else{&#13;
+          isHtz.value=&quot;&quot;;&#13;
+          common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false); &#13;
+          common_dom_row_set_show_required_reset(&quot;fd_bg_row&quot;,true,true,false);      &#13;
+   }&#13;
+});&#13;
+&lt;/script&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;xform:viewShow&gt;&#13;
+&lt;script&gt;&#13;
+//默认隐藏公网发布模式 &#13;
+Com_AddEventListener(window, &quot;load&quot;,&#13;
+     function(){&#13;
+       if(GetXFormFieldValueById(&quot;fd_is_jsx&quot;)[0]==&quot;1&quot;) {    &#13;
+            common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,true,false,false);&#13;
+     }else{&#13;
+             common_dom_row_set_show_required_reset(&quot;fd_jsx_row&quot;,false,false,false);&#13;
+       }&#13;
+});&#13;
+&lt;/script&gt;&#13;
+&lt;/xform:viewShow&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=355 row=&quot;4&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;新应用发布或常规变更&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1212 colSpan=3 row=&quot;4&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_intro_type1)&quot; alignment=&quot;H&quot; required=&quot;true&quot; subject=&quot;新应用发布或常规变更&quot; title=&quot;新应用发布或常规变更&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;新应用发布&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;常规变更&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=372 row=&quot;5&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;公网发布模式&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1195 colSpan=3 row=&quot;5&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3b0b2dc29ce6a4)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;公网发布模式 &quot; title=&quot;公网发布模式 &quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;常规模式&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;腾讯云发布&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=389 row=&quot;6&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;变更说明&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_bg_row&quot; name=&quot;fd_bg_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1178 colSpan=3 row=&quot;6&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0bc62d1416a8)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;变更说明&quot; title=&quot;变更说明&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 34px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=406 row=&quot;7&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;网络开放需求清单（源地址-目标地址端口）&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;7&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2da47cc138)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;网络开放需求清单（源地址-目标地址端口） &quot; title=&quot;网络开放需求清单（源地址-目标地址端口） &quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;8&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;内网域名清单（对应解析地址）&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;8&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e20941bd0)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;内网域名清单（对应解析地址）&quot; title=&quot;内网域名清单（对应解析地址）&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;9&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;公网域名清单&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;9&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e2128af16)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;公网域名清单&quot; title=&quot;公网域名清单&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;10&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;是否有独立证书&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;10&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3b0b2ddf881e06)&quot; alignment=&quot;H&quot; required=&quot;true&quot; subject=&quot;是否有独立证书&quot; title=&quot;是否有独立证书&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;是&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;否&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;11&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应用服务器地址清单&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=table_select style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;11&quot; column=&quot;1,2,3&quot; oldClassName&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_33584b35990032)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;应用服务器地址清单 &quot; title=&quot;应用服务器地址清单 &quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;12&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;反向代理配置&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;12&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0fdbb24ffd26)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;反向代理配置&quot; title=&quot;反向代理配置&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 99px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;13&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应用访问地址（漏扫用）&amp;nbsp;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;13&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e22542d9c)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;应用访问地址（漏扫用） &quot; title=&quot;应用访问地址（漏扫用） &quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 35px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;14&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;应用监控项清单&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;14&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e26325266)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;应用监控项清单&quot; title=&quot;应用监控项清单&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;15&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;备份机制及策略&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;15&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e2362402c)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;备份机制及策略&quot; title=&quot;备份机制及策略&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;16&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;日志保留策略&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;16&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e2719c8b6)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;日志保留策略&quot; title=&quot;日志保留策略&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;17&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;收费企业&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;input type=&quot;hidden&quot; id=&quot;fd_jsx_row&quot; name=&quot;fd_jsx_row&quot;/&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;17&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 980px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3b0b2e27ab43ea)&quot; style=&quot;HEIGHT: 80px; WIDTH: 980px&quot; required=&quot;false&quot; subject=&quot;收费企业&quot; title=&quot;收费企业&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=423 row=&quot;18&quot; column=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1161 colSpan=3 row=&quot;18&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_33584b1745a3a2&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=tb_normal style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=1583 colSpan=4 row=&quot;19&quot; column=&quot;0,1,2,3&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;left&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0bc65c83662a&quot; label=&quot;系统名称&quot; type=&quot;String&quot; notNull=&quot;true&quot; /&gt;&lt;extendSimpleProperty name=&quot;fd_3b0bc65c83662a_name&quot; label=&quot;系统名称_name&quot; type=&quot;String&quot; notNull=&quot;true&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_334b320492f7c4&quot; label=&quot;应用发布（预发布、正式发布）流程地址  &quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_is_jsx&quot; label=&quot;是否开具介绍信1&quot; type=&quot;String&quot; length=&quot;200&quot; canDisplay=&quot;false&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_intro_type&quot; label=&quot;发布范围 &quot; notNull=&quot;true&quot; enumValues=&quot;公网|1;内网|2&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_intro_type1&quot; label=&quot;新应用发布或常规变更&quot; notNull=&quot;true&quot; enumValues=&quot;新应用发布|1;常规变更|2&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2dc29ce6a4&quot; label=&quot;公网发布模式 &quot; enumValues=&quot;常规模式|1;腾讯云发布|2&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0bc62d1416a8&quot; label=&quot;变更说明&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2da47cc138&quot; label=&quot;网络开放需求清单（源地址-目标地址端口） &quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e20941bd0&quot; label=&quot;内网域名清单（对应解析地址）&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e2128af16&quot; label=&quot;公网域名清单&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2ddf881e06&quot; label=&quot;是否有独立证书&quot; notNull=&quot;true&quot; enumValues=&quot;是|1;否|2&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_33584b35990032&quot; label=&quot;应用服务器地址清单 &quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0fdbb24ffd26&quot; label=&quot;反向代理配置&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e22542d9c&quot; label=&quot;应用访问地址（漏扫用） &quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e26325266&quot; label=&quot;应用监控项清单&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e2362402c&quot; label=&quot;备份机制及策略&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e2719c8b6&quot; label=&quot;日志保留策略&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3b0b2e27ab43ea&quot; label=&quot;收费企业&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1555988877119</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

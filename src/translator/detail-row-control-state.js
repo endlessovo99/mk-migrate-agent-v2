@@ -3,7 +3,9 @@
  * matching onLoad row-state initialization.
  *
  * Completeness requires same-row hidden write + display toggle + required/validate
- * toggle. Placeholder text changes are ignored (not part of MK targetApi surface).
+ * toggle. The item-attribute calls are needed by both desktop and mobile
+ * renderers; updateControlStyle alone only affects the desktop control instance.
+ * Placeholder text changes are ignored (not part of MK targetApi surface).
  */
 
 function isCompleteDetailControlDisplay(functionText = "") {
@@ -40,7 +42,8 @@ function buildDetailRowControlStateFunction(parts = {}) {
     `  var active = String(selectedValue) === ${JSON.stringify(matchValue)}`,
     `  MKXFORM.updateControl(${JSON.stringify(`${table}.${hiddenControlId}`)}, rowNum, active ? "true" : "")`,
     `  MKXFORM.updateControlStyle(${JSON.stringify(`${table}.${targetControlId}`)}, rowNum, { display: active ? "block" : "none" })`,
-    `  MKXFORM.setDetailFieldItemAttr(${JSON.stringify(`${table}.${targetControlId}`)}, rowNum, active ? 3 : 6)`,
+    `  MKXFORM.setDetailFieldItemAttr(${JSON.stringify(table)}, active ? 5 : 4, rowNum, ${JSON.stringify(`${table}.${targetControlId}`)})`,
+    `  MKXFORM.setDetailFieldItemAttr(${JSON.stringify(table)}, active ? 3 : 6, rowNum, ${JSON.stringify(`${table}.${targetControlId}`)})`,
     "}"
   ].join("\n");
 }
@@ -62,7 +65,8 @@ function buildDetailRowLifecycleFunction(parts = {}) {
     `    var active = String(rows[rowNum][${JSON.stringify(triggerControlId)}] || "") === ${JSON.stringify(matchValue)} || String(rows[rowNum][${JSON.stringify(hiddenControlId)}] || "") === "true"`,
     `    MKXFORM.updateControl(${JSON.stringify(`${table}.${hiddenControlId}`)}, rowNum, active ? "true" : "")`,
     `    MKXFORM.updateControlStyle(${JSON.stringify(`${table}.${targetControlId}`)}, rowNum, { display: active ? "block" : "none" })`,
-    `    MKXFORM.setDetailFieldItemAttr(${JSON.stringify(`${table}.${targetControlId}`)}, rowNum, active ? 3 : 6)`,
+    `    MKXFORM.setDetailFieldItemAttr(${JSON.stringify(table)}, active ? 5 : 4, rowNum, ${JSON.stringify(`${table}.${targetControlId}`)})`,
+    `    MKXFORM.setDetailFieldItemAttr(${JSON.stringify(table)}, active ? 3 : 6, rowNum, ${JSON.stringify(`${table}.${targetControlId}`)})`,
     "  }",
     "}"
   ].join("\n");

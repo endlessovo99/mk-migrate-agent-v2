@@ -5,13 +5,24 @@ import { buildDesignerFirstForm } from "./sysform-designer-layout.js";
 import { extractSysFormJspScripts } from "./sysform-jsp-scripts.js";
 import { parseMetadataXml } from "./sysform-metadata.js";
 import { extractSysFormNodeDataAuthorities } from "./sysform-rights.js";
-import { cleanText, decodeEntities, parseFdValues, parseRootHashMapStringPuts } from "./xml-utils.js";
+import {
+  attrValue,
+  cleanText,
+  decodeEntities,
+  parseFdValues,
+  parseRootHashMapStringPuts,
+  propertyFieldId
+} from "./xml-utils.js";
 
 export function translateSysFormTemplateXml(xml, options = {}) {
   const template = parseSysFormTemplateXml(xml);
   const metadata = parseMetadataXml(template.fdMetadataXml || "");
   const warnings = [];
-  const form = buildDesignerFirstForm(template.fdDesignerHtml || "", metadata, warnings);
+  const form = buildDesignerFirstForm(template.fdDesignerHtml || "", metadata, warnings, {
+    runtimeVisibleFieldIds: unconditionallyRenderedRichTextFieldIds(
+      template.fdDisplayJsp || ""
+    )
+  });
   const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
     knownFieldIds: collectDataAuthorityFieldIds(form)
   });
@@ -93,6 +104,55 @@ function collectDataAuthorityFieldIds(form = {}) {
 
 export function parseSysFormTemplateXml(xml = "") {
   return parseRootHashMapStringPuts(xml);
+}
+
+function unconditionallyRenderedRichTextFieldIds(displayJsp = "") {
+  const ids = new Set();
+  const conditionalTags = new Set([
+    "c:choose",
+    "c:foreach",
+    "c:if",
+    "c:otherwise",
+    "c:when",
+    "xform:editshow",
+    "xform:right",
+    "xform:viewshow"
+  ]);
+  let conditionalDepth = 0;
+  const decoded = decodeEntities(displayJsp);
+  const tagPattern = /<(\/?)([A-Za-z][\w-]*):([\w-]+)\b([^>]*)>/gi;
+
+  for (const match of decoded.matchAll(tagPattern)) {
+    const closing = match[1] === "/";
+    const name = `${match[2]}:${match[3]}`.toLowerCase();
+    const selfClosing = /\/\s*$/.test(match[4]);
+    if (conditionalTags.has(name)) {
+      conditionalDepth = Math.max(
+        0,
+        conditionalDepth + (closing ? -1 : (selfClosing ? 0 : 1))
+      );
+      continue;
+    }
+    if (
+      closing ||
+      name !== "xform:rtf" ||
+      conditionalDepth > 0
+    ) {
+      continue;
+    }
+
+    const fieldId = displayJspFieldId(attrValue(match[4], "property"));
+    if (fieldId) ids.add(fieldId);
+  }
+
+  return ids;
+}
+
+function displayJspFieldId(property = "") {
+  const match = String(property).match(
+    /^extendDataFormInfo\.value\(([A-Za-z_][\w-]*)\)$/
+  );
+  return match?.[1] || propertyFieldId(property);
 }
 
 function extractDesignerTitle(html = "") {

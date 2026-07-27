@@ -73,6 +73,42 @@ describe("execute CLI", () => {
     assert.equal(request.options.targetTemplateId, "mk-test-template-id");
   });
 
+  it("passes repeated explicit participant overrides to the executor", async () => {
+    const { request } = await runExecuteCli({
+      argv: [
+        "--participant-override",
+        " source-person-a = target-person-a ",
+        "--participant-override",
+        "source-person-b=target-person-b"
+      ]
+    });
+
+    assert.deepEqual(request.options.participantOverrides, [
+      { sourceId: "source-person-a", targetFdId: "target-person-a" },
+      { sourceId: "source-person-b", targetFdId: "target-person-b" }
+    ]);
+  });
+
+  it("rejects malformed or duplicate explicit participant overrides before execution", async () => {
+    for (const argv of [
+      ["--participant-override", "missing-separator"],
+      ["--participant-override", "=missing-source"],
+      ["--participant-override", "missing-target="],
+      ["--participant-override", "source=target=extra"],
+      [
+        "--participant-override",
+        "duplicate-source=target-a",
+        "--participant-override",
+        "duplicate-source=target-b"
+      ]
+    ]) {
+      const { request, exitCode, output } = await runExecuteCli({ argv });
+      assert.equal(request, undefined);
+      assert.equal(exitCode, 1);
+      assert.match(JSON.parse(output.at(-1)).message, /participant-override/);
+    }
+  });
+
   it("passes configured fallback fdIds from the environment to the executor", async () => {
     const { request } = await runExecuteCli({
       env: {

@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/179567ad1b153c4aa58c147454d90538/179567ad1b153c4aa58c147454d90538_v1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_3993c22756812a class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_3993c2275678a4&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1764 colSpan=4 column=&quot;0,1,2,3&quot; row=&quot;0&quot;&gt;&#13;
+&lt;TABLE id=fd_3993c22c809e26 class=tb_normal style=&quot;WIDTH: 100%&quot; width=&quot;100%&quot; align=center fd_type=&quot;detailsTable&quot; fd_values=&apos;{cell:&quot;4&quot;,_label_bind:&quot;false&quot;,label:&quot;明细表1&quot;,id:&quot;fd_3993c22c809e26&quot;,width:&quot;100%&quot;,showRow:&quot;1&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;明细表1&quot; showStatisticRow=&quot;undefined&quot; showRow=&quot;1&quot; showIndex=&quot;true&quot; tableName=&quot;fd_3993c22756812a&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR class=tr_normal_title type=&quot;titleRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;0&quot; colType=&quot;noTitle&quot;&gt;&lt;LABEL attach=&quot;fd_3993c22c809e26&quot;&gt;序号&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3993c22e287438&quot;,content:&quot;填报人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;填报人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3993c22f099f14&quot;,content:&quot;填表时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;填表时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;0&quot; colType=&quot;addTitle&quot;&gt;&lt;IMG title=添加行 src=&quot;//scop.shanghai-electric.com/resource/style/default/icons/add.gif&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;1&quot; colType=&quot;noTemplate&quot;&gt;&lt;LABEL attach=&quot;fd_3993c22c809e26&quot;&gt;1&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_3993c23cf3b168&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;填报人&quot;,_label_bind_id:&quot;fd_3993c22e287438&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;true&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;null&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_3993c23cf3b168 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;填报人&quot; tableName=&quot;fd_3993c22c809e26&quot; businessType=&quot;addressDialog&quot; multiSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; defaultValue=&quot;null&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3993c23bb69ab0&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;填表时间&quot;,_label_bind_id:&quot;fd_3993c22f099f14&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3993c23bb69ab0 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;填表时间&quot; tableName=&quot;fd_3993c22c809e26&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;1&quot; colType=&quot;delCol&quot;&gt;&lt;NOBR&gt;&lt;IMG title=删除行 src=&quot;//scop.shanghai-electric.com/resource/style/default/icons/delete.gif&quot;&gt;&amp;nbsp;&lt;IMG title=上移 src=&quot;//scop.shanghai-electric.com/resource/style/default/icons/up.gif&quot;&gt;&amp;nbsp;&lt;IMG title=下移 src=&quot;//scop.shanghai-electric.com/resource/style/default/icons/down.gif&quot;&gt;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR type=&quot;statisticRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;2&quot; colType=&quot;noFoot&quot;&gt;&lt;LABEL attach=&quot;fd_3993c22c809e26&quot;&gt;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;2&quot; colType=&quot;emptyCell&quot;&gt;&lt;LABEL attach=&quot;fd_3993c22c809e26&quot;&gt;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=295 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=587 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=296 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=584 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=299 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=300 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=580 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=302 column=&quot;0&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=579 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=303 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=578 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>179567f2675a4481557b99842ebb1744</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/179567ad1b153c4aa58c147454d90538/179567ad1b153c4aa58c147454d90538_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_3993c22756812a class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_3993c2275678a4&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1764 colSpan=4 column=&quot;0,1,2,3&quot; row=&quot;0&quot;&gt;&#13;
+&lt;TABLE id=fd_3993c22c809e26 class=tb_normal style=&quot;WIDTH: 100%&quot; width=&quot;100%&quot; align=center fd_type=&quot;detailsTable&quot; fd_values=&apos;{cell:&quot;4&quot;,_label_bind:&quot;false&quot;,label:&quot;明细表1&quot;,id:&quot;fd_3993c22c809e26&quot;,width:&quot;100%&quot;,showRow:&quot;1&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;明细表1&quot; showStatisticRow=&quot;undefined&quot; showRow=&quot;1&quot; showIndex=&quot;true&quot; tableName=&quot;fd_3993c22756812a&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR class=tr_normal_title type=&quot;titleRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;0&quot; colType=&quot;noTitle&quot;&gt;&lt;LABEL attach=&quot;fd_3993c22c809e26&quot;&gt;序号&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3993c22e287438&quot;,content:&quot;填报人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;填报人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3993c22f099f14&quot;,content:&quot;填表时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;填表时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;0&quot; colType=&quot;addTitle&quot;&gt;&lt;IMG title=添加行 src=&quot;//scop.shanghai-electric.com/resource/style/default/icons/add.gif&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;1&quot; colType=&quot;noTemplate&quot;&gt;&lt;LABEL attach=&quot;fd_3993c22c809e26&quot;&gt;1&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_3993c23cf3b168&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;填报人&quot;,_label_bind_id:&quot;fd_3993c22e287438&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;true&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;null&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_3993c23cf3b168 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;填报人&quot; tableName=&quot;fd_3993c22c809e26&quot; businessType=&quot;addressDialog&quot; multiSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; defaultValue=&quot;null&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3993c23bb69ab0&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;填表时间&quot;,_label_bind_id:&quot;fd_3993c22f099f14&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3993c23bb69ab0 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;填表时间&quot; tableName=&quot;fd_3993c22c809e26&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;1&quot; colType=&quot;delCol&quot;&gt;&lt;NOBR&gt;&lt;IMG title=删除行 src=&quot;//scop.shanghai-electric.com/resource/style/default/icons/delete.gif&quot;&gt;&amp;nbsp;&lt;IMG title=上移 src=&quot;//scop.shanghai-electric.com/resource/style/default/icons/up.gif&quot;&gt;&amp;nbsp;&lt;IMG title=下移 src=&quot;//scop.shanghai-electric.com/resource/style/default/icons/down.gif&quot;&gt;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR type=&quot;statisticRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;2&quot; colType=&quot;noFoot&quot;&gt;&lt;LABEL attach=&quot;fd_3993c22c809e26&quot;&gt;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;2&quot; colType=&quot;emptyCell&quot;&gt;&lt;LABEL attach=&quot;fd_3993c22c809e26&quot;&gt;&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=295 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=587 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=296 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=584 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=299 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=300 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=580 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=302 column=&quot;0&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=579 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=303 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=578 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>179567ad1b153c4aa58c147454d90538</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>179567f269e2e5beec2a954470385fe5</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1620654809978</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_3993c22756812a class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1764 colSpan=4 column=&quot;0,1,2,3&quot; row=&quot;0&quot;&gt;&#13;
+&#13;
+&lt;script&gt;Com_IncludeFile(&apos;doclist.js&apos;);&lt;/script&gt;&lt;script&gt;DocList_Info.push(&apos;TABLE_DL_fd_3993c22c809e26&apos;);&lt;/script&gt;&#13;
+&lt;xform:editShow&gt;&lt;c:if test=&quot;${empty _xformForm.extendDataFormInfo.formData.fd_3993c22c809e26}&quot;&gt;&lt;script&gt;Com_AddEventListener(window, &apos;load&apos;, function(){ setTimeout(function() {for (var i = 0; i &lt; 1; i ++) {DocList_AddRow(document.getElementById(&apos;TABLE_DL_fd_3993c22c809e26&apos;))};}, 500);});&lt;/script&gt;&lt;/c:if&gt;&lt;/xform:editShow&gt;&lt;script&gt;$(function(){var tb=document.getElementById(&apos;TABLE_DL_fd_3993c22c809e26&apos;);var totalWidth=0;var tds=$(tb).find(&quot;tr[type=&apos;titleRow&apos;]&quot;).children();var hasPercent=false;tds.each(function(){if(!this.width||this.width+&apos;&apos;.indexOf(&apos;%&apos;)&gt;=0){totalWidth+=$(this).width();hasPercent=true;}else{	totalWidth+=parseInt(this.width);}});	var tdWidth=$(tb).parents(&apos;td&apos;).width();if(!hasPercent&amp;&amp;totalWidth&gt;tdWidth)$(tb).css(&apos;width&apos;,totalWidth+&apos;px&apos;);var tb_div=document.getElementById(&apos;TABLE_DL_fd_3993c22c809e26_div&apos;);$(tb_div).css(&apos;width&apos;,&apos;100%&apos;);});&lt;/script&gt;&lt;div id=&apos;TABLE_DL_fd_3993c22c809e26_div&apos; style=&apos;overflow:auto;&apos;&gt;&#13;
+&lt;TABLE id=TABLE_DL_fd_3993c22c809e26 class=tb_normal style=&quot;WIDTH: 100%&quot; width=&quot;100%&quot; align=center   layout2col=&quot;undefined&quot;  label=&quot;明细表1&quot; showStatisticRow=&quot;undefined&quot; showRow=&quot;1&quot; showIndex=&quot;true&quot; tableName=&quot;fd_3993c22756812a&quot;&gt;&#13;
+&lt;TR class=tr_normal_title type=&quot;titleRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;0&quot; colType=&quot;noTitle&quot;&gt;&lt;kmss:message key=&quot;page.serial&quot; /&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;填报人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;填表时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&lt;TD style=&quot;width:48px;&quot; align=center column=&quot;3&quot; row=&quot;0&quot; colType=&quot;addTitle&quot;&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/add.gif&apos;/&gt;&apos; title=&apos;添加行&apos; onclick=&apos;DocList_AddRow();XFom_RestValidationElements();&apos;&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&lt;/TR&gt;&#13;
+&lt;%-- 基准行 --%&gt;&#13;
+&lt;TR KMSS_IsReferRow=&quot;1&quot; style=&quot;display:none&quot;  type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;1&quot; colType=&quot;noTemplate&quot; KMSS_IsRowIndex=1&gt;{1}&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3993c22c809e26.!{index}.fd_3993c23cf3b168.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3993c22c809e26.!{index}.fd_3993c23cf3b168.name)&quot; mulSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;填报人&quot; title=&quot;填报人&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&#13;
+			&lt;%-- 明细表行ID --%&gt;&#13;
+			&lt;xform:text showStatus=&quot;noShow&quot;  property=&quot;extendDataFormInfo.value(fd_3993c22c809e26.!{index}.fdId)&quot; /&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3993c22c809e26.!{index}.fd_3993c23bb69ab0)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;填表时间&quot; title=&quot;填表时间&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;1&quot; colType=&quot;delCol&quot;&gt;&lt;nobr&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/delete.gif&apos;/&gt;&apos; title=删除行 onclick=&apos;DocList_DeleteRow_ClearLast();XFom_RestValidationElements();&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/up.gif&apos;/&gt;&apos; title=上移 onclick=&apos;DocList_MoveRow(-1);&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/down.gif&apos;/&gt;&apos; title=下移 onclick=&apos;DocList_MoveRow(1);&apos;&gt;&lt;/nobr&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TR&gt;&#13;
+&lt;%-- 内容行 --%&gt;&#13;
+&lt;c:forEach items=&quot;${_xformForm.extendDataFormInfo.formData.fd_3993c22c809e26}&quot; var=&quot;_xformEachBean&quot; varStatus=&quot;vstatus&quot;&gt;&#13;
+&lt;TR KMSS_IsContentRow=&quot;1&quot;  type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;1&quot; colType=&quot;noTemplate&quot; KMSS_IsRowIndex=1&gt;${vstatus.index + 1}&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3993c22c809e26.${vstatus.index}.fd_3993c23cf3b168.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3993c22c809e26.${vstatus.index}.fd_3993c23cf3b168.name)&quot; mulSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;填报人&quot; title=&quot;填报人&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&#13;
+			&lt;%-- 明细表行ID --%&gt;&#13;
+			&lt;xform:text showStatus=&quot;noShow&quot;  property=&quot;extendDataFormInfo.value(fd_3993c22c809e26.${vstatus.index}.fdId)&quot; /&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3993c22c809e26.${vstatus.index}.fd_3993c23bb69ab0)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;填表时间&quot; title=&quot;填表时间&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;1&quot; colType=&quot;delCol&quot;&gt;&lt;nobr&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/delete.gif&apos;/&gt;&apos; title=删除行 onclick=&apos;DocList_DeleteRow_ClearLast();XFom_RestValidationElements();&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/up.gif&apos;/&gt;&apos; title=上移 onclick=&apos;DocList_MoveRow(-1);&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/down.gif&apos;/&gt;&apos; title=下移 onclick=&apos;DocList_MoveRow(1);&apos;&gt;&lt;/nobr&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TR&gt;&#13;
+&lt;/c:forEach&gt;&#13;
+&lt;TR type=&quot;statisticRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;2&quot; colType=&quot;noFoot&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;2&quot; colType=&quot;emptyCell&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&lt;/TR&gt;&#13;
+			&lt;/TABLE&gt;&#13;
+&lt;/div&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=295 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=587 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=296 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=584 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=299 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=300 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=580 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=302 column=&quot;0&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=579 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=303 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=578 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSubTableProperty name=&quot;fd_3993c22c809e26&quot; label=&quot;明细表1&quot; &gt;&#13;
+&lt;idProperty&gt;&lt;generator type=&quot;assigned&quot; /&gt;&lt;/idProperty&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_3993c23cf3b168&quot; label=&quot;填报人&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; mutiValueSplit=&quot;;&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3993c23bb69ab0&quot; label=&quot;填表时间&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;/extendSubTableProperty&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>179567ad1b153c4aa58c147454d90538</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>179567f2675a4481557b99842ebb1744</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1620654810032</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_3993c22756812a class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1764 colSpan=4 column=&quot;0,1,2,3&quot; row=&quot;0&quot;&gt;&#13;
+&#13;
+&lt;script&gt;Com_IncludeFile(&apos;doclist.js&apos;);&lt;/script&gt;&lt;script&gt;DocList_Info.push(&apos;TABLE_DL_fd_3993c22c809e26&apos;);&lt;/script&gt;&#13;
+&lt;xform:editShow&gt;&lt;c:if test=&quot;${empty _xformForm.extendDataFormInfo.formData.fd_3993c22c809e26}&quot;&gt;&lt;script&gt;Com_AddEventListener(window, &apos;load&apos;, function(){ setTimeout(function() {for (var i = 0; i &lt; 1; i ++) {DocList_AddRow(document.getElementById(&apos;TABLE_DL_fd_3993c22c809e26&apos;))};}, 500);});&lt;/script&gt;&lt;/c:if&gt;&lt;/xform:editShow&gt;&lt;script&gt;$(function(){var tb=document.getElementById(&apos;TABLE_DL_fd_3993c22c809e26&apos;);var totalWidth=0;var tds=$(tb).find(&quot;tr[type=&apos;titleRow&apos;]&quot;).children();var hasPercent=false;tds.each(function(){if(!this.width||this.width+&apos;&apos;.indexOf(&apos;%&apos;)&gt;=0){totalWidth+=$(this).width();hasPercent=true;}else{	totalWidth+=parseInt(this.width);}});	var tdWidth=$(tb).parents(&apos;td&apos;).width();if(!hasPercent&amp;&amp;totalWidth&gt;tdWidth)$(tb).css(&apos;width&apos;,totalWidth+&apos;px&apos;);var tb_div=document.getElementById(&apos;TABLE_DL_fd_3993c22c809e26_div&apos;);$(tb_div).css(&apos;width&apos;,&apos;100%&apos;);});&lt;/script&gt;&lt;div id=&apos;TABLE_DL_fd_3993c22c809e26_div&apos; style=&apos;overflow:auto;&apos;&gt;&#13;
+&lt;TABLE id=TABLE_DL_fd_3993c22c809e26 class=tb_normal style=&quot;WIDTH: 100%&quot; width=&quot;100%&quot; align=center   layout2col=&quot;undefined&quot;  label=&quot;明细表1&quot; showStatisticRow=&quot;undefined&quot; showRow=&quot;1&quot; showIndex=&quot;true&quot; tableName=&quot;fd_3993c22756812a&quot;&gt;&#13;
+&lt;TR class=tr_normal_title type=&quot;titleRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;0&quot; colType=&quot;noTitle&quot;&gt;&lt;kmss:message key=&quot;page.serial&quot; /&gt;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;填报人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;填表时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&lt;TD style=&quot;width:48px;&quot; align=center column=&quot;3&quot; row=&quot;0&quot; colType=&quot;addTitle&quot;&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/add.gif&apos;/&gt;&apos; title=&apos;添加行&apos; onclick=&apos;DocList_AddRow();XFom_RestValidationElements();&apos;&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&lt;/TR&gt;&#13;
+&lt;%-- 基准行 --%&gt;&#13;
+&lt;TR KMSS_IsReferRow=&quot;1&quot; style=&quot;display:none&quot;  type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;1&quot; colType=&quot;noTemplate&quot; KMSS_IsRowIndex=1&gt;{1}&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3993c22c809e26.!{index}.fd_3993c23cf3b168.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3993c22c809e26.!{index}.fd_3993c23cf3b168.name)&quot; mulSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;填报人&quot; title=&quot;填报人&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&#13;
+			&lt;%-- 明细表行ID --%&gt;&#13;
+			&lt;xform:text showStatus=&quot;noShow&quot;  property=&quot;extendDataFormInfo.value(fd_3993c22c809e26.!{index}.fdId)&quot; /&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3993c22c809e26.!{index}.fd_3993c23bb69ab0)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;填表时间&quot; title=&quot;填表时间&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;1&quot; colType=&quot;delCol&quot;&gt;&lt;nobr&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/delete.gif&apos;/&gt;&apos; title=删除行 onclick=&apos;DocList_DeleteRow_ClearLast();XFom_RestValidationElements();&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/up.gif&apos;/&gt;&apos; title=上移 onclick=&apos;DocList_MoveRow(-1);&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/down.gif&apos;/&gt;&apos; title=下移 onclick=&apos;DocList_MoveRow(1);&apos;&gt;&lt;/nobr&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TR&gt;&#13;
+&lt;%-- 内容行 --%&gt;&#13;
+&lt;c:forEach items=&quot;${_xformForm.extendDataFormInfo.formData.fd_3993c22c809e26}&quot; var=&quot;_xformEachBean&quot; varStatus=&quot;vstatus&quot;&gt;&#13;
+&lt;TR KMSS_IsContentRow=&quot;1&quot;  type=&quot;templateRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;1&quot; colType=&quot;noTemplate&quot; KMSS_IsRowIndex=1&gt;${vstatus.index + 1}&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3993c22c809e26.${vstatus.index}.fd_3993c23cf3b168.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3993c22c809e26.${vstatus.index}.fd_3993c23cf3b168.name)&quot; mulSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;填报人&quot; title=&quot;填报人&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&#13;
+			&lt;%-- 明细表行ID --%&gt;&#13;
+			&lt;xform:text showStatus=&quot;noShow&quot;  property=&quot;extendDataFormInfo.value(fd_3993c22c809e26.${vstatus.index}.fdId)&quot; /&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3993c22c809e26.${vstatus.index}.fd_3993c23bb69ab0)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;填表时间&quot; title=&quot;填表时间&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&#13;
+&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;1&quot; colType=&quot;delCol&quot;&gt;&lt;nobr&gt;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/delete.gif&apos;/&gt;&apos; title=删除行 onclick=&apos;DocList_DeleteRow_ClearLast();XFom_RestValidationElements();&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/up.gif&apos;/&gt;&apos; title=上移 onclick=&apos;DocList_MoveRow(-1);&apos;&gt;&amp;nbsp;&amp;nbsp;&lt;img style=&apos;cursor:pointer&apos; class=optStyle src=&apos;&lt;c:url value=&apos;/resource/style/default/icons/down.gif&apos;/&gt;&apos; title=下移 onclick=&apos;DocList_MoveRow(1);&apos;&gt;&lt;/nobr&gt;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TR&gt;&#13;
+&lt;/c:forEach&gt;&#13;
+&lt;TR type=&quot;statisticRow&quot;&gt;&#13;
+&lt;TD style=&quot;WIDTH: 15px&quot; align=center column=&quot;0&quot; row=&quot;2&quot; colType=&quot;noFoot&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD align=center column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&#13;
+&lt;xform:editShow&gt;&lt;TD style=&quot;WIDTH: 48px&quot; align=center column=&quot;3&quot; row=&quot;2&quot; colType=&quot;emptyCell&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;/xform:editShow&gt;&lt;/TR&gt;&#13;
+			&lt;/TABLE&gt;&#13;
+&lt;/div&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=295 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=587 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=296 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=584 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=299 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=300 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=580 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=302 column=&quot;0&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=579 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=303 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=578 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendSubTableProperty name=&quot;fd_3993c22c809e26&quot; label=&quot;明细表1&quot; &gt;&#13;
+&lt;idProperty&gt;&lt;generator type=&quot;assigned&quot; /&gt;&lt;/idProperty&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_3993c23cf3b168&quot; label=&quot;填报人&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; mutiValueSplit=&quot;;&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3993c23bb69ab0&quot; label=&quot;填表时间&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;/extendSubTableProperty&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1620653844156</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

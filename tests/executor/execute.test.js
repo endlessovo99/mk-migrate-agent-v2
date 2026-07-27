@@ -1228,7 +1228,7 @@ describe("executeDsl", () => {
     assert.equal(rejected.diagnostics.some((item) => item.code === "readback.workflow.node_timeout_mismatch"), true);
   });
 
-  localCorpusIt("keeps procurement payment finance branch conditions as native Batch formulas", () => {
+  localCorpusIt("keeps procurement payment post-name branch conditions as native Eval formulas", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/1887a98750756b5ba35b02047e6a6a30");
     const dslDraft = draftSourceDraft(sourceDraft);
     const content = buildWorkflowContent(dslDraft.workflow, {
@@ -1237,11 +1237,12 @@ describe("executeDsl", () => {
       mainTableName: "mk_model_test"
     });
 
-    for (const edgeId of ["L33", "L53"]) {
+    for (const edgeId of ["L33", "L30", "L53", "L54"]) {
       const edge = content.elements.find((element) => element.id === edgeId);
       assert.equal(edge.formulaType, "formula");
-      assert.equal(JSON.parse(edge.formula).type, "Batch");
+      assert.equal(JSON.parse(edge.formula).type, "Eval");
       assert.equal(edge.formula.includes("global.contains"), true);
+      assert.equal(edge.formula.includes("fd_apply_post.fdName"), true);
     }
   });
 
@@ -1414,6 +1415,22 @@ describe("executeDsl", () => {
       fields: {
         fd_subject: { visible: true, editable: false, required: false },
         fd_name: { visible: true, editable: true, required: false }
+      },
+      detailColumnBindings: {
+        fd_name: detailTable
+      },
+      detailTables: {
+        [detailTable]: {
+          visible: true,
+          editable: true,
+          required: false,
+          operations: {
+            canAddRow: true,
+            canDeleteRow: true,
+            canImport: true,
+            canExport: false
+          }
+        }
       }
     });
   });

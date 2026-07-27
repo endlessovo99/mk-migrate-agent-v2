@@ -34,6 +34,7 @@ import { conditionalTotalCalculationModel } from "./conditional-total-calculatio
 import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
 import { projectDynamicHyperlinkForm } from "./dynamic-hyperlink.js";
 import { multiRadioRowHelperFormRules } from "./multi-radio-row-helper.js";
+import { applyDetailCascadeRowOptions } from "./detail-cascade-actions.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -57,7 +58,10 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     sourceDraft.scripts
   );
   const fieldIdMap = buildFieldIdMap(rawForm);
-  const form = applyFieldIdMapToForm(rawForm, fieldIdMap);
+  const form = applyDetailCascadeRowOptions(
+    applyFieldIdMapToForm(rawForm, fieldIdMap),
+    sourceDraft.scripts
+  );
   const knownSourceFieldIds = collectFormFieldIds(rawForm);
   const multiRadioFormRules = multiRadioRowHelperFormRules(sourceDraft.scripts, form);
   const formRules = draftFormRules(
@@ -624,7 +628,8 @@ function draftDetailTableFromSource(table) {
       props: propsFromSource(column, { detailTableId: table.id }),
       sourceProps: column.sourceProps || {},
       sourceRef: column.sourceRef,
-      generated: false
+      generated: false,
+      dataOnly: column.dataOnly === true ? true : undefined
     }))
   });
 }
@@ -642,8 +647,20 @@ function propsFromSource(source, options = {}) {
   // Description is display-only; catalog allows only content/style.
   if (componentId === "xform-description") {
     const props = {};
-    const content = source.sourceProps?.designerValues?.content || source.title;
+    const values = source.sourceProps?.designerValues || {};
+    const isLinkLabel = String(source.sourceProps?.designerType || "").toLowerCase() === "linklabel";
+    const content = isLinkLabel
+      ? source.title
+      : values.content || source.title;
     if (content) props.content = content;
+    if (isLinkLabel) {
+      const link = linkedDescriptionUrl(values.link);
+      if (link) {
+        props.hasLink = true;
+        props.link = link;
+      }
+      return props;
+    }
     const style = descriptionStyleFromSource(source);
     if (style) props.style = style;
     return props;
@@ -723,6 +740,13 @@ function propsFromSource(source, options = {}) {
   }
 
   return props;
+}
+
+function linkedDescriptionUrl(value) {
+  const link = String(value || "").trim();
+  if (/^https?:\/\//iu.test(link)) return link;
+  if (link.startsWith("//")) return `http:${link}`;
+  return "";
 }
 
 function legacyAddressOrgTypes(source) {

@@ -17,9 +17,7 @@ export function componentForSourceType(type, source = {}) {
     attachment: "xform-attach",
     description: "xform-description",
     RestDialog: "xform-input",
-    LinkLabel: String(source.sourceProps?.designerValues?.link || "").trim()
-      ? "xform-hyperlinks"
-      : "xform-description",
+    LinkLabel: "xform-description",
     button: "xform-button"
   }[type] || "xform-input";
 }

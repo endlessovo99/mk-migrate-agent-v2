@@ -11,7 +11,7 @@ describe("workflow data-authority source intake", () => {
 
     assert.deepEqual(
       Object.keys(node.dataAuthority.fields).sort(),
-      ["exactField", "httpCode", "resultCaption"]
+      ["detailHidden", "exactField", "httpCode", "resultCaption"]
     );
     assert.deepEqual(node.dataAuthority.fields.resultCaption, {
       visible: false,
@@ -33,6 +33,13 @@ describe("workflow data-authority source intake", () => {
       required: false,
       sourceMode: "hidden",
       sourceRef: "source.form.dataAuthority.fdDesignerHtml.result_right.n2.exactField"
+    });
+    assert.deepEqual(node.dataAuthority.fields.detailHidden, {
+      visible: false,
+      editable: false,
+      required: false,
+      sourceMode: "hidden",
+      sourceRef: "source.form.dataAuthority.fdDesignerHtml.detail_hidden_right.N2.detailHidden"
     });
   });
 

@@ -10,14 +10,35 @@ describe("workflow data-authority Route case", () => {
 
     assert.deepEqual(
       Object.keys(dslNode.dataAuthority.fields).sort(),
-      ["exactField", "httpCode", "resultCaption"]
+      ["detailHidden", "exactField", "httpCode", "resultCaption"]
     );
+    const detailTableName = result.execution.readback.form.persistence.detailTables.find(
+      (table) => table.fieldId === "fd_detail_auth"
+    )?.tableName;
+    assert.ok(detailTableName);
     assert.deepEqual(nativeNode.dataAuthority, {
       enabled: true,
       fields: {
         resultCaption: { visible: false, editable: false, required: false },
         httpCode: { visible: false, editable: false, required: false },
-        exactField: { visible: false, editable: false, required: false }
+        exactField: { visible: false, editable: false, required: false },
+        detailHidden: { visible: false, editable: false, required: false }
+      },
+      detailColumnBindings: {
+        detailHidden: detailTableName
+      },
+      detailTables: {
+        [detailTableName]: {
+          visible: true,
+          editable: true,
+          required: false,
+          operations: {
+            canAddRow: true,
+            canDeleteRow: true,
+            canImport: true,
+            canExport: false
+          }
+        }
       }
     });
     assert.equal(result.execution.readback.partitions.workflow, "verified");

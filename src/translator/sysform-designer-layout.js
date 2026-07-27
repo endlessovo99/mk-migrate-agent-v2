@@ -36,9 +36,9 @@ import {
   propertyFieldId
 } from "./xml-utils.js";
 
-export function buildDesignerFirstForm(html, metadata, warnings) {
+export function buildDesignerFirstForm(html, metadata, warnings, options = {}) {
   const metadataFields = Array.isArray(metadata?.fields) ? metadata.fields : [];
-  const designer = parseDesignerLayout(html, metadataFields, warnings);
+  const designer = parseDesignerLayout(html, metadataFields, warnings, options);
   const visibleDesignerIds = new Set(designer.fields.map((field) => field.id));
   const designerById = new Map(
     [...designer.hiddenFields, ...designer.fields].map((field) => [field.id, field])
@@ -115,10 +115,13 @@ function dataOnlyFieldFromMetadata(metadataField, designerField, warnings) {
   };
 }
 
-function parseDesignerLayout(html, metadataFields, warnings) {
+function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
   const decoded = decodeEntities(html);
   const rows = splitMainFormRows(decoded);
-  const captionContext = designerBoundCaptionContext(decoded);
+  const runtimeVisibleFieldIds = options.runtimeVisibleFieldIds instanceof Set
+    ? options.runtimeVisibleFieldIds
+    : new Set();
+  const captionContext = designerBoundCaptionContext(decoded, runtimeVisibleFieldIds);
   const metadataContext = metadataMatchContext(metadataFields);
   const fields = [];
   const fieldIds = new Set();
@@ -158,6 +161,20 @@ function parseDesignerLayout(html, metadataFields, warnings) {
   layoutRows.splice(0, layoutRows.length, ...adjacentRowTitles.rows);
 
   recoverDesignerAttachments(decoded, fields, fieldIds, layoutRows, warnings);
+
+  for (const field of fields) {
+    if (field.source?.displayJspVisibilityOverride !== true) continue;
+    warnings.push({
+      code: "source.sysform.display_jsp_visibility_override",
+      message: `Designer field ${field.id} (${field.title}) is rendered unconditionally by fdDisplayJsp and will remain visible despite canShow=false.`,
+      path: "/fdDisplayJsp",
+      details: {
+        fieldId: field.id,
+        designerCanShow: false,
+        displayJspRendered: true
+      }
+    });
+  }
 
   if (!rows.length && decoded.trim()) {
     warnings.push({
@@ -591,6 +608,9 @@ function enrichDesignerField(field, metadataField, warnings) {
     ...field,
     title: field.title || metadataField.title,
     required: field.required || metadataField.required,
+    ...(field.dataOnly === true || metadataField.dataOnly === true
+      ? { dataOnly: true }
+      : {}),
     source: {
       ...field.source,
       metadataId: metadataField.id,
@@ -736,7 +756,8 @@ function extractLayoutCellControls(html, captionContext, metadataContext, option
   const externalRightPromptIds = captionContext?.externalRightPromptIds || new Set();
   const extractedEntries = extractDesignerFieldControlEntries(html, {
     includeHidden: true,
-    includeTextLabels: true
+    includeTextLabels: true,
+    runtimeVisibleFieldIds: captionContext?.runtimeVisibleFieldIds
   }).map((entry) => withBoundCaptionEntry(entry, captionContext));
   const entries = extractedEntries.filter((entry) =>
     !isSourceDescriptionControl(entry.control) ||
@@ -1055,10 +1076,11 @@ function withInlineHint(control, hint) {
   };
 }
 
-function designerBoundCaptionContext(html) {
+function designerBoundCaptionContext(html, runtimeVisibleFieldIds = new Set()) {
   const controls = extractDesignerFieldControls(html, {
     includeHidden: true,
-    includeTextLabels: true
+    includeTextLabels: true,
+    runtimeVisibleFieldIds
   });
   const descriptionsById = new Map(
     controls
@@ -1103,7 +1125,8 @@ function designerBoundCaptionContext(html) {
   return {
     boundCaptions,
     externalRightPromptIds,
-    rightContainerByControlId
+    rightContainerByControlId,
+    runtimeVisibleFieldIds
   };
 }
 
@@ -1173,12 +1196,23 @@ function extractDesignerFieldControlEntries(html, options = {}) {
     if (normalizedType === "textlabel" && !options.includeTextLabels) continue;
     const values = parseDesignerFdValues(match[2]);
     const fragment = matchingElementFragment(html, match);
-    const hidden = isHiddenDesignerControl(values, match[2], fragment) ||
+    const fieldId = values.id ||
+      propertyFieldId(attrValue(match[2], "property")) ||
+      attrValue(match[2], "id");
+    const displayJspVisibilityOverride = Boolean(
+      fieldId &&
+      options.runtimeVisibleFieldIds?.has(fieldId) &&
+      isCanShowHidden(values, match[2])
+    );
+    const hidden = isHiddenDesignerControl(values, match[2], fragment, {
+      ignoreCanShow: displayJspVisibilityOverride
+    }) ||
       hiddenRanges.some((range) => match.index >= range.start && match.index < range.end);
     if (hidden && !options.includeHidden) continue;
     const field = designerFieldFromControl(fdType, values, match[2], {
       html: fragment,
       hidden,
+      displayJspVisibilityOverride: displayJspVisibilityOverride && !hidden,
       rightContainer: rightContainerAt(rightRanges, match.index)
     });
     if (field) controls.push({
@@ -1239,6 +1273,9 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
     designerShowStatus: attrValue(attrs, "showStatus") || undefined,
     ...(context.rightContainer ? { rightContainer: context.rightContainer } : {}),
     ...(normalized === "restdialog" ? { restDialog: restDialogEvidence(values) } : {}),
+    ...(context.displayJspVisibilityOverride
+      ? { displayJspVisibilityOverride: true }
+      : {}),
     ...(context.hidden ? { designerHidden: true } : {})
   };
 
@@ -1361,10 +1398,16 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
     for (const [cellIndex, cell] of cells.entries()) {
       if (isNonDataDetailCell(cell.attrs)) continue;
       const sourceColumn = parseColumnSpec(cell.attrs.column, cellIndex).column;
-      for (const control of extractDesignerFieldControls(cell.body)) {
+      for (const control of extractDesignerFieldControls(cell.body, { includeHidden: true })) {
         if (!isDetailColumnControl(control, tableId) || seen.has(control.id)) continue;
         seen.add(control.id);
-        const withHeader = withDetailHeaderSemantics(control, headerSemantics.get(sourceColumn));
+        const persistedControl = control.source?.designerHidden === true
+          ? { ...control, dataOnly: true }
+          : control;
+        const withHeader = withDetailHeaderSemantics(
+          persistedControl,
+          headerSemantics.get(sourceColumn)
+        );
         columns.push(detailColumnWithTitleLabel(withHeader, titleLabels));
       }
     }
@@ -1531,18 +1574,21 @@ function isNonDataDetailCell(attrs) {
 function isDetailColumnControl(control, tableId) {
   if (!control || control.type === "detailTable") return false;
   if (!control.title || control.title === control.id) return false;
-  if ((control.source?.designerValues?.showStatus || control.source?.designerShowStatus) === "noShow") return false;
   const tableName = control.source?.designerValues?.tableName || control.source?.designerTableName;
   if (tableName && tableName !== tableId) return false;
   return true;
 }
 
-function isHiddenDesignerControl(values = {}, attrs = "", fragment = "") {
-  if (isFalseLike(values.canShow) || isFalseLike(attrValue(attrs, "canShow"))) return true;
+function isHiddenDesignerControl(values = {}, attrs = "", fragment = "", options = {}) {
+  if (options.ignoreCanShow !== true && isCanShowHidden(values, attrs)) return true;
   if (isNoShow(values.showStatus) || isNoShow(attrValue(attrs, "showStatus"))) return true;
   if (hasDisplayNone(values.style) || hasDisplayNone(attrValue(attrs, "style"))) return true;
   if (/\bclass\s*=\s*(["'])[^"']*\binputhidden\b/i.test(fragment)) return true;
   return false;
+}
+
+function isCanShowHidden(values = {}, attrs = "") {
+  return isFalseLike(values.canShow) || isFalseLike(attrValue(attrs, "canShow"));
 }
 
 function hiddenAncestorRanges(html) {

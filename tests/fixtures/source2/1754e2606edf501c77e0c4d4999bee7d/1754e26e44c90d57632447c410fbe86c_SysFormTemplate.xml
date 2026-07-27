@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>101-EKP-GUOAIL</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>14c72d2eb8e184d6c44b4b24f6593173</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>101-EKP-GUOAIL</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>14c72d2eb8e184d6c44b4b24f6593173</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdOrgType</string> 
+       <int>2</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1639016c906fd4262c4e9644e4887066</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.organization.model.SysOrgDept</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdName</string> 
+       <string>上海电气集团数字科技有限公司</string> 
+      </void> 
+      <void method="put"> 
+       <string>hbmParent.fdName</string> 
+       <string>上海电气集团数字科技</string> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/1754e2606edf501c77e0c4d4999bee7d/1754e2606edf501c77e0c4d4999bee7d_v1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_32722d49680ae6 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_32722d496820b0&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d75ecf562&quot;,content:&quot;权限变更人所属公司&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;权限变更人所属公司&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_38d60d6162d4fc&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;权限变更人所属公司&quot;,_label_bind_id:&quot;fd_32722d75ecf562&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;select&quot;,_org_org:&quot;true&quot;,_selectValue:&quot;1639016c906fd4262c4e9644e4887066&quot;,_selectName:&quot;上海电气集团数字科技有限公司&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_38d60d6162d4fc class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=上海电气集团数字科技有限公司 ? label=&quot;权限变更人所属公司&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;true&quot; defaultValue=&quot;select&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; multiSelect=&quot;false&quot; businessType=&quot;addressDialog&quot; selectedName=&quot;上海电气集团数字科技有限公司&quot; selectedValue=&quot;1639016c906fd4262c4e9644e4887066&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=145 column=&quot;2&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d76528800&quot;,content:&quot;权限变更人所属部门&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;权限变更人所属部门&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=379 column=&quot;3&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_38d60d7843c8ac&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;权限变更人所属部门&quot;,_label_bind_id:&quot;fd_32722d76528800&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_DEPT&quot;,_org_org:&quot;true&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_38d60d7843c8ac class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=提交人的部门 ? label=&quot;权限变更人所属部门&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;true&quot; defaultValue=&quot;ORG_TYPE_DEPT&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; multiSelect=&quot;false&quot; businessType=&quot;addressDialog&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 51px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d76b18f3c&quot;,content:&quot;权限变更人姓名&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;权限变更人姓名&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_38d60d882ee902&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;权限变更人姓名&quot;,_label_bind_id:&quot;fd_32722d76b18f3c&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_PERSON&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_38d60d882ee902 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=提交人 ? label=&quot;权限变更人姓名&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;true&quot; defaultValue=&quot;ORG_TYPE_PERSON&quot; orgType=&quot;ORG_TYPE_PERSON&quot; multiSelect=&quot;false&quot; businessType=&quot;addressDialog&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=145 column=&quot;2&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d7719872c&quot;,content:&quot;权限变更人员工号&amp;#13;&amp;#10;（系统登陆名）&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;权限变更人员工号&lt;BR&gt;（系统登陆名）&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=379 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_qxbgr_number&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;权限变更人员工号&amp;#13;&amp;#10;（系统登陆名）&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_32722d7719872c&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_qxbgr_number class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;权限变更人员工号&amp;#13;&amp;#10;（系统登陆名）&amp;#13;&amp;#10;&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required thousandShow=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d7773ad8c&quot;,content:&quot;职务&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;职务&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_job&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;职务&quot;,_label_bind_id:&quot;fd_32722d7773ad8c&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_job class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;职务&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=158 column=&quot;2&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d77c9168a&quot;,content:&quot;联系电话&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;联系电话&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=407 column=&quot;3&quot; row=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_link_phone&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;联系电话&quot;,_label_bind_id:&quot;fd_32722d77c9168a&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_link_phone class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;联系电话&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d7974637c&quot;,content:&quot;申请原因&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;申请原因&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot;&gt;&lt;IMG id=fd_38f63cbd7d7ff8 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_38f63cbd7d7ff8&quot;,_label_bind:&quot;true&quot;,label:&quot;申请原因&quot;,_label_bind_id:&quot;fd_32722d7974637c&quot;,width:&quot;80%&quot;,height:&quot;220&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;申请原因&quot; canShow=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; businessType=&quot;rtfEditor&quot; needFilter=&quot;false&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;4&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d78cfe43c&quot;,content:&quot;所属应用系统名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;所属应用系统名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;4&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 313px; DISPLAY: inline&quot; fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_38e2d354e6848e&quot;,_label_bind:&quot;true&quot;,label:&quot;所属应用系统名称&quot;,_label_bind_id:&quot;fd_32722d78cfe43c&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;OA|1&amp;#13;&amp;#10;项目管理系统|2&amp;#13;&amp;#10;账单管理系统|3&amp;#13;&amp;#10;其他|4&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38e2d354e6848e type=radio value=1 label=&quot;所属应用系统名称&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; alignment=&quot;H&quot; items=&quot;OA;项目管理系统;账单管理系统;其他&quot; itemValues=&quot;1;2;3;4&quot;&gt;&lt;LABEL attach=&quot;fd_38e2d354e6848e&quot;&gt;OA&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38e2d354e6848e type=radio value=2 attach=&quot;fd_38e2d354e6848e&quot;&gt;&lt;LABEL attach=&quot;fd_38e2d354e6848e&quot;&gt;项目管理系统&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38e2d354e6848e type=radio value=3 attach=&quot;fd_38e2d354e6848e&quot;&gt;&lt;LABEL attach=&quot;fd_38e2d354e6848e&quot;&gt;账单管理系统&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38e2d354e6848e type=radio value=4 attach=&quot;fd_38e2d354e6848e&quot;&gt;&lt;LABEL attach=&quot;fd_38e2d354e6848e&quot;&gt;其他&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;5&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d782413d4&quot;,content:&quot;申请类别&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;申请类别&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;5&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 273px; DISPLAY: inline&quot; fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_require_type&quot;,_label_bind:&quot;true&quot;,label:&quot;申请类别&quot;,_label_bind_id:&quot;fd_32722d782413d4&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;增加用户|0&amp;#13;&amp;#10;删除用户 |1&amp;#13;&amp;#10;用户权限变更|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_require_type type=radio value=0 label=&quot;申请类别&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; alignment=&quot;H&quot; items=&quot;增加用户;删除用户 ;用户权限变更&quot; itemValues=&quot;0;1;2&quot;&gt;&lt;LABEL attach=&quot;fd_require_type&quot;&gt;增加用户&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_require_type type=radio value=1 attach=&quot;fd_require_type&quot;&gt;&lt;LABEL attach=&quot;fd_require_type&quot;&gt;删除用户 &lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_require_type type=radio value=2 attach=&quot;fd_require_type&quot;&gt;&lt;LABEL attach=&quot;fd_require_type&quot;&gt;用户权限变更&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;6&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3708140f9206f8&quot;,content:&quot;申请内容&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;申请内容&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;6&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 811px; DISPLAY: inline&quot; fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_3708141b539ecc&quot;,width:&quot;811&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;申请内容&quot;,_label_bind_id:&quot;fd_3708140f9206f8&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;TEXTAREA id=fd_3708141b539ecc class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 811px&quot; ? label=&quot;申请内容&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;7&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 24px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722ee9fb9428&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1062 colSpan=3 column=&quot;1,2,3&quot; row=&quot;7&quot;&gt;&#13;
+&lt;DIV id=fd_attachment style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_attachment&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_32722ee9fb9428&quot;,fileType:&quot;&quot;,sizeType:&quot;multi&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;附件&quot; tableName=&quot;fd_32722d49680ae6&quot; fdMulti=&quot;true&quot; enabledFileType&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>1754e26e44c90d57632447c410fbe86c</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/1754e2606edf501c77e0c4d4999bee7d/1754e2606edf501c77e0c4d4999bee7d_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_32722d49680ae6 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_32722d496820b0&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d75ecf562&quot;,content:&quot;权限变更人所属公司&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;权限变更人所属公司&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_38d60d6162d4fc&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;权限变更人所属公司&quot;,_label_bind_id:&quot;fd_32722d75ecf562&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;select&quot;,_org_org:&quot;true&quot;,_selectValue:&quot;1639016c906fd4262c4e9644e4887066&quot;,_selectName:&quot;上海电气集团数字科技有限公司&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_38d60d6162d4fc class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=上海电气集团数字科技有限公司 ? label=&quot;权限变更人所属公司&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;true&quot; defaultValue=&quot;select&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; multiSelect=&quot;false&quot; businessType=&quot;addressDialog&quot; selectedName=&quot;上海电气集团数字科技有限公司&quot; selectedValue=&quot;1639016c906fd4262c4e9644e4887066&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=145 column=&quot;2&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d76528800&quot;,content:&quot;权限变更人所属部门&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;权限变更人所属部门&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=379 column=&quot;3&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_38d60d7843c8ac&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;权限变更人所属部门&quot;,_label_bind_id:&quot;fd_32722d76528800&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_DEPT&quot;,_org_org:&quot;true&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_38d60d7843c8ac class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=提交人的部门 ? label=&quot;权限变更人所属部门&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;true&quot; defaultValue=&quot;ORG_TYPE_DEPT&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; multiSelect=&quot;false&quot; businessType=&quot;addressDialog&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 51px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d76b18f3c&quot;,content:&quot;权限变更人姓名&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;权限变更人姓名&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_38d60d882ee902&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;权限变更人姓名&quot;,_label_bind_id:&quot;fd_32722d76b18f3c&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_PERSON&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_38d60d882ee902 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=提交人 ? label=&quot;权限变更人姓名&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;true&quot; defaultValue=&quot;ORG_TYPE_PERSON&quot; orgType=&quot;ORG_TYPE_PERSON&quot; multiSelect=&quot;false&quot; businessType=&quot;addressDialog&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=145 column=&quot;2&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d7719872c&quot;,content:&quot;权限变更人员工号&amp;#13;&amp;#10;（系统登陆名）&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;权限变更人员工号&lt;BR&gt;（系统登陆名）&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=379 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_qxbgr_number&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;权限变更人员工号&amp;#13;&amp;#10;（系统登陆名）&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_32722d7719872c&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_qxbgr_number class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;权限变更人员工号&amp;#13;&amp;#10;（系统登陆名）&amp;#13;&amp;#10;&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required thousandShow=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d7773ad8c&quot;,content:&quot;职务&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;职务&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_job&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;职务&quot;,_label_bind_id:&quot;fd_32722d7773ad8c&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_job class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;职务&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=158 column=&quot;2&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d77c9168a&quot;,content:&quot;联系电话&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;联系电话&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=407 column=&quot;3&quot; row=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_link_phone&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;联系电话&quot;,_label_bind_id:&quot;fd_32722d77c9168a&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_link_phone class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;联系电话&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; thousandShow=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d7974637c&quot;,content:&quot;申请原因&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;申请原因&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot;&gt;&lt;IMG id=fd_38f63cbd7d7ff8 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_38f63cbd7d7ff8&quot;,_label_bind:&quot;true&quot;,label:&quot;申请原因&quot;,_label_bind_id:&quot;fd_32722d7974637c&quot;,width:&quot;80%&quot;,height:&quot;220&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;申请原因&quot; canShow=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; businessType=&quot;rtfEditor&quot; needFilter=&quot;false&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;4&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d78cfe43c&quot;,content:&quot;所属应用系统名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;所属应用系统名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;4&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 313px; DISPLAY: inline&quot; fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_38e2d354e6848e&quot;,_label_bind:&quot;true&quot;,label:&quot;所属应用系统名称&quot;,_label_bind_id:&quot;fd_32722d78cfe43c&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;OA|1&amp;#13;&amp;#10;项目管理系统|2&amp;#13;&amp;#10;账单管理系统|3&amp;#13;&amp;#10;其他|4&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38e2d354e6848e type=radio value=1 label=&quot;所属应用系统名称&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; alignment=&quot;H&quot; items=&quot;OA;项目管理系统;账单管理系统;其他&quot; itemValues=&quot;1;2;3;4&quot;&gt;&lt;LABEL attach=&quot;fd_38e2d354e6848e&quot;&gt;OA&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38e2d354e6848e type=radio value=2 attach=&quot;fd_38e2d354e6848e&quot;&gt;&lt;LABEL attach=&quot;fd_38e2d354e6848e&quot;&gt;项目管理系统&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38e2d354e6848e type=radio value=3 attach=&quot;fd_38e2d354e6848e&quot;&gt;&lt;LABEL attach=&quot;fd_38e2d354e6848e&quot;&gt;账单管理系统&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38e2d354e6848e type=radio value=4 attach=&quot;fd_38e2d354e6848e&quot;&gt;&lt;LABEL attach=&quot;fd_38e2d354e6848e&quot;&gt;其他&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;5&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722d782413d4&quot;,content:&quot;申请类别&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;申请类别&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;5&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 273px; DISPLAY: inline&quot; fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_require_type&quot;,_label_bind:&quot;true&quot;,label:&quot;申请类别&quot;,_label_bind_id:&quot;fd_32722d782413d4&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;增加用户|0&amp;#13;&amp;#10;删除用户 |1&amp;#13;&amp;#10;用户权限变更|2&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_require_type type=radio value=0 label=&quot;申请类别&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot; alignment=&quot;H&quot; items=&quot;增加用户;删除用户 ;用户权限变更&quot; itemValues=&quot;0;1;2&quot;&gt;&lt;LABEL attach=&quot;fd_require_type&quot;&gt;增加用户&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_require_type type=radio value=1 attach=&quot;fd_require_type&quot;&gt;&lt;LABEL attach=&quot;fd_require_type&quot;&gt;删除用户 &lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_require_type type=radio value=2 attach=&quot;fd_require_type&quot;&gt;&lt;LABEL attach=&quot;fd_require_type&quot;&gt;用户权限变更&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;6&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3708140f9206f8&quot;,content:&quot;申请内容&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;申请内容&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;6&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 811px; DISPLAY: inline&quot; fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_3708141b539ecc&quot;,width:&quot;811&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;申请内容&quot;,_label_bind_id:&quot;fd_3708140f9206f8&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;TEXTAREA id=fd_3708141b539ecc class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 811px&quot; ? label=&quot;申请内容&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_32722d49680ae6&quot; required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;7&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 24px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_32722ee9fb9428&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1062 colSpan=3 column=&quot;1,2,3&quot; row=&quot;7&quot;&gt;&#13;
+&lt;DIV id=fd_attachment style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_attachment&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_32722ee9fb9428&quot;,fileType:&quot;&quot;,sizeType:&quot;multi&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;附件&quot; tableName=&quot;fd_32722d49680ae6&quot; fdMulti=&quot;true&quot; enabledFileType&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>1754e2606edf501c77e0c4d4999bee7d</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1754e26e4f16ef93b35ee854a2d80270</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1603333973235</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_32722d49680ae6 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;权限变更人所属公司&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38d60d6162d4fc.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38d60d6162d4fc.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;权限变更人所属公司&quot; title=&quot;权限变更人所属公司&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=145 column=&quot;2&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;权限变更人所属部门&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=379 column=&quot;3&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38d60d7843c8ac.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38d60d7843c8ac.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;权限变更人所属部门&quot; title=&quot;权限变更人所属部门&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 51px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;权限变更人姓名&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38d60d882ee902.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38d60d882ee902.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;权限变更人姓名&quot; title=&quot;权限变更人姓名&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=145 column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;权限变更人员工号&lt;BR&gt;（系统登陆名）&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=379 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_qxbgr_number)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;权限变更人员工号&amp;amp;#13;&amp;amp;#10;（系统登陆名）&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;权限变更人员工号&amp;amp;#13;&amp;amp;#10;（系统登陆名）&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;职务&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_job)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;职务&quot; title=&quot;职务&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=158 column=&quot;2&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;联系电话&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=407 column=&quot;3&quot; row=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_link_phone)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;联系电话&quot; title=&quot;联系电话&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请原因&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_38f63cbd7d7ff8)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;false&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;4&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;所属应用系统名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;4&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_38e2d354e6848e)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;所属应用系统名称&quot; title=&quot;所属应用系统名称&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;OA&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;项目管理系统&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;账单管理系统&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;4&quot;&gt;其他&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;5&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请类别&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;5&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_require_type)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;申请类别&quot; title=&quot;申请类别&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;0&quot;&gt;增加用户&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;删除用户 &lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;用户权限变更&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;6&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请内容&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;6&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 811px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3708141b539ecc)&quot; style=&quot;HEIGHT: 80px; WIDTH: 811px&quot; required=&quot;false&quot; subject=&quot;申请内容&quot; title=&quot;申请内容&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;7&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1062 colSpan=3 column=&quot;1,2,3&quot; row=&quot;7&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_attachment&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38d60d6162d4fc&quot; label=&quot;权限变更人所属公司&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; formula=&quot;true&quot; defaultValue=&quot;OtherFunction.getModel(&amp;quot;1639016c906fd4262c4e9644e4887066&amp;quot;, &amp;quot;com.landray.kmss.sys.organization.model.SysOrgElement&amp;quot;, null)&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38d60d7843c8ac&quot; label=&quot;权限变更人所属部门&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; defaultValue=&quot;OrgFunction.getCurrentDept()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38d60d882ee902&quot; label=&quot;权限变更人姓名&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; defaultValue=&quot;OrgFunction.getCurrentUser()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_qxbgr_number&quot; label=&quot;权限变更人员工号&#13;
+（系统登陆名）&#13;
+&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_job&quot; label=&quot;职务&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_link_phone&quot; label=&quot;联系电话&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_38f63cbd7d7ff8&quot; label=&quot;申请原因&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_38e2d354e6848e&quot; label=&quot;所属应用系统名称&quot; enumValues=&quot;OA|1;项目管理系统|2;账单管理系统|3;其他|4&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_require_type&quot; label=&quot;申请类别&quot; enumValues=&quot;增加用户|0;删除用户 |1;用户权限变更|2&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3708141b539ecc&quot; label=&quot;申请内容&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>1754e2606edf501c77e0c4d4999bee7d</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>1754e26e44c90d57632447c410fbe86c</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1603333973236</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_32722d49680ae6 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;权限变更人所属公司&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38d60d6162d4fc.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38d60d6162d4fc.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;权限变更人所属公司&quot; title=&quot;权限变更人所属公司&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=145 column=&quot;2&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;权限变更人所属部门&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=379 column=&quot;3&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38d60d7843c8ac.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38d60d7843c8ac.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;权限变更人所属部门&quot; title=&quot;权限变更人所属部门&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 51px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;权限变更人姓名&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38d60d882ee902.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38d60d882ee902.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;权限变更人姓名&quot; title=&quot;权限变更人姓名&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=145 column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;权限变更人员工号&lt;BR&gt;（系统登陆名）&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=379 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_qxbgr_number)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;权限变更人员工号&amp;amp;#13;&amp;amp;#10;（系统登陆名）&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;权限变更人员工号&amp;amp;#13;&amp;amp;#10;（系统登陆名）&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=178 column=&quot;0&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;职务&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=515 column=&quot;1&quot; row=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_job)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;职务&quot; title=&quot;职务&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 176px&quot; width=158 column=&quot;2&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;联系电话&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 463px&quot; width=407 column=&quot;3&quot; row=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_link_phone)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;联系电话&quot; title=&quot;联系电话&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请原因&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_38f63cbd7d7ff8)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;false&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;4&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;所属应用系统名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;4&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_38e2d354e6848e)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;所属应用系统名称&quot; title=&quot;所属应用系统名称&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;OA&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;项目管理系统&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;账单管理系统&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;4&quot;&gt;其他&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;5&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请类别&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;5&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_require_type)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;申请类别&quot; title=&quot;申请类别&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;0&quot;&gt;增加用户&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;删除用户 &lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;用户权限变更&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;6&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请内容&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1011 colSpan=3 column=&quot;1,2,3&quot; row=&quot;6&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 811px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_3708141b539ecc)&quot; style=&quot;HEIGHT: 80px; WIDTH: 811px&quot; required=&quot;false&quot; subject=&quot;申请内容&quot; title=&quot;申请内容&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 column=&quot;0&quot; row=&quot;7&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1062 colSpan=3 column=&quot;1,2,3&quot; row=&quot;7&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_attachment&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38d60d6162d4fc&quot; label=&quot;权限变更人所属公司&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; formula=&quot;true&quot; defaultValue=&quot;OtherFunction.getModel(&amp;quot;1639016c906fd4262c4e9644e4887066&amp;quot;, &amp;quot;com.landray.kmss.sys.organization.model.SysOrgElement&amp;quot;, null)&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38d60d7843c8ac&quot; label=&quot;权限变更人所属部门&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; defaultValue=&quot;OrgFunction.getCurrentDept()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38d60d882ee902&quot; label=&quot;权限变更人姓名&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; defaultValue=&quot;OrgFunction.getCurrentUser()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_qxbgr_number&quot; label=&quot;权限变更人员工号&#13;
+（系统登陆名）&#13;
+&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_job&quot; label=&quot;职务&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_link_phone&quot; label=&quot;联系电话&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_38f63cbd7d7ff8&quot; label=&quot;申请原因&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_38e2d354e6848e&quot; label=&quot;所属应用系统名称&quot; enumValues=&quot;OA|1;项目管理系统|2;账单管理系统|3;其他|4&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_require_type&quot; label=&quot;申请类别&quot; enumValues=&quot;增加用户|0;删除用户 |1;用户权限变更|2&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3708141b539ecc&quot; label=&quot;申请内容&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1603333973236</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

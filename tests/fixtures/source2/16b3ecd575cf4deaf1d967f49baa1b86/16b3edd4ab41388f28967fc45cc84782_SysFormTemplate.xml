@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/16b3ecd575cf4deaf1d967f49baa1b86/16b3ecd575cf4deaf1d967f49baa1b86_v1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_376d455a379bd4 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_376d455a37b346&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=89 column=&quot;0&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d456aa5c282&quot;,content:&quot;物项类型&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;物项类型&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=478 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 214px; DISPLAY: inline&quot; fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_376d459f79538e&quot;,_label_bind:&quot;true&quot;,label:&quot;物项类型&quot;,_label_bind_id:&quot;fd_376d456aa5c282&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;行政|1&amp;#13;&amp;#10;财务|2&amp;#13;&amp;#10;人资|3&amp;#13;&amp;#10;其他|4&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_376d459f79538e type=radio value=1 label=&quot;物项类型&quot; _required=&quot;true&quot; alignment=&quot;H&quot; required=&quot;true&quot; tableName=&quot;fd_376d455a379bd4&quot; items=&quot;行政;财务;人资;其他&quot; itemValues=&quot;1;2;3;4&quot;&gt;&lt;LABEL attach=&quot;fd_376d459f79538e&quot;&gt;行政&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_376d459f79538e type=radio value=2 attach=&quot;fd_376d459f79538e&quot;&gt;&lt;LABEL attach=&quot;fd_376d459f79538e&quot;&gt;财务&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_376d459f79538e type=radio value=3 attach=&quot;fd_376d459f79538e&quot;&gt;&lt;LABEL attach=&quot;fd_376d459f79538e&quot;&gt;人资&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_376d459f79538e type=radio value=4 attach=&quot;fd_376d459f79538e&quot;&gt;&lt;LABEL attach=&quot;fd_376d459f79538e&quot;&gt;其他&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=164 column=&quot;2&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d45747551da&quot;,content:&quot;物项名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;物项名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=433 column=&quot;3&quot; row=&quot;0&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_376d45c9c52130&quot;,width:&quot;250&quot;,_label_bind:&quot;true&quot;,label:&quot;物项名称&quot;,_label_bind_id:&quot;fd_376d45747551da&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_376d45c9c52130 class=inputsgl style=&quot;WIDTH: 250px&quot; readOnly ? label=&quot;物项名称&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_376d455a379bd4&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=112 column=&quot;0&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d45886ec972&quot;,content:&quot;供应商名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;供应商名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=517 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_376d45d0fe6dfc&quot;,width:&quot;250&quot;,_label_bind:&quot;true&quot;,label:&quot;供应商名称&quot;,_label_bind_id:&quot;fd_376d45886ec972&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_376d45d0fe6dfc class=inputsgl style=&quot;WIDTH: 250px&quot; readOnly ? label=&quot;供应商名称&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_376d455a379bd4&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 column=&quot;2&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d4591757e12&quot;,content:&quot;合同费用&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;合同费用&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=449 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_376d45d7a59d42&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;合同费用&quot;,_label_bind_id:&quot;fd_376d4591757e12&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;2&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_376d45d7a59d42 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:2}&quot; ? label=&quot;合同费用&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_376d455a379bd4&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; _dataType=&quot;Double&quot; scale=&quot;2&quot; beginNum=&quot;&quot; endNum=&quot;&quot; dataType=&quot;number&quot;&gt;&lt;/DIV&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d45d94d713a&quot;,content:&quot;元&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;元&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=126 column=&quot;0&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d45f2ccf6a2&quot;,content:&quot;内容摘要&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;内容摘要&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1174 colSpan=3 column=&quot;1,2,3&quot; row=&quot;2&quot;&gt;&lt;IMG id=fd_376d45f000fb90 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_376d45f000fb90&quot;,_label_bind:&quot;true&quot;,label:&quot;内容摘要&quot;,_label_bind_id:&quot;fd_376d45f2ccf6a2&quot;,width:&quot;80%&quot;,height:&quot;220&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;内容摘要&quot; tableName=&quot;fd_376d455a379bd4&quot; canShow=&quot;false&quot; pHeight=&quot;220&quot; pWidth=&quot;80%&quot; needFilter=&quot;false&quot; businessType=&quot;rtfEditor&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=136 column=&quot;0&quot; row=&quot;3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d46009fee54&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1167 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot;&gt;&#13;
+&lt;DIV id=fd_376d46077c9632 style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_376d46077c9632&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_376d46009fee54&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;附件&quot; tableName=&quot;fd_376d455a379bd4&quot; fdMulti=&quot;true&quot; enabledFileType&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>16b3edd4ab41388f28967fc45cc84782</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/16b3ecd575cf4deaf1d967f49baa1b86/16b3ecd575cf4deaf1d967f49baa1b86_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_376d455a379bd4 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_376d455a37b346&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=89 column=&quot;0&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d456aa5c282&quot;,content:&quot;物项类型&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;物项类型&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=478 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 214px; DISPLAY: inline&quot; fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_376d459f79538e&quot;,_label_bind:&quot;true&quot;,label:&quot;物项类型&quot;,_label_bind_id:&quot;fd_376d456aa5c282&quot;,canShow:&quot;true&quot;,required:&quot;true&quot;,alignment:&quot;H&quot;,dataType:&quot;Double&quot;,items:&quot;行政|1&amp;#13;&amp;#10;财务|2&amp;#13;&amp;#10;人资|3&amp;#13;&amp;#10;其他|4&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_376d459f79538e type=radio value=1 label=&quot;物项类型&quot; _required=&quot;true&quot; alignment=&quot;H&quot; required=&quot;true&quot; tableName=&quot;fd_376d455a379bd4&quot; items=&quot;行政;财务;人资;其他&quot; itemValues=&quot;1;2;3;4&quot;&gt;&lt;LABEL attach=&quot;fd_376d459f79538e&quot;&gt;行政&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_376d459f79538e type=radio value=2 attach=&quot;fd_376d459f79538e&quot;&gt;&lt;LABEL attach=&quot;fd_376d459f79538e&quot;&gt;财务&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_376d459f79538e type=radio value=3 attach=&quot;fd_376d459f79538e&quot;&gt;&lt;LABEL attach=&quot;fd_376d459f79538e&quot;&gt;人资&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_376d459f79538e type=radio value=4 attach=&quot;fd_376d459f79538e&quot;&gt;&lt;LABEL attach=&quot;fd_376d459f79538e&quot;&gt;其他&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=164 column=&quot;2&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d45747551da&quot;,content:&quot;物项名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;物项名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=433 column=&quot;3&quot; row=&quot;0&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_376d45c9c52130&quot;,width:&quot;250&quot;,_label_bind:&quot;true&quot;,label:&quot;物项名称&quot;,_label_bind_id:&quot;fd_376d45747551da&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_376d45c9c52130 class=inputsgl style=&quot;WIDTH: 250px&quot; readOnly ? label=&quot;物项名称&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_376d455a379bd4&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=112 column=&quot;0&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d45886ec972&quot;,content:&quot;供应商名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;供应商名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=517 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_376d45d0fe6dfc&quot;,width:&quot;250&quot;,_label_bind:&quot;true&quot;,label:&quot;供应商名称&quot;,_label_bind_id:&quot;fd_376d45886ec972&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_376d45d0fe6dfc class=inputsgl style=&quot;WIDTH: 250px&quot; readOnly ? label=&quot;供应商名称&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_376d455a379bd4&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 column=&quot;2&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d4591757e12&quot;,content:&quot;合同费用&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;合同费用&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=449 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_376d45d7a59d42&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;合同费用&quot;,_label_bind_id:&quot;fd_376d4591757e12&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;2&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_376d45d7a59d42 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:2}&quot; ? label=&quot;合同费用&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_376d455a379bd4&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; _dataType=&quot;Double&quot; scale=&quot;2&quot; beginNum=&quot;&quot; endNum=&quot;&quot; dataType=&quot;number&quot;&gt;&lt;/DIV&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d45d94d713a&quot;,content:&quot;元&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;元&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=126 column=&quot;0&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d45f2ccf6a2&quot;,content:&quot;内容摘要&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;内容摘要&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1174 colSpan=3 column=&quot;1,2,3&quot; row=&quot;2&quot;&gt;&lt;IMG id=fd_376d45f000fb90 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_376d45f000fb90&quot;,_label_bind:&quot;true&quot;,label:&quot;内容摘要&quot;,_label_bind_id:&quot;fd_376d45f2ccf6a2&quot;,width:&quot;80%&quot;,height:&quot;220&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;内容摘要&quot; tableName=&quot;fd_376d455a379bd4&quot; canShow=&quot;false&quot; pHeight=&quot;220&quot; pWidth=&quot;80%&quot; needFilter=&quot;false&quot; businessType=&quot;rtfEditor&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=136 column=&quot;0&quot; row=&quot;3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_376d46009fee54&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1167 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot;&gt;&#13;
+&lt;DIV id=fd_376d46077c9632 style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_376d46077c9632&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_376d46009fee54&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;附件&quot; tableName=&quot;fd_376d455a379bd4&quot; fdMulti=&quot;true&quot; enabledFileType&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>16b3ecd575cf4deaf1d967f49baa1b86</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>16b3edd4b370e2df01ea2ed441c82573</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1609744142240</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_376d455a379bd4 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=89 column=&quot;0&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;物项类型&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=478 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_376d459f79538e)&quot; alignment=&quot;H&quot; required=&quot;true&quot; subject=&quot;物项类型&quot; title=&quot;物项类型&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;行政&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;财务&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;人资&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;4&quot;&gt;其他&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=164 column=&quot;2&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;物项名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=433 column=&quot;3&quot; row=&quot;0&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_376d45c9c52130)&quot; style=&quot;WIDTH: 250px&quot; required=&quot;false&quot; subject=&quot;物项名称&quot; title=&quot;物项名称&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=112 column=&quot;0&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;供应商名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=517 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_376d45d0fe6dfc)&quot; style=&quot;WIDTH: 250px&quot; required=&quot;false&quot; subject=&quot;供应商名称&quot; title=&quot;供应商名称&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;合同费用&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=449 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_376d45d7a59d42)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;合同费用&quot; title=&quot;合同费用&quot; validators=&quot; number number scaleLength(2)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;元&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=126 column=&quot;0&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;内容摘要&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1174 colSpan=3 column=&quot;1,2,3&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_376d45f000fb90)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;false&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=136 column=&quot;0&quot; row=&quot;3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1167 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_376d46077c9632&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d459f79538e&quot; label=&quot;物项类型&quot; notNull=&quot;true&quot; enumValues=&quot;行政|1;财务|2;人资|3;其他|4&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d45c9c52130&quot; label=&quot;物项名称&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d45d0fe6dfc&quot; label=&quot;供应商名称&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d45d7a59d42&quot; label=&quot;合同费用&quot; type=&quot;Double&quot; length=&quot;10&quot; scale=&quot;2&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d45f000fb90&quot; label=&quot;内容摘要&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>16b3ecd575cf4deaf1d967f49baa1b86</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>16b3edd4ab41388f28967fc45cc84782</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1609744142284</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_376d455a379bd4 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=89 column=&quot;0&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;物项类型&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=478 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_376d459f79538e)&quot; alignment=&quot;H&quot; required=&quot;true&quot; subject=&quot;物项类型&quot; title=&quot;物项类型&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;1&quot;&gt;行政&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;2&quot;&gt;财务&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;3&quot;&gt;人资&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;4&quot;&gt;其他&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=164 column=&quot;2&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;物项名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=433 column=&quot;3&quot; row=&quot;0&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_376d45c9c52130)&quot; style=&quot;WIDTH: 250px&quot; required=&quot;false&quot; subject=&quot;物项名称&quot; title=&quot;物项名称&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=112 column=&quot;0&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;供应商名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=517 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_376d45d0fe6dfc)&quot; style=&quot;WIDTH: 250px&quot; required=&quot;false&quot; subject=&quot;供应商名称&quot; title=&quot;供应商名称&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;合同费用&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=449 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_376d45d7a59d42)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;合同费用&quot; title=&quot;合同费用&quot; validators=&quot; number number scaleLength(2)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;元&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=126 column=&quot;0&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;内容摘要&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1174 colSpan=3 column=&quot;1,2,3&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_376d45f000fb90)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;false&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=136 column=&quot;0&quot; row=&quot;3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1167 colSpan=3 column=&quot;1,2,3&quot; row=&quot;3&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_376d46077c9632&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d459f79538e&quot; label=&quot;物项类型&quot; notNull=&quot;true&quot; enumValues=&quot;行政|1;财务|2;人资|3;其他|4&quot; type=&quot;Double&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d45c9c52130&quot; label=&quot;物项名称&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d45d0fe6dfc&quot; label=&quot;供应商名称&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d45d7a59d42&quot; label=&quot;合同费用&quot; type=&quot;Double&quot; length=&quot;10&quot; scale=&quot;2&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_376d45f000fb90&quot; label=&quot;内容摘要&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1560127818558</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

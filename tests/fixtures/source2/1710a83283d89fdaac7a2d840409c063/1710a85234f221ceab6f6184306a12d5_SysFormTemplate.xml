@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>101-EKP-GUOAIL</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>14c72d2eb8e184d6c44b4b24f6593173</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/1710a83283d89fdaac7a2d840409c063/1710a83283d89fdaac7a2d840409c063_v1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp;&#13;
+&lt;TABLE id=fd_384faac67e2ee0 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_384faac67e2db8&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_384faac7bcf7b6&quot;,content:&quot;起草&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;起草&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV id=fd_384faace351f48 style=&quot;BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_384faace351f48&quot;}&apos; fd_type=&quot;right&quot;&gt;&#13;
+&lt;DIV class=rightIconBar style=&quot;CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE class=righBar style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none&quot; cellPadding=1&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 18px&quot;&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px&quot; mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot; mode_N2=&quot;edit&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px&quot; def_N4=&quot;false&quot; def_N2=&quot;false&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px&quot; readerNames=&quot;&quot; readerIds=&quot;&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px&quot;&gt;&amp;nbsp;&lt;SPAN ondblclick=&quot;Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);&quot; style=&quot;BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px&quot;&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_384faacc439ae0&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;起草&quot;,_label_bind_id:&quot;fd_384faac7bcf7b6&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_384faacc439ae0 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;起草&quot; tableName=&quot;fd_384faace351f48&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>1710a85234f221ceab6f6184306a12d5</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/1710a83283d89fdaac7a2d840409c063/1710a83283d89fdaac7a2d840409c063_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp;&#13;
+&lt;TABLE id=fd_384faac67e2ee0 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_384faac67e2db8&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_384faac7bcf7b6&quot;,content:&quot;起草&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;起草&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV id=fd_384faace351f48 style=&quot;BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_384faace351f48&quot;}&apos; fd_type=&quot;right&quot;&gt;&#13;
+&lt;DIV class=rightIconBar style=&quot;CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE class=righBar style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none&quot; cellPadding=1&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 18px&quot;&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px&quot; mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot; mode_N2=&quot;edit&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px&quot; def_N4=&quot;false&quot; def_N2=&quot;false&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px&quot; readerNames=&quot;&quot; readerIds=&quot;&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px&quot;&gt;&amp;nbsp;&lt;SPAN ondblclick=&quot;Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);&quot; style=&quot;BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px&quot;&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_384faacc439ae0&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;起草&quot;,_label_bind_id:&quot;fd_384faac7bcf7b6&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_384faacc439ae0 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;起草&quot; tableName=&quot;fd_384faace351f48&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>1710a83283d89fdaac7a2d840409c063</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1710a852370d229d9755af34d948b05f</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1745301934986</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_384faac67e2ee0 class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;起草&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;xform:right  mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot; mode_N2=&quot;edit&quot; def_N4=&quot;false&quot; def_N2=&quot;false&quot;&gt;&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_384faacc439ae0)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;起草&quot; title=&quot;起草&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;/xform:right&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_384faacc439ae0&quot; label=&quot;起草&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>1710a83283d89fdaac7a2d840409c063</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>1710a85234f221ceab6f6184306a12d5</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1745301934987</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_384faac67e2ee0 class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;起草&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;xform:right  mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot; mode_N2=&quot;edit&quot; def_N4=&quot;false&quot; def_N2=&quot;false&quot;&gt;&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_384faacc439ae0)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;起草&quot; title=&quot;起草&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;/xform:right&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;1&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;1&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=427 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_384faacc439ae0&quot; label=&quot;起草&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1585019429751</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

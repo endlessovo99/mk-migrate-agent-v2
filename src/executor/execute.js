@@ -153,12 +153,35 @@ export async function executeDsl(input, options = {}) {
     const participantResolution = await resolveWorkflowParticipants(input, {
       client,
       targetBaseUrl: baseUrl,
-      fallbackFdIds: options.fallbackFdIds
+      fallbackFdIds: options.fallbackFdIds,
+      participantOverrides: options.participantOverrides
     });
     executableDsl = participantResolution.dsl;
     apiStages[apiStages.length - 1].status = "ok";
     apiStages[apiStages.length - 1].resolvedCount = participantResolution.resolvedCount;
     apiStages[apiStages.length - 1].identityCount = participantResolution.identityCount;
+    if (participantResolution.overrideCount > 0) {
+      const overrideAudits = redactCredentialValuesDeep(
+        participantResolution.overrides,
+        credentials
+      );
+      apiStages[apiStages.length - 1].overrideCount = participantResolution.overrideCount;
+      apiStages[apiStages.length - 1].overrideIdentityCount = participantResolution.overrideIdentityCount;
+      apiStages[apiStages.length - 1].overrideTargetIds = participantResolution.overrideTargetIds;
+      apiStages[apiStages.length - 1].overrides = overrideAudits;
+      diagnostics.push({
+        level: "warning",
+        code: "workflow.participant_explicit_override_applied",
+        message: "Explicit source-to-target workflow participant overrides were validated and applied for this execution.",
+        path: "/workflow/participants",
+        details: {
+          referenceCount: participantResolution.overrideCount,
+          identityCount: participantResolution.overrideIdentityCount,
+          targetFdIds: participantResolution.overrideTargetIds,
+          overrides: overrideAudits
+        }
+      });
+    }
     if (participantResolution.fallbackCount > 0) {
       const fallbackTargetsByOrgType = redactFallbackTargetNames(
         participantResolution.fallbackTargetsByOrgType,
@@ -895,6 +918,20 @@ function redactCredentialValues(value, credentials = {}) {
   return result;
 }
 
+function redactCredentialValuesDeep(value, credentials = {}) {
+  if (typeof value === "string") return redactCredentialValues(value, credentials);
+  if (Array.isArray(value)) {
+    return value.map((entry) => redactCredentialValuesDeep(entry, credentials));
+  }
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [
+      key,
+      redactCredentialValuesDeep(entry, credentials)
+    ])
+  );
+}
+
 function redactFallbackTargetNames(targetsByOrgType = {}, credentials = {}) {
   return Object.fromEntries(Object.entries(targetsByOrgType).map(([orgType, target]) => [
     orgType,
@@ -908,12 +945,7 @@ function redactFallbackTargetNames(targetsByOrgType = {}, credentials = {}) {
 }
 
 function redactParticipantIssues(issues, credentials) {
-  return issues.map((issue) => ({
-    ...issue,
-    ...(issue?.message
-      ? { message: redactCredentialValues(issue.message, credentials) }
-      : {})
-  }));
+  return redactCredentialValuesDeep(issues, credentials);
 }
 
 function requireWorkflowDraftId(result) {

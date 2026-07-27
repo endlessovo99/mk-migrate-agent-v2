@@ -9,7 +9,9 @@ export function parseMetadataXml(metadataXml = "") {
   for (const tableMatch of xml.matchAll(/<extendSubTableProperty\b([^>]*)>([\s\S]*?)<\/extendSubTableProperty>/gi)) {
     tableRanges.push([tableMatch.index, tableMatch.index + tableMatch[0].length]);
     const attrs = parseXmlAttributes(tableMatch[1]);
-    const columns = extractSimpleProperties(tableMatch[2]).map(metadataFieldToDslField);
+    const columns = extractSimpleProperties(tableMatch[2]).map((property) =>
+      metadataFieldToDslField(property, { classifyDataOnly: true })
+    );
     fields.push({
       id: attrs.name,
       title: attrs.label || attrs.name,

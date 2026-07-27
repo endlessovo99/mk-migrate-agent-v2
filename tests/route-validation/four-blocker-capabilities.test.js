@@ -59,6 +59,20 @@ describe("four blocking route capabilities", () => {
       detail.functionMappings?.some((mapping) => mapping.basis === "deterministic-detail-row-control-state"),
       true
     );
+    assert.equal(
+      detail.function.includes(
+        'MKXFORM.setDetailFieldItemAttr("${table:fd_detail}", active ? 5 : 4, rowNum, "${table:fd_detail}.fd_target_detail")'
+      ),
+      true,
+      detail.function
+    );
+    assert.equal(
+      detail.function.includes(
+        'MKXFORM.setDetailFieldItemAttr("${table:fd_detail}", active ? 3 : 6, rowNum, "${table:fd_detail}.fd_target_detail")'
+      ),
+      true,
+      detail.function
+    );
 
     const lifecycle = actionFor("detail_row_lifecycle");
     assert.equal(lifecycle.translationStatus, "mapped");
@@ -75,6 +89,20 @@ describe("four blocking route capabilities", () => {
     assert.equal(
       lifecycle.functionMappings?.some((mapping) => mapping.basis === "deterministic-detail-row-lifecycle"),
       true
+    );
+    assert.equal(
+      lifecycle.function.includes(
+        'MKXFORM.setDetailFieldItemAttr("${table:fd_detail}", active ? 5 : 4, rowNum, "${table:fd_detail}.fd_target_detail")'
+      ),
+      true,
+      lifecycle.function
+    );
+    assert.equal(
+      lifecycle.function.includes(
+        'MKXFORM.setDetailFieldItemAttr("${table:fd_detail}", active ? 3 : 6, rowNum, "${table:fd_detail}.fd_target_detail")'
+      ),
+      true,
+      lifecycle.function
     );
 
     const actionIndexes = draft.scripts.actions

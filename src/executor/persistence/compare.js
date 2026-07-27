@@ -173,6 +173,43 @@ function compareForm(expected, actual, diagnostics) {
           details: { fieldId: field.id }
         }));
       }
+      if ((field.dataOnlyColumnIds || []).length) {
+        for (const scene of ["desktop", "mobile"]) {
+          const renderedColumnIds =
+            actualField.renderedColumnIdsByScene?.[scene];
+          if (!Array.isArray(renderedColumnIds)) {
+            diagnostics.push(mismatch(
+              "form",
+              "readback.form.detail_render_scene_missing",
+              "Readback detail table is missing rendered-column evidence for one scene.",
+              {
+                invariantKey: `form.fields.${field.id}.renderedColumnIdsByScene.${scene}`,
+                path: `/readback/form/fields/${field.id}/renderedColumnIdsByScene/${scene}`,
+                expected: "array",
+                actual: renderedColumnIds,
+                details: { fieldId: field.id, scene }
+              }
+            ));
+            continue;
+          }
+          const renderedDataOnlyColumnIds = renderedColumnIds
+            .filter((columnId) => field.dataOnlyColumnIds.includes(columnId));
+          if (renderedDataOnlyColumnIds.length) {
+            diagnostics.push(mismatch(
+              "form",
+              "readback.form.detail_data_only_column_rendered",
+              "Readback detail render children unexpectedly include data-only columns.",
+              {
+                invariantKey: `form.fields.${field.id}.dataOnlyColumnIds.${scene}`,
+                path: `/readback/form/fields/${field.id}/renderedColumnIdsByScene/${scene}`,
+                expected: [],
+                actual: renderedDataOnlyColumnIds,
+                details: { fieldId: field.id, scene }
+              }
+            ));
+          }
+        }
+      }
       const actualColumns = new Map((actualField.columns || []).map((column) => [column.id, column]));
       const expectedColumnIds = new Set((field.columns || []).map((column) => column.id));
       for (const column of field.columns || []) {
@@ -188,6 +225,20 @@ function compareForm(expected, actual, diagnostics) {
         const columnPath = `/readback/form/fields/${field.id}/columns/${column.id}`;
         assertEqual(diagnostics, "form", "readback.form.detail_column_title", `form.fields.${field.id}.columns.${column.id}.title`, column.title, actualColumn.title, `${columnPath}/title`);
         assertEqual(diagnostics, "form", "readback.form.detail_column_component", `form.fields.${field.id}.columns.${column.id}.component`, column.component, actualColumn.component, `${columnPath}/component`);
+        if (Boolean(column.dataOnly) !== Boolean(actualColumn.dataOnly)) {
+          diagnostics.push(mismatch(
+            "form",
+            "readback.form.detail_column_data_only_flag_mismatch",
+            "Readback detail-column data-only visibility mismatch.",
+            {
+              invariantKey: `form.fields.${field.id}.columns.${column.id}.dataOnly`,
+              path: `${columnPath}/dataOnly`,
+              expected: column.dataOnly === true,
+              actual: actualColumn.dataOnly === true,
+              details: { fieldId: field.id, columnId: column.id }
+            }
+          ));
+        }
         compareProps(diagnostics, "form", `form.fields.${field.id}.columns.${column.id}.props`, column.props, actualColumn.props, `${columnPath}/props`);
       }
       for (const column of actualField.columns || []) {
@@ -937,8 +988,14 @@ function compareWorkflow(expected, actual, diagnostics) {
         actual: actualNode.parallelGateway
       }));
     }
-    if (node.dataAuthority) {
-      if (stableStringify(node.dataAuthority) !== stableStringify(actualNode.dataAuthority || {})) {
+    if (
+      node.dataAuthority ||
+      actualNode.dataAuthority
+    ) {
+      if (
+        stableStringify(node.dataAuthority || {}) !==
+        stableStringify(actualNode.dataAuthority || {})
+      ) {
         diagnostics.push(mismatch("workflow", "readback.workflow.data_authority_mismatch", "Readback workflow data authority mismatch.", {
           invariantKey: `workflow.nodes.${node.id}.dataAuthority`,
           path: `/readback/workflow/nodes/${node.id}/dataAuthority`,

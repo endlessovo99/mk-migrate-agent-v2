@@ -184,7 +184,8 @@ export function summarizeDslForm(form = {}, formRules = {}) {
             title: column.title,
             type: column.type,
             component: column.componentId,
-            required: column.props?.required === true
+            required: column.props?.required === true,
+            dataOnly: column.dataOnly === true
           }))
         : []
     })),
@@ -607,9 +608,11 @@ function canonicalField(field, template, model, order, tableType, lang) {
   const fdLength = fieldLengthFromDsl(field, spec);
   const isDisplayOnly = ["desc", "button"].includes(spec.attrType);
   const label = persistedFieldLabel(field);
+  const labelLangKey = linkedDescriptionTextToken(field);
   return {
     fdId: stableHexId(`${template.fdId}:${model.fdTableName}:${field.id}:${order}`),
     fdLabel: label,
+    ...(labelLangKey ? { fdLabelLangKey: labelLangKey } : {}),
     fdName: field.id,
     ...(tableType === "main"
       ? { fdColumn: `fd_${field.id}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48) }
@@ -645,13 +648,18 @@ function fieldLengthFromDsl(field, spec) {
 function fieldAttribute(field, template, tableName, tableType, spec, lang) {
   const controlId = `${spec.desktop}~${stableShortId(field.id)}`;
   const label = persistedFieldLabel(field);
+  const descriptionTextToken = linkedDescriptionTextToken(field);
+  const nativeLabel = descriptionTextToken || label;
+  if (descriptionTextToken) {
+    lang[descriptionTextToken] = nativeDescriptionLangEntry(field.id, label);
+  }
   const controlProps = {
     id: controlId,
     desktop: { type: spec.desktop },
     mobile: { type: spec.mobile },
     name: field.id,
     uuid: field.id,
-    title: label,
+    title: nativeLabel,
     span: 24,
     "$$tableType": tableType,
     "$$tableName": tableName
@@ -683,6 +691,16 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
       label: option.label ?? option.text ?? option.value,
       value: option.value ?? option.label ?? option.text
     }));
+  }
+  if (
+    tableType === "detail" &&
+    componentSupportsProp(field.componentId, "rowOptions") &&
+    field.props?.rowOptions
+  ) {
+    Object.assign(
+      controlProps,
+      nativeDetailRowOptions(field.props.rowOptions, tableName)
+    );
   }
   if (spec.attrType === "select") {
     controlProps.multi = field.componentId === "xform-select~multi";
@@ -776,12 +794,23 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
   }
   if (spec.attrType === "desc") {
     const content = field.props?.content || field.title || "";
-    Object.assign(controlProps, {
-      defaultTextValue: content,
-      content,
-      alignDesc: "left",
-      maxLength: 0
-    });
+    if (descriptionTextToken) {
+      Object.assign(controlProps, {
+        defaultTextValue: descriptionTextToken,
+        alignDesc: "left",
+        maxLength: 0,
+        hasLink: true,
+        link: linkedDescriptionLink(field)
+      });
+      delete controlProps.content;
+    } else {
+      Object.assign(controlProps, {
+        defaultTextValue: content,
+        content,
+        alignDesc: "left",
+        maxLength: 0
+      });
+    }
     delete controlProps.span;
   }
   if (spec.attrType === "hyperlinks") {
@@ -836,12 +865,12 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
             : spec.desktop,
       controlProps,
       kind: "control",
-      label,
+      label: nativeLabel,
       labelProps: isDescription
         ? {
             compose: true,
             desktop: { hiddenLabel: true },
-            title: label,
+            title: nativeLabel,
             mobile: { hiddenLabel: true }
           }
         : isButton
@@ -856,6 +885,35 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
             : { desktop: {}, title: label, mobile: {} }
     },
     env: isDescription ? ["xform", "print"] : ["xform"]
+  };
+}
+
+function nativeDetailRowOptions(rowOptions, tableName) {
+  const dependencyRef = `${tableName}.${rowOptions.dependencyFieldId}`;
+  const cases = rowOptions.cases.map((entry) => ({
+    value: entry.value,
+    options: entry.options.map(nativeRowOption)
+  }));
+  const defaultOptions = rowOptions.defaultOptions.map(nativeRowOption);
+  const dependencyLiteral = JSON.stringify(dependencyRef);
+  const js =
+    `function (controlProps, rowNum, MKXFORM) {var cases=${JSON.stringify(cases)};` +
+    `var defaultOptions=${JSON.stringify(defaultOptions)};` +
+    `var value=MKXFORM.getValue(${dependencyLiteral},{detailRowIndex:rowNum});` +
+    "var options=defaultOptions;" +
+    "for(var index=0;index<cases.length;index+=1){" +
+    "if(cases[index].value===String(value)){options=cases[index].options;break;}}" +
+    `return {options:options,deps:[${dependencyLiteral}]};}`;
+  return {
+    optionSource: "JavaScript",
+    js
+  };
+}
+
+function nativeRowOption(option) {
+  return {
+    label: option.label,
+    value: option.value
   };
 }
 
@@ -887,6 +945,33 @@ function nativeLangToken(fieldId, prop) {
 
 function nativeLangEntry(prop, name, text) {
   return { prop, name, type: "input", content: { Cn: String(text || "") } };
+}
+
+function nativeDescriptionLangEntry(fieldId, text) {
+  const content = String(text || "");
+  return {
+    prop: "defaultTextValue",
+    name: fieldId,
+    type: "input",
+    content: { Cn: content, default: content }
+  };
+}
+
+function linkedDescriptionTextToken(field) {
+  return linkedDescriptionLink(field)
+    ? nativeLangToken(field.id, "defaultTextValue")
+    : undefined;
+}
+
+function linkedDescriptionLink(field) {
+  if (
+    field?.componentId !== "xform-description" ||
+    field?.props?.hasLink !== true
+  ) {
+    return undefined;
+  }
+  const link = String(field.props?.link || "").trim();
+  return /^https?:\/\//iu.test(link) ? link : undefined;
 }
 
 function nativeNumberFormatLangEntry(fieldId, unit) {
@@ -1375,11 +1460,12 @@ function buildControlStyle(form = {}) {
   for (const field of form.fields || []) {
     if (field.componentId !== "xform-description") continue;
     const style = descriptionControlStyle(field);
-    if (!style) continue;
+    const isLinkedDescription = Boolean(linkedDescriptionLink(field));
+    if (!style && !isLinkedDescription) continue;
     styles[field.id] = {
       desktop: {
         layout: "vertical",
-        controlValueStyle: style
+        ...(style ? { controlValueStyle: style } : {})
       }
     };
   }
@@ -1502,7 +1588,11 @@ function buildGridItem(
     key: detailModel?.fdTableName || firstRefId,
     ...migrationAudit,
     ...(detailModel
-      ? { children: detailModel.fdFields.filter((field) => !field.fdIsSystem).map((field) => ({ key: field.fdName })) }
+      ? {
+          children: detailModel.fdFields
+            .filter((field) => !field.fdIsSystem && field.fdDisplay !== false)
+            .map((field) => ({ key: field.fdName }))
+        }
       : {})
   };
   const column = Number.isInteger(cell.column) ? cell.column : index;

@@ -1,0 +1,1132 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>3</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>101-EKP-GUOAIL</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>14c72d2eb8e184d6c44b4b24f6593173</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/168e0bfa3184fa39ccb8711467881cf7/168e0bfa3184fa39ccb8711467881cf7_v3</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp; &#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 924px; WIDTH: 1px; POSITION: absolute; LEFT: 13px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;left&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 924px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 1450px; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;right&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 1438px; POSITION: absolute; LEFT: 13px; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;leftUp&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;up&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;rightUp&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 1438px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 13px; Z-INDEX: 1; DISPLAY: none; TOP: 998px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;leftDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;rightDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;down&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE id=fd_327d2d3b730004 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_327d2d3b72f530&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710c7cfba792a&quot;,content:&quot;申请部门&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;申请部门&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 332px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_3710c7de3d501c&quot;,width:&quot;300&quot;,_label_bind:&quot;true&quot;,label:&quot;申请部门&quot;,_label_bind_id:&quot;fd_3710c7cfba792a&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_DEPT&quot;,_org_org:&quot;true&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_3710c7de3d501c class=inputsgl style=&quot;WIDTH: 300px&quot; readOnly value=提交人的部门 ? label=&quot;申请部门&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot; defaultValue=&quot;ORG_TYPE_DEPT&quot; businessType=&quot;addressDialog&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; multiSelect=&quot;false&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=210 align=left column=&quot;2&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cd5d8b4c52&quot;,content:&quot;项目经理&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;项目经理&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_38462a43dd18f6&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;项目经理&quot;,_label_bind_id:&quot;fd_3710cd5d8b4c52&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_PERSON&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_38462a43dd18f6 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=提交人 ? label=&quot;项目经理&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot; defaultValue=&quot;ORG_TYPE_PERSON&quot; businessType=&quot;addressDialog&quot; orgType=&quot;ORG_TYPE_PERSON&quot; multiSelect=&quot;false&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;1&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2d4303d0a4&quot;,content:&quot;项目名称&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;项目名称&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 230px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_project_name&quot;,width:&quot;230&quot;,_label_bind:&quot;true&quot;,label:&quot;项目名称&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_327d2d4303d0a4&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_name class=inputsgl style=&quot;WIDTH: 230px&quot; readOnly ? label=&quot;项目名称&amp;#13;&amp;#10;&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=210 align=left column=&quot;2&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2d9ef5b1ac&quot;,content:&quot;项目编号&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;项目编号&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 137px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_project_no&quot;,width:&quot;137&quot;,_label_bind:&quot;true&quot;,label:&quot;项目编号&quot;,_label_bind_id:&quot;fd_327d2d9ef5b1ac&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_no class=inputsgl style=&quot;WIDTH: 137px&quot; readOnly ? label=&quot;项目编号&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;2&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2d43b13ae0&quot;,content:&quot;采购对象名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;采购对象名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 231px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_erp_no&quot;,width:&quot;231&quot;,_label_bind:&quot;true&quot;,label:&quot;采购对象名称&quot;,_label_bind_id:&quot;fd_327d2d43b13ae0&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_erp_no class=inputsgl style=&quot;WIDTH: 231px&quot; readOnly ? label=&quot;采购对象名称&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; width=210 column=&quot;2&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2db66a2b1a&quot;,content:&quot;预成交单位&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;预成交单位&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 136px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_project_step&quot;,width:&quot;136&quot;,_label_bind:&quot;true&quot;,label:&quot;预成交单位&quot;,_label_bind_id:&quot;fd_327d2db66a2b1a&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_step class=inputsgl style=&quot;WIDTH: 136px&quot; readOnly ? label=&quot;预成交单位&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;3&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cdb766b59a&quot;,content:&quot;响应价格&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;响应价格&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=506 column=&quot;1&quot; row=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3710cdc14bb24c&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;响应价格&quot;,_label_bind_id:&quot;fd_3710cdb766b59a&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cdc14bb24c class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;响应价格&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=210 column=&quot;2&quot; row=&quot;3&quot; style_textalign=&quot;left&quot; style_verticalalign=&quot;middle&quot; style_borderleftwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderbottomwidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cdc496873c&quot;,content:&quot;成交价格&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;成交价格&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;3&quot; row=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3710cdd49e0540&quot;,width:&quot;140&quot;,_label_bind:&quot;true&quot;,label:&quot;成交价格&quot;,_label_bind_id:&quot;fd_3710cdc496873c&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cdd49e0540 class=inputsgl style=&quot;WIDTH: 140px&quot; readOnly ? label=&quot;成交价格&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;4&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cde2d1fd18&quot;,content:&quot;数量&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;数量&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=506 column=&quot;1&quot; row=&quot;4&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3710cde7fb5bec&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;数量&quot;,_label_bind_id:&quot;fd_3710cde2d1fd18&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cde7fb5bec class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;数量&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=210 column=&quot;2&quot; row=&quot;4&quot; style_textalign=&quot;left&quot; style_verticalalign=&quot;middle&quot; style_borderleftwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderbottomwidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cdeedc7938&quot;,content:&quot;批次&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;批次&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;3&quot; row=&quot;4&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3710cdfa6714ba&quot;,width:&quot;140&quot;,_label_bind:&quot;true&quot;,label:&quot;批次&quot;,_label_bind_id:&quot;fd_3710cdeedc7938&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cdfa6714ba class=inputsgl style=&quot;WIDTH: 140px&quot; readOnly ? label=&quot;批次&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;5&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710ce2f88c250&quot;,content:&quot;定价理由或所附报告名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;定价理由或所附报告名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1299 colSpan=3 column=&quot;1,2,3&quot; row=&quot;5&quot;&gt;&lt;IMG id=fd_3710ce44e80134 style=&quot;HEIGHT: 300px; WIDTH: 800px; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_3710ce44e80134&quot;,_label_bind:&quot;true&quot;,label:&quot;定价理由或所附报告名称&quot;,_label_bind_id:&quot;fd_3710ce2f88c250&quot;,width:&quot;800&quot;,height:&quot;300&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;定价理由或所附报告名称&quot; canShow=&quot;true&quot; tableName=&quot;fd_327d2d3b730004&quot; defaultValue businessType=&quot;rtfEditor&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;800&quot; pHeight=&quot;300&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=187 column=&quot;0&quot; row=&quot;6&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 24px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2ebd725f5e&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1299 colSpan=3 column=&quot;1,2,3&quot; row=&quot;6&quot;&gt;&#13;
+&lt;DIV id=fd_attachment style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_attachment&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_327d2ebd725f5e&quot;,fileType:&quot;&quot;,sizeType:&quot;multi&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;附件&quot; tableName=&quot;fd_327d2d3b730004&quot; fdMulti=&quot;true&quot; enabledFileType&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>168e0c45cd2dec82d52bd9949a4bff99</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/168e0bfa3184fa39ccb8711467881cf7/168e0bfa3184fa39ccb8711467881cf7_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 924px; WIDTH: 1px; POSITION: absolute; LEFT: 13px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;left&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 924px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 1450px; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;right&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 1438px; POSITION: absolute; LEFT: 13px; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;leftUp&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;up&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;rightUp&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 1438px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 13px; Z-INDEX: 1; DISPLAY: none; TOP: 998px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;leftDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;rightDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;down&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE id=fd_327d2d3b730004 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_327d2d3b72f530&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710c7cfba792a&quot;,content:&quot;申请部门&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;申请部门&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=538 row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710c7de3d501c&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;申请部门&quot;,_label_bind_id:&quot;fd_3710c7cfba792a&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_DEPT&quot;,_org_org:&quot;true&quot;}&apos; fd_type=&quot;address&quot;&gt;&lt;INPUT id=fd_3710c7de3d501c class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=提交人的部门 ? label=&quot;申请部门&quot; multiSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; businessType=&quot;addressDialog&quot; defaultValue=&quot;ORG_TYPE_DEPT&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=254 align=left row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=679 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d4303d0a4&quot;,content:&quot;合同名称&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;合同名称&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=538 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 230px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_project_name&quot;,width:&quot;230&quot;,_label_bind:&quot;true&quot;,label:&quot;合同名称&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_327d2d4303d0a4&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_name class=inputsgl style=&quot;WIDTH: 230px&quot; readOnly ? label=&quot;合同名称&amp;#13;&amp;#10;&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=254 align=left row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 48px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d9ef5b1ac&quot;,content:&quot;合同编号&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;合同编号&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=679 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 137px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_project_no&quot;,width:&quot;137&quot;,_label_bind:&quot;true&quot;,label:&quot;合同编号&quot;,_label_bind_id:&quot;fd_327d2d9ef5b1ac&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_no class=inputsgl style=&quot;WIDTH: 137px&quot; readOnly ? label=&quot;合同编号&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d43b13ae0&quot;,content:&quot;ERP项目编号&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;ERP项目编号&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=538 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_erp_no&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;ERP项目编号&quot;,_label_bind_id:&quot;fd_327d2d43b13ae0&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_erp_no class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;ERP项目编号&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; width=254 row=&quot;2&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 48px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2db66a2b1a&quot;,content:&quot;付款阶段&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;付款阶段&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=679 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 136px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_project_step&quot;,width:&quot;136&quot;,_label_bind:&quot;true&quot;,label:&quot;付款阶段&quot;,_label_bind_id:&quot;fd_327d2db66a2b1a&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_step class=inputsgl style=&quot;WIDTH: 136px&quot; readOnly ? label=&quot;付款阶段&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d41d66244&quot;,content:&quot;付款金额&amp;#13;&amp;#10;（详见付款计划）&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;付款金额&lt;BR&gt;（详见付款计划）&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;3&quot; column=&quot;1,2,3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 60px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2df49face4&quot;,content:&quot;合同总金额&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;合同总金额&lt;/LABEL&gt; &#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_contract_total&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;合同总金额&quot;,_label_bind_id:&quot;fd_327d2d41d66244&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;2&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_contract_total class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:2}&quot; ? label=&quot;合同总金额&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; dataType=&quot;number&quot; endNum=&quot;&quot; beginNum=&quot;&quot; scale=&quot;2&quot; _dataType=&quot;Double&quot;&gt;&lt;/DIV&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 55px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2e0bfa4692&quot;,content:&quot;元            &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;元&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 60px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2df4fc199e&quot;,content:&quot;已支付金额&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;已支付金额&lt;/LABEL&gt; &#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_contract_paid&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;已支付金额&quot;,_label_bind_id:&quot;fd_327d2d41d66244&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;2&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_contract_paid class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:2}&quot; ? label=&quot;已支付金额&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; dataType=&quot;number&quot; endNum=&quot;&quot; beginNum=&quot;&quot; scale=&quot;2&quot; _dataType=&quot;Double&quot;&gt;&lt;/DIV&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 55px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2e15b2dd72&quot;,content:&quot;元            &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;元&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 72px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2df563c916&quot;,content:&quot;此次支付金额&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;此次支付金额&lt;/LABEL&gt; &#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_contract_pay&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;此次支付金额&quot;,_label_bind_id:&quot;fd_327d2d41d66244&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;Double&quot;,validate:&quot;number&quot;,decimal:&quot;2&quot;,begin:&quot;&quot;,end:&quot;&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_contract_pay class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly validate=&quot;{dataType:&apos;number&apos;,decimal:2}&quot; ? label=&quot;此次支付金额&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; dataType=&quot;number&quot; endNum=&quot;&quot; beginNum=&quot;&quot; scale=&quot;2&quot; _dataType=&quot;Double&quot;&gt;&lt;/DIV&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 12px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2e165df944&quot;,content:&quot;元&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;元&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 99px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d43599bc0&quot;,content:&quot;合同付款条款&amp;#13;&amp;#10;（详见合同复印件）&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;合同付款条款&lt;BR&gt;（详见合同复印件）&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;4&quot; column=&quot;1,2,3&quot;&gt;&lt;IMG id=fd_contract_item style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;合同付款条款&amp;#13;&amp;#10;（详见合同复印件）&amp;#13;&amp;#10;&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_contract_item&quot;,_label_bind:&quot;true&quot;,label:&quot;合同付款条款&amp;#13;&amp;#10;（详见合同复印件）&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_327d2d43599bc0&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; businessType=&quot;rtfEditor&quot; defaultValue tableName=&quot;fd_327d2d3b730004&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula pHeight=&quot;220&quot; pWidth=&quot;80%&quot; needFilter=&quot;true&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 96px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d429fdeec&quot;,content:&quot;合同要求付款前提&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;合同要求付款前提&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;5&quot; column=&quot;1,2,3&quot;&gt;&lt;IMG id=fd_contract_precondition style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;合同要求付款前提&amp;#13;&amp;#10;&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_contract_precondition&quot;,_label_bind:&quot;true&quot;,label:&quot;合同要求付款前提&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_327d2d429fdeec&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; businessType=&quot;rtfEditor&quot; defaultValue tableName=&quot;fd_327d2d3b730004&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula pHeight=&quot;220&quot; pWidth=&quot;80%&quot; needFilter=&quot;true&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 96px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d4407ed3c&quot;,content:&quot;合同履行情况说明&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;合同履行情况说明&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;6&quot; column=&quot;1,2,3&quot;&gt;&lt;IMG id=fd_contract_content style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;合同履行情况说明&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_contract_content&quot;,_label_bind:&quot;true&quot;,label:&quot;合同履行情况说明&quot;,_label_bind_id:&quot;fd_327d2d4407ed3c&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; businessType=&quot;rtfEditor&quot; defaultValue tableName=&quot;fd_327d2d3b730004&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula pHeight=&quot;220&quot; pWidth=&quot;80%&quot; needFilter=&quot;true&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=1732 colSpan=4 align=left style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;7&quot; column=&quot;0,1,2,3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d8e6605a4&quot;,content:&quot;备注&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;备注&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=262 row=&quot;8&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d8ebcaf38&quot;,content:&quot;1、 IT项目投资执行报批流程链接： &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;1、&amp;nbsp;IT项目投资执行报批流程链接：&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;8&quot; column=&quot;1,2,3&quot;&gt;&lt;IMG id=fd_3352cba9e70d9c style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;报批链接&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3352cba9e70d9c&quot;,_label_bind:&quot;false&quot;,label:&quot;报批链接&quot;,_label_bind_id:&quot;fd_327d2d8f0912c6&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; businessType=&quot;rtfEditor&quot; defaultValue tableName=&quot;fd_327d2d3b730004&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula pHeight=&quot;220&quot; pWidth=&quot;80%&quot; needFilter=&quot;true&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=262 row=&quot;9&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d8f0912c6&quot;,content:&quot;2、 历次付款申请流程的链接： &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;2、&amp;nbsp;历次付款申请流程的链接：&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;9&quot; column=&quot;1,2,3&quot;&gt;&lt;IMG id=fd_3352cabd660662 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;历次付款申请流程的链接： &quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3352cabd660662&quot;,_label_bind:&quot;false&quot;,label:&quot;历次付款申请流程的链接： &quot;,_label_bind_id:&quot;fd_327d2d8f0912c6&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; businessType=&quot;rtfEditor&quot; defaultValue tableName=&quot;fd_327d2d3b730004&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula pHeight=&quot;220&quot; pWidth=&quot;80%&quot; needFilter=&quot;true&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=262 row=&quot;10&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2eba6370ee&quot;,content:&quot;3、 项目文档归档的链接： &quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;3、&amp;nbsp;项目文档归档的链接：&amp;nbsp;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;10&quot; column=&quot;1,2,3&quot;&gt;&lt;IMG id=fd_3352cba8807d8a style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;项目文档归档链接： &quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3352cba8807d8a&quot;,_label_bind:&quot;false&quot;,label:&quot;项目文档归档链接： &quot;,_label_bind_id:&quot;fd_327d2d8f0912c6&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; businessType=&quot;rtfEditor&quot; defaultValue tableName=&quot;fd_327d2d3b730004&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula pHeight=&quot;220&quot; pWidth=&quot;80%&quot; needFilter=&quot;true&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1732 colSpan=4 row=&quot;11&quot; column=&quot;0,1,2,3&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d42493122&quot;,content:&quot;注：&amp;#13;&amp;#10;1、 根据合同要求操作相关付款事宜&amp;#13;&amp;#10;2、 合同履行情况说明：对照合同技术方案或实施方案标明项目完成节点情况，如实际情况与合同要求有差异需同时表明&amp;#13;&amp;#10;3、 最后第二次付款时，需提供验收说明文档，在备注处标明项目文件归档的链接&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;注：&lt;BR&gt;1、&amp;nbsp;根据合同要求操作相关付款事宜&lt;BR&gt;2、&amp;nbsp;合同履行情况说明：对照合同技术方案或实施方案标明项目完成节点情况，如实际情况与合同要求有差异需同时表明&lt;BR&gt;3、&amp;nbsp;最后第二次付款时，需提供验收说明文档，在备注处标明项目文件归档的链接&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=262 row=&quot;12&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 24px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2ebd725f5e&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;12&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV id=fd_attachment style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; label=&quot;附件&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_attachment&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_327d2ebd725f5e&quot;,fileType:&quot;&quot;,sizeType:&quot;multi&quot;}&apos; fd_type=&quot;attachment&quot; tableName=&quot;fd_327d2d3b730004&quot; enabledFileType fdMulti=&quot;true&quot;&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>168e0bfa3184fa39ccb8711467881cf7</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>168e0c45d259999e391c67d4ae5ba5c7</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1549959191846</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_327d2d3b730004 class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请部门&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=538 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3710c7de3d501c.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3710c7de3d501c.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;申请部门&quot; title=&quot;申请部门&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=254 align=left row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=679 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;合同名称&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=538 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 230px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_name)&quot; style=&quot;WIDTH: 230px&quot; required=&quot;false&quot; subject=&quot;合同名称&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;合同名称&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=254 align=left row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;合同编号&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=679 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 137px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_no)&quot; style=&quot;WIDTH: 137px&quot; required=&quot;false&quot; subject=&quot;合同编号&quot; title=&quot;合同编号&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;ERP项目编号&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=538 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_erp_no)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;ERP项目编号&quot; title=&quot;ERP项目编号&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; width=254 row=&quot;2&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;付款阶段&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=679 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 136px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_step)&quot; style=&quot;WIDTH: 136px&quot; required=&quot;false&quot; subject=&quot;付款阶段&quot; title=&quot;付款阶段&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;付款金额&lt;BR&gt;（详见付款计划）&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;3&quot; column=&quot;1,2,3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;合同总金额&lt;/LABEL&gt;&#13;
+ &#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_contract_total)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;合同总金额&quot; title=&quot;合同总金额&quot; validators=&quot; number number scaleLength(2)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;元&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt;&#13;
+&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;已支付金额&lt;/LABEL&gt;&#13;
+ &#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_contract_paid)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;已支付金额&quot; title=&quot;已支付金额&quot; validators=&quot; number number scaleLength(2)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;元&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt;&#13;
+&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;此次支付金额&lt;/LABEL&gt;&#13;
+ &#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_contract_pay)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; htmlElementProperties=&quot;thousandShow=&apos;false&apos;&quot; dataType=&quot;Double&quot; subject=&quot;此次支付金额&quot; title=&quot;此次支付金额&quot; validators=&quot; number number scaleLength(2)&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;元&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 99px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;4&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;合同付款条款&lt;BR&gt;（详见合同复印件）&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;4&quot; column=&quot;1,2,3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_contract_item)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;5&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;合同要求付款前提&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;5&quot; column=&quot;1,2,3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_contract_precondition)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=262 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;6&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;合同履行情况说明&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;6&quot; column=&quot;1,2,3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_contract_content)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=1732 colSpan=4 align=left style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;7&quot; column=&quot;0,1,2,3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;备注&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=262 row=&quot;8&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;1、&amp;nbsp;IT项目投资执行报批流程链接：&amp;nbsp;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;8&quot; column=&quot;1,2,3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3352cba9e70d9c)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=262 row=&quot;9&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;2、&amp;nbsp;历次付款申请流程的链接：&amp;nbsp;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;9&quot; column=&quot;1,2,3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3352cabd660662)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=262 row=&quot;10&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;3、&amp;nbsp;项目文档归档的链接：&amp;nbsp;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;10&quot; column=&quot;1,2,3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3352cba8807d8a)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: auto&quot; width=1732 colSpan=4 row=&quot;11&quot; column=&quot;0,1,2,3&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;注：&lt;BR&gt;1、&amp;nbsp;根据合同要求操作相关付款事宜&lt;BR&gt;2、&amp;nbsp;合同履行情况说明：对照合同技术方案或实施方案标明项目完成节点情况，如实际情况与合同要求有差异需同时表明&lt;BR&gt;3、&amp;nbsp;最后第二次付款时，需提供验收说明文档，在备注处标明项目文件归档的链接&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=262 row=&quot;12&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1471 colSpan=3 row=&quot;12&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_attachment&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_3710c7de3d501c&quot; label=&quot;申请部门&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; defaultValue=&quot;OrgFunction.getCurrentDept()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_name&quot; label=&quot;合同名称&#13;
+&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_no&quot; label=&quot;合同编号&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_erp_no&quot; label=&quot;ERP项目编号&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_step&quot; label=&quot;付款阶段&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_contract_total&quot; label=&quot;合同总金额&quot; type=&quot;Double&quot; length=&quot;10&quot; scale=&quot;2&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_contract_paid&quot; label=&quot;已支付金额&quot; type=&quot;Double&quot; length=&quot;10&quot; scale=&quot;2&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_contract_pay&quot; label=&quot;此次支付金额&quot; type=&quot;Double&quot; length=&quot;10&quot; scale=&quot;2&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_contract_item&quot; label=&quot;合同付款条款&#13;
+（详见合同复印件）&#13;
+&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_contract_precondition&quot; label=&quot;合同要求付款前提&#13;
+&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_contract_content&quot; label=&quot;合同履行情况说明&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3352cba9e70d9c&quot; label=&quot;报批链接&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3352cabd660662&quot; label=&quot;历次付款申请流程的链接： &quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3352cba8807d8a&quot; label=&quot;项目文档归档链接： &quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>168e0c45cd2dec82d52bd9949a4bff99</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>2</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/168e0bfa3184fa39ccb8711467881cf7/168e0bfa3184fa39ccb8711467881cf7_v2</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 924px; WIDTH: 1px; POSITION: absolute; LEFT: 13px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;left&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 924px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 1450px; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;right&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 1438px; POSITION: absolute; LEFT: 13px; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;leftUp&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;up&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;rightUp&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 1438px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 13px; Z-INDEX: 1; DISPLAY: none; TOP: 998px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;leftDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;rightDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;down&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE id=fd_327d2d3b730004 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_327d2d3b72f530&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710c7cfba792a&quot;,content:&quot;申请部门&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;申请部门&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=487 row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710c7de3d501c&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;申请部门&quot;,_label_bind_id:&quot;fd_3710c7cfba792a&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_DEPT&quot;,_org_org:&quot;true&quot;}&apos; fd_type=&quot;address&quot;&gt;&lt;INPUT id=fd_3710c7de3d501c class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=提交人的部门 ? label=&quot;申请部门&quot; multiSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; businessType=&quot;addressDialog&quot; defaultValue=&quot;ORG_TYPE_DEPT&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=214 align=left row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cd5d8b4c52&quot;,content:&quot;招标方式&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;招标方式&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=592 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&lt;TABLE class=tb_noborder style=&quot;WIDTH: 160px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cd69bac946&quot;,_label_bind:&quot;true&quot;,label:&quot;招标方式&quot;,_label_bind_id:&quot;fd_3710cd5d8b4c52&quot;,canShow:&quot;true&quot;,required:&quot;false&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;公开招标&amp;#13;&amp;#10;邀请招标&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputRadio&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3710cd69bac946 type=radio value=公开招标 label=&quot;招标方式&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; alignment=&quot;H&quot; items=&quot;公开招标;邀请招标&quot; itemValues=&quot;公开招标;邀请招标&quot;&gt;&lt;LABEL attach=&quot;fd_3710cd69bac946&quot;&gt;公开招标&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_3710cd69bac946 type=radio value=邀请招标 attach=&quot;fd_3710cd69bac946&quot;&gt;&lt;LABEL attach=&quot;fd_3710cd69bac946&quot;&gt;邀请招标&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d4303d0a4&quot;,content:&quot;项目名称&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;项目名称&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=487 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 230px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_project_name&quot;,width:&quot;230&quot;,_label_bind:&quot;true&quot;,label:&quot;项目名称&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_327d2d4303d0a4&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_name class=inputsgl style=&quot;WIDTH: 230px&quot; readOnly ? label=&quot;项目名称&amp;#13;&amp;#10;&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=214 align=left row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d9ef5b1ac&quot;,content:&quot;招标编号&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;招标编号&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=592 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 137px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_project_no&quot;,width:&quot;137&quot;,_label_bind:&quot;true&quot;,label:&quot;招标编号&quot;,_label_bind_id:&quot;fd_327d2d9ef5b1ac&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_no class=inputsgl style=&quot;WIDTH: 137px&quot; readOnly ? label=&quot;招标编号&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2d43b13ae0&quot;,content:&quot;采购对象名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;采购对象名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=487 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 231px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_erp_no&quot;,width:&quot;231&quot;,_label_bind:&quot;true&quot;,label:&quot;采购对象名称&quot;,_label_bind_id:&quot;fd_327d2d43b13ae0&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_erp_no class=inputsgl style=&quot;WIDTH: 231px&quot; readOnly ? label=&quot;采购对象名称&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; width=214 row=&quot;2&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2db66a2b1a&quot;,content:&quot;预中标单位&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;预中标单位&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=592 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 136px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_project_step&quot;,width:&quot;136&quot;,_label_bind:&quot;true&quot;,label:&quot;预中标单位&quot;,_label_bind_id:&quot;fd_327d2db66a2b1a&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_step class=inputsgl style=&quot;WIDTH: 136px&quot; readOnly ? label=&quot;预中标单位&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cdb766b59a&quot;,content:&quot;投标价格&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;投标价格&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=487 row=&quot;3&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cdc14bb24c&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;投标价格&quot;,_label_bind_id:&quot;fd_3710cdb766b59a&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cdc14bb24c class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;投标价格&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 row=&quot;3&quot; column=&quot;2&quot; style_borderbottomwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_borderleftwidth=&quot;null&quot; style_verticalalign=&quot;middle&quot; style_textalign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cdc496873c&quot;,content:&quot;最终定标价格&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;最终定标价格&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=592 row=&quot;3&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cdd49e0540&quot;,width:&quot;140&quot;,_label_bind:&quot;true&quot;,label:&quot;最终定标价格&quot;,_label_bind_id:&quot;fd_3710cdc496873c&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cdd49e0540 class=inputsgl style=&quot;WIDTH: 140px&quot; readOnly ? label=&quot;最终定标价格&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cde2d1fd18&quot;,content:&quot;数量&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;数量&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=487 row=&quot;4&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cde7fb5bec&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;数量&quot;,_label_bind_id:&quot;fd_3710cde2d1fd18&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cde7fb5bec class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;数量&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 row=&quot;4&quot; column=&quot;2&quot; style_borderbottomwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_borderleftwidth=&quot;null&quot; style_verticalalign=&quot;middle&quot; style_textalign=&quot;left&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cdeedc7938&quot;,content:&quot;批次&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;批次&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=592 row=&quot;4&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710cdfa6714ba&quot;,width:&quot;140&quot;,_label_bind:&quot;true&quot;,label:&quot;批次&quot;,_label_bind_id:&quot;fd_3710cdeedc7938&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cdfa6714ba class=inputsgl style=&quot;WIDTH: 140px&quot; readOnly ? label=&quot;批次&quot; tableName=&quot;fd_327d2d3b730004&quot; _required=&quot;false&quot; required=&quot;false&quot; _readOnly=&quot;false&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710ce2f88c250&quot;,content:&quot;定标理由或所附报告名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;定标理由或所附报告名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1293 colSpan=3 row=&quot;5&quot; column=&quot;1,2,3&quot;&gt;&lt;IMG id=fd_3710ce44e80134 style=&quot;HEIGHT: 300px; WIDTH: 1248px; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;定标理由或所附报告名称&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3710ce44e80134&quot;,_label_bind:&quot;true&quot;,label:&quot;定标理由或所附报告名称&quot;,_label_bind_id:&quot;fd_3710ce2f88c250&quot;,width:&quot;1248&quot;,height:&quot;300&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; businessType=&quot;rtfEditor&quot; defaultValue tableName=&quot;fd_327d2d3b730004&quot; canShow=&quot;true&quot; pHeight=&quot;300&quot; pWidth=&quot;1248&quot; needFilter=&quot;true&quot; formula reCalculate=&quot;false&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=201 row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 24px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_327d2ebd725f5e&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1293 colSpan=3 row=&quot;6&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&lt;DIV id=fd_attachment style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; label=&quot;附件&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_attachment&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_327d2ebd725f5e&quot;,fileType:&quot;&quot;,sizeType:&quot;multi&quot;}&apos; fd_type=&quot;attachment&quot; tableName=&quot;fd_327d2d3b730004&quot; enabledFileType fdMulti=&quot;true&quot;&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>168e0bfa3184fa39ccb8711467881cf7</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>168e0d3cd55c6cbc10c77c3437c94534</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1566977908473</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_327d2d3b730004 class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请部门&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=487 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3710c7de3d501c.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3710c7de3d501c.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;申请部门&quot; title=&quot;申请部门&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=214 align=left row=&quot;0&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;招标方式&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=592 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;xform:radio  property=&quot;extendDataFormInfo.value(fd_3710cd69bac946)&quot; alignment=&quot;H&quot; required=&quot;false&quot; subject=&quot;招标方式&quot; title=&quot;招标方式&quot; onValueChange=&quot;__xformDispatch&quot;&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;公开招标&quot;&gt;公开招标&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;xform:simpleDataSource  value=&quot;邀请招标&quot;&gt;邀请招标&lt;/xform:simpleDataSource&gt;&#13;
+			&lt;/xform:radio&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;项目名称&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=487 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 230px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_name)&quot; style=&quot;WIDTH: 230px&quot; required=&quot;false&quot; subject=&quot;项目名称&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;项目名称&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=214 align=left row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;招标编号&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=592 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 137px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_no)&quot; style=&quot;WIDTH: 137px&quot; required=&quot;false&quot; subject=&quot;招标编号&quot; title=&quot;招标编号&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;采购对象名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=487 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 231px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_erp_no)&quot; style=&quot;WIDTH: 231px&quot; required=&quot;false&quot; subject=&quot;采购对象名称&quot; title=&quot;采购对象名称&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; width=214 row=&quot;2&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;预中标单位&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=592 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 136px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_step)&quot; style=&quot;WIDTH: 136px&quot; required=&quot;false&quot; subject=&quot;预中标单位&quot; title=&quot;预中标单位&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;投标价格&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=487 row=&quot;3&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cdc14bb24c)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;投标价格&quot; title=&quot;投标价格&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 row=&quot;3&quot; column=&quot;2&quot; style_borderbottomwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_borderleftwidth=&quot;null&quot; style_verticalalign=&quot;middle&quot; style_textalign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;最终定标价格&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=592 row=&quot;3&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cdd49e0540)&quot; style=&quot;WIDTH: 140px&quot; required=&quot;false&quot; subject=&quot;最终定标价格&quot; title=&quot;最终定标价格&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;4&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;数量&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=487 row=&quot;4&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cde7fb5bec)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;数量&quot; title=&quot;数量&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=214 row=&quot;4&quot; column=&quot;2&quot; style_borderbottomwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_borderleftwidth=&quot;null&quot; style_verticalalign=&quot;middle&quot; style_textalign=&quot;left&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;批次&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=592 row=&quot;4&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cdfa6714ba)&quot; style=&quot;WIDTH: 140px&quot; required=&quot;false&quot; subject=&quot;批次&quot; title=&quot;批次&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=201 style_textAlign=&quot;center&quot; style_verticalAlign=&quot;middle&quot; style_borderLeftWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderBottomWidth=&quot;null&quot; row=&quot;5&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;定标理由或所附报告名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1293 colSpan=3 row=&quot;5&quot; column=&quot;1,2,3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3710ce44e80134)&quot; height=&quot;300&quot; width=&quot;1248&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=201 row=&quot;6&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1293 colSpan=3 row=&quot;6&quot; column=&quot;1,2,3&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_attachment&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_3710c7de3d501c&quot; label=&quot;申请部门&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; defaultValue=&quot;OrgFunction.getCurrentDept()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cd69bac946&quot; label=&quot;招标方式&quot; enumValues=&quot;公开招标|公开招标;邀请招标|邀请招标&quot; type=&quot;String&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_name&quot; label=&quot;项目名称&#13;
+&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_no&quot; label=&quot;招标编号&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_erp_no&quot; label=&quot;采购对象名称&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_step&quot; label=&quot;预中标单位&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cdc14bb24c&quot; label=&quot;投标价格&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cdd49e0540&quot; label=&quot;最终定标价格&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cde7fb5bec&quot; label=&quot;数量&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cdfa6714ba&quot; label=&quot;批次&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710ce44e80134&quot; label=&quot;定标理由或所附报告名称&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>168e0c45cd2dec82d52bd9949a4bff99</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>3</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/168e0bfa3184fa39ccb8711467881cf7/168e0bfa3184fa39ccb8711467881cf7_v3</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 924px; WIDTH: 1px; POSITION: absolute; LEFT: 13px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;left&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 924px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 1450px; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%&quot; position=&quot;right&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 1438px; POSITION: absolute; LEFT: 13px; Z-INDEX: 1; DISPLAY: none; TOP: 76px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;leftUp&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;up&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px&quot; position=&quot;rightUp&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 1438px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 13px; Z-INDEX: 1; DISPLAY: none; TOP: 998px&quot;&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;leftDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;rightDown&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px&quot; position=&quot;down&quot;&gt;&lt;/DIV&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE id=fd_327d2d3b730004 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_327d2d3b72f530&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710c7cfba792a&quot;,content:&quot;申请部门&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;申请部门&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 332px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_3710c7de3d501c&quot;,width:&quot;300&quot;,_label_bind:&quot;true&quot;,label:&quot;申请部门&quot;,_label_bind_id:&quot;fd_3710c7cfba792a&quot;,_org_person:&quot;false&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_dept:&quot;true&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_DEPT&quot;,_org_org:&quot;true&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_3710c7de3d501c class=inputsgl style=&quot;WIDTH: 300px&quot; readOnly value=提交人的部门 ? label=&quot;申请部门&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot; defaultValue=&quot;ORG_TYPE_DEPT&quot; businessType=&quot;addressDialog&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; multiSelect=&quot;false&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=210 align=left column=&quot;2&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cd5d8b4c52&quot;,content:&quot;项目经理&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;项目经理&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_38462a43dd18f6&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;项目经理&quot;,_label_bind_id:&quot;fd_3710cd5d8b4c52&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;false&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;ORG_TYPE_PERSON&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_38462a43dd18f6 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly value=提交人 ? label=&quot;项目经理&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot; defaultValue=&quot;ORG_TYPE_PERSON&quot; businessType=&quot;addressDialog&quot; orgType=&quot;ORG_TYPE_PERSON&quot; multiSelect=&quot;false&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;1&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2d4303d0a4&quot;,content:&quot;项目名称&amp;#13;&amp;#10;&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;项目名称&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 230px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_project_name&quot;,width:&quot;230&quot;,_label_bind:&quot;true&quot;,label:&quot;项目名称&amp;#13;&amp;#10;&quot;,_label_bind_id:&quot;fd_327d2d4303d0a4&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_name class=inputsgl style=&quot;WIDTH: 230px&quot; readOnly ? label=&quot;项目名称&amp;#13;&amp;#10;&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=210 align=left column=&quot;2&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2d9ef5b1ac&quot;,content:&quot;项目编号&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;项目编号&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 137px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_project_no&quot;,width:&quot;137&quot;,_label_bind:&quot;true&quot;,label:&quot;项目编号&quot;,_label_bind_id:&quot;fd_327d2d9ef5b1ac&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_no class=inputsgl style=&quot;WIDTH: 137px&quot; readOnly ? label=&quot;项目编号&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;2&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2d43b13ae0&quot;,content:&quot;采购对象名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;采购对象名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 231px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_erp_no&quot;,width:&quot;231&quot;,_label_bind:&quot;true&quot;,label:&quot;采购对象名称&quot;,_label_bind_id:&quot;fd_327d2d43b13ae0&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_erp_no class=inputsgl style=&quot;WIDTH: 231px&quot; readOnly ? label=&quot;采购对象名称&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; width=210 column=&quot;2&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2db66a2b1a&quot;,content:&quot;预成交单位&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;预成交单位&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;2&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 136px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_project_step&quot;,width:&quot;136&quot;,_label_bind:&quot;true&quot;,label:&quot;预成交单位&quot;,_label_bind_id:&quot;fd_327d2db66a2b1a&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_project_step class=inputsgl style=&quot;WIDTH: 136px&quot; readOnly ? label=&quot;预成交单位&quot; canShow=&quot;true&quot; thousandShow=&quot;false&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;3&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cdb766b59a&quot;,content:&quot;响应价格&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;响应价格&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=506 column=&quot;1&quot; row=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3710cdc14bb24c&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;响应价格&quot;,_label_bind_id:&quot;fd_3710cdb766b59a&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cdc14bb24c class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;响应价格&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=210 column=&quot;2&quot; row=&quot;3&quot; style_textalign=&quot;left&quot; style_verticalalign=&quot;middle&quot; style_borderleftwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderbottomwidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cdc496873c&quot;,content:&quot;成交价格&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;成交价格&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;3&quot; row=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3710cdd49e0540&quot;,width:&quot;140&quot;,_label_bind:&quot;true&quot;,label:&quot;成交价格&quot;,_label_bind_id:&quot;fd_3710cdc496873c&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cdd49e0540 class=inputsgl style=&quot;WIDTH: 140px&quot; readOnly ? label=&quot;成交价格&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;4&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cde2d1fd18&quot;,content:&quot;数量&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;数量&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=506 column=&quot;1&quot; row=&quot;4&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3710cde7fb5bec&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;数量&quot;,_label_bind_id:&quot;fd_3710cde2d1fd18&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cde7fb5bec class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;数量&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=210 column=&quot;2&quot; row=&quot;4&quot; style_textalign=&quot;left&quot; style_verticalalign=&quot;middle&quot; style_borderleftwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderbottomwidth=&quot;null&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710cdeedc7938&quot;,content:&quot;批次&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;批次&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;3&quot; row=&quot;4&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_3710cdfa6714ba&quot;,width:&quot;140&quot;,_label_bind:&quot;true&quot;,label:&quot;批次&quot;,_label_bind_id:&quot;fd_3710cdeedc7938&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3710cdfa6714ba class=inputsgl style=&quot;WIDTH: 140px&quot; readOnly ? label=&quot;批次&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_327d2d3b730004&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;5&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3710ce2f88c250&quot;,content:&quot;定价理由或所附报告名称&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;定价理由或所附报告名称&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1299 colSpan=3 column=&quot;1,2,3&quot; row=&quot;5&quot;&gt;&lt;IMG id=fd_3710ce44e80134 style=&quot;HEIGHT: 300px; WIDTH: 800px; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_3710ce44e80134&quot;,_label_bind:&quot;true&quot;,label:&quot;定价理由或所附报告名称&quot;,_label_bind_id:&quot;fd_3710ce2f88c250&quot;,width:&quot;800&quot;,height:&quot;300&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;定价理由或所附报告名称&quot; canShow=&quot;true&quot; tableName=&quot;fd_327d2d3b730004&quot; defaultValue businessType=&quot;rtfEditor&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;800&quot; pHeight=&quot;300&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=187 column=&quot;0&quot; row=&quot;6&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: 24px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_327d2ebd725f5e&quot;,content:&quot;附件&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1299 colSpan=3 column=&quot;1,2,3&quot; row=&quot;6&quot;&gt;&#13;
+&lt;DIV id=fd_attachment style=&quot;WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline&quot; fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_attachment&quot;,_label_bind:&quot;true&quot;,label:&quot;附件&quot;,_label_bind_id:&quot;fd_327d2ebd725f5e&quot;,fileType:&quot;&quot;,sizeType:&quot;multi&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;附件&quot; tableName=&quot;fd_327d2d3b730004&quot; fdMulti=&quot;true&quot; enabledFileType&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick=&quot;return false;&quot; class=btnopt&gt;删除&lt;/BUTTON&gt; &#13;
+&lt;TABLE&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD&gt;&lt;INPUT onclick=&quot;return false;&quot; type=checkbox&gt;&lt;/TD&gt;&#13;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;&#13;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>168e0bfa3184fa39ccb8711467881cf7</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>170cc49a0a614888712c5144d9383e4c</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1608022514020</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_327d2d3b730004 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请部门&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 332px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3710c7de3d501c.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3710c7de3d501c.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;申请部门&quot; title=&quot;申请部门&quot; style=&quot;WIDTH: 300px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=210 align=left column=&quot;2&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;项目经理&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38462a43dd18f6.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38462a43dd18f6.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;项目经理&quot; title=&quot;项目经理&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;1&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;项目名称&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 230px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_name)&quot; style=&quot;WIDTH: 230px&quot; required=&quot;false&quot; subject=&quot;项目名称&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;项目名称&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=210 align=left column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;项目编号&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 137px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_no)&quot; style=&quot;WIDTH: 137px&quot; required=&quot;false&quot; subject=&quot;项目编号&quot; title=&quot;项目编号&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;2&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;采购对象名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 231px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_erp_no)&quot; style=&quot;WIDTH: 231px&quot; required=&quot;false&quot; subject=&quot;采购对象名称&quot; title=&quot;采购对象名称&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; width=210 column=&quot;2&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;预成交单位&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 136px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_step)&quot; style=&quot;WIDTH: 136px&quot; required=&quot;false&quot; subject=&quot;预成交单位&quot; title=&quot;预成交单位&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;3&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;响应价格&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=506 column=&quot;1&quot; row=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cdc14bb24c)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;响应价格&quot; title=&quot;响应价格&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=210 column=&quot;2&quot; row=&quot;3&quot; style_textalign=&quot;left&quot; style_verticalalign=&quot;middle&quot; style_borderleftwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderbottomwidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;成交价格&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;3&quot; row=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cdd49e0540)&quot; style=&quot;WIDTH: 140px&quot; required=&quot;false&quot; subject=&quot;成交价格&quot; title=&quot;成交价格&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;4&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;数量&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=506 column=&quot;1&quot; row=&quot;4&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cde7fb5bec)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;数量&quot; title=&quot;数量&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=210 column=&quot;2&quot; row=&quot;4&quot; style_textalign=&quot;left&quot; style_verticalalign=&quot;middle&quot; style_borderleftwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderbottomwidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;批次&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;3&quot; row=&quot;4&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cdfa6714ba)&quot; style=&quot;WIDTH: 140px&quot; required=&quot;false&quot; subject=&quot;批次&quot; title=&quot;批次&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;5&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;定价理由或所附报告名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1299 colSpan=3 column=&quot;1,2,3&quot; row=&quot;5&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3710ce44e80134)&quot; height=&quot;300&quot; width=&quot;800&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=187 column=&quot;0&quot; row=&quot;6&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1299 colSpan=3 column=&quot;1,2,3&quot; row=&quot;6&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_attachment&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_3710c7de3d501c&quot; label=&quot;申请部门&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; defaultValue=&quot;OrgFunction.getCurrentDept()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38462a43dd18f6&quot; label=&quot;项目经理&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; defaultValue=&quot;OrgFunction.getCurrentUser()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_name&quot; label=&quot;项目名称&#13;
+&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_no&quot; label=&quot;项目编号&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_erp_no&quot; label=&quot;采购对象名称&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_step&quot; label=&quot;预成交单位&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cdc14bb24c&quot; label=&quot;响应价格&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cdd49e0540&quot; label=&quot;成交价格&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cde7fb5bec&quot; label=&quot;数量&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cdfa6714ba&quot; label=&quot;批次&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710ce44e80134&quot; label=&quot;定价理由或所附报告名称&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>168e0bfa3184fa39ccb8711467881cf7</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>168e0c45cd2dec82d52bd9949a4bff99</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1608022514048</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_327d2d3b730004 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;0&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;申请部门&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 332px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3710c7de3d501c.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3710c7de3d501c.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot; subject=&quot;申请部门&quot; title=&quot;申请部门&quot; style=&quot;WIDTH: 300px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=210 align=left column=&quot;2&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;项目经理&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38462a43dd18f6.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38462a43dd18f6.name)&quot; mulSelect=&quot;false&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;项目经理&quot; title=&quot;项目经理&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;1&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;项目名称&lt;BR&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 230px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_name)&quot; style=&quot;WIDTH: 230px&quot; required=&quot;false&quot; subject=&quot;项目名称&amp;amp;#13;&amp;amp;#10;&quot; title=&quot;项目名称&amp;amp;#13;&amp;amp;#10;&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; vAlign=middle width=210 align=left column=&quot;2&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;项目编号&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 137px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_no)&quot; style=&quot;WIDTH: 137px&quot; required=&quot;false&quot; subject=&quot;项目编号&quot; title=&quot;项目编号&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;2&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;采购对象名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 537px&quot; width=506 column=&quot;1&quot; row=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 231px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_erp_no)&quot; style=&quot;WIDTH: 231px&quot; required=&quot;false&quot; subject=&quot;采购对象名称&quot; title=&quot;采购对象名称&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 248px&quot; width=210 column=&quot;2&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;预成交单位&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: 692px&quot; width=583 column=&quot;3&quot; row=&quot;2&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 136px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_project_step)&quot; style=&quot;WIDTH: 136px&quot; required=&quot;false&quot; subject=&quot;预成交单位&quot; title=&quot;预成交单位&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 39px&quot;&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;3&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;响应价格&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=506 column=&quot;1&quot; row=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cdc14bb24c)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;响应价格&quot; title=&quot;响应价格&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=210 column=&quot;2&quot; row=&quot;3&quot; style_textalign=&quot;left&quot; style_verticalalign=&quot;middle&quot; style_borderleftwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderbottomwidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;成交价格&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;3&quot; row=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cdd49e0540)&quot; style=&quot;WIDTH: 140px&quot; required=&quot;false&quot; subject=&quot;成交价格&quot; title=&quot;成交价格&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;4&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;数量&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=506 column=&quot;1&quot; row=&quot;4&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cde7fb5bec)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;数量&quot; title=&quot;数量&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;VERTICAL-ALIGN: middle; TEXT-ALIGN: left&quot; width=210 column=&quot;2&quot; row=&quot;4&quot; style_textalign=&quot;left&quot; style_verticalalign=&quot;middle&quot; style_borderleftwidth=&quot;null&quot; style_borderrightwidth=&quot;null&quot; style_bordertopwidth=&quot;null&quot; style_borderbottomwidth=&quot;null&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;批次&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=583 column=&quot;3&quot; row=&quot;4&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 140px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3710cdfa6714ba)&quot; style=&quot;WIDTH: 140px&quot; required=&quot;false&quot; subject=&quot;批次&quot; title=&quot;批次&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px; VERTICAL-ALIGN: middle; TEXT-ALIGN: center&quot; width=187 column=&quot;0&quot; row=&quot;5&quot; style_borderBottomWidth=&quot;null&quot; style_borderTopWidth=&quot;null&quot; style_borderRightWidth=&quot;null&quot; style_borderLeftWidth=&quot;null&quot; style_verticalAlign=&quot;middle&quot; style_textAlign=&quot;center&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;定价理由或所附报告名称&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1299 colSpan=3 column=&quot;1,2,3&quot; row=&quot;5&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3710ce44e80134)&quot; height=&quot;300&quot; width=&quot;800&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title style=&quot;WIDTH: 257px&quot; width=187 column=&quot;0&quot; row=&quot;6&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;附件&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD style=&quot;WIDTH: auto&quot; width=1299 colSpan=3 column=&quot;1,2,3&quot; row=&quot;6&quot;&gt;&#13;
+&#13;
+&lt;c:import url=&quot;/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == &apos;add&apos; || _xformMainForm.method_GET == &apos;edit&apos;) ? &apos;edit&apos; : &apos;view&apos;) : (_xformRight == &apos;edit&apos; ? &apos;edit&apos; : &apos;view&apos;)}.jsp&quot; charEncoding=&quot;UTF-8&quot;&gt;&#13;
+	&lt;c:param name=&quot;fdAttType&quot; value=&quot;byte&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdMulti&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdShowMsg&quot; value=&quot;true&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdImgHtmlProperty&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdKey&quot; value=&quot;fd_attachment&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelId&quot; value=&quot;${_xformMainForm.fdId}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;fdModelName&quot; value=&quot;${_xformMainForm.modelClass.name}&quot; /&gt;&#13;
+	&lt;c:param name=&quot;formBeanName&quot; value=&quot;_xformMainForm&quot; /&gt;&#13;
+&lt;/c:import&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_3710c7de3d501c&quot; label=&quot;申请部门&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; defaultValue=&quot;OrgFunction.getCurrentDept()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot; /&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38462a43dd18f6&quot; label=&quot;项目经理&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; defaultValue=&quot;OrgFunction.getCurrentUser()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_name&quot; label=&quot;项目名称&#13;
+&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_no&quot; label=&quot;项目编号&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_erp_no&quot; label=&quot;采购对象名称&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_project_step&quot; label=&quot;预成交单位&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cdc14bb24c&quot; label=&quot;响应价格&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cdd49e0540&quot; label=&quot;成交价格&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cde7fb5bec&quot; label=&quot;数量&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710cdfa6714ba&quot; label=&quot;批次&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3710ce44e80134&quot; label=&quot;定价理由或所附报告名称&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1549959191847</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

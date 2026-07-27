@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-07-24.v7",
+  "version": "2026-07-28.v9",
   "components": [
     {
       "componentId": "xform-button",
@@ -207,6 +207,7 @@
         "properties": {
           "required": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
+          "rowOptions": { "$ref": "#/$defs/rowOptions" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
       },
@@ -358,6 +359,8 @@
         "additionalProperties": false,
         "properties": {
           "content": { "type": "string" },
+          "hasLink": { "type": "boolean" },
+          "link": { "type": "string" },
           "style": {
             "type": "object",
             "additionalProperties": false,
@@ -369,7 +372,7 @@
         }
       },
       "defaultPolicy": {},
-      "omitPolicy": { "omitWhenAbsent": ["content", "style"] }
+      "omitPolicy": { "omitWhenAbsent": ["content", "hasLink", "link", "style"] }
     },
     {
       "componentId": "xform-detail-table",
@@ -507,6 +510,27 @@
           "label": { "type": "string", "minLength": 1 },
           "value": { "type": "string", "minLength": 1 }
         }
+      }
+    },
+    "rowOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dependencyFieldId", "cases", "defaultOptions"],
+      "properties": {
+        "dependencyFieldId": { "type": "string", "minLength": 1 },
+        "cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value", "options"],
+            "properties": {
+              "value": { "type": "string" },
+              "options": { "$ref": "#/$defs/options" }
+            }
+          }
+        },
+        "defaultOptions": { "$ref": "#/$defs/options" }
       }
     },
     "defaultValue": {

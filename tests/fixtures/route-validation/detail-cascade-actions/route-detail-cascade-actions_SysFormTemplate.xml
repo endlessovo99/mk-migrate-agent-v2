@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-detail-cascade-actions-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Detail Cascade Actions Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-detail-cascade-actions-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_route_source_lines&quot;,label:&quot;Source lines&quot;}&apos;&gt;&lt;tbody&gt;
+     &lt;tr&gt;&lt;td&gt;Model&lt;/td&gt;&lt;td&gt;Quantity&lt;/td&gt;&lt;/tr&gt;
+     &lt;tr type=&quot;templateRow&quot;&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_source_model&quot;,label:&quot;Model&quot;,tableName:&quot;fd_route_source_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_source_quantity&quot;,label:&quot;Quantity&quot;,tableName:&quot;fd_route_source_lines&quot;,dataType:&quot;Long&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;/tr&gt;
+    &lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_route_target_lines&quot;,label:&quot;Target lines&quot;}&apos;&gt;&lt;tbody&gt;
+     &lt;tr&gt;
+      &lt;td&gt;Model&lt;/td&gt;&lt;td&gt;Quantity&lt;/td&gt;&lt;td&gt;Kind&lt;/td&gt;
+      &lt;td&gt;Primary 1&lt;/td&gt;&lt;td&gt;Secondary 1&lt;/td&gt;
+      &lt;td&gt;Primary 2&lt;/td&gt;&lt;td&gt;Secondary 2&lt;/td&gt;
+      &lt;td&gt;Primary 3&lt;/td&gt;&lt;td&gt;Secondary 3&lt;/td&gt;
+      &lt;td&gt;Note&lt;/td&gt;&lt;td&gt;Kind shadow&lt;/td&gt;
+      &lt;td&gt;Primary 1 shadow&lt;/td&gt;&lt;td&gt;Secondary 1 shadow&lt;/td&gt;
+      &lt;td&gt;Primary 2 shadow&lt;/td&gt;&lt;td&gt;Secondary 2 shadow&lt;/td&gt;
+      &lt;td&gt;Primary 3 shadow&lt;/td&gt;&lt;td&gt;Secondary 3 shadow&lt;/td&gt;
+     &lt;/tr&gt;
+     &lt;tr type=&quot;templateRow&quot;&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_target_model&quot;,label:&quot;Model&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_target_quantity&quot;,label:&quot;Quantity&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;Long&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;fd_route_kind&quot;,label:&quot;Kind&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;,items:&quot;Multi|ROUTE_KIND_MULTI&amp;#10;Single|ROUTE_KIND_SINGLE&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;fd_route_primary_1&quot;,label:&quot;Primary 1&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;,items:&quot;Primary A|ROUTE_PRIMARY_A&amp;#10;Primary B|ROUTE_PRIMARY_B&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;fd_route_secondary_1&quot;,label:&quot;Secondary 1&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;,items:&quot;Secondary A|ROUTE_SECONDARY_A&amp;#10;Secondary B|ROUTE_SECONDARY_B&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;fd_route_primary_2&quot;,label:&quot;Primary 2&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;,items:&quot;Primary A|ROUTE_PRIMARY_A&amp;#10;Primary B|ROUTE_PRIMARY_B&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;fd_route_secondary_2&quot;,label:&quot;Secondary 2&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;,items:&quot;Secondary A|ROUTE_SECONDARY_A&amp;#10;Secondary B|ROUTE_SECONDARY_B&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;fd_route_primary_3&quot;,label:&quot;Primary 3&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;,items:&quot;Primary A|ROUTE_PRIMARY_A&amp;#10;Primary B|ROUTE_PRIMARY_B&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;fd_route_secondary_3&quot;,label:&quot;Secondary 3&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;,items:&quot;Secondary A|ROUTE_SECONDARY_A&amp;#10;Secondary B|ROUTE_SECONDARY_B&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_note&quot;,label:&quot;Note&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_kind_store&quot;,label:&quot;Kind store&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_p1_store&quot;,label:&quot;Primary 1 store&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_s1_store&quot;,label:&quot;Secondary 1 store&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_p2_store&quot;,label:&quot;Primary 2 store&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_s2_store&quot;,label:&quot;Secondary 2 store&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_p3_store&quot;,label:&quot;Primary 3 store&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_s3_store&quot;,label:&quot;Secondary 3 store&quot;,tableName:&quot;fd_route_target_lines&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;/tr&gt;
+    &lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div id=&quot;jsp_route_detail_cascade&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;
+    &lt;script&gt;
+     var routeTargetTableId = &quot;fd_route_target_lines&quot;;
+     Com_AddEventListener(window, &quot;load&quot;, function() {
+       setTimeout(function() {
+         var tableInfo = DocList_TableInfo[&quot;TABLE_DL_&quot; + routeTargetTableId];
+         if (!tableInfo) return;
+         for (var rowIndex = 0; rowIndex &lt; tableInfo.lastIndex - 1; rowIndex++) {
+           var kindId = buildRouteDetailFieldId(routeTargetTableId, &quot;fd_route_kind&quot;).replace(&quot;!{index}&quot;, rowIndex);
+           var kindValue = getFormFieldValue(kindId, &quot;table&quot;);
+           restoreRouteCascade(rowIndex, &quot;fd_route_primary_1&quot;, &quot;fd_route_secondary_1&quot;, &quot;fd_route_p1_store&quot;, &quot;fd_route_s1_store&quot;, kindValue);
+           restoreRouteCascade(rowIndex, &quot;fd_route_primary_2&quot;, &quot;fd_route_secondary_2&quot;, &quot;fd_route_p2_store&quot;, &quot;fd_route_s2_store&quot;, kindValue);
+           restoreRouteCascade(rowIndex, &quot;fd_route_primary_3&quot;, &quot;fd_route_secondary_3&quot;, &quot;fd_route_p3_store&quot;, &quot;fd_route_s3_store&quot;, kindValue);
+         }
+       }, 20);
+     });
+     function restoreRouteCascade(rowIndex, primaryId, secondaryId, primaryStoreId, secondaryStoreId, kindValue) {
+       var primaryFieldId = buildRouteDetailFieldId(routeTargetTableId, primaryId).replace(&quot;!{index}&quot;, rowIndex);
+       var secondaryFieldId = buildRouteDetailFieldId(routeTargetTableId, secondaryId).replace(&quot;!{index}&quot;, rowIndex);
+       var primaryShadowId = buildRouteDetailFieldId(routeTargetTableId, primaryStoreId).replace(&quot;!{index}&quot;, rowIndex);
+       var secondaryShadowId = buildRouteDetailFieldId(routeTargetTableId, secondaryStoreId).replace(&quot;!{index}&quot;, rowIndex);
+       var primaryValue = getFormFieldValue(primaryShadowId, &quot;table&quot;);
+       var secondaryValue = getFormFieldValue(secondaryShadowId, &quot;table&quot;);
+       var primary = $(&quot;[name=\&quot;&quot; + primaryFieldId + &quot;\&quot;]&quot;);
+       var secondary = $(&quot;[name=\&quot;&quot; + secondaryFieldId + &quot;\&quot;]&quot;);
+       resetRoutePrimary(kindValue, primary);
+       buildRouteSecondaryOptions(primaryValue, secondary);
+       primary.val(primaryValue);
+       secondary.val(secondaryValue);
+       setRouteSecondaryState(secondary, kindValue == &quot;ROUTE_KIND_MULTI&quot;);
+     }
+     function buildRouteDetailFieldId(tableId, columnId) {
+       return &quot;extendDataFormInfo.value(&quot; + tableId + &quot;.!{index}.&quot; + columnId + &quot;)&quot;;
+     }
+    &lt;/script&gt;
+    &lt;script&gt;
+     function buildRouteSecondaryOptions(primaryValue, secondary) {
+       secondary.empty();
+       secondary.append(&quot;&lt;option value=\&quot;\&quot;&gt;Choose&lt;/option&gt;&quot;);
+       if (primaryValue == &quot;ROUTE_PRIMARY_A&quot;) {
+         secondary.append(&quot;&lt;option value=\&quot;ROUTE_SECONDARY_A\&quot;&gt;Secondary A&lt;/option&gt;&quot;);
+       } else {
+         secondary.append(&quot;&lt;option value=\&quot;ROUTE_SECONDARY_B\&quot;&gt;Secondary B&lt;/option&gt;&quot;);
+       }
+     }
+     function resetRoutePrimary(kindValue, primary) {
+       primary.empty();
+       primary.append(&quot;&lt;option value=\&quot;\&quot;&gt;Choose&lt;/option&gt;&quot;);
+       if (kindValue == &quot;ROUTE_KIND_MULTI&quot;) {
+         primary.append(&quot;&lt;option value=\&quot;ROUTE_PRIMARY_A\&quot;&gt;Primary A&lt;/option&gt;&quot;);
+       } else {
+         primary.append(&quot;&lt;option value=\&quot;ROUTE_PRIMARY_B\&quot;&gt;Primary B&lt;/option&gt;&quot;);
+       }
+     }
+     function routeShadowField(domElement, sourceId, shadowId, value) {
+       var shadowName = domElement.name.replace(sourceId, shadowId);
+       $(&quot;[name=\&quot;&quot; + shadowName + &quot;\&quot;]&quot;).val(value);
+     }
+     function routeSecondaryField(domElement, sourceId, secondaryId) {
+       var secondaryName = domElement.name.replace(sourceId, secondaryId);
+       return $(&quot;[name=\&quot;&quot; + secondaryName + &quot;\&quot;]&quot;);
+     }
+     function setRouteSecondaryState(secondary, active) {
+       if (active) {
+         secondary.css(&quot;display&quot;, &quot;block&quot;);
+         secondary.attr(&quot;validate&quot;, &quot;required&quot;);
+         secondary.parent().find(&quot;.txtstrong&quot;).show();
+       } else {
+         secondary.css(&quot;display&quot;, &quot;none&quot;);
+         secondary.attr(&quot;validate&quot;, &quot;&quot;);
+         secondary.parent().find(&quot;.txtstrong&quot;).hide();
+       }
+     }
+     function clearRouteCascade(domElement, sourceId, primaryId, secondaryId, primaryStoreId, secondaryStoreId) {
+       routeSecondaryField(domElement, sourceId, primaryId).val(&quot;&quot;);
+       routeSecondaryField(domElement, sourceId, secondaryId).val(&quot;&quot;);
+       routeShadowField(domElement, sourceId, primaryStoreId, &quot;&quot;);
+       routeShadowField(domElement, sourceId, secondaryStoreId, &quot;&quot;);
+     }
+     function changeRoutePrimary1(value, domElement) {
+       var secondary = routeSecondaryField(domElement, &quot;fd_route_primary_1&quot;, &quot;fd_route_secondary_1&quot;);
+       buildRouteSecondaryOptions(value, secondary);
+       secondary.val(&quot;&quot;);
+       routeShadowField(domElement, &quot;fd_route_primary_1&quot;, &quot;fd_route_p1_store&quot;, value);
+       routeShadowField(domElement, &quot;fd_route_primary_1&quot;, &quot;fd_route_s1_store&quot;, &quot;&quot;);
+     }
+     function changeRoutePrimary2(value, domElement) {
+       var secondary = routeSecondaryField(domElement, &quot;fd_route_primary_2&quot;, &quot;fd_route_secondary_2&quot;);
+       buildRouteSecondaryOptions(value, secondary);
+       secondary.val(&quot;&quot;);
+       routeShadowField(domElement, &quot;fd_route_primary_2&quot;, &quot;fd_route_p2_store&quot;, value);
+       routeShadowField(domElement, &quot;fd_route_primary_2&quot;, &quot;fd_route_s2_store&quot;, &quot;&quot;);
+     }
+     function changeRoutePrimary3(value, domElement) {
+       var secondary = routeSecondaryField(domElement, &quot;fd_route_primary_3&quot;, &quot;fd_route_secondary_3&quot;);
+       buildRouteSecondaryOptions(value, secondary);
+       secondary.val(&quot;&quot;);
+       routeShadowField(domElement, &quot;fd_route_primary_3&quot;, &quot;fd_route_p3_store&quot;, value);
+       routeShadowField(domElement, &quot;fd_route_primary_3&quot;, &quot;fd_route_s3_store&quot;, &quot;&quot;);
+     }
+     function resetRouteKind(value, domElement) {
+       var secondary1 = routeSecondaryField(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_secondary_missing&quot;);
+       var secondary2 = routeSecondaryField(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_secondary_2&quot;);
+       var secondary3 = routeSecondaryField(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_secondary_3&quot;);
+       clearRouteCascade(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_primary_1&quot;, &quot;fd_route_secondary_1&quot;, &quot;fd_route_p1_store&quot;, &quot;fd_route_s1_store&quot;);
+       clearRouteCascade(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_primary_2&quot;, &quot;fd_route_secondary_2&quot;, &quot;fd_route_p2_store&quot;, &quot;fd_route_s2_store&quot;);
+       clearRouteCascade(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_primary_3&quot;, &quot;fd_route_secondary_3&quot;, &quot;fd_route_p3_store&quot;, &quot;fd_route_s3_store&quot;);
+       resetRoutePrimary(value, routeSecondaryField(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_primary_1&quot;));
+       resetRoutePrimary(value, routeSecondaryField(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_primary_2&quot;));
+       resetRoutePrimary(value, routeSecondaryField(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_primary_3&quot;));
+       setRouteSecondaryState(secondary1, value == &quot;ROUTE_KIND_MULTI&quot;);
+       setRouteSecondaryState(secondary2, value == &quot;ROUTE_KIND_MULTI&quot;);
+       setRouteSecondaryState(secondary3, value == &quot;ROUTE_KIND_MULTI&quot;);
+       routeShadowField(domElement, &quot;fd_route_kind&quot;, &quot;fd_route_kind_store&quot;, value);
+     }
+     function keepRouteSecondary1(value, domElement) {
+       routeShadowField(domElement, &quot;fd_route_secondary_1&quot;, &quot;fd_route_s1_store&quot;, value);
+     }
+     function keepRouteSecondary2(value, domElement) {
+       routeShadowField(domElement, &quot;fd_route_secondary_2&quot;, &quot;fd_route_s2_store&quot;, value);
+     }
+     function keepRouteSecondary3(value, domElement) {
+       routeShadowField(domElement, &quot;fd_route_secondary_3&quot;, &quot;fd_route_s3_store&quot;, value);
+     }
+     AttachXFormValueChangeEventById(&quot;fd_route_primary_1&quot;, changeRoutePrimary1);
+     AttachXFormValueChangeEventById(&quot;fd_route_primary_2&quot;, changeRoutePrimary2);
+     AttachXFormValueChangeEventById(&quot;fd_route_primary_3&quot;, changeRoutePrimary3);
+     AttachXFormValueChangeEventById(&quot;fd_route_kind&quot;, resetRouteKind);
+     AttachXFormValueChangeEventById(&quot;fd_route_secondary_1&quot;, keepRouteSecondary1);
+     AttachXFormValueChangeEventById(&quot;fd_route_secondary_2&quot;, keepRouteSecondary2);
+     AttachXFormValueChangeEventById(&quot;fd_route_secondary_3&quot;, keepRouteSecondary3);
+    &lt;/script&gt;
+   &apos;/&gt;&lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSubTableProperty name=&quot;fd_route_source_lines&quot; label=&quot;Source lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_source_model&quot; label=&quot;Model&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_source_quantity&quot; label=&quot;Quantity&quot; type=&quot;Long&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_route_target_lines&quot; label=&quot;Target lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_target_model&quot; label=&quot;Model&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_target_quantity&quot; label=&quot;Quantity&quot; type=&quot;Long&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_kind&quot; label=&quot;Kind&quot; enumValues=&quot;Multi|ROUTE_KIND_MULTI;Single|ROUTE_KIND_SINGLE&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_primary_1&quot; label=&quot;Primary 1&quot; enumValues=&quot;Primary A|ROUTE_PRIMARY_A;Primary B|ROUTE_PRIMARY_B&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_secondary_1&quot; label=&quot;Secondary 1&quot; enumValues=&quot;Secondary A|ROUTE_SECONDARY_A;Secondary B|ROUTE_SECONDARY_B&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_primary_2&quot; label=&quot;Primary 2&quot; enumValues=&quot;Primary A|ROUTE_PRIMARY_A;Primary B|ROUTE_PRIMARY_B&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_secondary_2&quot; label=&quot;Secondary 2&quot; enumValues=&quot;Secondary A|ROUTE_SECONDARY_A;Secondary B|ROUTE_SECONDARY_B&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_primary_3&quot; label=&quot;Primary 3&quot; enumValues=&quot;Primary A|ROUTE_PRIMARY_A;Primary B|ROUTE_PRIMARY_B&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_secondary_3&quot; label=&quot;Secondary 3&quot; enumValues=&quot;Secondary A|ROUTE_SECONDARY_A;Secondary B|ROUTE_SECONDARY_B&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_note&quot; label=&quot;Note&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_kind_store&quot; label=&quot;Kind store&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_p1_store&quot; label=&quot;Primary 1 store&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_s1_store&quot; label=&quot;Secondary 1 store&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_p2_store&quot; label=&quot;Primary 2 store&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_s2_store&quot; label=&quot;Secondary 2 store&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_p3_store&quot; label=&quot;Primary 3 store&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_s3_store&quot; label=&quot;Secondary 3 store&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

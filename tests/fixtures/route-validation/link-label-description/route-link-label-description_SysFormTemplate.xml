@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>class</string>
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string>
+  </void>
+  <void method="put">
+   <string>fdId</string>
+   <string>route-link-label-description-sysform</string>
+  </void>
+  <void method="put">
+   <string>fdTemplateEdition</string>
+   <string>1</string>
+  </void>
+  <void method="put">
+   <string>fdName</string>
+   <string>Route Linked Description</string>
+  </void>
+  <void method="put">
+   <string>fdModelName</string>
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string>
+  </void>
+  <void method="put">
+   <string>fdModelId</string>
+   <string>route-link-label-description-template</string>
+  </void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;linkLabel&quot; fd_values=&apos;{id:&quot;fd_col_4qkbo3&quot;,content:&quot;请点击查看采购需求清单模板&quot;,underline:&quot;true&quot;,link:&quot;//kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&amp;amp;amp;fdId=18e5f7972ce8d1c7e96e8354bc69fea5&quot;,color:&quot;#FF0000&quot;,b:&quot;true&quot;}&apos;&gt;
+       &lt;a href=&quot;//kms.shanghai-electric.com/kms/multidoc/kms_multidoc_knowledge/kmsMultidocKnowledge.do?method=view&amp;amp;amp;fdId=18e5f7972ce8d1c7e96e8354bc69fea5&quot; target=&quot;_blank&quot;&gt;请点击查看采购需求清单模板&lt;/a&gt;
+      &lt;/label&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata/&gt;</string>
+  </void>
+ </object>
+</java>

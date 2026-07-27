@@ -82,6 +82,15 @@ export function resolveScriptControlTarget(form = {}, action = {}) {
         controlId
       };
     }
+    if (target.column.dataOnly === true) {
+      return {
+        ok: false,
+        code: "data_only_control_action_forbidden",
+        message: "Data-only fields exist in the data model but cannot host control event actions.",
+        tableId,
+        controlId
+      };
+    }
     return {
       ok: true,
       kind: "detail",

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>683-SYS-ZKY</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>16a58a8ec6663e545e990b84f2cbd598</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string></string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/178de9bf727abf7abb406b64148b5dfc/178de9bf727abf7abb406b64148b5dfc_v1</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_38e35ea22f5334 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_38e35ea22f4266&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=422 column=&quot;0&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3987ee442ca8ce&quot;,content:&quot;报销交接人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;报销交接人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=605 column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_bxjjr&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;报销交接人&quot;,_label_bind_id:&quot;fd_3987ee442ca8ce&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;true&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;null&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_bxjjr class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;报销交接人&quot; businessType=&quot;addressDialog&quot; multiSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_38e35ea22f5334&quot; defaultValue=&quot;null&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3987ee6a43c87c title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;fd_3987ee6a43c87c&quot;}&apos; formDesign=&quot;landray&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&quot;&lt;xform:editShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;   alert(B);&amp;#13;&amp;#10;   var radio = GetXFormFieldById(&apos;fd_bxjjr&apos;);&amp;#13;&amp;#10;   alert(&apos;A&apos;);&amp;#13;&amp;#10;   alert(radio);&amp;#13;&amp;#10;   var radioLength = radio.length;&amp;#13;&amp;#10;   var radioValue;&amp;#13;&amp;#10;&amp;#13;&amp;#10;}&amp;#13;&amp;#10;&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:editShow&gt;&quot;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=304 column=&quot;2&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=434 column=&quot;3&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=423 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=603 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=306 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=432 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=424 column=&quot;0&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_38e35ee3fa572a&quot;,content:&quot;文本1&quot;}&apos; formDesign=&quot;landray&quot;&gt;文本1&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=602 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=308 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=430 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=425 column=&quot;0&quot; row=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_38e35ee52c2f68&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;111&quot;,_label_bind_id:&quot;&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_38e35ee52c2f68 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;111&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_38e35ea22f5334&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD width=601 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=310 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=430 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>178dea04fdc5f02895dac7a477aba8ab</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/178de9bf727abf7abb406b64148b5dfc/178de9bf727abf7abb406b64148b5dfc_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_38e35ea22f5334 class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_38e35ea22f4266&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=422 column=&quot;0&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_3987ee442ca8ce&quot;,content:&quot;报销交接人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;报销交接人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=605 column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_bxjjr&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;报销交接人&quot;,_label_bind_id:&quot;fd_3987ee442ca8ce&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;true&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;null&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;INPUT id=fd_bxjjr class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;报销交接人&quot; businessType=&quot;addressDialog&quot; multiSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; thousandShow=&quot;true&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_38e35ea22f5334&quot; defaultValue=&quot;null&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt; &#13;
+&lt;DIV id=fd_3987ee6a43c87c title=JSP片段 style=&quot;WIDTH: 16px; DISPLAY: inline&quot; fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;fd_3987ee6a43c87c&quot;}&apos; formDesign=&quot;landray&quot; mobileView=&quot;default&quot;&gt;&lt;LABEL ondblclick=&quot;Designer_Control_JSP_ShowEditFrame(event, this);&quot; class=button_img style=&quot;BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px&quot;&gt;&lt;INPUT type=hidden value=&quot;&lt;xform:editShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;   alert(B);&amp;#13;&amp;#10;   var radio = GetXFormFieldById(&apos;fd_bxjjr&apos;);&amp;#13;&amp;#10;   alert(&apos;A&apos;);&amp;#13;&amp;#10;   alert(radio);&amp;#13;&amp;#10;   var radioLength = radio.length;&amp;#13;&amp;#10;   var radioValue;&amp;#13;&amp;#10;&amp;#13;&amp;#10;}&amp;#13;&amp;#10;&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:editShow&gt;&quot;&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=304 column=&quot;2&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=434 column=&quot;3&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=423 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=603 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=306 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=432 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=424 column=&quot;0&quot; row=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_38e35ee3fa572a&quot;,content:&quot;文本1&quot;}&apos; formDesign=&quot;landray&quot;&gt;文本1&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=602 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=308 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=430 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=425 column=&quot;0&quot; row=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_38e35ee52c2f68&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;111&quot;,_label_bind_id:&quot;&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,validate:&quot;false&quot;,thousandShow:&quot;false&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_38e35ee52c2f68 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;111&quot; thousandShow=&quot;false&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; required=&quot;false&quot; _required=&quot;false&quot; tableName=&quot;fd_38e35ea22f5334&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD width=601 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=310 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=430 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>178de9bf727abf7abb406b64148b5dfc</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>178dea0502f0e208fa651004e65aefc0</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1619398926087</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_38e35ea22f5334 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=422 column=&quot;0&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;报销交接人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=605 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_bxjjr.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_bxjjr.name)&quot; mulSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;报销交接人&quot; title=&quot;报销交接人&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;xform:editShow&gt;&#13;
+&lt;script&gt;&#13;
+   alert(B);&#13;
+   var radio = GetXFormFieldById(&apos;fd_bxjjr&apos;);&#13;
+   alert(&apos;A&apos;);&#13;
+   alert(radio);&#13;
+   var radioLength = radio.length;&#13;
+   var radioValue;&#13;
+&#13;
+}&#13;
+&#13;
+&lt;/script&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=304 column=&quot;2&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=434 column=&quot;3&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=423 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=603 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=306 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=432 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=424 column=&quot;0&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;文本1&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=602 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=308 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=430 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=425 column=&quot;0&quot; row=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_38e35ee52c2f68)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;111&quot; title=&quot;111&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=601 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=310 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=430 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_bxjjr&quot; label=&quot;报销交接人&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; mutiValueSplit=&quot;;&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_38e35ee52c2f68&quot; label=&quot;111&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>178de9bf727abf7abb406b64148b5dfc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>178dea04fdc5f02895dac7a477aba8ab</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1619398926120</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_38e35ea22f5334 class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=422 column=&quot;0&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;报销交接人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=605 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_bxjjr.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_bxjjr.name)&quot; mulSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;报销交接人&quot; title=&quot;报销交接人&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+ &#13;
+&lt;xform:editShow&gt;&#13;
+&lt;script&gt;&#13;
+   alert(B);&#13;
+   var radio = GetXFormFieldById(&apos;fd_bxjjr&apos;);&#13;
+   alert(&apos;A&apos;);&#13;
+   alert(radio);&#13;
+   var radioLength = radio.length;&#13;
+   var radioValue;&#13;
+&#13;
+}&#13;
+&#13;
+&lt;/script&gt;&#13;
+&lt;/xform:editShow&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=304 column=&quot;2&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=434 column=&quot;3&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=423 column=&quot;0&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=603 column=&quot;1&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=306 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=432 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=424 column=&quot;0&quot; row=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;文本1&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=602 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=308 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=430 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=425 column=&quot;0&quot; row=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_38e35ee52c2f68)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;111&quot; title=&quot;111&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=601 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=310 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=430 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendElementProperty name=&quot;fd_bxjjr&quot; label=&quot;报销交接人&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; mutiValueSplit=&quot;;&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_38e35ee52c2f68&quot; label=&quot;111&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1618642751548</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

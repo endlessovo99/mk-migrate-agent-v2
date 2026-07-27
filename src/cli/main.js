@@ -222,6 +222,7 @@ async function runExecute(argv, options = {}) {
     targetTemplateId: args["target-template-id"],
     baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
     fallbackFdIds: selectFallbackFdIds(env),
+    participantOverrides: parseParticipantOverrides(args["participant-override"]),
     credentials: {
       username: env.NEWOA_USERNAME,
       encryptedPassword: env.NEWOA_ENCRYPTED_PASSWORD
@@ -271,11 +272,43 @@ function parseArgs(argv) {
       continue;
     }
 
-    result[key] = next;
+    if (key === "participant-override" && Object.hasOwn(result, key)) {
+      result[key] = Array.isArray(result[key])
+        ? [...result[key], next]
+        : [result[key], next];
+    } else {
+      result[key] = next;
+    }
     index += 1;
   }
 
   return result;
+}
+
+function parseParticipantOverrides(value) {
+  if (value === undefined) return [];
+  const values = Array.isArray(value) ? value : [value];
+  const overrides = values.map((entry) => {
+    if (typeof entry !== "string") {
+      throw new Error("--participant-override requires <sourceId>=<targetFdId>");
+    }
+    const separatorIndex = entry.indexOf("=");
+    const lastSeparatorIndex = entry.lastIndexOf("=");
+    const sourceId = separatorIndex >= 0 ? entry.slice(0, separatorIndex).trim() : "";
+    const targetFdId = separatorIndex >= 0 ? entry.slice(separatorIndex + 1).trim() : "";
+    if (!sourceId || !targetFdId || separatorIndex !== lastSeparatorIndex) {
+      throw new Error("--participant-override requires <sourceId>=<targetFdId>");
+    }
+    return { sourceId, targetFdId };
+  });
+  const sourceIds = new Set();
+  for (const override of overrides) {
+    if (sourceIds.has(override.sourceId)) {
+      throw new Error(`--participant-override sourceId may be specified only once: ${override.sourceId}`);
+    }
+    sourceIds.add(override.sourceId);
+  }
+  return overrides;
 }
 
 function readJson(path) {
@@ -310,7 +343,7 @@ function printUsage() {
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");
   console.error("  node src/cli/main.js check execute <migration.dsl.json>");
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
-  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--participant-override <sourceId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

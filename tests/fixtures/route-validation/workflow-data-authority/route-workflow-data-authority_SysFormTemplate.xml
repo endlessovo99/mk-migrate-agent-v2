@@ -27,6 +27,20 @@
       &lt;div fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;designer_helper&quot;}&apos;&gt;&lt;/div&gt;
      &lt;/div&gt;
     &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail_auth&quot;,label:&quot;权限明细&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;
+       &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+        &lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;detail_hidden_right&quot;}&apos; mode_N2=&quot;hidden&quot;&gt;
+         &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;detailHidden&quot;,label:&quot;节点隐藏列&quot;,required:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;detailHidden&quot;/&gt;&lt;/div&gt;
+        &lt;/div&gt;
+       &lt;/td&gt;
+       &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;
+        &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;detailDefault&quot;,label:&quot;继承默认列&quot;,required:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;detailDefault&quot;/&gt;&lt;/div&gt;
+       &lt;/td&gt;
+      &lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
    &lt;/tbody&gt;&lt;/table&gt;</string>
   </void>
   <void method="put">
@@ -34,6 +48,10 @@
    <string>&lt;metadata&gt;
     &lt;extendSimpleProperty name=&quot;httpCode&quot; label=&quot;请求 code&quot; type=&quot;String&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;exactField&quot; label=&quot;精确节点字段&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_detail_auth&quot; label=&quot;权限明细&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;detailHidden&quot; label=&quot;节点隐藏列&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;detailDefault&quot; label=&quot;继承默认列&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
    &lt;/metadata&gt;</string>
   </void>
  </object>

@@ -8,6 +8,7 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-clamped-detail-aggregate",
   "deterministic-conditional-total-uppercase",
   "deterministic-detail-row-control-state",
+  "deterministic-detail-cascade-actions",
   "deterministic-detail-row-expansion",
   "deterministic-detail-row-lifecycle",
   "deterministic-detail-lookup-calculation",
@@ -18,7 +19,10 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-inline-radio-row-effects",
   "deterministic-local-currency-helper",
   "deterministic-multi-radio-row-helper",
-  "deterministic-person-text-calculation"
+  "deterministic-person-text-calculation",
+  "deterministic-procurement-payment-attachment-submit",
+  "deterministic-procurement-payment-department-consistency",
+  "deterministic-procurement-payment-wbs-visibility"
 ]);
 
 export function buildDeterministicScriptBranchProof(action) {

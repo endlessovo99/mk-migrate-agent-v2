@@ -21,6 +21,10 @@ import {
   selectDefaultBranchEdge
 } from "./branch-defaults.js";
 import { detailTableNameFor } from "./detail-table-names.js";
+import {
+  deriveDetailColumnBindings,
+  deriveDetailTableAuthority
+} from "./detail-auth.js";
 import { projectSubProcessWorkflow, subProcessContract } from "../../dsl/subprocess.js";
 import { persistedFieldLabel } from "./field-labels.js";
 import { isAddressField } from "../condition-org-resolver.js";
@@ -153,6 +157,26 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     }
     fieldIds.add(field.id);
     if (field.type === "detailTable") {
+      const columns = (Array.isArray(field.columns) ? field.columns : []).map((column, columnIndex) => {
+        if (!nonEmptyString(column?.id)) {
+          diagnostics.push(projectionError(
+            "projection.form.column_id_missing",
+            "DSL detail column is missing an id.",
+            { fieldId: field.id, index: columnIndex }
+          ));
+          return null;
+        }
+        return {
+          id: column.id,
+          title: normalizeScalar(persistedFieldLabel(column)),
+          type: column.type,
+          component: column.componentId,
+          dataOnly: column.dataOnly === true,
+          props: executableProps(column, form, {
+            tableName: detailTableNameFor(mainTableName, field.id)
+          })
+        };
+      }).filter(Boolean);
       return {
         id: field.id,
         title: normalizeScalar(persistedFieldLabel(field)),
@@ -160,23 +184,10 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
         component: field.componentId,
         dataOnly: false,
         props: executableProps(field, form),
-        columns: (Array.isArray(field.columns) ? field.columns : []).map((column, columnIndex) => {
-          if (!nonEmptyString(column?.id)) {
-            diagnostics.push(projectionError(
-              "projection.form.column_id_missing",
-              "DSL detail column is missing an id.",
-              { fieldId: field.id, index: columnIndex }
-            ));
-            return null;
-          }
-          return {
-            id: column.id,
-            title: normalizeScalar(persistedFieldLabel(column)),
-            type: column.type,
-            component: column.componentId,
-            props: executableProps(column, form)
-          };
-        }).filter(Boolean)
+        columns,
+        dataOnlyColumnIds: columns
+          .filter((column) => column.dataOnly === true)
+          .map((column) => column.id)
       };
     }
     return {
@@ -319,7 +330,7 @@ function expectedCalculationDependencies(entry, knownRefs) {
     .filter((ref) => knownRefs.has(ref));
 }
 
-function executableProps(field = {}, form = {}) {
+function executableProps(field = {}, form = {}, context = {}) {
   const props = {};
   if (field.props?.required === true) props.required = true;
   if (
@@ -342,6 +353,16 @@ function executableProps(field = {}, form = {}) {
       label: normalizeScalar(option.label ?? option.text ?? option.value),
       value: normalizeScalar(option.value ?? option.label ?? option.text)
     }));
+  }
+  if (
+    componentSupportsProp(field.componentId, "rowOptions") &&
+    field.props?.rowOptions &&
+    nonEmptyString(context.tableName)
+  ) {
+    props.rowOptions = expectedDetailRowOptions(
+      field.props.rowOptions,
+      context.tableName
+    );
   }
   if (field.componentId === "xform-select~multi") props.multi = true;
   if (field.componentId === "xform-hyperlinks") {
@@ -372,6 +393,14 @@ function executableProps(field = {}, form = {}) {
     props.calculation = expectedCalculation(field.props.calculation, form);
   }
   if (field.props?.content !== undefined) props.content = normalizeScalar(field.props.content);
+  if (
+    field.componentId === "xform-description" &&
+    field.props?.hasLink === true &&
+    typeof field.props?.link === "string"
+  ) {
+    props.hasLink = true;
+    props.link = normalizeScalar(field.props.link);
+  }
   if (Array.isArray(field.props?.links) && field.props.links.length) {
     props.links = field.props.links.map((link) => ({
       name: normalizeScalar(link.name),
@@ -386,6 +415,40 @@ function executableProps(field = {}, form = {}) {
   const catalog = COMPONENTS_BY_ID.get(field.componentId);
   if (catalog?.componentId) props.componentId = catalog.componentId;
   return props;
+}
+
+function expectedDetailRowOptions(rowOptions, tableName) {
+  const dependencyFieldId = rowOptions.dependencyFieldId;
+  const dependencyRef = `${tableName}.${dependencyFieldId}`;
+  const cases = rowOptions.cases.map((entry) => ({
+    value: entry.value,
+    options: entry.options.map(expectedRowOption)
+  }));
+  const defaultOptions = rowOptions.defaultOptions.map(expectedRowOption);
+  const dependencyLiteral = JSON.stringify(dependencyRef);
+  const js =
+    `function (controlProps, rowNum, MKXFORM) {var cases=${JSON.stringify(cases)};` +
+    `var defaultOptions=${JSON.stringify(defaultOptions)};` +
+    `var value=MKXFORM.getValue(${dependencyLiteral},{detailRowIndex:rowNum});` +
+    "var options=defaultOptions;" +
+    "for(var index=0;index<cases.length;index+=1){" +
+    "if(cases[index].value===String(value)){options=cases[index].options;break;}}" +
+    `return {options:options,deps:[${dependencyLiteral}]};}`;
+  return {
+    dependencyFieldId,
+    dependencyRef,
+    cases,
+    defaultOptions,
+    optionSource: "JavaScript",
+    js
+  };
+}
+
+function expectedRowOption(option) {
+  return {
+    label: option.label,
+    value: option.value
+  };
 }
 
 function expectedCalculation(calculation, form = {}) {
@@ -771,7 +834,7 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       sendConfig: summarizeSendConfig(node),
       manualBranch: summarizeExpectedManualBranch(node),
       parallelGateway: summarizeExpectedParallelGateway(node, edges),
-      dataAuthority: summarizeDataAuthority(node),
+      dataAuthority: summarizeDataAuthority(node, context),
       timeout: summarizeNodeTimeoutConfig(attributes),
       ignoreOnSameIdentity: expectedIgnoreOnSameIdentity(node),
       subProcess: node.type === "startSubProcess" ? summarizeExpectedSubProcess(node.subProcess) : undefined
@@ -1230,17 +1293,26 @@ function splitRelatedNodeIds(value = "") {
   )];
 }
 
-function summarizeDataAuthority(node) {
+function summarizeDataAuthority(node, context = {}) {
   if (!node?.dataAuthority?.fields || node.dataAuthority.enabled === false) return undefined;
+  const fields = Object.fromEntries(
+    Object.entries(node.dataAuthority.fields).map(([fieldId, value]) => [fieldId, {
+      visible: normalizeBoolean(value.visible),
+      editable: normalizeBoolean(value.editable),
+      required: normalizeBoolean(value.required)
+    }])
+  );
+  const detailTables = deriveDetailTableAuthority(context.form, fields, {
+    mainTableName: context.mainTableName
+  });
+  const detailColumnBindings = deriveDetailColumnBindings(context.form, fields, {
+    mainTableName: context.mainTableName
+  });
   return {
     enabled: node.dataAuthority.enabled !== false,
-    fields: Object.fromEntries(
-      Object.entries(node.dataAuthority.fields).map(([fieldId, value]) => [fieldId, {
-        visible: normalizeBoolean(value.visible),
-        editable: normalizeBoolean(value.editable),
-        required: normalizeBoolean(value.required)
-      }])
-    )
+    fields,
+    ...(Object.keys(detailColumnBindings).length ? { detailColumnBindings } : {}),
+    ...(Object.keys(detailTables).length ? { detailTables } : {})
   };
 }
 
@@ -1419,7 +1491,12 @@ function expectedBatchConditionSemantics(sourceText, context = {}) {
 function expectedEvalConditionSemantics(sourceText, context = {}) {
   if (!context.templateId) return undefined;
   const ast = parseExpectedEvalConditionExpression(sourceText);
-  if (!ast || !conditionAstUsesFieldSum(ast) || !canRenderEvalConditionFormula(ast)) return undefined;
+  if (!ast) return undefined;
+
+  const addressNameContains = expectedAddressNameContainsEvalSemantics(ast, context);
+  if (addressNameContains) return addressNameContains;
+
+  if (!conditionAstUsesFieldSum(ast) || !canRenderEvalConditionFormula(ast)) return undefined;
   const parts = renderEvalConditionFormula(ast, {
     templateId: context.templateId,
     resolveField(fieldId) {
@@ -1428,6 +1505,33 @@ function expectedEvalConditionSemantics(sourceText, context = {}) {
   });
   if (!parts?.script) return undefined;
   return { recipe: "eval_formula", script: parts.script };
+}
+
+function expectedAddressNameContainsEvalSemantics(ast, context) {
+  const terms = collectConditionTerms(ast);
+  if (terms.length !== 1) return undefined;
+
+  const term = terms[0];
+  if (term.expressionType !== "contains" || term.fieldProperty !== "fdName") {
+    return undefined;
+  }
+
+  const field = expectedConditionField(context.form, term.field);
+  if (
+    !field ||
+    !isAddressField(field) ||
+    expectedConditionOrg(context.runtime, term.value)
+  ) {
+    return undefined;
+  }
+
+  const fieldRef = `${expectedFormulaFieldRef(context.templateId, field.id)}.fdName`;
+  const valueLiteral = JSON.stringify(String(term.value));
+  const call = `\${func.global.contains}(\${data.${fieldRef}}, ${valueLiteral})`;
+  return {
+    recipe: "eval_formula",
+    script: `${term.negateResult ? "!" : ""}${call}`
+  };
 }
 
 function expectedEvalConditionField(context, fieldId) {
@@ -1571,6 +1675,18 @@ function expectedContextConditionSemantics(ast, context) {
       continue;
     }
 
+    if (term.expressionType === "empty") {
+      const functionId = "global.isEmpty";
+      functionIds.add(functionId);
+      ruleSymbols.add(term.symbol);
+      functionCalls.push({
+        functionId,
+        inputs: [{ key: "value", type: "Var", value: fieldRef }],
+        fixedArguments: []
+      });
+      continue;
+    }
+
     const symbol = term.expressionType === "==" ? "==" : term.expressionType;
     if (!["==", "!=", ">", ">=", "<", "<="].includes(symbol)) return undefined;
     evalExpressions.add(`\${data.${fieldRef}} ${symbol} ${JSON.stringify(term.value)}`);
@@ -1593,14 +1709,38 @@ function expectedContextConditionSemantics(ast, context) {
 function parseExpectedContextConditionTerm(value) {
   const text = String(value || "").trim();
   const contains = text.match(
-    /^\$(?:字符串|列表)\.包含\$\(\s*\$([^$]+)\$(?:\s*\.\s*getFdName\s*\(\s*\))?\s*,\s*(["'])([\s\S]*?)\2\s*\)$/
+    /^\$(?:字符串|列表)\.包含\$\(\s*\$([^$]+)\$(\s*\.\s*getFdName\s*\(\s*\))?\s*,\s*(["'])([\s\S]*?)\3\s*\)$/
   );
   if (contains) {
     return {
       field: contains[1].trim(),
-      value: contains[3],
+      fieldProperty: contains[2] ? "fdName" : undefined,
+      value: contains[4],
       symbol: "contain",
       expressionType: "contains",
+      negateResult: false
+    };
+  }
+
+  const fieldMethodEqualsEmpty = text.match(
+    /^\$([^$]+)\$\s*\.\s*equals\s*\(\s*["']["']\s*\)$/i
+  );
+  if (fieldMethodEqualsEmpty) {
+    return {
+      field: fieldMethodEqualsEmpty[1].trim(),
+      symbol: "empty",
+      expressionType: "empty",
+      negateResult: false
+    };
+  }
+  const legacyEqualsEmpty = text.match(
+    /^["']["']\s*\.\s*equals\s*\(\s*\$([^$]+)\$\s*\)$/i
+  );
+  if (legacyEqualsEmpty) {
+    return {
+      field: legacyEqualsEmpty[1].trim(),
+      symbol: "empty",
+      expressionType: "empty",
       negateResult: false
     };
   }
@@ -1630,6 +1770,14 @@ function negateExpectedContextConditionTerm(term) {
     return {
       ...term,
       symbol: negated ? "notcontain" : "contain",
+      negateResult: negated
+    };
+  }
+  if (term.expressionType === "empty") {
+    const negated = !term.negateResult;
+    return {
+      ...term,
+      symbol: negated ? "notempty" : "empty",
       negateResult: negated
     };
   }
