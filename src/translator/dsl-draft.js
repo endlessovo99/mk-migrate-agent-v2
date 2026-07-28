@@ -1649,9 +1649,11 @@ function draftMkTree(layout, detailTableIds) {
       // Preserve one source <tr> as one logical target grid. The table layout
       // caps each native row at its catalog capability and keeps overflow in
       // additional rows of that same grid so row-marker ownership stays intact.
-      const packed = preserveNestedGeometry
-        ? projectLayoutGrid(segment.cells, { rows: 1, columns: sourceColumns })
-        : packLayoutGrid(segment.cells, {
+      const packed = segment.kind === "detailTable"
+        ? packLayoutGrid(segment.cells, { columns: 1 })
+        : preserveNestedGeometry
+          ? projectLayoutGrid(segment.cells, { rows: 1, columns: sourceColumns })
+          : packLayoutGrid(segment.cells, {
             columns: Math.max(Math.min(segment.cells.length, TABLE_LAYOUT_MAX_COLUMNS), 1)
           });
       const tableLayout = packed.rows > 1 || packed.columns > 4;
