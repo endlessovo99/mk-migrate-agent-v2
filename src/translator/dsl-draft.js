@@ -36,6 +36,9 @@ import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
 import { projectDynamicHyperlinkForm } from "./dynamic-hyperlink.js";
 import { multiRadioRowHelperFormRules } from "./multi-radio-row-helper.js";
 import { applyDetailCascadeRowOptions } from "./detail-cascade-actions.js";
+import {
+  DETAIL_MAIN_ROW_LIFECYCLE_BASIS
+} from "./detail-main-row-lifecycle.js";
 import { foldLegacyDetailAddressComposites } from "./detail-address-composite.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
@@ -66,7 +69,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   );
   const knownSourceFieldIds = collectFormFieldIds(rawForm);
   const multiRadioFormRules = multiRadioRowHelperFormRules(sourceDraft.scripts, form);
-  const formRules = draftFormRules(
+  const provisionalFormRules = draftFormRules(
     applyFieldIdMapToSourceFormRules(
       mergeSourceFormRules(sourceDraft.formRules, multiRadioFormRules),
       fieldIdMap
@@ -74,8 +77,15 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     form
   );
   const mappedScripts = applyFieldIdMapToScripts(
-    draftMkScriptsFromSourceScripts(sourceDraft.scripts, { form, formRules }),
+    draftMkScriptsFromSourceScripts(sourceDraft.scripts, {
+      form,
+      formRules: provisionalFormRules
+    }),
     fieldIdMap
+  );
+  const formRules = removeDeterministicScriptOwnedFormRules(
+    provisionalFormRules,
+    mappedScripts
   );
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
   const workflow = sourceDraft.workflow
@@ -118,6 +128,25 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceDraft: options.sourceDraftDigest || ""
     }
   });
+}
+
+function removeDeterministicScriptOwnedFormRules(formRules, scripts) {
+  if (!formRules || !Array.isArray(formRules.linkage)) return formRules;
+  const ownedSourceRefs = new Set(
+    (scripts?.actions || [])
+      .filter((action) => action.functionMappings?.some((mapping) =>
+        mapping?.basis === DETAIL_MAIN_ROW_LIFECYCLE_BASIS
+      ))
+      .flatMap((action) => action.sourceRefs || [])
+      .filter(Boolean)
+  );
+  if (!ownedSourceRefs.size) return formRules;
+  return {
+    ...formRules,
+    linkage: formRules.linkage.filter((rule) =>
+      !ownedSourceRefs.has(rule?.meta?.sourceJsp)
+    )
+  };
 }
 
 function applySourceNumericDetailInferences(form, sourceScripts) {

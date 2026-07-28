@@ -12,6 +12,7 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-detail-row-expansion",
   "deterministic-detail-row-lifecycle",
   "deterministic-detail-lookup-calculation",
+  "deterministic-detail-main-row-lifecycle",
   "deterministic-detail-threshold-calculation",
   "deterministic-dynamic-hyperlink",
   "deterministic-finance-detail-generation",

@@ -251,6 +251,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "detail-main-row-lifecycle-success",
+      source: {
+        kind: "form-only",
+        relativePath: "detail-main-row-lifecycle/route-detail-main-row-lifecycle_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "multi-batch-review-success",
       source: {
         kind: "form-only",

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-detail-main-row-lifecycle-sysform</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+  <void method="put"><string>fdName</string><string>Detail Main Row Lifecycle Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-detail-main-row-lifecycle-template</string></void>
+  <void method="put">
+   <string>fdDisplayJsp</string>
+   <string>
+    &lt;xform:editShow&gt;
+     &lt;script&gt;
+      AttachXFormValueChangeEventById(&quot;spbm_control_identifier_longer_than_limit&quot;, function(value, domElement) {
+        if (value == 3050100000000000000) {
+          SetXFormFieldValueById(&quot;fd_spbm_state_identifier_longer_than_limit&quot;, &quot;3050100000000000000&quot;);
+          common_dom_row_set_show_required_reset(&quot;invoice_row5&quot;, true, true, true);
+          common_dom_row_set_show_required_reset(&quot;invoice_row6&quot;, false, false, false);
+        } else {
+          common_dom_row_set_show_required_reset(&quot;invoice_row5&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row6&quot;, false, false, false);
+        }
+      });
+     &lt;/script&gt;
+    &lt;/xform:editShow&gt;
+    &lt;xform:editShow&gt;
+     &lt;script&gt;
+      Com_AddEventListener(window, &quot;load&quot;, function() {
+        if (GetXFormFieldValueById(&quot;fd_spbm_state_identifier_longer_than_limit&quot;) == &quot;3050100000000000000&quot;) {
+          common_dom_row_set_show_required_reset(&quot;invoice_row5&quot;, true, true, true);
+          common_dom_row_set_show_required_reset(&quot;invoice_row6&quot;, false, false, false);
+        } else {
+          common_dom_row_set_show_required_reset(&quot;invoice_row5&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;invoice_row6&quot;, false, false, false);
+        }
+      });
+     &lt;/script&gt;
+    &lt;/xform:editShow&gt;
+   </string>
+  </void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;detailList&quot;,label:&quot;Invoice lines&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;&lt;td&gt;Tax code&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;
+       &lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;spbm_control_identifier_longer_than_limit&quot;,label:&quot;Tax code&quot;,tableName:&quot;detailList&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,items:&quot;Construction|3050100000000000000&amp;#13;&amp;#10;Other|1090201080000000000&quot;}&apos;&gt;&lt;/div&gt;
+       &lt;div style=&quot;display:none&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_spbm_state_identifier_longer_than_limit&quot;,label:&quot;Tax code shadow&quot;,tableName:&quot;detailList&quot;,canShow:&quot;false&quot;,readOnly:&quot;true&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;
+      &lt;/td&gt;&lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_building&quot;,content:&quot;Building information&quot;}&apos;&gt;Building information&lt;/label&gt;&lt;input type=&quot;hidden&quot; id=&quot;invoice_row5&quot; name=&quot;invoice_row5&quot;/&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_project&quot;,label:&quot;Project&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_tax_number&quot;,label:&quot;Tax number&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_lease&quot;,content:&quot;Lease information&quot;}&apos;&gt;Lease information&lt;/label&gt;&lt;input type=&quot;hidden&quot; id=&quot;invoice_row6&quot; name=&quot;invoice_row6&quot;/&gt;&lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_lease_address&quot;,label:&quot;Lease address&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSubTableProperty name=&quot;detailList&quot; label=&quot;Invoice lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;spbm_control_identifier_longer_than_limit&quot; label=&quot;Tax code&quot; enumValues=&quot;Construction|3050100000000000000;Other|1090201080000000000&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_spbm_state_identifier_longer_than_limit&quot; label=&quot;Tax code shadow&quot; type=&quot;String&quot; canDisplay=&quot;false&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_project&quot; label=&quot;Project&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_tax_number&quot; label=&quot;Tax number&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_lease_address&quot; label=&quot;Lease address&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

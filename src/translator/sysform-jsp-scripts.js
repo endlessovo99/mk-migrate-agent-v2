@@ -11,6 +11,13 @@ import {
 } from "./sysform-form-rules.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
 import { inlineRadioRowEffectCandidates } from "./inline-radio-row-effects.js";
+import {
+  detailMainRowLifecycleCandidates
+} from "./detail-main-row-lifecycle.js";
+import {
+  inspectLegacyDetailControlTarget,
+  qualifyUniqueLegacyDetailControlTarget
+} from "./detail-control-target.js";
 import { attrValue, decodeEntities } from "./xml-utils.js";
 import {
   attachmentNonEmptyCandidate,
@@ -125,8 +132,11 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
   const actions = [];
   const warnings = [];
   candidates.forEach((candidate, index) => {
-    const action = canonicalizeLandrayScriptTarget(
-      mkActionFromCandidate(candidate, index, options),
+    const action = qualifyUniqueLegacyDetailControlTarget(
+      canonicalizeLandrayScriptTarget(
+        mkActionFromCandidate(candidate, index, options),
+        options.form
+      ),
       options.form
     );
     const target = scriptTargetWarning(action, options.form);
@@ -146,6 +156,9 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
 
 function canonicalizeLandrayScriptTarget(action, form) {
   if (!action || action.scope !== "control" || action.tableId || !/^d_[A-Za-z0-9_]+$/.test(action.controlId || "")) {
+    return action;
+  }
+  if (inspectLegacyDetailControlTarget(form, action.controlId).status !== "not_detail") {
     return action;
   }
   const canonicalId = `f${action.controlId}`;
@@ -265,6 +278,21 @@ function buttonCandidate(button) {
 
 function scriptTargetWarning(action, form) {
   if (!form || action.scope !== "control") return undefined;
+  if (!action.tableId) {
+    const legacyDetailTarget = inspectLegacyDetailControlTarget(
+      form,
+      action.controlId
+    );
+    if (legacyDetailTarget.status === "ambiguous") {
+      return {
+        level: "warning",
+        code: "script.control_target_ambiguous",
+        message: "JSP control id matches both a detail column and another form control, so the action was not drafted.",
+        sourceRefs: action.sourceRefs || [],
+        controlId: action.controlId
+      };
+    }
+  }
   const target = resolveScriptControlTarget(form, action);
   if (target.ok || sourceOriginalScriptTargetExists(form, action)) return undefined;
   return {
@@ -990,6 +1018,19 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   );
   if (inlineRadioRowEffects.length) {
     return inlineRadioRowEffects.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const detailMainRowLifecycle = detailMainRowLifecycleCandidates(
+    source,
+    options.form,
+    options.sourceScripts
+  );
+  if (detailMainRowLifecycle.length) {
+    return detailMainRowLifecycle.map((candidate, index) => ({
       ...candidate,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
       source
