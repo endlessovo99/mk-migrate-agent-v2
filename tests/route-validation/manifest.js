@@ -51,6 +51,16 @@ const PARTICIPANT_OVERRIDE_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "get-readback"
 ]);
 
+const GENERIC_ROLE_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
+  SUCCESS_OPERATIONS[0],
+  "get-element-info",
+  "search-org",
+  ...SUCCESS_OPERATIONS.slice(1, -1),
+  "save-workflow-draft",
+  "get-workflow-detail",
+  "get-readback"
+]);
+
 const DRAFT_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
   ...SUCCESS_OPERATIONS.slice(1, -1),
@@ -333,6 +343,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "needs_manual",
         executionStatus: "written_with_warnings",
         operations: PARTICIPANT_OVERRIDE_WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "generic-role-participant-success",
+      source: {
+        kind: "paired",
+        relativePath: "generic-role-participant"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: GENERIC_ROLE_WORKFLOW_SUCCESS_OPERATIONS
       }
     },
     {

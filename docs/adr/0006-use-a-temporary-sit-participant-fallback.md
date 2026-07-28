@@ -20,6 +20,7 @@ The current NewOA SIT organization directory intentionally does not contain ever
 | 16 group | AI迁移默认群组 | `1jt85gq4uw23well7w25q9bmdj729u82tmw0` | `NEWOA_FALLBACK_GROUP_FD_ID` |
 | 1 org / 2 department | AI迁移默认部门 | `1jt85rk85w23welrpw2s3uh4pvsr8ru35dw0` | `NEWOA_FALLBACK_ORGANIZATION_FD_ID` |
 
+- Bracketed generic roles such as `<直线领导>` are excluded from the temporary fallback. When their source role ID is not current, they resolve only from one exact current `fdName` + role `fdOrgType` match without requiring a parent organization. Missing, duplicate, or failed generic-role searches remain blocking because substituting a person would erase the role's dynamic semantics.
 - Each override is optional and independent; missing or blank values keep the default. Each used fallback fdId is validated through current `getElementInfo` evidence and must resolve uniquely as its fixed expected organization type.
 - Ambiguous matches, malformed source identities, target-shaped identity failures, and organization API failures remain blocking.
 - Resolution clones the trusted DSL and produces an execution-local DSL. Persistence expectations and payloads are derived from that same resolved clone; the trusted input artifact is not rewritten.

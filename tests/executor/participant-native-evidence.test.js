@@ -24,6 +24,26 @@ describe("native participant evidence", () => {
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
     assert.equal(readback.partitions.workflow, "verified");
   });
+
+  it("accepts the native generic-role member shape captured after selecting 直线领导", () => {
+    const prepared = prepareSample(nativeGenericRoleParticipantDsl());
+    const template = JSON.parse(readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8"));
+    const workflow = JSON.parse(readFileSync(
+      join(fixtureDir, "generic-role-participant-native-workflow.json"),
+      "utf8"
+    ));
+    const config = xformConfig(template);
+    const attr = JSON.parse(config.attribute.formAttr);
+    attr.subjectRule = {};
+    config.attribute.formAttr = JSON.stringify(attr);
+    template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(workflow);
+
+    const readback = prepared.verify(template);
+
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.equal(readback.partitions.workflow, "verified");
+  });
 });
 
 function nativeFormulaParticipantDsl() {
@@ -71,6 +91,50 @@ function nativeFormulaParticipantDsl() {
         attributes: {},
         condition: { translationStatus: "executable" }
       })),
+      topologicalOrder: nodes.map((node) => node.id)
+    }
+  });
+}
+
+function nativeGenericRoleParticipantDsl() {
+  const nodes = [
+    workflowNode("N1", "generalStart", "startEvent", "Start"),
+    {
+      ...workflowNode("N2", "review", "manualTask", "申请部门负责人"),
+      participants: {
+        mode: "explicit",
+        members: [{
+          id: "current-direct-manager-role",
+          name: "<直线领导>",
+          type: "user_or_org",
+          targetOrgType: 32
+        }]
+      }
+    },
+    workflowNode("N3", "generalEnd", "endEvent", "End")
+  ];
+  return sampleTrustedDsl({
+    workflow: {
+      process: { id: "native-generic-role-participant" },
+      nodes,
+      edges: [
+        {
+          id: "L1",
+          source: "N1",
+          target: "N2",
+          sourceRef: "source.workflow.edge.L1",
+          attributes: {},
+          condition: { translationStatus: "executable" }
+        },
+        {
+          id: "L2",
+          source: "N2",
+          target: "N3",
+          sourceRef: "source.workflow.edge.L2",
+          attributes: {},
+          condition: { translationStatus: "executable" }
+        }
+      ],
       topologicalOrder: nodes.map((node) => node.id)
     }
   });

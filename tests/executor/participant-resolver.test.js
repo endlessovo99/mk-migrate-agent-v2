@@ -874,6 +874,98 @@ describe("resolveWorkflowParticipants", () => {
     assert.equal(result.dsl.workflow.nodes[1].participants.members[0].targetOrgType, 32);
   });
 
+  it("resolves a bracketed generic role by its unique exact name without requiring a parent", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "<直线领导>",
+      sourceId: "legacy-direct-manager-role",
+      sourceOrgType: 32,
+      sourceParentName: undefined
+    })]);
+    const client = new SearchClient({
+      "<直线领导>": [currentOrg({
+        fdId: "current-direct-manager-role",
+        fdName: "<直线领导>",
+        fdOrgType: 32
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: "https://production.example.com"
+    });
+
+    assert.equal(result.resolvedCount, 1);
+    assert.equal(
+      result.dsl.workflow.nodes[1].participants.members[0].id,
+      "current-direct-manager-role"
+    );
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].targetOrgType, 32);
+    assert.deepEqual(client.searchRequests, [{
+      key: "<直线领导>",
+      sourceOrgType: 32
+    }]);
+  });
+
+  it("keeps duplicate bracketed generic-role names blocking", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "<直线领导>",
+      sourceId: "legacy-direct-manager-role",
+      sourceOrgType: 32,
+      sourceParentName: undefined
+    })]);
+    const client = new SearchClient({
+      "<直线领导>": [
+        currentOrg({
+          fdId: "current-direct-manager-role-a",
+          fdName: "<直线领导>",
+          fdOrgType: 32
+        }),
+        currentOrg({
+          fdId: "current-direct-manager-role-b",
+          fdName: "<直线领导>",
+          fdOrgType: 32
+        })
+      ]
+    });
+
+    await assert.rejects(
+      resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: "https://production.example.com"
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) =>
+          issue.reason === "ambiguous" &&
+          issue.name === "<直线领导>"
+        )
+    );
+  });
+
+  it("does not replace a missing bracketed generic role with the temporary person fallback", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "<直线领导>",
+      sourceId: "legacy-direct-manager-role",
+      sourceOrgType: 32,
+      sourceParentName: undefined
+    })]);
+    const client = new SearchClient({
+      "<直线领导>": []
+    }, sitFallbackElementResults());
+
+    await assert.rejects(
+      resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: NEWOA_SIT_BASE_URL
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) =>
+          issue.reason === "not_found" &&
+          issue.name === "<直线领导>"
+        )
+    );
+    assert.deepEqual(client.elementCalls, [["legacy-direct-manager-role"]]);
+  });
+
   it("resolves legacy qualified post names by leaf name and parent-path suffix", async () => {
     const dsl = dslWithExplicitMembers([
       sourceMember({

@@ -1,0 +1,56 @@
+{
+  "notifyDrafterOnEnd": "false",
+  "notifyParticipantOnEnd": "false",
+  "elements": [
+    {
+      "id": "N1",
+      "name": "Start",
+      "type": "generalStart",
+      "element": "startEvent"
+    },
+    {
+      "id": "N2",
+      "name": "申请部门负责人",
+      "type": "review",
+      "element": "manualTask",
+      "handlerIds": "stale-fallback-person",
+      "handlerNames": "mkpaas",
+      "handlerSelectType": "org",
+      "ignoreOnSameIdentity": "2",
+      "handlers": {
+        "id": "handlers",
+        "type": "org",
+        "source": "1",
+        "ruleKey": "",
+        "ruleName": "",
+        "members": [
+          {
+            "id": "current-direct-manager-role",
+            "name": "<直线领导>",
+            "element": "user",
+            "type": "4"
+          }
+        ],
+        "element": "users"
+      }
+    },
+    {
+      "id": "N3",
+      "name": "End",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    {
+      "id": "L1",
+      "type": "sequenceFlow",
+      "sourceRef": "N1",
+      "targetRef": "N2"
+    },
+    {
+      "id": "L2",
+      "type": "sequenceFlow",
+      "sourceRef": "N2",
+      "targetRef": "N3"
+    }
+  ]
+}

@@ -452,6 +452,7 @@ function deduplicateResolvedParticipantCollections(dsl) {
 
 function isSitFallbackEligible(resolution) {
   if (resolution.kind !== "source" || !SIT_FALLBACK_REASONS.has(resolution.issue?.reason)) return false;
+  if (isBracketedGenericRole(resolution.member)) return false;
   if (resolution.issue.reason === "not_found" || resolution.issue.reason === "search_failed") return true;
   return Array.isArray(resolution.issue.missing) &&
     resolution.issue.missing.length > 0 &&
@@ -604,7 +605,11 @@ async function resolveIdentity(identity, client, caches) {
     caches.elementCache
   );
   if (stableRoleResolution) return stableRoleResolution;
-  if (hasStableSourceRoleId(identity.member) && !normalizeText(identity.member.sourceParentName)) {
+  if (
+    hasStableSourceRoleId(identity.member) &&
+    !normalizeText(identity.member.sourceParentName) &&
+    !isBracketedGenericRole(identity.member)
+  ) {
     return resolutionFromMatches(identity, []);
   }
 
@@ -792,6 +797,11 @@ function hasStableSourceRoleId(member = {}) {
     Boolean(normalizeText(member.sourceId));
 }
 
+function isBracketedGenericRole(member = {}) {
+  return normalizeOrgType(member.sourceOrgType) === "32" &&
+    /^<\s*[^<>]+\s*>$/.test(normalizeText(member.name));
+}
+
 function matchCurrentCandidates(member, candidates) {
   const sourceOrgType = normalizeOrgType(member.sourceOrgType);
   const sameType = candidates.filter((candidate) => normalizeOrgType(candidate.fdOrgType) === sourceOrgType);
@@ -804,6 +814,9 @@ function matchCurrentCandidates(member, candidates) {
   const sourceName = normalizeText(member.name);
   const sourceLeafName = participantSearchName(member, sourceOrgType);
   const sourceParentName = normalizeText(member.sourceParentName);
+  if (isBracketedGenericRole(member) && !sourceParentName) {
+    return sameType.filter((candidate) => normalizeText(candidate.fdName) === sourceName);
+  }
   if (!sourceName || !sourceParentName) return [];
   return sameType.filter((candidate) => (
     [sourceName, sourceLeafName].includes(normalizeText(candidate.fdName)) &&
@@ -906,7 +919,8 @@ function requiredClientCapabilityIssues(identities, client, explicitOverrides = 
   ));
   const searchedSources = unresolvedSources.filter((identity) => (
     !hasStableSourceRoleId(identity.member) ||
-    Boolean(normalizeText(identity.member?.sourceParentName))
+    Boolean(normalizeText(identity.member?.sourceParentName)) ||
+    isBracketedGenericRole(identity.member)
   ));
   const overriddenSources = values.filter((identity) => (
     identity.kind === "source" &&

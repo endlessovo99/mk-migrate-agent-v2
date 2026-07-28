@@ -13,6 +13,12 @@ const ROUTE_CONDITION_ORG = Object.freeze({
   fdOrgType: 2,
   fdNo: "ROUTE_ORG_001"
 });
+const ROUTE_GENERIC_ROLE = Object.freeze({
+  fdId: "route-direct-manager-role",
+  fdName: "<直线领导>",
+  fdOrgType: 32
+});
+const LEGACY_GENERIC_ROLE_ID = "legacy-direct-manager-role";
 const SIT_CONDITION_ORG_FALLBACK_ID = SIT_CONDITION_ORG_FALLBACKS[0].fdId;
 const SIT_FALLBACK_BY_ID = new Map([
   ...Object.values(SIT_PARTICIPANT_FALLBACKS).map((fallback) => [fallback.fdId, fallback]),
@@ -75,26 +81,30 @@ export class FakeNewoaAdapter {
     if (key === ROUTE_CONDITION_ORG.fdNo) {
       return [clone(ROUTE_CONDITION_ORG)];
     }
+    if (key === ROUTE_GENERIC_ROLE.fdName) {
+      return [clone(ROUTE_GENERIC_ROLE)];
+    }
     return [];
   }
 
   async getElementInfo(targets) {
     this.record({ operation: "get-element-info", targets: clone(targets) });
-    return targets.map((fdId) => {
+    return targets.flatMap((fdId) => {
+      if (fdId === LEGACY_GENERIC_ROLE_ID) return [];
       const fallback = this.fallbackById.get(fdId);
       if (fallback) {
-        return {
+        return [{
           fdId: fallback.fdId,
           fdName: fallback.fdName,
           fdOrgType: fallback.fdOrgType,
           ...(fallback.fdNo ? { fdNo: fallback.fdNo } : {})
-        };
+        }];
       }
-      return {
+      return [{
         fdId,
         fdName: fdId,
         fdOrgType: 8
-      };
+      }];
     });
   }
 
