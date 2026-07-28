@@ -34,6 +34,13 @@ import {
   detailMatchValue as detailControlMatchValue,
   isCompleteDetailControlDisplay
 } from "./detail-row-control-state.js";
+import {
+  sameRowRadioSelectionCandidates
+} from "./same-row-radio-selection.js";
+import {
+  composeValueChangeCallbackCandidates,
+  directValueChangeCallbackCallRange
+} from "./value-change-callbacks.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -95,10 +102,21 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
 
   const candidates = dedupeCandidatesByKey([
     ...buttons.map(buttonCandidate),
-    ...sources.flatMap((source, sourceIndex) => eventCandidatesFromSource(source, sourceIndex, {
-      ...options,
-      sourceScripts
-    })),
+    ...sources.flatMap((source, sourceIndex) => {
+      const primaryCandidates = eventCandidatesFromSource(source, sourceIndex, {
+        ...options,
+        sourceScripts
+      });
+      const selectionCandidates = sameRowRadioSelectionCandidates(
+        source,
+        options.form
+      );
+      return composeValueChangeCallbackCandidates(
+        source,
+        primaryCandidates,
+        selectionCandidates
+      );
+    }),
     ...clampedDetailAggregateCandidates(options.form, sourceScripts)
   ]);
   const actions = [];
@@ -668,6 +686,7 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     analyzedBranchProvenance?.status === "unproven" &&
     translationStatus === "needs_review" &&
     !provisionalDeterministicProof &&
+    !(candidate.coverage?.residuals?.length) &&
     !sourceContainsLegacyRowEffect(candidate.branchSource || candidate.javascript) &&
     !sourceAssignsLegacyFieldValue(candidate.branchSource || candidate.javascript) &&
     !hasUnrecordedFunctionViolations(candidate)
@@ -1636,15 +1655,33 @@ function groupedDetailCalculationCandidates(source, form, sourceScripts = {}) {
 
   for (const binding of inlineValueChangeBindings(text)) {
     if (!dependencies.has(binding.controlId) || outputFieldIds.has(binding.controlId)) continue;
+    const callbackCall = directValueChangeCallbackCallRange(
+      source,
+      binding.index,
+      model.calculationFunctionName
+    );
+    if (!callbackCall) continue;
     const detail = binding.controlId === model.toolFieldId || binding.controlId === model.amountFieldId;
     candidates.push(groupedDetailCalculationCandidate({
       index: binding.index,
+      effectIndex: callbackCall.start,
+      sourceActionKey: inlineOnChangeSourceActionKey(
+        source.sourceRef || source.id,
+        binding.index
+      ),
       event: "onChange",
       scope: "control",
       controlId: binding.controlId,
       ...(detail ? { tableId: model.tableId } : {}),
       javascript: binding.javascript,
-      function: groupedDetailCalculationFunction("onChange", model)
+      function: groupedDetailCalculationFunction("onChange", model),
+      semanticHints: {
+        coveredCallbackStatementRanges: [{
+          sourceRef: source.sourceRef || source.id,
+          start: callbackCall.start,
+          end: callbackCall.end
+        }]
+      }
     }));
   }
 
@@ -1686,10 +1723,24 @@ function groupedDetailCalculationCandidates(source, form, sourceScripts = {}) {
     source.sourceRef,
     model.coveredFunctionNames
   );
-  return dedupeCandidatesByKey(candidates).map((candidate) => ({
-    ...candidate,
-    semanticHints: { ...(candidate.semanticHints || {}), coveredCalculationRanges }
-  }));
+  return dedupeCandidatesByKey(candidates).map((candidate) => {
+    const callbackRanges = candidate.semanticHints?.coveredCallbackStatementRanges || [];
+    return {
+      ...candidate,
+      semanticHints: {
+        ...(candidate.semanticHints || {}),
+        coveredCalculationRanges: [
+          ...coveredCalculationRanges,
+          ...callbackRanges.map((range) => ({
+            sourceRef: range.sourceRef,
+            name: `onChange:${candidate.controlId}:${model.calculationFunctionName}`,
+            start: range.start,
+            end: range.end
+          }))
+        ]
+      }
+    };
+  });
 }
 
 function groupedDetailCalculationModel(text, form, sourceScripts) {
@@ -1854,7 +1905,8 @@ function groupedDetailCalculationModel(text, form, sourceScripts) {
     taxLexicalScopeProven: scopedCalculationBody.ok,
     taxDivisor: Number(taxFormula[3]),
     taxMultiplier: Number(taxFormula[4]),
-    coveredFunctionNames: [helper.name, calculationFunction.name]
+    coveredFunctionNames: [helper.name, calculationFunction.name],
+    calculationFunctionName: calculationFunction.name
   };
 }
 

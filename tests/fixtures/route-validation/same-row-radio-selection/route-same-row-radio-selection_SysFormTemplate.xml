@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-same-row-radio-selection-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Same-row Radio Selection Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-same-row-radio-selection-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_route_trip_lines&quot;,label:&quot;Trip lines&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;
+       &lt;td&gt;Travel tool&lt;/td&gt;
+       &lt;td&gt;Travel class&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;
+       &lt;td&gt;
+        &lt;table fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_route_tool&quot;,label:&quot;Travel tool&quot;,tableName:&quot;fd_route_trip_lines&quot;,dataType:&quot;String&quot;,items:&quot;Air|route_air&amp;#13;&amp;#10;Rail|route_rail&amp;#13;&amp;#10;Road|route_road&amp;#13;&amp;#10;Ferry|route_ferry&quot;}&apos;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;input type=&quot;radio&quot; value=&quot;route_air&quot;/&gt;&lt;input type=&quot;radio&quot; value=&quot;route_rail&quot;/&gt;&lt;input type=&quot;radio&quot; value=&quot;route_road&quot;/&gt;&lt;input type=&quot;radio&quot; value=&quot;route_ferry&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+       &lt;/td&gt;
+       &lt;td&gt;
+        &lt;table fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_route_class&quot;,label:&quot;Travel class&quot;,tableName:&quot;fd_route_trip_lines&quot;,dataType:&quot;String&quot;,items:&quot;Basic|route_basic&amp;#13;&amp;#10;Comfort|route_comfort&amp;#13;&amp;#10;Second|route_second&amp;#13;&amp;#10;First|route_first&quot;}&apos;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;input type=&quot;radio&quot; value=&quot;route_basic&quot;/&gt;&lt;input type=&quot;radio&quot; value=&quot;route_comfort&quot;/&gt;&lt;input type=&quot;radio&quot; value=&quot;route_second&quot;/&gt;&lt;input type=&quot;radio&quot; value=&quot;route_first&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+       &lt;/td&gt;
+      &lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div id=&quot;jsp_route_same_row_radio&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;
+    &lt;script&gt;
+     function chooseRouteClass(value, domElement) {
+       var classField = GetXFormSameRowFieldById(domElement[0], &quot;fd_route_class&quot;);
+       if (value === &quot;route_air&quot;) {
+         classField[0].checked = true;
+       } else if (value === &quot;route_rail&quot;) {
+         classField[2].checked = true;
+       } else if (value === &quot;route_road&quot;) {
+         classField[0].checked = true;
+         classField[0].checked = false;
+       }
+     }
+
+     AttachXFormValueChangeEventById(&quot;fd_route_tool&quot;, function(value, domElement) {
+       chooseRouteClass(value, domElement);
+     });
+    &lt;/script&gt;
+   &apos;/&gt;&lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSubTableProperty name=&quot;fd_route_trip_lines&quot; label=&quot;Trip lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_tool&quot; label=&quot;Travel tool&quot; type=&quot;String&quot; enumValues=&quot;Air|route_air;Rail|route_rail;Road|route_road;Ferry|route_ferry&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_class&quot; label=&quot;Travel class&quot; type=&quot;String&quot; enumValues=&quot;Basic|route_basic;Comfort|route_comfort;Second|route_second;First|route_first&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>
