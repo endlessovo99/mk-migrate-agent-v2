@@ -24,6 +24,14 @@ const SUCCESS_OPERATIONS = Object.freeze([
   "get-readback"
 ]);
 
+const NATIVE_FORMULA_SUCCESS_OPERATIONS = Object.freeze([
+  SUCCESS_OPERATIONS[0],
+  "get-xform-desktop-digest",
+  "get-xform-desktop-module-sha256",
+  "get-xform-desktop-module-sha256",
+  ...SUCCESS_OPERATIONS.slice(1)
+]);
+
 const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
   "search-org",
@@ -208,6 +216,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "needs_manual",
         executionStatus: "written_with_warnings",
         operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "travel-reimbursement-lifecycle-success",
+      source: {
+        kind: "form-only",
+        relativePath: "travel-reimbursement-lifecycle/route-travel-reimbursement-lifecycle_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: NATIVE_FORMULA_SUCCESS_OPERATIONS
       }
     },
     {

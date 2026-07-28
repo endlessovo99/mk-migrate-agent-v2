@@ -75,6 +75,10 @@ export function buildConditionOperandResolver(source, options = {}) {
     }
     const firstItem = value.match(/^([A-Za-z_$][\w$]*)\s*\[\s*0\s*\]$/);
     if (firstItem) return appendTransform(resolveTrace(firstItem[1], context, seen), "index-first");
+    const lengthMember = value.match(/^([A-Za-z_$][\w$]*)\s*\.\s*length$/);
+    if (lengthMember) {
+      return appendTransform(resolveTrace(lengthMember[1], context, seen), "length");
+    }
     const normalizedNullable = value.match(
       /^([A-Za-z_$][\w$]*)\s*==\s*null\s*\?\s*(["'`])\2\s*:\s*String\(\s*\1\s*\)$/
     );
@@ -145,6 +149,24 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       transforms: directTrace.transforms,
       predicate: "boolean-coercion"
     };
+  }
+
+  const guardedMember = text.match(
+    /^([A-Za-z_$][\w$]*)\s*&&\s*(\1\s*\.\s*value[\s\S]+)$/
+  );
+  if (guardedMember) {
+    const guardTrace = operandTrace(resolveOperand, guardedMember[1], context);
+    const guardedCondition = parseProvenanceCondition(
+      guardedMember[2],
+      resolveOperand,
+      context
+    );
+    if (
+      guardTrace?.origin &&
+      guardedCondition?.operand === guardTrace.origin
+    ) {
+      return guardedCondition;
+    }
   }
 
   const regexTest = text.match(/^\/\[([^\]]+)\]\/[gimsuy]*\.test\(\s*([\s\S]+)\s*\)$/);

@@ -35,6 +35,9 @@ import {
   isCompleteDetailControlDisplay
 } from "./detail-row-control-state.js";
 import {
+  travelReimbursementLifecycleCandidates
+} from "./travel-reimbursement-lifecycle.js";
+import {
   sameRowRadioSelectionCandidates
 } from "./same-row-radio-selection.js";
 import {
@@ -633,6 +636,13 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     displayGate: candidate.source.displayGate,
     form: options.form
   }), options.formRules, options.form);
+  if (
+    candidate.translationStatus === "mapped" &&
+    candidate.coverage?.status === "translated" &&
+    coverage?.status === "covered"
+  ) {
+    coverage = { ...coverage, status: "translated" };
+  }
   const nativeCovered = coverage?.status === "covered" &&
     Array.isArray(coverage.nativeRules) && coverage.nativeRules.length > 0 &&
     Array.isArray(coverage.residuals) && coverage.residuals.length === 0;
@@ -910,6 +920,17 @@ function runWhenFromDisplayGate(displayGate) {
 
 function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   if (!hasExecutableJavascript(source.javascript)) return [];
+  const travelReimbursementLifecycle = travelReimbursementLifecycleCandidates(
+    source,
+    options
+  );
+  if (travelReimbursementLifecycle.length) {
+    return travelReimbursementLifecycle.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
   const sourceWithHelpers = source.helperJavascript
     ? { ...source, javascript: `${source.helperJavascript}\n\n${source.javascript}` }
     : source;
@@ -3343,13 +3364,13 @@ function legacyDetailRuntimeCandidate(source, form) {
       event: "onLoad",
       scope: "global",
       javascript: text,
-      function: `function onLoad() {\n  MKXFORM.addRow('${tableId}', {})\n}`,
-      translationStatus: "mapped",
-      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      function: "",
+      translationStatus: "omitted",
+      coverage: { status: "covered", nativeRules: [], residuals: [] },
       functionMappings: [{
         source: "DocList_AddRow",
-        target: "MKXFORM.addRow",
-        basis: "semantic-translation",
+        target: "xform-detail-table.defaultRowNumber=1",
+        basis: "legacy-runtime-noop",
         reviewRequired: false
       }]
     };
@@ -3388,9 +3409,12 @@ function legacyDetailTableId(text) {
 }
 
 function isLegacyDetailDefaultRowScript(text, tableId) {
+  const normalized = String(text || "")
+    .replace(/"/g, "'")
+    .replace(/\s+/g, "");
   return new RegExp(
-    `^Com_AddEventListener\\(\\s*window\\s*,\\s*(['"])load\\1\\s*,[\\s\\S]*?DocList_AddRow\\(\\s*document\\.getElementById\\(\\s*(['"])TABLE_DL_${escapeRegExp(tableId)}\\2\\s*\\)\\s*\\)[\\s\\S]*?\\)\\s*;?\\s*$`
-  ).test(text);
+    `^Com_AddEventListener\\(window,'load',function\\(\\)\\{setTimeout\\(function\\(\\)\\{for\\(vari=0;i<1;i\\+\\+\\)\\{DocList_AddRow\\(document\\.getElementById\\('TABLE_DL_${escapeRegExp(tableId)}'\\)\\)\\};?\\},\\d+\\);\\}\\);?$`
+  ).test(normalized);
 }
 
 function isLegacyDetailWidthScript(text, tableId) {

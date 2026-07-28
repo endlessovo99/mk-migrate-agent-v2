@@ -596,7 +596,7 @@ function extractFieldValueAssignmentResiduals(javascript, source) {
       target: match[3]
     });
   }
-  const assignments = /([A-Za-z_$][\w$]*)(?:\s*\[\s*0\s*\])?\s*\.\s*value\s*=\s*([^;\n]+)/g;
+  const assignments = /([A-Za-z_$][\w$]*)(?:\s*\[\s*0\s*\])?\s*\.\s*value\s*=(?!=)\s*([^;\n]+)/g;
   for (const match of text.matchAll(assignments)) {
     events.push({
       kind: "assignment",

@@ -176,4 +176,118 @@ describe("static reference and post-address route projection", () => {
     }
     assert.equal(execution.readback.partitions.form, "verified");
   });
+
+  it("does not render duplicate semantic columns in the migrated detail table", async () => {
+    const sourceDraft = cleanSourceFile(sourcePath);
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const dslDetail = dslDraft.form.fields
+      .find((field) => field.id === "fd_3242f3c67e44fc");
+    const dslColumnsById = new Map(
+      dslDetail.columns.map((column) => [column.id, column])
+    );
+
+    assert.deepEqual(
+      ["fd_name", "fd_out_post_input", "fd_in_post_input"].map((id) => ({
+        id,
+        dataOnly: dslColumnsById.get(id).dataOnly,
+        required: dslColumnsById.get(id).props.required,
+        role: dslColumnsById.get(id).sourceProps.legacyDetailComposite.role
+      })),
+      [
+        { id: "fd_name", dataOnly: true, required: undefined, role: "stored_display_shadow" },
+        { id: "fd_out_post_input", dataOnly: true, required: undefined, role: "stored_display_shadow" },
+        { id: "fd_in_post_input", dataOnly: true, required: undefined, role: "stored_display_shadow" }
+      ]
+    );
+    assert.deepEqual(
+      ["fd_xz_name", "fd_out_post", "fd_in_post"].map((id) => ({
+        id,
+        dataOnly: dslColumnsById.get(id).dataOnly === true,
+        role: dslColumnsById.get(id).sourceProps.legacyDetailComposite.role
+      })),
+      [
+        { id: "fd_xz_name", dataOnly: false, role: "interactive_address" },
+        { id: "fd_out_post", dataOnly: false, role: "interactive_address" },
+        { id: "fd_in_post", dataOnly: false, role: "interactive_address" }
+      ]
+    );
+    assert.equal(dslColumnsById.get("fd_xz_name").props.required, true);
+
+    delete dslDraft.workflow;
+    delete dslDraft.formRules;
+    dslDraft.scripts.actions = [];
+
+    const dsl = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-test-agent",
+      checkedAt: "2026-07-28T00:00:00.000Z"
+    });
+    const adapter = new FakeNewoaAdapter("persist");
+    const execution = await executeDsl(dsl, {
+      client: adapter,
+      confirmWrite: true,
+      targetCategoryId: "route-category-id",
+      credentials: {
+        username: "route-test-user",
+        encryptedPassword: "route-test-encrypted-password"
+      },
+      now: new Date("2026-07-28T00:00:00.000Z")
+    });
+
+    const detail = execution.readback.form.fields
+      .find((field) => field.id === "fd_3242f3c67e44fc");
+    const columnsById = new Map(detail.columns.map((column) => [column.id, column]));
+    const renderedTitles = detail.columns
+      .filter((column) => column.dataOnly !== true)
+      .map((column) => column.title.trim().replace(/\s+/g, " "));
+    const duplicateTitles = [...new Set(
+      renderedTitles.filter((title, index) => renderedTitles.indexOf(title) !== index)
+    )];
+
+    assert.deepEqual(duplicateTitles, []);
+    assert.deepEqual(
+      ["fd_name", "fd_out_post_input", "fd_in_post_input"]
+        .map((id) => columnsById.get(id).dataOnly),
+      [true, true, true]
+    );
+    assert.deepEqual(
+      ["fd_xz_name", "fd_out_post", "fd_in_post"]
+        .map((id) => detail.renderedColumnIds.includes(id)),
+      [true, true, true]
+    );
+    assert.deepEqual(
+      ["fd_name", "fd_out_post_input", "fd_in_post_input"]
+        .map((id) => detail.renderedColumnIds.includes(id)),
+      [false, false, false]
+    );
+  });
+
+  it("keeps same-header fields separate without zero-width selector evidence", () => {
+    const sourceDraft = structuredClone(cleanSourceFile(sourcePath));
+    const sourceDetail = sourceDraft.form.detailTables
+      .find((field) => field.id === "fd_3242f3c67e44fc");
+    for (const id of ["fd_xz_name", "fd_out_post", "fd_in_post"]) {
+      sourceDetail.columns
+        .find((column) => column.id === id)
+        .sourceProps.designerValues.width = "120";
+    }
+
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const dslDetail = dslDraft.form.fields
+      .find((field) => field.id === "fd_3242f3c67e44fc");
+
+    assert.deepEqual(
+      dslDetail.columns
+        .filter((column) => [
+          "fd_name",
+          "fd_xz_name",
+          "fd_out_post_input",
+          "fd_out_post",
+          "fd_in_post_input",
+          "fd_in_post"
+        ].includes(column.id))
+        .map((column) => column.dataOnly === true),
+      [false, false, false, false, false, false]
+    );
+  });
 });

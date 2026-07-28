@@ -16,7 +16,10 @@ export function isSupportedConditionalParallelCondition(value, knownFieldIds = [
     const text = stripFullyWrappingParentheses(part.trim());
     const method = text.match(/^\$([^$]+)\$\s*\.\s*equals\s*\(\s*(["'])([^"']*)\2\s*\)$/i);
     const comparison = text.match(/^\$([^$]+)\$\s*={2,3}\s*(?:(["'])([^"']*)\2|(-?\d+(?:\.\d+)?))$/);
-    const fieldId = method?.[1] || comparison?.[1];
+    const contains = text.match(
+      /^\$(?:字符串|列表)\.包含\$\(\s*\$([^$]+)\$(?:\s*\.\s*getFdName\s*\(\s*\))?\s*,\s*(["'])([^"']*)\2\s*\)$/
+    );
+    const fieldId = method?.[1] || comparison?.[1] || contains?.[1];
     return Boolean(fieldId && known.has(fieldId));
   });
 }

@@ -22,18 +22,31 @@ describe("legacy detail-table runtime scripts", () => {
       omittedAction(),
       omittedAction(),
       {
-        translationStatus: "mapped",
-        function: "function onLoad() {\n  MKXFORM.addRow('fd_fjmx', {})\n}",
-        coverage: { status: "translated", nativeRules: [], residuals: [] }
+        translationStatus: "omitted",
+        function: "",
+        coverage: { status: "covered", nativeRules: [], residuals: [] }
       },
       omittedAction()
     ]);
     assert.deepEqual(scripts.actions[2].functionMappings, [{
       source: "DocList_AddRow",
-      target: "MKXFORM.addRow",
-      basis: "semantic-translation",
+      target: "xform-detail-table.defaultRowNumber=1",
+      basis: "legacy-runtime-noop",
       reviewRequired: false
     }]);
+  });
+
+  it("does not omit a default-row-shaped script with extra behavior", () => {
+    const scripts = draftMkScriptsFromSourceScripts({
+      source: "sysform-jsp",
+      sources: [source(
+        "default-row-extra",
+        "Com_AddEventListener(window, 'load', function(){ setTimeout(function() {for (var i = 0; i < 1; i ++) {DocList_AddRow(document.getElementById('TABLE_DL_fd_fjmx')); UnknownLegacyFunction()};}, 500);});",
+        "xform:editShow"
+      )]
+    }, { form: formWithDetailTable() });
+
+    assert.equal(scripts.actions[0].translationStatus, "needs_review");
   });
 
   it("does not omit arbitrary DOM scripts", () => {

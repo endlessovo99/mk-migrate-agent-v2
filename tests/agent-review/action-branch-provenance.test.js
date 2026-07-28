@@ -349,6 +349,59 @@ describe("action-level branch operand provenance", () => {
     }]);
   });
 
+  it("does not treat an event truthiness guard as equivalent to an unguarded numeric branch", () => {
+    const expected = buildScriptBranchProvenance({
+      event: "onChange",
+      source: "function onChange(value) { if (value && Number(value) > -1) legacySet(value) }"
+    });
+    const action = {
+      event: "onChange",
+      function: "function onChange(value) { if (Number(value) > -1) MKXFORM.setValue('fd_amount', value) }",
+      translationStatus: "mapped",
+      branchProvenance: expected
+    };
+    const inspection = inspectMappedScriptBranchProvenance(action);
+
+    assert.equal(expected.status, "unproven", JSON.stringify(expected));
+    assert.equal(inspection.ok, false, JSON.stringify(inspection));
+    assert.equal(inspection.reason, "source_branch_provenance_unproven");
+  });
+
+  it("proves an event value length comparison", () => {
+    const result = analyzeScriptBranchConditions([
+      "AttachXFormValueChangeEventById('fd_subject', function(value) {",
+      "  if (value.length > 1) legacySet(value)",
+      "})"
+    ].join("\n"), { event: "onChange" });
+
+    assert.equal(result.status, "proven", JSON.stringify(result));
+    assert.deepEqual(result.conditions, [{
+      kind: "gt",
+      value: "1",
+      origin: "event:value",
+      transforms: ["length"],
+      predicate: "numeric->"
+    }]);
+  });
+
+  it("proves an onLoad field equality guarded by the field object's existence", () => {
+    const result = analyzeScriptBranchConditions([
+      "Com_AddEventListener(window, 'load', function() {",
+      "  var field = GetXFormFieldById('fd_subject')[0]",
+      "  if (field && field.value == '1') legacySet('matched')",
+      "})"
+    ].join("\n"), { event: "onLoad" });
+
+    assert.equal(result.status, "proven", JSON.stringify(result));
+    assert.deepEqual(result.conditions, [{
+      kind: "eq",
+      value: "1",
+      origin: "field:fd_subject",
+      transforms: [],
+      predicate: "loose-equality"
+    }]);
+  });
+
   it("rejects shadowed field readers and built-in derivation helpers", () => {
     const scripts = [
       "function onLoad(MKXFORM) { if (MKXFORM.getValue('fd_subject') === 'A') {} }",

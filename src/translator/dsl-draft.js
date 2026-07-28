@@ -36,6 +36,7 @@ import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
 import { projectDynamicHyperlinkForm } from "./dynamic-hyperlink.js";
 import { multiRadioRowHelperFormRules } from "./multi-radio-row-helper.js";
 import { applyDetailCascadeRowOptions } from "./detail-cascade-actions.js";
+import { foldLegacyDetailAddressComposites } from "./detail-address-composite.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -51,7 +52,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   const rawForm = projectDynamicHyperlinkForm(
     applySourceNumericDetailInferences(
       applyNativeCalculationInferences(
-        draftForm(sourceDraft.form || {}),
+        foldLegacyDetailAddressComposites(draftForm(sourceDraft.form || {})),
         sourceDraft.scripts
       ),
       sourceDraft.scripts

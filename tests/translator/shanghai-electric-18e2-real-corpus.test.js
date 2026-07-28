@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkDraft } from "../../src/dsl/checks.js";
+import {
+  inspectDeterministicScriptBranchProof
+} from "../../src/dsl/deterministic-script-translations.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 
 const sourcePath = "tests/fixtures/source/18e2b225a8abe4503405e6e4bb88aba0";
@@ -244,6 +247,30 @@ describe("Shanghai Electric 18e2 route regression", () => {
     assert.match(uppercaseActions[0].function, /MKXFORM\.setValue\("fd_upper_change", chineseAmount\)/);
     assert.match(uppercaseActions.at(-1).function, /context && context\.isDraft/);
 
+    const actionById = (id) => dsl.scripts.actions.find((action) => action.id === id);
+    const departmentChange = actionById("fd_3cc17629476baa.script.2.event.2");
+    assert.equal(
+      inspectDeterministicScriptBranchProof(departmentChange, {
+        calculationDecisions: dsl.scripts.calculationDecisions
+      }).ok,
+      true
+    );
+    assert.match(departmentChange.function, /departmentParts\.length > 1/);
+    for (const id of [
+      "fd_3dd49884660ec6.script.1.event.1",
+      "fd_3dd49884660ec6.script.2.event.1"
+    ]) {
+      const action = actionById(id);
+      assert.equal(action.branchProvenance.status, "proven", id);
+      assert.equal(
+        action.coverage.residuals.some((item) =>
+          item.code === "script.residual.field_value_assignment"
+        ),
+        false,
+        id
+      );
+    }
+
     const financeActions = actionsByBasis(actions, "deterministic-finance-detail-generation");
     assert.equal(financeActions.length, 1);
     const financeAction = financeActions[0];
@@ -297,8 +324,12 @@ describe("Shanghai Electric 18e2 route regression", () => {
     }
 
     assert.equal(decisions.filter((decision) => decision.classification === "native").length, 11);
-    assert.equal(decisions.filter((decision) => decision.classification === "script").length, 28);
-    assert.equal(decisions.filter((decision) => decision.classification === "manual").length, 4);
+    assert.equal(decisions.filter((decision) => decision.classification === "script").length, 29);
+    assert.equal(decisions.filter((decision) => decision.classification === "manual").length, 3);
+    assert.ok(decisions.some((decision) =>
+      decision.id === "calculation.script.fd_3cc17629476baa.script.2.event.4" &&
+      decision.classification === "script"
+    ));
     assert.ok(decisions.some((decision) =>
       decision.id === "calculation.manual.source.form.jsp.fd_3bba8d3507d72e.script.1.calculation.dependent_call_unmapped" &&
       decision.classification === "manual" &&
@@ -324,9 +355,9 @@ describe("Shanghai Electric 18e2 route regression", () => {
     assert.equal(manualCodes.has("calculation.aggregate_nonnegative_clamp"), false);
     assert.equal(manualCodes.has("calculation.detail_row_delete_immediate_recalc_unverified"), false);
     assert.ok(decisions.some((decision) =>
-      decision.classification === "manual" &&
+      decision.classification === "script" &&
       decision.sourceRefs.includes("source.form.jsp.fd_3cc17629476baa.script.2") &&
-      decision.targetRefs.includes("fd_payee_diff")
+      decision.targetRefs.includes("fd_flag_save_no")
     ));
     assert.ok(decisions.some((decision) =>
       decision.classification === "script" &&

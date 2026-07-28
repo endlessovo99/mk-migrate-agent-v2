@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-travel-reimbursement-lifecycle-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Travel Reimbursement Lifecycle Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-travel-reimbursement-lifecycle-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td&gt;&lt;select fd_type=&quot;inputSelect&quot; fd_values=&apos;{id:&quot;fd_bseg_firstkostl&quot;,label:&quot;Primary cost center&quot;,items:&quot;Route Department A|A&amp;#10;Route Department B|B&quot;}&apos;&gt;&lt;/select&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;select fd_type=&quot;inputSelect&quot; fd_values=&apos;{id:&quot;fd_bseg_kostl&quot;,label:&quot;Secondary cost center&quot;,items:&quot;Route Cost Center A|ROUTE_CC_A&amp;#10;Route Cost Center B|ROUTE_CC_B&quot;}&apos;&gt;&lt;/select&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_3cc1757848e700&quot;,label:&quot;Travel scope&quot;,items:&quot;Domestic|1&amp;#10;Local|0&quot;,defaultValue:&quot;1&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_the_city_flag&quot;,label:&quot;Travel scope flag&quot;,dataType:&quot;String&quot;,defaultValue:&quot;1&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_396238f4339462&quot;,label:&quot;Reimbursement department&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_is_project&quot;,label:&quot;Project reimbursement&quot;,items:&quot;Yes|1&amp;#10;No|0&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_flag_save_no&quot;,label:&quot;Save marker&quot;,dataType:&quot;String&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_total_cost&quot;,label:&quot;Total cost&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_payee_total&quot;,label:&quot;Payee total&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,expression_id:&quot;$XForm_CalculatioFuns_Sum$($fd_payee_list.fd_payee_amount$)&quot;,expression_name:&quot;$List.Sum$($Payees.Amount$)&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_payee_diff&quot;,label:&quot;Payee difference&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,formula:&quot;$fd_payee_total$ - $fd_total_cost$&quot;,defaultValue:&quot;$fd_payee_total$ - $fd_total_cost$&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_voucher_no&quot;,label:&quot;Voucher number&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_voucher_msg&quot;,label:&quot;Voucher message&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_link_address&quot;,label:&quot;Voucher link&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;
+     &lt;input type=&quot;hidden&quot; id=&quot;fd_guonei_row&quot; name=&quot;fd_guonei_row&quot;/&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_trafficCity_detail&quot;,label:&quot;Route traffic lines&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;&lt;td&gt;Amount&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_traffic_amount&quot;,label:&quot;Amount&quot;,tableName:&quot;fd_trafficCity_detail&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_train_detail&quot;,label:&quot;Route train lines&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;&lt;td&gt;Amount&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_train_amount&quot;,label:&quot;Amount&quot;,tableName:&quot;fd_train_detail&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_flight_detail&quot;,label:&quot;Route flight lines&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;&lt;td&gt;Amount&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_flight_amount&quot;,label:&quot;Amount&quot;,tableName:&quot;fd_flight_detail&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_project_num_list&quot;,label:&quot;Route project lines&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;&lt;td&gt;Project code&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_bseg_projk&quot;,label:&quot;Project code&quot;,tableName:&quot;fd_project_num_list&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_payee_list&quot;,label:&quot;Route payee lines&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;&lt;td&gt;Payee amount&lt;/td&gt;&lt;td&gt;Card number&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;
+       &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_payee_amount&quot;,label:&quot;Payee amount&quot;,tableName:&quot;fd_payee_list&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_card_number&quot;,label:&quot;Card number&quot;,tableName:&quot;fd_payee_list&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;
+     &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_finance_detail&quot;,label:&quot;Route finance lines&quot;}&apos;&gt;&lt;tbody&gt;
+      &lt;tr&gt;&lt;td&gt;Value&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_route_finance_value&quot;,label:&quot;Value&quot;,tableName:&quot;fd_finance_detail&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+
+   &lt;div id=&quot;fd_3e48c1f17e7e42&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    var commonWBSStr = &quot;ROUTE-WBS-001|ROUTE-WBS-002&quot;;
+    var commonKYWBSStr = &quot;ROUTE-RESEARCH-WBS-001&quot;;
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+
+   &lt;div id=&quot;fd_3ba9eae4151422&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function changeBsegValue() {
+      var firstCostCenterVal = getFormFieldValue(&quot;fd_bseg_firstkostl&quot;);
+      var secondCostCenter = $(&quot;select[name=extendDataFormInfo.value(fd_bseg_kostl)]&quot;);
+      secondCostCenter.empty();
+      secondCostCenter.append(&quot;&lt;option value=&amp;apos;&amp;apos;&gt;Select&lt;/option&gt;&quot;);
+      if (firstCostCenterVal == &quot;A&quot;) {
+        secondCostCenter.append(&quot;&lt;option value=&amp;apos;ROUTE_CC_A&amp;apos;&gt;Route Cost Center A&lt;/option&gt;&quot;);
+      } else if (firstCostCenterVal == &quot;B&quot;) {
+        secondCostCenter.append(&quot;&lt;option value=&amp;apos;ROUTE_CC_B&amp;apos;&gt;Route Cost Center B&lt;/option&gt;&quot;);
+      }
+    }
+
+    AttachXFormValueChangeEventById(&quot;fd_bseg_firstkostl&quot;, changeBsegValue);
+
+    AttachXFormValueChangeEventById(&quot;fd_bseg_kostl&quot;, function(value, domElement) {
+      if (theFinanceObj) {
+        theFinanceObj.fd_bseg_kostl = value;
+      }
+    });
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+
+   &lt;div id=&quot;fd_3bc187ead08638&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function trafficCityChange() {
+      var fdOvernightDays = $(&quot;[name=extendDataFormInfo.value(fd_overnight_days)]&quot;);
+      var fdAllowanceDays = $(&quot;[name=extendDataFormInfo.value(fd_allowance_days)]&quot;);
+      var allowanceCHG = $(&quot;[name=extendDataFormInfo.value(fd_allowance_chg)]&quot;);
+      var everydayAllowance = $(&quot;[name=extendDataFormInfo.value(fd_everyday_allowance)]&quot;);
+      if (theCityFlag == 0) {
+        fdOvernightDays.val(0);
+        fdAllowanceDays.val(0);
+        allowanceCHG.val(0.00);
+        everydayAllowance.val(20);
+        allowanceCalBG();
+      } else {
+        everydayAllowance.val(100);
+        trafficOvernightDays();
+        allowanceCalBG();
+      }
+      receiptTotal();
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+
+   &lt;div id=&quot;fd_3cc25d96ee0df2&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    var payeeListTableId = &quot;fd_payee_list&quot;;
+    var totalPayId = &quot;fd_total_cost&quot;;
+
+    function payeeListCal(tableId, controlId) {
+      var tab_id = &quot;TABLE_DL_&quot; + tableId;
+      var tbInfo = DocList_TableInfo[tab_id];
+      var sum = 0;
+      if (typeof (tbInfo) != &quot;undefined&quot;) {
+        for (var i = 0; i &lt; tbInfo.lastIndex - 1; i++) {
+          var clild_id = tableId + &quot;.&quot; + i + &quot;.&quot; + controlId;
+          var current_inspire = $(&quot;[name=extendDataFormInfo.value(&quot; + clild_id + &quot;)]&quot;).val();
+          sum = theFixedNumTwo(sum + Number(current_inspire));
+        }
+      }
+      return sum;
+    }
+
+    function payeeListSum() {
+      var payeeListRowAmount = &quot;fd_payee_amount&quot;;
+      var sum = payeeListCal(payeeListTableId, &quot;fd_payee_amount&quot;);
+      var payeeTotalVal = $(&quot;[name=extendDataFormInfo.value(fd_payee_total)]&quot;);
+      payeeTotalVal.val(sum);
+      var fd_total_pay = getFormFieldValue(totalPayId);
+      var payeeDiffVal = $(&quot;[name=extendDataFormInfo.value(fd_payee_diff)]&quot;);
+      var diffAmount = sum - Number(fd_total_pay);
+      payeeDiffVal.val(diffAmount);
+      payeeDiffTip(diffAmount);
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+
+   &lt;div id=&quot;fd_3cc17629476baa&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;script&gt;
+    var theCityFlag = 1;
+    var theFlagNo = 0;
+    var theConstFiaSaveFlag = 2222;
+   &lt;/script&gt;&lt;xform:editShow&gt;&lt;script&gt;
+    AttachXFormValueChangeEventById(&quot;fd_3cc1757848e700&quot;, function(value, domElement) {
+      var isCityFlag = GetXFormFieldById(&quot;fd_the_city_flag&quot;)[0];
+      if (value == &quot;1&quot;) {
+        theCityFlag = 1;
+        isCityFlag.value = &quot;1&quot;;
+        common_dom_row_set_show_required_reset(&quot;fd_guonei_row&quot;, true, true, false);
+      } else {
+        theCityFlag = 0;
+        isCityFlag.value = &quot;0&quot;;
+        clearTrainData();
+        common_dom_row_set_show_required_reset(&quot;fd_guonei_row&quot;, false, false, false);
+      }
+      trafficCityChange();
+    });
+
+    AttachXFormValueChangeEventById(&quot;fd_396238f4339462&quot;, function(value, domElement) {
+      if (value.length &gt; 1) {
+        setDepartMentSelect(value[1]);
+      }
+    });
+
+    function clearTrainData() {
+      var trafficCityDetailTableId = &quot;fd_trafficCity_detail&quot;;
+      _DocList_AddRows(trafficCityDetailTableId, [{}]);
+      trafficCityDetailTableId = &quot;fd_train_detail&quot;;
+      _DocList_AddRows(trafficCityDetailTableId, [{}]);
+      trafficCityDetailTableId = &quot;fd_flight_detail&quot;;
+      _DocList_AddRows(trafficCityDetailTableId, [{}]);
+    }
+
+    function setDepartMentSelect(tempDepart) {
+      var fd_departmentID = &quot;fd_bseg_firstkostl&quot;;
+      var fd_department_arr = $(&quot;#route-first-cost-center option&quot;);
+      for (var index = 0; index &lt; fd_department_arr.length; index++) {
+        var element = fd_department_arr[index];
+        var findIndex = tempDepart.indexOf(element.text);
+        if (findIndex &gt;= 0) {
+          var fd_depOldVal = getFormFieldValue(&quot;fd_bseg_firstkostl&quot;);
+          if (fd_depOldVal != element.value) {
+            SetXFormFieldValueById(fd_departmentID, element.value);
+            changeBsegValue();
+          }
+          break;
+        }
+      }
+    }
+
+    Com_AddEventListener(window, &quot;load&quot;, function() {
+      theFlagNo = Number(GetXFormFieldById(&quot;fd_flag_save_no&quot;)[0].value);
+      if (typeof theFinanceFlag != &quot;undefined&quot;) {
+      } else {
+        if (theConstFiaSaveFlag == theFlagNo) {
+          SetXFormFieldValueById(&quot;fd_voucher_no&quot;, &quot;&quot;);
+          SetXFormFieldValueById(&quot;fd_voucher_msg&quot;, &quot;&quot;);
+          SetXFormFieldValueById(&quot;fd_link_address&quot;, &quot;&quot;);
+          _DocList_AddRows(&quot;fd_finance_detail&quot;, [{}]);
+        }
+      }
+
+      theCityFlag = Number(getFormRadioValue(&quot;fd_3cc1757848e700&quot;));
+      if (theCityFlag == 0) {
+        common_dom_row_set_show_required_reset(&quot;fd_guonei_row&quot;, false, false, false);
+      }
+
+      var fd_department = getFormFieldValue(&quot;fd_396238f4339462&quot;);
+      var fd_depOldVal = getFormFieldValue(&quot;fd_bseg_firstkostl&quot;);
+      if (fd_department.length &gt; 1 &amp;&amp; (fd_depOldVal == undefined || fd_depOldVal == &quot;&quot;)) {
+        setDepartMentSelect(fd_department[1]);
+      }
+    });
+
+    Com_Parameter.event[&quot;submit&quot;].push(function() {
+      if (GetXFormFieldById(&quot;fd_is_project&quot;)[0].value == &quot;1&quot;) {
+        var projectNumListTableId = &quot;fd_project_num_list&quot;;
+        var wbsData = commonWBSStr;
+        var wbsList = _DocList_FormFieldValue(projectNumListTableId, &quot;fd_bseg_projk&quot;);
+        var errorFlag = false;
+        var wbsMsg = &quot;&quot;;
+        if (wbsList) {
+          for (var i = 0; i &lt; wbsList.length; i++) {
+            if (wbsData.indexOf(wbsList[i]) &lt; 0) {
+              wbsMsg = wbsMsg + &quot;,&quot; + (i + 1);
+              errorFlag = true;
+            }
+          }
+        }
+        if (errorFlag) {
+          alert(&quot;Invalid project code rows: &quot; + wbsMsg);
+          return false;
+        }
+      }
+
+      var getPayeeTableId = &quot;fd_payee_list&quot;;
+      var tempPayeeList = _DocList_FormFieldValue(getPayeeTableId, &quot;fd_card_number&quot;);
+      errorFlag = false;
+      var payeeMsg = &quot;&quot;;
+      if (tempPayeeList) {
+        for (var i = 0; i &lt; tempPayeeList.length; i++) {
+          if (tempPayeeList[i].length &lt; 16) {
+            payeeMsg = payeeMsg + &quot;,&quot; + (i + 1);
+            errorFlag = true;
+          }
+        }
+      }
+      if (errorFlag) {
+        alert(&quot;Invalid card number rows: &quot; + payeeMsg);
+        return false;
+      }
+
+      payeeListSum();
+      var $tempObj = $(&quot;input[name=extendDataFormInfo.value(fd_payee_diff)]&quot;);
+      if (Number($tempObj.val()) != 0) {
+        alert(&quot;Payee total must equal total cost.&quot;);
+        return false;
+      }
+
+      if (typeof theFinanceFlag != &quot;undefined&quot;) {
+        theFlagNo = theConstFiaSaveFlag;
+      } else {
+        theFlagNo = theFlagNo + 1;
+      }
+      SetXFormFieldValueById(&quot;fd_flag_save_no&quot;, theFlagNo);
+      return true;
+    });
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+
+   &lt;div id=&quot;fd_3cd39a8bc880b0&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    function theFixedNumTwo(value) {
+      var precision = 2;
+      var power = Math.pow(10, precision);
+      return Math.round(value * power) / power;
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;
+
+   &lt;div id=&quot;fd_3d19de502071ba&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    var theFinanceFlag = 1;
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_bseg_firstkostl&quot; label=&quot;Primary cost center&quot; type=&quot;String&quot; enumValues=&quot;Route Department A|A;Route Department B|B&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_bseg_kostl&quot; label=&quot;Secondary cost center&quot; type=&quot;String&quot; enumValues=&quot;Route Cost Center A|ROUTE_CC_A;Route Cost Center B|ROUTE_CC_B&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_3cc1757848e700&quot; label=&quot;Travel scope&quot; type=&quot;String&quot; enumValues=&quot;Domestic|1;Local|0&quot; defaultValue=&quot;1&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_the_city_flag&quot; label=&quot;Travel scope flag&quot; type=&quot;String&quot; defaultValue=&quot;1&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_396238f4339462&quot; label=&quot;Reimbursement department&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_is_project&quot; label=&quot;Project reimbursement&quot; type=&quot;String&quot; enumValues=&quot;Yes|1;No|0&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_flag_save_no&quot; label=&quot;Save marker&quot; type=&quot;String&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_total_cost&quot; label=&quot;Total cost&quot; type=&quot;Double&quot; scale=&quot;2&quot; defaultValue=&quot;0&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_payee_total&quot; label=&quot;Payee total&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_payee_diff&quot; label=&quot;Payee difference&quot; type=&quot;Double&quot; scale=&quot;2&quot; formula=&quot;true&quot; defaultValue=&quot;$fd_payee_total$ - $fd_total_cost$&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_voucher_no&quot; label=&quot;Voucher number&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_voucher_msg&quot; label=&quot;Voucher message&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_link_address&quot; label=&quot;Voucher link&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_trafficCity_detail&quot; label=&quot;Route traffic lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_traffic_amount&quot; label=&quot;Amount&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_train_detail&quot; label=&quot;Route train lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_train_amount&quot; label=&quot;Amount&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_flight_detail&quot; label=&quot;Route flight lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_flight_amount&quot; label=&quot;Amount&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_project_num_list&quot; label=&quot;Route project lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_bseg_projk&quot; label=&quot;Project code&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_payee_list&quot; label=&quot;Route payee lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_payee_amount&quot; label=&quot;Payee amount&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_card_number&quot; label=&quot;Card number&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name=&quot;fd_finance_detail&quot; label=&quot;Route finance lines&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_route_finance_value&quot; label=&quot;Value&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

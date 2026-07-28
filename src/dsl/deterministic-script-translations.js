@@ -23,7 +23,9 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-procurement-payment-attachment-submit",
   "deterministic-procurement-payment-department-consistency",
   "deterministic-procurement-payment-wbs-visibility",
-  "deterministic-same-row-radio-selection"
+  "deterministic-same-row-radio-selection",
+  "deterministic-travel-reimbursement-lifecycle",
+  "deterministic-travel-reimbursement-submit-calculation"
 ]);
 
 export function buildDeterministicScriptBranchProof(action) {
