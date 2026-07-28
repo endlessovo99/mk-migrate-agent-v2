@@ -32,7 +32,10 @@
     &lt;tr&gt;&lt;td row=&quot;11&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_incentive_cost&quot;,label:&quot;激励费用&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
      &lt;td row=&quot;11&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_grand_total&quot;,label:&quot;费用总计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
     &lt;tr&gt;&lt;td row=&quot;12&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;&lt;div fd_type=&quot;chinaValue&quot; fd_values=&apos;{id:&quot;fd_grand_total_upper&quot;,label:&quot;费用总计大写&quot;,relatedid:&quot;fd_grand_total&quot;,dataType:&quot;String&quot;}&apos; relatedid=&quot;fd_grand_total&quot;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
-    &lt;tr&gt;&lt;td row=&quot;13&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;
+    &lt;tr&gt;&lt;td row=&quot;13&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_group_beta&quot;,label:&quot;乙类合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;13&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_group_tax&quot;,label:&quot;乙类税额&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;14&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_group_travel_tax&quot;,label:&quot;分类总税额&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;15&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;
      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_receipts&quot;,label:&quot;票据明细&quot;}&apos;&gt;&lt;tbody&gt;
       &lt;tr&gt;
        &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_receipt_kind&quot;,content:&quot;票据类别&quot;}&apos;&gt;票据类别&lt;/label&gt;&lt;/td&gt;

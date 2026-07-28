@@ -83,6 +83,27 @@ describe("calculation script recipes Route case", () => {
   it("maps grouped detail totals, counts, mode branches, rounding, tax, and post-delete recalculation", () => {
     const dsl = stages();
     const actions = actionsByBasis(dsl, "deterministic-grouped-detail-calculation");
+    const field = (id) => dsl.form.fields.find(candidate => candidate.id === id);
+    const taxExpression = "($fd_group_beta$ ? Math.round(($fd_group_beta$ / 1.09 * 0.09) * 100) / 100 : 0)";
+
+    for (const id of ["fd_group_tax", "fd_group_travel_tax"]) {
+      assert.equal(field(id).componentId, "xform-calculate", id);
+      assert.deepEqual(field(id).props.calculation, {
+        kind: "formula",
+        expression: taxExpression,
+        displayExpression: taxExpression,
+        fieldIds: ["fd_group_beta"]
+      });
+      assert.equal(field(id).sourceProps.inferredCalculation.classification, "native");
+      assert.ok(dsl.scripts.calculationDecisions.some(decision =>
+        decision.id === `calculation.native.${id}` &&
+        decision.classification === "native"
+      ));
+      assert.equal(dsl.scripts.calculationDecisions.some(decision =>
+        decision.classification === "script" &&
+        decision.targetRefs.includes(id)
+      ), false);
+    }
 
     assert.deepEqual(actions.map(actionKey), [
       "onChange:fd_receipt_kind:fd_receipts",
@@ -102,7 +123,7 @@ describe("calculation script recipes Route case", () => {
       }
       assert.match(action.function, /category === "beta"/);
       assert.match(action.function, /MKXFORM\.setValue\("fd_group_count", groupedCount\)/);
-      assert.match(action.function, /taxableAmount \/ 1\.09 \* 0\.09/);
+      assert.doesNotMatch(action.function, /fd_group_tax|fd_group_travel_tax|taxableAmount/);
       assert.doesNotMatch(action.function, /DocList_TableInfo|SetXFormFieldValueById|jQuery|\$\(/);
     }
     assert.equal(dsl.scripts.calculationDecisions.some(decision =>
@@ -111,6 +132,74 @@ describe("calculation script recipes Route case", () => {
     const afterDelete = actions.find(action => action.event === "onAfterDel");
     assert.match(afterDelete.function, /function onAfterDel\(data\)/);
     assert.match(afterDelete.function, /var rawRows = data \|\| \[\]/);
+  });
+
+  it("does not promote same-named tax writes from an unrelated function", () => {
+    const source = cleanSourceFile(fixture);
+    const groupedSource = source.scripts.sources.find(candidate =>
+      candidate.sourceRef === "source.form.jsp.jsp_grouped_recipe.script.1"
+    );
+    groupedSource.javascript += `
+      function unrelatedTaxCopy() {
+        var unrelatedTarget = $("[name=extendDataFormInfo.value(fd_incentive_cost)]");
+        unrelatedTarget.val(tax);
+      }
+    `;
+    groupedSource.javascript = groupedSource.javascript.replace(
+      "betaTax.val(tax);",
+      `betaTax.val(tax);
+       function nestedTaxCopy() {
+         var nestedTarget = $("[name=extendDataFormInfo.value(fd_hotel_cost)]");
+         nestedTarget.val(tax);
+       }
+       var anonymousTaxCopy = function () {
+         var anonymousTarget = $("[name=extendDataFormInfo.value(fd_local_transport_cost)]");
+         var tax = 123;
+         anonymousTarget.val(tax);
+       };
+       var arrowTaxCopy = () => {
+         var arrowTarget = $("[name=extendDataFormInfo.value(fd_allowance_cost)]");
+         var tax = 456;
+         arrowTarget.val(tax);
+       };`
+    );
+
+    const dsl = draftSourceDraft(source);
+    for (const id of [
+      "fd_incentive_cost",
+      "fd_hotel_cost",
+      "fd_local_transport_cost",
+      "fd_allowance_cost"
+    ]) {
+      const unrelated = dsl.form.fields.find(field => field.id === id);
+      assert.equal(unrelated.componentId, "xform-number", id);
+      assert.equal(unrelated.props.calculation, undefined, id);
+      assert.equal(dsl.scripts.calculationDecisions.some(decision =>
+        decision.id === `calculation.native.${id}`
+      ), false, id);
+    }
+  });
+
+  it("fails closed when a tax field variable is reassigned in the calculation scope", () => {
+    const source = cleanSourceFile(fixture);
+    const groupedSource = source.scripts.sources.find(candidate =>
+      candidate.sourceRef === "source.form.jsp.jsp_grouped_recipe.script.1"
+    );
+    groupedSource.javascript = groupedSource.javascript.replace(
+      "betaTax.val(tax);",
+      `betaTax.val(tax);
+       var betaTax = $("[name=extendDataFormInfo.value(fd_hotel_cost)]");`
+    );
+
+    const dsl = draftSourceDraft(source);
+    for (const id of ["fd_group_tax", "fd_hotel_cost"]) {
+      const field = dsl.form.fields.find(candidate => candidate.id === id);
+      assert.equal(field.componentId, "xform-number", id);
+      assert.equal(field.props.calculation, undefined, id);
+      assert.equal(dsl.scripts.calculationDecisions.some(decision =>
+        decision.id === `calculation.native.${id}`
+      ), false, id);
+    }
   });
 
   it("maps traveler text splitting, description composition, and explicit cross-calculation calls", () => {

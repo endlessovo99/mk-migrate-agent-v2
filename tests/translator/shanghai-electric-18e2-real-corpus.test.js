@@ -155,6 +155,17 @@ describe("Shanghai Electric 18e2 route regression", () => {
       displayExpression: "$fd_payee_total$ - $fd_total_cost$",
       fieldIds: ["fd_payee_total", "fd_total_cost"]
     });
+    const trainTaxExpression = "($fd_train$ ? Math.round(($fd_train$ / 1.09 * 0.09) * 100) / 100 : 0)";
+    for (const id of ["fd_train_tax", "fd_traveling_tax"]) {
+      assert.equal(field(id).componentId, "xform-calculate", id);
+      assert.deepEqual(field(id).props.calculation, {
+        kind: "formula",
+        expression: trainTaxExpression,
+        displayExpression: trainTaxExpression,
+        fieldIds: ["fd_train"]
+      });
+      assert.equal(field(id).sourceProps.inferredCalculation.classification, "native");
+    }
 
     const actions = dsl.scripts.actions.filter((action) => action.translationStatus === "mapped");
     assertMappedActions(actions, "source.form.jsp.fd_3bc187ead08638.script.1", {
@@ -180,6 +191,9 @@ describe("Shanghai Electric 18e2 route regression", () => {
       .find((action) => action.event === "onAfterDel");
     assert.equal(actionKey(afterDelete), "onAfterDel:fd_trafficCity_detail:fd_trafficCity_detail");
     assert.match(afterDelete.function, /function onAfterDel\(data\)/);
+    for (const action of actionsByBasis(actions, "deterministic-grouped-detail-calculation")) {
+      assert.doesNotMatch(action.function, /fd_train_tax|fd_traveling_tax|taxableAmount/);
+    }
     assertMappedDetailActions(
       actions,
       "source.form.jsp.fd_3bb43549140132.script.1",
@@ -282,7 +296,7 @@ describe("Shanghai Electric 18e2 route regression", () => {
       assert.ok(decision.targetRefs.length > 0, `${decision.id} must identify target semantics`);
     }
 
-    assert.equal(decisions.filter((decision) => decision.classification === "native").length, 9);
+    assert.equal(decisions.filter((decision) => decision.classification === "native").length, 11);
     assert.equal(decisions.filter((decision) => decision.classification === "script").length, 28);
     assert.equal(decisions.filter((decision) => decision.classification === "manual").length, 4);
     assert.ok(decisions.some((decision) =>

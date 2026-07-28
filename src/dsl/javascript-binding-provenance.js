@@ -13,6 +13,39 @@ const LOOP_TYPES = new Set([
   "DoWhileStatement"
 ]);
 
+export function analyzeJavaScriptFunctionBodyBindings(source) {
+  const text = String(source || "");
+  const wrapperName = "__analyzedFunctionBody__";
+  const prefix = `function ${wrapperName}() {\n`;
+  const model = buildJavaScriptBindingModel(`${prefix}${text}\n}`, {
+    eventFunctionName: wrapperName
+  });
+  if (!model.ok || model.entrypoint?.type !== "function") {
+    return {
+      ok: false,
+      sourceWithoutNestedFunctions: text,
+      hasSingleStableBinding: () => false
+    };
+  }
+
+  const masked = text.split("");
+  const bodyEnd = prefix.length + text.length;
+  for (const range of model.functionRanges) {
+    if (range.start < prefix.length || range.end > bodyEnd) continue;
+    const start = range.start - prefix.length;
+    const end = range.end - prefix.length;
+    for (let index = start; index < end; index += 1) {
+      if (!["\n", "\r"].includes(masked[index])) masked[index] = " ";
+    }
+  }
+  const useIndex = prefix.length + text.length;
+  return {
+    ok: true,
+    sourceWithoutNestedFunctions: masked.join(""),
+    hasSingleStableBinding: (name) => model.hasSingleStableBinding(name, useIndex)
+  };
+}
+
 export function buildJavaScriptBindingModel(source, {
   eventParameter,
   eventFunctionName,
@@ -230,6 +263,20 @@ export function buildJavaScriptBindingModel(source, {
       ignoreAliasEscape: true
     })
   );
+  const hasSingleStableBinding = (name, atIndex) => {
+    const useScope = structure.scopeAt(atIndex);
+    const binding = bindingAtUse(name, atIndex);
+    if (
+      !binding ||
+      binding.ambiguous ||
+      binding.scope.functionScope !== useScope.functionScope ||
+      binding.declarations.length !== 1 ||
+      binding.declarations[0].controlFlowUnproven
+    ) return false;
+    return !binding.effects.some((effect) =>
+      ["write", "mutation"].includes(effect.kind)
+    );
+  };
 
   return {
     ok: true,
@@ -253,6 +300,11 @@ export function buildJavaScriptBindingModel(source, {
         : undefined,
     scopeAt: structure.scopeAt,
     bindingAtUse,
+    functionRanges: functionNodes.map((node) => ({
+      start: node.start,
+      end: node.end
+    })),
+    hasSingleStableBinding,
     isUnshadowedGlobal: (name, beforeIndex) => !bindingAtUse(name, beforeIndex),
     stableInitializer,
     stableEventUse

@@ -19,6 +19,7 @@ import {
 import { SOURCE_DRAFT_VERSION } from "./source-draft.js";
 import {
   draftMkScriptsFromSourceScripts,
+  groupedDetailTaxCalculationInferences,
   sourceNumericDetailFieldInferences
 } from "./sysform-jsp-scripts.js";
 import {
@@ -923,6 +924,7 @@ function applyNativeCalculationInferences(form, sourceScripts = {}) {
     for (const inference of [
       ...sums,
       ...inferRuntimeFormulaCalculations(source, sums),
+      ...groupedDetailTaxCalculationInferences(source, form, sourceScripts),
       ...(conditionalTotal ? [conditionalTotal] : [])
     ]) {
       const candidates = candidatesByTarget.get(inference.targetFieldId) || [];

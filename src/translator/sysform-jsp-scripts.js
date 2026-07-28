@@ -1,6 +1,9 @@
 import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitelist.js";
 import { buildScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
 import { buildDeterministicScriptBranchProof } from "../dsl/deterministic-script-translations.js";
+import {
+  analyzeJavaScriptFunctionBodyBindings
+} from "../dsl/javascript-binding-provenance.js";
 import { resolveScriptControlTarget } from "../dsl/scripts.js";
 import {
   analyzeLegacyScriptFormRules,
@@ -165,6 +168,48 @@ export function sourceNumericDetailFieldInferences(sourceScripts = {}, form = {}
     scope: inference.tableId,
     controlId: inference.fieldId
   }))).map(({ event: _event, scope: _scope, controlId: _controlId, ...inference }) => inference);
+}
+
+export function groupedDetailTaxCalculationInferences(source = {}, form = {}, sourceScripts = {}) {
+  const text = String(source.javascript || "");
+  const model = groupedDetailCalculationModel(text, form, sourceScripts);
+  if (!model?.taxLexicalScopeProven) return [];
+  const sourceField = formFieldBySourceId(form, model.taxSourceFieldId);
+  if (sourceField?.type !== "number") return [];
+  const expression = groupedDetailTaxFormulaExpression({
+    ...model,
+    taxSourceFieldId: sourceField.id
+  });
+
+  return model.taxTargetFieldIds.flatMap((targetFieldId) => {
+    const targetField = formFieldBySourceId(form, targetFieldId);
+    if (targetField?.type !== "number") return [];
+    const targetRanges = model.taxTargetWrites
+      .filter((write) => write.fieldId === targetFieldId)
+      .map((write) => ({
+        sourceRef: source.sourceRef,
+        name: "grouped-detail-tax-target",
+        start: write.start,
+        end: write.end
+      }));
+    return [{
+      kind: "formula",
+      targetFieldId: targetField.id,
+      expression,
+      displayExpression: expression,
+      fieldIds: [sourceField.id],
+      sourceRef: source.sourceRef,
+      evidence: model.taxFormulaEvidence,
+      coveredCalculationRanges: [{
+        sourceRef: source.sourceRef,
+        name: "grouped-detail-tax-formula",
+        start: model.taxFormulaStart,
+        end: model.taxFormulaEnd
+      }, ...targetRanges],
+      runtimeOverride: true,
+      residuals: []
+    }];
+  });
 }
 
 function buttonCandidate(button) {
@@ -1742,15 +1787,49 @@ function groupedDetailCalculationModel(text, form, sourceScripts) {
     return undefined;
   }
 
-  const taxFormula = text.match(
+  const scopedCalculationBody = analyzeJavaScriptFunctionBodyBindings(
+    calculationFunction.body
+  );
+  const calculationBody = scopedCalculationBody.sourceWithoutNestedFunctions;
+  const calculationBodyStart = calculationFunction.end - calculationFunction.body.length - 1;
+  const calculationSelected = selectedFieldVariables(calculationBody);
+  const taxFormula = calculationBody.match(
     /var\s+([A-Za-z_$][\w$]*)\s*=\s*\(\s*([A-Za-z_$][\w$]*)\.val\(\)\s*\?\s*theFixedNumTwo\(\s*\2\.val\(\)\s*\/\s*(-?(?:\d+\.?\d*|\.\d+))\s*\*\s*(-?(?:\d+\.?\d*|\.\d+))\s*\)\s*:\s*0\s*\)/u
   );
   if (!taxFormula) return undefined;
-  const taxSourceFieldId = selected.get(taxFormula[2]);
-  const taxTargetFieldIds = [...selected.entries()]
-    .filter(([variable]) => new RegExp(`\\b${escapePattern(variable)}\\.val\\(\\s*${escapePattern(taxFormula[1])}\\s*\\)`, "u").test(text))
-    .map(([, fieldId]) => fieldId);
+  const taxSourceFieldId = calculationSelected.get(taxFormula[2]);
+  const taxTargetMatches = [...calculationBody.matchAll(new RegExp(
+    `\\b([A-Za-z_$][\\w$]*)\\.val\\(\\s*${escapePattern(taxFormula[1])}\\s*\\)`,
+    "gu"
+  ))];
+  const taxTargetVariables = uniqueStrings(taxTargetMatches.map((match) => match[1]));
+  const stableTaxVariables = uniqueStrings([
+    taxFormula[1],
+    taxFormula[2],
+    ...taxTargetVariables
+  ]);
+  if (
+    taxTargetVariables.some((variable) => !calculationSelected.has(variable)) ||
+    scopedCalculationBody.ok && stableTaxVariables.some((variable) =>
+      !scopedCalculationBody.hasSingleStableBinding(variable)
+    )
+  ) return undefined;
+  const taxTargetWrites = taxTargetMatches.map((match) => ({
+    fieldId: calculationSelected.get(match[1]),
+    start: calculationBodyStart + match.index,
+    end: calculationBodyStart + match.index + match[0].length
+  }));
+  const taxTargetFieldIds = uniqueStrings(taxTargetWrites.map((write) => write.fieldId));
   if (!taxSourceFieldId || !taxTargetFieldIds.length) return undefined;
+  const nativeTaxTargetFieldIds = scopedCalculationBody.ok
+    ? taxTargetFieldIds.filter((fieldId) =>
+      hasEquivalentGroupedDetailTaxCalculation(form, fieldId, {
+        taxSourceFieldId,
+        taxDivisor: Number(taxFormula[3]),
+        taxMultiplier: Number(taxFormula[4])
+      })
+    )
+    : [];
 
   return {
     tableId,
@@ -1765,6 +1844,14 @@ function groupedDetailCalculationModel(text, form, sourceScripts) {
     categories,
     taxSourceFieldId,
     taxTargetFieldIds,
+    scriptTaxTargetFieldIds: taxTargetFieldIds.filter((fieldId) =>
+      !nativeTaxTargetFieldIds.includes(fieldId)
+    ),
+    taxFormulaEvidence: taxFormula[0].replace(/\s+/gu, " ").trim(),
+    taxFormulaStart: calculationBodyStart + taxFormula.index,
+    taxFormulaEnd: calculationBodyStart + taxFormula.index + taxFormula[0].length,
+    taxTargetWrites,
+    taxLexicalScopeProven: scopedCalculationBody.ok,
     taxDivisor: Number(taxFormula[3]),
     taxMultiplier: Number(taxFormula[4]),
     coveredFunctionNames: [helper.name, calculationFunction.name]
@@ -2011,12 +2098,38 @@ function groupedDetailCalculationLines(model, rowSource) {
     ...(model.countFieldId ? [`  MKXFORM.setValue(${JSON.stringify(model.countFieldId)}, groupedCount)`] : []),
     `  MKXFORM.setValue(${JSON.stringify(model.trafficTotalFieldId)}, trafficTotal.toFixed(2))`,
     `  MKXFORM.setValue(${JSON.stringify(model.domesticTotalFieldId)}, (mode === 0 ? taxi : domesticTotal).toFixed(2))`,
-    `  var taxableAmount = Number(MKXFORM.getValue(${JSON.stringify(model.taxSourceFieldId)}) || 0)`,
-    `  var tax = taxableAmount ? Math.round((taxableAmount / ${model.taxDivisor} * ${model.taxMultiplier}) * 100) / 100 : 0`,
-    ...model.taxTargetFieldIds.map((fieldId) =>
-      `  MKXFORM.setValue(${JSON.stringify(fieldId)}, tax.toFixed(2))`
-    )
+    ...(model.scriptTaxTargetFieldIds.length ? [
+      `  var taxableAmount = Number(MKXFORM.getValue(${JSON.stringify(model.taxSourceFieldId)}) || 0)`,
+      `  var tax = taxableAmount ? Math.round((taxableAmount / ${model.taxDivisor} * ${model.taxMultiplier}) * 100) / 100 : 0`,
+      ...model.scriptTaxTargetFieldIds.map((fieldId) =>
+        `  MKXFORM.setValue(${JSON.stringify(fieldId)}, tax.toFixed(2))`
+      )
+    ] : [])
   ];
+}
+
+function hasEquivalentGroupedDetailTaxCalculation(form, targetFieldId, model) {
+  const targetField = formFieldBySourceId(form, targetFieldId);
+  const sourceField = formFieldBySourceId(form, model.taxSourceFieldId);
+  const calculation = targetField?.props?.calculation;
+  if (!sourceField || calculation?.kind !== "formula") return false;
+  return calculation.expression === groupedDetailTaxFormulaExpression({
+    ...model,
+    taxSourceFieldId: sourceField.id
+  }) &&
+    calculation.fieldIds?.length === 1 &&
+    calculation.fieldIds[0] === sourceField.id;
+}
+
+function groupedDetailTaxFormulaExpression(model) {
+  const sourceRef = `$${model.taxSourceFieldId}$`;
+  return `(${sourceRef} ? Math.round((${sourceRef} / ${model.taxDivisor} * ${model.taxMultiplier}) * 100) / 100 : 0)`;
+}
+
+function formFieldBySourceId(form, fieldId) {
+  return (form?.fields || []).find((field) =>
+    field?.id === fieldId || field?.sourceProps?.originalId === fieldId
+  );
 }
 
 function allowanceCalculationCandidates(source, form, sourceScripts = {}) {
