@@ -46,6 +46,41 @@ describe("static form-property script coverage", () => {
     assert.deepEqual(scripts.actions[0].runWhen, { viewStatusIn: ["view"] });
   });
 
+  it("recognizes an exact textarea placeholder-only onLoad as static property evidence", () => {
+    const scripts = draftMkScriptsFromSourceScripts(placeholderSourceScripts("fd_notes"), {
+      form: formWithTextarea("fd_notes"),
+      formRules: { linkage: [] }
+    });
+
+    assert.equal(scripts.actions.length, 1);
+    assert.deepEqual(scripts.actions[0].coverage, {
+      status: "covered",
+      nativeRules: [],
+      staticProps: [{
+        fieldId: "fd_notes",
+        prop: "placeholder",
+        value: "简述成立时间、注册资金、人员规模、主营业务等"
+      }],
+      residuals: []
+    });
+    assert.equal(scripts.actions[0].translationStatus, "needs_review");
+  });
+
+  it("does not claim placeholder coverage when the onLoad has another side effect", () => {
+    const source = placeholderSourceScripts("fd_notes");
+    source.sources[0].javascript = source.sources[0].javascript.replace(
+      "});",
+      "field.value = \"unexpected\";\n});"
+    );
+    const scripts = draftMkScriptsFromSourceScripts(source, {
+      form: formWithTextarea("fd_notes"),
+      formRules: { linkage: [] }
+    });
+
+    assert.equal(scripts.actions[0].coverage.status, "uncovered");
+    assert.equal(scripts.actions[0].coverage.staticProps, undefined);
+  });
+
   localCorpusIt("finds exactly five required-only onLoad actions in the target fixture", () => {
     const dsl = draftSourceDraft(cleanSourceFile(targetFixture));
     const actions = dsl.scripts.actions.filter((action) => action.coverage?.staticProps?.length);
@@ -86,6 +121,35 @@ function formWithRequired(fieldId, required) {
       type: "text",
       componentId: "xform-input",
       props: required ? { required: true } : {}
+    }]
+  };
+}
+
+function placeholderSourceScripts(fieldId) {
+  return {
+    source: "sysform-jsp",
+    sources: [{
+      id: "placeholder-only.script.1",
+      sourceRef: "source.form.jsp.placeholder-only.script.1",
+      javascript: `Com_AddEventListener(window, "load", function(){
+  var field = GetXFormFieldById("${fieldId}")[0];
+  if (field) {
+    field.setAttribute("placeholder", "简述成立时间、注册资金、人员规模、主营业务等");
+  }
+});`,
+      functionAudit: { matched: [], violations: [] }
+    }]
+  };
+}
+
+function formWithTextarea(fieldId) {
+  return {
+    fields: [{
+      id: fieldId,
+      title: "目标字段",
+      type: "longText",
+      componentId: "xform-textarea",
+      props: {}
     }]
   };
 }

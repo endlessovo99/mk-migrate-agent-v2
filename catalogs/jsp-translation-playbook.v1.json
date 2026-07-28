@@ -1,6 +1,6 @@
 {
   "id": "jsp-translation-playbook",
-  "version": "2026-07-23.v2",
+  "version": "2026-07-29.v3",
   "goal": "Guide the Agent to semantically translate legacy EKP/JSP form scripts into restricted NewOA/MK DSL script patches. Deterministic code extracts evidence only; the Agent decides whether a patch is safe.",
   "principles": [
     "Translate behavior, not source syntax. Legacy function names and regex-like shapes are evidence, not completion criteria.",
@@ -112,7 +112,7 @@
     },
     {
       "id": "static-form-property-coverage",
-      "description": "If an ungated action only assigns a form property already present in the DSL, preserve coverage.staticProps as exact fieldId/prop/value evidence, use no nativeRules, and close the action as omitted with an empty function and no residuals."
+      "description": "If an ungated action only assigns required=true or a literal placeholder already present on a supported DSL field, preserve coverage.staticProps as exact fieldId/prop/value evidence, use no nativeRules, and close the action as omitted with an empty function and no residuals. Do not change the evidenced field prop."
     },
     {
       "id": "semantic-js-coverage",

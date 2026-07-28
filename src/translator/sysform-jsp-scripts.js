@@ -1,4 +1,5 @@
 import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitelist.js";
+import { componentSupportsProp } from "../dsl/catalogs.js";
 import { buildScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
 import { buildDeterministicScriptBranchProof } from "../dsl/deterministic-script-translations.js";
 import {
@@ -151,6 +152,44 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
     actions,
     warnings,
     javascript: actions.map((action) => action.function).filter(Boolean).join("\n\n")
+  };
+}
+
+export function applyStaticScriptProperties(form = {}, scripts = {}) {
+  const placeholderValuesByField = new Map();
+  for (const action of Array.isArray(scripts.actions) ? scripts.actions : []) {
+    for (const entry of Array.isArray(action.coverage?.staticProps)
+      ? action.coverage.staticProps
+      : []) {
+      if (
+        entry?.prop !== "placeholder" ||
+        typeof entry.value !== "string" ||
+        !entry.value.trim()
+      ) continue;
+      const values = placeholderValuesByField.get(entry.fieldId) || new Set();
+      values.add(entry.value);
+      placeholderValuesByField.set(entry.fieldId, values);
+    }
+  }
+  if (!placeholderValuesByField.size) return form;
+
+  return {
+    ...form,
+    fields: (form.fields || []).map((field) => {
+      const values = placeholderValuesByField.get(field.id);
+      if (
+        field.type === "detailTable" ||
+        values?.size !== 1 ||
+        !componentSupportsProp(field.componentId, "placeholder")
+      ) return field;
+      return {
+        ...field,
+        props: {
+          ...field.props,
+          placeholder: [...values][0]
+        }
+      };
+    })
   };
 }
 
@@ -890,7 +929,7 @@ function scriptResidual(input) {
 function scriptCoverageFromSource(source) {
   const staticProps = source.displayGate
     ? []
-    : staticRequiredCoverage(source.javascript, source.form);
+    : staticPropertyCoverage(source.javascript, source.form);
   if (staticProps.length) {
     return {
       status: "covered",
@@ -921,7 +960,7 @@ function scriptCoverageFromSource(source) {
   };
 }
 
-function staticRequiredCoverage(javascript, form) {
+function staticPropertyCoverage(javascript, form) {
   const load = String(javascript || "").match(
     /^\s*Com_AddEventListener\(\s*window\s*,\s*(["'])load\1\s*,\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\}\s*\)\s*;?\s*$/
   );
@@ -930,14 +969,33 @@ function staticRequiredCoverage(javascript, form) {
   const required = load[2].match(
     /^\s*\$\(\s*(["'])\[name=(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\2\]\1\s*\)\s*\.attr\(\s*(["'])validate\4\s*,\s*(["'])required\5\s*\)\s*;?\s*$/
   );
-  if (!required) return [];
+  if (required) {
+    const fieldId = required[3];
+    const field = findOrdinaryField(form, fieldId);
+    return field?.props?.required === true
+      ? [{ fieldId, prop: "required", value: true }]
+      : [];
+  }
 
-  const fieldId = required[3];
-  const field = (Array.isArray(form?.fields) ? form.fields : [])
+  const placeholder = load[2].match(
+    /^\s*var\s+([A-Za-z_$][\w$]*)\s*=\s*GetXFormFieldById\(\s*(["'])(fd_[A-Za-z0-9_]+)\2\s*\)\s*\[\s*0\s*\]\s*;?\s*if\s*\(\s*\1\s*\)\s*\{\s*\1\.setAttribute\(\s*(["'])placeholder\4\s*,\s*(["'])([^"'\\]*)\5\s*\)\s*;?\s*\}\s*;?\s*$/
+  );
+  if (!placeholder) return [];
+
+  const fieldId = placeholder[3];
+  const field = findOrdinaryField(form, fieldId);
+  if (!field || !componentSupportsProp(field.componentId, "placeholder")) return [];
+
+  return [{
+    fieldId,
+    prop: "placeholder",
+    value: placeholder[6]
+  }];
+}
+
+function findOrdinaryField(form, fieldId) {
+  return (Array.isArray(form?.fields) ? form.fields : [])
     .find((candidate) => candidate?.id === fieldId && candidate?.type !== "detailTable");
-  if (field?.props?.required !== true) return [];
-
-  return [{ fieldId, prop: "required", value: true }];
 }
 
 function runWhenFromDisplayGate(displayGate) {

@@ -18,6 +18,7 @@ import {
 } from "./field-id-remap.js";
 import { SOURCE_DRAFT_VERSION } from "./source-draft.js";
 import {
+  applyStaticScriptProperties,
   draftMkScriptsFromSourceScripts,
   groupedDetailTaxCalculationInferences,
   sourceNumericDetailFieldInferences
@@ -63,26 +64,27 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     sourceDraft.scripts
   );
   const fieldIdMap = buildFieldIdMap(rawForm);
-  const form = applyDetailCascadeRowOptions(
+  const mappedForm = applyDetailCascadeRowOptions(
     applyFieldIdMapToForm(rawForm, fieldIdMap),
     sourceDraft.scripts
   );
   const knownSourceFieldIds = collectFormFieldIds(rawForm);
-  const multiRadioFormRules = multiRadioRowHelperFormRules(sourceDraft.scripts, form);
+  const multiRadioFormRules = multiRadioRowHelperFormRules(sourceDraft.scripts, mappedForm);
   const provisionalFormRules = draftFormRules(
     applyFieldIdMapToSourceFormRules(
       mergeSourceFormRules(sourceDraft.formRules, multiRadioFormRules),
       fieldIdMap
     ),
-    form
+    mappedForm
   );
   const mappedScripts = applyFieldIdMapToScripts(
     draftMkScriptsFromSourceScripts(sourceDraft.scripts, {
-      form,
+      form: mappedForm,
       formRules: provisionalFormRules
     }),
     fieldIdMap
   );
+  const form = applyStaticScriptProperties(mappedForm, mappedScripts);
   const formRules = removeDeterministicScriptOwnedFormRules(
     provisionalFormRules,
     mappedScripts

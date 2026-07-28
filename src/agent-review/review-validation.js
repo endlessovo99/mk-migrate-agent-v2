@@ -1,4 +1,5 @@
 import { checkDraft } from "../dsl/checks.js";
+import { componentSupportsProp } from "../dsl/catalogs.js";
 import { FIELD_TYPES } from "../dsl/schema.js";
 import { nativeFormRuleBelongsToAction } from "../dsl/native-form-rule-projection.js";
 import { inspectMappedScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
@@ -1158,9 +1159,10 @@ function validatePatchValue(patch, target, path, currentValue, dslDraft) {
     return [error("agent.patch.value_props_required", "props patches require an object value.", `${path}/value`)];
   }
   if (target.property === "props") {
-    const unsupportedProps = Object.keys(patch.value).filter((key) => !["required", "options", "maxLength"].includes(key));
+    const unsupportedProps = Object.keys(patch.value)
+      .filter((key) => !["required", "options", "maxLength", "placeholder"].includes(key));
     if (unsupportedProps.length) {
-      return [error("agent.patch.value_props_unsupported", "Agent Review v1 may patch only required, options, and maxLength props.", `${path}/value`, {
+      return [error("agent.patch.value_props_unsupported", "Agent Review v1 may patch only required, options, maxLength, and placeholder props.", `${path}/value`, {
         unsupportedProps
       })];
     }
@@ -1364,8 +1366,13 @@ function validateStaticPropPatchCoverage(staticProps, form, path, currentStaticP
       diagnostics.push(error("agent.patch.static_prop_type", "Static-property coverage entries must be objects.", entryPath));
       return;
     }
-    if (entry.prop !== "required" || entry.value !== true) {
-      diagnostics.push(error("agent.patch.static_prop_unsupported", "Agent Review static coverage currently supports only { prop: \"required\", value: true }.", entryPath, {
+    if (
+      !(
+        (entry.prop === "required" && entry.value === true) ||
+        (entry.prop === "placeholder" && nonEmptyString(entry.value))
+      )
+    ) {
+      diagnostics.push(error("agent.patch.static_prop_unsupported", "Agent Review static coverage supports only required=true or a non-empty placeholder string.", entryPath, {
         prop: entry.prop,
         value: entry.value
       }));
@@ -1379,10 +1386,22 @@ function validateStaticPropPatchCoverage(staticProps, form, path, currentStaticP
       }));
       return;
     }
-    if (field.props?.required !== true) {
-      diagnostics.push(error("agent.patch.static_prop_not_satisfied", "Static required coverage must reference a field whose current DSL props.required is true.", entryPath, {
+    if (
+      entry.prop === "placeholder" &&
+      !componentSupportsProp(field.componentId, "placeholder")
+    ) {
+      diagnostics.push(error("agent.patch.static_prop_component_unsupported", "Static placeholder coverage requires a field component that supports placeholder.", entryPath, {
         fieldId: entry.fieldId,
-        actual: field.props?.required
+        componentId: field.componentId
+      }));
+      return;
+    }
+    if (field.props?.[entry.prop] !== entry.value) {
+      diagnostics.push(error("agent.patch.static_prop_not_satisfied", "Static-property coverage must exactly match the field's current DSL prop value.", entryPath, {
+        fieldId: entry.fieldId,
+        prop: entry.prop,
+        expected: entry.value,
+        actual: field.props?.[entry.prop]
       }));
     }
   });

@@ -1,4 +1,5 @@
 import {
+  componentSupportsProp,
   validateCatalogVersions,
   validateComponentProps,
   validateFunctionCatalogAudit
@@ -1477,8 +1478,8 @@ function validateStaticPropCoverage(staticProps, form, path, diagnostics) {
       diagnostics.push(error("dsl.scripts.static_prop_type", "Script static-property coverage entries must be objects.", entryPath));
       return;
     }
-    if (entry.prop !== "required" || entry.value !== true) {
-      diagnostics.push(error("dsl.scripts.static_prop_unsupported", "Static script coverage currently supports only { prop: \"required\", value: true }.", entryPath, {
+    if (!supportedStaticPropEntry(entry)) {
+      diagnostics.push(error("dsl.scripts.static_prop_unsupported", "Static script coverage supports only required=true or a non-empty placeholder string.", entryPath, {
         prop: entry.prop,
         value: entry.value
       }));
@@ -1491,20 +1492,43 @@ function validateStaticPropCoverage(staticProps, form, path, diagnostics) {
       }));
       return;
     }
-    if (field.props?.required !== true) {
-      diagnostics.push(error("dsl.scripts.static_prop_not_satisfied", "Static script coverage requires the referenced field to keep props.required=true.", entryPath, {
+    if (
+      entry.prop === "placeholder" &&
+      !componentSupportsProp(field.componentId, "placeholder")
+    ) {
+      diagnostics.push(error("dsl.scripts.static_prop_component_unsupported", "Static placeholder coverage requires a field component that supports placeholder.", entryPath, {
         fieldId: entry.fieldId,
-        actual: field.props?.required
+        componentId: field.componentId
+      }));
+      return;
+    }
+    if (field.props?.[entry.prop] !== entry.value) {
+      diagnostics.push(error("dsl.scripts.static_prop_not_satisfied", "Static script coverage must exactly match the referenced field's current DSL prop value.", entryPath, {
+        fieldId: entry.fieldId,
+        prop: entry.prop,
+        expected: entry.value,
+        actual: field.props?.[entry.prop]
       }));
     }
   });
 }
 
 function staticPropCoverageSatisfied(entry, form) {
-  return isRecord(entry) &&
-    entry.prop === "required" &&
-    entry.value === true &&
-    findStaticCoverageField(form, entry.fieldId)?.props?.required === true;
+  if (!isRecord(entry) || !supportedStaticPropEntry(entry)) return false;
+  const field = findStaticCoverageField(form, entry.fieldId);
+  return Boolean(
+    field &&
+    (
+      entry.prop !== "placeholder" ||
+      componentSupportsProp(field.componentId, "placeholder")
+    ) &&
+    field.props?.[entry.prop] === entry.value
+  );
+}
+
+function supportedStaticPropEntry(entry) {
+  return (entry.prop === "required" && entry.value === true) ||
+    (entry.prop === "placeholder" && nonEmptyString(entry.value));
 }
 
 function findStaticCoverageField(form, fieldId) {

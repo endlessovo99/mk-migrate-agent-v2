@@ -7,7 +7,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v8";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v9";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -64,7 +64,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Use reviewOpportunities only as evidence scaffolding. They are not deterministic translation results; accept them only when action-local source, formRules, targetApi, and playbook coverage standards agree.",
       "coverage.nativeRules is action-local evidence: preserve every eligible rule id already present, never attach control-change rules to a global onLoad action, accept a rule carrying meta.runWhen only with the deterministic view-status-formula proof, and never omit an eligible executable rule for the same control/source when claiming status=covered.",
       "Native-covered closure rule: when action-local behavior is fully covered, coverage.status=\"covered\", coverage.nativeRules references executable rules, and coverage.residuals is empty, close that action as native-covered omitted while preserving runWhen audit evidence. Patch function:\"\", translationStatus:\"omitted\", functionMappings to native-form-rule evidence, and preserve covered coverage/nativeRules/residuals. Do not invent residuals from DOM/helper noise for these already-covered actions.",
-      "Static-property closure rule: when an ungated action only sets a form property already present in the DSL, coverage.staticProps records the exact {fieldId,prop,value} evidence. If coverage.status=\"covered\" and residuals is empty, patch function:\"\", translationStatus:\"omitted\", functionMappings with basis static-form-prop, and preserve nativeRules:[], staticProps, and residuals:[]; never invent a formRule id.",
+      "Static-property closure rule: when an ungated action only sets required=true or a literal placeholder already present on a supported DSL field, coverage.staticProps records the exact {fieldId,prop,value} evidence. Patch function:\"\", translationStatus:\"omitted\", functionMappings with basis static-form-prop, and preserve nativeRules:[], staticProps, and residuals:[]; never invent a formRule id or change the evidenced field prop.",
       "For detail-row visibility candidates, legacy onclick/setAttribute/__xformDispatch snippets are event-binding scaffolding when the DSL action already has event=onChange and matching tableId/controlId. Do not treat that scaffolding as residual; translate the action-local business function body instead.",
       "Use sourceDraft.scripts.sources[].javascriptWindows as layered source excerpts. When javascriptLength exceeds the excerpt length, do not assume the excerpt is the complete source.",
       "Non-whitelisted EKP functions are not automatically blocking. First infer their intent from source evidence and surrounding script context, then translate safely to targetApi JavaScript when confidence is high.",
@@ -889,7 +889,7 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
         `/scripts/actions/${actionIndex}/coverage`
       ],
       staticProps,
-      requiredDecision: "Patch this action to omitted because verified static form properties fully cover the action-local behavior; do not invent a native formRule id.",
+      requiredDecision: "Patch this action to omitted because verified static form properties already fully cover the action-local behavior; do not invent a native formRule id or change the evidenced field prop.",
       requiredPatchShape: {
         function: "",
         translationStatus: "omitted",
