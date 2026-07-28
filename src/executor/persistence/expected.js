@@ -1229,6 +1229,7 @@ function expectedNativeMemberType(member = {}) {
     const normalized = String(sourceOrgType).trim().toLowerCase();
     if (normalized === "8" || normalized === "person" || normalized === "user") return "1";
     if (normalized === "4" || normalized === "post" || normalized === "position") return "2";
+    if (normalized === "32" || normalized === "role") return "4";
     return "3";
   }
   const existingType = String(member.type || "").trim().toLowerCase();

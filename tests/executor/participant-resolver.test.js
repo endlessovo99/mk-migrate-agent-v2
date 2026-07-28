@@ -146,12 +146,15 @@ describe("resolveWorkflowParticipants", () => {
       SIT_FALLBACK_DEPARTMENT.fdId
     ].sort());
     assert.deepEqual(client.calls, ["不存在岗位", "不存在群组", "不存在部门"]);
-    assert.deepEqual(client.elementCalls, [[
-      SIT_FALLBACK_PERSON.fdId,
-      SIT_FALLBACK_POST.fdId,
-      SIT_FALLBACK_GROUP.fdId,
-      SIT_FALLBACK_DEPARTMENT.fdId
-    ].sort()]);
+    assert.deepEqual(client.elementCalls, [
+      ["legacy-role-without-parent"],
+      [
+        SIT_FALLBACK_PERSON.fdId,
+        SIT_FALLBACK_POST.fdId,
+        SIT_FALLBACK_GROUP.fdId,
+        SIT_FALLBACK_DEPARTMENT.fdId
+      ].sort()
+    ]);
   });
 
   it("uses configured fallback fdIds for people, organizations, groups, and posts", async () => {
@@ -730,6 +733,127 @@ describe("resolveWorkflowParticipants", () => {
     );
   });
 
+  it("resolves a parentless role-line participant by its stable role id before name search", async () => {
+    const roleId = "149cb36bda232828b2168944bde8c95b";
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "部门领导",
+      sourceId: roleId,
+      sourceOrgType: 32,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
+      sourceParentName: undefined
+    })]);
+    const client = new SearchClient({}, {
+      [roleId]: [currentOrg({
+        fdId: roleId,
+        fdName: "部门领导",
+        fdOrgType: 32,
+        fdParentName: ""
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, { client });
+    const member = result.dsl.workflow.nodes[1].participants.members[0];
+
+    assert.equal(member.id, roleId);
+    assert.equal(member.name, "部门领导");
+    assert.equal(member.targetOrgType, 32);
+    assert.equal(result.fallbackCount, 0);
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[roleId]]);
+  });
+
+  it("does not let a stable role id bypass required source-name evidence", async () => {
+    const roleId = "149cb36bda232828b2168944bde8c95b";
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "",
+      sourceId: roleId,
+      sourceOrgType: 32,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
+      sourceParentName: undefined
+    })]);
+    const client = new SearchClient({}, {
+      [roleId]: [currentOrg({
+        fdId: roleId,
+        fdName: "部门领导",
+        fdOrgType: 32,
+        fdParentName: ""
+      })]
+    });
+
+    await assert.rejects(
+      resolveWorkflowParticipants(dsl, { client }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) =>
+          issue.reason === "missing_source_evidence" &&
+          issue.missing.includes("name")
+        )
+    );
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, []);
+  });
+
+  it("requires exact element validation capability for stable source role ids", async () => {
+    const roleId = "149cb36bda232828b2168944bde8c95b";
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "部门领导",
+      sourceId: roleId,
+      sourceOrgType: 32,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
+      sourceParentName: undefined
+    })]);
+    const calls = [];
+    const client = {
+      async searchOrg(name, sourceOrgType) {
+        calls.push({ name, sourceOrgType });
+        return [];
+      }
+    };
+
+    await assert.rejects(
+      resolveWorkflowParticipants(dsl, { client }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) =>
+          issue.reason === "source_role_validation_unavailable"
+        )
+    );
+    assert.deepEqual(calls, []);
+  });
+
+  it("does not hide a stable role-id type mismatch behind the SIT person fallback", async () => {
+    const roleId = "149cb36bda232828b2168944bde8c95b";
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "部门领导",
+      sourceId: roleId,
+      sourceOrgType: 32,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
+      sourceParentName: undefined
+    })]);
+    const client = new SearchClient({}, {
+      ...sitFallbackElementResults(),
+      [roleId]: [currentOrg({
+        fdId: roleId,
+        fdName: "错误人员",
+        fdOrgType: 8,
+        fdParentName: ""
+      })]
+    });
+
+    await assert.rejects(
+      resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: NEWOA_SIT_BASE_URL
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) =>
+          issue.reason === "source_role_id_type_mismatch" &&
+          issue.sourceId === roleId &&
+          issue.targetOrgType === 8
+        )
+    );
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[roleId]]);
+  });
+
   it("requires exact name, parent, and type for other organization kinds", async () => {
     const dsl = dslWithExplicitMembers([sourceMember({
       name: "区域角色",
@@ -859,10 +983,13 @@ describe("resolveWorkflowParticipants", () => {
     )), true);
     assert.equal(n210.participants.members.length, 1);
     assert.equal(n378.participants.alternativeMembers.length, 1);
-    assert.deepEqual(client.elementCalls, [[
-      SIT_FALLBACK_PERSON.fdId,
-      SIT_FALLBACK_POST.fdId
-    ].sort()]);
+    assert.deepEqual(client.elementCalls, [
+      ["149cb36bda232828b2168944bde8c95b"],
+      [
+        SIT_FALLBACK_PERSON.fdId,
+        SIT_FALLBACK_POST.fdId
+      ].sort()
+    ]);
   });
 
   it("bounds concurrent organization searches so NewOA is not flooded", async () => {

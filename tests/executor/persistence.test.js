@@ -1439,6 +1439,94 @@ describe("script mutations", () => {
 });
 
 describe("workflow mutations", () => {
+  it("projects a resolved role-line participant as native member type 4", () => {
+    const roleId = "149cb36bda232828b2168944bde8c95b";
+    const nativeHandlerEvidence = JSON.parse(readFileSync(
+      join(fixtureDir, "role-line-native-handler.json"),
+      "utf8"
+    ));
+    const workflow = sampleWorkflow();
+    workflow.nodes = [
+      workflow.nodes[0],
+      {
+        id: "N24",
+        type: "review",
+        element: "manualTask",
+        name: "输配电部门领导",
+        sourceType: "reviewNode",
+        sourceRef: "source.workflow.node.N24",
+        attributes: {},
+        participants: {
+          mode: "explicit",
+          members: [{ id: roleId, name: "部门领导", targetOrgType: 32 }]
+        },
+        translationStatus: "executable"
+      },
+      { ...workflow.nodes[1], id: "N3", sourceRef: "source.workflow.node.N3" }
+    ];
+    workflow.edges = [
+      { ...workflow.edges[0], id: "L1", source: "N1", target: "N24", sourceRef: "source.workflow.edge.L1" },
+      { ...workflow.edges[0], id: "L2", source: "N24", target: "N3", sourceRef: "source.workflow.edge.L2" }
+    ];
+    workflow.topologicalOrder = ["N1", "N24", "N3"];
+
+    const prepared = prepareSample(sampleTrustedDsl({ workflow }));
+    const content = JSON.parse(prepared.update.mechanisms.lbpmTemplate[0].fdContent);
+    const projectedHandlers = content.elements.find((element) => element.id === "N24").handlers;
+    assert.deepEqual(
+      {
+        id: projectedHandlers.id,
+        type: projectedHandlers.type,
+        source: projectedHandlers.source,
+        ruleKey: projectedHandlers.ruleKey,
+        ruleName: projectedHandlers.ruleName,
+        element: projectedHandlers.element,
+        members: projectedHandlers.members.map(({ id, element, type }) => ({
+          id,
+          element,
+          type
+        }))
+      },
+      {
+        id: nativeHandlerEvidence.id,
+        type: nativeHandlerEvidence.type,
+        source: nativeHandlerEvidence.source,
+        ruleKey: nativeHandlerEvidence.ruleKey,
+        ruleName: nativeHandlerEvidence.ruleName,
+        element: nativeHandlerEvidence.element,
+        members: nativeHandlerEvidence.members.map(({ id, element, type }) => ({
+          id,
+          element,
+          type
+        }))
+      }
+    );
+    assert.equal(prepared.verify(prepared.update).ok, true);
+
+    const evidencedReadback = structuredClone(prepared.update);
+    const evidencedContent = JSON.parse(
+      evidencedReadback.mechanisms.lbpmTemplate[0].fdContent
+    );
+    evidencedContent.elements.find((element) => element.id === "N24").handlers =
+      nativeHandlerEvidence;
+    evidencedReadback.mechanisms.lbpmTemplate[0].fdContent =
+      JSON.stringify(evidencedContent);
+    assert.equal(prepared.verify(evidencedReadback).ok, true);
+
+    const mutated = structuredClone(evidencedReadback);
+    const mutatedContent = JSON.parse(mutated.mechanisms.lbpmTemplate[0].fdContent);
+    mutatedContent.elements.find((element) => element.id === "N24").handlers.members[0].type = "3";
+    mutated.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(mutatedContent);
+    const rejected = prepared.verify(mutated);
+    assert.equal(rejected.ok, false);
+    assert.equal(
+      rejected.diagnostics.some((item) =>
+        item.code === "readback.workflow.participant_mismatch"
+      ),
+      true
+    );
+  });
+
   it("fails when the same-identity policy changes", () => {
     const workflow = sampleWorkflow();
     workflow.nodes = [

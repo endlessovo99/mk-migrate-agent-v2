@@ -1,0 +1,16 @@
+{
+  "id": "handlers",
+  "type": "org",
+  "source": "1",
+  "ruleKey": "",
+  "ruleName": "",
+  "members": [
+    {
+      "id": "149cb36bda232828b2168944bde8c95b",
+      "name": "部门领导 ",
+      "element": "user",
+      "type": "4"
+    }
+  ],
+  "element": "users"
+}
