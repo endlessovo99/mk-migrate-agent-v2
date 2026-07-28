@@ -251,7 +251,10 @@ function remapParticipants(participants, idMap) {
   if (!participants.fieldId) return participants;
   return {
     ...participants,
-    fieldId: mapFieldId(participants.fieldId, idMap)
+    fieldId: mapFieldId(participants.fieldId, idMap),
+    ...(participants.detailTableId
+      ? { detailTableId: mapFieldId(participants.detailTableId, idMap) }
+      : {})
   };
 }
 

@@ -2025,7 +2025,20 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
       diagnostics.push(error("workflow.participants.form_field_required", "Form-field participants require fieldId.", `${path}/fieldId`));
       return;
     }
-    if (context.fieldIds instanceof Set && !context.fieldIds.has(participants.fieldId)) {
+    if (
+      nonEmptyString(participants.detailTableId) &&
+      context.detailColumnIdsByTable instanceof Map &&
+      !context.detailColumnIdsByTable.get(participants.detailTableId)?.has(participants.fieldId)
+    ) {
+      diagnostics.push(error("workflow.participants.form_field_missing", "Form-field participant fieldId must reference an existing field or detail column.", `${path}/fieldId`, {
+        detailTableId: participants.detailTableId,
+        fieldId: participants.fieldId
+      }));
+    } else if (
+      !nonEmptyString(participants.detailTableId) &&
+      context.fieldIds instanceof Set &&
+      !context.fieldIds.has(participants.fieldId)
+    ) {
       diagnostics.push(error("workflow.participants.form_field_missing", "Form-field participant fieldId must reference an existing form field.", `${path}/fieldId`, {
         fieldId: participants.fieldId
       }));
@@ -2086,7 +2099,22 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         "Field role-line participants require fieldId and sourceFieldId.",
         `${path}/fieldId`
       ));
-    } else if (context.fieldIds instanceof Set && !context.fieldIds.has(participants.fieldId)) {
+    } else if (
+      nonEmptyString(participants.detailTableId) &&
+      context.detailColumnIdsByTable instanceof Map &&
+      !context.detailColumnIdsByTable.get(participants.detailTableId)?.has(participants.fieldId)
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.field_role_line_field_missing",
+        "Field role-line participant fieldId must reference an existing field or detail column.",
+        `${path}/fieldId`,
+        { detailTableId: participants.detailTableId, fieldId: participants.fieldId }
+      ));
+    } else if (
+      !nonEmptyString(participants.detailTableId) &&
+      context.fieldIds instanceof Set &&
+      !context.fieldIds.has(participants.fieldId)
+    ) {
       diagnostics.push(error(
         "workflow.participants.field_role_line_field_missing",
         "Field role-line participant fieldId must reference an existing form field.",

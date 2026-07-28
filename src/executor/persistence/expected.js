@@ -1061,7 +1061,8 @@ function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
 
 function expectedParticipantFormula(participants, context = {}) {
   const fieldId = participants?.fieldId || "";
-  const fieldRef = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
+  const fieldBinding = expectedWorkflowParticipantFieldBinding(participants, context);
+  const fieldRef = fieldBinding.variableId;
   let script = "";
   let varIds = [];
   let ruleMode = "simple";
@@ -1091,7 +1092,7 @@ function expectedParticipantFormula(participants, context = {}) {
     ruleKeyMode = "";
   } else if (participants?.mode === "field_role_line_script") {
     const dataRef = `\${data.${fieldRef}}`;
-    const displayRef = `$内置表单.${participants.fieldTitle || fieldId}$`;
+    const displayRef = fieldBinding.displayRef;
     if (participants.recipe === "department_head") {
       script = `return \${func.sysorg.getDepartmentHead}(${dataRef}) || [];`;
       ruleVoContent = `return #查找部门领导#(${displayRef}) || [];`;
@@ -1145,6 +1146,17 @@ function expectedParticipantFormula(participants, context = {}) {
     ].includes(participants?.mode)
       ? "org_array"
       : "none"
+  };
+}
+
+function expectedWorkflowParticipantFieldBinding(participants, context = {}) {
+  if (participants?.detailTableId) {
+    return expectedDetailScriptFormulaBinding(participants, context);
+  }
+  const fieldId = participants?.fieldId || "";
+  return {
+    variableId: context.templateId ? `${context.templateId}-${fieldId}` : fieldId,
+    displayRef: `$内置表单.${participants?.fieldTitle || fieldId}$`
   };
 }
 

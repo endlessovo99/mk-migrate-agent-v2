@@ -2360,11 +2360,9 @@ function nodeHistorySuperiorDepartmentHeadRuleKey(participants = {}) {
 }
 
 function fieldRoleLineScriptRuleKey(participants = {}, context = {}) {
-  const fieldId = String(participants.fieldId || "").trim();
-  const field = context.formFieldById?.get(fieldId);
-  const fieldRef = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
-  const dataRef = `\${data.${fieldRef}}`;
-  const displayRef = `$内置表单.${participants.fieldTitle || field?.title || fieldId}$`;
+  const binding = workflowParticipantFieldBinding(participants, context);
+  const dataRef = `\${data.${binding.variableId}}`;
+  const displayRef = binding.displayRef;
   let script;
   let content;
 
@@ -2594,21 +2592,34 @@ function deptLeaderByNoHandlerRuleKey(participants, context = {}) {
 }
 
 function formFieldHandlerRuleKey(participants, context = {}) {
-  const fieldId = participants.fieldId || "";
-  const field = context.formFieldById?.get(fieldId);
-  const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
-  const formulaName = participants.sourceNameExpression || `$${participants.fieldTitle || field?.title || fieldId}$`;
+  const binding = workflowParticipantFieldBinding(participants, context);
+  const formulaName = participants.detailTableId
+    ? binding.displayRef
+    : participants.sourceNameExpression || `$${participants.fieldTitle || binding.fieldTitle}$`;
 
   return {
     type: "Eval",
-    script: `\${data.${fdVarValue}}`,
-    varIds: [fdVarValue],
+    script: `\${data.${binding.variableId}}`,
+    varIds: [binding.variableId],
     vo: {
       mode: "formula",
       content: formulaName
     },
     mode: "simple",
     formulaName
+  };
+}
+
+function workflowParticipantFieldBinding(participants, context = {}) {
+  if (participants.detailTableId) {
+    return detailScriptFormulaBinding(participants, context);
+  }
+  const fieldId = String(participants.fieldId || "").trim();
+  const field = context.formFieldById?.get(fieldId);
+  return {
+    variableId: context.templateId ? `${context.templateId}-${fieldId}` : fieldId,
+    fieldTitle: field?.title || fieldId,
+    displayRef: `$内置表单.${participants.fieldTitle || field?.title || fieldId}$`
   };
 }
 

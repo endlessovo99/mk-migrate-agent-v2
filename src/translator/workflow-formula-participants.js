@@ -129,6 +129,7 @@ function fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) {
 
   const parsed = parseFieldRoleLineFormula(handlerIds[0]);
   if (!parsed || !parsed.subject.startsWith("fd_")) return undefined;
+  const fieldRef = participantFieldReference(parsed.subject);
   const recipe = parsed.companyRole === "公司级部门领导" && parsed.departmentRole === "部门领导"
     ? "department_head"
     : parsed.companyRole === "公司级分管领导" && parsed.departmentRole === "分管领导"
@@ -137,15 +138,19 @@ function fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) {
   if (!recipe) return undefined;
 
   const nameParsed = parseFieldRoleLineFormula(handlerNames[0]);
-  const fieldTitle = nameParsed && !nameParsed.subject.startsWith("fd_")
+  const sourceFieldTitle = nameParsed && !nameParsed.subject.startsWith("fd_")
     ? nameParsed.subject
     : parsed.subject;
+  const fieldTitle = fieldRef.detailTableId
+    ? sourceFieldTitle.split(".").at(-1)
+    : sourceFieldTitle;
   return {
     mode: "field_role_line_script",
     recipe,
     subjectKind: "field",
-    fieldId: parsed.subject,
-    sourceFieldId: parsed.subject,
+    ...(fieldRef.detailTableId ? { detailTableId: fieldRef.detailTableId } : {}),
+    fieldId: fieldRef.fieldId,
+    sourceFieldId: fieldRef.fieldId,
     fieldTitle,
     companyRole: parsed.companyRole,
     departmentRole: parsed.departmentRole,
@@ -460,16 +465,33 @@ function formFieldParticipant(attributes, handlerIds, handlerNames) {
 
   const fieldId = simpleDollarExpressionValue(handlerIds[0]);
   if (!fieldId || !fieldId.startsWith("fd_")) return undefined;
+  const fieldRef = participantFieldReference(fieldId);
 
-  const fieldTitle = simpleDollarExpressionValue(handlerNames[0]) || fieldId;
+  const sourceFieldTitle = simpleDollarExpressionValue(handlerNames[0]) || fieldId;
+  const fieldTitle = fieldRef.detailTableId
+    ? sourceFieldTitle.split(".").at(-1)
+    : sourceFieldTitle;
   return {
     mode: "form_field",
-    fieldId,
-    sourceFieldId: fieldId,
+    ...(fieldRef.detailTableId ? { detailTableId: fieldRef.detailTableId } : {}),
+    fieldId: fieldRef.fieldId,
+    sourceFieldId: fieldRef.fieldId,
     fieldTitle,
     sourceExpression: handlerIds[0],
     sourceNameExpression: handlerNames[0] || ""
   };
+}
+
+function participantFieldReference(value) {
+  const [detailTableId, fieldId, ...rest] = String(value || "").split(".");
+  if (
+    !rest.length &&
+    detailTableId?.startsWith("fd_") &&
+    fieldId?.startsWith("fd_")
+  ) {
+    return { detailTableId, fieldId };
+  }
+  return { fieldId: String(value || "") };
 }
 
 function docCreatorParticipant(attributes, handlerIds, handlerNames) {
