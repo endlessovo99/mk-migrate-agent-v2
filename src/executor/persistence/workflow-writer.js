@@ -2255,11 +2255,7 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       ruleMode: "simple",
       formulaType: "formula",
       members: [],
-      element: "users",
-      migrationSource: {
-        sourceExpression: participants.sourceExpression || "",
-        sourceNameExpression: participants.sourceNameExpression || ""
-      }
+      element: "users"
     };
   }
   if (participants?.mode === "doc_creator") {
@@ -2417,7 +2413,12 @@ function fieldRoleLineScriptRuleKey(participants = {}, context = {}) {
 }
 
 function nativeHandlerIds(participants, attrs) {
-  if (["script_formula", "field_role_line_script", "node_history_handlers"].includes(participants?.mode)) return "";
+  if (
+    ["dept_leader_by_no", "script_formula", "field_role_line_script", "node_history_handlers"]
+      .includes(participants?.mode)
+  ) {
+    return "";
+  }
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return participants.members.map((member) => member.id).filter(Boolean).join(";");
   }
@@ -2425,7 +2426,12 @@ function nativeHandlerIds(participants, attrs) {
 }
 
 function nativeHandlerNames(participants, attrs) {
-  if (["script_formula", "field_role_line_script", "node_history_handlers"].includes(participants?.mode)) return "";
+  if (
+    ["dept_leader_by_no", "script_formula", "field_role_line_script", "node_history_handlers"]
+      .includes(participants?.mode)
+  ) {
+    return "";
+  }
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return participants.members.map((member) => member.name || member.id).filter(Boolean).join(";");
   }
@@ -2644,9 +2650,8 @@ function deptLeaderByNoHandlerRuleKey(participants, context = {}) {
   const fieldId = participants.fieldId || "";
   const field = context.formFieldById?.get(fieldId);
   const fdVarValue = context.templateId ? `${context.templateId}-${fieldId}` : fieldId;
-  const fieldTitle = participants.fieldTitle || field?.title || fieldId;
-  const formulaName = participants.sourceNameExpression ||
-    `$部门领导.根据部门编号获取部门领导$($${fieldTitle}$)`;
+  const fieldTitle = field?.title || participants.fieldTitle || fieldId;
+  const formulaName = `$部门领导.根据部门编号获取部门领导$($${fieldTitle}$)`;
   const fieldRef = `\${data.${fdVarValue}}`;
 
   return {
@@ -2861,7 +2866,8 @@ function resolveEmptyHandlerType(node, attrs = {}, context = {}) {
 }
 
 function migrationNodeSource(node) {
-  const omitLegacyHandlerFormula = node?.participants?.mode === "node_history_handlers";
+  const omitLegacyHandlerFormula = ["dept_leader_by_no", "node_history_handlers"]
+    .includes(node?.participants?.mode);
   const attributes = { ...(node.attributes || {}) };
   const definition = summarizeDefinition(node.definition);
   if (omitLegacyHandlerFormula) {

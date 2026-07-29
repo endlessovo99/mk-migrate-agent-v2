@@ -23,6 +23,27 @@ describe("native participant evidence", () => {
     const readback = prepared.verify(template);
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
     assert.equal(readback.partitions.workflow, "verified");
+
+    const mutated = structuredClone(template);
+    const mutatedWorkflow = JSON.parse(mutated.mechanisms.lbpmTemplate[0].fdContent);
+    const departmentNode = mutatedWorkflow.elements.find((element) => element.id === "N3");
+    const departmentRule = typeof departmentNode.handlers.ruleKey === "string"
+      ? JSON.parse(departmentNode.handlers.ruleKey)
+      : departmentNode.handlers.ruleKey;
+    departmentRule.vo.content =
+      "String deptCodes = $主题$; return $部门领导.根据部门编号获取部门领导$(deptCodes);";
+    departmentNode.handlers.ruleKey = departmentRule;
+    mutated.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(mutatedWorkflow);
+
+    const rejected = prepared.verify(mutated);
+    assert.equal(rejected.ok, false);
+    assert.equal(
+      rejected.diagnostics.some((item) =>
+        item.code === "readback.workflow.participant_mismatch"
+      ),
+      true,
+      JSON.stringify(rejected.diagnostics)
+    );
   });
 
   it("accepts the native generic-role member shape captured after selecting 直线领导", () => {

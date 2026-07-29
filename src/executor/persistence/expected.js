@@ -1131,6 +1131,9 @@ function expectedParticipantFormula(participants, context = {}) {
   } else if (participants?.mode === "dept_leader_by_no") {
     script = `$部门领导.根据部门编号获取部门领导$(\${data.${fieldRef}})`;
     varIds = [fieldRef];
+    const field = (context.form?.fields || []).find((item) => item?.id === fieldId);
+    const fieldTitle = field?.title || participants.fieldTitle || fieldId;
+    ruleVoContent = `$部门领导.根据部门编号获取部门领导$($${fieldTitle}$)`;
   } else if (participants?.mode === "doc_creator") {
     script = "${data._ProcessCreator}";
     ruleMode = "formula";

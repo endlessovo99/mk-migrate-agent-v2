@@ -40,7 +40,8 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
 
   const handlerIds = splitList(attributes.handlerIds);
   const handlerNames = splitList(attributes.handlerNames);
-  return mainFieldLoginMapParticipant(attributes) ||
+  return deptLeaderByNoAliasParticipant(attributes) ||
+    mainFieldLoginMapParticipant(attributes) ||
     orderedMainPersonFieldsParticipant(attributes, handlerIds, handlerNames) ||
     detailScriptParticipant(attributes) ||
     nodeHistoryHandlersParticipant(attributes, handlerIds, handlerNames) ||
@@ -652,6 +653,31 @@ function deptLeaderByNoParticipant(attributes, handlerIds, handlerNames) {
   });
 }
 
+function deptLeaderByNoAliasParticipant(attributes) {
+  if (attributes.handlerSelectType !== "formula") return undefined;
+
+  const parsed = parseDeptLeaderByNoAliasFormula(attributes.handlerIds);
+  const nameParsed = parseDeptLeaderByNoAliasFormula(attributes.handlerNames);
+  if (
+    !parsed ||
+    !nameParsed ||
+    !parsed.subject.startsWith("fd_") ||
+    nameParsed.subject.startsWith("fd_") ||
+    parsed.alias !== nameParsed.alias
+  ) {
+    return undefined;
+  }
+
+  return {
+    mode: "dept_leader_by_no",
+    fieldId: parsed.subject,
+    sourceFieldId: parsed.subject,
+    fieldTitle: nameParsed.subject,
+    sourceExpression: String(attributes.handlerIds || ""),
+    sourceNameExpression: String(attributes.handlerNames || "")
+  };
+}
+
 function unaryFieldOrgFormulaParticipant(attributes, handlerIds, handlerNames, options) {
   if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
 
@@ -690,6 +716,14 @@ function parsePersonByLoginNameFormula(value) {
 
 function parseDeptLeaderByNoFormula(value) {
   return parseUnaryFieldOrgFormula(value, /^\$部门领导\.根据部门编号获取部门领导\$\s*\((.*)\)$/);
+}
+
+function parseDeptLeaderByNoAliasFormula(value) {
+  const match = normalizeLegacyExpression(value).match(
+    /^String\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\$([^$()]+)\$\s*;\s*return\s+\$部门领导\.根据部门编号获取部门领导\$\s*\(\s*\1\s*\)\s*;\s*$/
+  );
+  const subject = match?.[2]?.trim();
+  return subject ? { alias: match[1], subject } : undefined;
 }
 
 function splitFunctionArguments(value) {

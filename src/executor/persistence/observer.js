@@ -1859,10 +1859,11 @@ function observeParticipantFormula(handlers, node) {
     ruleVoMode: normalizeScalar(ruleKey.vo?.mode),
     resultType: observeParticipantResultType(ruleKey.resultType)
   };
-  return ruleKey.type === "Script" || (
-    /getSuperiorDepartmenthead/.test(String(ruleKey.script || "")) &&
-    /getNodeHistoryHandlers/.test(String(ruleKey.script || ""))
-  )
+  return ruleKey.type === "Script" ||
+    /根据部门编号获取部门领导/.test(String(ruleKey.script || "")) || (
+      /getSuperiorDepartmenthead/.test(String(ruleKey.script || "")) &&
+      /getNodeHistoryHandlers/.test(String(ruleKey.script || ""))
+    )
     ? { ...observed, ruleVoContent: normalizeScalar(ruleKey.vo?.content) }
     : observed;
 }
