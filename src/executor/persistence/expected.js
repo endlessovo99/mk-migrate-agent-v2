@@ -1019,7 +1019,13 @@ function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
     return {
       mode: "script_formula",
       recipe: node.participants.recipe,
-      fieldId: node.participants.fieldId,
+      ...(node.participants.recipe === "ordered_main_person_fields"
+        ? {
+            fields: (node.participants.fields || []).map((field) => ({
+              fieldId: field.fieldId
+            }))
+          }
+        : { fieldId: node.participants.fieldId }),
       nativeFormula: expectedParticipantFormula(node.participants, context)
     };
   }
@@ -1103,18 +1109,31 @@ function expectedParticipantFormula(participants, context = {}) {
     ruleMode = "script";
     ruleKeyMode = "";
   } else if (participants?.mode === "script_formula") {
-    const binding = participants.recipe === "main_field_contains_login_names"
-      ? expectedMainFieldScriptFormulaBinding(participants, context)
-      : expectedDetailScriptFormulaBinding(participants, context);
-    const dataRef = `\${data.${binding.variableId}}`;
-    if (participants.recipe === "main_field_contains_login_names") {
-      script = expectedMainFieldLoginMapScript(dataRef, participants.branches);
-    } else if (participants.recipe === "detail_login_names_to_persons") {
-      script = `var values = ${dataRef} || []; var handlers = []; var seen = {}; for (var i = 0; i < values.length; i++) { var loginName = String(values[i] || ""); if (!loginName || seen[loginName]) { continue; } seen[loginName] = true; var found = \${func.sysorg.getPersonByLoginName}(loginName) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); } } return handlers;`;
-    } else if (participants.recipe === "first_detail_department_code_to_head") {
-      script = `var values = ${dataRef} || []; if (!values.length) { return []; } var departments = \${func.sysorg.getElementByNo}(String(values[0]), "2") || []; return \${func.sysorg.getDepartmentHead}(departments) || [];`;
+    if (participants.recipe === "ordered_main_person_fields") {
+      const bindings = (participants.fields || []).map((field) =>
+        expectedMainFieldScriptFormulaBinding({ fieldId: field.fieldId }, context)
+      );
+      const dataRefs = bindings.map((binding) => `\${data.${binding.variableId}}`);
+      script = `var handlers = []; var groups = [${dataRefs.join(", ")}]; for (var i = 0; i < groups.length; i++) { var values = groups[i] || []; if (Object.prototype.toString.call(values) !== "[object Array]") { values = [values]; } for (var j = 0; j < values.length; j++) { if (values[j]) { handlers.push(values[j]); } } } return handlers;`;
+      ruleVoContent = expectedScriptFormulaDisplayContentForBindings(
+        script,
+        dataRefs,
+        bindings
+      );
+    } else {
+      const binding = participants.recipe === "main_field_contains_login_names"
+        ? expectedMainFieldScriptFormulaBinding(participants, context)
+        : expectedDetailScriptFormulaBinding(participants, context);
+      const dataRef = `\${data.${binding.variableId}}`;
+      if (participants.recipe === "main_field_contains_login_names") {
+        script = expectedMainFieldLoginMapScript(dataRef, participants.branches);
+      } else if (participants.recipe === "detail_login_names_to_persons") {
+        script = `var values = ${dataRef} || []; var handlers = []; var seen = {}; for (var i = 0; i < values.length; i++) { var loginName = String(values[i] || ""); if (!loginName || seen[loginName]) { continue; } seen[loginName] = true; var found = \${func.sysorg.getPersonByLoginName}(loginName) || []; if (Object.prototype.toString.call(found) === "[object Array]") { for (var j = 0; j < found.length; j++) { if (found[j]) { handlers.push(found[j]); } } } else if (found) { handlers.push(found); } } return handlers;`;
+      } else if (participants.recipe === "first_detail_department_code_to_head") {
+        script = `var values = ${dataRef} || []; if (!values.length) { return []; } var departments = \${func.sysorg.getElementByNo}(String(values[0]), "2") || []; return \${func.sysorg.getDepartmentHead}(departments) || [];`;
+      }
+      ruleVoContent = expectedScriptFormulaDisplayContent(script, dataRef, binding.displayRef);
     }
-    ruleVoContent = expectedScriptFormulaDisplayContent(script, dataRef, binding.displayRef);
     ruleMode = "script";
     ruleKeyMode = "";
   }
@@ -1206,8 +1225,21 @@ function expectedDetailScriptFormulaBinding(participants, context = {}) {
 }
 
 function expectedScriptFormulaDisplayContent(script, dataRef, displayRef) {
-  return String(script)
-    .replace(dataRef, () => displayRef)
+  return translateExpectedScriptFormulaDisplayContent(
+    String(script).replace(dataRef, () => displayRef)
+  );
+}
+
+function expectedScriptFormulaDisplayContentForBindings(script, dataRefs, bindings) {
+  let content = String(script);
+  for (let index = 0; index < dataRefs.length; index += 1) {
+    content = content.replace(dataRefs[index], () => bindings[index].displayRef);
+  }
+  return translateExpectedScriptFormulaDisplayContent(content);
+}
+
+function translateExpectedScriptFormulaDisplayContent(content) {
+  return String(content)
     .replace(/\$\{func\.sysorg\.getPersonByLoginName\}/g, "#根据登录名查找人员#")
     .replace(/\$\{func\.sysorg\.getElementByNo\}/g, "#根据组织编码查找组织#")
     .replace(/\$\{func\.sysorg\.getDepartmentHead\}/g, "#查找部门领导#");

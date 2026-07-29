@@ -1774,6 +1774,26 @@ function observeFormulaFieldId(handlers, node) {
   return undefined;
 }
 
+function observeOrderedMainPersonFieldIds(ruleKey) {
+  const script = normalizeScalar(ruleKey?.script) || "";
+  if (
+    ruleKey?.type !== "Script" ||
+    !/var groups = \[/.test(script) ||
+    !/groups\.length/.test(script) ||
+    !/handlers\.push\(values\[j\]\)/.test(script) ||
+    !/return handlers;/.test(script)
+  ) {
+    return undefined;
+  }
+
+  const fieldIds = [];
+  for (const match of script.matchAll(/\$\{data\.([^}]+)\}/g)) {
+    const fieldMatch = match[1].match(/-(fd_[A-Za-z0-9_]+)$/);
+    if (fieldMatch) fieldIds.push(fieldMatch[1]);
+  }
+  return fieldIds;
+}
+
 function observeRoleLineParticipants(script, formulaName, fieldId) {
   const expression = [script, formulaName].find((value) => /组织架构\.解释角色线/.test(value));
   if (!expression) return undefined;
@@ -1877,6 +1897,7 @@ function observeParticipants(node, initiatorSelectTarget) {
   if (handlers.type === "formula" || handlers.source === "2") {
     const ruleKey = participantRuleKey(handlers);
     const fieldId = observeFormulaFieldId(handlers, node);
+    const orderedMainPersonFieldIds = observeOrderedMainPersonFieldIds(ruleKey);
     const nativeFormula = observeParticipantFormula(handlers, node);
     const script = normalizeScalar(ruleKey.script) || "";
     const formulaName = normalizeScalar(handlers?.ruleName) ||
@@ -1888,6 +1909,16 @@ function observeParticipants(node, initiatorSelectTarget) {
       return nodeMatch
         ? { mode: "node_history_superior_department_head", nodeId: nodeMatch[1], nativeFormula }
         : { mode: "node_history_superior_department_head", nativeFormula };
+    }
+    if (orderedMainPersonFieldIds) {
+      return {
+        mode: "script_formula",
+        recipe: "ordered_main_person_fields",
+        fields: orderedMainPersonFieldIds.map((orderedFieldId) => ({
+          fieldId: orderedFieldId
+        })),
+        nativeFormula
+      };
     }
     if (
       ruleKey.type === "Script" &&

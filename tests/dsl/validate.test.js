@@ -1517,6 +1517,101 @@ describe("validateMigrationDsl", () => {
     );
   });
 
+  it("accepts only two ordered person address fields for the ordered Script recipe", () => {
+    const form = sampleForm();
+    form.fields.push(
+      {
+        id: "fd_proxy",
+        title: "代报人",
+        type: "text",
+        componentId: "xform-address",
+        props: { orgTypes: ["ORG_TYPE_PERSON"] },
+        sourceProps: {},
+        sourceRef: "source.form.control.fd_proxy"
+      },
+      {
+        id: "fd_applicant",
+        title: "申请人",
+        type: "text",
+        componentId: "xform-address",
+        props: { orgTypes: ["ORG_TYPE_PERSON"] },
+        sourceProps: {},
+        sourceRef: "source.form.control.fd_applicant"
+      }
+    );
+    const workflow = {
+      process: { id: "process-ordered-person-fields" },
+      nodes: [
+        { id: "N1", type: "generalStart", element: "startEvent", sourceRef: "source.workflow.node.N1", attributes: {}, translationStatus: "executable" },
+        {
+          id: "N2",
+          type: "review",
+          element: "manualTask",
+          sourceRef: "source.workflow.node.N2",
+          attributes: { handlerSelectType: "formula" },
+          participants: {
+            mode: "script_formula",
+            recipe: "ordered_main_person_fields",
+            fields: [
+              { fieldId: "fd_proxy", sourceFieldId: "fd_proxy" },
+              { fieldId: "fd_applicant", sourceFieldId: "fd_applicant" }
+            ],
+            sourceExpression: "($fd_proxy$);$fd_applicant$"
+          },
+          translationStatus: "executable"
+        },
+        { id: "N3", type: "generalEnd", element: "endEvent", sourceRef: "source.workflow.node.N3", attributes: {}, translationStatus: "executable" }
+      ],
+      edges: [
+        { id: "L1", source: "N1", target: "N2", sourceRef: "source.workflow.edge.L1", condition: { translationStatus: "executable" } },
+        { id: "L2", source: "N2", target: "N3", sourceRef: "source.workflow.edge.L2", condition: { translationStatus: "executable" } }
+      ],
+      topologicalOrder: ["N1", "N2", "N3"]
+    };
+
+    const accepted = validateMigrationDsl(sampleTrustedDsl({ form, workflow }), { mode: "execute" });
+    const wrongCount = structuredClone(workflow);
+    wrongCount.nodes[1].participants.fields.pop();
+    const rejectedCount = validateMigrationDsl(sampleTrustedDsl({ form, workflow: wrongCount }), { mode: "execute" });
+    const wrongShape = structuredClone(workflow);
+    wrongShape.nodes[1].participants.fieldId = 7;
+    const rejectedShape = validateMigrationDsl(sampleTrustedDsl({ form, workflow: wrongShape }), { mode: "execute" });
+    const wrongComponentForm = structuredClone(form);
+    wrongComponentForm.fields.find((field) => field.id === "fd_proxy").componentId = "xform-input";
+    const rejectedComponent = validateMigrationDsl(
+      sampleTrustedDsl({ form: wrongComponentForm, workflow }),
+      { mode: "execute" }
+    );
+    const wrongOrgTypeForm = structuredClone(form);
+    wrongOrgTypeForm.fields.find((field) => field.id === "fd_applicant").props.orgTypes = ["ORG_TYPE_DEPT"];
+    const rejectedOrgType = validateMigrationDsl(
+      sampleTrustedDsl({ form: wrongOrgTypeForm, workflow }),
+      { mode: "execute" }
+    );
+
+    assert.equal(accepted.ok, true);
+    assert.equal(rejectedCount.ok, false);
+    assert.equal(
+      rejectedCount.diagnostics.some((item) => item.code === "workflow.participants.script_formula_ordered_fields_required"),
+      true
+    );
+    assert.equal(rejectedShape.ok, false);
+    assert.equal(
+      rejectedShape.diagnostics.some((item) => item.code === "workflow.participants.script_formula_ordered_fields_required"),
+      true
+    );
+    assert.equal(rejectedComponent.ok, false);
+    assert.equal(
+      rejectedComponent.diagnostics.some((item) => item.code === "workflow.participants.script_formula_ordered_field_component"),
+      true
+    );
+    assert.equal(rejectedOrgType.ok, false);
+    assert.equal(
+      rejectedOrgType.diagnostics.some((item) => item.code === "workflow.participants.script_formula_ordered_field_person_only"),
+      true
+    );
+  });
+
   it("validates node data authority field references and flags", () => {
     const acceptedDsl = sampleTrustedDsl();
     acceptedDsl.workflow.nodes[0] = {

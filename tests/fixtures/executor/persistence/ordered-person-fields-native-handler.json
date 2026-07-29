@@ -1,0 +1,11 @@
+{
+  "id": "handlers",
+  "type": "formula",
+  "source": "2",
+  "ruleKey": "{\"type\":\"Script\",\"script\":\"var handlers = []; var groups = [${data.template-id-fd_subject}, ${data.template-id-fd_amount}]; for (var i = 0; i < groups.length; i++) { var values = groups[i] || []; if (Object.prototype.toString.call(values) !== \\\"[object Array]\\\") { values = [values]; } for (var j = 0; j < values.length; j++) { if (values[j]) { handlers.push(values[j]); } } } return handlers;\",\"vo\":{\"mode\":\"script\",\"content\":\"var handlers = []; var groups = [$内置表单.代报人$, $内置表单.申请人$]; for (var i = 0; i < groups.length; i++) { var values = groups[i] || []; if (Object.prototype.toString.call(values) !== \\\"[object Array]\\\") { values = [values]; } for (var j = 0; j < values.length; j++) { if (values[j]) { handlers.push(values[j]); } } } return handlers;\"},\"resultType\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"fdId\":{\"type\":\"string\",\"description\":\"ID\"},\"fdName\":{\"type\":\"string\",\"description\":\"名称\"},\"fdOrgType\":{\"type\":\"string\",\"description\":\"组织机构类型\"}}}}}",
+  "ruleName": "var handlers = []; var groups = [$内置表单.代报人$, $内置表单.申请人$]; for (var i = 0; i < groups.length; i++) { var values = groups[i] || []; if (Object.prototype.toString.call(values) !== \"[object Array]\") { values = [values]; } for (var j = 0; j < values.length; j++) { if (values[j]) { handlers.push(values[j]); } } } return handlers;",
+  "ruleMode": "script",
+  "formulaType": "formula",
+  "members": [],
+  "element": "users"
+}

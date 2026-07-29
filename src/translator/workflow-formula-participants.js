@@ -11,6 +11,7 @@ const FORMULA_PARTICIPANT_KEYS = Object.freeze([
   "fallbackKind",
   "reason",
   "branches",
+  "fields",
   "sourceExpression",
   "sourceNameExpression"
 ]);
@@ -39,6 +40,7 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
   const handlerIds = splitList(attributes.handlerIds);
   const handlerNames = splitList(attributes.handlerNames);
   return mainFieldLoginMapParticipant(attributes) ||
+    orderedMainPersonFieldsParticipant(attributes, handlerIds, handlerNames) ||
     detailScriptParticipant(attributes) ||
     nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) ||
     fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) ||
@@ -380,8 +382,21 @@ export function workflowFormulaParticipantMatches(attributes, participants, hand
     FORMULA_PARTICIPANT_KEYS.every((key) =>
       key === "branches"
         ? JSON.stringify(expected[key]) === JSON.stringify(participants[key])
+        : key === "fields"
+          ? formulaParticipantFieldsMatch(expected[key], participants[key])
         : expected[key] === participants[key]
     );
+}
+
+function formulaParticipantFieldsMatch(expectedFields, actualFields) {
+  if (expectedFields === undefined && actualFields === undefined) return true;
+  if (!Array.isArray(expectedFields) || !Array.isArray(actualFields)) return false;
+  if (expectedFields.length !== actualFields.length) return false;
+  return expectedFields.every((field, index) => {
+    const actual = actualFields[index];
+    return (field?.sourceFieldId || field?.fieldId) ===
+      (actual?.sourceFieldId || actual?.fieldId);
+  });
 }
 
 export function inspectWorkflowFormulaProvenance(sourceDraft, dslDraft) {
@@ -479,6 +494,44 @@ function formFieldParticipant(attributes, handlerIds, handlerNames) {
     fieldTitle,
     sourceExpression: handlerIds[0],
     sourceNameExpression: handlerNames[0] || ""
+  };
+}
+
+function orderedMainPersonFieldsParticipant(attributes, handlerIds, handlerNames) {
+  if (
+    attributes.handlerSelectType !== "formula" ||
+    handlerIds.length !== 2 ||
+    handlerNames.length !== 2
+  ) {
+    return undefined;
+  }
+
+  const fieldIds = [
+    parenthesizedDollarExpressionValue(handlerIds[0]),
+    simpleDollarExpressionValue(handlerIds[1])
+  ];
+  const fieldNames = [
+    parenthesizedDollarExpressionValue(handlerNames[0]),
+    simpleDollarExpressionValue(handlerNames[1])
+  ];
+  if (
+    fieldIds.some((fieldId) => !fieldId.startsWith("fd_") || fieldId.includes(".")) ||
+    fieldNames.some((fieldName) => !fieldName) ||
+    new Set(fieldIds).size !== fieldIds.length ||
+    new Set(fieldNames).size !== fieldNames.length
+  ) {
+    return undefined;
+  }
+
+  return {
+    mode: "script_formula",
+    recipe: "ordered_main_person_fields",
+    fields: fieldIds.map((fieldId) => ({
+      fieldId,
+      sourceFieldId: fieldId
+    })),
+    sourceExpression: attributes.handlerIds || "",
+    sourceNameExpression: attributes.handlerNames || ""
   };
 }
 
@@ -596,6 +649,11 @@ function simpleDollarExpressionValue(value) {
   return match ? match[1].trim() : "";
 }
 
+function parenthesizedDollarExpressionValue(value) {
+  const match = String(value || "").trim().match(/^\(\s*\$([^$()]+)\$\s*\)$/);
+  return match ? match[1].trim() : "";
+}
+
 function normalizeLegacyExpression(value) {
   if (value === undefined || value === null) return "";
   return String(value)
@@ -626,9 +684,34 @@ function formulaSourceAttributesMatch(sourceAttributes, dslAttributes) {
 }
 
 function workflowFormulaTargetFieldMatches(sourceFormula, participants, sourceForm, dslForm) {
+  if (Array.isArray(sourceFormula?.fields)) {
+    if (
+      !Array.isArray(participants?.fields) ||
+      participants.fields.length !== sourceFormula.fields.length
+    ) {
+      return false;
+    }
+    return sourceFormula.fields.every((field, index) =>
+      workflowFormulaTargetFieldMatch(
+        field?.sourceFieldId || field?.fieldId,
+        participants.fields[index]?.fieldId,
+        sourceForm,
+        dslForm
+      )
+    );
+  }
+
   const sourceFieldId = sourceFormula?.sourceFieldId || sourceFormula?.fieldId;
   if (!sourceFieldId) return true;
+  return workflowFormulaTargetFieldMatch(
+    sourceFieldId,
+    participants?.fieldId,
+    sourceForm,
+    dslForm
+  );
+}
 
+function workflowFormulaTargetFieldMatch(sourceFieldId, targetFieldId, sourceForm, dslForm) {
   const sourceCandidates = [
     ...(sourceForm?.controls || []),
     ...(sourceForm?.dataFields || []),
@@ -636,7 +719,7 @@ function workflowFormulaTargetFieldMatches(sourceFormula, participants, sourceFo
   ].filter((field) => field?.id === sourceFieldId);
   const targetFields = (dslForm?.fields || []).flatMap((field) => [field, ...(field?.columns || [])]);
   const candidates = targetFields
-    .filter((field) => field?.id === participants?.fieldId);
+    .filter((field) => field?.id === targetFieldId);
   if (sourceCandidates.length !== 1 || candidates.length !== 1) return false;
   const source = sourceCandidates[0];
   const target = candidates[0];

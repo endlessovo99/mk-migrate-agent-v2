@@ -2461,6 +2461,10 @@ function emptyOrgHandlers() {
 }
 
 function scriptFormulaHandlerRuleKey(participants, context = {}) {
+  if (participants.recipe === "ordered_main_person_fields") {
+    return orderedMainPersonFieldsRuleKey(participants, context);
+  }
+
   const binding = participants.recipe === "main_field_contains_login_names"
     ? mainFieldScriptFormulaBinding(participants, context)
     : detailScriptFormulaBinding(participants, context);
@@ -2478,6 +2482,28 @@ function scriptFormulaHandlerRuleKey(participants, context = {}) {
   }
   const content = scriptFormulaDisplayContent(script, dataRef, binding.displayRef);
 
+  return {
+    type: "Script",
+    script,
+    vo: { mode: "script", content },
+    resultType: workflowOrgArrayResultType()
+  };
+}
+
+function orderedMainPersonFieldsRuleKey(participants, context = {}) {
+  const fields = Array.isArray(participants.fields) ? participants.fields : [];
+  if (fields.length !== 2) {
+    const error = new Error("Workflow ordered person-field Script formula requires exactly two fields.");
+    error.code = "projection.workflow.script_formula_ordered_fields_invalid";
+    error.details = { fieldCount: fields.length };
+    throw error;
+  }
+  const bindings = fields.map((field) =>
+    mainFieldScriptFormulaBinding({ fieldId: field?.fieldId }, context)
+  );
+  const dataRefs = bindings.map((binding) => `\${data.${binding.variableId}}`);
+  const script = `var handlers = []; var groups = [${dataRefs.join(", ")}]; for (var i = 0; i < groups.length; i++) { var values = groups[i] || []; if (Object.prototype.toString.call(values) !== "[object Array]") { values = [values]; } for (var j = 0; j < values.length; j++) { if (values[j]) { handlers.push(values[j]); } } } return handlers;`;
+  const content = scriptFormulaDisplayContentForBindings(script, dataRefs, bindings);
   return {
     type: "Script",
     script,
@@ -2548,8 +2574,21 @@ function detailScriptFormulaBinding(participants, context = {}) {
 }
 
 function scriptFormulaDisplayContent(script, dataRef, displayRef) {
-  return String(script)
-    .replace(dataRef, () => displayRef)
+  return translateScriptFormulaDisplayContent(
+    String(script).replace(dataRef, () => displayRef)
+  );
+}
+
+function scriptFormulaDisplayContentForBindings(script, dataRefs, bindings) {
+  let content = String(script);
+  for (let index = 0; index < dataRefs.length; index += 1) {
+    content = content.replace(dataRefs[index], () => bindings[index].displayRef);
+  }
+  return translateScriptFormulaDisplayContent(content);
+}
+
+function translateScriptFormulaDisplayContent(content) {
+  return String(content)
     .replace(/\$\{func\.sysorg\.getPersonByLoginName\}/g, "#根据登录名查找人员#")
     .replace(/\$\{func\.sysorg\.getElementByNo\}/g, "#根据组织编码查找组织#")
     .replace(/\$\{func\.sysorg\.getDepartmentHead\}/g, "#查找部门领导#");

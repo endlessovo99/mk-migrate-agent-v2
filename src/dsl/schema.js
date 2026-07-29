@@ -2202,7 +2202,8 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
     const detailRecipe = ["detail_login_names_to_persons", "first_detail_department_code_to_head"]
       .includes(participants.recipe);
     const mainFieldRecipe = participants.recipe === "main_field_contains_login_names";
-    if (!detailRecipe && !mainFieldRecipe) {
+    const orderedMainPersonFieldsRecipe = participants.recipe === "ordered_main_person_fields";
+    if (!detailRecipe && !mainFieldRecipe && !orderedMainPersonFieldsRecipe) {
       diagnostics.push(error(
         "workflow.participants.script_formula_recipe_unsupported",
         "Script formula participants require a supported deterministic recipe.",
@@ -2210,7 +2211,10 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         { actual: participants.recipe }
       ));
     }
-    if (!nonEmptyString(participants.fieldId) || !nonEmptyString(participants.sourceFieldId)) {
+    if (
+      (detailRecipe || mainFieldRecipe) &&
+      (!nonEmptyString(participants.fieldId) || !nonEmptyString(participants.sourceFieldId))
+    ) {
       diagnostics.push(error(
         "workflow.participants.script_formula_field_required",
         "Script formula participants require fieldId and sourceFieldId.",
@@ -2264,6 +2268,9 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
     if (mainFieldRecipe) {
       validateMainFieldLoginMapParticipant(participants, context, diagnostics, path);
     }
+    if (orderedMainPersonFieldsRecipe) {
+      validateOrderedMainPersonFieldsParticipant(participants, context, diagnostics, path);
+    }
     if (!nonEmptyString(participants.sourceExpression)) {
       diagnostics.push(error(
         "workflow.participants.script_formula_source_required",
@@ -2272,6 +2279,80 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
       ));
     }
   }
+}
+
+function validateOrderedMainPersonFieldsParticipant(participants, context, diagnostics, path) {
+  const fields = participants.fields;
+  if (
+    !Array.isArray(fields) ||
+    fields.length !== 2 ||
+    participants.fieldId !== undefined ||
+    participants.sourceFieldId !== undefined ||
+    participants.detailTableId !== undefined
+  ) {
+    diagnostics.push(error(
+      "workflow.participants.script_formula_ordered_fields_required",
+      "Ordered person-field Script formula participants require exactly two fields and no singular field binding.",
+      `${path}/fields`
+    ));
+    return;
+  }
+
+  const seenFieldIds = new Set();
+  const seenSourceFieldIds = new Set();
+  fields.forEach((binding, index) => {
+    const bindingPath = `${path}/fields/${index}`;
+    const keys = isRecord(binding) ? Object.keys(binding).sort() : [];
+    if (
+      !isRecord(binding) ||
+      keys.join(",") !== "fieldId,sourceFieldId" ||
+      !nonEmptyString(binding.fieldId) ||
+      !nonEmptyString(binding.sourceFieldId) ||
+      seenFieldIds.has(binding.fieldId) ||
+      seenSourceFieldIds.has(binding.sourceFieldId)
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_ordered_field_invalid",
+        "Each ordered person-field binding requires unique fieldId and sourceFieldId values.",
+        bindingPath
+      ));
+      return;
+    }
+    seenFieldIds.add(binding.fieldId);
+    seenSourceFieldIds.add(binding.sourceFieldId);
+
+    const field = (context.form?.fields || []).find((item) => item?.id === binding.fieldId);
+    if (!field) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_ordered_field_missing",
+        "Ordered person-field bindings must reference existing main form fields.",
+        `${bindingPath}/fieldId`,
+        { fieldId: binding.fieldId }
+      ));
+      return;
+    }
+    if (field.componentId !== "xform-address") {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_ordered_field_component",
+        "Ordered person-field bindings require xform-address fields.",
+        `${bindingPath}/fieldId`,
+        { fieldId: binding.fieldId, componentId: field.componentId }
+      ));
+    }
+    const orgTypes = field.props?.orgTypes;
+    if (
+      !Array.isArray(orgTypes) ||
+      orgTypes.length !== 1 ||
+      orgTypes[0] !== "ORG_TYPE_PERSON"
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.script_formula_ordered_field_person_only",
+        "Ordered person-field bindings require person-only address fields.",
+        `${bindingPath}/fieldId`,
+        { fieldId: binding.fieldId, orgTypes }
+      ));
+    }
+  });
 }
 
 function validateMainFieldLoginMapParticipant(participants, context, diagnostics, path) {

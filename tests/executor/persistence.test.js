@@ -30,12 +30,60 @@ function loadIndependentFormFixture() {
   return fixture;
 }
 
+function orderedPersonFieldFormulaDsl() {
+  const form = sampleForm();
+  form.fields[0] = {
+    ...form.fields[0],
+    title: "代报人",
+    componentId: "xform-address",
+    props: { orgTypes: ["ORG_TYPE_PERSON"] }
+  };
+  form.fields[1] = {
+    ...form.fields[1],
+    title: "申请人",
+    componentId: "xform-address",
+    props: { required: true, orgTypes: ["ORG_TYPE_PERSON"] }
+  };
+
+  const workflow = sampleWorkflow();
+  workflow.nodes = [
+    workflow.nodes[0],
+    {
+      id: "N37",
+      type: "review",
+      element: "manualTask",
+      name: "部门负责人审批",
+      sourceType: "reviewNode",
+      sourceRef: "source.workflow.node.N37",
+      attributes: { handlerSelectType: "formula" },
+      participants: {
+        mode: "script_formula",
+        recipe: "ordered_main_person_fields",
+        fields: [
+          { fieldId: "fd_subject", sourceFieldId: "fd_subject" },
+          { fieldId: "fd_amount", sourceFieldId: "fd_amount" }
+        ],
+        sourceExpression: "($fd_subject$);$fd_amount$",
+        sourceNameExpression: "($代报人$);$申请人$"
+      },
+      translationStatus: "executable"
+    },
+    { ...workflow.nodes[1], id: "N3", sourceRef: "source.workflow.node.N3" }
+  ];
+  workflow.edges = [
+    { ...workflow.edges[0], id: "L1", source: "N1", target: "N37", sourceRef: "source.workflow.edge.L1" },
+    { ...workflow.edges[0], id: "L2", source: "N37", target: "N3", sourceRef: "source.workflow.edge.L2" }
+  ];
+  workflow.topologicalOrder = ["N1", "N37", "N3"];
+  return sampleTrustedDsl({ form, workflow });
+}
+
 describe("preparePersistedTemplate interface", () => {
   it("verifies a healthy projected template", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl());
     assert.equal(readback.ok, true);
     assert.equal(readback.status, "verified");
-    assert.equal(readback.invariantVersion, 20);
+    assert.equal(readback.invariantVersion, 21);
     assert.deepEqual(readback.partitions, {
       envelope: "verified",
       form: "verified",
@@ -1439,6 +1487,109 @@ describe("script mutations", () => {
 });
 
 describe("workflow mutations", () => {
+  it("persists and independently reads back the ordered two-person MK Script formula", () => {
+    const dsl = orderedPersonFieldFormulaDsl();
+    const nativeHandlerEvidence = JSON.parse(readFileSync(
+      join(fixtureDir, "ordered-person-fields-native-handler.json"),
+      "utf8"
+    ));
+    const prepared = prepareSample(dsl);
+    const content = JSON.parse(prepared.update.mechanisms.lbpmTemplate[0].fdContent);
+    const handlers = content.elements.find((element) => element.id === "N37").handlers;
+    const ruleKey = JSON.parse(handlers.ruleKey);
+    const expectedScript = "var handlers = []; var groups = [${data.template-id-fd_subject}, ${data.template-id-fd_amount}]; for (var i = 0; i < groups.length; i++) { var values = groups[i] || []; if (Object.prototype.toString.call(values) !== \"[object Array]\") { values = [values]; } for (var j = 0; j < values.length; j++) { if (values[j]) { handlers.push(values[j]); } } } return handlers;";
+    const expectedContent = "var handlers = []; var groups = [$内置表单.代报人$, $内置表单.申请人$]; for (var i = 0; i < groups.length; i++) { var values = groups[i] || []; if (Object.prototype.toString.call(values) !== \"[object Array]\") { values = [values]; } for (var j = 0; j < values.length; j++) { if (values[j]) { handlers.push(values[j]); } } } return handlers;";
+
+    assert.equal(handlers.type, "formula");
+    assert.equal(handlers.source, "2");
+    assert.equal(handlers.ruleMode, "script");
+    assert.equal(content.elements.find((element) => element.id === "N37").handlerIds, "");
+    assert.equal(content.elements.find((element) => element.id === "N37").handlerNames, "");
+    assert.equal(ruleKey.type, "Script");
+    assert.equal(ruleKey.script, expectedScript);
+    assert.equal(ruleKey.vo.mode, "script");
+    assert.equal(ruleKey.vo.content, expectedContent);
+    assert.equal(ruleKey.varIds, undefined);
+    assert.equal(ruleKey.resultType.type, "array");
+    assert.deepEqual(Object.keys(ruleKey.resultType.items.properties), [
+      "fdId",
+      "fdName",
+      "fdOrgType"
+    ]);
+    assert.equal(prepared.verify(prepared.update).ok, true);
+    const { migrationSource: _migrationSource, ...projectedNativeHandlers } = handlers;
+    assert.deepEqual(projectedNativeHandlers, nativeHandlerEvidence);
+
+    const evidencedReadback = structuredClone(prepared.update);
+    const evidencedContent = JSON.parse(
+      evidencedReadback.mechanisms.lbpmTemplate[0].fdContent
+    );
+    evidencedContent.elements.find((element) => element.id === "N37").handlers =
+      nativeHandlerEvidence;
+    evidencedReadback.mechanisms.lbpmTemplate[0].fdContent =
+      JSON.stringify(evidencedContent);
+    assert.equal(prepared.verify(evidencedReadback).ok, true);
+
+    const evaluate = (proxyReporter, applicant) => Function(
+      "proxyReporter",
+      "applicant",
+      ruleKey.script
+        .replace("${data.template-id-fd_subject}", "proxyReporter")
+        .replace("${data.template-id-fd_amount}", "applicant")
+    )(proxyReporter, applicant);
+    const proxyReporter = { fdId: "proxy", fdName: "代报人", fdOrgType: "8" };
+    const applicant = { fdId: "applicant", fdName: "申请人", fdOrgType: "8" };
+    assert.deepEqual(evaluate(undefined, applicant), [applicant]);
+    assert.deepEqual(evaluate(proxyReporter, applicant), [proxyReporter, applicant]);
+    assert.deepEqual(evaluate(applicant, applicant), [applicant, applicant]);
+
+    const mutations = [
+      (value) => {
+        value.script = value.script.replace(
+          "${data.template-id-fd_subject}, ${data.template-id-fd_amount}",
+          "null, ${data.template-id-fd_amount}"
+        );
+      },
+      (value) => {
+        value.script = value.script.replace(
+          "${data.template-id-fd_subject}, ${data.template-id-fd_amount}",
+          "${data.template-id-fd_amount}, ${data.template-id-fd_subject}"
+        );
+      },
+      (value) => {
+        value.script = value.script.replace(
+          "${data.template-id-fd_amount}",
+          "${data.template-id-fd_subject}"
+        );
+      },
+      (value) => {
+        value.vo.content = value.vo.content.replace("$内置表单.申请人$", "$内置表单.代报人$");
+      },
+      (value) => {
+        delete value.resultType;
+      }
+    ];
+
+    for (const mutateRuleKey of mutations) {
+      const mutated = structuredClone(evidencedReadback);
+      const mutatedContent = JSON.parse(mutated.mechanisms.lbpmTemplate[0].fdContent);
+      const mutatedHandlers = mutatedContent.elements.find((element) => element.id === "N37").handlers;
+      const mutatedRuleKey = JSON.parse(mutatedHandlers.ruleKey);
+      mutateRuleKey(mutatedRuleKey);
+      mutatedHandlers.ruleKey = JSON.stringify(mutatedRuleKey);
+      mutated.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(mutatedContent);
+
+      const rejected = prepared.verify(mutated);
+      assert.equal(rejected.ok, false);
+      assert.equal(
+        rejected.diagnostics.some((item) =>
+          item.code === "readback.workflow.participant_mismatch"
+        ),
+        true
+      );
+    }
+  });
+
   it("projects a resolved role-line participant as native member type 4", () => {
     const roleId = "149cb36bda232828b2168944bde8c95b";
     const nativeHandlerEvidence = JSON.parse(readFileSync(

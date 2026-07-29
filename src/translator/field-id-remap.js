@@ -248,10 +248,19 @@ function remapDataAuthority(dataAuthority, idMap) {
 
 function remapParticipants(participants, idMap) {
   if (!participants || typeof participants !== "object") return participants;
-  if (!participants.fieldId) return participants;
+  const fields = Array.isArray(participants.fields)
+    ? participants.fields.map((field) => ({
+        ...field,
+        fieldId: mapFieldId(field?.fieldId, idMap)
+      }))
+    : participants.fields;
+  if (!participants.fieldId && fields === participants.fields) return participants;
   return {
     ...participants,
-    fieldId: mapFieldId(participants.fieldId, idMap),
+    ...(participants.fieldId
+      ? { fieldId: mapFieldId(participants.fieldId, idMap) }
+      : {}),
+    ...(Array.isArray(fields) ? { fields } : {}),
     ...(participants.detailTableId
       ? { detailTableId: mapFieldId(participants.detailTableId, idMap) }
       : {})

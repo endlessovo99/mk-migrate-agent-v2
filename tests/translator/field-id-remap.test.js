@@ -132,4 +132,33 @@ describe("field-id-remap", () => {
       "matched"
     );
   });
+
+  it("remaps both ordered person-field bindings while preserving their source evidence and order", () => {
+    const firstSourceFieldId = "fd_proxy_reporter_person_field_over_limit";
+    const secondSourceFieldId = "fd_applicant_person_field_over_limit";
+    const idMap = new Map([
+      [firstSourceFieldId, "fd_1111111111111111"],
+      [secondSourceFieldId, "fd_2222222222222222"]
+    ]);
+
+    const workflow = applyFieldIdMapToWorkflow({
+      nodes: [{
+        id: "N37",
+        participants: {
+          mode: "script_formula",
+          recipe: "ordered_main_person_fields",
+          fields: [
+            { fieldId: firstSourceFieldId, sourceFieldId: firstSourceFieldId },
+            { fieldId: secondSourceFieldId, sourceFieldId: secondSourceFieldId }
+          ],
+          sourceExpression: `$${firstSourceFieldId}$;$${secondSourceFieldId}$`
+        }
+      }]
+    }, idMap);
+
+    assert.deepEqual(workflow.nodes[0].participants.fields, [
+      { fieldId: "fd_1111111111111111", sourceFieldId: firstSourceFieldId },
+      { fieldId: "fd_2222222222222222", sourceFieldId: secondSourceFieldId }
+    ]);
+  });
 });
