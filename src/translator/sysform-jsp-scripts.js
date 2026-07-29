@@ -1251,7 +1251,7 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   }
 
   const candidates = [
-    ...extractValueChangeCandidates(sourceWithHelpers),
+    ...extractValueChangeCandidates(sourceWithHelpers, options),
     ...extractDetailControlDisplayCandidates(sourceWithHelpers),
     ...extractWindowLoadCandidates(sourceWithHelpers, options),
     ...extractSubmitQueueCandidates(sourceWithHelpers, "submit", "onBeforeSubmit"),
@@ -3704,7 +3704,7 @@ function hasExecutableJavascript(value = "") {
   return false;
 }
 
-function extractValueChangeCandidates(source) {
+function extractValueChangeCandidates(source, options = {}) {
   const text = source.javascript || "";
   const candidates = [];
   const platformCallStarts = provenPlatformValueChangeCallStarts(text);
@@ -3745,6 +3745,42 @@ function extractValueChangeCandidates(source) {
         source,
         [fn, text.slice(match.index, end).trim()].filter(Boolean).join("\n")
       )
+    });
+  }
+
+  const aliases = literalFieldAliases(text);
+  const bindings = analyzeJavaScriptFunctionBodyBindings(text);
+  const namedAliasPattern = /AttachXFormValueChangeEventById\(\s*([A-Za-z_$][\w$]*)\s*,\s*([A-Za-z_$][\w$]*)\s*\)/g;
+  for (const match of text.matchAll(namedAliasPattern)) {
+    if (!platformCallStarts.has(match.index)) continue;
+    if (!bindings.ok || !bindings.hasSingleStableBinding(match[1])) continue;
+    const controlId = aliases.get(match[1]);
+    if (!controlId) continue;
+    if (!hasInlineWindowLoadHelperInvocation(text, match[2])) continue;
+    const helper = namedWindowLoadHelperEvidence(
+      text,
+      `${match[2]}();`,
+      options.form
+    );
+    if (!helper || helper.sourceFieldId !== controlId) continue;
+    const end = findCallEnd(text, match.index + match[0].length);
+    const javascript = [
+      helper.reviewText,
+      text.slice(match.index, end).trim()
+    ].filter(Boolean).join("\n");
+    candidates.push({
+      index: match.index,
+      sourceActionKey: inlineOnChangeSourceActionKey(
+        source.sourceRef || source.id,
+        match.index
+      ),
+      event: "onChange",
+      scope: "control",
+      controlId,
+      branchFunctionName: match[2],
+      branchSource: helper.onChangeBranchSource,
+      javascript,
+      reviewJavascript: withHelperJavascript(source, javascript)
     });
   }
 
@@ -4043,6 +4079,7 @@ function namedWindowLoadHelperEvidence(text, callbackBody, form) {
   );
   return {
     functionName,
+    sourceFieldId,
     functionText,
     reviewText: [
       `var ${aliasDeclarations.join(";\nvar ")};`,
@@ -4053,8 +4090,27 @@ function namedWindowLoadHelperEvidence(text, callbackBody, form) {
       `  var ${value[1]} = GetXFormFieldValueById(${JSON.stringify(sourceFieldId)})[0];`,
       `  if (${value[1]} ${operator} ${JSON.stringify(matchValue)}) {}`,
       "}"
+    ].join("\n"),
+    onChangeBranchSource: [
+      `function ${functionName}(value) {`,
+      `  if (value ${operator} ${JSON.stringify(matchValue)}) {}`,
+      "}"
     ].join("\n")
   };
+}
+
+function hasInlineWindowLoadHelperInvocation(text, functionName) {
+  const inlinePattern = /Com_AddEventListener\(\s*window\s*,\s*(["'])load\1\s*,\s*function\s*\([^)]*\)\s*\{/g;
+  for (const match of String(text || "").matchAll(inlinePattern)) {
+    const bodyStart = match.index + match[0].length;
+    const bodyEnd = findBalancedClose(text, bodyStart - 1, "{", "}");
+    if (bodyEnd < bodyStart) continue;
+    const invocation = text.slice(bodyStart, bodyEnd).match(
+      /^\s*([A-Za-z_$][\w$]*)\s*\(\s*\)\s*;?\s*$/
+    );
+    if (invocation?.[1] === functionName) return true;
+  }
+  return false;
 }
 
 function literalFieldAliases(text) {
