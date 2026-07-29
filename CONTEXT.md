@@ -89,7 +89,7 @@ The current v2 workflow source file shape. It is supported only when paired with
 _Avoid_: standalone workflow source, legacy flow source
 
 **KmReviewTemplate XML**:
-An optional companion export in a paired source directory. Its root `fdName` is the authoritative business template name used when `--template-name` is not provided.
+An optional companion export in a paired source directory. Its root `fdName` is the authoritative business template name used when `--template-name` is not provided. When its root `fdId` also exactly matches both paired template IDs, fixed root author/authorization containers may provide fail-closed person identity evidence for otherwise-unstructured static workflow handlers; this evidence never selects a NewOA target.
 _Avoid_: SysForm filename fallback, designer title substitute
 
 **Executor**:

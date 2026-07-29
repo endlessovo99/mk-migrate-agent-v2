@@ -1047,6 +1047,15 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }));
   }
 
+  const chinaValueRuntime = chinaValueRuntimeCandidates(source, options.form);
+  if (chinaValueRuntime.length) {
+    return chinaValueRuntime.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
   const localCurrencyHelpers = localCurrencyHelperCandidates(source, options.form);
   if (localCurrencyHelpers.length) {
     return localCurrencyHelpers.map((candidate, index) => ({
@@ -1304,6 +1313,132 @@ function simpleCalculationAssignmentCandidates(source, form) {
   }
 
   return candidates;
+}
+
+function chinaValueRuntimeCandidates(source, form) {
+  const text = String(source.javascript || "").trim();
+  if (!/^Com_IncludeFile\(\s*(["'])chinaValue_script\.js\1\s*,\s*(["'])\.\.\/sys\/xform\/designer\/chinaValue\/\2\s*\)\s*;?$/u.test(text)) {
+    return [];
+  }
+
+  const fields = Array.isArray(form?.fields) ? form.fields : [];
+  const ordinaryById = new Map(
+    fields
+      .filter((field) => field?.type !== "detailTable" && field?.dataOnly !== true)
+      .map((field) => [field.id, field])
+  );
+  const bindings = fields.flatMap((target) => {
+    if (
+      target?.type === "detailTable" ||
+      String(target?.sourceProps?.designerType || "").toLowerCase() !== "chinavalue"
+    ) return [];
+    const sourceId = String(
+      target.sourceProps?.designerValues?.relatedid ||
+      target.sourceProps?.metadataAttributes?.relatedid ||
+      ""
+    ).trim();
+    const amount = ordinaryById.get(sourceId);
+    if (!sourceId || !amount || amount.type !== "number" || target.type !== "text") return [];
+    return [{ sourceId, targetId: target.id }];
+  });
+  if (!bindings.length) return [];
+
+  return bindings.flatMap(({ sourceId, targetId }, bindingIndex) => [
+    chinaValueRuntimeCandidate({
+      index: bindingIndex * 2,
+      event: "onChange",
+      scope: "control",
+      controlId: sourceId,
+      javascript: text,
+      function: chinaValueRuntimeFunction("onChange", sourceId, targetId)
+    }, sourceId, targetId, source.sourceRef),
+    chinaValueRuntimeCandidate({
+      index: bindingIndex * 2 + 1,
+      event: "onLoad",
+      scope: "global",
+      javascript: text,
+      function: chinaValueRuntimeFunction("onLoad", sourceId, targetId)
+    }, sourceId, targetId, source.sourceRef)
+  ]);
+}
+
+function chinaValueRuntimeCandidate(candidate, sourceId, targetId, sourceRef) {
+  return {
+    ...candidate,
+    semanticHints: {
+      coveredCalculationRanges: [{
+        sourceRef,
+        name: `china-value-runtime:${sourceId}:${targetId}`,
+        start: 0,
+        end: candidate.javascript.length
+      }]
+    },
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: `chinaValue_script.js runtime binding ${targetId}.relatedid=${sourceId}`,
+      target: "control onChange/onLoad + MKXFORM synchronous uppercase currency conversion",
+      basis: "deterministic-china-value-runtime",
+      reviewRequired: false
+    }]
+  };
+}
+
+function chinaValueRuntimeFunction(event, sourceId, targetId) {
+  const signature = event === "onLoad"
+    ? "function onLoad() {"
+    : "function onChange(value, rowNum, parentRowNum) {";
+  return [
+    signature,
+    `  var amountRaw = MKXFORM.getValue(${JSON.stringify(sourceId)})`,
+    "  var amount = Number(Array.isArray(amountRaw) ? amountRaw[0] : amountRaw || 0)",
+    "  var cnDigits = [\"零\",\"壹\",\"贰\",\"叁\",\"肆\",\"伍\",\"陆\",\"柒\",\"捌\",\"玖\"]",
+    "  var cnRadices = [\"\",\"拾\",\"佰\",\"仟\"]",
+    "  var cnUnits = [\"\",\"万\",\"亿\",\"兆\"]",
+    "  var cnDecimals = [\"角\",\"分\"]",
+    "  var negative = amount < 0",
+    "  var absolute = Math.abs(amount)",
+    "  var chineseAmount = \"\"",
+    "  if (!isFinite(absolute) || absolute >= 1000000000000000) {",
+    "    chineseAmount = \"\"",
+    "  } else if (absolute === 0) {",
+    "    chineseAmount = \"零元整\"",
+    "  } else {",
+    "    var parts = absolute.toFixed(2).split(\".\")",
+    "    var integerText = parts[0]",
+    "    var decimalText = parts[1]",
+    "    var zeroCount = 0",
+    "    for (var digitIndex = 0; digitIndex < integerText.length; digitIndex += 1) {",
+    "      var digit = Number(integerText.substring(digitIndex, digitIndex + 1))",
+    "      var position = integerText.length - digitIndex - 1",
+    "      var groupIndex = Math.floor(position / 4)",
+    "      var radixIndex = position % 4",
+    "      if (digit === 0) {",
+    "        zeroCount += 1",
+    "      } else {",
+    "        if (zeroCount > 0) chineseAmount += cnDigits[0]",
+    "        zeroCount = 0",
+    "        chineseAmount += cnDigits[digit] + cnRadices[radixIndex]",
+    "      }",
+    "      if (radixIndex === 0 && zeroCount < 4) chineseAmount += cnUnits[groupIndex]",
+    "    }",
+    "    if (integerText === \"0\") chineseAmount = cnDigits[0]",
+    "    chineseAmount += \"元\"",
+    "    var decimalWritten = false",
+    "    for (var decimalIndex = 0; decimalIndex < 2; decimalIndex += 1) {",
+    "      var decimalDigit = Number(decimalText.substring(decimalIndex, decimalIndex + 1))",
+    "      if (decimalDigit !== 0) {",
+    "        if (decimalIndex === 1 && Number(decimalText.substring(0, 1)) === 0) chineseAmount += cnDigits[0]",
+    "        chineseAmount += cnDigits[decimalDigit] + cnDecimals[decimalIndex]",
+    "        decimalWritten = true",
+    "      }",
+    "    }",
+    "    if (!decimalWritten) chineseAmount += \"整\"",
+    "    if (negative) chineseAmount = \"负\" + chineseAmount",
+    "  }",
+    `  MKXFORM.setValue(${JSON.stringify(targetId)}, chineseAmount)`,
+    "}"
+  ].join("\n");
 }
 
 function conditionalTotalUppercaseCandidates(source, form, sourceScripts = {}) {
@@ -3762,14 +3897,24 @@ function extractWindowLoadCandidates(source, options = {}) {
     const end = findCallEnd(text, bodyEnd + 1);
     const detailDisplay = detailControlDisplayParts(text);
     const javascript = text.slice(match.index, end).trim();
+    const namedHelper = namedWindowLoadHelperEvidence(
+      text,
+      text.slice(bodyStart, bodyEnd),
+      options.form
+    );
     const base = {
       index: match.index,
       event: "onLoad",
       scope: "global",
       javascript,
-      reviewJavascript: withHelperJavascript(source, javascript),
-      branchSource: text,
-      branchFunctionStart: match.index + match[0].lastIndexOf("function")
+      reviewJavascript: namedHelper
+        ? withHelperJavascript(source, [namedHelper.reviewText, javascript].join("\n\n"))
+        : withHelperJavascript(source, javascript),
+      branchSource: namedHelper?.branchSource || text,
+      branchFunctionName: namedHelper?.functionName,
+      branchFunctionStart: namedHelper
+        ? undefined
+        : match.index + match[0].lastIndexOf("function")
     };
 
     if (
@@ -3847,6 +3992,84 @@ function extractWindowLoadCandidates(source, options = {}) {
     });
   }
   return candidates;
+}
+
+function namedWindowLoadHelperEvidence(text, callbackBody, form) {
+  const invocation = String(callbackBody || "").match(
+    /^\s*([A-Za-z_$][\w$]*)\s*\(\s*\)\s*;?\s*$/
+  );
+  if (!invocation) return undefined;
+
+  const functionName = invocation[1];
+  const functionText = findNamedFunction(text, functionName);
+  if (!functionText) return undefined;
+
+  const aliases = literalFieldAliases(text);
+  const radio = functionText.match(
+    /\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*GetXFormFieldById\(\s*([A-Za-z_$][\w$]*)\s*\)\s*;/
+  );
+  if (!radio) return undefined;
+  const sourceFieldId = aliases.get(radio[2]);
+  if (!sourceFieldId || !mainField(form, sourceFieldId)) return undefined;
+
+  const value = functionText.match(
+    /\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*;[\s\S]*?\bif\s*\(\s*([A-Za-z_$][\w$]*)\s*\[\s*([A-Za-z_$][\w$]*)\s*\]\s*\.checked\s*\)\s*\{[\s\S]*?\b(?:var\s+)?\1\s*=\s*\2\s*\[\s*\3\s*\]\s*\.value\s*;?[\s\S]*?\}[\s\S]*?\bif\s*\(\s*\1\s*(===|==)\s*(["'])([^"']+)\5\s*\)/
+  );
+  if (!value || value[2] !== radio[1]) return undefined;
+
+  const target = functionText.match(
+    /\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*GetXFormFieldById\(\s*([A-Za-z_$][\w$]*)\s*\)\s*;/
+  );
+  const targetMatches = [...functionText.matchAll(
+    /\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*GetXFormFieldById\(\s*([A-Za-z_$][\w$]*)\s*\)\s*;/g
+  )];
+  const targetMatch = targetMatches.find((candidate) => candidate[1] !== radio[1]);
+  const targetFieldId = targetMatch ? aliases.get(targetMatch[2]) : undefined;
+  if (
+    !target ||
+    !targetMatch ||
+    !targetFieldId ||
+    !mainField(form, targetFieldId) ||
+    !new RegExp(`${escapeRegExp(targetMatch[1])}\\s*\\[[^\\]]+\\][\\s\\S]*?\\.style\\.display\\s*=`).test(functionText) ||
+    !new RegExp(`${escapeRegExp(targetMatch[1])}\\s*\\[[^\\]]+\\]\\.validate\\s*=`).test(functionText)
+  ) {
+    return undefined;
+  }
+
+  const operator = value[4];
+  const matchValue = value[6];
+  const aliasDeclarations = [radio[2], targetMatch[2]].map((name) =>
+    `${name} = ${JSON.stringify(aliases.get(name))}`
+  );
+  return {
+    functionName,
+    functionText,
+    reviewText: [
+      `var ${aliasDeclarations.join(";\nvar ")};`,
+      functionText
+    ].join("\n\n"),
+    branchSource: [
+      `function ${functionName}() {`,
+      `  var ${value[1]} = GetXFormFieldValueById(${JSON.stringify(sourceFieldId)})[0];`,
+      `  if (${value[1]} ${operator} ${JSON.stringify(matchValue)}) {}`,
+      "}"
+    ].join("\n")
+  };
+}
+
+function literalFieldAliases(text) {
+  const aliases = new Map();
+  const ambiguous = new Set();
+  const pattern = /\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(["'])(fd_[A-Za-z0-9_]+)\2\s*;/g;
+  for (const match of String(text || "").matchAll(pattern)) {
+    if (aliases.has(match[1]) && aliases.get(match[1]) !== match[3]) {
+      ambiguous.add(match[1]);
+    } else {
+      aliases.set(match[1], match[3]);
+    }
+  }
+  for (const name of ambiguous) aliases.delete(name);
+  return aliases;
 }
 
 function withHelperJavascript(source, javascript) {

@@ -4,9 +4,24 @@ import { auditSourceScriptRowMarkerOrphans, ORPHAN_ROW_MARKER_WARNING_CODE } fro
 import { translateLbpmProcessDefinitionXml } from "./lbpm-process-definition-adapter.js";
 import { sourceFormRulesFromLegacyScripts } from "./sysform-form-rules.js";
 import { translateSysFormTemplateXml } from "./sysform-template-adapter.js";
-import { cleanText, parseRootHashMapStringPuts } from "./xml-utils.js";
+import {
+  cleanText,
+  parseRootHashMap,
+  parseRootHashMapStringPuts
+} from "./xml-utils.js";
 
 export const SOURCE_DRAFT_VERSION = "2.0-source-draft";
+const KM_REVIEW_PERSON_EVIDENCE_KEYS = Object.freeze([
+  "docCreator",
+  "docAlteror",
+  "docRelevantDept",
+  "fdFeedback",
+  "authAllEditors",
+  "authReaders",
+  "authEditors",
+  "authAllReaders",
+  "authTmpReaders"
+]);
 const FORM_RIGHT_MODE_RESTRICTIVENESS = new Map([
   ["hidden", 0],
   ["view", 1],
@@ -176,7 +191,7 @@ function cleanSourceDirectory(path, options = {}) {
   const sysFormPath = join(path, sysFormName);
   const lbpmProcessPath = join(path, lbpmProcessName);
   const kmReviewTemplate = kmReviewTemplateName
-    ? readKmReviewTemplateName(join(path, kmReviewTemplateName))
+    ? readKmReviewTemplateEvidence(join(path, kmReviewTemplateName))
     : undefined;
 
   const formDsl = translateSysFormTemplateXml(readFileSync(sysFormPath, "utf8"), {
@@ -199,6 +214,15 @@ function cleanSourceDirectory(path, options = {}) {
   if (kmReviewTemplate?.fdId && processTemplateId && kmReviewTemplate.fdId !== processTemplateId) {
     throw new Error(`source directory template mismatch: KmReviewTemplate fdId ${kmReviewTemplate.fdId} does not match LbpmProcessDefinition templateId ${processTemplateId}`);
   }
+  const pairedPersonEntities = (
+    kmReviewTemplate?.fdId &&
+    formTemplateId &&
+    processTemplateId &&
+    kmReviewTemplate.fdId === formTemplateId &&
+    kmReviewTemplate.fdId === processTemplateId
+  )
+    ? kmReviewTemplate.personEntities
+    : undefined;
 
   return sourceDraftFromLegacyDsl({
     ...formDsl,
@@ -214,7 +238,10 @@ function cleanSourceDirectory(path, options = {}) {
         }
       } : {})
     },
-    workflow: workflowDsl.workflow,
+    workflow: supplementWorkflowHandlerEvidence(
+      workflowDsl.workflow,
+      pairedPersonEntities
+    ),
     review: mergeSourceReviews(formDsl.review, workflowDsl.review)
   }, {
     sourcePath: path,
@@ -234,16 +261,215 @@ function mergeSourceReviews(formReview, workflowReview) {
   return merged;
 }
 
-function readKmReviewTemplateName(path) {
-  const values = parseRootHashMapStringPuts(readFileSync(path, "utf8"));
+function readKmReviewTemplateEvidence(path) {
+  const xml = readFileSync(path, "utf8");
+  const values = parseRootHashMapStringPuts(xml);
   const name = cleanText(values.fdName || "");
   if (!name) {
     throw new Error(`KmReviewTemplate XML is missing root fdName: ${basename(path)}`);
   }
   return {
     name,
-    fdId: cleanText(values.fdId || "") || undefined
+    fdId: cleanText(values.fdId || "") || undefined,
+    personEntities: collectConsistentPersonEntities(
+      parseRootHashMap(xml)
+    )
   };
+}
+
+function collectConsistentPersonEntities(value) {
+  const candidatesById = new Map();
+  for (const key of KM_REVIEW_PERSON_EVIDENCE_KEYS) {
+    const candidates = Array.isArray(value?.[key])
+      ? value[key]
+      : [value?.[key]];
+    for (const candidate of candidates) {
+      const id = organizationRecordId(candidate);
+      if (!id) continue;
+      const entity = personEntityCandidate(candidate);
+      const matches = candidatesById.get(id) || [];
+      matches.push(entity);
+      candidatesById.set(id, matches);
+    }
+  }
+  return new Map(
+    [...candidatesById.entries()].flatMap(([id, candidates]) => {
+      const entity = mergeConsistentPersonCandidates(candidates);
+      return entity ? [[id, entity]] : [];
+    })
+  );
+}
+
+function organizationRecordId(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+  return cleanText(value.fdId || "");
+}
+
+function personEntityCandidate(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const id = cleanText(value.fdId || "");
+  const orgType = Number(value.fdOrgType);
+  const className = cleanText(value.class || "");
+  const loginName = cleanText(value.fdLoginName || "");
+  if (
+    !id ||
+    orgType !== 8 ||
+    className !== "com.landray.kmss.sys.organization.model.SysOrgPerson" ||
+    !loginName
+  ) {
+    return undefined;
+  }
+  return {
+    id,
+    orgType,
+    class: className,
+    parentPresent: Object.prototype.hasOwnProperty.call(value, "hbmParent.fdName"),
+    parent: cleanText(value["hbmParent.fdName"] || "") || undefined,
+    loginName,
+    namePresent: Object.prototype.hasOwnProperty.call(value, "fdName"),
+    name: cleanText(value.fdName || "") || undefined
+  };
+}
+
+function mergeConsistentPersonCandidates(candidates) {
+  if (candidates.length === 0 || candidates.some((candidate) => !candidate)) {
+    return undefined;
+  }
+  const properties = [
+    "orgType",
+    "class",
+    "parentPresent",
+    "parent",
+    "loginName",
+    "namePresent",
+    "name"
+  ];
+  const merged = { id: candidates[0]?.id };
+  for (const property of properties) {
+    const values = [...new Set(candidates.map((candidate) => candidate[property]))];
+    if (values.length !== 1) return undefined;
+    if (!property.endsWith("Present") && values[0] !== undefined) {
+      merged[property] = values[0];
+    }
+  }
+  return merged.id && merged.orgType ? merged : undefined;
+}
+
+function supplementWorkflowHandlerEvidence(workflow, personEntities) {
+  if (!(personEntities instanceof Map) || personEntities.size === 0) {
+    return workflow;
+  }
+  const conflictingNamesById = collectWorkflowHandlerNameConflicts(workflow);
+  return {
+    ...workflow,
+    nodes: (workflow.nodes || []).map((node) => ({
+      ...node,
+      handlerEntities: recoverHandlerEntities(
+        node.handlerEntities,
+        node.attributes?.handlerIds,
+        node.attributes?.handlerNames,
+        personEntities,
+        conflictingNamesById
+      ),
+      optionalHandlerEntities: recoverHandlerEntities(
+        node.optionalHandlerEntities,
+        node.attributes?.optHandlerIds,
+        node.attributes?.optHandlerNames,
+        personEntities,
+        conflictingNamesById
+      )
+    }))
+  };
+}
+
+function collectWorkflowHandlerNameConflicts(workflow) {
+  const namesById = new Map();
+  for (const node of workflow?.nodes || []) {
+    addEntityClaims(node.handlerEntities);
+    addEntityClaims(node.optionalHandlerEntities);
+    addClaims(node.attributes?.handlerIds, node.attributes?.handlerNames);
+    addClaims(node.attributes?.optHandlerIds, node.attributes?.optHandlerNames);
+  }
+  return new Set(
+    [...namesById.entries()]
+      .filter(([, names]) => names.size > 1)
+      .map(([id]) => id)
+  );
+
+  function addClaims(idsValue, namesValue) {
+    const ids = splitWorkflowParticipantSlots(idsValue);
+    const names = splitWorkflowParticipantSlots(namesValue);
+    if (
+      ids.length === 0 ||
+      ids.length !== names.length ||
+      ids.some((id) => !id || id.startsWith("$")) ||
+      names.some((name) => !name)
+    ) {
+      return;
+    }
+    ids.forEach((id, index) => {
+      const claims = namesById.get(id) || new Set();
+      claims.add(names[index]);
+      namesById.set(id, claims);
+    });
+  }
+
+  function addEntityClaims(entities) {
+    for (const entity of entities || []) {
+      const id = cleanText(entity?.id || "");
+      const name = cleanText(entity?.name || "");
+      if (!id || !name) continue;
+      const claims = namesById.get(id) || new Set();
+      claims.add(name);
+      namesById.set(id, claims);
+    }
+  }
+}
+
+function recoverHandlerEntities(
+  existing,
+  idsValue,
+  namesValue,
+  personEntities,
+  conflictingNamesById
+) {
+  if (Array.isArray(existing) && existing.length > 0) return existing;
+  const ids = splitWorkflowParticipantSlots(idsValue);
+  const names = splitWorkflowParticipantSlots(namesValue);
+  if (
+    ids.length === 0 ||
+    ids.length !== names.length ||
+    ids.some((id) => !id || id.startsWith("$")) ||
+    names.some((name) => !name) ||
+    ids.some((id) => conflictingNamesById.has(id))
+  ) {
+    return existing;
+  }
+
+  const recovered = ids.map((id, index) => {
+    const entity = personEntities.get(id);
+    const name = names[index];
+    if (!entity || (entity.name && entity.name !== name)) return undefined;
+    return {
+      id,
+      name,
+      orgType: entity.orgType,
+      class: entity.class,
+      parent: entity.parent,
+      index,
+      loginName: entity.loginName,
+      evidenceSource: "kmReviewTemplate.rootHashMap"
+    };
+  });
+  return recovered.every(Boolean) ? recovered : existing;
+}
+
+function splitWorkflowParticipantSlots(value) {
+  const text = String(value || "");
+  if (!text.trim()) return [];
+  return text
+    .split(";")
+    .map((item) => item.trim());
 }
 
 function normalizeSourceMetadata(source, context) {

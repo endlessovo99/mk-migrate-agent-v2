@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>class</string><string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string></void>
+  <void method="put"><string>fdId</string><string>named-window-load-helper-sysform</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+  <void method="put"><string>fdName</string><string>命名加载助手路由验证</string></void>
+  <void method="put"><string>fdModelName</string><string>com.landray.kmss.km.review.model.KmReviewTemplate</string></void>
+  <void method="put"><string>fdModelId</string><string>named-window-load-helper-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;
+    &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;radio&quot; fd_values=&apos;{id:&quot;fd_company_type&quot;,label:&quot;公司类型&quot;}&apos;&gt;&lt;input id=&quot;fd_company_type&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_joint_company&quot;,label:&quot;合资公司&quot;}&apos;&gt;&lt;input id=&quot;fd_joint_company&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+   &lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+   &lt;div id=&quot;jsp_named_load&quot; fd_type=&quot;jsp&quot;&gt;&lt;label&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+    var leftId = &quot;fd_company_type&quot;;
+    var rightId = &quot;fd_joint_company&quot;;
+    Com_AddEventListener(window, &quot;load&quot;, function(){ changeCompany(); });
+    function changeCompany(){
+      var radio = GetXFormFieldById(leftId);
+      var radioValue;
+      for(var i = 0; i &lt; radio.length; i++){
+        if(radio[i].checked){ radioValue = radio[i].value; }
+      }
+      var targets = GetXFormFieldById(rightId);
+      if(radioValue == &quot;1&quot;){
+        for(var j = 0; j &lt; targets.length; j++){
+          targets[j].parentNode.parentNode.style.display = &quot;&quot;;
+          targets[j].validate = &quot;required&quot;;
+        }
+      }else{
+        for(var j = 0; j &lt; targets.length; j++){
+          targets[j].parentNode.parentNode.style.display = &quot;none&quot;;
+          targets[j].validate = &quot;&quot;;
+        }
+      }
+    }
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/label&gt;&lt;/div&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_company_type&quot; label=&quot;公司类型&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_joint_company&quot; label=&quot;合资公司&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

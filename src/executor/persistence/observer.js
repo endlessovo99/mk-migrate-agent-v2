@@ -311,7 +311,36 @@ function observeDataField(field, lang) {
     component,
     dataOnly: field.fdDisplay === false,
     props,
+    nativeAddressContextDefault: observeNativeAddressContextDefault(controlProps),
     columns: []
+  };
+}
+
+function observeNativeAddressContextDefault(controlProps) {
+  const formula = controlProps?.defaultValueFormulaVO;
+  const source = String(formula?.script || "").trim();
+  if (![
+    "${data.biz.fdCreator}",
+    "${data.biz.fdCreatorDept}",
+    "${data.biz.fdCreator.post}"
+  ].includes(source)) {
+    return undefined;
+  }
+  return {
+    types: Array.isArray(controlProps.org?.types)
+      ? controlProps.org.types.map(normalizeScalar)
+      : undefined,
+    orgTypeArr: Array.isArray(controlProps.org?.orgTypeArr)
+      ? controlProps.org.orgTypeArr.map(normalizeScalar)
+      : undefined,
+    defaultValueType: normalizeScalar(controlProps.org?.defaultValueType),
+    multi: controlProps.multi,
+    preSelectType: normalizeScalar(controlProps.preSelectType),
+    showOrgType: controlProps.showOrgType,
+    maxLength: controlProps.maxLength,
+    allowCustomValue: controlProps["$$allowCustomValue"],
+    type: normalizeScalar(controlProps.type),
+    range: normalizeScalar(controlProps.range)
   };
 }
 

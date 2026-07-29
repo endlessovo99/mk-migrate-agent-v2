@@ -1012,7 +1012,7 @@ function hasNativeNumberPrecision(field) {
 function applyDefaultValueToControlProps(controlProps, field, template, spec) {
   const contextDefault = contextDefaultFormula(field, template, spec);
   if (contextDefault) {
-    applyContextDefaultToControlProps(controlProps, contextDefault, spec, field);
+    applyContextDefaultToControlProps(controlProps, contextDefault, spec);
     return;
   }
 
@@ -1040,23 +1040,21 @@ function applyDefaultValueToControlProps(controlProps, field, template, spec) {
   }
 }
 
-function applyContextDefaultToControlProps(controlProps, contextDefault, spec, field) {
-
+function applyContextDefaultToControlProps(controlProps, contextDefault, spec) {
   if (spec.attrType === "address") {
-    const explicitOrgTypeArr = Array.isArray(field.props?.orgTypes) && field.props.orgTypes.length
-      ? field.props.orgTypes.map((orgType) => NATIVE_ORG_TYPE_CODE.get(orgType))
-      : undefined;
     Object.assign(controlProps, {
       multi: false,
       preSelectType: "fixed",
       defaultValueFormulaVO: contextDefault.formula,
       showOrgType: 0,
-      maxLength: 0,
-      "$$allowCustomValue": true
+      maxLength: 200,
+      "$$allowCustomValue": true,
+      type: spec.desktop,
+      range: "all"
     });
     controlProps.org = {
-      ...(controlProps.org || {}),
-      orgTypeArr: explicitOrgTypeArr || contextDefault.orgTypeArr,
+      types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"],
+      orgTypeArr: contextDefault.orgTypeArr,
       defaultValueType: "formula"
     };
     return;

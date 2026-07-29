@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { projectTemplate, verifyTemplate, xformConfig } from "../helpers/persistence.js";
 import { runRouteCase } from "./run-route-case.js";
 
 const fixture = "tests/fixtures/route-validation/semantic-props";
@@ -98,6 +99,77 @@ describe("semantic source props Route case", { concurrency: false }, () => {
 
     assert.deepEqual(currency.defaultValue, { kind: "literal", value: "CNY" });
     assert.deepEqual(detailAmount.defaultValue, { kind: "literal", value: 0 });
+  });
+
+  it("projects context-default main address controls with the native runtime contract", async () => {
+    const { dsl } = stages();
+    const address = dsl.form.fields.find((field) => field.id === "fd_requester_dept");
+    assert.deepEqual(address.props, {
+      required: true,
+      defaultValue: { kind: "context", source: "creatorDept" },
+      orgTypes: ["ORG_TYPE_ORG", "ORG_TYPE_DEPT"]
+    });
+
+    const projected = projectTemplate(dsl);
+    const config = xformConfig(projected);
+    const nativeField = config.dataModel[0].fdFields
+      .find((field) => field.fdName === address.id);
+    const controlProps = JSON.parse(nativeField.fdAttribute).config.controlProps;
+    assert.deepEqual(
+      {
+        types: controlProps.org?.types,
+        orgTypeArr: controlProps.org?.orgTypeArr,
+        defaultValueType: controlProps.org?.defaultValueType,
+        maxLength: controlProps.maxLength,
+        type: controlProps.type,
+        range: controlProps.range
+      },
+      {
+        types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"],
+        orgTypeArr: ["2"],
+        defaultValueType: "formula",
+        maxLength: 200,
+        type: "@elem/xform-address",
+        range: "all"
+      }
+    );
+    assert.deepEqual(controlProps.defaultValueFormulaVO, {
+      type: "Eval",
+      script: "${data.biz.fdCreatorDept}",
+      vo: {
+        mode: "formula",
+        content: "$MK_TEST_示例流程_20260710120000.创建者部门$"
+      },
+      varIds: ["fdCreatorDept"]
+    });
+
+    const broken = structuredClone(projected);
+    const brokenConfig = xformConfig(broken);
+    const brokenField = brokenConfig.dataModel[0].fdFields
+      .find((field) => field.fdName === address.id);
+    const brokenAttribute = JSON.parse(brokenField.fdAttribute);
+    delete brokenAttribute.config.controlProps.range;
+    brokenField.fdAttribute = JSON.stringify(brokenAttribute);
+    broken.mechanisms["sys-xform"].fdConfig = JSON.stringify(brokenConfig);
+    const brokenReadback = verifyTemplate(dsl, broken);
+    assert.equal(brokenReadback.ok, false);
+    assert.equal(
+      brokenReadback.diagnostics.some((diagnostic) =>
+        diagnostic.code ===
+          "readback.form.address_context_default_native_contract_mismatch"
+      ),
+      true
+    );
+
+    const result = await runRouteCase("semantic-props-success");
+    const readback = result.execution.readback.form.fields
+      .find((field) => field.id === address.id);
+    assert.deepEqual(readback.orgTypes, ["ORG_TYPE_DEPT"]);
+    assert.deepEqual(readback.defaultValue, {
+      kind: "context",
+      source: "creatorDept"
+    });
+    assert.equal(result.execution.readback.partitions.form, "verified");
   });
 
   it("projects detail numeric scale through every stage and verifies native readback", async () => {

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-china-value-runtime-sysform</string></void>
+  <void method="put"><string>fdName</string><string>China Value Runtime</string></void>
+  <void method="put"><string>fdModelId</string><string>route-china-value-runtime-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;
+    &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_amount&quot;,label:&quot;金额（小写）&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;chinaValue&quot; fd_values=&apos;{id:&quot;fd_amount_upper&quot;,label:&quot;金额（大写）&quot;,relatedid:&quot;fd_amount&quot;,dataType:&quot;String&quot;}&apos; relatedid=&quot;fd_amount&quot;&gt;&lt;/div&gt;&lt;/td&gt;
+   &lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdDisplayJsp</string>
+   <string>&lt;script&gt;Com_IncludeFile(&apos;chinaValue_script.js&apos;,&apos;../sys/xform/designer/chinaValue/&apos;);&lt;/script&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_amount&quot; label=&quot;金额（小写）&quot; type=&quot;Double&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_amount_upper&quot; label=&quot;金额（大写）&quot; type=&quot;String&quot; relatedid=&quot;fd_amount&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

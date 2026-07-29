@@ -7,6 +7,10 @@ The v2 route-validation source format is either:
 
 An optional `*_KmReviewTemplate.xml` may sit alongside the paired form and workflow files. When present, its root `fdName` is the authoritative business template name used by Source Draft and DSL. `--template-name` still overrides that value. Without either source, name resolution falls back through the root SysFormTemplate `fdName`, a designer title, and finally the source filename.
 
+The companion may recover otherwise-missing static workflow person source identity evidence only when its root `fdId` exists and exactly equals both `SysFormTemplate.fdModelId` and `LbpmProcessDefinition.templateId`. Intake reads records only from these direct root containers: `docCreator`, `docAlteror`, `docRelevantDept`, `fdFeedback`, `authAllEditors`, `authReaders`, `authEditors`, `authAllReaders`, and `authTmpReaders`. Each record must have `fdOrgType = 8`, the exact `SysOrgPerson` class, and non-empty `fdId` and `fdLoginName` values; other organization types remain outside this route.
+
+Recovery is all-or-nothing per handler list. `handlerIds` and `handlerNames` must have the same number of non-empty positional slots, every ID must occur in an allowed companion container, and every record for a repeated `fdId` must be valid and agree on organization type, class, parent, login name, and name, including whether optional properties are present. Across the workflow, one handler fdId must always have one handler name; a conflicting name invalidates every involved list. A companion without a root `fdId`, an invalid duplicate, a partial handler list, a positional gap, or any identity conflict leaves the original unstructured handler attributes unchanged. Recovered Source Draft handler entities carry `evidenceSource = "kmReviewTemplate.rootHashMap"`. This is source provenance only: it does not select or validate a NewOA target, and the Executor still requires normal unique resolution or an explicitly validated participant override.
+
 `SysFormTemplate.xml` is a Java XMLDecoder export for `com.landray.kmss.sys.xform.base.model.SysFormTemplate`. The adapter reads:
 
 - `fdId`

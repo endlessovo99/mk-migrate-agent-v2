@@ -55,6 +55,21 @@ export function parseRootHashMapStringPuts(xml = "") {
   return values;
 }
 
+export function parseRootHashMap(xml = "") {
+  const text = String(xml);
+  const root = findOutermostHashMap(text);
+  if (!root) return {};
+
+  const rootClose = findMatchingElementClose(text, root.end, "object");
+  if (!rootClose) return {};
+
+  return parseJavaDecoderElement(text, {
+    ...root,
+    closeStart: rootClose.start,
+    closeEnd: rootClose.end
+  }) || {};
+}
+
 export function parseRootHashMapValue(xml = "", key) {
   const text = String(xml);
   const root = findOutermostHashMap(text);

@@ -151,6 +151,24 @@ function compareForm(expected, actual, diagnostics) {
     }
     assertEqual(diagnostics, "form", "readback.form.field_title", `form.fields.${field.id}.title`, field.title, actualField.title, `/readback/form/fields/${field.id}/title`);
     assertEqual(diagnostics, "form", "readback.form.component_mismatch", `form.fields.${field.id}.component`, field.component, actualField.component, `/readback/form/fields/${field.id}/component`);
+    if (
+      field.nativeAddressContextDefault &&
+      stableStringify(field.nativeAddressContextDefault) !==
+        stableStringify(actualField.nativeAddressContextDefault)
+    ) {
+      diagnostics.push(mismatch(
+        "form",
+        "readback.form.address_context_default_native_contract_mismatch",
+        "Readback context-default address control does not preserve the required Native runtime contract.",
+        {
+          invariantKey: `form.fields.${field.id}.nativeAddressContextDefault`,
+          path: `/readback/form/fields/${field.id}/nativeAddressContextDefault`,
+          expected: field.nativeAddressContextDefault,
+          actual: actualField.nativeAddressContextDefault,
+          details: { fieldId: field.id }
+        }
+      ));
+    }
     if (Boolean(field.dataOnly) !== Boolean(actualField.dataOnly)) {
       diagnostics.push(mismatch("form", "readback.form.data_only_flag_mismatch", "Readback data-only visibility mismatch.", {
         invariantKey: `form.fields.${field.id}.dataOnly`,

@@ -197,6 +197,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
       component: field.componentId,
       dataOnly: field.dataOnly === true,
       props: executableProps(field, form),
+      nativeAddressContextDefault: expectedNativeAddressContextDefault(field),
       columns: []
     };
   }).filter(Boolean);
@@ -346,7 +347,8 @@ function executableProps(field = {}, form = {}, context = {}) {
     props.unit = normalizeScalar(field.props.unit);
   }
   if (componentSupportsProp(field.componentId, "orgTypes") && Array.isArray(field.props?.orgTypes)) {
-    props.orgTypes = field.props.orgTypes.map(normalizeScalar);
+    const contextOrgTypes = expectedContextDefaultOrgTypes(field);
+    props.orgTypes = (contextOrgTypes || field.props.orgTypes).map(normalizeScalar);
   }
   if (Array.isArray(field.props?.options) && field.props.options.length) {
     props.options = field.props.options.map((option) => ({
@@ -415,6 +417,41 @@ function executableProps(field = {}, form = {}, context = {}) {
   const catalog = COMPONENTS_BY_ID.get(field.componentId);
   if (catalog?.componentId) props.componentId = catalog.componentId;
   return props;
+}
+
+function expectedContextDefaultOrgTypes(field) {
+  if (field?.componentId !== "xform-address") return undefined;
+  const defaultValue = field.props?.defaultValue;
+  if (defaultValue?.kind !== "context") return undefined;
+  const bySource = {
+    creator: ["ORG_TYPE_PERSON"],
+    creatorDept: ["ORG_TYPE_DEPT"],
+    creatorPost: ["ORG_TYPE_POST"]
+  };
+  return bySource[defaultValue.source];
+}
+
+function expectedNativeAddressContextDefault(field) {
+  const orgTypes = expectedContextDefaultOrgTypes(field);
+  if (!orgTypes) return undefined;
+  const codeByType = {
+    ORG_TYPE_ORG: "1",
+    ORG_TYPE_DEPT: "2",
+    ORG_TYPE_POST: "4",
+    ORG_TYPE_PERSON: "8"
+  };
+  return {
+    types: ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"],
+    orgTypeArr: orgTypes.map((type) => codeByType[type]),
+    defaultValueType: "formula",
+    multi: false,
+    preSelectType: "fixed",
+    showOrgType: 0,
+    maxLength: 200,
+    allowCustomValue: true,
+    type: "@elem/xform-address",
+    range: "all"
+  };
 }
 
 function expectedDetailRowOptions(rowOptions, tableName) {

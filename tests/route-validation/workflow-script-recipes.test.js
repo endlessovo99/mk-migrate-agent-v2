@@ -10,6 +10,8 @@ const ROLE_LINE_SOURCE = "tests/fixtures/source/19ca1bf6a201d607679a76d4609a3e87
 const CREATOR_PATH_SOURCE = "tests/fixtures/source/195023f8389d40797436b304835a3525";
 const CREATOR_DEPT_SOURCE = "tests/fixtures/source/191e3d177105738cef50e6545cd8c01f";
 const MAIN_FIELD_LOGIN_MAP_SOURCE = "tests/fixtures/source/168a79d763649dc1121721141b5b2616";
+const DIRECT_MAIN_FIELD_LOGIN_MAP_SOURCE =
+  "tests/fixtures/source2/16d622ad41c4bb720ab81b14e2eaa0b0";
 
 describe("workflow Script recipes", () => {
   it("translates legacy fdDepartment conditions to the NewOA creator-department context", () => {
@@ -222,6 +224,77 @@ describe("workflow Script recipes", () => {
     const mapped = dslDraft.workflow.nodes.find((item) => item.id === "N25");
     assert.equal(mapped.participants.mode, "unmapped_formula");
     assert.equal(mapped.translationStatus, "pending_review");
+  });
+
+  it("maps direct main-field branches that return one login-name handler", () => {
+    const sourceDraft = cleanSourceFile(DIRECT_MAIN_FIELD_LOGIN_MAP_SOURCE);
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const mapped = dslDraft.workflow.nodes.filter((node) =>
+      node.attributes?.handlerSelectType === "formula" &&
+      node.attributes.handlerIds.includes("根据登录名取用户")
+    );
+    const expectedBranches = [
+      ["运营优化中心280210001", "10217783"],
+      ["质量及交付管理中心280210005", "10219823"],
+      ["业务拓展中心-市场280220001", "68300183"],
+      ["业务拓展中心-销售280220002", "68300183"],
+      ["大客户及解决方案中心280230001", "01000104"],
+      ["工业互联网创新中心280230003", "10700506"],
+      ["软件开发中心280230004", "10605489"],
+      ["基础架构中心280230005", "10220001"],
+      ["智慧供应链产品中心280230006", "38400004"],
+      ["大客户及解决方案中心-售前280223001", "01000104"],
+      ["创新研发中心-售前280223003", "10700506"],
+      ["基础架构中心-售前280223005", "10220001"],
+      ["智慧供应链产品中心-售前280223006", "38400004"]
+    ].map(([value, loginName]) => ({
+      value,
+      requireUnseen: [],
+      addLoginNames: [loginName],
+      markSeen: []
+    }));
+
+    assert.equal(mapped.length, 9);
+    assert.equal(mapped.every((node) =>
+      node.participants.mode === "script_formula" &&
+      node.participants.recipe === "main_field_contains_login_names" &&
+      node.participants.fieldId === "fd_37b0412206b2e4" &&
+      node.participants.fieldTitle === "成本中心及代码" &&
+      node.translationStatus === "executable"
+    ), true);
+    assert.equal(mapped.every((node) =>
+      JSON.stringify(node.participants.branches) === JSON.stringify(expectedBranches)
+    ), true);
+
+    const sourceNode = sourceDraft.workflow.nodes.find((node) => node.id === "N26");
+    for (const mutation of [
+      (attributes) => {
+        attributes.handlerIds = attributes.handlerIds.replace(
+          "return $组织架构.根据登录名取用户$(\"10217783\");",
+          "$服务.记录$(\"副作用\"); return $组织架构.根据登录名取用户$(\"10217783\");"
+        );
+      },
+      (attributes) => {
+        attributes.handlerIds = attributes.handlerIds.replace(
+          "\"质量及交付管理中心280210005\"",
+          "\"运营优化中心280210001\""
+        );
+      },
+      (attributes) => {
+        attributes.handlerNames = attributes.handlerNames.replace(
+          "\"10219823\"",
+          "\"different-login\""
+        );
+      }
+    ]) {
+      const mutatedDraft = structuredClone(sourceDraft);
+      const node = mutatedDraft.workflow.nodes.find((item) => item.id === sourceNode.id);
+      mutation(node.attributes);
+      mutation(node.definition.attributes);
+      const participant = draftSourceDraft(mutatedDraft).workflow.nodes
+        .find((item) => item.id === sourceNode.id).participants;
+      assert.equal(participant.mode, "unmapped_formula");
+    }
   });
 
   it("maps common field role lines and routes related leaders to the configured person fallback", () => {

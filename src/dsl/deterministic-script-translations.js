@@ -5,6 +5,7 @@ export const DETERMINISTIC_SCRIPT_BRANCH_PROOF_VERSION = 2;
 const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-allowance-calculation",
   "deterministic-calculation-assignment",
+  "deterministic-china-value-runtime",
   "deterministic-clamped-detail-aggregate",
   "deterministic-conditional-total-uppercase",
   "deterministic-detail-row-control-state",

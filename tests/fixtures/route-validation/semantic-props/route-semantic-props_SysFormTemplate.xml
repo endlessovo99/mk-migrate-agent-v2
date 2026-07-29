@@ -24,7 +24,11 @@
      &lt;td row=&quot;3&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;fd_currency&quot;,label:&quot;报销币种&quot;,items:&quot;人民币|CNY&#13;&#10;美元|USD&quot;,defaultValue:&quot;CNY&quot;,formula:&quot;&quot;,reCalculate:&quot;false&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
     &lt;/tr&gt;
     &lt;tr&gt;
-     &lt;td row=&quot;4&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;
+     &lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_requester_dept&quot;,content:&quot;需求人部门&quot;}&apos;&gt;需求人部门&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;4&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_requester_dept&quot;,label:&quot;需求人部门&quot;,_label_bind_id:&quot;label_requester_dept&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,_org_org:&quot;true&quot;,_org_dept:&quot;true&quot;,defaultValue:&quot;ORG_TYPE_DEPT&quot;,required:&quot;true&quot;,multiSelect:&quot;false&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;5&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;
       &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_detail&quot;,label:&quot;采购明细&quot;}&apos;&gt;&lt;tbody&gt;
        &lt;tr&gt;
         &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;header_wbs&quot;,content:&quot;WBS/成本中心&quot;}&apos;&gt;WBS/成本中心&lt;/label&gt;&lt;/td&gt;
@@ -42,12 +46,12 @@
      &lt;/td&gt;
     &lt;/tr&gt;
     &lt;tr&gt;
-     &lt;td row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_formula_total&quot;,content:&quot;主表合计&quot;}&apos;&gt;主表合计&lt;/label&gt;&lt;/td&gt;
-     &lt;td row=&quot;5&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_formula_total&quot;,label:&quot;主表合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,formula:&quot;$fd_estimate$ + $fd_guarded_estimate$&quot;,defaultValue:&quot;$采购估价$ + $有介入控件的估价$&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_formula_total&quot;,content:&quot;主表合计&quot;}&apos;&gt;主表合计&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;6&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_formula_total&quot;,label:&quot;主表合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,formula:&quot;$fd_estimate$ + $fd_guarded_estimate$&quot;,defaultValue:&quot;$采购估价$ + $有介入控件的估价$&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
     &lt;/tr&gt;
     &lt;tr&gt;
-     &lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_detail_total&quot;,content:&quot;明细合计&quot;}&apos;&gt;明细合计&lt;/label&gt;&lt;/td&gt;
-     &lt;td row=&quot;6&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_detail_total&quot;,label:&quot;明细合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,expression_id:&quot;$XForm_CalculatioFuns_Sum$($fd_detail.fd_detail_amount$)&quot;,expression_name:&quot;$列表.求和$($采购明细.金额$)&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;7&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_detail_total&quot;,content:&quot;明细合计&quot;}&apos;&gt;明细合计&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;7&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_detail_total&quot;,label:&quot;明细合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,expression_id:&quot;$XForm_CalculatioFuns_Sum$($fd_detail.fd_detail_amount$)&quot;,expression_name:&quot;$列表.求和$($采购明细.金额$)&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
     &lt;/tr&gt;
    &lt;/tbody&gt;&lt;/table&gt;</string>
   </void>
@@ -58,6 +62,7 @@
     &lt;extendSimpleProperty name=&quot;fd_estimate&quot; label=&quot;采购估价&quot; type=&quot;Double&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_guarded_estimate&quot; label=&quot;有介入控件的估价&quot; type=&quot;Double&quot;/&gt;
     &lt;extendSimpleProperty name=&quot;fd_currency&quot; label=&quot;报销币种&quot; type=&quot;String&quot; enumValues=&quot;人民币|CNY;美元|USD&quot; defaultValue=&quot;CNY&quot;/&gt;
+    &lt;extendElementProperty name=&quot;fd_requester_dept&quot; label=&quot;需求人部门&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; notNull=&quot;true&quot; defaultValue=&quot;OrgFunction.getCurrentDept()&quot; formula=&quot;true&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot;/&gt;
     &lt;extendSubTableProperty name=&quot;fd_detail&quot; label=&quot;采购明细&quot;&gt;
      &lt;extendSimpleProperty name=&quot;fd_site&quot; label=&quot;风场名称2&quot; type=&quot;String&quot;/&gt;
      &lt;extendSimpleProperty name=&quot;fd_ebeln&quot; label=&quot;采购订单号&quot; type=&quot;String&quot;/&gt;

@@ -2357,10 +2357,10 @@ function validateOrderedMainPersonFieldsParticipant(participants, context, diagn
 
 function validateMainFieldLoginMapParticipant(participants, context, diagnostics, path) {
   const field = (context.form?.fields || []).find((item) => item?.id === participants.fieldId);
-  if (field && field.componentId !== "xform-select~multi") {
+  if (field && !["xform-select", "xform-select~multi"].includes(field.componentId)) {
     diagnostics.push(error(
       "workflow.participants.script_formula_main_field_component",
-      "Main-field login mapping requires an xform-select~multi source field.",
+      "Main-field login mapping requires an xform-select or xform-select~multi source field.",
       `${path}/fieldId`,
       { fieldId: participants.fieldId, componentId: field.componentId }
     ));

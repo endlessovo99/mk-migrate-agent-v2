@@ -202,6 +202,9 @@ function mainFieldLoginMapParticipant(attributes) {
 
 function parseMainFieldLoginMapFormula(value) {
   const expression = normalizeLegacyExpression(value);
+  const direct = parseDirectMainFieldLoginMapFormula(expression);
+  if (direct) return direct;
+
   const preamble = expression.match(
     /^(?:import\s+[A-Za-z0-9_.]+\s*;\s*)*List\s+handlers\s*=\s*new\s+ArrayList\s*\(\s*\)\s*;\s*String\s+perCodes\s*=\s*""\s*;\s*(?:String\s+perCodes1\s*=\s*""\s*;\s*)?String\s+name\s*=\s*\$([^$]+)\$\s*;\s*/
   );
@@ -222,6 +225,50 @@ function parseMainFieldLoginMapFormula(value) {
 
   if (!branches.length || !/^return\s+handlers\s*;\s*$/.test(remainder)) return undefined;
   return { fieldId: preamble[1].trim(), branches };
+}
+
+function parseDirectMainFieldLoginMapFormula(expression) {
+  const branches = [];
+  let fieldId;
+  let remainder = expression;
+
+  while (remainder) {
+    if (branches.length) {
+      const elseMatch = remainder.match(/^else\s+/);
+      if (!elseMatch) return undefined;
+      remainder = remainder.slice(elseMatch[0].length);
+    }
+    if (!/^if\s*\(/.test(remainder)) return undefined;
+
+    const parsedIf = takeIfBlock(remainder);
+    if (!parsedIf) return undefined;
+    const condition = parsedIf.condition.match(
+      /^"([^"\\]*)"\.equals\s*\(\s*\$([^$()]+)\$\s*\)$/
+    );
+    if (!condition) return undefined;
+    const [, branchValue, branchFieldId] = condition;
+    if (
+      branches.some((branch) => branch.value === branchValue) ||
+      (fieldId && fieldId !== branchFieldId.trim())
+    ) {
+      return undefined;
+    }
+
+    const returned = parsedIf.body.match(
+      /^return\s+\$组织架构\.根据登录名取用户\$\s*\(\s*"([A-Za-z0-9._-]+)"\s*\)\s*;$/
+    );
+    if (!returned) return undefined;
+    fieldId ||= branchFieldId.trim();
+    branches.push({
+      value: branchValue,
+      requireUnseen: [],
+      addLoginNames: [returned[1]],
+      markSeen: []
+    });
+    remainder = parsedIf.remainder.trimStart();
+  }
+
+  return branches.length ? { fieldId, branches } : undefined;
 }
 
 function takeIfBlock(value) {
