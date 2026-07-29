@@ -974,6 +974,7 @@ function isFormulaParticipantMode(mode) {
     "person_by_login_name",
     "dept_leader_by_no",
     "doc_creator",
+    "node_history_handlers",
     "node_history_superior_department_head",
     "field_role_line_script",
     "configured_person_fallback",
@@ -1081,6 +1082,13 @@ function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
       nativeFormula: expectedParticipantFormula(node.participants, context)
     };
   }
+  if (node.participants.mode === "node_history_handlers") {
+    return {
+      mode: "node_history_handlers",
+      nodeId: node.participants.nodeId,
+      nativeFormula: expectedParticipantFormula(node.participants, context)
+    };
+  }
   if (node.participants.mode === "explicit") {
     return {
       mode: "explicit",
@@ -1131,6 +1139,12 @@ function expectedParticipantFormula(participants, context = {}) {
     const nodeId = JSON.stringify(String(participants.nodeId || ""));
     script = `return \${func.sysorg.getSuperiorDepartmenthead}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), 1)`;
     ruleVoContent = `return #查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`;
+    ruleMode = "script";
+    ruleKeyMode = "";
+  } else if (participants?.mode === "node_history_handlers") {
+    const nodeId = JSON.stringify(String(participants.nodeId || ""));
+    script = `return \${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false)`;
+    ruleVoContent = `return #获取节点历史处理人#(${nodeId}, false)`;
     ruleMode = "script";
     ruleKeyMode = "";
   } else if (participants?.mode === "field_role_line_script") {
@@ -1185,11 +1199,11 @@ function expectedParticipantFormula(participants, context = {}) {
     memberCount: 0,
     ruleMode,
     formulaType: "formula",
-    ruleKeyType: ["script_formula", "node_history_superior_department_head", "field_role_line_script"].includes(participants?.mode)
+    ruleKeyType: ["script_formula", "node_history_handlers", "node_history_superior_department_head", "field_role_line_script"].includes(participants?.mode)
       ? "Script"
       : "Eval",
     ruleKeyMode,
-    ruleVoMode: ["script_formula", "node_history_superior_department_head", "field_role_line_script"].includes(participants?.mode)
+    ruleVoMode: ["script_formula", "node_history_handlers", "node_history_superior_department_head", "field_role_line_script"].includes(participants?.mode)
       ? "script"
       : "formula",
     ...(ruleVoContent !== undefined ? { ruleVoContent } : {}),
@@ -1197,6 +1211,7 @@ function expectedParticipantFormula(participants, context = {}) {
       "person_by_login_name",
       "doc_creator",
       "script_formula",
+      "node_history_handlers",
       "node_history_superior_department_head",
       "field_role_line_script"
     ].includes(participants?.mode)

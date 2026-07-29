@@ -2152,7 +2152,11 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
       const participants = nodeType.participants === false
         ? undefined
         : participantsFromSourceNode(node, participantSelections.get(node.id));
-      const formulaNeedsReview = participants?.mode === "unmapped_formula";
+      const missingNodeHistoryReference =
+        ["node_history_handlers", "node_history_superior_department_head"].includes(participants?.mode) &&
+        !nodeById.has(participants.nodeId);
+      const formulaNeedsReview = participants?.mode === "unmapped_formula" ||
+        missingNodeHistoryReference;
       const subProcessNeedsReview = ["startSubProcess", "recoverSubProcess"].includes(nodeType.type) &&
         !subProcessByNodeId.has(node.id);
       return pruneUndefined({

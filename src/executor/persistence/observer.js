@@ -1939,6 +1939,16 @@ function observeParticipants(node, initiatorSelectTarget) {
         ? { mode: "node_history_superior_department_head", nodeId: nodeMatch[1], nativeFormula }
         : { mode: "node_history_superior_department_head", nativeFormula };
     }
+    const nodeHistoryHandlers = script.match(
+      /^return\s+\$\{func\.lbpm\.getNodeHistoryHandlers\}\s*\(\s*(["'])([^"']+)\1\s*,\s*false\s*\)\s*;?$/
+    );
+    if (nodeHistoryHandlers) {
+      return {
+        mode: "node_history_handlers",
+        nodeId: nodeHistoryHandlers[2],
+        nativeFormula
+      };
+    }
     if (orderedMainPersonFieldIds) {
       return {
         mode: "script_formula",

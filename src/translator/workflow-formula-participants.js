@@ -28,6 +28,7 @@ const FORMULA_PARTICIPANT_MODES = new Set([
   "person_by_login_name",
   "dept_leader_by_no",
   "doc_creator",
+  "node_history_handlers",
   "node_history_superior_department_head",
   "field_role_line_script",
   "configured_person_fallback",
@@ -42,6 +43,7 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
   return mainFieldLoginMapParticipant(attributes) ||
     orderedMainPersonFieldsParticipant(attributes, handlerIds, handlerNames) ||
     detailScriptParticipant(attributes) ||
+    nodeHistoryHandlersParticipant(attributes, handlerIds, handlerNames) ||
     nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) ||
     fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) ||
     configuredPersonFallbackParticipant(attributes, handlerIds, handlerNames) ||
@@ -363,6 +365,35 @@ function nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, ha
     sourceExpression: handlerIds[0],
     sourceNameExpression: handlerNames[0] || ""
   };
+}
+
+function nodeHistoryHandlersParticipant(attributes, handlerIds, handlerNames) {
+  if (
+    attributes.handlerSelectType !== "formula" ||
+    handlerIds.length !== 1 ||
+    handlerNames.length !== 1
+  ) {
+    return undefined;
+  }
+
+  const parsed = parseNodeHistoryHandlersFormula(handlerIds[0]);
+  const nameParsed = parseNodeHistoryHandlersFormula(handlerNames[0]);
+  if (!parsed || !nameParsed || parsed.nodeId !== nameParsed.nodeId) return undefined;
+
+  return {
+    mode: "node_history_handlers",
+    nodeId: parsed.nodeId,
+    sourceExpression: handlerIds[0],
+    sourceNameExpression: handlerNames[0]
+  };
+}
+
+function parseNodeHistoryHandlersFormula(value) {
+  const match = normalizeLegacyExpression(value).match(
+    /^\$流程\.获取节点实际处理人\$\s*\(\s*(["'])([^"'\\]+)\1\s*\)$/
+  );
+  const nodeId = match?.[2]?.trim();
+  return nodeId ? { nodeId } : undefined;
 }
 
 function parseNodeHistoryRoleLineFormula(value) {

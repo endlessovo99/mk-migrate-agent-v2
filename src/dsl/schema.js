@@ -77,6 +77,7 @@ const WORKFLOW_PARTICIPANT_MODES = new Set([
   "person_by_login_name",
   "dept_leader_by_no",
   "doc_creator",
+  "node_history_handlers",
   "node_history_superior_department_head",
   "field_role_line_script",
   "configured_person_fallback",
@@ -87,6 +88,7 @@ const MAPPED_FORMULA_PARTICIPANT_MODES = new Set([
   "person_by_login_name",
   "dept_leader_by_no",
   "doc_creator",
+  "node_history_handlers",
   "node_history_superior_department_head",
   "field_role_line_script",
   "configured_person_fallback",
@@ -1770,7 +1772,12 @@ function validateWorkflowParticipantNodeReferences(nodes, nodeMap, diagnostics) 
   if (!Array.isArray(nodes)) return;
   nodes.forEach((node, index) => {
     const participants = node?.participants;
-    if (participants?.mode !== "node_history_superior_department_head") return;
+    if (
+      participants?.mode !== "node_history_handlers" &&
+      participants?.mode !== "node_history_superior_department_head"
+    ) {
+      return;
+    }
     if (nonEmptyString(participants.nodeId) && !nodeMap.has(participants.nodeId)) {
       diagnostics.push(error(
         "workflow.participants.node_history_node_missing",
@@ -2050,6 +2057,25 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
   if (participants.mode === "doc_creator") {
     if (!nonEmptyString(participants.sourceExpression)) {
       diagnostics.push(error("workflow.participants.doc_creator_source_required", "Document-creator participants must preserve the source handler expression.", `${path}/sourceExpression`));
+    }
+  }
+  if (participants.mode === "node_history_handlers") {
+    if (!nonEmptyString(participants.nodeId)) {
+      diagnostics.push(error(
+        "workflow.participants.node_history_node_required",
+        "Node-history handler participants require nodeId.",
+        `${path}/nodeId`
+      ));
+    }
+    if (
+      !nonEmptyString(participants.sourceExpression) ||
+      !nonEmptyString(participants.sourceNameExpression)
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.node_history_source_required",
+        "Node-history handler participants must preserve both source expressions.",
+        path
+      ));
     }
   }
   if (participants.mode === "node_history_superior_department_head") {

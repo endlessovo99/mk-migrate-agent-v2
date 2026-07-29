@@ -251,6 +251,7 @@ function isFormulaParticipantMode(mode) {
     "person_by_login_name",
     "dept_leader_by_no",
     "doc_creator",
+    "node_history_handlers",
     "node_history_superior_department_head",
     "field_role_line_script",
     "configured_person_fallback",
@@ -557,6 +558,7 @@ function buildArtificialNode(node, type, context = {}) {
       node.participants?.mode === "person_by_login_name" ||
       node.participants?.mode === "dept_leader_by_no" ||
       node.participants?.mode === "doc_creator" ||
+      node.participants?.mode === "node_history_handlers" ||
       node.participants?.mode === "node_history_superior_department_head" ||
       node.participants?.mode === "field_role_line_script" ||
       node.participants?.mode === "script_formula"
@@ -2299,6 +2301,23 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       }
     };
   }
+  if (participants?.mode === "node_history_handlers") {
+    const ruleKey = nodeHistoryHandlersRuleKey(participants);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey: JSON.stringify(ruleKey),
+      ruleName: ruleKey.vo.content,
+      ruleMode: "script",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        nodeId: participants.nodeId || ""
+      }
+    };
+  }
   if (participants?.mode === "field_role_line_script") {
     const ruleKey = fieldRoleLineScriptRuleKey(participants, context);
     return {
@@ -2359,6 +2378,19 @@ function nodeHistorySuperiorDepartmentHeadRuleKey(participants = {}) {
   };
 }
 
+function nodeHistoryHandlersRuleKey(participants = {}) {
+  const nodeId = JSON.stringify(String(participants.nodeId || ""));
+  return {
+    script: `return \${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false)`,
+    type: "Script",
+    vo: {
+      content: `return #获取节点历史处理人#(${nodeId}, false)`,
+      mode: "script"
+    },
+    resultType: workflowOrgArrayResultType()
+  };
+}
+
 function fieldRoleLineScriptRuleKey(participants = {}, context = {}) {
   const binding = workflowParticipantFieldBinding(participants, context);
   const dataRef = `\${data.${binding.variableId}}`;
@@ -2385,7 +2417,7 @@ function fieldRoleLineScriptRuleKey(participants = {}, context = {}) {
 }
 
 function nativeHandlerIds(participants, attrs) {
-  if (["script_formula", "field_role_line_script"].includes(participants?.mode)) return "";
+  if (["script_formula", "field_role_line_script", "node_history_handlers"].includes(participants?.mode)) return "";
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return participants.members.map((member) => member.id).filter(Boolean).join(";");
   }
@@ -2393,7 +2425,7 @@ function nativeHandlerIds(participants, attrs) {
 }
 
 function nativeHandlerNames(participants, attrs) {
-  if (["script_formula", "field_role_line_script"].includes(participants?.mode)) return "";
+  if (["script_formula", "field_role_line_script", "node_history_handlers"].includes(participants?.mode)) return "";
   if (participants?.mode === "explicit" && Array.isArray(participants.members)) {
     return participants.members.map((member) => member.name || member.id).filter(Boolean).join(";");
   }
@@ -2829,16 +2861,27 @@ function resolveEmptyHandlerType(node, attrs = {}, context = {}) {
 }
 
 function migrationNodeSource(node) {
+  const omitLegacyHandlerFormula = node?.participants?.mode === "node_history_handlers";
+  const attributes = { ...(node.attributes || {}) };
+  const definition = summarizeDefinition(node.definition);
+  if (omitLegacyHandlerFormula) {
+    delete attributes.handlerIds;
+    delete attributes.handlerNames;
+    if (definition?.attributes) {
+      delete definition.attributes.handlerIds;
+      delete definition.attributes.handlerNames;
+    }
+  }
   return {
     id: node.id,
     type: node.sourceType || node.type,
     targetType: node.type,
     sourceRef: node.sourceRef || "",
     name: node.name || "",
-    attributes: node.attributes || {},
-    definition: summarizeDefinition(node.definition),
+    attributes,
+    definition,
     subProcess: node.subProcess,
-    sourceXml: node.sourceXml || ""
+    sourceXml: omitLegacyHandlerFormula ? "" : node.sourceXml || ""
   };
 }
 
@@ -2907,7 +2950,7 @@ function summarizeDefinition(definition) {
   if (!definition) return undefined;
   return {
     type: definition.type,
-    attributes: definition.attributes || {}
+    attributes: { ...(definition.attributes || {}) }
   };
 }
 

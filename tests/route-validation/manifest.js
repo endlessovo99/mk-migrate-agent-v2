@@ -543,6 +543,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "node-history-handlers-success",
+      source: {
+        kind: "paired",
+        relativePath: "node-history-handlers"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: DRAFT_WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "readback-loss",
       source: {
         kind: "paired",
