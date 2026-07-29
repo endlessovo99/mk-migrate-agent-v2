@@ -69,6 +69,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     sourceDraft.scripts
   );
   const knownSourceFieldIds = collectFormFieldIds(rawForm);
+  const knownSourceFieldTitles = collectFormFieldTitles(rawForm);
   const multiRadioFormRules = multiRadioRowHelperFormRules(sourceDraft.scripts, mappedForm);
   const provisionalFormRules = draftFormRules(
     applyFieldIdMapToSourceFormRules(
@@ -91,7 +92,10 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   );
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
   const workflow = sourceDraft.workflow
-    ? applyFieldIdMapToWorkflow(draftWorkflow(sourceDraft.workflow, knownSourceFieldIds), fieldIdMap)
+    ? applyFieldIdMapToWorkflow(
+        draftWorkflow(sourceDraft.workflow, knownSourceFieldIds, knownSourceFieldTitles),
+        fieldIdMap
+      )
     : undefined;
 
   return pruneUndefined({
@@ -197,6 +201,29 @@ function collectFormFieldIds(form = {}) {
     }
   }
   return fieldIds;
+}
+
+function collectFormFieldTitles(form = {}) {
+  const titlesById = new Map();
+  const duplicateIds = new Set();
+  for (const field of form.fields || []) {
+    addUniqueFieldTitle(titlesById, duplicateIds, field);
+    for (const column of field?.columns || []) {
+      addUniqueFieldTitle(titlesById, duplicateIds, column);
+    }
+  }
+  for (const fieldId of duplicateIds) titlesById.delete(fieldId);
+  return titlesById;
+}
+
+function addUniqueFieldTitle(titlesById, duplicateIds, field) {
+  if (!field?.id || duplicateIds.has(field.id)) return;
+  if (titlesById.has(field.id)) {
+    duplicateIds.add(field.id);
+    titlesById.delete(field.id);
+    return;
+  }
+  titlesById.set(field.id, field.title || field.id);
 }
 
 function attachCalculationDecisions(scripts, form, sourceScripts = {}) {
@@ -2135,7 +2162,7 @@ function draftRuleEffects(effects) {
     : undefined;
 }
 
-function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
+function draftWorkflow(sourceWorkflow, knownFieldIds = null, knownFieldTitles = null) {
   const sourceNodes = sourceWorkflow.nodes || [];
   const nodeById = new Map(sourceNodes.map((node) => [node.id, node]));
   const conditionalSplitIds = conditionalParallelSplitIds(
@@ -2151,7 +2178,11 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null) {
       const nodeType = mapWorkflowNodeType(node, nodeById);
       const participants = nodeType.participants === false
         ? undefined
-        : participantsFromSourceNode(node, participantSelections.get(node.id));
+        : participantsFromSourceNode(
+            node,
+            participantSelections.get(node.id),
+            knownFieldTitles
+          );
       const missingNodeHistoryReference =
         ["node_history_handlers", "node_history_superior_department_head"].includes(participants?.mode) &&
         !nodeById.has(participants.nodeId);
@@ -2338,7 +2369,7 @@ function draftDataAuthority(dataAuthority, knownFieldIds = null) {
   };
 }
 
-function participantsFromSourceNode(node, participantSelections) {
+function participantsFromSourceNode(node, participantSelections, knownFieldTitles) {
   const attrs = sourceNodeAttributes(node);
   const handlerIds = splitList(attrs.handlerIds);
   const handlerNames = splitList(attrs.handlerNames);
@@ -2349,7 +2380,10 @@ function participantsFromSourceNode(node, participantSelections) {
     useAlternativeOnly: alternativeMembers.length ? booleanAttribute(attrs, "useOptHandlerOnly") : undefined
   };
 
-  const formulaParticipant = classifyWorkflowFormulaParticipant(attrs);
+  const formulaParticipant = failClosedMismatchedFormulaFieldTitle(
+    classifyWorkflowFormulaParticipant(attrs),
+    knownFieldTitles
+  );
   if (formulaParticipant) return pruneUndefined({ ...formulaParticipant, ...participantEvidence });
 
   const dynamicParticipant = classifyWorkflowDynamicParticipant(attrs, node.handlerEntities);
@@ -2396,6 +2430,25 @@ function participantsFromSourceNode(node, participantSelections) {
     reason: "source did not specify executable participants",
     ...participantEvidence
   });
+}
+
+function failClosedMismatchedFormulaFieldTitle(participants, knownFieldTitles) {
+  if (
+    participants?.mode !== "dept_leader_by_no" ||
+    !/^\s*String\b/u.test(participants.sourceExpression || "")
+  ) {
+    return participants;
+  }
+  const expectedTitle = knownFieldTitles instanceof Map
+    ? knownFieldTitles.get(participants.sourceFieldId || participants.fieldId)
+    : undefined;
+  if (expectedTitle && participants.fieldTitle === expectedTitle) return participants;
+  return {
+    mode: "unmapped_formula",
+    reason: "source handler name alias does not match the referenced field title",
+    sourceExpression: participants.sourceExpression || "",
+    sourceNameExpression: participants.sourceNameExpression || ""
+  };
 }
 
 function participantMembersFromHandlerEntities(entities) {

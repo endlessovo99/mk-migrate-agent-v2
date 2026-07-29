@@ -815,12 +815,39 @@ function workflowFormulaTargetFieldMatches(sourceFormula, participants, sourceFo
 
   const sourceFieldId = sourceFormula?.sourceFieldId || sourceFormula?.fieldId;
   if (!sourceFieldId) return true;
-  return workflowFormulaTargetFieldMatch(
+  const identityMatches = workflowFormulaTargetFieldMatch(
     sourceFieldId,
     participants?.fieldId,
     sourceForm,
     dslForm
   );
+  if (!identityMatches) return false;
+  if (
+    sourceFormula.mode !== "dept_leader_by_no" ||
+    !/^\s*String\b/u.test(sourceFormula.sourceExpression || "")
+  ) {
+    return true;
+  }
+  return workflowFormulaTargetFieldTitleMatch(
+    sourceFormula,
+    participants,
+    sourceForm,
+    dslForm
+  );
+}
+
+function workflowFormulaTargetFieldTitleMatch(sourceFormula, participants, sourceForm, dslForm) {
+  const sourceFieldId = sourceFormula?.sourceFieldId || sourceFormula?.fieldId;
+  const sourceCandidates = [
+    ...(sourceForm?.controls || []),
+    ...(sourceForm?.dataFields || [])
+  ].filter((field) => field?.id === sourceFieldId);
+  const targetCandidates = (dslForm?.fields || [])
+    .filter((field) => field?.id === participants?.fieldId);
+  return sourceCandidates.length === 1 &&
+    targetCandidates.length === 1 &&
+    sourceFormula.fieldTitle === sourceCandidates[0].title &&
+    participants.fieldTitle === targetCandidates[0].title;
 }
 
 function workflowFormulaTargetFieldMatch(sourceFieldId, targetFieldId, sourceForm, dslForm) {

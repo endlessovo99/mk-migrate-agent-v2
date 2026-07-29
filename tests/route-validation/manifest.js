@@ -326,6 +326,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "department-leader-alias-success",
+      source: {
+        kind: "paired",
+        relativePath: "department-leader-alias"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: DRAFT_WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "participant-explicit-override-success",
       source: {
         kind: "paired",

@@ -1,18 +1,22 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { runAgentReview } from "../../src/agent-review/index.js";
 import { checkDraft, checkExecute } from "../../src/dsl/checks.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { classifyWorkflowFormulaParticipant } from "../../src/translator/workflow-formula-participants.js";
 import { prepareSample } from "../helpers/persistence.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
+import { createFakeReviewProvider } from "./fake-review-provider.js";
 import { resolveRouteFixture } from "./fixture.js";
+import { runRouteCase } from "./run-route-case.js";
 
 const SOURCE_EXPRESSION = "String deptCodes = $fd_department_code$; return $部门领导.根据部门编号获取部门领导$(deptCodes);";
 const SOURCE_NAME_EXPRESSION = "String deptCodes = $WBS号所属部门代码$; return $部门领导.根据部门编号获取部门领导$(deptCodes);";
 
 describe("Route-validation department-leader alias formula", { concurrency: false }, () => {
-  it("normalizes an exact local field alias to the existing department-leader participant", () => {
-    const draft = departmentLeaderAliasDraft();
+  it("normalizes and executes an exact local field alias through the public migration route", async () => {
+    const result = await runRouteCase("department-leader-alias-success");
+    const draft = result.dsl;
     const node = draft.workflow.nodes.find((item) => item.id === "N2");
 
     assert.deepEqual(node.participants, {
@@ -27,6 +31,15 @@ describe("Route-validation department-leader alias formula", { concurrency: fals
     assert.equal(
       draft.form.fields.find((field) => field.id === "fd_department_code")?.dataOnly,
       true
+    );
+    assert.equal(result.review.status, "needs_manual");
+    assert.equal(result.dryRun.status, "needs_manual");
+    assert.equal(result.execution.status, "written_with_warnings");
+    assert.equal(result.execution.readback.partitions.workflow, "verified");
+    assert.equal(
+      result.execution.readback.workflow.nodes.find((item) => item.id === "N2")
+        ?.participants?.mode,
+      "dept_leader_by_no"
     );
   });
 
@@ -108,6 +121,38 @@ describe("Route-validation department-leader alias formula", { concurrency: fals
         "unmapped_formula"
       );
     }
+  });
+
+  it("keeps a name-side field title that disagrees with the referenced field fail-closed", async () => {
+    const fixturePath = resolveRouteFixture({
+      kind: "paired",
+      relativePath: "department-leader-alias"
+    });
+    const source = cleanSourceFile(fixturePath);
+    const sourceNode = source.workflow.nodes.find((node) => node.id === "N2");
+    const mismatched =
+      "String deptCodes = $错误字段$; return $部门领导.根据部门编号获取部门领导$(deptCodes);";
+    for (const attributes of [sourceNode.attributes, sourceNode.definition?.attributes].filter(Boolean)) {
+      attributes.handlerNames = mismatched;
+    }
+
+    const draft = draftSourceDraft(source);
+    const node = draft.workflow.nodes.find((item) => item.id === "N2");
+
+    assert.equal(node.participants.mode, "unmapped_formula");
+    assert.equal(node.translationStatus, "pending_review");
+
+    const review = await runAgentReview(source, draft, {
+      provider: createFakeReviewProvider("fail-if-called")
+    });
+    assert.equal(review.ok, false);
+    assert.equal(review.report.stage, "agent-review.input");
+    assert.equal(
+      review.report.diagnostics.some((item) =>
+        item.code === "agent.input.workflow_formula_provenance_mismatch"
+      ),
+      true
+    );
   });
 });
 
