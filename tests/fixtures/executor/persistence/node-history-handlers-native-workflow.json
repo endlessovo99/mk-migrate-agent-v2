@@ -1,0 +1,141 @@
+{
+  "notifyDrafterOnEnd": "false",
+  "notifyParticipantOnEnd": "false",
+  "elements": [
+    {
+      "id": "N1",
+      "name": "Start",
+      "type": "generalStart",
+      "element": "startEvent"
+    },
+    {
+      "id": "N4",
+      "name": "Send-node referenced node",
+      "type": "draft",
+      "element": "manualTask"
+    },
+    {
+      "id": "N8",
+      "name": "First send reusing N4 handlers",
+      "type": "send",
+      "element": "manualTask",
+      "handlerIds": "",
+      "handlerNames": "",
+      "handlerSelectType": "formula",
+      "ignoreOnSameIdentity": "2",
+      "modifyProcessAuthority": "0",
+      "systemNotifyType": "2",
+      "language": {
+        "nameCn": "First send reusing N4 handlers",
+        "nameUs": "CC node"
+      },
+      "handlers": {
+        "id": "handlers",
+        "type": "formula",
+        "source": "2",
+        "ruleKey": "{\"script\":\"return ${func.lbpm.getNodeHistoryHandlers}(\\\"N4\\\", false)\",\"type\":\"Script\",\"vo\":{\"content\":\"return #获取节点历史处理人#(\\\"N4\\\", false)\",\"mode\":\"script\"},\"resultType\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"fdId\":{\"type\":\"string\",\"description\":\"ID\"},\"fdName\":{\"type\":\"string\",\"description\":\"名称\"},\"fdOrgType\":{\"type\":\"string\",\"description\":\"组织机构类型\"}}}}}",
+        "ruleName": "return #获取节点历史处理人#(\"N4\", false)",
+        "ruleMode": "script",
+        "formulaType": "formula",
+        "members": [],
+        "element": "users"
+      }
+    },
+    {
+      "id": "N20",
+      "name": "Second send reusing N4 handlers",
+      "type": "send",
+      "element": "manualTask",
+      "handlerIds": "",
+      "handlerNames": "",
+      "handlerSelectType": "formula",
+      "ignoreOnSameIdentity": "2",
+      "modifyProcessAuthority": "0",
+      "systemNotifyType": "2",
+      "language": {
+        "nameCn": "Second send reusing N4 handlers",
+        "nameUs": "CC node"
+      },
+      "handlers": {
+        "id": "handlers",
+        "type": "formula",
+        "source": "2",
+        "ruleKey": "{\"script\":\"return ${func.lbpm.getNodeHistoryHandlers}(\\\"N4\\\", false)\",\"type\":\"Script\",\"vo\":{\"content\":\"return #获取节点历史处理人#(\\\"N4\\\", false)\",\"mode\":\"script\"},\"resultType\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"fdId\":{\"type\":\"string\",\"description\":\"ID\"},\"fdName\":{\"type\":\"string\",\"description\":\"名称\"},\"fdOrgType\":{\"type\":\"string\",\"description\":\"组织机构类型\"}}}}}",
+        "ruleName": "return #获取节点历史处理人#(\"N4\", false)",
+        "ruleMode": "script",
+        "formulaType": "formula",
+        "members": [],
+        "element": "users"
+      }
+    },
+    {
+      "id": "N5",
+      "name": "Referenced node",
+      "type": "draft",
+      "element": "manualTask"
+    },
+    {
+      "id": "N36",
+      "name": "Reuse N5 handlers",
+      "type": "review",
+      "element": "manualTask",
+      "handlerIds": "",
+      "handlerNames": "",
+      "handlerSelectType": "formula",
+      "ignoreOnSameIdentity": "2",
+      "handlers": {
+        "id": "handlers",
+        "type": "formula",
+        "source": "2",
+        "ruleKey": "{\"script\":\"return ${func.lbpm.getNodeHistoryHandlers}(\\\"N5\\\", false)\",\"type\":\"Script\",\"vo\":{\"content\":\"return #获取节点历史处理人#(\\\"N5\\\", false)\",\"mode\":\"script\"},\"resultType\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"fdId\":{\"type\":\"string\",\"description\":\"ID\"},\"fdName\":{\"type\":\"string\",\"description\":\"名称\"},\"fdOrgType\":{\"type\":\"string\",\"description\":\"组织机构类型\"}}}}}",
+        "ruleName": "return #获取节点历史处理人#(\"N5\", false)",
+        "ruleMode": "script",
+        "formulaType": "formula",
+        "members": [],
+        "element": "users"
+      }
+    },
+    {
+      "id": "N3",
+      "name": "End",
+      "type": "generalEnd",
+      "element": "endEvent"
+    },
+    {
+      "id": "L1",
+      "type": "sequenceFlow",
+      "sourceRef": "N1",
+      "targetRef": "N4"
+    },
+    {
+      "id": "L2",
+      "type": "sequenceFlow",
+      "sourceRef": "N4",
+      "targetRef": "N8"
+    },
+    {
+      "id": "L3",
+      "type": "sequenceFlow",
+      "sourceRef": "N8",
+      "targetRef": "N20"
+    },
+    {
+      "id": "L4",
+      "type": "sequenceFlow",
+      "sourceRef": "N20",
+      "targetRef": "N5"
+    },
+    {
+      "id": "L5",
+      "type": "sequenceFlow",
+      "sourceRef": "N5",
+      "targetRef": "N36"
+    },
+    {
+      "id": "L6",
+      "type": "sequenceFlow",
+      "sourceRef": "N36",
+      "targetRef": "N3"
+    }
+  ]
+}

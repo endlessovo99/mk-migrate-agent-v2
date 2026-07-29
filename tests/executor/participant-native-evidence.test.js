@@ -44,6 +44,63 @@ describe("native participant evidence", () => {
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
     assert.equal(readback.partitions.workflow, "verified");
   });
+
+  it("verifies independently authored node-history Script handlers and rejects semantic mutations", () => {
+    const prepared = prepareSample(nativeNodeHistoryHandlersDsl());
+    const template = JSON.parse(readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8"));
+    const workflow = JSON.parse(readFileSync(
+      join(fixtureDir, "node-history-handlers-native-workflow.json"),
+      "utf8"
+    ));
+    const config = xformConfig(template);
+    const attr = JSON.parse(config.attribute.formAttr);
+    attr.subjectRule = {};
+    config.attribute.formAttr = JSON.stringify(attr);
+    template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(workflow);
+
+    const readback = prepared.verify(template);
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.equal(readback.partitions.workflow, "verified");
+
+    const mutations = [
+      ["referenced node", (rule) => {
+        rule.script = rule.script.replace('"N5"', '"N4"');
+      }],
+      ["history flag", (rule) => {
+        rule.script = rule.script.replace("false", "true");
+      }],
+      ["display content", (rule) => {
+        rule.vo.content = rule.vo.content.replace('"N5"', '"N4"');
+      }],
+      ["display mode", (rule) => {
+        rule.vo.mode = "formula";
+      }],
+      ["organization array result type", (rule) => {
+        rule.resultType.type = "object";
+      }]
+    ];
+
+    for (const [name, mutateRule] of mutations) {
+      const mutated = structuredClone(template);
+      const content = JSON.parse(mutated.mechanisms.lbpmTemplate[0].fdContent);
+      const handlers = content.elements.find((element) => element.id === "N36").handlers;
+      const rule = JSON.parse(handlers.ruleKey);
+      mutateRule(rule);
+      handlers.ruleKey = JSON.stringify(rule);
+      mutated.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+
+      const rejected = prepared.verify(mutated);
+      assert.equal(rejected.ok, false, `${name} mutation must fail`);
+      assert.equal(
+        rejected.diagnostics.some((item) =>
+          item.code === "readback.workflow.participant_mismatch"
+        ),
+        true,
+        JSON.stringify(rejected.diagnostics)
+      );
+    }
+  });
 });
 
 function nativeFormulaParticipantDsl() {
@@ -135,6 +192,57 @@ function nativeGenericRoleParticipantDsl() {
           condition: { translationStatus: "executable" }
         }
       ],
+      topologicalOrder: nodes.map((node) => node.id)
+    }
+  });
+}
+
+function nativeNodeHistoryHandlersDsl() {
+  const nodes = [
+    workflowNode("N1", "generalStart", "startEvent", "Start"),
+    workflowNode("N4", "draft", "manualTask", "Send-node referenced node"),
+    {
+      ...workflowNode("N8", "send", "manualTask", "First send reusing N4 handlers"),
+      participants: {
+        mode: "node_history_handlers",
+        nodeId: "N4",
+        sourceExpression: '$流程.获取节点实际处理人$("N4")',
+        sourceNameExpression: '$流程.获取节点实际处理人$("N4")'
+      }
+    },
+    {
+      ...workflowNode("N20", "send", "manualTask", "Second send reusing N4 handlers"),
+      participants: {
+        mode: "node_history_handlers",
+        nodeId: "N4",
+        sourceExpression: '$流程.获取节点实际处理人$("N4")',
+        sourceNameExpression: '$流程.获取节点实际处理人$("N4")'
+      }
+    },
+    workflowNode("N5", "draft", "manualTask", "Referenced node"),
+    {
+      ...workflowNode("N36", "review", "manualTask", "Reuse N5 handlers"),
+      participants: {
+        mode: "node_history_handlers",
+        nodeId: "N5",
+        sourceExpression: '$流程.获取节点实际处理人$("N5")',
+        sourceNameExpression: '$流程.获取节点实际处理人$("N5")'
+      }
+    },
+    workflowNode("N3", "generalEnd", "endEvent", "End")
+  ];
+  return sampleTrustedDsl({
+    workflow: {
+      process: { id: "native-node-history-handlers" },
+      nodes,
+      edges: nodes.slice(0, -1).map((node, index) => ({
+        id: `L${index + 1}`,
+        source: node.id,
+        target: nodes[index + 1].id,
+        sourceRef: `source.workflow.edge.L${index + 1}`,
+        attributes: {},
+        condition: { translationStatus: "executable" }
+      })),
       topologicalOrder: nodes.map((node) => node.id)
     }
   });

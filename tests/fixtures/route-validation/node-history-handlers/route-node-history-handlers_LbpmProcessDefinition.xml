@@ -14,14 +14,20 @@
    <string>&lt;process description=&quot;modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=route-node-history-handlers-template&amp;amp;lbpmTmpId=route-node-history-handlers-lbpm&quot; fdId=&quot;route-node-history-handlers-process&quot;&gt;
 &lt;nodes&gt;
 &lt;startNode id=&quot;N1&quot; name=&quot;Start&quot;/&gt;
+&lt;draftNode id=&quot;N4&quot; name=&quot;Send-node referenced node&quot;/&gt;
+&lt;sendNode handlerIds=&quot;$流程.获取节点实际处理人$(&amp;quot;N4&amp;quot;)&quot; handlerNames=&quot;$流程.获取节点实际处理人$(&amp;quot;N4&amp;quot;)&quot; handlerSelectType=&quot;formula&quot; id=&quot;N8&quot; name=&quot;First send reusing N4 handlers&quot;/&gt;
+&lt;sendNode handlerIds=&quot;$流程.获取节点实际处理人$(&amp;quot;N4&amp;quot;)&quot; handlerNames=&quot;$流程.获取节点实际处理人$(&amp;quot;N4&amp;quot;)&quot; handlerSelectType=&quot;formula&quot; id=&quot;N20&quot; name=&quot;Second send reusing N4 handlers&quot;/&gt;
 &lt;draftNode id=&quot;N5&quot; name=&quot;Referenced node&quot;/&gt;
 &lt;reviewNode handlerIds=&quot;$流程.获取节点实际处理人$(&amp;quot;N5&amp;quot;)&quot; handlerNames=&quot;$流程.获取节点实际处理人$(&amp;quot;N5&amp;quot;)&quot; handlerSelectType=&quot;formula&quot; id=&quot;N36&quot; name=&quot;Reuse N5 handlers&quot;/&gt;
 &lt;endNode id=&quot;N3&quot; name=&quot;End&quot;/&gt;
 &lt;/nodes&gt;
 &lt;lines&gt;
-&lt;line endNodeId=&quot;N5&quot; id=&quot;L1&quot; startNodeId=&quot;N1&quot;/&gt;
-&lt;line endNodeId=&quot;N36&quot; id=&quot;L2&quot; startNodeId=&quot;N5&quot;/&gt;
-&lt;line endNodeId=&quot;N3&quot; id=&quot;L3&quot; startNodeId=&quot;N36&quot;/&gt;
+&lt;line endNodeId=&quot;N4&quot; id=&quot;L1&quot; startNodeId=&quot;N1&quot;/&gt;
+&lt;line endNodeId=&quot;N8&quot; id=&quot;L2&quot; startNodeId=&quot;N4&quot;/&gt;
+&lt;line endNodeId=&quot;N20&quot; id=&quot;L3&quot; startNodeId=&quot;N8&quot;/&gt;
+&lt;line endNodeId=&quot;N5&quot; id=&quot;L4&quot; startNodeId=&quot;N20&quot;/&gt;
+&lt;line endNodeId=&quot;N36&quot; id=&quot;L5&quot; startNodeId=&quot;N5&quot;/&gt;
+&lt;line endNodeId=&quot;N3&quot; id=&quot;L6&quot; startNodeId=&quot;N36&quot;/&gt;
 &lt;/lines&gt;
 &lt;/process&gt;</string>
   </void>

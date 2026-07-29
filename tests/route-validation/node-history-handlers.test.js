@@ -36,6 +36,33 @@ describe("Route-validation node-history handlers", { concurrency: false }, () =>
         nodeId: "N5"
       }
     );
+    for (const nodeId of ["N8", "N20"]) {
+      const sendDslNode = result.dsl.workflow.nodes.find((node) => node.id === nodeId);
+      const sendNativeNode = result.execution.readback.workflow.nodes.find((node) => node.id === nodeId);
+
+      assert.deepEqual(
+        {
+          mode: sendDslNode.participants.mode,
+          nodeId: sendDslNode.participants.nodeId,
+          status: sendDslNode.translationStatus
+        },
+        {
+          mode: "node_history_handlers",
+          nodeId: "N4",
+          status: "executable"
+        }
+      );
+      assert.deepEqual(
+        {
+          mode: sendNativeNode.participants.mode,
+          nodeId: sendNativeNode.participants.nodeId
+        },
+        {
+          mode: "node_history_handlers",
+          nodeId: "N4"
+        }
+      );
+    }
     assert.equal(result.execution.readback.partitions.workflow, "verified");
   });
 
@@ -64,6 +91,14 @@ describe("Route-validation node-history handlers", { concurrency: false }, () =>
     assert.equal(rule.vo.mode, "script");
     assert.equal(rule.resultType.type, "array");
     assert.equal(JSON.stringify(node).includes("$流程.获取节点实际处理人$"), false);
+    for (const nodeId of ["N8", "N20"]) {
+      const sendNode = content.elements.find((element) => element.id === nodeId);
+      const sendRule = JSON.parse(sendNode.handlers.ruleKey);
+      assert.equal(sendNode.type, "send");
+      assert.equal(sendRule.script, 'return ${func.lbpm.getNodeHistoryHandlers}("N4", false)');
+      assert.equal(sendRule.vo.content, 'return #获取节点历史处理人#("N4", false)');
+      assert.equal(sendRule.resultType.type, "array");
+    }
     assert.equal(verifyTemplate(trusted, template).ok, true);
 
     rule.script = 'return ${func.lbpm.getNodeHistoryHandlers}("N4", false)';
