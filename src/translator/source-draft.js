@@ -4,6 +4,7 @@ import { auditSourceScriptRowMarkerOrphans, ORPHAN_ROW_MARKER_WARNING_CODE } fro
 import { translateLbpmProcessDefinitionXml } from "./lbpm-process-definition-adapter.js";
 import { sourceFormRulesFromLegacyScripts } from "./sysform-form-rules.js";
 import { translateSysFormTemplateXml } from "./sysform-template-adapter.js";
+import { isHiddenMetadataAttributes } from "./sysform-metadata.js";
 import {
   cleanText,
   parseRootHashMap,
@@ -170,13 +171,17 @@ function omitAuditedOrphanRowRuleEffects(formRules, issues = []) {
 }
 
 function sourceDataFieldFromField(field) {
+  const hardHidden = field.source?.hardHidden === true;
   return pruneUndefined({
     id: field.id,
     sourceRef: sourceRef("form.dataField", field.id),
     title: field.title,
     sourceType: field.type,
     required: Boolean(field.required),
-    dataOnly: true,
+    dataOnly: !hardHidden && (
+      field.dataOnly === true ||
+      isHiddenMetadataAttributes(field.source?.metadataAttributes)
+    ) ? true : undefined,
     options: cloneOptions(field.options),
     sourceProps: sourcePropsFromField(field),
     evidence: evidenceForField(field)
@@ -593,7 +598,8 @@ function sourcePropsFromField(field) {
     restDialog: field.source?.restDialog,
     metadataId: field.source?.metadataId,
     metadataKind: field.source?.metadataKind,
-    metadataAttributes: field.source?.metadataAttributes
+    metadataAttributes: field.source?.metadataAttributes,
+    hardHidden: field.source?.hardHidden === true ? true : undefined
   });
 }
 

@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-07-28.v9",
+  "version": "2026-08-16.v10",
   "components": [
     {
       "componentId": "xform-button",
@@ -39,6 +39,26 @@
         }
       },
       "defaultPolicy": { "executorDefaults": ["placeholder"] },
+      "omitPolicy": { "omitWhenAbsent": [] }
+    },
+    {
+      "componentId": "xform-hidden",
+      "kind": "field",
+      "label": "隐藏字段",
+      "description": "NewOA/MK native stored hidden field.",
+      "usage": "Use for source controls that are explicitly hard-hidden and must remain available to scripts and data binding.",
+      "negativeUsage": "Do not use for fields hidden only by a dynamic visibility rule; those remain data-only fields.",
+      "allowedScopes": ["field", "detailColumn"],
+      "target": { "desktop": "@elem/xform-hidden", "mobile": "@elem/xform-hidden" },
+      "propsSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required": { "type": "boolean" },
+          "defaultValue": { "$ref": "#/$defs/defaultValue" }
+        }
+      },
+      "defaultPolicy": {},
       "omitPolicy": { "omitWhenAbsent": [] }
     },
     {

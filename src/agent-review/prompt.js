@@ -538,6 +538,7 @@ function dslFieldSummary(field = {}, compact = false) {
 function compactSourceProps(sourceProps = {}) {
   if (!isRecord(sourceProps)) return undefined;
   return pruneUndefined({
+    hardHidden: sourceProps.hardHidden === true ? true : undefined,
     designerType: sourceProps.designerType,
     metadataKind: sourceProps.metadataKind,
     designerValues: pick(sourceProps.designerValues, [

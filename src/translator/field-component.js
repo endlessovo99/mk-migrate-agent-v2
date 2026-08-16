@@ -1,4 +1,10 @@
 export function componentForSourceType(type, source = {}) {
+  if (
+    source.sourceProps?.hardHidden === true ||
+    String(source.sourceProps?.designerType || "").toLowerCase() === "hidden"
+  ) {
+    return "xform-hidden";
+  }
   if (String(source.sourceProps?.designerType || "").toLowerCase() === "rtf") return "xform-rich-text";
   if (isSourceCalculation(type, source)) {
     return "xform-calculate";

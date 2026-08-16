@@ -41,6 +41,7 @@ import {
   DETAIL_MAIN_ROW_LIFECYCLE_BASIS
 } from "./detail-main-row-lifecycle.js";
 import { foldLegacyDetailAddressComposites } from "./detail-address-composite.js";
+import { isHiddenMetadataAttributes } from "./sysform-metadata.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -639,10 +640,14 @@ function draftForm(sourceForm) {
 }
 
 function draftDataFieldFromSource(field) {
-  return {
+  const hardHidden = field.sourceProps?.hardHidden === true;
+  return pruneUndefined({
     ...draftFieldFromSourceControl(field),
-    dataOnly: true
-  };
+    dataOnly: !hardHidden && (
+      field.dataOnly === true ||
+      isHiddenMetadataAttributes(field.sourceProps?.metadataAttributes)
+    ) ? true : undefined
+  });
 }
 
 function draftFieldFromSourceControl(control) {

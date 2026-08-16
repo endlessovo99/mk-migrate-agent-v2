@@ -70,7 +70,7 @@ function metadataFieldToDslField(property, settings = {}) {
   };
 }
 
-function isHiddenMetadataAttributes(attrs = {}) {
+export function isHiddenMetadataAttributes(attrs = {}) {
   return isFalseLike(attrs.canDisplay) || isFalseLike(attrs.canShow) || isNoShow(attrs.showStatus);
 }
 

@@ -817,7 +817,7 @@ describe("translateSysFormTemplateXml", () => {
     assert.deepEqual(parseSysFormTemplateXml(nestedUnderVoid), {});
   });
 
-  it("keeps metadata-backed hidden persisted fields as data-only fields outside layout", () => {
+  it("keeps hidden persisted fields outside layout and appends them after visible fields", () => {
     const designerHtml = `
       <table fd_type="standardTable">
         <tbody>
@@ -843,13 +843,13 @@ describe("translateSysFormTemplateXml", () => {
     assert.deepEqual(dsl.form.fields.map((field) => field.id), ["fd_visible"]);
     assert.deepEqual(dsl.form.dataFields.map((field) => [field.id, field.dataOnly]), [
       ["fd_metadata_hidden", true],
-      ["fd_designer_hidden", true]
+      ["fd_designer_hidden", undefined],
+      ["fd_designer_only", true]
     ]);
     assert.deepEqual(
       dsl.form.layout.rows.flatMap((row) => row.cells.flatMap((cell) => cell.fieldIds)),
       ["fd_visible"]
     );
-    assert.equal(dsl.form.dataFields.some((field) => field.id === "fd_designer_only"), false);
     assert.equal(dsl.form.dataFields.some((field) => field.id === "fd_hidden_column"), false);
   });
 
@@ -889,7 +889,7 @@ describe("translateSysFormTemplateXml", () => {
 
     assert.deepEqual(
       dsl.form.dataFields.map((field) => [field.id, field.dataOnly]),
-      [["fd_hidden_sibling", true]]
+      [["fd_hidden_sibling", undefined]]
     );
     assert.deepEqual(
       dsl.form.layout.rows.flatMap((row) =>
