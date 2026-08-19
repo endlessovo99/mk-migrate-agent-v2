@@ -1140,6 +1140,8 @@ function validatePatchValue(patch, target, path, currentValue, dslDraft) {
   if (target.scope === "scriptAction") {
     return validateScriptPatchValue(patch, target, path, currentValue, dslDraft);
   }
+  const deterministicTypeIssue = validateDeterministicFieldTypePatch(patch, target, dslDraft, path);
+  if (deterministicTypeIssue) return [deterministicTypeIssue];
   if (target.property === "title" && !nonEmptyString(patch.value)) {
     return [error("agent.patch.value_title_required", "Title patches require a non-empty string value.", `${path}/value`)];
   }
@@ -1168,6 +1170,28 @@ function validatePatchValue(patch, target, path, currentValue, dslDraft) {
     }
   }
   return [];
+}
+
+function validateDeterministicFieldTypePatch(patch, target, dslDraft, path) {
+  if (!["type", "componentId"].includes(target.property)) return undefined;
+  const field = dslDraft?.form?.fields?.[target.fieldIndex];
+  const value = target.scope === "column" ? field?.columns?.[target.columnIndex] : field;
+  const inference = value?.sourceProps?.numericCalculationInference;
+  if (!inference) return undefined;
+  const expected = target.property === "type" ? "number" : "xform-number";
+  if (patch.value === expected) return undefined;
+  return error(
+    "agent.patch.deterministic_numeric_component_changed",
+    "Agent Review must preserve the deterministic numeric component inferred from source calculation behavior.",
+    `${path}/value`,
+    {
+      fieldId: value?.id,
+      expected,
+      actual: patch.value,
+      sourceRef: inference.sourceRef,
+      evidence: inference.evidence
+    }
+  );
 }
 
 function validateScriptPatchValue(patch, target, path, currentValue, dslDraft) {
@@ -1244,10 +1268,94 @@ function validateScriptPatchValue(patch, target, path, currentValue, dslDraft) {
       `${path}/value/staticProps`,
       action?.coverage?.staticProps
     ));
+    diagnostics.push(...validateNativeCalculationPatchCoverage(
+      patch.value.nativeCalculations,
+      action?.coverage?.nativeCalculations,
+      `${path}/value/nativeCalculations`
+    ));
+    diagnostics.push(...validateNativeDisplayPatchCoverage(
+      patch.value.nativeDisplayFields,
+      action?.coverage?.nativeDisplayFields,
+      dslDraft?.form,
+      `${path}/value/nativeDisplayFields`
+    ));
     if (patch.value.residuals !== undefined && !Array.isArray(patch.value.residuals)) {
       diagnostics.push(error("agent.patch.value_coverage_residuals_invalid", "Script coverage.residuals must be an array when present.", `${path}/value/residuals`));
     }
     return diagnostics;
+  }
+  return [];
+}
+
+function validateNativeDisplayPatchCoverage(proposed, current, form, path) {
+  const currentValues = Array.isArray(current) ? current : [];
+  if (proposed === undefined) {
+    return currentValues.length
+      ? [error(
+          "agent.patch.native_display_fields_deterministic_evidence_changed",
+          "Agent Review must preserve every deterministically identified native display coverage field.",
+          path,
+          { current: currentValues, proposed }
+        )]
+      : [];
+  }
+  if (!Array.isArray(proposed)) {
+    return [error(
+      "agent.patch.value_coverage_native_display_fields_invalid",
+      "Script coverage.nativeDisplayFields must be an array when present.",
+      path
+    )];
+  }
+  const missing = currentValues.filter((fieldId) => !proposed.includes(fieldId));
+  if (missing.length) {
+    return [error(
+      "agent.patch.native_display_fields_deterministic_evidence_changed",
+      "Agent Review must preserve every deterministically identified native display coverage field.",
+      path,
+      { current: currentValues, proposed, missing }
+    )];
+  }
+  const invalid = proposed.filter((fieldId) =>
+    typeof fieldId !== "string" || !fieldId.trim() ||
+    !(form?.fields || []).some((field) => field?.id === fieldId)
+  );
+  return invalid.length
+    ? [error(
+        "agent.patch.value_coverage_native_display_field_invalid",
+        "Script coverage.nativeDisplayFields must reference existing form fields.",
+        path,
+        { invalid }
+      )]
+    : [];
+}
+
+function validateNativeCalculationPatchCoverage(proposed, current, path) {
+  const currentValues = Array.isArray(current) ? current : [];
+  if (proposed === undefined) {
+    return currentValues.length
+      ? [error(
+          "agent.patch.native_calculations_deterministic_evidence_changed",
+          "Agent Review must preserve every deterministically identified native calculation coverage field.",
+          path,
+          { current: currentValues, proposed }
+        )]
+      : [];
+  }
+  if (!Array.isArray(proposed)) {
+    return [error(
+      "agent.patch.value_coverage_native_calculations_invalid",
+      "Script coverage.nativeCalculations must be an array when present.",
+      path
+    )];
+  }
+  const missing = currentValues.filter((fieldId) => !proposed.includes(fieldId));
+  if (missing.length) {
+    return [error(
+      "agent.patch.native_calculations_deterministic_evidence_changed",
+      "Agent Review must preserve every deterministically identified native calculation coverage field.",
+      path,
+      { current: currentValues, proposed, missing }
+    )];
   }
   return [];
 }

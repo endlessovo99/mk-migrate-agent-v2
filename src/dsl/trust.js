@@ -253,7 +253,7 @@ function isSourceBoundScriptAction(action) {
 
 function validateWorkflowFormulaProvenance(sourceDraft, migrationDsl, diagnostics) {
   for (const inspection of inspectWorkflowFormulaProvenance(sourceDraft, migrationDsl)) {
-    if (inspection.status === "matched") continue;
+    if (["matched", "reviewed_fallback"].includes(inspection.status)) continue;
     diagnostics.push(error(
       inspection.status === "unmapped"
         ? "trust.workflow_formula_unmapped"

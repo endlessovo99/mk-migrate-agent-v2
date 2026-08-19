@@ -2666,6 +2666,7 @@ function inferComponent(field, controlProps) {
 }
 
 function inferFieldType(field, controlProps) {
+  if (field.fdType === "hidden") return "text";
   if (field.fdType && field.fdType !== "varchar") return field.fdType;
   const component = inferComponent(field, controlProps);
   if (component.includes("select")) return "select";

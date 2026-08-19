@@ -43,20 +43,27 @@ export function buildDesignerFirstForm(html, metadata, warnings, options = {}) {
   const designerById = new Map(
     [...designer.hiddenFields, ...designer.fields].map((field) => [field.id, field])
   );
-  const hiddenDesignerIds = new Set(
-    designer.hiddenFields
-      .filter((field) => field.type !== "detailTable" && !visibleDesignerIds.has(field.id))
-      .map((field) => field.id)
+  const hiddenDesignerFields = designer.hiddenFields.filter(
+    (field) => field.type !== "detailTable" && !visibleDesignerIds.has(field.id)
   );
-  const dataOnlyMetadataFields = metadataFields.filter((field) =>
+  const hiddenDesignerIds = new Set(hiddenDesignerFields.map((field) => field.id));
+  const hiddenMetadataFields = metadataFields.filter((field) =>
     field.type !== "detailTable" &&
     (isDataOnlyMetadataField(field) || hiddenDesignerIds.has(field.id))
   );
-  const dataOnlyIds = new Set(dataOnlyMetadataFields.map((field) => field.id));
-  const dataFields = dataOnlyMetadataFields.map((field) =>
-    dataOnlyFieldFromMetadata(field, designerById.get(field.id), warnings)
+  const hiddenMetadataIds = new Set(hiddenMetadataFields.map((field) => field.id));
+  const dataFields = [
+    ...hiddenMetadataFields.map((field) =>
+      dataOnlyFieldFromMetadata(field, designerById.get(field.id), warnings)
+    ),
+    ...hiddenDesignerFields
+      .filter((field) => !hiddenMetadataIds.has(field.id))
+      .map((field) => dataFieldFromHiddenDesigner(field, warnings))
+  ];
+  const dataOnlyIds = new Set(
+    dataFields.filter((field) => field.dataOnly === true).map((field) => field.id)
   );
-  const visibleMetadataFields = metadataFields.filter((field) => !dataOnlyIds.has(field.id));
+  const visibleMetadataFields = metadataFields.filter((field) => !hiddenMetadataIds.has(field.id));
 
   if (!designer.fields.length) {
     warnings.push({
@@ -74,7 +81,7 @@ export function buildDesignerFirstForm(html, metadata, warnings, options = {}) {
 
   const metadataById = new Map(visibleMetadataFields.map((field) => [field.id, field]));
   const metadataByTitle = groupBy(visibleMetadataFields, (field) => normalizeMatchText(field.title));
-  const matchedMetadataIds = new Set(dataOnlyIds);
+  const matchedMetadataIds = new Set(hiddenMetadataIds);
   const fields = [];
 
   for (const field of designer.fields) {
@@ -109,10 +116,22 @@ function dataOnlyFieldFromMetadata(metadataField, designerField, warnings) {
   const field = designerField
     ? enrichDesignerField(designerField, metadataField, warnings)
     : metadataField;
+  if (isHardHiddenField(field)) return field;
   return {
     ...field,
     dataOnly: true
   };
+}
+
+function dataFieldFromHiddenDesigner(field, warnings) {
+  const enriched = enrichDesignerField(field, undefined, warnings);
+  return isHardHiddenField(enriched)
+    ? enriched
+    : { ...enriched, dataOnly: true };
+}
+
+function isHardHiddenField(field) {
+  return field?.source?.hardHidden === true;
 }
 
 function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
@@ -604,13 +623,16 @@ function enrichDesignerField(field, metadataField, warnings) {
     };
   }
 
+  const hardHidden = isHardHiddenField(field);
   const next = {
     ...field,
     title: field.title || metadataField.title,
     required: field.required || metadataField.required,
-    ...(field.dataOnly === true || metadataField.dataOnly === true
-      ? { dataOnly: true }
-      : {}),
+    dataOnly: hardHidden
+      ? undefined
+      : field.dataOnly === true || metadataField.dataOnly === true
+        ? true
+        : undefined,
     source: {
       ...field.source,
       metadataId: metadataField.id,
@@ -1204,7 +1226,8 @@ function extractDesignerFieldControlEntries(html, options = {}) {
       options.runtimeVisibleFieldIds?.has(fieldId) &&
       isCanShowHidden(values, match[2])
     );
-    const hidden = isHiddenDesignerControl(values, match[2], fragment, {
+    const hardHidden = isHardHiddenDesignerControl(normalizedType, match[2], fragment);
+    const hidden = hardHidden || isHiddenDesignerControl(values, match[2], fragment, {
       ignoreCanShow: displayJspVisibilityOverride
     }) ||
       hiddenRanges.some((range) => match.index >= range.start && match.index < range.end);
@@ -1212,6 +1235,7 @@ function extractDesignerFieldControlEntries(html, options = {}) {
     const field = designerFieldFromControl(fdType, values, match[2], {
       html: fragment,
       hidden,
+      hardHidden,
       displayJspVisibilityOverride: displayJspVisibilityOverride && !hidden,
       rightContainer: rightContainerAt(rightRanges, match.index)
     });
@@ -1276,7 +1300,8 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
     ...(context.displayJspVisibilityOverride
       ? { displayJspVisibilityOverride: true }
       : {}),
-    ...(context.hidden ? { designerHidden: true } : {})
+    ...(context.hidden ? { designerHidden: true } : {}),
+    ...(context.hardHidden ? { hardHidden: true } : {})
   };
 
   if (normalized === "textlabel") {
@@ -1323,6 +1348,16 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
       columns: extractDesignerDetailTableColumns(context.html || "", id)
     };
   }
+  if (normalized === "hidden") {
+    return {
+      id,
+      title,
+      type: "text",
+      required,
+      mk: mkForComponent("xform-hidden"),
+      source
+    };
+  }
   if (["textarea", "rtf"].includes(normalized)) {
     return { id, title, type: "longText", required, mk: mkForFieldType("longText"), source };
   }
@@ -1345,7 +1380,14 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
     return { id, title, type: "attachment", required, mk: mkForFieldType("attachment"), source };
   }
   if (["inputtext", "calculation", "sqldialog"].includes(normalized)) {
-    return { id, title, type: "text", required, mk: mkForFieldType("text"), source };
+    return {
+      id,
+      title,
+      type: "text",
+      required,
+      mk: context.hardHidden ? mkForComponent("xform-hidden") : mkForFieldType("text"),
+      source
+    };
   }
   if (normalized === "restdialog") {
     return { id, title, type: "RestDialog", required, source };
@@ -1401,7 +1443,8 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
       for (const control of extractDesignerFieldControls(cell.body, { includeHidden: true })) {
         if (!isDetailColumnControl(control, tableId) || seen.has(control.id)) continue;
         seen.add(control.id);
-        const persistedControl = control.source?.designerHidden === true
+        const persistedControl = control.source?.designerHidden === true &&
+          control.source?.hardHidden !== true
           ? { ...control, dataOnly: true }
           : control;
         const withHeader = withDetailHeaderSemantics(
@@ -1585,6 +1628,25 @@ function isHiddenDesignerControl(values = {}, attrs = "", fragment = "", options
   if (hasDisplayNone(values.style) || hasDisplayNone(attrValue(attrs, "style"))) return true;
   if (/\bclass\s*=\s*(["'])[^"']*\binputhidden\b/i.test(fragment)) return true;
   return false;
+}
+
+function isHardHiddenDesignerControl(normalizedType, attrs = "", fragment = "") {
+  const ownAttributes = String(attrs).toLowerCase();
+  if (normalizedType === "detailstable") {
+    return ownAttributes.includes("inputhidden") ||
+      hasHiddenTypeAttribute(ownAttributes);
+  }
+  return normalizedType === "hidden" ||
+    String(fragment).toLowerCase().includes("inputhidden") ||
+    hasHiddenTypeAttribute(fragment) ||
+    hasHiddenTypeAttribute(ownAttributes);
+}
+
+function hasHiddenTypeAttribute(value = "") {
+  const text = String(value).toLowerCase();
+  return text.includes('type="hidden"') ||
+    text.includes("type='hidden'") ||
+    /\btype\s*=\s*hidden\b/u.test(text);
 }
 
 function isCanShowHidden(values = {}, attrs = "") {

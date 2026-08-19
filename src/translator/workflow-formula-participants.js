@@ -9,6 +9,7 @@ const FORMULA_PARTICIPANT_KEYS = Object.freeze([
   "companyRole",
   "departmentRole",
   "fallbackKind",
+  "fallbackScope",
   "reason",
   "branches",
   "fields",
@@ -511,7 +512,13 @@ export function inspectWorkflowFormulaProvenance(sourceDraft, dslDraft) {
       actualMode: exact?.node?.participants?.mode
     };
     if (sourceFormula.mode === "unmapped_formula") {
-      inspections.push({ ...common, status: "unmapped", identityMatched: Boolean(exact) });
+      inspections.push(reviewedUnmappedFormulaFallbackMatches({
+        dslDraft,
+        exact,
+        common
+      })
+        ? { ...common, status: "reviewed_fallback", identityMatched: true }
+        : { ...common, status: "unmapped", identityMatched: Boolean(exact) });
     } else if (!exact) {
       inspections.push({ ...common, status: "source_missing_in_dsl", identityMatched: false });
     } else {
@@ -552,6 +559,30 @@ export function inspectWorkflowFormulaProvenance(sourceDraft, dslDraft) {
   });
 
   return inspections;
+}
+
+function reviewedUnmappedFormulaFallbackMatches({ dslDraft, exact, common }) {
+  const participants = exact?.node?.participants;
+  if (
+    participants?.mode !== "configured_person_fallback" ||
+    participants.fallbackKind !== "person" ||
+    participants.fallbackScope !== "reviewed_unmapped_formula" ||
+    participants.sourceExpression !== common.sourceExpression ||
+    !String(participants.reason || "").trim()
+  ) {
+    return false;
+  }
+
+  const targetRef = `/workflow/nodes/${exact.nodeIndex}/participants`;
+  return (dslDraft?.review?.decisions || []).some((decision) => (
+    decision?.status === "accepted" &&
+    decision?.decisionType === "workflow_formula_person_fallback" &&
+    decision?.result === "configured_person_fallback" &&
+    Array.isArray(decision.sourceRefs) &&
+    decision.sourceRefs.includes(common.sourceRef) &&
+    Array.isArray(decision.targetRefs) &&
+    decision.targetRefs.includes(targetRef)
+  ));
 }
 
 function formFieldParticipant(attributes, handlerIds, handlerNames) {

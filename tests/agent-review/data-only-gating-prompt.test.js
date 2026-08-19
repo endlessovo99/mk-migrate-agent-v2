@@ -4,7 +4,7 @@ import { buildAgentReviewPrompt } from "../../src/agent-review/prompt.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 
 describe("agent-review hidden field and view gate context", () => {
-  it("exposes data-only field evidence and immutable runWhen without allowing either to be patched", () => {
+  it("exposes hard-hidden field evidence and immutable runWhen without allowing either to be patched", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/route-hidden-data-field");
     const dslDraft = draftSourceDraft(sourceDraft);
     const prompt = buildAgentReviewPrompt(sourceDraft, dslDraft);
@@ -15,9 +15,11 @@ describe("agent-review hidden field and view gate context", () => {
       action.runWhen?.viewStatusIn?.[0] === "view"
     );
 
-    assert.equal(sourceDataField.dataOnly, true);
+    assert.equal(sourceDataField.dataOnly, undefined);
+    assert.equal(sourceDataField.sourceProps.hardHidden, true);
     assert.equal(sourceDataField.sourceProps.metadataAttributes.canDisplay, "false");
-    assert.equal(dslDataField.dataOnly, true);
+    assert.equal(dslDataField.dataOnly, undefined);
+    assert.equal(dslDataField.componentId, "xform-hidden");
     assert.equal(editSource.displayGate, "xform:editShow");
     assert.deepEqual(viewAction.runWhen, { viewStatusIn: ["view"] });
     assert.equal(prompt.context.allowedPatchPaths.some((path) => path.includes("dataOnly")), false);

@@ -282,7 +282,7 @@ function projectModel(form, model) {
     const rowId = `layout.generated-${model.generatedFieldId}`;
     return {
       ...form,
-      fields: [...(form.fields || []), generatedField],
+      fields: fieldsWithGeneratedField(form, generatedField),
       layout: {
         ...(form.layout || {}),
         mkTree: [
@@ -311,7 +311,7 @@ function projectModel(form, model) {
   }
   return {
     ...form,
-    fields: [...(form.fields || []), generatedField],
+    fields: fieldsWithGeneratedField(form, generatedField),
     layout: {
       ...(form.layout || {}),
       mkTree: (form.layout?.mkTree || []).map((row) => {
@@ -334,6 +334,19 @@ function projectModel(form, model) {
       })
     }
   };
+}
+
+function fieldsWithGeneratedField(form, generatedField) {
+  const fields = Array.isArray(form.fields) ? form.fields : [];
+  const hidden = fields.filter(isHiddenField);
+  const visible = fields.filter((field) => !isHiddenField(field));
+  return [...visible, generatedField, ...hidden];
+}
+
+function isHiddenField(field) {
+  return field?.dataOnly === true ||
+    field?.componentId === "xform-hidden" ||
+    field?.sourceProps?.hardHidden === true;
 }
 
 function compiledDynamicHyperlinkFunction(model) {

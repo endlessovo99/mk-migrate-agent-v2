@@ -20,8 +20,9 @@ describe("dynamic invoice hyperlink Route case", () => {
     ));
     const action = dslDraft.scripts.actions.find((candidate) => candidate.id === actionId);
 
-    assert.equal(sourceUrl.dataOnly, true);
-    assert.equal(sourceUrl.componentId, "xform-input");
+    assert.equal(sourceUrl.dataOnly, undefined);
+    assert.equal(sourceUrl.componentId, "xform-hidden");
+    assert.equal(sourceUrl.sourceProps.hardHidden, true);
     assert.deepEqual(hyperlink.props, { largestSet: 1, editable: false });
     assert.equal(hyperlink.type, "hyperlinks");
     assert.equal(hyperlink.componentId, "xform-hyperlinks");
@@ -66,7 +67,9 @@ describe("dynamic invoice hyperlink Route case", () => {
     ));
     const action = dslDraft.scripts.actions.find((candidate) => candidate.id === urlOnlyActionId);
 
-    assert.equal(sourceUrl.dataOnly, true);
+    assert.equal(sourceUrl.dataOnly, undefined);
+    assert.equal(sourceUrl.componentId, "xform-hidden");
+    assert.equal(sourceUrl.sourceProps.hardHidden, true);
     assert.deepEqual(hyperlink.props, { largestSet: 1, editable: false });
     assert.equal(hyperlink.type, "hyperlinks");
     assert.equal(hyperlink.componentId, "xform-hyperlinks");

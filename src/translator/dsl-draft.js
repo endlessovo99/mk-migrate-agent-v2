@@ -41,6 +41,7 @@ import {
   DETAIL_MAIN_ROW_LIFECYCLE_BASIS
 } from "./detail-main-row-lifecycle.js";
 import { foldLegacyDetailAddressComposites } from "./detail-address-composite.js";
+import { isHiddenMetadataAttributes } from "./sysform-metadata.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -54,9 +55,12 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   }
 
   const rawForm = projectDynamicHyperlinkForm(
-    applySourceNumericDetailInferences(
-      applyNativeCalculationInferences(
-        foldLegacyDetailAddressComposites(draftForm(sourceDraft.form || {})),
+    appendStaticJspDescriptionFields(
+      applySourceNumericDetailInferences(
+        applyNativeCalculationInferences(
+          foldLegacyDetailAddressComposites(draftForm(sourceDraft.form || {})),
+          sourceDraft.scripts
+        ),
         sourceDraft.scripts
       ),
       sourceDraft.scripts
@@ -85,7 +89,9 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     }),
     fieldIdMap
   );
-  const form = applyStaticScriptProperties(mappedForm, mappedScripts);
+  const form = appendHardHiddenFieldsToLayout(
+    applyStaticScriptProperties(mappedForm, mappedScripts)
+  );
   const formRules = removeDeterministicScriptOwnedFormRules(
     provisionalFormRules,
     mappedScripts
@@ -638,11 +644,116 @@ function draftForm(sourceForm) {
   };
 }
 
-function draftDataFieldFromSource(field) {
+function appendStaticJspDescriptionFields(form, scripts = {}) {
+  const existingIds = new Set((form?.fields || []).map((field) => field?.id));
+  const generated = (scripts?.fragments || []).flatMap((fragment) => {
+    const match = String(fragment?.content || "").match(
+      /<label\b[^>]*\bid\s*=\s*(["'])(fd_jsp_[A-Za-z0-9_]+)\1[^>]*>([\s\S]*?)<\/label>/iu
+    );
+    if (!match || existingIds.has(match[2])) return [];
+    const content = String(match[3]).replace(/<[^>]+>/gu, " ").replace(/\s+/gu, " ").trim();
+    if (!content) return [];
+    existingIds.add(match[2]);
+    return [{
+      id: match[2],
+      title: content,
+      type: "description",
+      componentId: "xform-description",
+      props: { content },
+      sourceProps: {
+        generatedFromJsp: true,
+        jspFragmentId: fragment.id,
+        staticHtml: fragment.content
+      },
+      sourceRef: fragment.sourceRef,
+      generated: true,
+      reason: "Source JSP contains a static label referenced by payeeDiffTip visibility logic.",
+      layoutSourceRef: `source.form.layout.generated.${match[2]}`
+    }];
+  });
+  if (!generated.length) return form;
+  const generatedRows = generated.map((field) => ({
+    id: `layout.generated.${field.id}`,
+    componentId: "xform-flex-1-1-layout",
+    props: { columns: 1, sourceColumns: 1 },
+    sourceRef: field.sourceRef,
+    children: [{
+      id: `layout.generated.${field.id}.cell-0`,
+      refType: "field",
+      refIds: [field.id],
+      sourceRef: field.sourceRef,
+      column: 0,
+      colspan: 1
+    }]
+  }));
   return {
-    ...draftFieldFromSourceControl(field),
-    dataOnly: true
+    ...form,
+    fields: [...(form.fields || []), ...generated.map(({ layoutSourceRef, ...field }) => field)],
+    layout: {
+      ...(form.layout || {}),
+      mkTree: [...(form.layout?.mkTree || []), ...generatedRows]
+    }
   };
+}
+
+function appendHardHiddenFieldsToLayout(form) {
+  const hardHiddenFields = (form?.fields || []).filter((field) =>
+    field?.type !== "detailTable" && field?.sourceProps?.hardHidden === true
+  );
+  if (!hardHiddenFields.length) return form;
+
+  const hardHiddenIds = new Set(hardHiddenFields.map((field) => field.id));
+  const existingRows = (form.layout?.mkTree || [])
+    .map((row) => {
+      const children = (row.children || []).flatMap((child) => {
+        if (child?.refType !== "field") return [child];
+        const refIds = Array.isArray(child.refIds)
+          ? child.refIds
+          : child.refId
+            ? [child.refId]
+            : [];
+        const keptRefIds = refIds.filter((refId) => !hardHiddenIds.has(refId));
+        if (!keptRefIds.length) return [];
+        if (Array.isArray(child.refIds)) return [{ ...child, refIds: keptRefIds }];
+        return [{ ...child, refId: keptRefIds[0] }];
+      });
+      return children.length ? { ...row, children } : undefined;
+    })
+    .filter(Boolean);
+
+  const hiddenRows = hardHiddenFields.map((field) => ({
+    id: `layout.hard-hidden.${field.id}`,
+    componentId: "xform-flex-1-1-layout",
+    props: { columns: 1, sourceColumns: 1 },
+    sourceRef: field.sourceRef,
+    children: [{
+      id: `layout.hard-hidden.${field.id}.cell-0`,
+      refType: "field",
+      refIds: [field.id],
+      sourceRef: field.sourceRef,
+      column: 0,
+      colspan: 1
+    }]
+  }));
+
+  return {
+    ...form,
+    layout: {
+      ...(form.layout || {}),
+      mkTree: [...existingRows, ...hiddenRows]
+    }
+  };
+}
+
+function draftDataFieldFromSource(field) {
+  const hardHidden = field.sourceProps?.hardHidden === true;
+  return pruneUndefined({
+    ...draftFieldFromSourceControl(field),
+    dataOnly: !hardHidden && (
+      field.dataOnly === true ||
+      isHiddenMetadataAttributes(field.sourceProps?.metadataAttributes)
+    ) ? true : undefined
+  });
 }
 
 function draftFieldFromSourceControl(control) {

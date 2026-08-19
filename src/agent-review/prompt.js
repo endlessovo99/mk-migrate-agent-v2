@@ -7,7 +7,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v9";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v10";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -65,6 +65,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "coverage.nativeRules is action-local evidence: preserve every eligible rule id already present, never attach control-change rules to a global onLoad action, accept a rule carrying meta.runWhen only with the deterministic view-status-formula proof, and never omit an eligible executable rule for the same control/source when claiming status=covered.",
       "Native-covered closure rule: when action-local behavior is fully covered, coverage.status=\"covered\", coverage.nativeRules references executable rules, and coverage.residuals is empty, close that action as native-covered omitted while preserving runWhen audit evidence. Patch function:\"\", translationStatus:\"omitted\", functionMappings to native-form-rule evidence, and preserve covered coverage/nativeRules/residuals. Do not invent residuals from DOM/helper noise for these already-covered actions.",
       "Static-property closure rule: when an ungated action only sets required=true or a literal placeholder already present on a supported DSL field, coverage.staticProps records the exact {fieldId,prop,value} evidence. Patch function:\"\", translationStatus:\"omitted\", functionMappings with basis static-form-prop, and preserve nativeRules:[], staticProps, and residuals:[]; never invent a formRule id or change the evidenced field prop.",
+      "Native-calculation closure rule: when coverage.status=\"covered\", coverage.nativeCalculations lists target fields with verified xform-calculate props and coverage.residuals is empty, the legacy callback is only a duplicate trigger. If coverage.nativeDisplayFields is also present, it is source-backed evidence that the listed xform-description field is controlled by a deterministic sibling translation; preserve that list too. Patch function:\"\", translationStatus:\"omitted\", functionMappings with basis native-calculation, and preserve nativeCalculations, nativeDisplayFields when present, and residuals; do not retain legacy DOM or jQuery code.",
       "For detail-row visibility candidates, legacy onclick/setAttribute/__xformDispatch snippets are event-binding scaffolding when the DSL action already has event=onChange and matching tableId/controlId. Do not treat that scaffolding as residual; translate the action-local business function body instead.",
       "Use sourceDraft.scripts.sources[].javascriptWindows as layered source excerpts. When javascriptLength exceeds the excerpt length, do not assume the excerpt is the complete source.",
       "Non-whitelisted EKP functions are not automatically blocking. First infer their intent from source evidence and surrounding script context, then translate safely to targetApi JavaScript when confidence is high.",
@@ -527,17 +528,36 @@ function dslFieldSummary(field = {}, compact = false) {
     type: field.type,
     componentId: field.componentId,
     dataOnly: field.dataOnly,
-    props: compact ? undefined : field.props,
+    props: compact
+      ? (field.props?.calculation ? { calculation: field.props.calculation } : undefined)
+      : field.props,
     sourceRef: field.sourceRef,
-    sourceProps: compact ? undefined : compactSourceProps(field.sourceProps),
+    sourceProps: compact ? compactCalculationSourceProps(field.sourceProps) : compactSourceProps(field.sourceProps),
     columnCount: Array.isArray(field.columns) ? field.columns.length : undefined,
     columns: Array.isArray(field.columns) ? field.columns.map((column) => dslFieldSummary(column, compact)) : undefined
+  });
+}
+
+function compactCalculationSourceProps(sourceProps = {}) {
+  if (!isRecord(sourceProps)) return undefined;
+  return pruneUndefined({
+    hardHidden: sourceProps.hardHidden === true ? true : undefined,
+    generatedFromJsp: sourceProps.generatedFromJsp === true ? true : undefined,
+    inferredCalculation: sourceProps.inferredCalculation
+      ? {
+          classification: sourceProps.inferredCalculation.classification,
+          sourceRef: sourceProps.inferredCalculation.sourceRef,
+          evidence: sourceProps.inferredCalculation.evidence,
+          postTransform: sourceProps.inferredCalculation.postTransform
+        }
+      : undefined
   });
 }
 
 function compactSourceProps(sourceProps = {}) {
   if (!isRecord(sourceProps)) return undefined;
   return pruneUndefined({
+    hardHidden: sourceProps.hardHidden === true ? true : undefined,
     designerType: sourceProps.designerType,
     metadataKind: sourceProps.metadataKind,
     designerValues: pick(sourceProps.designerValues, [
@@ -937,6 +957,44 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
         }
       },
       residualPolicy: "Do not keep this action needs_review because of DOM/helper calls in the same JSP source file or callback scaffolding. Only actions whose coverage is partial/uncovered/none need new residual adjudication."
+    });
+  }
+  if (
+    coverage.status === "covered" &&
+    Array.isArray(coverage.nativeCalculations) &&
+    coverage.nativeCalculations.length &&
+    residuals.length === 0
+  ) {
+    opportunities.push({
+      kind: "native_calculation_coverage_candidate",
+      actionIndex,
+      candidatePatchPaths: [
+        `/scripts/actions/${actionIndex}/function`,
+        `/scripts/actions/${actionIndex}/translationStatus`,
+        `/scripts/actions/${actionIndex}/functionMappings`,
+        `/scripts/actions/${actionIndex}/coverage`
+      ],
+      nativeCalculations: coverage.nativeCalculations,
+      nativeDisplayFields: coverage.nativeDisplayFields,
+      requiredDecision: "Patch this duplicate calculation trigger to omitted/native-covered. The target calculation fields and the listed deterministic display translation already own the callback effects; preserve nativeCalculations, nativeDisplayFields, and do not retain the legacy DOM callback.",
+      requiredPatchShape: {
+        function: "",
+        translationStatus: "omitted",
+        functionMappings: [{
+          source: "legacy JSP calculation trigger",
+          target: "native xform-calculate field",
+          basis: "native-calculation",
+          reviewRequired: false
+        }],
+        coverage: {
+          status: "covered",
+          nativeRules: [],
+          nativeCalculations: coverage.nativeCalculations,
+          nativeDisplayFields: coverage.nativeDisplayFields,
+          residuals: []
+        }
+      },
+      residualPolicy: "Only close this action when the listed native calculation fields and, when present, nativeDisplayFields are the complete replacement for the callback's aggregate/formula and display effects; retain needs_review only for independent validation or helper behavior outside those listed effects."
     });
   }
 
@@ -1573,6 +1631,12 @@ function coverageSummary(coverage = {}, maxResiduals = 1) {
   return pruneUndefined({
     status: coverage.status,
     nativeRules: Array.isArray(coverage.nativeRules) ? coverage.nativeRules.slice(0, 8) : coverage.nativeRules,
+    nativeCalculations: Array.isArray(coverage.nativeCalculations)
+      ? coverage.nativeCalculations.slice(0, 8)
+      : coverage.nativeCalculations,
+    nativeDisplayFields: Array.isArray(coverage.nativeDisplayFields)
+      ? coverage.nativeDisplayFields.slice(0, 8)
+      : coverage.nativeDisplayFields,
     staticProps: Array.isArray(coverage.staticProps) ? coverage.staticProps.slice(0, 8) : coverage.staticProps,
     residuals: Array.isArray(coverage.residuals)
       ? coverage.residuals.slice(0, maxResiduals).map(compactResidual)

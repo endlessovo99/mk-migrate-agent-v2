@@ -18,22 +18,35 @@ describe("hidden data field route", () => {
     assert.equal(serialized.includes("fd_stale"), false);
   });
 
-  it("models metadata-backed hidden helpers as data-only fields without rendering them", () => {
+  it("retains hard-hidden helpers as native hidden fields at the form tail", () => {
     const sourceDraft = cleanSourceFile(fixture);
     const dslDraft = draftSourceDraft(sourceDraft);
-    const dataField = sourceDraft.form.dataFields.find((field) => field.id === "fd_shift");
-    const dslField = dslDraft.form.fields.find((field) => field.id === "fd_shift");
+    const sourceFields = sourceDraft.form.dataFields;
+    const dslFields = dslDraft.form.fields.slice(-2);
     const layoutRefs = dslDraft.form.layout.mkTree.flatMap((row) =>
       row.children.flatMap((cell) => cell.refIds)
     );
 
     assert.deepEqual(sourceDraft.form.controls.map((field) => field.id), ["fd_mode"]);
-    assert.equal(dataField.dataOnly, true);
-    assert.equal(dataField.sourceRef, "source.form.dataField.fd_shift");
-    assert.equal(dslField.dataOnly, true);
-    assert.equal(dslField.sourceRef, "source.form.dataField.fd_shift");
-    assert.equal(dslDraft.form.fields.some((field) => field.id === "fd_transient_marker"), false);
-    assert.deepEqual(layoutRefs, ["fd_mode"]);
+    assert.deepEqual(sourceFields.map((field) => field.id), [
+      "fd_shift",
+      "fd_transient_marker"
+    ]);
+    assert.deepEqual(sourceFields.map((field) => field.sourceProps.hardHidden), [true, true]);
+    assert.equal(sourceFields.every((field) => field.dataOnly !== true), true);
+    assert.deepEqual(dslFields.map((field) => [field.id, field.componentId, field.dataOnly]), [
+      ["fd_shift", "xform-hidden", undefined],
+      ["fd_transient_marker", "xform-hidden", undefined]
+    ]);
+    assert.deepEqual(dslFields.map((field) => field.sourceRef), [
+      "source.form.dataField.fd_shift",
+      "source.form.dataField.fd_transient_marker"
+    ]);
+    assert.deepEqual(layoutRefs, ["fd_mode", "fd_shift", "fd_transient_marker"]);
+    assert.deepEqual(
+      dslDraft.form.layout.mkTree.slice(-2).map((row) => row.children[0].refIds[0]),
+      ["fd_shift", "fd_transient_marker"]
+    );
     assert.equal(checkDraft(dslDraft).ok, true);
   });
 
@@ -56,13 +69,15 @@ describe("hidden data field route", () => {
       editAction.sourceActionKey
     );
     assert.deepEqual(editAction.coverage.nativeRules, ["linkage.fd_mode.contains.A"]);
-    assert.equal(editAction.coverage.status, "partial");
+    assert.equal(editAction.coverage.status, "translated");
     assert.equal(
       editAction.coverage.residuals.some((item) =>
         item.code === "script.residual.field_value_assignment" && item.target === "fd_shift"
       ),
-      true
+      false
     );
+    assert.equal(editAction.translationStatus, "mapped");
+    assert.match(editAction.function, /MKXFORM\.setValue\("fd_shift", value\)/);
     assert.deepEqual(editAction.runWhen, { viewStatusIn: ["add", "edit"] });
     assert.deepEqual(viewAction.runWhen, { viewStatusIn: ["view"] });
   });

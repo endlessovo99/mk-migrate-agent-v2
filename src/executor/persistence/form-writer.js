@@ -660,11 +660,22 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     name: field.id,
     uuid: field.id,
     title: nativeLabel,
-    span: 24,
+    span: spec.attrType === "hidden" ? 12 : 24,
     "$$tableType": tableType,
     "$$tableName": tableName
   };
 
+  if (spec.attrType === "hidden") {
+    Object.assign(controlProps, {
+      controlType: { value: "@elem/xform-input" },
+      passValue: true,
+      hidden: true,
+      defaultValueType: "formula",
+      maxLength: 200,
+      desktop: { type: spec.desktop, hiddenLabel: true },
+      mobile: { type: spec.mobile, hiddenLabel: true }
+    });
+  }
   if (field.props?.required) controlProps.required = true;
   const hiddenLabel = componentSupportsProp(field.componentId, "hiddenLabel") &&
     field.props?.hiddenLabel === true;
@@ -850,6 +861,7 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
 
   applyDefaultValueToControlProps(controlProps, field, template, spec);
 
+  const isHidden = spec.attrType === "hidden";
   const isDescription = spec.attrType === "desc";
   const isButton = spec.attrType === "button";
   return {
@@ -858,6 +870,8 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
       key: controlId,
       type: isDescription
         ? "desc"
+        : isHidden
+          ? "hidden"
         : isButton
           ? "button"
           : spec.attrType === "number" && hasNativeNumberPrecision(field)
@@ -873,6 +887,15 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
             title: nativeLabel,
             mobile: { hiddenLabel: true }
           }
+        : isHidden
+          ? {
+              compose: true,
+              desktop: { hiddenLabel: true },
+              hidden: true,
+              title: nativeLabel,
+              mobile: { hiddenLabel: true },
+              visible: false
+            }
         : isButton
           ? { desktop: {}, showText: false, title: label, mobile: {} }
           : hiddenLabel
@@ -1033,7 +1056,7 @@ function applyDefaultValueToControlProps(controlProps, field, template, spec) {
     return;
   }
 
-  if (["text", "textarea", "number", "calculate", "timestamp"].includes(spec.attrType)) {
+  if (["text", "hidden", "textarea", "number", "calculate", "timestamp"].includes(spec.attrType)) {
     controlProps.defaultValueType = "formula";
     controlProps.defaultValueFormulaVO = literalDefaultFormula(literalDefault.value);
     if (spec.attrType === "text") controlProps.maxLength = controlProps.maxLength || 200;
@@ -1060,7 +1083,7 @@ function applyContextDefaultToControlProps(controlProps, contextDefault, spec) {
     return;
   }
 
-  if (spec.attrType === "text") {
+  if (["text", "hidden"].includes(spec.attrType)) {
     controlProps.defaultValueType = "formula";
     controlProps.defaultValueFormulaVO = contextDefault.formula;
     controlProps.maxLength = controlProps.maxLength || 200;
@@ -1073,7 +1096,9 @@ function applyContextDefaultToControlProps(controlProps, contextDefault, spec) {
 }
 
 function fieldFontExtendData(field, template, spec) {
-  const data = {};
+  const data = spec.attrType === "hidden"
+    ? { passValue: true, hidden: true, defaultValueType: "formula" }
+    : {};
   if (spec.attrType === "timestamp") {
     Object.assign(data, nativeDateTimePatterns(field));
     if (hasCurrentTimeDefault(field)) {
@@ -1145,7 +1170,7 @@ function fieldFontExtendData(field, template, spec) {
     };
   }
 
-  if (contextDefault && spec.attrType === "text") {
+  if (contextDefault && ["text", "hidden"].includes(spec.attrType)) {
     return {
       ...data,
       passValue: false,
@@ -1189,7 +1214,7 @@ function fieldFontExtendData(field, template, spec) {
     };
   }
 
-  if (["text", "textarea", "number", "calculate"].includes(spec.attrType)) {
+  if (["text", "hidden", "textarea", "number", "calculate"].includes(spec.attrType)) {
     return {
       ...data,
       passValue: false,
@@ -1888,6 +1913,7 @@ function componentFromDataField(field) {
 
 function componentForFdType(type) {
   return {
+    hidden: "xform-hidden",
     text: "xform-input",
     textarea: "xform-textarea",
     richtext: "xform-rich-text",
@@ -1908,6 +1934,9 @@ function componentForFdType(type) {
 
 function componentSpec(field) {
   const component = field.componentId;
+  if (component === "xform-hidden") {
+    return specForComponent(component, "hidden", "varchar", "simpleDict", "hidden", "@elem/xform-hidden", "@elem/xform-hidden");
+  }
   if (component === "xform-button") {
     return specForComponent(component, "button", "varchar", "simpleDict", "button", "@elem/xform-button", "@elem/xform-m-button");
   }

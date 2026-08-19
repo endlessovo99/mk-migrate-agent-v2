@@ -64,7 +64,8 @@ export async function executeDsl(input, options = {}) {
           };
         } else {
           capability = inspectNativeFormRuleRuntimeDigest(
-            await client.getXFormDesktopDigest()
+            await client.getXFormDesktopDigest(),
+            { baseUrl }
           );
           if (capability.ok) {
             if (typeof client.getXFormDesktopModuleSha256 !== "function") {
@@ -84,7 +85,12 @@ export async function executeDsl(input, options = {}) {
               });
               capability = {
                 ...capability,
-                ...inspectNativeFormRuleRuntimeBundleHashes({ runtimeSha256, ideSha256 })
+                ...inspectNativeFormRuleRuntimeBundleHashes({
+                  runtimeSha256,
+                  ideSha256,
+                  expectedRuntimeSha256: capability.expectedRuntimeSha256,
+                  expectedIdeSha256: capability.expectedIdeSha256
+                })
               };
             }
           }
@@ -120,6 +126,7 @@ export async function executeDsl(input, options = {}) {
       stage.ideHash = capability.ideHash;
       stage.runtimeSha256 = capability.runtimeSha256;
       stage.ideSha256 = capability.ideSha256;
+      stage.deploymentId = capability.deploymentId;
     }
     if (updatesExistingTemplate) {
       templateId = targetTemplateId;

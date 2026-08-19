@@ -25,9 +25,14 @@ describe("Agent Review non-native row-marker prompt", () => {
     assert.doesNotMatch(fn, /\?/);
   });
 
-  it("combines exact helper assignments and row effects in explicit onChange branches", () => {
-    const { opportunity } = fixtureOpportunity("fd_3da5a6abc177a2.script.1.event.2");
-    const fn = opportunity.suggestedPatchShape.function;
+  it("deterministically combines hard-hidden assignments and row effects", () => {
+    const action = dslDraft.scripts.actions.find((candidate) =>
+      candidate.id === "fd_3da5a6abc177a2.script.1.event.2"
+    );
+    assert.equal(action.translationStatus, "mapped");
+    assert.equal(action.coverage.status, "translated");
+    assert.equal(action.coverage.residuals.length, 0);
+    const fn = action.function;
 
     assert.match(fn, /if \(value\.indexOf\("D"\) >= 0\) \{/);
     assert.match(fn, /MKXFORM\.setValue\("fd_ypfwshift", "D"\)/);
@@ -37,10 +42,6 @@ describe("Agent Review non-native row-marker prompt", () => {
     assert.match(fn, /MKXFORM\.setFieldAttr\("fd_jsx_row", 4\)/);
     assert.match(fn, /MKXFORM\.setFieldAttr\("fd_jsx_row", 6\)/);
     assert.doesNotMatch(fn, /MKXFORM\.(?:setValue|setFieldAttr)\([^\n]*\?/);
-    assert.deepEqual(
-      opportunity.suggestedPatchShape.functionMappings.map((mapping) => mapping.target),
-      ["MKXFORM.setFieldAttr", "MKXFORM.setValue"]
-    );
   });
 
   it("uses the same explicit assignment shape for every matching uncovered callback", () => {
@@ -52,7 +53,10 @@ describe("Agent Review non-native row-marker prompt", () => {
     ];
 
     for (const [actionId, value, target] of cases) {
-      const fn = fixtureOpportunity(actionId).opportunity.suggestedPatchShape.function;
+      const action = dslDraft.scripts.actions.find((candidate) => candidate.id === actionId);
+      assert.equal(action.translationStatus, "mapped", actionId);
+      assert.equal(action.coverage.residuals.length, 0, actionId);
+      const fn = action.function;
       assert.equal(fn.includes(`if (value.indexOf(${JSON.stringify(value)}) >= 0) {`), true);
       assert.equal(fn.includes(`MKXFORM.setValue(${JSON.stringify(target)}, ${JSON.stringify(value)})`), true);
       assert.equal(fn.includes(`MKXFORM.setValue(${JSON.stringify(target)}, "")`), true);

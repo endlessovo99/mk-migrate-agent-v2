@@ -11,7 +11,10 @@ import {
   provenPlatformValueChangeCallStarts
 } from "./sysform-form-rules.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
-import { inlineRadioRowEffectCandidates } from "./inline-radio-row-effects.js";
+import {
+  hardHiddenValueChangeCandidates,
+  inlineRadioRowEffectCandidates
+} from "./inline-radio-row-effects.js";
 import {
   detailMainRowLifecycleCandidates
 } from "./detail-main-row-lifecycle.js";
@@ -703,6 +706,21 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     displayGate: candidate.source.displayGate,
     form: options.form
   }), options.formRules, options.form);
+  const nativeCalculations = nativeCalculationCoverageForCandidate(candidate, options.form);
+  const nativeDisplayFields = nativeDisplayCoverageForCandidate(candidate, options.form);
+  if (
+    (nativeCalculations.length > 0 || nativeDisplayFields.length > 0) &&
+    coverage?.status === "none" &&
+    Array.isArray(coverage.residuals) &&
+    coverage.residuals.length === 0
+  ) {
+    coverage = {
+      ...coverage,
+      status: "covered",
+      ...(nativeCalculations.length ? { nativeCalculations } : {}),
+      ...(nativeDisplayFields.length ? { nativeDisplayFields } : {})
+    };
+  }
   if (
     candidate.translationStatus === "mapped" &&
     candidate.coverage?.status === "translated" &&
@@ -816,6 +834,53 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     semanticHints: candidate.semanticHints,
     unmappedFunctions: (candidate.source.functionAudit?.violations || []).map((violation) => violation.name)
   });
+}
+
+function nativeCalculationCoverageForCandidate(candidate, form = {}) {
+  if (
+    candidate?.translationStatus === "mapped" ||
+    candidate?.event !== "onChange" ||
+    candidate?.scope !== "control" ||
+    !candidate?.controlId
+  ) return [];
+
+  const table = (form?.fields || []).find((field) =>
+    field?.type === "detailTable" &&
+    (field.id === candidate.tableId ||
+      (!candidate.tableId && (field.columns || []).some((column) => column?.id === candidate.controlId)))
+  );
+  if (!(table?.columns || []).some((column) => column?.id === candidate.controlId)) {
+    return [];
+  }
+
+  const sourceRefs = new Set(uniqueStrings([
+    candidate?.source?.sourceRef,
+    ...(candidate?.sourceRefs || [])
+  ]));
+  if (!sourceRefs.size) return [];
+
+  return uniqueStrings(
+    (form?.fields || [])
+      .filter((field) => (
+        field?.type !== "detailTable" &&
+        field?.props?.calculation &&
+        sourceRefs.has(field?.sourceProps?.inferredCalculation?.sourceRef)
+      ))
+      .map((field) => field.id)
+  );
+}
+
+function nativeDisplayCoverageForCandidate(candidate, form = {}) {
+  if (
+    candidate?.event !== "onChange" ||
+    candidate?.scope !== "control" ||
+    !candidate?.controlId ||
+    !nativeCalculationCoverageForCandidate(candidate, form).length ||
+    !/\bpayeeDiffTip\s*\(/u.test(String(candidate?.source?.javascript || ""))
+  ) return [];
+
+  const label = (form?.fields || []).find((field) => field?.id === "fd_jsp_payee_diff_tip");
+  return label?.componentId === "xform-description" ? [label.id] : [];
 }
 
 function hasUnrecordedFunctionViolations(candidate) {
@@ -1021,6 +1086,19 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     ? { ...source, javascript: `${source.helperJavascript}\n\n${source.javascript}` }
     : source;
 
+  // Prefer the source-backed view row translation over the generic legacy
+  // window-load fallback.  The latter cannot retain the condition's exact
+  // row-marker semantics and would leave a deterministic source relation
+  // unnecessarily review-required.
+  const viewRowMarker = simpleViewRowMarkerCandidate(sourceWithHelpers, options.form);
+  if (viewRowMarker.length) {
+    return viewRowMarker.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source: sourceWithHelpers
+    }));
+  }
+
   const detailCascadeActions = detailCascadeActionCandidates(
     source,
     options.form,
@@ -1090,6 +1168,12 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
       source
     }));
   }
+
+  const hardHiddenValueChanges = hardHiddenValueChangeCandidates(
+    source,
+    options.form,
+    options.formRules
+  );
 
   const detailMainRowLifecycle = detailMainRowLifecycleCandidates(
     source,
@@ -1250,10 +1334,26 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }];
   }
 
+  const directSemanticCandidates = [
+    simpleViewRowMarkerCandidate(sourceWithHelpers, options.form),
+    payeeDiffDisplayCandidate(sourceWithHelpers, options.form)
+  ].flat().filter(Boolean);
+  const directSemanticKeys = new Set(directSemanticCandidates.map((candidate) =>
+    `${candidate.index}:${candidate.event}:${candidate.scope}:${candidate.tableId || ""}:${candidate.controlId || ""}`
+  ));
+  const hardHiddenValueChangeKeys = new Set(hardHiddenValueChanges.map(candidateKey));
   const candidates = [
-    ...extractValueChangeCandidates(sourceWithHelpers, options),
-    ...extractDetailControlDisplayCandidates(sourceWithHelpers),
-    ...extractWindowLoadCandidates(sourceWithHelpers, options),
+    ...directSemanticCandidates,
+    ...hardHiddenValueChanges,
+    ...extractValueChangeCandidates(sourceWithHelpers, options)
+      .filter((candidate) =>
+        !directSemanticKeys.has(candidateKey(candidate)) &&
+        !hardHiddenValueChangeKeys.has(candidateKey(candidate))
+      ),
+    ...extractDetailControlDisplayCandidates(sourceWithHelpers)
+      .filter((candidate) => !directSemanticKeys.has(candidateKey(candidate))),
+    ...extractWindowLoadCandidates(sourceWithHelpers, options)
+      .filter((candidate) => !directSemanticKeys.has(candidateKey(candidate))),
     ...extractSubmitQueueCandidates(sourceWithHelpers, "submit", "onBeforeSubmit"),
     ...extractSubmitQueueCandidates(sourceWithHelpers, "afterSubmit", "onAfterSubmit")
   ].sort((left, right) => left.index - right.index);
@@ -4030,6 +4130,137 @@ function extractWindowLoadCandidates(source, options = {}) {
   return candidates;
 }
 
+function simpleViewRowMarkerCandidate(source, form = {}) {
+  if (source?.displayGate !== "xform:viewShow") return [];
+  const text = String(source.javascript || "");
+  const listener = text.match(
+    /Com_AddEventListener\(\s*window\s*,\s*(["'])load\1\s*,\s*function\s*\([^)]*\)\s*\{/u
+  );
+  if (!listener) return [];
+  const bodyStart = listener.index + listener[0].length;
+  const bodyEnd = findBalancedClose(text, bodyStart - 1, "{", "}");
+  if (bodyEnd < bodyStart) return [];
+  const body = text.slice(bodyStart, bodyEnd);
+  const executableBody = body.replace(/\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/gu, "");
+  const fieldMatch = body.match(/GetXFormFieldById\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*\)/u);
+  const condition = body.match(/if\s*\(\s*\w+\s*(==|===)\s*(["'])([^"']+)\2\s*\)/u);
+  const rowCalls = [...body.matchAll(/common_dom_row_set_show_required_reset\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*,\s*(true|false)\s*,\s*(true|false)\s*,\s*(true|false)\s*\)/gu)];
+  if (
+    !fieldMatch ||
+    !condition ||
+    rowCalls.length !== 1 ||
+    !formFieldExists(form, fieldMatch[2]) ||
+    !layoutMarkerExists(form, rowCalls[0][2]) ||
+    /(?:SetXFormFieldValueById|document\.|\$\s*\(|Com_Parameter\.event)/u.test(executableBody)
+  ) return [];
+
+  const rowId = rowCalls[0][2];
+  const visible = rowCalls[0][3] === "true";
+  const required = rowCalls[0][4] === "true";
+  const sourceRef = source.sourceRef || source.id;
+  const javascript = text.slice(listener.index, findCallEnd(text, bodyEnd + 1)).trim();
+  return [{
+    index: listener.index,
+    event: "onLoad",
+    scope: "global",
+    javascript,
+    branchSource: javascript,
+    branchFunctionStart: javascript.indexOf("function"),
+    branchProgramIsEntrypoint: true,
+    function: [
+      "function onLoad() {",
+      `  var normalizedValue = MKXFORM.getValue(${JSON.stringify(fieldMatch[2])})`,
+      `  if (normalizedValue ${condition[1]} ${JSON.stringify(condition[3])}) {`,
+      `    MKXFORM.setFieldAttr(${JSON.stringify(rowId)}, ${visible ? 5 : 4})`,
+      `    MKXFORM.setFieldAttr(${JSON.stringify(rowId)}, ${required ? 3 : 6})`,
+      "  }",
+      "}"
+    ].join("\n"),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: "view-gated row visibility/required branch",
+      target: "MKXFORM.getValue + MKXFORM.setFieldAttr",
+      basis: "semantic-translation",
+      reviewRequired: false
+    }],
+    semanticHints: {
+      coveredCalculationRanges: coveredRangesForText(text, javascript, {
+        sourceRef,
+        name: "view-row-marker"
+      })
+    }
+  }];
+}
+
+function payeeDiffDisplayCandidate(source, form = {}) {
+  const label = formFieldById(form, "fd_jsp_payee_diff_tip");
+  const text = String(source?.javascript || "");
+  if (!label || !/function\s+payeeDiffTip\s*\(/u.test(text)) return [];
+  const binding = inlineValueChangeBindings(text).find((candidate) =>
+    candidate.controlId === "fd_payee_amount"
+  );
+  const table = (form?.fields || []).find((field) =>
+    field?.type === "detailTable" && (field.columns || []).some((column) => column?.id === binding?.controlId)
+  );
+  if (!binding || !table) return [];
+  const sourceRef = source.sourceRef || source.id;
+  return [{
+    index: binding.index,
+    event: "onChange",
+    scope: "control",
+    controlId: binding.controlId,
+    tableId: table.id,
+    sourceActionKey: inlineOnChangeSourceActionKey(sourceRef, binding.index),
+    javascript: binding.javascript,
+    branchSource: binding.javascript,
+    function: [
+      "function onChange(value, rowNum, parentRowNum) {",
+      `  var difference = Number(MKXFORM.getValue(${JSON.stringify("fd_payee_diff")}) || 0)`,
+      `  if (difference == 0) {`,
+      `    MKXFORM.setFieldAttr(${JSON.stringify(label.id)}, 4)`,
+      "  } else {",
+      `    MKXFORM.setFieldAttr(${JSON.stringify(label.id)}, 5)`,
+      "  }",
+      "}"
+    ].join("\n"),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: "payeeDiffTip inline label visibility",
+      target: "native xform-calculate difference + MKXFORM.setFieldAttr",
+      basis: "deterministic-payee-diff-display",
+      reviewRequired: false
+    }],
+    semanticHints: {
+      coveredCalculationRanges: coveredRangesForText(text, text.match(/function\s+payeeDiffTip[\s\S]*?\n\s*\}/u)?.[0] || "", {
+        sourceRef,
+        name: "payee-diff-display"
+      })
+    }
+  }];
+}
+
+function formFieldById(form, fieldId) {
+  return (form?.fields || []).find((field) =>
+    field?.id === fieldId || (field?.columns || []).some((column) => column?.id === fieldId)
+  );
+}
+
+function formFieldExists(form, fieldId) {
+  return Boolean(formFieldById(form, fieldId));
+}
+
+function layoutMarkerExists(form, marker) {
+  const visit = (node) => {
+    if (!node || typeof node !== "object") return false;
+    if (Array.isArray(node)) return node.some(visit);
+    if (Array.isArray(node.sourceMarkers) && node.sourceMarkers.includes(marker)) return true;
+    return Object.values(node).some(visit);
+  };
+  return visit(form?.layout?.mkTree);
+}
+
 function namedWindowLoadHelperEvidence(text, callbackBody, form) {
   const invocation = String(callbackBody || "").match(
     /^\s*([A-Za-z_$][\w$]*)\s*\(\s*\)\s*;?\s*$/
@@ -4345,12 +4576,16 @@ function dedupeCandidates(candidates) {
   const seen = new Set();
   const result = [];
   for (const candidate of candidates) {
-    const key = `${candidate.index}:${candidate.event}:${candidate.scope}:${candidate.tableId || ""}:${candidate.controlId || ""}`;
+    const key = candidateKey(candidate);
     if (seen.has(key)) continue;
     seen.add(key);
     result.push(candidate);
   }
   return result;
+}
+
+function candidateKey(candidate = {}) {
+  return `${candidate.index}:${candidate.event}:${candidate.scope}:${candidate.tableId || ""}:${candidate.controlId || ""}`;
 }
 
 function dedupeCandidatesByKey(candidates) {

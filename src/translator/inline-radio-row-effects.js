@@ -8,7 +8,7 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
   if (Array.isArray(source.functionAudit?.violations) && source.functionAudit.violations.length) {
     return [];
   }
-  if (sourceHasNativeRules(source, formRules)) return [];
+  if (sourceHasNativeRules(source, formRules, form)) return [];
   const text = String(source.javascript || "");
   const program = parseProgram(text);
   if (!program) return [];
@@ -18,14 +18,19 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
     .filter((call) => call?.callee?.type === "Identifier" &&
       call.callee.name === "AttachXFormValueChangeEventById");
   if (onChangeCalls.length) {
+    const hasHardHiddenAssignment = onChangeCalls.some((call) =>
+      isFunction(call.arguments?.[1]) &&
+      callbackWritesHardHiddenField(call.arguments[1], hardHiddenFieldIds(form)) &&
+      Boolean(compileOnChange(call.arguments[1], form))
+    );
     if (
-      onChangeCalls.length < 2 ||
+      (onChangeCalls.length < 2 && !hasHardHiddenAssignment) ||
       onChangeCalls.length !== program.body.filter((statement) => statement.type !== "EmptyStatement").length
     ) {
       return [];
     }
     const candidates = onChangeCalls.map((call) =>
-      onChangeCandidate(call, source, form)
+      onChangeCandidate(call, source, form, formRules)
     );
     return candidates.every(Boolean) ? candidates : [];
   }
@@ -43,7 +48,30 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
   return candidate ? [candidate] : [];
 }
 
-function onChangeCandidate(call, source, form) {
+export function hardHiddenValueChangeCandidates(source = {}, form = {}, formRules = {}) {
+  if (Array.isArray(source.functionAudit?.violations) && source.functionAudit.violations.length) {
+    return [];
+  }
+  const program = parseProgram(String(source.javascript || ""));
+  if (!program) return [];
+  const hardHiddenIds = hardHiddenFieldIds(form);
+  if (!hardHiddenIds.size) return [];
+  return program.body
+    .map(expressionCall)
+    .filter((call) => call?.callee?.type === "Identifier" &&
+      call.callee.name === "AttachXFormValueChangeEventById")
+    .map((call) => {
+      if (
+        !isFunction(call.arguments?.[1]) ||
+        !callbackWritesHardHiddenField(call.arguments[1], hardHiddenIds) ||
+        !compileOnChange(call.arguments[1], form)
+      ) return undefined;
+      return onChangeCandidate(call, source, form, formRules);
+    })
+    .filter(Boolean);
+}
+
+function onChangeCandidate(call, source, form, formRules) {
   if (
     call.arguments?.length !== 2 ||
     typeof literalValue(call.arguments[0]) !== "string" ||
@@ -55,7 +83,8 @@ function onChangeCandidate(call, source, form) {
   if (!formFieldIds(form).has(controlId)) return undefined;
   const compiled = compileOnChange(call.arguments[1], form);
   if (!compiled) return undefined;
-  if (!targetsHaveDistinctLayoutOwners(form, rowEffectTargets(call.arguments[1]))) {
+  const rowTargets = rowEffectTargets(call.arguments[1]);
+  if (rowTargets.length > 0 && !targetsHaveDistinctLayoutOwners(form, rowTargets)) {
     return undefined;
   }
   const sourceRef = source.sourceRef || source.id;
@@ -68,7 +97,7 @@ function onChangeCandidate(call, source, form) {
     javascript: String(source.javascript || ""),
     function: compiled,
     translationStatus: "mapped",
-    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    coverage: nativeRuleCoverageForSource(source, formRules),
     functionMappings: [{
       source: "inline radio value-change row effects",
       target: "MKXFORM.getValue/setValue/setFieldAttr",
@@ -124,11 +153,11 @@ function compileStatement(statement, context) {
   if (statement.type === "IfStatement") return compileIf(statement, context);
   const effect = rowEffect(statement);
   if (effect) return compileRowEffect(effect, context.form, context.indent);
-  const assignment = legacyFieldAssignment(statement, context.aliases);
+  const assignment = legacyFieldAssignment(statement, context.aliases, context.sourceValueName);
   if (assignment) {
     return [
-      `${context.indent}MKXFORM.setValue(${JSON.stringify(assignment.fieldId)}, ${JSON.stringify(assignment.value)});`,
-      `${context.indent}${assignment.alias} = ${JSON.stringify(assignment.value)};`
+      `${context.indent}MKXFORM.setValue(${JSON.stringify(assignment.fieldId)}, ${assignment.expression});`,
+      `${context.indent}${assignment.alias} = ${assignment.expression};`
     ];
   }
   return undefined;
@@ -179,9 +208,28 @@ function compileCondition(condition, context) {
   if (contains) {
     return `${context.targetValueName}.indexOf(${JSON.stringify(contains)}) >= 0`;
   }
+  const eventEquality = eventValueEquality(condition, context.sourceValueName);
+  if (eventEquality) {
+    return `${context.targetValueName} ${eventEquality.operator} ${JSON.stringify(eventEquality.value)}`;
+  }
   const fieldEquality = aliasValueEquality(condition, context.aliases);
   if (fieldEquality) {
     return `${fieldEquality.alias} == ${JSON.stringify(fieldEquality.value)}`;
+  }
+  return undefined;
+}
+
+function eventValueEquality(node, valueName) {
+  if (node?.type !== "BinaryExpression" || !["==", "==="].includes(node.operator)) {
+    return undefined;
+  }
+  if (node.left?.type === "Identifier" && node.left.name === valueName) {
+    const value = literalValue(node.right);
+    return typeof value === "string" ? { operator: node.operator, value } : undefined;
+  }
+  if (node.right?.type === "Identifier" && node.right.name === valueName) {
+    const value = literalValue(node.left);
+    return typeof value === "string" ? { operator: node.operator, value } : undefined;
   }
   return undefined;
 }
@@ -698,7 +746,7 @@ function legacyFieldElementId(node) {
   return literalValue(node.object.arguments[0]);
 }
 
-function legacyFieldAssignment(statement, aliases) {
+function legacyFieldAssignment(statement, aliases, sourceValueName) {
   const assignment = expressionCall(statement)?.type === "AssignmentExpression"
     ? expressionCall(statement)
     : statement?.type === "ExpressionStatement" &&
@@ -711,15 +759,25 @@ function legacyFieldAssignment(statement, aliases) {
     assignment.left.computed ||
     assignment.left.property?.name !== "value" ||
     assignment.left.object?.type !== "Identifier" ||
-    typeof literalValue(assignment.right) !== "string"
+    assignmentValueExpression(assignment.right, sourceValueName) === undefined
   ) {
     return undefined;
   }
   const alias = assignment.left.object.name;
   const fieldId = aliases.get(alias);
   return fieldId
-    ? { alias, fieldId, value: literalValue(assignment.right) }
+    ? { alias, fieldId, expression: assignmentValueExpression(assignment.right, sourceValueName) }
     : undefined;
+}
+
+function assignmentValueExpression(node, sourceValueName) {
+  if (node?.type === "Identifier" && node.name === sourceValueName) {
+    return sourceValueName;
+  }
+  if (node?.type === "Literal" && ["string", "number", "boolean"].includes(typeof node.value)) {
+    return JSON.stringify(node.value);
+  }
+  return undefined;
 }
 
 function eventContainsCondition(node, valueName) {
@@ -862,13 +920,88 @@ function rowEffectTargets(node) {
   return [];
 }
 
-function sourceHasNativeRules(source, formRules) {
+function sourceHasNativeRules(source, formRules, form) {
   const sourceRef = source.sourceRef || source.id;
-  return (Array.isArray(formRules?.linkage) ? formRules.linkage : []).some((rule) =>
+  const hasNativeRule = (Array.isArray(formRules?.linkage) ? formRules.linkage : []).some((rule) =>
     rule?.meta?.sourceJsp === sourceRef ||
     rule?.meta?.sourceRef === sourceRef ||
     rule?.sourceRef === sourceRef
   );
+  if (!hasNativeRule) return false;
+  return !hasCompilableHardHiddenAssignment(source, form);
+}
+
+function hardHiddenFieldIds(form) {
+  return new Set(
+    (Array.isArray(form?.fields) ? form.fields : [])
+      .filter((field) => field?.type !== "detailTable" && field?.sourceProps?.hardHidden === true)
+      .map((field) => field.id)
+      .filter(nonEmptyString)
+  );
+}
+
+function nativeRuleCoverageForSource(source, formRules) {
+  const sourceRef = source.sourceRef || source.id;
+  const nativeRules = [];
+  for (const rule of Array.isArray(formRules?.linkage) ? formRules.linkage : []) {
+    if (
+      rule?.meta?.sourceJsp !== sourceRef &&
+      rule?.meta?.sourceRef !== sourceRef &&
+      rule?.sourceRef !== sourceRef
+    ) continue;
+    if (typeof rule.id === "string" && rule.id.length > 0 && !nativeRules.includes(rule.id)) {
+      nativeRules.push(rule.id);
+    }
+  }
+  return { status: "translated", nativeRules, residuals: [] };
+}
+
+function hasCompilableHardHiddenAssignment(source, form) {
+  const hardHiddenIds = hardHiddenFieldIds(form);
+  if (!hardHiddenIds.size) return false;
+  const program = parseProgram(String(source?.javascript || ""));
+  if (!program) return false;
+  const onChangeCalls = program.body
+    .map(expressionCall)
+    .filter((call) => call?.callee?.type === "Identifier" &&
+      call.callee.name === "AttachXFormValueChangeEventById");
+  return onChangeCalls.some((call) =>
+    isFunction(call.arguments?.[1]) &&
+    callbackWritesHardHiddenField(call.arguments[1], hardHiddenIds) &&
+    Boolean(compileOnChange(call.arguments[1], form))
+  );
+}
+
+function callbackWritesHardHiddenField(callback, hardHiddenIds) {
+  const aliases = new Map();
+  let writes = false;
+  const visit = (node) => {
+    if (!node || writes) return;
+    if (node.type === "VariableDeclaration") {
+      for (const statement of [node]) {
+        const alias = legacyFieldAlias(statement);
+        if (alias) aliases.set(alias.name, alias.fieldId);
+      }
+    }
+    if (node.type === "AssignmentExpression" &&
+        node.operator === "=" &&
+        node.left?.type === "MemberExpression" &&
+        !node.left.computed &&
+        node.left.property?.name === "value" &&
+        node.left.object?.type === "Identifier" &&
+        hardHiddenIds.has(aliases.get(node.left.object.name))) {
+      writes = true;
+      return;
+    }
+    for (const value of Object.values(node)) {
+      if (value && typeof value === "object") {
+        if (Array.isArray(value)) value.forEach(visit);
+        else visit(value);
+      }
+    }
+  };
+  visit(callback.body);
+  return writes;
 }
 
 function expressionCall(statement) {
