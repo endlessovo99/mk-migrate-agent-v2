@@ -13,7 +13,8 @@ describe("Agent Review partial native assignment prompt", () => {
       action.coverage?.status === "partial" &&
       action.coverage?.nativeRules?.length > 0 &&
       action.coverage?.residuals?.some((residual) => (
-        residual.code === "script.residual.field_value_assignment"
+        residual.code === "script.residual.field_value_assignment" &&
+        residual.target === "fd_glqxshift"
       ))
     ));
     assert.notEqual(actionIndex, -1);
@@ -36,17 +37,17 @@ describe("Agent Review partial native assignment prompt", () => {
 
     assert.deepEqual(
       assignmentResiduals.map((residual) => residual.target),
-      ["fd_aqxyshift", "fd_aqxyshift"]
+      ["fd_glqxshift", "fd_glqxshift"]
     );
-    assert.deepEqual(opportunity.nativeRules, ["linkage.fd_3268bfe94b435c.contains.A"]);
+    assert.deepEqual(opportunity.nativeRules, ["linkage.fd_38e47090921a54.eq.O"]);
     assert.equal(opportunity.suggestedPatchShape.function.includes("MKXFORM.setFieldAttr"), false);
     assert.match(
       opportunity.suggestedPatchShape.function,
-      /MKXFORM\.setValue\("fd_aqxyshift", "A"\)/
+      /MKXFORM\.setValue\("fd_glqxshift", "O"\)/
     );
     assert.match(
       opportunity.suggestedPatchShape.function,
-      /MKXFORM\.setValue\("fd_aqxyshift", ""\)/
+      /MKXFORM\.setValue\("fd_glqxshift", ""\)/
     );
     assert.doesNotMatch(
       opportunity.suggestedPatchShape.function,
@@ -54,7 +55,7 @@ describe("Agent Review partial native assignment prompt", () => {
     );
     assert.deepEqual(
       opportunity.suggestedPatchShape.coverage.nativeRules,
-      ["linkage.fd_3268bfe94b435c.contains.A"]
+      ["linkage.fd_38e47090921a54.eq.O"]
     );
     assert.equal(
       prompt.system.includes("Never combine distinct evidenced assignment values into a conditional or ternary MKXFORM.setValue argument"),

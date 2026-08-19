@@ -543,7 +543,14 @@ function applyRowCalls(...groups) {
 function compareScenarioStates(expectedStates, observedStates) {
   for (const [scenario, expected] of expectedStates) {
     const observed = observedStates.get(scenario);
-    if (!observed) return { scenario, reason: "scenario_missing" };
+    // A source branch may contain no row-helper call at all. Omitting the
+    // corresponding target else block is semantically the same as an empty
+    // else block, so only require an observed scenario when the source owns
+    // row state in that branch.
+    if (!observed) {
+      if (scenario === "else" && expected.size === 0) continue;
+      return { scenario, reason: "scenario_missing" };
+    }
     for (const [key, value] of expected) {
       if (observed.get(key) !== value) {
         return {

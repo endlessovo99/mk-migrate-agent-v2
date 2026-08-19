@@ -1106,9 +1106,16 @@ function compareWorkflow(expected, actual, diagnostics) {
   }
 }
 
-function participantsEquivalent(expected, actual) {
+export function participantsEquivalent(expected, actual) {
   if (stableStringify(expected) === stableStringify(actual || {})) return true;
-  if (expected?.mode !== "explicit" || actual?.mode !== "initiator_select") return false;
+  const modePair = new Set([expected?.mode, actual?.mode]);
+  if (
+    modePair.size !== 2 ||
+    !modePair.has("explicit") ||
+    !modePair.has("initiator_select")
+  ) {
+    return false;
+  }
   const comparableKeys = [
     "handlersType",
     "handlersSource",

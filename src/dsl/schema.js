@@ -1210,6 +1210,8 @@ function validateScripts(scripts, diagnostics, context) {
       }));
     }
     validateStaticPropCoverage(action.coverage?.staticProps, context.form, `${path}/coverage/staticProps`, diagnostics);
+    validateNativeCalculationCoverage(action.coverage?.nativeCalculations, action, context.form, `${path}/coverage/nativeCalculations`, diagnostics);
+    validateNativeDisplayCoverage(action.coverage?.nativeDisplayFields, context.form, `${path}/coverage/nativeDisplayFields`, diagnostics);
     if (action.translationStatus === "mapped" && !["translated", "covered"].includes(action.coverage?.status)) {
       diagnostics.push(error("dsl.scripts.mapped_coverage_status_invalid", "Mapped script actions must mark source behavior as translated or covered before execution.", `${path}/coverage/status`, {
         actual: action.coverage?.status
@@ -1226,7 +1228,7 @@ function validateScripts(scripts, diagnostics, context) {
     validateOmittedNativeRuleCoverage(action, path, diagnostics, context);
     if (
       action.translationStatus === "omitted" &&
-      action.coverage?.staticProps !== undefined &&
+      (action.coverage?.staticProps !== undefined || action.coverage?.nativeCalculations !== undefined) &&
       !hasCompleteOmissionCoverage(action, context)
     ) {
       diagnostics.push(error("dsl.scripts.omitted_coverage_incomplete", "Omitted script actions require complete, residual-free native-rule or static-property coverage evidence.", `${path}/coverage`));
@@ -1237,6 +1239,7 @@ function validateScripts(scripts, diagnostics, context) {
       action.translationStatus === "omitted" &&
       action.runWhen !== undefined &&
       !hasCompleteExecutableNativeCoverage(action, context.formRules) &&
+      !hasCompleteNativeCalculationCoverage(action, context.form) &&
       !hasLegacyRuntimeNoopCoverage(action)
     ) {
       diagnostics.push(error("dsl.scripts.gated_omission_forbidden", "View-gated script actions may be omitted only when the empty action body is fully covered by referenced executable native form rules or a legacy runtime no-op with no residuals.", `${path}/translationStatus`));
@@ -1293,6 +1296,7 @@ function validateScriptBranchProvenance(action, path, diagnostics, context) {
     if (
       relevantEvent &&
       !deterministicTranslation &&
+      !hasCompleteNativeCalculationCoverage(action, context.form) &&
       !hasLegacyRuntimeNoopCoverage(action) &&
       (
         nonEmptyString(action.sourceActionKey) ||
@@ -1327,6 +1331,7 @@ function validateScriptBranchProvenance(action, path, diagnostics, context) {
     // staticProps-only coverage is intentionally NOT enough (agent-review tests).
     if (
       hasCompleteExecutableNativeCoverage(action, context.formRules) ||
+      hasCompleteNativeCalculationCoverage(action, context.form) ||
       hasLegacyRuntimeNoopCoverage(action)
     ) {
       return;
@@ -1404,6 +1409,51 @@ function validateOmittedNativeRuleCoverage(action, path, diagnostics, context) {
   ));
 }
 
+function validateNativeCalculationCoverage(nativeCalculations, action, form, path, diagnostics) {
+  if (nativeCalculations === undefined) return;
+  if (!Array.isArray(nativeCalculations)) {
+    diagnostics.push(error("dsl.scripts.native_calculations_type", "Script coverage.nativeCalculations must be an array when present.", path));
+    return;
+  }
+  const invalid = nativeCalculations.filter((fieldId) => !nonEmptyString(fieldId));
+  if (invalid.length) {
+    diagnostics.push(error("dsl.scripts.native_calculation_id_invalid", "Script coverage.nativeCalculations entries must be non-empty field ids.", path, { invalid }));
+  }
+  if (new Set(nativeCalculations).size !== nativeCalculations.length) {
+    diagnostics.push(error("dsl.scripts.native_calculation_id_duplicate", "Script coverage.nativeCalculations must not contain duplicate field ids.", path));
+  }
+  if (nativeCalculations.length && !nativeCalculationsBelongToAction(nativeCalculations, action, form)) {
+    diagnostics.push(error(
+      "dsl.scripts.native_calculation_action_mismatch",
+      "Native calculation coverage must reference calculated fields derived from the same detail-table change action and source evidence.",
+      path,
+      { actionId: action?.id, nativeCalculations }
+    ));
+  }
+}
+
+function validateNativeDisplayCoverage(nativeDisplayFields, form, path, diagnostics) {
+  if (nativeDisplayFields === undefined) return;
+  if (!Array.isArray(nativeDisplayFields)) {
+    diagnostics.push(error("dsl.scripts.native_display_fields_type", "Script coverage.nativeDisplayFields must be an array when present.", path));
+    return;
+  }
+  const invalid = nativeDisplayFields.filter((fieldId) =>
+    !nonEmptyString(fieldId) || !(form?.fields || []).some((field) => field?.id === fieldId)
+  );
+  if (invalid.length) {
+    diagnostics.push(error(
+      "dsl.scripts.native_display_field_invalid",
+      "Script coverage.nativeDisplayFields must reference existing form fields.",
+      path,
+      { invalid }
+    ));
+  }
+  if (new Set(nativeDisplayFields).size !== nativeDisplayFields.length) {
+    diagnostics.push(error("dsl.scripts.native_display_field_duplicate", "Script coverage.nativeDisplayFields must not contain duplicate field ids.", path));
+  }
+}
+
 function validateScriptRecipe(action, path, diagnostics, context) {
   for (const issue of scriptRecipeValidationIssues(action, context)) {
     diagnostics.push(error(issue.code, issue.message, `${path}${issue.pathSuffix}`, issue.details));
@@ -1415,10 +1465,36 @@ function hasCompleteOmissionCoverage(action, context) {
   if (action.coverage?.status !== "covered") return false;
   if (!Array.isArray(action.coverage?.residuals) || action.coverage.residuals.length) return false;
   const nativeRules = Array.isArray(action.coverage?.nativeRules) ? action.coverage.nativeRules : [];
+  const nativeCalculations = Array.isArray(action.coverage?.nativeCalculations)
+    ? action.coverage.nativeCalculations
+    : [];
   const staticProps = Array.isArray(action.coverage?.staticProps) ? action.coverage.staticProps : [];
-  return nativeRules.length + staticProps.length > 0 &&
-    nativeRulesBelongToAction(nativeRules, action, context.formRules) &&
+  return nativeRules.length + nativeCalculations.length + staticProps.length > 0 &&
+    (!nativeRules.length || nativeRulesBelongToAction(nativeRules, action, context.formRules)) &&
+    (!nativeCalculations.length || nativeCalculationsBelongToAction(nativeCalculations, action, context.form)) &&
     staticProps.every((entry) => staticPropCoverageSatisfied(entry, context.form));
+}
+
+function nativeCalculationsBelongToAction(nativeCalculations, action, form = {}) {
+  if (!Array.isArray(nativeCalculations) || !nativeCalculations.length) return false;
+  if (action?.event !== "onChange" || action?.scope !== "control") return false;
+  const table = (form?.fields || []).find((field) =>
+    field?.type === "detailTable" && field.id === action.tableId
+  );
+  if (!(table?.columns || []).some((column) => column?.id === action.controlId)) return false;
+  const sourceRefs = new Set(
+    (Array.isArray(action?.sourceRefs) ? action.sourceRefs : []).filter(nonEmptyString)
+  );
+  if (!sourceRefs.size) return false;
+  return nativeCalculations.every((fieldId) => {
+    const field = (form?.fields || []).find((candidate) =>
+      candidate?.type !== "detailTable" && candidate?.id === fieldId
+    );
+    return Boolean(
+      field?.props?.calculation &&
+      sourceRefs.has(field?.sourceProps?.inferredCalculation?.sourceRef)
+    );
+  });
 }
 
 function hasCompleteExecutableNativeCoverage(action, formRules) {
@@ -1430,11 +1506,22 @@ function hasCompleteExecutableNativeCoverage(action, formRules) {
   return nativeRulesBelongToAction(nativeRules, action, formRules);
 }
 
+function hasCompleteNativeCalculationCoverage(action, form) {
+  if (nonEmptyString(action.function)) return false;
+  if (action.coverage?.status !== "covered") return false;
+  if (!Array.isArray(action.coverage?.residuals) || action.coverage.residuals.length) return false;
+  const nativeCalculations = Array.isArray(action.coverage?.nativeCalculations)
+    ? action.coverage.nativeCalculations
+    : [];
+  return nativeCalculations.length > 0 && nativeCalculationsBelongToAction(nativeCalculations, action, form);
+}
+
 function hasLegacyRuntimeNoopCoverage(action) {
   if (nonEmptyString(action.function)) return false;
   if (action.coverage?.status !== "covered") return false;
   if (!Array.isArray(action.coverage?.residuals) || action.coverage.residuals.length) return false;
   if (Array.isArray(action.coverage?.nativeRules) && action.coverage.nativeRules.length) return false;
+  if (Array.isArray(action.coverage?.nativeCalculations) && action.coverage.nativeCalculations.length) return false;
   if (Array.isArray(action.coverage?.staticProps) && action.coverage.staticProps.length) return false;
   return (Array.isArray(action.functionMappings) ? action.functionMappings : [])
     .some((mapping) => mapping?.basis === "legacy-runtime-noop" && mapping.reviewRequired === false);
@@ -2168,6 +2255,8 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
     }
   }
   if (participants.mode === "configured_person_fallback") {
+    const reviewedUnmappedFormula =
+      participants.fallbackScope === "reviewed_unmapped_formula";
     if (participants.fallbackKind !== "person") {
       diagnostics.push(error(
         "workflow.participants.configured_fallback_kind_unsupported",
@@ -2176,13 +2265,20 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         { actual: participants.fallbackKind }
       ));
     }
-    if (!nonEmptyString(participants.fieldId) || !nonEmptyString(participants.sourceFieldId)) {
+    if (
+      !reviewedUnmappedFormula &&
+      (!nonEmptyString(participants.fieldId) || !nonEmptyString(participants.sourceFieldId))
+    ) {
       diagnostics.push(error(
         "workflow.participants.configured_fallback_field_required",
         "Configured formula person fallbacks require fieldId and sourceFieldId.",
         `${path}/fieldId`
       ));
-    } else if (context.fieldIds instanceof Set && !context.fieldIds.has(participants.fieldId)) {
+    } else if (
+      !reviewedUnmappedFormula &&
+      context.fieldIds instanceof Set &&
+      !context.fieldIds.has(participants.fieldId)
+    ) {
       diagnostics.push(error(
         "workflow.participants.configured_fallback_field_missing",
         "Configured formula person fallback fieldId must reference an existing form field.",
@@ -2191,8 +2287,11 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
       ));
     }
     if (
-      participants.companyRole !== "公司级相关领导" ||
-      !["相关领导", "部门相关领导"].includes(participants.departmentRole)
+      !reviewedUnmappedFormula &&
+      (
+        participants.companyRole !== "公司级相关领导" ||
+        !["相关领导", "部门相关领导"].includes(participants.departmentRole)
+      )
     ) {
       diagnostics.push(error(
         "workflow.participants.configured_fallback_roles_unsupported",
@@ -2206,6 +2305,17 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         "workflow.participants.configured_fallback_evidence_required",
         "Configured formula person fallbacks must preserve sourceExpression and reason.",
         path
+      ));
+    }
+    if (
+      participants.fallbackScope !== undefined &&
+      participants.fallbackScope !== "reviewed_unmapped_formula"
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.configured_fallback_scope_unsupported",
+        "Configured formula fallback scope is unsupported.",
+        `${path}/fallbackScope`,
+        { actual: participants.fallbackScope }
       ));
     }
   }

@@ -2,7 +2,11 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
-import { NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY } from "../../src/executor/native-form-rule-runtime-capability.js";
+import {
+  inspectNativeFormRuleRuntimeBundleHashes,
+  inspectNativeFormRuleRuntimeDigest,
+  NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY
+} from "../../src/executor/native-form-rule-runtime-capability.js";
 import { executeDsl } from "../../src/executor/execute.js";
 import {
   buildWorkflowContent,
@@ -3747,6 +3751,31 @@ describe("executeDsl", () => {
     assert.equal(
       capabilityStage?.catalogVersion,
       NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.catalogVersion
+    );
+  });
+
+  it("accepts the verified Shanghai Electric dev XForm deployment pair", () => {
+    const digest = {
+      [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeModule]: {
+        hash: "a3ec998c10af6bbce34dd6caffe4a203"
+      },
+      [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideModule]: {
+        hash: "4dc12919af1531c82de2356c4ded8777"
+      }
+    };
+    const capability = inspectNativeFormRuleRuntimeDigest(digest, {
+      baseUrl: "http://oa-dev.shanghai-electric.com:8088"
+    });
+    assert.equal(capability.ok, true);
+    assert.equal(capability.deploymentId, "shanghai-electric-dev-2026-08-16");
+    assert.equal(
+      inspectNativeFormRuleRuntimeBundleHashes({
+        runtimeSha256: "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+        ideSha256: "3e1e44c44d665b34f6279735f610aa80a7f644515359b860fea1bd32dca347bb",
+        expectedRuntimeSha256: capability.expectedRuntimeSha256,
+        expectedIdeSha256: capability.expectedIdeSha256
+      }).ok,
+      true
     );
   });
 

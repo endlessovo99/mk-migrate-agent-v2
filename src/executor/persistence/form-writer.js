@@ -660,19 +660,18 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     name: field.id,
     uuid: field.id,
     title: nativeLabel,
-    span: 24,
+    span: spec.attrType === "hidden" ? 12 : 24,
     "$$tableType": tableType,
     "$$tableName": tableName
   };
 
   if (spec.attrType === "hidden") {
     Object.assign(controlProps, {
-      type: spec.desktop,
       controlType: { value: "@elem/xform-input" },
       passValue: true,
       hidden: true,
       defaultValueType: "formula",
-      "$$allowCustomValue": true,
+      maxLength: 200,
       desktop: { type: spec.desktop, hiddenLabel: true },
       mobile: { type: spec.mobile, hiddenLabel: true }
     });

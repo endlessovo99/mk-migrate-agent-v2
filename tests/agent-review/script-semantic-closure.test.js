@@ -73,6 +73,32 @@ describe("Agent Review regex-set semantic closure", () => {
     assert.deepEqual(result, { ok: true });
   });
 
+  it("accepts an omitted target else when the source else has no row effect", () => {
+    const result = validateRowMarkerBranchSemantics({
+      sourceFunction: generatedSourceFunction([
+        'var tempValue = GetXFormFieldById("fd_the_city_flag")[0].value;',
+        'if (tempValue == "0") {',
+        `  common_dom_row_set_show_required_reset("${rowMarker}", false, false, false);`,
+        "} else {",
+        "  theCityFlag = 1;",
+        "}"
+      ]),
+      reviewedFunction: [
+        "function onLoad() {",
+        '  var tempValue = MKXFORM.getValue("fd_the_city_flag");',
+        '  if (tempValue == "0") {',
+        `    MKXFORM.setFieldAttr("${rowMarker}", 4);`,
+        `    MKXFORM.setFieldAttr("${rowMarker}", 6);`,
+        "  }",
+        "}"
+      ].join("\n"),
+      resolvedMarkers: [rowMarker],
+      primaryMarkerByAlias: new Map()
+    });
+
+    assert.deepEqual(result, { ok: true });
+  });
+
   it("rejects a changed regex-set row-state branch", () => {
     const result = validateRowMarkerBranchSemantics({
       sourceFunction: generatedSourceFunction([

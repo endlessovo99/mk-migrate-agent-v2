@@ -56,7 +56,23 @@
         "scope": "NewOA desktop XForm native display/required formula rules",
         "verifiedAt": "2026-07-22",
         "notes": "Both loader release identities and downloaded bundle SHA-256 values must match before a formula-backed native rule can be written."
-      }
+      },
+      "verifiedDeployments": [
+        {
+          "id": "shanghai-electric-dev-2026-08-16",
+          "baseUrl": "http://oa-dev.shanghai-electric.com:8088",
+          "runtime": {
+            "release": "a3ec998c10af6bbce34dd6caffe4a203",
+            "sha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba"
+          },
+          "ide": {
+            "release": "4dc12919af1531c82de2356c4ded8777",
+            "sha256": "3e1e44c44d665b34f6279735f610aa80a7f644515359b860fea1bd32dca347bb"
+          },
+          "verifiedAt": "2026-08-16",
+          "evidence": "Live authenticated digest and module downloads from the configured Shanghai Electric NewOA dev origin; both bundles expose the XForm viewStatus/formula implementation used by the projection."
+        }
+      ]
     }
   ]
 }

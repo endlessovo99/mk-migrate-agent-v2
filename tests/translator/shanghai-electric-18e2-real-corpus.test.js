@@ -17,8 +17,42 @@ describe("Shanghai Electric 18e2 route regression", () => {
       .flatMap((candidate) => [candidate, ...(candidate.columns || [])])
       .find((candidate) => candidate.id === originalId || candidate.sourceProps?.originalId === originalId)?.id;
 
-    assert.equal(dsl.form.fields.length, 104);
+    assert.equal(dsl.form.fields.length, 105);
     assert.equal(field("fd_person_name").title, "出差人员");
+
+    const hardHiddenIds = [
+      "fd_bkpf_bukrs",
+      "fd_bkpf_blart",
+      "fd_3e6e8f90af1a1c",
+      "fd_is_project",
+      "fd_the_city_flag",
+      "fd_flag_save_no",
+      "fd_is_traffic_change",
+      "fd_traveling_tax_account",
+      "fd_wbs_data"
+    ];
+    const layoutReferences = (node) => {
+      if (!node || typeof node !== "object") return [];
+      if (Array.isArray(node)) return node.flatMap(layoutReferences);
+      return [
+        ...(Array.isArray(node.refIds) ? node.refIds : []),
+        ...Object.values(node).flatMap(layoutReferences)
+      ];
+    };
+    assert.deepEqual(
+      dsl.form.fields.filter((candidate) => candidate.sourceProps?.hardHidden).map((candidate) => candidate.id),
+      hardHiddenIds
+    );
+    for (const id of hardHiddenIds) {
+      assert.equal(field(id).componentId, "xform-hidden", `${id} must remain a hidden field`);
+      assert.equal(layoutReferences(dsl.form.layout.mkTree).includes(id), true, `${id} must be appended to layout`);
+    }
+    assert.deepEqual(
+      dsl.form.layout.mkTree.slice(-hardHiddenIds.length).map((row) => row.children[0].refIds[0]),
+      hardHiddenIds
+    );
+    assert.equal(field("fd_jsp_payee_diff_tip").componentId, "xform-description");
+    assert.equal(field("fd_jsp_payee_diff_tip").sourceProps.generatedFromJsp, true);
 
     assert.deepEqual(field("fd_bkpf_waers").props.defaultValue, {
       kind: "literal",
@@ -171,6 +205,17 @@ describe("Shanghai Electric 18e2 route regression", () => {
     }
 
     const actions = dsl.scripts.actions.filter((action) => action.translationStatus === "mapped");
+    const viewRowAction = dsl.scripts.actions.find((action) =>
+      action.sourceRefs.includes("source.form.jsp.fd_3cc17629476baa.script.3")
+    );
+    assert.equal(viewRowAction.functionMappings[0].basis, "semantic-translation");
+    assert.match(viewRowAction.function, /fd_guonei_row/);
+    const payeeDiffDisplayAction = dsl.scripts.actions.find((action) =>
+      action.sourceRefs.includes("source.form.jsp.fd_3cc25d96ee0df2.script.1") &&
+      action.functionMappings?.[0]?.basis === "deterministic-payee-diff-display"
+    );
+    assert.ok(payeeDiffDisplayAction);
+    assert.match(payeeDiffDisplayAction.function, /fd_jsp_payee_diff_tip/);
     assertMappedActions(actions, "source.form.jsp.fd_3bc187ead08638.script.1", {
       onChange: [
         "fd_is_allowance_bg",
@@ -270,6 +315,17 @@ describe("Shanghai Electric 18e2 route regression", () => {
         id
       );
     }
+    const trafficChange = actionById("fd_3dd49884660ec6.script.1.event.2");
+    assert.equal(trafficChange.translationStatus, "mapped");
+    assert.match(trafficChange.function, /MKXFORM\.setValue\("fd_is_traffic_change", "1"\)/);
+    assert.match(trafficChange.function, /MKXFORM\.setValue\("fd_is_traffic_change", "0"\)/);
+    assert.equal(
+      trafficChange.coverage.residuals.some((item) =>
+        item.code === "script.residual.field_value_assignment" &&
+        item.target === "fd_is_traffic_change"
+      ),
+      false
+    );
 
     const financeActions = actionsByBasis(actions, "deterministic-finance-detail-generation");
     assert.equal(financeActions.length, 1);

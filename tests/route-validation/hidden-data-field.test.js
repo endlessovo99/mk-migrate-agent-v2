@@ -45,16 +45,23 @@ describe("hard-hidden field Route case", () => {
       const attribute = JSON.parse(field.fdAttribute);
       const fontExtendData = JSON.parse(field.fdFontExtendData);
       assert.equal(attribute.config.type, "hidden");
-      assert.equal(attribute.config.controlProps.type, "@elem/xform-hidden");
+      assert.equal(attribute.config.controlProps.type, undefined);
       assert.equal(attribute.config.controlProps.controlType.value, "@elem/xform-input");
       assert.equal(attribute.config.controlProps.hidden, true);
       assert.equal(attribute.config.controlProps.passValue, true);
+      assert.equal(attribute.config.controlProps.span, 12);
       assert.equal(attribute.config.controlProps.desktop.hiddenLabel, true);
       assert.equal(attribute.config.controlProps.mobile.hiddenLabel, true);
+      assert.equal(attribute.config.labelProps.hidden, true);
+      assert.equal(attribute.config.labelProps.visible, false);
       assert.equal(fontExtendData.hidden, true);
       assert.equal(fontExtendData.passValue, true);
     }
     assert.deepEqual(readback.form.layoutRows[0].fields, ["fd_mode"]);
+    assert.deepEqual(
+      readback.form.layoutRows.flatMap((row) => row.fields).slice(-2),
+      ["fd_shift", "fd_transient_marker"]
+    );
     assert.deepEqual(
       readback.form.fields.filter((field) => field.id.startsWith("fd_")).slice(-2)
         .map((field) => [field.id, field.component, field.type, field.dataOnly]),

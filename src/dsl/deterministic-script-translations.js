@@ -22,6 +22,7 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-local-currency-helper",
   "deterministic-multi-radio-row-helper",
   "deterministic-person-text-calculation",
+  "deterministic-payee-diff-display",
   "deterministic-procurement-payment-attachment-submit",
   "deterministic-procurement-payment-department-consistency",
   "deterministic-procurement-payment-wbs-visibility",
