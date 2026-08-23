@@ -337,16 +337,16 @@ describe("source directory stages", () => {
         orgType: 4,
         class: "com.landray.kmss.sys.organization.model.SysOrgElement",
         parent: "风电工程服务公司领导",
-        index: 0
+        index: 0,
+        directTargetId: "18ccd439cda358f3c9fcb99495691efb",
+        directTargetOrgType: 4
       }]);
       assert.deepEqual(draftNodes.get(nodeId).handlerEntities, sourceNodes.get(nodeId).handlerEntities);
       assert.deepEqual(draftNodes.get(nodeId).participants.members, [{
+        id: "18ccd439cda358f3c9fcb99495691efb",
         name: "风电工程服务分公司_分管领导",
         type: "user_or_org",
-        sourceId: "18ccd439cda358f3c9fcb99495691efb",
-        sourceOrgType: 4,
-        sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
-        sourceParentName: "风电工程服务公司领导"
+        targetOrgType: 4
       }]);
     }
 
@@ -507,6 +507,102 @@ describe("source directory stages", () => {
     });
     assert.equal(node.participants.members[0].id, undefined);
     assert.equal(node.participants.alternativeMembers[0].id, undefined);
+  });
+
+  it("emits direct fixed-post targets for both primary and optional structured handlers", () => {
+    const sourceDraft = sampleSourceDraft({ workflow: sampleDraftSelectionSourceWorkflow() });
+    const sourceNode = sourceDraft.workflow.nodes.find((node) => node.id === "N9");
+    sourceNode.attributes = {
+      ...sourceNode.attributes,
+      handlerIds: "cached-main-post-id",
+      handlerNames: "旧主岗位",
+      handlerSelectType: "org",
+      optHandlerIds: "cached-optional-post-id",
+      optHandlerNames: "旧备选岗位",
+      optHandlerSelectType: "org",
+      useOptHandlerOnly: "true"
+    };
+    sourceNode.handlerEntities = [{
+      id: "target-main-post-id",
+      name: "目标主岗位",
+      orgType: 4,
+      directTargetId: "target-main-post-id",
+      directTargetOrgType: 4
+    }];
+    sourceNode.optionalHandlerEntities = [{
+      id: "target-optional-post-id",
+      name: "目标备选岗位",
+      orgType: 4,
+      directTargetId: "target-optional-post-id",
+      directTargetOrgType: 4
+    }];
+
+    const node = draftSourceDraft(sourceDraft).workflow.nodes.find((item) => item.id === "N9");
+
+    assert.deepEqual(node.participants, {
+      mode: "explicit",
+      members: [{
+        id: "target-main-post-id",
+        name: "目标主岗位",
+        type: "user_or_org",
+        targetOrgType: 4
+      }],
+      alternativeMembers: [{
+        id: "target-optional-post-id",
+        name: "目标备选岗位",
+        type: "user_or_org",
+        targetOrgType: 4
+      }],
+      useAlternativeOnly: true
+    });
+  });
+
+  it("keeps conflicting structured fixed-post targets pending review and non-executable", () => {
+    const sourceDraft = cleanSourceFile("tests/fixtures/source/route-validation-lbpm");
+    const sourceNode = sourceDraft.workflow.nodes.find((node) => node.id === "N3");
+    sourceNode.handlerEntities = [
+      { id: "ambiguous-post-a", name: "冲突岗位 A", orgType: 4, index: 0 },
+      { id: "ambiguous-post-b", name: "冲突岗位 B", orgType: 4, index: 0 }
+    ];
+    sourceNode.directTargetAmbiguities = [{
+      attribute: "handlerIds",
+      index: 0,
+      cachedId: "handler-1",
+      targetIds: ["ambiguous-post-a", "ambiguous-post-b"]
+    }];
+
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const node = dslDraft.workflow.nodes.find((item) => item.id === "N3");
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "test-reviewer",
+      checkedAt: "2026-08-23T00:00:00.000Z"
+    });
+    const executeCheck = checkExecute(trusted);
+
+    assert.equal(checkDraft(dslDraft).ok, true);
+    assert.equal(node.translationStatus, "pending_review");
+    assert.equal(node.handlerEntities.some((entity) => entity.directTargetId), false);
+    assert.deepEqual(node.directTargetAmbiguities, [{
+      attribute: "handlerIds",
+      index: 0,
+      cachedId: "handler-1",
+      targetIds: ["ambiguous-post-a", "ambiguous-post-b"]
+    }]);
+    assert.deepEqual(node.participants.members.map((member) => ({
+      id: member.id,
+      sourceId: member.sourceId
+    })), [
+      { id: undefined, sourceId: "ambiguous-post-a" },
+      { id: undefined, sourceId: "ambiguous-post-b" }
+    ]);
+    assert.equal(executeCheck.ok, false);
+    assert.equal(executeCheck.diagnostics.some((item) =>
+      item.code === "workflow.participants.direct_target_ambiguous"
+    ), true);
+    assert.equal(executeCheck.diagnostics.some((item) =>
+      item.code === "dsl.workflow.node.pending_review"
+    ), true);
   });
 
   it("does not replace unsupported formula participants with draft-selection fallback", () => {

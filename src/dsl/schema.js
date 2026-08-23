@@ -1943,6 +1943,7 @@ function validateWorkflowNodes(nodes, diagnostics, context) {
     }
     validateWorkflowCredentialMaterial(node, diagnostics, path);
     validateParticipants(node.participants, diagnostics, `${path}/participants`, context);
+    validateDirectTargetAmbiguities(node.directTargetAmbiguities, diagnostics, `${path}/directTargetAmbiguities`, context);
     const sourceAttributes = {
       ...(isRecord(node.attributes) ? node.attributes : {}),
       ...(isRecord(node.definition?.attributes) ? node.definition.attributes : {})
@@ -2079,6 +2080,63 @@ function isSupportedParallelGatewayPair(node, related) {
   return (mode === "all" && relatedMode === "all") ||
     (node.type === "split" && mode === "condition" && relatedMode === "all") ||
     (node.type === "join" && mode === "all" && relatedMode === "condition");
+}
+
+function validateDirectTargetAmbiguities(value, diagnostics, path, context = {}) {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    diagnostics.push(error(
+      "workflow.participants.direct_target_ambiguities_type",
+      "Fixed-post direct-target ambiguities must be an array.",
+      path
+    ));
+    return;
+  }
+
+  value.forEach((ambiguity, index) => {
+    const ambiguityPath = `${path}/${index}`;
+    if (!isRecord(ambiguity)) {
+      diagnostics.push(error(
+        "workflow.participants.direct_target_ambiguity_type",
+        "Each fixed-post direct-target ambiguity must be a JSON object.",
+        ambiguityPath
+      ));
+      return;
+    }
+
+    const targetIds = Array.isArray(ambiguity.targetIds)
+      ? ambiguity.targetIds.map((targetId) => String(targetId || "").trim())
+      : [];
+    const distinctTargetIds = new Set(targetIds.filter(Boolean));
+    const valid =
+      ["handlerIds", "optHandlerIds"].includes(ambiguity.attribute) &&
+      Number.isSafeInteger(ambiguity.index) &&
+      ambiguity.index >= 0 &&
+      nonEmptyString(ambiguity.cachedId) &&
+      targetIds.length >= 2 &&
+      targetIds.every(Boolean) &&
+      distinctTargetIds.size >= 2;
+    if (!valid) {
+      diagnostics.push(error(
+        "workflow.participants.direct_target_ambiguity_invalid",
+        "Fixed-post direct-target ambiguity evidence must preserve one handler position, its cached ID, and at least two distinct structured target IDs.",
+        ambiguityPath
+      ));
+    }
+    if (context.mode === "execute") {
+      diagnostics.push(error(
+        "workflow.participants.direct_target_ambiguous",
+        "A static fixed-post handler position has multiple structured target IDs and requires review before execution.",
+        ambiguityPath,
+        {
+          attribute: ambiguity.attribute,
+          index: ambiguity.index,
+          cachedId: ambiguity.cachedId,
+          targetIds: [...distinctTargetIds].sort()
+        }
+      ));
+    }
+  });
 }
 
 function validateParticipants(participants, diagnostics, path, context = {}) {
