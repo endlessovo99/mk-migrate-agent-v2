@@ -790,10 +790,13 @@ function observeNativeDefaultValue(controlProps, field) {
   if (script === "${data._ProcessCreator.fdName}") {
     return { kind: "context", source: "submitter", property: "fdName" };
   }
+  if (script === "${data._ProcessCreator.fdNo}") {
+    return { kind: "context", source: "submitter", property: "fdNo" };
+  }
   if (script === "${data._ProcessCreator.parent.fdName}") {
     return { kind: "context", source: "submitterDept", property: "fdName" };
   }
-  const context = script.match(/^\$\{data\.biz\.(fdCreator|fdCreatorDept)(?:\.(fdName))?\}$/u);
+  const context = script.match(/^\$\{data\.biz\.(fdCreator|fdCreatorDept)(?:\.(fdName|fdNo))?\}$/u);
   if (context) {
     return {
       kind: "context",

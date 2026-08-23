@@ -7,7 +7,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v10";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v11";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -43,6 +43,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Return only strict JSON with exactly these top-level keys: summary, patches, diagnostics.",
       "Do not return a complete DSL.",
       "Only propose evidence-backed replace patches for allowed form and script DSL paths.",
+      "A form props patch is a shallow partial update: include only required, options, maxLength, or placeholder keys that evidence requires changing. Existing deterministic props such as defaultValue, orgTypes, and calculation are preserved by the validator.",
       "Patch paths must be copied exactly from allowedConcretePatchPaths. Do not invent array indexes or paths.",
       "When reviewScope is present, it is authoritative. Do not patch form fields or script actions outside that scope.",
       "Workflow is diagnostic-only in this version. Never patch workflow, trust, executor safety, source artifact, credentials, environment, or config paths.",
@@ -52,7 +53,9 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Use sourceRef strings from the provided source draft. Do not use raw XML or invent source evidence.",
       "Title patches require confidence >= 0.7. Type, componentId, and props patches require confidence >= 0.85.",
       "Script patches require confidence >= 0.85 and must preserve the deterministic action boundary. Do not create, delete, or retarget script actions.",
+      "Every functionMappings patch value must be a JSON array, including omission closures; never return null or a single mapping object.",
       "scripts.actions[].branchProvenance is immutable deterministic evidence. For mapped onChange branches every condition operand must derive from the action value input; for mapped onLoad branches it must derive from the exact original source field recorded there. If equivalence is not statically provable, keep needs_review.",
+      "When repairing a mapped branch after provenance validation, use a direct source-field read and explicit if/else matching branchProvenance. Do not introduce ternary normalization, logical fallback, Array.isArray guards, or unrelated aliases around the condition operand.",
       "scripts.actions[].runWhen is immutable source-derived execution context. Never patch, remove, or reproduce it inside the reviewed business function; the executor injects the canonical MKXFORM.viewStatus guard.",
       "A gated native formRule is valid only when its immutable metadata proves the versioned view-status-formula projection, its conditionSource is event:value, and it binds to exactly one same-control onChange action/sourceRef/runWhen. Otherwise fail closed and keep the behavior in reviewed JavaScript.",
       "Keep runWhen on any residual JavaScript, and translate only residual behavior such as marker setValue or effects not represented by native/static coverage.",

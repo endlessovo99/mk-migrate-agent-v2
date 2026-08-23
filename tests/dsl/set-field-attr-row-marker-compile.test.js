@@ -61,4 +61,34 @@ describe("compileSetFieldAttrRowMarkerTargets", () => {
     });
     assert.doesNotThrow(() => safeFn());
   });
+
+  it("makes legacy string membership reads safe when hidden helper fields are initially undefined", () => {
+    const source = [
+      "function onLoad() {",
+      '  if (MKXFORM.getValue("fd_qtskr").indexOf("5") >= 0) {',
+      '    MKXFORM.setFieldAttr("fd_external", 5)',
+      "  } else {",
+      '    MKXFORM.setFieldAttr("fd_external", 4)',
+      "  }",
+      "}"
+    ].join("\n");
+    const form = {
+      fields: [{ id: "fd_external", type: "text" }],
+      layout: { mkTree: [] }
+    };
+
+    const compiled = compileSetFieldAttrRowMarkerTargets(source, form);
+    assert.match(
+      compiled,
+      /String\(MKXFORM\.getValue\("fd_qtskr"\)\)\.indexOf\("5"\)/
+    );
+
+    const calls = [];
+    const handler = new Function("MKXFORM", `${compiled}; return onLoad;`)({
+      getValue() { return undefined; },
+      setFieldAttr(id, attr) { calls.push([id, attr]); }
+    });
+    assert.doesNotThrow(() => handler());
+    assert.deepEqual(calls, [["fd_external", 4]]);
+  });
 });

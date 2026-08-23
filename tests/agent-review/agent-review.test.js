@@ -389,7 +389,11 @@ describe("agent-review", () => {
   it("applies metadata-backed props patches and keeps workflow diagnostics warning-only", async () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/route-validation-lbpm");
     const dslDraft = draftSourceDraft(sourceDraft);
-    dslDraft.form.fields[1].props = {};
+    dslDraft.form.fields[1].props = {
+      required: false,
+      defaultValue: { kind: "context", source: "creator" },
+      orgTypes: ["ORG_TYPE_PERSON"]
+    };
     const result = await runAgentReview(sourceDraft, dslDraft, {
       provider: new FakeReviewProvider(reviewResponse({
         patches: [{
@@ -411,7 +415,12 @@ describe("agent-review", () => {
     });
 
     assert.equal(result.ok, true);
-    assert.deepEqual(result.dsl.form.fields[1].props, { required: true });
+    assert.deepEqual(result.dsl.form.fields[1].props, {
+      required: true,
+      defaultValue: { kind: "context", source: "creator" },
+      orgTypes: ["ORG_TYPE_PERSON"]
+    });
+    assert.equal(result.dsl.review.decisions[0].result, "merged /form/fields/1/props");
     assert.equal(result.dsl.review.warnings.some((item) => item.code === "agent.workflow.condition_display_only"), true);
   });
 

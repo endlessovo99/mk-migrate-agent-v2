@@ -74,7 +74,8 @@ export async function resolveWorkflowParticipants(dsl, {
             identity,
             explicitOverride,
             client,
-            elementCache
+            elementCache,
+            { targetBaseUrl, configuredFallbacks }
           );
         }
         return await resolveIdentity(identity, client, { searchCache, elementCache });
@@ -268,9 +269,25 @@ function prepareParticipantOverrides(identities, overrides) {
   return bySourceId;
 }
 
-async function resolveExplicitParticipantOverride(identity, override, client, elementCache) {
+async function resolveExplicitParticipantOverride(
+  identity,
+  override,
+  client,
+  elementCache,
+  { targetBaseUrl, configuredFallbacks } = {}
+) {
   const evidenceIssue = validateSourceEvidence(identity);
-  if (evidenceIssue) {
+  const confirmedFallback = confirmedFallbackOverride(
+    identity,
+    override,
+    targetBaseUrl,
+    configuredFallbacks
+  );
+  if (evidenceIssue && !(
+    confirmedFallback &&
+    evidenceIssue.missing?.length > 0 &&
+    evidenceIssue.missing.every((field) => field === "sourceParentName")
+  )) {
     return {
       ...identity,
       issue: {
@@ -304,7 +321,10 @@ async function resolveExplicitParticipantOverride(identity, override, client, el
   const target = exactMatches[0];
   const sourceOrgType = normalizeOrgType(identity.member.sourceOrgType);
   const targetOrgType = normalizeOrgType(target.fdOrgType);
-  if (targetOrgType !== sourceOrgType) {
+  const confirmedFallbackTypeBridge = confirmedFallback &&
+    sourceOrgType === "32" &&
+    targetOrgType === "16";
+  if (targetOrgType !== sourceOrgType && !confirmedFallbackTypeBridge) {
     return {
       ...identity,
       issue: {
@@ -324,8 +344,18 @@ async function resolveExplicitParticipantOverride(identity, override, client, el
     ...identity,
     target,
     override: true,
-    overrideSpec: override
+    overrideSpec: override,
+    ...(confirmedFallback ? { confirmedFallbackOverride: true } : {})
   };
+}
+
+function confirmedFallbackOverride(identity, override, targetBaseUrl, configuredFallbacks) {
+  if (!allowsTemporaryOrgFallbacks(targetBaseUrl) || !configuredFallbacks) return false;
+  const sourceOrgType = normalizeOrgType(identity.member?.sourceOrgType);
+  const fallback = sourceOrgType === "32"
+    ? configuredFallbacks.group
+    : temporaryFallbackForSourceOrgType(sourceOrgType, configuredFallbacks);
+  return normalizeText(override.targetFdId) === normalizeText(fallback?.fdId);
 }
 
 function buildParticipantOverrideAudit(resolution) {
@@ -350,6 +380,7 @@ function buildParticipantOverrideAudit(resolution) {
       fdName: normalizeText(resolution.target.fdName),
       fdOrgType: resolution.target.fdOrgType
     },
+    ...(resolution.confirmedFallbackOverride ? { confirmedFallbackOverride: true } : {}),
     referenceCount: resolution.members.length,
     paths: [...resolution.paths]
   };

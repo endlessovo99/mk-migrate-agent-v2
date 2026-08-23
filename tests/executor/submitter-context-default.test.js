@@ -45,4 +45,33 @@ describe("submitter text context defaults", () => {
       submitterDept.props.defaultValue
     );
   });
+
+  it("persists and reads back the submitter employee number", () => {
+    const dsl = sampleTrustedDsl({ workflow: null });
+    delete dsl.workflow;
+    const employeeNumber = dsl.form.fields[0];
+    employeeNumber.title = "实际报销人工号";
+    employeeNumber.props = {
+      defaultValue: { kind: "context", source: "submitter", property: "fdNo" }
+    };
+
+    const prepared = prepareSample(dsl);
+    const controlProps = xformConfig(prepared.update).dataModel
+      .find((model) => model.fdType === "main")
+      .fdFields
+      .find((field) => field.fdName === employeeNumber.id);
+    const nativeProps = JSON.parse(controlProps.fdAttribute).config.controlProps;
+
+    assert.equal(
+      nativeProps.defaultValueFormulaVO?.script,
+      "${data._ProcessCreator.fdNo}"
+    );
+
+    const readback = prepared.verify(structuredClone(prepared.update));
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.deepEqual(
+      readback.form.fields.find((field) => field.id === employeeNumber.id)?.defaultValue,
+      employeeNumber.props.defaultValue
+    );
+  });
 });

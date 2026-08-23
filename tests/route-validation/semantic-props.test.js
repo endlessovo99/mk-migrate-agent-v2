@@ -106,7 +106,7 @@ describe("semantic source props Route case", { concurrency: false }, () => {
     const address = dsl.form.fields.find((field) => field.id === "fd_requester_dept");
     assert.deepEqual(address.props, {
       required: true,
-      defaultValue: { kind: "context", source: "submitterDept" },
+      defaultValue: { kind: "context", source: "creatorDept" },
       orgTypes: ["ORG_TYPE_ORG", "ORG_TYPE_DEPT"]
     });
 
@@ -135,12 +135,12 @@ describe("semantic source props Route case", { concurrency: false }, () => {
     );
     assert.deepEqual(controlProps.defaultValueFormulaVO, {
       type: "Eval",
-      script: "${data._ProcessCreator.parent}",
+      script: "${data.biz.fdCreatorDept}",
       vo: {
         mode: "formula",
-        content: "$MK_TEST_示例流程_20260710120000.提交者部门$"
+        content: "$MK_TEST_示例流程_20260710120000.创建者部门$"
       },
-      varIds: ["_ProcessCreator.parent"]
+      varIds: ["fdCreatorDept"]
     });
 
     const broken = structuredClone(projected);
@@ -167,7 +167,7 @@ describe("semantic source props Route case", { concurrency: false }, () => {
     assert.deepEqual(readback.orgTypes, ["ORG_TYPE_DEPT"]);
     assert.deepEqual(readback.defaultValue, {
       kind: "context",
-      source: "submitterDept"
+      source: "creatorDept"
     });
     assert.equal(result.execution.readback.partitions.form, "verified");
   });

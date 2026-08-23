@@ -14,18 +14,18 @@ const fixturePath =
   "tests/fixtures/source/166d859bc79f49f5acf97474d9fa5d85";
 
 describe("submitter defaults, compound fields, and department-leader role lines", () => {
-  it("maps current-user source defaults to submitter context and persists native submitter formulas", () => {
+  it("maps current-user source defaults to creator context available on the add page", () => {
     const sourceDraft = cleanSourceFile(fixturePath);
     const dslDraft = draftSourceDraft(sourceDraft);
     const fields = new Map(dslDraft.form.fields.map((field) => [field.id, field]));
 
     assert.deepEqual(fields.get("fd_appr_dept")?.props.defaultValue, {
       kind: "context",
-      source: "submitterDept"
+      source: "creatorDept"
     });
     assert.deepEqual(fields.get("fd_approver")?.props.defaultValue, {
       kind: "context",
-      source: "submitter"
+      source: "creator"
     });
 
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
@@ -44,15 +44,15 @@ describe("submitter defaults, compound fields, and department-leader role lines"
 
     assert.deepEqual(fieldsById.get("fd_approver")?.defaultValueFormulaVO, {
       type: "Eval",
-      script: "${data._ProcessCreator}",
-      vo: { mode: "formula", content: `$${templateName}.提交者$` },
-      varIds: ["_ProcessCreator"]
+      script: "${data.biz.fdCreator}",
+      vo: { mode: "formula", content: `$${templateName}.创建人$` },
+      varIds: ["fdCreator"]
     });
     assert.deepEqual(fieldsById.get("fd_appr_dept")?.defaultValueFormulaVO, {
       type: "Eval",
-      script: "${data._ProcessCreator.parent}",
-      vo: { mode: "formula", content: `$${templateName}.提交者部门$` },
-      varIds: ["_ProcessCreator.parent"]
+      script: "${data.biz.fdCreatorDept}",
+      vo: { mode: "formula", content: `$${templateName}.创建者部门$` },
+      varIds: ["fdCreatorDept"]
     });
   });
 

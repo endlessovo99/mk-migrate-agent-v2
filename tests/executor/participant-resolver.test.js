@@ -644,6 +644,63 @@ describe("resolveWorkflowParticipants", () => {
     assert.deepEqual(client.elementCalls, [[targetFdId]]);
   });
 
+  it("accepts explicitly confirmed configured fallbacks for incomplete people and legacy roles", async () => {
+    const personSourceId = "legacy-parentless-person";
+    const roleSourceId = "legacy-missing-role";
+    const personTargetId = "configured-person-fallback";
+    const groupTargetId = "configured-group-fallback";
+    const dsl = dslWithExplicitMembers([
+      sourceMember({
+        name: "熊涛",
+        sourceId: personSourceId,
+        sourceOrgType: 8,
+        sourceParentName: undefined
+      }),
+      sourceMember({
+        name: "综合事务管理员",
+        sourceId: roleSourceId,
+        sourceOrgType: 32,
+        sourceParentName: undefined
+      })
+    ]);
+    const client = new SearchClient({}, {
+      [personTargetId]: [currentOrg({
+        fdId: personTargetId,
+        fdName: "配置兜底人",
+        fdOrgType: 8
+      })],
+      [groupTargetId]: [currentOrg({
+        fdId: groupTargetId,
+        fdName: "配置兜底群组",
+        fdOrgType: 16
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: NEWOA_SIT_BASE_URL,
+      fallbackFdIds: { person: personTargetId, group: groupTargetId },
+      participantOverrides: [
+        { sourceId: personSourceId, targetFdId: personTargetId },
+        { sourceId: roleSourceId, targetFdId: groupTargetId }
+      ]
+    });
+
+    assert.deepEqual(
+      result.dsl.workflow.nodes[1].participants.members.map((member) => ({
+        id: member.id,
+        targetOrgType: member.targetOrgType
+      })),
+      [
+        { id: personTargetId, targetOrgType: 8 },
+        { id: groupTargetId, targetOrgType: 16 }
+      ]
+    );
+    assert.equal(result.overrideIdentityCount, 2);
+    assert.ok(result.overrides.every((override) => override.confirmedFallbackOverride === true));
+    assert.deepEqual(client.calls, []);
+  });
+
   it("rejects unknown and ambiguous sourceIds in explicit participant override configuration", async () => {
     const dsl = dslWithExplicitMembers([
       sourceMember({ name: "审批人甲", sourceId: "shared-source-id", sourceParentName: "甲部门" }),

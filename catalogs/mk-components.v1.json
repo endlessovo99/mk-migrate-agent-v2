@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-08-16.v11",
+  "version": "2026-08-23.v12",
   "components": [
     {
       "componentId": "xform-button",
@@ -585,7 +585,7 @@
       "properties": {
         "kind": { "type": "string", "enum": ["context"] },
         "source": { "type": "string", "enum": ["creator", "creatorDept", "creatorPost", "submitter", "submitterDept", "now"] },
-        "property": { "type": "string", "enum": ["fdName"] }
+        "property": { "type": "string", "enum": ["fdName", "fdNo"] }
       }
     },
     "dateTimeDefaultValue": {

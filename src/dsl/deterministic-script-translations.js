@@ -22,6 +22,7 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-local-currency-helper",
   "deterministic-multi-radio-row-helper",
   "deterministic-person-text-calculation",
+  "deterministic-person-property-hydration",
   "deterministic-payee-diff-display",
   "deterministic-procurement-payment-attachment-submit",
   "deterministic-procurement-payment-department-consistency",
@@ -155,6 +156,16 @@ function inspectManualResidualClosures(action, calculationDecisions) {
 }
 
 function hasSourceRecipeEvidence(action, basis) {
+  if (basis === "deterministic-person-property-hydration") {
+    const evidence = action?.semanticHints?.personPropertyHydration;
+    return isRecord(evidence) &&
+      nonEmptyString(evidence.addressFieldId) &&
+      nonEmptyString(evidence.targetFieldId) &&
+      ["fdLoginName", "fdNo"].includes(evidence.property) &&
+      Array.isArray(action?.sourceRefs) && action.sourceRefs.length > 0 &&
+      action.sourceRefs.includes(evidence.addressSourceRef) &&
+      action.sourceRefs.includes(evidence.targetSourceRef);
+  }
   if (basis === "deterministic-calculation-assignment") {
     return nonEmptyString(action?.sourceActionKey) &&
       Array.isArray(action?.sourceRefs) && action.sourceRefs.length > 0;

@@ -472,6 +472,15 @@ export function compileSetFieldAttrRowMarkerTargets(functionText = "", form = {}
 
   const replacements = [];
   walkJavaScriptAst(ast, (node) => {
+    if (isLegacyStringFieldRead(node)) {
+      const read = node.callee.object;
+      replacements.push({
+        start: read.start,
+        end: read.end,
+        value: `String(${source.slice(read.start, read.end)})`
+      });
+      return;
+    }
     if (
       node?.type !== "CallExpression" ||
       node.callee?.type !== "MemberExpression" ||
@@ -504,6 +513,22 @@ export function compileSetFieldAttrRowMarkerTargets(functionText = "", form = {}
     .reduce((compiled, replacement) => (
       `${compiled.slice(0, replacement.start)}${replacement.value}${compiled.slice(replacement.end)}`
     ), source);
+}
+
+function isLegacyStringFieldRead(node) {
+  const read = node?.callee?.object;
+  return node?.type === "CallExpression" &&
+    node.callee?.type === "MemberExpression" &&
+    !node.callee.computed &&
+    node.callee.property?.name === "indexOf" &&
+    read?.type === "CallExpression" &&
+    read.callee?.type === "MemberExpression" &&
+    !read.callee.computed &&
+    read.callee.object?.type === "Identifier" &&
+    read.callee.object.name === "MKXFORM" &&
+    read.callee.property?.name === "getValue" &&
+    read.arguments?.length === 1 &&
+    Boolean(staticAcornString(read.arguments[0]));
 }
 
 function staticAcornString(node) {

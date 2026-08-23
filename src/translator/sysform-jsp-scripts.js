@@ -114,23 +114,28 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
   const buttons = Array.isArray(sourceScripts.buttons) ? sourceScripts.buttons : [];
   if (!sources.length && !buttons.length) return undefined;
 
+  const sourceCandidates = sources.flatMap((source, sourceIndex) => {
+    const primaryCandidates = eventCandidatesFromSource(source, sourceIndex, {
+      ...options,
+      sourceScripts
+    });
+    const selectionCandidates = sameRowRadioSelectionCandidates(
+      source,
+      options.form
+    );
+    return composeValueChangeCallbackCandidates(
+      source,
+      primaryCandidates,
+      selectionCandidates
+    );
+  });
+  const hydratedTargetIds = new Set(sourceCandidates
+    .filter((candidate) => candidate?.semanticHints?.personPropertyHydration)
+    .map((candidate) => candidate.semanticHints.personPropertyHydration.targetFieldId));
   const candidates = dedupeCandidatesByKey([
     ...buttons.map(buttonCandidate),
-    ...sources.flatMap((source, sourceIndex) => {
-      const primaryCandidates = eventCandidatesFromSource(source, sourceIndex, {
-        ...options,
-        sourceScripts
-      });
-      const selectionCandidates = sameRowRadioSelectionCandidates(
-        source,
-        options.form
-      );
-      return composeValueChangeCallbackCandidates(
-        source,
-        primaryCandidates,
-        selectionCandidates
-      );
-    }),
+    ...sourceCandidates,
+    ...contextPersonPropertyHydrationCandidates(options.form, hydratedTargetIds),
     ...clampedDetailAggregateCandidates(options.form, sourceScripts)
   ]);
   const actions = [];
@@ -698,6 +703,7 @@ function hiddenInputValue(html = "") {
 
 function mkActionFromCandidate(candidate, index, options = {}) {
   const functionName = candidate.event;
+  const coveredLegacyFunctions = new Set(candidate.semanticHints?.coveredLegacyFunctions || []);
   const functionMappings = candidate.functionMappings || functionMappingsFromAudit(candidate.source.functionAudit);
   let coverage = scriptCoverageForExecutableFormRules(candidate.coverage || scriptCoverageFromSource({
     javascript: candidate.javascript,
@@ -832,7 +838,9 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     functionMappings: effectiveMappings,
     recipe: candidate.recipe,
     semanticHints: candidate.semanticHints,
-    unmappedFunctions: (candidate.source.functionAudit?.violations || []).map((violation) => violation.name)
+    unmappedFunctions: (candidate.source.functionAudit?.violations || [])
+      .map((violation) => violation.name)
+      .filter((name) => !coveredLegacyFunctions.has(name))
   });
 }
 
@@ -1071,6 +1079,17 @@ function runWhenFromDisplayGate(displayGate) {
 
 function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   if (!hasExecutableJavascript(source.javascript)) return [];
+  const personPropertyHydration = legacyPersonPropertyHydrationCandidates(
+    source,
+    options.form
+  );
+  if (personPropertyHydration.length) {
+    return personPropertyHydration.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
   const travelReimbursementLifecycle = travelReimbursementLifecycleCandidates(
     source,
     options
@@ -2659,6 +2678,235 @@ function personTextCalculationCandidates(source, form, sourceScripts = {}) {
     ...candidate,
     semanticHints: { ...(candidate.semanticHints || {}), coveredCalculationRanges }
   }));
+}
+
+function legacyPersonPropertyHydrationCandidates(source, form) {
+  const text = String(source.javascript || "").trim();
+  const binding = text.match(
+    /^AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\.id\1\s*,\s*function\s*\(\s*value\s*,\s*domElement\s*\)\s*\{/u
+  );
+  if (
+    !binding ||
+    !/Data_GetOrgPersonBeanNameByKey\s*\(/u.test(text) ||
+    !/data\.GetHashMapArray\s*\(\s*\)/u.test(text) ||
+    !/GetXFormFieldById\s*\(\s*toIDs\s*\[\s*i\s*\]\s*\[\s*(["'])id\1\s*\]\s*\)\s*\[\s*0\s*\]\.value/u.test(text)
+  ) return [];
+
+  const addressField = findOrdinaryField(form, binding[2]);
+  if (addressField?.componentId !== "xform-address") return [];
+  const mappings = [...text.matchAll(
+    /\{\s*name\s*:\s*(["'])(fdLoginName|fdNo)\1\s*,\s*id\s*:\s*(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\3\s*\}/gu
+  )].flatMap((match) => {
+    const targetField = findOrdinaryField(form, match[4]);
+    if (!targetField || targetField.componentId !== "xform-input") return [];
+    return [{
+      property: match[2],
+      targetField,
+      index: match.index
+    }];
+  });
+  if (!mappings.length) return [];
+
+  return mappings.flatMap(({ property, targetField, index }, mappingIndex) => {
+    const evidence = personPropertyHydrationEvidence(addressField, targetField, property);
+    const common = {
+      javascript: text,
+      translationStatus: "mapped",
+      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      functionMappings: [personPropertyHydrationMapping()],
+      sourceRefs: [addressField.sourceRef, targetField.sourceRef],
+      semanticHints: {
+        personPropertyHydration: evidence,
+        coveredLegacyFunctions: [
+          "Data_GetOrgPersonBeanNameByKey",
+          "GetXFormFieldById",
+          "KMSSData",
+          "data.Format",
+          "data.GetHashMapArray",
+          "kmssdata.AddBeanData",
+          "kmssdata.Parse"
+        ]
+      }
+    };
+    const onChange = {
+      ...common,
+      index,
+      dedupeKey: `person-property:onChange:${addressField.id}:${targetField.id}`,
+      sourceActionKey: inlineOnChangeSourceActionKey(source.sourceRef || source.id, binding.index || 0),
+      event: "onChange",
+      scope: "control",
+      controlId: addressField.id,
+      function: personPropertyHydrationFunction("onChange", addressField.id, targetField.id, property)
+    };
+    const defaultValue = addressField.props?.defaultValue;
+    if (defaultValue?.kind !== "context") return [onChange];
+    return [
+      onChange,
+      {
+        ...common,
+        index: text.length + mappingIndex + 1,
+        dedupeKey: `person-property:onLoad:${addressField.id}:${targetField.id}`,
+        event: "onLoad",
+        scope: "global",
+        function: personPropertyHydrationFunction("onLoad", addressField.id, targetField.id, property)
+      }
+    ];
+  });
+}
+
+function contextPersonPropertyHydrationCandidates(form = {}, excludedTargetIds = new Set()) {
+  const fields = Array.isArray(form?.fields) ? form.fields : [];
+  const fieldsById = new Map(fields.map((field) => [field.id, field]));
+  return fields.flatMap((targetField, index) => {
+    if (
+      targetField?.type === "detailTable" ||
+      targetField?.componentId !== "xform-input" ||
+      excludedTargetIds.has(targetField.id)
+    ) return [];
+    const expression = String(
+      targetField.sourceProps?.metadataAttributes?.defaultValue ||
+      targetField.sourceProps?.designerValues?.formula ||
+      ""
+    ).trim();
+    const match = expression.match(/^\$([A-Za-z_][\w]*)\$\s*\.\s*(fdNo)$/iu);
+    if (!match) return [];
+    const addressField = fieldsById.get(match[1]);
+    if (
+      addressField?.componentId !== "xform-address" ||
+      addressField.props?.defaultValue?.kind !== "context"
+    ) return [];
+    const fallbackAddressFieldIds = fields
+      .filter((field) =>
+        field.id !== addressField.id &&
+        field.componentId === "xform-address" &&
+        field.props?.defaultValue?.kind === "context" &&
+        field.props.defaultValue.source === addressField.props.defaultValue.source
+      )
+      .map((field) => field.id);
+    const property = match[2];
+    const sourceRef = targetField.sourceRef || `source.form.control.${targetField.id}`;
+    const common = {
+      javascript: expression,
+      translationStatus: "mapped",
+      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      functionMappings: [personPropertyHydrationMapping()],
+      sourceRefs: [addressField.sourceRef, targetField.sourceRef],
+      semanticHints: {
+        personPropertyHydration: personPropertyHydrationEvidence(addressField, targetField, property)
+      },
+      source: {
+        sourceRef,
+        javascript: expression,
+        functionAudit: { violations: [] }
+      }
+    };
+    return [
+      {
+        ...common,
+        id: `person-property.${targetField.id}.onChange`,
+        index,
+        dedupeKey: `person-property:onChange:${addressField.id}:${targetField.id}`,
+        event: "onChange",
+        scope: "control",
+        controlId: addressField.id,
+        function: personPropertyHydrationFunction("onChange", addressField.id, targetField.id, property)
+      },
+      {
+        ...common,
+        id: `person-property.${targetField.id}.onLoad`,
+        index: index + fields.length,
+        dedupeKey: `person-property:onLoad:${addressField.id}:${targetField.id}`,
+        event: "onLoad",
+        scope: "global",
+        function: personPropertyHydrationFunction(
+          "onLoad",
+          addressField.id,
+          targetField.id,
+          property,
+          { fallbackAddressFieldIds }
+        )
+      }
+    ];
+  });
+}
+
+function personPropertyHydrationEvidence(addressField, targetField, property) {
+  return {
+    addressFieldId: addressField.id,
+    targetFieldId: targetField.id,
+    property,
+    addressSourceRef: addressField.sourceRef,
+    targetSourceRef: targetField.sourceRef
+  };
+}
+
+function personPropertyHydrationMapping() {
+  return {
+    source: "legacy person address property lookup",
+    target: "sysorg.getPersonByPersonId + MKXFORM.setValue",
+    basis: "deterministic-person-property-hydration",
+    reviewRequired: false
+  };
+}
+
+function personPropertyHydrationFunction(
+  event,
+  addressFieldId,
+  targetFieldId,
+  property,
+  { fallbackAddressFieldIds = [] } = {}
+) {
+  if (event === "onLoad") {
+    const fallbackLines = fallbackAddressFieldIds.length > 0
+      ? [
+          `  var fallbackAddressFieldIds = ${JSON.stringify(fallbackAddressFieldIds)}`,
+          "  for (var index = 0; (!person || !person.fdId) && index < fallbackAddressFieldIds.length; index += 1) {",
+          "    person = MKXFORM.getValue(fallbackAddressFieldIds[index])",
+          "  }"
+        ]
+      : [];
+    return [
+      "function onLoad() {",
+      `  var person = MKXFORM.getValue(${JSON.stringify(addressFieldId)})`,
+      ...fallbackLines,
+      "  var personId = person && person.fdId",
+      "  if (!personId) {",
+      `    MKXFORM.setValue(${JSON.stringify(targetFieldId)}, \"\")`,
+      "    return",
+      "  }",
+      "  MKXFORM.callOrg({",
+      "    id: \"sysorg.getPersonByPersonId\",",
+      "    param: { fdPersonId: personId }",
+      "  }, function(error, result) {",
+      `    var nextValue = !error && result ? result[${JSON.stringify(property)}] : \"\"`,
+      `    MKXFORM.setValue(${JSON.stringify(targetFieldId)}, nextValue || \"\")`,
+      "  })",
+      "}"
+    ].join("\n");
+  }
+  const signature = event === "onChange"
+    ? "function onChange(value, rowNum, parentRowNum) {"
+    : "function onLoad() {";
+  const valueLine = event === "onChange"
+    ? "  var person = Array.isArray(value) ? value[0] : value"
+    : `  var person = MKXFORM.getValue(${JSON.stringify(addressFieldId)})`;
+  return [
+    signature,
+    valueLine,
+    "  var personId = person && person.fdId",
+    "  if (!personId) {",
+    `    MKXFORM.setValue(${JSON.stringify(targetFieldId)}, "")`,
+    "    return",
+    "  }",
+    "  MKXFORM.callOrg({",
+    "    id: \"sysorg.getPersonByPersonId\",",
+    "    param: { fdPersonId: personId }",
+    "  }, function(error, result) {",
+    `    var nextValue = !error && result ? result[${JSON.stringify(property)}] : ""`,
+    `    MKXFORM.setValue(${JSON.stringify(targetFieldId)}, nextValue || "")`,
+    "  })",
+    "}"
+  ].join("\n");
 }
 
 function personTextCalculationModel(text, sourceScripts) {

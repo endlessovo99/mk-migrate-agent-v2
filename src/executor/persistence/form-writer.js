@@ -1302,7 +1302,7 @@ function contextDefaultFormula(field, template, spec) {
   if (!["address", "text"].includes(spec.attrType)) return undefined;
 
   const property = spec.attrType === "text" ? defaultValue.property : undefined;
-  if (spec.attrType === "text" && property !== "fdName") return undefined;
+  if (spec.attrType === "text" && !["fdName", "fdNo"].includes(property)) return undefined;
 
   const sourceDefaults = {
     creator: { sourceField: "fdCreator", sourceLabel: "创建人", orgTypeArr: ["8"] },
@@ -1315,8 +1315,8 @@ function contextDefaultFormula(field, template, spec) {
   if (!sourceDefault) return undefined;
 
   const sourceField = sourceDefault.sourceField;
-  const scriptPath = property === "fdName" ? `${sourceField}.fdName` : sourceField;
-  const propertyLabel = property === "fdName" ? ".名称" : "";
+  const scriptPath = property ? `${sourceField}.${property}` : sourceField;
+  const propertyLabel = property === "fdName" ? ".名称" : property === "fdNo" ? ".工号" : "";
   const templateName = String(template?.fdName || "表单").trim() || "表单";
   const root = sourceDefault.root || "data.biz";
 
@@ -1339,7 +1339,7 @@ function normalizeContextDefault(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   if (value.kind !== "context") return undefined;
   if (!["creator", "creatorDept", "creatorPost", "submitter", "submitterDept", "now"].includes(value.source)) return undefined;
-  if (value.property !== undefined && value.property !== "fdName") return undefined;
+  if (value.property !== undefined && !["fdName", "fdNo"].includes(value.property)) return undefined;
   return {
     source: value.source,
     property: value.property

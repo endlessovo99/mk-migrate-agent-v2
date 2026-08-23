@@ -164,7 +164,12 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
 
   const patchedDraft = clone(dslDraft);
   acceptedPatches.forEach((patch, index) => {
-    setByPointer(patchedDraft, patch.path, clone(patch.value));
+    const target = parseAllowedPatchPath(patch.path);
+    const currentTarget = getByPointer(patchedDraft, patch.path);
+    const nextValue = target.ok && target.property === "props"
+      ? { ...(isRecord(currentTarget.value) ? currentTarget.value : {}), ...clone(patch.value) }
+      : clone(patch.value);
+    setByPointer(patchedDraft, patch.path, nextValue);
     decisions.push({
       id: `agent-review-patch-${index + 1}`,
       status: "accepted",
@@ -172,7 +177,9 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
       sourceRefs: patch.sourceRefs,
       targetRefs: [patch.path],
       rationale: patch.rationale,
-      result: `replaced ${patch.path}`,
+      result: target.ok && target.property === "props"
+        ? `merged ${patch.path}`
+        : `replaced ${patch.path}`,
       evidence: patch.evidence,
       confidence: patch.confidence
     });

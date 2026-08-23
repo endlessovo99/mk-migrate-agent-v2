@@ -63,7 +63,9 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     appendStaticJspDescriptionFields(
       applySourceNumericDetailInferences(
         applyNativeCalculationInferences(
-          foldLegacyDetailAddressComposites(draftForm(sourceDraft.form || {})),
+          foldLegacyDetailAddressComposites(
+            applyReferencedAddressPropertyContextDefaults(draftForm(sourceDraft.form || {}))
+          ),
           sourceDraft.scripts
         ),
         sourceDraft.scripts
@@ -103,9 +105,12 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   );
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
   const workflow = sourceDraft.workflow
-    ? applyFieldIdMapToWorkflow(
-        draftWorkflow(sourceDraft.workflow, knownSourceFieldIds, knownSourceFieldTitles),
-        fieldIdMap
+    ? applyImplicitContextDefaultEditAuthority(
+        applyFieldIdMapToWorkflow(
+          draftWorkflow(sourceDraft.workflow, knownSourceFieldIds, knownSourceFieldTitles),
+          fieldIdMap
+        ),
+        form
       )
     : undefined;
 
@@ -654,6 +659,84 @@ function draftForm(sourceForm) {
         sharedCaptionRecovery.compoundCells
       )
     }
+  };
+}
+
+function applyReferencedAddressPropertyContextDefaults(form) {
+  const fieldsById = new Map((form.fields || []).map((field) => [field.id, field]));
+  return {
+    ...form,
+    fields: (form.fields || []).map((field) => {
+      if (field.type === "detailTable" || field.componentId !== "xform-input") return field;
+      const expression = firstNonEmptyExpression(
+        field.sourceProps?.metadataAttributes?.defaultValue,
+        field.sourceProps?.designerValues?.defaultValue,
+        field.sourceProps?.designerValues?.formula
+      );
+      const match = normalizeLegacyExpression(expression).match(
+        /^\$([A-Za-z_][\w]*)\$\s*\.\s*(fdNo)$/iu
+      );
+      if (!match) return field;
+
+      const referenced = fieldsById.get(match[1]);
+      const referencedDefault = referenced?.props?.defaultValue;
+      if (
+        referenced?.componentId !== "xform-address" ||
+        referencedDefault?.kind !== "context"
+      ) {
+        return field;
+      }
+
+      return {
+        ...field,
+        props: {
+          ...field.props,
+          defaultValue: {
+            ...referencedDefault,
+            property: match[2]
+          }
+        }
+      };
+    })
+  };
+}
+
+function applyImplicitContextDefaultEditAuthority(workflow, form) {
+  const candidates = (form?.fields || []).filter((field) =>
+    field?.type !== "detailTable" &&
+    field?.props?.defaultValue?.kind === "context" &&
+    field?.props?.defaultValue?.property === "fdNo"
+  );
+  if (!candidates.length) return workflow;
+
+  const explicitlyGoverned = new Set(
+    (workflow?.nodes || []).flatMap((node) => Object.keys(node?.dataAuthority?.fields || {}))
+  );
+  const implicitCandidates = candidates.filter((field) => !explicitlyGoverned.has(field.id));
+  if (!implicitCandidates.length) return workflow;
+
+  return {
+    ...workflow,
+    nodes: (workflow.nodes || []).map((node) => {
+      if (node?.dataAuthority?.enabled !== true) return node;
+      const additions = Object.fromEntries(implicitCandidates.map((field) => [field.id, {
+        visible: true,
+        editable: true,
+        required: field.props?.required === true,
+        sourceMode: "edit",
+        sourceRef: field.sourceRef
+      }]));
+      return {
+        ...node,
+        dataAuthority: {
+          ...node.dataAuthority,
+          fields: {
+            ...(node.dataAuthority.fields || {}),
+            ...additions
+          }
+        }
+      };
+    })
   };
 }
 
@@ -1719,19 +1802,19 @@ function parseLegacyContextDefaultExpression(value, source) {
   }
 
   if (/^OrgFunction\s*\.\s*getCurrentUser\s*\(\s*\)\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
-    return { kind: "context", source: "submitter", property: "fdName" };
+    return { kind: "context", source: "creator", property: "fdName" };
   }
 
   if (/^OrgFunction\s*\.\s*getCurrentDept\s*\(\s*\)\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
-    return { kind: "context", source: "submitterDept", property: "fdName" };
+    return { kind: "context", source: "creatorDept", property: "fdName" };
   }
 
   if (/^OrgFunction\s*\.\s*getCurrentUser\s*\(\s*\)$/i.test(expression)) {
-    return { kind: "context", source: "submitter" };
+    return { kind: "context", source: "creator" };
   }
 
   if (/^OrgFunction\s*\.\s*getCurrentDept\s*\(\s*\)$/i.test(expression)) {
-    return { kind: "context", source: "submitterDept" };
+    return { kind: "context", source: "creatorDept" };
   }
 
   if (isLegacyAddressSource(source) && /^OrgFunction\s*\.\s*getCurrentPost\s*\(\s*\)$/i.test(expression)) {
