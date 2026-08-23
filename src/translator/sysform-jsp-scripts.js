@@ -1086,6 +1086,15 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     ? { ...source, javascript: `${source.helperJavascript}\n\n${source.javascript}` }
     : source;
 
+  const staticFieldDisabled = staticFieldDisabledCandidate(source, options.form);
+  if (staticFieldDisabled) {
+    return [{
+      ...staticFieldDisabled,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+      source
+    }];
+  }
+
   // Prefer the source-backed view row translation over the generic legacy
   // window-load fallback.  The latter cannot retain the condition's exact
   // row-marker semantics and would leave a deterministic source relation
@@ -4128,6 +4137,50 @@ function extractWindowLoadCandidates(source, options = {}) {
     });
   }
   return candidates;
+}
+
+function staticFieldDisabledCandidate(source, form = {}) {
+  if (source?.displayGate) return undefined;
+  const text = String(source?.javascript || "");
+  const listener = text.match(
+    /^\s*Com_AddEventListener\(\s*window\s*,\s*(["'])load\1\s*,\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\}\s*\)\s*;?\s*$/u
+  );
+  const body = listener ? listener[2] : text;
+  const disabled = body.match(
+    /^\s*\$\(\s*(["'])\[name=(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\2\]\1\s*\)\s*\.prop\(\s*(["'])disabled\4\s*,\s*true\s*\)\s*;?\s*$/u
+  );
+  if (!disabled || !findOrdinaryField(form, disabled[3])) return undefined;
+
+  const fieldId = disabled[3];
+  const sourceRef = source.sourceRef || source.id;
+  return {
+    index: listener?.index || 0,
+    event: "onLoad",
+    scope: "global",
+    javascript: text.trim(),
+    branchSource: text.trim(),
+    branchFunctionStart: listener ? text.indexOf("function") : undefined,
+    branchProgramIsEntrypoint: true,
+    function: [
+      "function onLoad() {",
+      `  MKXFORM.setFieldAttr(${JSON.stringify(fieldId)}, 1)`,
+      "}"
+    ].join("\n"),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: "exact global onLoad disabled=true field property",
+      target: "MKXFORM.setFieldAttr(fieldId, 1)",
+      basis: "deterministic-static-field-disabled",
+      reviewRequired: false
+    }],
+    semanticHints: {
+      coveredCalculationRanges: coveredRangesForText(text, text.trim(), {
+        sourceRef,
+        name: "static-field-disabled"
+      })
+    }
+  };
 }
 
 function simpleViewRowMarkerCandidate(source, form = {}) {

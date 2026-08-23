@@ -81,6 +81,43 @@ describe("static form-property script coverage", () => {
     assert.equal(scripts.actions[0].coverage.staticProps, undefined);
   });
 
+  it("maps an exact disabled-only onLoad to MK read-only field state", () => {
+    const scripts = draftMkScriptsFromSourceScripts(disabledSourceScripts("fd_data_source"), {
+      form: formWithRequired("fd_data_source", true),
+      formRules: { linkage: [] }
+    });
+
+    assert.equal(scripts.actions.length, 1);
+    assert.equal(scripts.actions[0].translationStatus, "mapped");
+    assert.deepEqual(scripts.actions[0].coverage, {
+      status: "translated",
+      nativeRules: [],
+      residuals: []
+    });
+    assert.equal(
+      scripts.actions[0].function,
+      'function onLoad() {\n  MKXFORM.setFieldAttr("fd_data_source", 1)\n}'
+    );
+    assert.equal(
+      scripts.actions[0].functionMappings[0].basis,
+      "deterministic-static-field-disabled"
+    );
+  });
+
+  it("does not map disabled onLoad when the source has another side effect", () => {
+    const source = disabledSourceScripts("fd_data_source");
+    source.sources[0].javascript = source.sources[0].javascript.replace(
+      ".prop('disabled', true);",
+      ".prop('disabled', true);\n  unexpected();"
+    );
+    const scripts = draftMkScriptsFromSourceScripts(source, {
+      form: formWithRequired("fd_data_source", true),
+      formRules: { linkage: [] }
+    });
+
+    assert.equal(scripts.actions[0].translationStatus, "needs_review");
+  });
+
   localCorpusIt("finds exactly five required-only onLoad actions in the target fixture", () => {
     const dsl = draftSourceDraft(cleanSourceFile(targetFixture));
     const actions = dsl.scripts.actions.filter((action) => action.coverage?.staticProps?.length);
@@ -136,6 +173,20 @@ function placeholderSourceScripts(fieldId) {
   if (field) {
     field.setAttribute("placeholder", "简述成立时间、注册资金、人员规模、主营业务等");
   }
+});`,
+      functionAudit: { matched: [], violations: [] }
+    }]
+  };
+}
+
+function disabledSourceScripts(fieldId) {
+  return {
+    source: "sysform-jsp",
+    sources: [{
+      id: "disabled-only.script.1",
+      sourceRef: "source.form.jsp.disabled-only.script.1",
+      javascript: `Com_AddEventListener(window, "load", function(){
+  $('[name="extendDataFormInfo.value(${fieldId})"]').prop('disabled', true);
 });`,
       functionAudit: { matched: [], violations: [] }
     }]

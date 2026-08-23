@@ -46,6 +46,7 @@ import {
   projectCompoundLayoutCell,
   recoverSharedBoundCaptionGroups
 } from "./shared-bound-caption-recovery.js";
+import { recoverWorkflowConditionFieldAliases } from "./workflow-condition-alias.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -2354,6 +2355,12 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null, knownFieldTitles = 
       const conditionalParallel = conditionalSplitIds.has(edge.source);
       const conditionExecutable = conditionalParallel &&
         isSupportedConditionalParallelCondition(edge.condition, knownFieldIds || []);
+      const recoveredCondition = recoverWorkflowConditionFieldAliases(
+        edge.condition,
+        edge.displayCondition,
+        knownFieldIds || [],
+        knownFieldTitles || new Map()
+      );
       return {
         id: edge.id,
         source: edge.source,
@@ -2364,7 +2371,10 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null, knownFieldTitles = 
         condition: {
           sourceText: edge.condition || "",
           displayText: edge.displayCondition || "",
-          targetText: translateLegacyConditionContextReferences(edge.condition, knownFieldIds || []),
+          targetText: translateLegacyConditionContextReferences(
+            recoveredCondition,
+            knownFieldIds || []
+          ),
           translationStatus: conditionalParallel
             ? conditionExecutable ? "executable" : hasCondition ? "display_only" : "pending_review"
             : hasCondition ? "display_only" : "executable",

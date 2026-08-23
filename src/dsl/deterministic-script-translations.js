@@ -27,6 +27,7 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-procurement-payment-department-consistency",
   "deterministic-procurement-payment-wbs-visibility",
   "deterministic-same-row-radio-selection",
+  "deterministic-static-field-disabled",
   "deterministic-travel-reimbursement-lifecycle",
   "deterministic-travel-reimbursement-submit-calculation"
 ]);
