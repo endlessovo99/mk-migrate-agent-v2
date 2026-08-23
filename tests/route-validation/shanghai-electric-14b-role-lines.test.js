@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import {
+  ParticipantResolutionError,
   resolveWorkflowParticipants,
   SIT_PARTICIPANT_FALLBACKS
 } from "../../src/executor/participant-resolver.js";
@@ -12,7 +13,32 @@ const fixturePath =
   "tests/fixtures/source/14b583fed3170897b4e808b45f6a58ab";
 
 describe("Shanghai Electric 14b fixed role-line Route case", () => {
-  it("preserves both source role ids and persists them as native member type 4", async () => {
+  it("keeps an unresolved fixed role line blocking instead of replacing it with a person fallback", async () => {
+    const sourceDraft = cleanSourceFile(fixturePath);
+    const trusted = createTrustedMigrationDsl(sourceDraft, draftSourceDraft(sourceDraft), {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt: "2026-08-23T00:00:00.000Z"
+    });
+
+    await assert.rejects(
+      resolveWorkflowParticipants(trusted, {
+        client: {
+          async searchOrg() { return []; },
+          async getElementInfo() { return []; }
+        },
+        targetBaseUrl: "http://oa-dev.shanghai-electric.com:8088"
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) => (
+          issue.sourceId === "149cbca19a5f9a6db33d2a74e50af173" &&
+          issue.sourceOrgType === 32 &&
+          issue.reason === "not_found"
+        ))
+    );
+  });
+
+  it("preserves the department-leader role source as a submitter role-line formula", async () => {
     const sourceDraft = cleanSourceFile(fixturePath);
     const dslDraft = draftSourceDraft(sourceDraft);
     assert.deepEqual(
@@ -21,22 +47,30 @@ describe("Shanghai Electric 14b fixed role-line Route case", () => {
         return {
           id: node.id,
           mode: node.participants.mode,
-          members: node.participants.members.map((member) => ({
-            name: member.name,
-            sourceId: member.sourceId,
-            sourceOrgType: member.sourceOrgType
-          }))
+          ...(node.participants.mode === "submitter_role_line_script"
+            ? {
+                recipe: node.participants.recipe,
+                sourceRoleId: node.participants.sourceRoleId,
+                sourceRoleName: node.participants.sourceRoleName,
+                sourceOrgType: node.participants.sourceOrgType
+              }
+            : {
+                members: node.participants.members.map((member) => ({
+                  name: member.name,
+                  sourceId: member.sourceId,
+                  sourceOrgType: member.sourceOrgType
+                }))
+              })
         };
       }),
       [
         {
           id: "N24",
-          mode: "explicit",
-          members: [{
-            name: "部门领导",
-            sourceId: "149cb36bda232828b2168944bde8c95b",
-            sourceOrgType: 32
-          }]
+          mode: "submitter_role_line_script",
+          recipe: "department_head",
+          sourceRoleId: "149cb36bda232828b2168944bde8c95b",
+          sourceRoleName: "部门领导",
+          sourceOrgType: 32
         },
         {
           id: "N26",
@@ -58,11 +92,6 @@ describe("Shanghai Electric 14b fixed role-line Route case", () => {
     assert.equal(checkTrust(sourceDraft, trusted).ok, true);
 
     const currentRoleTargets = {
-      "149cb36bda232828b2168944bde8c95b": {
-        fdId: "149cb36bda232828b2168944bde8c95b",
-        fdName: "部门领导",
-        fdOrgType: 32
-      },
       "149cbca19a5f9a6db33d2a74e50af173": {
         fdId: "149cbca19a5f9a6db33d2a74e50af173",
         fdName: "分管领导",
@@ -103,18 +132,21 @@ describe("Shanghai Electric 14b fixed role-line Route case", () => {
         const node = workflow.elements.find((element) => element.id === nodeId);
         return {
           id: node.id,
-          member: node.handlers.members[0]
+          ...(nodeId === "N24"
+            ? {
+                script: JSON.parse(node.handlers.ruleKey).script,
+                content: JSON.parse(node.handlers.ruleKey).vo.content,
+                members: node.handlers.members
+              }
+            : { member: node.handlers.members[0] })
         };
       }),
       [
         {
           id: "N24",
-          member: {
-            id: "149cb36bda232828b2168944bde8c95b",
-            name: "部门领导",
-            element: "user",
-            type: "4"
-          }
+          script: "return ${func.sysorg.getDepartmentHead}(${data._ProcessCreator}) || [];",
+          content: "return #查找部门领导#($流程数据项.起草人$) || [];",
+          members: []
         },
         {
           id: "N26",

@@ -90,12 +90,6 @@ describe("resolveWorkflowParticipants", () => {
         sourceParentName: "采购部"
       }),
       sourceMember({
-        name: "部门领导",
-        sourceId: "legacy-role-without-parent",
-        sourceOrgType: 32,
-        sourceParentName: undefined
-      }),
-      sourceMember({
         name: "不存在群组",
         sourceId: "legacy-group-missing",
         sourceOrgType: 16,
@@ -127,29 +121,25 @@ describe("resolveWorkflowParticipants", () => {
       })),
       [
         { id: SIT_FALLBACK_POST.fdId, name: SIT_FALLBACK_POST.fdName, targetOrgType: 4 },
-        { id: SIT_FALLBACK_PERSON.fdId, name: SIT_FALLBACK_PERSON.fdName, targetOrgType: 8 },
         { id: SIT_FALLBACK_GROUP.fdId, name: SIT_FALLBACK_GROUP.fdName, targetOrgType: 16 },
         { id: SIT_FALLBACK_DEPARTMENT.fdId, name: SIT_FALLBACK_DEPARTMENT.fdName, targetOrgType: 2 }
       ]
     );
-    assert.equal(result.fallbackCount, 4);
-    assert.equal(result.fallbackIdentityCount, 4);
+    assert.equal(result.fallbackCount, 3);
+    assert.equal(result.fallbackIdentityCount, 3);
     assert.deepEqual(client.searchRequests, [
       { key: "不存在岗位", sourceOrgType: 4 },
       { key: "不存在群组", sourceOrgType: 16 },
       { key: "不存在部门", sourceOrgType: 2 }
     ]);
     assert.deepEqual(result.fallbackTargetIds, [
-      SIT_FALLBACK_PERSON.fdId,
       SIT_FALLBACK_POST.fdId,
       SIT_FALLBACK_GROUP.fdId,
       SIT_FALLBACK_DEPARTMENT.fdId
     ].sort());
     assert.deepEqual(client.calls, ["不存在岗位", "不存在群组", "不存在部门"]);
     assert.deepEqual(client.elementCalls, [
-      ["legacy-role-without-parent"],
       [
-        SIT_FALLBACK_PERSON.fdId,
         SIT_FALLBACK_POST.fdId,
         SIT_FALLBACK_GROUP.fdId,
         SIT_FALLBACK_DEPARTMENT.fdId

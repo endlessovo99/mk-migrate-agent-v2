@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-08-16.v10",
+  "version": "2026-08-16.v11",
   "components": [
     {
       "componentId": "xform-button",
@@ -184,6 +184,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "hiddenLabel": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
@@ -205,6 +206,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "hiddenLabel": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
@@ -226,6 +228,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "hiddenLabel": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
           "rowOptions": { "$ref": "#/$defs/rowOptions" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
@@ -248,6 +251,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "hiddenLabel": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
         }
@@ -580,7 +584,7 @@
       "required": ["kind", "source"],
       "properties": {
         "kind": { "type": "string", "enum": ["context"] },
-        "source": { "type": "string", "enum": ["creator", "creatorDept", "creatorPost", "now"] },
+        "source": { "type": "string", "enum": ["creator", "creatorDept", "creatorPost", "submitter", "submitterDept", "now"] },
         "property": { "type": "string", "enum": ["fdName"] }
       }
     },

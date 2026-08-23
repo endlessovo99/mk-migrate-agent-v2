@@ -322,7 +322,9 @@ function observeNativeAddressContextDefault(controlProps) {
   if (![
     "${data.biz.fdCreator}",
     "${data.biz.fdCreatorDept}",
-    "${data.biz.fdCreator.post}"
+    "${data.biz.fdCreator.post}",
+    "${data._ProcessCreator}",
+    "${data._ProcessCreator.parent}"
   ].includes(source)) {
     return undefined;
   }
@@ -778,6 +780,18 @@ function observeNativeDefaultValue(controlProps, field) {
   const script = String(formula.script ?? "").trim();
   if (script === "${data.biz.fdCreator.post}") {
     return { kind: "context", source: "creatorPost" };
+  }
+  if (script === "${data._ProcessCreator}") {
+    return { kind: "context", source: "submitter" };
+  }
+  if (script === "${data._ProcessCreator.parent}") {
+    return { kind: "context", source: "submitterDept" };
+  }
+  if (script === "${data._ProcessCreator.fdName}") {
+    return { kind: "context", source: "submitter", property: "fdName" };
+  }
+  if (script === "${data._ProcessCreator.parent.fdName}") {
+    return { kind: "context", source: "submitterDept", property: "fdName" };
   }
   const context = script.match(/^\$\{data\.biz\.(fdCreator|fdCreatorDept)(?:\.(fdName))?\}$/u);
   if (context) {
@@ -1957,6 +1971,16 @@ function observeParticipants(node, initiatorSelectTarget) {
         fields: orderedMainPersonFieldIds.map((orderedFieldId) => ({
           fieldId: orderedFieldId
         })),
+        nativeFormula
+      };
+    }
+    if (
+      ruleKey.type === "Script" &&
+      /^return\s+\$\{func\.sysorg\.getDepartmentHead\}\(\$\{data\._ProcessCreator\}\)\s*\|\|\s*\[\];?$/u.test(script)
+    ) {
+      return {
+        mode: "submitter_role_line_script",
+        recipe: "department_head",
         nativeFormula
       };
     }

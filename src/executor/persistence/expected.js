@@ -426,7 +426,9 @@ function expectedContextDefaultOrgTypes(field) {
   const bySource = {
     creator: ["ORG_TYPE_PERSON"],
     creatorDept: ["ORG_TYPE_DEPT"],
-    creatorPost: ["ORG_TYPE_POST"]
+    creatorPost: ["ORG_TYPE_POST"],
+    submitter: ["ORG_TYPE_PERSON"],
+    submitterDept: ["ORG_TYPE_DEPT"]
   };
   return bySource[defaultValue.source];
 }
@@ -977,6 +979,7 @@ function isFormulaParticipantMode(mode) {
     "node_history_handlers",
     "node_history_superior_department_head",
     "field_role_line_script",
+    "submitter_role_line_script",
     "configured_person_fallback",
     "script_formula"
   ].includes(mode);
@@ -1075,6 +1078,13 @@ function summarizeParticipants(node, initiatorSelectTarget, context = {}) {
       nativeFormula: expectedParticipantFormula(node.participants, context)
     };
   }
+  if (node.participants.mode === "submitter_role_line_script") {
+    return {
+      mode: "submitter_role_line_script",
+      recipe: node.participants.recipe,
+      nativeFormula: expectedParticipantFormula(node.participants, context)
+    };
+  }
   if (node.participants.mode === "node_history_superior_department_head") {
     return {
       mode: "node_history_superior_department_head",
@@ -1162,6 +1172,11 @@ function expectedParticipantFormula(participants, context = {}) {
     }
     ruleMode = "script";
     ruleKeyMode = "";
+  } else if (participants?.mode === "submitter_role_line_script") {
+    script = "return ${func.sysorg.getDepartmentHead}(${data._ProcessCreator}) || [];";
+    ruleVoContent = "return #查找部门领导#($流程数据项.起草人$) || [];";
+    ruleMode = "script";
+    ruleKeyMode = "";
   } else if (participants?.mode === "script_formula") {
     if (participants.recipe === "ordered_main_person_fields") {
       const bindings = (participants.fields || []).map((field) =>
@@ -1202,11 +1217,11 @@ function expectedParticipantFormula(participants, context = {}) {
     memberCount: 0,
     ruleMode,
     formulaType: "formula",
-    ruleKeyType: ["script_formula", "node_history_handlers", "node_history_superior_department_head", "field_role_line_script"].includes(participants?.mode)
+    ruleKeyType: ["script_formula", "node_history_handlers", "node_history_superior_department_head", "field_role_line_script", "submitter_role_line_script"].includes(participants?.mode)
       ? "Script"
       : "Eval",
     ruleKeyMode,
-    ruleVoMode: ["script_formula", "node_history_handlers", "node_history_superior_department_head", "field_role_line_script"].includes(participants?.mode)
+    ruleVoMode: ["script_formula", "node_history_handlers", "node_history_superior_department_head", "field_role_line_script", "submitter_role_line_script"].includes(participants?.mode)
       ? "script"
       : "formula",
     ...(ruleVoContent !== undefined ? { ruleVoContent } : {}),
@@ -1216,7 +1231,8 @@ function expectedParticipantFormula(participants, context = {}) {
       "script_formula",
       "node_history_handlers",
       "node_history_superior_department_head",
-      "field_role_line_script"
+      "field_role_line_script",
+      "submitter_role_line_script"
     ].includes(participants?.mode)
       ? "org_array"
       : "none"
