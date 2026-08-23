@@ -53,9 +53,9 @@ describe("static reference and post-address route projection", () => {
         rows: 7,
         columns: 3,
         colsStyle: [
-          { startIndex: 0, count: 1, value: "25%" },
-          { startIndex: 1, count: 1, value: "25%" },
-          { startIndex: 2, count: 1, value: "50%" }
+          { startIndex: 0, count: 1, value: "22.268907563025%" },
+          { startIndex: 1, count: 1, value: "55.46218487395%" },
+          { startIndex: 2, count: 1, value: "22.268907563025%" }
         ]
       }
     );

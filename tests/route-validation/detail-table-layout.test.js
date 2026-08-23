@@ -408,11 +408,11 @@ describe("detail-table Route-validation", () => {
           rows: 6,
           columns: 5,
           colsStyle: [
-            { startIndex: 0, count: 1, value: "25%" },
-            { startIndex: 1, count: 1, value: "25%" },
-            { startIndex: 2, count: 1, value: "12.5%" },
-            { startIndex: 3, count: 1, value: "12.5%" },
-            { startIndex: 4, count: 1, value: "25%" }
+            { startIndex: 0, count: 1, value: "20%" },
+            { startIndex: 1, count: 1, value: "20%" },
+            { startIndex: 2, count: 1, value: "20%" },
+            { startIndex: 3, count: 1, value: "20%" },
+            { startIndex: 4, count: 1, value: "20%" }
           ],
           firstCell: { column: 0, colspan: 1, rowspan: 6 }
         },
@@ -421,11 +421,11 @@ describe("detail-table Route-validation", () => {
           rows: 8,
           columns: 5,
           colsStyle: [
-            { startIndex: 0, count: 1, value: "25%" },
-            { startIndex: 1, count: 1, value: "25%" },
-            { startIndex: 2, count: 1, value: "12.5%" },
-            { startIndex: 3, count: 1, value: "12.5%" },
-            { startIndex: 4, count: 1, value: "25%" }
+            { startIndex: 0, count: 1, value: "20%" },
+            { startIndex: 1, count: 1, value: "20%" },
+            { startIndex: 2, count: 1, value: "20%" },
+            { startIndex: 3, count: 1, value: "20%" },
+            { startIndex: 4, count: 1, value: "20%" }
           ],
           firstCell: { column: 0, colspan: 1, rowspan: 8 }
         },

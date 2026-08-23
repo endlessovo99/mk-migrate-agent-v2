@@ -15,6 +15,11 @@ import {
   isPlainInlineCaption
 } from "./inline-caption-recovery.js";
 import { isSafeInlineUnit } from "./source-text-predicates.js";
+import { isStaticHeaderGridShape } from "./standard-table-grid.js";
+import {
+  designerVisibilityWarnings,
+  resolveDesignerVisibilityOverrides
+} from "./designer-visibility.js";
 import {
   applyAdjacentDetailTableTitles,
   applyAdjacentRowDetailTableTitles,
@@ -140,7 +145,14 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
   const runtimeVisibleFieldIds = options.runtimeVisibleFieldIds instanceof Set
     ? options.runtimeVisibleFieldIds
     : new Set();
-  const captionContext = designerBoundCaptionContext(decoded, runtimeVisibleFieldIds);
+  const nodeDataAuthorityVisibleFieldIds = options.nodeDataAuthorityVisibleFieldIds instanceof Set
+    ? options.nodeDataAuthorityVisibleFieldIds
+    : new Set();
+  const captionContext = designerBoundCaptionContext(
+    decoded,
+    runtimeVisibleFieldIds,
+    nodeDataAuthorityVisibleFieldIds
+  );
   const metadataContext = metadataMatchContext(metadataFields);
   const fields = [];
   const fieldIds = new Set();
@@ -181,19 +193,7 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
 
   recoverDesignerAttachments(decoded, fields, fieldIds, layoutRows, warnings);
 
-  for (const field of fields) {
-    if (field.source?.displayJspVisibilityOverride !== true) continue;
-    warnings.push({
-      code: "source.sysform.display_jsp_visibility_override",
-      message: `Designer field ${field.id} (${field.title}) is rendered unconditionally by fdDisplayJsp and will remain visible despite canShow=false.`,
-      path: "/fdDisplayJsp",
-      details: {
-        fieldId: field.id,
-        designerCanShow: false,
-        displayJspRendered: true
-      }
-    });
-  }
+  warnings.push(...designerVisibilityWarnings(fields));
 
   if (!rows.length && decoded.trim()) {
     warnings.push({
@@ -246,15 +246,21 @@ function expandNestedLayoutRowDescriptor(
   const nestedRows = splitDirectChildRows(extractFirstTbodyContent(nested.html) || nested.html);
   if (!nestedRows.length) return [descriptor];
 
-  const preservePlainLabels =
-    /<table\b[^>]*\bfd_type\s*=\s*(["'])detailsTable\1/i.test(nested.html);
+  const staticHeaderGrid = isStaticHeaderGrid(nestedRows);
+  const projectionMode = staticHeaderGrid
+    ? "static-header-grid"
+    : /<table\b[^>]*\bfd_type\s*=\s*(["'])detailsTable\1/i.test(nested.html)
+      ? "details-table"
+      : undefined;
   const nestedRootDescriptors = nestedRows.map((html, nestedRowIndex) => ({
     html,
     id: `${descriptor.id}.nested-0.row-${nestedRowIndex}`,
     sourceRow: `${descriptor.sourceRow}.${nestedRowIndex}`,
     inheritedMarkers: [],
-    preservePlainLabels,
-    preserveStandalonePlainLabels: preservePlainLabels
+    standardTableProjection: {
+      mode: projectionMode || "plain",
+      rowRole: nestedRowIndex === 0 ? "header" : "body"
+    }
   }));
   const nestedDescriptors = nestedRootDescriptors.flatMap((nestedDescriptor) =>
     expandNestedLayoutRowDescriptor(
@@ -274,9 +280,12 @@ function expandNestedLayoutRowDescriptor(
     ...cell,
     controls: extractLayoutCellControls(cell.body, captionContext, metadataContext, {
       preservePlainLabels:
-        descriptor.preservePlainLabels === true ||
+        preservesStandardTableLabels(descriptor.standardTableProjection) ||
         sourceCellIndex < nested.sourceCellIndex,
-      preserveStandalonePlainLabels: descriptor.preserveStandalonePlainLabels !== false
+      preserveStandalonePlainLabels:
+        preservesStandaloneStandardTableLabels(descriptor.standardTableProjection),
+      preserveBoundCaptions:
+        descriptor.standardTableProjection?.mode === "static-header-grid"
     }),
     ...(sourceCellIndex === nested.sourceCellIndex
       ? { layoutRowIds: nestedRootDescriptors.map((row) => row.id) }
@@ -290,6 +299,29 @@ function expandNestedLayoutRowDescriptor(
     },
     ...nestedDescriptors
   ];
+}
+
+function isStaticHeaderGrid(rows = []) {
+  return isStaticHeaderGridShape(
+    rows.map((row) =>
+      splitDirectChildCells(row).map((cell) =>
+        extractDesignerFieldControls(cell.body, {
+          includeHidden: true,
+          includeTextLabels: true
+        }).map((control) => ({
+          description: isSourceDescriptionControl(control)
+        }))
+      )
+    )
+  );
+}
+
+function preservesStandardTableLabels(projection) {
+  return ["details-table", "static-header-grid"].includes(projection?.mode);
+}
+
+function preservesStandaloneStandardTableLabels(projection) {
+  return projection ? preservesStandardTableLabels(projection) : true;
 }
 
 function directStandardTableFragments(html) {
@@ -346,11 +378,16 @@ function appendDesignerLayoutRow(descriptor, context) {
   }, 1);
 
   sourceCells.forEach((cell, cellIndex) => {
-    const controls = Array.isArray(cell.controls)
+    const widthWeight = parseCellWidthWeight(cell.attrs);
+    let controls = Array.isArray(cell.controls)
       ? cell.controls
       : extractLayoutCellControls(cell.body, captionContext, metadataContext, {
-          preservePlainLabels: descriptor.preservePlainLabels === true,
-          preserveStandalonePlainLabels: descriptor.preserveStandalonePlainLabels !== false,
+          preservePlainLabels:
+            preservesStandardTableLabels(descriptor.standardTableProjection),
+          preserveStandalonePlainLabels:
+            preservesStandaloneStandardTableLabels(descriptor.standardTableProjection),
+          preserveBoundCaptions:
+            descriptor.standardTableProjection?.mode === "static-header-grid",
           cell,
           sourceColumns,
           crossCellBoundCaptionIds: new Set(
@@ -359,6 +396,23 @@ function appendDesignerLayoutRow(descriptor, context) {
               .map(([captionId]) => captionId)
           )
         });
+    if (
+      descriptor.standardTableProjection?.mode === "static-header-grid" &&
+      descriptor.standardTableProjection?.rowRole === "body"
+    ) {
+      controls = controls.map((control) => isSourceDescriptionControl(control)
+        ? control
+        : {
+            ...control,
+            source: {
+              ...control.source,
+              layoutCell: {
+                hiddenLabel: true,
+                relation: "standard-table-column-header"
+              }
+            }
+          });
+    }
     const column = parseColumnSpec(cell.attrs.column, cellIndex);
     const rowspan = parseRowspan(cell.attrs.rowspan ?? cell.attrs.rowSpan);
     const controlGroups = controls.length ? groupLayoutCellControls(controls) : [];
@@ -385,6 +439,7 @@ function appendDesignerLayoutRow(descriptor, context) {
         fieldIds: cellFieldIds,
         column: column.column,
         colspan: column.colspan,
+        ...(widthWeight ? { widthWeight } : {}),
         ...(rowspan > 1 ? { rowspan } : {})
       });
     });
@@ -401,6 +456,7 @@ function appendDesignerLayoutRow(descriptor, context) {
         layoutRowIds,
         column: column.column,
         colspan: column.colspan,
+        ...(widthWeight ? { widthWeight } : {}),
         ...(rowspan > 1 ? { rowspan } : {})
       });
     }
@@ -430,6 +486,18 @@ function appendDesignerLayoutRow(descriptor, context) {
       cells
     });
   }
+}
+
+function parseCellWidthWeight(attrs = {}) {
+  const style = String(attrs.style || "");
+  const styleMatch = style.match(/(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)px(?:\s*!important)?\s*(?:;|$)/i);
+  const styleWidth = Number(styleMatch?.[1]);
+  if (Number.isFinite(styleWidth) && styleWidth > 0) return styleWidth;
+
+  const attributeWidth = Number.parseFloat(String(attrs.width || ""));
+  return Number.isFinite(attributeWidth) && attributeWidth > 0
+    ? attributeWidth
+    : undefined;
 }
 
 function applyRowspanLayoutNesting(layoutRows) {
@@ -779,12 +847,14 @@ function extractLayoutCellControls(html, captionContext, metadataContext, option
   const extractedEntries = extractDesignerFieldControlEntries(html, {
     includeHidden: true,
     includeTextLabels: true,
-    runtimeVisibleFieldIds: captionContext?.runtimeVisibleFieldIds
+    runtimeVisibleFieldIds: captionContext?.runtimeVisibleFieldIds,
+    nodeDataAuthorityVisibleFieldIds: captionContext?.nodeDataAuthorityVisibleFieldIds
   }).map((entry) => withBoundCaptionEntry(entry, captionContext));
   const entries = extractedEntries.filter((entry) =>
     !isSourceDescriptionControl(entry.control) ||
     !boundCaptions.has(entry.control.id) ||
-    externalRightPromptIds.has(entry.control.id)
+    externalRightPromptIds.has(entry.control.id) ||
+    options.preserveBoundCaptions === true
   );
   const controls = entries.map((entry) => entry.control);
   const detailTables = controls.filter((control) => control.type === "detailTable");
@@ -1098,11 +1168,16 @@ function withInlineHint(control, hint) {
   };
 }
 
-function designerBoundCaptionContext(html, runtimeVisibleFieldIds = new Set()) {
+function designerBoundCaptionContext(
+  html,
+  runtimeVisibleFieldIds = new Set(),
+  nodeDataAuthorityVisibleFieldIds = new Set()
+) {
   const controls = extractDesignerFieldControls(html, {
     includeHidden: true,
     includeTextLabels: true,
-    runtimeVisibleFieldIds
+    runtimeVisibleFieldIds,
+    nodeDataAuthorityVisibleFieldIds
   });
   const descriptionsById = new Map(
     controls
@@ -1148,7 +1223,8 @@ function designerBoundCaptionContext(html, runtimeVisibleFieldIds = new Set()) {
     boundCaptions,
     externalRightPromptIds,
     rightContainerByControlId,
-    runtimeVisibleFieldIds
+    runtimeVisibleFieldIds,
+    nodeDataAuthorityVisibleFieldIds
   };
 }
 
@@ -1221,14 +1297,15 @@ function extractDesignerFieldControlEntries(html, options = {}) {
     const fieldId = values.id ||
       propertyFieldId(attrValue(match[2], "property")) ||
       attrValue(match[2], "id");
-    const displayJspVisibilityOverride = Boolean(
-      fieldId &&
-      options.runtimeVisibleFieldIds?.has(fieldId) &&
-      isCanShowHidden(values, match[2])
-    );
+    const visibilityOverrides = resolveDesignerVisibilityOverrides({
+      fieldId,
+      canShowHidden: isCanShowHidden(values, match[2]),
+      runtimeVisibleFieldIds: options.runtimeVisibleFieldIds,
+      nodeDataAuthorityVisibleFieldIds: options.nodeDataAuthorityVisibleFieldIds
+    });
     const hardHidden = isHardHiddenDesignerControl(normalizedType, match[2], fragment);
     const hidden = hardHidden || isHiddenDesignerControl(values, match[2], fragment, {
-      ignoreCanShow: displayJspVisibilityOverride
+      ignoreCanShow: visibilityOverrides.ignoreCanShow
     }) ||
       hiddenRanges.some((range) => match.index >= range.start && match.index < range.end);
     if (hidden && !options.includeHidden) continue;
@@ -1236,7 +1313,9 @@ function extractDesignerFieldControlEntries(html, options = {}) {
       html: fragment,
       hidden,
       hardHidden,
-      displayJspVisibilityOverride: displayJspVisibilityOverride && !hidden,
+      displayJspVisibilityOverride: visibilityOverrides.displayJsp && !hidden,
+      nodeDataAuthorityVisibilityOverride:
+        visibilityOverrides.nodeDataAuthority && !hidden,
       rightContainer: rightContainerAt(rightRanges, match.index)
     });
     if (field) controls.push({
@@ -1299,6 +1378,9 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
     ...(normalized === "restdialog" ? { restDialog: restDialogEvidence(values) } : {}),
     ...(context.displayJspVisibilityOverride
       ? { displayJspVisibilityOverride: true }
+      : {}),
+    ...(context.nodeDataAuthorityVisibilityOverride
+      ? { nodeDataAuthorityVisibilityOverride: true }
       : {}),
     ...(context.hidden ? { designerHidden: true } : {}),
     ...(context.hardHidden ? { hardHidden: true } : {})

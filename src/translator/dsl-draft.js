@@ -861,8 +861,10 @@ function propsFromSource(source, options = {}) {
   const props = {};
   if (source.required) props.required = true;
   if (
-    hasActiveExternalRightPrompt(source) &&
-    source.sourceProps?.rightContainer &&
+    (
+      (hasActiveExternalRightPrompt(source) && source.sourceProps?.rightContainer) ||
+      source.sourceProps?.layoutCell?.hiddenLabel === true
+    ) &&
     componentSupportsProp(componentId, "hiddenLabel")
   ) {
     props.hiddenLabel = true;
@@ -1846,7 +1848,10 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
             sourceRef: cell.sourceRef,
             ...(tableLayout ? { row: cell.row } : {}),
             column: cell.column,
-            colspan: cell.colspan
+            colspan: cell.colspan,
+            ...(Number.isFinite(cell.widthWeight) && cell.widthWeight > 0
+              ? { widthWeight: cell.widthWeight }
+              : {})
           };
         })
       };

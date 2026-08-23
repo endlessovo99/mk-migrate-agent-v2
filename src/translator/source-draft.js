@@ -589,6 +589,7 @@ function sourcePropsFromField(field) {
     detailTitleHint: field.source?.detailTitleHint,
     boundCaption: field.source?.boundCaption,
     rightContainer: field.source?.rightContainer,
+    layoutCell: field.source?.layoutCell,
     detailHeaderCaption: field.source?.detailHeaderCaption,
     displayText: field.source?.displayText,
     subjectLabel: field.source?.subjectLabel,
@@ -639,12 +640,14 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
           column: cell.column,
           colspan: cell.colspan,
           rowspan: cell.rowspan,
+          widthWeight: cell.widthWeight,
           references: [...fieldRefs, ...layoutRefs],
           evidence: {
             row: row.sourceRow ?? String(rowIndex),
             column: cell.column,
             colspan: cell.colspan,
-            rowspan: cell.rowspan
+            rowspan: cell.rowspan,
+            widthWeight: cell.widthWeight
           }
         });
       })

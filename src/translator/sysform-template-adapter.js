@@ -18,9 +18,15 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   const template = parseSysFormTemplateXml(xml);
   const metadata = parseMetadataXml(template.fdMetadataXml || "");
   const warnings = [];
+  const preliminaryNodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
+    knownFieldIds: collectMetadataFieldIds(metadata)
+  });
   const form = buildDesignerFirstForm(template.fdDesignerHtml || "", metadata, warnings, {
     runtimeVisibleFieldIds: unconditionallyRenderedRichTextFieldIds(
       template.fdDisplayJsp || ""
+    ),
+    nodeDataAuthorityVisibleFieldIds: visibleNodeDataAuthorityFieldIds(
+      preliminaryNodeDataAuthorities.nodeDataAuthorities
     )
   });
   const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
@@ -88,6 +94,27 @@ export function translateSysFormTemplateXml(xml, options = {}) {
       ...(functionWhitelist ? { functionWhitelist } : {})
     }
   };
+}
+
+function collectMetadataFieldIds(metadata = {}) {
+  const ids = new Set();
+  for (const field of metadata.fields || []) {
+    if (field?.id) ids.add(field.id);
+    for (const column of field?.columns || []) {
+      if (column?.id) ids.add(column.id);
+    }
+  }
+  return ids;
+}
+
+function visibleNodeDataAuthorityFieldIds(nodes = {}) {
+  const ids = new Set();
+  for (const node of Object.values(nodes || {})) {
+    for (const [fieldId, authority] of Object.entries(node?.fields || {})) {
+      if (["view", "edit"].includes(authority?.mode)) ids.add(fieldId);
+    }
+  }
+  return ids;
 }
 
 function collectDataAuthorityFieldIds(form = {}) {

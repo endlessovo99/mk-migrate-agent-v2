@@ -1,6 +1,7 @@
 import { projectLayoutGrid } from "../../dsl/layout-pack.js";
 
 const DEFAULT_MAX_COLUMNS = 8;
+const MIN_SOURCE_COLUMN_WIDTH_WEIGHT = 135;
 
 /**
  * Lower the DSL's flat layout registry to the native layout-grid rows NewOA can
@@ -39,12 +40,15 @@ export function projectNativeLayoutRows(mkTree = [], options = {}) {
       orderedCells(flattened.cells),
       projectionColumns
     );
+    const sourceColsStyle = sourceWidthColsStyle(compressed.cells, compressed.columns);
     return {
       id: root.id,
       rows: Math.max(1, flattened.rows),
       columns: compressed.columns,
       cells: compressed.cells,
-      ...(compressed.colsStyle ? { colsStyle: compressed.colsStyle } : {})
+      ...(sourceColsStyle || compressed.colsStyle
+        ? { colsStyle: sourceColsStyle || compressed.colsStyle }
+        : {})
     };
   });
 }
@@ -184,7 +188,10 @@ function flattenNode({
         row: projectedRow + groupOffset,
         column: plan.bounds.column,
         colspan: plan.bounds.colspan,
-        rowspan: groupHeight
+        rowspan: groupHeight,
+        ...(Number.isFinite(plan.cell.widthWeight) && plan.cell.widthWeight > 0
+          ? { widthWeight: plan.cell.widthWeight }
+          : {})
       });
     }
     projectedRow += Math.max(projectedBlockRows, 1);
@@ -194,17 +201,37 @@ function flattenNode({
 }
 
 function selectProjectionColumns(root, nodesById, maxColumns) {
-  for (let candidate = 1; candidate <= maxColumns; candidate += 1) {
+  // This is an internal integer lattice, not the number of native columns.
+  // Nested ratios such as an outer 1/4 + an inner five-column grid need 20
+  // lattice units, but compress back to only six visible native columns.
+  const internalLimit = maxColumns * maxColumns;
+  for (let candidate = 1; candidate <= internalLimit; candidate += 1) {
     if (hasExactRecursiveBoundaries({
       node: root,
       nodesById,
       regionColspan: candidate,
       ancestors: new Set()
-    })) {
+    }) && projectedVisibleColumnCount(root, nodesById, candidate) <= maxColumns) {
       return candidate;
     }
   }
   return positiveInteger(root.props?.columns) || 1;
+}
+
+function projectedVisibleColumnCount(root, nodesById, projectionColumns) {
+  const flattened = flattenNode({
+    node: root,
+    nodesById,
+    regionColumn: 0,
+    regionColspan: projectionColumns,
+    totalColumns: projectionColumns,
+    ancestors: new Set(),
+    ownerNodePath: [root.id]
+  });
+  return compressProjectionColumns(
+    orderedCells(flattened.cells),
+    projectionColumns
+  ).columns;
 }
 
 function hasExactRecursiveBoundaries({
@@ -413,6 +440,43 @@ function compressProjectionColumns(cells, projectionColumns) {
 function percentageWidth(units, total) {
   const value = Number(((units / total) * 100).toFixed(12));
   return `${value}%`;
+}
+
+function sourceWidthColsStyle(cells, columns) {
+  const weights = Array.from({ length: columns });
+  for (const cell of orderedCells(cells)) {
+    const column = integerOr(cell.column, -1);
+    if (
+      column < 0 ||
+      column >= columns ||
+      (positiveInteger(cell.colspan) || 1) !== 1 ||
+      weights[column] !== undefined ||
+      !Number.isFinite(cell.widthWeight) ||
+      cell.widthWeight <= 0
+    ) continue;
+    weights[column] = cell.widthWeight;
+  }
+  const measuredWeights = weights.filter((weight) => weight !== undefined);
+  if (!measuredWeights.length) return undefined;
+  // Legacy section-caption cells often omit WIDTH while the nested standard
+  // table supplies exact pixel widths. Keep the caption compact by using the
+  // narrowest measured source column for any such unmeasured native column.
+  const fallbackWeight = Math.min(...measuredWeights);
+  for (let index = 0; index < weights.length; index += 1) {
+    if (weights[index] === undefined) weights[index] = fallbackWeight;
+    // NewOA's grid item chrome consumes roughly 40px before child content.
+    // A literal legacy 62px column otherwise leaves only a couple of pixels
+    // for labels such as 类型/A型 and makes a real five-column table look like
+    // a three-column table. Preserve proportions above this renderer floor.
+    weights[index] = Math.max(weights[index], MIN_SOURCE_COLUMN_WIDTH_WEIGHT);
+  }
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  if (!(total > 0)) return undefined;
+  return weights.map((weight, index) => ({
+    startIndex: index,
+    count: 1,
+    value: percentageWidth(weight, total)
+  }));
 }
 
 function orderedCells(cells) {

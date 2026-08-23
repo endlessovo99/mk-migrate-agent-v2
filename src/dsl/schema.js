@@ -888,6 +888,17 @@ function validateMkTreeNode(node, index, refs, diagnostics) {
         { columns, column: child.column, colspan: child.colspan }
       ));
     }
+    if (
+      child.widthWeight !== undefined &&
+      (!Number.isFinite(child.widthWeight) || child.widthWeight <= 0)
+    ) {
+      diagnostics.push(error(
+        "dsl.form.layout.child_width_weight_invalid",
+        "mkTree child widthWeight must be a positive finite number when provided.",
+        `${childPath}/widthWeight`,
+        { widthWeight: child.widthWeight }
+      ));
+    }
     if (!["field", "detailTable", "layout"].includes(child.refType)) {
       diagnostics.push(error("dsl.form.layout.child_ref_type_invalid", "mkTree child refType must be field, detailTable, or layout.", `${childPath}/refType`));
     }
