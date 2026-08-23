@@ -1166,7 +1166,7 @@ function fieldFontExtendData(field, template, spec) {
       defaultValueType: "formula",
       multi: false,
       defaultValueFormulaVO: contextDefault.formula,
-      ...(contextDefault.source === "creatorDept" ? { relation: [] } : {})
+      ...(["creatorDept", "submitterDept"].includes(contextDefault.source) ? { relation: [] } : {})
     };
   }
 
@@ -1307,7 +1307,9 @@ function contextDefaultFormula(field, template, spec) {
   const sourceDefaults = {
     creator: { sourceField: "fdCreator", sourceLabel: "创建人", orgTypeArr: ["8"] },
     creatorDept: { sourceField: "fdCreatorDept", sourceLabel: "创建者部门", orgTypeArr: ["2"] },
-    creatorPost: { sourceField: "fdCreator.post", sourceLabel: "创建人岗位", orgTypeArr: ["4"] }
+    creatorPost: { sourceField: "fdCreator.post", sourceLabel: "创建人岗位", orgTypeArr: ["4"] },
+    submitter: { sourceField: "_ProcessCreator", sourceLabel: "提交者", orgTypeArr: ["8"], root: "data" },
+    submitterDept: { sourceField: "_ProcessCreator.parent", sourceLabel: "提交者部门", orgTypeArr: ["2"], root: "data" }
   };
   const sourceDefault = sourceDefaults[defaultValue.source];
   if (!sourceDefault) return undefined;
@@ -1316,13 +1318,14 @@ function contextDefaultFormula(field, template, spec) {
   const scriptPath = property === "fdName" ? `${sourceField}.fdName` : sourceField;
   const propertyLabel = property === "fdName" ? ".名称" : "";
   const templateName = String(template?.fdName || "表单").trim() || "表单";
+  const root = sourceDefault.root || "data.biz";
 
   return {
     source: defaultValue.source,
     orgTypeArr: sourceDefault.orgTypeArr,
     formula: {
       type: "Eval",
-      script: `\${data.biz.${scriptPath}}`,
+      script: `\${${root}.${scriptPath}}`,
       vo: {
         mode: "formula",
         content: `$${templateName}.${sourceDefault.sourceLabel}${propertyLabel}$`
@@ -1335,7 +1338,7 @@ function contextDefaultFormula(field, template, spec) {
 function normalizeContextDefault(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   if (value.kind !== "context") return undefined;
-  if (!["creator", "creatorDept", "creatorPost", "now"].includes(value.source)) return undefined;
+  if (!["creator", "creatorDept", "creatorPost", "submitter", "submitterDept", "now"].includes(value.source)) return undefined;
   if (value.property !== undefined && value.property !== "fdName") return undefined;
   return {
     source: value.source,

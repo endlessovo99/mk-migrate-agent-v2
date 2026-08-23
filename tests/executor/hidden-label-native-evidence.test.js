@@ -60,6 +60,50 @@ describe("xform-input hidden-label native persistence", () => {
     assert.equal(prepared.verify(structuredClone(prepared.update)).ok, true);
   });
 
+  for (const testCase of [
+    {
+      name: "radio",
+      type: "radio",
+      componentId: "xform-radio",
+      desktopType: "@elem/xform-radio"
+    },
+    {
+      name: "checkbox",
+      type: "checkbox",
+      componentId: "xform-checkbox",
+      desktopType: "@elem/xform-checkbox"
+    },
+    {
+      name: "single-select",
+      type: "singleSelect",
+      componentId: "xform-select",
+      desktopType: "@elem/xform-select"
+    },
+    {
+      name: "multi-select",
+      type: "multiSelect",
+      componentId: "xform-select~multi",
+      desktopType: "@elem/xform-select"
+    }
+  ]) {
+    it(`writes and reads back the shared hidden-label contract for ${testCase.name}`, () => {
+      const dsl = hiddenLabelDslForOption(testCase);
+      const prepared = prepareSample(dsl);
+      const attribute = nativeAttribute(prepared.update, fieldId);
+
+      assert.equal(attribute.config.controlProps.desktop.type, testCase.desktopType);
+      assert.deepEqual(hiddenLabelEvidence(attribute), {
+        controlDesktop: true,
+        controlMobile: true,
+        controlShowText: false,
+        labelDesktop: true,
+        labelMobile: true,
+        labelShowText: false
+      });
+      assert.equal(prepared.verify(structuredClone(prepared.update)).ok, true);
+    });
+  }
+
   it("restores hiddenLabel only from complete independent native evidence", () => {
     const prepared = prepareSample(hiddenLabelDsl());
     const readback = prepared.verify(independentNativeReadback());
@@ -132,6 +176,18 @@ function hiddenLabelDsl() {
   const dsl = sampleTrustedDsl({ workflow: null });
   delete dsl.workflow;
   dsl.form.fields.find((field) => field.id === fieldId).props.hiddenLabel = true;
+  return dsl;
+}
+
+function hiddenLabelDslForOption({ type, componentId }) {
+  const dsl = hiddenLabelDsl();
+  const field = dsl.form.fields.find((candidate) => candidate.id === fieldId);
+  field.type = type;
+  field.componentId = componentId;
+  field.props = {
+    hiddenLabel: true,
+    options: [{ label: "选项 A", value: "A" }]
+  };
   return dsl;
 }
 

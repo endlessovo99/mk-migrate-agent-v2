@@ -254,6 +254,7 @@ function isFormulaParticipantMode(mode) {
     "node_history_handlers",
     "node_history_superior_department_head",
     "field_role_line_script",
+    "submitter_role_line_script",
     "configured_person_fallback",
     "script_formula"
   ].includes(mode);
@@ -561,6 +562,7 @@ function buildArtificialNode(node, type, context = {}) {
       node.participants?.mode === "node_history_handlers" ||
       node.participants?.mode === "node_history_superior_department_head" ||
       node.participants?.mode === "field_role_line_script" ||
+      node.participants?.mode === "submitter_role_line_script" ||
       node.participants?.mode === "script_formula"
       ? "formula"
       : attrs.handlerSelectType,
@@ -2336,6 +2338,29 @@ function handlersFromParticipants(participants, attrs, context = {}) {
       }
     };
   }
+  if (participants?.mode === "submitter_role_line_script") {
+    const ruleKey = submitterRoleLineScriptRuleKey(participants);
+    return {
+      id: "handlers",
+      type: "formula",
+      source: "2",
+      ruleKey: JSON.stringify(ruleKey),
+      ruleName: ruleKey.vo.content,
+      ruleMode: "script",
+      formulaType: "formula",
+      members: [],
+      element: "users",
+      migrationSource: {
+        sourceExpression: participants.sourceExpression || "",
+        sourceNameExpression: participants.sourceNameExpression || "",
+        recipe: participants.recipe || "",
+        sourceRoleId: participants.sourceRoleId || "",
+        sourceRoleName: participants.sourceRoleName || "",
+        sourceOrgType: participants.sourceOrgType,
+        sourceOrgClass: participants.sourceOrgClass || ""
+      }
+    };
+  }
   if (participants?.mode === "script_formula") {
     const ruleKey = scriptFormulaHandlerRuleKey(participants, context);
     return {
@@ -2412,9 +2437,24 @@ function fieldRoleLineScriptRuleKey(participants = {}, context = {}) {
   };
 }
 
+function submitterRoleLineScriptRuleKey(participants = {}) {
+  if (participants.recipe !== "department_head") {
+    throw new Error(`unsupported submitter role-line Script recipe: ${participants.recipe || ""}`);
+  }
+  return {
+    type: "Script",
+    script: "return ${func.sysorg.getDepartmentHead}(${data._ProcessCreator}) || [];",
+    vo: {
+      mode: "script",
+      content: "return #查找部门领导#($流程数据项.起草人$) || [];"
+    },
+    resultType: workflowOrgArrayResultType()
+  };
+}
+
 function nativeHandlerIds(participants, attrs) {
   if (
-    ["dept_leader_by_no", "script_formula", "field_role_line_script", "node_history_handlers"]
+    ["dept_leader_by_no", "script_formula", "field_role_line_script", "submitter_role_line_script", "node_history_handlers"]
       .includes(participants?.mode)
   ) {
     return "";
@@ -2427,7 +2467,7 @@ function nativeHandlerIds(participants, attrs) {
 
 function nativeHandlerNames(participants, attrs) {
   if (
-    ["dept_leader_by_no", "script_formula", "field_role_line_script", "node_history_handlers"]
+    ["dept_leader_by_no", "script_formula", "field_role_line_script", "submitter_role_line_script", "node_history_handlers"]
       .includes(participants?.mode)
   ) {
     return "";

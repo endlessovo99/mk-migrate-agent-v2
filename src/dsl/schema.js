@@ -80,6 +80,7 @@ const WORKFLOW_PARTICIPANT_MODES = new Set([
   "node_history_handlers",
   "node_history_superior_department_head",
   "field_role_line_script",
+  "submitter_role_line_script",
   "configured_person_fallback",
   "script_formula"
 ]);
@@ -91,6 +92,7 @@ const MAPPED_FORMULA_PARTICIPANT_MODES = new Set([
   "node_history_handlers",
   "node_history_superior_department_head",
   "field_role_line_script",
+  "submitter_role_line_script",
   "configured_person_fallback",
   "script_formula"
 ]);
@@ -2251,6 +2253,49 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         "workflow.participants.field_role_line_source_required",
         "Field role-line participants must preserve the source expression.",
         `${path}/sourceExpression`
+      ));
+    }
+  }
+  if (participants.mode === "submitter_role_line_script") {
+    if (participants.recipe !== "department_head") {
+      diagnostics.push(error(
+        "workflow.participants.submitter_role_line_recipe_unsupported",
+        "Submitter role-line participants require the department-head Script recipe.",
+        `${path}/recipe`,
+        { actual: participants.recipe }
+      ));
+    }
+    if (!nonEmptyString(participants.sourceRoleId)) {
+      diagnostics.push(error(
+        "workflow.participants.submitter_role_line_source_role_required",
+        "Submitter role-line participants must preserve the source role id.",
+        `${path}/sourceRoleId`
+      ));
+    }
+    if (
+      participants.sourceRoleName !== "部门领导" ||
+      Number(participants.sourceOrgType) !== 32 ||
+      participants.sourceOrgClass !== "com.landray.kmss.sys.organization.model.SysOrgElement"
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.submitter_role_line_source_role_mismatch",
+        "Submitter role-line participants are limited to the verified direct 部门领导 role source.",
+        path,
+        {
+          sourceRoleName: participants.sourceRoleName,
+          sourceOrgType: participants.sourceOrgType,
+          sourceOrgClass: participants.sourceOrgClass
+        }
+      ));
+    }
+    if (
+      !nonEmptyString(participants.sourceExpression) ||
+      !nonEmptyString(participants.sourceNameExpression)
+    ) {
+      diagnostics.push(error(
+        "workflow.participants.submitter_role_line_source_required",
+        "Submitter role-line participants must preserve both source expressions.",
+        path
       ));
     }
   }

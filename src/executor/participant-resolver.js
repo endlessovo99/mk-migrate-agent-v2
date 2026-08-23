@@ -452,7 +452,7 @@ function deduplicateResolvedParticipantCollections(dsl) {
 
 function isSitFallbackEligible(resolution) {
   if (resolution.kind !== "source" || !SIT_FALLBACK_REASONS.has(resolution.issue?.reason)) return false;
-  if (isBracketedGenericRole(resolution.member)) return false;
+  if (normalizeOrgType(resolution.member?.sourceOrgType) === "32") return false;
   if (resolution.issue.reason === "not_found" || resolution.issue.reason === "search_failed") return true;
   return Array.isArray(resolution.issue.missing) &&
     resolution.issue.missing.length > 0 &&
@@ -467,7 +467,6 @@ function temporaryFallbackForSourceOrgType(sourceOrgType, fallbacks) {
     4: fallbacks.post,
     8: fallbacks.person,
     16: fallbacks.group,
-    32: fallbacks.person,
     128: fallbacks.post,
     256: fallbacks.person
   };

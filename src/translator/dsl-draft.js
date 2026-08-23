@@ -42,6 +42,10 @@ import {
 } from "./detail-main-row-lifecycle.js";
 import { foldLegacyDetailAddressComposites } from "./detail-address-composite.js";
 import { isHiddenMetadataAttributes } from "./sysform-metadata.js";
+import {
+  projectCompoundLayoutCell,
+  recoverSharedBoundCaptionGroups
+} from "./shared-bound-caption-recovery.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -634,12 +638,20 @@ function draftForm(sourceForm) {
     ...detailTables.map(draftDetailTableFromSource),
     ...dataFields.map(draftDataFieldFromSource)
   ];
+  const sharedCaptionRecovery = recoverSharedBoundCaptionGroups(
+    fields,
+    sourceForm.layout || { source: "fdDesignerHtml", rows: [] }
+  );
 
   return {
-    fields,
+    fields: sharedCaptionRecovery.fields,
     layout: {
-      sourceGrid: sourceForm.layout || { source: "fdDesignerHtml", rows: [] },
-      mkTree: draftMkTree(sourceForm.layout || {}, new Set(detailTables.map((table) => table.id)))
+      sourceGrid: sharedCaptionRecovery.layout,
+      mkTree: draftMkTree(
+        sharedCaptionRecovery.layout,
+        new Set(detailTables.map((table) => table.id)),
+        sharedCaptionRecovery.compoundCells
+      )
     }
   };
 }
@@ -1704,19 +1716,19 @@ function parseLegacyContextDefaultExpression(value, source) {
   }
 
   if (/^OrgFunction\s*\.\s*getCurrentUser\s*\(\s*\)\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
-    return { kind: "context", source: "creator", property: "fdName" };
+    return { kind: "context", source: "submitter", property: "fdName" };
   }
 
   if (/^OrgFunction\s*\.\s*getCurrentDept\s*\(\s*\)\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
-    return { kind: "context", source: "creatorDept", property: "fdName" };
+    return { kind: "context", source: "submitterDept", property: "fdName" };
   }
 
   if (/^OrgFunction\s*\.\s*getCurrentUser\s*\(\s*\)$/i.test(expression)) {
-    return { kind: "context", source: "creator" };
+    return { kind: "context", source: "submitter" };
   }
 
   if (/^OrgFunction\s*\.\s*getCurrentDept\s*\(\s*\)$/i.test(expression)) {
-    return { kind: "context", source: "creatorDept" };
+    return { kind: "context", source: "submitterDept" };
   }
 
   if (isLegacyAddressSource(source) && /^OrgFunction\s*\.\s*getCurrentPost\s*\(\s*\)$/i.test(expression)) {
@@ -1753,11 +1765,18 @@ function normalizeLegacyExpression(value) {
     .trim();
 }
 
-function draftMkTree(layout, detailTableIds) {
+function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
   const rows = Array.isArray(layout.rows) ? layout.rows : [];
   const projectedRows = rows.map((row, rowIndex) => {
-    const sourceCells = Array.isArray(row.cells) ? row.cells : [];
     const sourceRowId = row.id || `row-${rowIndex}`;
+    const originalSourceCells = Array.isArray(row.cells) ? row.cells : [];
+    const nestedNodes = [];
+    const sourceCells = originalSourceCells.map((cell) => {
+      const projection = projectCompoundLayoutCell(sourceRowId, cell, compoundCells);
+      if (!projection) return cell;
+      nestedNodes.push(projection.node);
+      return projection.cell;
+    });
     const sourceColumns = Math.max(
       Number.isInteger(row.columns) ? row.columns : 0,
       ...sourceCells.map((cell) =>
@@ -1832,7 +1851,7 @@ function draftMkTree(layout, detailTableIds) {
         })
       };
     });
-    return { sourceRowId, nodes };
+    return { sourceRowId, nodes, nestedNodes };
   });
 
   const targetNodeIdsBySourceRowId = new Map(
@@ -1841,8 +1860,8 @@ function draftMkTree(layout, detailTableIds) {
       nodes.map((node) => node.id)
     ])
   );
-  return projectedRows.flatMap(({ nodes }) =>
-    nodes.map((node) => ({
+  return projectedRows.flatMap(({ nodes, nestedNodes }) => [
+    ...nodes.map((node) => ({
       ...node,
       children: node.children.map((child) => child.refType === "layout"
         ? {
@@ -1853,7 +1872,9 @@ function draftMkTree(layout, detailTableIds) {
             )
           }
         : child)
-    }))
+    })),
+    ...nestedNodes
+  ]
   );
 }
 
@@ -2500,6 +2521,13 @@ function participantsFromSourceNode(node, participantSelections, knownFieldTitle
   const dynamicParticipant = classifyWorkflowDynamicParticipant(attrs, node.handlerEntities);
   if (dynamicParticipant) return pruneUndefined({ ...dynamicParticipant, ...participantEvidence });
 
+  const submitterRoleLine = submitterDepartmentLeaderRoleLine(
+    handlerMembers,
+    handlerIds,
+    handlerNames
+  );
+  if (submitterRoleLine) return pruneUndefined({ ...submitterRoleLine, ...participantEvidence });
+
   if (handlerMembers.length) {
     return pruneUndefined({
       mode: "explicit",
@@ -2573,6 +2601,30 @@ function participantMembersFromHandlerEntities(entities) {
     sourceParentName: entity.parent,
     sourceLoginName: entity.loginName
   }));
+}
+
+function submitterDepartmentLeaderRoleLine(handlerMembers, handlerIds, handlerNames) {
+  if (!Array.isArray(handlerMembers) || handlerMembers.length !== 1) return undefined;
+  const member = handlerMembers[0];
+  const sourceRoleId = String(member?.sourceId || "").trim();
+  if (
+    !sourceRoleId ||
+    String(member?.name || "").trim() !== "部门领导" ||
+    Number(member?.sourceOrgType) !== 32 ||
+    member?.sourceOrgClass !== "com.landray.kmss.sys.organization.model.SysOrgElement"
+  ) {
+    return undefined;
+  }
+  return {
+    mode: "submitter_role_line_script",
+    recipe: "department_head",
+    sourceRoleId,
+    sourceRoleName: "部门领导",
+    sourceOrgType: 32,
+    sourceOrgClass: member.sourceOrgClass,
+    sourceExpression: handlerIds[0] || sourceRoleId,
+    sourceNameExpression: handlerNames[0] || member.name
+  };
 }
 
 function participantSelectionSemantics(selection) {
