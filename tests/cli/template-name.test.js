@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 import { main } from "../../src/cli/main.js";
 
 const SOURCE_PATH = "tests/fixtures/route-validation/form-only/route-form-only_SysFormTemplate.xml";
+const WORKFLOW_SOURCE_PATH = "tests/fixtures/source/route-validation-lbpm";
+const WORKFLOW_REFERENCE_DIR = "tests/fixtures/source/workflow-reference-initdata";
 
 describe("source template name CLI", () => {
   it("uses --template-name when cleaning source XML", async () => {
@@ -47,6 +49,23 @@ describe("source template name CLI", () => {
     assert.equal(output.dsl.template.name, "原流程模板");
   });
 
+  it("uses --workflow-reference-dir to emit fixed-post target IDs from initdata", async () => {
+    const output = await captureJsonOutput(() => main([
+      "translate",
+      WORKFLOW_SOURCE_PATH,
+      "--workflow-reference-dir",
+      WORKFLOW_REFERENCE_DIR
+    ]));
+    const n3 = output.dsl.workflow.nodes.find((node) => node.id === "N3");
+
+    assert.deepEqual(n3.participants.members, [{
+      id: "reference-target-post-id",
+      name: "参考目标岗位",
+      type: "user_or_org",
+      targetOrgType: 4
+    }]);
+  });
+
   it("rejects --template-name when its value is missing", async () => {
     const originalExitCode = process.exitCode;
     try {
@@ -58,6 +77,39 @@ describe("source template name CLI", () => {
 
       assert.equal(output.ok, false);
       assert.equal(output.message, "--template-name requires a non-empty value");
+    } finally {
+      process.exitCode = originalExitCode;
+    }
+  });
+
+  it("rejects --workflow-reference-dir when its value is missing", async () => {
+    const originalExitCode = process.exitCode;
+    try {
+      const output = await captureJsonOutput(() => main([
+        "clean",
+        WORKFLOW_SOURCE_PATH,
+        "--workflow-reference-dir"
+      ]));
+
+      assert.equal(output.ok, false);
+      assert.equal(output.message, "--workflow-reference-dir requires a non-empty directory path");
+    } finally {
+      process.exitCode = originalExitCode;
+    }
+  });
+
+  it("rejects --workflow-reference-dir for a form-only source", async () => {
+    const originalExitCode = process.exitCode;
+    try {
+      const output = await captureJsonOutput(() => main([
+        "clean",
+        SOURCE_PATH,
+        "--workflow-reference-dir",
+        WORKFLOW_REFERENCE_DIR
+      ]));
+
+      assert.equal(output.ok, false);
+      assert.equal(output.message, "workflow reference requires a paired source directory");
     } finally {
       process.exitCode = originalExitCode;
     }

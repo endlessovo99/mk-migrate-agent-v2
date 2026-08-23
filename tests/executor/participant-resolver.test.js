@@ -1311,6 +1311,43 @@ describe("executeDsl participant resolution seam", () => {
     assert.deepEqual(client.elementCalls, [[targetFdId]]);
   });
 
+  it("persists a structured fixed-post target without searching or falling back to a source id", async () => {
+    const targetFdId = "current-structured-post";
+    const dsl = dslWithExplicitMembers([{
+      id: targetFdId,
+      name: "采购部_采购岗",
+      type: "user_or_org",
+      targetOrgType: 4
+    }]);
+    const client = new CompleteSearchClient({}, {
+      [targetFdId]: [currentOrg({
+        fdId: targetFdId,
+        fdName: "采购部_采购岗",
+        fdOrgType: 4
+      })]
+    });
+
+    const result = await executeDsl(dsl, {
+      client,
+      credentials: { username: "route-user", encryptedPassword: "route-password" },
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      now: new Date("2026-08-23T00:00:00.000Z")
+    });
+    const workflow = JSON.parse(client.savedTemplate.mechanisms.lbpmTemplate[0].fdContent);
+    const members = workflow.elements.find((element) => element.id === "N-review").handlers.members;
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(members, [{
+      id: targetFdId,
+      name: "采购部_采购岗",
+      element: "user",
+      type: "2"
+    }]);
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[targetFdId]]);
+  });
+
   it("projects current NewOA participant ids instead of the source ids", async () => {
     const dsl = dslWithExplicitMembers([
       sourceMember({

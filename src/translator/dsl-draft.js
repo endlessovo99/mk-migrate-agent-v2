@@ -2411,6 +2411,8 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null, knownFieldTitles = 
         missingNodeHistoryReference;
       const subProcessNeedsReview = ["startSubProcess", "recoverSubProcess"].includes(nodeType.type) &&
         !subProcessByNodeId.has(node.id);
+      const directTargetNeedsReview = Array.isArray(node.directTargetAmbiguities) &&
+        node.directTargetAmbiguities.length > 0;
       return pruneUndefined({
         id: node.id,
         type: nodeType.type,
@@ -2426,11 +2428,14 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null, knownFieldTitles = 
         definition: node.definition,
         handlerEntities: node.handlerEntities,
         optionalHandlerEntities: node.optionalHandlerEntities,
+        directTargetAmbiguities: node.directTargetAmbiguities,
         dataAuthority: draftDataAuthority(node.dataAuthority, knownFieldIds),
         participantSelections: participantSelections.get(node.id),
         participants,
         subProcess: subProcessByNodeId.get(node.id),
-        translationStatus: nodeType.needsReview || formulaNeedsReview || subProcessNeedsReview ? "pending_review" : "executable"
+        translationStatus: nodeType.needsReview || formulaNeedsReview || subProcessNeedsReview || directTargetNeedsReview
+          ? "pending_review"
+          : "executable"
       });
     }),
     edges: (sourceWorkflow.edges || []).map((edge) => {
@@ -2690,15 +2695,26 @@ function failClosedMismatchedFormulaFieldTitle(participants, knownFieldTitles) {
 
 function participantMembersFromHandlerEntities(entities) {
   if (!Array.isArray(entities)) return [];
-  return entities.map((entity) => pruneUndefined({
-    name: entity.name || entity.id,
-    type: "user_or_org",
-    sourceId: entity.id,
-    sourceOrgType: entity.orgType,
-    sourceOrgClass: entity.class,
-    sourceParentName: entity.parent,
-    sourceLoginName: entity.loginName
-  }));
+  return entities.map((entity) => {
+    const directTargetId = String(entity?.directTargetId || "").trim();
+    if (directTargetId && Number(entity?.directTargetOrgType) === 4) {
+      return {
+        id: directTargetId,
+        name: entity.name || directTargetId,
+        type: "user_or_org",
+        targetOrgType: 4
+      };
+    }
+    return pruneUndefined({
+      name: entity.name || entity.id,
+      type: "user_or_org",
+      sourceId: entity.id,
+      sourceOrgType: entity.orgType,
+      sourceOrgClass: entity.class,
+      sourceParentName: entity.parent,
+      sourceLoginName: entity.loginName
+    });
+  });
 }
 
 function submitterDepartmentLeaderRoleLine(handlerMembers, handlerIds, handlerNames) {

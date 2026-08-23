@@ -52,7 +52,8 @@ function runClean(argv) {
 
   const sourceDraft = cleanSourceFile(sourcePath, {
     functionWhitelist: loadWhitelist(args),
-    templateName: readTemplateNameOption(args)
+    templateName: readTemplateNameOption(args),
+    workflowReferenceDir: readWorkflowReferenceDirOption(args)
   });
   writeOrPrint(args, sourceDraft, {
     ok: true,
@@ -83,7 +84,8 @@ function runTranslate(argv) {
 
   const dsl = translateSourceFile(sourcePath, {
     functionWhitelist: loadWhitelist(args),
-    templateName: readTemplateNameOption(args)
+    templateName: readTemplateNameOption(args),
+    workflowReferenceDir: readWorkflowReferenceDirOption(args)
   });
   const check = checkDraft(dsl);
   writeOrPrint(args, dsl, {
@@ -246,6 +248,15 @@ function readTemplateNameOption(args) {
   return value.trim();
 }
 
+function readWorkflowReferenceDirOption(args) {
+  const value = args["workflow-reference-dir"];
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error("--workflow-reference-dir requires a non-empty directory path");
+  }
+  return value.trim();
+}
+
 function writeOrPrint(args, artifact, output) {
   if (args.out) {
     writeJson(args.out, artifact);
@@ -333,9 +344,9 @@ function printJson(value) {
 
 function printUsage() {
   console.error("Usage:");
-  console.error("  node src/cli/main.js clean <source-dir|sysform.xml> [--template-name <original-name>] [--out source-draft.json]");
+  console.error("  node src/cli/main.js clean <source-dir|sysform.xml> [--template-name <original-name>] [--workflow-reference-dir <initdata-dir>] [--out source-draft.json]");
   console.error("  node src/cli/main.js draft <source-draft.json> [--out dsl-draft.json]");
-  console.error("  node src/cli/main.js translate <source-dir|sysform.xml> [--template-name <original-name>] [--out dsl-draft.json]");
+  console.error("  node src/cli/main.js translate <source-dir|sysform.xml> [--template-name <original-name>] [--workflow-reference-dir <initdata-dir>] [--out dsl-draft.json]");
   console.error("  OPENAI_BASE_URL=... OPENAI_API_KEY=... OPENAI_MODEL=... AGENT_REVIEW_CHECKPOINT_KEY=... node src/cli/main.js agent-review <source-draft.json> <dsl-draft.json> --out migration.dsl.json [--report-out agent-review.report.json] [--checkpoint-out agent-review.checkpoint.json] [--resume-from agent-review.checkpoint.json] [--review-batch-size 12] [--max-review-attempts 2]");
   console.error("    Review and repair use OPENAI_MODEL from the environment; no model fallback.");
   console.error("  node src/cli/main.js trust <source-draft.json> <dsl-draft.json> --external-agent-reviewed [--reviewer-name name] [--out migration.dsl.json]");

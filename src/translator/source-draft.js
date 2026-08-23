@@ -10,6 +10,10 @@ import {
   parseRootHashMap,
   parseRootHashMapStringPuts
 } from "./xml-utils.js";
+import {
+  applyWorkflowReferenceTargets,
+  resolveWorkflowReference
+} from "./workflow-reference-targets.js";
 
 export const SOURCE_DRAFT_VERSION = "2.0-source-draft";
 const KM_REVIEW_PERSON_EVIDENCE_KEYS = Object.freeze([
@@ -33,6 +37,10 @@ export function cleanSourceFile(path, options = {}) {
   const stat = statSync(path);
   if (stat.isDirectory()) {
     return cleanSourceDirectory(path, options);
+  }
+
+  if (options.workflowReferenceDir !== undefined) {
+    throw new Error("workflow reference requires a paired source directory");
   }
 
   if (!/_SysFormTemplate\.xml$/i.test(path)) {
@@ -207,6 +215,13 @@ function cleanSourceDirectory(path, options = {}) {
   const workflowDsl = translateLbpmProcessDefinitionXml(readFileSync(lbpmProcessPath, "utf8"), {
     sourcePath: lbpmProcessPath
   });
+  const workflowReference = resolveWorkflowReference(
+    workflowDsl.workflow,
+    options.workflowReferenceDir
+  );
+  const referencedWorkflow = workflowReference
+    ? applyWorkflowReferenceTargets(workflowDsl.workflow, workflowReference.workflow)
+    : workflowDsl.workflow;
 
   const formTemplateId = formDsl.source.fdModelId;
   const processTemplateId = workflowDsl.source.templateId;
@@ -241,10 +256,11 @@ function cleanSourceDirectory(path, options = {}) {
           path: join(path, kmReviewTemplateName),
           fdId: kmReviewTemplate.fdId
         }
-      } : {})
+      } : {}),
+      ...(workflowReference ? { workflowReference: workflowReference.metadata } : {})
     },
     workflow: supplementWorkflowHandlerEvidence(
-      workflowDsl.workflow,
+      referencedWorkflow,
       pairedPersonEntities
     ),
     review: mergeSourceReviews(formDsl.review, workflowDsl.review)
@@ -485,7 +501,8 @@ function normalizeSourceMetadata(source, context) {
       sourceId: basename(source.path || context.sourcePath || "source-directory"),
       sysFormTemplate: source.sysFormTemplate,
       lbpmProcessDefinition: source.lbpmProcessDefinition,
-      kmReviewTemplate: source.kmReviewTemplate
+      kmReviewTemplate: source.kmReviewTemplate,
+      ...(source.workflowReference ? { workflowReference: source.workflowReference } : {})
     };
   }
 
@@ -668,6 +685,7 @@ function sourceWorkflowFromLegacyWorkflow(workflow, context = {}) {
     attributes: node.attributes || {},
     handlerEntities: node.handlerEntities,
     optionalHandlerEntities: node.optionalHandlerEntities,
+    directTargetAmbiguities: node.directTargetAmbiguities,
     definition: node.definition ? {
       sourceType: node.definition.type,
       attributes: node.definition.attributes || {}

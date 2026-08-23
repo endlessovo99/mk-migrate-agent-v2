@@ -130,6 +130,89 @@ describe("translateLbpmProcessDefinitionXml", () => {
     }]);
   });
 
+  it("uses divergent static fixed-post handler records as direct target evidence only", () => {
+    const result = translateLbpmProcessDefinitionXml(directTargetHandlerFixture());
+    const reviewNode = result.workflow.nodes.find((node) => node.id === "N2");
+    const formulaNode = result.workflow.nodes.find((node) => node.id === "N3");
+
+    assert.deepEqual(reviewNode.handlerEntities, [
+      {
+        id: "target-person-id",
+        name: "目标人员",
+        orgType: 8,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        parent: "示例部门",
+        index: 0
+      },
+      {
+        id: "target-post-id",
+        name: "目标岗位",
+        orgType: 4,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+        parent: "示例部门",
+        index: 1,
+        directTargetId: "target-post-id",
+        directTargetOrgType: 4
+      },
+      {
+        id: "unchanged-post-id",
+        name: "未变岗位",
+        orgType: 4,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+        parent: "示例部门",
+        index: 2
+      }
+    ]);
+    assert.deepEqual(reviewNode.optionalHandlerEntities, [{
+      id: "target-optional-post-id",
+      name: "目标备选岗位",
+      orgType: 4,
+      class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+      parent: "示例部门",
+      index: 0,
+      directTargetId: "target-optional-post-id",
+      directTargetOrgType: 4
+    }]);
+    assert.deepEqual(formulaNode.handlerEntities, [{
+      id: "formula-post-target-id",
+      name: "公式岗位",
+      orgType: 4,
+      class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+      parent: "示例部门",
+      index: 0
+    }]);
+  });
+
+  it("marks one fixed-post position with multiple structured targets for review", () => {
+    const result = translateLbpmProcessDefinitionXml(directTargetHandlerFixture());
+    const reviewNode = result.workflow.nodes.find((node) => node.id === "N4");
+
+    assert.deepEqual(reviewNode.handlerEntities, [
+      {
+        id: "ambiguous-post-a",
+        name: "冲突岗位 A",
+        orgType: 4,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+        parent: "示例部门",
+        index: 0
+      },
+      {
+        id: "ambiguous-post-b",
+        name: "冲突岗位 B",
+        orgType: 4,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+        parent: "示例部门",
+        index: 0
+      }
+    ]);
+    assert.deepEqual(reviewNode.directTargetAmbiguities, [{
+      attribute: "handlerIds",
+      index: 0,
+      cachedId: "cached-ambiguous-post-id",
+      targetIds: ["ambiguous-post-a", "ambiguous-post-b"]
+    }]);
+  });
+
   it("normalizes node help to meaningful text without retaining executable markup", () => {
     const process = '<process fdId="help-process"><nodes><draftNode id="N2" name="起草" description="&lt;pre&gt;第一行&lt;br/&gt;第二行&lt;script&gt;alert(1)&lt;/script&gt;&lt;style&gt;.x{}&lt;/style&gt;&lt;/pre&gt;"/><draftNode id="N3" name="起草2" description="安全内容&lt;script&gt;doBadThing()"/></nodes><lines/></process>';
     const xml = `<java><object><void method="put"><string>fdContent</string><string>${encodeXml(process)}</string></void></object></java>`;
@@ -176,6 +259,79 @@ function handlerEntityFixture() {
               className: "com.landray.kmss.sys.organization.model.SysOrgPerson",
               parent: "示例部门",
               loginName: "000001"
+            })}
+          </object>
+        </void>
+        <void method="put"><string>fdContent</string><string>${encodeXml(process)}</string></void>
+      </object>
+    </java>
+  `;
+}
+
+function directTargetHandlerFixture() {
+  const process = [
+    '<process fdId="direct-target-process"><nodes>',
+    '<startNode id="N1" name="开始"/>',
+    '<reviewNode id="N2" name="审批" handlerIds="cached-person-id;cached-post-id;unchanged-post-id" handlerNames="旧人员;旧岗位;未变岗位" handlerSelectType="org" optHandlerIds="cached-optional-post-id" optHandlerNames="旧备选岗位" optHandlerSelectType="org"/>',
+    '<reviewNode id="N3" name="公式审批" handlerIds="formula-cached-post-id" handlerNames="公式岗位" handlerSelectType="formula"/>',
+    '<reviewNode id="N4" name="冲突审批" handlerIds="cached-ambiguous-post-id" handlerNames="旧岗位" handlerSelectType="org"/>',
+    '<endNode id="N5" name="结束"/>',
+    '</nodes><lines><line id="L1" startNodeId="N1" endNodeId="N2"/><line id="L2" startNodeId="N2" endNodeId="N3"/><line id="L3" startNodeId="N3" endNodeId="N4"/><line id="L4" startNodeId="N4" endNodeId="N5"/></lines></process>'
+  ].join("");
+  return `
+    <java>
+      <object class="java.util.HashMap">
+        <void method="put">
+          <string>nodeDefinitionHandlers</string>
+          <object class="java.util.ArrayList">
+            ${handlerEntry("N2", "handlerIds", 0, {
+              id: "target-person-id",
+              name: "目标人员",
+              orgType: 8,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N2", "handlerIds", 1, {
+              id: "target-post-id",
+              name: "目标岗位",
+              orgType: 4,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N2", "handlerIds", 2, {
+              id: "unchanged-post-id",
+              name: "未变岗位",
+              orgType: 4,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N2", "optHandlerIds", 0, {
+              id: "target-optional-post-id",
+              name: "目标备选岗位",
+              orgType: 4,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N3", "handlerIds", 0, {
+              id: "formula-post-target-id",
+              name: "公式岗位",
+              orgType: 4,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N4", "handlerIds", 0, {
+              id: "ambiguous-post-a",
+              name: "冲突岗位 A",
+              orgType: 4,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N4", "handlerIds", 0, {
+              id: "ambiguous-post-b",
+              name: "冲突岗位 B",
+              orgType: 4,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "示例部门"
             })}
           </object>
         </void>

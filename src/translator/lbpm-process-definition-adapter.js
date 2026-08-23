@@ -295,10 +295,35 @@ function nodeFromAttributes(type, attributes, definition, sourceXml, handlerInde
     node.definition = definition;
   }
 
-  const handlerEntities = handlerEntitiesFor(handlerIndex, node.id, "handlerIds", attributes.handlerNames);
-  const optionalHandlerEntities = handlerEntitiesFor(handlerIndex, node.id, "optHandlerIds", attributes.optHandlerNames);
+  const handlerEvidence = handlerEntityEvidenceFor(
+    handlerIndex,
+    node.id,
+    "handlerIds",
+    attributes.handlerNames,
+    {
+      cachedIds: attributes.handlerIds,
+      selectionType: attributes.handlerSelectType
+    }
+  );
+  const optionalHandlerEvidence = handlerEntityEvidenceFor(
+    handlerIndex,
+    node.id,
+    "optHandlerIds",
+    attributes.optHandlerNames,
+    {
+      cachedIds: attributes.optHandlerIds,
+      selectionType: attributes.optHandlerSelectType
+    }
+  );
+  const { entities: handlerEntities } = handlerEvidence;
+  const { entities: optionalHandlerEntities } = optionalHandlerEvidence;
   if (handlerEntities.length) node.handlerEntities = handlerEntities;
   if (optionalHandlerEntities.length) node.optionalHandlerEntities = optionalHandlerEntities;
+  const directTargetAmbiguities = [
+    ...handlerEvidence.directTargetAmbiguities,
+    ...optionalHandlerEvidence.directTargetAmbiguities
+  ];
+  if (directTargetAmbiguities.length) node.directTargetAmbiguities = directTargetAmbiguities;
 
   return node;
 }
@@ -356,12 +381,81 @@ function indexNodeDefinitionHandlers(value) {
   return index;
 }
 
-function handlerEntitiesFor(index, factId, attribute, fallbackNames = "") {
+function handlerEntitiesFor(index, factId, attribute, fallbackNames = "", options = {}) {
+  return handlerEntityEvidenceFor(index, factId, attribute, fallbackNames, options).entities;
+}
+
+function handlerEntityEvidenceFor(index, factId, attribute, fallbackNames = "", options = {}) {
   const names = String(fallbackNames || "").split(";").map((name) => name.trim());
-  return (index.get(handlerIndexKey(factId, attribute)) || []).map((entity) => ({
-    ...entity,
-    name: entity.name || names[entity.index] || entity.loginName || entity.id
-  }));
+  const cachedIds = splitHandlerIds(options.cachedIds);
+  const staticOrgSelection = String(options.selectionType || "").trim().toLowerCase() === "org";
+  const structuredEntities = index.get(handlerIndexKey(factId, attribute)) || [];
+  const directTargetAmbiguities = staticOrgSelection
+    ? directTargetAmbiguitiesFor(structuredEntities, attribute, cachedIds)
+    : [];
+  const ambiguousIndexes = new Set(directTargetAmbiguities.map((ambiguity) => ambiguity.index));
+
+  return {
+    entities: structuredEntities.map((entity) => {
+      const cachedId = cachedIds[entity.index];
+      const directTarget = staticOrgSelection &&
+        !ambiguousIndexes.has(entity.index) &&
+        isDivergentFixedPostTarget(entity, cachedId);
+      return compactObject({
+        ...entity,
+        name: entity.name || names[entity.index] || entity.loginName || entity.id,
+        ...(directTarget ? {
+          directTargetId: entity.id,
+          directTargetOrgType: entity.orgType
+        } : {})
+      });
+    }),
+    directTargetAmbiguities
+  };
+}
+
+function directTargetAmbiguitiesFor(entities, attribute, cachedIds) {
+  const targetIdsByIndex = new Map();
+  for (const entity of entities) {
+    if (!Number.isSafeInteger(entity?.index) || entity.index < 0) continue;
+    const targetId = String(entity.id || "").trim();
+    if (!targetId) continue;
+    if (!targetIdsByIndex.has(entity.index)) targetIdsByIndex.set(entity.index, new Set());
+    targetIdsByIndex.get(entity.index).add(targetId);
+  }
+
+  const ambiguities = new Map();
+  for (const entity of entities) {
+    const cachedId = cachedIds[entity.index];
+    if (!isDivergentFixedPostTarget(entity, cachedId)) continue;
+    const targetIds = targetIdsByIndex.get(entity.index);
+    if (!targetIds || targetIds.size < 2) continue;
+    ambiguities.set(entity.index, {
+      attribute,
+      index: entity.index,
+      cachedId: String(cachedId).trim(),
+      targetIds: [...targetIds].sort()
+    });
+  }
+
+  return [...ambiguities.values()].sort((left, right) => left.index - right.index);
+}
+
+function isDivergentFixedPostTarget(entity, cachedId) {
+  if (entity?.orgType !== 4 || !Number.isSafeInteger(entity.index) || entity.index < 0) {
+    return false;
+  }
+  const targetId = String(entity.id || "").trim();
+  const sourceId = String(cachedId || "").trim();
+  return Boolean(targetId && sourceId && isLiteralHandlerId(sourceId) && sourceId !== targetId);
+}
+
+function splitHandlerIds(value) {
+  return String(value || "").split(";").map((item) => item.trim());
+}
+
+function isLiteralHandlerId(value) {
+  return !/[${}<>()[\]]/.test(value);
 }
 
 function handlerIndexKey(factId, attribute) {

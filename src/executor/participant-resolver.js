@@ -36,6 +36,10 @@ export async function resolveWorkflowParticipants(dsl, {
   participantOverrides
 } = {}) {
   const nextDsl = structuredClone(dsl);
+  const directTargetAmbiguityIssues = collectDirectTargetAmbiguityIssues(nextDsl);
+  if (directTargetAmbiguityIssues.length) {
+    throw new ParticipantResolutionError(directTargetAmbiguityIssues);
+  }
   const configuredFallbacks = resolveTemporaryOrgFallbacks(fallbackFdIds);
   const elementCache = new Map();
   const configuredFormulaFallback = await materializeConfiguredPersonFallbacks(nextDsl, {
@@ -587,6 +591,27 @@ function fallbackValidationKey(fallback) {
   return `${fallback.fdId}\0${fallback.fdOrgType}`;
 }
 
+function collectDirectTargetAmbiguityIssues(dsl) {
+  const nodes = Array.isArray(dsl?.workflow?.nodes) ? dsl.workflow.nodes : [];
+  return nodes.flatMap((node, nodeIndex) => {
+    if (node?.directTargetAmbiguities === undefined) return [];
+    const ambiguities = Array.isArray(node.directTargetAmbiguities)
+      ? node.directTargetAmbiguities
+      : [node.directTargetAmbiguities];
+    return ambiguities.map((ambiguity, ambiguityIndex) => ({
+      reason: "direct_target_ambiguous",
+      attribute: normalizeText(ambiguity?.attribute),
+      index: ambiguity?.index,
+      cachedId: normalizeText(ambiguity?.cachedId),
+      targetIds: Array.isArray(ambiguity?.targetIds)
+        ? ambiguity.targetIds.map((targetId) => normalizeText(targetId)).filter(Boolean).sort()
+        : [],
+      paths: [`/workflow/nodes/${nodeIndex}/directTargetAmbiguities/${ambiguityIndex}`],
+      message: "A static fixed-post handler position has multiple structured target IDs and requires review before resolution."
+    }));
+  });
+}
+
 function collectParticipantIdentities(dsl) {
   const identities = new Map();
   const nodes = Array.isArray(dsl?.workflow?.nodes) ? dsl.workflow.nodes : [];
@@ -734,9 +759,24 @@ async function validateCurrentTargetIdentity(identity, client, elementCache) {
     elementCache
   );
   if (candidates.length === 1 && exactMatches.length === 1) {
+    const target = exactMatches[0];
+    const expectedOrgType = normalizeOrgType(identity.member.targetOrgType);
+    if (expectedOrgType && normalizeOrgType(target.fdOrgType) !== expectedOrgType) {
+      return {
+        ...identity,
+        issue: {
+          reason: "target_type_mismatch",
+          name: identity.member.name,
+          targetId,
+          targetOrgType: target.fdOrgType,
+          expectedOrgType: identity.member.targetOrgType,
+          paths: identity.paths
+        }
+      };
+    }
     return {
       ...identity,
-      target: exactMatches[0]
+      target
     };
   }
 
@@ -914,7 +954,11 @@ function candidateParentName(candidate) {
 
 function participantIdentityKey(member, kind) {
   if (kind === "target") {
-    return JSON.stringify(["target", normalizeText(member.id)]);
+    return JSON.stringify([
+      "target",
+      normalizeText(member.id),
+      normalizeOrgType(member.targetOrgType)
+    ]);
   }
   return JSON.stringify([
     "source",
