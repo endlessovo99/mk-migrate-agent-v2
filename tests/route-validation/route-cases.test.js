@@ -51,6 +51,46 @@ describe("offline Route-validation", { concurrency: false }, () => {
     ]);
   });
 
+  it("compacts procurement address and right-bound pairs into coherent two-column rows", async () => {
+    const result = await runRouteCase("compact-procurement-layout-success");
+    const fields = new Map(result.dsl.form.fields.map((field) => [field.id, field]));
+
+    assert.equal(fields.get("fd_department")?.title, "部门/客户");
+    assert.equal(fields.get("fd_department")?.props?.required, true);
+    assert.equal(fields.get("fd_department.name")?.dataOnly, true);
+    assert.equal(fields.get("fd_department.name")?.props?.required, undefined);
+    assert.equal(fields.get("fd_procurement")?.title, "采购说明");
+    assert.equal(fields.get("fd_price")?.title, "定价");
+    assert.equal(fields.has("label_procurement"), false);
+    assert.equal(fields.has("label_price"), false);
+
+    const expectedRows = [
+      ["fd_department", "fd_manager"],
+      ["fd_requirement", "fd_procurement"],
+      ["fd_quote", "fd_price"]
+    ];
+    assert.deepEqual(
+      result.dsl.form.layout.mkTree.map((row) => ({
+        componentId: row.componentId,
+        columns: row.props.columns,
+        refs: row.children.flatMap((child) => child.refIds)
+      })),
+      expectedRows.map((refs) => ({
+        componentId: "xform-flex-1-2-layout",
+        columns: 2,
+        refs
+      }))
+    );
+    assert.equal(result.execution.readback.partitions.form, "verified");
+    assert.deepEqual(
+      result.execution.readback.form.layoutRows.map((row) => ({
+        columns: row.columns,
+        refs: row.cells.flatMap((cell) => cell.fieldIds)
+      })),
+      expectedRows.map((refs) => ({ columns: 2, refs }))
+    );
+  });
+
   it("reviews more than one script batch before dry-run and execution", async () => {
     const result = await runRouteCase("multi-batch-review-success");
 
