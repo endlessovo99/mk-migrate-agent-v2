@@ -47,6 +47,10 @@ import {
   recoverSharedBoundCaptionGroups
 } from "./shared-bound-caption-recovery.js";
 import { recoverWorkflowConditionFieldAliases } from "./workflow-condition-alias.js";
+import {
+  mapAddressDisplayCompanions,
+  removeDataOnlyFieldRefs
+} from "./address-display-companion-mapping.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -639,14 +643,18 @@ function draftForm(sourceForm) {
   const controls = Array.isArray(sourceForm.controls) ? sourceForm.controls : [];
   const detailTables = Array.isArray(sourceForm.detailTables) ? sourceForm.detailTables : [];
   const dataFields = Array.isArray(sourceForm.dataFields) ? sourceForm.dataFields : [];
-  const fields = [
+  const fields = mapAddressDisplayCompanions([
     ...controls.map(draftFieldFromSourceControl),
     ...detailTables.map(draftDetailTableFromSource),
     ...dataFields.map(draftDataFieldFromSource)
-  ];
+  ], sourceForm.layout);
   const sharedCaptionRecovery = recoverSharedBoundCaptionGroups(
     fields,
     sourceForm.layout || { source: "fdDesignerHtml", rows: [] }
+  );
+  const renderLayout = removeDataOnlyFieldRefs(
+    sharedCaptionRecovery.layout,
+    sharedCaptionRecovery.fields
   );
 
   return {
@@ -654,7 +662,7 @@ function draftForm(sourceForm) {
     layout: {
       sourceGrid: sharedCaptionRecovery.layout,
       mkTree: draftMkTree(
-        sharedCaptionRecovery.layout,
+        renderLayout,
         new Set(detailTables.map((table) => table.id)),
         sharedCaptionRecovery.compoundCells
       )

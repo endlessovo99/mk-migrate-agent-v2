@@ -11,6 +11,7 @@ export function recoverSharedBoundCaptionGroups(fields, layout) {
   const groups = new Map();
 
   for (const field of nextFields) {
+    if (field.dataOnly === true) continue;
     const labelId = sharedBoundCaptionId(field);
     if (!labelId) continue;
     if (!groups.has(labelId)) groups.set(labelId, []);

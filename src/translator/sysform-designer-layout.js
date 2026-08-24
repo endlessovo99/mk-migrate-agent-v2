@@ -26,10 +26,9 @@ import {
   attachmentContextControls
 } from "./designer-structure-recovery.js";
 import {
-  compactAddressDisplayCompanions,
   isCompactRequiredRightBoundControl,
   isZeroWidthAddressDisplayCompanion
-} from "./designer-field-compaction.js";
+} from "./designer-bound-caption-semantics.js";
 import {
   findMatchingCloseTag,
   isVoidLikeTag,
@@ -48,9 +47,7 @@ import {
 
 export function buildDesignerFirstForm(html, metadata, warnings, options = {}) {
   const metadataFields = Array.isArray(metadata?.fields) ? metadata.fields : [];
-  const designer = compactAddressDisplayCompanions(
-    parseDesignerLayout(html, metadataFields, warnings, options)
-  );
+  const designer = parseDesignerLayout(html, metadataFields, warnings, options);
   const visibleDesignerIds = new Set(designer.fields.map((field) => field.id));
   const designerById = new Map(
     [...designer.hiddenFields, ...designer.fields].map((field) => [field.id, field])
