@@ -346,11 +346,13 @@ describe("workflow Script recipes", () => {
     const departmentRule = JSON.parse(departmentHead.handlers.ruleKey);
     const superiorRule = JSON.parse(superiorHead.handlers.ruleKey);
     assert.equal(departmentRule.type, "Script");
-    assert.match(departmentRule.script, /func\.sysorg\.getDepartmentHead/);
+    assert.match(departmentRule.script, /func\.sysRole\.resolveRoleLine/);
     assert.match(departmentRule.script, /template-id-fd_38c40aef38e5d8/);
+    assert.match(departmentRule.script, /"公司级部门领导", "部门领导"/);
     assert.equal(superiorRule.type, "Script");
-    assert.match(superiorRule.script, /func\.sysorg\.getSuperiorDepartmenthead/);
+    assert.match(superiorRule.script, /func\.sysRole\.resolveRoleLine/);
     assert.match(superiorRule.script, /template-id-fd_38c40af374c0ee/);
+    assert.match(superiorRule.script, /"公司级分管领导", "分管领导"/);
   });
 
   it("projects creator parent-path contains on L34 as a boolean Script condition", () => {

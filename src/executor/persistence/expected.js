@@ -1163,13 +1163,10 @@ function expectedParticipantFormula(participants, context = {}) {
   } else if (participants?.mode === "field_role_line_script") {
     const dataRef = `\${data.${fieldRef}}`;
     const displayRef = fieldBinding.displayRef;
-    if (participants.recipe === "department_head") {
-      script = `return \${func.sysorg.getDepartmentHead}(${dataRef}) || [];`;
-      ruleVoContent = `return #查找部门领导#(${displayRef}) || [];`;
-    } else if (participants.recipe === "superior_department_head") {
-      script = `return \${func.sysorg.getSuperiorDepartmenthead}(${dataRef}, 1) || [];`;
-      ruleVoContent = `return #查找上级部门领导#(${displayRef}, 1) || [];`;
-    }
+    const companyRole = JSON.stringify(participants.companyRole);
+    const departmentRole = JSON.stringify(participants.departmentRole);
+    script = `return \${func.sysRole.resolveRoleLine}(${dataRef}, ${companyRole}, ${departmentRole})`;
+    ruleVoContent = `return #解释角色线#(${displayRef}, ${companyRole}, ${departmentRole})`;
     ruleMode = "script";
     ruleKeyMode = "";
   } else if (participants?.mode === "submitter_role_line_script") {
