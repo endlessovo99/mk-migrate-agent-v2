@@ -43,7 +43,9 @@ import {
 
 export function buildDesignerFirstForm(html, metadata, warnings, options = {}) {
   const metadataFields = Array.isArray(metadata?.fields) ? metadata.fields : [];
-  const designer = parseDesignerLayout(html, metadataFields, warnings, options);
+  const designer = compactAddressDisplayCompanions(
+    parseDesignerLayout(html, metadataFields, warnings, options)
+  );
   const visibleDesignerIds = new Set(designer.fields.map((field) => field.id));
   const designerById = new Map(
     [...designer.hiddenFields, ...designer.fields].map((field) => [field.id, field])
@@ -1186,7 +1188,9 @@ function designerBoundCaptionContext(
   );
   const references = controls
     .filter((control) =>
-      !isSourceDescriptionControl(control) && !control.source?.designerHidden
+      !isSourceDescriptionControl(control) &&
+      !control.source?.designerHidden &&
+      !isZeroWidthAddressDisplayCompanion(control, controls)
     )
     .map((control) => control.source?.designerValues?._label_bind_id)
     .filter(Boolean);
@@ -1214,7 +1218,8 @@ function designerBoundCaptionContext(
       labelId &&
       boundCaptions.has(labelId) &&
       rightContainer &&
-      rightContainer.id !== captionRightContainer?.id
+      rightContainer.id !== captionRightContainer?.id &&
+      !isCompactRequiredRightBoundControl(control)
     ) {
       externalRightPromptIds.add(labelId);
     }
@@ -1234,11 +1239,7 @@ function withBoundCaptionEntry(entry, captionContext) {
   const caption = boundCaptions.get(labelId);
   if (!caption || isSourceDescriptionControl(entry.control)) return entry;
   const rightContainer = captionContext?.rightContainerByControlId?.get(entry.control.id);
-  const captionRightContainer = caption.source?.rightContainer;
-  const externalRightPrompt = Boolean(
-    rightContainer &&
-    rightContainer.id !== captionRightContainer?.id
-  );
+  const externalRightPrompt = captionContext?.externalRightPromptIds?.has(labelId) === true;
   return {
     ...entry,
     control: {
@@ -1259,6 +1260,107 @@ function withBoundCaptionEntry(entry, captionContext) {
       }
     }
   };
+}
+
+function compactAddressDisplayCompanions(designer) {
+  const fields = Array.isArray(designer?.fields) ? designer.fields : [];
+  const companions = new Map();
+
+  for (const address of fields) {
+    if (!isZeroWidthAddressControl(address)) continue;
+    const companion = fields.find((field) => isAddressDisplayCompanion(field, address));
+    if (!companion || !shareLayoutCell(designer.layout, companion.id, address.id)) continue;
+    companions.set(companion.id, address.id);
+  }
+  if (!companions.size) return designer;
+
+  const requiredAddressIds = new Set(companions.values());
+  return {
+    ...designer,
+    fields: fields
+      .filter((field) => !companions.has(field.id))
+      .map((field) => requiredAddressIds.has(field.id)
+        ? {
+            ...field,
+            required: true,
+            source: {
+              ...field.source,
+              addressDisplayCompanionId: [...companions.entries()]
+                .find(([, addressId]) => addressId === field.id)?.[0]
+            }
+          }
+        : field),
+    hiddenFields: [
+      ...(designer.hiddenFields || []),
+      ...fields
+        .filter((field) => companions.has(field.id))
+        .map((field) => ({
+          ...field,
+          source: {
+            ...field.source,
+            designerHidden: true,
+            addressDisplayFor: companions.get(field.id)
+          }
+        }))
+    ],
+    layout: {
+      ...(designer.layout || {}),
+      rows: (designer.layout?.rows || []).map((row) => ({
+        ...row,
+        cells: (row.cells || []).map((cell) => ({
+          ...cell,
+          fieldIds: (cell.fieldIds || []).filter((fieldId) => !companions.has(fieldId)),
+          ...(companions.has(cell.fieldId)
+            ? { fieldId: (cell.fieldIds || []).find((fieldId) => !companions.has(fieldId)) }
+            : {})
+        })).filter((cell) =>
+          (cell.fieldIds || []).length > 0 || (cell.layoutRowIds || []).length > 0
+        )
+      }))
+    }
+  };
+}
+
+function isZeroWidthAddressDisplayCompanion(control, controls) {
+  if (String(control?.source?.designerType || "").toLowerCase() !== "inputtext") {
+    return false;
+  }
+  return controls.some((address) => isZeroWidthAddressControl(address) &&
+    isAddressDisplayCompanion(control, address));
+}
+
+function isZeroWidthAddressControl(control) {
+  return String(control?.source?.designerType || "").toLowerCase() === "address" &&
+    Number(control.source?.designerValues?.width) === 0;
+}
+
+function isAddressDisplayCompanion(control, address) {
+  const controlValues = control?.source?.designerValues || {};
+  const addressValues = address?.source?.designerValues || {};
+  return control?.id === `${address?.id}.name` &&
+    String(controlValues._label_bind || "").toLowerCase() !== "true" &&
+    controlValues._label_bind_id &&
+    controlValues._label_bind_id === addressValues._label_bind_id;
+}
+
+function shareLayoutCell(layout, leftId, rightId) {
+  return (layout?.rows || []).some((row) => (row.cells || []).some((cell) => {
+    const ids = new Set(cell.fieldIds || []);
+    return ids.has(leftId) && ids.has(rightId);
+  }));
+}
+
+function isCompactRequiredRightBoundControl(control) {
+  const values = control?.source?.designerValues || {};
+  const right = control?.source?.rightContainer;
+  const type = String(control?.source?.designerType || "").toLowerCase();
+  return Boolean(
+    right?.id &&
+    !cleanText(right.name || "") &&
+    control?.required === true &&
+    String(values._label_bind || "").toLowerCase() === "true" &&
+    ["textarea", "inputtext"].includes(type)
+  );
 }
 
 function appendMissingControls(controls, additions) {
