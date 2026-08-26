@@ -141,19 +141,12 @@ Do not add source formats outside the current XML route-validation scope while h
 Execution uses a configured NewOA root origin, defaulting to `https://p-sit.onewo.com`:
 
 ```bash
-NEWOA_USERNAME=01025344 \
-NEWOA_ENCRYPTED_PASSWORD='...' \
-NEWOA_BASE_URL='https://p-sit.onewo.com' \
-NEWOA_FALLBACK_PERSON_FD_ID='<optional person fdId>' \
-NEWOA_FALLBACK_ORGANIZATION_FD_ID='<optional organization fdId>' \
-NEWOA_FALLBACK_GROUP_FD_ID='<optional group fdId>' \
-NEWOA_FALLBACK_POST_FD_ID='<optional post fdId>' \
 node src/cli/main.js execute migration.dsl.json \
   --confirm-write \
   --target-category-id '<NewOA category fdId>'
 ```
 
-`--base-url` overrides `NEWOA_BASE_URL`; when neither contains a value, execution uses `https://p-sit.onewo.com`. The CLI and live-smoke entry points read the environment variable and pass the resolved value to the Executor; the Executor does not read `process.env`. The base URL must be an HTTP or HTTPS root origin. Leading/trailing whitespace and a trailing root slash are normalized, while user information, a non-root path, query, fragment, or another protocol produces `safety.base_url_invalid` before login. Domains, IP addresses, localhost, and explicit ports are allowed. The normalized origin is used for requests and execution reporting.
+The CLI and live-smoke entry points automatically load `.tmp/newoa.env`; variables already exported by the caller take precedence. `--base-url` overrides `NEWOA_BASE_URL`; when neither contains a value, execution uses `https://p-sit.onewo.com`. The entry points pass the resolved value to the Executor; the Executor does not read `process.env`. The base URL must be an HTTP or HTTPS root origin. Leading/trailing whitespace and a trailing root slash are normalized, while user information, a non-root path, query, fragment, or another protocol produces `safety.base_url_invalid` before login. Domains, IP addresses, localhost, and explicit ports are allowed. The normalized origin is used for requests and execution reporting.
 
 The executor logs in through `/data/sys-auth/login`, then uses `kmReviewTemplate/add`, `kmReviewTemplate/get`, and `kmReviewTemplate/update`. It creates a new `MK_TEST_...` draft template and does not publish, delete, update existing templates, create categories, or batch execute.
 

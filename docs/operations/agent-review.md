@@ -107,11 +107,10 @@ Default tests remain offline:
 npm test
 ```
 
-The live smoke is separate and expects env to already be present:
+The live smoke is separate and loads `.tmp/newoa.env` at startup:
 
 ```bash
-source .tmp/newoa.env
 npm run test:agent-review:live
 ```
 
-The smoke does not source `.tmp/newoa.env` by itself. With env present, it calls the real `/v1/responses` endpoint, writes artifacts under `.tmp/agent-review-live/`, and validates whether the provider produced the expected layered JSP review outcome or a clear blocked report. NewOA SIT writes are attempted only for fixtures configured in `execute` mode that produce trusted DSL and have a target category fdId.
+Variables already exported by the caller take precedence over values in `.tmp/newoa.env`. With env present, the smoke calls the real `/v1/responses` endpoint, writes artifacts under `.tmp/agent-review-live/`, and validates whether the provider produced the expected layered JSP review outcome or a clear blocked report. NewOA SIT writes are attempted only for fixtures configured in `execute` mode that produce trusted DSL and have a target category fdId.

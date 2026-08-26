@@ -36,7 +36,7 @@ node src/cli/main.js draft .tmp/sample/source-draft.json --out .tmp/sample/dsl-d
 node src/cli/main.js check draft .tmp/sample/dsl-draft.json
 
 # Explicit AI review stage. The model returns restricted patches; local code validates and applies them.
-source .tmp/newoa.env
+# CLI startup loads .tmp/newoa.env automatically.
 node src/cli/main.js agent-review .tmp/sample/source-draft.json .tmp/sample/dsl-draft.json \
   --out .tmp/sample/migration.dsl.json \
   --report-out .tmp/sample/agent-review.report.json \
@@ -45,8 +45,6 @@ node src/cli/main.js agent-review .tmp/sample/source-draft.json .tmp/sample/dsl-
 node src/cli/main.js check trust .tmp/sample/source-draft.json .tmp/sample/migration.dsl.json
 node src/cli/main.js check execute .tmp/sample/migration.dsl.json
 node src/cli/main.js dry-run .tmp/sample/migration.dsl.json --out .tmp/sample/dry-run.report.json
-NEWOA_USERNAME=01025344 \
-NEWOA_ENCRYPTED_PASSWORD='...' \
 node src/cli/main.js execute .tmp/sample/migration.dsl.json \
   --confirm-write \
   --target-category-id '<NewOA category fdId>'
@@ -68,10 +66,9 @@ Some exported `SysFormTemplate`/`LbpmProcessDefinition` pairs contain only templ
 
 A paired `KmReviewTemplate` may also supply otherwise-missing static workflow person source identity evidence, but only when its root `fdId` exists and exactly matches both paired template IDs. Intake reads only the fixed root author/authorization containers documented in `docs/operations/source-format.md`; every record must be an exact person with a login name, handler IDs and names must have the same non-empty positional shape, every ID must be present, repeated identity properties must be consistent, and one fdId must have one handler name across the workflow. Missing pairing evidence, invalid duplicates, partial lists, or conflicts leave the workflow handler un-enriched. Recovered entities retain `evidenceSource = "kmReviewTemplate.rootHashMap"` in the Source Draft and never choose a NewOA target.
 
-`agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Review and repair requests use the configured model; provider failures do not fall back to another model. Checkpoint persistence additionally requires `AGENT_REVIEW_CHECKPOINT_KEY` with at least 32 characters. Keep local secrets in an ignored file such as `.tmp/newoa.env`, then source it explicitly before review or live smoke:
+`agent-review` reads `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` from the environment and calls `POST {OPENAI_BASE_URL}/v1/responses`. Review and repair requests use the configured model; provider failures do not fall back to another model. Checkpoint persistence additionally requires `AGENT_REVIEW_CHECKPOINT_KEY` with at least 32 characters. The CLI and live-smoke entry points automatically load the ignored `.tmp/newoa.env` file at startup. Variables already exported by the caller take precedence over values in the file:
 
 ```bash
-source .tmp/newoa.env
 npm run test:agent-review:live -- --target-category-id '<NewOA category fdId>'
 ```
 

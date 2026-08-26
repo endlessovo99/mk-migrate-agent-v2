@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { loadDefaultEnvironment } from "../src/default-environment.js";
 import { runAgentReview } from "../src/agent-review/index.js";
 import { selectNewoaBaseUrl } from "../src/cli/base-url.js";
 import { selectFallbackFdIds } from "../src/cli/fallback-fd-ids.js";
 import { executeDsl } from "../src/executor/execute.js";
 import { cleanSourceFile, draftSourceDraft } from "../src/translator/index.js";
+
+loadDefaultEnvironment();
 
 const DEFAULT_FIXTURES = [
   {

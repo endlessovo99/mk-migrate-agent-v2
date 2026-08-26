@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { loadDefaultEnvironment } from "../default-environment.js";
 import { runAgentReview } from "../agent-review/index.js";
 import { checkDraft, checkExecute } from "../dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../dsl/trust.js";
@@ -358,5 +359,6 @@ function printUsage() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  loadDefaultEnvironment();
   main(process.argv.slice(2));
 }

@@ -23,6 +23,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "acorn": "^8.17.0"
+    "acorn": "^8.17.0",
+    "dotenv": "^17.4.2"
   }
 }
