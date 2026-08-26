@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadDefaultEnvironment } from "../default-environment.js";
 import { runAgentReview } from "../agent-review/index.js";
 import { checkDraft, checkExecute } from "../dsl/checks.js";
@@ -358,7 +359,16 @@ function printUsage() {
   console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--participant-override <sourceId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isDirectInvocation()) {
   loadDefaultEnvironment();
   main(process.argv.slice(2));
+}
+
+function isDirectInvocation() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
 }
