@@ -47,6 +47,12 @@ export async function main(argv = [], options = {}) {
   }
 }
 
+export async function startCli(argv = [], options = {}) {
+  const env = options.env || process.env;
+  loadDefaultEnvironment({ path: options.defaultEnvFile, env });
+  await main(argv, { ...options, env });
+}
+
 function runClean(argv) {
   const args = parseArgs(argv);
   const sourcePath = args.positionals[0];
@@ -360,14 +366,13 @@ function printUsage() {
 }
 
 if (isDirectInvocation()) {
-  loadDefaultEnvironment();
-  main(process.argv.slice(2));
+  await startCli(process.argv.slice(2));
 }
 
-function isDirectInvocation() {
-  if (!process.argv[1]) return false;
+export function isDirectInvocation(entryPath = process.argv[1]) {
+  if (!entryPath) return false;
   try {
-    return realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
+    return realpathSync(entryPath) === fileURLToPath(import.meta.url);
   } catch {
     return false;
   }
