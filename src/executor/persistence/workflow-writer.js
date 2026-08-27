@@ -2416,23 +2416,19 @@ function fieldRoleLineScriptRuleKey(participants = {}, context = {}) {
   const binding = workflowParticipantFieldBinding(participants, context);
   const dataRef = `\${data.${binding.variableId}}`;
   const displayRef = binding.displayRef;
-  let script;
-  let content;
-
-  if (participants.recipe === "department_head") {
-    script = `return \${func.sysorg.getDepartmentHead}(${dataRef}) || [];`;
-    content = `return #查找部门领导#(${displayRef}) || [];`;
-  } else if (participants.recipe === "superior_department_head") {
-    script = `return \${func.sysorg.getSuperiorDepartmenthead}(${dataRef}, 1) || [];`;
-    content = `return #查找上级部门领导#(${displayRef}, 1) || [];`;
-  } else {
+  if (!["department_head", "superior_department_head"].includes(participants.recipe)) {
     throw new Error(`unsupported workflow field role-line Script recipe: ${participants.recipe || ""}`);
   }
+  const companyRole = JSON.stringify(participants.companyRole);
+  const departmentRole = JSON.stringify(participants.departmentRole);
 
   return {
     type: "Script",
-    script,
-    vo: { mode: "script", content },
+    script: `return \${func.sysRole.resolveRoleLine}(${dataRef}, ${companyRole}, ${departmentRole})`,
+    vo: {
+      mode: "script",
+      content: `return #解释角色线#(${displayRef}, ${companyRole}, ${departmentRole})`
+    },
     resultType: workflowOrgArrayResultType()
   };
 }

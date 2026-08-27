@@ -117,6 +117,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "compact-procurement-layout-success",
+      source: {
+        kind: "form-only",
+        relativePath: "compact-procurement-layout/route-compact-procurement-layout_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "link-label-description-success",
       source: {
         kind: "form-only",

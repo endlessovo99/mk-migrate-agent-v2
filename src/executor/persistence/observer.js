@@ -1841,7 +1841,9 @@ function observeOrderedMainPersonFieldIds(ruleKey) {
 }
 
 function observeRoleLineParticipants(script, formulaName, fieldId) {
-  const expression = [script, formulaName].find((value) => /组织架构\.解释角色线/.test(value));
+  const expression = [script, formulaName].find((value) =>
+    /组织架构\.解释角色线|sysRole\.resolveRoleLine|#解释角色线#/.test(value)
+  );
   if (!expression) return undefined;
 
   const roles = observeRoleLineRoles(expression);
@@ -1857,6 +1859,25 @@ function observeRoleLineParticipants(script, formulaName, fieldId) {
   return fieldId
     ? { mode: "role_line", subjectKind: "field", fieldId, ...roles }
     : { mode: "role_line", ...roles };
+}
+
+function observeFieldRoleLineParticipants(script, formulaName, fieldId, nativeFormula) {
+  if (!fieldId) return undefined;
+  const roleLine = observeRoleLineParticipants(script, formulaName, fieldId);
+  if (!roleLine) return undefined;
+  const recipe = roleLine.companyRole === "公司级部门领导" &&
+      roleLine.departmentRole === "部门领导"
+    ? "department_head"
+    : roleLine.companyRole === "公司级分管领导" &&
+        roleLine.departmentRole === "分管领导"
+      ? "superior_department_head"
+      : "unknown";
+  return {
+    mode: "field_role_line_script",
+    recipe,
+    fieldId,
+    nativeFormula
+  };
 }
 
 function observeParticipantFormula(handlers, node) {
@@ -1987,6 +2008,13 @@ function observeParticipants(node, initiatorSelectTarget) {
         nativeFormula
       };
     }
+    const fieldRoleLine = observeFieldRoleLineParticipants(
+      script,
+      formulaName,
+      fieldId,
+      nativeFormula
+    );
+    if (fieldRoleLine) return fieldRoleLine;
     if (
       ruleKey.type === "Script" &&
       fieldId &&

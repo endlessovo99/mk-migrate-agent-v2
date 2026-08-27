@@ -26,6 +26,10 @@ import {
   attachmentContextControls
 } from "./designer-structure-recovery.js";
 import {
+  isCompactRequiredRightBoundControl,
+  isZeroWidthAddressDisplayCompanion
+} from "./designer-bound-caption-semantics.js";
+import {
   findMatchingCloseTag,
   isVoidLikeTag,
   matchingElementFragment,
@@ -1186,7 +1190,9 @@ function designerBoundCaptionContext(
   );
   const references = controls
     .filter((control) =>
-      !isSourceDescriptionControl(control) && !control.source?.designerHidden
+      !isSourceDescriptionControl(control) &&
+      !control.source?.designerHidden &&
+      !isZeroWidthAddressDisplayCompanion(control, controls)
     )
     .map((control) => control.source?.designerValues?._label_bind_id)
     .filter(Boolean);
@@ -1214,7 +1220,8 @@ function designerBoundCaptionContext(
       labelId &&
       boundCaptions.has(labelId) &&
       rightContainer &&
-      rightContainer.id !== captionRightContainer?.id
+      rightContainer.id !== captionRightContainer?.id &&
+      !isCompactRequiredRightBoundControl(control)
     ) {
       externalRightPromptIds.add(labelId);
     }
@@ -1234,11 +1241,7 @@ function withBoundCaptionEntry(entry, captionContext) {
   const caption = boundCaptions.get(labelId);
   if (!caption || isSourceDescriptionControl(entry.control)) return entry;
   const rightContainer = captionContext?.rightContainerByControlId?.get(entry.control.id);
-  const captionRightContainer = caption.source?.rightContainer;
-  const externalRightPrompt = Boolean(
-    rightContainer &&
-    rightContainer.id !== captionRightContainer?.id
-  );
+  const externalRightPrompt = captionContext?.externalRightPromptIds?.has(labelId) === true;
   return {
     ...entry,
     control: {
