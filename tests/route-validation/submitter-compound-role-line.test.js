@@ -127,7 +127,7 @@ describe("submitter defaults, compound fields, and department-leader role lines"
     assert.equal(checkDraft(dslDraft).ok, true);
   });
 
-  it("writes department-leader nodes as a submitter role-line formula and falls back unresolved fixed posts", async () => {
+  it("writes role-line formulas, validates structured people exactly, and falls back unresolved posts", async () => {
     const sourceDraft = cleanSourceFile(fixturePath);
     const dslDraft = draftSourceDraft(sourceDraft);
     const departmentLeaderNodes = dslDraft.workflow.nodes.filter((node) =>
@@ -156,12 +156,19 @@ describe("submitter defaults, compound fields, and department-leader role lines"
     const fallbackTargets = new Map(
       Object.values(SIT_PARTICIPANT_FALLBACKS).map((fallback) => [fallback.fdId, fallback])
     );
+    const directTargets = collectDirectTargets(dslDraft);
+    const searchCalls = [];
+    const elementCalls = [];
     const resolved = await resolveWorkflowParticipants(trusted, {
       client: {
-        async searchOrg() { return []; },
+        async searchOrg(...args) {
+          searchCalls.push(args);
+          return [];
+        },
         async getElementInfo(targetIds) {
+          elementCalls.push(targetIds);
           return targetIds.flatMap((targetId) => {
-            const target = fallbackTargets.get(targetId);
+            const target = directTargets.get(targetId) || fallbackTargets.get(targetId);
             return target ? [{ ...target }] : [];
           });
         }
@@ -181,6 +188,12 @@ describe("submitter defaults, compound fields, and department-leader role lines"
       sourceId: "165fb24a33144ee84ac17fb4209bf820"
     }]);
     assert.equal(resolved.fallbackCount > 0, true);
+    const validatedIds = new Set(elementCalls.flat());
+    assert.equal([...directTargets.keys()].every((targetId) => validatedIds.has(targetId)), true);
+    assert.equal(
+      searchCalls.some(([key]) => [...directTargets.values()].some((target) => target.fdName === key)),
+      false
+    );
 
     const prepared = prepareSample(resolved.dsl);
     const workflow = JSON.parse(prepared.update.mechanisms.lbpmTemplate[0].fdContent);
@@ -205,4 +218,19 @@ function rowShape(row) {
       colspan: child.colspan
     }))
   };
+}
+
+function collectDirectTargets(dsl) {
+  return new Map((dsl.workflow?.nodes || []).flatMap((node) =>
+    [
+      ...(node.participants?.members || []),
+      ...(node.participants?.alternativeMembers || [])
+    ].flatMap((member) => member.id && Number.isFinite(Number(member.targetOrgType))
+      ? [[member.id, {
+          fdId: member.id,
+          fdName: member.name,
+          fdOrgType: Number(member.targetOrgType)
+        }]]
+      : [])
+  ));
 }

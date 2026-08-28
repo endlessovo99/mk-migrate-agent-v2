@@ -29,7 +29,8 @@ describe("Source2 nested detail-table route validation", () => {
       refIds: [detailTableId],
       sourceRef: "source.form.layout.cell.row-4-cell-1",
       column: 0,
-      colspan: 1
+      colspan: 1,
+      widthWeight: 1379
     });
     assert.equal(
       validation.diagnostics.some((diagnostic) =>

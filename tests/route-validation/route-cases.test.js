@@ -2,10 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { detailTableNameFor } from "../../src/executor/persistence/detail-table-names.js";
 import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-resolver.js";
-import { SIT_PARTICIPANT_FALLBACKS } from "../../src/executor/participant-resolver.js";
 import { runRouteCase } from "./run-route-case.js";
 
-const SIT_FALLBACK_PARTICIPANT_ID = SIT_PARTICIPANT_FALLBACKS.person.fdId;
 const SIT_CONDITION_ORG_FALLBACK_ID = SIT_CONDITION_ORG_FALLBACKS[0].fdId;
 
 describe("offline Route-validation", { concurrency: false }, () => {
@@ -131,25 +129,21 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(result.transcript[0].operation, "login");
   });
 
-  it("applies participant and condition-organization fallbacks on the Shanghai Electric development origin", async () => {
+  it("keeps structured people exact while applying condition-organization fallback on the Shanghai Electric development origin", async () => {
     const result = await runRouteCase("shanghai-electric-dev-fallback-success");
     const participantFallbackId = "route-configured-person-fallback";
     const organizationFallbackId = "route-configured-organization-fallback";
+    const structuredPersonId = "legacy-conditional-reviewer";
 
     assert.equal(result.execution.ok, true);
     assert.equal(result.execution.baseUrl, "http://oa-dev.shanghai-electric.com:8088");
     assert.equal(
       result.execution.diagnostics.some((item) => item.code === "workflow.participant_sit_fallback_applied"),
-      true
+      false
     );
     assert.equal(
       result.execution.diagnostics.some((item) => item.code === "workflow.condition_org_sit_fallback_applied"),
       true
-    );
-    assert.deepEqual(
-      result.execution.diagnostics.find((item) => item.code === "workflow.participant_sit_fallback_applied")
-        .details.targetFdIds,
-      [participantFallbackId]
     );
     assert.deepEqual(
       result.execution.diagnostics.find((item) => item.code === "workflow.condition_org_sit_fallback_applied")
@@ -158,7 +152,11 @@ describe("offline Route-validation", { concurrency: false }, () => {
     );
     assert.deepEqual(
       result.transcript.filter((entry) => entry.operation === "get-element-info").map((entry) => entry.targets),
-      [[participantFallbackId], [organizationFallbackId]]
+      [[structuredPersonId], [organizationFallbackId]]
+    );
+    assert.equal(
+      result.transcript.some((entry) => entry.targets?.includes(participantFallbackId)),
+      false
     );
   });
 
@@ -177,29 +175,17 @@ describe("offline Route-validation", { concurrency: false }, () => {
       {
         name: "resolveWorkflowParticipants",
         status: "ok",
-        resolvedCount: 1,
-        identityCount: 1,
-        fallbackCount: 1,
-        fallbackIdentityCount: 1,
-        fallbackTargetId: SIT_FALLBACK_PARTICIPANT_ID,
-        fallbackTargetIds: [SIT_FALLBACK_PARTICIPANT_ID],
-        fallbackTargetsByOrgType: {
-          8: {
-            sourceOrgType: 8,
-            targetFdId: SIT_FALLBACK_PARTICIPANT_ID,
-            targetOrgType: 8,
-            targetName: SIT_PARTICIPANT_FALLBACKS.person.fdName
-          }
-        }
+        resolvedCount: 0,
+        identityCount: 1
       }
     );
     assert.equal(
       result.execution.diagnostics.some((item) => item.code === "workflow.participant_sit_fallback_applied"),
-      true
+      false
     );
     assert.deepEqual(
       result.transcript.find((entry) => entry.operation === "get-element-info"),
-      { operation: "get-element-info", targets: [SIT_FALLBACK_PARTICIPANT_ID] }
+      { operation: "get-element-info", targets: ["legacy-route-reviewer"] }
     );
     assert.deepEqual(
       result.transcript.find((entry) => entry.operation === "get-workflow-detail"),
@@ -330,7 +316,6 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.deepEqual(
       result.transcript.filter((entry) => entry.operation === "search-org"),
       [
-        { operation: "search-org", key: "Conditional Reviewer" },
         { operation: "search-org", key: "南方服务中心" },
         { operation: "search-org", key: "ROUTE_ORG_001" }
       ]

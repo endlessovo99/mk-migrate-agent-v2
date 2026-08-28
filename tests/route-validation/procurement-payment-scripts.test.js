@@ -4,8 +4,10 @@ import { checkDraft } from "../../src/dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { prepareSample } from "../helpers/persistence.js";
+import { localCorpusIt } from "../helpers/local-corpus.js";
 
 const fixturePath = "tests/fixtures/source/1887a98750756b5ba35b02047e6a6a30";
+const source3FixturePath = "tests/fixtures/source3/18875c1805622fe95ac5379448580d94";
 
 describe("procurement payment script Route case", () => {
   it("projects post-name contains branches as native Eval formulas", () => {
@@ -185,5 +187,36 @@ describe("procurement payment script Route case", () => {
         path: diagnostic.path
       }));
     assert.deepEqual(routeReadbackErrors, []);
+  });
+
+  localCorpusIt("maps every Source3 literal detail-department consistency guard", () => {
+    const sourceDraft = cleanSourceFile(source3FixturePath);
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const expected = new Map([
+      ["fd_37b043b6560188", "ywzd_department"],
+      ["fd_37b058dbdb8e54", "clbx_department"],
+      ["fd_37b0d83b385242", "qtfy_department"],
+      ["fd_37b0d9407abeee", "snjt_department"],
+      ["fd_37b0d944369540", "jbcf_department"]
+    ]);
+    const actions = dslDraft.scripts.actions.filter((action) =>
+      action.functionMappings?.some((mapping) =>
+        mapping.basis === "deterministic-procurement-payment-department-consistency"
+      )
+    );
+
+    assert.equal(actions.length, expected.size);
+    for (const [tableId, columnId] of expected) {
+      const action = actions.find((candidate) =>
+        candidate.function.includes(`\${table:${tableId}}`)
+      );
+      assert.equal(action?.translationStatus, "mapped", tableId);
+      assert.match(action.function, new RegExp(`\\[${JSON.stringify(columnId)}\\]`, "u"));
+      assert.equal(
+        action.deterministicBranchProof.basis,
+        "deterministic-procurement-payment-department-consistency"
+      );
+    }
+    assert.equal(checkDraft(dslDraft).ok, true);
   });
 });

@@ -70,6 +70,31 @@ function receptionLayout() {
 }
 
 describe("nested native layout projection", () => {
+  it("preserves complete width ratios on ordinary spanned rows without a pixel floor", () => {
+    const left = { ...fieldCell("layout.plain", 0, "fd_left", 0), widthWeight: 20 };
+    const right = { ...fieldCell("layout.plain", 1, "fd_right", 1, 3), widthWeight: 80 };
+    const [row] = projectNativeLayoutRows([layoutNode("layout.plain", 4, [left, right])]);
+
+    assert.equal(row.columns, 4);
+    assert.deepEqual(row.cells.map((cell) => cell.colspan), [1, 3]);
+    assert.equal(row.colsStyle[0].value, "20%");
+    assert.ok(Math.abs(row.colsStyle.slice(1).reduce((sum, style) => sum + parseFloat(style.value), 0) - 80) < 1e-9);
+  });
+
+  it("does not guess ordinary column widths from incomplete or conflicting measurements", () => {
+    const left = { ...fieldCell("layout.plain", 0, "fd_left", 0), widthWeight: 120 };
+    const right = fieldCell("layout.plain", 1, "fd_right", 1);
+    assert.equal(projectNativeLayoutRows([layoutNode("layout.plain", 2, [left, right])])[0].colsStyle, undefined);
+    const node = layoutNode("layout.plain", 2, [
+      left, { ...right, widthWeight: 480 },
+      { ...fieldCell("layout.plain", 2, "fd_other_left", 0), row: 1, widthWeight: 240 },
+      { ...fieldCell("layout.plain", 3, "fd_other_right", 1), row: 1, widthWeight: 360 }
+    ]);
+    node.componentId = "xform-multi-row-table-layout";
+    node.props.rows = 2;
+    assert.equal(projectNativeLayoutRows([node])[0].colsStyle, undefined);
+  });
+
   it("lowers a nested source region into one minimal proportional grid", () => {
     const [projection] = projectNativeLayoutRows(receptionLayout());
 

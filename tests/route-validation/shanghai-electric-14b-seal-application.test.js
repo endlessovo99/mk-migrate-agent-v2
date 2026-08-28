@@ -106,13 +106,19 @@ describe("Shanghai Electric 14b seal-application Route case", () => {
         target
       ])
     );
+    const directTargets = collectDirectTargets(dslDraft);
+    const searchCalls = [];
+    const elementCalls = [];
     const participantClient = {
-      async searchOrg() {
+      async searchOrg(...args) {
+        searchCalls.push(args);
         return [];
       },
       async getElementInfo(targets) {
+        elementCalls.push(targets);
         return targets.flatMap((targetId) => {
           const target = currentRoleTargets[targetId] ||
+            directTargets.get(targetId) ||
             currentFallbackTargets[targetId];
           return target ? [structuredClone(target)] : [];
         });
@@ -122,6 +128,12 @@ describe("Shanghai Electric 14b seal-application Route case", () => {
       client: participantClient,
       targetBaseUrl: "http://oa-dev.shanghai-electric.com:8088"
     });
+    const validatedIds = new Set(elementCalls.flat());
+    assert.equal([...directTargets.keys()].every((targetId) => validatedIds.has(targetId)), true);
+    assert.equal(
+      searchCalls.some(([key]) => [...directTargets.values()].some((target) => target.fdName === key)),
+      false
+    );
     const prepared = prepareSample(resolved.dsl);
     const readback = prepared.verify(prepared.update);
     assert.equal(
@@ -177,3 +189,18 @@ describe("Shanghai Electric 14b seal-application Route case", () => {
     );
   });
 });
+
+function collectDirectTargets(dsl) {
+  return new Map((dsl.workflow?.nodes || []).flatMap((node) =>
+    [
+      ...(node.participants?.members || []),
+      ...(node.participants?.alternativeMembers || [])
+    ].flatMap((member) => member.id && Number.isFinite(Number(member.targetOrgType))
+      ? [[member.id, {
+          fdId: member.id,
+          fdName: member.name,
+          fdOrgType: Number(member.targetOrgType)
+        }]]
+      : [])
+  ));
+}

@@ -2,6 +2,7 @@ import { basename } from "node:path";
 import { DSL_VERSION } from "../dsl/schema.js";
 import { auditFunctionWhitelist, functionWhitelistErrors } from "./function-whitelist.js";
 import { buildDesignerFirstForm } from "./sysform-designer-layout.js";
+import { scanHtmlTags } from "./designer-html-tokenizer.js";
 import { extractSysFormJspScripts } from "./sysform-jsp-scripts.js";
 import { parseMetadataXml } from "./sysform-metadata.js";
 import { extractSysFormNodeDataAuthorities } from "./sysform-rights.js";
@@ -27,7 +28,8 @@ export function translateSysFormTemplateXml(xml, options = {}) {
     ),
     nodeDataAuthorityVisibleFieldIds: visibleNodeDataAuthorityFieldIds(
       preliminaryNodeDataAuthorities.nodeDataAuthorities
-    )
+    ),
+    editorLabelEvidence: editorLabelEvidence(template.fdDisplayJsp || "")
   });
   const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
     knownFieldIds: collectDataAuthorityFieldIds(form)
@@ -180,6 +182,54 @@ function displayJspFieldId(property = "") {
     /^extendDataFormInfo\.value\(([A-Za-z_][\w-]*)\)$/
   );
   return match?.[1] || propertyFieldId(property);
+}
+
+function editorLabelEvidence(displayJsp) {
+  const decoded = decodeEntities(displayJsp);
+  const editors = new Set(["xform:rtf", "xform:textarea", "xform:xtext"]);
+  const conditionalTags = new Set([
+    "c:choose", "c:foreach", "c:if", "c:otherwise", "c:when",
+    "xform:editshow", "xform:right", "xform:viewshow"
+  ]);
+  const rows = [];
+  const rowStack = [];
+  const renderings = new Map();
+  let conditionalDepth = 0;
+  for (const token of scanHtmlTags(decoded)) {
+    if (conditionalTags.has(token.name)) {
+      conditionalDepth = Math.max(0, conditionalDepth + (
+        token.closing ? -1 : token.selfClosing ? 0 : 1
+      ));
+    }
+    if (token.name === "tr") {
+      if (!token.closing) rowStack.push(token.start);
+      else if (rowStack.length) rows.push({ start: rowStack.pop(), end: token.end });
+    }
+    if (token.closing || !editors.has(token.name)) continue;
+    const id = displayJspFieldId(attrValue(token.attrs, "property"));
+    if (!id) continue;
+    const entries = renderings.get(id) || [];
+    entries.push({
+      renderer: token.name,
+      offset: token.start,
+      unconditional: conditionalDepth === 0 &&
+        attrValue(token.attrs, "showStatus").toLowerCase() !== "noshow" &&
+        attrValue(token.attrs, "showLabel").toLowerCase() !== "true"
+    });
+    renderings.set(id, entries);
+  }
+  return new Map([...renderings].map(([id, entries]) => {
+    const entry = entries[0];
+    const row = rows.filter((item) => item.start <= entry.offset && entry.offset < item.end)
+      .sort((left, right) => (left.end - left.start) - (right.end - right.start))[0];
+    const rowHtml = row ? decoded.slice(row.start, row.end) : "";
+    return [id, {
+      renderer: entry.renderer,
+      verified: entries.length === 1 && entry.unconditional && Boolean(rowHtml) && !rowHtml.includes("<%"),
+      rowText: cleanText(rowHtml),
+      sourceRef: "source.form.fdDisplayJsp"
+    }];
+  }));
 }
 
 function extractDesignerTitle(html = "") {

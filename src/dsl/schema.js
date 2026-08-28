@@ -2087,7 +2087,7 @@ function validateDirectTargetAmbiguities(value, diagnostics, path, context = {})
   if (!Array.isArray(value)) {
     diagnostics.push(error(
       "workflow.participants.direct_target_ambiguities_type",
-      "Fixed-post direct-target ambiguities must be an array.",
+      "Structured direct-target ambiguities must be an array.",
       path
     ));
     return;
@@ -2098,7 +2098,7 @@ function validateDirectTargetAmbiguities(value, diagnostics, path, context = {})
     if (!isRecord(ambiguity)) {
       diagnostics.push(error(
         "workflow.participants.direct_target_ambiguity_type",
-        "Each fixed-post direct-target ambiguity must be a JSON object.",
+        "Each structured direct-target ambiguity must be a JSON object.",
         ambiguityPath
       ));
       return;
@@ -2119,14 +2119,14 @@ function validateDirectTargetAmbiguities(value, diagnostics, path, context = {})
     if (!valid) {
       diagnostics.push(error(
         "workflow.participants.direct_target_ambiguity_invalid",
-        "Fixed-post direct-target ambiguity evidence must preserve one handler position, its cached ID, and at least two distinct structured target IDs.",
+        "Structured direct-target ambiguity evidence must preserve one handler position, its cached ID, and at least two distinct structured target IDs.",
         ambiguityPath
       ));
     }
     if (context.mode === "execute") {
       diagnostics.push(error(
         "workflow.participants.direct_target_ambiguous",
-        "A static fixed-post handler position has multiple structured target IDs and requires review before execution.",
+        "A static handler position has multiple structured target IDs and requires review before execution.",
         ambiguityPath,
         {
           attribute: ambiguity.attribute,

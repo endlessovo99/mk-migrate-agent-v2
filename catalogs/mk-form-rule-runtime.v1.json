@@ -1,6 +1,6 @@
 {
   "id": "mk-form-rule-runtime",
-  "version": "2026-07-22.v1",
+  "version": "2026-08-26.v1",
   "activeCapabilityId": "mk-xform.form-rule-formula.v1",
   "capabilities": [
     {
@@ -71,6 +71,20 @@
           },
           "verifiedAt": "2026-08-16",
           "evidence": "Live authenticated digest and module downloads from the configured Shanghai Electric NewOA dev origin; both bundles expose the XForm viewStatus/formula implementation used by the projection."
+        },
+        {
+          "id": "shanghai-electric-oadev-2026-08-26",
+          "baseUrl": "http://oadev.shanghai-electric.com",
+          "runtime": {
+            "release": "a3ec998c10af6bbce34dd6caffe4a203",
+            "sha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba"
+          },
+          "ide": {
+            "release": "4dc12919af1531c82de2356c4ded8777",
+            "sha256": "3e1e44c44d665b34f6279735f610aa80a7f644515359b860fea1bd32dca347bb"
+          },
+          "verifiedAt": "2026-08-26",
+          "evidence": "Live authenticated digest and module downloads from the configured Shanghai Electric oadev origin; release identities and both bundle SHA-256 values are byte-identical to the verified development capability pair."
         }
       ]
     }

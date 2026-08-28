@@ -233,6 +233,15 @@ async function runExecute(argv, options = {}) {
     baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
     fallbackFdIds: selectFallbackFdIds(env),
     participantOverrides: parseParticipantOverrides(args["participant-override"]),
+    directParticipantOverrides: parseDirectParticipantOverrides(
+      args["direct-participant-override"]
+    ),
+    allowMissingDirectPersonFallback: args["allow-missing-direct-person-fallback"] === true,
+    allowMissingDirectPostFallback: args["allow-missing-direct-post-fallback"] === true,
+    directPersonFallbackIds: parseFdIdList(
+      args["direct-person-fallback-id"],
+      "--direct-person-fallback-id"
+    ),
     credentials: {
       username: env.NEWOA_USERNAME,
       encryptedPassword: env.NEWOA_ENCRYPTED_PASSWORD
@@ -291,7 +300,14 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (key === "participant-override" && Object.hasOwn(result, key)) {
+    if (
+      [
+        "participant-override",
+        "direct-participant-override",
+        "direct-person-fallback-id"
+      ].includes(key) &&
+      Object.hasOwn(result, key)
+    ) {
       result[key] = Array.isArray(result[key])
         ? [...result[key], next]
         : [result[key], next];
@@ -330,6 +346,49 @@ function parseParticipantOverrides(value) {
   return overrides;
 }
 
+function parseDirectParticipantOverrides(value) {
+  if (value === undefined) return [];
+  const values = Array.isArray(value) ? value : [value];
+  const overrides = values.map((entry) => {
+    if (typeof entry !== "string") {
+      throw new Error("--direct-participant-override requires <sourceTargetId>=<targetFdId>");
+    }
+    const separatorIndex = entry.indexOf("=");
+    const lastSeparatorIndex = entry.lastIndexOf("=");
+    const sourceTargetId = separatorIndex >= 0 ? entry.slice(0, separatorIndex).trim() : "";
+    const targetFdId = separatorIndex >= 0 ? entry.slice(separatorIndex + 1).trim() : "";
+    if (!sourceTargetId || !targetFdId || separatorIndex !== lastSeparatorIndex) {
+      throw new Error("--direct-participant-override requires <sourceTargetId>=<targetFdId>");
+    }
+    return { sourceTargetId, targetFdId };
+  });
+  const sourceTargetIds = new Set();
+  for (const override of overrides) {
+    if (sourceTargetIds.has(override.sourceTargetId)) {
+      throw new Error(
+        `--direct-participant-override sourceTargetId may be specified only once: ${override.sourceTargetId}`
+      );
+    }
+    sourceTargetIds.add(override.sourceTargetId);
+  }
+  return overrides;
+}
+
+function parseFdIdList(value, optionName) {
+  if (value === undefined) return [];
+  const values = Array.isArray(value) ? value : [value];
+  const normalized = values.map((entry) => {
+    if (typeof entry !== "string" || !entry.trim()) {
+      throw new Error(`${optionName} requires a non-empty fdId`);
+    }
+    return entry.trim();
+  });
+  if (new Set(normalized).size !== normalized.length) {
+    throw new Error(`${optionName} may specify each fdId only once`);
+  }
+  return normalized;
+}
+
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -362,7 +421,7 @@ function printUsage() {
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");
   console.error("  node src/cli/main.js check execute <migration.dsl.json>");
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
-  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--participant-override <sourceId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--allow-missing-direct-person-fallback] [--allow-missing-direct-post-fallback] [--direct-person-fallback-id <sourceFdId>]... [--participant-override <sourceId>=<targetFdId>]... [--direct-participant-override <sourceTargetId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
 }
 
 if (isDirectInvocation()) {

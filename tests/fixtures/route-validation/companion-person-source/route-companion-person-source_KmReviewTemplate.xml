@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdName</string><string>伴随文件人员来源</string></void>
+  <void method="put"><string>fdId</string><string>route-companion-person-source-template-id</string></void>
+  <void method="put">
+   <string>authReaders</string>
+   <object class="java.util.ArrayList">
+    <void method="add">
+     <object class="java.util.HashMap">
+      <void method="put"><string>fdOrgType</string><int>8</int></void>
+      <void method="put"><string>fdLoginName</string><string>legacy.companion</string></void>
+      <void method="put"><string>fdId</string><string>legacy-companion-reviewer</string></void>
+      <void method="put"><string>class</string><string>com.landray.kmss.sys.organization.model.SysOrgPerson</string></void>
+      <void method="put"><string>hbmParent.fdName</string><string>Legacy Department</string></void>
+      <void method="put"><string>fdName</string><string>Companion Reviewer</string></void>
+     </object>
+    </void>
+   </object>
+  </void>
+ </object>
+</java>

@@ -1,11 +1,16 @@
 import { parse } from "acorn";
+import { buildFormRuleRefIndex, resolveEffectTarget } from "../dsl/form-rules.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
 
 const BASIS = "deterministic-inline-radio-row-effects";
 const ROW_HELPER = "common_dom_row_set_show_required_reset";
+const NON_RESETTABLE_COMPONENTS = new Set([
+  "xform-button",
+  "xform-description"
+]);
 
 export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules = {}) {
-  if (Array.isArray(source.functionAudit?.violations) && source.functionAudit.violations.length) {
+  if (!hasOnlyDiagnosticAlertViolations(source.functionAudit)) {
     return [];
   }
   if (sourceHasNativeRules(source, formRules, form)) return [];
@@ -39,13 +44,40 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
     .map(expressionCall)
     .filter((call) => isWindowLoadCall(call));
   if (
-    loadCalls.length !== 1 ||
-    program.body.filter((statement) => statement.type !== "EmptyStatement").length !== 1
+    !loadCalls.length ||
+    program.body.filter((statement) => statement.type !== "EmptyStatement").length !== loadCalls.length
   ) {
     return [];
   }
-  const candidate = onLoadCandidate(loadCalls[0], source, form);
-  return candidate ? [candidate] : [];
+  const candidates = loadCalls.map((call) =>
+    onLoadCandidate(call, source, form) || simpleOnLoadCandidate(call, source, form)
+  );
+  if (!candidates.every(Boolean)) return [];
+  const usesMainRowResetLifecycle = candidates.some((candidate) =>
+    candidate.semanticHints?.mainRowResetLifecycle === true
+  );
+  if (
+    usesMainRowResetLifecycle &&
+    (loadCalls.length < 2 || !loadCalls.some((call) => hasResetRowEffect(call.arguments?.[2])))
+  ) {
+    return [];
+  }
+  const alertViolation = hasDiagnosticAlertViolation(source.functionAudit);
+  if (
+    alertViolation &&
+    !candidates.some((candidate) => candidate.semanticHints?.omittedDiagnosticAlerts?.count > 0)
+  ) {
+    return [];
+  }
+  return alertViolation
+    ? candidates.map((candidate) => ({
+        ...candidate,
+        semanticHints: {
+          ...candidate.semanticHints,
+          coveredLegacyFunctions: ["alert"]
+        }
+      }))
+    : candidates;
 }
 
 export function hardHiddenValueChangeCandidates(source = {}, form = {}, formRules = {}) {
@@ -204,9 +236,18 @@ function compileBlock(block, context) {
 }
 
 function compileCondition(condition, context) {
+  if (condition?.type === "LogicalExpression" && condition.operator === "&&") {
+    const left = compileCondition(condition.left, context);
+    const right = compileCondition(condition.right, context);
+    return left && right ? `(${left}) && (${right})` : undefined;
+  }
   const contains = eventContainsCondition(condition, context.sourceValueName);
   if (contains) {
     return `${context.targetValueName}.indexOf(${JSON.stringify(contains)}) >= 0`;
+  }
+  const aliasContains = aliasContainsCondition(condition, context.aliases);
+  if (aliasContains) {
+    return `${aliasContains.alias}.indexOf(${JSON.stringify(aliasContains.value)}) >= 0`;
   }
   const eventEquality = eventValueEquality(condition, context.sourceValueName);
   if (eventEquality) {
@@ -264,6 +305,106 @@ function onLoadCandidate(call, source, form) {
       }]
     }
   };
+}
+
+function simpleOnLoadCandidate(call, source, form) {
+  const listener = call.arguments?.[2];
+  if (!isFunction(listener) || listener.body?.type !== "BlockStatement") return undefined;
+  const model = simpleLoadModel(listener, form);
+  if (!model) return undefined;
+  const targets = rowEffectTargets(listener);
+  if (targets.length > 0 && !targetsHaveDistinctLayoutOwners(form, targets)) {
+    return undefined;
+  }
+  const sourceRef = source.sourceRef || source.id;
+  return {
+    index: call.start,
+    event: "onLoad",
+    scope: "global",
+    javascript: String(source.javascript || ""),
+    function: renderSimpleOnLoad(model),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: "legacy main-field row initialization and reset",
+      target: "MKXFORM.getValue/setFieldAttr/setValue",
+      basis: BASIS,
+      reviewRequired: false
+    }, ...(model.diagnosticAlertCount ? [{
+      source: "side-effect-free onLoad alert probes",
+      target: "omitted diagnostic probes",
+      basis: BASIS,
+      reviewRequired: false
+    }] : [])],
+    sourceRefs: [sourceRef],
+    semanticHints: {
+      mainRowResetLifecycle: true,
+      ...(model.diagnosticAlertCount ? {
+        omittedDiagnosticAlerts: {
+          count: model.diagnosticAlertCount,
+          reason: "Every alert argument is a side-effect-free read or the same boolean predicate used by the following row-effect branch."
+        }
+      } : {}),
+      coveredCalculationRanges: [{
+        sourceRef,
+        name: "inlineRadioRowEffects:simpleOnLoad",
+        start: call.start,
+        end: call.end
+      }]
+    }
+  };
+}
+
+function simpleLoadModel(listener, form) {
+  if (listener.params?.length) return undefined;
+  const aliases = new Map();
+  let branch;
+  let diagnosticAlertCount = 0;
+  for (const statement of listener.body.body) {
+    if (statement.type === "EmptyStatement") continue;
+    const alias = legacyFieldAlias(statement);
+    if (alias) {
+      if (branch || !formFieldIds(form).has(alias.fieldId) || aliases.has(alias.name)) {
+        return undefined;
+      }
+      aliases.set(alias.name, alias.fieldId);
+      continue;
+    }
+    if (diagnosticAlert(statement, aliases, form)) {
+      if (branch) return undefined;
+      diagnosticAlertCount += 1;
+      continue;
+    }
+    if (statement.type === "IfStatement" && !branch) {
+      branch = statement;
+      continue;
+    }
+    return undefined;
+  }
+  if (!aliases.size || !branch) return undefined;
+  const lines = compileStatement(branch, {
+    aliases,
+    sourceValueName: undefined,
+    targetValueName: undefined,
+    form,
+    indent: "  "
+  });
+  return lines ? { aliases, lines, diagnosticAlertCount } : undefined;
+}
+
+function renderSimpleOnLoad(model) {
+  const lines = ["function onLoad() {"];
+  const usedNames = new Set(model.aliases.keys());
+  for (const [alias, fieldId] of model.aliases) {
+    const rawAlias = uniqueLocalName(`${alias}Raw`, usedNames);
+    usedNames.add(rawAlias);
+    lines.push(
+      `  var ${rawAlias} = MKXFORM.getValue(${JSON.stringify(fieldId)});`,
+      `  var ${alias} = Array.isArray(${rawAlias}) ? ${rawAlias} : String(${rawAlias} || "");`
+    );
+  }
+  lines.push(...model.lines, "}");
+  return lines.join("\n");
 }
 
 function loadModel(listener, source, form) {
@@ -684,8 +825,30 @@ function renderOnLoad(model) {
 }
 
 function compileRowEffect(effect, form, indent) {
-  if (!effect || effect.reset || !layoutMarkerSet(form).has(effect.target)) return undefined;
-  return renderRowEffect(effect, indent);
+  if (!effect || !layoutMarkerSet(form).has(effect.target)) return undefined;
+  const lines = renderRowEffect(effect, indent);
+  if (!effect.reset) return lines;
+
+  const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), effect.target);
+  if (
+    resolved?.source !== "rowMarker" ||
+    resolved.unresolved?.length ||
+    !resolved.targets?.length
+  ) {
+    return undefined;
+  }
+  const resetFieldIds = [];
+  for (const target of resolved.targets) {
+    if (target.kind !== "field") return undefined;
+    if (NON_RESETTABLE_COMPONENTS.has(target.field?.componentId)) continue;
+    if (!target.id || target.field?.dataOnly === true) return undefined;
+    resetFieldIds.push(target.id);
+  }
+  if (!resetFieldIds.length) return undefined;
+  for (const fieldId of [...new Set(resetFieldIds)]) {
+    lines.push(`${indent}MKXFORM.setValue(${JSON.stringify(fieldId)}, "");`);
+  }
+  return lines;
 }
 
 function renderRowEffect(effect, indent) {
@@ -746,6 +909,35 @@ function legacyFieldElementId(node) {
   return literalValue(node.object.arguments[0]);
 }
 
+function diagnosticAlert(statement, aliases, form) {
+  const call = expressionCall(statement);
+  if (
+    call?.type !== "CallExpression" ||
+    call.callee?.type !== "Identifier" ||
+    call.callee.name !== "alert" ||
+    call.arguments?.length !== 1
+  ) {
+    return false;
+  }
+  const argument = call.arguments[0];
+  const directFieldId = legacyFieldElementId(argument);
+  if (directFieldId) return formFieldIds(form).has(directFieldId);
+  if (
+    argument?.type === "MemberExpression" &&
+    !argument.computed &&
+    argument.object?.type === "Identifier" &&
+    argument.property?.name === "value" &&
+    aliases.has(argument.object.name)
+  ) {
+    return true;
+  }
+  return Boolean(compileCondition(argument, {
+    aliases,
+    sourceValueName: undefined,
+    targetValueName: undefined
+  }));
+}
+
 function legacyFieldAssignment(statement, aliases, sourceValueName) {
   const assignment = expressionCall(statement)?.type === "AssignmentExpression"
     ? expressionCall(statement)
@@ -801,6 +993,35 @@ function eventContainsCondition(node, valueName) {
     (node.operator === ">" && literalValue(node.right) === -1)
   ) {
     return literalValue(node.left.arguments[0]);
+  }
+  return undefined;
+}
+
+function aliasContainsCondition(node, aliases) {
+  if (
+    node?.type !== "BinaryExpression" ||
+    ![">=", ">"].includes(node.operator) ||
+    node.left?.type !== "CallExpression" ||
+    node.left.callee?.type !== "MemberExpression" ||
+    node.left.callee.computed ||
+    node.left.callee.object?.type !== "MemberExpression" ||
+    node.left.callee.object.computed ||
+    node.left.callee.object.object?.type !== "Identifier" ||
+    node.left.callee.object.property?.name !== "value" ||
+    node.left.callee.property?.name !== "indexOf" ||
+    node.left.arguments?.length !== 1 ||
+    typeof literalValue(node.left.arguments[0]) !== "string" ||
+    typeof literalValue(node.right) !== "number"
+  ) {
+    return undefined;
+  }
+  const alias = node.left.callee.object.object.name;
+  if (!aliases.has(alias)) return undefined;
+  if (
+    (node.operator === ">=" && literalValue(node.right) === 0) ||
+    (node.operator === ">" && literalValue(node.right) === -1)
+  ) {
+    return { alias, value: literalValue(node.left.arguments[0]) };
   }
   return undefined;
 }
@@ -920,6 +1141,17 @@ function rowEffectTargets(node) {
   return [];
 }
 
+function hasResetRowEffect(node) {
+  if (!node || typeof node !== "object") return false;
+  const effect = rowEffect(node);
+  if (effect?.reset === true) return true;
+  return Object.values(node).some((value) => (
+    Array.isArray(value)
+      ? value.some(hasResetRowEffect)
+      : value && typeof value === "object" && hasResetRowEffect(value)
+  ));
+}
+
 function sourceHasNativeRules(source, formRules, form) {
   const sourceRef = source.sourceRef || source.id;
   const hasNativeRule = (Array.isArray(formRules?.linkage) ? formRules.linkage : []).some((rule) =>
@@ -1002,6 +1234,28 @@ function callbackWritesHardHiddenField(callback, hardHiddenIds) {
   };
   visit(callback.body);
   return writes;
+}
+
+function hasOnlyDiagnosticAlertViolations(functionAudit = {}) {
+  const violations = Array.isArray(functionAudit?.violations)
+    ? functionAudit.violations
+    : [];
+  return violations.every((violation) => violation?.name === "alert");
+}
+
+function hasDiagnosticAlertViolation(functionAudit = {}) {
+  return (Array.isArray(functionAudit?.violations) ? functionAudit.violations : [])
+    .some((violation) => violation?.name === "alert");
+}
+
+function uniqueLocalName(base, usedNames) {
+  let candidate = base;
+  let suffix = 2;
+  while (usedNames.has(candidate)) {
+    candidate = `${base}${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
 }
 
 function expressionCall(statement) {

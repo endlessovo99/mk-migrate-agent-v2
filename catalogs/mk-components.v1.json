@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-08-23.v12",
+  "version": "2026-08-28.v13",
   "components": [
     {
       "componentId": "xform-button",
@@ -155,7 +155,7 @@
       "kind": "field",
       "label": "富文本",
       "description": "NewOA/MK rich text field.",
-      "usage": "Use for legacy RTF/rich-text source controls that must preserve rich text editing semantics.",
+      "usage": "Use for legacy RTF/rich-text source controls that must preserve rich text editing semantics. hiddenLabel uses the common desktop/mobile control and label flags; preserve the field title as metadata.",
       "negativeUsage": "Do not use for plain textarea controls.",
       "allowedScopes": ["field", "detailColumn"],
       "target": { "desktop": "@elem/xform-rich-text", "mobile": "@elem/xform-m-rich-text" },
@@ -164,6 +164,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "hiddenLabel": { "type": "boolean" },
           "maxLength": { "type": "integer", "minimum": 1 }
         }
       },

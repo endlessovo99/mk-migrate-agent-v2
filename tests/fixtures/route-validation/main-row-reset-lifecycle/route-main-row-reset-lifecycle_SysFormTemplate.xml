@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-main-row-reset-lifecycle-sysform</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+  <void method="put"><string>fdName</string><string>Main Row Reset Lifecycle Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-main-row-reset-lifecycle-template</string></void>
+  <void method="put">
+   <string>fdDisplayJsp</string>
+   <string>
+    &lt;xform:editShow&gt;
+     &lt;script&gt;
+      AttachXFormValueChangeEventById(&quot;fd_ddtype&quot;, function(value, domElement) {
+        var isDdtype = GetXFormFieldById(&quot;fd_is_ddtype&quot;)[0];
+        if (value.indexOf(&quot;bjjx&quot;) &gt;= 0) {
+          isDdtype.value = &quot;bjjx&quot;;
+          common_dom_row_set_show_required_reset(&quot;fd_ddje_row&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzlx_row&quot;, false, false, true);
+        } else {
+          isDdtype.value = &quot;&quot;;
+          common_dom_row_set_show_required_reset(&quot;fd_gzlx_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_ddje_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, false, false, false);
+        }
+      });
+      AttachXFormValueChangeEventById(&quot;fd_ddtype&quot;, function(value, domElement) {
+        var isGztype = GetXFormFieldById(&quot;fd_gz&quot;)[0];
+        if (value.indexOf(&quot;gz&quot;) &gt;= 0) {
+          isGztype.value = &quot;gz&quot;;
+          common_dom_row_set_show_required_reset(&quot;fd_ddje_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzlx_row&quot;, true, true, true);
+        } else {
+          isGztype.value = &quot;&quot;;
+          common_dom_row_set_show_required_reset(&quot;fd_gzlx_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_ddje_row&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, false, false, false);
+        }
+      });
+      AttachXFormValueChangeEventById(&quot;fd_gztype&quot;, function(value, domElement) {
+        var isGzSubtype = GetXFormFieldById(&quot;fd_is_gztype&quot;)[0];
+        if (value.indexOf(&quot;ytl&quot;) &gt;= 0) {
+          isGzSubtype.value = &quot;ytl&quot;;
+          common_dom_row_set_show_required_reset(&quot;fd_ddje_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, true, true, false);
+        } else {
+          isGzSubtype.value = &quot;&quot;;
+          common_dom_row_set_show_required_reset(&quot;fd_ddje_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, false, false, false);
+        }
+      });
+     &lt;/script&gt;
+    &lt;/xform:editShow&gt;
+    &lt;xform:editShow&gt;
+     &lt;script&gt;
+      Com_AddEventListener(window, &quot;load&quot;, function() {
+        var isDdtype = GetXFormFieldById(&quot;fd_is_ddtype&quot;)[0];
+        if (isDdtype.value.indexOf(&quot;bjjx&quot;) &gt;= 0) {
+          common_dom_row_set_show_required_reset(&quot;fd_ddje_row&quot;, true, true, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzlx_row&quot;, false, false, true);
+        } else {
+          common_dom_row_set_show_required_reset(&quot;fd_ddje_row&quot;, false, false, false);
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, false, false, false);
+        }
+      });
+      Com_AddEventListener(window, &quot;load&quot;, function() {
+        var isGztype = GetXFormFieldById(&quot;fd_gz&quot;)[0];
+        if (isGztype.value.indexOf(&quot;gz&quot;) &gt;= 0) {
+          common_dom_row_set_show_required_reset(&quot;fd_gzlx_row&quot;, true, true, true);
+        } else {
+          common_dom_row_set_show_required_reset(&quot;fd_gzlx_row&quot;, false, false, false);
+        }
+      });
+      Com_AddEventListener(window, &quot;load&quot;, function() {
+        var isGztype = GetXFormFieldById(&quot;fd_gz&quot;)[0];
+        alert(GetXFormFieldById(&quot;fd_gz&quot;)[0]);
+        var isGzSubtype = GetXFormFieldById(&quot;fd_is_gztype&quot;)[0];
+        alert(isGzSubtype.value);
+        alert(isGzSubtype.value.indexOf(&quot;ytl&quot;) &gt;= 0 &amp;&amp; isGztype.value.indexOf(&quot;gz&quot;) &gt;= 0);
+        if (isGzSubtype.value.indexOf(&quot;ytl&quot;) &gt;= 0 &amp;&amp; isGztype.value.indexOf(&quot;gz&quot;) &gt;= 0) {
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, true, true, false);
+        } else {
+          common_dom_row_set_show_required_reset(&quot;fd_gzje_row&quot;, false, false, false);
+        }
+      });
+     &lt;/script&gt;
+    &lt;/xform:editShow&gt;
+   </string>
+  </void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_ddtype&quot;,content:&quot;Decision type&quot;}&apos;&gt;Decision type&lt;/label&gt;&lt;/td&gt;&lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_ddtype&quot;,label:&quot;Decision type&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,items:&quot;Repair|bjjx&amp;#13;&amp;#10;Transformation|gz&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_ddje&quot;,content:&quot;Repair amount&quot;}&apos;&gt;Repair amount&lt;/label&gt;&lt;input type=&quot;hidden&quot; id=&quot;fd_ddje_row&quot; name=&quot;fd_ddje_row&quot;/&gt;&lt;/td&gt;&lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_ddje&quot;,label:&quot;Repair amount&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,items:&quot;Low|a1&amp;#13;&amp;#10;High|a2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_gzlx&quot;,content:&quot;Transformation type&quot;}&apos;&gt;Transformation type&lt;/label&gt;&lt;input type=&quot;hidden&quot; id=&quot;fd_gzlx_row&quot; name=&quot;fd_gzlx_row&quot;/&gt;&lt;/td&gt;&lt;td row=&quot;2&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_gztype&quot;,label:&quot;Transformation type&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,items:&quot;Preparation|jszb&amp;#13;&amp;#10;Pre-material|ytl&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_gzje&quot;,content:&quot;Transformation amount&quot;}&apos;&gt;Transformation amount&lt;/label&gt;&lt;input type=&quot;hidden&quot; id=&quot;fd_gzje_row&quot; name=&quot;fd_gzje_row&quot;/&gt;&lt;/td&gt;&lt;td row=&quot;3&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_gzje&quot;,label:&quot;Transformation amount&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,items:&quot;Low|b1&amp;#13;&amp;#10;High|b2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_is_ddtype&quot;,label:&quot;Decision state&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;td row=&quot;4&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_gz&quot;,label:&quot;Transformation state&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;/div&gt;&lt;div style=&quot;display:none&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_is_gztype&quot;,label:&quot;Subtype state&quot;,canShow:&quot;false&quot;,readOnly:&quot;false&quot;,dataType:&quot;String&quot;}&apos;&gt;&lt;input id=&quot;fd_is_gztype&quot; class=&quot;inputhidden&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_ddtype&quot; label=&quot;Decision type&quot; enumValues=&quot;Repair|bjjx;Transformation|gz&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_ddje&quot; label=&quot;Repair amount&quot; enumValues=&quot;Low|a1;High|a2&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_gztype&quot; label=&quot;Transformation type&quot; enumValues=&quot;Preparation|jszb;Pre-material|ytl&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_gzje&quot; label=&quot;Transformation amount&quot; enumValues=&quot;Low|b1;High|b2&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_is_ddtype&quot; label=&quot;Decision state&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_gz&quot; label=&quot;Transformation state&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_is_gztype&quot; label=&quot;Subtype state&quot; type=&quot;String&quot; canDisplay=&quot;false&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

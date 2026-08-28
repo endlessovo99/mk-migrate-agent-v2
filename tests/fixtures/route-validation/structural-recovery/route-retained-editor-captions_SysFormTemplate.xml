@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+ <void method="put"><string>fdId</string><string>route-retained-editor-captions</string></void>
+ <void method="put"><string>fdName</string><string>Retained editor captions</string></void>
+ <void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td class=td_normal_title width=120 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;first_caption&quot;,content:&quot;1、审批记录：&quot;}&apos;&gt;1、审批记录：&lt;/label&gt;&lt;/td&gt;
+   &lt;td width=480 row=&quot;0&quot; column=&quot;1,2,3&quot; colspan=3&gt;&lt;img fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_first&quot;,label:&quot;审批内容&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;second_caption&quot;}&apos;/&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td class=td_normal_title width=20% row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;second_caption&quot;,content:&quot;2、付款记录：&quot;}&apos;&gt;2、付款记录：&lt;/label&gt;&lt;/td&gt;
+   &lt;td width=80% row=&quot;1&quot; column=&quot;1,2,3&quot; colspan=3&gt;&lt;img fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_second&quot;,label:&quot;付款内容&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;second_caption&quot;}&apos;/&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td class=td_normal_title row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;note_caption&quot;,content:&quot;3、填写说明：&quot;}&apos;&gt;3、填写说明：&lt;/label&gt;&lt;/td&gt;
+   &lt;td row=&quot;2&quot; column=&quot;1,2,3&quot; colspan=3&gt;&lt;textarea fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_note&quot;,label:&quot;内部说明&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;obsolete_caption&quot;}&apos;&gt;&lt;/textarea&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td class=td_normal_title width=120 row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;code_caption&quot;,content:&quot;4、登记编码：&quot;}&apos;&gt;4、登记编码：&lt;/label&gt;&lt;/td&gt;
+   &lt;td width=80% row=&quot;3&quot; column=&quot;1,2,3&quot; colspan=3&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_code&quot;,label:&quot;内部编码&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;obsolete_caption&quot;}&apos;/&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td class=td_normal_title row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;conditional_caption&quot;,content:&quot;条件说明&quot;}&apos;&gt;条件说明&lt;/label&gt;&lt;/td&gt;
+   &lt;td row=&quot;4&quot; column=&quot;1&quot;&gt;&lt;img fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_conditional&quot;,label:&quot;条件字段&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;obsolete_caption&quot;}&apos;/&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td class=td_normal_title row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;merged_caption&quot;,content:&quot;实际标题&quot;}&apos;&gt;实际标题&lt;/label&gt;&lt;/td&gt;
+   &lt;td row=&quot;5&quot; column=&quot;1&quot;&gt;&lt;img fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_merged&quot;,label:&quot;内部标题&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;&quot;}&apos;/&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+ &lt;/tbody&gt;&lt;/table&gt;</string></void>
+ <void method="put"><string>fdDisplayJsp</string><string>&lt;table&gt;
+  &lt;tr&gt;&lt;td&gt;1、审批记录：&lt;/td&gt;&lt;td&gt;&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_first)&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;2、付款记录：&lt;/td&gt;&lt;td&gt;&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_second)&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;3、填写说明：&lt;/td&gt;&lt;td&gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_note)&quot; subject=&quot;内部说明&quot; title=&quot;内部说明&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;4、登记编码：&lt;/td&gt;&lt;td&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_code)&quot; subject=&quot;内部编码&quot; title=&quot;内部编码&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;条件说明&lt;/td&gt;&lt;td&gt;&lt;c:if test=&quot;${allowed}&quot;&gt;&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_conditional)&quot; /&gt;&lt;/c:if&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;实际标题&lt;/td&gt;&lt;td&gt;&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_merged)&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;
+ &lt;/table&gt;</string></void>
+ <void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;
+  &lt;extendSimpleProperty name=&quot;fd_first&quot; label=&quot;审批内容&quot; type=&quot;RTF&quot;/&gt;
+  &lt;extendSimpleProperty name=&quot;fd_second&quot; label=&quot;付款内容&quot; type=&quot;RTF&quot;/&gt;
+  &lt;extendSimpleProperty name=&quot;fd_note&quot; label=&quot;内部说明&quot; type=&quot;String&quot;/&gt;
+  &lt;extendSimpleProperty name=&quot;fd_code&quot; label=&quot;内部编码&quot; type=&quot;String&quot;/&gt;
+  &lt;extendSimpleProperty name=&quot;fd_conditional&quot; label=&quot;条件字段&quot; type=&quot;RTF&quot;/&gt;
+  &lt;extendSimpleProperty name=&quot;fd_merged&quot; label=&quot;内部标题&quot; type=&quot;RTF&quot;/&gt;
+ &lt;/metadata&gt;</string></void>
+</object></java>

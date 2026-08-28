@@ -157,6 +157,7 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
     runtimeVisibleFieldIds,
     nodeDataAuthorityVisibleFieldIds
   );
+  captionContext.editorLabelEvidence = options.editorLabelEvidence || new Map();
   const metadataContext = metadataMatchContext(metadataFields);
   const fields = [];
   const fieldIds = new Set();
@@ -372,7 +373,7 @@ function appendDesignerLayoutRow(descriptor, context) {
   ])];
   const sourceCells = Array.isArray(descriptor.sourceCells)
     ? descriptor.sourceCells
-    : splitDirectChildCells(rowHtml);
+    : splitDirectChildCells(rowHtml, { includeUnquotedWidth: !descriptor.standardTableProjection });
   const boundCaptionCellIndexes = Array.isArray(descriptor.sourceCells)
     ? new Map()
     : indexBoundCaptionCells(sourceCells, captionContext.boundCaptions);
@@ -381,9 +382,9 @@ function appendDesignerLayoutRow(descriptor, context) {
     return Math.max(max, column.column + column.colspan);
   }, 1);
 
-  sourceCells.forEach((cell, cellIndex) => {
-    const widthWeight = parseCellWidthWeight(cell.attrs);
-    let controls = Array.isArray(cell.controls)
+  const controlCells = sourceCells.map((cell, cellIndex) => ({
+    ...cell,
+    controls: Array.isArray(cell.controls)
       ? cell.controls
       : extractLayoutCellControls(cell.body, captionContext, metadataContext, {
           preservePlainLabels:
@@ -399,7 +400,21 @@ function appendDesignerLayoutRow(descriptor, context) {
               .filter(([, captionCellIndex]) => captionCellIndex !== cellIndex)
               .map(([captionId]) => captionId)
           )
-        });
+        })
+  }));
+  const titledCells = recoverAdjacentTitleCells(
+    controlCells,
+    captionContext,
+    metadataContext,
+    descriptor.standardTableProjection
+  );
+  retainEditorCaptionPresentation(titledCells, captionContext, metadataContext, warnings);
+  const widthHints = titledCells.map((cell) => parseCellWidth(cell.attrs));
+  const widthUnits = new Set(widthHints.map((hint) => hint?.unit).filter(Boolean));
+
+  titledCells.forEach((cell, cellIndex) => {
+    const widthWeight = widthUnits.size <= 1 ? widthHints[cellIndex]?.value : undefined;
+    let controls = cell.controls;
     if (
       descriptor.standardTableProjection?.mode === "static-header-grid" &&
       descriptor.standardTableProjection?.rowRole === "body"
@@ -487,20 +502,161 @@ function appendDesignerLayoutRow(descriptor, context) {
       sourceRow: descriptor.sourceRow,
       ...(sourceMarkers.length ? { sourceMarkers } : {}),
       columns: Math.max(sourceColumns, ...cells.map((cell) => cell.column + cell.colspan), 1),
+      ...(!descriptor.standardTableProjection && hasCompleteSourceGeometry(cells, sourceColumns)
+        ? { preserveSourceGeometry: true }
+        : {}),
       cells
     });
   }
 }
 
-function parseCellWidthWeight(attrs = {}) {
-  const style = String(attrs.style || "");
-  const styleMatch = style.match(/(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)px(?:\s*!important)?\s*(?:;|$)/i);
-  const styleWidth = Number(styleMatch?.[1]);
-  if (Number.isFinite(styleWidth) && styleWidth > 0) return styleWidth;
+function recoverAdjacentTitleCells(cells, captionContext, metadataContext, projection) {
+  if (preservesStandardTableLabels(projection)) return cells;
+  const result = [...cells];
 
-  const attributeWidth = Number.parseFloat(String(attrs.width || ""));
-  return Number.isFinite(attributeWidth) && attributeWidth > 0
-    ? attributeWidth
+  for (let index = 0; index < result.length - 1; index += 1) {
+    const captionCell = result[index];
+    const valueCell = result[index + 1];
+    if (
+      !isTitleCell(captionCell) || isTitleCell(valueCell) ||
+      (result[index + 2] && !isTitleCell(result[index + 2])) ||
+      captionCell.layoutRowIds?.length || valueCell.layoutRowIds?.length ||
+      valueCell.controls.length !== 1
+    ) continue;
+
+    const captionColumn = parseColumnSpec(captionCell.attrs.column, index);
+    const valueColumn = parseColumnSpec(valueCell.attrs.column, index + 1);
+    if (
+      captionColumn.column + captionColumn.colspan !== valueColumn.column ||
+      parseRowspan(captionCell.attrs.rowspan ?? captionCell.attrs.rowSpan) !==
+        parseRowspan(valueCell.attrs.rowspan ?? valueCell.attrs.rowSpan) ||
+      (captionCell.attrs.row !== undefined && valueCell.attrs.row !== undefined &&
+        normalizeMatchText(captionCell.attrs.row) !== normalizeMatchText(valueCell.attrs.row))
+    ) continue;
+
+    // Read the caption before ordinary label filtering, which may discard it
+    // solely because its ID looks like a label or its text matches metadata.
+    const candidates = extractDesignerFieldControls(captionCell.body, {
+      includeHidden: true,
+      includeTextLabels: true
+    });
+    const caption = candidates[0];
+    const control = valueCell.controls[0];
+    if (
+      candidates.length !== 1 || !isPlainInlineCaption(caption) ||
+      !cleanText(caption.title) ||
+      cleanText(captionCell.body) !== cleanText(caption.title) ||
+      captionCell.controls.some((item) => item.id !== caption.id) ||
+      caption.source?.designerHidden ||
+      captionContext.referencedCaptionIds.has(caption.id) ||
+      captionContext.rightContainerByControlId.has(caption.id) ||
+      captionContext.rightContainerByControlId.has(control.id) ||
+      isSourceDescriptionControl(control) || control.source?.designerHidden ||
+      control.source?.boundCaption || control.source?.inlineCaption || control.source?.explicitTitle ||
+      control.source?.designerValues?._label_bind_id ||
+      String(control.source?.designerValues?._label_bind || "").toLowerCase() !== "false" ||
+      isDataOnlyMetadataField(metadataContext.byId.get(control.id))
+    ) continue;
+
+    const title = cleanText(caption.title);
+    const subject = cleanText(control.source?.designerValues?.label || control.title);
+    result[index] = { ...captionCell, controls: [] };
+    result[index + 1] = {
+      ...valueCell,
+      controls: [{
+        ...control,
+        title,
+        source: {
+          ...control.source,
+          boundCaption: { id: caption.id, content: title, relation: "adjacent-title-cell" },
+          ...(subject && normalizeMatchText(subject) !== normalizeMatchText(title)
+            ? {
+                subjectLabel: {
+                  content: subject,
+                  relation: "unbound-control-subject-distinct-from-visible-caption"
+                }
+              }
+            : {})
+        }
+      }]
+    };
+  }
+
+  return result;
+}
+
+function isTitleCell(cell) {
+  return String(cell.attrs.class || "").split(/\s+/).includes("td_normal_title");
+}
+
+function retainEditorCaptionPresentation(cells, context, metadataContext, warnings) {
+  for (let index = 1; index < cells.length; index += 1) {
+    const left = cells[index - 1];
+    const right = cells[index];
+    const captions = left.controls.filter((control) => !control.source?.designerHidden);
+    if (
+      left.layoutRowIds?.length || right.layoutRowIds?.length ||
+      !captions.length || !captions.every(isSourceDescriptionControl) ||
+      parseRowspan(left.attrs.rowspan ?? left.attrs.rowSpan) !==
+        parseRowspan(right.attrs.rowspan ?? right.attrs.rowSpan)
+    ) continue;
+    const start = parseColumnSpec(left.attrs.column, index - 1);
+    if (start.column + start.colspan !== parseColumnSpec(right.attrs.column, index).column) continue;
+    right.controls = right.controls.map((control) => {
+      const evidence = context.editorLabelEvidence.get(control.id);
+      if (
+        !evidence || isSourceDescriptionControl(control) || control.source?.designerHidden ||
+        control.source?.boundCaption || control.source?.inlineCaption || control.source?.explicitTitle ||
+        isDataOnlyMetadataField(metadataContext.byId.get(control.id))
+      ) return control;
+      const rowText = normalizeMatchText(evidence.rowText);
+      if (!evidence.verified || !captions.every((caption) => {
+        const text = normalizeMatchText(caption.title);
+        return text && rowText.includes(text);
+      })) {
+        warnings.push({
+          code: "source.sysform.label_visibility_unverified",
+          message: `Field ${control.id} retains adjacent source text, but its rendered title visibility needs review.`,
+          path: "/fdDisplayJsp",
+          details: { fieldId: control.id, captionIds: captions.map((caption) => caption.id) }
+        });
+        return control;
+      }
+      return {
+        ...control,
+        source: {
+          ...control.source,
+          layoutCell: {
+            ...control.source?.layoutCell,
+            hiddenLabel: true,
+            relation: "retained-source-caption",
+            captionIds: captions.map((caption) => caption.id),
+            renderer: evidence.renderer,
+            sourceRef: evidence.sourceRef
+          }
+        }
+      };
+    });
+  }
+}
+
+function hasCompleteSourceGeometry(cells, columns) {
+  if (cells.length < 2 || columns > 8 || new Set(cells.map((cell) => cell.colspan)).size < 2) return false;
+  let end = 0;
+  for (const cell of cells.slice().sort((left, right) => left.column - right.column)) {
+    if (cell.column !== end || (cell.fieldIds || []).length > 1) return false;
+    end += cell.colspan;
+  }
+  return end === columns;
+}
+
+function parseCellWidth(attrs = {}) {
+  const style = String(attrs.style || "");
+  const match = style.match(/(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)(px|%)(?:\s*!important)?\s*(?:;|$)/i) ||
+    String(attrs.width || "").trim().match(/^(\d+(?:\.\d+)?)(px|%)?$/i);
+  const value = Number(match?.[1]);
+  return Number.isFinite(value) && value > 0
+    ? { value, unit: match[2] === "%" ? "percent" : "px" }
     : undefined;
 }
 
@@ -1228,6 +1384,7 @@ function designerBoundCaptionContext(
   }
   return {
     boundCaptions,
+    referencedCaptionIds: new Set(references),
     externalRightPromptIds,
     rightContainerByControlId,
     runtimeVisibleFieldIds,

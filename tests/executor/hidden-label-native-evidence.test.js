@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
+import { checkExecute } from "../../src/dsl/checks.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 
 const fixtureDir = join(dirname(fileURLToPath(import.meta.url)), "../fixtures/executor/persistence");
@@ -58,6 +59,25 @@ describe("xform-input hidden-label native persistence", () => {
       labelShowText: false
     });
     assert.equal(prepared.verify(structuredClone(prepared.update)).ok, true);
+  });
+
+  it("writes and verifies the common native label contract for rich text", () => {
+    const dsl = hiddenLabelDsl();
+    const field = dsl.form.fields.find((candidate) => candidate.id === fieldId);
+    field.type = "longText";
+    field.componentId = "xform-rich-text";
+    assert.equal(checkExecute(dsl).ok, true);
+    const prepared = prepareSample(dsl);
+    const attribute = nativeAttribute(prepared.update, fieldId);
+    assert.equal(attribute.config.controlProps.desktop.type, "@elem/xform-rich-text");
+    assert.deepEqual(hiddenLabelEvidence(attribute), {
+      controlDesktop: true, controlMobile: true, controlShowText: false,
+      labelDesktop: true, labelMobile: true, labelShowText: false
+    });
+    assert.equal(prepared.verify(prepared.update).form.fields.find((item) => item.id === fieldId)?.hiddenLabel, true);
+    const corrupt = structuredClone(prepared.update);
+    mutateNativeAttribute(corrupt, fieldId, (value) => { delete value.config.labelProps.desktop.hiddenLabel; });
+    assert.equal(prepared.verify(corrupt).partitions.form, "mismatch");
   });
 
   for (const testCase of [

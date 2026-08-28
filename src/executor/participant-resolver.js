@@ -33,7 +33,11 @@ export async function resolveWorkflowParticipants(dsl, {
   client,
   targetBaseUrl,
   fallbackFdIds,
-  participantOverrides
+  participantOverrides,
+  directParticipantOverrides,
+  allowMissingDirectPersonFallback = false,
+  allowMissingDirectPostFallback = false,
+  directPersonFallbackIds
 } = {}) {
   const nextDsl = structuredClone(dsl);
   const directTargetAmbiguityIssues = collectDirectTargetAmbiguityIssues(nextDsl);
@@ -50,6 +54,14 @@ export async function resolveWorkflowParticipants(dsl, {
   });
   const identities = collectParticipantIdentities(nextDsl);
   const explicitOverrides = prepareParticipantOverrides(identities, participantOverrides);
+  const explicitDirectOverrides = prepareDirectParticipantOverrides(
+    identities,
+    directParticipantOverrides
+  );
+  const explicitDirectPersonFallbacks = prepareDirectPersonFallbackIds(
+    identities,
+    directPersonFallbackIds
+  );
   if (identities.size === 0) {
     return {
       dsl: nextDsl,
@@ -58,7 +70,9 @@ export async function resolveWorkflowParticipants(dsl, {
       fallbackCount: 0,
       fallbackIdentityCount: 0,
       overrideCount: 0,
-      overrideIdentityCount: 0
+      overrideIdentityCount: 0,
+      directOverrideCount: 0,
+      directOverrideIdentityCount: 0
     };
   }
   const capabilityIssues = requiredClientCapabilityIssues(identities, client, explicitOverrides);
@@ -72,7 +86,20 @@ export async function resolveWorkflowParticipants(dsl, {
     1,
     async (identity) => {
       const explicitOverride = explicitOverrides.get(normalizeText(identity.member?.sourceId));
+      const explicitDirectOverride = explicitDirectOverrides.get(
+        normalizeText(identity.member?.id)
+      );
+      const explicitDirectPersonFallback = identity.kind === "target" &&
+        explicitDirectPersonFallbacks.has(normalizeText(identity.member?.id));
       try {
+        if (explicitDirectOverride) {
+          return await resolveDirectParticipantOverride(
+            identity,
+            explicitDirectOverride,
+            client,
+            elementCache
+          );
+        }
         if (explicitOverride) {
           return await resolveExplicitParticipantOverride(
             identity,
@@ -82,18 +109,43 @@ export async function resolveWorkflowParticipants(dsl, {
             { targetBaseUrl, configuredFallbacks }
           );
         }
-        return await resolveIdentity(identity, client, { searchCache, elementCache });
+        const resolution = await resolveIdentity(identity, client, { searchCache, elementCache });
+        if (!explicitDirectPersonFallback) return resolution;
+        if (
+          resolution.target &&
+          normalizeOrgType(resolution.target.fdOrgType) !== "8"
+        ) {
+          return {
+            ...resolution,
+            target: undefined,
+            explicitDirectPersonFallback: true,
+            issue: {
+              reason: "direct_person_source_type_mismatch",
+              name: identity.member.name,
+              targetId: identity.member.id,
+              targetOrgType: resolution.target.fdOrgType,
+              expectedOrgType: 8,
+              paths: identity.paths
+            }
+          };
+        }
+        return { ...resolution, explicitDirectPersonFallback: true };
       } catch (error) {
         if (error instanceof ParticipantResolutionError) throw error;
         return {
           ...identity,
+          ...(explicitDirectPersonFallback ? { explicitDirectPersonFallback: true } : {}),
           issue: {
             reason: explicitOverride
               ? "override_target_validation_failed"
+              : explicitDirectOverride
+                ? "direct_override_target_validation_failed"
               : identity.kind === "target" ? "target_validation_failed" : "search_failed",
             name: identity.member.name,
             sourceId: identity.member.sourceId,
-            ...(explicitOverride ? { targetId: explicitOverride.targetFdId } : {}),
+            ...((explicitOverride || explicitDirectOverride)
+              ? { targetId: (explicitOverride || explicitDirectOverride).targetFdId }
+              : {}),
             paths: identity.paths,
             message: error instanceof Error ? error.message : String(error)
           }
@@ -104,7 +156,10 @@ export async function resolveWorkflowParticipants(dsl, {
 
   const unresolvedResolutions = resolutions.filter((resolution) => resolution.issue);
   const fallbackResolutions = allowsTemporaryOrgFallbacks(targetBaseUrl)
-    ? unresolvedResolutions.filter(isSitFallbackEligible)
+    ? unresolvedResolutions.filter((resolution) => isSitFallbackEligible(resolution, {
+      allowMissingDirectPersonFallback,
+      allowMissingDirectPostFallback
+    }))
     : [];
   const fallbackResolutionSet = new Set(fallbackResolutions);
   const blockingResolutions = unresolvedResolutions.filter((resolution) => !fallbackResolutionSet.has(resolution));
@@ -121,7 +176,7 @@ export async function resolveWorkflowParticipants(dsl, {
     );
     for (const resolution of fallbackResolutions) {
       const fallback = temporaryFallbackForSourceOrgType(
-        resolution.member?.sourceOrgType,
+        participantFallbackOrgType(resolution),
         configuredFallbacks
       );
       const target = validatedTargets.get(fallbackValidationKey(fallback));
@@ -135,7 +190,7 @@ export async function resolveWorkflowParticipants(dsl, {
       ...Object.fromEntries(
       [...new Map(
         fallbackResolutions.map((resolution) => {
-          const sourceOrgType = normalizeOrgType(resolution.member?.sourceOrgType) || "8";
+          const sourceOrgType = participantFallbackOrgType(resolution) || "8";
           return [sourceOrgType, {
             sourceOrgType: Number(sourceOrgType),
             targetFdId: resolution.fallbackSpec.fdId,
@@ -155,12 +210,24 @@ export async function resolveWorkflowParticipants(dsl, {
 
   const overrideResolutions = resolutions.filter((resolution) => resolution.override);
   const overrideAudits = overrideResolutions.map(buildParticipantOverrideAudit);
+  const directOverrideResolutions = resolutions.filter((resolution) => resolution.directOverride);
+  const directOverrideAudits = directOverrideResolutions.map(buildDirectParticipantOverrideAudit);
+  const directTargetFallbackResolutions = fallbackResolutions.filter((resolution) => (
+    resolution.kind === "target"
+  ));
+  const directTargetFallbacks = directTargetFallbackResolutions.map(
+    buildDirectTargetFallbackAudit
+  );
   const overrideTargetIds = [...new Set(
     overrideResolutions.map((resolution) => resolution.target.fdId)
+  )].sort();
+  const directOverrideTargetIds = [...new Set(
+    directOverrideResolutions.map((resolution) => resolution.target.fdId)
   )].sort();
   let resolvedCount = 0;
   let fallbackCount = configuredFormulaFallback.referenceCount;
   let overrideCount = 0;
+  let directOverrideCount = 0;
   for (const resolution of resolutions) {
     for (const member of resolution.members) {
       member.id = resolution.target.fdId;
@@ -169,6 +236,7 @@ export async function resolveWorkflowParticipants(dsl, {
       if (resolution.kind === "source") resolvedCount += 1;
       if (resolution.fallback) fallbackCount += 1;
       if (resolution.override) overrideCount += 1;
+      if (resolution.directOverride) directOverrideCount += 1;
     }
   }
   deduplicateResolvedParticipantCollections(nextDsl);
@@ -184,17 +252,29 @@ export async function resolveWorkflowParticipants(dsl, {
     identityCount: identities.size,
     fallbackCount,
     fallbackIdentityCount: configuredFormulaFallback.identityCount + fallbackResolutions.length,
+    directTargetFallbackCount: directTargetFallbackResolutions.reduce(
+      (count, resolution) => count + resolution.members.length,
+      0
+    ),
+    directTargetFallbackIdentityCount: directTargetFallbackResolutions.length,
     overrideCount,
     overrideIdentityCount: overrideResolutions.length,
+    directOverrideCount,
+    directOverrideIdentityCount: directOverrideResolutions.length,
     ...(overrideCount ? {
       overrideTargetIds,
       overrides: overrideAudits
+    } : {}),
+    ...(directOverrideCount ? {
+      directOverrideTargetIds,
+      directOverrides: directOverrideAudits
     } : {}),
     ...(fallbackCount ? {
       fallbackTargetIds,
       fallbackTargetsByOrgType,
       ...(fallbackTargetIds.length === 1 ? { fallbackTargetId: fallbackTargetIds[0] } : {})
-    } : {})
+    } : {}),
+    ...(directTargetFallbacks.length ? { directTargetFallbacks } : {})
   };
 }
 
@@ -273,6 +353,209 @@ function prepareParticipantOverrides(identities, overrides) {
   return bySourceId;
 }
 
+function prepareDirectParticipantOverrides(identities, overrides) {
+  if (overrides === undefined) return new Map();
+  if (!Array.isArray(overrides)) {
+    throw new ParticipantResolutionError([{
+      reason: "direct_override_configuration_invalid",
+      message: "Explicit direct participant overrides must be an array of sourceTargetId/targetFdId mappings.",
+      paths: ["/execute/directParticipantOverrides"]
+    }]);
+  }
+
+  const bySourceTargetId = new Map();
+  const issues = [];
+  overrides.forEach((override, index) => {
+    const path = `/execute/directParticipantOverrides/${index}`;
+    const sourceTargetId = normalizeText(override?.sourceTargetId);
+    const targetFdId = normalizeText(override?.targetFdId);
+    if (!override || typeof override !== "object" || !sourceTargetId || !targetFdId) {
+      issues.push({
+        reason: "direct_override_configuration_invalid",
+        sourceTargetId,
+        targetId: targetFdId,
+        paths: [path],
+        message: "Each direct participant override requires non-empty sourceTargetId and targetFdId."
+      });
+      return;
+    }
+    if (bySourceTargetId.has(sourceTargetId)) {
+      issues.push({
+        reason: "direct_override_source_duplicate",
+        sourceTargetId,
+        targetId: targetFdId,
+        paths: [path],
+        message: "A direct participant target may be explicitly overridden only once."
+      });
+      return;
+    }
+    bySourceTargetId.set(sourceTargetId, { sourceTargetId, targetFdId, path });
+  });
+
+  for (const override of bySourceTargetId.values()) {
+    const matchingIdentities = [...identities.values()].filter((identity) => (
+      identity.kind === "target" &&
+      normalizeText(identity.member?.id) === override.sourceTargetId
+    ));
+    if (matchingIdentities.length === 0) {
+      issues.push({
+        reason: "direct_override_source_not_found",
+        sourceTargetId: override.sourceTargetId,
+        targetId: override.targetFdId,
+        paths: [override.path],
+        message: "Direct participant override sourceTargetId does not exist in the trusted DSL."
+      });
+    } else if (matchingIdentities.length !== 1) {
+      issues.push({
+        reason: "direct_override_source_ambiguous",
+        sourceTargetId: override.sourceTargetId,
+        targetId: override.targetFdId,
+        paths: [
+          override.path,
+          ...matchingIdentities.flatMap((identity) => identity.paths)
+        ],
+        message: "Direct participant override sourceTargetId refers to multiple typed direct identities."
+      });
+    } else if (!normalizeOrgType(matchingIdentities[0].member?.targetOrgType)) {
+      issues.push({
+        reason: "direct_override_source_type_missing",
+        sourceTargetId: override.sourceTargetId,
+        targetId: override.targetFdId,
+        paths: matchingIdentities[0].paths,
+        message: "Direct participant override requires a typed source target identity."
+      });
+    }
+  }
+  if (issues.length) throw new ParticipantResolutionError(issues);
+  return bySourceTargetId;
+}
+
+function prepareDirectPersonFallbackIds(identities, values) {
+  if (values === undefined) return new Set();
+  if (!Array.isArray(values)) {
+    throw new ParticipantResolutionError([{
+      reason: "direct_person_fallback_configuration_invalid",
+      message: "Explicit direct-person fallback ids must be an array.",
+      paths: ["/execute/directPersonFallbackIds"]
+    }]);
+  }
+
+  const configured = new Set();
+  const issues = [];
+  values.forEach((value, index) => {
+    const fdId = normalizeText(value);
+    const path = `/execute/directPersonFallbackIds/${index}`;
+    if (!fdId) {
+      issues.push({
+        reason: "direct_person_fallback_configuration_invalid",
+        paths: [path],
+        message: "Each explicit direct-person fallback id must be non-empty."
+      });
+      return;
+    }
+    if (configured.has(fdId)) {
+      issues.push({
+        reason: "direct_person_fallback_id_duplicate",
+        targetId: fdId,
+        paths: [path],
+        message: "A direct-person fallback id may be specified only once."
+      });
+      return;
+    }
+    configured.add(fdId);
+  });
+
+  for (const fdId of configured) {
+    const matches = [...identities.values()].filter((identity) => (
+      identity.kind === "target" && normalizeText(identity.member?.id) === fdId
+    ));
+    if (matches.length === 0) {
+      issues.push({
+        reason: "direct_person_fallback_id_not_found",
+        targetId: fdId,
+        paths: ["/execute/directPersonFallbackIds"],
+        message: "Explicit direct-person fallback id does not exist as a direct participant in the trusted DSL."
+      });
+      continue;
+    }
+    if (matches.length !== 1) {
+      issues.push({
+        reason: "direct_person_fallback_id_ambiguous",
+        targetId: fdId,
+        paths: matches.flatMap((identity) => identity.paths),
+        message: "Explicit direct-person fallback id refers to multiple typed direct identities."
+      });
+      continue;
+    }
+    const knownOrgType = normalizeOrgType(matches[0].member?.targetOrgType);
+    if (knownOrgType && knownOrgType !== "8") {
+      issues.push({
+        reason: "direct_person_fallback_type_mismatch",
+        targetId: fdId,
+        targetOrgType: matches[0].member.targetOrgType,
+        expectedOrgType: 8,
+        paths: matches[0].paths,
+        message: "Explicit direct-person fallback id is already typed as a non-person participant."
+      });
+    }
+  }
+  if (issues.length) throw new ParticipantResolutionError(issues);
+  return configured;
+}
+
+async function resolveDirectParticipantOverride(
+  identity,
+  override,
+  client,
+  elementCache
+) {
+  const { candidates, exactMatches } = await currentElementsByExactId(
+    override.targetFdId,
+    client,
+    elementCache
+  );
+  if (candidates.length !== 1 || exactMatches.length !== 1) {
+    return {
+      ...identity,
+      issue: {
+        reason: exactMatches.length === 0
+          ? "direct_override_target_not_found"
+          : "direct_override_target_ambiguous",
+        name: identity.member.name,
+        sourceTargetId: override.sourceTargetId,
+        targetId: override.targetFdId,
+        paths: identity.paths,
+        candidateIds: candidates.map((candidate) => candidate.fdId)
+      }
+    };
+  }
+
+  const target = exactMatches[0];
+  const expectedOrgType = normalizeOrgType(identity.member.targetOrgType);
+  const targetOrgType = normalizeOrgType(target.fdOrgType);
+  if (!expectedOrgType || targetOrgType !== expectedOrgType) {
+    return {
+      ...identity,
+      issue: {
+        reason: "direct_override_target_type_mismatch",
+        name: identity.member.name,
+        sourceTargetId: override.sourceTargetId,
+        targetId: override.targetFdId,
+        targetOrgType: target.fdOrgType,
+        expectedOrgType: identity.member.targetOrgType,
+        paths: identity.paths
+      }
+    };
+  }
+
+  return {
+    ...identity,
+    target,
+    directOverride: true,
+    directOverrideSpec: override
+  };
+}
+
 async function resolveExplicitParticipantOverride(
   identity,
   override,
@@ -287,8 +570,12 @@ async function resolveExplicitParticipantOverride(
     targetBaseUrl,
     configuredFallbacks
   );
+  const exactSourceIdRevalidation =
+    normalizeText(override.sourceId) === normalizeText(override.targetFdId) &&
+    evidenceIssue?.missing?.length > 0 &&
+    evidenceIssue.missing.every((field) => field === "sourceParentName");
   if (evidenceIssue && !(
-    confirmedFallback &&
+    (confirmedFallback || exactSourceIdRevalidation) &&
     evidenceIssue.missing?.length > 0 &&
     evidenceIssue.missing.every((field) => field === "sourceParentName")
   )) {
@@ -343,12 +630,30 @@ async function resolveExplicitParticipantOverride(
       }
     };
   }
+  if (
+    exactSourceIdRevalidation &&
+    normalizeText(target.fdName) !== normalizeText(identity.member.name)
+  ) {
+    return {
+      ...identity,
+      issue: {
+        reason: "override_target_name_mismatch",
+        name: identity.member.name,
+        sourceId: override.sourceId,
+        sourceOrgType: identity.member.sourceOrgType,
+        targetId: override.targetFdId,
+        targetName: target.fdName,
+        paths: identity.paths
+      }
+    };
+  }
 
   return {
     ...identity,
     target,
     override: true,
     overrideSpec: override,
+    ...(exactSourceIdRevalidation ? { exactSourceIdRevalidation: true } : {}),
     ...(confirmedFallback ? { confirmedFallbackOverride: true } : {})
   };
 }
@@ -384,7 +689,25 @@ function buildParticipantOverrideAudit(resolution) {
       fdName: normalizeText(resolution.target.fdName),
       fdOrgType: resolution.target.fdOrgType
     },
+    ...(resolution.exactSourceIdRevalidation ? { exactSourceIdRevalidation: true } : {}),
     ...(resolution.confirmedFallbackOverride ? { confirmedFallbackOverride: true } : {}),
+    referenceCount: resolution.members.length,
+    paths: [...resolution.paths]
+  };
+}
+
+function buildDirectParticipantOverrideAudit(resolution) {
+  return {
+    sourceTargetEvidence: {
+      fdId: normalizeText(resolution.member?.id),
+      fdName: normalizeText(resolution.member?.name),
+      fdOrgType: resolution.member?.targetOrgType
+    },
+    target: {
+      fdId: normalizeText(resolution.target?.fdId),
+      fdName: normalizeText(resolution.target?.fdName),
+      fdOrgType: resolution.target?.fdOrgType
+    },
     referenceCount: resolution.members.length,
     paths: [...resolution.paths]
   };
@@ -485,13 +808,32 @@ function deduplicateResolvedParticipantCollections(dsl) {
   }
 }
 
-function isSitFallbackEligible(resolution) {
+function isSitFallbackEligible(resolution, {
+  allowMissingDirectPersonFallback = false,
+  allowMissingDirectPostFallback = false
+} = {}) {
+  if (resolution.kind === "target") {
+    if (resolution.issue?.reason !== "not_found") return false;
+    if (resolution.explicitDirectPersonFallback === true) return true;
+    const targetOrgType = normalizeOrgType(resolution.member?.targetOrgType);
+    return (targetOrgType === "8" && allowMissingDirectPersonFallback === true) ||
+      (targetOrgType === "4" && allowMissingDirectPostFallback === true);
+  }
   if (resolution.kind !== "source" || !SIT_FALLBACK_REASONS.has(resolution.issue?.reason)) return false;
   if (normalizeOrgType(resolution.member?.sourceOrgType) === "32") return false;
   if (resolution.issue.reason === "not_found" || resolution.issue.reason === "search_failed") return true;
   return Array.isArray(resolution.issue.missing) &&
     resolution.issue.missing.length > 0 &&
     resolution.issue.missing.every((field) => field === "sourceParentName");
+}
+
+function participantFallbackOrgType(resolution) {
+  if (resolution.explicitDirectPersonFallback === true) return "8";
+  return normalizeOrgType(
+    resolution.kind === "target"
+      ? resolution.member?.targetOrgType
+      : resolution.member?.sourceOrgType
+  );
 }
 
 function temporaryFallbackForSourceOrgType(sourceOrgType, fallbacks) {
@@ -513,7 +855,7 @@ async function resolveSitFallbackTargets(client, elementCache, resolutions, fall
   const fallbacks = [...new Map(
     resolutions.map((resolution) => {
       const fallback = temporaryFallbackForSourceOrgType(
-        resolution.member?.sourceOrgType,
+        participantFallbackOrgType(resolution),
         fallbacksByKind
       );
       return [fallbackValidationKey(fallback), fallback];
@@ -591,6 +933,26 @@ function fallbackValidationKey(fallback) {
   return `${fallback.fdId}\0${fallback.fdOrgType}`;
 }
 
+function buildDirectTargetFallbackAudit(resolution) {
+  return {
+    missingTarget: {
+      fdId: normalizeText(resolution.member?.id),
+      fdName: normalizeText(resolution.member?.name),
+      fdOrgType: resolution.member?.targetOrgType
+    },
+    fallbackTarget: {
+      fdId: normalizeText(resolution.target?.fdId),
+      fdName: normalizeText(resolution.target?.fdName),
+      fdOrgType: resolution.target?.fdOrgType
+    },
+    referenceCount: resolution.members.length,
+    paths: [...resolution.paths],
+    ...(resolution.explicitDirectPersonFallback
+      ? { authorization: "explicit_direct_person_id" }
+      : {})
+  };
+}
+
 function collectDirectTargetAmbiguityIssues(dsl) {
   const nodes = Array.isArray(dsl?.workflow?.nodes) ? dsl.workflow.nodes : [];
   return nodes.flatMap((node, nodeIndex) => {
@@ -607,7 +969,7 @@ function collectDirectTargetAmbiguityIssues(dsl) {
         ? ambiguity.targetIds.map((targetId) => normalizeText(targetId)).filter(Boolean).sort()
         : [],
       paths: [`/workflow/nodes/${nodeIndex}/directTargetAmbiguities/${ambiguityIndex}`],
-      message: "A static fixed-post handler position has multiple structured target IDs and requires review before resolution."
+      message: "A static handler position has multiple structured target IDs and requires review before resolution."
     }));
   });
 }

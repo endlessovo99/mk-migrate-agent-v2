@@ -400,7 +400,7 @@ function handlerEntityEvidenceFor(index, factId, attribute, fallbackNames = "", 
       const cachedId = cachedIds[entity.index];
       const directTarget = staticOrgSelection &&
         !ambiguousIndexes.has(entity.index) &&
-        isDivergentFixedPostTarget(entity, cachedId);
+        isStructuredDirectTarget(entity, cachedId);
       return compactObject({
         ...entity,
         name: entity.name || names[entity.index] || entity.loginName || entity.id,
@@ -427,7 +427,7 @@ function directTargetAmbiguitiesFor(entities, attribute, cachedIds) {
   const ambiguities = new Map();
   for (const entity of entities) {
     const cachedId = cachedIds[entity.index];
-    if (!isDivergentFixedPostTarget(entity, cachedId)) continue;
+    if (!isStructuredDirectTarget(entity, cachedId)) continue;
     const targetIds = targetIdsByIndex.get(entity.index);
     if (!targetIds || targetIds.size < 2) continue;
     ambiguities.set(entity.index, {
@@ -441,11 +441,13 @@ function directTargetAmbiguitiesFor(entities, attribute, cachedIds) {
   return [...ambiguities.values()].sort((left, right) => left.index - right.index);
 }
 
-function isDivergentFixedPostTarget(entity, cachedId) {
-  if (entity?.orgType !== 4 || !Number.isSafeInteger(entity.index) || entity.index < 0) {
+function isStructuredDirectTarget(entity, cachedId) {
+  if (!Number.isSafeInteger(entity?.index) || entity.index < 0) {
     return false;
   }
   const targetId = String(entity.id || "").trim();
+  if (entity.orgType === 8) return Boolean(targetId);
+  if (entity.orgType !== 4) return false;
   const sourceId = String(cachedId || "").trim();
   return Boolean(targetId && sourceId && isLiteralHandlerId(sourceId) && sourceId !== targetId);
 }

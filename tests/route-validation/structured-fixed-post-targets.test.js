@@ -7,9 +7,11 @@ import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js
 const fixturePath = "tests/fixtures/source/14a08d7d8b8753e20198a5b4223b707e";
 const TARGET_POST_ID = "19e634c586620d613af9df04841ade59";
 const CACHED_SOURCE_POST_ID = "189f835a41ef38038dca2904425b55d2";
+const TARGET_PERSON_ID = "14912dbee2ad4d8becd6c5a458e834e2";
 const REFERENCE_SOURCE_PATH = "tests/fixtures/source/route-validation-lbpm";
 const WORKFLOW_REFERENCE_DIR = "tests/fixtures/source/workflow-reference-initdata";
 const REFERENCE_TARGET_POST_ID = "reference-target-post-id";
+const FALLBACK_POST_ID = "current-fallback-post-id";
 
 describe("structured fixed-post targets", () => {
   it("uses an exact matching initdata process as common direct-target evidence", async () => {
@@ -74,7 +76,7 @@ describe("structured fixed-post targets", () => {
     const dslDraft = draftSourceDraft(cleanSourceFile(fixturePath));
     const n110 = dslDraft.workflow.nodes.find((node) => node.id === "N110");
     const targetMember = n110.participants.members.find((member) => member.id === TARGET_POST_ID);
-    const sourceMember = n110.participants.members.find((member) => member.sourceId);
+    const personMember = n110.participants.members.find((member) => member.id === TARGET_PERSON_ID);
 
     assert.equal(n110.attributes.handlerIds.includes(CACHED_SOURCE_POST_ID), true);
     assert.equal(checkDraft(dslDraft).ok, true);
@@ -85,7 +87,12 @@ describe("structured fixed-post targets", () => {
       targetOrgType: 4
     });
     assert.equal(targetMember.sourceId, undefined);
-    assert.equal(sourceMember.sourceId, "14912dbee2ad4d8becd6c5a458e834e2");
+    assert.deepEqual(personMember, {
+      id: TARGET_PERSON_ID,
+      name: "梁文德",
+      type: "user_or_org",
+      targetOrgType: 8
+    });
 
     const searchCalls = [];
     const elementCalls = [];
@@ -95,30 +102,31 @@ describe("structured fixed-post targets", () => {
       client: {
         async searchOrg(name, orgType) {
           searchCalls.push([name, orgType]);
-          return [{
-            fdId: "current-person-id",
-            fdName: "梁文德",
-            fdOrgType: 8,
-            fdParentName: "风电工程服务公司海外服务中心"
-          }];
+          return [];
         },
         async getElementInfo(targetIds) {
           elementCalls.push(targetIds);
-          return [{
-            fdId: TARGET_POST_ID,
-            fdName: "风电工程服务分公司_运维服务中心部门领导",
-            fdOrgType: 4
-          }];
+          return targetIds.map((targetId) => targetId === TARGET_PERSON_ID
+            ? {
+                fdId: TARGET_PERSON_ID,
+                fdName: "梁文德",
+                fdOrgType: 8
+              }
+            : {
+                fdId: TARGET_POST_ID,
+                fdName: "风电工程服务分公司_运维服务中心部门领导",
+                fdOrgType: 4
+              });
         }
       }
     });
 
     assert.equal(resolved.fallbackCount, 0);
-    assert.deepEqual(searchCalls, [["梁文德", 8]]);
-    assert.deepEqual(elementCalls, [[TARGET_POST_ID]]);
+    assert.deepEqual(searchCalls, []);
+    assert.deepEqual(elementCalls, [[TARGET_PERSON_ID], [TARGET_POST_ID]]);
     assert.deepEqual(
       resolved.dsl.workflow.nodes[0].participants.members.map((member) => member.id),
-      ["current-person-id", TARGET_POST_ID]
+      [TARGET_PERSON_ID, TARGET_POST_ID]
     );
     assert.equal(
       JSON.stringify(resolved.dsl.workflow.nodes[0].participants.members).includes(CACHED_SOURCE_POST_ID),
@@ -171,6 +179,44 @@ describe("structured fixed-post targets", () => {
       }
     );
     assert.deepEqual(elementCalls, [[TARGET_POST_ID]]);
+  });
+
+  it("applies an explicitly authorized post fallback after exact target absence is confirmed", async () => {
+    const n110 = targetOnlyNode();
+    const elementCalls = [];
+    const resolved = await resolveWorkflowParticipants({ workflow: { nodes: [n110] } }, {
+      targetBaseUrl: "https://p-sit.onewo.com",
+      fallbackFdIds: { post: FALLBACK_POST_ID },
+      allowMissingDirectPostFallback: true,
+      client: {
+        async getElementInfo(targetIds) {
+          elementCalls.push(targetIds);
+          if (targetIds.includes(FALLBACK_POST_ID)) {
+            return [{
+              fdId: FALLBACK_POST_ID,
+              fdName: "迁移兜底岗位",
+              fdOrgType: 4
+            }];
+          }
+          return [];
+        }
+      }
+    });
+
+    assert.deepEqual(elementCalls, [[TARGET_POST_ID], [FALLBACK_POST_ID]]);
+    assert.equal(resolved.fallbackCount, 1);
+    assert.equal(resolved.directTargetFallbackCount, 1);
+    assert.deepEqual(resolved.dsl.workflow.nodes[0].participants.members, [{
+      id: FALLBACK_POST_ID,
+      name: "迁移兜底岗位",
+      type: "user_or_org",
+      targetOrgType: 4
+    }]);
+    assert.deepEqual(resolved.directTargetFallbacks[0].missingTarget, {
+      fdId: TARGET_POST_ID,
+      fdName: "风电工程服务分公司_运维服务中心部门领导",
+      fdOrgType: 4
+    });
   });
 
   it("blocks conflicting structured fixed-post targets before lookup or fallback", async () => {

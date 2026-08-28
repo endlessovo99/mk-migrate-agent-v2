@@ -130,7 +130,7 @@ describe("translateLbpmProcessDefinitionXml", () => {
     }]);
   });
 
-  it("uses divergent static fixed-post handler records as direct target evidence only", () => {
+  it("uses all structured static people and divergent static posts as direct targets", () => {
     const result = translateLbpmProcessDefinitionXml(directTargetHandlerFixture());
     const reviewNode = result.workflow.nodes.find((node) => node.id === "N2");
     const formulaNode = result.workflow.nodes.find((node) => node.id === "N3");
@@ -142,7 +142,9 @@ describe("translateLbpmProcessDefinitionXml", () => {
         orgType: 8,
         class: "com.landray.kmss.sys.organization.model.SysOrgPerson",
         parent: "示例部门",
-        index: 0
+        index: 0,
+        directTargetId: "target-person-id",
+        directTargetOrgType: 8
       },
       {
         id: "target-post-id",
@@ -161,18 +163,40 @@ describe("translateLbpmProcessDefinitionXml", () => {
         class: "com.landray.kmss.sys.organization.model.SysOrgPost",
         parent: "示例部门",
         index: 2
+      },
+      {
+        id: "unchanged-person-id",
+        name: "缓存一致人员",
+        orgType: 8,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        parent: "示例部门",
+        index: 3,
+        directTargetId: "unchanged-person-id",
+        directTargetOrgType: 8
       }
     ]);
-    assert.deepEqual(reviewNode.optionalHandlerEntities, [{
-      id: "target-optional-post-id",
-      name: "目标备选岗位",
-      orgType: 4,
-      class: "com.landray.kmss.sys.organization.model.SysOrgPost",
-      parent: "示例部门",
-      index: 0,
-      directTargetId: "target-optional-post-id",
-      directTargetOrgType: 4
-    }]);
+    assert.deepEqual(reviewNode.optionalHandlerEntities, [
+      {
+        id: "target-optional-post-id",
+        name: "目标备选岗位",
+        orgType: 4,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPost",
+        parent: "示例部门",
+        index: 0,
+        directTargetId: "target-optional-post-id",
+        directTargetOrgType: 4
+      },
+      {
+        id: "unchanged-optional-person-id",
+        name: "缓存一致备选人员",
+        orgType: 8,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        parent: "示例部门",
+        index: 1,
+        directTargetId: "unchanged-optional-person-id",
+        directTargetOrgType: 8
+      }
+    ]);
     assert.deepEqual(formulaNode.handlerEntities, [{
       id: "formula-post-target-id",
       name: "公式岗位",
@@ -210,6 +234,36 @@ describe("translateLbpmProcessDefinitionXml", () => {
       index: 0,
       cachedId: "cached-ambiguous-post-id",
       targetIds: ["ambiguous-post-a", "ambiguous-post-b"]
+    }]);
+  });
+
+  it("marks one static-person position with multiple structured targets for review", () => {
+    const result = translateLbpmProcessDefinitionXml(directTargetHandlerFixture());
+    const reviewNode = result.workflow.nodes.find((node) => node.id === "N6");
+
+    assert.deepEqual(reviewNode.handlerEntities, [
+      {
+        id: "ambiguous-person-a",
+        name: "冲突人员 A",
+        orgType: 8,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        parent: "示例部门",
+        index: 0
+      },
+      {
+        id: "ambiguous-person-b",
+        name: "冲突人员 B",
+        orgType: 8,
+        class: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        parent: "示例部门",
+        index: 0
+      }
+    ]);
+    assert.deepEqual(reviewNode.directTargetAmbiguities, [{
+      attribute: "handlerIds",
+      index: 0,
+      cachedId: "cached-ambiguous-person-id",
+      targetIds: ["ambiguous-person-a", "ambiguous-person-b"]
     }]);
   });
 
@@ -272,11 +326,12 @@ function directTargetHandlerFixture() {
   const process = [
     '<process fdId="direct-target-process"><nodes>',
     '<startNode id="N1" name="开始"/>',
-    '<reviewNode id="N2" name="审批" handlerIds="cached-person-id;cached-post-id;unchanged-post-id" handlerNames="旧人员;旧岗位;未变岗位" handlerSelectType="org" optHandlerIds="cached-optional-post-id" optHandlerNames="旧备选岗位" optHandlerSelectType="org"/>',
+    '<reviewNode id="N2" name="审批" handlerIds="cached-person-id;cached-post-id;unchanged-post-id;unchanged-person-id" handlerNames="旧人员;旧岗位;未变岗位;缓存一致人员" handlerSelectType="org" optHandlerIds="cached-optional-post-id;unchanged-optional-person-id" optHandlerNames="旧备选岗位;缓存一致备选人员" optHandlerSelectType="org"/>',
     '<reviewNode id="N3" name="公式审批" handlerIds="formula-cached-post-id" handlerNames="公式岗位" handlerSelectType="formula"/>',
     '<reviewNode id="N4" name="冲突审批" handlerIds="cached-ambiguous-post-id" handlerNames="旧岗位" handlerSelectType="org"/>',
+    '<reviewNode id="N6" name="冲突人员审批" handlerIds="cached-ambiguous-person-id" handlerNames="旧人员" handlerSelectType="org"/>',
     '<endNode id="N5" name="结束"/>',
-    '</nodes><lines><line id="L1" startNodeId="N1" endNodeId="N2"/><line id="L2" startNodeId="N2" endNodeId="N3"/><line id="L3" startNodeId="N3" endNodeId="N4"/><line id="L4" startNodeId="N4" endNodeId="N5"/></lines></process>'
+    '</nodes><lines><line id="L1" startNodeId="N1" endNodeId="N2"/><line id="L2" startNodeId="N2" endNodeId="N3"/><line id="L3" startNodeId="N3" endNodeId="N4"/><line id="L4" startNodeId="N4" endNodeId="N6"/><line id="L5" startNodeId="N6" endNodeId="N5"/></lines></process>'
   ].join("");
   return `
     <java>
@@ -305,11 +360,25 @@ function directTargetHandlerFixture() {
               className: "com.landray.kmss.sys.organization.model.SysOrgPost",
               parent: "示例部门"
             })}
+            ${handlerEntry("N2", "handlerIds", 3, {
+              id: "unchanged-person-id",
+              name: "缓存一致人员",
+              orgType: 8,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+              parent: "示例部门"
+            })}
             ${handlerEntry("N2", "optHandlerIds", 0, {
               id: "target-optional-post-id",
               name: "目标备选岗位",
               orgType: 4,
               className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N2", "optHandlerIds", 1, {
+              id: "unchanged-optional-person-id",
+              name: "缓存一致备选人员",
+              orgType: 8,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPerson",
               parent: "示例部门"
             })}
             ${handlerEntry("N3", "handlerIds", 0, {
@@ -331,6 +400,20 @@ function directTargetHandlerFixture() {
               name: "冲突岗位 B",
               orgType: 4,
               className: "com.landray.kmss.sys.organization.model.SysOrgPost",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N6", "handlerIds", 0, {
+              id: "ambiguous-person-a",
+              name: "冲突人员 A",
+              orgType: 8,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPerson",
+              parent: "示例部门"
+            })}
+            ${handlerEntry("N6", "handlerIds", 0, {
+              id: "ambiguous-person-b",
+              name: "冲突人员 B",
+              orgType: 8,
+              className: "com.landray.kmss.sys.organization.model.SysOrgPerson",
               parent: "示例部门"
             })}
           </object>

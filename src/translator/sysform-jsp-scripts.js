@@ -3682,9 +3682,15 @@ function procurementPaymentWbsVisibilityCandidate(source, form) {
 
 function procurementPaymentDepartmentConsistencyCandidate(source, form) {
   const text = String(source.javascript || "");
-  if (!/list_check\(\s*["']fd_pur_pay_req["']\s*,\s*["']department["']\s*\)/.test(text)) return undefined;
-  const detailTable = fieldById(form, "fd_pur_pay_req");
-  if (!detailTable || !Array.isArray(detailTable.columns) || !detailTable.columns.some((column) => column.id === "department")) return undefined;
+  const call = text.match(/list_check\(\s*["']([^"']+)["']\s*,\s*["']([^"']+)["']\s*\)/);
+  if (!call) return undefined;
+  const [, tableId, columnId] = call;
+  const detailTable = fieldById(form, tableId);
+  if (
+    !detailTable ||
+    !Array.isArray(detailTable.columns) ||
+    !detailTable.columns.some((column) => column.id === columnId)
+  ) return undefined;
   const message = text.match(/alert\(\s*(["'])([^"']+)\1\s*\)/)?.[2] || "项目所属部门不一致，请更改!";
   return {
     index: text.indexOf("Com_Parameter.event.submit.push"),
@@ -3693,10 +3699,10 @@ function procurementPaymentDepartmentConsistencyCandidate(source, form) {
     function: [
       "function onBeforeSubmit(context) {",
       "  if (context && context.isDraft) return true",
-      "  var rows = MKXFORM.getValue(\"${table:fd_pur_pay_req}\") || []",
+      `  var rows = MKXFORM.getValue("\${table:${tableId}}") || []`,
       "  var previous = null",
       "  for (var index = 0; index < rows.length; index += 1) {",
-      "    var value = rows[index] && rows[index].department",
+      `    var value = rows[index] && rows[index][${JSON.stringify(columnId)}]`,
       "    if (value === undefined || value === null || value === \"\") continue",
       "    value = String(value)",
       "    if (previous !== null && previous !== value) {",

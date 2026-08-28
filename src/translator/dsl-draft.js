@@ -2705,12 +2705,13 @@ function participantMembersFromHandlerEntities(entities) {
   if (!Array.isArray(entities)) return [];
   return entities.map((entity) => {
     const directTargetId = String(entity?.directTargetId || "").trim();
-    if (directTargetId && Number(entity?.directTargetOrgType) === 4) {
+    const directTargetOrgType = Number(entity?.directTargetOrgType);
+    if (directTargetId && [4, 8].includes(directTargetOrgType)) {
       return {
         id: directTargetId,
         name: entity.name || directTargetId,
         type: "user_or_org",
-        targetOrgType: 4
+        targetOrgType: directTargetOrgType
       };
     }
     return pruneUndefined({

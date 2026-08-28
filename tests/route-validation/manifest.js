@@ -34,7 +34,6 @@ const NATIVE_FORMULA_SUCCESS_OPERATIONS = Object.freeze([
 
 const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
-  "search-org",
   "get-element-info",
   ...SUCCESS_OPERATIONS.slice(1, -1),
   "save-workflow-draft",
@@ -74,7 +73,6 @@ const CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "get-xform-desktop-digest",
   "get-xform-desktop-module-sha256",
   "get-xform-desktop-module-sha256",
-  "search-org",
   "get-element-info",
   "search-org",
   "search-org",
@@ -361,13 +359,13 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       id: "participant-explicit-override-success",
       source: {
         kind: "paired",
-        relativePath: "paired"
+        relativePath: "companion-person-source"
       },
       reviewScenario: "accept",
       newoaScenario: "persist",
       confirmWrite: true,
       participantOverrides: [{
-        sourceId: "legacy-route-reviewer",
+        sourceId: "legacy-companion-reviewer",
         targetFdId: "route-explicit-person-override"
       }],
       expected: {

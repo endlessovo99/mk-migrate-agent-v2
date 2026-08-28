@@ -89,6 +89,54 @@ describe("execute CLI", () => {
     ]);
   });
 
+  it("passes repeated direct participant overrides to the executor", async () => {
+    const { request } = await runExecuteCli({
+      argv: [
+        "--direct-participant-override",
+        " legacy-direct-a = target-person-a ",
+        "--direct-participant-override",
+        "legacy-direct-b=target-person-b"
+      ]
+    });
+
+    assert.deepEqual(request.options.directParticipantOverrides, [
+      { sourceTargetId: "legacy-direct-a", targetFdId: "target-person-a" },
+      { sourceTargetId: "legacy-direct-b", targetFdId: "target-person-b" }
+    ]);
+  });
+
+  it("passes explicit authorization for missing direct-person fallback", async () => {
+    const { request } = await runExecuteCli({
+      argv: ["--allow-missing-direct-person-fallback"]
+    });
+
+    assert.equal(request.options.allowMissingDirectPersonFallback, true);
+  });
+
+  it("passes explicit authorization for missing direct-post fallback", async () => {
+    const { request } = await runExecuteCli({
+      argv: ["--allow-missing-direct-post-fallback"]
+    });
+
+    assert.equal(request.options.allowMissingDirectPostFallback, true);
+  });
+
+  it("passes repeated exact direct-person fallback ids", async () => {
+    const { request } = await runExecuteCli({
+      argv: [
+        "--direct-person-fallback-id",
+        " legacy-person-a ",
+        "--direct-person-fallback-id",
+        "legacy-person-b"
+      ]
+    });
+
+    assert.deepEqual(request.options.directPersonFallbackIds, [
+      "legacy-person-a",
+      "legacy-person-b"
+    ]);
+  });
+
   it("rejects malformed or duplicate explicit participant overrides before execution", async () => {
     for (const argv of [
       ["--participant-override", "missing-separator"],

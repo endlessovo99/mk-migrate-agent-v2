@@ -9,8 +9,13 @@ describe("Route-validation formula participants", { concurrency: false }, () => 
 
     assert.equal(dslNodes.get("N2").participants.mode, "explicit");
     assert.deepEqual(
-      dslNodes.get("N2").participants.members.map((member) => member.sourceId),
-      ["legacy-route-reviewer"]
+      dslNodes.get("N2").participants.members,
+      [{
+        id: "legacy-route-reviewer",
+        name: "Route Reviewer",
+        type: "user_or_org",
+        targetOrgType: 8
+      }]
     );
     assert.deepEqual(
       ["N4", "N5", "N6", "N7"].map((nodeId) =>

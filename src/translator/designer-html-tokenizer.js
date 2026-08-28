@@ -93,7 +93,7 @@ export function splitDirectChildRows(fragment) {
   return [...fragment.matchAll(/<tr\b[\s\S]*?<\/tr>/gi)].map((match) => match[0]);
 }
 
-export function splitDirectChildCells(rowHtml) {
+export function splitDirectChildCells(rowHtml, { includeUnquotedWidth = false } = {}) {
   const cells = [];
   let tableDepth = 0;
   let cell;
@@ -112,6 +112,10 @@ export function splitDirectChildCells(rowHtml) {
       const bodyStart = openMatch ? openMatch[0].length : 0;
       const attributesText = cell.attrs || openMatch?.[2] || "";
       const attrs = parseXmlAttributes(attributesText);
+      const className = attrValue(attributesText, "class");
+      if (className && attrs.class === undefined) attrs.class = className;
+      const width = includeUnquotedWidth ? attrValue(attributesText, "width") : "";
+      if (width && attrs.width === undefined) attrs.width = width;
       const rowspan = attrValue(attributesText, "rowspan");
       if (rowspan && attrs.rowspan === undefined && attrs.rowSpan === undefined) {
         attrs.rowspan = rowspan;

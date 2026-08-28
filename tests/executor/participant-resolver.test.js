@@ -558,6 +558,87 @@ describe("resolveWorkflowParticipants", () => {
     assert.deepEqual(client.elementCalls, [["current-target-id"]]);
   });
 
+  it("applies distinct direct-target overrides after exact current type validation", async () => {
+    const dsl = dslWithExplicitMembers([
+      {
+        id: "legacy-direct-person-a",
+        name: "张康永",
+        type: "user_or_org",
+        targetOrgType: 8
+      },
+      {
+        id: "legacy-direct-person-b",
+        name: "郑汉敏",
+        type: "user_or_org",
+        targetOrgType: 8
+      }
+    ]);
+    const client = new SearchClient({}, {
+      "current-person-a": [currentOrg({
+        fdId: "current-person-a",
+        fdName: "张康永",
+        fdOrgType: 8
+      })],
+      "current-person-b": [currentOrg({
+        fdId: "current-person-b",
+        fdName: "admin-ce",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      directParticipantOverrides: [
+        { sourceTargetId: "legacy-direct-person-a", targetFdId: "current-person-a" },
+        { sourceTargetId: "legacy-direct-person-b", targetFdId: "current-person-b" }
+      ]
+    });
+
+    assert.deepEqual(
+      result.dsl.workflow.nodes[1].participants.members.map((member) => member.id),
+      ["current-person-a", "current-person-b"]
+    );
+    assert.equal(result.directOverrideCount, 2);
+    assert.equal(result.directOverrideIdentityCount, 2);
+    assert.deepEqual(result.directOverrideTargetIds, ["current-person-a", "current-person-b"]);
+    assert.deepEqual(
+      result.directOverrides.map((override) => override.sourceTargetEvidence.fdId),
+      ["legacy-direct-person-a", "legacy-direct-person-b"]
+    );
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [["current-person-a"], ["current-person-b"]]);
+  });
+
+  it("rejects a direct-target override whose current target type changed", async () => {
+    const dsl = dslWithExplicitMembers([{
+      id: "legacy-direct-person",
+      name: "审批人",
+      type: "user_or_org",
+      targetOrgType: 8
+    }]);
+    const client = new SearchClient({}, {
+      "current-department": [currentOrg({
+        fdId: "current-department",
+        fdName: "审批部门",
+        fdOrgType: 2
+      })]
+    });
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        directParticipantOverrides: [{
+          sourceTargetId: "legacy-direct-person",
+          targetFdId: "current-department"
+        }]
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) => issue.reason === "direct_override_target_type_mismatch")
+    );
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [["current-department"]]);
+  });
+
   it("applies an explicit sourceId override only after exact current-target validation", async () => {
     const sourceId = "legacy-ambiguous-person";
     const targetFdId = "current-mkpaas-person";
@@ -613,6 +694,65 @@ describe("resolveWorkflowParticipants", () => {
       referenceCount: 1,
       paths: ["/workflow/nodes/1/participants/members/0"]
     }]);
+  });
+
+  it("revalidates a parentless source post only when the same current id and name match", async () => {
+    const sourceId = "current-parentless-post";
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "财务部_部长",
+      sourceId,
+      sourceOrgType: 4,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
+      sourceParentName: undefined
+    })]);
+    const client = new SearchClient({}, {
+      [sourceId]: [currentOrg({
+        fdId: sourceId,
+        fdName: "财务部_部长",
+        fdOrgType: 4,
+        fdParentName: ""
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      participantOverrides: [{ sourceId, targetFdId: sourceId }]
+    });
+
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].id, sourceId);
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[sourceId]]);
+    assert.equal(result.overrides[0].exactSourceIdRevalidation, true);
+  });
+
+  it("rejects parentless same-id revalidation when the current target name changed", async () => {
+    const sourceId = "reassigned-parentless-post";
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "原岗位",
+      sourceId,
+      sourceOrgType: 4,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
+      sourceParentName: undefined
+    })]);
+    const client = new SearchClient({}, {
+      [sourceId]: [currentOrg({
+        fdId: sourceId,
+        fdName: "其他岗位",
+        fdOrgType: 4,
+        fdParentName: ""
+      })]
+    });
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        participantOverrides: [{ sourceId, targetFdId: sourceId }]
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) => issue.reason === "override_target_name_mismatch")
+    );
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[sourceId]]);
   });
 
   it("rejects an explicit participant override whose current target has an incompatible org type", async () => {
@@ -1307,6 +1447,55 @@ describe("executeDsl participant resolution seam", () => {
     assert.equal(stage.overrides[0].target.fdId, targetFdId);
     assert.equal(warning.details.referenceCount, 1);
     assert.equal(warning.details.overrides[0].sourceEvidence.sourceParentName, "审批部");
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[targetFdId]]);
+  });
+
+  it("reports an audited warning when execution applies a direct participant override", async () => {
+    const sourceTargetId = "legacy-direct-person";
+    const targetFdId = "current-direct-person";
+    const dsl = dslWithExplicitMembers([{
+      id: sourceTargetId,
+      name: "郑汉敏",
+      type: "user_or_org",
+      targetOrgType: 8
+    }]);
+    const client = new CompleteSearchClient({}, {
+      [targetFdId]: [currentOrg({
+        fdId: targetFdId,
+        fdName: "admin-ce",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await executeDsl(dsl, {
+      client,
+      credentials: { username: "route-user", encryptedPassword: "route-password" },
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      directParticipantOverrides: [{ sourceTargetId, targetFdId }],
+      now: new Date("2026-07-10T10:00:00.000Z")
+    });
+    const workflow = JSON.parse(client.savedTemplate.mechanisms.lbpmTemplate[0].fdContent);
+    const members = workflow.elements.find((element) => element.id === "N-review").handlers.members;
+    const stage = result.apiStages.find((item) => item.name === "resolveWorkflowParticipants");
+    const warning = result.diagnostics.find((item) => (
+      item.code === "workflow.participant_direct_override_applied"
+    ));
+
+    assert.equal(result.ok, true);
+    assert.equal(result.status, "written_with_warnings");
+    assert.deepEqual(members.map(({ id, name }) => ({ id, name })), [{
+      id: targetFdId,
+      name: "admin-ce"
+    }]);
+    assert.equal(stage.directOverrideCount, 1);
+    assert.equal(stage.directOverrideIdentityCount, 1);
+    assert.deepEqual(stage.directOverrideTargetIds, [targetFdId]);
+    assert.equal(stage.directOverrides[0].sourceTargetEvidence.fdId, sourceTargetId);
+    assert.equal(stage.directOverrides[0].target.fdId, targetFdId);
+    assert.equal(warning.details.referenceCount, 1);
+    assert.equal(warning.details.overrides[0].sourceTargetEvidence.fdName, "郑汉敏");
     assert.deepEqual(client.calls, []);
     assert.deepEqual(client.elementCalls, [[targetFdId]]);
   });

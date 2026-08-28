@@ -60,10 +60,12 @@ function projectPlainRoot(root) {
       ? root.props?.rows
       : 1
   });
+  const colsStyle = completeSourceWidthColsStyle(projected.cells, projected.columns);
   return {
     id: root.id,
     rows: projected.rows,
     columns: projected.columns,
+    ...(colsStyle ? { colsStyle } : {}),
     cells: projected.cells.map((cell) => ({
       id: cell.id,
       ownerNodeId: root.id,
@@ -76,6 +78,25 @@ function projectPlainRoot(root) {
       rowspan: 1
     }))
   };
+}
+
+function completeSourceWidthColsStyle(cells, columns) {
+  const weights = Array.from({ length: columns });
+  for (const cell of cells) {
+    const column = integerOr(cell.column, -1);
+    const span = positiveInteger(cell.colspan) || 1;
+    if (column < 0 || column + span > columns || !Number.isFinite(cell.widthWeight) || cell.widthWeight <= 0) {
+      return undefined;
+    }
+    const weight = cell.widthWeight / span;
+    for (let index = column; index < column + span; index += 1) {
+      if (weights[index] !== undefined && Math.abs(weights[index] - weight) > 1e-9) return undefined;
+      weights[index] = weight;
+    }
+  }
+  if (!weights.length || weights.some((weight) => weight === undefined)) return undefined;
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  return weights.map((weight, index) => ({ startIndex: index, count: 1, value: percentageWidth(weight, total) }));
 }
 
 function flattenNode({

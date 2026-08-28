@@ -161,7 +161,11 @@ export async function executeDsl(input, options = {}) {
       client,
       targetBaseUrl: baseUrl,
       fallbackFdIds: options.fallbackFdIds,
-      participantOverrides: options.participantOverrides
+      participantOverrides: options.participantOverrides,
+      directParticipantOverrides: options.directParticipantOverrides,
+      allowMissingDirectPersonFallback: options.allowMissingDirectPersonFallback,
+      allowMissingDirectPostFallback: options.allowMissingDirectPostFallback,
+      directPersonFallbackIds: options.directPersonFallbackIds
     });
     executableDsl = participantResolution.dsl;
     apiStages[apiStages.length - 1].status = "ok";
@@ -189,6 +193,31 @@ export async function executeDsl(input, options = {}) {
         }
       });
     }
+    if (participantResolution.directOverrideCount > 0) {
+      const directOverrideAudits = redactCredentialValuesDeep(
+        participantResolution.directOverrides,
+        credentials
+      );
+      apiStages[apiStages.length - 1].directOverrideCount =
+        participantResolution.directOverrideCount;
+      apiStages[apiStages.length - 1].directOverrideIdentityCount =
+        participantResolution.directOverrideIdentityCount;
+      apiStages[apiStages.length - 1].directOverrideTargetIds =
+        participantResolution.directOverrideTargetIds;
+      apiStages[apiStages.length - 1].directOverrides = directOverrideAudits;
+      diagnostics.push({
+        level: "warning",
+        code: "workflow.participant_direct_override_applied",
+        message: "Explicit direct-target workflow participant overrides were validated and applied for this execution.",
+        path: "/workflow/participants",
+        details: {
+          referenceCount: participantResolution.directOverrideCount,
+          identityCount: participantResolution.directOverrideIdentityCount,
+          targetFdIds: participantResolution.directOverrideTargetIds,
+          overrides: directOverrideAudits
+        }
+      });
+    }
     if (participantResolution.fallbackCount > 0) {
       const fallbackTargetsByOrgType = redactFallbackTargetNames(
         participantResolution.fallbackTargetsByOrgType,
@@ -201,16 +230,33 @@ export async function executeDsl(input, options = {}) {
         apiStages[apiStages.length - 1].fallbackTargetId = participantResolution.fallbackTargetId;
       }
       apiStages[apiStages.length - 1].fallbackTargetsByOrgType = fallbackTargetsByOrgType;
+      const directTargetFallbacks = redactCredentialValuesDeep(
+        participantResolution.directTargetFallbacks || [],
+        credentials
+      );
+      if (participantResolution.directTargetFallbackCount > 0) {
+        apiStages[apiStages.length - 1].directTargetFallbackCount =
+          participantResolution.directTargetFallbackCount;
+        apiStages[apiStages.length - 1].directTargetFallbackIdentityCount =
+          participantResolution.directTargetFallbackIdentityCount;
+        apiStages[apiStages.length - 1].directTargetFallbacks =
+          directTargetFallbacks;
+      }
       diagnostics.push({
         level: "warning",
         code: "workflow.participant_sit_fallback_applied",
-        message: "Unresolved source workflow participants were replaced with the configured temporary type-specific fallback identities.",
+        message: "Unresolved workflow participants were replaced with the configured temporary type-specific fallback identities.",
         path: "/workflow/participants",
         details: {
           referenceCount: participantResolution.fallbackCount,
           identityCount: participantResolution.fallbackIdentityCount,
           targetFdIds: participantResolution.fallbackTargetIds,
-          targetsByOrgType: fallbackTargetsByOrgType
+          targetsByOrgType: fallbackTargetsByOrgType,
+          ...(participantResolution.directTargetFallbackCount > 0 ? {
+            directTargetReferenceCount: participantResolution.directTargetFallbackCount,
+            directTargetIdentityCount: participantResolution.directTargetFallbackIdentityCount,
+            directTargetFallbacks
+          } : {})
         }
       });
     }

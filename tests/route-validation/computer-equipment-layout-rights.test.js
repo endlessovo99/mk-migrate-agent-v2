@@ -8,6 +8,47 @@ const fixture =
   "tests/fixtures/source2/167017372174045e6d7c09c4d3a964fc";
 
 describe("computer equipment form layout and node rights Route-validation", () => {
+  it("uses the visible requirements caption as the rich-text title without a second control", () => {
+    const source = cleanSourceFile(fixture);
+    const draft = draftSourceDraft(source);
+    const fieldId = "fd_365b19d6c299ea";
+    const captionId = "fd_3258ee6079d39c";
+    const field = draft.form.fields.find((item) => item.id === fieldId);
+
+    assert.equal(field?.title, "需求情况");
+    assert.equal(field?.componentId, "xform-rich-text");
+    assert.equal(field?.sourceProps.designerValues.label, "补充");
+    assert.equal(field?.sourceProps.metadataAttributes.label, "补充");
+    assert.deepEqual(field?.sourceProps.boundCaption, {
+      id: captionId,
+      content: "需求情况",
+      relation: "adjacent-title-cell"
+    });
+    assert.equal(source.form.controls.some((item) => item.id === captionId), false);
+    assert.deepEqual(rowRefs(source.form.layout, "row-2"), [fieldId]);
+    assert.equal(
+      draft.form.fields.find((item) => item.title.startsWith("关于员工领用电脑"))?.type,
+      "description"
+    );
+
+    const trusted = createTrustedMigrationDsl(source, draft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-test",
+      checkedAt: "2026-08-28T00:00:00.000Z"
+    });
+    const prepared = prepareSample(trusted);
+    const readback = prepared.verify(prepared.update);
+    const nativeField = readback.form.fields.find((item) => item.id === fieldId);
+    const nativeRow = readback.form.layoutRows.find((row) => row.rootNodeId === "layout.row-2");
+
+    assert.equal(readback.partitions.form, "verified");
+    assert.equal(nativeField?.title, "需求情况");
+    assert.equal(nativeField?.component, "xform-rich-text");
+    assert.equal(readback.form.fields.some((item) => item.id === captionId), false);
+    assert.deepEqual(nativeRow?.fields, [fieldId]);
+    assert.equal(nativeRow?.columns, 1);
+  });
+
   it("preserves the five-column type grid content and source order", () => {
     const source = cleanSourceFile(fixture);
     const draft = draftSourceDraft(source);

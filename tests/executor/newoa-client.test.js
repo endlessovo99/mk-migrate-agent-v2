@@ -287,10 +287,12 @@ describe("NewoaClient", () => {
     );
   });
 
-  it("allows temporary organization fallbacks on the Shanghai Electric development origin only at its configured port", () => {
+  it("allows temporary organization fallbacks only on the configured Shanghai Electric development origins", () => {
     assert.equal(allowsTemporaryOrgFallbacks("http://oa-dev.shanghai-electric.com:8088/"), true);
+    assert.equal(allowsTemporaryOrgFallbacks("http://oadev.shanghai-electric.com/"), true);
     assert.equal(allowsTemporaryOrgFallbacks("http://oa-dev.shanghai-electric.com"), false);
     assert.equal(allowsTemporaryOrgFallbacks("http://oa-dev.shanghai-electric.com:8089"), false);
+    assert.equal(allowsTemporaryOrgFallbacks("https://oadev.shanghai-electric.com"), false);
   });
 
   it("uses the canonical configured origin for client requests", async () => {

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-cell-captions</string></void>
+  <void method="put"><string>fdName</string><string>Cross-cell captions</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;0,1&quot; rowspan=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;brief_caption&quot;,content:&quot;需求概述&quot;}&apos;&gt;需求概述&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0,1&quot; rowspan=&quot;2&quot; column=&quot;1,2,3&quot; colspan=&quot;3&quot;&gt;&lt;img fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_brief&quot;,label:&quot;内部备注&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;&quot;}&apos;/&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;&lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_applicant&quot;,content:&quot;申请人&quot;}&apos;&gt;申请人&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;1&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_applicant&quot;,label:&quot;申请者姓名&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;&quot;}&apos;/&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;items_caption&quot;,content:&quot;申请明细&quot;}&apos;&gt;申请明细&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;3&quot; column=&quot;1&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_items&quot;,label:&quot;明细表1&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;&quot;}&apos;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_item_name&quot;,label:&quot;名称&quot;}&apos;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;plain_note&quot;,content:&quot;请按实际情况填写&quot;}&apos;&gt;请按实际情况填写&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;4&quot; column=&quot;1&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_note_value&quot;,label:&quot;说明内容&quot;,_label_bind:&quot;false&quot;}&apos;/&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;warning_note&quot;,content:&quot;重要提示&quot;,color:&quot;#FF0000&quot;}&apos;&gt;重要提示&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;5&quot; column=&quot;1&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_warning_value&quot;,label:&quot;处理意见&quot;,_label_bind:&quot;false&quot;}&apos;/&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;6,7&quot; rowspan=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;group_caption&quot;,content:&quot;项目资料&quot;}&apos;&gt;项目资料&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;6&quot; column=&quot;1&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_project_name&quot;,label:&quot;项目名称&quot;,_label_bind:&quot;false&quot;}&apos;/&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;7&quot; column=&quot;1&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_project_code&quot;,label:&quot;项目编码&quot;,_label_bind:&quot;false&quot;}&apos;/&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;8&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;range_caption&quot;,content:&quot;时间范围&quot;}&apos;&gt;时间范围&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;8&quot; column=&quot;1&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_start&quot;,label:&quot;开始&quot;,_label_bind:&quot;false&quot;}&apos;/&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_end&quot;,label:&quot;结束&quot;,_label_bind:&quot;false&quot;}&apos;/&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;9&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;conflicting_caption&quot;,content:&quot;保留的分区&quot;}&apos;&gt;保留的分区&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;9&quot; column=&quot;1&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_explicit&quot;,label:&quot;正式字段名&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;other_caption&quot;}&apos;/&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;10&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;hidden_caption&quot;,content:&quot;隐藏值说明&quot;}&apos;&gt;隐藏值说明&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;10&quot; column=&quot;1&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_hidden&quot;,label:&quot;隐藏值&quot;,_label_bind:&quot;false&quot;}&apos;/&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=&quot;td_normal_title&quot; row=&quot;11&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;shared_caption&quot;,content:&quot;收件信息&quot;}&apos;&gt;收件信息&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;11&quot; column=&quot;1&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_recipient&quot;,label:&quot;收件人&quot;,_label_bind:&quot;false&quot;}&apos;/&gt;&lt;/td&gt;
+     &lt;td row=&quot;11&quot; column=&quot;2&quot;&gt;&lt;input fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_phone&quot;,label:&quot;电话&quot;,_label_bind:&quot;false&quot;}&apos;/&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_brief&quot; label=&quot;内部备注&quot; type=&quot;RTF&quot; length=&quot;1000000&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_applicant&quot; label=&quot;申请者姓名&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_items&quot; label=&quot;明细表1&quot;&gt;&lt;extendSimpleProperty name=&quot;fd_item_name&quot; label=&quot;名称&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_note_value&quot; label=&quot;说明内容&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_warning_value&quot; label=&quot;处理意见&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_project_name&quot; label=&quot;项目名称&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_project_code&quot; label=&quot;项目编码&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_start&quot; label=&quot;开始&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_end&quot; label=&quot;结束&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_explicit&quot; label=&quot;正式字段名&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_hidden&quot; label=&quot;隐藏值&quot; type=&quot;String&quot; canShow=&quot;false&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_recipient&quot; label=&quot;收件人&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_phone&quot; label=&quot;电话&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

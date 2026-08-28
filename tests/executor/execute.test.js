@@ -177,6 +177,33 @@ describe("executeDsl", () => {
     );
   });
 
+  it("preserves an existing workflow during an explicitly targeted form-only update", async () => {
+    const client = new FakeNewoaClient();
+    const dsl = sampleTrustedDsl();
+    const options = {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    };
+    const created = await executeDsl(dsl, options);
+    assert.equal(created.ok, true);
+    const before = await client.getTemplate(created.templateId);
+    delete dsl.workflow;
+    client.calls = [];
+
+    const updated = await executeDsl(dsl, { ...options, targetTemplateId: created.templateId });
+    assert.equal(updated.ok, true, JSON.stringify(updated.diagnostics));
+    assert.deepEqual(updated.createdFdIds, []);
+    assert.deepEqual(updated.updatedFdIds, [created.templateId]);
+    assert.equal(
+      client.calls.some((call) => ["addTemplate", "saveWorkflowDraft", "getWorkflowTemplateDetail"].includes(call.name)),
+      false
+    );
+    const after = await client.getTemplate(created.templateId);
+    assert.deepEqual(after.mechanisms.lbpmTemplate, before.mechanisms.lbpmTemplate);
+  });
+
   it("blocks targeted updates unless the existing template is an MK_TEST draft", async () => {
     const client = new FakeNewoaClient();
     const dsl = sampleTrustedDsl();
@@ -3768,6 +3795,31 @@ describe("executeDsl", () => {
     });
     assert.equal(capability.ok, true);
     assert.equal(capability.deploymentId, "shanghai-electric-dev-2026-08-16");
+    assert.equal(
+      inspectNativeFormRuleRuntimeBundleHashes({
+        runtimeSha256: "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+        ideSha256: "3e1e44c44d665b34f6279735f610aa80a7f644515359b860fea1bd32dca347bb",
+        expectedRuntimeSha256: capability.expectedRuntimeSha256,
+        expectedIdeSha256: capability.expectedIdeSha256
+      }).ok,
+      true
+    );
+  });
+
+  it("accepts the verified Shanghai Electric oadev XForm deployment pair", () => {
+    const digest = {
+      [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeModule]: {
+        hash: "a3ec998c10af6bbce34dd6caffe4a203"
+      },
+      [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideModule]: {
+        hash: "4dc12919af1531c82de2356c4ded8777"
+      }
+    };
+    const capability = inspectNativeFormRuleRuntimeDigest(digest, {
+      baseUrl: "http://oadev.shanghai-electric.com"
+    });
+    assert.equal(capability.ok, true);
+    assert.equal(capability.deploymentId, "shanghai-electric-oadev-2026-08-26");
     assert.equal(
       inspectNativeFormRuleRuntimeBundleHashes({
         runtimeSha256: "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
