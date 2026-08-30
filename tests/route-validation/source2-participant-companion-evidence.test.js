@@ -45,10 +45,26 @@ describe("Route-validation Source2 companion participant evidence", {
       .find((node) => node.id === "N4")
       .participants.members[0];
     const trusted = trustRouteDraft(sourceDraft, dslDraft);
-    let searchCalled = false;
+    const searchedKeys = [];
     const client = {
-      async searchOrg() {
-        searchCalled = true;
+      async searchOrg(key, orgType) {
+        searchedKeys.push(key);
+        if (key === "683-SYS-ZKY" && Number(orgType) === 8) {
+          return [{
+            fdId: "current-system-support",
+            fdName: "张康永-系统支持",
+            fdOrgType: 8,
+            fdLoginName: "683-SYS-ZKY"
+          }];
+        }
+        if (key === "总经理" && Number(orgType) === 4) {
+          return [{
+            fdId: "current-general-manager-post",
+            fdName: "总经理",
+            fdOrgType: 4,
+            fdParentName: "电气数科公司领导"
+          }];
+        }
         return [];
       },
       async getElementInfo(targets) {
@@ -83,10 +99,17 @@ describe("Route-validation Source2 companion participant evidence", {
       .find((node) => node.id === "N4")
       .participants.members[0];
 
-    assert.equal(searchCalled, false);
-    assert.equal(resolved.overrideCount, 1);
+    assert.equal(searchedKeys.includes("68300032"), false);
+    assert.equal(resolved.overrideCount, 3);
     assert.equal(resolved.overrideIdentityCount, 1);
     assert.deepEqual(resolved.overrideTargetIds, [targetFdId]);
+    assert.equal(
+      Object.values(resolved.dsl.template.authorization)
+        .flatMap((value) => Array.isArray(value) ? value : [])
+        .filter((member) => member.sourceId === sourceId)
+        .every((member) => member.id === targetFdId),
+      true
+    );
     assert.equal(resolvedMember.id, targetFdId);
     assert.equal(resolvedMember.name, "张康永");
     assert.equal(resolvedMember.targetOrgType, 8);

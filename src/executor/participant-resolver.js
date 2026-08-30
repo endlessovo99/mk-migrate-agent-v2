@@ -6,6 +6,14 @@ import {
 
 const PARTICIPANT_RESOLUTION_STAGE = "resolveWorkflowParticipants";
 const SIT_FALLBACK_REASONS = new Set(["not_found", "missing_source_evidence", "search_failed"]);
+const TEMPLATE_AUTHORIZATION_COLLECTIONS = Object.freeze([
+  "readers",
+  "editors",
+  "allReaders",
+  "allEditors",
+  "temporaryReaders",
+  "temporaryEditors"
+]);
 
 /** NewOA orgType: 1 机构, 2 部门, 4 岗位, 8 人员, 16 群组, 32 角色, 128 公共岗位, 256 身份 */
 export const SIT_PARTICIPANT_FALLBACKS = Object.freeze({
@@ -806,12 +814,25 @@ function deduplicateResolvedParticipantCollections(dsl) {
       });
     }
   }
+  const authorization = dsl?.template?.authorization;
+  if (!authorization || typeof authorization !== "object") return;
+  for (const collectionName of TEMPLATE_AUTHORIZATION_COLLECTIONS) {
+    if (!Array.isArray(authorization[collectionName])) continue;
+    const seen = new Set();
+    authorization[collectionName] = authorization[collectionName].filter((member) => {
+      const id = normalizeText(member?.id);
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }
 }
 
 function isSitFallbackEligible(resolution, {
   allowMissingDirectPersonFallback = false,
   allowMissingDirectPostFallback = false
 } = {}) {
+  if (resolution.scope === "template_authorization") return false;
   if (resolution.kind === "target") {
     if (resolution.issue?.reason !== "not_found") return false;
     if (resolution.explicitDirectPersonFallback === true) return true;
@@ -1004,6 +1025,32 @@ function collectParticipantIdentities(dsl) {
       });
     }
   });
+
+  const authorization = dsl?.template?.authorization;
+  for (const collectionName of TEMPLATE_AUTHORIZATION_COLLECTIONS) {
+    const members = authorization?.[collectionName];
+    if (!Array.isArray(members)) continue;
+    members.forEach((member, memberIndex) => {
+      if (!member || typeof member !== "object") return;
+      const kind = hasSourceEvidence(member) ? "source" : "target";
+      const key = participantIdentityKey(member, kind);
+      const path = `/template/authorization/${collectionName}/${memberIndex}`;
+      const current = identities.get(key);
+      if (current) {
+        current.members.push(member);
+        current.paths.push(path);
+        current.scope = "template_authorization";
+        return;
+      }
+      identities.set(key, {
+        kind,
+        scope: "template_authorization",
+        member,
+        members: [member],
+        paths: [path]
+      });
+    });
+  }
 
   return identities;
 }
@@ -1322,14 +1369,19 @@ function participantIdentityKey(member, kind) {
       normalizeOrgType(member.targetOrgType)
     ]);
   }
+  const sourceOrgType = normalizeOrgType(member.sourceOrgType);
+  const sourceLoginName = normalizeText(member.sourceLoginName);
+  const identityName = sourceOrgType === "8" && sourceLoginName
+    ? ""
+    : normalizeText(member.name);
   return JSON.stringify([
     "source",
     normalizeText(member.sourceId),
-    normalizeText(member.name),
-    normalizeOrgType(member.sourceOrgType),
+    identityName,
+    sourceOrgType,
     normalizeText(member.sourceOrgClass),
     normalizeText(member.sourceParentName),
-    normalizeText(member.sourceLoginName)
+    sourceLoginName
   ]);
 }
 

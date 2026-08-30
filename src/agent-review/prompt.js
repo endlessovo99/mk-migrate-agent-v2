@@ -7,7 +7,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v11";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v12";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -77,6 +77,8 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Legacy APIs listed in jspTranslationPlaybook are semantic examples and guidance; still verify each patch against the concrete source/action context.",
       "Detail-table control scripts use tableId plus controlId; preserve rowNum for row-scoped APIs.",
       "MKXFORM.getFormValues returns each detail table as a state object; read rows from its values array. A direct array may be accepted only as a compatibility fallback.",
+      "Legacy text-value rule: branchProvenance.conditions[].emptyText=true means the source read a scalar text input's DOM .value, whose unset value is an empty string. Preserve that with String(MKXFORM.getValue('fieldId') ?? '') or a stable raw == null ? '' : String(raw) alias before testing it. A raw getValue read, String(raw), or raw || '' does not preserve this contract. Do not apply this coercion to organization objects, arrays, or numeric fields without matching source text evidence. Keep the immutable emptyText evidence unchanged.",
+      "Static readOnly=true fields are source restrictions. Preserve props.readOnly and do not weaken them to editable during review.",
       "When a detail-table function refers to a runtime control id inside a detail row, use ${table:<sourceDetailTableId>}.<controlId>; the executor resolves this placeholder to mk_model_fd_... at write time.",
       "Whole-row or whole detail-table container visibility/required state must prefer native formRules.linkage against layout sourceMarkers (including detail-table-only rows). Do not use ${table:<detailTableId>} or the detail-table field id as an MKXFORM.setFieldAttr target.",
       "Only the first sourceMarker on a layout row is persisted as migrationRowId. When a row lists multiple sourceMarkers, rewrite every co-located alias to that primary marker in MKXFORM.setFieldAttr calls.",

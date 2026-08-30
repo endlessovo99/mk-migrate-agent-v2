@@ -1144,7 +1144,7 @@ function sourceBoundOnLoadCase() {
     ].join("\n"),
     functionText: [
       "function onLoad() {",
-      "  var current = MKXFORM.getValue('fd_subject')",
+      "  var current = String(MKXFORM.getValue('fd_subject') ?? '')",
       "  if (current === 'A') MKXFORM.setValue('fd_amount', 'matched')",
       "  else MKXFORM.setValue('fd_amount', 'other')",
       "}"

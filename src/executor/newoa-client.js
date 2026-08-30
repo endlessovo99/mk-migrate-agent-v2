@@ -203,6 +203,19 @@ export class NewoaClient {
     return body?.data || { fdId: payload.fdId };
   }
 
+  async getOfficialForm(fdId) {
+    const body = await this.postJson("sys-xform", "sysXFormOfficial/loadById", {
+      fdId, mechanisms: { load: "*" }
+    });
+    if (body?.data?.fdId !== fdId) throw new Error("official form readback id mismatch");
+    return body.data;
+  }
+
+  async saveOfficialForm(payload) {
+    const body = await this.postJson("sys-xform", "sysXFormOfficial/save", payload);
+    return body?.data || { fdId: payload.fdId };
+  }
+
   async saveWorkflowDraft(payload) {
     if (payload?.isDraft !== true) {
       throw clientStageError("saveWorkflowDraft", "Workflow definition writes must remain draft saves.");

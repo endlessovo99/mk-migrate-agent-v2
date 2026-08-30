@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   edgeConditionText as sharedEdgeConditionText,
   isExplicitDefaultEdge,
@@ -57,8 +58,15 @@ export function applyWorkflowPayload(template, dsl) {
   lbpm.fdStatus = "draft";
   lbpm.fdPublishType ||= "instant";
   lbpm.isDraft = true;
+  applyTemplateAuthorization(next, dsl.template?.authorization);
   lbpm.fdReaders = next.fdReaders || lbpm.fdReaders || [];
   lbpm.fdEditors = next.fdEditors || lbpm.fdEditors || [];
+  if (dsl.workflow.process?.timeoutNotification) {
+    lbpm.fdTimeoutStrategiesOfNode = [buildTimeoutNotificationStrategy(
+      dsl.workflow.process.timeoutNotification,
+      dsl.workflow.process.id
+    )];
+  }
   const templateFormAuths = buildTemplateFormAuths(dsl.workflow, {
     form: dsl.form,
     mainTableName: next.mechanisms["sys-xform"]?.fdTableName || next.fdTableName || ""
@@ -68,6 +76,100 @@ export function applyWorkflowPayload(template, dsl) {
   }
 
   return next;
+}
+
+const TEMPLATE_AUTHORIZATION_NATIVE_FIELDS = Object.freeze([
+  ["readers", "fdReaders"],
+  ["editors", "fdEditors"],
+  ["allReaders", "fdAllReaders"],
+  ["allEditors", "fdAllEditors"],
+  ["temporaryReaders", "fdTmpReaders"],
+  ["temporaryEditors", "fdTmpEditors"]
+]);
+
+function applyTemplateAuthorization(template, authorization) {
+  if (!authorization || typeof authorization !== "object") return;
+  for (const [dslKey, nativeKey] of TEMPLATE_AUTHORIZATION_NATIVE_FIELDS) {
+    template[nativeKey] = nativeAuthorizationMembers(authorization[dslKey], dslKey);
+  }
+}
+
+function nativeAuthorizationMembers(value, collectionName) {
+  if (!Array.isArray(value)) {
+    throw workflowDraftError(`Template authorization ${collectionName} must be an array.`);
+  }
+  return value.map((member, index) => {
+    const fdId = String(member?.id || "").trim();
+    const fdName = String(member?.name || "").trim();
+    const fdOrgType = Number(member?.targetOrgType);
+    if (!fdId || !fdName || !Number.isInteger(fdOrgType)) {
+      throw workflowDraftError(
+        `Template authorization ${collectionName}[${index}] must be resolved before persistence.`
+      );
+    }
+    return { fdId, fdName, fdOrgType };
+  });
+}
+
+function buildTimeoutNotificationStrategy(policy, processId) {
+  const afterDays = Number(policy.afterDays);
+  const afterHours = Number(policy.afterHours);
+  const afterMinutes = Number(policy.afterMinutes);
+  const notifyMethods = [...policy.notifyMethods];
+  const fdExpireDuration = (afterDays * 24 * 60) + (afterHours * 60) + afterMinutes;
+  const fdCondition = {
+    fdTimeoutType: 2,
+    fdDayOfTimeout: afterDays,
+    fdExpireDuration,
+    fdHourOfTimeout: afterHours,
+    fdMinuteOfTimeout: afterMinutes
+  };
+  const title = "节点超时通知：#{nodeName}超过#{day}天#{hour}小时#{minute}分钟未处理，请关注！流程名称“#{subject}”";
+  return {
+    fdCondition,
+    fdActions: [{
+      fdActionType: "notifyAdmin",
+      fdRepeat: false,
+      fdActionTypeErrorStatus: false,
+      processErrorStatus: false,
+      notifyMethodsErrorStatus: false,
+      fdConfig: JSON.stringify({
+        notifyMethods,
+        fdMessageContent: {
+          msgType: 3,
+          notifyTitle: {
+            language: {
+              "zh-cn": {
+                value: title,
+                display: title
+              }
+            }
+          }
+        }
+      }),
+      fdMessageContentErrorStatus: true,
+      notifyTemplateCodeErrorStatus: false,
+      customNotifyContentErrorStatus: false
+    }],
+    fdName: `${afterDays}天未完成通知特权人`,
+    fdKey: timeoutStrategyUuid(processId),
+    fdTimeoutType: 2,
+    fdDayOfTimeout: afterDays,
+    fdExpireDuration,
+    fdHourOfTimeout: afterHours,
+    fdMinuteOfTimeout: afterMinutes
+  };
+}
+
+function timeoutStrategyUuid(processId) {
+  const chars = [...createHash("sha256")
+    .update(`mk-migrate-agent-v2:timeout-notification:${String(processId || "workflow")}`)
+    .digest("hex")
+    .slice(0, 32)];
+  chars[12] = "4";
+  chars[16] = ["8", "9", "a", "b"][Number.parseInt(chars[16], 16) % 4];
+  const hex = chars.join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 const WORKFLOW_DRAFT_FIELDS = Object.freeze([

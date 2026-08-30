@@ -86,6 +86,18 @@ JSP-to-NewOA JS translation is intentionally semantic-first. The deterministic t
 
 `execute` creates a new `MK_TEST_...` template at the resolved NewOA origin, saves it as draft, reads it back, and reports the created `fdId`. Warning-only trusted DSL (`needs_manual`) is executable; DSL errors, invalid base URLs, and other safety errors block before login. If creation succeeds and a later stage fails, the report keeps the partial fdId and does not auto-rollback. Custom origins use the same write confirmation and draft-only gates as the default SIT origin; temporary participant and organization fallbacks apply only at `https://p-sit.onewo.com`, `http://mkpaaspoc.shanghai-electric.com`, and `http://oa-dev.shanghai-electric.com:8088`.
 
+## Scoped published-form repair
+
+`execute --published-form-patch` is a separately confirmed repair path for a named published `MK_TEST_` template. It retains the normal `--confirm-write`, environment credentials, root origin, target template, and category requirements. It also requires a fresh `--expected-snapshot-digest`, an unused `--artifacts-dir`, and repeatable `--readonly-field` / `--script-action` selectors.
+
+The executor uses the native official-version editor's `sysXFormOfficial/loadById` and `sysXFormOfficial/save` APIs. It can only enable source-backed readonly main-field permissions and add source-backed empty-text normalization to selected existing global onLoad actions. An AST comparison rejects other script changes. Model/schema, layout, unrelated form content, template/version identity, publication state, and the workflow must remain unchanged. No template update, workflow save, publish, or participant resolution API is called.
+
+Prepare the expected snapshot using `publishedFormSnapshotDigest(template, officialForm)` and inspect `preparePublishedFormPatch(...)` before execution. The executor checks that snapshot again immediately before its single save, stores private before/after artifacts, and verifies readback. This is a read-before-write check, not a server-side atomic compare-and-swap; avoid concurrent editing. A used execution directory or uncertain write cannot be retried automatically. See [ADR 0008](docs/adr/0008-scoped-published-form-repair.md).
+
+Transient `mechanisms.sys-auth.mechAuthToken` values are excluded from snapshot comparison and disk artifacts. The save request uses the latest token returned by the server; all other permission metadata remains protected.
+
+The official-version save regenerates runtime profile references and may hydrate view audit fields. Readback permits only those documented derived changes. The design copy can remain unchanged; carry the repair into a later design republish so the old configuration is not restored.
+
 ## Repository shape
 
 ```text

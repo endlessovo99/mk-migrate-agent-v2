@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
@@ -9,6 +10,23 @@ import {
 } from "../../src/executor/newoa-client.js";
 
 describe("NewoaClient", () => {
+  it("uses the native official-version editor read/save contract without a template or workflow update", async () => {
+    const evidence = JSON.parse(readFileSync(new URL("../fixtures/executor/persistence/published-form-api-evidence.json", import.meta.url), "utf8"));
+    const calls = [];
+    const client = new NewoaClient({ fetchImpl: async (url, options) => {
+      calls.push({ url, body: JSON.parse(options.body) });
+      return jsonResponse({ success: true, data: { fdId: "official-version" } });
+    } });
+    await client.getOfficialForm("official-version");
+    const payload = { fdId: "official-version", fdConfig: "{}", mechanisms: {} };
+    await client.saveOfficialForm(payload);
+    assert.deepEqual(calls, [
+      { url: `${NEWOA_SIT_BASE_URL}${evidence.readPath}`, body: { fdId: "official-version", mechanisms: { load: "*" } } },
+      { url: `${NEWOA_SIT_BASE_URL}${evidence.savePath}`, body: payload }
+    ]);
+    assert.deepEqual(Object.keys(payload).sort(), [...evidence.requestKeys].sort());
+  });
+
   it("reads the authenticated XForm desktop digest as a no-cache GET", async () => {
     const calls = [];
     const digest = {

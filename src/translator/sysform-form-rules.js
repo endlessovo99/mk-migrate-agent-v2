@@ -45,6 +45,15 @@ export function sourceFormRulesFromLegacyScripts(scripts) {
 function extractSupplementalBridgeAssignments(sources) {
   const bridges = new Map();
   for (const source of sources) {
+    const nativeRequiredTargetsByAction = new Map();
+    for (const rule of analyzeLegacyScriptFormRules(source).linkage) {
+      const key = rule.meta?.sourceActionKey;
+      if (!key) continue;
+      if (!nativeRequiredTargetsByAction.has(key)) nativeRequiredTargetsByAction.set(key, new Set());
+      for (const effect of [...(rule.effects || []), ...(rule.else || [])]) {
+        if (effect.type === "required") nativeRequiredTargetsByAction.get(key).add(effect.target);
+      }
+    }
     const { callbacks } = extractXFormValueChangeCallbacks(source?.javascript || "", source);
     for (const callback of callbacks) {
       const resolveOperand = buildConditionOperandResolver(callback.body, {
@@ -60,10 +69,20 @@ function extractSupplementalBridgeAssignments(sources) {
           );
           if (!condition) continue;
           const effects = extractSupplementalDirectRowEffects(branch.body);
-          for (const assignment of extractSetFieldValueAssignments(branch.body)) {
+          const assignments = [
+            ...extractSetFieldValueAssignments(branch.body),
+            ...extractElementValueAssignments(
+              branch.body,
+              resolveOperand,
+              branch.bodyStart
+            )
+          ];
+          for (const assignment of assignments) {
             bridges.set(`${assignment.field}:${assignment.value}`, {
               condition: { ...condition, source: callback.source },
-              effects
+              effects,
+              sourceRef: source.sourceRef,
+              nativeRequiredTargets: nativeRequiredTargetsByAction.get(callback.sourceActionKey) || new Set()
             });
           }
         }
@@ -76,10 +95,17 @@ function extractSupplementalBridgeAssignments(sources) {
 function supplementalWindowLoadRules(source, bridgeAssignments) {
   const rules = [];
   for (const callback of extractWindowLoadCallbacks(source?.javascript || "")) {
+    const resolveOperand = buildConditionOperandResolver(callback.body, {
+      programIsEntrypoint: true
+    });
     for (const chain of extractTopLevelConditionalChains(callback.body)) {
       if (chain.branches.length !== 1 || !chain.elseBody) continue;
       const branch = chain.branches[0];
-      let condition = supplementalConditionSpec(branch.condition);
+      let condition = supplementalConditionSpec(
+        branch.condition,
+        resolveOperand,
+        branch.conditionStart
+      );
       if (!condition) continue;
       let effects = extractSupplementalDirectRowEffects(branch.body);
       let elseEffects = extractSupplementalDirectRowEffects(chain.elseBody);
@@ -90,8 +116,24 @@ function supplementalWindowLoadRules(source, bridgeAssignments) {
       );
       if (bridged && sameEffectTargets(effects, bridged.effects)) {
         condition = bridged.condition;
-        effects = effects.filter((effect) => effect.type === "visible");
-        elseEffects = elseEffects.filter((effect) => effect.type === "visible");
+        const sourceEffects = effects;
+        const sourceElseEffects = elseEffects;
+        effects = sourceEffects.filter((effect) => effect.type === "visible");
+        elseEffects = sourceElseEffects.filter((effect) => effect.type === "visible");
+        const branchRequired = new Map(
+          bridged.effects.filter((effect) => effect.type === "required")
+            .map((effect) => [effect.target, effect])
+        );
+        const elseRequired = new Map(
+          sourceElseEffects.filter((effect) => effect.type === "required")
+            .map((effect) => [effect.target, effect])
+        );
+        for (const target of effects.map((effect) => effect.target)) {
+          if (bridged.nativeRequiredTargets.has(target)) continue;
+          if (!elseRequired.has(target) || !branchRequired.has(target)) continue;
+          effects.push(branchRequired.get(target));
+          elseEffects.push(elseRequired.get(target));
+        }
       }
       const sourceField = condition.source || condition.when?.[0]?.field;
       rules.push({
@@ -104,8 +146,10 @@ function supplementalWindowLoadRules(source, bridgeAssignments) {
         else: elseEffects,
         meta: pruneUndefined({
           sourceJsp: source.sourceRef,
+          bridgeSourceJsp: bridged?.sourceRef,
           displayGate: source.displayGate,
           runWhen: runWhenFromDisplayGate(source.displayGate),
+          partialNativeRowEffects: bridged ? true : undefined,
           sourceRuleIds: [`linkage.${sourceField}.${condition.idPart}${bridged ? ".load" : ""}`]
         }),
         translationStatus: "executable"
@@ -130,7 +174,17 @@ function extractWindowLoadCallbacks(javascript) {
   return callbacks;
 }
 
-function supplementalConditionSpec(condition) {
+function supplementalConditionSpec(condition, resolveOperand, beforeIndex) {
+  const parsed = parseProvenanceCondition(condition, resolveOperand, { beforeIndex });
+  if (parsed?.operand?.startsWith("field:") && ["eq", "contains"].includes(parsed.kind)) {
+    const source = parsed.operand.slice("field:".length);
+    return {
+      source,
+      idPart: `${parsed.kind}.${stableIdPart(parsed.value)}`,
+      logic: "and",
+      when: [{ field: source, op: parsed.kind, value: parsed.value }]
+    };
+  }
   const text = String(condition || "");
   const direct = text.match(
     /GetXFormFieldValueById\(\s*(["'])([^"']+)\1\s*\)\s*={2,3}\s*(["'])([^"']+)\3/
@@ -153,6 +207,24 @@ function extractSetFieldValueAssignments(body) {
   return [...String(body || "").matchAll(
     /SetXFormFieldValueById\(\s*(["'])([^"']+)\1\s*,\s*(["'])([^"']*)\3\s*\)/g
   )].map((match) => ({ field: match[2], value: match[4] }));
+}
+
+function extractElementValueAssignments(body, resolveOperand, bodyStart = 0) {
+  const assignments = [];
+  const pattern = /\b([A-Za-z_$][\w$]*)\s*\.\s*value\s*=\s*(["'])([^"'\\]*)\2/g;
+  const codeMask = javascriptCodeMask(body);
+  for (const match of String(body || "").matchAll(pattern)) {
+    if (!codeMask.startsWith(match[1], match.index)) continue;
+    const trace = resolveOperand.trace(`${match[1]}.value`, {
+      beforeIndex: bodyStart + match.index
+    });
+    if (!trace?.origin?.startsWith("field:")) continue;
+    assignments.push({
+      field: trace.origin.slice("field:".length),
+      value: match[3]
+    });
+  }
+  return assignments;
 }
 
 function extractSupplementalDirectRowEffects(body) {

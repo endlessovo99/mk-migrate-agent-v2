@@ -9,10 +9,12 @@ The product is a migration execution tool. Agent work may implement DSL generati
 NewOA writes are allowed only for the executor implementation path when all of these are true:
 
 - The target is an explicitly configured valid HTTP/HTTPS root origin, or the default `https://p-sit.onewo.com` when no base URL is configured.
-- The template is a new `MK_TEST_` draft template.
+- The template is a new `MK_TEST_` draft template, unless the caller explicitly confirms the scoped published-form repair path below.
 - The caller provides explicit write confirmation and a target category `fdId`.
 - Credentials are provided through environment variables.
 - Default tests use fake clients and do not access NewOA.
+
+An explicitly confirmed published-form repair may update only the current official form version of a named `MK_TEST_` template through `sysXFormOfficial/save`. It requires a matching target/category and snapshot digest, explicit field/action lists, private backups, and readback verification. Only enabling source-backed readonly permissions and preserving empty-text reads in existing onLoad actions are allowed. Template identity, publication state, data models, layout, unrelated form content, and workflow definitions must remain unchanged. The normal draft-only executor gate must not be weakened, and uncertain writes must not be retried.
 
 ## Engineering Rules
 

@@ -1,13 +1,81 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
-import { projectTemplate, verifyTemplate, xformConfig } from "../helpers/persistence.js";
+import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
+import { prepareSample, projectTemplate, verifyTemplate, xformConfig } from "../helpers/persistence.js";
 import { runRouteCase } from "./run-route-case.js";
 
 const fixture = "tests/fixtures/route-validation/semantic-props";
 const help = "起草人节点请选择：区域经理管理处、策略采购主管、分管副总/分管领导（如有）的节点处理人，否则流程将报错。";
 
 describe("semantic source props Route case", { concurrency: false }, () => {
+  it("rejects readonly weakening during review and when checking trusted source provenance", () => {
+    const { source, dsl } = stages();
+    const index = dsl.form.fields.findIndex((field) => field.id === "fd_estimate");
+    const result = applyEvidenceBackedPatches(dsl, [{
+      op: "replace", path: `/form/fields/${index}/props`, value: { readOnly: false },
+      sourceRefs: [dsl.form.fields[index].sourceRef], confidence: 1,
+      evidence: ["Attempted change to the source field permission."], rationale: "Make the field editable."
+    }], { sourceDraft: source, sourceRefs: collectSourceRefs(source) });
+    assert.equal(result.ok, false);
+    const trusted = createTrustedMigrationDsl(source, dsl, { externalAgentReviewed: true });
+    assert.equal(checkTrust(source, trusted).ok, true);
+    delete trusted.form.fields[index].props.readOnly;
+    const check = checkTrust(source, trusted);
+    assert.equal(check.ok, false);
+    assert.ok(check.diagnostics.some((item) => item.code === "trust.form.read_only_source_mismatch"));
+  });
+
+  it("preserves static readonly main fields and detail columns in add/edit authority and readback", () => {
+    const { source, dsl } = stages();
+    for (const id of ["fd_requirement", "fd_estimate"]) {
+      assert.equal(source.form.controls.find((field) => field.id === id).sourceProps.designerValues.readOnly, "true");
+      assert.equal(dsl.form.fields.find((field) => field.id === id).props.readOnly, true);
+    }
+    const detail = dsl.form.fields.find((field) => field.id === "fd_detail");
+    assert.equal(detail.columns.find((field) => field.id === "fd_site").props.readOnly, true);
+    const prepared = prepareSample(dsl);
+    const config = xformConfig(prepared.update);
+    const mainModel = config.dataModel.find((model) => model.fdType === "main");
+    const detailModel = config.dataModel.find((model) => model.fdType === "detail");
+    for (const mode of ["add", "edit"]) {
+      for (const id of ["fd_requirement", "fd_estimate"]) {
+        assert.equal(config.auth[0][mode][mainModel.fdTableName].fields[id].editable, false);
+      }
+      assert.equal(config.auth[0][mode][detailModel.fdTableName].fields.fd_site.editable, false);
+      assert.equal(config.auth[0][mode][mainModel.fdTableName].fields.fd_guarded_estimate.editable, true);
+      assert.equal(config.auth[0][mode][detailModel.fdTableName].fields.fd_ebeln.editable, true);
+    }
+    const verified = prepared.verify(prepared.update);
+    assert.equal(verified.ok, true);
+    assert.equal(verified.form.fields.find((field) => field.id === "fd_estimate").readOnly, true);
+    assert.equal(verified.form.fields.find((field) => field.id === "fd_detail").columns.find((field) => field.id === "fd_site").readOnly, true);
+
+    for (const mode of ["add", "edit"]) {
+      for (const [tableName, id] of [[mainModel.fdTableName, "fd_estimate"], [detailModel.fdTableName, "fd_site"]]) {
+        const mutated = structuredClone(prepared.update);
+        const changedConfig = xformConfig(mutated);
+        changedConfig.auth[0][mode][tableName].fields[id].editable = true;
+        mutated.mechanisms["sys-xform"].fdConfig = JSON.stringify(changedConfig);
+        const readback = prepared.verify(mutated);
+        assert.equal(readback.ok, false, `${mode}:${id}`);
+        assert.ok(readback.diagnostics.some((item) => item.code === "readback.form.prop_readOnly_mismatch"));
+      }
+    }
+  });
+
+  it("does not let a same-named detail column overwrite the main readonly authority", () => {
+    const { dsl } = stages();
+    const detail = dsl.form.fields.find((field) => field.id === "fd_detail");
+    detail.columns[0].id = "fd_estimate";
+    const config = xformConfig(prepareSample(dsl).update);
+    const mainModel = config.dataModel.find((model) => model.fdType === "main");
+    const detailModel = config.dataModel.find((model) => model.fdType === "detail");
+    assert.equal(config.auth[0].add[mainModel.fdTableName].fields.fd_estimate.editable, false);
+    assert.equal(config.auth[0].add[detailModel.fdTableName].fields.fd_estimate.editable, true);
+  });
+
   it("merges designer-only detail columns by natural id without changing designer order", () => {
     const { source, dsl } = stages();
     const sourceColumns = source.form.detailTables.find((field) => field.id === "fd_detail").columns;

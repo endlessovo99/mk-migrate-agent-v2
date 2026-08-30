@@ -58,7 +58,8 @@ export async function runRouteCase(caseId) {
     }
 
     const adapter = new FakeNewoaAdapter(routeCase.newoaScenario, {
-      fallbackFdIds: routeCase.fallbackFdIds
+      fallbackFdIds: routeCase.fallbackFdIds,
+      templateAuthorization: reviewResult.dsl.template?.authorization
     });
     const execution = await executeDsl(reviewResult.dsl, {
       client: adapter,

@@ -40,7 +40,7 @@ describe("legacy required toggle scripts", () => {
       function: "function onChange(value, rowNum, parentRowNum) {\n  const required = String(value || \"\").indexOf(\"quote\") >= 0\n  MKXFORM.setFieldAttr(\"fd_amount\", required ? 3 : 6)\n}",
       sourceRefs: ["source.form.jsp.required-toggle.script.1"],
       branchProvenance: {
-        version: 3,
+        version: 4,
         event: "onChange",
         sourceRef: "source.form.jsp.required-toggle.script.1",
         status: "proven",

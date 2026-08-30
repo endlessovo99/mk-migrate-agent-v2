@@ -1,6 +1,7 @@
 import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitelist.js";
 import { componentSupportsProp } from "../dsl/catalogs.js";
 import { buildScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
+import { textValueFieldIds } from "../dsl/script-condition-provenance.js";
 import { buildDeterministicScriptBranchProof } from "../dsl/deterministic-script-translations.js";
 import {
   analyzeJavaScriptFunctionBodyBindings
@@ -776,6 +777,7 @@ function mkActionFromCandidate(candidate, index, options = {}) {
           sourceActionKey: candidate.sourceActionKey,
           eventFunctionName: candidate.branchFunctionName,
           eventFunctionStart: candidate.branchFunctionStart,
+          textFieldIds: textValueFieldIds(options.form),
           programIsEntrypoint: candidate.branchProgramIsEntrypoint
         })
     : undefined;

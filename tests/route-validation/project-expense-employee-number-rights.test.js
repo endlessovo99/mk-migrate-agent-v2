@@ -3,12 +3,60 @@ import { describe, it } from "node:test";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { observeNativeTemplate } from "../../src/executor/persistence/observer.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
-import { prepareSample, xformConfig } from "../helpers/persistence.js";
+import { formAttr, prepareSample, xformConfig } from "../helpers/persistence.js";
 
 const fixture =
   "tests/fixtures/source2/16cf5c1a6dcb1023c2806ee47aba3d7c";
 
 describe("project expense employee number defaults and rights Route-validation", () => {
+  it("keeps the source readonly payee bank fields readonly when drafting", () => {
+    const draft = draftSourceDraft(cleanSourceFile(fixture));
+    const config = xformConfig(prepareSample(draft).update);
+    const main = config.dataModel.find((model) => model.fdType === "main");
+    for (const id of ["fd_37b0420c4b3958", "fd_37b041ddf45024"]) {
+      assert.equal(draft.form.fields.find((field) => field.id === id).props.readOnly, true);
+      assert.equal(config.auth[0].add[main.fdTableName].fields[id].editable, false);
+      const field = main.fdFields.find((field) => field.fdName === id);
+      assert.equal(JSON.parse(field.fdAttribute).config.controlProps.showStatus, "readOnly");
+    }
+  });
+
+  it("projects the internal/external payee load state as a native preview rule", () => {
+    const draft = draftSourceDraft(cleanSourceFile(fixture));
+    const rule = draft.formRules.linkage.find((rule) =>
+      rule.source === "fd_37bfffeb510716" && rule.trigger === "load"
+    );
+    assert.ok(rule);
+    assert.deepEqual(rule.when, [{ field: "fd_37bfffeb510716", op: "contains", value: "5" }]);
+    assert.equal(rule.meta.partialNativeRowEffects, true);
+    const value = (effects, type, target) => effects.find((effect) =>
+      effect.type === type && effect.target === target
+    )?.value;
+    for (const target of ["qtskr_row", "qtkhh_row"]) {
+      assert.equal(value(rule.effects, "visible", target), true);
+      assert.equal(value(rule.effects, "required", target), true);
+      assert.equal(value(rule.else, "visible", target), false);
+      assert.equal(value(rule.else, "required", target), false);
+    }
+    for (const target of ["skr_row", "khh_row"]) {
+      assert.equal(value(rule.effects, "visible", target), false);
+      assert.equal(value(rule.else, "visible", target), undefined);
+    }
+
+    const native = formAttr(prepareSample(draft).update).formRule;
+    const generated = [...native.display, ...native.require].filter((item) =>
+      item.meta?.sourceRuleId === rule.id
+    );
+    assert.equal(generated.length, 4);
+    assert.ok(generated.every((item) => item.choices.items[0].fieldName === "fd_37bfffeb510716"));
+    assert.ok(generated.some((item) =>
+      item.meta.branch === "else" &&
+      item.result.some((result) =>
+        result.fieldName === "fd_37c09f0b8334d2" && result.displayFlag === "hide"
+      )
+    ));
+  });
+
   it("inherits current creator employee numbers and keeps them editable at draft and research approval", () => {
     const source = cleanSourceFile(fixture);
     const draft = draftSourceDraft(source);

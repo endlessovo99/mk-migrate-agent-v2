@@ -97,6 +97,14 @@ const MAPPED_FORMULA_PARTICIPANT_MODES = new Set([
   "script_formula"
 ]);
 const MK_FIELD_ID_MAX_LENGTH = 25;
+const TEMPLATE_AUTHORIZATION_COLLECTIONS = Object.freeze([
+  "readers",
+  "editors",
+  "allReaders",
+  "allEditors",
+  "temporaryReaders",
+  "temporaryEditors"
+]);
 
 export function validateMigrationDsl(input, options = {}) {
   const diagnostics = [];
@@ -221,6 +229,73 @@ function validateTemplate(template, diagnostics) {
   }
   if (!nonEmptyString(template.name)) {
     diagnostics.push(error("dsl.template.name_required", "template.name is required.", "/template/name"));
+  }
+  validateTemplateAuthorization(template.authorization, diagnostics);
+}
+
+function validateTemplateAuthorization(value, diagnostics) {
+  if (value === undefined) return;
+  const path = "/template/authorization";
+  if (!isRecord(value)) {
+    diagnostics.push(error(
+      "dsl.template.authorization.type",
+      "Template authorization must be an object.",
+      path
+    ));
+    return;
+  }
+  if (typeof value.readerFlag !== "boolean") {
+    diagnostics.push(error(
+      "dsl.template.authorization.reader_flag_required",
+      "Template authorization readerFlag must be a boolean.",
+      `${path}/readerFlag`
+    ));
+  }
+  for (const collectionName of TEMPLATE_AUTHORIZATION_COLLECTIONS) {
+    const members = value[collectionName];
+    const collectionPath = `${path}/${collectionName}`;
+    if (!Array.isArray(members)) {
+      diagnostics.push(error(
+        "dsl.template.authorization.collection_required",
+        "Template authorization collections must be arrays.",
+        collectionPath
+      ));
+      continue;
+    }
+    members.forEach((member, index) => {
+      const memberPath = `${collectionPath}/${index}`;
+      if (!isRecord(member)) {
+        diagnostics.push(error(
+          "dsl.template.authorization.member_type",
+          "Template authorization members must be objects.",
+          memberPath
+        ));
+        return;
+      }
+      const sourceBacked = nonEmptyString(member.sourceId);
+      const targetBacked = nonEmptyString(member.id);
+      if (!nonEmptyString(member.name) || (!sourceBacked && !targetBacked)) {
+        diagnostics.push(error(
+          "dsl.template.authorization.member_identity_required",
+          "Template authorization members require a name and either source or resolved target identity.",
+          memberPath
+        ));
+      }
+      if (sourceBacked && !Number.isInteger(Number(member.sourceOrgType))) {
+        diagnostics.push(error(
+          "dsl.template.authorization.source_org_type_required",
+          "Source-backed template authorization members require sourceOrgType.",
+          `${memberPath}/sourceOrgType`
+        ));
+      }
+      if (targetBacked && !Number.isInteger(Number(member.targetOrgType))) {
+        diagnostics.push(error(
+          "dsl.template.authorization.target_org_type_required",
+          "Resolved template authorization members require targetOrgType.",
+          `${memberPath}/targetOrgType`
+        ));
+      }
+    });
   }
 }
 
@@ -1828,6 +1903,7 @@ function validateWorkflow(workflow, diagnostics, context) {
     diagnostics.push(error("dsl.workflow.process.id_required", "workflow.process.id is required.", "/workflow/process/id"));
   }
   validateWorkflowCompletionNotifications(process.completionNotifications, diagnostics);
+  validateWorkflowTimeoutNotification(process.timeoutNotification, diagnostics);
 
   const nodeMap = validateWorkflowNodes(workflow.nodes, diagnostics, context);
   validateWorkflowParticipantNodeReferences(workflow.nodes, nodeMap, diagnostics);
@@ -1858,6 +1934,46 @@ function validateWorkflowCompletionNotifications(value, diagnostics) {
         `${path}/${key}`
       ));
     }
+  }
+}
+
+function validateWorkflowTimeoutNotification(value, diagnostics) {
+  if (value === undefined) return;
+  const path = "/workflow/process/timeoutNotification";
+  if (!isRecord(value)) {
+    diagnostics.push(error(
+      "dsl.workflow.timeout_notification.type",
+      "Workflow timeoutNotification must be an object.",
+      path
+    ));
+    return;
+  }
+  const expected = {
+    afterDays: 15,
+    afterHours: 0,
+    afterMinutes: 0,
+    recipient: "privileged_users"
+  };
+  for (const [key, expectedValue] of Object.entries(expected)) {
+    if (value[key] !== expectedValue) {
+      diagnostics.push(error(
+        "dsl.workflow.timeout_notification.standard_required",
+        "Workflow timeoutNotification must use the standard 15-day privileged-user policy.",
+        `${path}/${key}`,
+        { expected: expectedValue, actual: value[key] }
+      ));
+    }
+  }
+  if (
+    !Array.isArray(value.notifyMethods) ||
+    value.notifyMethods.length !== 1 ||
+    value.notifyMethods[0] !== "todo"
+  ) {
+    diagnostics.push(error(
+      "dsl.workflow.timeout_notification.notify_method_required",
+      "Workflow timeoutNotification must use the todo notification method.",
+      `${path}/notifyMethods`
+    ));
   }
 }
 

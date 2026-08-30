@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-08-28",
+  "operation": "native official XForm version editor",
+  "readPath": "/data/sys-xform/sysXFormOfficial/loadById",
+  "savePath": "/data/sys-xform/sysXFormOfficial/save",
+  "requestKeys": ["fdId", "fdConfig", "mechanisms"],
+  "transientAuthorizationField": "mechanisms.sys-auth.mechAuthToken",
+  "derivedSaveEffects": [
+    "fdProfileId is regenerated; only matching fdProfileId entries in sys-xform:XFormComponent descriptors change in workflow form metadata",
+    "viewModel entries may acquire fdAlter and fdAlterTime audit metadata"
+  ],
+  "idMeaning": "The official form version fdId, bound to the template through fdXForm.fdId and fdEntityId; not the workflow definition id.",
+  "versionEditorModule": {
+    "path": "km-review/desktop/pages/kmReviewTemplateForm/versionEdit",
+    "release": "50dedaae62ac7b4b6b2a998db4f66540",
+    "sha256": "a7027d328c5005acdbc1f72bc30e7c7e25ff4f4f45b8531469a9f948e0eb8183"
+  },
+  "editorFragmentModule": {
+    "path": "sys-xform/desktop/api/XFormIDEFragment",
+    "release": "09b7538d0adcaad4d672cd36b77f02f8",
+    "sha256": "6c604125fd5831aff08645c0ccc4635d76216efd95e0ba64b993f798114be2d9"
+  }
+}

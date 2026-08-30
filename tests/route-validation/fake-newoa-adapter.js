@@ -41,6 +41,10 @@ export class FakeNewoaAdapter {
     this.template = undefined;
     this.workflowDraft = undefined;
     this.updated = false;
+    this.authorizationCandidates = authorizationCandidates(options.templateAuthorization);
+    this.authorizationCandidateById = new Map(
+      this.authorizationCandidates.map((candidate) => [candidate.fdId, candidate])
+    );
     this.fallbackById = new Map(SIT_FALLBACK_BY_ID);
     for (const [kind, fdId] of Object.entries(options.fallbackFdIds || {})) {
       const shape = CONFIGURED_FALLBACK_SHAPES[kind];
@@ -78,6 +82,12 @@ export class FakeNewoaAdapter {
 
   async searchOrg(key) {
     this.record({ operation: "search-org", key });
+    const authorizationMatches = this.authorizationCandidates.filter((candidate) => (
+      candidate.searchKeys.includes(key)
+    ));
+    if (authorizationMatches.length) {
+      return authorizationMatches.map(({ searchKeys: _searchKeys, ...candidate }) => clone(candidate));
+    }
     if (key === ROUTE_CONDITION_ORG.fdNo) {
       return [clone(ROUTE_CONDITION_ORG)];
     }
@@ -90,6 +100,11 @@ export class FakeNewoaAdapter {
   async getElementInfo(targets) {
     this.record({ operation: "get-element-info", targets: clone(targets) });
     return targets.flatMap((fdId) => {
+      const authorizationCandidate = this.authorizationCandidateById.get(fdId);
+      if (authorizationCandidate) {
+        const { searchKeys: _searchKeys, ...candidate } = authorizationCandidate;
+        return [clone(candidate)];
+      }
       if (fdId === LEGACY_GENERIC_ROLE_ID) return [];
       const fallback = this.fallbackById.get(fdId);
       if (fallback) {
@@ -219,6 +234,46 @@ export class FakeNewoaAdapter {
     }
     appendTranscriptEntry(this.entries, entry);
   }
+}
+
+function authorizationCandidates(authorization) {
+  if (!authorization || typeof authorization !== "object") return [];
+  const candidates = new Map();
+  for (const collectionName of [
+    "readers",
+    "editors",
+    "allReaders",
+    "allEditors",
+    "temporaryReaders",
+    "temporaryEditors"
+  ]) {
+    for (const member of authorization[collectionName] || []) {
+      if (!member?.sourceId || !member?.name || !member?.sourceOrgType) continue;
+      const searchKeys = new Set([
+        member.name,
+        member.sourceLoginName,
+        qualifiedLeafName(member.name, member.sourceOrgType)
+      ].filter(Boolean));
+      candidates.set(member.sourceId, {
+        fdId: member.sourceId,
+        fdName: member.name,
+        fdOrgType: member.sourceOrgType,
+        ...(member.sourceLoginName ? {
+          fdLoginName: member.sourceLoginName,
+          fdNo: member.sourceLoginName
+        } : {}),
+        ...(member.sourceParentName ? { fdParentName: member.sourceParentName } : {}),
+        searchKeys: [...searchKeys]
+      });
+    }
+  }
+  return [...candidates.values()];
+}
+
+function qualifiedLeafName(name, orgType) {
+  if (![4, 32, 128].includes(Number(orgType))) return name;
+  const index = String(name).lastIndexOf("_");
+  return index >= 0 ? String(name).slice(index + 1).trim() : name;
 }
 
 function clone(value) {

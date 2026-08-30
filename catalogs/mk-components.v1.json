@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-08-28.v13",
+  "version": "2026-08-28.v14",
   "components": [
     {
       "componentId": "xform-button",
@@ -33,6 +33,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "hiddenLabel": { "type": "boolean" },
           "placeholder": { "type": "string" },
           "defaultValue": { "$ref": "#/$defs/defaultValue" }
@@ -55,6 +56,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "defaultValue": { "$ref": "#/$defs/defaultValue" }
         }
       },
@@ -120,6 +122,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "placeholder": { "type": "string" },
           "defaultValue": { "$ref": "#/$defs/defaultValue" }
         }
@@ -141,6 +144,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "hiddenLabel": { "type": "boolean" },
           "placeholder": { "type": "string" },
           "maxLength": { "type": "integer", "minimum": 1 },
@@ -164,6 +168,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "hiddenLabel": { "type": "boolean" },
           "maxLength": { "type": "integer", "minimum": 1 }
         }
@@ -185,6 +190,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "hiddenLabel": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
@@ -207,6 +213,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "hiddenLabel": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
@@ -229,6 +236,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "hiddenLabel": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
           "rowOptions": { "$ref": "#/$defs/rowOptions" },
@@ -252,6 +260,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "hiddenLabel": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
@@ -274,6 +283,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "displayPattern": { "type": "string" },
           "defaultValue": { "$ref": "#/$defs/dateTimeDefaultValue" }
         }
@@ -295,6 +305,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "precision": { "type": "integer", "minimum": 0 },
           "unit": { "type": "string", "minLength": 1 },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }
@@ -317,6 +328,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "precision": { "type": "integer", "minimum": 0 },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" },
           "calculation": { "$ref": "#/$defs/calculation" }
@@ -339,6 +351,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "orgTypes": {
             "type": "array",
             "items": { "type": "string", "enum": ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT", "ORG_TYPE_ORG", "ORG_TYPE_POST"] }
@@ -363,6 +376,7 @@
         "additionalProperties": false,
         "properties": {
           "required": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "maxCount": { "type": "integer", "minimum": 0 },
           "singleMaxSize": { "type": "integer", "minimum": 1 }
         }

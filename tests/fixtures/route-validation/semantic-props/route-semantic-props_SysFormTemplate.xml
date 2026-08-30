@@ -9,11 +9,11 @@
    <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
     &lt;tr&gt;
      &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_requirement&quot;,content:&quot;采购需求说明&quot;}&apos;&gt;采购需求说明&lt;/label&gt;&lt;/td&gt;
-     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_requirement&quot;,label:&quot;采购需求说明1&quot;,_label_bind_id:&quot;label_requirement&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_requirement&quot;,label:&quot;采购需求说明1&quot;,_label_bind_id:&quot;label_requirement&quot;,readOnly:&quot;true&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
     &lt;/tr&gt;
     &lt;tr&gt;
      &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_estimate&quot;,content:&quot;采购估价&quot;}&apos;&gt;采购估价&lt;/label&gt;&lt;/td&gt;
-     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_estimate&quot;,label:&quot;采购估价&quot;}&apos;&gt;&lt;/div&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;estimate_unit&quot;,content:&quot;元&quot;}&apos;&gt;元&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_estimate&quot;,label:&quot;采购估价&quot;,readOnly:&quot;true&quot;}&apos;&gt;&lt;/div&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;estimate_unit&quot;,content:&quot;元&quot;}&apos;&gt;元&lt;/label&gt;&lt;/td&gt;
     &lt;/tr&gt;
     &lt;tr&gt;
      &lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_guarded_estimate&quot;,content:&quot;有介入控件的估价&quot;}&apos;&gt;有介入控件的估价&lt;/label&gt;&lt;/td&gt;
@@ -39,7 +39,7 @@
        &lt;tr type=&quot;templateRow&quot;&gt;
         &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_wbs&quot;,label:&quot;WBS/成本中心&quot;,tableName:&quot;fd_detail&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
         &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_ebeln&quot;,label:&quot;采购订单号&quot;,tableName:&quot;fd_detail&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
-        &lt;td row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_site&quot;,label:&quot;风场名称2&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;header_site&quot;,tableName:&quot;fd_detail&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+        &lt;td row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_site&quot;,label:&quot;风场名称2&quot;,_label_bind:&quot;false&quot;,_label_bind_id:&quot;header_site&quot;,tableName:&quot;fd_detail&quot;,readOnly:&quot;true&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
         &lt;td row=&quot;1&quot; column=&quot;3&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_detail_amount&quot;,label:&quot;金额&quot;,tableName:&quot;fd_detail&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0.00&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
        &lt;/tr&gt;
       &lt;/tbody&gt;&lt;/table&gt;

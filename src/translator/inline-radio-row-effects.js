@@ -1,5 +1,6 @@
 import { parse } from "acorn";
 import { buildFormRuleRefIndex, resolveEffectTarget } from "../dsl/form-rules.js";
+import { textValueFieldIds } from "../dsl/script-condition-provenance.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
 
 const BASIS = "deterministic-inline-radio-row-effects";
@@ -157,6 +158,7 @@ function compileOnChange(callback, form) {
   }
   const sourceValueName = callback.params[0].name;
   const aliases = new Map();
+  const textFields = new Set(textValueFieldIds(form));
   const lines = ["function onChange(value, rowNum, parentRowNum) {"];
   for (const statement of callback.body.body) {
     if (statement.type === "EmptyStatement") continue;
@@ -164,7 +166,8 @@ function compileOnChange(callback, form) {
     if (alias) {
       if (!formFieldIds(form).has(alias.fieldId) || aliases.has(alias.name)) return undefined;
       aliases.set(alias.name, alias.fieldId);
-      lines.push(`  var ${alias.name} = MKXFORM.getValue(${JSON.stringify(alias.fieldId)});`);
+      const read = `MKXFORM.getValue(${JSON.stringify(alias.fieldId)})`;
+      lines.push(`  var ${alias.name} = ${textFields.has(alias.fieldId) ? `String(${read} ?? "")` : read};`);
       continue;
     }
     const compiled = compileStatement(statement, {
@@ -400,7 +403,7 @@ function renderSimpleOnLoad(model) {
     usedNames.add(rawAlias);
     lines.push(
       `  var ${rawAlias} = MKXFORM.getValue(${JSON.stringify(fieldId)});`,
-      `  var ${alias} = Array.isArray(${rawAlias}) ? ${rawAlias} : String(${rawAlias} || "");`
+      `  var ${alias} = Array.isArray(${rawAlias}) ? ${rawAlias} : String(${rawAlias} ?? "");`
     );
   }
   lines.push(...model.lines, "}");
@@ -1154,12 +1157,14 @@ function hasResetRowEffect(node) {
 
 function sourceHasNativeRules(source, formRules, form) {
   const sourceRef = source.sourceRef || source.id;
-  const hasNativeRule = (Array.isArray(formRules?.linkage) ? formRules.linkage : []).some((rule) =>
+  const matchingRules = (Array.isArray(formRules?.linkage) ? formRules.linkage : []).filter((rule) =>
     rule?.meta?.sourceJsp === sourceRef ||
     rule?.meta?.sourceRef === sourceRef ||
     rule?.sourceRef === sourceRef
   );
-  if (!hasNativeRule) return false;
+  if (!matchingRules.length || matchingRules.some((rule) => rule.meta?.partialNativeRowEffects === true)) {
+    return false;
+  }
   return !hasCompilableHardHiddenAssignment(source, form);
 }
 

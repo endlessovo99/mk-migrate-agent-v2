@@ -25,7 +25,16 @@ const KM_REVIEW_PERSON_EVIDENCE_KEYS = Object.freeze([
   "authReaders",
   "authEditors",
   "authAllReaders",
-  "authTmpReaders"
+  "authTmpReaders",
+  "authTmpEditors"
+]);
+const KM_REVIEW_AUTHORIZATION_COLLECTIONS = Object.freeze([
+  ["authReaders", "readers"],
+  ["authEditors", "editors"],
+  ["authAllReaders", "allReaders"],
+  ["authAllEditors", "allEditors"],
+  ["authTmpReaders", "temporaryReaders"],
+  ["authTmpEditors", "temporaryEditors"]
 ]);
 const FORM_RIGHT_MODE_RESTRICTIVENESS = new Map([
   ["hidden", 0],
@@ -102,7 +111,8 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
     source: normalizeSourceMetadata(source, context),
     template: {
       name: legacyDsl.template?.name || basename(context.sourcePath || source.path || "source"),
-      categoryPath: legacyDsl.template?.categoryPath || ""
+      categoryPath: legacyDsl.template?.categoryPath || "",
+      authorization: legacyDsl.template?.authorization
     },
     form: {
       controls: normalControls,
@@ -246,6 +256,10 @@ function cleanSourceDirectory(path, options = {}) {
 
   return sourceDraftFromLegacyDsl({
     ...formDsl,
+    template: {
+      ...(formDsl.template || {}),
+      authorization: kmReviewTemplate?.authorization
+    },
     source: {
       kind: "source-directory",
       path,
@@ -263,7 +277,12 @@ function cleanSourceDirectory(path, options = {}) {
       referencedWorkflow,
       pairedPersonEntities
     ),
-    review: mergeSourceReviews(formDsl.review, workflowDsl.review)
+    review: mergeSourceReviews(
+      mergeSourceReviews(formDsl.review, workflowDsl.review),
+      kmReviewTemplate?.authorizationIssues?.length
+        ? { errors: kmReviewTemplate.authorizationIssues }
+        : undefined
+    )
   }, {
     sourcePath: path,
     sourceKind: "source-directory"
@@ -285,16 +304,103 @@ function mergeSourceReviews(formReview, workflowReview) {
 function readKmReviewTemplateEvidence(path) {
   const xml = readFileSync(path, "utf8");
   const values = parseRootHashMapStringPuts(xml);
+  const root = parseRootHashMap(xml);
   const name = cleanText(values.fdName || "");
   if (!name) {
     throw new Error(`KmReviewTemplate XML is missing root fdName: ${basename(path)}`);
   }
+  const authorization = collectTemplateAuthorization(root);
   return {
     name,
     fdId: cleanText(values.fdId || "") || undefined,
-    personEntities: collectConsistentPersonEntities(
-      parseRootHashMap(xml)
-    )
+    personEntities: collectConsistentPersonEntities(root),
+    authorization: authorization.value,
+    authorizationIssues: authorization.issues
+  };
+}
+
+function collectTemplateAuthorization(value) {
+  const hasAuthorization = Object.prototype.hasOwnProperty.call(value || {}, "authReaderFlag") ||
+    KM_REVIEW_AUTHORIZATION_COLLECTIONS.some(([sourceKey]) => (
+      Object.prototype.hasOwnProperty.call(value || {}, sourceKey)
+    ));
+  if (!hasAuthorization) return { value: undefined, issues: [] };
+
+  const result = {
+    readerFlag: value?.authReaderFlag === true
+  };
+  const issues = [];
+  for (const [sourceKey, targetKey] of KM_REVIEW_AUTHORIZATION_COLLECTIONS) {
+    const sourceValue = value?.[sourceKey];
+    if (sourceValue !== undefined && !Array.isArray(sourceValue)) {
+      issues.push(templateAuthorizationIssue(sourceKey, undefined, "authorization_container_not_array"));
+      result[targetKey] = [];
+      continue;
+    }
+    const members = [];
+    for (const [index, candidate] of (sourceValue || []).entries()) {
+      const member = templateAuthorizationMember(candidate, sourceKey, index);
+      if (!member) {
+        issues.push(templateAuthorizationIssue(sourceKey, index, "authorization_identity_incomplete"));
+        continue;
+      }
+      members.push(member);
+    }
+    result[targetKey] = members;
+  }
+
+  return {
+    value: issues.length ? undefined : result,
+    issues
+  };
+}
+
+function templateAuthorizationMember(value, sourceKey, index) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const sourceId = cleanText(value.fdId || "");
+  const sourceOrgType = Number(value.fdOrgType);
+  const sourceOrgClass = cleanText(value.class || "");
+  const sourceLoginName = cleanText(value.fdLoginName || "");
+  const sourceParentName = cleanText(value["hbmParent.fdName"] || "");
+  const sourceName = cleanText(value.fdName || "");
+  const person = sourceOrgType === 8;
+  const stableRole = sourceOrgType === 32 && sourceId;
+  const name = sourceName || (person ? sourceLoginName : "");
+  if (
+    !sourceId ||
+    !Number.isInteger(sourceOrgType) ||
+    !sourceOrgClass ||
+    !name ||
+    (person && (
+      sourceOrgClass !== "com.landray.kmss.sys.organization.model.SysOrgPerson" ||
+      !sourceLoginName
+    )) ||
+    (!person && !stableRole && !sourceParentName)
+  ) {
+    return undefined;
+  }
+  return pruneUndefined({
+    type: "user_or_org",
+    sourceId,
+    name,
+    sourceOrgType,
+    sourceOrgClass,
+    sourceParentName: sourceParentName || undefined,
+    sourceLoginName: sourceLoginName || undefined,
+    sourceRef: `source.template.authorization.${sourceKey}.${index}`
+  });
+}
+
+function templateAuthorizationIssue(sourceKey, index, reason) {
+  const suffix = index === undefined ? "" : `/${index}`;
+  return {
+    code: `source.template.${reason}`,
+    message: "KmReviewTemplate authorization evidence is incomplete; template permissions cannot be migrated safely.",
+    path: `/template/authorization/${sourceKey}${suffix}`,
+    details: {
+      sourceKey,
+      ...(index === undefined ? {} : { index })
+    }
   };
 }
 

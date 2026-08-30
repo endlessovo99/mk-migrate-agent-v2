@@ -69,6 +69,8 @@ export function checkTrust(sourceDraft, migrationDsl) {
   const sourceRefs = collectSourceRefs(sourceDraft);
   validateDerivedFrom(sourceDraft, migrationDsl, diagnostics);
   validateCoreProvenance(migrationDsl, sourceRefs, diagnostics);
+  validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics);
+  validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics);
   validateWorkflowFormulaProvenance(sourceDraft, migrationDsl, diagnostics);
   validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics);
 
@@ -76,6 +78,40 @@ export function checkTrust(sourceDraft, migrationDsl) {
   diagnostics.push(...executionValidation.diagnostics);
 
   return finalize("trust", diagnostics);
+}
+
+function validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics) {
+  const expected = sourceDraft?.template?.authorization;
+  const actual = migrationDsl?.template?.authorization;
+  if (canonicalJson(expected) === canonicalJson(actual)) return;
+  diagnostics.push(error(
+    "trust.template.authorization_source_mismatch",
+    "Trusted template authorization must exactly preserve the source authorization evidence.",
+    "/template/authorization"
+  ));
+}
+
+function validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics) {
+  const sourceFields = [
+    ...(sourceDraft?.form?.controls || []),
+    ...(sourceDraft?.form?.dataFields || []),
+    ...(sourceDraft?.form?.detailTables || []).flatMap((table) => table.columns || [])
+  ];
+  const actualFields = (migrationDsl?.form?.fields || []).flatMap((field) =>
+    field.type === "detailTable" ? field.columns || [] : [field]
+  );
+  for (const source of sourceFields) {
+    if (source.sourceType === "description" ||
+      String(source.sourceProps?.designerValues?.readOnly).trim().toLowerCase() !== "true") continue;
+    const actual = actualFields.find((field) => field.sourceRef === source.sourceRef);
+    if (actual?.props?.readOnly === true || actual?.componentId === "xform-description") continue;
+    diagnostics.push(error(
+      "trust.form.read_only_source_mismatch",
+      "Trusted fields must preserve the source static read-only restriction.",
+      "/form/fields",
+      { fieldId: actual?.id || source.id, sourceRef: source.sourceRef }
+    ));
+  }
 }
 
 function validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics) {

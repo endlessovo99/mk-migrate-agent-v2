@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>empty-text-initialization-form</string></void>
+  <void method="put"><string>fdName</string><string>Empty text initialization</string></void>
+  <void method="put"><string>fdModelId</string><string>empty-text-initialization-template</string></void>
+  <void method="put"><string>fdDesignerHtml</string><string>
+   &lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;
+     &lt;input type=&quot;hidden&quot; id=&quot;internal_row&quot;/&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_internal_note&quot;,label:&quot;Internal note&quot;}&apos;&gt;&lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+     &lt;input type=&quot;hidden&quot; id=&quot;external_row&quot;/&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_external_name&quot;,label:&quot;External name&quot;,required:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_external_account&quot;,label:&quot;External account&quot;,required:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_external_bank&quot;,label:&quot;External bank&quot;,required:&quot;true&quot;}&apos;&gt;&lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr style=&quot;display:none&quot;&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_first_flag&quot;,label:&quot;First flag&quot;,canShow:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;fd_first_flag&quot; class=&quot;inputhidden&quot;/&gt;&lt;/div&gt;
+     &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_external_flag&quot;,label:&quot;External flag&quot;,canShow:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;fd_external_flag&quot; class=&quot;inputhidden&quot;/&gt;&lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div fd_type=&quot;jsp&quot; id=&quot;fd_init_script&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;script&gt;
+    Com_AddEventListener(window, &quot;load&quot;, function(){
+      var first = GetXFormFieldById(&quot;fd_first_flag&quot;)[0].value;
+      if (first.indexOf(&quot;ready&quot;) &gt;= 0) { common_dom_row_set_show_required_reset(&quot;internal_row&quot;, true, false, false); }
+      else { common_dom_row_set_show_required_reset(&quot;internal_row&quot;, false, false, false); }
+    });
+    Com_AddEventListener(window, &quot;load&quot;, function(){
+      var external = GetXFormFieldById(&quot;fd_external_flag&quot;)[0].value;
+      if (external.indexOf(&quot;external&quot;) &gt;= 0) { common_dom_row_set_show_required_reset(&quot;external_row&quot;, true, true, false); }
+      else { common_dom_row_set_show_required_reset(&quot;external_row&quot;, false, false, false); }
+    });
+   &lt;/script&gt;&apos;/&gt;&lt;/div&gt;
+  </string></void>
+  <void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;
+   &lt;extendSimpleProperty name=&quot;fd_internal_note&quot; label=&quot;Internal note&quot; type=&quot;String&quot;/&gt;
+   &lt;extendSimpleProperty name=&quot;fd_external_name&quot; label=&quot;External name&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+   &lt;extendSimpleProperty name=&quot;fd_external_account&quot; label=&quot;External account&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+   &lt;extendSimpleProperty name=&quot;fd_external_bank&quot; label=&quot;External bank&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+   &lt;extendSimpleProperty name=&quot;fd_first_flag&quot; label=&quot;First flag&quot; type=&quot;String&quot; canDisplay=&quot;false&quot;/&gt;
+   &lt;extendSimpleProperty name=&quot;fd_external_flag&quot; label=&quot;External flag&quot; type=&quot;String&quot; canDisplay=&quot;false&quot;/&gt;
+  &lt;/metadata&gt;</string></void>
+ </object>
+</java>

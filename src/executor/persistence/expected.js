@@ -69,7 +69,8 @@ export function buildExpectedInvariants(dsl, envelope) {
       templateId: envelope?.templateId,
       mainTableName: envelope?.tableName,
       form: dsl?.form,
-      runtime: dsl?.runtime
+      runtime: dsl?.runtime,
+      templateAuthorization: dsl?.template?.authorization
     })
     : { expected: false };
 
@@ -334,6 +335,9 @@ function expectedCalculationDependencies(entry, knownRefs) {
 function executableProps(field = {}, form = {}, context = {}) {
   const props = {};
   if (field.props?.required === true) props.required = true;
+  if (componentSupportsProp(field.componentId, "readOnly") && field.props?.readOnly === true) {
+    props.readOnly = true;
+  }
   if (
     componentSupportsProp(field.componentId, "hiddenLabel") &&
     field.props?.hiddenLabel === true
@@ -902,6 +906,13 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
   return {
     expected: true,
     readable: true,
+    templateAuthorization: summarizeExpectedTemplateAuthorization(
+      context.templateAuthorization,
+      diagnostics
+    ),
+    timeoutNotification: summarizeExpectedTimeoutNotification(
+      workflow.process?.timeoutNotification
+    ),
     completionNotifications: {
       drafter: workflow.process?.completionNotifications?.drafter === true,
       participants: workflow.process?.completionNotifications?.participants === true
@@ -909,6 +920,50 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
     process: summarizeProcessConfig(workflow.process),
     nodes: expectedNodes,
     edges: expectedEdges
+  };
+}
+
+const TEMPLATE_AUTHORIZATION_COLLECTIONS = Object.freeze([
+  "readers",
+  "editors",
+  "allReaders",
+  "allEditors",
+  "temporaryReaders",
+  "temporaryEditors"
+]);
+
+function summarizeExpectedTemplateAuthorization(authorization, diagnostics) {
+  if (authorization === undefined) return undefined;
+  const result = {};
+  for (const collectionName of TEMPLATE_AUTHORIZATION_COLLECTIONS) {
+    const members = Array.isArray(authorization?.[collectionName])
+      ? authorization[collectionName]
+      : [];
+    result[collectionName] = members.map((member, index) => {
+      const id = normalizeScalar(member?.id);
+      if (!nonEmptyString(id) || !Number.isInteger(Number(member?.targetOrgType))) {
+        diagnostics.push(projectionError(
+          "projection.template.authorization_unresolved",
+          "Template authorization members must be resolved before persistence.",
+          { collectionName, index, sourceId: member?.sourceId }
+        ));
+      }
+      return id;
+    }).sort();
+  }
+  return result;
+}
+
+function summarizeExpectedTimeoutNotification(value) {
+  if (value === undefined) return undefined;
+  return {
+    afterDays: Number(value.afterDays),
+    afterHours: Number(value.afterHours),
+    afterMinutes: Number(value.afterMinutes),
+    recipient: normalizeScalar(value.recipient),
+    notifyMethods: Array.isArray(value.notifyMethods)
+      ? value.notifyMethods.map(normalizeScalar)
+      : []
   };
 }
 

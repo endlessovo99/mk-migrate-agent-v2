@@ -7,6 +7,20 @@ import { main } from "../../src/cli/main.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("execute CLI", () => {
+  it("passes the separately confirmed published form patch scope without widening normal execute", async () => {
+    const { request } = await runExecuteCli({ argv: [
+      "--published-form-patch", "--confirm-write", "--target-template-id", "published-template",
+      "--readonly-field", "fd_bank", "--readonly-field", "fd_account",
+      "--script-action", "script.1.event.1", "--script-action", "script.2.event.1",
+      "--expected-snapshot-digest", "a".repeat(64), "--artifacts-dir", "/tmp/published-form-execution"
+    ] });
+    assert.equal(request.options.publishedFormPatch, true);
+    assert.deepEqual(request.options.readonlyFieldIds, ["fd_bank", "fd_account"]);
+    assert.deepEqual(request.options.scriptActionIds, ["script.1.event.1", "script.2.event.1"]);
+    assert.equal(request.options.expectedSnapshotDigest, "a".repeat(64));
+    assert.equal(request.options.artifactsDir, "/tmp/published-form-execution");
+  });
+
   it("passes NEWOA_BASE_URL from the environment to the executor", async () => {
     const { request } = await runExecuteCli({
       env: { NEWOA_BASE_URL: "https://oa.example.com" }

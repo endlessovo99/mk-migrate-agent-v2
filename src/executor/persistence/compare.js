@@ -881,6 +881,39 @@ function compareWorkflow(expected, actual, diagnostics) {
     return;
   }
 
+  if (
+    expected.templateAuthorization !== undefined &&
+    stableStringify(expected.templateAuthorization) !== stableStringify(actual.templateAuthorization)
+  ) {
+    diagnostics.push(mismatch(
+      "workflow",
+      "readback.workflow.template_authorization_mismatch",
+      "Readback workflow-template authorization mismatch.",
+      {
+        invariantKey: "workflow.templateAuthorization",
+        path: "/readback/workflow/templateAuthorization",
+        expected: expected.templateAuthorization,
+        actual: actual.templateAuthorization
+      }
+    ));
+  }
+  if (
+    expected.timeoutNotification !== undefined &&
+    stableStringify(expected.timeoutNotification) !== stableStringify(actual.timeoutNotification)
+  ) {
+    diagnostics.push(mismatch(
+      "workflow",
+      "readback.workflow.timeout_notification_mismatch",
+      "Readback workflow timeout-notification policy mismatch.",
+      {
+        invariantKey: "workflow.timeoutNotification",
+        path: "/readback/workflow/timeoutNotification",
+        expected: expected.timeoutNotification,
+        actual: actual.timeoutNotification
+      }
+    ));
+  }
+
   for (const key of ["drafter", "participants"]) {
     assertEqual(
       diagnostics,

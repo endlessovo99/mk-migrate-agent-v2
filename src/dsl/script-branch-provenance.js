@@ -4,7 +4,7 @@ import {
   parseProvenanceCondition
 } from "./script-condition-provenance.js";
 
-export const SCRIPT_BRANCH_PROVENANCE_VERSION = 3;
+export const SCRIPT_BRANCH_PROVENANCE_VERSION = 4;
 
 const PROVENANCE_STATUSES = new Set(["none", "proven", "unproven"]);
 const PROVENANCE_EVENTS = new Set(["onChange", "onLoad"]);
@@ -16,12 +16,14 @@ export function buildScriptBranchProvenance({
   sourceActionKey,
   eventFunctionName,
   eventFunctionStart,
+  textFieldIds,
   programIsEntrypoint = false
 } = {}) {
   const analysis = analyzeScriptBranchConditions(source, {
     event,
     eventFunctionName,
     eventFunctionStart,
+    textFieldIds,
     programIsEntrypoint
   });
   return pruneUndefined({
@@ -39,6 +41,7 @@ export function analyzeScriptBranchConditions(source, {
   event,
   eventFunctionName,
   eventFunctionStart,
+  textFieldIds,
   programIsEntrypoint = false
 } = {}) {
   const text = String(source || "");
@@ -55,6 +58,7 @@ export function analyzeScriptBranchConditions(source, {
     event,
     eventFunctionName,
     eventFunctionStart,
+    textFieldIds,
     programIsEntrypoint
   });
   if (["onChange", "onLoad"].includes(event) && !resolver.entrypoint) {
@@ -208,6 +212,15 @@ export function inspectMappedScriptBranchProvenance(action, expected = action?.b
   }
   if (!sameConditionSequence(expected.conditions, observed.conditions)) {
     return invalid("branch_condition_provenance_changed", expected, observed);
+  }
+  if (expected.conditions.some((condition, index) => {
+    if (condition.emptyText !== true) return false;
+    const transforms = observed.conditions[index].transforms;
+    const nullish = transforms.indexOf("nullish-empty");
+    const string = transforms.indexOf("string");
+    return nullish < 0 || string < nullish || transforms.includes("default-empty");
+  })) {
+    return invalid("legacy_text_empty_value_not_preserved", expected, observed);
   }
   return { ok: true, status: "matched", expected, observed };
 }
@@ -515,6 +528,7 @@ function normalizedCondition(condition) {
     values: condition.values,
     origin: condition.operand,
     transforms: Array.isArray(condition.transforms) ? condition.transforms : [],
+    emptyText: condition.emptyText === true ? true : undefined,
     predicate: condition.predicate,
     pattern: condition.pattern
   });
@@ -537,6 +551,7 @@ function conditionKey(condition) {
 
 function validCondition(condition, event) {
   if (!condition || typeof condition !== "object" || Array.isArray(condition)) return false;
+  if (condition.emptyText !== undefined && typeof condition.emptyText !== "boolean") return false;
   if (!["eq", "contains", "regex-set", "truthy", "lt", "lte", "gt", "gte"].includes(condition.kind)) {
     return false;
   }

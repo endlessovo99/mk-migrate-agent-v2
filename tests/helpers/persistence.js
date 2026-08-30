@@ -53,6 +53,7 @@ export function sampleBaseTemplate(overrides = {}) {
 }
 
 export function prepareSample(dsl, options = {}) {
+  const executableDsl = materializeTestTemplateAuthorization(dsl);
   const providedBase = options.baseTemplate ? clone(options.baseTemplate) : sampleBaseTemplate();
   const envelope = sampleEnvelope({
     templateId: providedBase.fdId || "template-id",
@@ -87,7 +88,7 @@ export function prepareSample(dsl, options = {}) {
   }
 
   const prepared = preparePersistedTemplate({
-    dsl,
+    dsl: executableDsl,
     envelope,
     baseTemplate: providedBase
   });
@@ -97,6 +98,32 @@ export function prepareSample(dsl, options = {}) {
     throw error;
   }
   return prepared;
+}
+
+function materializeTestTemplateAuthorization(dsl) {
+  const next = clone(dsl);
+  const authorization = next?.template?.authorization;
+  if (!authorization || typeof authorization !== "object") return next;
+  for (const collectionName of [
+    "readers",
+    "editors",
+    "allReaders",
+    "allEditors",
+    "temporaryReaders",
+    "temporaryEditors"
+  ]) {
+    if (!Array.isArray(authorization[collectionName])) continue;
+    authorization[collectionName] = authorization[collectionName].map((member) => (
+      member?.id || !member?.sourceId
+        ? member
+        : {
+            ...member,
+            id: member.sourceId,
+            targetOrgType: member.sourceOrgType
+          }
+    ));
+  }
+  return next;
 }
 
 /** Project DSL through the persistence Module Interface. */

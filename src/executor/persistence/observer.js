@@ -90,7 +90,7 @@ export function observeNativeTemplate(template) {
       diagnostics: []
     };
   } else {
-    partitions.workflow = observeWorkflow(lbpm);
+    partitions.workflow = observeWorkflow(lbpm, template);
   }
 
   return partitions;
@@ -186,6 +186,14 @@ function observeForm(config, xform, options = {}) {
     .map((field) => observeDataField(field, lang));
   const detailFields = detailModels.map((model) => observeDetailField(model, models.indexOf(model), lang));
   const fields = [...mainFields, ...detailFields];
+  for (const field of mainFields) {
+    observeStaticReadOnly(field, config.auth, mainModel.fdTableName);
+  }
+  detailFields.forEach((field, index) => {
+    for (const column of field.columns) {
+      observeStaticReadOnly(column, config.auth, detailModels[index].fdTableName);
+    }
+  });
   const renderedDetailColumnsByScene = {
     desktop: new Map(),
     mobile: new Map()
@@ -286,6 +294,19 @@ function observeForm(config, xform, options = {}) {
   };
 }
 
+function observeStaticReadOnly(field, auth, tableName) {
+  if (
+    field.nativeStaticReadOnly === true &&
+    Array.isArray(auth) && auth.length > 0 &&
+    auth.every((entry) => ["add", "edit"].every((mode) =>
+      entry?.[mode]?.[tableName]?.fields?.[field.id]?.editable === false
+    ))
+  ) {
+    field.props.readOnly = true;
+  }
+  delete field.nativeStaticReadOnly;
+}
+
 function observeDataField(field, lang) {
   const attributeResult = decodeFieldAttribute(field.fdAttribute);
   const controlProps = attributeResult?.config?.controlProps || {};
@@ -311,6 +332,7 @@ function observeDataField(field, lang) {
     component,
     dataOnly: field.fdDisplay === false,
     props,
+    nativeStaticReadOnly: controlProps.showStatus === "readOnly",
     nativeAddressContextDefault: observeNativeAddressContextDefault(controlProps),
     columns: []
   };
@@ -378,6 +400,7 @@ function observeDetailField(model, modelIndex, lang) {
         component: inferComponent(field, controlProps),
         dataOnly: field.fdDisplay === false,
         props: observeExecutableProps(controlProps, { field, lang, attribute }),
+        nativeStaticReadOnly: controlProps.showStatus === "readOnly",
         persistence: {
           fieldIndex,
           mechanismType: normalizeScalar(field.fdMechanismType),
@@ -1547,7 +1570,7 @@ function hasCanonicalGuard(source, event) {
   return Boolean(inspectLeadingViewStatusGuard(source, { event }));
 }
 
-function observeWorkflow(lbpm) {
+function observeWorkflow(lbpm, template) {
   const diagnostics = [];
   const contentResult = decodeRequiredJsonObject(lbpm.fdContent, {
     partition: "workflow",
@@ -1621,9 +1644,13 @@ function observeWorkflow(lbpm) {
     });
   if (!formAuthsResult.ok) diagnostics.push(formAuthsResult.diagnostic);
   const formAuths = formAuthsResult.ok ? formAuthsResult.value : {};
+  const templateAuthorization = observeTemplateAuthorization(template, lbpm, diagnostics);
+  const timeoutNotification = observeTimeoutNotification(lbpm, diagnostics);
 
   const value = {
     readable: true,
+    templateAuthorization,
+    timeoutNotification,
     completionNotifications: {
       drafter: completionNotificationResults.drafter.value,
       participants: completionNotificationResults.participants.value
@@ -1673,6 +1700,149 @@ function observeWorkflow(lbpm) {
     value,
     diagnostics
   };
+}
+
+const TEMPLATE_AUTHORIZATION_NATIVE_FIELDS = Object.freeze([
+  ["readers", "fdReaders"],
+  ["editors", "fdEditors"],
+  ["allReaders", "fdAllReaders"],
+  ["allEditors", "fdAllEditors"],
+  ["temporaryReaders", "fdTmpReaders"],
+  ["temporaryEditors", "fdTmpEditors"]
+]);
+
+function observeTemplateAuthorization(template, lbpm, diagnostics) {
+  const hasAuthorization = TEMPLATE_AUTHORIZATION_NATIVE_FIELDS.some(([, nativeKey]) => (
+    Object.prototype.hasOwnProperty.call(template || {}, nativeKey)
+  )) || Object.prototype.hasOwnProperty.call(template || {}, "fdReaderFlag");
+  if (!hasAuthorization) return undefined;
+
+  const value = {};
+  for (const [dslKey, nativeKey] of TEMPLATE_AUTHORIZATION_NATIVE_FIELDS) {
+    value[dslKey] = observeAuthorizationIds(
+      template?.[nativeKey],
+      `/template/${nativeKey}`,
+      diagnostics
+    );
+  }
+  const workflowReaders = observeAuthorizationIds(
+    lbpm?.fdReaders,
+    "/mechanisms/lbpmTemplate/0/fdReaders",
+    diagnostics
+  );
+  const workflowEditors = observeAuthorizationIds(
+    lbpm?.fdEditors,
+    "/mechanisms/lbpmTemplate/0/fdEditors",
+    diagnostics
+  );
+  if (
+    stableStringify(workflowReaders) !== stableStringify(value.readers) ||
+    stableStringify(workflowEditors) !== stableStringify(value.editors)
+  ) {
+    diagnostics.push(workflowDecodeDiagnostic(
+      "readback.decode.workflow.template_authorization_binding_mismatch",
+      "Workflow-template readers and editors do not match the template authorization.",
+      "/mechanisms/lbpmTemplate/0"
+    ));
+  }
+  return value;
+}
+
+function observeAuthorizationIds(value, path, diagnostics) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    diagnostics.push(workflowDecodeDiagnostic(
+      "readback.decode.workflow.template_authorization_array_required",
+      "Template authorization collections must be arrays.",
+      path
+    ));
+    return [];
+  }
+  return value.map((member, index) => {
+    const id = normalizeScalar(member?.fdId);
+    if (!id) {
+      diagnostics.push(workflowDecodeDiagnostic(
+        "readback.decode.workflow.template_authorization_id_required",
+        "Template authorization members must retain fdId.",
+        `${path}/${index}/fdId`
+      ));
+    }
+    return id;
+  }).sort();
+}
+
+function observeTimeoutNotification(lbpm, diagnostics) {
+  if (lbpm?.fdTimeoutStrategiesOfNode === undefined) return undefined;
+  const strategies = lbpm.fdTimeoutStrategiesOfNode;
+  if (!Array.isArray(strategies) || strategies.length !== 1) {
+    diagnostics.push(workflowDecodeDiagnostic(
+      "readback.decode.workflow.timeout_strategy_single_required",
+      "Workflow timeout notification requires exactly one native node-timeout strategy.",
+      "/mechanisms/lbpmTemplate/0/fdTimeoutStrategiesOfNode"
+    ));
+    return undefined;
+  }
+  const strategy = strategies[0] || {};
+  const condition = strategy.fdCondition || {};
+  const hasCondition = condition && typeof condition === "object" &&
+    Object.keys(condition).length > 0;
+  const actions = Array.isArray(strategy.fdActions) ? strategy.fdActions : [];
+  const action = actions[0] || {};
+  let config = {};
+  try {
+    config = JSON.parse(action.fdConfig || "{}");
+  } catch {
+    diagnostics.push(workflowDecodeDiagnostic(
+      "readback.decode.workflow.timeout_strategy_config_invalid",
+      "Workflow timeout notification fdConfig must be valid JSON.",
+      "/mechanisms/lbpmTemplate/0/fdTimeoutStrategiesOfNode/0/fdActions/0/fdConfig"
+    ));
+  }
+  const afterDays = Number(strategy.fdDayOfTimeout);
+  const afterHours = Number(strategy.fdHourOfTimeout);
+  const afterMinutes = Number(strategy.fdMinuteOfTimeout);
+  const expectedDuration = (afterDays * 24 * 60) + (afterHours * 60) + afterMinutes;
+  const conditionValid = !hasCondition || (
+    Number(condition.fdTimeoutType) === 2 &&
+    Number(condition.fdDayOfTimeout) === afterDays &&
+    Number(condition.fdHourOfTimeout) === afterHours &&
+    Number(condition.fdMinuteOfTimeout) === afterMinutes &&
+    Number(condition.fdExpireDuration) === expectedDuration
+  );
+  const contractValid =
+    strategy.fdName === `${afterDays}天未完成通知特权人` &&
+    Number(strategy.fdTimeoutType) === 2 &&
+    Number(strategy.fdExpireDuration) === expectedDuration &&
+    conditionValid &&
+    actions.length === 1 &&
+    action.fdActionType === "notifyAdmin" &&
+    action.fdRepeat === false;
+  if (!contractValid) {
+    diagnostics.push(workflowDecodeDiagnostic(
+      "readback.decode.workflow.timeout_strategy_contract_mismatch",
+      "Workflow timeout notification does not match the required native privileged-user strategy.",
+      "/mechanisms/lbpmTemplate/0/fdTimeoutStrategiesOfNode/0"
+    ));
+  }
+  return {
+    afterDays,
+    afterHours,
+    afterMinutes,
+    recipient: action.fdActionType === "notifyAdmin" ? "privileged_users" : "",
+    notifyMethods: Array.isArray(config.notifyMethods)
+      ? config.notifyMethods.map(normalizeScalar)
+      : []
+  };
+}
+
+function workflowDecodeDiagnostic(code, message, decodePath) {
+  return diagnostic({
+    level: "error",
+    code,
+    message,
+    partition: "workflow",
+    decodePath
+  });
 }
 
 function observeNativeNodeHelp(node) {

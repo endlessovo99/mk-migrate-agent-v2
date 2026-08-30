@@ -23,7 +23,7 @@ describe("named window-load helper Route case", () => {
     assert.ok(loadAction);
     assert.equal(loadAction.translationStatus, "needs_review");
     assert.deepEqual(loadAction.branchProvenance, {
-      version: 3,
+      version: 4,
       event: "onLoad",
       sourceRef: "source.form.jsp.jsp_named_load.script.1",
       status: "proven",
@@ -48,7 +48,7 @@ describe("named window-load helper Route case", () => {
       /^source\.form\.jsp\.jsp_named_load\.script\.1#onChange@\d+$/
     );
     assert.deepEqual(changeAction.branchProvenance, {
-      version: 3,
+      version: 4,
       event: "onChange",
       sourceRef: "source.form.jsp.jsp_named_load.script.1",
       sourceActionKey: changeAction.sourceActionKey,

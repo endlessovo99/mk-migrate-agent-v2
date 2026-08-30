@@ -131,6 +131,9 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
 
 function summarizeSemanticProps(field) {
   const props = {};
+  if (componentSupportsProp(field.component, "readOnly") && field.props?.readOnly === true) {
+    props.readOnly = true;
+  }
   if (
     componentSupportsProp(field.component, "hiddenLabel") &&
     field.props?.hiddenLabel === true
@@ -192,6 +195,12 @@ export function buildWorkflowSummary(observedWorkflow) {
   return {
     nodeCount: nodes.length,
     edgeCount: edges.length,
+    ...(observedWorkflow.templateAuthorization !== undefined
+      ? { templateAuthorization: observedWorkflow.templateAuthorization }
+      : {}),
+    ...(observedWorkflow.timeoutNotification !== undefined
+      ? { timeoutNotification: observedWorkflow.timeoutNotification }
+      : {}),
     completionNotifications: observedWorkflow.completionNotifications,
     conditionEdgeCount: edges.filter(hasCondition).length,
     invalidEdgeCount: edges.filter((edge) => !edge.source || !edge.target || !nodeIds.has(edge.source) || !nodeIds.has(edge.target)).length,

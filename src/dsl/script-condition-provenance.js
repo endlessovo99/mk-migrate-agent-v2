@@ -1,8 +1,17 @@
 import { buildJavaScriptBindingModel } from "./javascript-binding-provenance.js";
 
+export function textValueFieldIds(form = {}) {
+  const textComponents = new Set(["xform-input", "xform-hidden", "xform-textarea", "xform-subject"]);
+  const isText = (field) => ["text", "longText"].includes(field.type) && textComponents.has(field.componentId);
+  return (form.fields || []).flatMap((field) => field.type === "detailTable"
+    ? (field.columns || []).filter(isText).map((column) => `${field.id}.${column.id}`)
+    : isText(field) ? [field.id] : []);
+}
+
 export function buildConditionOperandResolver(source, options = {}) {
   const text = String(source || "");
   const bindings = buildJavaScriptBindingModel(text, options);
+  const textFields = new Set(options.textFieldIds || []);
 
   function resolveTrace(expression, context = {}, seen = new Set()) {
     const beforeIndex = Number.isInteger(context.beforeIndex) ? context.beforeIndex : text.length;
@@ -25,7 +34,11 @@ export function buildConditionOperandResolver(source, options = {}) {
       bindings.isUnshadowedGlobal(legacyGetter, beforeIndex) &&
       staticCapturedLiteral(legacyValue[1], legacyValue[2])
     ) {
-      return { origin: `field:${legacyValue[2]}`, transforms: [] };
+      return {
+        origin: `field:${legacyValue[2]}`,
+        transforms: [],
+        ...(/\.\s*value$/.test(value) && textFields.has(legacyValue[2]) ? { emptyText: true } : {})
+      };
     }
     const legacyElementMember = value.match(/^([A-Za-z_$][\w$]*)\s*\.\s*value$/);
     if (legacyElementMember) {
@@ -42,7 +55,11 @@ export function buildConditionOperandResolver(source, options = {}) {
         bindings.isUnshadowedGlobal("GetXFormFieldById", declaration.expressionIndex) &&
         staticCapturedLiteral(elementGetter[1], elementGetter[2])
       ) {
-        return { origin: `field:${elementGetter[2]}`, transforms: [] };
+        return {
+          origin: `field:${elementGetter[2]}`,
+          transforms: [],
+          ...(textFields.has(elementGetter[2]) ? { emptyText: true } : {})
+        };
       }
     }
     const legacyJqueryValue = value.match(/^\$\(\s*(["'`])([\s\S]*)\1\s*\)\s*\.\s*val\(\s*\)$/);
@@ -67,6 +84,8 @@ export function buildConditionOperandResolver(source, options = {}) {
     }
     const defaulted = value.match(/^([A-Za-z_$][\w$]*)\s*\|\|\s*(["'`])\2$/);
     if (defaulted) return appendTransform(resolveTrace(defaulted[1], context, seen), "default-empty");
+    const nullishDefault = value.match(/^([\s\S]+?)\s*\?\?\s*(["'`])\2$/);
+    if (nullishDefault) return appendTransform(resolveTrace(nullishDefault[1], context, seen), "nullish-empty");
     const normalizedArray = value.match(
       /^Array\.isArray\(\s*([A-Za-z_$][\w$]*)\s*\)\s*\?\s*\1\s*\[\s*0\s*\]\s*:\s*\1$/
     );
@@ -136,6 +155,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: "falsy",
       operand: negatedTrace.origin,
       transforms: negatedTrace.transforms,
+      ...(negatedTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: "logical-not"
     };
   }
@@ -147,6 +167,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: "truthy",
       operand: directTrace.origin,
       transforms: directTrace.transforms,
+      ...(directTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: "boolean-coercion"
     };
   }
@@ -177,6 +198,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       values: [...new Set([...regexTest[1]])],
       operand: regexTrace.origin,
       transforms: regexTrace.transforms,
+      ...(regexTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: "regex-char-set",
       pattern: `[${regexTest[1]}]`
     };
@@ -190,6 +212,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: indexOf[3],
       operand: indexOfTrace.origin,
       transforms: indexOfTrace.transforms,
+      ...(indexOfTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: "indexOf"
     };
   }
@@ -202,6 +225,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: includes[3],
       operand: includesTrace.origin,
       transforms: includesTrace.transforms,
+      ...(includesTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: "includes"
     };
   }
@@ -214,6 +238,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: equality[4],
       operand: equalityTrace.origin,
       transforms: equalityTrace.transforms,
+      ...(equalityTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: equality[2].length === 3 ? "strict-equality" : "loose-equality"
     };
   }
@@ -226,6 +251,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: reversed[2],
       operand: reversedTrace.origin,
       transforms: reversedTrace.transforms,
+      ...(reversedTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: reversed[3].length === 3 ? "strict-equality" : "loose-equality"
     };
   }
@@ -240,6 +266,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: numericEquality[3],
       operand: numericTrace.origin,
       transforms: numericTrace.transforms,
+      ...(numericTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: numericEquality[2].length === 3
         ? "strict-numeric-equality"
         : "loose-numeric-equality"
@@ -256,6 +283,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: reversedNumeric[1],
       operand: reversedNumericTrace.origin,
       transforms: reversedNumericTrace.transforms,
+      ...(reversedNumericTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: reversedNumeric[2].length === 3
         ? "strict-numeric-equality"
         : "loose-numeric-equality"
@@ -272,6 +300,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: relational[3],
       operand: relationalTrace.origin,
       transforms: relationalTrace.transforms,
+      ...(relationalTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: `numeric-${relational[2]}`
     };
   }
@@ -286,6 +315,7 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
       value: reversedRelational[1],
       operand: reversedRelationalTrace.origin,
       transforms: reversedRelationalTrace.transforms,
+      ...(reversedRelationalTrace.emptyText === true ? { emptyText: true } : {}),
       predicate: `numeric-reversed-${reversedRelational[2]}`
     };
   }

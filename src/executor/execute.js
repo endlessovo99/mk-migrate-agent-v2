@@ -1,4 +1,5 @@
 import { buildDryRunPlan } from "./dry-run.js";
+import { executePublishedFormPatch } from "./published-form-patch.js";
 import { NewoaClient, normalizeBaseUrl } from "./newoa-client.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
@@ -17,6 +18,7 @@ import {
 } from "./native-form-rule-runtime-capability.js";
 
 export async function executeDsl(input, options = {}) {
+  if (options.publishedFormPatch === true) return executePublishedFormPatch(input, options);
   const plan = buildDryRunPlan(input);
 
   if (!plan.ok) {

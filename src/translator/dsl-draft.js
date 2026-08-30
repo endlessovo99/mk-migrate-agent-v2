@@ -138,7 +138,8 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     template: {
       name: sourceDraft.template?.name || "未命名模板",
       categoryPath: sourceDraft.template?.categoryPath || "",
-      sourceRef: sourceDraft.source?.sourceId || sourceDraft.source?.path || ""
+      sourceRef: sourceDraft.source?.sourceId || sourceDraft.source?.path || "",
+      authorization: sourceDraft.template?.authorization
     },
     form,
     formRules,
@@ -952,6 +953,12 @@ function propsFromSource(source, options = {}) {
 
   const props = {};
   if (source.required) props.required = true;
+  if (
+    componentSupportsProp(componentId, "readOnly") &&
+    String(source.sourceProps?.designerValues?.readOnly).trim().toLowerCase() === "true"
+  ) {
+    props.readOnly = true;
+  }
   if (
     (
       (hasActiveExternalRightPrompt(source) && source.sourceProps?.rightContainer) ||
@@ -2486,7 +2493,14 @@ function draftWorkflowProcess(process = {}) {
   const completionNotifications = completionNotificationsFromSourceAttributes(process.attributes);
   return pruneUndefined({
     ...process,
-    completionNotifications
+    completionNotifications,
+    timeoutNotification: {
+      afterDays: 15,
+      afterHours: 0,
+      afterMinutes: 0,
+      recipient: "privileged_users",
+      notifyMethods: ["todo"]
+    }
   });
 }
 

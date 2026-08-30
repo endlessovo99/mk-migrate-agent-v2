@@ -1,12 +1,60 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { checkExecute } from "../../src/dsl/checks.js";
+import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
-import { prepareSample, summarizeProjectedForm, xformConfig } from "../helpers/persistence.js";
+import { formAttr, prepareSample, summarizeProjectedForm, xformConfig } from "../helpers/persistence.js";
 
 const fixture = "tests/fixtures/source/route-hidden-data-field";
 
 describe("hard-hidden field Route case", () => {
+  it("rejects reviewed text predicates that lose the legacy empty-string value", () => {
+    const source = cleanSourceFile("tests/fixtures/route-validation/empty-text-initialization/route-empty-text-initialization_SysFormTemplate.xml");
+    const draft = draftSourceDraft(source);
+    const result = applyEvidenceBackedPatches(draft, initializationPatches(draft, false), {
+      sourceDraft: source, sourceRefs: collectSourceRefs(source)
+    });
+    assert.equal(result.ok, false);
+    assert.ok(result.diagnostics.some((item) => item.details?.reason === "legacy_text_empty_value_not_preserved"));
+  });
+
+  it("runs all initializers with unset text flags and preserves conditional external fields", () => {
+    const source = cleanSourceFile("tests/fixtures/route-validation/empty-text-initialization/route-empty-text-initialization_SysFormTemplate.xml");
+    const draft = draftSourceDraft(source);
+    const result = applyEvidenceBackedPatches(draft, initializationPatches(draft, true), {
+      sourceDraft: source, sourceRefs: collectSourceRefs(source)
+    });
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    const trusted = createTrustedMigrationDsl(source, result.dslDraft, { externalAgentReviewed: true });
+    assert.equal(checkTrust(source, trusted).ok, true);
+    assert.equal(checkExecute(trusted).ok, true);
+    const forged = structuredClone(trusted);
+    delete forged.scripts.actions[0].branchProvenance.conditions[0].emptyText;
+    assert.equal(checkTrust(source, forged).ok, false);
+    const prepared = prepareSample(trusted);
+    assert.equal(prepared.verify(prepared.update).ok, true);
+    const code = formAttr(prepared.update).controlAction.global.onLoad[0].function;
+    const ids = ["fd_external_name", "fd_external_account", "fd_external_bank"];
+    for (const value of [undefined, null, "", "internal", "external"]) {
+      const states = new Map(ids.map((id) => [id, { visible: true, required: true }]));
+      const onLoad = new Function("MKXFORM", `${code};return onLoad;`)({
+        getValue(id) { return id === "fd_external_flag" ? value : undefined; },
+        setFieldAttr(id, state) {
+          if (!states.has(id)) return;
+          if (state === 4) states.get(id).visible = false;
+          if (state === 5) states.get(id).visible = true;
+          if (state === 6) states.get(id).required = false;
+          if (state === 3) states.get(id).required = true;
+        }
+      });
+      assert.doesNotThrow(() => onLoad({}));
+      for (const state of states.values()) {
+        assert.deepEqual(state, { visible: value === "external", required: value === "external" });
+      }
+    }
+  });
+
   it("writes retained hidden helpers as stored native hidden fields at the form tail", () => {
     const sourceDraft = cleanSourceFile(fixture);
     const dslDraft = draftSourceDraft(sourceDraft);
@@ -91,3 +139,33 @@ describe("hard-hidden field Route case", () => {
     assert.equal(failedReadback.ok, false);
   });
 });
+
+function initializationPatches(draft, safe) {
+  return draft.scripts.actions.flatMap((action, index) => {
+    const external = action.branchProvenance.conditions[0].origin === "field:fd_external_flag";
+    const fieldId = external ? "fd_external_flag" : "fd_first_flag";
+    const marker = external ? "external_row" : "internal_row";
+    const read = `MKXFORM.getValue('${fieldId}')`;
+    const values = {
+      function: `function onLoad() {
+        var text = ${safe ? `String(${read} ?? '')` : read};
+        if (text.indexOf('${external ? "external" : "ready"}') >= 0) {
+          MKXFORM.setFieldAttr('${marker}', 5);
+          MKXFORM.setFieldAttr('${marker}', ${external ? 3 : 6});
+        } else {
+          MKXFORM.setFieldAttr('${marker}', 4);
+          MKXFORM.setFieldAttr('${marker}', 6);
+        }
+      }`,
+      translationStatus: "mapped",
+      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      functionMappings: [{ source: "source text value and row states", target: "MKXFORM.getValue/setFieldAttr", basis: "semantic-translation", reviewRequired: false }]
+    };
+    return Object.entries(values).map(([property, value]) => ({
+      op: "replace", path: `/scripts/actions/${index}/${property}`, value,
+      sourceRefs: action.sourceRefs, confidence: 1,
+      evidence: ["The source reads a scalar text control value and switches the same row states."],
+      rationale: "Preserve initial empty-text behavior and both source branches."
+    }));
+  });
+}

@@ -1,12 +1,43 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
+import { buildScriptBranchProvenance, inspectMappedScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { namedValueChangeAssignmentCandidates } from "../../src/translator/named-value-change-assignment.js";
 
 const fixturePath = "tests/fixtures/source/1670297c984b45009eb5b1e444d9957d";
 
 describe("legacy branch provenance", () => {
+  it("requires source text empty normalization before string conversion and preserves zero", () => {
+    const source = "Com_AddEventListener(window, 'load', function(){ var element = GetXFormFieldById('fd_helper')[0]; if (element.value.indexOf('0') >= 0) showRow(); })";
+    const branchProvenance = buildScriptBranchProvenance({
+      event: "onLoad", source, textFieldIds: ["fd_helper"]
+    });
+    assert.equal(branchProvenance.conditions[0].emptyText, true);
+    const actionFor = (expression) => ({
+      event: "onLoad", translationStatus: "mapped", branchProvenance,
+      function: `function onLoad() { var raw = MKXFORM.getValue('fd_helper'); var text = ${expression}; if (text.indexOf('0') >= 0) MKXFORM.setValue('fd_result', 'matched'); }`
+    });
+    for (const expression of ["raw", "String(raw)", "String(raw || '')", "String(raw) ?? ''"]) {
+      const result = inspectMappedScriptBranchProvenance(actionFor(expression));
+      assert.equal(result.ok, false, expression);
+      assert.equal(result.reason, "legacy_text_empty_value_not_preserved");
+    }
+    for (const expression of ["String(raw ?? '')", "raw == null ? '' : String(raw)"]) {
+      const action = actionFor(expression);
+      assert.equal(inspectMappedScriptBranchProvenance(action).ok, true, expression);
+      for (const raw of [undefined, null, "", 0, "0"]) {
+        const writes = [];
+        const run = new Function("MKXFORM", `${action.function};return onLoad;`)({
+          getValue: () => raw, setValue: (_id, value) => writes.push(value)
+        });
+        assert.doesNotThrow(run);
+        assert.deepEqual(writes, raw === 0 || raw === "0" ? ["matched"] : []);
+      }
+    }
+    const typedEvidence = buildScriptBranchProvenance({ event: "onLoad", source, textFieldIds: [] });
+    assert.equal(typedEvidence.conditions[0].emptyText, undefined);
+  });
+
   it("traces a stable legacy field-element alias through its value member onLoad", () => {
     const source = [
       "Com_AddEventListener(window, 'load', function(){",

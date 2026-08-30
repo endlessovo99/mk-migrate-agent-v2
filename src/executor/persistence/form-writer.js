@@ -665,6 +665,10 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     "$$tableName": tableName
   };
 
+  if (componentSupportsProp(field.componentId, "readOnly") && field.props?.readOnly === true) {
+    controlProps.showStatus = "readOnly";
+  }
+
   if (spec.attrType === "hidden") {
     Object.assign(controlProps, {
       controlType: { value: "@elem/xform-input" },
@@ -1652,22 +1656,27 @@ function migrationRowIdFor(row = {}) {
 
 function buildFieldAuth(mainModel, detailModels, form) {
   const required = new Set((form.fields || []).filter((field) => field.props?.required).map((field) => field.id));
-  const authEntry = (field) => ({
+  const fieldsById = new Map((form.fields || []).map((field) => [field.id, field]));
+  const authEntry = (field, dslField) => ({
     visible: true,
-    editable: !field.fdIsSystem && field.fdType !== "desc",
+    editable: !field.fdIsSystem && field.fdType !== "desc" && dslField?.props?.readOnly !== true,
     required: required.has(field.fdName),
     hide: false
   });
 
   const mainFields = Object.fromEntries(
-    (mainModel.fdFields || []).map((field) => [field.fdName, authEntry(field)])
+    (mainModel.fdFields || []).map((field) => [field.fdName, authEntry(field, fieldsById.get(field.fdName))])
   );
   const flatDetailFields = {};
   const detailByTable = {};
   for (const model of detailModels) {
     const nestedFields = {};
+    const columnsById = new Map(
+      (fieldsById.get(model.dynamicProps?.detailFieldName)?.columns || [])
+        .map((column) => [column.id, column])
+    );
     for (const field of model.fdFields || []) {
-      const entry = authEntry(field);
+      const entry = authEntry(field, columnsById.get(field.fdName));
       flatDetailFields[field.fdName] = entry;
       if (!field.fdIsSystem) nestedFields[field.fdName] = entry;
     }
@@ -1706,15 +1715,15 @@ function buildAuth(tableName, fieldAuth, form, detailModels = []) {
   );
 
   const mainEditFields = {
+    ...fieldAuth.flatDetailFields,
     ...fieldAuth.mainFields,
-    ...detailTableRefs,
-    ...fieldAuth.flatDetailFields
+    ...detailTableRefs
   };
   const mainViewFields = Object.fromEntries(
     Object.entries({
+      ...fieldAuth.flatDetailFields,
       ...fieldAuth.mainFields,
-      ...detailTableViewRefs,
-      ...fieldAuth.flatDetailFields
+      ...detailTableViewRefs
     }).map(([fieldName, entry]) => {
       if (detailTableViewRefs[fieldName]) {
         return [fieldName, detailTableViewRefs[fieldName]];
