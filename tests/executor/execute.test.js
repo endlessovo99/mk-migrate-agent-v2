@@ -849,7 +849,7 @@ describe("executeDsl", () => {
     assert.equal(verifyTemplate(trusted, brokenDisplay).ok, false);
   });
 
-  it("writes node-history superior leaders as Script handlers for arbitrary node ids", () => {
+  it("writes node-history role lines as Script handlers for arbitrary node ids", () => {
     const sourceExpression = '$组织架构.解释角色线$($流程.获取节点实际处理人$("N654"), "公司级分管领导", "分管领导")';
     const nodes = [
       { id: "N100", type: "generalStart", element: "startEvent", sourceRef: "source.workflow.node.N100", attributes: {}, translationStatus: "executable" },
@@ -903,8 +903,10 @@ describe("executeDsl", () => {
 
     assert.equal(persisted.handlers.ruleMode, "script");
     assert.equal(rule.type, "Script");
-    assert.equal(rule.script, 'return ${func.sysorg.getSuperiorDepartmenthead}(${func.lbpm.getNodeHistoryHandlers}("N654", false), 1)');
-    assert.equal(rule.vo.content, 'return #查找上级部门领导#(#获取节点历史处理人#("N654", false), 1)');
+    assert.equal(persisted.handlerIds, "");
+    assert.equal(persisted.handlerNames, "");
+    assert.equal(rule.script, 'return ${func.sysRole.resolveRoleLine}(${func.lbpm.getNodeHistoryHandlers}("N654", false), "公司级分管领导", "分管领导")');
+    assert.equal(rule.vo.content, 'return #解释角色线#(#获取节点历史处理人#("N654", false), "公司级分管领导", "分管领导")');
     assert.equal(rule.vo.mode, "script");
     assert.equal(rule.resultType.type, "array");
     assert.equal(verifyTemplate(trusted, template).ok, true);
@@ -1282,13 +1284,15 @@ describe("executeDsl", () => {
     }
   });
 
-  localCorpusIt("projects the related-leader role line through the configured execution fallback", () => {
+  localCorpusIt("projects the related-leader role line without replacing its semantics", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const node = dslDraft.workflow.nodes.find((element) => element.id === "N53");
 
-    assert.equal(node.participants.mode, "configured_person_fallback");
-    assert.equal(node.participants.fallbackKind, "person");
+    assert.equal(node.participants.mode, "field_role_line_script");
+    assert.equal(node.participants.recipe, "resolve_role_line");
+    assert.equal(node.participants.companyRole, "公司级相关领导");
+    assert.equal(node.participants.departmentRole, "部门相关领导");
     assert.equal(node.translationStatus, "executable");
   });
 

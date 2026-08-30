@@ -2277,6 +2277,14 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
     return;
   }
   if (participants.mode === "unmapped_formula") {
+    if (!["role_line", "other"].includes(participants.formulaFamily)) {
+      diagnostics.push(error(
+        "workflow.participants.formula_family_required",
+        "Unmapped formula participants require an explicit formula family.",
+        `${path}/formulaFamily`,
+        { actual: participants.formulaFamily }
+      ));
+    }
     if (!nonEmptyString(participants.sourceExpression)) {
       diagnostics.push(error(
         "workflow.participants.formula_source_required",
@@ -2356,17 +2364,14 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
     if (!nonEmptyString(participants.nodeId)) {
       diagnostics.push(error(
         "workflow.participants.node_history_node_required",
-        "Node-history superior-department-head participants require nodeId.",
+        "Node-history role-line participants require nodeId.",
         `${path}/nodeId`
       ));
     }
-    if (
-      participants.companyRole !== "公司级分管领导" ||
-      participants.departmentRole !== "分管领导"
-    ) {
+    if (!nonEmptyString(participants.companyRole) || !nonEmptyString(participants.departmentRole)) {
       diagnostics.push(error(
-        "workflow.participants.node_history_roles_unsupported",
-        "Only the verified company/department role pair is supported for this participant formula.",
+        "workflow.participants.node_history_roles_required",
+        "Node-history role-line participants require both original role arguments.",
         path,
         { companyRole: participants.companyRole, departmentRole: participants.departmentRole }
       ));
@@ -2374,23 +2379,18 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
     if (!nonEmptyString(participants.sourceExpression)) {
       diagnostics.push(error(
         "workflow.participants.node_history_source_required",
-        "Node-history superior-department-head participants must preserve the source expression.",
+        "Node-history role-line participants must preserve the source expression.",
         `${path}/sourceExpression`
       ));
     }
   }
   if (participants.mode === "field_role_line_script") {
-    const expectedRoles = participants.recipe === "department_head"
-      ? ["公司级部门领导", "部门领导"]
-      : participants.recipe === "superior_department_head"
-        ? ["公司级分管领导", "分管领导"]
-        : undefined;
-    if (!expectedRoles) {
+    if (!nonEmptyString(participants.companyRole) || !nonEmptyString(participants.departmentRole)) {
       diagnostics.push(error(
-        "workflow.participants.field_role_line_recipe_unsupported",
-        "Field role-line participants require a supported deterministic Script recipe.",
-        `${path}/recipe`,
-        { actual: participants.recipe }
+        "workflow.participants.field_role_line_roles_required",
+        "Field role-line participants require both original role arguments.",
+        path,
+        { companyRole: participants.companyRole, departmentRole: participants.departmentRole }
       ));
     }
     if (!nonEmptyString(participants.fieldId) || !nonEmptyString(participants.sourceFieldId)) {
@@ -2420,17 +2420,6 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         "Field role-line participant fieldId must reference an existing form field.",
         `${path}/fieldId`,
         { fieldId: participants.fieldId }
-      ));
-    }
-    if (
-      expectedRoles &&
-      (participants.companyRole !== expectedRoles[0] || participants.departmentRole !== expectedRoles[1])
-    ) {
-      diagnostics.push(error(
-        "workflow.participants.field_role_line_roles_mismatch",
-        "Field role-line roles must match the selected deterministic Script recipe.",
-        path,
-        { companyRole: participants.companyRole, departmentRole: participants.departmentRole }
       ));
     }
     if (!nonEmptyString(participants.sourceExpression)) {
@@ -2487,6 +2476,14 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
   if (participants.mode === "configured_person_fallback") {
     const reviewedUnmappedFormula =
       participants.fallbackScope === "reviewed_unmapped_formula";
+    if (!reviewedUnmappedFormula) {
+      diagnostics.push(error(
+        "workflow.participants.configured_fallback_scope_unsupported",
+        "Configured formula fallbacks require the reviewed-unmapped-formula scope.",
+        `${path}/fallbackScope`,
+        { actual: participants.fallbackScope }
+      ));
+    }
     if (participants.fallbackKind !== "person") {
       diagnostics.push(error(
         "workflow.participants.configured_fallback_kind_unsupported",
@@ -2495,39 +2492,12 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         { actual: participants.fallbackKind }
       ));
     }
-    if (
-      !reviewedUnmappedFormula &&
-      (!nonEmptyString(participants.fieldId) || !nonEmptyString(participants.sourceFieldId))
-    ) {
+    if (participants.formulaFamily !== "other") {
       diagnostics.push(error(
-        "workflow.participants.configured_fallback_field_required",
-        "Configured formula person fallbacks require fieldId and sourceFieldId.",
-        `${path}/fieldId`
-      ));
-    } else if (
-      !reviewedUnmappedFormula &&
-      context.fieldIds instanceof Set &&
-      !context.fieldIds.has(participants.fieldId)
-    ) {
-      diagnostics.push(error(
-        "workflow.participants.configured_fallback_field_missing",
-        "Configured formula person fallback fieldId must reference an existing form field.",
-        `${path}/fieldId`,
-        { fieldId: participants.fieldId }
-      ));
-    }
-    if (
-      !reviewedUnmappedFormula &&
-      (
-        participants.companyRole !== "公司级相关领导" ||
-        !["相关领导", "部门相关领导"].includes(participants.departmentRole)
-      )
-    ) {
-      diagnostics.push(error(
-        "workflow.participants.configured_fallback_roles_unsupported",
-        "Configured formula person fallback is limited to the verified related-leader role pair.",
-        path,
-        { companyRole: participants.companyRole, departmentRole: participants.departmentRole }
+        "workflow.participants.configured_fallback_formula_family_unsupported",
+        "Configured person fallback cannot replace a formula family with dedicated target semantics.",
+        `${path}/formulaFamily`,
+        { actual: participants.formulaFamily }
       ));
     }
     if (!nonEmptyString(participants.sourceExpression) || !nonEmptyString(participants.reason)) {
@@ -2535,17 +2505,6 @@ function validateParticipants(participants, diagnostics, path, context = {}) {
         "workflow.participants.configured_fallback_evidence_required",
         "Configured formula person fallbacks must preserve sourceExpression and reason.",
         path
-      ));
-    }
-    if (
-      participants.fallbackScope !== undefined &&
-      participants.fallbackScope !== "reviewed_unmapped_formula"
-    ) {
-      diagnostics.push(error(
-        "workflow.participants.configured_fallback_scope_unsupported",
-        "Configured formula fallback scope is unsupported.",
-        `${path}/fallbackScope`,
-        { actual: participants.fallbackScope }
       ));
     }
   }
