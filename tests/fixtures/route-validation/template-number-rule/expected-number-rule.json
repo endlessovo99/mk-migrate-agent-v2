@@ -1,0 +1,14 @@
+{
+  "fdType": "1",
+  "fdSysNumber": {
+    "fdId": "1k18j2ah9w1e1w6080w1phrhv41pemi72gw0",
+    "dynamicProps": {
+      "fdNameCn": "流程管理编号规则"
+    },
+    "fdEntityName": "com.landray.km.review.core.entity.KmReviewMain",
+    "fdDefaultFlag": true,
+    "fdName": "流程管理编号规则"
+  },
+  "passValidate": true,
+  "fdEntityKey": "kmReviewTemplate"
+}

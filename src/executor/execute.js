@@ -4,6 +4,10 @@ import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { preparePersistedTemplate, buildWorkflowDraftPayload } from "./persistence.js";
 import {
+  applyRequiredTemplateNumberRule,
+  attachRequiredTemplateNumberRuleReadback
+} from "./template-number-rule.js";
+import {
   requiresNativeFormRuleFormula
 } from "../dsl/native-form-rule-projection.js";
 import {
@@ -376,10 +380,12 @@ export async function executeDsl(input, options = {}) {
       apiStages.push({ name: "loadParentCategory", status: "started" });
       const parentCategory = await client.loadParentCategory(options.targetCategoryId);
       apiStages[apiStages.length - 1].status = "ok";
-      const createPayload = buildCreatePayload(baseTemplate, executableDsl, options, {
-        fdTableName,
-        parentCategory
-      });
+      const createPayload = applyRequiredTemplateNumberRule(
+        buildCreatePayload(baseTemplate, executableDsl, options, {
+          fdTableName,
+          parentCategory
+        })
+      );
 
       apiStages.push({ name: "projectionPreflight", status: "started" });
       const preflightDetail = preflightTemplateDetail(createPayload, {
@@ -472,7 +478,7 @@ export async function executeDsl(input, options = {}) {
       }
     }
 
-    const savePayload = prepared.update;
+    const savePayload = applyRequiredTemplateNumberRule(prepared.update);
     apiStages.push({ name: "update", status: "started", templateId });
     await client.updateTemplate(savePayload);
     apiStages[apiStages.length - 1].status = "ok";
@@ -503,10 +509,13 @@ export async function executeDsl(input, options = {}) {
       assertCurrentWorkflowTopLinkage(readbackTemplate, workflowTemplateDetail, workflowTemplateId);
     }
     apiStages[apiStages.length - 1].status = "ok";
-    const readback = prepared.verify(
-      workflowTemplateDetail
-        ? attachWorkflowReadback(readbackTemplate, workflowTemplateDetail)
-        : readbackTemplate
+    const readback = attachRequiredTemplateNumberRuleReadback(
+      prepared.verify(
+        workflowTemplateDetail
+          ? attachWorkflowReadback(readbackTemplate, workflowTemplateDetail)
+          : readbackTemplate
+      ),
+      readbackTemplate
     );
     diagnostics.push(...readback.diagnostics);
 

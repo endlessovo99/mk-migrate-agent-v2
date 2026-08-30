@@ -170,6 +170,11 @@ describe("executeDsl", () => {
     assert.equal(client.calls.some((call) => call.name === "addTemplate"), false);
     assert.equal(client.calls.filter((call) => call.name === "updateTemplate").length, 1);
     assert.equal(
+      client.calls.find((call) => call.name === "updateTemplate")
+        .payload.mechanisms.sysnumber[0].fdSysNumber.fdId,
+      "1k18j2ah9w1e1w6080w1phrhv41pemi72gw0"
+    );
+    assert.equal(
       updated.apiStages.some((stage) =>
         stage.name === "validateTargetTemplate" && stage.status === "ok"
       ),
