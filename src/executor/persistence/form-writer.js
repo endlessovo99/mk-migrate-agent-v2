@@ -62,6 +62,7 @@ export function applyFormPayload(template, dsl) {
   const mainModel = buildMainModel(next, xform, config, form, lang);
   const detailModels = buildDetailModels(next, form, mainModel, lang);
   const dataModels = [mainModel, ...detailModels];
+  assertUniqueNativeTableNames(dataModels);
   assertUniqueNativeControlIds(dataModels);
   const detailModelsByField = new Map(
     detailModels.map((model) => [model.dynamicProps?.detailFieldName, model]).filter(([fieldId]) => Boolean(fieldId))
@@ -599,6 +600,33 @@ function assertUniqueNativeControlIds(dataModels) {
     );
     error.code = "projection.form.native_control_id_collision";
     error.details = { controlId, fieldRefs: uniqueRefs };
+    throw error;
+  }
+}
+
+function assertUniqueNativeTableNames(dataModels) {
+  const modelsByTableName = new Map();
+
+  for (const model of dataModels) {
+    const tableName = String(model?.fdTableName || "").trim();
+    if (!tableName) continue;
+    const canonicalTableName = tableName.toLowerCase();
+    const existing = modelsByTableName.get(canonicalTableName);
+    if (!existing) {
+      modelsByTableName.set(canonicalTableName, model);
+      continue;
+    }
+
+    const error = new Error(`Native table name ${tableName} is shared by multiple data models.`);
+    error.code = "projection.form.native_table_name_collision";
+    error.details = {
+      tableName,
+      modelNames: [existing.fdName, model.fdName].filter(Boolean),
+      detailFieldIds: [
+        existing.dynamicProps?.detailFieldName,
+        model.dynamicProps?.detailFieldName
+      ].filter(Boolean)
+    };
     throw error;
   }
 }

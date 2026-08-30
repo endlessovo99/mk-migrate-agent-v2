@@ -329,7 +329,7 @@ function compareDetailPersistence(expected = {}, actual = {}, diagnostics) {
     }
 
     if (model.tableName !== expectedModel.tableName) {
-      diagnostics.push(mismatch("form", "readback.form.detail_model_table_name_mismatch", "Readback detail model does not use the physical table derived from its main model and DSL field.", {
+      diagnostics.push(mismatch("form", "readback.form.detail_model_table_name_mismatch", "Readback detail model does not use the physical table derived from its EKP detail fdId.", {
         invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.tableName`,
         path: `${modelPath}/fdTableName`,
         expected: expectedModel.tableName,

@@ -88,7 +88,7 @@ describe("Detail-column workflow participant Route case", () => {
         : node.handlers.ruleKey;
       const variableId = ruleKey.script.match(/\$\{data\.([^}]+)\}/)?.[1];
       assert.equal(
-        /^template-id-mk_model_test_d_[0-9a-f]{8}\.fd_38ecbeedc0dd52$/
+        /^template-id-mk_model_fd_37970d76f84924\.fd_38ecbeedc0dd52$/
           .test(variableId),
         true,
         `${nodeId}: ${JSON.stringify(ruleKey)}`

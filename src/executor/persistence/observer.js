@@ -90,7 +90,12 @@ export function observeNativeTemplate(template) {
       diagnostics: []
     };
   } else {
-    partitions.workflow = observeWorkflow(lbpm, template);
+    const detailTableNames = new Set(
+      (Array.isArray(configResult.value?.dataModel) ? configResult.value.dataModel : [])
+        .filter((model) => model?.fdType === "detail" && model?.fdTableName)
+        .map((model) => model.fdTableName)
+    );
+    partitions.workflow = observeWorkflow(lbpm, template, { detailTableNames });
   }
 
   return partitions;
@@ -1570,7 +1575,7 @@ function hasCanonicalGuard(source, event) {
   return Boolean(inspectLeadingViewStatusGuard(source, { event }));
 }
 
-function observeWorkflow(lbpm, template) {
+function observeWorkflow(lbpm, template, options = {}) {
   const diagnostics = [];
   const contentResult = decodeRequiredJsonObject(lbpm.fdContent, {
     partition: "workflow",
@@ -1671,7 +1676,8 @@ function observeWorkflow(lbpm, template) {
       parallelGateway: observeParallelGateway(node),
       dataAuthority: observeDataAuthority(formAuths[node.id], {
         diagnostics,
-        nodeId: normalizeScalar(node.id)
+        nodeId: normalizeScalar(node.id),
+        detailTableNames: options.detailTableNames
       }),
       timeout: observeNodeTimeoutConfig(node),
       ignoreOnSameIdentity: node.ignoreOnSameIdentity === undefined
@@ -2336,7 +2342,7 @@ function observeDataAuthority(auth, context = {}) {
       ...context,
       decodePath: entryPath
     });
-    if (isPhysicalDetailTableAuthKey(key)) {
+    if (isPhysicalDetailTableAuthKey(key, context.detailTableNames)) {
       detailTables[key] = {
         ...authority,
         operations: observeDetailTableOperationState(value?.operations, {

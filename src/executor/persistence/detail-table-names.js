@@ -1,12 +1,18 @@
-export function detailTableNameFor(mainTableName, fieldId) {
+export function detailTableNameFor(_mainTableName, fieldId) {
   const maxLength = 30;
-  const sourceMainTableName = String(mainTableName || "mk_model_main");
-  const normalizedMainTableName = sourceMainTableName
-    .replace(/[^a-zA-Z0-9_]+/g, "_");
-  const suffixSeed = `${sourceMainTableName}:${String(fieldId || "detail")}`;
-  const suffix = `_d_${stableHexId(suffixSeed).slice(0, 8)}`;
-  const base = normalizedMainTableName.slice(0, maxLength - suffix.length);
-  return `${base}${suffix}`;
+  const prefix = "mk_model_";
+  const sourceFieldId = String(fieldId || "detail").trim();
+  const normalizedFieldId = sourceFieldId.replace(/[^a-zA-Z0-9_]+/g, "_") || "detail";
+  const sourceBasedName = `${prefix}${normalizedFieldId}`;
+
+  if (normalizedFieldId === sourceFieldId && sourceBasedName.length <= maxLength) {
+    return sourceBasedName;
+  }
+
+  // Standard EKP fdIds fit without rewriting. Preserve source identity whenever
+  // a non-standard id must be normalized or shortened so distinct ids cannot merge.
+  const suffix = `_${stableHexId(sourceFieldId).slice(0, 8)}`;
+  return `${prefix}${normalizedFieldId.slice(0, maxLength - prefix.length - suffix.length)}${suffix}`;
 }
 
 function stableHexId(value) {

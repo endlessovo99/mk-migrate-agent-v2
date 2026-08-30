@@ -189,8 +189,11 @@ export function physicalDetailTableName(mainTableName, detailFieldId) {
   return detailTableNameFor(mainTableName, detailFieldId);
 }
 
-export function isPhysicalDetailTableAuthKey(key = "") {
-  return !String(key).includes(".") && /_d_[0-9a-f]{8}$/i.test(String(key));
+export function isPhysicalDetailTableAuthKey(key = "", detailTableNames) {
+  const text = String(key);
+  if (text.includes(".")) return false;
+  if (detailTableNames instanceof Set) return detailTableNames.has(text);
+  return /_d_[0-9a-f]{8}$/i.test(text);
 }
 
 export function authFieldIdFromKey(key = "") {
