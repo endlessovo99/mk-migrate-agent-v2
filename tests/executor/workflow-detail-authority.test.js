@@ -40,6 +40,29 @@ describe("workflow detail-table data authority", () => {
     });
   });
 
+  it("does not widen an explicit field edit grant when mixed with unrelated sparse authority", () => {
+    const dsl = detailAuthorityDsl({
+      fd_name: {
+        visible: true,
+        editable: true,
+        required: false,
+        detailRowOperations: false
+      },
+      fd_code: hiddenAuthority()
+    });
+    const payload = projectTemplate(dsl);
+    const { auth, tableName } = nativeDetailAuthority(payload);
+
+    assert.equal(auth[tableName].isShow, true);
+    assert.equal(auth[tableName].isEdit, true);
+    assert.deepEqual(operationState(auth[tableName].operations), {
+      canAddRow: false,
+      canDeleteRow: false,
+      canImport: false,
+      canExport: true
+    });
+  });
+
   it("hides a detail table only when every column is explicitly hidden", () => {
     const dsl = detailAuthorityDsl({
       fd_name: hiddenAuthority(),

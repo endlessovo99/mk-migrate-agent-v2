@@ -109,15 +109,11 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   );
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
   const workflow = sourceDraft.workflow
-    ? applyImplicitContextDefaultEditAuthority(
-        applyFieldIdMapToWorkflow(
-          draftWorkflow(sourceDraft.workflow, knownSourceFieldIds, knownSourceFieldTitles),
-          fieldIdMap
-        ),
-        form
+    ? applyFieldIdMapToWorkflow(
+        draftWorkflow(sourceDraft.workflow, knownSourceFieldIds, knownSourceFieldTitles),
+        fieldIdMap
       )
     : undefined;
-
   return pruneUndefined({
     version: MIGRATION_DSL_VERSION,
     artifact: "dsl-draft",
@@ -703,45 +699,6 @@ function applyReferencedAddressPropertyContextDefaults(form) {
           defaultValue: {
             ...referencedDefault,
             property: match[2]
-          }
-        }
-      };
-    })
-  };
-}
-
-function applyImplicitContextDefaultEditAuthority(workflow, form) {
-  const candidates = (form?.fields || []).filter((field) =>
-    field?.type !== "detailTable" &&
-    field?.props?.defaultValue?.kind === "context" &&
-    field?.props?.defaultValue?.property === "fdNo"
-  );
-  if (!candidates.length) return workflow;
-
-  const explicitlyGoverned = new Set(
-    (workflow?.nodes || []).flatMap((node) => Object.keys(node?.dataAuthority?.fields || {}))
-  );
-  const implicitCandidates = candidates.filter((field) => !explicitlyGoverned.has(field.id));
-  if (!implicitCandidates.length) return workflow;
-
-  return {
-    ...workflow,
-    nodes: (workflow.nodes || []).map((node) => {
-      if (node?.dataAuthority?.enabled !== true) return node;
-      const additions = Object.fromEntries(implicitCandidates.map((field) => [field.id, {
-        visible: true,
-        editable: true,
-        required: field.props?.required === true,
-        sourceMode: "edit",
-        sourceRef: field.sourceRef
-      }]));
-      return {
-        ...node,
-        dataAuthority: {
-          ...node.dataAuthority,
-          fields: {
-            ...(node.dataAuthority.fields || {}),
-            ...additions
           }
         }
       };
@@ -2614,6 +2571,7 @@ function draftDataAuthority(dataAuthority, knownFieldIds = null) {
         visible: value.visible,
         editable: value.editable,
         required: value.required,
+        detailRowOperations: value.detailRowOperations,
         sourceMode: value.sourceMode,
         sourceRef: value.sourceRef
       })])

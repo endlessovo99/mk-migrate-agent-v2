@@ -1623,6 +1623,7 @@ describe("validateMigrationDsl", () => {
             visible: true,
             editable: false,
             required: false,
+            detailRowOperations: false,
             sourceMode: "view",
             sourceRef: "source.form.dataAuthority.fdDisplayJsp.xform-right-1.N1.fd_name"
           }
@@ -1642,14 +1643,21 @@ describe("validateMigrationDsl", () => {
         }
       }
     };
+    const rejectedOperationsDsl = structuredClone(acceptedDsl);
+    rejectedOperationsDsl.workflow.nodes[0].dataAuthority.fields.fd_name.detailRowOperations = "false";
 
     const accepted = validateMigrationDsl(acceptedDsl, { mode: "execute" });
     const rejected = validateMigrationDsl(rejectedDsl, { mode: "execute" });
+    const rejectedOperations = validateMigrationDsl(rejectedOperationsDsl, { mode: "execute" });
 
     assert.equal(accepted.ok, true);
     assert.equal(rejected.ok, false);
     assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.workflow.data_authority.field_missing"), true);
     assert.equal(rejected.diagnostics.some((item) => item.code === "dsl.workflow.data_authority.flag_required"), true);
+    assert.equal(rejectedOperations.ok, false);
+    assert.equal(rejectedOperations.diagnostics.some((item) =>
+      item.code === "dsl.workflow.data_authority.detail_row_operations_type"
+    ), true);
   });
 
   it("rejects legacy role-line participants without a verified NewOA Script recipe", () => {

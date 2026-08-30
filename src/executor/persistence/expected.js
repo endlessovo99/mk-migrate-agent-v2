@@ -1470,7 +1470,7 @@ function summarizeDataAuthority(node, context = {}) {
       required: normalizeBoolean(value.required)
     }])
   );
-  const detailTables = deriveDetailTableAuthority(context.form, fields, {
+  const detailTables = deriveDetailTableAuthority(context.form, node.dataAuthority.fields, {
     mainTableName: context.mainTableName
   });
   const detailColumnBindings = deriveDetailColumnBindings(context.form, fields, {

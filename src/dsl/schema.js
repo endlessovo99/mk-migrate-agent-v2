@@ -2130,6 +2130,16 @@ function validateNodeDataAuthority(dataAuthority, diagnostics, path, context) {
         diagnostics.push(error("dsl.workflow.data_authority.flag_required", `Node dataAuthority field ${key} must be a boolean.`, `${fieldPath}/${key}`));
       }
     }
+    if (
+      value.detailRowOperations !== undefined &&
+      typeof value.detailRowOperations !== "boolean"
+    ) {
+      diagnostics.push(error(
+        "dsl.workflow.data_authority.detail_row_operations_type",
+        "Node dataAuthority detailRowOperations must be a boolean when present.",
+        `${fieldPath}/detailRowOperations`
+      ));
+    }
     if (value.sourceMode !== undefined && !["hidden", "view", "edit"].includes(value.sourceMode)) {
       diagnostics.push(error("dsl.workflow.data_authority.source_mode_invalid", "Node dataAuthority sourceMode must be hidden, view, or edit when present.", `${fieldPath}/sourceMode`, {
         actual: value.sourceMode
