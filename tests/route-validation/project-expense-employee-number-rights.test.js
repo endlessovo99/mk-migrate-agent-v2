@@ -40,7 +40,7 @@ describe("project expense employee number defaults and rights Route-validation",
     }
     for (const target of ["skr_row", "khh_row"]) {
       assert.equal(value(rule.effects, "visible", target), false);
-      assert.equal(value(rule.else, "visible", target), undefined);
+      assert.equal(value(rule.else, "visible", target), true);
     }
 
     const native = formAttr(prepareSample(draft).update).formRule;
@@ -53,6 +53,12 @@ describe("project expense employee number defaults and rights Route-validation",
       item.meta.branch === "else" &&
       item.result.some((result) =>
         result.fieldName === "fd_37c09f0b8334d2" && result.displayFlag === "hide"
+      )
+    ));
+    assert.ok(generated.some((item) =>
+      item.meta.branch === "else" &&
+      item.result.some((result) =>
+        result.fieldName === "fd_37b041ca9cd0c2" && result.displayFlag === "display"
       )
     ));
   });

@@ -50,17 +50,25 @@ export function removeDataOnlyFieldRefs(layout, fields) {
   );
   return {
     ...(layout || {}),
-    rows: (layout?.rows || []).map((row) => ({
-      ...row,
-      cells: (row.cells || []).map((cell) => ({
+    rows: (layout?.rows || []).map((row) => {
+      const cells = (row.cells || []).map((cell) => ({
         ...cell,
         references: (cell.references || []).filter((reference) =>
           !dataOnlyIds.has(reference.referenceId)
         )
       })).filter((cell) =>
         (cell.references || []).length > 0 || (cell.layoutRowIds || []).length > 0
-      )
-    }))
+      );
+      const removedFromCompoundCell = (row.cells || []).some((cell) =>
+        (cell.references || []).length > 1 &&
+        (cell.references || []).some((reference) => dataOnlyIds.has(reference.referenceId))
+      );
+      return {
+        ...row,
+        ...(removedFromCompoundCell ? { preserveSourceGeometry: true } : {}),
+        cells
+      };
+    })
   };
 }
 

@@ -79,7 +79,12 @@ export function buildNativeFormRuleConfig(formRules, form, dataModels, scripts, 
     if (Array.isArray(rule.else) && rule.else.length) {
       const elseConditions = projection.kind === "view-status-formula"
         ? [buildFormulaConditionItem(rule, "else", formIndex, nativeIndex)]
-        : buildConditionItems(invertClauses(when), formIndex, nativeIndex, `${ruleId}:else`);
+        : buildConditionItems(
+          invertClausesWithBlankFallback(when),
+          formIndex,
+          nativeIndex,
+          `${ruleId}:else`
+        );
       const elseBranch = buildBranch({ ...rule, logic: invertLogic(rule.logic) }, ruleId, "else", elseConditions, rule.else, formIndex, nativeIndex);
       display.push(...elseBranch.display);
       require.push(...elseBranch.require);
@@ -575,6 +580,24 @@ function invertClauses(clauses) {
     ...clause,
     op: INVERT_OPERATOR_MAP[clause.op] || clause.op
   }));
+}
+
+/**
+ * MK's native notInclude condition does not match an unselected/null control.
+ * For a single contains clause, its DSL else branch includes that blank state,
+ * so persist an explicit OR-empty alternative to preserve the source semantics.
+ */
+function invertClausesWithBlankFallback(clauses) {
+  const inverted = invertClauses(clauses);
+  if (clauses.length !== 1 || inverted[0]?.op !== "notContains") return inverted;
+  return [
+    inverted[0],
+    {
+      ...inverted[0],
+      op: "empty",
+      value: ""
+    }
+  ];
 }
 
 function invertLogic(logic) {

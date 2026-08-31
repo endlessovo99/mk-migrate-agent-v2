@@ -585,7 +585,7 @@ function buildExpectedRules(formRules = {}, form = {}, scripts = {}, diagnostics
         branch: "else",
         active: rule.active !== false,
         logic: rule.logic === "or" ? "and" : "or",
-        when: invertClauses(when),
+        when: invertClausesWithBlankFallback(when),
         effects: rule.else,
         formIndex,
         nativeFormula: elseFormula
@@ -720,6 +720,19 @@ function invertClauses(clauses) {
     ...clause,
     op: invert[clause.op] || clause.op
   }));
+}
+
+function invertClausesWithBlankFallback(clauses) {
+  const inverted = invertClauses(clauses);
+  if (clauses.length !== 1 || inverted[0]?.op !== "notContains") return inverted;
+  return [
+    inverted[0],
+    {
+      ...inverted[0],
+      op: "empty",
+      value: ""
+    }
+  ];
 }
 
 function normalizeRuleValue(value) {
