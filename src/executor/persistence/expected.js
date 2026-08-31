@@ -584,7 +584,12 @@ function buildExpectedRules(formRules = {}, form = {}, scripts = {}, diagnostics
         : undefined;
       const elseClauseSets = elseFormula
         ? [when]
-        : expandInvertedClausesWithBlankFallback(when, rule.logic);
+        : expandInvertedClausesWithBlankFallback(
+          when,
+          rule.logic,
+          diagnostics,
+          ruleId
+        );
       for (const elseClauses of elseClauseSets) {
         pushRuleSemantics(rules, {
           ruleId,
@@ -729,7 +734,7 @@ function invertClauses(clauses) {
   }));
 }
 
-function expandInvertedClausesWithBlankFallback(clauses, logic) {
+function expandInvertedClausesWithBlankFallback(clauses, logic, diagnostics, ruleId) {
   const inverted = invertClauses(clauses);
   const alternatives = inverted.map((clause) => clause.op === "notContains"
     ? [clause, { ...clause, op: "empty", value: "" }]
@@ -737,10 +742,12 @@ function expandInvertedClausesWithBlankFallback(clauses, logic) {
   if (logic !== "or") return [alternatives.flat()];
   const variantCount = alternatives.reduce((count, choices) => count * choices.length, 1);
   if (variantCount > MAX_BLANK_COMPLEMENT_VARIANTS) {
-    const error = new Error("Expected form-rule semantics require too many blank-safe variants.");
-    error.code = "projection.form_rule.blank_complement_variants_exceeded";
-    error.details = { variantCount, maximum: MAX_BLANK_COMPLEMENT_VARIANTS };
-    throw error;
+    diagnostics.push(projectionError(
+      "projection.form_rule.blank_complement_variants_exceeded",
+      "A native form-rule else branch requires too many blank-safe variants.",
+      { ruleId, variantCount, maximum: MAX_BLANK_COMPLEMENT_VARIANTS }
+    ));
+    return [];
   }
   return alternatives.reduce(
     (sets, choices) => sets.flatMap((set) => choices.map((choice) => [...set, choice])),

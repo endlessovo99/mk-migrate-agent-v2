@@ -1006,6 +1006,31 @@ describe("form rules mutations", () => {
     );
   });
 
+  it("fails closed when blank-safe complement expansion exceeds its cap", () => {
+    const dsl = dslWithRules();
+    const rule = dsl.formRules.linkage[0];
+    rule.logic = "or";
+    rule.when = Array.from({ length: 6 }, (_, index) => ({
+      field: index % 2 === 0 ? "fd_subject" : "fd_amount",
+      op: "contains",
+      value: String(index)
+    }));
+
+    const prepared = preparePersistedTemplate({
+      dsl,
+      envelope: sampleEnvelope(),
+      baseTemplate: sampleBaseTemplate()
+    });
+
+    assert.equal(prepared.ok, false);
+    assert.equal(
+      prepared.diagnostics.some((item) =>
+        item.code === "projection.form_rule.blank_complement_variants_exceeded"
+      ),
+      true
+    );
+  });
+
   it("refuses to project a gated linkage without a statically proven native projection", () => {
     const dsl = dslWithRules();
     dsl.formRules.linkage[0].meta = { runWhen: { viewStatusIn: ["add", "edit"] } };
