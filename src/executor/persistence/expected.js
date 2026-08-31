@@ -43,6 +43,8 @@ import { normalizeRuleConditionText } from "./condition-rule.js";
 import { isOptionComponent, normalizeOptionDefaultValue } from "./option-defaults.js";
 import { projectNativeLayoutRows } from "./layout-projection.js";
 
+const MAX_BLANK_COMPLEMENT_VARIANTS = 32;
+
 const parseExpectedContextConditionExpression = createConditionExpressionParser({
   parseTerm: parseExpectedContextConditionTerm,
   negateTerm: negateExpectedContextConditionTerm
@@ -580,16 +582,21 @@ function buildExpectedRules(formRules = {}, form = {}, scripts = {}, diagnostics
             resolveFieldName: (field) => resolveConditionFieldName(formIndex, field)
           })
         : undefined;
-      pushRuleSemantics(rules, {
-        ruleId,
-        branch: "else",
-        active: rule.active !== false,
-        logic: rule.logic === "or" ? "and" : "or",
-        when: invertClausesWithBlankFallback(when),
-        effects: rule.else,
-        formIndex,
-        nativeFormula: elseFormula
-      }, diagnostics);
+      const elseClauseSets = elseFormula
+        ? [when]
+        : expandInvertedClausesWithBlankFallback(when, rule.logic);
+      for (const elseClauses of elseClauseSets) {
+        pushRuleSemantics(rules, {
+          ruleId,
+          branch: "else",
+          active: rule.active !== false,
+          logic: rule.logic === "or" ? "and" : "or",
+          when: elseClauses,
+          effects: rule.else,
+          formIndex,
+          nativeFormula: elseFormula
+        }, diagnostics);
+      }
     }
   }
 
@@ -722,17 +729,23 @@ function invertClauses(clauses) {
   }));
 }
 
-function invertClausesWithBlankFallback(clauses) {
+function expandInvertedClausesWithBlankFallback(clauses, logic) {
   const inverted = invertClauses(clauses);
-  if (clauses.length !== 1 || inverted[0]?.op !== "notContains") return inverted;
-  return [
-    inverted[0],
-    {
-      ...inverted[0],
-      op: "empty",
-      value: ""
-    }
-  ];
+  const alternatives = inverted.map((clause) => clause.op === "notContains"
+    ? [clause, { ...clause, op: "empty", value: "" }]
+    : [clause]);
+  if (logic !== "or") return [alternatives.flat()];
+  const variantCount = alternatives.reduce((count, choices) => count * choices.length, 1);
+  if (variantCount > MAX_BLANK_COMPLEMENT_VARIANTS) {
+    const error = new Error("Expected form-rule semantics require too many blank-safe variants.");
+    error.code = "projection.form_rule.blank_complement_variants_exceeded";
+    error.details = { variantCount, maximum: MAX_BLANK_COMPLEMENT_VARIANTS };
+    throw error;
+  }
+  return alternatives.reduce(
+    (sets, choices) => sets.flatMap((set) => choices.map((choice) => [...set, choice])),
+    [[]]
+  );
 }
 
 function normalizeRuleValue(value) {

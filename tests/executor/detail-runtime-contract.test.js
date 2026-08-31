@@ -127,6 +127,10 @@ describe("detail persistence metadata contract", () => {
 
     assert.equal(isPhysicalDetailTableAuthKey("mk_model_items", detailTables), true);
     assert.equal(isPhysicalDetailTableAuthKey("mk_model_fd_status", detailTables), false);
+    assert.equal(
+      isPhysicalDetailTableAuthKey("fd.detail", new Set(["fd.detail"])),
+      true
+    );
   });
 
   it("fails before persistence when projected table names collide case-insensitively", () => {

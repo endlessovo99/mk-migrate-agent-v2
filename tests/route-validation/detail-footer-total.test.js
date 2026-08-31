@@ -207,7 +207,10 @@ describe("detail footer total Route case", () => {
     assert.deepEqual(bWhen.choices.items.map((item) => item.operate), ["notInclude", "include"]);
     assert.equal(bWhen.result.every((item) => item.displayFlag === "display"), true);
     assert.equal(bElse.condition, "2");
-    assert.deepEqual(bElse.choices.items.map((item) => item.operate), ["include", "notInclude"]);
+    assert.deepEqual(
+      bElse.choices.items.map((item) => item.operate),
+      ["include", "notInclude", "empty"]
+    );
     assert.equal(bElse.result.every((item) => item.displayFlag === "hide"), true);
     assert.equal(
       bWhen.result.some((item) => item.type === "main" && item.fieldName === "fd_3c671e0549112e"),

@@ -956,6 +956,56 @@ describe("form rules mutations", () => {
     assert.equal(rules.require.every((rule) => rule.result.length === 1), true);
   });
 
+  it("distributes blank-safe complements for multi-clause OR rules", () => {
+    const dsl = dslWithRules();
+    const rule = dsl.formRules.linkage[0];
+    rule.logic = "or";
+    rule.when = [
+      { field: "fd_subject", op: "contains", value: "A" },
+      { field: "fd_amount", op: "contains", value: "B" }
+    ];
+
+    const { template, readback } = persistAndVerify(dsl);
+    const elseDisplay = formAttr(template).formRule.display.filter((item) =>
+      item.meta?.sourceRuleId === rule.id && item.meta?.branch === "else"
+    );
+
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.equal(elseDisplay.length, 4);
+    assert.equal(new Set(elseDisplay.map((item) => item.id)).size, 4);
+    assert.deepEqual(
+      elseDisplay.map((item) => item.choices.items.map((condition) => condition.operate)),
+      [
+        ["notInclude", "notInclude"],
+        ["notInclude", "empty"],
+        ["empty", "notInclude"],
+        ["empty", "empty"]
+      ]
+    );
+
+    const broken = persistAndVerify(dsl, {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        const removeIndex = attr.formRule.display.findIndex((item) =>
+          item.meta?.sourceRuleId === rule.id &&
+          item.meta?.branch === "else"
+        );
+        attr.formRule.display.splice(removeIndex, 1);
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+    assert.equal(broken.readback.ok, false);
+    assert.equal(
+      broken.readback.diagnostics.some((item) =>
+        item.code === "readback.form_rules.semantic_missing"
+      ),
+      true
+    );
+  });
+
   it("refuses to project a gated linkage without a statically proven native projection", () => {
     const dsl = dslWithRules();
     dsl.formRules.linkage[0].meta = { runWhen: { viewStatusIn: ["add", "edit"] } };
