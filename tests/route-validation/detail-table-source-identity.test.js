@@ -35,20 +35,22 @@ describe("EKP detail-table identity Route case", () => {
         const control = JSON.parse(model.fdAttribute).config.controlProps;
         return {
           name: model.fdName,
-          code: model.dynamicProps?.detailFieldName,
+          code: model.fdCode,
           tableName: model.fdTableName,
           tableNameAlias: model.fdTableNameAlias,
-          controlCode: control["$$detailTableFieldName"],
+          controlCode: control.code,
+          internalDetailName: control["$$detailTableFieldName"],
           controlTableName: control["$$tableName"]
         };
       }),
       expectedDetails.map(({ id, name }) => ({
         name,
         code: id,
-        tableName: `mk_model_${id}`,
-        tableNameAlias: `mk_model_${id}`,
+        tableName: id,
+        tableNameAlias: id,
         controlCode: id,
-        controlTableName: `mk_model_${id}`
+        internalDetailName: id,
+        controlTableName: id
       }))
     );
   });

@@ -337,6 +337,24 @@ function compareDetailPersistence(expected = {}, actual = {}, diagnostics) {
       }));
     }
 
+    if (model.code !== expectedModel.code) {
+      diagnostics.push(mismatch("form", "readback.form.detail_model_code_mismatch", "Readback detail model code does not match its source EKP detail fdId.", {
+        invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.code`,
+        path: `${modelPath}/fdCode`,
+        expected: expectedModel.code,
+        actual: model.code
+      }));
+    }
+
+    if (model.controlBinding?.code !== expectedModel.code) {
+      diagnostics.push(mismatch("form", "readback.form.detail_control_code_mismatch", "Readback detail control property-panel code does not match its source EKP detail fdId.", {
+        invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.controlCode`,
+        path: `${modelPath}/fdAttribute/config/controlProps/code`,
+        expected: expectedModel.code,
+        actual: model.controlBinding?.code
+      }));
+    }
+
     if (expectedModel.requireModelControlBinding === true) {
       const binding = model.controlBinding || {};
       const bindingMatches = Boolean(

@@ -1343,7 +1343,7 @@ describe("executeDsl", () => {
   });
 
   it("writes detail-table column rights as dotted keys plus table-level operations", () => {
-    const detailTable = "mk_model_fd_detail";
+    const detailTable = "fd_detail";
     const trusted = sampleTrustedDsl({
       workflow: {
         process: { id: "process-detail-auth" },
@@ -3676,7 +3676,7 @@ describe("executeDsl", () => {
     const controlKey = `${detailModel.fdTableName}.fd_name`;
     const action = formAttr.controlAction.control[controlKey].onChange[0];
 
-    assert.equal(detailModel.fdTableName, "mk_model_fd_detail");
+    assert.equal(detailModel.fdTableName, "fd_detail");
     assert.equal(action.function.includes(`MKXFORM.updateControlStyle("${detailModel.fdTableName}.fd_name", rowNum`), true);
     assert.equal(action.function.includes("${table:"), false);
     assert.deepEqual(summarizeProjectedForm(payload).scripts.controlEvents, [{

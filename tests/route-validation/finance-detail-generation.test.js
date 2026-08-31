@@ -215,7 +215,7 @@ describe("finance detail generation Route case", () => {
     assert.equal(actual.event, "onClick");
     assert.equal(actual.hasCanonicalGuard, true);
     assert.equal(result.execution.readback.partitions.scripts, "verified");
-    assert.match(nativeAction.function, /var fixtureFinanceTable = "mk_model_fd_fixture_finance"/);
+    assert.match(nativeAction.function, /var fixtureFinanceTable = "fd_fixture_finance"/);
     assert.match(nativeAction.function, /MKXFORM\.setDetailValues\(fixtureFinanceTable, data\)/);
     assert.doesNotMatch(nativeAction.function, /\$\{table:/);
 

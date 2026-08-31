@@ -59,8 +59,8 @@ describe("detail persistence metadata contract", () => {
       mainTableName: secondMainTable
     });
 
-    assert.equal(first.detailModel.fdTableName, "mk_model_fd_detail");
-    assert.equal(second.detailModel.fdTableName, "mk_model_fd_detail");
+    assert.equal(first.detailModel.fdTableName, "fd_detail");
+    assert.equal(second.detailModel.fdTableName, "fd_detail");
     assert.equal(first.detailModel.dynamicProps.detailFieldName, "fd_detail");
     assert.equal(second.detailModel.dynamicProps.detailFieldName, "fd_detail");
   });
@@ -76,8 +76,8 @@ describe("detail persistence metadata contract", () => {
       mainTableName: `${sharedPrefix}beta`
     });
 
-    assert.equal(first.detailModel.fdTableName, "mk_model_fd_detail");
-    assert.equal(second.detailModel.fdTableName, "mk_model_fd_detail");
+    assert.equal(first.detailModel.fdTableName, "fd_detail");
+    assert.equal(second.detailModel.fdTableName, "fd_detail");
   });
 
   it("does not let normalized main-table collisions alter the source-derived detail table", () => {
@@ -90,8 +90,8 @@ describe("detail persistence metadata contract", () => {
       mainTableName: "mk_runtime_main"
     });
 
-    assert.equal(first.detailModel.fdTableName, "mk_model_fd_detail");
-    assert.equal(second.detailModel.fdTableName, "mk_model_fd_detail");
+    assert.equal(first.detailModel.fdTableName, "fd_detail");
+    assert.equal(second.detailModel.fdTableName, "fd_detail");
   });
 
   it("uses the same physical name for the same fdId across main tables", () => {
@@ -100,8 +100,8 @@ describe("detail persistence metadata contract", () => {
     const first = detailTableNameFor(`${sharedPrefix}alpha`, fieldId);
     const second = detailTableNameFor(`${sharedPrefix}beta`, fieldId);
 
-    assert.equal(first, "mk_model_fd_detail");
-    assert.equal(second, "mk_model_fd_detail");
+    assert.equal(first, "fd_detail");
+    assert.equal(second, "fd_detail");
   });
 
   it("isolates detail field identities within the same main table", () => {
@@ -112,13 +112,14 @@ describe("detail persistence metadata contract", () => {
     assert.notEqual(first, second);
   });
 
-  it("preserves identity when a non-standard detail id requires normalization", () => {
+  it("preserves a non-standard detail id without normalization", () => {
     const normalized = detailTableNameFor("mk_model_main", "fd_a");
-    const rewritten = detailTableNameFor("mk_model_main", "fd-a");
+    const nonStandard = detailTableNameFor("mk_model_main", "fd-a");
+    const whitespace = detailTableNameFor("mk_model_main", " fd-a ");
 
-    assert.equal(normalized, "mk_model_fd_a");
-    assert.match(rewritten, /^mk_model_fd_a_[0-9a-f]{8}$/);
-    assert.notEqual(rewritten, normalized);
+    assert.equal(normalized, "fd_a");
+    assert.equal(nonStandard, "fd-a");
+    assert.equal(whitespace, " fd-a ");
   });
 
   it("classifies detail authority with the exact projected model table set", () => {
@@ -157,14 +158,14 @@ describe("detail persistence metadata contract", () => {
     );
   });
 
-  it("keeps non-standard long detail identities deterministic and within the native limit", () => {
+  it("does not silently shorten a long detail identity", () => {
+    const sourceId = "fd_detail_identity_that_exceeds_the_native_limit";
     const tableName = detailTableNameFor(
       "mk_model_shared_prefix_that_exceeds_the_native_limit_alpha",
-      "fd_detail_identity_that_exceeds_the_native_limit"
+      sourceId
     );
 
-    assert.equal(tableName.length <= 30, true);
-    assert.match(tableName, /^mk_model_fd_detail_id_[0-9a-f]{8}$/);
+    assert.equal(tableName, sourceId);
   });
 });
 

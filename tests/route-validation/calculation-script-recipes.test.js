@@ -370,7 +370,7 @@ describe("calculation script recipes Route case", () => {
       assert.equal(actual.hasCanonicalGuard, true);
       if (expectedAction.tableId) {
         const physicalTable = actual.controlKey.slice(0, actual.controlKey.lastIndexOf("."));
-        assert.notEqual(physicalTable, expectedAction.tableId);
+        assert.equal(physicalTable, expectedAction.tableId);
         assert.notEqual(physicalTable, "route_model_generated");
         const prior = physicalTableByLogicalId.get(expectedAction.tableId);
         if (prior) assert.equal(physicalTable, prior);

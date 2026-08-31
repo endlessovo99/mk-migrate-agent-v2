@@ -820,7 +820,7 @@ describe("form layout projection", () => {
   });
 
   it("nests detail-table field auth and row operations under fdConfig.auth", () => {
-    const detailTable = "mk_model_fd_detail";
+    const detailTable = "fd_detail";
     const prepared = prepareSample(sampleTrustedDsl({ workflow: null }));
     assert.equal(prepared.ok, true);
     const config = xformConfig(prepared.update);

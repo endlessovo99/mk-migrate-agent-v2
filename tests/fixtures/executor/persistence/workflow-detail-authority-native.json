@@ -38,12 +38,12 @@
   },
   "fdTemplateFormAuths": {
     "N2": {
-      "mk_model_fd_detail.fd_name": {
+      "fd_detail.fd_name": {
         "isShow": false,
         "isEdit": false,
         "isRequire": false
       },
-      "mk_model_fd_detail": {
+      "fd_detail": {
         "isShow": false,
         "isEdit": false,
         "isRequire": false,

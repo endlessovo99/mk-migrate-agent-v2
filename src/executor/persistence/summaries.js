@@ -88,6 +88,8 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
       mainTableName: observedForm?.tableName,
       detailTables: (observedForm?.persistence?.detailModels || []).map((model) => ({
         fieldId: model.fieldId,
+        code: model.code,
+        controlCode: model.controlBinding?.code,
         tableName: model.tableName
       }))
     },
