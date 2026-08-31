@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { TRANSFER_RECORD_ENDPOINT_URL } from "./transfer-record.js";
 
 export const NEWOA_SIT_BASE_URL = "https://p-sit.onewo.com";
 export const NEWOA_POC_BASE_URL = "http://mkpaaspoc.shanghai-electric.com";
@@ -59,6 +60,32 @@ export class NewoaClient {
       throw error;
     }
     return result.body;
+  }
+
+  assertTransferRecordAuthentication() {
+    transferRecordAuthToken(this.cookie);
+  }
+
+  async addTransferRecord(payload) {
+    const authToken = transferRecordAuthToken(this.cookie);
+    let response;
+    try {
+      response = await this.fetch(TRANSFER_RECORD_ENDPOINT_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "X-AUTH-TOKEN": authToken
+        },
+        body: JSON.stringify(payload || {})
+      });
+      const result = await readResponse(response);
+      if (!response.ok || result.body?.success === false) {
+        throw new Error(`Transfer record request failed: ${response.status}`);
+      }
+      return result.body?.data || { fdId: payload?.fdId };
+    } catch (error) {
+      throw assignClientStage(error, "addTransferRecord");
+    }
   }
 
   async initTemplate() {
@@ -342,6 +369,19 @@ function tokenFromBody(body) {
     body?.data?.access_token ||
     body?.data?.accessToken ||
     "";
+}
+
+function transferRecordAuthToken(cookieHeader) {
+  for (const item of String(cookieHeader || "").split(";")) {
+    const separator = item.indexOf("=");
+    if (separator < 0 || item.slice(0, separator).trim() !== "X-AUTH-TOKEN") continue;
+    const value = item.slice(separator + 1).trim();
+    if (value) return value;
+  }
+  throw clientStageError(
+    "addTransferRecord",
+    "NewOA login did not provide the X-AUTH-TOKEN cookie required for transfer recording."
+  );
 }
 
 function isRecord(value) {

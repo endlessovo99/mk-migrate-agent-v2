@@ -1,0 +1,13 @@
+{
+  "endpointUrl": "http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add",
+  "endpointPath": "/data/sys-transfer/transferRecord/add",
+  "fixedFields": {
+    "fdModuleName": "流程管理",
+    "fdModuleId": "frameworkMeta#km-review",
+    "fdEntityId": "frameworkMeta#com.landray.km.review.core.entity.KmReviewTemplate",
+    "fdEntityLabel": "流程模板",
+    "fdTransferTaskId": "1j7jf65kew1ef0w9akw327oqf633vupsq3w0",
+    "fdTransferTaskName": "模板",
+    "fdTaskMainId": "1j7jf65krw1ef0w9avwl0d3k13si83i7rtw0"
+  }
+}

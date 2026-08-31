@@ -12,6 +12,7 @@ import { withNetworkGuard } from "./network-guard.js";
 import { assertNoSecretLeak } from "./transcript.js";
 
 const FIXED_NOW = "2026-07-10T00:00:00.000Z";
+const FIXED_TRANSFER_RECORD_ID = "route0000000000000000000000000000000";
 const TEST_CREDENTIALS = Object.freeze({
   username: "route-test-user",
   encryptedPassword: "route-test-encrypted-password"
@@ -69,7 +70,8 @@ export async function runRouteCase(caseId) {
       baseUrl: routeCase.baseUrl ?? NEWOA_SIT_BASE_URL,
       fallbackFdIds: routeCase.fallbackFdIds,
       participantOverrides: routeCase.participantOverrides,
-      now: new Date(FIXED_NOW)
+      now: new Date(FIXED_NOW),
+      transferRecordIdFactory: () => FIXED_TRANSFER_RECORD_ID
     });
     const transcript = adapter.transcript();
     assertExpected(routeCase, reviewResult.report, dryRun, execution, transcript);

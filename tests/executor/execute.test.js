@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
 import {
@@ -23,6 +24,10 @@ const TEST_CREDENTIALS = Object.freeze({
   username: "route-test-user",
   encryptedPassword: "route-test-encrypted-password"
 });
+const EXPECTED_TRANSFER_RECORD = JSON.parse(readFileSync(
+  new URL("../fixtures/route-validation/transfer-record/expected-transfer-record.json", import.meta.url),
+  "utf8"
+));
 
 describe("executeDsl", () => {
   it("uses caller-provided credentials without recording them", async () => {
@@ -66,6 +71,25 @@ describe("executeDsl", () => {
     assert.equal(result.diagnostics.at(-1).message, "login rejected [REDACTED] [REDACTED]");
   });
 
+  it("blocks before template writes when login has no transfer-record authentication", async () => {
+    const transferRecordAuthError = new Error("missing X-AUTH-TOKEN cookie");
+    const client = new FakeNewoaClient({ transferRecordAuthError });
+
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.stage, "transferRecordPreflight");
+    assert.deepEqual(result.createdFdIds, []);
+    assert.deepEqual(client.calls.map((call) => call.name), ["login"]);
+    assert.equal(result.apiStages.at(-1).name, "transferRecordPreflight");
+    assert.equal(result.apiStages.at(-1).status, "failed");
+  });
+
   it("writes an initial same-id workflow draft and verifies readback", async () => {
     const client = new FakeNewoaClient();
     const result = await executeDsl(sampleTrustedDsl(), {
@@ -90,7 +114,8 @@ describe("executeDsl", () => {
       "updateTemplate",
       "saveWorkflowDraft",
       "getWorkflowTemplateDetail",
-      "getTemplate"
+      "getTemplate",
+      "addTransferRecord"
     ]);
     assert.equal(result.apiStages.some((stage) => stage.name === "saveWorkflowDraft" && stage.status === "ok"), true);
     assert.equal(result.apiStages.some((stage) => stage.name === "getWorkflowTemplateDetail" && stage.status === "ok"), true);
@@ -139,6 +164,59 @@ describe("executeDsl", () => {
     assert.equal(result.readback.workflow.invalidEdgeCount, 0);
   });
 
+  it("records the verified migration exactly once after final readback", async () => {
+    const client = new FakeNewoaClient();
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      now: new Date("2026-07-05T01:02:03.000Z"),
+      transferRecordIdFactory: () => "test-transfer-record-id"
+    });
+
+    const transferCalls = client.calls.filter((call) => call.name === "addTransferRecord");
+    const finalReadbackIndex = client.calls.findLastIndex((call) => call.name === "getTemplate");
+    const transferIndex = client.calls.findIndex((call) => call.name === "addTransferRecord");
+
+    assert.equal(result.ok, true);
+    assert.equal(transferCalls.length, 1);
+    assert.equal(transferIndex, finalReadbackIndex + 1);
+    assert.deepEqual(transferCalls[0].payload, {
+      fdId: "test-transfer-record-id",
+      ...EXPECTED_TRANSFER_RECORD.fixedFields,
+      fdOriginalId: "sample-source",
+      fdTargetId: "created-template-id",
+      fdName: "示例流程",
+      fdCreateTime: 1783213323000
+    });
+  });
+
+  it("preserves verified migration evidence when the transfer record outcome is unknown", async () => {
+    const transferRecordError = new Error("transfer record connection closed after POST");
+    transferRecordError.stage = "addTransferRecord";
+    const client = new FakeNewoaClient({ transferRecordError });
+
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      now: new Date("2026-07-05T01:02:03.000Z"),
+      transferRecordIdFactory: () => "uncertain-transfer-record-id"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.status, "transfer_record_failed");
+    assert.deepEqual(result.createdFdIds, ["created-template-id"]);
+    assert.equal(result.readback.ok, true);
+    assert.equal(result.transferRecord.writeOutcomeUnknown, true);
+    assert.equal(
+      client.calls.filter((call) => call.name === "addTransferRecord").length,
+      1
+    );
+  });
+
   it("updates an explicitly targeted existing MK_TEST draft without creating another template", async () => {
     const client = new FakeNewoaClient();
     const dsl = sampleTrustedDsl();
@@ -169,6 +247,9 @@ describe("executeDsl", () => {
     assert.equal(client.calls.some((call) => call.name === "loadParentCategory"), false);
     assert.equal(client.calls.some((call) => call.name === "addTemplate"), false);
     assert.equal(client.calls.filter((call) => call.name === "updateTemplate").length, 1);
+    const transferCalls = client.calls.filter((call) => call.name === "addTransferRecord");
+    assert.equal(transferCalls.length, 1);
+    assert.equal(transferCalls[0].payload.fdTargetId, created.templateId);
     assert.equal(
       client.calls.find((call) => call.name === "updateTemplate")
         .payload.mechanisms.sysnumber[0].fdSysNumber.fdId,
@@ -3020,6 +3101,7 @@ describe("executeDsl", () => {
     assert.deepEqual(result.createdFdIds, ["created-template-id"]);
     assert.equal(result.cleanup.attempted, false);
     assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "readback.form.layout_cells_mismatch"), true);
+    assert.equal(client.calls.some((call) => call.name === "addTransferRecord"), false);
   });
 
   it("fails readback when persisted workflow edges lose connected endpoints", async () => {
@@ -4363,6 +4445,8 @@ class FakeNewoaClient {
     this.generatedTableName = options.generatedTableName ?? "generated_table_name";
     this.xformDesktopDigest = options.xformDesktopDigest ?? knownXFormDesktopDigest();
     this.xformDesktopDigestError = options.xformDesktopDigestError;
+    this.transferRecordAuthError = options.transferRecordAuthError;
+    this.transferRecordError = options.transferRecordError;
   }
 
   async login(credentials) {
@@ -4372,6 +4456,10 @@ class FakeNewoaClient {
     this.calls.push({ name: "login", payload: {} });
     if (this.loginError) throw this.loginError;
     return { ok: true };
+  }
+
+  async assertTransferRecordAuthentication() {
+    if (this.transferRecordAuthError) throw this.transferRecordAuthError;
   }
 
   async getXFormDesktopDigest() {
@@ -4483,5 +4571,11 @@ class FakeNewoaClient {
   async getElementInfo(targets) {
     this.calls.push({ name: "getElementInfo", payload: { targets } });
     return [];
+  }
+
+  async addTransferRecord(payload) {
+    this.calls.push({ name: "addTransferRecord", payload });
+    if (this.transferRecordError) throw this.transferRecordError;
+    return { fdId: payload.fdId };
   }
 }

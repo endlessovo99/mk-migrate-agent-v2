@@ -91,9 +91,11 @@ The executor will be API-first:
 - NewOA login is API-based. It posts the provided username and already encrypted password to the NewOA login endpoint as form URL encoded data.
 - Login credentials and the optional default base URL are read at the CLI/live-smoke seam from environment variables. The encrypted password is passed through directly as `j_password`; first version does not implement client-side password encryption.
 - Secrets, login request bodies, cookies, and tokens are not written to disk and are not included in JSON output.
+- Normal migration requires the login session's `X-AUTH-TOKEN` cookie before any template write. After complete readback verification, the executor sends exactly one transfer record to `http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add`, using that value only in the `X-AUTH-TOKEN` request header.
+- Transfer-record failure is reported separately from template migration failure. The verified target and generated record ID remain in the report, the record outcome is treated as unknown, and neither the migration nor the record request is retried automatically. Published-form repair does not add a transfer record.
 - The executor performs local validation and safety checks before making any login or write request.
 - The first write API boundary is limited to template-level `add`, `get`, and `update`.
-- Execution sequence is: validate DSL, check safety gates, login, create test template, get template detail, map DSL into template detail, update template draft, get readback, verify readback, return report.
+- Execution sequence is: validate DSL, check safety gates, login, verify transfer-record authentication, create test template, get template detail, map DSL into template detail, update template draft, get readback, verify readback, add the transfer record, return report.
 - If create succeeds but a later stage fails, the executor does not roll back or delete the test template. It returns the created `fdId` and failure stage.
 - `needs_manual` and other warning-only DSL states are executable. DSL errors are not executable.
 - Function whitelist violations are DSL errors and block execution.
