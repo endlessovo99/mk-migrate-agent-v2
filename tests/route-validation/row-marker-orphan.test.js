@@ -114,7 +114,8 @@ describe("audited orphan row-marker Route case", { concurrency: false }, () => {
       "add",
       "get-before-update",
       "update",
-      "get-readback"
+      "get-readback",
+      "add-transfer-record"
     ]);
   });
 

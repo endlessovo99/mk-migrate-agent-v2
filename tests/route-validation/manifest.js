@@ -21,7 +21,8 @@ const SUCCESS_OPERATIONS = Object.freeze([
   "add",
   "get-before-update",
   "update",
-  "get-readback"
+  "get-readback",
+  "add-transfer-record"
 ]);
 
 const NATIVE_FORMULA_SUCCESS_OPERATIONS = Object.freeze([
@@ -35,37 +36,41 @@ const NATIVE_FORMULA_SUCCESS_OPERATIONS = Object.freeze([
 const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
   "get-element-info",
-  ...SUCCESS_OPERATIONS.slice(1, -1),
+  ...SUCCESS_OPERATIONS.slice(1, -2),
   "save-workflow-draft",
   "get-workflow-detail",
-  "get-readback"
+  "get-readback",
+  "add-transfer-record"
 ]);
 
 const PARTICIPANT_OVERRIDE_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
   "get-element-info",
-  ...SUCCESS_OPERATIONS.slice(1, -1),
+  ...SUCCESS_OPERATIONS.slice(1, -2),
   "save-workflow-draft",
   "get-workflow-detail",
-  "get-readback"
+  "get-readback",
+  "add-transfer-record"
 ]);
 
 const GENERIC_ROLE_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
   "get-element-info",
   "search-org",
-  ...SUCCESS_OPERATIONS.slice(1, -1),
+  ...SUCCESS_OPERATIONS.slice(1, -2),
   "save-workflow-draft",
   "get-workflow-detail",
-  "get-readback"
+  "get-readback",
+  "add-transfer-record"
 ]);
 
 const DRAFT_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
-  ...SUCCESS_OPERATIONS.slice(1, -1),
+  ...SUCCESS_OPERATIONS.slice(1, -2),
   "save-workflow-draft",
   "get-workflow-detail",
-  "get-readback"
+  "get-readback",
+  "add-transfer-record"
 ]);
 
 const CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
@@ -77,10 +82,11 @@ const CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "search-org",
   "search-org",
   "get-element-info",
-  ...SUCCESS_OPERATIONS.slice(1, -1),
+  ...SUCCESS_OPERATIONS.slice(1, -2),
   "save-workflow-draft",
   "get-workflow-detail",
-  "get-readback"
+  "get-readback",
+  "add-transfer-record"
 ]);
 
 const CONDITIONAL_PARALLEL_SUCCESS_OPERATIONS = Object.freeze([
@@ -88,10 +94,11 @@ const CONDITIONAL_PARALLEL_SUCCESS_OPERATIONS = Object.freeze([
   "get-element-info",
   "get-element-info",
   "get-element-info",
-  ...SUCCESS_OPERATIONS.slice(1, -1),
+  ...SUCCESS_OPERATIONS.slice(1, -2),
   "save-workflow-draft",
   "get-workflow-detail",
-  "get-readback"
+  "get-readback",
+  "add-transfer-record"
 ]);
 
 export const ROUTE_CASE_MANIFEST = deepFreeze({
@@ -602,7 +609,7 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "needs_manual",
         executionStatus: "readback_failed",
         executionStage: "readback",
-        operations: WORKFLOW_SUCCESS_OPERATIONS
+        operations: WORKFLOW_SUCCESS_OPERATIONS.slice(0, -1)
       }
     },
     {
@@ -619,7 +626,7 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "passed",
         executionStatus: "readback_failed",
         executionStage: "readback",
-        operations: SUCCESS_OPERATIONS
+        operations: SUCCESS_OPERATIONS.slice(0, -1)
       }
     }
   ]

@@ -1690,6 +1690,13 @@ class SearchClient {
     return { ok: true };
   }
 
+  async assertTransferRecordAuthentication() {}
+
+  async addTransferRecord(payload) {
+    this.executeCalls.push("addTransferRecord");
+    return { fdId: payload.fdId };
+  }
+
   async searchOrg(name, sourceOrgType) {
     this.calls.push(name);
     this.searchRequests.push({ key: name, sourceOrgType });

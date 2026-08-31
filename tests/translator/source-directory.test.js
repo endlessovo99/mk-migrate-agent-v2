@@ -119,21 +119,26 @@ describe("source directory stages", () => {
     });
   });
 
-  it("maps verified node-history leader formulas independently of workflow node ids", () => {
-    const sourceExpression = '$组织架构.解释角色线$($流程.获取节点实际处理人$("N654"), "公司级分管领导", "分管领导")';
+  it("maps node-history role lines independently of role names and workflow node ids", () => {
+    for (const [companyRole, departmentRole] of [
+      ["公司级分管领导", "分管领导"],
+      ["未知公司角色", "未知部门角色"]
+    ]) {
+      const sourceExpression = `$组织架构.解释角色线$($流程.获取节点实际处理人$("N654"), ${JSON.stringify(companyRole)}, ${JSON.stringify(departmentRole)})`;
 
-    assert.deepEqual(classifyWorkflowFormulaParticipant({
-      handlerSelectType: "formula",
-      handlerIds: sourceExpression,
-      handlerNames: sourceExpression
-    }), {
-      mode: "node_history_superior_department_head",
-      nodeId: "N654",
-      companyRole: "公司级分管领导",
-      departmentRole: "分管领导",
-      sourceExpression,
-      sourceNameExpression: sourceExpression
-    });
+      assert.deepEqual(classifyWorkflowFormulaParticipant({
+        handlerSelectType: "formula",
+        handlerIds: sourceExpression,
+        handlerNames: sourceExpression
+      }), {
+        mode: "node_history_superior_department_head",
+        nodeId: "N654",
+        companyRole,
+        departmentRole,
+        sourceExpression,
+        sourceNameExpression: sourceExpression
+      });
+    }
   });
 
   localCorpusIt("cleans a paired SysFormTemplate and LbpmProcessDefinition directory into source-only facts", () => {
@@ -273,7 +278,7 @@ describe("source directory stages", () => {
     assert.equal(actions.filter((action) => action.translationStatus === "needs_review").length, 5);
   });
 
-  localCorpusIt("maps the related-leader workflow participant to the configured person fallback", () => {
+  localCorpusIt("preserves the related-leader workflow participant as a role-line formula", () => {
     const sourceDraft = cleanSourceFile("tests/fixtures/source/19bb55286bd93a6081a33e44c3791374");
     const dslDraft = draftSourceDraft(sourceDraft);
     const nodesById = new Map(dslDraft.workflow.nodes.map((node) => [node.id, node]));
@@ -288,8 +293,10 @@ describe("source directory stages", () => {
     });
     assert.equal(nodesById.get("N32").participants.mode, "form_field");
     assert.equal(nodesById.get("N16").participants.mode, "form_field");
-    assert.equal(nodesById.get("N53").participants.mode, "configured_person_fallback");
-    assert.equal(nodesById.get("N53").participants.fallbackKind, "person");
+    assert.equal(nodesById.get("N53").participants.mode, "field_role_line_script");
+    assert.equal(nodesById.get("N53").participants.recipe, "resolve_role_line");
+    assert.equal(nodesById.get("N53").participants.companyRole, "公司级相关领导");
+    assert.equal(nodesById.get("N53").participants.departmentRole, "部门相关领导");
     assert.equal(nodesById.get("N53").translationStatus, "executable");
   });
 
@@ -608,10 +615,6 @@ describe("source directory stages", () => {
   it("does not replace unsupported formula participants with draft-selection fallback", () => {
     for (const { handlerIds, handlerNames } of [
       { handlerIds: "$unsupported(formula)$" },
-      {
-        handlerIds: '$组织架构.解释角色线$($流程.获取节点实际处理人$("N27"), "未知公司角色", "未知部门角色")',
-        handlerNames: '$组织架构.解释角色线$($流程.获取节点实际处理人$("N27"), "未知公司角色", "未知部门角色")'
-      },
       { handlerIds: '$组织架构.解释角色线$($fd_subject$, "Company Lead", "Department Lead", "extra")' },
       { handlerIds: '$组织架构.解释角色线$($fd_subject$, $fd_company_role$, "Department Lead")' },
       { handlerIds: '$组织架构.解释角色线$($fd_subject$, "Company" + $fd_role$ + "Lead", "Department Lead")' },

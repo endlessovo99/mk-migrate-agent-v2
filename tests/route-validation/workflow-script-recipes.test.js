@@ -297,45 +297,53 @@ describe("workflow Script recipes", () => {
     }
   });
 
-  it("maps common field role lines and routes related leaders to the configured person fallback", () => {
+  it("maps every recognized field role line without replacing related leaders", () => {
     const sourceDraft = cleanSourceFile(ROLE_LINE_SOURCE);
     const dslDraft = draftSourceDraft(sourceDraft);
-    const formulaNodes = dslDraft.workflow.nodes.filter((node) =>
-      node.attributes?.handlerSelectType === "formula"
-    );
-    const common = formulaNodes.filter((node) =>
-      node.participants?.mode === "field_role_line_script"
-    );
-    const configuredFallbacks = formulaNodes.filter((node) =>
-      node.participants?.mode === "configured_person_fallback"
+    const roleLineNodes = dslDraft.workflow.nodes.filter((node) =>
+      node.attributes?.handlerSelectType === "formula" &&
+      node.attributes?.handlerIds?.includes("$组织架构.解释角色线$")
     );
 
-    assert.equal(common.filter((node) => node.participants.recipe === "department_head").length, 39);
-    assert.equal(common.filter((node) => node.participants.recipe === "superior_department_head").length, 47);
-    assert.equal(configuredFallbacks.length, 25);
-    assert.equal(configuredFallbacks.every((node) =>
-      node.participants.sourceExpression.includes("公司级相关领导")
+    assert.equal(roleLineNodes.filter((node) =>
+      node.participants.companyRole === "公司级部门领导" &&
+      node.participants.departmentRole === "部门领导"
+    ).length, 39);
+    assert.equal(roleLineNodes.filter((node) =>
+      node.participants.companyRole === "公司级分管领导" &&
+      node.participants.departmentRole === "分管领导"
+    ).length, 47);
+    assert.equal(roleLineNodes.filter((node) =>
+      node.participants.companyRole === "公司级相关领导" &&
+      node.participants.departmentRole === "相关领导"
+    ).length, 25);
+    assert.equal(roleLineNodes.every((node) =>
+      node.participants?.mode === "field_role_line_script" &&
+      node.translationStatus === "executable"
     ), true);
-    assert.equal(common.every((node) => node.translationStatus === "executable"), true);
-    assert.equal(configuredFallbacks.every((node) => node.translationStatus === "executable"), true);
-    assert.equal(formulaNodes.some((node) => node.participants?.mode === "unmapped_formula"), false);
+    assert.equal(roleLineNodes.some((node) =>
+      node.participants?.mode === "configured_person_fallback"
+    ), false);
 
     const departmentNode = dslDraft.workflow.nodes.find((node) => node.id === "N560");
     const superiorNode = dslDraft.workflow.nodes.find((node) => node.id === "N175");
+    const relatedNode = dslDraft.workflow.nodes.find((node) => node.id === "N640");
     const focusedWorkflow = {
       process: { id: "field-role-line-script" },
       nodes: [
         { id: "N_TEST_START", type: "generalStart", element: "startEvent", name: "开始", sourceType: "startNode", sourceRef: "source.workflow.node.N_TEST_START", attributes: {}, translationStatus: "executable" },
         departmentNode,
         superiorNode,
+        relatedNode,
         { id: "N_TEST_END", type: "generalEnd", element: "endEvent", name: "结束", sourceType: "endNode", sourceRef: "source.workflow.node.N_TEST_END", attributes: {}, translationStatus: "executable" }
       ],
       edges: [
         { id: "L_TEST_1", source: "N_TEST_START", target: departmentNode.id, sourceRef: "source.workflow.edge.L_TEST_1", condition: { translationStatus: "executable" } },
         { id: "L_TEST_2", source: departmentNode.id, target: superiorNode.id, sourceRef: "source.workflow.edge.L_TEST_2", condition: { translationStatus: "executable" } },
-        { id: "L_TEST_3", source: superiorNode.id, target: "N_TEST_END", sourceRef: "source.workflow.edge.L_TEST_3", condition: { translationStatus: "executable" } }
+        { id: "L_TEST_3", source: superiorNode.id, target: relatedNode.id, sourceRef: "source.workflow.edge.L_TEST_3", condition: { translationStatus: "executable" } },
+        { id: "L_TEST_4", source: relatedNode.id, target: "N_TEST_END", sourceRef: "source.workflow.edge.L_TEST_4", condition: { translationStatus: "executable" } }
       ],
-      topologicalOrder: ["N_TEST_START", departmentNode.id, superiorNode.id, "N_TEST_END"]
+      topologicalOrder: ["N_TEST_START", departmentNode.id, superiorNode.id, relatedNode.id, "N_TEST_END"]
     };
     const content = buildWorkflowContent(focusedWorkflow, {
       templateId: "template-id",
@@ -343,8 +351,10 @@ describe("workflow Script recipes", () => {
     });
     const departmentHead = content.elements.find((element) => element.id === "N560");
     const superiorHead = content.elements.find((element) => element.id === "N175");
+    const relatedLeader = content.elements.find((element) => element.id === "N640");
     const departmentRule = JSON.parse(departmentHead.handlers.ruleKey);
     const superiorRule = JSON.parse(superiorHead.handlers.ruleKey);
+    const relatedRule = JSON.parse(relatedLeader.handlers.ruleKey);
     assert.equal(departmentRule.type, "Script");
     assert.match(departmentRule.script, /func\.sysRole\.resolveRoleLine/);
     assert.match(departmentRule.script, /template-id-fd_38c40aef38e5d8/);
@@ -353,6 +363,16 @@ describe("workflow Script recipes", () => {
     assert.match(superiorRule.script, /func\.sysRole\.resolveRoleLine/);
     assert.match(superiorRule.script, /template-id-fd_38c40af374c0ee/);
     assert.match(superiorRule.script, /"公司级分管领导", "分管领导"/);
+    assert.equal(relatedLeader.handlerIds, "");
+    assert.equal(relatedLeader.handlerNames, "");
+    assert.equal(
+      relatedRule.script,
+      'return ${func.sysRole.resolveRoleLine}(${data.template-id-fd_38c40aef38e5d8}, "公司级相关领导", "相关领导")'
+    );
+    assert.equal(
+      relatedRule.vo.content,
+      'return #解释角色线#($内置表单.申请部门$, "公司级相关领导", "相关领导")'
+    );
   });
 
   it("projects creator parent-path contains on L34 as a boolean Script condition", () => {

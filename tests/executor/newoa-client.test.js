@@ -10,6 +10,79 @@ import {
 } from "../../src/executor/newoa-client.js";
 
 describe("NewoaClient", () => {
+  it("uses the login X-AUTH-TOKEN cookie for the exact transfer-record POST contract", async () => {
+    const authToken = "fixture-transfer-auth-token";
+    const calls = [];
+    const responses = [
+      jsonResponse({ success: true }, {
+        cookies: [
+          "INGRESSCOOKIE=fixture-route; Path=/",
+          "LtpaToken=fixture-ltpa; Path=/",
+          `X-AUTH-TOKEN=${authToken}; Path=/; HttpOnly`,
+          "isMkLogin=true; Path=/"
+        ]
+      }),
+      jsonResponse({ success: true, data: { fdId: "transfer-record-id" } })
+    ];
+    const client = new NewoaClient({
+      baseUrl: "https://p-sit.onewo.com",
+      fetchImpl: async (url, options) => {
+        calls.push({ url, options });
+        return responses.shift();
+      }
+    });
+    const payload = {
+      fdId: "transfer-record-id",
+      fdOriginalId: "source-template-id",
+      fdTargetId: "target-template-id"
+    };
+
+    await client.login({ username: "transfer-user", encryptedPassword: "transfer-password" });
+    const result = await client.addTransferRecord(payload);
+
+    assert.equal(responses.length, 0);
+    assert.deepEqual(calls[1], {
+      url: "http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add",
+      options: {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "X-AUTH-TOKEN": authToken
+        },
+        body: JSON.stringify(payload)
+      }
+    });
+    assert.deepEqual(result, { fdId: "transfer-record-id" });
+    assert.equal(JSON.stringify(result).includes(authToken), false);
+    assert.equal(calls[1].options.body.includes(authToken), false);
+  });
+
+  it("fails before the transfer-record request when login has no X-AUTH-TOKEN cookie", async () => {
+    const calls = [];
+    const bodyToken = "bearer-token-is-not-a-transfer-token";
+    const client = new NewoaClient({
+      fetchImpl: async (url, options) => {
+        calls.push({ url, options });
+        return jsonResponse({ success: true, token: bodyToken }, {
+          cookies: ["JSESSIONID=fixture-session; Path=/; HttpOnly"]
+        });
+      }
+    });
+
+    await client.login({ username: "transfer-user", encryptedPassword: "transfer-password" });
+    await assert.rejects(
+      () => client.addTransferRecord({ fdId: "transfer-record-id" }),
+      (error) => {
+        assert.equal(error.stage, "addTransferRecord");
+        assert.match(error.message, /X-AUTH-TOKEN/);
+        assert.equal(error.message.includes(bodyToken), false);
+        assert.equal(JSON.stringify(error).includes(bodyToken), false);
+        return true;
+      }
+    );
+    assert.equal(calls.length, 1);
+  });
+
   it("uses the native official-version editor read/save contract without a template or workflow update", async () => {
     const evidence = JSON.parse(readFileSync(new URL("../fixtures/executor/persistence/published-form-api-evidence.json", import.meta.url), "utf8"));
     const calls = [];

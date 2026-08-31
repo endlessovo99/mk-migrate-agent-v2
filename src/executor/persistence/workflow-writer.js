@@ -2382,7 +2382,7 @@ function handlersFromParticipants(participants, attrs, context = {}) {
     };
   }
   if (participants?.mode === "node_history_superior_department_head") {
-    const ruleKey = nodeHistorySuperiorDepartmentHeadRuleKey(participants);
+    const ruleKey = nodeHistoryRoleLineRuleKey(participants);
     return {
       id: "handlers",
       type: "formula",
@@ -2489,17 +2489,13 @@ function handlersFromParticipants(participants, attrs, context = {}) {
   return handlersFromAttributes(attrs);
 }
 
-function nodeHistorySuperiorDepartmentHeadRuleKey(participants = {}) {
+function nodeHistoryRoleLineRuleKey(participants = {}) {
   const nodeId = JSON.stringify(String(participants.nodeId || ""));
-  return {
-    script: `return \${func.sysorg.getSuperiorDepartmenthead}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), 1)`,
-    type: "Script",
-    vo: {
-      content: `return #查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`,
-      mode: "script"
-    },
-    resultType: workflowOrgArrayResultType()
-  };
+  return roleLineScriptRuleKey(
+    participants,
+    `\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false)`,
+    `#获取节点历史处理人#(${nodeId}, false)`
+  );
 }
 
 function nodeHistoryHandlersRuleKey(participants = {}) {
@@ -2519,9 +2515,10 @@ function fieldRoleLineScriptRuleKey(participants = {}, context = {}) {
   const binding = workflowParticipantFieldBinding(participants, context);
   const dataRef = `\${data.${binding.variableId}}`;
   const displayRef = binding.displayRef;
-  if (!["department_head", "superior_department_head"].includes(participants.recipe)) {
-    throw new Error(`unsupported workflow field role-line Script recipe: ${participants.recipe || ""}`);
-  }
+  return roleLineScriptRuleKey(participants, dataRef, displayRef);
+}
+
+function roleLineScriptRuleKey(participants, dataRef, displayRef) {
   const companyRole = JSON.stringify(participants.companyRole);
   const departmentRole = JSON.stringify(participants.departmentRole);
 
@@ -2553,7 +2550,7 @@ function submitterRoleLineScriptRuleKey(participants = {}) {
 
 function nativeHandlerIds(participants, attrs) {
   if (
-    ["dept_leader_by_no", "script_formula", "field_role_line_script", "submitter_role_line_script", "node_history_handlers"]
+    ["dept_leader_by_no", "script_formula", "field_role_line_script", "submitter_role_line_script", "node_history_handlers", "node_history_superior_department_head"]
       .includes(participants?.mode)
   ) {
     return "";
@@ -2566,7 +2563,7 @@ function nativeHandlerIds(participants, attrs) {
 
 function nativeHandlerNames(participants, attrs) {
   if (
-    ["dept_leader_by_no", "script_formula", "field_role_line_script", "submitter_role_line_script", "node_history_handlers"]
+    ["dept_leader_by_no", "script_formula", "field_role_line_script", "submitter_role_line_script", "node_history_handlers", "node_history_superior_department_head"]
       .includes(participants?.mode)
   ) {
     return "";

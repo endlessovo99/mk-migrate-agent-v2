@@ -1219,8 +1219,10 @@ function expectedParticipantFormula(participants, context = {}) {
     ruleKeyMode = "formula";
   } else if (participants?.mode === "node_history_superior_department_head") {
     const nodeId = JSON.stringify(String(participants.nodeId || ""));
-    script = `return \${func.sysorg.getSuperiorDepartmenthead}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), 1)`;
-    ruleVoContent = `return #查找上级部门领导#(#获取节点历史处理人#(${nodeId}, false), 1)`;
+    const companyRole = JSON.stringify(participants.companyRole);
+    const departmentRole = JSON.stringify(participants.departmentRole);
+    script = `return \${func.sysRole.resolveRoleLine}(\${func.lbpm.getNodeHistoryHandlers}(${nodeId}, false), ${companyRole}, ${departmentRole})`;
+    ruleVoContent = `return #解释角色线#(#获取节点历史处理人#(${nodeId}, false), ${companyRole}, ${departmentRole})`;
     ruleMode = "script";
     ruleKeyMode = "";
   } else if (participants?.mode === "node_history_handlers") {

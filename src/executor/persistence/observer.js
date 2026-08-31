@@ -2025,7 +2025,13 @@ function observeRoleLineParticipants(script, formulaName, fieldId) {
   if (!expression) return undefined;
 
   const roles = observeRoleLineRoles(expression);
-  const nodeMatch = expression.match(/\$流程\.获取节点实际处理人\$\s*\(\s*["']([^"']+)["']\s*\)/);
+  const nodeMatch = expression.match(
+    /\$\{func\.lbpm\.getNodeHistoryHandlers\}\s*\(\s*["']([^"']+)["']/
+  ) || expression.match(
+    /#获取节点历史处理人#\s*\(\s*["']([^"']+)["']/
+  ) || expression.match(
+    /\$流程\.获取节点实际处理人\$\s*\(\s*["']([^"']+)["']\s*\)/
+  );
   if (nodeMatch) {
     return {
       mode: "role_line",
@@ -2049,7 +2055,7 @@ function observeFieldRoleLineParticipants(script, formulaName, fieldId, nativeFo
     : roleLine.companyRole === "公司级分管领导" &&
         roleLine.departmentRole === "分管领导"
       ? "superior_department_head"
-      : "unknown";
+      : "resolve_role_line";
   return {
     mode: "field_role_line_script",
     recipe,
@@ -2150,6 +2156,14 @@ function observeParticipants(node, initiatorSelectTarget) {
       normalizeScalar(ruleKey.formulaName) ||
       normalizeScalar(ruleKey.vo?.content) ||
       "";
+    const roleLine = observeRoleLineParticipants(script, formulaName, fieldId);
+    if (roleLine?.subjectKind === "node_handlers") {
+      return {
+        mode: "node_history_superior_department_head",
+        nodeId: roleLine.nodeId,
+        nativeFormula
+      };
+    }
     if (/getSuperiorDepartmenthead/.test(script) && /getNodeHistoryHandlers/.test(script)) {
       const nodeMatch = script.match(/getNodeHistoryHandlers\}\s*\(\s*["']([^"']+)["']/);
       return nodeMatch
@@ -2226,8 +2240,8 @@ function observeParticipants(node, initiatorSelectTarget) {
         ? { mode: "script_formula", recipe, fieldId, nativeFormula }
         : { mode: "script_formula", recipe, nativeFormula };
     }
-    const roleLine = observeRoleLineParticipants(script, formulaName, fieldId);
-    if (roleLine) return { ...roleLine, nativeFormula };
+    const observedRoleLine = observeRoleLineParticipants(script, formulaName, fieldId);
+    if (observedRoleLine) return { ...observedRoleLine, nativeFormula };
     if (/getPersonByLoginName/.test(script)) {
       return fieldId
         ? { mode: "person_by_login_name", fieldId, nativeFormula }

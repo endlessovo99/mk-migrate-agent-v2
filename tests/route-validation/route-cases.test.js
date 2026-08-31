@@ -45,7 +45,8 @@ describe("offline Route-validation", { concurrency: false }, () => {
       "add",
       "get-before-update",
       "update",
-      "get-readback"
+      "get-readback",
+      "add-transfer-record"
     ]);
   });
 
@@ -116,7 +117,8 @@ describe("offline Route-validation", { concurrency: false }, () => {
       "add",
       "get-before-update",
       "update",
-      "get-readback"
+      "get-readback",
+      "add-transfer-record"
     ]);
   });
 

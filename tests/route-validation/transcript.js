@@ -18,7 +18,15 @@ const ENTRY_KEYS_BY_OPERATION = new Map([
     "notifyParticipantOnEnd"
   ])],
   ["get-workflow-detail", new Set(["operation", "templateId", "definitionId"])],
-  ["get-readback", new Set(["operation", "templateId"])]
+  ["get-readback", new Set(["operation", "templateId"])],
+  ["add-transfer-record", new Set([
+    "operation",
+    "recordId",
+    "sourceTemplateId",
+    "targetTemplateId",
+    "templateName",
+    "createTime"
+  ])]
 ]);
 const FORBIDDEN_KEY = /authorization|cookie|credential|password|secret|token|username/i;
 
@@ -31,7 +39,14 @@ export function appendTranscriptEntry(transcript, entry) {
   if (unknown.length) {
     throw integrityError("route.transcript.invalid", "Transcript entry contains non-semantic data.", { unknown });
   }
-  for (const key of ["templateId", "templateName", "categoryId"]) {
+  for (const key of [
+    "templateId",
+    "templateName",
+    "categoryId",
+    "recordId",
+    "sourceTemplateId",
+    "targetTemplateId"
+  ]) {
     if (Object.hasOwn(entry, key) && !nonEmptyString(entry[key])) {
       throw integrityError("route.transcript.invalid", `Transcript ${key} must be a non-empty string.`);
     }
@@ -41,6 +56,11 @@ export function appendTranscriptEntry(transcript, entry) {
   }
   if (Object.hasOwn(entry, "draft") && typeof entry.draft !== "boolean") {
     throw integrityError("route.transcript.invalid", "Transcript draft must be a boolean.");
+  }
+  if (Object.hasOwn(entry, "createTime") && (
+    !Number.isSafeInteger(entry.createTime) || entry.createTime <= 0
+  )) {
+    throw integrityError("route.transcript.invalid", "Transcript createTime must be a positive integer timestamp.");
   }
   for (const key of ["notifyDrafterOnEnd", "notifyParticipantOnEnd"]) {
     if (Object.hasOwn(entry, key) && !["true", "false"].includes(entry[key])) {

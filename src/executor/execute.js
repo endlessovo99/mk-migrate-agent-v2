@@ -16,6 +16,10 @@ import {
   inspectNativeFormRuleRuntimeDigest,
   NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY
 } from "./native-form-rule-runtime-capability.js";
+import {
+  buildTransferRecordPreflight,
+  generateTransferRecordId
+} from "./transfer-record.js";
 
 export async function executeDsl(input, options = {}) {
   if (options.publishedFormPatch === true) return executePublishedFormPatch(input, options);
@@ -45,6 +49,7 @@ export async function executeDsl(input, options = {}) {
   const apiStages = [];
   let templateId = "";
   let executableDsl = input;
+  let transferRecordPreflight;
   const targetTemplateId = nonEmptyString(options.targetTemplateId)
     ? options.targetTemplateId.trim()
     : "";
@@ -55,6 +60,28 @@ export async function executeDsl(input, options = {}) {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    apiStages.push({ name: "transferRecordPreflight", status: "started" });
+    try {
+      if (
+        typeof client.assertTransferRecordAuthentication !== "function" ||
+        typeof client.addTransferRecord !== "function"
+      ) {
+        throw new Error("NewOA client does not implement the transfer-record contract.");
+      }
+      await client.assertTransferRecordAuthentication();
+      const transferRecordIdFactory = options.transferRecordIdFactory || generateTransferRecordId;
+      transferRecordPreflight = buildTransferRecordPreflight(input, {
+        fdId: transferRecordIdFactory(),
+        now: options.now || new Date()
+      });
+      apiStages[apiStages.length - 1].status = "ok";
+    } catch (error) {
+      apiStages[apiStages.length - 1].status = "failed";
+      throw stagedError(
+        "transferRecordPreflight",
+        "Transfer recording is unavailable for this authenticated migration session."
+      );
+    }
     if (requiresNativeFormRuleFormula(input)) {
       const stage = {
         name: "verifyNativeFormRuleFormulaCapability",
@@ -544,9 +571,60 @@ export async function executeDsl(input, options = {}) {
       };
     }
 
+    const executionStatus = diagnostics.some((diagnostic) => diagnostic.level === "warning")
+      ? "written_with_warnings"
+      : "written";
+    const transferRecordPayload = {
+      ...transferRecordPreflight,
+      fdTargetId: templateId,
+      fdCreateTime: new Date(options.now || new Date()).getTime()
+    };
+    apiStages.push({
+      name: "addTransferRecord",
+      status: "started",
+      recordId: transferRecordPayload.fdId,
+      templateId
+    });
+    try {
+      await client.addTransferRecord(transferRecordPayload);
+      apiStages[apiStages.length - 1].status = "ok";
+    } catch {
+      apiStages[apiStages.length - 1].status = "failed";
+      apiStages[apiStages.length - 1].writeOutcomeUnknown = true;
+      return {
+        ok: false,
+        status: "transfer_record_failed",
+        stage: "addTransferRecord",
+        failedAt: "addTransferRecord",
+        migrationStatus: executionStatus,
+        baseUrl,
+        templateId,
+        createdFdIds,
+        updatedFdIds,
+        validationPolicy: input?.validationPolicy,
+        catalogs: input?.catalogs,
+        diagnostics: [
+          ...diagnostics,
+          {
+            level: "error",
+            code: "transfer_record.write_outcome_unknown",
+            message: "The template migration was verified, but the transfer-record write outcome is unknown. Do not rerun the migration or automatically retry with a new record id.",
+            path: "/transferRecord"
+          }
+        ],
+        apiStages,
+        plan,
+        readback,
+        transferRecord: transferRecordSummary(transferRecordPayload, {
+          status: "outcome_unknown",
+          writeOutcomeUnknown: true
+        })
+      };
+    }
+
     return {
       ok: true,
-      status: diagnostics.some((diagnostic) => diagnostic.level === "warning") ? "written_with_warnings" : "written",
+      status: executionStatus,
       baseUrl,
       templateId,
       createdFdIds,
@@ -556,7 +634,8 @@ export async function executeDsl(input, options = {}) {
       diagnostics,
       apiStages,
       plan,
-      readback
+      readback,
+      transferRecord: transferRecordSummary(transferRecordPayload, { status: "recorded" })
     };
   } catch (error) {
     if (apiStages.length && apiStages[apiStages.length - 1].status === "started") {
@@ -599,6 +678,17 @@ export async function executeDsl(input, options = {}) {
       plan
     };
   }
+}
+
+function transferRecordSummary(payload, extra) {
+  return {
+    ...extra,
+    fdId: payload.fdId,
+    fdOriginalId: payload.fdOriginalId,
+    fdTargetId: payload.fdTargetId,
+    fdName: payload.fdName,
+    fdCreateTime: payload.fdCreateTime
+  };
 }
 
 function nativeFormulaCapabilityBlocked({ plan, diagnostics, apiStages, baseUrl, capability }) {

@@ -57,6 +57,8 @@ export class FakeNewoaAdapter {
     return { ok: true };
   }
 
+  async assertTransferRecordAuthentication() {}
+
   async getXFormDesktopDigest() {
     this.record({ operation: "get-xform-desktop-digest" });
     return {
@@ -218,6 +220,18 @@ export class FakeNewoaAdapter {
       isDraft: true,
       fdStatus: "draft"
     };
+  }
+
+  async addTransferRecord(payload) {
+    this.record({
+      operation: "add-transfer-record",
+      recordId: payload.fdId,
+      sourceTemplateId: payload.fdOriginalId,
+      targetTemplateId: payload.fdTargetId,
+      templateName: payload.fdName,
+      createTime: payload.fdCreateTime
+    });
+    return { fdId: payload.fdId };
   }
 
   transcript() {

@@ -10,6 +10,7 @@ const FORMULA_PARTICIPANT_KEYS = Object.freeze([
   "departmentRole",
   "fallbackKind",
   "fallbackScope",
+  "formulaFamily",
   "reason",
   "branches",
   "fields",
@@ -46,15 +47,15 @@ export function classifyWorkflowFormulaParticipant(attributes = {}) {
     orderedMainPersonFieldsParticipant(attributes, handlerIds, handlerNames) ||
     detailScriptParticipant(attributes) ||
     nodeHistoryHandlersParticipant(attributes, handlerIds, handlerNames) ||
-    nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) ||
+    nodeHistoryRoleLineParticipant(attributes, handlerIds, handlerNames) ||
     fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) ||
-    configuredPersonFallbackParticipant(attributes, handlerIds, handlerNames) ||
     personByLoginNameParticipant(attributes, handlerIds, handlerNames) ||
     deptLeaderByNoParticipant(attributes, handlerIds, handlerNames) ||
     formFieldParticipant(attributes, handlerIds, handlerNames) ||
     docCreatorParticipant(attributes, handlerIds, handlerNames) ||
     {
       mode: "unmapped_formula",
+      formulaFamily: isRoleLineSourceExpression(attributes.handlerIds) ? "role_line" : "other",
       reason: "source formula requires ES5 script translation",
       sourceExpression: attributes.handlerIds || "",
       sourceNameExpression: attributes.handlerNames || ""
@@ -98,52 +99,27 @@ function isBracketedDocumentCreatorSemantic(value) {
   return /^<\s*[^<>]+\s*>$/.test(String(value || "").trim()) && Boolean(documentCreatorSemantic(value));
 }
 
-function configuredPersonFallbackParticipant(attributes, handlerIds, handlerNames) {
-  if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
-
-  const parsed = parseFieldRoleLineFormula(handlerIds[0]);
+function fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) {
   if (
-    !parsed ||
-    !parsed.subject.startsWith("fd_") ||
-    parsed.companyRole !== "公司级相关领导" ||
-    !["相关领导", "部门相关领导"].includes(parsed.departmentRole)
+    attributes.handlerSelectType !== "formula" ||
+    handlerIds.length !== 1 ||
+    handlerNames.length > 1
   ) {
     return undefined;
   }
 
-  const nameParsed = parseFieldRoleLineFormula(handlerNames[0]);
-  const fieldTitle = nameParsed && !nameParsed.subject.startsWith("fd_")
-    ? nameParsed.subject
-    : parsed.subject;
-  return {
-    mode: "configured_person_fallback",
-    fallbackKind: "person",
-    reason: "related leader formula has no verified target recipe",
-    subjectKind: "field",
-    fieldId: parsed.subject,
-    sourceFieldId: parsed.subject,
-    fieldTitle,
-    companyRole: parsed.companyRole,
-    departmentRole: parsed.departmentRole,
-    sourceExpression: handlerIds[0],
-    sourceNameExpression: handlerNames[0] || ""
-  };
-}
-
-function fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) {
-  if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
-
   const parsed = parseFieldRoleLineFormula(handlerIds[0]);
   if (!parsed || !parsed.subject.startsWith("fd_")) return undefined;
   const fieldRef = participantFieldReference(parsed.subject);
-  const recipe = parsed.companyRole === "公司级部门领导" && parsed.departmentRole === "部门领导"
-    ? "department_head"
-    : parsed.companyRole === "公司级分管领导" && parsed.departmentRole === "分管领导"
-      ? "superior_department_head"
-      : undefined;
-  if (!recipe) return undefined;
-
   const nameParsed = parseFieldRoleLineFormula(handlerNames[0]);
+  if (
+    (handlerNames.length === 1 && !nameParsed) ||
+    (nameParsed &&
+      (nameParsed.companyRole !== parsed.companyRole ||
+        nameParsed.departmentRole !== parsed.departmentRole))
+  ) {
+    return undefined;
+  }
   const sourceFieldTitle = nameParsed && !nameParsed.subject.startsWith("fd_")
     ? nameParsed.subject
     : parsed.subject;
@@ -152,7 +128,7 @@ function fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) {
     : sourceFieldTitle;
   return {
     mode: "field_role_line_script",
-    recipe,
+    recipe: roleLineRecipe(parsed.companyRole, parsed.departmentRole),
     subjectKind: "field",
     ...(fieldRef.detailTableId ? { detailTableId: fieldRef.detailTableId } : {}),
     fieldId: fieldRef.fieldId,
@@ -163,6 +139,16 @@ function fieldRoleLineScriptParticipant(attributes, handlerIds, handlerNames) {
     sourceExpression: handlerIds[0],
     sourceNameExpression: handlerNames[0] || ""
   };
+}
+
+function roleLineRecipe(companyRole, departmentRole) {
+  if (companyRole === "公司级部门领导" && departmentRole === "部门领导") {
+    return "department_head";
+  }
+  if (companyRole === "公司级分管领导" && departmentRole === "分管领导") {
+    return "superior_department_head";
+  }
+  return "resolve_role_line";
 }
 
 function parseFieldRoleLineFormula(value) {
@@ -351,15 +337,32 @@ function parseLoginMapBranch(value, body) {
   return { value, requireUnseen, addLoginNames, markSeen };
 }
 
-function nodeHistorySuperiorDepartmentHeadParticipant(attributes, handlerIds, handlerNames) {
-  if (attributes.handlerSelectType !== "formula" || handlerIds.length !== 1) return undefined;
+function nodeHistoryRoleLineParticipant(attributes, handlerIds, handlerNames) {
+  if (
+    attributes.handlerSelectType !== "formula" ||
+    handlerIds.length !== 1 ||
+    handlerNames.length > 1
+  ) {
+    return undefined;
+  }
 
   const parsed = parseNodeHistoryRoleLineFormula(handlerIds[0]);
-  if (!parsed || parsed.companyRole !== "公司级分管领导" || parsed.departmentRole !== "分管领导") {
+  if (!parsed) {
+    return undefined;
+  }
+  const nameParsed = parseNodeHistoryRoleLineFormula(handlerNames[0]);
+  if (
+    (handlerNames.length === 1 && !nameParsed) ||
+    (nameParsed &&
+      (nameParsed.nodeId !== parsed.nodeId ||
+        nameParsed.companyRole !== parsed.companyRole ||
+        nameParsed.departmentRole !== parsed.departmentRole))
+  ) {
     return undefined;
   }
 
   return {
+    // Keep the established DSL discriminator so existing trusted documents remain comparable.
     mode: "node_history_superior_department_head",
     nodeId: parsed.nodeId,
     companyRole: parsed.companyRole,
@@ -508,6 +511,7 @@ export function inspectWorkflowFormulaProvenance(sourceDraft, dslDraft) {
       nodeId: sourceNode?.id,
       sourceRef: sourceNode?.sourceRef,
       sourceExpression: sourceFormula.sourceExpression || sourceAttributes.handlerIds || "",
+      formulaFamily: sourceFormula.formulaFamily,
       expectedMode: sourceFormula.mode,
       actualMode: exact?.node?.participants?.mode
     };
@@ -564,9 +568,12 @@ export function inspectWorkflowFormulaProvenance(sourceDraft, dslDraft) {
 function reviewedUnmappedFormulaFallbackMatches({ dslDraft, exact, common }) {
   const participants = exact?.node?.participants;
   if (
+    common.formulaFamily === "role_line" ||
     participants?.mode !== "configured_person_fallback" ||
     participants.fallbackKind !== "person" ||
     participants.fallbackScope !== "reviewed_unmapped_formula" ||
+    participants.formulaFamily !== "other" ||
+    participants.formulaFamily !== common.formulaFamily ||
     participants.sourceExpression !== common.sourceExpression ||
     !String(participants.reason || "").trim()
   ) {
@@ -583,6 +590,10 @@ function reviewedUnmappedFormulaFallbackMatches({ dslDraft, exact, common }) {
     Array.isArray(decision.targetRefs) &&
     decision.targetRefs.includes(targetRef)
   ));
+}
+
+function isRoleLineSourceExpression(value) {
+  return /\$组织架构\.解释角色线\$\s*\(/.test(normalizeLegacyExpression(value));
 }
 
 function formFieldParticipant(attributes, handlerIds, handlerNames) {
