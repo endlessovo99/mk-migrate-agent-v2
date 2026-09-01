@@ -43,6 +43,7 @@ export async function resolveWorkflowParticipants(dsl, {
   fallbackFdIds,
   participantOverrides,
   directParticipantOverrides,
+  allowTemplateAuthorizationFallback = false,
   allowMissingDirectPersonFallback = false,
   allowMissingDirectPostFallback = false,
   directPersonFallbackIds
@@ -165,6 +166,7 @@ export async function resolveWorkflowParticipants(dsl, {
   const unresolvedResolutions = resolutions.filter((resolution) => resolution.issue);
   const fallbackResolutions = allowsTemporaryOrgFallbacks(targetBaseUrl)
     ? unresolvedResolutions.filter((resolution) => isSitFallbackEligible(resolution, {
+      allowTemplateAuthorizationFallback,
       allowMissingDirectPersonFallback,
       allowMissingDirectPostFallback
     }))
@@ -829,10 +831,14 @@ function deduplicateResolvedParticipantCollections(dsl) {
 }
 
 function isSitFallbackEligible(resolution, {
+  allowTemplateAuthorizationFallback = false,
   allowMissingDirectPersonFallback = false,
   allowMissingDirectPostFallback = false
 } = {}) {
-  if (resolution.scope === "template_authorization") return false;
+  if (
+    resolution.scope === "template_authorization" &&
+    allowTemplateAuthorizationFallback !== true
+  ) return false;
   if (resolution.kind === "target") {
     if (resolution.issue?.reason !== "not_found") return false;
     if (resolution.explicitDirectPersonFallback === true) return true;

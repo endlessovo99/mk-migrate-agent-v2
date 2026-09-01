@@ -33,7 +33,8 @@ export function preparePersistedTemplate({ dsl, envelope, baseTemplate }) {
     };
   }
 
-  const expectedResult = buildExpectedInvariants(dsl, envelope);
+  const projectionDsl = lowerTemplateAuthorizationForNativePersistence(dsl);
+  const expectedResult = buildExpectedInvariants(projectionDsl, envelope);
   if (!expectedResult.ok) {
     return {
       ok: false,
@@ -58,7 +59,10 @@ export function preparePersistedTemplate({ dsl, envelope, baseTemplate }) {
         fdId: envelope.templateId || withCategory.mechanisms["sys-xform"].fdId
       };
     }
-    update = applyWorkflowPayload(applyFormPayload(withCategory, dsl), dsl);
+    update = applyWorkflowPayload(
+      applyFormPayload(withCategory, projectionDsl),
+      projectionDsl
+    );
   } catch (error) {
     return {
       ok: false,
@@ -80,6 +84,50 @@ export function preparePersistedTemplate({ dsl, envelope, baseTemplate }) {
       return verifyPrepared(expected, readbackTemplate);
     }
   };
+}
+
+function lowerTemplateAuthorizationForNativePersistence(dsl) {
+  const authorization = dsl?.template?.authorization;
+  if (!authorization || typeof authorization !== "object") return dsl;
+  if (![authorization.readers, authorization.editors, authorization.allReaders, authorization.allEditors]
+    .every(Array.isArray)) return dsl;
+
+  const editors = unionAuthorizationMembers(
+    authorization.editors,
+    authorization.allEditors
+  );
+  const editorIds = new Set(editors.map(authorizationMemberId).filter(Boolean));
+  const readers = unionAuthorizationMembers(
+    authorization.readers,
+    authorization.allReaders.filter((member) => !editorIds.has(authorizationMemberId(member)))
+  );
+  return {
+    ...dsl,
+    template: {
+      ...dsl.template,
+      authorization: {
+        ...authorization,
+        readers,
+        editors
+      }
+    }
+  };
+}
+
+function unionAuthorizationMembers(primary, additions) {
+  const result = [...primary];
+  const ids = new Set(result.map(authorizationMemberId).filter(Boolean));
+  for (const member of additions) {
+    const id = authorizationMemberId(member);
+    if (!id || ids.has(id)) continue;
+    ids.add(id);
+    result.push(member);
+  }
+  return result;
+}
+
+function authorizationMemberId(member) {
+  return typeof member?.id === "string" ? member.id.trim() : "";
 }
 
 function verifyPrepared(expected, readbackTemplate) {

@@ -29,7 +29,8 @@ import {
 } from "./workflow-formula-participants.js";
 import {
   conditionalParallelSplitIds,
-  isSupportedConditionalParallelCondition
+  isSupportedConditionalParallelCondition,
+  normalizeConditionalParallelMultiSelectCondition
 } from "./conditional-parallel.js";
 import { componentForSourceType } from "./field-component.js";
 import { conditionalTotalCalculationModel } from "./conditional-total-calculation.js";
@@ -88,6 +89,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   );
   const knownSourceFieldIds = collectFormFieldIds(rawForm);
   const knownSourceFieldTitles = collectFormFieldTitles(rawForm);
+  const conditionalParallelFieldSpecs = collectConditionalParallelFieldSpecs(rawForm);
   const multiRadioFormRules = multiRadioRowHelperFormRules(sourceDraft.scripts, mappedForm);
   const provisionalFormRules = draftFormRules(
     applyFieldIdMapToSourceFormRules(
@@ -113,7 +115,12 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
   const workflow = sourceDraft.workflow
     ? applyFieldIdMapToWorkflow(
-        draftWorkflow(sourceDraft.workflow, knownSourceFieldIds, knownSourceFieldTitles),
+        draftWorkflow(
+          sourceDraft.workflow,
+          knownSourceFieldIds,
+          knownSourceFieldTitles,
+          conditionalParallelFieldSpecs
+        ),
         fieldIdMap
       )
     : undefined;
@@ -221,6 +228,17 @@ function collectFormFieldIds(form = {}) {
     }
   }
   return fieldIds;
+}
+
+function collectConditionalParallelFieldSpecs(form = {}) {
+  return new Map((form.fields || [])
+    .filter((field) => field?.type !== "detailTable" && field?.id)
+    .map((field) => [field.id, {
+      type: field.type,
+      optionValues: new Set((field.props?.options || [])
+        .map((option) => option?.value)
+        .filter((value) => typeof value === "string"))
+    }]));
 }
 
 function collectFormFieldTitles(form = {}) {
@@ -657,9 +675,12 @@ function draftForm(sourceForm, sourceWorkflow) {
     sharedCaptionRecovery.layout,
     sharedCaptionRecovery.fields
   );
+  const calculationFields = rebindAggregateCalculationTables(
+    sharedCaptionRecovery.fields
+  );
 
   return {
-    fields: sharedCaptionRecovery.fields,
+    fields: calculationFields,
     layout: {
       sourceGrid: sharedCaptionRecovery.layout,
       mkTree: draftMkTree(
@@ -848,6 +869,9 @@ function hasActiveExternalRightPrompt(control) {
 }
 
 function draftDetailTableFromSource(table) {
+  const detailColumnIds = new Set(
+    (table.columns || []).map((column) => column?.id).filter(Boolean)
+  );
   return pruneUndefined({
     id: table.id,
     title: targetDetailTableTitle(table),
@@ -862,7 +886,7 @@ function draftDetailTableFromSource(table) {
       title: column.title,
       type: normalizeFieldType(column.sourceType),
       componentId: componentForSourceType(column.sourceType, column),
-      props: propsFromSource(column, { detailTableId: table.id }),
+      props: propsFromSource(column, { detailTableId: table.id, detailColumnIds }),
       sourceProps: column.sourceProps || {},
       sourceRef: column.sourceRef,
       generated: false,
@@ -1102,7 +1126,8 @@ function legacyCalculationFromSource(source, options = {}) {
   const arithmetic = normalizeArithmeticCalculationExpression(expression, {
     detailTableId: options.detailTableId ||
       values.tableName ||
-      source.sourceProps?.designerTableName
+      source.sourceProps?.designerTableName,
+    detailColumnIds: options.detailColumnIds
   });
   if (!arithmetic) return undefined;
   return pruneUndefined({
@@ -1150,7 +1175,15 @@ function normalizeArithmeticCalculationExpression(expression, options = {}) {
 
   if (qualifiedTableId) {
     const detailTableId = options.detailTableId;
-    if (detailTableId && qualifiedTableId !== detailTableId) return undefined;
+    if (
+      detailTableId &&
+      qualifiedTableId !== detailTableId &&
+      !(
+        options.detailColumnIds instanceof Set &&
+        fieldIds.length > 0 &&
+        fieldIds.every((fieldId) => options.detailColumnIds.has(fieldId))
+      )
+    ) return undefined;
     if (!isSupportedArithmeticExpression(rewritten)) return undefined;
   }
 
@@ -1158,6 +1191,34 @@ function normalizeArithmeticCalculationExpression(expression, options = {}) {
     expression: rewritten,
     fieldIds: uniqueStrings(fieldIds)
   };
+}
+
+function rebindAggregateCalculationTables(fields = []) {
+  const detailTables = fields.filter((field) => field?.type === "detailTable");
+  return fields.map((field) => {
+    if (field?.type === "detailTable") return field;
+    const calculation = field?.props?.calculation;
+    if (calculation?.kind !== "aggregate") return field;
+    const current = detailTables.find((table) => (
+      table.id === calculation.tableId &&
+      (table.columns || []).some((column) => column?.id === calculation.fieldId)
+    ));
+    if (current) return field;
+    const candidates = detailTables.filter((table) =>
+      (table.columns || []).some((column) => column?.id === calculation.fieldId)
+    );
+    if (candidates.length !== 1) return field;
+    return {
+      ...field,
+      props: {
+        ...field.props,
+        calculation: {
+          ...calculation,
+          tableId: candidates[0].id
+        }
+      }
+    };
+  });
 }
 
 function applyNativeCalculationInferences(form, sourceScripts = {}) {
@@ -2450,7 +2511,12 @@ function draftRuleEffects(effects) {
     : undefined;
 }
 
-function draftWorkflow(sourceWorkflow, knownFieldIds = null, knownFieldTitles = null) {
+function draftWorkflow(
+  sourceWorkflow,
+  knownFieldIds = null,
+  knownFieldTitles = null,
+  conditionalParallelFieldSpecs = new Map()
+) {
   const sourceNodes = sourceWorkflow.nodes || [];
   const nodeById = new Map(sourceNodes.map((node) => [node.id, node]));
   const conditionalSplitIds = conditionalParallelSplitIds(
@@ -2508,13 +2574,21 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null, knownFieldTitles = 
     edges: (sourceWorkflow.edges || []).map((edge) => {
       const hasCondition = Boolean(edge.condition || edge.displayCondition);
       const conditionalParallel = conditionalSplitIds.has(edge.source);
-      const conditionExecutable = conditionalParallel &&
-        isSupportedConditionalParallelCondition(edge.condition, knownFieldIds || []);
       const recoveredCondition = recoverWorkflowConditionFieldAliases(
         edge.condition,
         edge.displayCondition,
         knownFieldIds || [],
         knownFieldTitles || new Map()
+      );
+      const normalizedMultiSelectCondition = conditionalParallel
+        ? normalizeConditionalParallelMultiSelectCondition(
+            recoveredCondition,
+            conditionalParallelFieldSpecs
+          )
+        : undefined;
+      const conditionExecutable = conditionalParallel && Boolean(
+        normalizedMultiSelectCondition ||
+        isSupportedConditionalParallelCondition(recoveredCondition, knownFieldIds || [])
       );
       return {
         id: edge.id,
@@ -2527,7 +2601,7 @@ function draftWorkflow(sourceWorkflow, knownFieldIds = null, knownFieldTitles = 
           sourceText: edge.condition || "",
           displayText: edge.displayCondition || "",
           targetText: translateLegacyConditionContextReferences(
-            recoveredCondition,
+            normalizedMultiSelectCondition || recoveredCondition,
             knownFieldIds || []
           ),
           translationStatus: conditionalParallel

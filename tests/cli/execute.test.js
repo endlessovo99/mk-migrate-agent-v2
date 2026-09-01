@@ -127,6 +127,14 @@ describe("execute CLI", () => {
     assert.equal(request.options.allowMissingDirectPersonFallback, true);
   });
 
+  it("passes explicit authorization for unresolved template-permission fallbacks", async () => {
+    const { request } = await runExecuteCli({
+      argv: ["--allow-template-authorization-fallback"]
+    });
+
+    assert.equal(request.options.allowTemplateAuthorizationFallback, true);
+  });
+
   it("passes explicit authorization for missing direct-post fallback", async () => {
     const { request } = await runExecuteCli({
       argv: ["--allow-missing-direct-post-fallback"]

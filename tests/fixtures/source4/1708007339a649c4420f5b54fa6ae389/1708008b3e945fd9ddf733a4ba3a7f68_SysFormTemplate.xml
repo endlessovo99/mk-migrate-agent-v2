@@ -1,0 +1,1121 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<java version="1.6.0_26" class="java.beans.XMLDecoder"> 
+ <object class="java.util.HashMap"> 
+  <void method="put"> 
+   <string>sysAttFile_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdTemplateEdition</string> 
+   <string>5</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreator</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>101-EKP-GUOAIL</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>14c72d2eb8e184d6c44b4b24f6593173</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelName</string> 
+   <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttRtfData_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdKey</string> 
+   <string>reviewMainDoc</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlteror</string> 
+   <object class="java.util.HashMap"> 
+    <void method="put"> 
+     <string>fdOrgType</string> 
+     <int>8</int> 
+    </void> 
+    <void method="put"> 
+     <string>fdLoginName</string> 
+     <string>101-EKP-GUOAIL</string> 
+    </void> 
+    <void method="put"> 
+     <string>fdId</string> 
+     <string>14c72d2eb8e184d6c44b4b24f6593173</string> 
+    </void> 
+    <void method="put"> 
+     <string>class</string> 
+     <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string> 
+    </void> 
+    <void method="put"> 
+     <string>hbmParent.fdName</string> 
+     <string>电气数科大客户及解决方案中心</string> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>class</string> 
+   <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdFormFileName</string> 
+   <string>km/review/xform/define/1708007339a649c4420f5b54fa6ae389/1708007339a649c4420f5b54fa6ae389_v5</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdMode</string> 
+   <int>3</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdDesignerHtml</string> 
+   <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_383a892b661edc&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50dc3a2f8e&quot;,content:&quot;召开时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;召开时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50eeb35620&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;召开日期&quot;,_label_bind_id:&quot;fd_383e50dc3a2f8e&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;dateDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e50eeb35620 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;召开日期&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e52f90eb7b6&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;召开时间&quot;,_label_bind_id:&quot;fd_383e50dc3a2f8e&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;timeDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e52f90eb7b6 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;召开时间&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;timeDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50e51da134&quot;,content:&quot;结束时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;结束时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e53485835c2&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;结束日期&quot;,_label_bind_id:&quot;fd_383e50e51da134&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;dateDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e53485835c2 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;结束日期&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e53516b6cfe&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;结束时间&quot;,_label_bind_id:&quot;fd_383e50e51da134&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;timeDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e53516b6cfe class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;结束时间&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;timeDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a892fa99bd6&quot;,content:&quot;参会人员&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;参会人员&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;IMG id=fd_3848ec12b81c94 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;参会人员&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848ec12b81c94&quot;,_label_bind:&quot;true&quot;,label:&quot;参会人员&quot;,_label_bind_id:&quot;fd_383a892fa99bd6&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e535c813a40&quot;,content:&quot;会议地点&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议地点&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;1&quot; column=&quot;3&quot;&gt;&lt;IMG id=fd_383e537bf12d58 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;会议地点&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e537bf12d58&quot;,_label_bind:&quot;true&quot;,label:&quot;会议地点&quot;,_label_bind_id:&quot;fd_383e535c813a40&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 109px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848ec1910adc8&quot;,content:&quot;会议组织人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议组织人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848ec2088eb66&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;会议组织人&quot;,_label_bind_id:&quot;fd_3848ec1910adc8&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3848ec2088eb66 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;会议组织人&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;2&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f51416b09e&quot;,content:&quot;会议主持人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议主持人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f5157a0eca&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;会议主持人&quot;,_label_bind_id:&quot;fd_3848f51416b09e&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3848f5157a0eca class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;会议主持人&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;IMG id=fd_3848f5342ec0e0 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;会议主持人2&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f5342ec0e0&quot;,_label_bind:&quot;false&quot;,label:&quot;会议主持人2&quot;,_label_bind_id:&quot;fd_3848f51416b09e&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f5275af80e&quot;,content:&quot;与会人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;与会人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;3&quot; column=&quot;1&quot;&gt;&lt;IMG id=fd_3848f53b6179a2 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;与会人2&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f53b6179a2&quot;,_label_bind:&quot;false&quot;,label:&quot;与会人2&quot;,_label_bind_id:&quot;fd_3848f5275af80e&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38494a1c23fc60&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;与会人&quot;,_label_bind_id:&quot;fd_3848f5275af80e&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;true&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;null&quot;}&apos; fd_type=&quot;address&quot;&gt;&lt;INPUT id=fd_38494a1c23fc60 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;与会人&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;addressDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; multiSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;3&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38494a275a57ec&quot;,content:&quot;会议连接&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议连接&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;3&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV id=fd_38494e9eab2fbc style=&quot;BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38494e9eab2fbc&quot;}&apos; fd_type=&quot;right&quot;&gt;&#13;
+&lt;DIV class=rightIconBar style=&quot;CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE class=righBar style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none&quot; cellPadding=1&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 18px&quot;&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px&quot; mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;edit&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px&quot; def_N4=&quot;false&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px&quot; readerNames=&quot;&quot; readerIds=&quot;&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px&quot;&gt;&amp;nbsp;&lt;SPAN ondblclick=&quot;Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);&quot; style=&quot;BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px&quot;&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38494a2eaf5642&quot;,width:&quot;250&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;会议连接&quot;,_label_bind_id:&quot;fd_38494a275a57ec&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_38494a2eaf5642 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; ? label=&quot;会议连接&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_38494e9eab2fbc&quot; canShow=&quot;true&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;4&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;4&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;4&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;4&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>hbmHistries</string> 
+   <object class="java.util.ArrayList"> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>1708008b3e945fd9ddf733a4ba3a7f68</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>4</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/1708007339a649c4420f5b54fa6ae389/1708007339a649c4420f5b54fa6ae389_v4</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_383a892b661edc&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50dc3a2f8e&quot;,content:&quot;召开时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;召开时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50eeb35620&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;召开日期&quot;,_label_bind_id:&quot;fd_383e50dc3a2f8e&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;dateDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e50eeb35620 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;召开日期&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e52f90eb7b6&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;召开时间&quot;,_label_bind_id:&quot;fd_383e50dc3a2f8e&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;timeDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e52f90eb7b6 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;召开时间&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;timeDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50e51da134&quot;,content:&quot;结束时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;结束时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e53485835c2&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;结束日期&quot;,_label_bind_id:&quot;fd_383e50e51da134&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;dateDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e53485835c2 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;结束日期&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e53516b6cfe&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;结束时间&quot;,_label_bind_id:&quot;fd_383e50e51da134&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;timeDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e53516b6cfe class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;结束时间&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;timeDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a892fa99bd6&quot;,content:&quot;参会人员&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;参会人员&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;IMG id=fd_3848ec12b81c94 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;参会人员&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848ec12b81c94&quot;,_label_bind:&quot;true&quot;,label:&quot;参会人员&quot;,_label_bind_id:&quot;fd_383a892fa99bd6&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e535c813a40&quot;,content:&quot;会议地点&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议地点&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;1&quot; column=&quot;3&quot;&gt;&lt;IMG id=fd_383e537bf12d58 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;会议地点&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e537bf12d58&quot;,_label_bind:&quot;true&quot;,label:&quot;会议地点&quot;,_label_bind_id:&quot;fd_383e535c813a40&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 109px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848ec1910adc8&quot;,content:&quot;会议组织人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议组织人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848ec2088eb66&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;会议组织人&quot;,_label_bind_id:&quot;fd_3848ec1910adc8&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3848ec2088eb66 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;会议组织人&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;2&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f51416b09e&quot;,content:&quot;会议主持人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议主持人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f5157a0eca&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;会议主持人&quot;,_label_bind_id:&quot;fd_3848f51416b09e&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3848f5157a0eca class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;会议主持人&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;IMG id=fd_3848f5342ec0e0 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;会议主持人2&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f5342ec0e0&quot;,_label_bind:&quot;false&quot;,label:&quot;会议主持人2&quot;,_label_bind_id:&quot;fd_3848f51416b09e&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f5275af80e&quot;,content:&quot;与会人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;与会人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;3&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f52f6c8054&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;与会人&quot;,_label_bind_id:&quot;fd_3848f5275af80e&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3848f52f6c8054 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;与会人&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;IMG id=fd_3848f53b6179a2 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;与会人2&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f53b6179a2&quot;,_label_bind:&quot;false&quot;,label:&quot;与会人2&quot;,_label_bind_id:&quot;fd_3848f5275af80e&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;4&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;4&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;4&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;4&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>1708007339a649c4420f5b54fa6ae389</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>170de5064983c2df2786c8848e2aae90</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1584281691675</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;召开时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e50eeb35620)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;召开日期&quot; title=&quot;召开日期&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e52f90eb7b6)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;召开时间&quot; title=&quot;召开时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;time&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;0&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;结束时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e53485835c2)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;结束日期&quot; title=&quot;结束日期&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e53516b6cfe)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;结束时间&quot; title=&quot;结束时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;time&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;参会人员&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3848ec12b81c94)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议地点&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_383e537bf12d58)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 109px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;2&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议组织人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3848ec2088eb66)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;会议组织人&quot; title=&quot;会议组织人&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;2&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议主持人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3848f5157a0eca)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;会议主持人&quot; title=&quot;会议主持人&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3848f5342ec0e0)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;3&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;与会人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;3&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3848f52f6c8054)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;与会人&quot; title=&quot;与会人&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3848f53b6179a2)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;4&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;4&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=31 row=&quot;4&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=781 row=&quot;4&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e50eeb35620&quot; label=&quot;召开日期&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e52f90eb7b6&quot; label=&quot;召开时间&quot; type=&quot;Time&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e53485835c2&quot; label=&quot;结束日期&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e53516b6cfe&quot; label=&quot;结束时间&quot; type=&quot;Time&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848ec12b81c94&quot; label=&quot;参会人员&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e537bf12d58&quot; label=&quot;会议地点&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848ec2088eb66&quot; label=&quot;会议组织人&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f5157a0eca&quot; label=&quot;会议主持人&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f5342ec0e0&quot; label=&quot;会议主持人2&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f52f6c8054&quot; label=&quot;与会人&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f53b6179a2&quot; label=&quot;与会人2&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>1708008b3e945fd9ddf733a4ba3a7f68</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>2</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/1708007339a649c4420f5b54fa6ae389/1708007339a649c4420f5b54fa6ae389_v2</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_383a892b661edc&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+&lt;DIV id=fd_383b675e472fb0 style=&quot;BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383b675e472fb0&quot;}&apos; fd_type=&quot;right&quot;&gt;&#13;
+&lt;DIV class=rightIconBar style=&quot;CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE class=righBar style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none&quot; cellPadding=1&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 18px&quot;&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=不可见 class=modeCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -32px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px&quot; mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px&quot; def_N4=&quot;false&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px&quot; readerNames=&quot;&quot; readerIds=&quot;&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px&quot;&gt;&amp;nbsp;&lt;SPAN ondblclick=&quot;Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);&quot; style=&quot;BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px&quot;&gt;权限区段2&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a892cc4702a&quot;,content:&quot;多行文本&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;多行文本&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD width=932 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV id=fd_383b675c47c7be style=&quot;BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383b675c47c7be&quot;}&apos; fd_type=&quot;right&quot;&gt;&#13;
+&lt;DIV class=rightIconBar style=&quot;CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE class=righBar style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none&quot; cellPadding=1&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 18px&quot;&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=不可见 class=modeCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -32px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px&quot; mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px&quot; def_N4=&quot;false&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px&quot; readerNames=&quot;&quot; readerIds=&quot;&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px&quot;&gt;&amp;nbsp;&lt;SPAN ondblclick=&quot;Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);&quot; style=&quot;BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px&quot;&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;IMG id=fd_383a892e567c84 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;1111&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a892e567c84&quot;,_label_bind:&quot;false&quot;,label:&quot;1111&quot;,_label_bind_id:&quot;&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;1&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; reCalculate=&quot;false&quot; defaultValue=&quot;1&quot; formula businessType=&quot;rtfEditor&quot; needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot; tableName=&quot;fd_383b675c47c7be&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=396 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=227 row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a892fa99bd6&quot;,content:&quot;富文本&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;富文本&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=955 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a8943d962f4&quot;,width:&quot;250&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;富文本&quot;,_label_bind_id:&quot;fd_383a892fa99bd6&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,maxlength:&quot;&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_383a8943d962f4 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; ? label=&quot;富文本&quot; defaultValue=&quot;&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=402 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=236 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=964 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=205 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=396 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=240 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=969 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=209 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=392 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>1708007339a649c4420f5b54fa6ae389</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>17085b886af38b83f18fc5d457bab8c3</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1582791427759</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=206 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+&#13;
+			&lt;xform:right  mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot; def_N4=&quot;false&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;多行文本&lt;/LABEL&gt;&#13;
+&#13;
+			&lt;/xform:right&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=932 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;xform:right  mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot; def_N4=&quot;false&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_383a892e567c84)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&#13;
+			&lt;/xform:right&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=183 row=&quot;0&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=396 row=&quot;0&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=227 row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;富文本&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=955 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 250px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_383a8943d962f4)&quot; style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; required=&quot;false&quot; subject=&quot;富文本&quot; title=&quot;富文本&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=198 row=&quot;1&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=402 row=&quot;1&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=236 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=964 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=205 row=&quot;2&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=396 row=&quot;2&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=240 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=969 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=209 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=392 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&#13;
+&lt;extendSimpleProperty name=&quot;fd_383a892e567c84&quot; label=&quot;1111&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; defaultValue=&quot;1&quot; /&gt;&#13;
+&#13;
+&lt;extendSimpleProperty name=&quot;fd_383a8943d962f4&quot; label=&quot;富文本&quot; type=&quot;String&quot; length=&quot;&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>1708008b3e945fd9ddf733a4ba3a7f68</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>3</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/1708007339a649c4420f5b54fa6ae389/1708007339a649c4420f5b54fa6ae389_v3</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_383a892b661edc&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=155 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+&lt;DIV id=fd_383b675e472fb0 style=&quot;BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383b675e472fb0&quot;}&apos; fd_type=&quot;right&quot;&gt;&#13;
+&lt;DIV class=rightIconBar style=&quot;CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE class=righBar style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none&quot; cellPadding=1&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 18px&quot;&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=不可见 class=modeCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -32px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px&quot; mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px&quot; def_N4=&quot;false&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px&quot; readerNames=&quot;&quot; readerIds=&quot;&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px&quot;&gt;&amp;nbsp;&lt;SPAN ondblclick=&quot;Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);&quot; style=&quot;BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px&quot;&gt;权限区段2&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a892cc4702a&quot;,content:&quot;多行文本&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;多行文本&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD width=1083 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV id=fd_383b675c47c7be style=&quot;BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383b675c47c7be&quot;}&apos; fd_type=&quot;right&quot;&gt;&#13;
+&lt;DIV class=rightIconBar style=&quot;CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE class=righBar style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none&quot; cellPadding=1&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 18px&quot;&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=不可见 class=modeCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -32px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px&quot; mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px&quot; def_N4=&quot;false&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px&quot; readerNames=&quot;&quot; readerIds=&quot;&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px&quot;&gt;&amp;nbsp;&lt;SPAN ondblclick=&quot;Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);&quot; style=&quot;BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px&quot;&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;IMG id=fd_383a892e567c84 style=&quot;HEIGHT: 134px; WIDTH: 196px; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;1111&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a892e567c84&quot;,_label_bind:&quot;false&quot;,label:&quot;1111&quot;,_label_bind_id:&quot;&quot;,width:&quot;196&quot;,height:&quot;134&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;1&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; reCalculate=&quot;false&quot; defaultValue=&quot;1&quot; formula businessType=&quot;rtfEditor&quot; needFilter=&quot;true&quot; pWidth=&quot;196&quot; pHeight=&quot;134&quot; tableName=&quot;fd_383b675c47c7be&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=130 row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50dc3a2f8e&quot;,content:&quot;召开时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;召开时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=234 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 138px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50eeb35620&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;召开日期&quot;,_label_bind_id:&quot;fd_383e50dc3a2f8e&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;dateDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e50eeb35620 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;召开日期&quot; defaultValue=&quot;null&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 138px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e52f90eb7b6&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;召开时间&quot;,_label_bind_id:&quot;fd_383e50dc3a2f8e&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;timeDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e52f90eb7b6 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;召开时间&quot; defaultValue=&quot;null&quot; businessType=&quot;timeDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=177 row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a892fa99bd6&quot;,content:&quot;富文本&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;富文本&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=1121 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a8943d962f4&quot;,width:&quot;250&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;富文本&quot;,_label_bind_id:&quot;fd_383a892fa99bd6&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,maxlength:&quot;&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_383a8943d962f4 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; ? label=&quot;富文本&quot; defaultValue=&quot;&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=146 row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50e51da134&quot;,content:&quot;结束时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;结束时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=249 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 138px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e53485835c2&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;结束日期&quot;,_label_bind_id:&quot;fd_383e50e51da134&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;dateDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e53485835c2 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;结束日期&quot; defaultValue=&quot;null&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 138px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e53516b6cfe&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;结束时间&quot;,_label_bind_id:&quot;fd_383e50e51da134&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;timeDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e53516b6cfe class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;结束时间&quot; defaultValue=&quot;null&quot; businessType=&quot;timeDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=189 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=1105 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=158 row=&quot;2&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e535c813a40&quot;,content:&quot;会议地点&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议地点&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=261 row=&quot;2&quot; column=&quot;3&quot;&gt;&lt;IMG id=fd_383e537bf12d58 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;会议地点&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e537bf12d58&quot;,_label_bind:&quot;true&quot;,label:&quot;会议地点&quot;,_label_bind_id:&quot;fd_383e535c813a40&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; reCalculate=&quot;false&quot; defaultValue formula businessType=&quot;rtfEditor&quot; needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=196 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=1085 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=166 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=270 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>1708007339a649c4420f5b54fa6ae389</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>17098deca7e709b2c9ffd4c4a7fb74ba</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1583113963855</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=155 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+&#13;
+			&lt;xform:right  mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot; def_N4=&quot;false&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;多行文本&lt;/LABEL&gt;&#13;
+&#13;
+			&lt;/xform:right&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=1083 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;xform:right  mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;hidden&quot; def_N4=&quot;false&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_383a892e567c84)&quot; height=&quot;134&quot; width=&quot;196&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&#13;
+			&lt;/xform:right&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=130 row=&quot;0&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;召开时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=234 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 138px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e50eeb35620)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;召开日期&quot; title=&quot;召开日期&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 138px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e52f90eb7b6)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;召开时间&quot; title=&quot;召开时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;time&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=177 row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;富文本&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=1121 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 250px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_383a8943d962f4)&quot; style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; required=&quot;false&quot; subject=&quot;富文本&quot; title=&quot;富文本&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=146 row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;结束时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=249 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 138px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e53485835c2)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;结束日期&quot; title=&quot;结束日期&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 138px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e53516b6cfe)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;结束时间&quot; title=&quot;结束时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;time&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=189 row=&quot;2&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=1105 row=&quot;2&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=158 row=&quot;2&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议地点&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=261 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_383e537bf12d58)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=196 row=&quot;3&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=1085 row=&quot;3&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=166 row=&quot;3&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=270 row=&quot;3&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&#13;
+&lt;extendSimpleProperty name=&quot;fd_383a892e567c84&quot; label=&quot;1111&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; defaultValue=&quot;1&quot; /&gt;&#13;
+&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e50eeb35620&quot; label=&quot;召开日期&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e52f90eb7b6&quot; label=&quot;召开时间&quot; type=&quot;Time&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383a8943d962f4&quot; label=&quot;富文本&quot; type=&quot;String&quot; length=&quot;&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e53485835c2&quot; label=&quot;结束日期&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e53516b6cfe&quot; label=&quot;结束时间&quot; type=&quot;Time&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e537bf12d58&quot; label=&quot;会议地点&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>1708008b3e945fd9ddf733a4ba3a7f68</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/1708007339a649c4420f5b54fa6ae389/1708007339a649c4420f5b54fa6ae389_v1</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal style=&quot;WIDTH: 98%&quot; align=center fd_type=&quot;standardTable&quot; fd_values=&apos;{id:&quot;fd_383a892b661edc&quot;,label:&quot;主表&quot;}&apos; layout2col=&quot;undefined&quot; formDesign=&quot;landray&quot; label=&quot;主表&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=159 column=&quot;0&quot; row=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_383a892cc4702a&quot;,content:&quot;多行文本&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;多行文本&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=781 column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;IMG id=fd_383a892e567c84 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; fd_type=&quot;rtf&quot; fd_values=&apos;{id:&quot;fd_383a892e567c84&quot;,_label_bind:&quot;true&quot;,label:&quot;多行文本&quot;,_label_bind_id:&quot;fd_383a892cc4702a&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot; label=&quot;多行文本&quot; canShow=&quot;true&quot; tableName=&quot;fd_383a892b6641ae&quot; pHeight=&quot;220&quot; pWidth=&quot;80%&quot; needFilter=&quot;true&quot; businessType=&quot;rtfEditor&quot; formula defaultValue reCalculate=&quot;false&quot;&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=152 column=&quot;2&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=331 column=&quot;3&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=156 column=&quot;0&quot; row=&quot;1&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_383a892fa99bd6&quot;,content:&quot;富文本&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;富文本&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=792 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot; fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_383a8943d962f4&quot;,width:&quot;250&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;富文本&quot;,_label_bind_id:&quot;fd_383a892fa99bd6&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,dataType:&quot;String&quot;,maxlength:&quot;&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; formDesign=&quot;landray&quot;&gt;&lt;TEXTAREA id=fd_383a8943d962f4 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; ? label=&quot;富文本&quot; canShow=&quot;true&quot; required=&quot;false&quot; _required=&quot;false&quot; _readOnly=&quot;false&quot; tableName=&quot;fd_383a892b6641ae&quot; defaultValue=&quot;&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=151 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=327 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=155 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=798 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=150 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=325 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=154 column=&quot;0&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=803 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=157 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=365 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>1708007339a649c4420f5b54fa6ae389</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>1708008b40e60ed27ee0dd0488d8f2cb</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1582696103984</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal  align=center   layout2col=&quot;undefined&quot;  label=&quot;主表&quot; style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=159 column=&quot;0&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;多行文本&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=781 column=&quot;1&quot; row=&quot;0&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_383a892e567c84)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=152 column=&quot;2&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=331 column=&quot;3&quot; row=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=156 column=&quot;0&quot; row=&quot;1&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;富文本&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=792 column=&quot;1&quot; row=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 250px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_383a8943d962f4)&quot; style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; required=&quot;false&quot; subject=&quot;富文本&quot; title=&quot;富文本&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=151 column=&quot;2&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=327 column=&quot;3&quot; row=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=155 column=&quot;0&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=798 column=&quot;1&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=150 column=&quot;2&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=325 column=&quot;3&quot; row=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=154 column=&quot;0&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=803 column=&quot;1&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=157 column=&quot;2&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=365 column=&quot;3&quot; row=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383a892e567c84&quot; label=&quot;多行文本&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383a8943d962f4&quot; label=&quot;富文本&quot; type=&quot;String&quot; length=&quot;&quot; /&gt;&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+    <void method="add"> 
+     <object class="java.util.HashMap"> 
+      <void method="put"> 
+       <string>fdTemplate</string> 
+       <object class="java.util.HashMap"> 
+        <void method="put"> 
+         <string>fdId</string> 
+         <string>1708008b3e945fd9ddf733a4ba3a7f68</string> 
+        </void> 
+        <void method="put"> 
+         <string>class</string> 
+         <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string> 
+        </void> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdTemplateEdition</string> 
+       <string>5</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelName</string> 
+       <string>com.landray.kmss.km.review.model.KmReviewTemplate</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdKey</string> 
+       <string>reviewMainDoc</string> 
+      </void> 
+      <void method="put"> 
+       <string>class</string> 
+       <string>com.landray.kmss.sys.xform.base.model.SysFormTemplateHistory</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdFormFileName</string> 
+       <string>km/review/xform/define/1708007339a649c4420f5b54fa6ae389/1708007339a649c4420f5b54fa6ae389_v5</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMode</string> 
+       <int>3</int> 
+      </void> 
+      <void method="put"> 
+       <string>fdDesignerHtml</string> 
+       <string>&amp;nbsp; &#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal style=&quot;WIDTH: 98%&quot; align=center label=&quot;主表&quot; formDesign=&quot;landray&quot; layout2col=&quot;undefined&quot; fd_values=&apos;{id:&quot;fd_383a892b661edc&quot;,label:&quot;主表&quot;}&apos; fd_type=&quot;standardTable&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50dc3a2f8e&quot;,content:&quot;召开时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;召开时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50eeb35620&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;召开日期&quot;,_label_bind_id:&quot;fd_383e50dc3a2f8e&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;dateDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e50eeb35620 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;召开日期&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e52f90eb7b6&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;召开时间&quot;,_label_bind_id:&quot;fd_383e50dc3a2f8e&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;timeDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e52f90eb7b6 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;召开时间&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;timeDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;0&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e50e51da134&quot;,content:&quot;结束时间&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;结束时间&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e53485835c2&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;结束日期&quot;,_label_bind_id:&quot;fd_383e50e51da134&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;dateDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e53485835c2 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;结束日期&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;dateDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e53516b6cfe&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;结束时间&quot;,_label_bind_id:&quot;fd_383e50e51da134&quot;,canShow:&quot;true&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;timeDialog&quot;,defaultValue:&quot;null&quot;,_selectValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;datetime&quot;&gt;&lt;INPUT id=fd_383e53516b6cfe class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;结束时间&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;timeDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383a892fa99bd6&quot;,content:&quot;参会人员&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;参会人员&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;IMG id=fd_3848ec12b81c94 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;参会人员&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848ec12b81c94&quot;,_label_bind:&quot;true&quot;,label:&quot;参会人员&quot;,_label_bind_id:&quot;fd_383a892fa99bd6&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;1&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e535c813a40&quot;,content:&quot;会议地点&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议地点&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;1&quot; column=&quot;3&quot;&gt;&lt;IMG id=fd_383e537bf12d58 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;会议地点&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_383e537bf12d58&quot;,_label_bind:&quot;true&quot;,label:&quot;会议地点&quot;,_label_bind_id:&quot;fd_383e535c813a40&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 109px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848ec1910adc8&quot;,content:&quot;会议组织人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议组织人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848ec2088eb66&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;会议组织人&quot;,_label_bind_id:&quot;fd_3848ec1910adc8&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3848ec2088eb66 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;会议组织人&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;2&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f51416b09e&quot;,content:&quot;会议主持人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议主持人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f5157a0eca&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;会议主持人&quot;,_label_bind_id:&quot;fd_3848f51416b09e&quot;}&apos; fd_type=&quot;inputText&quot; canShow=&quot;true&quot;&gt;&lt;INPUT id=fd_3848f5157a0eca class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;会议主持人&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot;&gt;&lt;/DIV&gt;&lt;IMG id=fd_3848f5342ec0e0 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;会议主持人2&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f5342ec0e0&quot;,_label_bind:&quot;false&quot;,label:&quot;会议主持人2&quot;,_label_bind_id:&quot;fd_3848f51416b09e&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f5275af80e&quot;,content:&quot;与会人&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;与会人&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;3&quot; column=&quot;1&quot;&gt;&lt;IMG id=fd_3848f53b6179a2 style=&quot;HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline&quot; src=&quot;style/img/rtf.jpg&quot; label=&quot;与会人2&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_3848f53b6179a2&quot;,_label_bind:&quot;false&quot;,label:&quot;与会人2&quot;,_label_bind_id:&quot;fd_3848f5275af80e&quot;,width:&quot;80%&quot;,height:&quot;220&quot;,canShow:&quot;true&quot;,dataType:&quot;RTF&quot;,needFilter:&quot;true&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos; fd_type=&quot;rtf&quot; defaultValue businessType=&quot;rtfEditor&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; reCalculate=&quot;false&quot; formula needFilter=&quot;true&quot; pWidth=&quot;80%&quot; pHeight=&quot;220&quot;&gt;&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38494a1c23fc60&quot;,width:&quot;120&quot;,_label_bind:&quot;true&quot;,label:&quot;与会人&quot;,_label_bind_id:&quot;fd_3848f5275af80e&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,readOnly:&quot;false&quot;,required:&quot;false&quot;,businessType:&quot;addressDialog&quot;,multiSelect:&quot;true&quot;,orgType:&quot;&quot;,_org_org:&quot;false&quot;,_org_dept:&quot;false&quot;,_org_post:&quot;false&quot;,_org_group:&quot;false&quot;,defaultValue:&quot;null&quot;}&apos; fd_type=&quot;address&quot;&gt;&lt;INPUT id=fd_38494a1c23fc60 class=inputsgl style=&quot;WIDTH: 120px&quot; readOnly ? label=&quot;与会人&quot; thousandShow=&quot;true&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; defaultValue=&quot;null&quot; businessType=&quot;addressDialog&quot; tableName=&quot;fd_383a892b6641ae&quot; canShow=&quot;true&quot; multiSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot;&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;3&quot; column=&quot;2&quot;&gt;&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38494a275a57ec&quot;,content:&quot;会议连接&quot;,font:&quot;&quot;,size:&quot;&quot;,color:&quot;&quot;,effect:&quot;&quot;,b:&quot;false&quot;,i:&quot;false&quot;,underline:&quot;false&quot;}&apos; fd_type=&quot;textLabel&quot;&gt;会议连接&lt;/LABEL&gt;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;3&quot; column=&quot;3&quot;&gt;&#13;
+&lt;DIV id=fd_38494e9eab2fbc style=&quot;BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38494e9eab2fbc&quot;}&apos; fd_type=&quot;right&quot;&gt;&#13;
+&lt;DIV class=rightIconBar style=&quot;CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red&quot;&gt;&lt;/DIV&gt;&#13;
+&lt;TABLE class=righBar style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none&quot; cellPadding=1&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 18px&quot;&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px&quot; mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;edit&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px&quot; def_N4=&quot;false&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4&quot;&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style=&quot;CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px&quot; readerNames=&quot;&quot; readerIds=&quot;&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;&#13;
+&lt;TD style=&quot;BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px&quot;&gt;&amp;nbsp;&lt;SPAN ondblclick=&quot;Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);&quot; style=&quot;BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px&quot;&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&#13;
+&lt;DIV style=&quot;WIDTH: 250px; DISPLAY: inline&quot; formDesign=&quot;landray&quot; fd_values=&apos;{id:&quot;fd_38494a2eaf5642&quot;,width:&quot;250&quot;,height:&quot;80&quot;,_label_bind:&quot;true&quot;,label:&quot;会议连接&quot;,_label_bind_id:&quot;fd_38494a275a57ec&quot;}&apos; fd_type=&quot;textarea&quot;&gt;&lt;TEXTAREA id=fd_38494a2eaf5642 class=inputmul style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; ? label=&quot;会议连接&quot; _readOnly=&quot;false&quot; _required=&quot;false&quot; required=&quot;false&quot; tableName=&quot;fd_38494e9eab2fbc&quot; canShow=&quot;true&quot;&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;4&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;4&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;4&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;4&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdModelId</string> 
+       <string>1708007339a649c4420f5b54fa6ae389</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdId</string> 
+       <string>170e0b8c4927ec1c6270f584ec989a25</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdAlterTime</string> 
+       <object class="java.util.Date"> 
+        <long>1584320082477</long> 
+       </object> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayJsp</string> 
+       <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;召开时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e50eeb35620)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;召开日期&quot; title=&quot;召开日期&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e52f90eb7b6)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;召开时间&quot; title=&quot;召开时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;time&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;0&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;结束时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e53485835c2)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;结束日期&quot; title=&quot;结束日期&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e53516b6cfe)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;结束时间&quot; title=&quot;结束时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;time&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;参会人员&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3848ec12b81c94)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议地点&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_383e537bf12d58)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 109px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;2&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议组织人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3848ec2088eb66)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;会议组织人&quot; title=&quot;会议组织人&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;2&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议主持人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3848f5157a0eca)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;会议主持人&quot; title=&quot;会议主持人&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3848f5342ec0e0)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;3&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;与会人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;3&quot; column=&quot;1&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3848f53b6179a2)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38494a1c23fc60.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38494a1c23fc60.name)&quot; mulSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;与会人&quot; title=&quot;与会人&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;3&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议连接&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;3&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;xform:right  mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;edit&quot; def_N4=&quot;false&quot;&gt;&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 250px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_38494a2eaf5642)&quot; style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; required=&quot;false&quot; subject=&quot;会议连接&quot; title=&quot;会议连接&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;/xform:right&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;4&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;4&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;4&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;4&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdMetadataXml</string> 
+       <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e50eeb35620&quot; label=&quot;召开日期&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e52f90eb7b6&quot; label=&quot;召开时间&quot; type=&quot;Time&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e53485835c2&quot; label=&quot;结束日期&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e53516b6cfe&quot; label=&quot;结束时间&quot; type=&quot;Time&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848ec12b81c94&quot; label=&quot;参会人员&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e537bf12d58&quot; label=&quot;会议地点&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848ec2088eb66&quot; label=&quot;会议组织人&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f5157a0eca&quot; label=&quot;会议主持人&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f5342ec0e0&quot; label=&quot;会议主持人2&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f53b6179a2&quot; label=&quot;与会人2&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38494a1c23fc60&quot; label=&quot;与会人&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; mutiValueSplit=&quot;;&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_38494a2eaf5642&quot; label=&quot;会议连接&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+      </void> 
+      <void method="put"> 
+       <string>fdDisplayType</string> 
+       <int>2</int> 
+      </void> 
+     </object> 
+    </void> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdModelId</string> 
+   <string>1708007339a649c4420f5b54fa6ae389</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdId</string> 
+   <string>1708008b3e945fd9ddf733a4ba3a7f68</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdAlterTime</string> 
+   <object class="java.util.Date"> 
+    <long>1584320082501</long> 
+   </object> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayJsp</string> 
+   <string>&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot; pageEncoding=&quot;UTF-8&quot;%&gt;&#13;
+&lt;%@ include file=&quot;/resource/jsp/common.jsp&quot;%&gt;&#13;
+&lt;%@ page import=&quot;com.landray.kmss.web.taglib.xform.TagUtils&quot; %&gt;&#13;
+&lt;TABLE id=fd_383a892b6641ae class=tb_normal  align=center label=&quot;主表&quot;  layout2col=&quot;undefined&quot;  style=&quot;width:100%;&quot;&gt;&#13;
+&lt;TBODY&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;0&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;召开时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;0&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e50eeb35620)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;召开日期&quot; title=&quot;召开日期&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e52f90eb7b6)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;召开时间&quot; title=&quot;召开时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;time&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;0&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;结束时间&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;0&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e53485835c2)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;结束日期&quot; title=&quot;结束日期&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;date&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:datetime property=&quot;extendDataFormInfo.value(fd_383e53516b6cfe)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;结束时间&quot; title=&quot;结束时间&quot; onValueChange=&quot;__xformDispatch&quot; dateTimeType=&quot;time&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;1&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;参会人员&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;1&quot; column=&quot;1&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3848ec12b81c94)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;1&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议地点&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;1&quot; column=&quot;3&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_383e537bf12d58)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR style=&quot;HEIGHT: 109px&quot;&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;2&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议组织人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;2&quot; column=&quot;1&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3848ec2088eb66)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;会议组织人&quot; title=&quot;会议组织人&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;2&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议主持人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;2&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;DIV style=&quot;WIDTH: 120px; DISPLAY: inline&quot;    canShow=&quot;true&quot;&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3848f5157a0eca)&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; subject=&quot;会议主持人&quot; title=&quot;会议主持人&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3848f5342ec0e0)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;3&quot; column=&quot;0&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;与会人&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;3&quot; column=&quot;1&quot;&gt;&#13;
+			&lt;xform:rtf property=&quot;extendDataFormInfo.value(fd_3848f53b6179a2)&quot; height=&quot;220&quot; width=&quot;80%&quot; needFilter=&quot;true&quot; toolbarSet=&quot;Default&quot; /&gt;&#13;
+			&lt;LABEL style=&quot;WIDTH: 152px; DISPLAY: inline&quot;   &gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_38494a1c23fc60.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_38494a1c23fc60.name)&quot; mulSelect=&quot;true&quot; orgType=&quot;ORG_TYPE_PERSON&quot; subject=&quot;与会人&quot; title=&quot;与会人&quot; style=&quot;WIDTH: 120px&quot; required=&quot;false&quot; onValueChange=&quot;__xformDispatch&quot; isLoadDataDict=&quot;false&quot; /&gt;&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;3&quot; column=&quot;2&quot;&gt;&#13;
+			&lt;LABEL style=&quot;TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline&quot;   &gt;会议连接&lt;/LABEL&gt;&#13;
+&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;3&quot; column=&quot;3&quot;&gt;&#13;
+&#13;
+			&lt;xform:right  mode_d=&quot;view&quot; mode_g=&quot;view&quot; mode_N4=&quot;edit&quot; def_N4=&quot;false&quot;&gt;&#13;
+			&lt;DIV style=&quot;word-wrap:break-word;word-break:break-all;WIDTH: 250px; DISPLAY: inline&quot;   &gt;&lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_38494a2eaf5642)&quot; style=&quot;HEIGHT: 80px; WIDTH: 250px&quot; required=&quot;false&quot; subject=&quot;会议连接&quot; title=&quot;会议连接&quot; onValueChange=&quot;__xformDispatch&quot; /&gt;&lt;/DIV&gt;&#13;
+&#13;
+			&lt;/xform:right&gt;&#13;
+&lt;/TD&gt;&lt;/TR&gt;&#13;
+&lt;TR&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;4&quot; column=&quot;0&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;4&quot; column=&quot;1&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD class=td_normal_title width=35 row=&quot;4&quot; column=&quot;2&quot;&gt;&amp;nbsp;&lt;/TD&gt;&#13;
+&lt;TD width=785 row=&quot;4&quot; column=&quot;3&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>sysAttMain_extension</string> 
+   <object class="java.util.ArrayList"/> 
+  </void> 
+  <void method="put"> 
+   <string>fdMetadataXml</string> 
+   <string>&lt;model &gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e50eeb35620&quot; label=&quot;召开日期&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e52f90eb7b6&quot; label=&quot;召开时间&quot; type=&quot;Time&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e53485835c2&quot; label=&quot;结束日期&quot; type=&quot;Date&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e53516b6cfe&quot; label=&quot;结束时间&quot; type=&quot;Time&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848ec12b81c94&quot; label=&quot;参会人员&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_383e537bf12d58&quot; label=&quot;会议地点&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848ec2088eb66&quot; label=&quot;会议组织人&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f5157a0eca&quot; label=&quot;会议主持人&quot; type=&quot;String&quot; length=&quot;200&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f5342ec0e0&quot; label=&quot;会议主持人2&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_3848f53b6179a2&quot; label=&quot;与会人2&quot; type=&quot;RTF&quot; length=&quot;1000000&quot; /&gt;&#13;
+&lt;extendElementProperty name=&quot;fd_38494a1c23fc60&quot; label=&quot;与会人&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; mutiValueSplit=&quot;;&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot; /&gt;&#13;
+&lt;extendSimpleProperty name=&quot;fd_38494a2eaf5642&quot; label=&quot;会议连接&quot; type=&quot;String&quot; length=&quot;undefined&quot; /&gt;&#13;
+&#13;
+&lt;/model&gt;</string> 
+  </void> 
+  <void method="put"> 
+   <string>fdDisplayType</string> 
+   <int>2</int> 
+  </void> 
+  <void method="put"> 
+   <string>fdCreateTime</string> 
+   <object class="java.util.Date"> 
+    <long>1582696018964</long> 
+   </object> 
+  </void> 
+ </object> 
+</java> 

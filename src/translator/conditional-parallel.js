@@ -24,6 +24,29 @@ export function isSupportedConditionalParallelCondition(value, knownFieldIds = [
   });
 }
 
+export function normalizeConditionalParallelMultiSelectCondition(value, fieldSpecs = new Map()) {
+  const parts = splitTopLevelOr(stripFullyWrappingParentheses(String(value || "").trim()));
+  if (!parts.length) return undefined;
+  const normalized = [];
+  for (const part of parts) {
+    const text = stripFullyWrappingParentheses(part.trim());
+    const match = text.match(
+      /^\$([^$]+)\$\s*\.\s*contains\s*\(\s*(["'])([^"']*)\2\s*\)$/i
+    );
+    if (!match) return undefined;
+    const fieldId = match[1].trim();
+    const value = match[3];
+    const spec = fieldSpecs instanceof Map ? fieldSpecs.get(fieldId) : undefined;
+    if (
+      spec?.type !== "multiSelect" ||
+      !(spec.optionValues instanceof Set) ||
+      !spec.optionValues.has(value)
+    ) return undefined;
+    normalized.push(`$列表.包含$($${fieldId}$, ${JSON.stringify(value)})`);
+  }
+  return normalized.join(" || ");
+}
+
 function splitTopLevelOr(value) {
   const parts = [];
   let quote = "";

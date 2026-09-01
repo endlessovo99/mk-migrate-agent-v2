@@ -330,8 +330,52 @@ function validateForm(form, diagnostics) {
       .filter((field) => field?.type === "detailTable")
       .map((field) => [field.id, new Set((field.columns || []).map((column) => column?.id).filter(nonEmptyString))])
   );
+  validateAggregateCalculationReferences(
+    form.fields,
+    detailColumnIdsByTable,
+    diagnostics
+  );
   const layoutNodeIds = validateFormLayout(form.layout, { fieldIds, detailTableIds, dataOnlyFieldIds }, diagnostics);
   return { fieldIds, dataAuthorityFieldIds, detailTableIds, detailColumnIdsByTable, layoutNodeIds };
+}
+
+function validateAggregateCalculationReferences(fields, detailColumnIdsByTable, diagnostics) {
+  if (!Array.isArray(fields)) return;
+  fields.forEach((field, fieldIndex) => {
+    if (field?.type !== "detailTable") {
+      validateAggregateCalculationReference(
+        field,
+        `/form/fields/${fieldIndex}`,
+        detailColumnIdsByTable,
+        diagnostics
+      );
+      return;
+    }
+    (field.columns || []).forEach((column, columnIndex) => {
+      validateAggregateCalculationReference(
+        column,
+        `/form/fields/${fieldIndex}/columns/${columnIndex}`,
+        detailColumnIdsByTable,
+        diagnostics
+      );
+    });
+  });
+}
+
+function validateAggregateCalculationReference(field, path, detailColumnIdsByTable, diagnostics) {
+  const calculation = field?.props?.calculation;
+  if (calculation?.kind !== "aggregate") return;
+  const columns = detailColumnIdsByTable.get(calculation.tableId);
+  if (columns?.has(calculation.fieldId)) return;
+  diagnostics.push(error(
+    "dsl.form.calculation.aggregate_source_missing",
+    "Aggregate calculation must reference an existing detail-table column.",
+    `${path}/props/calculation`,
+    {
+      tableId: calculation.tableId,
+      fieldId: calculation.fieldId
+    }
+  ));
 }
 
 function validateFields(fields, diagnostics) {

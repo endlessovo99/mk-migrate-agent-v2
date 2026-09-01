@@ -195,6 +195,60 @@ describe("resolveWorkflowParticipants", () => {
     assert.deepEqual(client.elementCalls, [Object.values(fallbackFdIds).sort()]);
   });
 
+  it("uses an explicitly authorized configured fallback for unresolved template permissions", async () => {
+    const fallbackPostId = "configured-template-permission-post-id";
+    const dsl = dslWithExplicitMembers([]);
+    dsl.template.authorization = {
+      readerFlag: false,
+      readers: [],
+      editors: [],
+      allReaders: [],
+      allEditors: [],
+      temporaryReaders: [sourceMember({
+        name: "源系统已下线岗位",
+        sourceId: "legacy-template-permission-post",
+        sourceOrgType: 4,
+        sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgPost",
+        sourceParentName: "源系统部门"
+      })],
+      temporaryEditors: []
+    };
+    const client = new SearchClient({
+      源系统已下线岗位: []
+    }, {
+      [fallbackPostId]: [currentOrg({
+        fdId: fallbackPostId,
+        fdName: "配置模版权限兜底岗位",
+        fdOrgType: 4
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: NEWOA_SIT_BASE_URL,
+      fallbackFdIds: { post: fallbackPostId },
+      allowTemplateAuthorizationFallback: true
+    });
+
+    assert.deepEqual(
+      result.dsl.template.authorization.temporaryReaders,
+      [{
+        id: fallbackPostId,
+        name: "配置模版权限兜底岗位",
+        type: "user_or_org",
+        sourceId: "legacy-template-permission-post",
+        sourceOrgType: 4,
+        sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgPost",
+        sourceParentName: "源系统部门",
+        targetOrgType: 4
+      }]
+    );
+    assert.equal(result.fallbackCount, 1);
+    assert.equal(result.fallbackIdentityCount, 1);
+    assert.deepEqual(result.fallbackTargetIds, [fallbackPostId]);
+    assert.deepEqual(client.elementCalls, [[fallbackPostId]]);
+  });
+
   it("rejects one configured fallback fdId reused across incompatible participant types", async () => {
     const sharedFdId = "configured-shared-person-group-id";
     const dsl = dslWithExplicitMembers([

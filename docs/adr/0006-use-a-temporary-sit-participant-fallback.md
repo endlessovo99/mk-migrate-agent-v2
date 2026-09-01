@@ -10,6 +10,7 @@ The current NewOA SIT organization directory intentionally does not contain ever
   - `https://p-sit.onewo.com`
   - `http://mkpaaspoc.shanghai-electric.com`
   - `http://oa-dev.shanghai-electric.com:8088`
+  - `http://oadev.shanghai-electric.com`
   Configuring any other origin through `NEWOA_BASE_URL` or `--base-url` does not carry these temporary fdIds into that environment.
 - Source participants that return `not_found`, or whose only missing lookup evidence is `sourceParentName`, are replaced with a type-specific current identity:
 
@@ -21,6 +22,7 @@ The current NewOA SIT organization directory intentionally does not contain ever
 | 1 org / 2 department | AI迁移默认部门 | `1jt85rk85w23welrpw2s3uh4pvsr8ru35dw0` | `NEWOA_FALLBACK_ORGANIZATION_FD_ID` |
 
 - Role participants (source org type `32`), including bracketed generic roles such as `<直线领导>`, are excluded from the temporary fallback. They resolve only from valid role evidence; missing, duplicate, or failed role searches remain blocking because substituting a person would erase role-line semantics.
+- Template authorization identities remain blocking by default. An explicitly confirmed execution may pass `--allow-template-authorization-fallback` to apply the same type-specific fallbacks to unresolved readers, editors, all-readers, all-editors, and temporary/default readers or editors. Ambiguous or malformed template identities remain blocking, and source org type `32` roles stay excluded.
 - Each override is optional and independent; missing or blank values keep the default. Each used fallback fdId is validated through current `getElementInfo` evidence and must resolve uniquely as its fixed expected organization type.
 - Explicit `sourceId=targetFdId` mappings take precedence over fallback. Ambiguous matches, malformed source identities, target-shaped identity failures, and organization API failures remain blocking.
 - Resolution clones the trusted DSL and produces an execution-local DSL. Persistence expectations and payloads are derived from that same resolved clone; the trusted input artifact is not rewritten.

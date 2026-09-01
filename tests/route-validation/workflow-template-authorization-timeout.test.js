@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { NEWOA_SIT_BASE_URL } from "../../src/executor/newoa-client.js";
 import { resolveWorkflowParticipants } from "../../src/executor/participant-resolver.js";
 import {
   persistAndVerify,
@@ -139,7 +140,112 @@ describe("workflow-template authorization and timeout Route case", () => {
       JSON.stringify(normalizedReadback.diagnostics)
     );
   });
+
+  it("uses the configured post fallback for an explicitly authorized unresolved default reader", async () => {
+    const sourceDraft = cleanSourceFile(sourcePath);
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt
+    });
+    const fallbackPostId = "configured-template-permission-fallback-post";
+    const baseClient = permissionResolutionClient(trusted);
+    const client = {
+      async searchOrg(key, orgType) {
+        if (Number(orgType) === 4) return [];
+        return baseClient.searchOrg(key, orgType);
+      },
+      async getElementInfo(targets) {
+        return [
+          ...await baseClient.getElementInfo(targets),
+          ...targets.filter((target) => target === fallbackPostId).map(() => ({
+            fdId: fallbackPostId,
+            fdName: "配置模版权限兜底岗位",
+            fdOrgType: 4
+          }))
+        ];
+      }
+    };
+
+    const resolved = await resolveWorkflowParticipants(trusted, {
+      client,
+      targetBaseUrl: NEWOA_SIT_BASE_URL,
+      fallbackFdIds: { post: fallbackPostId },
+      allowTemplateAuthorizationFallback: true
+    });
+    const result = persistAndVerify(resolved.dsl);
+
+    assert.equal(result.readback.ok, true, JSON.stringify(result.readback.diagnostics));
+    assert.deepEqual(
+      result.template.fdTmpReaders.map((member) => member.fdId),
+      [fallbackPostId]
+    );
+    assert.equal(resolved.fallbackCount, 1);
+    assert.equal(resolved.fallbackIdentityCount, 1);
+    assert.deepEqual(resolved.fallbackTargetIds, [fallbackPostId]);
+  });
+
+  it("retains all-scope-only authorization members through NewOA normalization", async () => {
+    const sourceDraft = cleanSourceFile(sourcePath);
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt
+    });
+    const resolved = await resolveWorkflowParticipants(trusted, {
+      client: permissionResolutionClient(trusted)
+    });
+    const allReaderAndEditor = resolved.dsl.template.authorization.allReaders[0];
+    const allReaderOnly = {
+      ...allReaderAndEditor,
+      id: "target-person-all-reader-only",
+      name: "仅全局阅读者"
+    };
+    resolved.dsl.template.authorization = {
+      ...resolved.dsl.template.authorization,
+      readers: [],
+      editors: [],
+      allReaders: [allReaderOnly, allReaderAndEditor],
+      allEditors: [allReaderAndEditor],
+      temporaryReaders: [],
+      temporaryEditors: []
+    };
+    const originalAuthorization = structuredClone(resolved.dsl.template.authorization);
+    const result = persistAndVerify(resolved.dsl);
+    const serverNormalized = normalizeAuthorizationLikeNewoa(result.template);
+
+    const readback = result.prepared.verify(serverNormalized);
+
+    assert.deepEqual(resolved.dsl.template.authorization, originalAuthorization);
+    assert.deepEqual(result.template.fdReaders.map((member) => member.fdId), [
+      allReaderOnly.id
+    ]);
+    assert.deepEqual(result.template.fdEditors.map((member) => member.fdId), [
+      allReaderAndEditor.id
+    ]);
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.deepEqual(readback.workflow.templateAuthorization.allReaders, [
+      allReaderOnly.id,
+      allReaderAndEditor.id
+    ].sort());
+    assert.deepEqual(readback.workflow.templateAuthorization.allEditors, [
+      allReaderAndEditor.id
+    ]);
+  });
 });
+
+function normalizeAuthorizationLikeNewoa(template) {
+  const next = structuredClone(template);
+  const baseIds = new Set([
+    ...(next.fdReaders || []).map((member) => member.fdId),
+    ...(next.fdEditors || []).map((member) => member.fdId)
+  ]);
+  next.fdAllReaders = (next.fdAllReaders || []).filter((member) => baseIds.has(member.fdId));
+  next.fdAllEditors = (next.fdAllEditors || []).filter((member) => baseIds.has(member.fdId));
+  return next;
+}
 
 function permissionCounts(authorization = {}) {
   return Object.fromEntries([

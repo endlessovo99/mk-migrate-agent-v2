@@ -3,6 +3,9 @@ import { describe, it } from "node:test";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import {
+  normalizeConditionalParallelMultiSelectCondition
+} from "../../src/translator/conditional-parallel.js";
 
 const fixture = "tests/fixtures/route-validation/conditional-parallel";
 
@@ -127,4 +130,43 @@ describe("conditional-parallel route semantics", () => {
     assert.equal(edge.condition.translationStatus, "display_only");
     assert.equal(edge.condition.critical, true);
   });
+});
+
+describe("conditional-parallel multi-select conditions", () => {
+  const specs = new Map([
+    ["fd_type", {
+      type: "multiSelect",
+      optionValues: new Set(["采购", "维修", "报废"])
+    }],
+    ["fd_text", {
+      type: "text",
+      optionValues: new Set()
+    }]
+  ]);
+
+  it("normalizes static allowed multi-select membership", () => {
+    assert.equal(
+      normalizeConditionalParallelMultiSelectCondition(
+        '$fd_type$.contains("采购")',
+        specs
+      ),
+      '$列表.包含$($fd_type$, "采购")'
+    );
+  });
+
+  for (const value of [
+    '$fd_text$.contains("采购")',
+    '$fd_missing$.contains("采购")',
+    '$fd_type$.contains("未知")',
+    "$fd_type$.contains($fd_other$)",
+    '!$fd_type$.contains("采购")',
+    '$fd_type$.contains("采购") && true'
+  ]) {
+    it(`keeps unsupported membership fail-closed: ${value}`, () => {
+      assert.equal(
+        normalizeConditionalParallelMultiSelectCondition(value, specs),
+        undefined
+      );
+    });
+  }
 });

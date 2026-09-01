@@ -1061,9 +1061,11 @@ function compareWorkflow(expected, actual, diagnostics) {
       node.dataAuthority ||
       actualNode.dataAuthority
     ) {
+      const expectedDataAuthority = canonicalDataAuthority(node.dataAuthority || {});
+      const actualDataAuthority = canonicalDataAuthority(actualNode.dataAuthority || {});
       if (
-        stableStringify(node.dataAuthority || {}) !==
-        stableStringify(actualNode.dataAuthority || {})
+        stableStringify(expectedDataAuthority) !==
+        stableStringify(actualDataAuthority)
       ) {
         diagnostics.push(mismatch("workflow", "readback.workflow.data_authority_mismatch", "Readback workflow data authority mismatch.", {
           invariantKey: `workflow.nodes.${node.id}.dataAuthority`,
@@ -1155,6 +1157,25 @@ function compareWorkflow(expected, actual, diagnostics) {
       }));
     }
   }
+}
+
+function canonicalDataAuthority(authority = {}) {
+  const fields = { ...(authority.fields || {}) };
+  for (const [tableId, tableAuthority] of Object.entries(authority.detailTables || {})) {
+    const duplicateField = fields[tableId];
+    if (
+      duplicateField &&
+      duplicateField.visible === tableAuthority?.visible &&
+      duplicateField.editable === tableAuthority?.editable &&
+      duplicateField.required === tableAuthority?.required
+    ) {
+      delete fields[tableId];
+    }
+  }
+  return {
+    ...authority,
+    ...(authority.fields ? { fields } : {})
+  };
 }
 
 export function participantsEquivalent(expected, actual) {

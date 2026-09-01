@@ -100,6 +100,20 @@ describe("workflow detail-table data authority", () => {
     });
   });
 
+  it("does not require a redundant main-field entry for a detail table authority", () => {
+    const viewOnly = { visible: true, editable: false, required: false };
+    const prepared = prepareSample(detailAuthorityDsl({
+      fd_detail: viewOnly,
+      fd_name: viewOnly,
+      fd_code: viewOnly
+    }));
+
+    const readback = prepared.verify(prepared.update);
+
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.equal(readback.partitions.workflow, "verified");
+  });
+
   it("rejects the sanitized native sparse-authority repro until its table aggregate is corrected", () => {
     const prepared = prepareSample(detailAuthorityDsl({
       fd_name: hiddenAuthority()

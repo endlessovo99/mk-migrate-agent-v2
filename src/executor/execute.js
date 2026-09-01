@@ -196,6 +196,7 @@ export async function executeDsl(input, options = {}) {
       fallbackFdIds: options.fallbackFdIds,
       participantOverrides: options.participantOverrides,
       directParticipantOverrides: options.directParticipantOverrides,
+      allowTemplateAuthorizationFallback: options.allowTemplateAuthorizationFallback,
       allowMissingDirectPersonFallback: options.allowMissingDirectPersonFallback,
       allowMissingDirectPostFallback: options.allowMissingDirectPostFallback,
       directPersonFallbackIds: options.directPersonFallbackIds

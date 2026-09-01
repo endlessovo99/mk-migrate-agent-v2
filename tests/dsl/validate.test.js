@@ -129,6 +129,30 @@ describe("validateMigrationDsl", () => {
     });
   });
 
+  it("rejects aggregate calculations whose detail source does not exist", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.fields[0] = {
+      ...dsl.form.fields[0],
+      type: "number",
+      componentId: "xform-calculate",
+      props: {
+        calculation: {
+          kind: "aggregate",
+          operation: "sum",
+          tableId: "fd_missing_table",
+          fieldId: "fd_missing_column"
+        }
+      }
+    };
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.diagnostics.some((item) =>
+      item.code === "dsl.form.calculation.aggregate_source_missing"
+    ), true);
+  });
+
   it("rejects trusted layouts without mkTree and invalid child references", () => {
     const missingTree = validateMigrationDsl(sampleTrustedDsl({ form: { layout: { mkTree: [] } } }), { mode: "execute" });
     const missingField = validateMigrationDsl(sampleTrustedDsl({
