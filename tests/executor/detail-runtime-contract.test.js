@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { preparePersistedTemplate } from "../../src/executor/persistence.js";
 import { detailTableNameFor } from "../../src/executor/persistence/detail-table-names.js";
+import { isPhysicalDetailTableAuthKey } from "../../src/executor/persistence/detail-auth.js";
+import { applyFormPayload } from "../../src/executor/persistence/form-writer.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("detail persistence metadata contract", () => {
@@ -45,7 +47,7 @@ describe("detail persistence metadata contract", () => {
     assert.deepEqual(persistableRow, submittedRow);
   });
 
-  it("derives each detail physical table from its server-generated main table", () => {
+  it("derives the detail physical table from its EKP detail fdId", () => {
     const firstMainTable = "mk_main_alpha";
     const secondMainTable = "mk_main_beta";
     const first = projectDetailModel({
@@ -57,18 +59,13 @@ describe("detail persistence metadata contract", () => {
       mainTableName: secondMainTable
     });
 
-    assert.deepEqual({
-      firstUsesServerMain: first.detailModel.fdTableName.startsWith(`${firstMainTable}_`),
-      secondUsesServerMain: second.detailModel.fdTableName.startsWith(`${secondMainTable}_`),
-      physicalTablesAreIsolated: first.detailModel.fdTableName !== second.detailModel.fdTableName
-    }, {
-      firstUsesServerMain: true,
-      secondUsesServerMain: true,
-      physicalTablesAreIsolated: true
-    });
+    assert.equal(first.detailModel.fdTableName, "fd_detail");
+    assert.equal(second.detailModel.fdTableName, "fd_detail");
+    assert.equal(first.detailModel.dynamicProps.detailFieldName, "fd_detail");
+    assert.equal(second.detailModel.dynamicProps.detailFieldName, "fd_detail");
   });
 
-  it("isolates long main tables that share the same truncated prefix", () => {
+  it("does not let long main-table identities alter the source-derived detail table", () => {
     const sharedPrefix = "mk_model_shared_prefix_that_exceeds_the_native_limit_";
     const first = projectDetailModel({
       templateId: "template-long-alpha",
@@ -79,12 +76,11 @@ describe("detail persistence metadata contract", () => {
       mainTableName: `${sharedPrefix}beta`
     });
 
-    assert.notEqual(first.detailModel.fdTableName, second.detailModel.fdTableName);
-    assert.equal(first.detailModel.fdTableName.length <= 30, true);
-    assert.equal(second.detailModel.fdTableName.length <= 30, true);
+    assert.equal(first.detailModel.fdTableName, "fd_detail");
+    assert.equal(second.detailModel.fdTableName, "fd_detail");
   });
 
-  it("uses the complete server table identity when normalized names collide", () => {
+  it("does not let normalized main-table collisions alter the source-derived detail table", () => {
     const first = projectDetailModel({
       templateId: "template-punctuation-alpha",
       mainTableName: "mk_runtime-main"
@@ -94,16 +90,18 @@ describe("detail persistence metadata contract", () => {
       mainTableName: "mk_runtime_main"
     });
 
-    assert.notEqual(first.detailModel.fdTableName, second.detailModel.fdTableName);
+    assert.equal(first.detailModel.fdTableName, "fd_detail");
+    assert.equal(second.detailModel.fdTableName, "fd_detail");
   });
 
-  it("isolates complete long main table identities with the same truncated prefix", () => {
+  it("uses the same physical name for the same fdId across main tables", () => {
     const sharedPrefix = "mk_model_shared_prefix_that_exceeds_the_native_limit_";
     const fieldId = "fd_detail";
     const first = detailTableNameFor(`${sharedPrefix}alpha`, fieldId);
     const second = detailTableNameFor(`${sharedPrefix}beta`, fieldId);
 
-    assert.notEqual(first, second);
+    assert.equal(first, "fd_detail");
+    assert.equal(second, "fd_detail");
   });
 
   it("isolates detail field identities within the same main table", () => {
@@ -114,14 +112,64 @@ describe("detail persistence metadata contract", () => {
     assert.notEqual(first, second);
   });
 
-  it("keeps detail table names within the native limit with a hexadecimal suffix", () => {
+  it("preserves a non-standard detail id without normalization", () => {
+    const normalized = detailTableNameFor("mk_model_main", "fd_a");
+    const nonStandard = detailTableNameFor("mk_model_main", "fd-a");
+    const whitespace = detailTableNameFor("mk_model_main", " fd-a ");
+
+    assert.equal(normalized, "fd_a");
+    assert.equal(nonStandard, "fd-a");
+    assert.equal(whitespace, " fd-a ");
+  });
+
+  it("classifies detail authority with the exact projected model table set", () => {
+    const detailTables = new Set(["mk_model_items"]);
+
+    assert.equal(isPhysicalDetailTableAuthKey("mk_model_items", detailTables), true);
+    assert.equal(isPhysicalDetailTableAuthKey("mk_model_fd_status", detailTables), false);
+    assert.equal(
+      isPhysicalDetailTableAuthKey("fd.detail", new Set(["fd.detail"])),
+      true
+    );
+  });
+
+  it("fails before persistence when projected table names collide case-insensitively", () => {
+    const dsl = sampleTrustedDsl();
+    delete dsl.workflow;
+    const first = dsl.form.fields.find((field) => field.type === "detailTable");
+    first.id = "fd_A";
+    const second = structuredClone(first);
+    second.id = "fd_a";
+    second.title = "另一张明细";
+    second.columns[0].id = "fd_other_name";
+    dsl.form.fields.push(second);
+
+    assert.throws(
+      () => applyFormPayload({
+        fdId: "template-table-collision",
+        fdName: "MK_TEST_table_collision",
+        fdTableName: "mk_model_main",
+        mechanisms: {
+          "sys-xform": {
+            fdId: "template-table-collision",
+            fdName: "MK_TEST_table_collision",
+            fdTableName: "mk_model_main",
+            fdConfig: "{}"
+          }
+        }
+      }, dsl),
+      (error) => error?.code === "projection.form.native_table_name_collision"
+    );
+  });
+
+  it("does not silently shorten a long detail identity", () => {
+    const sourceId = "fd_detail_identity_that_exceeds_the_native_limit";
     const tableName = detailTableNameFor(
       "mk_model_shared_prefix_that_exceeds_the_native_limit_alpha",
-      "fd_detail"
+      sourceId
     );
 
-    assert.equal(tableName.length <= 30, true);
-    assert.match(tableName, /_d_[0-9a-f]{6,}$/);
+    assert.equal(tableName, sourceId);
   });
 });
 

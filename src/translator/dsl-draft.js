@@ -43,6 +43,7 @@ import {
 import { foldLegacyDetailAddressComposites } from "./detail-address-composite.js";
 import { isHiddenMetadataAttributes } from "./sysform-metadata.js";
 import {
+  markSharedCaptionRobotOutputsDataOnly,
   projectCompoundLayoutCell,
   recoverSharedBoundCaptionGroups
 } from "./shared-bound-caption-recovery.js";
@@ -68,7 +69,9 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       applySourceNumericDetailInferences(
         applyNativeCalculationInferences(
           foldLegacyDetailAddressComposites(
-            applyReferencedAddressPropertyContextDefaults(draftForm(sourceDraft.form || {}))
+            applyReferencedAddressPropertyContextDefaults(
+              draftForm(sourceDraft.form || {}, sourceDraft.workflow)
+            )
           ),
           sourceDraft.scripts
         ),
@@ -109,15 +112,11 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   );
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
   const workflow = sourceDraft.workflow
-    ? applyImplicitContextDefaultEditAuthority(
-        applyFieldIdMapToWorkflow(
-          draftWorkflow(sourceDraft.workflow, knownSourceFieldIds, knownSourceFieldTitles),
-          fieldIdMap
-        ),
-        form
+    ? applyFieldIdMapToWorkflow(
+        draftWorkflow(sourceDraft.workflow, knownSourceFieldIds, knownSourceFieldTitles),
+        fieldIdMap
       )
     : undefined;
-
   return pruneUndefined({
     version: MIGRATION_DSL_VERSION,
     artifact: "dsl-draft",
@@ -640,7 +639,7 @@ function calculationEvidencePreview(source = "") {
   return String(line || source).replace(/\s+/gu, " ").trim().slice(0, 320);
 }
 
-function draftForm(sourceForm) {
+function draftForm(sourceForm, sourceWorkflow) {
   const controls = Array.isArray(sourceForm.controls) ? sourceForm.controls : [];
   const detailTables = Array.isArray(sourceForm.detailTables) ? sourceForm.detailTables : [];
   const dataFields = Array.isArray(sourceForm.dataFields) ? sourceForm.dataFields : [];
@@ -649,8 +648,9 @@ function draftForm(sourceForm) {
     ...detailTables.map(draftDetailTableFromSource),
     ...dataFields.map(draftDataFieldFromSource)
   ], sourceForm.layout);
+  const presentationFields = markSharedCaptionRobotOutputsDataOnly(fields, sourceWorkflow);
   const sharedCaptionRecovery = recoverSharedBoundCaptionGroups(
-    fields,
+    presentationFields,
     sourceForm.layout || { source: "fdDesignerHtml", rows: [] }
   );
   const renderLayout = removeDataOnlyFieldRefs(
@@ -703,45 +703,6 @@ function applyReferencedAddressPropertyContextDefaults(form) {
           defaultValue: {
             ...referencedDefault,
             property: match[2]
-          }
-        }
-      };
-    })
-  };
-}
-
-function applyImplicitContextDefaultEditAuthority(workflow, form) {
-  const candidates = (form?.fields || []).filter((field) =>
-    field?.type !== "detailTable" &&
-    field?.props?.defaultValue?.kind === "context" &&
-    field?.props?.defaultValue?.property === "fdNo"
-  );
-  if (!candidates.length) return workflow;
-
-  const explicitlyGoverned = new Set(
-    (workflow?.nodes || []).flatMap((node) => Object.keys(node?.dataAuthority?.fields || {}))
-  );
-  const implicitCandidates = candidates.filter((field) => !explicitlyGoverned.has(field.id));
-  if (!implicitCandidates.length) return workflow;
-
-  return {
-    ...workflow,
-    nodes: (workflow.nodes || []).map((node) => {
-      if (node?.dataAuthority?.enabled !== true) return node;
-      const additions = Object.fromEntries(implicitCandidates.map((field) => [field.id, {
-        visible: true,
-        editable: true,
-        required: field.props?.required === true,
-        sourceMode: "edit",
-        sourceRef: field.sourceRef
-      }]));
-      return {
-        ...node,
-        dataAuthority: {
-          ...node.dataAuthority,
-          fields: {
-            ...(node.dataAuthority.fields || {}),
-            ...additions
           }
         }
       };
@@ -2055,7 +2016,9 @@ function mergeSourceFormRules(left, right) {
 }
 
 function draftFormRules(sourceFormRules, form) {
-  const linkage = Array.isArray(sourceFormRules?.linkage) ? sourceFormRules.linkage : [];
+  const linkage = reconcileComplementaryLoadVisibilityRules(
+    Array.isArray(sourceFormRules?.linkage) ? sourceFormRules.linkage : []
+  );
   if (!linkage.length) return undefined;
   const refIndex = buildFormRuleRefIndex(form || {});
   const overlapIssues = mergeRuleIssueMaps(
@@ -2092,6 +2055,95 @@ function draftFormRules(sourceFormRules, form) {
       mergedRules: mergedRules.length ? mergedRules : undefined
     })
   };
+}
+
+function reconcileComplementaryLoadVisibilityRules(linkage) {
+  const baselineCompleteLinkage = linkage.map(restorePartialLoadVisibilityBaseline);
+  const loadRules = baselineCompleteLinkage.filter((rule) =>
+    rule?.trigger === "load" &&
+    rule.meta?.partialNativeRowEffects === true &&
+    typeof rule.meta?.bridgeSourceJsp === "string" &&
+    rule.meta.bridgeSourceJsp
+  );
+  if (!loadRules.length) return baselineCompleteLinkage;
+
+  return baselineCompleteLinkage.map((rule) => {
+    if (
+      rule?.trigger !== "change" ||
+      rule.meta?.runWhen === undefined ||
+      typeof rule.meta?.sourceJsp !== "string" ||
+      !rule.meta.sourceJsp
+    ) {
+      return rule;
+    }
+
+    const companions = loadRules.filter((loadRule) =>
+      loadRule.source === rule.source &&
+      loadRule.logic === rule.logic &&
+      loadRule.meta.bridgeSourceJsp === rule.meta.sourceJsp &&
+      JSON.stringify(loadRule.when || []) === JSON.stringify(rule.when || []) &&
+      visibleEffectsAreSubset(loadRule.effects, rule.effects) &&
+      visibleEffectsAreSubset(loadRule.else, rule.else)
+    );
+    if (!companions.length) return rule;
+
+    const delegatedEffects = new Set(companions.flatMap((item) =>
+      (item.effects || []).map(formRuleEffectKey)
+    ));
+    const delegatedElse = new Set(companions.flatMap((item) =>
+      (item.else || []).map(formRuleEffectKey)
+    ));
+    const remainingEffects = (rule.effects || [])
+      .filter((effect) => !delegatedEffects.has(formRuleEffectKey(effect)));
+    const remainingElse = (rule.else || [])
+      .filter((effect) => !delegatedElse.has(formRuleEffectKey(effect)));
+    if (!remainingEffects.length || !remainingElse.length) return rule;
+    return {
+      ...rule,
+      effects: remainingEffects,
+      else: remainingElse
+    };
+  });
+}
+
+function restorePartialLoadVisibilityBaseline(rule) {
+  if (rule?.trigger !== "load" || rule.meta?.partialNativeRowEffects !== true) return rule;
+  const elseEffects = Array.isArray(rule.else) ? rule.else : [];
+  const elseDimensions = new Set(elseEffects.map(formRuleEffectDimensionKey));
+  const restoredVisibility = (Array.isArray(rule.effects) ? rule.effects : [])
+    .filter((effect) =>
+      effect?.type === "visible" &&
+      effect.value === false &&
+      !elseDimensions.has(formRuleEffectDimensionKey(effect))
+    )
+    .map((effect) => ({ ...effect, value: true }));
+  if (!restoredVisibility.length) return rule;
+  return {
+    ...rule,
+    else: [...elseEffects, ...restoredVisibility]
+  };
+}
+
+function visibleEffectsAreSubset(candidate, complete) {
+  const effects = Array.isArray(candidate) ? candidate : [];
+  if (!effects.length || effects.some((effect) => effect?.type !== "visible")) return false;
+  const completeKeys = new Set((Array.isArray(complete) ? complete : []).map(formRuleEffectKey));
+  return effects.every((effect) => completeKeys.has(formRuleEffectKey(effect)));
+}
+
+function formRuleEffectKey(effect) {
+  return JSON.stringify({
+    type: effect?.type,
+    target: effect?.target,
+    value: effect?.value
+  });
+}
+
+function formRuleEffectDimensionKey(effect) {
+  return JSON.stringify({
+    type: effect?.type,
+    target: effect?.target
+  });
 }
 
 function baselineDeltaTargetOverlapIssues(linkage, refIndex) {
@@ -2614,6 +2666,7 @@ function draftDataAuthority(dataAuthority, knownFieldIds = null) {
         visible: value.visible,
         editable: value.editable,
         required: value.required,
+        detailRowOperations: value.detailRowOperations,
         sourceMode: value.sourceMode,
         sourceRef: value.sourceRef
       })])

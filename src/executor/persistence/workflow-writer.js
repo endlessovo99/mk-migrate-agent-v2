@@ -441,7 +441,7 @@ function buildTemplateFormAuths(workflow = {}, { form, mainTableName } = {}) {
       nodeAuth[fieldId] = entry;
     }
 
-    const detailTables = deriveDetailTableAuthority(form, authorityFields, {
+    const detailTables = deriveDetailTableAuthority(form, node.dataAuthority.fields, {
       mainTableName
     });
     for (const [physicalTable, authority] of Object.entries(detailTables)) {
@@ -450,7 +450,8 @@ function buildTemplateFormAuths(workflow = {}, { form, mainTableName } = {}) {
         isEdit: authority.editable,
         isRequire: authority.required,
         operations: JSON.stringify(detailTableNodeOperations({
-          editable: authority.editable
+          editable: authority.editable,
+          operations: authority.operations
         }))
       };
     }

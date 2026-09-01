@@ -263,7 +263,7 @@ describe("detail cascade action Route case", () => {
         0,
         observed.controlKey.lastIndexOf(".")
       );
-      assert.notEqual(physicalTable, targetTableId);
+      assert.equal(physicalTable, targetTableId);
       assert.notEqual(physicalTable, "route_model_generated");
       physicalTables.add(physicalTable);
     }

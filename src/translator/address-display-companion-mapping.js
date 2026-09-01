@@ -48,19 +48,37 @@ export function removeDataOnlyFieldRefs(layout, fields) {
   const dataOnlyIds = new Set(
     fields.filter((field) => field.dataOnly === true).map((field) => field.id)
   );
+  const geometryPreservingDataOnlyIds = new Set(
+    fields
+      .filter((field) =>
+        field.dataOnly === true &&
+        field.sourceProps?.presentation === "shared-caption-robot-output"
+      )
+      .map((field) => field.id)
+  );
   return {
     ...(layout || {}),
-    rows: (layout?.rows || []).map((row) => ({
-      ...row,
-      cells: (row.cells || []).map((cell) => ({
+    rows: (layout?.rows || []).map((row) => {
+      const cells = (row.cells || []).map((cell) => ({
         ...cell,
         references: (cell.references || []).filter((reference) =>
           !dataOnlyIds.has(reference.referenceId)
         )
       })).filter((cell) =>
         (cell.references || []).length > 0 || (cell.layoutRowIds || []).length > 0
-      )
-    }))
+      );
+      const removedGeometryPreservingField = (row.cells || []).some((cell) =>
+        (cell.references || []).length > 1 &&
+        (cell.references || []).some((reference) =>
+          geometryPreservingDataOnlyIds.has(reference.referenceId)
+        )
+      );
+      return {
+        ...row,
+        ...(removedGeometryPreservingField ? { preserveSourceGeometry: true } : {}),
+        cells
+      };
+    })
   };
 }
 

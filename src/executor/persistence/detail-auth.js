@@ -43,19 +43,20 @@ export function detailTableViewOperations() {
 }
 
 /** Operations string used by lbpm fdTemplateFormAuths table-level entries. */
-export function detailTableNodeOperations({ editable } = {}) {
-  if (editable) {
+export function detailTableNodeOperations({ editable, operations } = {}) {
+  const operationState = operations || detailTableAuthorityOperationState(editable);
+  if (operationState.canAddRow || operationState.canDeleteRow || operationState.canImport) {
     return [
       ...DETAIL_VIEW_OPERATIONS.map((operation) => ({
         ...operation,
         required: false,
-        enable: false
+        enable: operationState[operation.id] === true
       })),
       ...DETAIL_EDIT_OPERATIONS.map((operation) => ({
         ...operation,
         required: false,
         value: operation.id,
-        enable: true
+        enable: operationState[operation.id] === true
       }))
     ];
   }
@@ -64,12 +65,12 @@ export function detailTableNodeOperations({ editable } = {}) {
     ...DETAIL_EDIT_OPERATIONS.map((operation) => ({
       ...operation,
       required: false,
-      enable: false
+      enable: operationState[operation.id] === true
     })),
     ...DETAIL_VIEW_OPERATIONS.map((operation) => ({
       ...operation,
       required: false,
-      enable: true
+      enable: operationState[operation.id] === true
     }))
   ];
 }
@@ -138,11 +139,14 @@ export function deriveDetailTableAuthority(
       group.authorities.some((authority) => authority?.editable === true);
     const visible = inheritsDefaultEdit || editable ||
       group.authorities.some((authority) => authority?.visible === true);
+    const blocksDetailRowOperations = group.authorities.some((authority) =>
+      authority?.editable === true && authority?.detailRowOperations === false
+    );
     derived[physicalDetailTableName(mainTableName, detailFieldId)] = {
       visible,
       editable,
       required: false,
-      operations: detailTableAuthorityOperationState(editable)
+      operations: detailTableAuthorityOperationState(editable && !blocksDetailRowOperations)
     };
   }
   return derived;
@@ -185,8 +189,11 @@ export function physicalDetailTableName(mainTableName, detailFieldId) {
   return detailTableNameFor(mainTableName, detailFieldId);
 }
 
-export function isPhysicalDetailTableAuthKey(key = "") {
-  return !String(key).includes(".") && /_d_[0-9a-f]{8}$/i.test(String(key));
+export function isPhysicalDetailTableAuthKey(key = "", detailTableNames) {
+  const text = String(key);
+  if (detailTableNames instanceof Set) return detailTableNames.has(text);
+  if (text.includes(".")) return false;
+  return /_d_[0-9a-f]{8}$/i.test(text);
 }
 
 export function authFieldIdFromKey(key = "") {

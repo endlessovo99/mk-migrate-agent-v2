@@ -43,6 +43,8 @@ import { normalizeRuleConditionText } from "./condition-rule.js";
 import { isOptionComponent, normalizeOptionDefaultValue } from "./option-defaults.js";
 import { projectNativeLayoutRows } from "./layout-projection.js";
 
+const MAX_BLANK_COMPLEMENT_VARIANTS = 32;
+
 const parseExpectedContextConditionExpression = createConditionExpressionParser({
   parseTerm: parseExpectedContextConditionTerm,
   negateTerm: negateExpectedContextConditionTerm
@@ -273,6 +275,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
         .filter((field) => field.type === "detailTable")
         .map((field) => ({
           fieldId: field.id,
+          code: field.id,
           title: normalizeScalar(persistedFieldLabel(field)),
           tableName: detailTableNameFor(mainTableName, field.id),
           tableType: "detail",
@@ -579,16 +582,26 @@ function buildExpectedRules(formRules = {}, form = {}, scripts = {}, diagnostics
             resolveFieldName: (field) => resolveConditionFieldName(formIndex, field)
           })
         : undefined;
-      pushRuleSemantics(rules, {
-        ruleId,
-        branch: "else",
-        active: rule.active !== false,
-        logic: rule.logic === "or" ? "and" : "or",
-        when: invertClauses(when),
-        effects: rule.else,
-        formIndex,
-        nativeFormula: elseFormula
-      }, diagnostics);
+      const elseClauseSets = elseFormula
+        ? [when]
+        : expandInvertedClausesWithBlankFallback(
+          when,
+          rule.logic,
+          diagnostics,
+          ruleId
+        );
+      for (const elseClauses of elseClauseSets) {
+        pushRuleSemantics(rules, {
+          ruleId,
+          branch: "else",
+          active: rule.active !== false,
+          logic: rule.logic === "or" ? "and" : "or",
+          when: elseClauses,
+          effects: rule.else,
+          formIndex,
+          nativeFormula: elseFormula
+        }, diagnostics);
+      }
     }
   }
 
@@ -719,6 +732,27 @@ function invertClauses(clauses) {
     ...clause,
     op: invert[clause.op] || clause.op
   }));
+}
+
+function expandInvertedClausesWithBlankFallback(clauses, logic, diagnostics, ruleId) {
+  const inverted = invertClauses(clauses);
+  const alternatives = inverted.map((clause) => clause.op === "notContains"
+    ? [clause, { ...clause, op: "empty", value: "" }]
+    : [clause]);
+  if (logic !== "or") return [alternatives.flat()];
+  const variantCount = alternatives.reduce((count, choices) => count * choices.length, 1);
+  if (variantCount > MAX_BLANK_COMPLEMENT_VARIANTS) {
+    diagnostics.push(projectionError(
+      "projection.form_rule.blank_complement_variants_exceeded",
+      "A native form-rule else branch requires too many blank-safe variants.",
+      { ruleId, variantCount, maximum: MAX_BLANK_COMPLEMENT_VARIANTS }
+    ));
+    return [];
+  }
+  return alternatives.reduce(
+    (sets, choices) => sets.flatMap((set) => choices.map((choice) => [...set, choice])),
+    [[]]
+  );
 }
 
 function normalizeRuleValue(value) {
@@ -1472,7 +1506,7 @@ function summarizeDataAuthority(node, context = {}) {
       required: normalizeBoolean(value.required)
     }])
   );
-  const detailTables = deriveDetailTableAuthority(context.form, fields, {
+  const detailTables = deriveDetailTableAuthority(context.form, node.dataAuthority.fields, {
     mainTableName: context.mainTableName
   });
   const detailColumnBindings = deriveDetailColumnBindings(context.form, fields, {

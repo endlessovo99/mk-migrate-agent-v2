@@ -1,6 +1,66 @@
 import { componentSupportsProp } from "../dsl/catalogs.js";
 
 /**
+ * A readonly robot output can share one retained EKP caption cell with the
+ * editable robot input that drives it. In that shape the output is workflow
+ * data, not a second visible text line. Keep it persisted for the robot while
+ * removing it from the rendered layout.
+ */
+export function markSharedCaptionRobotOutputsDataOnly(fields, workflow) {
+  const values = Array.isArray(fields) ? fields : [];
+  const fieldsById = new Map(values.map((field) => [field.id, field]));
+  const hiddenOutputIds = new Set();
+
+  for (const node of workflow?.nodes || []) {
+    if (node?.sourceType !== "robotNode" && node?.type !== "robot") continue;
+    let config;
+    try {
+      const content = node.definition?.attributes?.content;
+      config = typeof content === "string" ? JSON.parse(content) : content;
+    } catch {
+      continue;
+    }
+    const inputIds = (config?.inputParams || [])
+      .map((param) => robotFieldId(param?.idField))
+      .filter(Boolean);
+    for (const output of config?.outParams || []) {
+      if (String(output?.isUse).toLowerCase() !== "true") continue;
+      const outputId = robotFieldId(output?.idField);
+      const outputField = fieldsById.get(outputId);
+      const captionId = retainedCaptionId(outputField);
+      if (
+        !captionId ||
+        outputField?.componentId !== "xform-input" ||
+        outputField.props?.readOnly !== true ||
+        outputField.props?.hiddenLabel !== true
+      ) {
+        continue;
+      }
+      const pairedInput = inputIds
+        .map((inputId) => fieldsById.get(inputId))
+        .find((field) =>
+          field?.componentId === "xform-input" &&
+          field.props?.readOnly !== true &&
+          field.props?.hiddenLabel === true &&
+          retainedCaptionId(field) === captionId
+        );
+      if (pairedInput) hiddenOutputIds.add(outputId);
+    }
+  }
+
+  return values.map((field) => hiddenOutputIds.has(field.id)
+    ? {
+        ...field,
+        dataOnly: true,
+        sourceProps: {
+          ...field.sourceProps,
+          presentation: "shared-caption-robot-output"
+        }
+      }
+    : field);
+}
+
+/**
  * Retains one shared left-side caption and the complete source cell when
  * multiple actionable controls bind to the same legacy textLabel.
  */
@@ -22,12 +82,17 @@ export function recoverSharedBoundCaptionGroups(fields, layout) {
   const groupedFieldIds = new Map();
   for (const [captionId, members] of groups) {
     const activeMember = members.find(hasActiveDesignerLabelBinding);
-    if (!activeMember || members.length < 2) continue;
+    const retainedCaption = fieldsById.get(captionId);
+    const retainedCaptionGroup =
+      isDescriptionField(retainedCaption) &&
+      members.every(hasRetainedSourceCaptionLayout);
+    if ((!activeMember && !retainedCaptionGroup) || members.length < 2) continue;
     const location = sharedBoundCaptionCellLocation(nextLayout, members);
     if (!location) continue;
 
-    let caption = fieldsById.get(captionId);
+    let caption = retainedCaption;
     if (!isDescriptionField(caption)) {
+      if (!activeMember) continue;
       const captionCell = recoverSharedCaptionCell(nextLayout, location, captionId);
       if (!captionCell) continue;
       caption = {
@@ -144,6 +209,22 @@ function sharedBoundCaptionId(field) {
 
 function hasActiveDesignerLabelBinding(field) {
   return String(field?.sourceProps?.designerValues?._label_bind || "").trim().toLowerCase() === "true";
+}
+
+function hasRetainedSourceCaptionLayout(field) {
+  return field?.sourceProps?.layoutCell?.relation === "retained-source-caption";
+}
+
+function retainedCaptionId(field) {
+  if (!hasRetainedSourceCaptionLayout(field)) return undefined;
+  const ids = field?.sourceProps?.layoutCell?.captionIds;
+  return Array.isArray(ids) && ids.length === 1 ? ids[0] : undefined;
+}
+
+function robotFieldId(value) {
+  const normalized = String(value || "").trim();
+  const wrapped = /^\$([^$]+)\$$/u.exec(normalized);
+  return wrapped ? wrapped[1] : normalized;
 }
 
 function isDescriptionField(field) {

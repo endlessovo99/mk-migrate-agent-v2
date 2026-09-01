@@ -114,13 +114,20 @@ function onChangeCandidate(call, source, form, formRules) {
   }
   const controlId = literalValue(call.arguments[0]);
   if (!formFieldIds(form).has(controlId)) return undefined;
-  const compiled = compileOnChange(call.arguments[1], form);
+  const sourceRef = source.sourceRef || source.id;
+  const restoreStaticRequiredBaseline = hasPartialLoadBridge(
+    formRules,
+    sourceRef,
+    controlId
+  );
+  const compiled = compileOnChange(call.arguments[1], form, {
+    restoreStaticRequiredBaseline
+  });
   if (!compiled) return undefined;
   const rowTargets = rowEffectTargets(call.arguments[1]);
   if (rowTargets.length > 0 && !targetsHaveDistinctLayoutOwners(form, rowTargets)) {
     return undefined;
   }
-  const sourceRef = source.sourceRef || source.id;
   return {
     index: call.start,
     sourceActionKey: inlineOnChangeSourceActionKey(sourceRef, call.start),
@@ -139,6 +146,7 @@ function onChangeCandidate(call, source, form, formRules) {
     }],
     sourceRefs: [sourceRef],
     semanticHints: {
+      ...(restoreStaticRequiredBaseline ? { restoreStaticRequiredBaseline: true } : {}),
       coveredCalculationRanges: [{
         sourceRef,
         name: `inlineRadioRowEffects:${controlId}`,
@@ -149,7 +157,7 @@ function onChangeCandidate(call, source, form, formRules) {
   };
 }
 
-function compileOnChange(callback, form) {
+function compileOnChange(callback, form, options = {}) {
   if (
     callback.params?.[0]?.type !== "Identifier" ||
     callback.body?.type !== "BlockStatement"
@@ -175,6 +183,7 @@ function compileOnChange(callback, form) {
       sourceValueName,
       targetValueName: "value",
       form,
+      restoreStaticRequiredBaseline: options.restoreStaticRequiredBaseline === true,
       indent: "  "
     });
     if (!compiled) return undefined;
@@ -187,7 +196,11 @@ function compileOnChange(callback, form) {
 function compileStatement(statement, context) {
   if (statement.type === "IfStatement") return compileIf(statement, context);
   const effect = rowEffect(statement);
-  if (effect) return compileRowEffect(effect, context.form, context.indent);
+  if (effect) {
+    return context.restoreStaticRequiredBaseline
+      ? compileBaselineRowEffect(effect, context.form, context.indent)
+      : compileRowEffect(effect, context.form, context.indent);
+  }
   const assignment = legacyFieldAssignment(statement, context.aliases, context.sourceValueName);
   if (assignment) {
     return [
@@ -196,6 +209,15 @@ function compileStatement(statement, context) {
     ];
   }
   return undefined;
+}
+
+function hasPartialLoadBridge(formRules, sourceRef, controlId) {
+  return (Array.isArray(formRules?.linkage) ? formRules.linkage : []).some((rule) =>
+    rule?.trigger === "load" &&
+    rule?.source === controlId &&
+    rule.meta?.partialNativeRowEffects === true &&
+    rule.meta?.bridgeSourceJsp === sourceRef
+  );
 }
 
 function compileIf(statement, context) {
@@ -850,6 +872,40 @@ function compileRowEffect(effect, form, indent) {
   if (!resetFieldIds.length) return undefined;
   for (const fieldId of [...new Set(resetFieldIds)]) {
     lines.push(`${indent}MKXFORM.setValue(${JSON.stringify(fieldId)}, "");`);
+  }
+  return lines;
+}
+
+/**
+ * A bridged EKP onLoad keeps visible controls at their declared field-level
+ * required baseline, while the paired onChange helper addresses a whole row.
+ * Restore that baseline explicitly after a hidden row has been shown again so
+ * readonly outputs and captions do not inherit the row's required styling.
+ */
+function compileBaselineRowEffect(effect, form, indent) {
+  if (!effect || !layoutMarkerSet(form).has(effect.target)) return undefined;
+  const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), effect.target);
+  if (
+    resolved?.source !== "rowMarker" ||
+    resolved.unresolved?.length ||
+    !resolved.targets?.length
+  ) {
+    return undefined;
+  }
+
+  const lines = [
+    `${indent}MKXFORM.setFieldAttr(${JSON.stringify(effect.target)}, ${effect.visible ? 5 : 4});`
+  ];
+  for (const target of resolved.targets) {
+    if (target.kind === "detailTable") continue;
+    if (target.kind !== "field") return undefined;
+    if (NON_RESETTABLE_COMPONENTS.has(target.field?.componentId)) continue;
+    const required = effect.visible && effect.required
+      ? target.field?.props?.required === true
+      : false;
+    lines.push(
+      `${indent}MKXFORM.setFieldAttr(${JSON.stringify(target.id)}, ${required ? 3 : 6});`
+    );
   }
   return lines;
 }

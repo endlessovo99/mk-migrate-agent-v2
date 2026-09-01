@@ -820,7 +820,7 @@ describe("form layout projection", () => {
   });
 
   it("nests detail-table field auth and row operations under fdConfig.auth", () => {
-    const detailTable = "mk_model_test_d_a47d94a5";
+    const detailTable = "fd_detail";
     const prepared = prepareSample(sampleTrustedDsl({ workflow: null }));
     assert.equal(prepared.ok, true);
     const config = xformConfig(prepared.update);
@@ -954,6 +954,81 @@ describe("form rules mutations", () => {
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
     assert.equal(rules.display.every((rule) => rule.result.length === 1), true);
     assert.equal(rules.require.every((rule) => rule.result.length === 1), true);
+  });
+
+  it("distributes blank-safe complements for multi-clause OR rules", () => {
+    const dsl = dslWithRules();
+    const rule = dsl.formRules.linkage[0];
+    rule.logic = "or";
+    rule.when = [
+      { field: "fd_subject", op: "contains", value: "A" },
+      { field: "fd_amount", op: "contains", value: "B" }
+    ];
+
+    const { template, readback } = persistAndVerify(dsl);
+    const elseDisplay = formAttr(template).formRule.display.filter((item) =>
+      item.meta?.sourceRuleId === rule.id && item.meta?.branch === "else"
+    );
+
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+    assert.equal(elseDisplay.length, 4);
+    assert.equal(new Set(elseDisplay.map((item) => item.id)).size, 4);
+    assert.deepEqual(
+      elseDisplay.map((item) => item.choices.items.map((condition) => condition.operate)),
+      [
+        ["notInclude", "notInclude"],
+        ["notInclude", "empty"],
+        ["empty", "notInclude"],
+        ["empty", "empty"]
+      ]
+    );
+
+    const broken = persistAndVerify(dsl, {
+      mutate(template) {
+        const config = xformConfig(template);
+        const attr = JSON.parse(config.attribute.formAttr);
+        const removeIndex = attr.formRule.display.findIndex((item) =>
+          item.meta?.sourceRuleId === rule.id &&
+          item.meta?.branch === "else"
+        );
+        attr.formRule.display.splice(removeIndex, 1);
+        config.attribute.formAttr = JSON.stringify(attr);
+        template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+        return template;
+      }
+    });
+    assert.equal(broken.readback.ok, false);
+    assert.equal(
+      broken.readback.diagnostics.some((item) =>
+        item.code === "readback.form_rules.semantic_missing"
+      ),
+      true
+    );
+  });
+
+  it("fails closed when blank-safe complement expansion exceeds its cap", () => {
+    const dsl = dslWithRules();
+    const rule = dsl.formRules.linkage[0];
+    rule.logic = "or";
+    rule.when = Array.from({ length: 6 }, (_, index) => ({
+      field: index % 2 === 0 ? "fd_subject" : "fd_amount",
+      op: "contains",
+      value: String(index)
+    }));
+
+    const prepared = preparePersistedTemplate({
+      dsl,
+      envelope: sampleEnvelope(),
+      baseTemplate: sampleBaseTemplate()
+    });
+
+    assert.equal(prepared.ok, false);
+    assert.equal(
+      prepared.diagnostics.some((item) =>
+        item.code === "projection.form_rule.blank_complement_variants_exceeded"
+      ),
+      true
+    );
   });
 
   it("refuses to project a gated linkage without a statically proven native projection", () => {

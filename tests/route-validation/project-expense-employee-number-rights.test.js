@@ -40,7 +40,7 @@ describe("project expense employee number defaults and rights Route-validation",
     }
     for (const target of ["skr_row", "khh_row"]) {
       assert.equal(value(rule.effects, "visible", target), false);
-      assert.equal(value(rule.else, "visible", target), undefined);
+      assert.equal(value(rule.else, "visible", target), true);
     }
 
     const native = formAttr(prepareSample(draft).update).formRule;
@@ -55,9 +55,15 @@ describe("project expense employee number defaults and rights Route-validation",
         result.fieldName === "fd_37c09f0b8334d2" && result.displayFlag === "hide"
       )
     ));
+    assert.ok(generated.some((item) =>
+      item.meta.branch === "else" &&
+      item.result.some((result) =>
+        result.fieldName === "fd_37b041ca9cd0c2" && result.displayFlag === "display"
+      )
+    ));
   });
 
-  it("inherits current creator employee numbers and keeps them editable at draft and research approval", () => {
+  it("inherits current creator employee numbers without widening the research approval rights", () => {
     const source = cleanSourceFile(fixture);
     const draft = draftSourceDraft(source);
     const fields = new Map(draft.form.fields.map((field) => [field.id, field]));
@@ -136,12 +142,48 @@ describe("project expense employee number defaults and rights Route-validation",
     assert.equal(draftNode?.dataAuthority, undefined);
     assert.equal(governedResearchNode?.name, "科研审批");
     for (const fieldId of ["fd_person_no1", "fd_39645f8a34ed88"]) {
-      assert.deepEqual(governedResearchNode?.dataAuthority?.fields?.[fieldId], {
+      assert.equal(governedResearchNode?.dataAuthority?.fields?.[fieldId], undefined);
+    }
+    assert.deepEqual(
+      Object.keys(governedResearchNode?.dataAuthority?.fields || {}).sort(),
+      [
+        "fd_37b058755db52a",
+        "fd_37b058795b82aa",
+        "fd_37b0598fdb7c02",
+        "fd_37b0599331fa3a",
+        "fd_37b0da609dc6c6",
+        "fd_37b0da61e5176a",
+        "fd_37b0da634e093a",
+        "fd_37b0da6ebb75a6",
+        "fd_37b0da70f7d0bc",
+        "fd_37b0da7280d3a8"
+      ].sort()
+    );
+    const permissionPairs = [
+      ["fd_37b058755db52a", "fd_37b058795b82aa"],
+      ["fd_37b0598fdb7c02", "fd_37b0599331fa3a"],
+      ["fd_37b0da609dc6c6", "fd_37b0da6ebb75a6"],
+      ["fd_37b0da61e5176a", "fd_37b0da70f7d0bc"],
+      ["fd_37b0da634e093a", "fd_37b0da7280d3a8"]
+    ];
+    for (const [wbsId, internalOrderId] of permissionPairs) {
+      assert.deepEqual(governedResearchNode.dataAuthority.fields[wbsId], {
+        visible: true,
+        editable: true,
+        required: true,
+        detailRowOperations: false,
+        sourceMode: "edit",
+        sourceRef: source.workflow.nodes.find((node) => node.id === "N136")
+          .dataAuthority.fields[wbsId].sourceRef
+      });
+      assert.deepEqual(governedResearchNode.dataAuthority.fields[internalOrderId], {
         visible: true,
         editable: true,
         required: false,
+        detailRowOperations: false,
         sourceMode: "edit",
-        sourceRef: fields.get(fieldId)?.sourceRef
+        sourceRef: source.workflow.nodes.find((node) => node.id === "N136")
+          .dataAuthority.fields[internalOrderId].sourceRef
       });
     }
     assert.equal(implicitResearchNodes.length, 2);
@@ -166,11 +208,25 @@ describe("project expense employee number defaults and rights Route-validation",
         observed.form.value.fields.find((field) => field.id === fieldId)?.props?.defaultValue,
         { kind: "context", source: "creator", property: "fdNo" }
       );
-      assert.deepEqual(
+      assert.equal(
         observed.workflow.value.nodes.find((node) => node.id === "N136")
           ?.dataAuthority?.fields?.[fieldId],
-        { visible: true, editable: true, required: false }
+        undefined
       );
+    }
+
+    const researchAuthority = observed.workflow.value.nodes.find((node) => node.id === "N136")
+      ?.dataAuthority;
+    assert.equal(Object.keys(researchAuthority?.fields || {}).length, 10);
+    assert.equal(Object.keys(researchAuthority?.detailTables || {}).length, 5);
+    for (const table of Object.values(researchAuthority?.detailTables || {})) {
+      assert.equal(table.editable, true);
+      assert.deepEqual(table.operations, {
+        canAddRow: false,
+        canDeleteRow: false,
+        canImport: false,
+        canExport: true
+      });
     }
   });
 });

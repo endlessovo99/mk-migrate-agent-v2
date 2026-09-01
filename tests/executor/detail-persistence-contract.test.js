@@ -21,49 +21,65 @@ describe("detail persistence readback contract", () => {
 
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
     assert.equal(readback.form.fields.some((field) => field.id === "fd_detail"), true);
+    assert.deepEqual(readback.form.persistence.detailTables, [{
+      fieldId: "fd_detail",
+      code: "fd_detail",
+      controlCode: "fd_detail",
+      tableName: "fd_detail"
+    }]);
   });
 
-  it("rejects a coherently renamed physical detail table", () => {
+  it("rejects a renamed physical detail table", () => {
     const readback = verifyMutated((config) => {
       const detail = detailModel(config);
-      return replaceDetailTableName(config, detail.fdTableName, "mk_detail_unexpected_7f3a");
+      detail.fdTableName = "mk_detail_unexpected_7f3a";
+      detail.fdTableNameAlias = detail.fdTableName;
+      return config;
     });
 
     assert.equal(readback.ok, false);
     assert.equal(hasCode(readback, "readback.form.detail_model_table_name_mismatch"), true);
   });
 
+  it("rejects a detail model whose MK code is not the source detail fdId", () => {
+    const readback = verifyMutated((config) => {
+      detailModel(config).fdCode = "wrong_detail_code";
+      return config;
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(hasCode(readback, "readback.form.detail_model_code_mismatch"), true);
+  });
+
+  it("rejects a detail control whose property-panel code is not the source detail fdId", () => {
+    const readback = verifyMutated((config) => {
+      const detail = detailModel(config);
+      const attribute = JSON.parse(detail.fdAttribute);
+      attribute.config.controlProps.code = "wrong_detail_code";
+      detail.fdAttribute = JSON.stringify(attribute);
+      return config;
+    });
+
+    assert.equal(readback.ok, false);
+    assert.equal(hasCode(readback, "readback.form.detail_control_code_mismatch"), true);
+  });
+
   it("rejects duplicate detail models bound to the same DSL field", () => {
     const readback = verifyMutated((config) => {
       const source = detailModel(config);
       const duplicate = structuredClone(source);
-      const sourceTableName = duplicate.fdTableName;
       const duplicateTableName = "mk_detail_duplicate_7f3a";
 
       duplicate.fdId = "duplicate-detail-model-id";
       duplicate.fdTableName = duplicateTableName;
       duplicate.fdTableNameAlias = duplicateTableName;
-      duplicate.fdAttribute = replaceText(
-        duplicate.fdAttribute,
-        sourceTableName,
-        duplicateTableName
-      );
       duplicate.fdFields = duplicate.fdFields.map((field) => ({
         ...field,
         fdId: `${field.fdId}-duplicate`,
         fdDataModel: {
           fdId: duplicate.fdId,
           fdName: duplicate.fdName
-        },
-        ...(field.fdAttribute
-          ? {
-              fdAttribute: replaceText(
-                field.fdAttribute,
-                sourceTableName,
-                duplicateTableName
-              )
-            }
-          : {})
+        }
       }));
       config.dataModel.push(duplicate);
       return config;
@@ -192,12 +208,6 @@ function detailModel(config) {
 
 function businessFields(detail) {
   return detail.fdFields.filter((field) => field.fdIsSystem !== true);
-}
-
-function replaceDetailTableName(config, sourceTableName, targetTableName) {
-  return JSON.parse(
-    JSON.stringify(config).replaceAll(sourceTableName, targetTableName)
-  );
 }
 
 function replaceText(value, source, target) {

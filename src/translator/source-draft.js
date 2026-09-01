@@ -780,6 +780,7 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
 
 function sourceWorkflowFromLegacyWorkflow(workflow, context = {}) {
   const requiredFields = buildRequiredFieldIndex(context.fields || []);
+  const detailColumnIds = buildDetailColumnIdSet(context.fields || []);
   const nodeDataAuthorities = context.nodeDataAuthorities || {};
   const nodes = (workflow.nodes || []).map((node) => ({
     id: node.id,
@@ -796,7 +797,11 @@ function sourceWorkflowFromLegacyWorkflow(workflow, context = {}) {
       sourceType: node.definition.type,
       attributes: node.definition.attributes || {}
     } : undefined,
-    dataAuthority: sourceNodeDataAuthority(nodeDataAuthorities[node.id], requiredFields),
+    dataAuthority: sourceNodeDataAuthority(
+      nodeDataAuthorities[node.id],
+      requiredFields,
+      detailColumnIds
+    ),
     incoming: (workflow.edges || []).filter((edge) => edge.target === node.id).map((edge) => edge.id),
     outgoing: (workflow.edges || []).filter((edge) => edge.source === node.id).map((edge) => edge.id),
     evidence: { id: node.id, name: node.name || "", sourceType: node.type }
@@ -953,12 +958,15 @@ function authoritySourceRefs(authority) {
   )];
 }
 
-function sourceNodeDataAuthority(authority, requiredFields) {
+function sourceNodeDataAuthority(authority, requiredFields, detailColumnIds) {
   const fields = authority?.fields || {};
   const entries = Object.entries(fields).map(([fieldId, entry]) => {
     const required = requiredFields.has(fieldId);
     return [fieldId, pruneUndefined({
       ...authorityFlags(entry.mode, required),
+      detailRowOperations: entry.mode === "edit" && detailColumnIds.has(fieldId)
+        ? false
+        : undefined,
       sourceMode: entry.mode,
       sourceRef: entry.sourceRef
     })];
@@ -969,6 +977,14 @@ function sourceNodeDataAuthority(authority, requiredFields) {
     enabled: true,
     fields: Object.fromEntries(entries)
   };
+}
+
+function buildDetailColumnIdSet(fields) {
+  return new Set((fields || []).flatMap((field) =>
+    field?.type === "detailTable"
+      ? (field.columns || []).map((column) => column?.id).filter(Boolean)
+      : []
+  ));
 }
 
 function authorityFlags(mode, fieldRequired) {

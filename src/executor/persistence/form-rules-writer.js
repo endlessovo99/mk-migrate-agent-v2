@@ -12,6 +12,7 @@ import {
 
 const GENERATED_BY = "mk-migrate-agent-v2";
 const GENERATED_RULE_PREFIX = "mk-migrate-agent-v2:";
+const MAX_BLANK_COMPLEMENT_VARIANTS = 32;
 
 const OPERATOR_MAP = {
   eq: "=",
@@ -77,12 +78,30 @@ export function buildNativeFormRuleConfig(formRules, form, dataModels, scripts, 
     require.push(...branch.require);
 
     if (Array.isArray(rule.else) && rule.else.length) {
-      const elseConditions = projection.kind === "view-status-formula"
-        ? [buildFormulaConditionItem(rule, "else", formIndex, nativeIndex)]
-        : buildConditionItems(invertClauses(when), formIndex, nativeIndex, `${ruleId}:else`);
-      const elseBranch = buildBranch({ ...rule, logic: invertLogic(rule.logic) }, ruleId, "else", elseConditions, rule.else, formIndex, nativeIndex);
-      display.push(...elseBranch.display);
-      require.push(...elseBranch.require);
+      const elseClauseSets = projection.kind === "view-status-formula"
+        ? [[buildFormulaConditionItem(rule, "else", formIndex, nativeIndex)]]
+        : expandInvertedClausesWithBlankFallback(when, rule.logic).map(
+          (clauses, variantIndex) => buildConditionItems(
+            clauses,
+            formIndex,
+            nativeIndex,
+            `${ruleId}:else:${variantIndex}`
+          )
+        );
+      for (const [variantIndex, elseConditions] of elseClauseSets.entries()) {
+        const elseBranch = buildBranch(
+          { ...rule, logic: invertLogic(rule.logic) },
+          ruleId,
+          "else",
+          elseConditions,
+          rule.else,
+          formIndex,
+          nativeIndex,
+          elseClauseSets.length > 1 ? `variant-${variantIndex + 1}` : ""
+        );
+        display.push(...elseBranch.display);
+        require.push(...elseBranch.require);
+      }
     }
   });
 
@@ -323,7 +342,16 @@ export function applyExpressionFormulaVoToModels({ dataModels = [], computeRules
   return config;
 }
 
-function buildBranch(rule, ruleId, branch, conditionItems, effects, formIndex, nativeIndex) {
+function buildBranch(
+  rule,
+  ruleId,
+  branch,
+  conditionItems,
+  effects,
+  formIndex,
+  nativeIndex,
+  variant = ""
+) {
   const displayResults = [];
   const requireResults = [];
   const displayKeys = new Set();
@@ -350,13 +378,17 @@ function buildBranch(rule, ruleId, branch, conditionItems, effects, formIndex, n
   }
 
   return {
-    display: displayResults.length ? [buildNativeRule(rule, ruleId, branch, "display", conditionItems, displayResults)] : [],
-    require: requireResults.length ? [buildNativeRule(rule, ruleId, branch, "require", conditionItems, requireResults)] : []
+    display: displayResults.length
+      ? [buildNativeRule(rule, ruleId, branch, "display", conditionItems, displayResults, variant)]
+      : [],
+    require: requireResults.length
+      ? [buildNativeRule(rule, ruleId, branch, "require", conditionItems, requireResults, variant)]
+      : []
   };
 }
 
-function buildNativeRule(rule, ruleId, branch, type, conditionItems, result) {
-  const seed = `${ruleId}:${branch}:${type}`;
+function buildNativeRule(rule, ruleId, branch, type, conditionItems, result, variant = "") {
+  const seed = `${ruleId}:${branch}:${variant ? `${variant}:` : ""}${type}`;
   return {
     id: stableId("rule", seed),
     ruleName: `${GENERATED_RULE_PREFIX}${ruleId}:${branch}:${type}`,
@@ -575,6 +607,31 @@ function invertClauses(clauses) {
     ...clause,
     op: INVERT_OPERATOR_MAP[clause.op] || clause.op
   }));
+}
+
+/**
+ * MK's native notInclude condition does not match an unselected/null control.
+ * A DSL complement of `contains` includes blank, while MK's native notInclude
+ * does not. AND conditions invert to one flat OR rule. OR conditions invert to
+ * AND, so distribute each blank alternative into separate native rule variants.
+ */
+function expandInvertedClausesWithBlankFallback(clauses, logic) {
+  const inverted = invertClauses(clauses);
+  const alternatives = inverted.map((clause) => clause.op === "notContains"
+    ? [clause, { ...clause, op: "empty", value: "" }]
+    : [clause]);
+  if (logic !== "or") return [alternatives.flat()];
+  const variantCount = alternatives.reduce((count, choices) => count * choices.length, 1);
+  if (variantCount > MAX_BLANK_COMPLEMENT_VARIANTS) {
+    const error = new Error("A native form-rule else branch requires too many blank-safe variants.");
+    error.code = "projection.form_rule.blank_complement_variants_exceeded";
+    error.details = { variantCount, maximum: MAX_BLANK_COMPLEMENT_VARIANTS };
+    throw error;
+  }
+  return alternatives.reduce(
+    (sets, choices) => sets.flatMap((set) => choices.map((choice) => [...set, choice])),
+    [[]]
+  );
 }
 
 function invertLogic(logic) {
