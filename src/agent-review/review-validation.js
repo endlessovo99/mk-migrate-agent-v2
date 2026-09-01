@@ -4,6 +4,7 @@ import { FIELD_TYPES } from "../dsl/schema.js";
 import { nativeFormRuleBelongsToAction } from "../dsl/native-form-rule-projection.js";
 import { inspectMappedScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
 import { analyzeScriptFunction, validateSetFieldAttrTargets } from "../dsl/scripts.js";
+import { isSourceBackedMonthField } from "../dsl/static-month-picker.js";
 import { AGENT_REVIEW_PROMPT_VERSION } from "./prompt.js";
 import { classifyActionRowMarkers } from "./row-marker-policy.js";
 import {
@@ -1183,6 +1184,22 @@ function validateDeterministicFieldTypePatch(patch, target, dslDraft, path) {
   if (!["type", "componentId"].includes(target.property)) return undefined;
   const field = dslDraft?.form?.fields?.[target.fieldIndex];
   const value = target.scope === "column" ? field?.columns?.[target.columnIndex] : field;
+  const monthInference = value?.sourceProps?.monthPickerInference;
+  if (isSourceBackedMonthField(value)) {
+    const expected = target.property === "type" ? "dateTime" : "xform-datetime";
+    if (patch.value === expected) return undefined;
+    return error(
+      "agent.patch.deterministic_month_component_changed",
+      "Agent Review must preserve the deterministic month component inferred from exact source laydate behavior.",
+      `${path}/value`,
+      {
+        fieldId: value?.id,
+        expected,
+        actual: patch.value,
+        inference: monthInference
+      }
+    );
+  }
   const inference = value?.sourceProps?.numericCalculationInference;
   if (!inference) return undefined;
   const expected = target.property === "type" ? "number" : "xform-number";

@@ -42,6 +42,7 @@ import {
   validateSetFieldAttrTargets
 } from "./scripts.js";
 import { scriptRecipeValidationIssues } from "./script-recipes.js";
+import { isSourceBackedMonthField } from "./static-month-picker.js";
 import { subProcessValidationIssues } from "./subprocess.js";
 import { projectLayoutGrid } from "./layout-pack.js";
 import { findUnredactedCredentialPaths } from "../credential-material.js";
@@ -1697,15 +1698,9 @@ function hasCompleteStaticMonthPickerCoverage(action, form) {
     )))
   ) return false;
   const field = (form?.fields || []).find((candidate) => (
-    candidate?.id === staticProps[0].fieldId &&
-    candidate?.type === "dateTime" &&
-    candidate?.componentId === "xform-datetime"
+    candidate?.id === staticProps[0].fieldId
   ));
-  return field?.props?.dataPattern === "yyyy-MM" &&
-    field?.props?.displayPattern === "yyyy-MM" &&
-    field?.sourceProps?.monthPickerInference?.classification === "source" &&
-    field?.sourceProps?.monthPickerInference?.dataPattern === "yyyy-MM" &&
-    field?.sourceProps?.monthPickerInference?.displayPattern === "yyyy-MM";
+  return isSourceBackedMonthField(field);
 }
 
 function hasLegacyRuntimeNoopCoverage(action) {

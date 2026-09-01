@@ -1,5 +1,6 @@
 import { COMPONENT_CATALOG, FUNCTION_CATALOG, VALIDATION_POLICY } from "../dsl/catalogs.js";
 import { scriptTargetApiSummary } from "../dsl/scripts.js";
+import { isSourceBackedMonthField } from "../dsl/static-month-picker.js";
 import { JSP_TRANSLATION_PLAYBOOK } from "./playbook.js";
 import {
   classifyActionRowMarkers,
@@ -7,7 +8,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v12";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v13";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -79,6 +80,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "MKXFORM.getFormValues returns each detail table as a state object; read rows from its values array. A direct array may be accepted only as a compatibility fallback.",
       "Legacy text-value rule: branchProvenance.conditions[].emptyText=true means the source read a scalar text input's DOM .value, whose unset value is an empty string. Preserve that with String(MKXFORM.getValue('fieldId') ?? '') or a stable raw == null ? '' : String(raw) alias before testing it. A raw getValue read, String(raw), or raw || '' does not preserve this contract. Do not apply this coercion to organization objects, arrays, or numeric fields without matching source text evidence. Keep the immutable emptyText evidence unchanged.",
       "Static readOnly=true fields are source restrictions. Preserve props.readOnly and do not weaken them to editable during review.",
+      "Source-proven deterministic month fields already lowered to xform-datetime with yyyy-MM patterns have immutable type and componentId. Do not downgrade them to the source metadata's String/xform-input shape.",
       "When a detail-table function refers to a runtime control id inside a detail row, use ${table:<sourceDetailTableId>}.<controlId>; the executor resolves this placeholder to the source detail fdId at write time.",
       "Whole-row or whole detail-table container visibility/required state must prefer native formRules.linkage against layout sourceMarkers (including detail-table-only rows). Do not use ${table:<detailTableId>} or the detail-table field id as an MKXFORM.setFieldAttr target.",
       "Only the first sourceMarker on a layout row is persisted as migrationRowId. When a row lists multiple sourceMarkers, rewrite every co-located alias to that primary marker in MKXFORM.setFieldAttr calls.",
@@ -282,11 +284,11 @@ function buildConcretePatchTargets(dslDraft, reviewScope) {
   const fields = Array.isArray(dslDraft?.form?.fields) ? dslDraft.form.fields : [];
   const scriptActions = Array.isArray(dslDraft?.scripts?.actions) ? dslDraft.scripts.actions : [];
   const targets = [];
-  const patchProperties = ["title", "type", "componentId", "props"];
   const scriptPatchProperties = ["function", "translationStatus", "functionMappings", "coverage"];
 
   if (!reviewScope || reviewScope.includeFormTargets) fields.forEach((field, fieldIndex) => {
     const pathBase = `/form/fields/${fieldIndex}`;
+    const patchProperties = allowedFormPatchProperties(field);
     targets.push(targetSummary({
       scope: "field",
       index: fieldIndex,
@@ -298,6 +300,7 @@ function buildConcretePatchTargets(dslDraft, reviewScope) {
     const columns = Array.isArray(field?.columns) ? field.columns : [];
     columns.forEach((column, columnIndex) => {
       const columnPathBase = `${pathBase}/columns/${columnIndex}`;
+      const columnPatchProperties = allowedFormPatchProperties(column);
       targets.push(targetSummary({
         scope: "column",
         fieldIndex,
@@ -305,7 +308,7 @@ function buildConcretePatchTargets(dslDraft, reviewScope) {
         parentFieldId: field.id,
         pathBase: columnPathBase,
         value: column,
-        allowedPatchPaths: patchProperties.map((property) => `${columnPathBase}/${property}`)
+        allowedPatchPaths: columnPatchProperties.map((property) => `${columnPathBase}/${property}`)
       }));
     });
   });
@@ -323,6 +326,13 @@ function buildConcretePatchTargets(dslDraft, reviewScope) {
   });
 
   return targets;
+}
+
+function allowedFormPatchProperties(value) {
+  const properties = ["title", "type", "componentId", "props"];
+  return isSourceBackedMonthField(value)
+    ? properties.filter((property) => !["type", "componentId"].includes(property))
+    : properties;
 }
 
 function targetSummary({ scope, index, fieldIndex, columnIndex, parentFieldId, pathBase, value, allowedPatchPaths }) {
