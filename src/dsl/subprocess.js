@@ -31,7 +31,6 @@ export function projectSubProcessWorkflow(workflow = {}) {
 }
 
 export function subProcessContract(value = {}) {
-  const startIdentity = subProcessStartIdentityContract(value.startIdentity);
   return {
     templateId: value.templateId,
     recoverNodeId: value.recoverNodeId,
@@ -42,130 +41,9 @@ export function subProcessContract(value = {}) {
       variableScope: value.variableScope,
       recoverRule: value.recoverRule
     },
-    ...(startIdentity ? { startIdentity } : {}),
     startParamConfig: Array.isArray(value.startParamConfig) ? value.startParamConfig : [],
     recoverParamConfig: Array.isArray(value.recoverParamConfig) ? value.recoverParamConfig : []
   };
-}
-
-export function inspectSubProcessStartParamCompatibility(subProcess = {}, childDsl = {}) {
-  const targetFields = childTargetFieldContracts(childDsl?.form);
-  return (Array.isArray(subProcess.startParamConfig) ? subProcess.startParamConfig : [])
-    .flatMap((mapping, index) => {
-      const target = mapping?.target || {};
-      const targetId = String(target.value || "").trim();
-      const expected = legacyTypeContract(target.type);
-      const actual = targetFields.get(targetId);
-      const path = `/subProcess/startParamConfig/${index}/target`;
-      if (!targetId || !expected) {
-        return [{
-          code: "subprocess.start_param_target_invalid",
-          path,
-          targetId,
-          targetType: target.type
-        }];
-      }
-      if (!actual) {
-        return [{
-          code: "subprocess.start_param_target_missing",
-          path,
-          targetId,
-          expected
-        }];
-      }
-      const issues = [];
-      if (actual.type !== expected.type) {
-        issues.push({
-          code: "subprocess.start_param_target_type_mismatch",
-          path,
-          targetId,
-          expected: expected.type,
-          actual: actual.type
-        });
-      }
-      if (actual.array !== expected.array) {
-        issues.push({
-          code: "subprocess.start_param_target_grain_mismatch",
-          path,
-          targetId,
-          expected: expected.array ? "array" : "scalar",
-          actual: actual.array ? "array" : "scalar"
-        });
-      }
-      return issues;
-    });
-}
-
-function childTargetFieldContracts(form = {}) {
-  const contracts = new Map([["docSubject", { type: "String", array: false }]]);
-  for (const field of Array.isArray(form?.fields) ? form.fields : []) {
-    if (field?.type === "detailTable") {
-      for (const column of field.columns || []) {
-        contracts.set(`${field.id}.${column.id}`, {
-          type: dslFieldLegacyType(column),
-          array: true
-        });
-      }
-      continue;
-    }
-    contracts.set(field.id, { type: dslFieldLegacyType(field), array: false });
-  }
-  return contracts;
-}
-
-function dslFieldLegacyType(field = {}) {
-  if (field.componentId === "xform-address") {
-    return "com.landray.kmss.sys.organization.model.SysOrgElement";
-  }
-  if (field.type === "dateTime") return "Date";
-  return "String";
-}
-
-function legacyTypeContract(value) {
-  const text = String(value || "").trim();
-  if (!text) return undefined;
-  const array = text.endsWith("[]");
-  return {
-    type: array ? text.slice(0, -2) : text,
-    array
-  };
-}
-
-function subProcessStartIdentityContract(value) {
-  if (!isRecord(value)) return undefined;
-  if (value.mode === "explicit" && Array.isArray(value.members)) {
-    return {
-      mode: "explicit",
-      members: value.members.map((member) => ({
-        id: member?.id,
-        name: member?.name,
-        targetOrgType: member?.targetOrgType
-      }))
-    };
-  }
-  if (
-    String(value.type || "").toLowerCase() === "org" &&
-    Array.isArray(value.members) &&
-    value.members.length > 0
-  ) {
-    return {
-      mode: "explicit",
-      members: value.members.map((member) => ({
-        id: member?.id,
-        name: member?.name,
-        targetOrgType: nativeMemberOrgType(member?.type)
-      }))
-    };
-  }
-  return undefined;
-}
-
-function nativeMemberOrgType(value) {
-  const type = String(value || "");
-  if (type === "1") return 8;
-  if (type === "2") return 4;
-  if (type === "4") return 32;
-  return 2;
 }
 
 export function subProcessValidationIssues({ nodes = [], edges = [], mode = "draft" } = {}) {
@@ -187,26 +65,13 @@ export function subProcessValidationIssues({ nodes = [], edges = [], mode = "dra
       ));
       continue;
     }
+    issues.push(...subProcessRecoveryIssues(node.subProcess, `${path}/subProcess`));
     if (node.type === "startSubProcess") {
       const recoverId = node.subProcess.recoverNodeId;
-      const hasTargetTemplate = nonEmptyString(node.subProcess.templateId);
-      const hasSourceTemplate = nonEmptyString(node.subProcess.sourceTemplateId);
-      if (!hasTargetTemplate && !hasSourceTemplate) {
-        issues.push(issue("error", "dsl.workflow.subprocess.template_required", "Start subprocess requires a target templateId or a sourceTemplateId awaiting explicit resolution.", `${path}/subProcess/templateId`));
-      } else if (!hasTargetTemplate && hasSourceTemplate) {
-        issues.push(issue(
-          "warning",
-          "dsl.workflow.subprocess.template_resolution_required",
-          "Source subprocess templates require an explicitly validated target override before persistence.",
-          `${path}/subProcess/sourceTemplateId`
-        ));
-      }
-      if (String(node.subProcess.flowType) === "1") {
-        issues.push(...standaloneSubProcessIssues(node.subProcess, `${path}/subProcess`));
-        continue;
-      }
-      issues.push(...subProcessRecoveryIssues(node.subProcess, `${path}/subProcess`));
       const recover = nodeMap.get(recoverId);
+      if (!nonEmptyString(node.subProcess.templateId)) {
+        issues.push(issue("error", "dsl.workflow.subprocess.template_required", "Start subprocess requires a target templateId.", `${path}/subProcess/templateId`));
+      }
       if (!recover || recover.type !== "recoverSubProcess" || recover.subProcess?.startNodeId !== node.id) {
         issues.push(issue("error", "dsl.workflow.subprocess.recover_pair_invalid", "Start subprocess must reference a reciprocal recoverSubProcess node.", `${path}/subProcess/recoverNodeId`));
       }
@@ -217,59 +82,12 @@ export function subProcessValidationIssues({ nodes = [], edges = [], mode = "dra
         }
       }
     } else {
-      issues.push(...subProcessRecoveryIssues(node.subProcess, `${path}/subProcess`));
       const start = nodeMap.get(node.subProcess.startNodeId);
       if (!start || start.type !== "startSubProcess" || start.subProcess?.recoverNodeId !== node.id) {
         issues.push(issue("error", "dsl.workflow.subprocess.start_pair_invalid", "Recover subprocess must reference a reciprocal startSubProcess node.", `${path}/subProcess/startNodeId`));
       }
     }
   }
-  return issues;
-}
-
-function standaloneSubProcessIssues(subProcess, path) {
-  const issues = [];
-  if (
-    subProcess.recoverNodeId !== undefined ||
-    subProcess.variableScope !== undefined ||
-    subProcess.recoverRule !== undefined ||
-    (Array.isArray(subProcess.recoverParamConfig) && subProcess.recoverParamConfig.length > 0)
-  ) {
-    issues.push(issue(
-      "error",
-      "dsl.workflow.subprocess.continue_recovery_forbidden",
-      "Continue-flow subprocesses cannot declare recovery or child-to-parent mappings.",
-      path
-    ));
-  }
-  const startIdentity = subProcess.startIdentity;
-  const members = startIdentity?.members;
-  if (
-    !isRecord(startIdentity) ||
-    startIdentity.mode !== "explicit" ||
-    !Array.isArray(members) ||
-    members.length === 0
-  ) {
-    issues.push(issue(
-      "error",
-      "dsl.workflow.subprocess.start_identity_required",
-      "Continue-flow subprocesses require an explicit source-backed or resolved start identity.",
-      `${path}/startIdentity`
-    ));
-    return issues;
-  }
-  members.forEach((member, index) => {
-    const sourceBacked = nonEmptyString(member?.sourceId) && Number.isInteger(Number(member?.sourceOrgType));
-    const targetBacked = nonEmptyString(member?.id) && Number.isInteger(Number(member?.targetOrgType));
-    if (!isRecord(member) || !nonEmptyString(member.name) || (!sourceBacked && !targetBacked)) {
-      issues.push(issue(
-        "error",
-        "dsl.workflow.subprocess.start_identity_member_invalid",
-        "Subprocess start-identity members require a name and either source or resolved target identity.",
-        `${path}/startIdentity/members/${index}`
-      ));
-    }
-  });
   return issues;
 }
 

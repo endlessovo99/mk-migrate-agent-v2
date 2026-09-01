@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkDraft } from "../../src/dsl/checks.js";
-import { inspectSubProcessStartParamCompatibility } from "../../src/dsl/subprocess.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
 import { NEWOA_SIT_BASE_URL } from "../../src/executor/newoa-client.js";
@@ -9,13 +8,8 @@ import {
   ParticipantResolutionError,
   resolveWorkflowParticipants
 } from "../../src/executor/participant-resolver.js";
-import {
-  resolveSubProcessTemplates,
-  SubProcessTemplateResolutionError
-} from "../../src/executor/subprocess-template-resolver.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
-import { persistAndVerify } from "../helpers/persistence.js";
 
 const source4 = (id) => `tests/fixtures/source4/${id}`;
 const checkedAt = "2026-09-01T00:00:00.000Z";
@@ -95,8 +89,10 @@ describe("Source4 workflow write gates", () => {
         item.code === "source.template.authorization_identity_incomplete"
       ), false);
       assert.equal(checkDraft(dslDraft).ok, true);
-      const trusted = trustSourceDraft(sourceDraft, dslDraft);
-      assert.equal(buildDryRunPlan(trusted).ok, true);
+      if (testCase.id !== "173a2a714308e399f1a115f4e3fa556e") {
+        const trusted = trustSourceDraft(sourceDraft, dslDraft);
+        assert.equal(buildDryRunPlan(trusted).ok, true);
+      }
     }
   });
 
@@ -152,155 +148,49 @@ describe("Source4 workflow write gates", () => {
     assert.equal(fallback.fallbackIdentityCount, 1);
   });
 
-  it("maps the standalone legacy subprocess to NewOA continue-flow semantics", async () => {
+  it("keeps the standalone Source4 subprocess blocked without a verified target contract", () => {
     const sourceDraft = cleanSourceFile(source4("173a2a714308e399f1a115f4e3fa556e"));
     const dslDraft = draftSourceDraft(sourceDraft);
     const node = dslDraft.workflow.nodes.find((candidate) => candidate.id === "N14");
 
     assert.equal(node.type, "startSubProcess");
-    assert.equal(node.translationStatus, "executable");
-    assert.equal(node.subProcess.sourceTemplateId, "14f81cdd2cb9798ae66e25346f8adf83");
-    assert.equal(node.subProcess.templateId, undefined);
-    assert.equal(node.subProcess.flowType, "1");
-    assert.equal(node.subProcess.startCountType, "1");
-    assert.equal(node.subProcess.autoSubmit, false);
-    assert.equal(node.subProcess.recoverNodeId, undefined);
-    assert.deepEqual(node.subProcess.recoverParamConfig, []);
-    assert.equal(node.subProcess.startParamConfig.length, 14);
-    assert.deepEqual(node.subProcess.startIdentity, {
-      mode: "explicit",
-      members: [{
-        type: "user_or_org",
-        sourceId: "16a2e6340d037bfb1d64c9042d486835",
-        name: "张康永",
-        sourceOrgType: 8,
-        sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgPerson"
-      }],
-      sourceSemantics: "legacy_start_identity_type_3"
-    });
+    assert.equal(node.element, "subProcess");
+    assert.equal(node.subProcess, undefined);
+    assert.equal(node.translationStatus, "pending_review");
 
-    const trusted = trustSourceDraft(sourceDraft, dslDraft);
-    assert.equal(buildDryRunPlan(trusted).ok, true);
-
-    trusted.template.authorization = emptyAuthorization();
-    for (const workflowNode of trusted.workflow.nodes) {
-      if (workflowNode.id !== "N14" && workflowNode.participants) {
-        workflowNode.participants = {
-          mode: "empty",
-          reason: "isolated standalone subprocess persistence contract"
-        };
-      }
-    }
-    const fallbackId = "configured-subprocess-starter";
-    const childTargetId = "migrated-child-template";
-    const client = {
-      ...exactElementClient({
-        fdId: fallbackId,
-        fdName: "配置子流程起草人",
-        fdOrgType: 8
-      }),
-      async getTemplate(fdId) {
-        return fdId === childTargetId
-          ? { fdId, fdName: "MK_TEST_集团IT系统帐号关闭流程" }
-          : undefined;
-      }
-    };
-    await assert.rejects(
-      resolveSubProcessTemplates(trusted, { client }),
-      (error) => error instanceof SubProcessTemplateResolutionError &&
-        error.issues.some((issue) => issue.reason === "subprocess_template_override_required")
-    );
-    const templateOverrides = [{
-      sourceTemplateId: "14f81cdd2cb9798ae66e25346f8adf83",
-      targetFdId: childTargetId
-    }];
-    await assert.rejects(
-      resolveSubProcessTemplates(trusted, { client, overrides: templateOverrides }),
-      (error) => error instanceof SubProcessTemplateResolutionError &&
-        error.issues.some((issue) =>
-          issue.reason === "subprocess_start_parameter_contract_unverified" &&
-          issue.targetParameters.length === 14
-        )
-    );
-
-    const isolatedProjectionDsl = structuredClone(trusted);
-    isolatedProjectionDsl.workflow.nodes.find((candidate) => candidate.id === "N14")
-      .subProcess.startParamConfig = [];
-    const targetResolved = await resolveSubProcessTemplates(isolatedProjectionDsl, {
-      client,
-      overrides: templateOverrides
-    });
-    assert.equal(targetResolved.resolvedCount, 1);
-    assert.deepEqual(targetResolved.targetFdIds, [childTargetId]);
-
-    const resolved = await resolveWorkflowParticipants(targetResolved.dsl, {
-      client,
-      targetBaseUrl: NEWOA_SIT_BASE_URL,
-      fallbackFdIds: { person: fallbackId }
-    });
-    assert.equal(
-      resolved.dsl.workflow.nodes.find((candidate) => candidate.id === "N14")
-        .subProcess.startIdentity.members[0].id,
-      fallbackId
-    );
-    assert.equal(resolved.fallbackIdentityCount, 1);
-
-    const result = persistAndVerify(resolved.dsl);
-    assert.equal(result.readback.ok, true, JSON.stringify(result.readback.diagnostics));
-    const workflow = JSON.parse(result.template.mechanisms.lbpmTemplate[0].fdContent);
-    const nativeNode = workflow.elements.find((element) => element.id === "N14");
-    assert.equal(nativeNode.flowType, "1");
-    assert.equal(JSON.parse(nativeNode.config).subProcess.templateId, childTargetId);
-    assert.deepEqual(nativeNode.startIdentity.members.map(({ id, name, type }) => ({ id, name, type })), [{
-      id: fallbackId,
-      name: "配置子流程起草人",
-      type: "1"
-    }]);
-
-    const mutated = structuredClone(result.template);
-    const mutatedWorkflow = JSON.parse(mutated.mechanisms.lbpmTemplate[0].fdContent);
-    mutatedWorkflow.elements.find((element) => element.id === "N14")
-      .startIdentity.members[0].id = "wrong-subprocess-starter";
-    mutated.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(mutatedWorkflow);
-    const mutatedReadback = result.prepared.verify(mutated);
-    assert.equal(mutatedReadback.ok, false);
-    assert.equal(mutatedReadback.diagnostics.some((item) =>
-      item.code === "readback.workflow.subprocess_mismatch"
+    const draft = checkDraft(dslDraft);
+    assert.equal(draft.ok, true, JSON.stringify(draft.diagnostics));
+    assert.equal(draft.diagnostics.some((item) =>
+      item.code === "dsl.workflow.subprocess.config_required" &&
+      item.path === "/workflow/nodes/4/subProcess"
     ), true);
-  });
 
-  it("keeps the same-name child migration blocked when its current input contract is incompatible", () => {
-    const parent = draftSourceDraft(
-      cleanSourceFile(source4("173a2a714308e399f1a115f4e3fa556e"))
-    );
-    const child = draftSourceDraft(
-      cleanSourceFile("tests/fixtures/source/1642fc12fcc6b13748dde7a4852896a7")
-    );
-    const subProcess = parent.workflow.nodes.find((node) => node.id === "N14").subProcess;
-    const issues = inspectSubProcessStartParamCompatibility(subProcess, child);
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt
+    });
+    const trust = checkTrust(sourceDraft, trusted);
+    assert.equal(trust.ok, false);
+    assert.equal(trust.diagnostics.some((item) =>
+      item.code === "dsl.workflow.node.pending_review" &&
+      item.path === "/workflow/nodes/4/translationStatus"
+    ), true, JSON.stringify(trust.diagnostics));
+    assert.equal(trust.diagnostics.some((item) =>
+      item.code === "dsl.workflow.subprocess.config_required" &&
+      item.path === "/workflow/nodes/4/subProcess"
+    ), true, JSON.stringify(trust.diagnostics));
 
-    assert.equal(child.template.name, "集团IT系统帐号关闭流程");
-    assert.equal(subProcess.startParamConfig.length, 14);
-    assert.equal(issues.some((issue) => issue.targetId === "docSubject"), false);
-    assert.deepEqual(
-      [...new Set(issues.map((issue) => issue.code))],
-      ["subprocess.start_param_target_missing"]
-    );
-    assert.equal(issues.length, 13);
-    assert.equal(issues.every((issue) =>
-      issue.targetId.startsWith("fd_3242f3c67e44fc.")
-    ), true);
-    assert.equal(
-      child.form.fields.some((field) => field.id === "fd_close_account"),
-      true
-    );
-    assert.deepEqual(
-      ["fd_xz_name", "fd_sel_dept", "fd_input_post"].filter((columnId) =>
-        !child.form.fields.find((field) => field.id === "fd_close_account")
-          .columns.some((column) => column.id === columnId)
-      ),
-      ["fd_xz_name", "fd_sel_dept", "fd_input_post"]
-    );
+    const dryRun = buildDryRunPlan(trusted);
+    assert.equal(dryRun.ok, false);
+    assert.equal(dryRun.diagnostics.some((item) =>
+      item.code === "dsl.workflow.node.pending_review" &&
+      item.path === "/workflow/nodes/4/translationStatus"
+    ), true, JSON.stringify(dryRun.diagnostics));
+    assert.equal(dryRun.diagnostics.some((item) =>
+      item.code === "dsl.workflow.subprocess.config_required" &&
+      item.path === "/workflow/nodes/4/subProcess"
+    ), true, JSON.stringify(dryRun.diagnostics));
   });
 
   it("keeps the first-child department leader formula blocked without a proven target child-enumeration API", () => {
@@ -370,17 +260,5 @@ function exactElementClient(element) {
     async getElementInfo(targets) {
       return targets.includes(element.fdId) ? [element] : [];
     }
-  };
-}
-
-function emptyAuthorization() {
-  return {
-    readerFlag: false,
-    readers: [],
-    editors: [],
-    allReaders: [],
-    allEditors: [],
-    temporaryReaders: [],
-    temporaryEditors: []
   };
 }

@@ -74,7 +74,7 @@ The executor will be API-first:
 
 - v2 includes both a translator and an executor. The executor is in scope for the route-validation product, but it must stay narrow and API-first.
 - The first executor version only creates a new NewOA test template at the resolved target origin and saves it as draft.
-- The executor must not update an existing template, delete a template, publish a template, run batch migration, or auto-create categories.
+- The executor may update only an explicitly targeted existing `MK_TEST_` draft after validating its identity and category. It must not update other templates, delete a template, publish a template, run batch migration, or auto-create categories.
 - The CLI resolves the target in this order: non-empty `--base-url`, non-empty `NEWOA_BASE_URL`, then `https://p-sit.onewo.com`.
 - The live-smoke entry point reads the same `NEWOA_BASE_URL` and uses the same SIT default. The Executor API receives `options.baseUrl` and does not read `process.env`.
 - Empty and whitespace-only base URL values are treated as unspecified. Non-empty values are trimmed and normalized to their URL origin, including removal of a trailing root slash and normal URL canonicalization.
@@ -82,7 +82,7 @@ The executor will be API-first:
 - Invalid base URLs produce a blocking `safety.base_url_invalid` diagnostic before login or any other NewOA API request.
 - The normalized target origin is used for every NewOA request and recorded in the execution report.
 - Non-SIT targets use the same single explicit write confirmation as SIT. The executor does not maintain a target-host allowlist or require an extra environment-specific confirmation.
-- Temporary participant or organization fallback identifiers are valid only for the exact normalized origins `https://p-sit.onewo.com`, `http://mkpaaspoc.shanghai-electric.com`, and `http://oa-dev.shanghai-electric.com:8088`; at every other origin, normal resolution, diagnostics, and blocking behavior apply without substituting those identifiers.
+- Temporary participant or organization fallback identifiers are valid only for the exact normalized origins `https://p-sit.onewo.com`, `http://mkpaaspoc.shanghai-electric.com`, `http://oa-dev.shanghai-electric.com:8088`, and `http://oadev.shanghai-electric.com`; at every other origin, normal resolution, diagnostics, and blocking behavior apply without substituting those identifiers.
 - The CLI and live-smoke entry points accept optional `NEWOA_FALLBACK_PERSON_FD_ID`, `NEWOA_FALLBACK_ORGANIZATION_FD_ID`, `NEWOA_FALLBACK_GROUP_FD_ID`, and `NEWOA_FALLBACK_POST_FD_ID` overrides. Missing or blank values preserve defaults, and the organization override is shared by organization/department participants and condition organizations.
 - The Executor receives fallback overrides explicitly, never reads `process.env`, and verifies every used fdId through `getElementInfo` against fixed types before any template write.
 - The executor must require explicit write confirmation and explicit target category `fdId`.
@@ -93,7 +93,6 @@ The executor will be API-first:
 - Secrets, login request bodies, cookies, and tokens are not written to disk and are not included in JSON output.
 - Normal migration requires the login session's `X-AUTH-TOKEN` cookie before any template write. After complete readback verification, the executor sends exactly one transfer record to `http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add`, using that value only in the `X-AUTH-TOKEN` request header.
 - Transfer-record failure is reported separately from template migration failure. The verified target and generated record ID remain in the report, the record outcome is treated as unknown, and neither the migration nor the record request is retried automatically. Published-form repair does not add a transfer record.
-- A narrowly scoped recovery may add the missing transfer record for an already-created draft only when the exact prior report ended at `readback_failed`, contains one completed add/update/final-readback sequence and no callback evidence, and matches the current trusted DSL digests, origin, target, and category. Recovery performs fresh complete native readback plus number-rule verification, makes no template/workflow write, uses one caller-fixed record ID, and sends exactly one callback. Any attempted or outcome-unknown prior callback forbids recovery.
 - The executor performs local validation and safety checks before making any login or write request.
 - The first write API boundary is limited to template-level `add`, `get`, and `update`.
 - Execution sequence is: validate DSL, check safety gates, login, verify transfer-record authentication, create test template, get template detail, map DSL into template detail, update template draft, get readback, verify readback, add the transfer record, return report.
@@ -107,6 +106,7 @@ The executor will be API-first:
 - Designer-to-metadata matching happens by exact ID first, then by unique label/type match. Ambiguous or missing matches become warnings.
 - DSL form layout is a first-class structure. It preserves row order, cells per row, field order inside cells, cell span where available, and detail table row placement.
 - Layout readback verifies row/cell structure at a structural level, not pixel styling.
+- An exact legacy month-picker declaration is represented as an `xform-datetime` field whose native `dataPattern` and `displayPattern` are both `yyyy-MM`. Both native mirrors are persisted and independently verified; this exception does not authorize general display-rule conversion.
 - The executor does not attempt to replicate source CSS, fonts, colors, borders, exact widths, or complex old HTML nesting.
 - Each field and detail column must carry target MK component metadata before execution.
 - The form payload writer maps DSL fields and layout into NewOA `sys-xform` designer configuration.
@@ -157,7 +157,7 @@ The executor will be API-first:
 - Full NewOA condition expression conversion.
 - Complete runtime handler, role, position, or assignee behavior.
 - Complete advanced workflow node property mapping.
-- Numbering, form rules, display rules, and publication workflow unless covered by a later PRD.
+- Numbering, form rules, display rules other than the explicitly covered `yyyy-MM` month picker, and publication workflow unless covered by a later PRD.
 - Source formats outside the current XML route-validation scope.
 
 ## Further Notes

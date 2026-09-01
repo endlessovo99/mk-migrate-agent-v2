@@ -2745,64 +2745,7 @@ function draftSubProcessPairs(nodes) {
     });
   }
 
-  for (const start of nodes.filter((node) => (
-    String(node.sourceType || "").toLowerCase() === "startsubprocessnode" &&
-    !result.has(node.id)
-  ))) {
-    const startConfig = configs.get(start.id);
-    const hasRecoverNode = nodes.some((node) => (
-      String(node.sourceType || "").toLowerCase() === "recoversubprocessnode" &&
-      configs.get(node.id)?.subProcessNode === start.id
-    ));
-    const startIdentity = standaloneSubProcessStartIdentity(startConfig?.startIdentity);
-    if (
-      hasRecoverNode ||
-      !startConfig?.subProcess?.templateId ||
-      Number(startConfig.startCountType || 1) !== 1 ||
-      !Array.isArray(startConfig.onErrorNotify) ||
-      startConfig.onErrorNotify.length !== 0 ||
-      !startIdentity
-    ) continue;
-
-    result.set(start.id, {
-      sourceTemplateId: startConfig.subProcess.templateId,
-      templateName: startConfig.subProcess.templateName || "",
-      modelName: startConfig.subProcess.modelName || "",
-      dictBean: startConfig.subProcess.dictBean || "",
-      createParam: startConfig.subProcess.createParam || "",
-      startIdentity,
-      startCountType: "1",
-      autoSubmit: startConfig.skipDraftNode === true,
-      flowType: "1",
-      startParamConfig: parameterMappings(startConfig.startParamenters, "parent_to_child"),
-      recoverParamConfig: []
-    });
-  }
   return result;
-}
-
-function standaloneSubProcessStartIdentity(value) {
-  if (!value || Number(value.type) !== 3) return undefined;
-  const sourceIds = splitRelatedNodeIds(value.values);
-  const names = String(value.names || "").split(";").map((item) => item.trim());
-  if (
-    sourceIds.length === 0 ||
-    sourceIds.length !== names.length ||
-    sourceIds.some((sourceId) => /[${}<>()[\]]/.test(sourceId)) ||
-    names.some((name) => !name)
-  ) return undefined;
-
-  return {
-    mode: "explicit",
-    members: sourceIds.map((sourceId, index) => ({
-      type: "user_or_org",
-      sourceId,
-      name: names[index],
-      sourceOrgType: 8,
-      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgPerson"
-    })),
-    sourceSemantics: "legacy_start_identity_type_3"
-  };
 }
 
 function nativeSubProcessFlowType(recoverConfig) {

@@ -1013,10 +1013,6 @@ function deduplicateResolvedParticipantCollections(dsl) {
         participants[collectionName] = deduplicateMembers(participants[collectionName]);
       }
     }
-    const startIdentity = node?.subProcess?.startIdentity;
-    if (Array.isArray(startIdentity?.members)) {
-      startIdentity.members = deduplicateMembers(startIdentity.members);
-    }
   }
   const authorization = dsl?.template?.authorization;
   if (!authorization || typeof authorization !== "object") return;
@@ -1228,17 +1224,6 @@ function collectParticipantIdentities(dsl) {
         });
       }
     }
-
-    const startIdentityMembers = node?.subProcess?.startIdentity?.members;
-    if (Array.isArray(startIdentityMembers)) {
-      startIdentityMembers.forEach((member, memberIndex) => {
-        collectIdentity(
-          member,
-          `/workflow/nodes/${nodeIndex}/subProcess/startIdentity/members/${memberIndex}`
-        );
-      });
-    }
-
     function collectIdentity(member, path) {
       if (!member || typeof member !== "object") return;
       const kind = hasSourceEvidence(member) ? "source" : "target";

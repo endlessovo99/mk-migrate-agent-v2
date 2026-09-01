@@ -1960,7 +1960,6 @@ function observeSubProcess(node) {
     startCountType: node.startCountType || config.startCountType,
     flowType: node.flowType || config.flowType,
     autoSubmit: node.autoSubmit,
-    startIdentity: node.startIdentity,
     variableScope: config.recovery?.variableScope,
     recoverRule: config.recovery?.recoverRule,
     startParamConfig: node.startParamConfig,
