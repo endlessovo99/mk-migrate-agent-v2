@@ -8,6 +8,8 @@ import { checkDraft, checkExecute } from "../dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../dsl/trust.js";
 import { buildDryRunPlan } from "../executor/dry-run.js";
 import { executeDsl } from "../executor/execute.js";
+import { repairLockedDraft } from "../executor/locked-draft-repair.js";
+import { reconcileTransferRecord } from "../executor/reconcile-transfer-record.js";
 import { loadFunctionWhitelist } from "../translator/function-whitelist.js";
 import { cleanSourceFile, draftSourceDraft, translateSourceFile } from "../translator/index.js";
 import { selectNewoaBaseUrl } from "./base-url.js";
@@ -22,7 +24,9 @@ const commands = new Map([
   ["check", runCheck],
   ["validate", runValidate],
   ["dry-run", runDryRun],
-  ["execute", runExecute]
+  ["execute", runExecute],
+  ["reconcile-transfer-record", runReconcileTransferRecord],
+  ["repair-locked-draft", runRepairLockedDraft]
 ]);
 
 export async function main(argv = [], options = {}) {
@@ -262,6 +266,98 @@ async function runExecute(argv, options = {}) {
   if (report.ok !== true) process.exitCode = 1;
 }
 
+async function runReconcileTransferRecord(argv, options = {}) {
+  const args = parseArgs(argv);
+  const inputPath = args.positionals[0];
+  if (!inputPath) {
+    throw new Error("reconcile-transfer-record requires a trusted migration DSL path");
+  }
+  if (typeof args.source !== "string" || !args.source.trim()) {
+    throw new Error("reconcile-transfer-record requires --source <source-dir|sysform.xml>");
+  }
+  if (typeof args["prior-execution-report"] !== "string") {
+    throw new Error("reconcile-transfer-record requires --prior-execution-report <report.json>");
+  }
+  const env = options.env || process.env;
+  const reconcile = options.reconcileTransferRecord || reconcileTransferRecord;
+  const sourceDraft = cleanSourceFile(args.source, {
+    functionWhitelist: loadWhitelist(args),
+    templateName: readTemplateNameOption(args),
+    workflowReferenceDir: readWorkflowReferenceDirOption(args)
+  });
+  const report = await reconcile(readJson(inputPath), {
+    sourceDraft,
+    priorSourceDraft: typeof args["prior-source-draft"] === "string"
+      ? readJson(args["prior-source-draft"])
+      : undefined,
+    priorExecutionReport: readJson(args["prior-execution-report"]),
+    confirmWrite: args["confirm-write"] === true,
+    expectedDslDigest: args["expected-dsl-digest"],
+    expectedPriorReportDigest: args["expected-prior-report-digest"],
+    expectedPriorSourceDraftDigest: args["expected-prior-source-draft-digest"],
+    expectedEvidenceDigest: args["expected-evidence-digest"],
+    artifactsDir: args["artifacts-dir"],
+    targetCategoryId: args["target-category-id"],
+    targetTemplateId: args["target-template-id"],
+    baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
+    credentials: {
+      username: env.NEWOA_USERNAME,
+      encryptedPassword: env.NEWOA_ENCRYPTED_PASSWORD
+    }
+  });
+  if (args.out) writeJson(args.out, report);
+  printJson(args.out ? { ...report, wrote: args.out } : report);
+  if (report.ok !== true) process.exitCode = 1;
+}
+
+async function runRepairLockedDraft(argv, options = {}) {
+  const args = parseArgs(argv);
+  const inputPath = args.positionals[0];
+  if (!inputPath) throw new Error("repair-locked-draft requires a trusted migration DSL path");
+  if (typeof args.source !== "string" || !args.source.trim()) {
+    throw new Error("repair-locked-draft requires --source <source-dir|sysform.xml>");
+  }
+  if (typeof args["prior-execution-report"] !== "string") {
+    throw new Error("repair-locked-draft requires --prior-execution-report <report.json>");
+  }
+  const env = options.env || process.env;
+  const repair = options.repairLockedDraft || repairLockedDraft;
+  const sourceDraft = cleanSourceFile(args.source, {
+    functionWhitelist: loadWhitelist(args),
+    templateName: readTemplateNameOption(args),
+    workflowReferenceDir: readWorkflowReferenceDirOption(args)
+  });
+  const report = await repair(readJson(inputPath), {
+    sourceDraft,
+    priorSourceDraft: typeof args["prior-source-draft"] === "string"
+      ? readJson(args["prior-source-draft"])
+      : undefined,
+    priorDsl: typeof args["prior-migration-dsl"] === "string"
+      ? readJson(args["prior-migration-dsl"])
+      : undefined,
+    priorExecutionReport: readJson(args["prior-execution-report"]),
+    repairKind: args["repair-kind"],
+    confirmWrite: args["confirm-write"] === true,
+    expectedDslDigest: args["expected-dsl-digest"],
+    expectedPriorDslDigest: args["expected-prior-dsl-digest"],
+    expectedPriorReportDigest: args["expected-prior-report-digest"],
+    expectedPriorSourceDraftDigest: args["expected-prior-source-draft-digest"],
+    expectedEvidenceDigest: args["expected-evidence-digest"],
+    artifactsDir: args["artifacts-dir"],
+    targetCategoryId: args["target-category-id"],
+    targetTemplateId: args["target-template-id"],
+    baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
+    fallbackFdIds: selectFallbackFdIds(env),
+    credentials: {
+      username: env.NEWOA_USERNAME,
+      encryptedPassword: env.NEWOA_ENCRYPTED_PASSWORD
+    }
+  });
+  if (args.out) writeJson(args.out, report);
+  printJson(args.out ? { ...report, wrote: args.out } : report);
+  if (report.ok !== true) process.exitCode = 1;
+}
+
 function loadWhitelist(args) {
   return loadFunctionWhitelist(args["function-whitelist"] || process.env.MK_FUNCTION_WHITELIST_PATH);
 }
@@ -430,6 +526,8 @@ function printUsage() {
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");
   console.error("  node src/cli/main.js check execute <migration.dsl.json>");
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js reconcile-transfer-record <migration.dsl.json> --source <source-dir|sysform.xml> [--prior-source-draft <source-draft.json> --expected-prior-source-draft-digest <sha256>] --prior-execution-report <readback-failed-report.json> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js repair-locked-draft <migration.dsl.json> --source <source-dir|sysform.xml> [--prior-source-draft <source-draft.json> --expected-prior-source-draft-digest <sha256>] --prior-execution-report <readback-failed-report.json> --repair-kind <template_authorization|calculation> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--prior-migration-dsl <historical.dsl.json> --expected-prior-dsl-digest <sha256>] [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
   console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--allow-template-authorization-fallback] [--allow-missing-direct-person-fallback] [--allow-missing-direct-post-fallback] [--direct-person-fallback-id <sourceFdId>]... [--participant-override <sourceId>=<targetFdId>]... [--template-authorization-override <sourceId>=<targetFdId>]... [--direct-participant-override <sourceTargetId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
   console.error("    Published form repair additionally requires --published-form-patch --target-template-id <fdId> --expected-snapshot-digest <sha256> --artifacts-dir <new-directory> [--readonly-field <id>]... [--script-action <id>]...");
 }

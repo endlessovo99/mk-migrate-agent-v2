@@ -75,6 +75,9 @@ The executor will be API-first:
 - v2 includes both a translator and an executor. The executor is in scope for the route-validation product, but it must stay narrow and API-first.
 - The first executor version only creates a new NewOA test template at the resolved target origin and saves it as draft.
 - The executor must not update an existing template, delete a template, publish a template, run batch migration, or auto-create categories.
+- Locked-draft recovery is a separate, explicitly confirmed exception rather than a mode of normal execution. It requires one retained `readback_failed` creation report, complete approved artifact digests, the exact target/category/origin, a stable two-read native snapshot, private backups, a fresh artifacts directory, and a deterministic per-origin/target lock outside that caller-selected directory.
+- Record-only reconciliation may add the missing transfer record only after complete current persisted-invariant and number-rule verification; it cannot call template or workflow write operations.
+- Scoped locked-draft repair may change only the prior-report-evidenced template-authorization collections or the three allowlisted native calculation paths for one row formula and its aggregate. It protects all other template/form/workflow state and performs complete readback before adding one transfer record. Any uncertain write permanently forbids retry.
 - The CLI resolves the target in this order: non-empty `--base-url`, non-empty `NEWOA_BASE_URL`, then `https://p-sit.onewo.com`.
 - The live-smoke entry point reads the same `NEWOA_BASE_URL` and uses the same SIT default. The Executor API receives `options.baseUrl` and does not read `process.env`.
 - Empty and whitespace-only base URL values are treated as unspecified. Non-empty values are trimmed and normalized to their URL origin, including removal of a trailing root slash and normal URL canonicalization.
@@ -93,6 +96,7 @@ The executor will be API-first:
 - Secrets, login request bodies, cookies, and tokens are not written to disk and are not included in JSON output.
 - Normal migration requires the login session's `X-AUTH-TOKEN` cookie before any template write. After complete readback verification, the executor sends exactly one transfer record to `http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add`, using that value only in the `X-AUTH-TOKEN` request header.
 - Transfer-record failure is reported separately from template migration failure. The verified target and generated record ID remain in the report, the record outcome is treated as unknown, and neither the migration nor the record request is retried automatically. Published-form repair does not add a transfer record.
+- Locked-draft reconciliation and repair refuse any prior callback or outcome-unknown evidence. Their persistent execution state is created before the first allowed write and prevents a second callback or repair attempt even across process restarts.
 - The executor performs local validation and safety checks before making any login or write request.
 - The first write API boundary is limited to template-level `add`, `get`, and `update`.
 - Execution sequence is: validate DSL, check safety gates, login, verify transfer-record authentication, create test template, get template detail, map DSL into template detail, update template draft, get readback, verify readback, add the transfer record, return report.
