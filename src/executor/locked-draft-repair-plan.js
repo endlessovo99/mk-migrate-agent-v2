@@ -344,7 +344,10 @@ function parsedFormAttr(config) {
 
 function nativeDetailField(config, tableId, fieldId) {
   const models = (config?.dataModel || []).filter((model) => (
-    model?.fdType === "detail" && model?.dynamicProps?.detailFieldName === tableId
+    model?.fdType === "detail" && (
+      model?.dynamicProps?.detailFieldName === tableId ||
+      model?.fdTableName === tableId
+    )
   ));
   requireValue(models.length === 1, "locked_draft.calculation_detail_model_mismatch");
   const fields = (models[0].fdFields || []).filter((field) => field?.fdName === fieldId);

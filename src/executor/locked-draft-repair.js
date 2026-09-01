@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { sha256Digest } from "../agent-review/digest.js";
 import { CATALOG_VERSIONS } from "../dsl/catalogs.js";
 import { checkTrust } from "../dsl/trust.js";
 import { buildDryRunPlan } from "./dry-run.js";
@@ -16,6 +15,7 @@ import { attachRequiredTemplateNumberRuleReadback } from "./template-number-rule
 import { buildTransferRecordPayload, generateTransferRecordId } from "./transfer-record.js";
 import { createLockedDraftState } from "./locked-draft-state.js";
 import { prepareLockedDraftRepair } from "./locked-draft-repair-plan.js";
+import { validateLockedDraftSourceEvidence } from "./locked-draft-source-evidence.js";
 
 const PARTITIONS = Object.freeze(["envelope", "form", "rules", "scripts", "workflow"]);
 
@@ -28,7 +28,12 @@ export async function repairLockedDraft(input, options = {}) {
     ? validateCalculationDslEvolution(priorInput, input, options.priorExecutionReport)
     : { ok: true };
   if (!evolution.ok) return invalid(evolution.diagnostics);
-  const trusted = repairDsl(options.sourceDraft, input, options.priorExecutionReport);
+  const trusted = repairDsl(
+    options.sourceDraft,
+    options.priorSourceDraft,
+    input,
+    options.priorExecutionReport
+  );
   if (!trusted.ok) return invalid(trusted.diagnostics);
   const plan = buildDryRunPlan(trusted.dsl);
   if (!plan.ok) return { ...invalid(plan.diagnostics), plan };
@@ -132,6 +137,7 @@ export async function repairLockedDraft(input, options = {}) {
 
     const evidenceDigest = lockedDraftEvidenceDigest({
       sourceDraft: options.sourceDraft,
+      priorSourceDraft: options.priorSourceDraft,
       originalInput: input,
       priorInput,
       calculationDslEvolution: evolution.audit,
@@ -477,14 +483,14 @@ function bundleDigest(bundle) {
   return digest(withoutMechanismTokens(bundle));
 }
 
-function repairDsl(sourceDraft, input, priorExecutionReport) {
-  if (sha256Digest(sourceDraft) !== input?.trust?.digests?.sourceDraft) {
-    return { ok: false, diagnostics: [{
-      level: "error",
-      code: "locked_draft.source_digest_mismatch",
-      message: "Current Source XML does not match the trusted Source Draft.",
-      path: "/sourceDraft"
-    }] };
+function repairDsl(sourceDraft, priorSourceDraft, input, priorExecutionReport) {
+  const sourceDiagnostics = validateLockedDraftSourceEvidence(
+    sourceDraft,
+    priorSourceDraft,
+    input
+  );
+  if (sourceDiagnostics.length) {
+    return { ok: false, diagnostics: sourceDiagnostics };
   }
   const trust = checkTrust(sourceDraft, input);
   if (trust.ok) return { ok: true, dsl: input };
@@ -597,6 +603,12 @@ function validateArtifactDigests(input, options) {
     digest(options.priorDsl) !== options.expectedPriorDslDigest
   )) {
     diagnostics.push({ level: "error", code: "locked_draft.prior_dsl_digest_mismatch", message: "Historical DSL digest mismatch.", path: "/expectedPriorDslDigest" });
+  }
+  if (options.priorSourceDraft && (
+    !/^[a-f0-9]{64}$/.test(options.expectedPriorSourceDraftDigest || "") ||
+    digest(options.priorSourceDraft) !== options.expectedPriorSourceDraftDigest
+  )) {
+    diagnostics.push({ level: "error", code: "locked_draft.prior_source_digest_mismatch", message: "Historical Source Draft digest mismatch.", path: "/expectedPriorSourceDraftDigest" });
   }
   return diagnostics;
 }

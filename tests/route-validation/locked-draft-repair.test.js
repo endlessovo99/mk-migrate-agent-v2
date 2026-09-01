@@ -350,12 +350,23 @@ function calculationFixture() {
   const sourceDraft = cleanSourceFile(
     "tests/fixtures/source4/188d28d4a52c772acda09c04a739f0c0/188d28da17a2f4450dcc7af497f9e9e3_SysFormTemplate.xml"
   );
+  const priorSourceDraft = structuredClone(sourceDraft);
+  priorSourceDraft.issues = [
+    ...(priorSourceDraft.issues || []),
+    {
+      level: "warning",
+      code: "source.function_not_whitelisted",
+      message: "Historical parser-only warning.",
+      sourcePath: "/fdDesignerHtml",
+      evidence: { functionName: "legacy-sql-keyword" }
+    }
+  ];
   const dslDraft = draftSourceDraft(sourceDraft);
   const dsl = createTrustedMigrationDsl(sourceDraft, dslDraft, {
     externalAgentReviewed: true,
     reviewerName: "route-validation",
     checkedAt: "2026-09-01T00:00:00.000Z",
-    sourceDraftDigest: sha256Digest(sourceDraft),
+    sourceDraftDigest: sha256Digest(priorSourceDraft),
     dslDraftDigest: sha256Digest(dslDraft)
   });
   const priorDsl = structuredClone(dsl);
@@ -399,6 +410,7 @@ function calculationFixture() {
   const detail = config.dataModel.find((model) => (
     model.fdType === "detail" && model.dynamicProps?.detailFieldName === "table"
   ));
+  detail.dynamicProps = {};
   const rowField = detail.fdFields.find((field) => field.fdName === "fd_35523eceb856e4");
   const rowAttribute = JSON.parse(rowField.fdAttribute);
   delete rowAttribute.config.controlProps.expressionFormulaVO;
@@ -447,12 +459,14 @@ function calculationFixture() {
   };
   return {
     sourceDraft,
+    priorSourceDraft,
     dsl,
     priorDsl,
     template,
     priorExecutionReport,
     dslDigest: lockedDraftEvidenceDigest(dsl),
     priorDslDigest: lockedDraftEvidenceDigest(priorDsl),
+    priorSourceDraftDigest: lockedDraftEvidenceDigest(priorSourceDraft),
     priorReportDigest: lockedDraftEvidenceDigest(priorExecutionReport)
   };
 }
@@ -469,6 +483,10 @@ function repairOptions(fixture, overrides = {}) {
     ...(fixture.priorDsl ? {
       priorDsl: fixture.priorDsl,
       expectedPriorDslDigest: fixture.priorDslDigest
+    } : {}),
+    ...(fixture.priorSourceDraft ? {
+      priorSourceDraft: fixture.priorSourceDraft,
+      expectedPriorSourceDraftDigest: fixture.priorSourceDraftDigest
     } : {}),
     transferRecordIdFactory: () => "lockedrepair000000000000000000000000",
     ...overrides

@@ -287,10 +287,14 @@ async function runReconcileTransferRecord(argv, options = {}) {
   });
   const report = await reconcile(readJson(inputPath), {
     sourceDraft,
+    priorSourceDraft: typeof args["prior-source-draft"] === "string"
+      ? readJson(args["prior-source-draft"])
+      : undefined,
     priorExecutionReport: readJson(args["prior-execution-report"]),
     confirmWrite: args["confirm-write"] === true,
     expectedDslDigest: args["expected-dsl-digest"],
     expectedPriorReportDigest: args["expected-prior-report-digest"],
+    expectedPriorSourceDraftDigest: args["expected-prior-source-draft-digest"],
     expectedEvidenceDigest: args["expected-evidence-digest"],
     artifactsDir: args["artifacts-dir"],
     targetCategoryId: args["target-category-id"],
@@ -325,6 +329,9 @@ async function runRepairLockedDraft(argv, options = {}) {
   });
   const report = await repair(readJson(inputPath), {
     sourceDraft,
+    priorSourceDraft: typeof args["prior-source-draft"] === "string"
+      ? readJson(args["prior-source-draft"])
+      : undefined,
     priorDsl: typeof args["prior-migration-dsl"] === "string"
       ? readJson(args["prior-migration-dsl"])
       : undefined,
@@ -334,6 +341,7 @@ async function runRepairLockedDraft(argv, options = {}) {
     expectedDslDigest: args["expected-dsl-digest"],
     expectedPriorDslDigest: args["expected-prior-dsl-digest"],
     expectedPriorReportDigest: args["expected-prior-report-digest"],
+    expectedPriorSourceDraftDigest: args["expected-prior-source-draft-digest"],
     expectedEvidenceDigest: args["expected-evidence-digest"],
     artifactsDir: args["artifacts-dir"],
     targetCategoryId: args["target-category-id"],
@@ -518,8 +526,8 @@ function printUsage() {
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");
   console.error("  node src/cli/main.js check execute <migration.dsl.json>");
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
-  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js reconcile-transfer-record <migration.dsl.json> --source <source-dir|sysform.xml> --prior-execution-report <readback-failed-report.json> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
-  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js repair-locked-draft <migration.dsl.json> --source <source-dir|sysform.xml> --prior-execution-report <readback-failed-report.json> --repair-kind <template_authorization|calculation> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--prior-migration-dsl <historical.dsl.json> --expected-prior-dsl-digest <sha256>] [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js reconcile-transfer-record <migration.dsl.json> --source <source-dir|sysform.xml> [--prior-source-draft <source-draft.json> --expected-prior-source-draft-digest <sha256>] --prior-execution-report <readback-failed-report.json> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js repair-locked-draft <migration.dsl.json> --source <source-dir|sysform.xml> [--prior-source-draft <source-draft.json> --expected-prior-source-draft-digest <sha256>] --prior-execution-report <readback-failed-report.json> --repair-kind <template_authorization|calculation> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--prior-migration-dsl <historical.dsl.json> --expected-prior-dsl-digest <sha256>] [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
   console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--allow-template-authorization-fallback] [--allow-missing-direct-person-fallback] [--allow-missing-direct-post-fallback] [--direct-person-fallback-id <sourceFdId>]... [--participant-override <sourceId>=<targetFdId>]... [--template-authorization-override <sourceId>=<targetFdId>]... [--direct-participant-override <sourceTargetId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
   console.error("    Published form repair additionally requires --published-form-patch --target-template-id <fdId> --expected-snapshot-digest <sha256> --artifacts-dir <new-directory> [--readonly-field <id>]... [--script-action <id>]...");
 }

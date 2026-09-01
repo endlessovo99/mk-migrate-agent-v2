@@ -4,7 +4,6 @@ import { existsSync, mkdirSync } from "node:fs";
 import { buildDryRunPlan } from "./dry-run.js";
 import { CATALOG_VERSIONS } from "../dsl/catalogs.js";
 import { checkTrust } from "../dsl/trust.js";
-import { sha256Digest } from "../agent-review/digest.js";
 import { NewoaClient, normalizeBaseUrl } from "./newoa-client.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
@@ -14,6 +13,7 @@ import { withoutMechanismTokens } from "./published-form-patch.js";
 import { attachRequiredTemplateNumberRuleReadback } from "./template-number-rule.js";
 import { buildTransferRecordPayload, generateTransferRecordId } from "./transfer-record.js";
 import { createLockedDraftState } from "./locked-draft-state.js";
+import { validateLockedDraftSourceEvidence } from "./locked-draft-source-evidence.js";
 
 const VERIFIED_PARTITIONS = Object.freeze([
   "envelope",
@@ -39,6 +39,7 @@ export async function reconcileTransferRecord(input, options = {}) {
   }
   const trustedInput = reconciliationDsl(
     options.sourceDraft,
+    options.priorSourceDraft,
     input,
     options.priorExecutionReport
   );
@@ -176,6 +177,7 @@ export async function reconcileTransferRecord(input, options = {}) {
 
     const evidenceDigest = reconciliationEvidenceDigest({
       sourceDraft: options.sourceDraft,
+      priorSourceDraft: options.priorSourceDraft,
       originalInput: input,
       executableInput,
       catalogBridge: trustedInput.catalogBridge,
@@ -349,16 +351,16 @@ export function reconciliationEvidenceDigest(value) {
   return digest(withoutMechanismTokens(value));
 }
 
-function reconciliationDsl(sourceDraft, input, priorExecutionReport) {
-  if (sha256Digest(sourceDraft) !== input?.trust?.digests?.sourceDraft) {
+function reconciliationDsl(sourceDraft, priorSourceDraft, input, priorExecutionReport) {
+  const sourceDiagnostics = validateLockedDraftSourceEvidence(
+    sourceDraft,
+    priorSourceDraft,
+    input
+  );
+  if (sourceDiagnostics.length) {
     return {
       ok: false,
-      diagnostics: [{
-        level: "error",
-        code: "reconcile.source_draft_digest_mismatch",
-        message: "The current Source XML does not reproduce the trusted Source Draft digest.",
-        path: "/sourceDraft"
-      }]
+      diagnostics: sourceDiagnostics
     };
   }
   const trust = checkTrust(sourceDraft, input);
@@ -558,6 +560,17 @@ function validateArtifactDigests(input, options) {
       code: "reconcile.prior_report_digest_mismatch",
       message: "The prior execution report does not match the approved artifact digest.",
       path: "/expectedPriorReportDigest"
+    });
+  }
+  if (options.priorSourceDraft && (
+    !/^[a-f0-9]{64}$/.test(options.expectedPriorSourceDraftDigest || "") ||
+    digest(options.priorSourceDraft) !== options.expectedPriorSourceDraftDigest
+  )) {
+    diagnostics.push({
+      level: "error",
+      code: "reconcile.prior_source_digest_mismatch",
+      message: "Historical Source Draft digest mismatch.",
+      path: "/expectedPriorSourceDraftDigest"
     });
   }
   return diagnostics;

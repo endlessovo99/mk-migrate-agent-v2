@@ -1,10 +1,13 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
 
-const DEFAULT_LOCK_ROOT = fileURLToPath(
-  new URL("../../.tmp/locked-draft-locks/", import.meta.url)
+const DEFAULT_LOCK_ROOT = join(
+  homedir(),
+  ".codex",
+  "mk-migrate-agent-v2",
+  "locked-draft-locks"
 );
 
 /** Create one permanent local write-attempt lock for a target draft. */
