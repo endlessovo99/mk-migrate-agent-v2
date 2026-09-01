@@ -548,6 +548,24 @@ class LockedDraftFakeClient {
   async updateTemplate(payload) {
     this.calls.push({ operation: "update-template" });
     this.template = structuredClone(payload);
+    const config = JSON.parse(this.template.mechanisms["sys-xform"].fdConfig);
+    const formulaKey = "fd_35523eceb856e4.expressionFormulaVO";
+    if (config.sign?.formula?.[formulaKey]) {
+      config.sign.digest = {
+        ...(config.sign.digest || {}),
+        [formulaKey]: "1373321220937d99"
+      };
+      this.template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+      for (const field of ["fdReaders", "fdEditors"]) {
+        if (Array.isArray(this.template.mechanisms.lbpmTemplate?.[0]?.[field])) {
+          this.template.mechanisms.lbpmTemplate[0][field] =
+            this.template.mechanisms.lbpmTemplate[0][field].map(({ fdId, fdOrgType }) => ({
+              fdId,
+              ...(fdOrgType === undefined ? {} : { fdOrgType })
+            }));
+        }
+      }
+    }
     return { fdId: payload.fdId };
   }
   async saveWorkflowDraft(payload) {
@@ -555,6 +573,11 @@ class LockedDraftFakeClient {
     if (this.failWorkflowSave) throw new Error("unknown workflow-save outcome");
     this.workflow = structuredClone(payload);
     this.template.mechanisms.lbpmTemplate[0] = structuredClone(payload);
+    const config = JSON.parse(this.template.mechanisms["sys-xform"].fdConfig);
+    config.dataModel[0].fdAlterTime = 1788246673277;
+    const detailModel = config.dataModel.find((model) => model.fdType === "detail");
+    if (detailModel) detailModel.fdDeletedFields = [];
+    this.template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
     this.afterWorkflowSave?.();
     return { fdId: payload.fdId };
   }

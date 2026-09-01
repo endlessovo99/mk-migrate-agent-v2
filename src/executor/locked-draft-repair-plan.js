@@ -316,6 +316,7 @@ function findDslField(dsl, fieldId) {
 
 function parsedXformConfig(template) {
   const value = template?.mechanisms?.["sys-xform"]?.fdConfig;
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
   requireValue(typeof value === "string", "locked_draft.xform_config_required");
   try {
     const parsed = JSON.parse(value);
@@ -381,6 +382,10 @@ function protectedCalculationTemplate(template, { tableId, fieldId }) {
   }
   row.fdAttribute = attribute;
   if (config.sign?.formula) delete config.sign.formula[`${fieldId}.expressionFormulaVO`];
+  if (config.sign?.digest) {
+    delete config.sign.digest[`${fieldId}.expressionFormulaVO`];
+    if (Object.keys(config.sign.digest).length === 0) delete config.sign.digest;
+  }
   copy.mechanisms["sys-xform"].fdConfig = config;
   return copy;
 }
@@ -429,10 +434,22 @@ function protectedAuthorizationBundle(bundle) {
 
 function normalizedProtected(value) {
   const copy = withoutMechanismTokens(value);
+  const xform = copy?.template?.mechanisms?.["sys-xform"] ||
+    copy?.mechanisms?.["sys-xform"];
+  if (typeof xform?.fdConfig === "string") {
+    try {
+      xform.fdConfig = JSON.parse(xform.fdConfig);
+    } catch {
+      throw coded("locked_draft.xform_config_invalid");
+    }
+  }
   const visit = (node) => {
     if (!node || typeof node !== "object") return;
     delete node.fdAlter;
     delete node.fdAlterTime;
+    if (Array.isArray(node.fdDeletedFields) && node.fdDeletedFields.length === 0) {
+      delete node.fdDeletedFields;
+    }
     for (const child of Object.values(node)) visit(child);
   };
   visit(copy);
