@@ -74,7 +74,7 @@ The executor will be API-first:
 
 - v2 includes both a translator and an executor. The executor is in scope for the route-validation product, but it must stay narrow and API-first.
 - The first executor version only creates a new NewOA test template at the resolved target origin and saves it as draft.
-- The executor may update only an explicitly targeted existing `MK_TEST_` draft after validating its identity and category. It must not update other templates, delete a template, publish a template, run batch migration, or auto-create categories.
+- The executor must not update an existing template, delete a template, publish a template, run batch migration, or auto-create categories.
 - The CLI resolves the target in this order: non-empty `--base-url`, non-empty `NEWOA_BASE_URL`, then `https://p-sit.onewo.com`.
 - The live-smoke entry point reads the same `NEWOA_BASE_URL` and uses the same SIT default. The Executor API receives `options.baseUrl` and does not read `process.env`.
 - Empty and whitespace-only base URL values are treated as unspecified. Non-empty values are trimmed and normalized to their URL origin, including removal of a trailing root slash and normal URL canonicalization.
