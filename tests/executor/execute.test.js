@@ -3265,6 +3265,28 @@ describe("executeDsl", () => {
     assert.deepEqual(client.calls, []);
   });
 
+  it("keeps template authorization overrides on the new-draft creation path", async () => {
+    const client = new FakeNewoaClient();
+    const result = await executeDsl(sampleTrustedDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      targetTemplateId: "existing-mk-test-draft",
+      templateAuthorizationOverrides: [{
+        sourceId: "source-reader",
+        targetFdId: "target-reader"
+      }]
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.status, "blocked");
+    assert.equal(result.diagnostics.some((diagnostic) =>
+      diagnostic.code === "safety.template_authorization_override_create_only"
+    ), true);
+    assert.deepEqual(client.calls, []);
+  });
+
   it("executes against a normalized caller-provided NewOA origin", async () => {
     const client = new FakeNewoaClient();
     const result = await executeDsl(sampleTrustedDsl(), {

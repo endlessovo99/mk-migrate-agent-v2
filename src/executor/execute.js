@@ -819,6 +819,18 @@ function validateSafety(options, baseUrlDiagnostics = []) {
       path: "/credentials/encryptedPassword"
     });
   }
+  if (
+    nonEmptyString(options.targetTemplateId) &&
+    Array.isArray(options.templateAuthorizationOverrides) &&
+    options.templateAuthorizationOverrides.length > 0
+  ) {
+    diagnostics.push({
+      level: "error",
+      code: "safety.template_authorization_override_create_only",
+      message: "Template authorization overrides are allowed only while creating a new MK_TEST_ draft.",
+      path: "/templateAuthorizationOverrides"
+    });
+  }
   diagnostics.push(...baseUrlDiagnostics);
   return diagnostics;
 }
