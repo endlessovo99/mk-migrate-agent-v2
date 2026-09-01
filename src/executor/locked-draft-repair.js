@@ -14,24 +14,10 @@ import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { attachRequiredTemplateNumberRuleReadback } from "./template-number-rule.js";
 import { buildTransferRecordPayload, generateTransferRecordId } from "./transfer-record.js";
+import { createLockedDraftState } from "./locked-draft-state.js";
+import { prepareLockedDraftRepair } from "./locked-draft-repair-plan.js";
 
 const PARTITIONS = Object.freeze(["envelope", "form", "rules", "scripts", "workflow"]);
-const AUTHORIZATION_COLLECTIONS = Object.freeze([
-  "readers",
-  "editors",
-  "allReaders",
-  "allEditors",
-  "temporaryReaders",
-  "temporaryEditors"
-]);
-const AUTHORIZATION_NATIVE_FIELDS = Object.freeze({
-  readers: "fdReaders",
-  editors: "fdEditors",
-  allReaders: "fdAllReaders",
-  allEditors: "fdAllEditors",
-  temporaryReaders: "fdTmpReaders",
-  temporaryEditors: "fdTmpEditors"
-});
 
 /** Repair one already-created draft through a strictly allowlisted native delta. */
 export async function repairLockedDraft(input, options = {}) {
@@ -71,7 +57,9 @@ export async function repairLockedDraft(input, options = {}) {
   const diagnostics = [...plan.diagnostics];
   let writeStarted = false;
   let writeCompleted = false;
-  let stateCreated = false;
+  let operationState;
+  let transferRecordStarted = false;
+  let transferRecordCompleted = false;
   let transferRecordPayload;
 
   const baseResult = () => ({
@@ -84,23 +72,6 @@ export async function repairLockedDraft(input, options = {}) {
     apiStages,
     plan
   });
-  const recordState = (status, extra = {}) => {
-    if (!stateCreated) return;
-    writeFileSync(
-      join(options.artifactsDir, "locked-draft-state.json"),
-      `${JSON.stringify({
-        status,
-        targetTemplateId,
-        repairKind: options.repairKind,
-        recordId: transferRecordPayload?.fdId,
-        writeStarted,
-        writeOutcomeUnknown: writeStarted && !writeCompleted,
-        ...extra
-      }, null, 2)}\n`,
-      { mode: 0o600, flag: "w", flush: true }
-    );
-  };
-
   try {
     apiStages.push(stage("login"));
     await client.login(credentials);
@@ -137,13 +108,14 @@ export async function repairLockedDraft(input, options = {}) {
       expectsWorkflow: Boolean(conditionResolution.dsl.workflow),
       label: "first"
     });
-    const preparedRepair = await prepareRepair({
+    const preparedRepair = await prepareLockedDraftRepair({
       client,
       before,
       dsl: conditionResolution.dsl,
       sourceDsl: trusted.dsl,
       priorExecutionReport: options.priorExecutionReport,
-      repairKind: options.repairKind
+      repairKind: options.repairKind,
+      envelope: executionEnvelope(before.template, before.workflow, targetCategoryId)
     });
     const second = await readBundle(client, {
       apiStages,
@@ -192,19 +164,15 @@ export async function repairLockedDraft(input, options = {}) {
     requireValue(text(options.expectedEvidenceDigest) === evidenceDigest, "locked_draft.evidence_digest_mismatch");
     requireValue(!existsSync(options.artifactsDir), "locked_draft.artifacts_dir_used");
     mkdirSync(options.artifactsDir, { recursive: true, mode: 0o700 });
-    writeFileSync(
-      join(options.artifactsDir, "locked-draft-state.json"),
-      `${JSON.stringify({
-        status: "prepared",
-        targetTemplateId,
-        repairKind: options.repairKind,
-        evidenceDigest,
-        writeStarted: false,
-        writeOutcomeUnknown: false
-      }, null, 2)}\n`,
-      { mode: 0o600, flag: "wx", flush: true }
-    );
-    stateCreated = true;
+    operationState = createLockedDraftState({
+      baseUrl,
+      targetTemplateId,
+      operation: `repair_${options.repairKind}`,
+      evidenceDigest,
+      artifactsDir: options.artifactsDir,
+      testLockRoot: options.testLockRoot,
+      allowTestLockRoot: Boolean(options.client)
+    });
     writeArtifact(options.artifactsDir, "before.template.json", before.template);
     writeArtifact(options.artifactsDir, "before.workflow.json", before.workflow);
     writeArtifact(options.artifactsDir, "repair.plan.json", preparedRepair.plan);
@@ -214,18 +182,44 @@ export async function repairLockedDraft(input, options = {}) {
     }
 
     writeStarted = true;
-    recordState("write_started", { evidenceDigest, writeStage: "updateTemplate" });
+    operationState.record("template_write_started", {
+      repairKind: options.repairKind,
+      writeStage: "updateTemplate",
+      templateWriteStarted: true,
+      templateWriteCompleted: false,
+      templateWriteOutcomeUnknown: true,
+      transferRecordStarted: false,
+      transferRecordCompleted: false,
+      transferRecordOutcomeUnknown: false
+    });
     apiStages.push(stage("updateTemplate"));
     await client.updateTemplate(preparedRepair.template);
     okStage(apiStages);
     if (preparedRepair.workflow) {
-      recordState("write_started", { evidenceDigest, writeStage: "saveWorkflowDraft" });
+      operationState.record("template_write_started", {
+        repairKind: options.repairKind,
+        writeStage: "saveWorkflowDraft",
+        templateWriteStarted: true,
+        templateWriteCompleted: false,
+        templateWriteOutcomeUnknown: true,
+        transferRecordStarted: false,
+        transferRecordCompleted: false,
+        transferRecordOutcomeUnknown: false
+      });
       apiStages.push(stage("saveWorkflowDraft"));
       await client.saveWorkflowDraft(preparedRepair.workflow);
       okStage(apiStages);
     }
     writeCompleted = true;
-    recordState("awaiting_readback", { evidenceDigest });
+    operationState.record("awaiting_readback", {
+      repairKind: options.repairKind,
+      templateWriteStarted: true,
+      templateWriteCompleted: true,
+      templateWriteOutcomeUnknown: false,
+      transferRecordStarted: false,
+      transferRecordCompleted: false,
+      transferRecordOutcomeUnknown: false
+    });
 
     const after = await readBundle(client, {
       apiStages,
@@ -262,7 +256,15 @@ export async function repairLockedDraft(input, options = {}) {
         artifactsDir: options.artifactsDir
       };
       writeArtifact(options.artifactsDir, "result.json", result);
-      recordState("readback_failed", { evidenceDigest });
+      operationState.record("readback_failed", {
+        repairKind: options.repairKind,
+        templateWriteStarted: true,
+        templateWriteCompleted: true,
+        templateWriteOutcomeUnknown: false,
+        transferRecordStarted: false,
+        transferRecordCompleted: false,
+        transferRecordOutcomeUnknown: false
+      });
       return result;
     }
 
@@ -273,9 +275,20 @@ export async function repairLockedDraft(input, options = {}) {
       now: options.now || new Date()
     });
     apiStages.push(stage("addTransferRecord"));
-    recordState("record_started", { evidenceDigest, writeStage: "addTransferRecord" });
+    transferRecordStarted = true;
+    operationState.record("transfer_record_started", {
+      repairKind: options.repairKind,
+      recordId: transferRecordPayload.fdId,
+      templateWriteStarted: true,
+      templateWriteCompleted: true,
+      templateWriteOutcomeUnknown: false,
+      transferRecordStarted: true,
+      transferRecordCompleted: false,
+      transferRecordOutcomeUnknown: true
+    });
     try {
       await client.addTransferRecord(transferRecordPayload);
+      transferRecordCompleted = true;
       okStage(apiStages);
     } catch {
       apiStages.at(-1).status = "failed";
@@ -286,6 +299,7 @@ export async function repairLockedDraft(input, options = {}) {
         stage: "addTransferRecord",
         failedAt: "addTransferRecord",
         ...baseResult(),
+        writeOutcomeUnknown: true,
         diagnostics: [
           ...diagnostics,
           {
@@ -302,7 +316,16 @@ export async function repairLockedDraft(input, options = {}) {
         })
       };
       writeArtifact(options.artifactsDir, "result.json", result);
-      recordState("record_outcome_unknown", { evidenceDigest });
+      operationState.record("transfer_record_outcome_unknown", {
+        repairKind: options.repairKind,
+        recordId: transferRecordPayload.fdId,
+        templateWriteStarted: true,
+        templateWriteCompleted: true,
+        templateWriteOutcomeUnknown: false,
+        transferRecordStarted: true,
+        transferRecordCompleted: false,
+        transferRecordOutcomeUnknown: true
+      });
       return result;
     }
 
@@ -319,18 +342,37 @@ export async function repairLockedDraft(input, options = {}) {
       artifactsDir: options.artifactsDir
     };
     writeArtifact(options.artifactsDir, "result.json", result);
-    recordState("verified", { evidenceDigest });
+    operationState.record("verified", {
+      repairKind: options.repairKind,
+      recordId: transferRecordPayload.fdId,
+      templateWriteStarted: true,
+      templateWriteCompleted: true,
+      templateWriteOutcomeUnknown: false,
+      transferRecordStarted: true,
+      transferRecordCompleted: true,
+      transferRecordOutcomeUnknown: false
+    });
     return result;
   } catch (error) {
     if (apiStages.at(-1)?.status === "started") apiStages.at(-1).status = "failed";
-    recordState(writeStarted ? "failed" : "blocked", { errorCode: error?.code });
+    operationState?.record(writeStarted ? "failed" : "blocked", {
+      repairKind: options.repairKind,
+      errorCode: error?.code,
+      templateWriteStarted: writeStarted,
+      templateWriteCompleted: writeCompleted,
+      templateWriteOutcomeUnknown: writeStarted && !writeCompleted,
+      transferRecordStarted,
+      transferRecordCompleted,
+      transferRecordOutcomeUnknown: transferRecordStarted && !transferRecordCompleted
+    });
     return {
       ok: false,
       status: writeStarted ? "failed" : "blocked",
       stage: apiStages.at(-1)?.name || "lockedDraftRepair",
       failedAt: apiStages.at(-1)?.name || "lockedDraftRepair",
       ...baseResult(),
-      writeOutcomeUnknown: writeStarted && !writeCompleted,
+      writeOutcomeUnknown: (writeStarted && !writeCompleted) ||
+        (transferRecordStarted && !transferRecordCompleted),
       diagnostics: [
         ...diagnostics,
         {
@@ -346,419 +388,6 @@ export async function repairLockedDraft(input, options = {}) {
 
 export function lockedDraftEvidenceDigest(value) {
   return digest(withoutMechanismTokens(value));
-}
-
-async function prepareRepair({ client, before, dsl, sourceDsl, priorExecutionReport, repairKind }) {
-  if (repairKind === "template_authorization") {
-    return prepareAuthorizationRepair({
-      client,
-      before,
-      dsl,
-      sourceDsl,
-      priorExecutionReport
-    });
-  }
-  if (repairKind === "calculation") {
-    return prepareCalculationRepair({ before, dsl, priorExecutionReport });
-  }
-  throw coded("locked_draft.repair_kind_unsupported");
-}
-
-async function prepareAuthorizationRepair({ client, before, sourceDsl, priorExecutionReport }) {
-  const mismatch = (priorExecutionReport.diagnostics || []).filter((diagnostic) => (
-    diagnostic?.level === "error" &&
-    diagnostic?.code === "readback.workflow.template_authorization_mismatch"
-  ));
-  requireValue(mismatch.length === 1, "locked_draft.authorization_evidence_required");
-  const expected = mismatch[0].details?.expected;
-  const actual = mismatch[0].details?.actual;
-  requireValue(expected && actual, "locked_draft.authorization_evidence_required");
-  const observed = observedAuthorization(before.template);
-  for (const collection of AUTHORIZATION_COLLECTIONS) {
-    requireValue(
-      stableStringify(observed[collection]) === stableStringify(sortedIds(actual[collection])),
-      "locked_draft.authorization_snapshot_mismatch"
-    );
-  }
-
-  const desiredEditors = unionIds(expected.editors, expected.allEditors);
-  const editorIds = new Set(desiredEditors);
-  const desiredReaders = unionIds(
-    expected.readers,
-    (expected.allReaders || []).filter((id) => !editorIds.has(id))
-  );
-  const desired = {
-    readers: desiredReaders,
-    editors: desiredEditors,
-    allReaders: sortedIds(expected.allReaders),
-    allEditors: sortedIds(expected.allEditors),
-    temporaryReaders: sortedIds(expected.temporaryReaders),
-    temporaryEditors: sortedIds(expected.temporaryEditors)
-  };
-  const missingIds = [...new Set(
-    AUTHORIZATION_COLLECTIONS.flatMap((collection) => (
-      desired[collection].filter((id) => !observed[collection].includes(id))
-    ))
-  )].sort();
-  requireValue(missingIds.length > 0, "locked_draft.authorization_no_change");
-  const elements = await client.getElementInfo(missingIds);
-  const elementById = new Map((elements || []).map((member) => [member?.fdId, member]));
-  for (const id of missingIds) {
-    const sourceMember = sourceAuthorizationMember(sourceDsl, id);
-    const target = elementById.get(id);
-    requireValue(
-      target?.fdId === id && text(target.fdName) &&
-        Number(target.fdOrgType) === Number(sourceMember?.sourceOrgType),
-      "locked_draft.authorization_identity_mismatch"
-    );
-  }
-
-  const template = structuredClone(before.template);
-  for (const collection of AUTHORIZATION_COLLECTIONS) {
-    const nativeField = AUTHORIZATION_NATIVE_FIELDS[collection];
-    template[nativeField] = membersForIds(
-      desired[collection],
-      before.template[nativeField],
-      elementById
-    );
-  }
-  template.mechanisms.lbpmTemplate[0].fdReaders = structuredClone(template.fdReaders);
-  template.mechanisms.lbpmTemplate[0].fdEditors = structuredClone(template.fdEditors);
-  const workflow = structuredClone(before.workflow);
-  workflow.fdReaders = structuredClone(template.fdReaders);
-  workflow.fdEditors = structuredClone(template.fdEditors);
-
-  const changedPaths = authorizationChangedPaths(before, { template, workflow });
-  const allowedPaths = [
-    "/fdAllEditors",
-    "/fdAllReaders",
-    "/fdEditors",
-    "/mechanisms/lbpmTemplate/0/fdEditors",
-    "/workflowDetail/fdEditors"
-  ];
-  requireValue(
-    stableStringify(changedPaths) === stableStringify(allowedPaths),
-    "locked_draft.authorization_delta_outside_scope"
-  );
-  requireValue(
-    digest(protectedAuthorizationBundle(before)) ===
-      digest(protectedAuthorizationBundle({ template, workflow })),
-    "locked_draft.authorization_delta_outside_scope"
-  );
-
-  return {
-    before,
-    template,
-    workflow,
-    plan: {
-      repairKind: "template_authorization",
-      targetTemplateId: template.fdId,
-      missingIds,
-      changedPaths
-    },
-    verify(after) {
-      const afterObserved = observedAuthorization(after.template);
-      const authorizationOk = AUTHORIZATION_COLLECTIONS.every((collection) => (
-        stableStringify(afterObserved[collection]) === stableStringify(desired[collection])
-      ));
-      const bindingsOk = stableStringify(ids(after.template.mechanisms.lbpmTemplate[0].fdReaders)) ===
-          stableStringify(desired.readers) &&
-        stableStringify(ids(after.template.mechanisms.lbpmTemplate[0].fdEditors)) ===
-          stableStringify(desired.editors) &&
-        stableStringify(ids(after.workflow?.fdReaders)) === stableStringify(desired.readers) &&
-        stableStringify(ids(after.workflow?.fdEditors)) === stableStringify(desired.editors);
-      const protectedOk = digest(protectedAuthorizationBundle(before)) ===
-        digest(protectedAuthorizationBundle(after));
-      return {
-        ok: authorizationOk && bindingsOk && protectedOk,
-        checks: { authorizationOk, bindingsOk, protectedOk }
-      };
-    }
-  };
-}
-
-function prepareCalculationRepair({ before, dsl, priorExecutionReport }) {
-  const calculationDiagnostics = (priorExecutionReport.diagnostics || []).filter((diagnostic) => (
-    diagnostic?.level === "error" && [
-      "readback.form.calculation_order_mismatch",
-      "readback.form.prop_calculation_mismatch"
-    ].includes(diagnostic.code)
-  ));
-  requireValue(
-    calculationDiagnostics.length === 2 &&
-      calculationDiagnostics.some((diagnostic) => diagnostic.code === "readback.form.calculation_order_mismatch") &&
-      calculationDiagnostics.some((diagnostic) => diagnostic.code === "readback.form.prop_calculation_mismatch"),
-    "locked_draft.calculation_evidence_required"
-  );
-  const propMismatch = calculationDiagnostics.find((diagnostic) => (
-    diagnostic.code === "readback.form.prop_calculation_mismatch"
-  ));
-  const aggregateFieldId = text(propMismatch?.details?.fieldId);
-  const aggregateField = findDslField(dsl, aggregateFieldId);
-  const aggregate = aggregateField?.props?.calculation;
-  requireValue(
-    aggregate?.kind === "aggregate" && aggregate.operation === "sum" &&
-      text(aggregate.tableId) && text(aggregate.fieldId),
-    "locked_draft.calculation_dsl_mismatch"
-  );
-  const detailTable = (dsl.form?.fields || []).find((field) => (
-    field?.type === "detailTable" && field.id === aggregate.tableId
-  ));
-  const rowField = detailTable?.columns?.find((field) => field.id === aggregate.fieldId);
-  requireValue(rowField?.props?.calculation?.kind === "formula", "locked_draft.calculation_row_formula_required");
-
-  const projection = preparePersistedTemplate({
-    dsl,
-    envelope: executionEnvelope(
-      before.template,
-      before.workflow,
-      before.template.fdCategory.fdId
-    ),
-    baseTemplate: before.template
-  });
-  requireValue(projection.ok, "locked_draft.calculation_projection_failed");
-  const candidateConfig = parsedXformConfig(projection.update);
-  const currentConfig = parsedXformConfig(before.template);
-  const nextConfig = structuredClone(currentConfig);
-
-  const candidateFormAttr = parsedFormAttr(candidateConfig);
-  const nextFormAttr = parsedFormAttr(nextConfig);
-  requireValue(
-    Array.isArray(candidateFormAttr.formRule?.compute) &&
-      candidateFormAttr.formRule.compute.length > 0,
-    "locked_draft.calculation_compute_required"
-  );
-  nextFormAttr.formRule = nextFormAttr.formRule || {};
-  nextFormAttr.formRule.compute = structuredClone(candidateFormAttr.formRule.compute);
-  nextConfig.attribute.formAttr = JSON.stringify(nextFormAttr);
-
-  const candidateRow = nativeDetailField(candidateConfig, aggregate.tableId, aggregate.fieldId);
-  const nextRow = nativeDetailField(nextConfig, aggregate.tableId, aggregate.fieldId);
-  const candidateAttribute = parsedNativeAttribute(candidateRow);
-  const nextAttribute = parsedNativeAttribute(nextRow);
-  const expressionFormulaVO = candidateAttribute.config?.controlProps?.expressionFormulaVO;
-  requireValue(expressionFormulaVO && typeof expressionFormulaVO === "object",
-    "locked_draft.calculation_expression_required");
-  nextAttribute.config = nextAttribute.config || {};
-  nextAttribute.config.controlProps = nextAttribute.config.controlProps || {};
-  nextAttribute.config.controlProps.expressionFormulaVO = structuredClone(expressionFormulaVO);
-  nextRow.fdAttribute = JSON.stringify(nextAttribute);
-
-  const signKey = `${aggregate.fieldId}.expressionFormulaVO`;
-  requireValue(
-    text(candidateConfig.sign?.formula?.[signKey]),
-    "locked_draft.calculation_sign_required"
-  );
-  nextConfig.sign = nextConfig.sign || {};
-  nextConfig.sign.formula = nextConfig.sign.formula || {};
-  nextConfig.sign.formula[signKey] = candidateConfig.sign.formula[signKey];
-
-  const template = structuredClone(before.template);
-  template.mechanisms["sys-xform"].fdConfig = JSON.stringify(nextConfig);
-  const changedPaths = [
-    "/mechanisms/sys-xform/fdConfig/attribute/formAttr/formRule/compute",
-    `/mechanisms/sys-xform/fdConfig/dataModel[detail:${aggregate.tableId}]/fdFields[${aggregate.fieldId}]/fdAttribute/config/controlProps/expressionFormulaVO`,
-    `/mechanisms/sys-xform/fdConfig/sign/formula/${signKey}`
-  ];
-  requireValue(
-    digest(protectedCalculationTemplate(before.template, {
-      tableId: aggregate.tableId,
-      fieldId: aggregate.fieldId
-    })) === digest(protectedCalculationTemplate(template, {
-      tableId: aggregate.tableId,
-      fieldId: aggregate.fieldId
-    })),
-    "locked_draft.calculation_delta_outside_scope"
-  );
-
-  return {
-    before,
-    template,
-    workflow: undefined,
-    plan: {
-      repairKind: "calculation",
-      targetTemplateId: template.fdId,
-      aggregateFieldId,
-      detailTableId: aggregate.tableId,
-      rowFormulaFieldId: aggregate.fieldId,
-      changedPaths
-    },
-    verify(after) {
-      const afterConfig = parsedXformConfig(after.template);
-      const afterFormAttr = parsedFormAttr(afterConfig);
-      const afterRowAttribute = parsedNativeAttribute(
-        nativeDetailField(afterConfig, aggregate.tableId, aggregate.fieldId)
-      );
-      const computeOk = stableStringify(afterFormAttr.formRule?.compute || []) ===
-        stableStringify(candidateFormAttr.formRule.compute);
-      const expressionOk = stableStringify(
-        afterRowAttribute.config?.controlProps?.expressionFormulaVO
-      ) === stableStringify(expressionFormulaVO);
-      const signOk = afterConfig.sign?.formula?.[signKey] === candidateConfig.sign.formula[signKey];
-      const protectedOk = digest(protectedCalculationTemplate(before.template, {
-        tableId: aggregate.tableId,
-        fieldId: aggregate.fieldId
-      })) === digest(protectedCalculationTemplate(after.template, {
-        tableId: aggregate.tableId,
-        fieldId: aggregate.fieldId
-      }));
-      return {
-        ok: computeOk && expressionOk && signOk && protectedOk,
-        checks: { computeOk, expressionOk, signOk, protectedOk }
-      };
-    }
-  };
-}
-
-function observedAuthorization(template) {
-  return Object.fromEntries(AUTHORIZATION_COLLECTIONS.map((collection) => [
-    collection,
-    ids(template?.[AUTHORIZATION_NATIVE_FIELDS[collection]])
-  ]));
-}
-
-function findDslField(dsl, fieldId) {
-  for (const field of dsl?.form?.fields || []) {
-    if (field?.id === fieldId) return field;
-    if (field?.type === "detailTable") {
-      const column = (field.columns || []).find((candidate) => candidate?.id === fieldId);
-      if (column) return column;
-    }
-  }
-  return undefined;
-}
-
-function parsedXformConfig(template) {
-  const value = template?.mechanisms?.["sys-xform"]?.fdConfig;
-  requireValue(typeof value === "string", "locked_draft.xform_config_required");
-  try {
-    const parsed = JSON.parse(value);
-    requireValue(parsed && typeof parsed === "object" && !Array.isArray(parsed),
-      "locked_draft.xform_config_invalid");
-    return parsed;
-  } catch (error) {
-    if (error?.code) throw error;
-    throw coded("locked_draft.xform_config_invalid");
-  }
-}
-
-function parsedFormAttr(config) {
-  const value = config?.attribute?.formAttr;
-  requireValue(typeof value === "string", "locked_draft.form_attr_required");
-  try {
-    const parsed = JSON.parse(value);
-    requireValue(parsed && typeof parsed === "object" && !Array.isArray(parsed),
-      "locked_draft.form_attr_invalid");
-    return parsed;
-  } catch (error) {
-    if (error?.code) throw error;
-    throw coded("locked_draft.form_attr_invalid");
-  }
-}
-
-function nativeDetailField(config, tableId, fieldId) {
-  const models = (config?.dataModel || []).filter((model) => (
-    model?.fdType === "detail" && model?.dynamicProps?.detailFieldName === tableId
-  ));
-  requireValue(models.length === 1, "locked_draft.calculation_detail_model_mismatch");
-  const fields = (models[0].fdFields || []).filter((field) => field?.fdName === fieldId);
-  requireValue(fields.length === 1, "locked_draft.calculation_detail_field_mismatch");
-  return fields[0];
-}
-
-function parsedNativeAttribute(field) {
-  requireValue(typeof field?.fdAttribute === "string", "locked_draft.calculation_attribute_required");
-  try {
-    const parsed = JSON.parse(field.fdAttribute);
-    requireValue(parsed && typeof parsed === "object" && !Array.isArray(parsed),
-      "locked_draft.calculation_attribute_invalid");
-    return parsed;
-  } catch (error) {
-    if (error?.code) throw error;
-    throw coded("locked_draft.calculation_attribute_invalid");
-  }
-}
-
-function protectedCalculationTemplate(template, { tableId, fieldId }) {
-  const copy = normalizedProtected(structuredClone(template));
-  const config = parsedXformConfig(copy);
-  const formAttr = parsedFormAttr(config);
-  if (formAttr.formRule) delete formAttr.formRule.compute;
-  config.attribute.formAttr = formAttr;
-  const row = nativeDetailField(config, tableId, fieldId);
-  const attribute = parsedNativeAttribute(row);
-  if (attribute.config?.controlProps) {
-    delete attribute.config.controlProps.expressionFormulaVO;
-  }
-  row.fdAttribute = attribute;
-  if (config.sign?.formula) delete config.sign.formula[`${fieldId}.expressionFormulaVO`];
-  copy.mechanisms["sys-xform"].fdConfig = config;
-  return copy;
-}
-
-function sourceAuthorizationMember(dsl, sourceId) {
-  return AUTHORIZATION_COLLECTIONS
-    .flatMap((collection) => dsl?.template?.authorization?.[collection] || [])
-    .find((member) => member?.sourceId === sourceId || member?.id === sourceId);
-}
-
-function membersForIds(expectedIds, existing, elementById) {
-  const existingById = new Map((existing || []).map((member) => [member?.fdId, member]));
-  return expectedIds.map((id) => {
-    if (existingById.has(id)) return structuredClone(existingById.get(id));
-    const target = elementById.get(id);
-    return { fdId: target.fdId, fdName: target.fdName, fdOrgType: Number(target.fdOrgType) };
-  });
-}
-
-function authorizationChangedPaths(before, after) {
-  const paths = [];
-  for (const field of ["fdEditors", "fdAllReaders", "fdAllEditors"]) {
-    if (stableStringify(ids(before.template[field])) !== stableStringify(ids(after.template[field]))) {
-      paths.push(`/${field}`);
-    }
-  }
-  if (stableStringify(ids(before.template.mechanisms.lbpmTemplate[0].fdEditors)) !==
-    stableStringify(ids(after.template.mechanisms.lbpmTemplate[0].fdEditors))) {
-    paths.push("/mechanisms/lbpmTemplate/0/fdEditors");
-  }
-  if (stableStringify(ids(before.workflow?.fdEditors)) !== stableStringify(ids(after.workflow?.fdEditors))) {
-    paths.push("/workflowDetail/fdEditors");
-  }
-  return paths.sort();
-}
-
-function protectedAuthorizationBundle(bundle) {
-  const copy = normalizedProtected(structuredClone(bundle));
-  for (const field of ["fdEditors", "fdAllReaders", "fdAllEditors"]) delete copy.template[field];
-  if (copy.template?.mechanisms?.lbpmTemplate?.[0]) {
-    delete copy.template.mechanisms.lbpmTemplate[0].fdEditors;
-  }
-  if (copy.workflow) delete copy.workflow.fdEditors;
-  return copy;
-}
-
-function normalizedProtected(value) {
-  const copy = withoutMechanismTokens(value);
-  const visit = (node) => {
-    if (!node || typeof node !== "object") return;
-    delete node.fdAlter;
-    delete node.fdAlterTime;
-    for (const child of Object.values(node)) visit(child);
-  };
-  visit(copy);
-  const normalize = (owner, fields) => {
-    if (!owner || typeof owner !== "object") return;
-    for (const field of fields) {
-      if (Array.isArray(owner[field])) owner[field] = ids(owner[field]);
-    }
-  };
-  normalize(copy, Object.values(AUTHORIZATION_NATIVE_FIELDS));
-  normalize(copy?.mechanisms?.lbpmTemplate?.[0], ["fdReaders", "fdEditors"]);
-  normalize(copy.template, Object.values(AUTHORIZATION_NATIVE_FIELDS));
-  normalize(copy.template?.mechanisms?.lbpmTemplate?.[0], ["fdReaders", "fdEditors"]);
-  normalize(copy.workflow, ["fdReaders", "fdEditors"]);
-  return copy;
 }
 
 async function readBundle(client, {
@@ -1065,18 +694,17 @@ function writeArtifact(directory, name, value) {
     { mode: 0o600, flag: "wx", flush: true });
 }
 
-function membersById(values) {
-  const result = new Map();
-  for (const member of values || []) {
-    requireValue(text(member?.fdId) && !result.has(member.fdId), "locked_draft.authorization_member_invalid");
-    result.set(member.fdId, member);
+function findDslField(dsl, fieldId) {
+  for (const field of dsl?.form?.fields || []) {
+    if (field?.id === fieldId) return field;
+    if (field?.type === "detailTable") {
+      const column = (field.columns || []).find((candidate) => candidate?.id === fieldId);
+      if (column) return column;
+    }
   }
-  return result;
+  return undefined;
 }
 
-function ids(values) { return [...membersById(values).keys()].sort(); }
-function sortedIds(values) { return [...new Set((values || []).filter(text))].sort(); }
-function unionIds(...values) { return sortedIds(values.flat()); }
 function valueAtPointer(root, pointer) { return pointer.split("/").slice(1).reduce((value, token) => value?.[token.replaceAll("~1", "/").replaceAll("~0", "~")], root); }
 function normalizedTarget(value) { try { return { baseUrl: normalizeBaseUrl(value), diagnostics: [] }; } catch (error) { return { baseUrl: undefined, diagnostics: [{ level: "error", code: "safety.base_url_invalid", message: error.message, path: "/baseUrl" }] }; } }
 function normalizedEvidenceUrl(value) { try { return normalizeBaseUrl(value); } catch { return undefined; } }

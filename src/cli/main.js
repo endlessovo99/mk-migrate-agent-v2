@@ -296,22 +296,6 @@ async function runReconcileTransferRecord(argv, options = {}) {
     targetCategoryId: args["target-category-id"],
     targetTemplateId: args["target-template-id"],
     baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
-    fallbackFdIds: selectFallbackFdIds(env),
-    participantOverrides: parseParticipantOverrides(args["participant-override"]),
-    templateAuthorizationOverrides: parseTemplateAuthorizationOverrides(
-      args["template-authorization-override"]
-    ),
-    directParticipantOverrides: parseDirectParticipantOverrides(
-      args["direct-participant-override"]
-    ),
-    allowTemplateAuthorizationFallback:
-      args["allow-template-authorization-fallback"] === true,
-    allowMissingDirectPersonFallback: args["allow-missing-direct-person-fallback"] === true,
-    allowMissingDirectPostFallback: args["allow-missing-direct-post-fallback"] === true,
-    directPersonFallbackIds: parseFdIdList(
-      args["direct-person-fallback-id"],
-      "--direct-person-fallback-id"
-    ),
     credentials: {
       username: env.NEWOA_USERNAME,
       encryptedPassword: env.NEWOA_ENCRYPTED_PASSWORD

@@ -38,8 +38,7 @@ describe("reconcile-transfer-record CLI", () => {
         "--base-url", "http://oadev.shanghai-electric.com",
         "--confirm-write",
         "--expected-evidence-digest", "a".repeat(64),
-        "--artifacts-dir", join(root, "artifacts"),
-        "--participant-override", "source-person=target-person"
+        "--artifacts-dir", join(root, "artifacts")
       ], {
         env: {
           NEWOA_USERNAME: "cli-reconcile-user",
@@ -64,10 +63,6 @@ describe("reconcile-transfer-record CLI", () => {
     assert.equal(request.options.expectedPriorReportDigest, "c".repeat(64));
     assert.equal(request.options.sourceDraft.source.sourceId, source.source.sourceId);
     assert.equal(request.options.priorExecutionReport.status, "readback_failed");
-    assert.deepEqual(request.options.participantOverrides, [{
-      sourceId: "source-person",
-      targetFdId: "target-person"
-    }]);
     assert.equal(output.join("\n").includes("cli-reconcile-secret"), false);
   });
 });

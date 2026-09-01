@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync } from "node:fs";
 
 import { buildDryRunPlan } from "./dry-run.js";
 import { CATALOG_VERSIONS } from "../dsl/catalogs.js";
@@ -14,6 +13,7 @@ import { stableStringify } from "./persistence/normalize.js";
 import { withoutMechanismTokens } from "./published-form-patch.js";
 import { attachRequiredTemplateNumberRuleReadback } from "./template-number-rule.js";
 import { buildTransferRecordPayload, generateTransferRecordId } from "./transfer-record.js";
+import { createLockedDraftState } from "./locked-draft-state.js";
 
 const VERIFIED_PARTITIONS = Object.freeze([
   "envelope",
@@ -92,7 +92,7 @@ export async function reconcileTransferRecord(input, options = {}) {
   let transferRecordPayload;
   let writeStarted = false;
   let writeCompleted = false;
-  let stateCreated = false;
+  let operationState;
 
   const resultBase = () => ({
     baseUrl,
@@ -104,22 +104,6 @@ export async function reconcileTransferRecord(input, options = {}) {
     apiStages,
     plan
   });
-  const recordState = (status, extra = {}) => {
-    if (!stateCreated) return;
-    writeFileSync(
-      join(options.artifactsDir, "transfer-record-state.json"),
-      `${JSON.stringify({
-        status,
-        targetTemplateId,
-        recordId: transferRecordPayload?.fdId,
-        writeStarted,
-        writeOutcomeUnknown: writeStarted && !writeCompleted,
-        ...extra
-      }, null, 2)}\n`,
-      { mode: 0o600, flag: "w", flush: true }
-    );
-  };
-
   try {
     apiStages.push(stage("login", "started"));
     await client.login(credentials);
@@ -137,15 +121,7 @@ export async function reconcileTransferRecord(input, options = {}) {
     apiStages.push(stage("resolveWorkflowParticipants", "started"));
     const participantResolution = await resolveWorkflowParticipants(priorResolution.dsl, {
       client,
-      targetBaseUrl: baseUrl,
-      fallbackFdIds: options.fallbackFdIds,
-      participantOverrides: options.participantOverrides,
-      templateAuthorizationOverrides: options.templateAuthorizationOverrides,
-      directParticipantOverrides: options.directParticipantOverrides,
-      allowTemplateAuthorizationFallback: options.allowTemplateAuthorizationFallback,
-      allowMissingDirectPersonFallback: options.allowMissingDirectPersonFallback,
-      allowMissingDirectPostFallback: options.allowMissingDirectPostFallback,
-      directPersonFallbackIds: options.directPersonFallbackIds
+      targetBaseUrl: baseUrl
     });
     current(apiStages).status = "ok";
     current(apiStages).resolvedCount = participantResolution.resolvedCount;
@@ -153,8 +129,7 @@ export async function reconcileTransferRecord(input, options = {}) {
     apiStages.push(stage("resolveConditionOrgs", "started"));
     const conditionResolution = await resolveConditionOrgs(participantResolution.dsl, {
       client,
-      targetBaseUrl: baseUrl,
-      fallbackFdIds: options.fallbackFdIds
+      targetBaseUrl: baseUrl
     });
     current(apiStages).status = "ok";
     current(apiStages).resolvedCount = conditionResolution.resolvedCount;
@@ -211,7 +186,7 @@ export async function reconcileTransferRecord(input, options = {}) {
       targetTemplateId,
       targetCategoryId,
       targetSnapshotDigest: secondSnapshot,
-      resolutionOptions: resolutionEvidence(options)
+      resolutionOptions: resolutionEvidence()
     });
 
     if (!completeVerification(readback)) {
@@ -253,35 +228,55 @@ export async function reconcileTransferRecord(input, options = {}) {
       targetTemplateId,
       now: options.now || new Date()
     });
-    writeFileSync(
-      join(options.artifactsDir, "transfer-record-state.json"),
-      `${JSON.stringify({
-        status: "prepared",
-        targetTemplateId,
-        recordId: transferRecordPayload.fdId,
-        evidenceDigest,
-        writeStarted: false,
-        writeOutcomeUnknown: false
-      }, null, 2)}\n`,
-      { mode: 0o600, flag: "wx", flush: true }
-    );
-    stateCreated = true;
+    operationState = createLockedDraftState({
+      baseUrl,
+      targetTemplateId,
+      operation: "reconcile_transfer_record",
+      evidenceDigest,
+      artifactsDir: options.artifactsDir,
+      testLockRoot: options.testLockRoot,
+      allowTestLockRoot: Boolean(options.client)
+    });
 
     apiStages.push(stage("addTransferRecord", "started", {
       recordId: transferRecordPayload.fdId,
       templateId: targetTemplateId
     }));
     writeStarted = true;
-    recordState("write_started", { evidenceDigest });
+    operationState.record("transfer_record_started", {
+      recordId: transferRecordPayload.fdId,
+      templateWriteStarted: false,
+      templateWriteCompleted: false,
+      templateWriteOutcomeUnknown: false,
+      transferRecordStarted: true,
+      transferRecordCompleted: false,
+      transferRecordOutcomeUnknown: true
+    });
     try {
       await client.addTransferRecord(transferRecordPayload);
       writeCompleted = true;
       current(apiStages).status = "ok";
-      recordState("recorded", { evidenceDigest });
+      operationState.record("recorded", {
+        recordId: transferRecordPayload.fdId,
+        templateWriteStarted: false,
+        templateWriteCompleted: false,
+        templateWriteOutcomeUnknown: false,
+        transferRecordStarted: true,
+        transferRecordCompleted: true,
+        transferRecordOutcomeUnknown: false
+      });
     } catch {
       current(apiStages).status = "failed";
       current(apiStages).writeOutcomeUnknown = true;
-      recordState("outcome_unknown", { evidenceDigest });
+      operationState.record("transfer_record_outcome_unknown", {
+        recordId: transferRecordPayload.fdId,
+        templateWriteStarted: false,
+        templateWriteCompleted: false,
+        templateWriteOutcomeUnknown: false,
+        transferRecordStarted: true,
+        transferRecordCompleted: false,
+        transferRecordOutcomeUnknown: true
+      });
       return {
         ok: false,
         status: "transfer_record_failed",
@@ -322,7 +317,15 @@ export async function reconcileTransferRecord(input, options = {}) {
     };
   } catch (error) {
     if (current(apiStages)?.status === "started") current(apiStages).status = "failed";
-    recordState(writeStarted ? "failed" : "blocked");
+    operationState?.record(writeStarted ? "failed" : "blocked", {
+      recordId: transferRecordPayload?.fdId,
+      templateWriteStarted: false,
+      templateWriteCompleted: false,
+      templateWriteOutcomeUnknown: false,
+      transferRecordStarted: writeStarted,
+      transferRecordCompleted: writeCompleted,
+      transferRecordOutcomeUnknown: writeStarted && !writeCompleted
+    });
     const stageName = current(apiStages)?.name || "reconcile";
     return failure({
       ...resultBase(),
@@ -508,6 +511,24 @@ function validateSafety(options) {
     "/expectedPriorReportDigest",
     diagnostics
   );
+  if (
+    [
+      options.participantOverrides,
+      options.templateAuthorizationOverrides,
+      options.directParticipantOverrides,
+      options.directPersonFallbackIds
+    ].some((value) => Array.isArray(value) && value.length > 0) ||
+    options.allowTemplateAuthorizationFallback === true ||
+    options.allowMissingDirectPersonFallback === true ||
+    options.allowMissingDirectPostFallback === true
+  ) {
+    diagnostics.push({
+      level: "error",
+      code: "reconcile.new_resolution_options_forbidden",
+      message: "Reconciliation may use only retained successful resolution evidence and current exact lookup.",
+      path: "/resolutionOptions"
+    });
+  }
   if (options.confirmWrite === true) {
     requiredText(options.expectedEvidenceDigest, "reconcile.evidence_digest_required", "/expectedEvidenceDigest", diagnostics);
     requiredText(options.artifactsDir, "reconcile.artifacts_dir_required", "/artifactsDir", diagnostics);
@@ -700,17 +721,8 @@ function targetSnapshotDigest(readback) {
   return digest(withoutMechanismTokens(readback));
 }
 
-function resolutionEvidence(options) {
-  return {
-    participantOverrides: options.participantOverrides || [],
-    templateAuthorizationOverrides: options.templateAuthorizationOverrides || [],
-    directParticipantOverrides: options.directParticipantOverrides || [],
-    directPersonFallbackIds: options.directPersonFallbackIds || [],
-    fallbackFdIds: options.fallbackFdIds || {},
-    allowTemplateAuthorizationFallback: options.allowTemplateAuthorizationFallback === true,
-    allowMissingDirectPersonFallback: options.allowMissingDirectPersonFallback === true,
-    allowMissingDirectPostFallback: options.allowMissingDirectPostFallback === true
-  };
+function resolutionEvidence() {
+  return { mode: "prior_execution_evidence_only" };
 }
 
 function completeVerification(readback) {

@@ -49,6 +49,8 @@ describe("scoped locked-draft repair Route", () => {
 
     const root = mkdtempSync(join(tmpdir(), "mk-locked-auth-repair-"));
     t.after(() => rmSync(root, { recursive: true, force: true }));
+    const originalTemplate = structuredClone(client.template);
+    const originalWorkflow = structuredClone(client.workflow);
     const result = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
       client,
       sourceDraft: fixture.sourceDraft,
@@ -65,6 +67,18 @@ describe("scoped locked-draft repair Route", () => {
     assert.deepEqual(client.ids(client.template.fdAllReaders), [MEMBER_ID]);
     assert.deepEqual(client.ids(client.template.fdAllEditors), [MEMBER_ID]);
     assert.deepEqual(client.ids(client.workflow.fdEditors), [MEMBER_ID]);
+    client.template = originalTemplate;
+    client.workflow = originalWorkflow;
+    const bypassAttempt = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
+      client,
+      sourceDraft: fixture.sourceDraft,
+      priorExecutionReport: fixture.priorExecutionReport,
+      repairKind: "template_authorization",
+      confirmWrite: true,
+      expectedEvidenceDigest: preview.evidenceDigest,
+      artifactsDir: join(root, "different-execution-directory")
+    }));
+    assert.equal(bypassAttempt.ok, false);
     assert.equal(client.calls.filter((call) => call.operation === "update-template").length, 1);
     assert.equal(client.calls.filter((call) => call.operation === "save-workflow-draft").length, 1);
     assert.equal(client.calls.filter((call) => call.operation === "add-transfer-record").length, 1);
@@ -173,6 +187,26 @@ describe("scoped locked-draft repair Route", () => {
     assert.equal(client.calls.filter((call) => call.operation === "update-template").length, 1);
     assert.equal(client.calls.filter((call) => call.operation === "save-workflow-draft").length, 1);
     assert.equal(client.calls.some((call) => call.operation === "add-transfer-record"), false);
+  });
+
+  it("blocks a calculation repair when an allowlisted path drifted after the failure report", async () => {
+    const fixture = calculationFixture();
+    const config = JSON.parse(fixture.template.mechanisms["sys-xform"].fdConfig);
+    const formAttr = JSON.parse(config.attribute.formAttr);
+    formAttr.formRule.compute = [{ id: "manual-compute-after-failure" }];
+    config.attribute.formAttr = JSON.stringify(formAttr);
+    fixture.template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+    const client = new LockedDraftFakeClient(fixture.template);
+
+    const result = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
+      client,
+      sourceDraft: fixture.sourceDraft,
+      priorExecutionReport: fixture.priorExecutionReport,
+      repairKind: "calculation"
+    }));
+
+    assert.equal(result.ok, false);
+    assert.equal(client.hasWrite(), false);
   });
 });
 
@@ -424,7 +458,7 @@ function calculationFixture() {
 }
 
 function repairOptions(fixture, overrides = {}) {
-  return {
+  const options = {
     credentials: CREDENTIALS,
     confirmWrite: false,
     targetCategoryId: CATEGORY_ID,
@@ -439,6 +473,10 @@ function repairOptions(fixture, overrides = {}) {
     transferRecordIdFactory: () => "lockedrepair000000000000000000000000",
     ...overrides
   };
+  if (overrides.artifactsDir && !overrides.testLockRoot) {
+    options.testLockRoot = join(overrides.artifactsDir, "..", "locks");
+  }
+  return options;
 }
 
 function findTestDslField(dsl, fieldId) {
