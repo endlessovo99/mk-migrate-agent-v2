@@ -241,10 +241,12 @@ function reconciliationFixture() {
     createdFdIds: [TARGET_TEMPLATE_ID],
     updatedFdIds: [],
     readback: { ok: false, status: "readback_failed" },
-    apiStages: [
-      { name: "add", status: "ok" },
-      { name: "update", status: "ok" },
-      { name: "readback", status: "ok" }
+      apiStages: [
+        { name: "add", status: "ok" },
+        { name: "update", status: "ok" },
+        { name: "saveWorkflowDraft", status: "ok" },
+        { name: "getWorkflowTemplateDetail", status: "ok" },
+        { name: "readback", status: "ok" }
     ],
     plan
   };

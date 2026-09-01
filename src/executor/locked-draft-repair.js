@@ -1029,7 +1029,21 @@ function validatePriorExecution(report, { input, plan, baseUrl, targetTemplateId
   if (report?.status !== "readback_failed" || report.failedAt !== "readback" || report.readback?.ok !== false) fail("locked_draft.prior_readback_required");
   if (report?.templateId !== targetTemplateId || stableStringify(report.createdFdIds) !== stableStringify([targetTemplateId]) || (report.updatedFdIds?.length || 0)) fail("locked_draft.prior_target_mismatch");
   if (normalizedEvidenceUrl(report?.baseUrl) !== baseUrl) fail("locked_draft.prior_origin_mismatch");
-  if ((report?.apiStages || []).some((entry) => entry?.name === "addTransferRecord") || report?.transferRecord != null || report?.writeOutcomeUnknown === true) fail("locked_draft.prior_callback_present");
+  const stages = Array.isArray(report?.apiStages) ? report.apiStages : [];
+  const requiredStages = [
+    "add",
+    "update",
+    ...(input?.workflow ? ["saveWorkflowDraft", "getWorkflowTemplateDetail"] : []),
+    "readback"
+  ];
+  if (requiredStages.some((name) => (
+    stages.filter((entry) => entry?.name === name && entry?.status === "ok").length !== 1
+  )) || stages.at(-1)?.name !== "readback" || stages.at(-1)?.status !== "ok") {
+    fail("locked_draft.prior_write_sequence_invalid");
+  }
+  if (stages.some((entry) => entry?.name === "addTransferRecord") ||
+    report?.transferRecord != null || report?.writeOutcomeUnknown === true ||
+    report?.transferRecord?.outcomeUnknown === true) fail("locked_draft.prior_callback_present");
   if (report?.plan?.template?.name !== plan.template?.name ||
     stableStringify(report?.plan?.trust?.digests || {}) !== stableStringify(input?.trust?.digests || {}) ||
     stableStringify(report?.plan?.catalogs || {}) !== stableStringify(input?.catalogs || {})) fail("locked_draft.prior_dsl_mismatch");

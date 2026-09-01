@@ -568,15 +568,22 @@ function validatePriorExecution(report, { baseUrl, targetTemplateId, plan, input
   }
   if (normalizedEvidenceUrl(report.baseUrl) !== baseUrl) fail("reconcile.prior_origin_mismatch");
   const stages = Array.isArray(report.apiStages) ? report.apiStages : [];
-  if (["add", "update", "readback"].some((name) => (
+  const requiredStages = [
+    "add",
+    "update",
+    ...(input?.workflow ? ["saveWorkflowDraft", "getWorkflowTemplateDetail"] : []),
+    "readback"
+  ];
+  if (requiredStages.some((name) => (
     stages.filter((entry) => entry?.name === name && entry?.status === "ok").length !== 1
-  ))) {
+  )) || stages.at(-1)?.name !== "readback" || stages.at(-1)?.status !== "ok") {
     fail("reconcile.prior_write_sequence_invalid");
   }
   if (
     stages.some((entry) => entry?.name === "addTransferRecord") ||
     report.transferRecord != null ||
-    report.writeOutcomeUnknown === true
+    report.writeOutcomeUnknown === true ||
+    report.transferRecord?.outcomeUnknown === true
   ) {
     fail("reconcile.prior_callback_evidence_present");
   }

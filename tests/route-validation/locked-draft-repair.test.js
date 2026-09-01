@@ -295,6 +295,8 @@ function authorizationFixture() {
       },
       { name: "add", status: "ok" },
       { name: "update", status: "ok" },
+      { name: "saveWorkflowDraft", status: "ok" },
+      { name: "getWorkflowTemplateDetail", status: "ok" },
       { name: "readback", status: "ok" }
     ],
     plan
