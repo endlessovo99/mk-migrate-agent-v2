@@ -334,83 +334,51 @@ function parseArgs(argv) {
 }
 
 function parseParticipantOverrides(value) {
-  if (value === undefined) return [];
-  const values = Array.isArray(value) ? value : [value];
-  const overrides = values.map((entry) => {
-    if (typeof entry !== "string") {
-      throw new Error("--participant-override requires <sourceId>=<targetFdId>");
-    }
-    const separatorIndex = entry.indexOf("=");
-    const lastSeparatorIndex = entry.lastIndexOf("=");
-    const sourceId = separatorIndex >= 0 ? entry.slice(0, separatorIndex).trim() : "";
-    const targetFdId = separatorIndex >= 0 ? entry.slice(separatorIndex + 1).trim() : "";
-    if (!sourceId || !targetFdId || separatorIndex !== lastSeparatorIndex) {
-      throw new Error("--participant-override requires <sourceId>=<targetFdId>");
-    }
-    return { sourceId, targetFdId };
+  return parseOverridePairs(value, {
+    optionName: "--participant-override",
+    sourceKey: "sourceId"
   });
-  const sourceIds = new Set();
-  for (const override of overrides) {
-    if (sourceIds.has(override.sourceId)) {
-      throw new Error(`--participant-override sourceId may be specified only once: ${override.sourceId}`);
-    }
-    sourceIds.add(override.sourceId);
-  }
-  return overrides;
 }
 
 function parseTemplateAuthorizationOverrides(value) {
-  if (value === undefined) return [];
-  const values = Array.isArray(value) ? value : [value];
-  const overrides = values.map((entry) => {
-    if (typeof entry !== "string") {
-      throw new Error("--template-authorization-override requires <sourceId>=<targetFdId>");
-    }
-    const separatorIndex = entry.indexOf("=");
-    const lastSeparatorIndex = entry.lastIndexOf("=");
-    const sourceId = separatorIndex >= 0 ? entry.slice(0, separatorIndex).trim() : "";
-    const targetFdId = separatorIndex >= 0 ? entry.slice(separatorIndex + 1).trim() : "";
-    if (!sourceId || !targetFdId || separatorIndex !== lastSeparatorIndex) {
-      throw new Error("--template-authorization-override requires <sourceId>=<targetFdId>");
-    }
-    return { sourceId, targetFdId };
+  return parseOverridePairs(value, {
+    optionName: "--template-authorization-override",
+    sourceKey: "sourceId"
   });
-  const sourceIds = new Set();
-  for (const override of overrides) {
-    if (sourceIds.has(override.sourceId)) {
-      throw new Error(
-        `--template-authorization-override sourceId may be specified only once: ${override.sourceId}`
-      );
-    }
-    sourceIds.add(override.sourceId);
-  }
-  return overrides;
 }
 
 function parseDirectParticipantOverrides(value) {
+  return parseOverridePairs(value, {
+    optionName: "--direct-participant-override",
+    sourceKey: "sourceTargetId"
+  });
+}
+
+function parseOverridePairs(value, { optionName, sourceKey }) {
   if (value === undefined) return [];
   const values = Array.isArray(value) ? value : [value];
+  const requirement = `${optionName} requires <${sourceKey}>=<targetFdId>`;
   const overrides = values.map((entry) => {
     if (typeof entry !== "string") {
-      throw new Error("--direct-participant-override requires <sourceTargetId>=<targetFdId>");
+      throw new Error(requirement);
     }
     const separatorIndex = entry.indexOf("=");
     const lastSeparatorIndex = entry.lastIndexOf("=");
-    const sourceTargetId = separatorIndex >= 0 ? entry.slice(0, separatorIndex).trim() : "";
+    const sourceValue = separatorIndex >= 0 ? entry.slice(0, separatorIndex).trim() : "";
     const targetFdId = separatorIndex >= 0 ? entry.slice(separatorIndex + 1).trim() : "";
-    if (!sourceTargetId || !targetFdId || separatorIndex !== lastSeparatorIndex) {
-      throw new Error("--direct-participant-override requires <sourceTargetId>=<targetFdId>");
+    if (!sourceValue || !targetFdId || separatorIndex !== lastSeparatorIndex) {
+      throw new Error(requirement);
     }
-    return { sourceTargetId, targetFdId };
+    return { [sourceKey]: sourceValue, targetFdId };
   });
-  const sourceTargetIds = new Set();
+  const sourceValues = new Set();
   for (const override of overrides) {
-    if (sourceTargetIds.has(override.sourceTargetId)) {
+    if (sourceValues.has(override[sourceKey])) {
       throw new Error(
-        `--direct-participant-override sourceTargetId may be specified only once: ${override.sourceTargetId}`
+        `${optionName} ${sourceKey} may be specified only once: ${override[sourceKey]}`
       );
     }
-    sourceTargetIds.add(override.sourceTargetId);
+    sourceValues.add(override[sourceKey]);
   }
   return overrides;
 }

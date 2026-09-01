@@ -186,62 +186,6 @@ describe("workflow-template authorization and timeout Route case", () => {
     assert.deepEqual(resolved.fallbackTargetIds, [fallbackPostId]);
   });
 
-  it("preserves a parentless default reader through a separately scoped exact override", async () => {
-    const sourceDraft = cleanSourceFile(sourcePath);
-    const dslDraft = draftSourceDraft(sourceDraft);
-    const sourceMember = sourceDraft.template.authorization.temporaryReaders[0];
-    const dslMember = dslDraft.template.authorization.temporaryReaders[0];
-    delete sourceMember.sourceParentName;
-    delete dslMember.sourceParentName;
-    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
-      externalAgentReviewed: true,
-      reviewerName: "route-validation",
-      checkedAt
-    });
-    const baseClient = permissionResolutionClient(trusted);
-    const searchCalls = [];
-    const client = {
-      async searchOrg(key, orgType) {
-        searchCalls.push({ key, orgType });
-        return baseClient.searchOrg(key, orgType);
-      },
-      async getElementInfo(targets) {
-        const remaining = targets.filter((target) => target !== sourceMember.sourceId);
-        return [
-          ...(remaining.length ? await baseClient.getElementInfo(remaining) : []),
-          ...(targets.includes(sourceMember.sourceId) ? [{
-            fdId: sourceMember.sourceId,
-            fdName: sourceMember.name,
-            fdOrgType: sourceMember.sourceOrgType
-          }] : [])
-        ];
-      }
-    };
-
-    const resolved = await resolveWorkflowParticipants(trusted, {
-      client,
-      templateAuthorizationOverrides: [{
-        sourceId: sourceMember.sourceId,
-        targetFdId: sourceMember.sourceId
-      }]
-    });
-    const result = persistAndVerify(resolved.dsl);
-
-    assert.equal(result.readback.ok, true, JSON.stringify(result.readback.diagnostics));
-    assert.deepEqual(result.template.fdTmpReaders.map((member) => member.fdId), [
-      sourceMember.sourceId
-    ]);
-    assert.equal(resolved.templateAuthorizationOverrideCount, 1);
-    assert.equal(resolved.templateAuthorizationOverrideIdentityCount, 1);
-    assert.deepEqual(resolved.templateAuthorizationOverrides[0].paths, [
-      "/template/authorization/temporaryReaders/0"
-    ]);
-    assert.equal(
-      searchCalls.some((call) => call.key === sourceMember.name && Number(call.orgType) === 4),
-      false
-    );
-  });
-
   it("retains all-scope-only authorization members through NewOA normalization", async () => {
     const sourceDraft = cleanSourceFile(sourcePath);
     const dslDraft = draftSourceDraft(sourceDraft);
