@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { draftMkScriptsFromSourceScripts } from "../../src/translator/sysform-jsp-scripts.js";
 
 describe("unproven branch draft closure", () => {
-  it("omits unproven onChange branches with legacy-runtime-noop instead of leaving needs_review", () => {
+  it("keeps unproven onChange alerts review-required instead of declaring a no-op", () => {
     const scripts = draftMkScriptsFromSourceScripts({
       source: "sysform-jsp",
       sources: [{
@@ -33,14 +33,51 @@ describe("unproven branch draft closure", () => {
     const action = scripts.actions[0];
     assert.equal(action.event, "onChange");
     assert.equal(action.controlId, "fd_end");
-    assert.equal(action.translationStatus, "omitted");
-    assert.equal(action.function, "");
+    assert.equal(action.translationStatus, "needs_review");
+    assert.notEqual(action.function, "");
     assert.equal(action.branchProvenance?.status, "unproven");
-    assert.deepEqual(action.coverage, { status: "covered", nativeRules: [], residuals: [] });
+    assert.equal(action.coverage.status, "uncovered");
+    assert.deepEqual(action.coverage.nativeRules, []);
+    assert.equal(action.coverage.residuals.some((residual) =>
+      residual.code === "script.residual.form_rule_condition_source_unproven"
+    ), true);
     assert.equal(
       action.functionMappings.some((mapping) => mapping.basis === "legacy-runtime-noop"),
-      true
+      false
     );
+  });
+
+  it("keeps computed-member calls review-required", () => {
+    for (const call of ['window["alert"]("invalid")', 'vkor["eq"](0)']) {
+      const scripts = draftMkScriptsFromSourceScripts({
+        source: "sysform-jsp",
+        sources: [{
+          id: "computed-call.script.1",
+          sourceRef: "source.form.jsp.computed-call.script.1",
+          javascript: [
+            "AttachXFormValueChangeEventById('fd_end', function(value){",
+            "  var startDate = GetXFormFieldById('fd_start')[0].value;",
+            "  if (new Date(startDate) > new Date(value)) {",
+            `    ${call};`,
+            "  }",
+            "});"
+          ].join("\n"),
+          functionAudit: { matched: [], violations: [] }
+        }]
+      }, {
+        form: {
+          fields: [
+            { id: "fd_start", title: "开始", type: "date", componentId: "xform-date", props: {} },
+            { id: "fd_end", title: "结束", type: "date", componentId: "xform-date", props: {} }
+          ]
+        }
+      });
+
+      assert.equal(scripts.actions[0].translationStatus, "needs_review", call);
+      assert.equal(scripts.actions[0].functionMappings.some((mapping) =>
+        mapping.basis === "legacy-runtime-noop"
+      ), false, call);
+    }
   });
 
   it("deterministically maps a complete numeric compare onChange alert", () => {

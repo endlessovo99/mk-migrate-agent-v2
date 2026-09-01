@@ -11,7 +11,10 @@ import {
   analyzeLegacyScriptFormRules,
   provenPlatformValueChangeCallStarts
 } from "./sysform-form-rules.js";
-import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
+import {
+  inlineOnChangeSourceActionKey,
+  normalizeHelperInjectedSourceActionKey
+} from "./source-action-key.js";
 import {
   hardHiddenValueChangeCandidates,
   inlineRadioRowEffectCandidates
@@ -172,6 +175,7 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
 export function applyStaticScriptProperties(form = {}, scripts = {}) {
   const placeholderValuesByField = new Map();
   const monthPatternsByField = new Map();
+  const requiredFieldIds = new Set();
   for (const action of Array.isArray(scripts.actions) ? scripts.actions : []) {
     for (const entry of Array.isArray(action.coverage?.staticProps)
       ? action.coverage.staticProps
@@ -185,29 +189,41 @@ export function applyStaticScriptProperties(form = {}, scripts = {}) {
         monthPatternsByField.set(entry.fieldId, patterns);
         continue;
       }
+      if (entry?.prop === "required" && entry.value === true) {
+        requiredFieldIds.add(entry.fieldId);
+        continue;
+      }
       if (entry?.prop !== "placeholder" || typeof entry.value !== "string" || !entry.value.trim()) continue;
       const values = placeholderValuesByField.get(entry.fieldId) || new Set();
       values.add(entry.value);
       placeholderValuesByField.set(entry.fieldId, values);
     }
   }
-  if (!placeholderValuesByField.size && !monthPatternsByField.size) return form;
+  if (!placeholderValuesByField.size && !monthPatternsByField.size && !requiredFieldIds.size) return form;
 
   return {
     ...form,
     fields: (form.fields || []).map((field) => {
-      if (
-        monthPatternsByField.get(field.id)?.size === 2 &&
+      const requiredField = requiredFieldIds.has(field.id) &&
         field.type !== "detailTable" &&
-        field.type === "text" &&
-        field.componentId === "xform-input"
+        componentSupportsProp(field.componentId, "required")
+        ? {
+            ...field,
+            props: { ...(field.props || {}), required: true }
+          }
+        : field;
+      if (
+        monthPatternsByField.get(requiredField.id)?.size === 2 &&
+        requiredField.type !== "detailTable" &&
+        requiredField.type === "text" &&
+        requiredField.componentId === "xform-input"
       ) {
         const dateProps = {};
         for (const prop of ["required", "readOnly", "defaultValue"]) {
-          if (field.props?.[prop] !== undefined) dateProps[prop] = field.props[prop];
+          if (requiredField.props?.[prop] !== undefined) dateProps[prop] = requiredField.props[prop];
         }
         return {
-          ...field,
+          ...requiredField,
           type: "dateTime",
           componentId: "xform-datetime",
           props: {
@@ -216,7 +232,7 @@ export function applyStaticScriptProperties(form = {}, scripts = {}) {
             displayPattern: "yyyy-MM"
           },
           sourceProps: {
-            ...(field.sourceProps || {}),
+            ...(requiredField.sourceProps || {}),
             monthPickerInference: {
               classification: "source",
               dataPattern: "yyyy-MM",
@@ -225,16 +241,16 @@ export function applyStaticScriptProperties(form = {}, scripts = {}) {
           }
         };
       }
-      const values = placeholderValuesByField.get(field.id);
+      const values = placeholderValuesByField.get(requiredField.id);
       if (
-        field.type === "detailTable" ||
+        requiredField.type === "detailTable" ||
         values?.size !== 1 ||
-        !componentSupportsProp(field.componentId, "placeholder")
-      ) return field;
+        !componentSupportsProp(requiredField.componentId, "placeholder")
+      ) return requiredField;
       return {
-        ...field,
+        ...requiredField,
         props: {
-          ...field.props,
+          ...requiredField.props,
           placeholder: [...values][0]
         }
       };
@@ -744,12 +760,16 @@ function hiddenInputValue(html = "") {
 
 function mkActionFromCandidate(candidate, index, options = {}) {
   const functionName = candidate.event;
+  const sourceActionKey = normalizeHelperInjectedSourceActionKey(
+    candidate.sourceActionKey,
+    candidate.source
+  );
   const coveredLegacyFunctions = new Set(candidate.semanticHints?.coveredLegacyFunctions || []);
   const functionMappings = candidate.functionMappings || functionMappingsFromAudit(candidate.source.functionAudit);
   let coverage = scriptCoverageForExecutableFormRules(candidate.coverage || scriptCoverageFromSource({
     javascript: candidate.javascript,
     sourceRef: candidate.source.sourceRef,
-    sourceActionKey: candidate.sourceActionKey,
+    sourceActionKey,
     displayGate: candidate.source.displayGate,
     form: options.form
   }), options.formRules, options.form);
@@ -799,7 +819,7 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     controlId: candidate.controlId,
     tableId: candidate.tableId,
     sourceRefs,
-    sourceActionKey: candidate.sourceActionKey,
+    sourceActionKey,
     function: fn,
     translationStatus,
     coverage,
@@ -814,7 +834,7 @@ function mkActionFromCandidate(candidate, index, options = {}) {
           event: candidate.event,
           source: candidate.branchSource || candidate.javascript,
           sourceRef: candidate.source.sourceRef,
-          sourceActionKey: candidate.sourceActionKey,
+          sourceActionKey,
           eventFunctionName: candidate.branchFunctionName,
           eventFunctionStart: candidate.branchFunctionStart,
           textFieldIds: textValueFieldIds(options.form),
@@ -822,36 +842,13 @@ function mkActionFromCandidate(candidate, index, options = {}) {
         })
     : undefined;
 
-  // Unproven onChange/onLoad cannot become mapped later (fail-closed). Close them
-  // as legacy-runtime-noop at draft so agent-review is not permanently blocked.
-  // Keep needs_review when source still assigns through GetXFormFieldById(...).value.
-  if (
-    analyzedBranchProvenance?.status === "unproven" &&
-    translationStatus === "needs_review" &&
-    !provisionalDeterministicProof &&
-    !(candidate.coverage?.residuals?.length) &&
-    !sourceContainsLegacyRowEffect(candidate.branchSource || candidate.javascript) &&
-    !sourceAssignsLegacyFieldValue(candidate.branchSource || candidate.javascript) &&
-    !hasUnrecordedFunctionViolations(candidate)
-  ) {
-    translationStatus = "omitted";
-    fn = "";
-    coverage = { status: "covered", nativeRules: [], residuals: [] };
-    effectiveMappings = [{
-      source: unprovenBranchLegacySource(analyzedBranchProvenance, candidate),
-      target: "omitted-unproven-branch-provenance",
-      basis: "legacy-runtime-noop",
-      reviewRequired: false
-    }];
-  }
-
   const deterministicBranchProof = buildDeterministicScriptBranchProof({
     event: candidate.event,
     scope: candidate.scope,
     controlId: candidate.controlId,
     tableId: candidate.tableId,
     sourceRefs,
-    sourceActionKey: candidate.sourceActionKey,
+    sourceActionKey,
     function: fn,
     translationStatus,
     coverage,
@@ -872,7 +869,7 @@ function mkActionFromCandidate(candidate, index, options = {}) {
     runWhen: candidate.runWhen || runWhenFromDisplayGate(candidate.source.displayGate),
     function: fn,
     sourceRefs,
-    sourceActionKey: candidate.sourceActionKey,
+    sourceActionKey,
     branchProvenance,
     deterministicBranchProof,
     translationStatus,
@@ -931,40 +928,6 @@ function nativeDisplayCoverageForCandidate(candidate, form = {}) {
 
   const label = (form?.fields || []).find((field) => field?.id === "fd_jsp_payee_diff_tip");
   return label?.componentId === "xform-description" ? [label.id] : [];
-}
-
-function hasUnrecordedFunctionViolations(candidate) {
-  const recordedViolations = candidate.source?.functionAudit?.violations;
-  if (!Array.isArray(recordedViolations)) return false;
-  const recordedNames = new Set(recordedViolations.map((violation) => violation?.name).filter(Boolean));
-  const currentAudit = auditFunctionWhitelist(
-    candidate.branchSource || candidate.javascript,
-    loadFunctionWhitelist(),
-    { path: candidate.source?.sourceRef || "" }
-  );
-  return currentAudit.violations.some((violation) => !recordedNames.has(violation.name));
-}
-
-function sourceAssignsLegacyFieldValue(source) {
-  return /GetXFormField(?:Value)?ById\s*\(\s*(["'`])[^"'`]+\1\s*\)\s*(?:\[\s*0\s*\])?\s*\.value\s*=/.test(
-    String(source || "")
-  );
-}
-
-function sourceContainsLegacyRowEffect(source) {
-  return /\bcommon_dom_row_set_show_required_reset\s*\(/.test(String(source || ""));
-}
-
-function unprovenBranchLegacySource(provenance, candidate) {
-  const reason = provenance?.reason || "unproven";
-  const recipeKind = candidate?.recipe?.kind;
-  if (recipeKind === "dependent_select_options") {
-    return `jQuery dependent select option mutation (${reason})`;
-  }
-  if (candidate?.controlId) {
-    return `AttachXFormValueChangeEventById(${candidate.controlId}) (${reason})`;
-  }
-  return `legacy ${candidate?.event || "script"} branch (${reason})`;
 }
 
 function scriptCoverageForExecutableFormRules(coverage, formRules) {

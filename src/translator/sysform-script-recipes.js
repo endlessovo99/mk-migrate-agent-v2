@@ -1,3 +1,5 @@
+import { isUnconditionalAttachmentRequirement } from "./attachment-non-empty.js";
+
 export function dependentSelectOptionsCandidates(source, form) {
   const text = String(source.javascript || "");
   const binding = text.match(/AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\1\s*,\s*function\s*\(/);
@@ -74,19 +76,50 @@ export function attachmentNonEmptyCandidate(source, form) {
   );
   if (!field) return undefined;
   const message = text.match(/alert\(\s*(["'])([^"']+)\1\s*\)/)?.[2] || `${field.title}不能为空`;
-  const recipe = { kind: "attachment_non_empty", fieldId, message };
+  const nativeRequired = source?.displayGate !== "xform:viewShow" &&
+    isUnconditionalAttachmentRequirement(text, fieldId);
+  const recipe = {
+    kind: "attachment_non_empty",
+    fieldId,
+    message,
+    ...(nativeRequired ? {
+      nativeRequiredEvidence: {
+        contractVersion: 1,
+        sourceShape: "active-file-submit-guard",
+        displayGate: source?.displayGate || "ungated"
+      }
+    } : {})
+  };
   return {
     index: attachment.index || 0,
     event: "onBeforeSubmit",
     scope: "global",
     javascript: text,
     recipe,
+    ...(nativeRequired ? {
+      function: "",
+      translationStatus: "omitted",
+      coverage: {
+        status: "covered",
+        nativeRules: [],
+        staticProps: [{ fieldId, prop: "required", value: true }],
+        residuals: []
+      },
+      functionMappings: [{
+        source: "legacy attachment active-file submit guard",
+        target: "form.fields[].props.required",
+        basis: "static-form-prop",
+        reviewRequired: false
+      }]
+    } : {}),
     semanticHints: [{
       kind: "attachment_non_empty",
       fieldId,
       message,
       targetApiCandidates: [],
-      evidence: "Legacy submit queue rejects submission after filtering deleted attachment entries; the current target catalog has no verified attachment-value read API."
+      evidence: nativeRequired
+        ? "Legacy submit validation requires at least one non-deleted attachment; the target attachment required rule filters DELETE bindings before validating non-empty state."
+        : "Legacy submit queue rejects submission after filtering deleted attachment entries; the current target catalog has no verified attachment-value read API."
     }]
   };
 }

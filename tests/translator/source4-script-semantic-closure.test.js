@@ -18,27 +18,56 @@ function actionsByBasis(draft, basis) {
 }
 
 describe("Source4 script semantic closure", () => {
-  it("keeps attachment non-empty submit guards blocked without a target attachment read API", () => {
+  it("lowers unconditional attachment non-empty guards to native required fields", () => {
     const cases = [
-      ["1859e7bfaa39079c5e082ab45ada2a9a", "fd_3b737ff6f7c696", undefined],
-      ["19c9dac6eb80b3565aacdd64db6b7e34", "fd_3ef5d3dd57cdcc", undefined],
-      ["19ed50e681ba7fdeab4e00a48dc9da44", "fd_3f536e8d4f6688", undefined],
-      ["19ed50e681ba7fdeab4e00a48dc9da44", "fd_3a4530a5242e44", "fd_3f519912b47f3e"]
+      ["1859e7bfaa39079c5e082ab45ada2a9a", "fd_3b737ff6f7c696", true],
+      ["19c9dac6eb80b3565aacdd64db6b7e34", "fd_3ef5d3dd57cdcc", true],
+      ["19ed50e681ba7fdeab4e00a48dc9da44", "fd_3f536e8d4f6688", false]
     ];
 
-    for (const [sourceId, attachmentId, conditionFieldId] of cases) {
-      const { draft } = stages(sourceId);
+    for (const [sourceId, attachmentId, fullyClosed] of cases) {
+      const { source, draft } = stages(sourceId);
+      const field = draft.form.fields.find((candidate) => candidate.id === attachmentId);
       const action = draft.scripts.actions.find((candidate) =>
         candidate.recipe?.kind === "attachment_non_empty" &&
         candidate.recipe.fieldId === attachmentId
       );
 
-      assert.equal(action?.translationStatus, "needs_review", `${sourceId}:${attachmentId}`);
-      assert.equal(action.semanticHints?.[0]?.targetApiCandidates?.length, 0);
-      assert.doesNotMatch(action.function, /MKXFORM\.getValue/u);
-      assert.equal(conditionFieldId === undefined || action.function.includes(conditionFieldId), true);
+      assert.equal(field.props.required, true, `${sourceId}:${attachmentId}`);
+      assert.equal(action?.translationStatus, "omitted", `${sourceId}:${attachmentId}`);
+      assert.equal(action.function, "");
+      assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
+      assert.deepEqual(action.coverage, {
+        status: "covered",
+        nativeRules: [],
+        staticProps: [{ fieldId: attachmentId, prop: "required", value: true }],
+        residuals: []
+      });
+      assert.equal(action.functionMappings?.[0]?.basis, "static-form-prop");
       assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+      const trusted = createTrustedMigrationDsl(source, draft, {
+        externalAgentReviewed: true,
+        reviewerName: "route-validation",
+        checkedAt: "2026-09-01T00:00:00.000Z"
+      });
+      if (fullyClosed) {
+        assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
+      }
     }
+  });
+
+  it("keeps conditional attachment guards blocked without a target attachment read API", () => {
+    const { draft } = stages("19ed50e681ba7fdeab4e00a48dc9da44");
+    const action = draft.scripts.actions.find((candidate) =>
+      candidate.recipe?.kind === "attachment_non_empty" &&
+      candidate.recipe.fieldId === "fd_3a4530a5242e44"
+    );
+
+    assert.equal(action?.translationStatus, "needs_review");
+    assert.equal(action.semanticHints?.[0]?.targetApiCandidates?.length, 0);
+    assert.doesNotMatch(action.function, /MKXFORM\.getValue/u);
+    assert.match(action.function, /fd_3f519912b47f3e/u);
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
   });
 
   it("maps source-complete synchronous submit validation chains and rejects malformed source", () => {
@@ -258,6 +287,62 @@ describe("Source4 script semantic closure", () => {
     assert.equal(checkDraft(incompleteCoverage).ok, false);
   });
 
+  it("keeps native rule action keys stable when helper definitions are injected", () => {
+    const { draft } = stages("19a24476acdcc9ce5b708744206a2724");
+    const sourceRef = "source.form.jsp.fd_3e95c77263ca8c.script.2";
+    const rule = draft.formRules.linkage.find((candidate) =>
+      candidate.source === "fd_project_property" &&
+      candidate.meta?.sourceJsp === sourceRef &&
+      candidate.meta?.sourceActionKey
+    );
+    const action = draft.scripts.actions.find((candidate) =>
+      candidate.event === "onChange" &&
+      candidate.controlId === "fd_project_property" &&
+      candidate.sourceRefs?.includes(sourceRef)
+    );
+
+    assert.ok(rule);
+    assert.ok(action);
+    assert.equal(action.sourceActionKey, rule.meta.sourceActionKey);
+    assert.equal(action.coverage.nativeRules.includes(rule.id), true);
+  });
+
+  it("keeps active per-option visibility handlers review-required", () => {
+    for (const sourceId of [
+      "17c8337f9b9ff6feda7f8e24cb482a75",
+      "190fd4c9da66e44314426f746ecb2b4e",
+      "19a24476acdcc9ce5b708744206a2724"
+    ]) {
+      const { draft } = stages(sourceId);
+      const action = draft.scripts.actions.find((candidate) =>
+        candidate.event === "onChange" &&
+        candidate.controlId === "fd_project_property" &&
+        candidate.unmappedFunctions?.includes("vkor.eq")
+      );
+
+      assert.ok(action, sourceId);
+      assert.equal(action.translationStatus, "needs_review", sourceId);
+      assert.equal(
+        action.functionMappings?.some((mapping) => mapping.basis === "legacy-runtime-noop"),
+        false,
+        sourceId
+      );
+    }
+  });
+
+  it("keeps source-backed dependent option recipes review-required", () => {
+    const { draft } = stages("1900f4bec4249fc9cde772a43b8a2e81");
+    const actions = draft.scripts.actions.filter((candidate) =>
+      candidate.recipe?.kind === "dependent_select_options"
+    );
+
+    assert.deepEqual(actions.map((action) => action.event).sort(), ["onChange", "onLoad"]);
+    assert.equal(actions.every((action) => action.translationStatus === "needs_review"), true);
+    assert.equal(actions.every((action) =>
+      action.functionMappings?.every((mapping) => mapping.basis !== "legacy-runtime-noop")
+    ), true);
+  });
+
   it("maps a conditional hard-hidden mirror and dependent field resets", () => {
     const { draft } = stages("18809ca40ff98e01d45ec5d4923811a5");
     const action = actionsByBasis(draft, "deterministic-conditional-field-reset")[0];
@@ -271,7 +356,7 @@ describe("Source4 script semantic closure", () => {
     assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
   });
 
-  it("maps nested row-state branches while retaining the unsupported attachment guard", () => {
+  it("maps nested row-state branches together with the native attachment requirement", () => {
     const { draft } = stages("1859e7bfaa39079c5e082ab45ada2a9a");
     const rowActions = draft.scripts.actions.filter((action) =>
       [
@@ -289,7 +374,12 @@ describe("Source4 script semantic closure", () => {
     const attachment = draft.scripts.actions.find((action) =>
       action.recipe?.fieldId === "fd_3b737ff6f7c696"
     );
-    assert.equal(attachment.translationStatus, "needs_review");
+    assert.equal(attachment.translationStatus, "omitted");
+    assert.deepEqual(attachment.coverage.staticProps, [{
+      fieldId: "fd_3b737ff6f7c696",
+      prop: "required",
+      value: true
+    }]);
     assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
   });
 });

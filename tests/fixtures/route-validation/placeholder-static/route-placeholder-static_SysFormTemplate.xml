@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-placeholder-static-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Placeholder Static Coverage</string></void>
+  <void method="put"><string>fdModelId</string><string>route-placeholder-static-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;
+    &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_subject_title&quot;,content:&quot;供应商基本信息&quot;}&apos;&gt;供应商基本信息&lt;/label&gt;&lt;/td&gt;
+    &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;
+     &lt;div id=&quot;route_placeholder_jsp&quot; fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;route_placeholder_jsp&quot;}&apos;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;script&gt;Com_AddEventListener(window, &quot;load&quot;, function(){ var field=GetXFormFieldById(&quot;fd_subject&quot;)[0]; if(field){ field.setAttribute(&quot;placeholder&quot;,&quot;简述成立时间、注册资金、人员规模、主营业务等&quot;); } });&lt;/script&gt;&apos;/&gt;&lt;/div&gt;
+     &lt;div fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_subject&quot;,label:&quot;供应商基本信息&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;fd_subject_title&quot;,required:&quot;false&quot;}&apos;&gt;&lt;textarea id=&quot;fd_subject&quot; required=&quot;false&quot;&gt;&lt;/textarea&gt;&lt;/div&gt;
+    &lt;/td&gt;
+   &lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;&lt;extendSimpleProperty name=&quot;fd_subject&quot; label=&quot;供应商基本信息&quot; type=&quot;String&quot;/&gt;&lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

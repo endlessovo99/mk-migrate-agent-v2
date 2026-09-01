@@ -55,6 +55,40 @@ export function scriptRecipeValidationIssues(action, context = {}) {
     if (!nonEmptyString(recipe.message)) {
       add("dsl.scripts.recipe_message_required", "Attachment non-empty recipe requires a user-visible validation message.", "/recipe/message");
     }
+    if (
+      recipe.nativeRequiredEvidence !== undefined &&
+      !validAttachmentNativeRequiredEvidence(recipe.nativeRequiredEvidence)
+    ) {
+      add(
+        "dsl.scripts.recipe_attachment_native_required_evidence_invalid",
+        "Attachment native-required evidence must use the exact versioned active-file submit-guard contract.",
+        "/recipe/nativeRequiredEvidence"
+      );
+    }
+    if (
+      claimsAttachmentNativeRequired(action, recipe) &&
+      !validAttachmentNativeRequiredEvidence(recipe.nativeRequiredEvidence)
+    ) {
+      add(
+        "dsl.scripts.recipe_attachment_native_required_evidence_required",
+        "Omitting an attachment guard as native required requires immutable exact-shape source evidence.",
+        "/recipe/nativeRequiredEvidence"
+      );
+    }
+    if (
+      validAttachmentNativeRequiredEvidence(recipe.nativeRequiredEvidence) &&
+      !nativeRequiredRunWhenMatches(action.runWhen, recipe.nativeRequiredEvidence.displayGate)
+    ) {
+      add(
+        "dsl.scripts.recipe_attachment_native_required_gate_mismatch",
+        "Attachment native-required evidence must preserve its source display gate exactly.",
+        "/runWhen",
+        {
+          displayGate: recipe.nativeRequiredEvidence.displayGate,
+          runWhen: action.runWhen
+        }
+      );
+    }
   }
 
   if (["detail_row_control_state", "detail_row_lifecycle"].includes(recipe.kind)) {
@@ -75,6 +109,30 @@ export function scriptRecipeValidationIssues(action, context = {}) {
     }
   }
   return issues;
+}
+
+function validAttachmentNativeRequiredEvidence(value) {
+  return isRecord(value) &&
+    Object.keys(value).length === 3 &&
+    value.contractVersion === 1 &&
+    value.sourceShape === "active-file-submit-guard" &&
+    ["xform:editShow", "ungated"].includes(value.displayGate);
+}
+
+function claimsAttachmentNativeRequired(action, recipe) {
+  return action?.translationStatus === "omitted" &&
+    !nonEmptyString(action.function) &&
+    (action.coverage?.staticProps || []).some((entry) =>
+      entry?.fieldId === recipe.fieldId &&
+      entry?.prop === "required" &&
+      entry?.value === true
+    );
+}
+
+function nativeRequiredRunWhenMatches(runWhen, displayGate) {
+  if (displayGate === "ungated") return runWhen === undefined;
+  return displayGate === "xform:editShow" &&
+    JSON.stringify(runWhen) === JSON.stringify({ viewStatusIn: ["add", "edit"] });
 }
 
 function completeRowLifecycle(value) {

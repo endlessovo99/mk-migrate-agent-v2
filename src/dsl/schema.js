@@ -1373,9 +1373,10 @@ function validateScripts(scripts, diagnostics, context) {
       action.runWhen !== undefined &&
       !hasCompleteExecutableNativeCoverage(action, context.formRules) &&
       !hasCompleteNativeCalculationCoverage(action, context.form) &&
+      !hasCompleteEditableAttachmentRequiredCoverage(action, context.form) &&
       !hasLegacyRuntimeNoopCoverage(action)
     ) {
-      diagnostics.push(error("dsl.scripts.gated_omission_forbidden", "View-gated script actions may be omitted only when the empty action body is fully covered by referenced executable native form rules or a legacy runtime no-op with no residuals.", `${path}/translationStatus`));
+      diagnostics.push(error("dsl.scripts.gated_omission_forbidden", "View-gated script actions may be omitted only when the empty action body is fully covered by referenced executable native form rules, an exact editable attachment requirement, or a legacy runtime no-op with no residuals.", `${path}/translationStatus`));
     }
     if (!SCRIPT_SCOPES.has(action.scope)) {
       diagnostics.push(error("dsl.scripts.scope_invalid", "Script action scope must be global or control.", `${path}/scope`, {
@@ -1607,6 +1608,44 @@ function hasCompleteOmissionCoverage(action, context) {
     (!nativeRules.length || nativeRulesBelongToAction(nativeRules, action, context.formRules)) &&
     (!nativeCalculations.length || nativeCalculationsBelongToAction(nativeCalculations, action, context.form)) &&
     staticProps.every((entry) => staticPropCoverageSatisfied(entry, context.form));
+}
+
+function hasCompleteEditableAttachmentRequiredCoverage(action, form) {
+  if (
+    action?.translationStatus !== "omitted" ||
+    nonEmptyString(action.function) ||
+    action.event !== "onBeforeSubmit" ||
+    action.scope !== "global" ||
+    JSON.stringify(action.runWhen) !== JSON.stringify({ viewStatusIn: ["add", "edit"] }) ||
+    action.recipe?.kind !== "attachment_non_empty" ||
+    !nonEmptyString(action.recipe.fieldId) ||
+    action.recipe.nativeRequiredEvidence?.contractVersion !== 1 ||
+    action.recipe.nativeRequiredEvidence?.sourceShape !== "active-file-submit-guard" ||
+    action.recipe.nativeRequiredEvidence?.displayGate !== "xform:editShow" ||
+    action.coverage?.status !== "covered" ||
+    !Array.isArray(action.coverage?.residuals) ||
+    action.coverage.residuals.length !== 0 ||
+    !Array.isArray(action.coverage?.staticProps) ||
+    action.coverage.staticProps.length !== 1 ||
+    !(action.functionMappings || []).some((mapping) => (
+      mapping?.source === "legacy attachment active-file submit guard" &&
+      mapping?.target === "form.fields[].props.required" &&
+      mapping?.basis === "static-form-prop" &&
+      mapping.reviewRequired === false
+    ))
+  ) return false;
+  const staticProp = action.coverage.staticProps[0];
+  if (
+    staticProp?.fieldId !== action.recipe.fieldId ||
+    staticProp?.prop !== "required" ||
+    staticProp?.value !== true
+  ) return false;
+  const field = (form?.fields || []).find((candidate) =>
+    candidate?.id === action.recipe.fieldId
+  );
+  return field?.type === "attachment" &&
+    field?.componentId === "xform-attach" &&
+    field?.props?.required === true;
 }
 
 function nativeCalculationsBelongToAction(nativeCalculations, action, form = {}) {

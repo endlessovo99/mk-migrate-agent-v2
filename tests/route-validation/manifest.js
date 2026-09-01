@@ -123,6 +123,38 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "placeholder-static-success",
+      source: {
+        kind: "form-only",
+        relativePath: "placeholder-static/route-placeholder-static_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "attachment-native-required-success",
+      source: {
+        kind: "form-only",
+        relativePath: "attachment-native-required/route-attachment-native-required_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "compact-procurement-layout-success",
       source: {
         kind: "form-only",
