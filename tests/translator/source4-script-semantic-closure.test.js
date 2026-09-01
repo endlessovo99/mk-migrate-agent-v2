@@ -307,7 +307,35 @@ describe("Source4 script semantic closure", () => {
     assert.equal(action.coverage.nativeRules.includes(rule.id), true);
   });
 
-  it("keeps active per-option visibility handlers review-required", () => {
+  it("maps radio checked-state and onclick lifecycle onto getValue/onChange", () => {
+    const { source, draft } = stages("177bdce608766f2502ee0714130bb55e");
+    const actions = draft.scripts.actions.filter((action) =>
+      action.sourceRefs?.includes("source.form.jsp.fd_373401da7f5a7e.script.2")
+    );
+    const change = actions.find((action) => action.event === "onChange");
+    const load = actions.find((action) => action.event === "onLoad");
+
+    assert.equal(actions.every((action) => action.translationStatus === "mapped"), true);
+    assert.equal(change?.controlId, "fd_3733f3d7ab9898");
+    assert.equal(
+      change.functionMappings?.[0]?.basis,
+      "deterministic-radio-checked-onclick-lifecycle"
+    );
+    assert.match(change.function, /MKXFORM\.setValue\("fd_isout_val"/u);
+    assert.match(change.function, /MKXFORM\.setFieldAttr\("fd_3733f9ed8601ce"/u);
+    assert.match(load.function, /MKXFORM\.getValue\("fd_3733f3389380b0"\)/u);
+    assert.match(load.function, /MKXFORM\.getValue\("fd_3733f3d7ab9898"\)/u);
+    assert.doesNotMatch(change.function, /document\.|setAttribute|onclick/u);
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+    const trusted = createTrustedMigrationDsl(source, draft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt: "2026-09-01T00:00:00.000Z"
+    });
+    assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
+  });
+
+  it("maps per-option radio visibility to setProps", () => {
     for (const sourceId of [
       "17c8337f9b9ff6feda7f8e24cb482a75",
       "190fd4c9da66e44314426f746ecb2b4e",
@@ -317,17 +345,126 @@ describe("Source4 script semantic closure", () => {
       const action = draft.scripts.actions.find((candidate) =>
         candidate.event === "onChange" &&
         candidate.controlId === "fd_project_property" &&
-        candidate.unmappedFunctions?.includes("vkor.eq")
+        candidate.functionMappings?.some((mapping) =>
+          mapping.basis === "deterministic-radio-option-visibility"
+        )
       );
 
       assert.ok(action, sourceId);
-      assert.equal(action.translationStatus, "needs_review", sourceId);
-      assert.equal(
-        action.functionMappings?.some((mapping) => mapping.basis === "legacy-runtime-noop"),
-        false,
-        sourceId
-      );
+      assert.equal(action.translationStatus, "mapped", sourceId);
+      assert.match(action.function, /MKXFORM\.setProps\("fd_budget_effect"/u, sourceId);
+      assert.doesNotMatch(action.function, /vkor\.eq|parent\(\)\.(?:show|hide)/u, sourceId);
+      assert.equal(action.deterministicBranchProof?.basis, "deterministic-radio-option-visibility", sourceId);
+      assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
     }
+  });
+
+  it("closes helper-backed project-change row, detail, and approval-branch scripts", () => {
+    const { source, draft } = stages("19a24476acdcc9ce5b708744206a2724");
+    const propertyChange = draft.scripts.actions.find((action) =>
+      action.event === "onChange" &&
+      action.controlId === "fd_project_property" &&
+      action.sourceRefs?.includes("source.form.jsp.fd_3e95c77263ca8c.script.2")
+    );
+    const approval = draft.scripts.actions.find((action) =>
+      action.controlId === "fd_Approval_branch"
+    );
+
+    assert.equal(propertyChange?.translationStatus, "mapped");
+    assert.equal(
+      propertyChange.functionMappings?.[0]?.basis,
+      "deterministic-project-change-row-detail"
+    );
+    assert.match(propertyChange.function, /MKXFORM\.setValue\("fd_3e95c74ae39794"/u);
+    assert.match(propertyChange.function, /MKXFORM\.setDetailFieldAttr\("\$\{table:fd_sheet\}\.fd_target_cost"/u);
+    assert.match(propertyChange.function, /MKXFORM\.setFieldAttr\("fd_3e96b925d04394"/u);
+    assert.doesNotMatch(propertyChange.function, /img\[title/u);
+    assert.equal(approval?.translationStatus, "mapped");
+    assert.match(approval.function, /MKXFORM\.toast/u);
+    assert.equal(
+      draft.scripts.actions.every((action) => action.translationStatus !== "needs_review"),
+      true,
+      JSON.stringify(draft.scripts.actions.filter((action) => action.translationStatus === "needs_review").map((action) => action.id))
+    );
+    const trusted = createTrustedMigrationDsl(source, draft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt: "2026-09-01T00:00:00.000Z"
+    });
+    assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
+  });
+
+  it("omits IE Excel import onto native detail import and drops unverified job-number hydration", () => {
+    const { source, draft } = stages("184d0e88f3949b8870a0558420682dee");
+    const excel = draft.scripts.actions.find((action) =>
+      action.sourceRefs?.includes("source.form.jsp.fd_3607e68357f368.script.1")
+    );
+    const hydration = draft.scripts.actions.find((action) =>
+      action.sourceRefs?.includes("source.form.jsp.fd_3343d66e1c0210.script.1")
+    );
+
+    assert.equal(excel?.translationStatus, "omitted");
+    assert.equal(excel.functionMappings?.[0]?.basis, "legacy-runtime-noop");
+    assert.match(excel.functionMappings[0].source, /fd_input_post|fd_update_odm/u);
+    assert.equal(hydration?.translationStatus, "omitted");
+    assert.equal(hydration.functionMappings?.[0]?.basis, "legacy-runtime-noop");
+    assert.match(hydration.functionMappings[0].source, /fd_job_number|xform-input/u);
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+    const trusted = createTrustedMigrationDsl(source, draft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt: "2026-09-01T00:00:00.000Z"
+    });
+    assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
+  });
+
+  it("omits generated SQLDialog Dialog_List runtime onto a required text field", () => {
+    const { source, draft } = stages("18a8356e42d059a3140a2644792895c3");
+    const field = draft.form.fields.find((candidate) => candidate.id === "fd_3c333949ed6ad4");
+    const action = draft.scripts.actions.find((candidate) =>
+      candidate.sourceRefs?.includes("source.form.jsp.fdDisplayJsp.script.1")
+    );
+
+    assert.equal(field.type, "text");
+    assert.equal(field.props.required, true);
+    assert.equal(action?.translationStatus, "omitted");
+    assert.equal(action.functionMappings?.[0]?.basis, "legacy-runtime-noop");
+    assert.match(action.functionMappings[0].source, /Dialog_List|SQLDialog/u);
+    assert.equal(
+      draft.review.warnings.some((warning) => warning.code === "source.sysform.sql_dialog_partial"),
+      true
+    );
+    const trusted = createTrustedMigrationDsl(source, draft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt: "2026-09-01T00:00:00.000Z"
+    });
+    assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
+  });
+
+  it("maps detail pointer-lock and omits unbound view-mode URL rewriting", () => {
+    const { source, draft } = stages("1923b93d7bcd8e63b7b743e45fba6361");
+    const lock = draft.scripts.actions.find((action) =>
+      action.sourceRefs?.includes("source.form.jsp.fd_3e1919245a8554.script.1")
+    );
+    const links = draft.scripts.actions.find((action) =>
+      action.sourceRefs?.includes("source.form.jsp.fd_3ec2cf3cfd7a38.script.1")
+    );
+
+    assert.equal(lock?.translationStatus, "mapped");
+    assert.match(lock.function, /MKXFORM\.disabledOperation\("\$\{table:fd_pur_pay_req\}", false\)/u);
+    assert.equal(links?.translationStatus, "omitted");
+    assert.equal(links.functionMappings?.[0]?.basis, "legacy-runtime-noop");
+    assert.equal(
+      draft.scripts.actions.every((action) => action.translationStatus !== "needs_review"),
+      true
+    );
+    const trusted = createTrustedMigrationDsl(source, draft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt: "2026-09-01T00:00:00.000Z"
+    });
+    assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
   });
 
   it("keeps source-backed dependent option recipes review-required", () => {

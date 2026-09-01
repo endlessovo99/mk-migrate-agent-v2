@@ -829,6 +829,17 @@ function enrichDesignerField(field, metadataField, warnings) {
       }
     });
   }
+  if (String(field.sourceProps?.designerType || field.source?.designerType || "").toLowerCase() === "sqldialog") {
+    warnings.push({
+      code: "source.sysform.sql_dialog_partial",
+      message: `Designer SQLDialog ${field.id} (${field.title}) is preserved as a visible text field; remote SQL lookup and cascading output behavior require manual implementation.`,
+      path: "/fdDesignerHtml",
+      details: {
+        designerId: field.id,
+        title: field.title
+      }
+    });
+  }
 
   if (!metadataField) {
     if (field.type !== "description" && !isExecutableDesignerOnlyField(field)) {

@@ -64,6 +64,12 @@ import {
   synchronousSubmitValidationCandidate
 } from "./sysform-submit-validation.js";
 import { conditionalFieldResetCandidates } from "./conditional-field-reset.js";
+import { radioOptionVisibilityCandidates } from "./radio-option-visibility.js";
+import { radioCheckedOnclickLifecycleCandidates } from "./radio-checked-onclick-lifecycle.js";
+import { projectChangeScriptClosureCandidates } from "./project-change-script-closures.js";
+import { legacyExcelAndOrgHydrationCandidates } from "./legacy-excel-and-org-hydration.js";
+import { legacySqlDialogRuntimeCandidate } from "./legacy-sql-dialog-runtime.js";
+import { procurementDetailLockAndLinkCandidates } from "./procurement-detail-lock-and-links.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -1204,6 +1210,64 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
       ...candidate,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
       source: sourceWithHelpers
+    }));
+  }
+
+  const radioCheckedOnclick = radioCheckedOnclickLifecycleCandidates(source, options.form);
+  if (radioCheckedOnclick.length) {
+    return radioCheckedOnclick.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const radioOptionVisibility = radioOptionVisibilityCandidates(source, options.form);
+  if (radioOptionVisibility.length) {
+    return radioOptionVisibility.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const projectChangeScripts = projectChangeScriptClosureCandidates(
+    source,
+    options.form,
+    options.formRules
+  );
+  if (projectChangeScripts.length) {
+    return projectChangeScripts.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const excelAndOrgHydration = legacyExcelAndOrgHydrationCandidates(source, options.form);
+  if (excelAndOrgHydration.length) {
+    return excelAndOrgHydration.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const sqlDialogRuntime = legacySqlDialogRuntimeCandidate(source, options.form);
+  if (sqlDialogRuntime) {
+    return [{
+      ...sqlDialogRuntime,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+      source
+    }];
+  }
+
+  const procurementLockAndLinks = procurementDetailLockAndLinkCandidates(source, options.form);
+  if (procurementLockAndLinks.length) {
+    return procurementLockAndLinks.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
     }));
   }
 
