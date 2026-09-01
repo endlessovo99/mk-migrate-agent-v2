@@ -1464,6 +1464,7 @@ function validateScriptBranchProvenance(action, path, diagnostics, context) {
     if (
       hasCompleteExecutableNativeCoverage(action, context.formRules) ||
       hasCompleteNativeCalculationCoverage(action, context.form) ||
+      hasCompleteStaticMonthPickerCoverage(action, context.form) ||
       hasLegacyRuntimeNoopCoverage(action)
     ) {
       return;
@@ -1609,6 +1610,9 @@ function hasCompleteOmissionCoverage(action, context) {
 
 function nativeCalculationsBelongToAction(nativeCalculations, action, form = {}) {
   if (!Array.isArray(nativeCalculations) || !nativeCalculations.length) return false;
+  if (isCompleteCalculationRuntimeCoverage(nativeCalculations, action, form)) {
+    return true;
+  }
   if (action?.event !== "onChange" || action?.scope !== "control") return false;
   const table = (form?.fields || []).find((field) =>
     field?.type === "detailTable" && field.id === action.tableId
@@ -1629,6 +1633,27 @@ function nativeCalculationsBelongToAction(nativeCalculations, action, form = {})
   });
 }
 
+function isCompleteCalculationRuntimeCoverage(nativeCalculations, action, form = {}) {
+  if (
+    action?.event !== "onLoad" ||
+    action?.scope !== "global" ||
+    action?.semanticHints?.calculationRuntimeBootstrap !== true ||
+    !(action?.functionMappings || []).some((mapping) => (
+      mapping?.basis === "native-calculation-runtime" && mapping.reviewRequired === false
+    ))
+  ) return false;
+  const calculatedTargets = (form?.fields || []).flatMap((field) => (
+    field?.type === "detailTable"
+      ? (field.columns || [])
+          .filter((column) => column?.props?.calculation)
+          .map((column) => `${field.id}.${column.id}`)
+      : field?.props?.calculation ? [field.id] : []
+  ));
+  return calculatedTargets.length > 0 &&
+    nativeCalculations.length === calculatedTargets.length &&
+    calculatedTargets.every((target) => nativeCalculations.includes(target));
+}
+
 function hasCompleteExecutableNativeCoverage(action, formRules) {
   if (nonEmptyString(action.function)) return false;
   if (action.coverage?.status !== "covered") return false;
@@ -1646,6 +1671,41 @@ function hasCompleteNativeCalculationCoverage(action, form) {
     ? action.coverage.nativeCalculations
     : [];
   return nativeCalculations.length > 0 && nativeCalculationsBelongToAction(nativeCalculations, action, form);
+}
+
+function hasCompleteStaticMonthPickerCoverage(action, form) {
+  if (
+    action?.translationStatus !== "omitted" ||
+    nonEmptyString(action.function) ||
+    action.coverage?.status !== "covered" ||
+    action.event !== "onLoad" ||
+    action.scope !== "global" ||
+    !(action.functionMappings || []).some((mapping) => (
+      mapping?.basis === "static-form-prop" &&
+      mapping?.source === "laydate.render type=month" &&
+      mapping.reviewRequired === false
+    ))
+  ) return false;
+  const staticProps = action.coverage?.staticProps;
+  if (
+    !Array.isArray(staticProps) ||
+    staticProps.length !== 2 ||
+    !nonEmptyString(staticProps[0]?.fieldId) ||
+    staticProps[1]?.fieldId !== staticProps[0].fieldId ||
+    !["dataPattern", "displayPattern"].every((prop) => staticProps.some((entry) => (
+      entry?.prop === prop && entry.value === "yyyy-MM"
+    )))
+  ) return false;
+  const field = (form?.fields || []).find((candidate) => (
+    candidate?.id === staticProps[0].fieldId &&
+    candidate?.type === "dateTime" &&
+    candidate?.componentId === "xform-datetime"
+  ));
+  return field?.props?.dataPattern === "yyyy-MM" &&
+    field?.props?.displayPattern === "yyyy-MM" &&
+    field?.sourceProps?.monthPickerInference?.classification === "source" &&
+    field?.sourceProps?.monthPickerInference?.dataPattern === "yyyy-MM" &&
+    field?.sourceProps?.monthPickerInference?.displayPattern === "yyyy-MM";
 }
 
 function hasLegacyRuntimeNoopCoverage(action) {
@@ -1700,7 +1760,7 @@ function validateStaticPropCoverage(staticProps, form, path, diagnostics) {
       return;
     }
     if (!supportedStaticPropEntry(entry)) {
-      diagnostics.push(error("dsl.scripts.static_prop_unsupported", "Static script coverage supports only required=true or a non-empty placeholder string.", entryPath, {
+      diagnostics.push(error("dsl.scripts.static_prop_unsupported", "Static script coverage supports only required=true, a non-empty placeholder string, or mirrored yyyy-MM date patterns.", entryPath, {
         prop: entry.prop,
         value: entry.value
       }));
@@ -1718,6 +1778,16 @@ function validateStaticPropCoverage(staticProps, form, path, diagnostics) {
       !componentSupportsProp(field.componentId, "placeholder")
     ) {
       diagnostics.push(error("dsl.scripts.static_prop_component_unsupported", "Static placeholder coverage requires a field component that supports placeholder.", entryPath, {
+        fieldId: entry.fieldId,
+        componentId: field.componentId
+      }));
+      return;
+    }
+    if (
+      ["dataPattern", "displayPattern"].includes(entry.prop) &&
+      !componentSupportsProp(field.componentId, entry.prop)
+    ) {
+      diagnostics.push(error("dsl.scripts.static_prop_component_unsupported", "Static date-pattern coverage requires a date-time field component.", entryPath, {
         fieldId: entry.fieldId,
         componentId: field.componentId
       }));
@@ -1742,6 +1812,9 @@ function staticPropCoverageSatisfied(entry, form) {
     (
       entry.prop !== "placeholder" ||
       componentSupportsProp(field.componentId, "placeholder")
+    ) && (
+      !["dataPattern", "displayPattern"].includes(entry.prop) ||
+      componentSupportsProp(field.componentId, entry.prop)
     ) &&
     field.props?.[entry.prop] === entry.value
   );
@@ -1749,7 +1822,8 @@ function staticPropCoverageSatisfied(entry, form) {
 
 function supportedStaticPropEntry(entry) {
   return (entry.prop === "required" && entry.value === true) ||
-    (entry.prop === "placeholder" && nonEmptyString(entry.value));
+    (entry.prop === "placeholder" && nonEmptyString(entry.value)) ||
+    (["dataPattern", "displayPattern"].includes(entry.prop) && entry.value === "yyyy-MM");
 }
 
 function findStaticCoverageField(form, fieldId) {
@@ -2233,7 +2307,7 @@ function validateParallelGateways(nodes, nodeMap, diagnostics) {
 
     if (!isSupportedParallelGatewayPair(node, related)) {
       const modeKey = node.type === "split" ? "splitType" : "joinType";
-      diagnostics.push(error("dsl.workflow.parallel_gateway.mode_unsupported", "Executable parallel gateways must be all/all, or a condition split paired with an all join.", `${path}/definition/attributes/${modeKey}`, {
+      diagnostics.push(error("dsl.workflow.parallel_gateway.mode_unsupported", "Executable parallel gateways must be all/all, all/anyone, or a condition split paired with an all join.", `${path}/definition/attributes/${modeKey}`, {
         current: attrs[modeKey]
       }));
     }
@@ -2248,6 +2322,8 @@ function isSupportedParallelGatewayPair(node, related) {
   const mode = normalizeParallelMode(attrs[modeKey]);
   const relatedMode = normalizeParallelMode(relatedAttrs[relatedModeKey]);
   return (mode === "all" && relatedMode === "all") ||
+    (node.type === "split" && mode === "all" && relatedMode === "anyone") ||
+    (node.type === "join" && mode === "anyone" && relatedMode === "all") ||
     (node.type === "split" && mode === "condition" && relatedMode === "all") ||
     (node.type === "join" && mode === "all" && relatedMode === "condition");
 }

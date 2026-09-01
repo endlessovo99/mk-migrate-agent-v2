@@ -53,9 +53,9 @@ describe("static reference and post-address route projection", () => {
         rows: 7,
         columns: 3,
         colsStyle: [
-          { startIndex: 0, count: 1, value: "22.268907563025%" },
-          { startIndex: 1, count: 1, value: "55.46218487395%" },
-          { startIndex: 2, count: 1, value: "22.268907563025%" }
+          { startIndex: 0, count: 1, value: "15.153681200858%" },
+          { startIndex: 1, count: 1, value: "37.741243745533%" },
+          { startIndex: 2, count: 1, value: "47.10507505361%" }
         ]
       }
     );
@@ -132,7 +132,9 @@ describe("static reference and post-address route projection", () => {
       reviewerName: "route-test-agent",
       checkedAt: "2026-07-24T00:00:00.000Z"
     });
-    const adapter = new FakeNewoaAdapter("persist");
+    const adapter = new FakeNewoaAdapter("persist", {
+      templateAuthorization: dsl.template.authorization
+    });
     const execution = await executeDsl(dsl, {
       client: adapter,
       confirmWrite: true,
@@ -222,7 +224,9 @@ describe("static reference and post-address route projection", () => {
       reviewerName: "route-test-agent",
       checkedAt: "2026-07-28T00:00:00.000Z"
     });
-    const adapter = new FakeNewoaAdapter("persist");
+    const adapter = new FakeNewoaAdapter("persist", {
+      templateAuthorization: dsl.template.authorization
+    });
     const execution = await executeDsl(dsl, {
       client: adapter,
       confirmWrite: true,

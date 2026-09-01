@@ -42,6 +42,7 @@ export async function resolveWorkflowParticipants(dsl, {
   targetBaseUrl,
   fallbackFdIds,
   participantOverrides,
+  templateAuthorizationOverrides,
   directParticipantOverrides,
   allowTemplateAuthorizationFallback = false,
   allowMissingDirectPersonFallback = false,
@@ -63,6 +64,10 @@ export async function resolveWorkflowParticipants(dsl, {
   });
   const identities = collectParticipantIdentities(nextDsl);
   const explicitOverrides = prepareParticipantOverrides(identities, participantOverrides);
+  const explicitTemplateAuthorizationOverrides = prepareTemplateAuthorizationOverrides(
+    identities,
+    templateAuthorizationOverrides
+  );
   const explicitDirectOverrides = prepareDirectParticipantOverrides(
     identities,
     directParticipantOverrides
@@ -80,11 +85,18 @@ export async function resolveWorkflowParticipants(dsl, {
       fallbackIdentityCount: 0,
       overrideCount: 0,
       overrideIdentityCount: 0,
+      templateAuthorizationOverrideCount: 0,
+      templateAuthorizationOverrideIdentityCount: 0,
       directOverrideCount: 0,
       directOverrideIdentityCount: 0
     };
   }
-  const capabilityIssues = requiredClientCapabilityIssues(identities, client, explicitOverrides);
+  const capabilityIssues = requiredClientCapabilityIssues(
+    identities,
+    client,
+    explicitOverrides,
+    explicitTemplateAuthorizationOverrides
+  );
   if (capabilityIssues.length) {
     throw new ParticipantResolutionError(capabilityIssues);
   }
@@ -94,11 +106,17 @@ export async function resolveWorkflowParticipants(dsl, {
     [...identities.values()],
     1,
     async (identity) => {
-      const explicitOverride = explicitOverrides.get(normalizeText(identity.member?.sourceId));
-      const explicitDirectOverride = explicitDirectOverrides.get(
-        normalizeText(identity.member?.id)
-      );
-      const explicitDirectPersonFallback = identity.kind === "target" &&
+      const workflowIdentity = identity.scope !== "template_authorization";
+      const explicitOverride = workflowIdentity
+        ? explicitOverrides.get(normalizeText(identity.member?.sourceId))
+        : undefined;
+      const templateAuthorizationOverride = !workflowIdentity
+        ? explicitTemplateAuthorizationOverrides.get(normalizeText(identity.member?.sourceId))
+        : undefined;
+      const explicitDirectOverride = workflowIdentity
+        ? explicitDirectOverrides.get(normalizeText(identity.member?.id))
+        : undefined;
+      const explicitDirectPersonFallback = workflowIdentity && identity.kind === "target" &&
         explicitDirectPersonFallbacks.has(normalizeText(identity.member?.id));
       try {
         if (explicitDirectOverride) {
@@ -116,6 +134,14 @@ export async function resolveWorkflowParticipants(dsl, {
             client,
             elementCache,
             { targetBaseUrl, configuredFallbacks }
+          );
+        }
+        if (templateAuthorizationOverride) {
+          return await resolveTemplateAuthorizationOverride(
+            identity,
+            templateAuthorizationOverride,
+            client,
+            elementCache
           );
         }
         const resolution = await resolveIdentity(identity, client, { searchCache, elementCache });
@@ -220,6 +246,12 @@ export async function resolveWorkflowParticipants(dsl, {
 
   const overrideResolutions = resolutions.filter((resolution) => resolution.override);
   const overrideAudits = overrideResolutions.map(buildParticipantOverrideAudit);
+  const templateAuthorizationOverrideResolutions = resolutions.filter((resolution) => (
+    resolution.templateAuthorizationOverride
+  ));
+  const templateAuthorizationOverrideAudits = templateAuthorizationOverrideResolutions.map(
+    buildParticipantOverrideAudit
+  );
   const directOverrideResolutions = resolutions.filter((resolution) => resolution.directOverride);
   const directOverrideAudits = directOverrideResolutions.map(buildDirectParticipantOverrideAudit);
   const directTargetFallbackResolutions = fallbackResolutions.filter((resolution) => (
@@ -231,12 +263,16 @@ export async function resolveWorkflowParticipants(dsl, {
   const overrideTargetIds = [...new Set(
     overrideResolutions.map((resolution) => resolution.target.fdId)
   )].sort();
+  const templateAuthorizationOverrideTargetIds = [...new Set(
+    templateAuthorizationOverrideResolutions.map((resolution) => resolution.target.fdId)
+  )].sort();
   const directOverrideTargetIds = [...new Set(
     directOverrideResolutions.map((resolution) => resolution.target.fdId)
   )].sort();
   let resolvedCount = 0;
   let fallbackCount = configuredFormulaFallback.referenceCount;
   let overrideCount = 0;
+  let templateAuthorizationOverrideCount = 0;
   let directOverrideCount = 0;
   for (const resolution of resolutions) {
     for (const member of resolution.members) {
@@ -246,6 +282,7 @@ export async function resolveWorkflowParticipants(dsl, {
       if (resolution.kind === "source") resolvedCount += 1;
       if (resolution.fallback) fallbackCount += 1;
       if (resolution.override) overrideCount += 1;
+      if (resolution.templateAuthorizationOverride) templateAuthorizationOverrideCount += 1;
       if (resolution.directOverride) directOverrideCount += 1;
     }
   }
@@ -269,11 +306,17 @@ export async function resolveWorkflowParticipants(dsl, {
     directTargetFallbackIdentityCount: directTargetFallbackResolutions.length,
     overrideCount,
     overrideIdentityCount: overrideResolutions.length,
+    templateAuthorizationOverrideCount,
+    templateAuthorizationOverrideIdentityCount: templateAuthorizationOverrideResolutions.length,
     directOverrideCount,
     directOverrideIdentityCount: directOverrideResolutions.length,
     ...(overrideCount ? {
       overrideTargetIds,
       overrides: overrideAudits
+    } : {}),
+    ...(templateAuthorizationOverrideCount ? {
+      templateAuthorizationOverrideTargetIds,
+      templateAuthorizationOverrides: templateAuthorizationOverrideAudits
     } : {}),
     ...(directOverrideCount ? {
       directOverrideTargetIds,
@@ -327,14 +370,17 @@ function prepareParticipantOverrides(identities, overrides) {
     bySourceId.set(sourceId, { sourceId, targetFdId, path });
   });
 
+  const workflowIdentities = [...identities.values()].filter((identity) => (
+    identity.scope !== "template_authorization"
+  ));
   const presentSourceIds = new Set(
-    [...identities.values()]
+    workflowIdentities
       .filter((identity) => identity.kind === "source")
       .map((identity) => normalizeText(identity.member?.sourceId))
       .filter(Boolean)
   );
   for (const override of bySourceId.values()) {
-    const matchingIdentities = [...identities.values()].filter((identity) => (
+    const matchingIdentities = workflowIdentities.filter((identity) => (
       identity.kind === "source" &&
       normalizeText(identity.member?.sourceId) === override.sourceId
     ));
@@ -356,6 +402,78 @@ function prepareParticipantOverrides(identities, overrides) {
           ...matchingIdentities.flatMap((identity) => identity.paths)
         ],
         message: "Explicit participant override sourceId refers to multiple distinct source identities."
+      });
+    }
+  }
+  if (issues.length) throw new ParticipantResolutionError(issues);
+  return bySourceId;
+}
+
+function prepareTemplateAuthorizationOverrides(identities, overrides) {
+  if (overrides === undefined) return new Map();
+  if (!Array.isArray(overrides)) {
+    throw new ParticipantResolutionError([{
+      reason: "template_authorization_override_configuration_invalid",
+      message: "Explicit template authorization overrides must be an array of sourceId/targetFdId mappings.",
+      paths: ["/execute/templateAuthorizationOverrides"]
+    }]);
+  }
+
+  const bySourceId = new Map();
+  const issues = [];
+  overrides.forEach((override, index) => {
+    const path = `/execute/templateAuthorizationOverrides/${index}`;
+    const sourceId = normalizeText(override?.sourceId);
+    const targetFdId = normalizeText(override?.targetFdId);
+    if (!override || typeof override !== "object" || !sourceId || !targetFdId) {
+      issues.push({
+        reason: "template_authorization_override_configuration_invalid",
+        sourceId,
+        targetId: targetFdId,
+        paths: [path],
+        message: "Each explicit template authorization override requires non-empty sourceId and targetFdId."
+      });
+      return;
+    }
+    if (bySourceId.has(sourceId)) {
+      issues.push({
+        reason: "template_authorization_override_source_duplicate",
+        sourceId,
+        targetId: targetFdId,
+        paths: [path],
+        message: "A template authorization source identity may be explicitly overridden only once."
+      });
+      return;
+    }
+    bySourceId.set(sourceId, { sourceId, targetFdId, path });
+  });
+
+  const authorizationIdentities = [...identities.values()].filter((identity) => (
+    identity.scope === "template_authorization"
+  ));
+  for (const override of bySourceId.values()) {
+    const matchingIdentities = authorizationIdentities.filter((identity) => (
+      identity.kind === "source" &&
+      normalizeText(identity.member?.sourceId) === override.sourceId
+    ));
+    if (matchingIdentities.length === 0) {
+      issues.push({
+        reason: "template_authorization_override_source_not_found",
+        sourceId: override.sourceId,
+        targetId: override.targetFdId,
+        paths: [override.path],
+        message: "Template authorization override sourceId does not exist in template authorization."
+      });
+    } else if (matchingIdentities.length !== 1) {
+      issues.push({
+        reason: "template_authorization_override_source_ambiguous",
+        sourceId: override.sourceId,
+        targetId: override.targetFdId,
+        paths: [
+          override.path,
+          ...matchingIdentities.flatMap((identity) => identity.paths)
+        ],
+        message: "Template authorization override sourceId refers to multiple distinct authorization identities."
       });
     }
   }
@@ -404,6 +522,7 @@ function prepareDirectParticipantOverrides(identities, overrides) {
 
   for (const override of bySourceTargetId.values()) {
     const matchingIdentities = [...identities.values()].filter((identity) => (
+      identity.scope !== "template_authorization" &&
       identity.kind === "target" &&
       normalizeText(identity.member?.id) === override.sourceTargetId
     ));
@@ -477,6 +596,7 @@ function prepareDirectPersonFallbackIds(identities, values) {
 
   for (const fdId of configured) {
     const matches = [...identities.values()].filter((identity) => (
+      identity.scope !== "template_authorization" &&
       identity.kind === "target" && normalizeText(identity.member?.id) === fdId
     ));
     if (matches.length === 0) {
@@ -668,6 +788,89 @@ async function resolveExplicitParticipantOverride(
   };
 }
 
+async function resolveTemplateAuthorizationOverride(
+  identity,
+  override,
+  client,
+  elementCache
+) {
+  const evidenceIssue = validateSourceEvidence(identity);
+  const parentNameIsOnlyMissingEvidence = evidenceIssue?.missing?.length > 0 &&
+    evidenceIssue.missing.every((field) => field === "sourceParentName");
+  if (evidenceIssue && !parentNameIsOnlyMissingEvidence) {
+    return {
+      ...identity,
+      issue: {
+        ...evidenceIssue,
+        reason: "template_authorization_override_source_evidence_invalid",
+        targetId: override.targetFdId
+      }
+    };
+  }
+
+  const { candidates, exactMatches } = await currentElementsByExactId(
+    override.targetFdId,
+    client,
+    elementCache
+  );
+  if (candidates.length !== 1 || exactMatches.length !== 1) {
+    return {
+      ...identity,
+      issue: {
+        reason: exactMatches.length === 0
+          ? "template_authorization_override_target_not_found"
+          : "template_authorization_override_target_ambiguous",
+        name: identity.member.name,
+        sourceId: override.sourceId,
+        sourceOrgType: identity.member.sourceOrgType,
+        targetId: override.targetFdId,
+        paths: identity.paths,
+        candidateIds: candidates.map((candidate) => candidate.fdId)
+      }
+    };
+  }
+
+  const target = exactMatches[0];
+  const sourceOrgType = normalizeOrgType(identity.member.sourceOrgType);
+  const targetOrgType = normalizeOrgType(target.fdOrgType);
+  if (targetOrgType !== sourceOrgType) {
+    return {
+      ...identity,
+      issue: {
+        reason: "template_authorization_override_target_type_mismatch",
+        name: identity.member.name,
+        sourceId: override.sourceId,
+        sourceOrgType: identity.member.sourceOrgType,
+        targetId: override.targetFdId,
+        targetOrgType: target.fdOrgType,
+        expectedOrgType: identity.member.sourceOrgType,
+        paths: identity.paths
+      }
+    };
+  }
+  if (normalizeText(target.fdName) !== normalizeText(identity.member.name)) {
+    return {
+      ...identity,
+      issue: {
+        reason: "template_authorization_override_target_name_mismatch",
+        name: identity.member.name,
+        sourceId: override.sourceId,
+        sourceOrgType: identity.member.sourceOrgType,
+        targetId: override.targetFdId,
+        targetName: target.fdName,
+        paths: identity.paths
+      }
+    };
+  }
+
+  return {
+    ...identity,
+    target,
+    templateAuthorizationOverride: true,
+    templateAuthorizationOverrideSpec: override
+  };
+}
+
 function confirmedFallbackOverride(identity, override, targetBaseUrl, configuredFallbacks) {
   if (!allowsTemporaryOrgFallbacks(targetBaseUrl) || !configuredFallbacks) return false;
   const sourceOrgType = normalizeOrgType(identity.member?.sourceOrgType);
@@ -804,16 +1007,15 @@ function deduplicateResolvedParticipantCollections(dsl) {
   const nodes = Array.isArray(dsl?.workflow?.nodes) ? dsl.workflow.nodes : [];
   for (const node of nodes) {
     const participants = node?.participants;
-    if (!participants || typeof participants !== "object") continue;
-    for (const collectionName of ["members", "alternativeMembers"]) {
-      if (!Array.isArray(participants[collectionName])) continue;
-      const seen = new Set();
-      participants[collectionName] = participants[collectionName].filter((member) => {
-        const id = normalizeText(member?.id);
-        if (!id || seen.has(id)) return false;
-        seen.add(id);
-        return true;
-      });
+    if (participants && typeof participants === "object") {
+      for (const collectionName of ["members", "alternativeMembers"]) {
+        if (!Array.isArray(participants[collectionName])) continue;
+        participants[collectionName] = deduplicateMembers(participants[collectionName]);
+      }
+    }
+    const startIdentity = node?.subProcess?.startIdentity;
+    if (Array.isArray(startIdentity?.members)) {
+      startIdentity.members = deduplicateMembers(startIdentity.members);
     }
   }
   const authorization = dsl?.template?.authorization;
@@ -822,6 +1024,16 @@ function deduplicateResolvedParticipantCollections(dsl) {
     if (!Array.isArray(authorization[collectionName])) continue;
     const seen = new Set();
     authorization[collectionName] = authorization[collectionName].filter((member) => {
+      const id = normalizeText(member?.id);
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }
+
+  function deduplicateMembers(members) {
+    const seen = new Set();
+    return members.filter((member) => {
       const id = normalizeText(member?.id);
       if (!id || seen.has(id)) return false;
       seen.add(id);
@@ -1007,27 +1219,42 @@ function collectParticipantIdentities(dsl) {
 
   nodes.forEach((node, nodeIndex) => {
     const participants = node?.participants;
-    if (!participants || typeof participants !== "object") return;
-    for (const collectionName of ["members", "alternativeMembers"]) {
-      const members = participants[collectionName];
-      if (!Array.isArray(members)) continue;
-      members.forEach((member, memberIndex) => {
-        if (!member || typeof member !== "object") return;
-        const kind = hasSourceEvidence(member) ? "source" : "target";
-        const key = participantIdentityKey(member, kind);
-        const path = `/workflow/nodes/${nodeIndex}/participants/${collectionName}/${memberIndex}`;
-        const current = identities.get(key);
-        if (current) {
-          current.members.push(member);
-          current.paths.push(path);
-          return;
-        }
-        identities.set(key, {
-          kind,
-          member,
-          members: [member],
-          paths: [path]
+    if (participants && typeof participants === "object") {
+      for (const collectionName of ["members", "alternativeMembers"]) {
+        const members = participants[collectionName];
+        if (!Array.isArray(members)) continue;
+        members.forEach((member, memberIndex) => {
+          collectIdentity(member, `/workflow/nodes/${nodeIndex}/participants/${collectionName}/${memberIndex}`);
         });
+      }
+    }
+
+    const startIdentityMembers = node?.subProcess?.startIdentity?.members;
+    if (Array.isArray(startIdentityMembers)) {
+      startIdentityMembers.forEach((member, memberIndex) => {
+        collectIdentity(
+          member,
+          `/workflow/nodes/${nodeIndex}/subProcess/startIdentity/members/${memberIndex}`
+        );
+      });
+    }
+
+    function collectIdentity(member, path) {
+      if (!member || typeof member !== "object") return;
+      const kind = hasSourceEvidence(member) ? "source" : "target";
+      const key = participantIdentityKey(member, kind, "workflow");
+      const current = identities.get(key);
+      if (current) {
+        current.members.push(member);
+        current.paths.push(path);
+        return;
+      }
+      identities.set(key, {
+        kind,
+        scope: "workflow",
+        member,
+        members: [member],
+        paths: [path]
       });
     }
   });
@@ -1039,7 +1266,7 @@ function collectParticipantIdentities(dsl) {
     members.forEach((member, memberIndex) => {
       if (!member || typeof member !== "object") return;
       const kind = hasSourceEvidence(member) ? "source" : "target";
-      const key = participantIdentityKey(member, kind);
+      const key = participantIdentityKey(member, kind, "template_authorization");
       const path = `/template/authorization/${collectionName}/${memberIndex}`;
       const current = identities.get(key);
       if (current) {
@@ -1367,9 +1594,10 @@ function candidateParentName(candidate) {
     "";
 }
 
-function participantIdentityKey(member, kind) {
+function participantIdentityKey(member, kind, scope) {
   if (kind === "target") {
     return JSON.stringify([
+      scope,
       "target",
       normalizeText(member.id),
       normalizeOrgType(member.targetOrgType)
@@ -1381,6 +1609,7 @@ function participantIdentityKey(member, kind) {
     ? ""
     : normalizeText(member.name);
   return JSON.stringify([
+    scope,
     "source",
     normalizeText(member.sourceId),
     identityName,
@@ -1401,12 +1630,18 @@ function hasSourceEvidence(member) {
   ].some((key) => Object.hasOwn(member, key));
 }
 
-function requiredClientCapabilityIssues(identities, client, explicitOverrides = new Map()) {
+function requiredClientCapabilityIssues(
+  identities,
+  client,
+  explicitOverrides = new Map(),
+  templateAuthorizationOverrides = new Map()
+) {
   const issues = [];
   const values = [...identities.values()];
   const unresolvedSources = values.filter((identity) => (
     identity.kind === "source" &&
-    !explicitOverrides.has(normalizeText(identity.member?.sourceId))
+    !hasWorkflowExplicitOverride(identity, explicitOverrides) &&
+    !hasTemplateAuthorizationOverride(identity, templateAuthorizationOverrides)
   ));
   const stableRoleSources = unresolvedSources.filter((identity) => (
     hasStableSourceRoleId(identity.member)
@@ -1418,7 +1653,11 @@ function requiredClientCapabilityIssues(identities, client, explicitOverrides = 
   ));
   const overriddenSources = values.filter((identity) => (
     identity.kind === "source" &&
-    explicitOverrides.has(normalizeText(identity.member?.sourceId))
+    hasWorkflowExplicitOverride(identity, explicitOverrides)
+  ));
+  const overriddenTemplateAuthorizationSources = values.filter((identity) => (
+    identity.kind === "source" &&
+    hasTemplateAuthorizationOverride(identity, templateAuthorizationOverrides)
   ));
   if (searchedSources.length > 0 && typeof client?.searchOrg !== "function") {
     issues.push({
@@ -1449,7 +1688,27 @@ function requiredClientCapabilityIssues(identities, client, explicitOverrides = 
       paths: overriddenSources.flatMap((identity) => identity.paths)
     });
   }
+  if (
+    overriddenTemplateAuthorizationSources.length > 0 &&
+    typeof client?.getElementInfo !== "function"
+  ) {
+    issues.push({
+      reason: "template_authorization_override_target_validation_unavailable",
+      message: "NewOA client does not provide exact template authorization override target validation.",
+      paths: overriddenTemplateAuthorizationSources.flatMap((identity) => identity.paths)
+    });
+  }
   return issues;
+}
+
+function hasWorkflowExplicitOverride(identity, explicitOverrides) {
+  return identity.scope !== "template_authorization" &&
+    explicitOverrides.has(normalizeText(identity.member?.sourceId));
+}
+
+function hasTemplateAuthorizationOverride(identity, templateAuthorizationOverrides) {
+  return identity.scope === "template_authorization" &&
+    templateAuthorizationOverrides.has(normalizeText(identity.member?.sourceId));
 }
 
 function normalizeOrgType(value) {

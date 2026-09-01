@@ -8,6 +8,7 @@ import { checkDraft, checkExecute } from "../dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../dsl/trust.js";
 import { buildDryRunPlan } from "../executor/dry-run.js";
 import { executeDsl } from "../executor/execute.js";
+import { recoverVerifiedTransferRecord } from "../executor/transfer-record-recovery.js";
 import { loadFunctionWhitelist } from "../translator/function-whitelist.js";
 import { cleanSourceFile, draftSourceDraft, translateSourceFile } from "../translator/index.js";
 import { selectNewoaBaseUrl } from "./base-url.js";
@@ -22,7 +23,8 @@ const commands = new Map([
   ["check", runCheck],
   ["validate", runValidate],
   ["dry-run", runDryRun],
-  ["execute", runExecute]
+  ["execute", runExecute],
+  ["recover-transfer-record", runRecoverTransferRecord]
 ]);
 
 export async function main(argv = [], options = {}) {
@@ -238,13 +240,70 @@ async function runExecute(argv, options = {}) {
     baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
     fallbackFdIds: selectFallbackFdIds(env),
     participantOverrides: parseParticipantOverrides(args["participant-override"]),
+    templateAuthorizationOverrides: parseTemplateAuthorizationOverrides(
+      args["template-authorization-override"]
+    ),
     directParticipantOverrides: parseDirectParticipantOverrides(
       args["direct-participant-override"]
+    ),
+    subProcessTemplateOverrides: parseSubProcessTemplateOverrides(
+      args["subprocess-template-override"]
     ),
     allowTemplateAuthorizationFallback:
       args["allow-template-authorization-fallback"] === true,
     allowMissingDirectPersonFallback: args["allow-missing-direct-person-fallback"] === true,
     allowMissingDirectPostFallback: args["allow-missing-direct-post-fallback"] === true,
+    directPersonFallbackIds: parseFdIdList(
+      args["direct-person-fallback-id"],
+      "--direct-person-fallback-id"
+    ),
+    credentials: {
+      username: env.NEWOA_USERNAME,
+      encryptedPassword: env.NEWOA_ENCRYPTED_PASSWORD
+    }
+  });
+  if (args.out) writeJson(args.out, report);
+  printJson(args.out ? { ...report, wrote: args.out } : report);
+  if (report.ok !== true) process.exitCode = 1;
+}
+
+async function runRecoverTransferRecord(argv, options = {}) {
+  const args = parseArgs(argv);
+  const inputPath = args.positionals[0];
+  if (!inputPath) {
+    throw new Error("recover-transfer-record requires a trusted migration DSL path");
+  }
+  if (typeof args["prior-execution-report"] !== "string") {
+    throw new Error("recover-transfer-record requires --prior-execution-report <report.json>");
+  }
+  if (args["subprocess-template-override"] !== undefined) {
+    throw new Error("--subprocess-template-override is supported only by execute, not recover-transfer-record");
+  }
+  const env = options.env || process.env;
+  const recover = options.recoverVerifiedTransferRecord || recoverVerifiedTransferRecord;
+  const report = await recover(readJson(inputPath), {
+    confirmWrite: args["confirm-write"] === true,
+    confirmNoSuccessfulTransferRecord:
+      args["confirm-no-successful-transfer-record"] === true,
+    targetCategoryId: args["target-category-id"],
+    targetTemplateId: args["target-template-id"],
+    transferRecordId: args["transfer-record-id"],
+    priorExecutionReport: readJson(args["prior-execution-report"]),
+    baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
+    fallbackFdIds: selectFallbackFdIds(env),
+    participantOverrides: parseParticipantOverrides(args["participant-override"]),
+    templateAuthorizationOverrides: parseTemplateAuthorizationOverrides(
+      args["template-authorization-override"]
+    ),
+    directParticipantOverrides: parseDirectParticipantOverrides(
+      args["direct-participant-override"]
+    ),
+    allowTemplateAuthorizationFallback:
+      args["allow-template-authorization-fallback"] === true,
+    allowMissingDirectPersonFallback:
+      args["allow-missing-direct-person-fallback"] === true,
+    allowMissingDirectPostFallback:
+      args["allow-missing-direct-post-fallback"] === true,
     directPersonFallbackIds: parseFdIdList(
       args["direct-person-fallback-id"],
       "--direct-person-fallback-id"
@@ -310,7 +369,9 @@ function parseArgs(argv) {
     if (
       [
         "participant-override",
+        "template-authorization-override",
         "direct-participant-override",
+        "subprocess-template-override",
         "direct-person-fallback-id",
         "readonly-field",
         "script-action"
@@ -355,6 +416,34 @@ function parseParticipantOverrides(value) {
   return overrides;
 }
 
+function parseTemplateAuthorizationOverrides(value) {
+  if (value === undefined) return [];
+  const values = Array.isArray(value) ? value : [value];
+  const overrides = values.map((entry) => {
+    if (typeof entry !== "string") {
+      throw new Error("--template-authorization-override requires <sourceId>=<targetFdId>");
+    }
+    const separatorIndex = entry.indexOf("=");
+    const lastSeparatorIndex = entry.lastIndexOf("=");
+    const sourceId = separatorIndex >= 0 ? entry.slice(0, separatorIndex).trim() : "";
+    const targetFdId = separatorIndex >= 0 ? entry.slice(separatorIndex + 1).trim() : "";
+    if (!sourceId || !targetFdId || separatorIndex !== lastSeparatorIndex) {
+      throw new Error("--template-authorization-override requires <sourceId>=<targetFdId>");
+    }
+    return { sourceId, targetFdId };
+  });
+  const sourceIds = new Set();
+  for (const override of overrides) {
+    if (sourceIds.has(override.sourceId)) {
+      throw new Error(
+        `--template-authorization-override sourceId may be specified only once: ${override.sourceId}`
+      );
+    }
+    sourceIds.add(override.sourceId);
+  }
+  return overrides;
+}
+
 function parseDirectParticipantOverrides(value) {
   if (value === undefined) return [];
   const values = Array.isArray(value) ? value : [value];
@@ -379,6 +468,34 @@ function parseDirectParticipantOverrides(value) {
       );
     }
     sourceTargetIds.add(override.sourceTargetId);
+  }
+  return overrides;
+}
+
+function parseSubProcessTemplateOverrides(value) {
+  if (value === undefined) return [];
+  const values = Array.isArray(value) ? value : [value];
+  const overrides = values.map((entry) => {
+    if (typeof entry !== "string") {
+      throw new Error("--subprocess-template-override requires <sourceTemplateId>=<targetFdId>");
+    }
+    const separatorIndex = entry.indexOf("=");
+    const lastSeparatorIndex = entry.lastIndexOf("=");
+    const sourceTemplateId = separatorIndex >= 0 ? entry.slice(0, separatorIndex).trim() : "";
+    const targetFdId = separatorIndex >= 0 ? entry.slice(separatorIndex + 1).trim() : "";
+    if (!sourceTemplateId || !targetFdId || separatorIndex !== lastSeparatorIndex) {
+      throw new Error("--subprocess-template-override requires <sourceTemplateId>=<targetFdId>");
+    }
+    return { sourceTemplateId, targetFdId };
+  });
+  const sourceTemplateIds = new Set();
+  for (const override of overrides) {
+    if (sourceTemplateIds.has(override.sourceTemplateId)) {
+      throw new Error(
+        `--subprocess-template-override sourceTemplateId may be specified only once: ${override.sourceTemplateId}`
+      );
+    }
+    sourceTemplateIds.add(override.sourceTemplateId);
   }
   return overrides;
 }
@@ -430,7 +547,8 @@ function printUsage() {
   console.error("  node src/cli/main.js check trust <source-draft.json> <migration.dsl.json>");
   console.error("  node src/cli/main.js check execute <migration.dsl.json>");
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
-  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--allow-template-authorization-fallback] [--allow-missing-direct-person-fallback] [--allow-missing-direct-post-fallback] [--direct-person-fallback-id <sourceFdId>]... [--participant-override <sourceId>=<targetFdId>]... [--direct-participant-override <sourceTargetId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--allow-template-authorization-fallback] [--allow-missing-direct-person-fallback] [--allow-missing-direct-post-fallback] [--direct-person-fallback-id <sourceFdId>]... [--participant-override <sourceId>=<targetFdId>]... [--template-authorization-override <sourceId>=<targetFdId>]... [--direct-participant-override <sourceTargetId>=<targetFdId>]... [--subprocess-template-override <sourceTemplateId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js recover-transfer-record <migration.dsl.json> --confirm-write --confirm-no-successful-transfer-record --prior-execution-report <readback-failed-report.json> --transfer-record-id <fixed-id> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--participant-override <sourceId>=<targetFdId>]... [--template-authorization-override <sourceId>=<targetFdId>]... [--base-url <origin>] [--out recovery.report.json]");
   console.error("    Published form repair additionally requires --published-form-patch --target-template-id <fdId> --expected-snapshot-digest <sha256> --artifacts-dir <new-directory> [--readonly-field <id>]... [--script-action <id>]...");
 }
 

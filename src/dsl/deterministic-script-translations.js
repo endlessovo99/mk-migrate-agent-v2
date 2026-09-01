@@ -8,6 +8,7 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-china-value-runtime",
   "deterministic-clamped-detail-aggregate",
   "deterministic-conditional-total-uppercase",
+  "deterministic-conditional-field-reset",
   "deterministic-detail-row-control-state",
   "deterministic-detail-cascade-actions",
   "deterministic-detail-row-expansion",
@@ -27,8 +28,11 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-procurement-payment-attachment-submit",
   "deterministic-procurement-payment-department-consistency",
   "deterministic-procurement-payment-wbs-visibility",
+  "deterministic-required-field-toggle",
   "deterministic-same-row-radio-selection",
   "deterministic-static-field-disabled",
+  "deterministic-synchronous-submit-validation",
+  "deterministic-synchronous-onchange-alert",
   "deterministic-travel-reimbursement-lifecycle",
   "deterministic-travel-reimbursement-submit-calculation"
 ]);

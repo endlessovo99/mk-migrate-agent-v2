@@ -27,6 +27,7 @@ import { componentSupportsProp } from "../../dsl/catalogs.js";
 
 const CURRENT_TIME_INITIALIZER = 'function(e){var t=(e||{}).controlProps||{},r=t.defaultValueType,n=t.value;if("now"===r&&void 0===n){var o=(new Date).valueOf();return e.controlProps.value=o,o}}';
 const DATE_TIME_OUTPUT_PATTERN = "yyyy-MM-dd hh:mm";
+const DATE_MONTH_PATTERN = "yyyy-MM";
 const NATIVE_DATE_TIME_DATA_PATTERN = "yyyy-MM-dd HH/mm";
 const NATIVE_DATE_TIME_DISPLAY_PATTERN = "yyyy年MM月DD日 HH点mm分";
 const ORG_TYPE_BY_NATIVE_CODE = new Map([
@@ -524,8 +525,7 @@ function observeExecutableProps(controlProps = {}, native = {}) {
   }
   const precision = observeNativeNumberPrecision(controlProps, native, unit);
   if (precision !== undefined) props.precision = precision;
-  const displayPattern = observeNativeDateTimeDisplayPattern(controlProps, native.field);
-  if (displayPattern !== undefined) props.displayPattern = displayPattern;
+  Object.assign(props, observeNativeDateTimePatterns(controlProps, native.field));
   const defaultValue = observeNativeDefaultValue(controlProps, native.field);
   if (defaultValue) props.defaultValue = defaultValue;
   if (controlProps.content !== undefined) {
@@ -851,23 +851,31 @@ function observeNativeDefaultValue(controlProps, field) {
   return undefined;
 }
 
-function observeNativeDateTimeDisplayPattern(controlProps, field) {
-  if (field?.fdType !== "timestamp") return undefined;
+function observeNativeDateTimePatterns(controlProps, field) {
+  if (field?.fdType !== "timestamp") return {};
   const font = safeParseObject(field.fdFontExtendData);
   if (
-    controlProps.dataPattern !== NATIVE_DATE_TIME_DATA_PATTERN ||
-    controlProps.displayPattern !== NATIVE_DATE_TIME_DISPLAY_PATTERN ||
-    font.dataPattern !== NATIVE_DATE_TIME_DATA_PATTERN ||
-    font.displayPattern !== NATIVE_DATE_TIME_DISPLAY_PATTERN
+    controlProps.dataPattern === NATIVE_DATE_TIME_DATA_PATTERN &&
+    controlProps.displayPattern === NATIVE_DATE_TIME_DISPLAY_PATTERN &&
+    font.dataPattern === NATIVE_DATE_TIME_DATA_PATTERN &&
+    font.displayPattern === NATIVE_DATE_TIME_DISPLAY_PATTERN
   ) {
-    const displayPattern = typeof controlProps.displayPattern === "string"
-      ? controlProps.displayPattern.trim()
-      : "";
-    return displayPattern && font.displayPattern === displayPattern
-      ? displayPattern
-      : undefined;
+    return { displayPattern: DATE_TIME_OUTPUT_PATTERN };
   }
-  return DATE_TIME_OUTPUT_PATTERN;
+  const patterns = {};
+  const dataPattern = typeof controlProps.dataPattern === "string"
+    ? controlProps.dataPattern.trim()
+    : "";
+  if (dataPattern === DATE_MONTH_PATTERN && font.dataPattern === dataPattern) {
+    patterns.dataPattern = dataPattern;
+  }
+  const displayPattern = typeof controlProps.displayPattern === "string"
+    ? controlProps.displayPattern.trim()
+    : "";
+  if (displayPattern && font.displayPattern === displayPattern) {
+    patterns.displayPattern = displayPattern;
+  }
+  return patterns;
 }
 
 function applyObservedComputations(fields, formRule, detailModels, options = {}) {
@@ -1952,6 +1960,7 @@ function observeSubProcess(node) {
     startCountType: node.startCountType || config.startCountType,
     flowType: node.flowType || config.flowType,
     autoSubmit: node.autoSubmit,
+    startIdentity: node.startIdentity,
     variableScope: config.recovery?.variableScope,
     recoverRule: config.recovery?.recoverRule,
     startParamConfig: node.startParamConfig,

@@ -60,9 +60,15 @@ export function dependentSelectOptionsCandidates(source, form) {
 export function attachmentNonEmptyCandidate(source, form) {
   const text = String(source.javascript || "");
   if (!/Com_Parameter\.event(?:\s*\[\s*["']submit["']\s*\]|\s*\.\s*submit)\s*\.push/.test(text)) return undefined;
-  const attachment = text.match(/attachmentObject_(fd_[A-Za-z0-9_]+)\.fileList/);
+  const attachmentIds = [...text.matchAll(
+    /(?:attachmentObject_(fd_[A-Za-z0-9_]+)|Attachment_ObjectInfo\s*\[\s*["'](fd_[A-Za-z0-9_]+)["']\s*\])\.fileList/g
+  )].map((match) => match[1] || match[2]);
+  const uniqueAttachmentIds = [...new Set(attachmentIds)];
+  const attachment = uniqueAttachmentIds.length === 1
+    ? { fieldId: uniqueAttachmentIds[0], index: text.indexOf(uniqueAttachmentIds[0]) }
+    : undefined;
   if (!attachment) return undefined;
-  const fieldId = attachment[1];
+  const fieldId = attachment.fieldId;
   const field = (form?.fields || []).find((candidate) =>
     candidate?.id === fieldId && candidate.type === "attachment"
   );
@@ -79,8 +85,8 @@ export function attachmentNonEmptyCandidate(source, form) {
       kind: "attachment_non_empty",
       fieldId,
       message,
-      targetApiCandidates: ["MKXFORM.getFormValues", "MKXFORM.modal"],
-      evidence: "Legacy submit queue rejects submission when the named attachment fileList is empty and displays the captured validation message."
+      targetApiCandidates: [],
+      evidence: "Legacy submit queue rejects submission after filtering deleted attachment entries; the current target catalog has no verified attachment-value read API."
     }]
   };
 }

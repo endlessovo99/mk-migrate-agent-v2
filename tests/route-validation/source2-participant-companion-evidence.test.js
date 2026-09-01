@@ -49,6 +49,14 @@ describe("Route-validation Source2 companion participant evidence", {
     const client = {
       async searchOrg(key, orgType) {
         searchedKeys.push(key);
+        if (key === "68300032" && Number(orgType) === 8) {
+          return [{
+            fdId: sourceId,
+            fdName: "张康永",
+            fdOrgType: 8,
+            fdLoginName: "68300032"
+          }];
+        }
         if (key === "683-SYS-ZKY" && Number(orgType) === 8) {
           return [{
             fdId: "current-system-support",
@@ -99,15 +107,15 @@ describe("Route-validation Source2 companion participant evidence", {
       .find((node) => node.id === "N4")
       .participants.members[0];
 
-    assert.equal(searchedKeys.includes("68300032"), false);
-    assert.equal(resolved.overrideCount, 3);
+    assert.equal(searchedKeys.includes("68300032"), true);
+    assert.equal(resolved.overrideCount, 1);
     assert.equal(resolved.overrideIdentityCount, 1);
     assert.deepEqual(resolved.overrideTargetIds, [targetFdId]);
     assert.equal(
       Object.values(resolved.dsl.template.authorization)
         .flatMap((value) => Array.isArray(value) ? value : [])
         .filter((member) => member.sourceId === sourceId)
-        .every((member) => member.id === targetFdId),
+        .every((member) => member.id === sourceId),
       true
     );
     assert.equal(resolvedMember.id, targetFdId);

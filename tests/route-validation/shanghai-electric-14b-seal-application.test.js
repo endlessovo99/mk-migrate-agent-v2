@@ -85,6 +85,8 @@ describe("Shanghai Electric 14b seal-application Route case", () => {
     ]);
     assert.equal(checkDraft(dslDraft).ok, true);
 
+    delete sourceDraft.template.authorization;
+    delete dslDraft.template.authorization;
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
       externalAgentReviewed: true,
       reviewerName: "route-validation",

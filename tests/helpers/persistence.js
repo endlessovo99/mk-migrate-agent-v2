@@ -133,6 +133,7 @@ export function projectTemplate(dsl, baseTemplate) {
 
 /** Verify a native template through the bound persistence verify capability. */
 export function verifyTemplate(dsl, template, options = {}) {
+  const executableDsl = materializeTestTemplateAuthorization(dsl);
   const envelope = sampleEnvelope({
     templateId: template?.fdId || "template-id",
     templateName: template?.fdName?.startsWith?.("MK_TEST_")
@@ -157,7 +158,7 @@ export function verifyTemplate(dsl, template, options = {}) {
     ...options.envelope
   });
   const prepared = preparePersistedTemplate({
-    dsl,
+    dsl: executableDsl,
     envelope,
     baseTemplate: sampleBaseTemplate({
       fdId: envelope.templateId,

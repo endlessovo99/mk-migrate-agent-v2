@@ -26,7 +26,9 @@ describe("long description route projection", () => {
       reviewerName: "route-test-agent",
       checkedAt: "2026-07-12T00:00:00.000Z"
     });
-    const adapter = new FakeNewoaAdapter("persist");
+    const adapter = new FakeNewoaAdapter("persist", {
+      templateAuthorization: dsl.template.authorization
+    });
     const execution = await executeDsl(dsl, {
       client: adapter,
       confirmWrite: true,

@@ -213,7 +213,7 @@ ${rowUpdates}
   return `function onLoad() {
   var storedValue = MKXFORM.getValue(${JSON.stringify(audit.helperFieldId)})
   var selectedValue = Array.isArray(storedValue) ? storedValue[0] : storedValue
-  var normalizedValue = String(selectedValue)
+  var normalizedValue = String(selectedValue ?? "")
   if (normalizedValue !== "11" && normalizedValue !== "22") return
   var active = normalizedValue === "11"
 ${rowUpdates}

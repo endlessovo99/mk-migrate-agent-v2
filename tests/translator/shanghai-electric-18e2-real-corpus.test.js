@@ -209,6 +209,10 @@ describe("Shanghai Electric 18e2 route regression", () => {
       action.sourceRefs.includes("source.form.jsp.fd_3cc17629476baa.script.3")
     );
     assert.equal(viewRowAction.functionMappings[0].basis, "semantic-translation");
+    assert.match(
+      viewRowAction.function,
+      /String\(MKXFORM\.getValue\("fd_the_city_flag"\) \?\? ""\)/
+    );
     assert.match(viewRowAction.function, /fd_guonei_row/);
     const payeeDiffDisplayAction = dsl.scripts.actions.find((action) =>
       action.sourceRefs.includes("source.form.jsp.fd_3cc25d96ee0df2.script.1") &&

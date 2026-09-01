@@ -53,7 +53,7 @@ describe("Source2 placeholder static-property Route case", { concurrency: false 
     const dryRun = buildDryRunPlan(review.dsl);
     assert.equal(dryRun.ok, true);
 
-    const adapter = new Source2FakeNewoaAdapter();
+    const adapter = new Source2FakeNewoaAdapter(review.dsl.template.authorization);
     const execution = await executeDsl(review.dsl, {
       client: adapter,
       credentials: {
@@ -78,8 +78,8 @@ describe("Source2 placeholder static-property Route case", { concurrency: false 
 });
 
 class Source2FakeNewoaAdapter extends FakeNewoaAdapter {
-  constructor() {
-    super("persist");
+  constructor(templateAuthorization) {
+    super("persist", { templateAuthorization });
   }
 
   async getElementInfo(targets) {

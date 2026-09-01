@@ -364,7 +364,6 @@ function templateAuthorizationMember(value, sourceKey, index) {
   const sourceParentName = cleanText(value["hbmParent.fdName"] || "");
   const sourceName = cleanText(value.fdName || "");
   const person = sourceOrgType === 8;
-  const stableRole = sourceOrgType === 32 && sourceId;
   const name = sourceName || (person ? sourceLoginName : "");
   if (
     !sourceId ||
@@ -374,8 +373,7 @@ function templateAuthorizationMember(value, sourceKey, index) {
     (person && (
       sourceOrgClass !== "com.landray.kmss.sys.organization.model.SysOrgPerson" ||
       !sourceLoginName
-    )) ||
-    (!person && !stableRole && !sourceParentName)
+    ))
   ) {
     return undefined;
   }

@@ -56,6 +56,11 @@ import {
   composeValueChangeCallbackCandidates,
   directValueChangeCallbackCallRange
 } from "./value-change-callbacks.js";
+import {
+  synchronousOnChangeAlertCandidate,
+  synchronousSubmitValidationCandidate
+} from "./sysform-submit-validation.js";
+import { conditionalFieldResetCandidates } from "./conditional-field-reset.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -166,25 +171,60 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
 
 export function applyStaticScriptProperties(form = {}, scripts = {}) {
   const placeholderValuesByField = new Map();
+  const monthPatternsByField = new Map();
   for (const action of Array.isArray(scripts.actions) ? scripts.actions : []) {
     for (const entry of Array.isArray(action.coverage?.staticProps)
       ? action.coverage.staticProps
       : []) {
       if (
-        entry?.prop !== "placeholder" ||
-        typeof entry.value !== "string" ||
-        !entry.value.trim()
-      ) continue;
+        ["dataPattern", "displayPattern"].includes(entry?.prop) &&
+        entry.value === "yyyy-MM"
+      ) {
+        const patterns = monthPatternsByField.get(entry.fieldId) || new Set();
+        patterns.add(entry.prop);
+        monthPatternsByField.set(entry.fieldId, patterns);
+        continue;
+      }
+      if (entry?.prop !== "placeholder" || typeof entry.value !== "string" || !entry.value.trim()) continue;
       const values = placeholderValuesByField.get(entry.fieldId) || new Set();
       values.add(entry.value);
       placeholderValuesByField.set(entry.fieldId, values);
     }
   }
-  if (!placeholderValuesByField.size) return form;
+  if (!placeholderValuesByField.size && !monthPatternsByField.size) return form;
 
   return {
     ...form,
     fields: (form.fields || []).map((field) => {
+      if (
+        monthPatternsByField.get(field.id)?.size === 2 &&
+        field.type !== "detailTable" &&
+        field.type === "text" &&
+        field.componentId === "xform-input"
+      ) {
+        const dateProps = {};
+        for (const prop of ["required", "readOnly", "defaultValue"]) {
+          if (field.props?.[prop] !== undefined) dateProps[prop] = field.props[prop];
+        }
+        return {
+          ...field,
+          type: "dateTime",
+          componentId: "xform-datetime",
+          props: {
+            ...dateProps,
+            dataPattern: "yyyy-MM",
+            displayPattern: "yyyy-MM"
+          },
+          sourceProps: {
+            ...(field.sourceProps || {}),
+            monthPickerInference: {
+              classification: "source",
+              dataPattern: "yyyy-MM",
+              displayPattern: "yyyy-MM"
+            }
+          }
+        };
+      }
       const values = placeholderValuesByField.get(field.id);
       if (
         field.type === "detailTable" ||
@@ -1116,6 +1156,15 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }];
   }
 
+  const monthPicker = staticMonthPickerCandidate(source, options.form);
+  if (monthPicker) {
+    return [{
+      ...monthPicker,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+      source
+    }];
+  }
+
   // Prefer the source-backed view row translation over the generic legacy
   // window-load fallback.  The latter cannot retain the condition's exact
   // row-marker semantics and would leave a deterministic source relation
@@ -1186,6 +1235,15 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }));
   }
 
+  const procurementPaymentScripts = procurementPaymentScriptCandidates(sourceWithHelpers, options.form);
+  if (procurementPaymentScripts.length) {
+    return procurementPaymentScripts.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source: sourceWithHelpers
+    }));
+  }
+
   const inlineRadioRowEffects = inlineRadioRowEffectCandidates(
     source,
     options.form,
@@ -1193,6 +1251,18 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   );
   if (inlineRadioRowEffects.length) {
     return inlineRadioRowEffects.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
+
+  const conditionalFieldResets = conditionalFieldResetCandidates(
+    source,
+    options.form
+  );
+  if (conditionalFieldResets.length) {
+    return conditionalFieldResets.map((candidate, index) => ({
       ...candidate,
       id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
       source
@@ -1292,13 +1362,28 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }));
   }
 
-  const procurementPaymentScripts = procurementPaymentScriptCandidates(sourceWithHelpers, options.form);
-  if (procurementPaymentScripts.length) {
-    return procurementPaymentScripts.map((candidate, index) => ({
-      ...candidate,
-      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+  const synchronousSubmitValidation = synchronousSubmitValidationCandidate(
+    sourceWithHelpers,
+    options.form
+  );
+  if (synchronousSubmitValidation) {
+    return [{
+      ...synchronousSubmitValidation,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
       source: sourceWithHelpers
-    }));
+    }];
+  }
+
+  const synchronousOnChangeAlert = synchronousOnChangeAlertCandidate(
+    sourceWithHelpers,
+    options.form
+  );
+  if (synchronousOnChangeAlert) {
+    return [{
+      ...synchronousOnChangeAlert,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+      source: sourceWithHelpers
+    }];
   }
 
   const dependentSelectOptions = dependentSelectOptionsCandidates(sourceWithHelpers, options.form);
@@ -1355,13 +1440,13 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }];
   }
 
-  const legacyRequiredToggle = legacyRequiredToggleCandidate(sourceWithHelpers, options.form);
-  if (legacyRequiredToggle) {
-    return [{
-      ...legacyRequiredToggle,
-      id: `${source.id || `script.${sourceIndex + 1}`}.event.1`,
+  const legacyRequiredToggles = legacyRequiredToggleCandidates(sourceWithHelpers, options.form);
+  if (legacyRequiredToggles.length) {
+    return legacyRequiredToggles.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
       source: sourceWithHelpers
-    }];
+    }));
   }
 
   const directSemanticCandidates = [
@@ -3848,17 +3933,41 @@ function legacyAttachmentRuntimeCandidate(source, form) {
   return legacyRuntimeOmission(text, "legacy WebUploader CSS/refresh patch", "xform-attach native rendering");
 }
 
-function legacyRequiredToggleCandidate(source, form) {
+function legacyRequiredToggleCandidates(source, form) {
   const text = String(source.javascript || "").trim();
   const toggle = legacyRequiredToggle(text);
-  if (!toggle) return undefined;
+  if (!toggle) return [];
 
   const fields = Array.isArray(form?.fields) ? form.fields : [];
   const trigger = fields.find((field) => field?.id === toggle.triggerFieldId && field.type !== "detailTable");
   const target = fields.find((field) => field?.id === toggle.targetFieldId && field.type !== "detailTable");
-  if (!trigger || !target) return undefined;
+  if (!trigger || !target) return [];
 
-  return {
+  const sourceRef = source.sourceRef || source.id;
+  const common = {
+    javascript: text,
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: "set_required/set_not_required field helper",
+      target: "MKXFORM.getValue/setFieldAttr",
+      basis: "deterministic-required-field-toggle",
+      reviewRequired: false
+    }],
+    semanticHints: {
+      coveredLegacyFunctions: (source.functionAudit?.violations || [])
+        .map((violation) => violation?.name)
+        .filter(Boolean),
+      coveredCalculationRanges: [{
+        sourceRef,
+        name: `required-field-toggle:${toggle.triggerFieldId}:${toggle.targetFieldId}`,
+        start: 0,
+        end: text.length
+      }]
+    }
+  };
+  const candidates = [{
+    ...common,
     index: toggle.index,
     event: "onChange",
     scope: "control",
@@ -3866,19 +3975,33 @@ function legacyRequiredToggleCandidate(source, form) {
     javascript: toggle.javascript,
     function: [
       "function onChange(value, rowNum, parentRowNum) {",
-      `  const required = String(value || "").indexOf(${JSON.stringify(toggle.matchValue)}) >= 0`,
+      `  const required = ${toggle.operator === "contains"
+        ? `String(value || "").indexOf(${JSON.stringify(toggle.matchValue)}) >= 0`
+        : `String(value ?? "") === ${JSON.stringify(toggle.matchValue)}`}`,
       `  MKXFORM.setFieldAttr(${JSON.stringify(toggle.targetFieldId)}, required ? 3 : 6)`,
       "}"
-    ].join("\n"),
-    translationStatus: "mapped",
-    coverage: { status: "translated", nativeRules: [], residuals: [] },
-    functionMappings: [{
-      source: "AttachXFormValueChangeEventById + set_required/set_not_required",
-      target: "MKXFORM.setFieldAttr",
-      basis: "semantic-translation",
-      reviewRequired: false
-    }]
-  };
+    ].join("\n")
+  }];
+  const load = legacyRequiredToggleLoad(text, toggle);
+  if (load) {
+    candidates.push({
+      ...common,
+      index: load.index,
+      event: "onLoad",
+      scope: "global",
+      function: [
+        "function onLoad() {",
+        `  var rawValue = MKXFORM.getValue(${JSON.stringify(toggle.triggerFieldId)})`,
+        "  var value = Array.isArray(rawValue) ? rawValue[0] : rawValue",
+        `  const required = ${toggle.operator === "contains"
+          ? `String(value || "").indexOf(${JSON.stringify(toggle.matchValue)}) >= 0`
+          : `String(value ?? "") === ${JSON.stringify(toggle.matchValue)}`}`,
+        `  MKXFORM.setFieldAttr(${JSON.stringify(toggle.targetFieldId)}, required ? 3 : 6)`,
+        "}"
+      ].join("\n")
+    });
+  }
+  return candidates.sort((left, right) => left.index - right.index);
 }
 
 function legacyRequiredToggle(text) {
@@ -3905,6 +4028,7 @@ function legacyRequiredToggle(text) {
       triggerFieldId: match[2],
       targetFieldId: toggle.targetFieldId,
       matchValue: toggle.matchValue,
+      operator: toggle.operator,
       javascript: text.slice(match.index, findCallEnd(text, bodyEnd + 1)).trim()
     };
   }
@@ -3924,12 +4048,49 @@ function requiredToggleFromBody(body, valueParam) {
     `if\\s*\\(\\s*${escapeRegExp(valueParam)}\\.indexOf\\(\\s*(["'])([^"']+)\\1\\s*\\)\\s*>=\\s*0\\s*\\)\\s*\\{[\\s\\S]*?set_required\\(\\s*(["'])${escapeRegExp(targetFieldId)}\\3\\s*\\)[\\s\\S]*?\\}\\s*else\\s*\\{[\\s\\S]*?set_not_required\\(\\s*(["'])${escapeRegExp(targetFieldId)}\\4\\s*\\)[\\s\\S]*?\\}`
   );
   const match = bodyText.match(condition);
-  if (!match) return undefined;
+  if (match) {
+    return {
+      targetFieldId,
+      matchValue: match[2],
+      operator: "contains"
+    };
+  }
 
-  return {
+  const equality = bodyText.match(new RegExp(
+    `if\\s*\\(\\s*${escapeRegExp(valueParam)}\\s*={2,3}\\s*(["'])([^"']+)\\1\\s*\\)\\s*\\{[\\s\\S]*?set_required\\(\\s*(["'])${escapeRegExp(targetFieldId)}\\3\\s*\\)[\\s\\S]*?\\}`
+  ));
+  return equality ? {
     targetFieldId,
-    matchValue: match[2]
-  };
+    matchValue: equality[2],
+    operator: "equals"
+  } : undefined;
+}
+
+function legacyRequiredToggleLoad(text, toggle) {
+  const listener = String(text || "").match(
+    /Com_AddEventListener\(\s*window\s*,\s*(["'])load\1\s*,\s*function\s*\([^)]*\)\s*\{/u
+  );
+  if (!listener) return undefined;
+  const bodyStart = listener.index + listener[0].length;
+  const listenerEnd = findBalancedClose(text, bodyStart - 1, "{", "}");
+  if (listenerEnd < bodyStart) return undefined;
+  const listenerBody = text.slice(bodyStart, listenerEnd);
+  const executable = listenerBody.match(
+    /setTimeout\(\s*function\s*\(\s*\)\s*\{([\s\S]*?)\}\s*,\s*\d+\s*\)\s*;?/u
+  )?.[1] || listenerBody;
+  const alias = executable.match(
+    /var\s+([A-Za-z_$][\w$]*)\s*=\s*\$\(\s*(["'])\[name=(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\3\][^"']*\2\s*\)\s*\.val\(\s*\)/u
+  );
+  if (!alias || alias[4] !== toggle.triggerFieldId) return undefined;
+  const required = new RegExp(
+    `if\\s*\\(\\s*${escapeRegExp(alias[1])}\\s*={2,3}\\s*(["'])${escapeRegExp(toggle.matchValue)}\\1\\s*\\)\\s*\\{[\\s\\S]*?set_required\\(\\s*(["'])${escapeRegExp(toggle.targetFieldId)}\\2\\s*\\)[\\s\\S]*?\\}`
+  );
+  const reset = new RegExp(
+    `set_not_required\\(\\s*(["'])${escapeRegExp(toggle.targetFieldId)}\\1\\s*\\)`
+  );
+  return required.test(executable) && reset.test(executable)
+    ? { index: listener.index }
+    : undefined;
 }
 
 function isLegacyAttachmentRuntimePatch(text) {
@@ -4403,11 +4564,18 @@ function staticFieldDisabledCandidate(source, form = {}) {
   );
   const body = listener ? listener[2] : text;
   const disabled = body.match(
-    /^\s*\$\(\s*(["'])\[name=(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\2\]\1\s*\)\s*\.prop\(\s*(["'])disabled\4\s*,\s*true\s*\)\s*;?\s*$/u
+    /^\s*\$\(\s*(["'])(?:input)?\[name=(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\2\]\1\s*\)\s*\.prop\(\s*(["'])disabled\4\s*,\s*true\s*\)\s*;?\s*$/u
   );
-  if (!disabled || !findOrdinaryField(form, disabled[3])) return undefined;
+  if (!disabled) return undefined;
 
   const fieldId = disabled[3];
+  if (!findOrdinaryField(form, fieldId)) {
+    return legacyRuntimeOmission(
+      text.trim(),
+      `jQuery disabled mutation for absent source control ${fieldId}`,
+      "proven no-op because the authoritative source form has no matching control"
+    );
+  }
   const sourceRef = source.sourceRef || source.id;
   return {
     index: listener?.index || 0,
@@ -4434,6 +4602,58 @@ function staticFieldDisabledCandidate(source, form = {}) {
       coveredCalculationRanges: coveredRangesForText(text, text.trim(), {
         sourceRef,
         name: "static-field-disabled"
+      })
+    }
+  };
+}
+
+function staticMonthPickerCandidate(source, form = {}) {
+  if (source?.displayGate) return undefined;
+  const text = String(source?.javascript || "");
+  const executable = text.replace(/\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/gu, " ");
+  const render = executable.match(
+    /laydate\.render\(\s*\{\s*elem\s*:\s*document\.getElementsByName\(\s*(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\1\s*\)\s*\[\s*0\s*\]\s*,\s*type\s*:\s*(["'])month\3\s*\}\s*\)\s*;?/u
+  );
+  if (!render) return undefined;
+  const withoutRender = executable.slice(0, render.index) + executable.slice(render.index + render[0].length);
+  const withoutVersionProbe = withoutRender.replace(
+    /lay\(\s*(["'])#version\1\s*\)\.html\(\s*(["'])-v\2\s*\+\s*laydate\.v\s*\)\s*;?/u,
+    ""
+  );
+  if (withoutVersionProbe.trim()) return undefined;
+  const fieldId = render[2];
+  const field = findOrdinaryField(form, fieldId);
+  if (!field || field.type !== "text" || field.componentId !== "xform-input") return undefined;
+  const sourceRef = source.sourceRef || source.id;
+  return {
+    index: render.index,
+    event: "onLoad",
+    scope: "global",
+    javascript: text.trim(),
+    function: "",
+    translationStatus: "omitted",
+    coverage: {
+      status: "covered",
+      nativeRules: [],
+      staticProps: [
+        { fieldId, prop: "dataPattern", value: "yyyy-MM" },
+        { fieldId, prop: "displayPattern", value: "yyyy-MM" }
+      ],
+      residuals: []
+    },
+    functionMappings: [{
+      source: "laydate.render type=month",
+      target: "xform-datetime yyyy-MM native month picker",
+      basis: "static-form-prop",
+      reviewRequired: false
+    }],
+    semanticHints: {
+      coveredLegacyFunctions: (source.functionAudit?.violations || [])
+        .map((violation) => violation?.name)
+        .filter(Boolean),
+      coveredCalculationRanges: coveredRangesForText(text, text.trim(), {
+        sourceRef,
+        name: "static-month-picker"
       })
     }
   };
@@ -4466,6 +4686,8 @@ function simpleViewRowMarkerCandidate(source, form = {}) {
   const rowId = rowCalls[0][2];
   const visible = rowCalls[0][3] === "true";
   const required = rowCalls[0][4] === "true";
+  const sourceFieldId = fieldMatch[2];
+  const preservesLegacyEmptyText = textValueFieldIds(form).includes(sourceFieldId);
   const sourceRef = source.sourceRef || source.id;
   const javascript = text.slice(listener.index, findCallEnd(text, bodyEnd + 1)).trim();
   return [{
@@ -4478,7 +4700,9 @@ function simpleViewRowMarkerCandidate(source, form = {}) {
     branchProgramIsEntrypoint: true,
     function: [
       "function onLoad() {",
-      `  var normalizedValue = MKXFORM.getValue(${JSON.stringify(fieldMatch[2])})`,
+      `  var normalizedValue = ${preservesLegacyEmptyText
+        ? `String(MKXFORM.getValue(${JSON.stringify(sourceFieldId)}) ?? "")`
+        : `MKXFORM.getValue(${JSON.stringify(sourceFieldId)})`}`,
       `  if (normalizedValue ${condition[1]} ${JSON.stringify(condition[3])}) {`,
       `    MKXFORM.setFieldAttr(${JSON.stringify(rowId)}, ${visible ? 5 : 4})`,
       `    MKXFORM.setFieldAttr(${JSON.stringify(rowId)}, ${required ? 3 : 6})`,

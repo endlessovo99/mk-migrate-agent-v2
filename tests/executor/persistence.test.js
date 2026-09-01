@@ -83,7 +83,7 @@ describe("preparePersistedTemplate interface", () => {
     const { readback } = persistAndVerify(sampleTrustedDsl());
     assert.equal(readback.ok, true);
     assert.equal(readback.status, "verified");
-    assert.equal(readback.invariantVersion, 24);
+    assert.equal(readback.invariantVersion, 26);
     assert.deepEqual(readback.partitions, {
       envelope: "verified",
       form: "verified",

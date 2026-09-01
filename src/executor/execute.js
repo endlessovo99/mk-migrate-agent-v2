@@ -2,6 +2,7 @@ import { buildDryRunPlan } from "./dry-run.js";
 import { executePublishedFormPatch } from "./published-form-patch.js";
 import { NewoaClient, normalizeBaseUrl } from "./newoa-client.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
+import { resolveSubProcessTemplates } from "./subprocess-template-resolver.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { preparePersistedTemplate, buildWorkflowDraftPayload } from "./persistence.js";
 import {
@@ -189,12 +190,38 @@ export async function executeDsl(input, options = {}) {
       }
       apiStages[apiStages.length - 1].status = "ok";
     }
+    if (hasSourceSubProcessTemplates(executableDsl)) {
+      apiStages.push({ name: "resolveSubProcessTemplates", status: "started" });
+      const subProcessResolution = await resolveSubProcessTemplates(executableDsl, {
+        client,
+        overrides: options.subProcessTemplateOverrides
+      });
+      executableDsl = subProcessResolution.dsl;
+      apiStages[apiStages.length - 1].status = "ok";
+      apiStages[apiStages.length - 1].resolvedCount = subProcessResolution.resolvedCount;
+      apiStages[apiStages.length - 1].sourceTemplateCount = subProcessResolution.sourceTemplateCount;
+      apiStages[apiStages.length - 1].targetFdIds = subProcessResolution.targetFdIds;
+      apiStages[apiStages.length - 1].overrides = subProcessResolution.overrides;
+      diagnostics.push({
+        level: "warning",
+        code: "workflow.subprocess_template_override_applied",
+        message: "Explicit source-to-target subprocess template overrides were validated and applied for this execution.",
+        path: "/workflow/subprocessTemplates",
+        details: {
+          referenceCount: subProcessResolution.resolvedCount,
+          sourceTemplateCount: subProcessResolution.sourceTemplateCount,
+          targetFdIds: subProcessResolution.targetFdIds,
+          overrides: subProcessResolution.overrides
+        }
+      });
+    }
     apiStages.push({ name: "resolveWorkflowParticipants", status: "started" });
-    const participantResolution = await resolveWorkflowParticipants(input, {
+    const participantResolution = await resolveWorkflowParticipants(executableDsl, {
       client,
       targetBaseUrl: baseUrl,
       fallbackFdIds: options.fallbackFdIds,
       participantOverrides: options.participantOverrides,
+      templateAuthorizationOverrides: options.templateAuthorizationOverrides,
       directParticipantOverrides: options.directParticipantOverrides,
       allowTemplateAuthorizationFallback: options.allowTemplateAuthorizationFallback,
       allowMissingDirectPersonFallback: options.allowMissingDirectPersonFallback,
@@ -224,6 +251,32 @@ export async function executeDsl(input, options = {}) {
           identityCount: participantResolution.overrideIdentityCount,
           targetFdIds: participantResolution.overrideTargetIds,
           overrides: overrideAudits
+        }
+      });
+    }
+    if (participantResolution.templateAuthorizationOverrideCount > 0) {
+      const authorizationOverrideAudits = redactCredentialValuesDeep(
+        participantResolution.templateAuthorizationOverrides,
+        credentials
+      );
+      apiStages[apiStages.length - 1].templateAuthorizationOverrideCount =
+        participantResolution.templateAuthorizationOverrideCount;
+      apiStages[apiStages.length - 1].templateAuthorizationOverrideIdentityCount =
+        participantResolution.templateAuthorizationOverrideIdentityCount;
+      apiStages[apiStages.length - 1].templateAuthorizationOverrideTargetIds =
+        participantResolution.templateAuthorizationOverrideTargetIds;
+      apiStages[apiStages.length - 1].templateAuthorizationOverrides =
+        authorizationOverrideAudits;
+      diagnostics.push({
+        level: "warning",
+        code: "template.authorization_explicit_override_applied",
+        message: "Explicit source-to-target template authorization overrides were validated and applied for this execution.",
+        path: "/template/authorization",
+        details: {
+          referenceCount: participantResolution.templateAuthorizationOverrideCount,
+          identityCount: participantResolution.templateAuthorizationOverrideIdentityCount,
+          targetFdIds: participantResolution.templateAuthorizationOverrideTargetIds,
+          overrides: authorizationOverrideAudits
         }
       });
     }
@@ -669,7 +722,11 @@ export async function executeDsl(input, options = {}) {
           level: "error",
           code: error?.code || "execute.newoa_api_failed",
           message: redactCredentialValues(error instanceof Error ? error.message : String(error), credentials),
-          path: error?.stage === "resolveWorkflowParticipants" ? "/workflow/participants" : "/execute",
+          path: error?.stage === "resolveWorkflowParticipants"
+            ? "/workflow/participants"
+            : error?.stage === "resolveSubProcessTemplates"
+              ? "/workflow/subprocessTemplates"
+              : "/execute",
           ...(Array.isArray(error?.issues)
             ? { details: { issues: redactParticipantIssues(error.issues, credentials) } }
             : {})
@@ -679,6 +736,13 @@ export async function executeDsl(input, options = {}) {
       plan
     };
   }
+}
+
+function hasSourceSubProcessTemplates(dsl) {
+  return (dsl?.workflow?.nodes || []).some((node) => (
+    node?.type === "startSubProcess" &&
+    nonEmptyString(node?.subProcess?.sourceTemplateId)
+  ));
 }
 
 function transferRecordSummary(payload, extra) {
@@ -796,7 +860,7 @@ function validateSafety(options, baseUrlDiagnostics = []) {
   return diagnostics;
 }
 
-function validateExistingTargetTemplate(template, { templateId, targetCategoryId }) {
+export function validateExistingTargetTemplate(template, { templateId, targetCategoryId }) {
   const diagnostics = [];
   if (template?.fdId !== templateId) {
     diagnostics.push({
@@ -896,7 +960,7 @@ function resolveBaseUrl(value) {
   }
 }
 
-function buildExecutionEnvelope({ templateId, templateName, categoryId, tableName, detail }) {
+export function buildExecutionEnvelope({ templateId, templateName, categoryId, tableName, detail }) {
   return {
     templateId,
     templateName,
@@ -1120,7 +1184,7 @@ function requireWorkflowDraftId(result) {
   return draftId;
 }
 
-function assertWorkflowTemplateDetail(detail, workflowTemplateId, targetCategoryId) {
+export function assertWorkflowTemplateDetail(detail, workflowTemplateId, targetCategoryId) {
   if (!nonEmptyString(detail?.fdId)) {
     throw stagedError(
       "getWorkflowTemplateDetail",
@@ -1166,7 +1230,7 @@ function assertWorkflowTemplateDetail(detail, workflowTemplateId, targetCategory
   }
 }
 
-function assertCurrentWorkflowTopLinkage(template, workflowDetail, workflowTemplateId) {
+export function assertCurrentWorkflowTopLinkage(template, workflowDetail, workflowTemplateId) {
   const topWorkflow = template?.mechanisms?.lbpmTemplate?.[0];
   if (!nonEmptyString(topWorkflow?.fdId) || topWorkflow.fdId !== workflowTemplateId) {
     throw stagedError(
@@ -1210,7 +1274,7 @@ function stagedError(stage, message) {
   return error;
 }
 
-function attachWorkflowReadback(template, workflowTemplateDetail) {
+export function attachWorkflowReadback(template, workflowTemplateDetail) {
   const next = clone(template);
   next.mechanisms = next.mechanisms || {};
   next.mechanisms.lbpmTemplate = [clone(workflowTemplateDetail)];

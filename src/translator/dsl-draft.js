@@ -404,10 +404,77 @@ function attachCalculationDecisions(scripts, form, sourceScripts = {}) {
   }
 
   if (!scripts && !decisions.length) return scripts;
+  const actionsWithNativeRuntimeCoverage = closeNativeCalculationRuntimeIncludes(
+    actions,
+    decisions,
+    sourceScripts,
+    form
+  );
   return {
     ...(scripts || { source: sourceScripts?.source || "sysform-jsp", actions: [], warnings: [], javascript: "" }),
+    actions: actionsWithNativeRuntimeCoverage,
     calculationDecisions: decisions
   };
+}
+
+function closeNativeCalculationRuntimeIncludes(actions, decisions, sourceScripts, form) {
+  const manualDecisions = decisions.filter((decision) => decision?.classification === "manual");
+  const nativeTargets = uniqueStrings(decisions
+    .filter((decision) => decision?.classification === "native")
+    .flatMap((decision) => decision.targetRefs || []));
+  const calculatedTargets = calculatedFormTargetRefs(form);
+  if (
+    manualDecisions.length ||
+    !nativeTargets.length ||
+    nativeTargets.length !== calculatedTargets.length ||
+    nativeTargets.some((target) => !calculatedTargets.includes(target))
+  ) return actions;
+
+  const sourcesByRef = new Map((sourceScripts?.sources || [])
+    .map((source) => [source?.sourceRef, source]));
+  return actions.map((action) => {
+    const refs = Array.isArray(action?.sourceRefs) ? action.sourceRefs : [];
+    if (refs.length !== 1 || !isCalculationRuntimeInclude(sourcesByRef.get(refs[0])?.javascript)) {
+      return action;
+    }
+    return {
+      ...action,
+      function: "",
+      translationStatus: "omitted",
+      coverage: {
+        status: "covered",
+        nativeRules: [],
+        nativeCalculations: nativeTargets,
+        residuals: []
+      },
+      functionMappings: [{
+        source: "calculation_script.js generated calculation runtime",
+        target: "native calculated form fields",
+        basis: "native-calculation-runtime",
+        reviewRequired: false
+      }],
+      semanticHints: {
+        calculationRuntimeBootstrap: true
+      },
+      unmappedFunctions: []
+    };
+  });
+}
+
+function calculatedFormTargetRefs(form = {}) {
+  return uniqueStrings((form.fields || []).flatMap((field) => (
+    field?.type === "detailTable"
+      ? (field.columns || [])
+          .filter((column) => column?.props?.calculation)
+          .map((column) => `${field.id}.${column.id}`)
+      : field?.props?.calculation ? [field.id] : []
+  )));
+}
+
+function isCalculationRuntimeInclude(source) {
+  return /^\s*Com_IncludeFile\(\s*(["'])calculation_script\.js\1\s*,\s*(["'])\.\.\/sys\/xform\/designer\/calculation\/\2\s*\)\s*;?\s*$/u.test(
+    String(source || "")
+  );
 }
 
 function nativeFormulaSourceCoverage(sourceScripts = {}, form = {}) {
@@ -2677,7 +2744,65 @@ function draftSubProcessPairs(nodes) {
       recoverParamConfig: common.recoverParamConfig
     });
   }
+
+  for (const start of nodes.filter((node) => (
+    String(node.sourceType || "").toLowerCase() === "startsubprocessnode" &&
+    !result.has(node.id)
+  ))) {
+    const startConfig = configs.get(start.id);
+    const hasRecoverNode = nodes.some((node) => (
+      String(node.sourceType || "").toLowerCase() === "recoversubprocessnode" &&
+      configs.get(node.id)?.subProcessNode === start.id
+    ));
+    const startIdentity = standaloneSubProcessStartIdentity(startConfig?.startIdentity);
+    if (
+      hasRecoverNode ||
+      !startConfig?.subProcess?.templateId ||
+      Number(startConfig.startCountType || 1) !== 1 ||
+      !Array.isArray(startConfig.onErrorNotify) ||
+      startConfig.onErrorNotify.length !== 0 ||
+      !startIdentity
+    ) continue;
+
+    result.set(start.id, {
+      sourceTemplateId: startConfig.subProcess.templateId,
+      templateName: startConfig.subProcess.templateName || "",
+      modelName: startConfig.subProcess.modelName || "",
+      dictBean: startConfig.subProcess.dictBean || "",
+      createParam: startConfig.subProcess.createParam || "",
+      startIdentity,
+      startCountType: "1",
+      autoSubmit: startConfig.skipDraftNode === true,
+      flowType: "1",
+      startParamConfig: parameterMappings(startConfig.startParamenters, "parent_to_child"),
+      recoverParamConfig: []
+    });
+  }
   return result;
+}
+
+function standaloneSubProcessStartIdentity(value) {
+  if (!value || Number(value.type) !== 3) return undefined;
+  const sourceIds = splitRelatedNodeIds(value.values);
+  const names = String(value.names || "").split(";").map((item) => item.trim());
+  if (
+    sourceIds.length === 0 ||
+    sourceIds.length !== names.length ||
+    sourceIds.some((sourceId) => /[${}<>()[\]]/.test(sourceId)) ||
+    names.some((name) => !name)
+  ) return undefined;
+
+  return {
+    mode: "explicit",
+    members: sourceIds.map((sourceId, index) => ({
+      type: "user_or_org",
+      sourceId,
+      name: names[index],
+      sourceOrgType: 8,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgPerson"
+    })),
+    sourceSemantics: "legacy_start_identity_type_3"
+  };
 }
 
 function nativeSubProcessFlowType(recoverConfig) {
@@ -2966,8 +3091,11 @@ function isSupportedParallelGatewayPair(attrs, relatedAttrs, type) {
   const relatedMode = normalizeParallelMode(relatedAttrs[relatedModeKey]);
 
   // Legacy `condition` splits fan out to every matching branch and pair with
-  // an `all` join. NewOA persists this paired gateway shape as splitType "1".
+  // an `all` join. Legacy `anyone` joins complete after any incoming branch;
+  // NewOA exposes that join mode separately from the ordinary all/all pair.
   return (mode === "all" && relatedMode === "all") ||
+    (type === "split" && mode === "all" && relatedMode === "anyone") ||
+    (type === "join" && mode === "anyone" && relatedMode === "all") ||
     (type === "split" && mode === "condition" && relatedMode === "all") ||
     (type === "join" && mode === "all" && relatedMode === "condition");
 }

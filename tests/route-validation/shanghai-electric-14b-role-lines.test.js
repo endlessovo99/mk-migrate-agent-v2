@@ -15,7 +15,9 @@ const fixturePath =
 describe("Shanghai Electric 14b fixed role-line Route case", () => {
   it("keeps an unresolved fixed role line blocking instead of replacing it with a person fallback", async () => {
     const sourceDraft = cleanSourceFile(fixturePath);
-    const trusted = createTrustedMigrationDsl(sourceDraft, draftSourceDraft(sourceDraft), {
+    const dslDraft = draftSourceDraft(sourceDraft);
+    omitTemplateAuthorization(sourceDraft, dslDraft);
+    const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
       externalAgentReviewed: true,
       reviewerName: "route-validation",
       checkedAt: "2026-08-23T00:00:00.000Z"
@@ -84,6 +86,7 @@ describe("Shanghai Electric 14b fixed role-line Route case", () => {
       ]
     );
 
+    omitTemplateAuthorization(sourceDraft, dslDraft);
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
       externalAgentReviewed: true,
       reviewerName: "route-validation",
@@ -173,6 +176,11 @@ describe("Shanghai Electric 14b fixed role-line Route case", () => {
     );
   });
 });
+
+function omitTemplateAuthorization(sourceDraft, dsl) {
+  delete sourceDraft.template.authorization;
+  delete dsl.template.authorization;
+}
 
 function collectDirectTargets(dsl) {
   return new Map((dsl.workflow?.nodes || []).flatMap((node) =>

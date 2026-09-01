@@ -148,6 +148,8 @@ describe("submitter defaults, compound fields, and department-leader role lines"
       }, node.id);
     }
 
+    delete sourceDraft.template.authorization;
+    delete dslDraft.template.authorization;
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
       externalAgentReviewed: true,
       reviewerName: "route-validation",

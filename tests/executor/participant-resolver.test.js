@@ -750,6 +750,127 @@ describe("resolveWorkflowParticipants", () => {
     }]);
   });
 
+  it("keeps workflow overrides isolated from template authorization with the same source id", async () => {
+    const sourceId = "shared-workflow-authorization-person";
+    const targetFdId = "workflow-only-override-person";
+    const member = sourceMember({
+      name: "叶明明",
+      sourceId,
+      sourceOrgType: 8,
+      sourceParentName: "审批部"
+    });
+    const dsl = dslWithExplicitMembers([member]);
+    dsl.template.authorization = {
+      readerFlag: false,
+      readers: [structuredClone(member)],
+      editors: [],
+      allReaders: [],
+      allEditors: [],
+      temporaryReaders: [],
+      temporaryEditors: []
+    };
+    const client = new SearchClient({
+      叶明明: [currentOrg({
+        fdId: sourceId,
+        fdName: "叶明明",
+        fdOrgType: 8,
+        fdParentName: "审批部"
+      })]
+    }, {
+      [targetFdId]: [currentOrg({
+        fdId: targetFdId,
+        fdName: "workflow-target",
+        fdOrgType: 8
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      participantOverrides: [{ sourceId, targetFdId }]
+    });
+
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].id, targetFdId);
+    assert.equal(result.dsl.template.authorization.readers[0].id, sourceId);
+    assert.equal(result.overrideCount, 1);
+    assert.equal(result.overrideIdentityCount, 1);
+    assert.deepEqual(result.overrides[0].paths, [
+      "/workflow/nodes/1/participants/members/0"
+    ]);
+    assert.deepEqual(client.calls, ["叶明明"]);
+    assert.deepEqual(client.elementCalls, [[targetFdId]]);
+  });
+
+  it("applies a parentless template authorization override only after exact name and type validation", async () => {
+    const sourceId = "legacy-parentless-authorization-post";
+    const targetFdId = "current-parentless-authorization-post";
+    const authorizationMember = sourceMember({
+      name: "财务部_部长",
+      sourceId,
+      sourceOrgType: 4,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
+      sourceParentName: undefined
+    });
+    const dsl = dslWithExplicitMembers([]);
+    dsl.template.authorization = {
+      readerFlag: false,
+      readers: [],
+      editors: [],
+      allReaders: [],
+      allEditors: [],
+      temporaryReaders: [authorizationMember],
+      temporaryEditors: []
+    };
+    const client = new SearchClient({}, {
+      [targetFdId]: [currentOrg({
+        fdId: targetFdId,
+        fdName: authorizationMember.name,
+        fdOrgType: authorizationMember.sourceOrgType,
+        fdParentName: ""
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      templateAuthorizationOverrides: [{ sourceId, targetFdId }]
+    });
+
+    assert.deepEqual(result.dsl.template.authorization.temporaryReaders[0], {
+      ...authorizationMember,
+      id: targetFdId,
+      name: authorizationMember.name,
+      targetOrgType: 4
+    });
+    assert.equal(result.templateAuthorizationOverrideCount, 1);
+    assert.equal(result.templateAuthorizationOverrideIdentityCount, 1);
+    assert.deepEqual(result.templateAuthorizationOverrideTargetIds, [targetFdId]);
+    assert.deepEqual(result.templateAuthorizationOverrides[0].paths, [
+      "/template/authorization/temporaryReaders/0"
+    ]);
+    assert.deepEqual(client.calls, []);
+    assert.deepEqual(client.elementCalls, [[targetFdId]]);
+
+    for (const [candidate, reason] of [
+      [{ fdName: "其他岗位", fdOrgType: 4 }, "template_authorization_override_target_name_mismatch"],
+      [{ fdName: authorizationMember.name, fdOrgType: 8 }, "template_authorization_override_target_type_mismatch"]
+    ]) {
+      const mismatchClient = new SearchClient({}, {
+        [targetFdId]: [currentOrg({
+          fdId: targetFdId,
+          fdParentName: "",
+          ...candidate
+        })]
+      });
+      await assert.rejects(
+        () => resolveWorkflowParticipants(dsl, {
+          client: mismatchClient,
+          templateAuthorizationOverrides: [{ sourceId, targetFdId }]
+        }),
+        (error) => error instanceof ParticipantResolutionError &&
+          error.issues.some((issue) => issue.reason === reason)
+      );
+    }
+  });
+
   it("revalidates a parentless source post only when the same current id and name match", async () => {
     const sourceId = "current-parentless-post";
     const dsl = dslWithExplicitMembers([sourceMember({
@@ -1361,6 +1482,57 @@ describe("resolveWorkflowParticipants", () => {
 });
 
 describe("executeDsl participant resolution seam", () => {
+  it("audits and persists an exact template authorization override separately", async () => {
+    const sourceId = "legacy-parentless-template-post";
+    const targetFdId = "current-parentless-template-post";
+    const dsl = dslWithExplicitMembers([]);
+    dsl.template.authorization = {
+      readerFlag: false,
+      readers: [],
+      editors: [],
+      allReaders: [],
+      allEditors: [],
+      temporaryReaders: [sourceMember({
+        name: "财务部_部长",
+        sourceId,
+        sourceOrgType: 4,
+        sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement",
+        sourceParentName: undefined
+      })],
+      temporaryEditors: []
+    };
+    const client = new CompleteSearchClient({}, {
+      [targetFdId]: [currentOrg({
+        fdId: targetFdId,
+        fdName: "财务部_部长",
+        fdOrgType: 4,
+        fdParentName: ""
+      })]
+    });
+
+    const result = await executeDsl(dsl, {
+      client,
+      credentials: { username: "route-user", encryptedPassword: "route-password" },
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      templateAuthorizationOverrides: [{ sourceId, targetFdId }],
+      now: new Date("2026-07-10T10:00:00.000Z")
+    });
+    const stage = result.apiStages.find((item) => item.name === "resolveWorkflowParticipants");
+    const warning = result.diagnostics.find((item) => (
+      item.code === "template.authorization_explicit_override_applied"
+    ));
+
+    assert.equal(result.ok, true);
+    assert.equal(stage.templateAuthorizationOverrideCount, 1);
+    assert.equal(stage.templateAuthorizationOverrideIdentityCount, 1);
+    assert.deepEqual(stage.templateAuthorizationOverrideTargetIds, [targetFdId]);
+    assert.equal(warning.details.referenceCount, 1);
+    assert.deepEqual(client.savedTemplate.fdTmpReaders.map((member) => member.fdId), [
+      targetFdId
+    ]);
+  });
+
   it("reports and persists the temporary participant fallback on NewOA SIT", async () => {
     const dsl = dslWithExplicitMembers([
       sourceMember({

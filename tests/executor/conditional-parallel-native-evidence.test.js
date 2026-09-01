@@ -9,6 +9,26 @@ import { prepareSample, xformConfig } from "../helpers/persistence.js";
 const fixtureDir = join(dirname(fileURLToPath(import.meta.url)), "../fixtures/executor/persistence");
 
 describe("independent conditional-parallel native evidence", () => {
+  it("projects and independently verifies an all split with an any-incoming join", () => {
+    const dsl = allAnyoneParallelDsl();
+    const prepared = prepareSample(dsl);
+    const written = JSON.parse(prepared.update.mechanisms.lbpmTemplate[0].fdContent);
+
+    assert.equal(written.elements.find((element) => element.id === "QA20").splitType, "1");
+    assert.equal(written.elements.find((element) => element.id === "QA50").joinType, "2");
+
+    const readback = prepared.verify(independentAllAnyoneReadback());
+    assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+
+    const mutated = independentAllAnyoneReadback();
+    mutateWorkflow(mutated, (content) => {
+      content.elements.find((element) => element.id === "QA50").joinType = "1";
+    });
+    assert.equal(prepared.verify(mutated).diagnostics.some((item) =>
+      item.code === "readback.workflow.parallel_gateway_mismatch"
+    ), true);
+  });
+
   it("projects condition-matching parallel splits as native conditional gateways", () => {
     const prepared = prepareSample(conditionalParallelDsl());
     const workflow = JSON.parse(prepared.update.mechanisms.lbpmTemplate[0].fdContent);
@@ -149,9 +169,63 @@ function conditionalParallelDsl() {
   });
 }
 
+function allAnyoneParallelDsl() {
+  const nodes = [
+    workflowNode("QA10", "generalStart", "startEvent", "Start"),
+    {
+      ...workflowNode("QA20", "split", "parallelGateway", "Parallel split"),
+      attributes: { splitType: "all", relatedNodeIds: "QA50" }
+    },
+    workflowNode("QA31", "review", "manualTask", "Alpha review"),
+    workflowNode("QA32", "review", "manualTask", "Beta review"),
+    {
+      ...workflowNode("QA50", "join", "parallelGateway", "Any incoming join"),
+      attributes: { joinType: "anyone", relatedNodeIds: "QA20" }
+    },
+    {
+      ...workflowNode("QA60", "review", "manualTask", "Submitter confirmation"),
+      participants: {
+        mode: "doc_creator",
+        sourceExpression: "<提交人>",
+        sourceNameExpression: "<提交人>"
+      }
+    },
+    workflowNode("QA90", "generalEnd", "endEvent", "End")
+  ];
+  const edges = [
+    workflowEdge("QAE10", "QA10", "QA20"),
+    workflowEdge("QAE21", "QA20", "QA31"),
+    workflowEdge("QAE22", "QA20", "QA32"),
+    workflowEdge("QAE31", "QA31", "QA50"),
+    workflowEdge("QAE32", "QA32", "QA50"),
+    workflowEdge("QAE50", "QA50", "QA60"),
+    workflowEdge("QAE60", "QA60", "QA90")
+  ];
+  return sampleTrustedDsl({
+    workflow: {
+      process: { id: "independent-all-anyone-parallel" },
+      nodes,
+      edges,
+      topologicalOrder: nodes.map((node) => node.id)
+    }
+  });
+}
+
 function independentReadback() {
   const template = JSON.parse(readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8"));
   const workflow = JSON.parse(readFileSync(join(fixtureDir, "conditional-parallel-native-workflow.json"), "utf8"));
+  const config = xformConfig(template);
+  const attr = JSON.parse(config.attribute.formAttr);
+  attr.subjectRule = {};
+  config.attribute.formAttr = JSON.stringify(attr);
+  template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+  template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(workflow);
+  return template;
+}
+
+function independentAllAnyoneReadback() {
+  const template = JSON.parse(readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8"));
+  const workflow = JSON.parse(readFileSync(join(fixtureDir, "all-anyone-parallel-native-workflow.json"), "utf8"));
   const config = xformConfig(template);
   const attr = JSON.parse(config.attribute.formAttr);
   attr.subjectRule = {};

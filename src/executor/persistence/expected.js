@@ -382,6 +382,12 @@ function executableProps(field = {}, form = {}, context = {}) {
     props.precision = field.props.precision;
   }
   if (
+    componentSupportsProp(field.componentId, "dataPattern") &&
+    typeof field.props?.dataPattern === "string"
+  ) {
+    props.dataPattern = normalizeScalar(field.props.dataPattern);
+  }
+  if (
     componentSupportsProp(field.componentId, "displayPattern") &&
     typeof field.props?.displayPattern === "string"
   ) {
@@ -1534,7 +1540,7 @@ function summarizeExpectedParallelGateway(node, edges = []) {
   const attrs = sourceAttributes(node);
   const conditional = isConditionalParallelSplit(node);
   return {
-    mode: conditional ? "3" : "1",
+    mode: conditional ? "3" : isAnyoneParallelJoin(node) ? "2" : "1",
     relatedNodeId: splitRelatedNodeIds(attrs.relatedNodeIds)[0] || "",
     direction: node.type === "split" ? "diverging" : "converging",
     ...(conditional ? {
@@ -1561,6 +1567,11 @@ function isNativeFormulaGatewayNode(node) {
 function isConditionalParallelSplit(node) {
   return node?.type === "split" &&
     String(sourceAttributes(node).splitType || "").trim().toLowerCase() === "condition";
+}
+
+function isAnyoneParallelJoin(node) {
+  return node?.type === "join" &&
+    String(sourceAttributes(node).joinType || "").trim().toLowerCase() === "anyone";
 }
 
 function summarizeCondition(edge, conditionBranch, context = {}) {

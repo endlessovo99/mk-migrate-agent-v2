@@ -43,7 +43,7 @@ describe("unproven branch draft closure", () => {
     );
   });
 
-  it("keeps proven numeric compare onChange actions reviewable for agent mapping", () => {
+  it("deterministically maps a complete numeric compare onChange alert", () => {
     const scripts = draftMkScriptsFromSourceScripts({
       source: "sysform-jsp",
       sources: [{
@@ -67,15 +67,19 @@ describe("unproven branch draft closure", () => {
     });
 
     const action = scripts.actions[0];
-    assert.equal(action.translationStatus, "needs_review");
-    assert.equal(action.branchProvenance.status, "proven");
-    assert.deepEqual(action.branchProvenance.conditions, [{
-      kind: "lt",
-      value: "0",
-      origin: "event:value",
-      transforms: [],
-      predicate: "numeric-<"
-    }]);
+    assert.equal(action.translationStatus, "mapped");
+    assert.equal(action.deterministicBranchProof?.basis, "deterministic-synchronous-onchange-alert");
+    assert.deepEqual(action.coverage, { status: "translated", nativeRules: [], residuals: [] });
+    assert.match(action.function, /if \(value < 0\)/);
+    assert.match(action.function, /MKXFORM\.toast\("金额不得小于0"\)/);
+
+    const messages = [];
+    const onChange = Function("MKXFORM", `${action.function}; return onChange;`)({
+      toast(message) { messages.push(message); }
+    });
+    onChange(-1);
+    onChange(0);
+    assert.deepEqual(messages, ["金额不得小于0"]);
   });
 
   it("keeps unproven legacy row effects reviewable instead of declaring them no-ops", () => {

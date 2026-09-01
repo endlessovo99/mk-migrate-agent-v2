@@ -149,6 +149,12 @@ function summarizeSemanticProps(field) {
     props.precision = field.props.precision;
   }
   if (
+    componentSupportsProp(field.component, "dataPattern") &&
+    field.props?.dataPattern !== undefined
+  ) {
+    props.dataPattern = field.props.dataPattern;
+  }
+  if (
     componentSupportsProp(field.component, "displayPattern") &&
     field.props?.displayPattern !== undefined
   ) {

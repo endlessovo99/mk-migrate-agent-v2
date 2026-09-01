@@ -1371,7 +1371,9 @@ function branchConditionContext(action = {}, condition = {}) {
   const expression = conditionExpression(condition, "normalizedValue");
   return expression ? {
     signature: "function onLoad()",
-    initialization: `  var normalizedValue = MKXFORM.getValue(${JSON.stringify(fieldMatch[1])})`,
+    initialization: `  var normalizedValue = ${condition.emptyText === true
+      ? `String(MKXFORM.getValue(${JSON.stringify(fieldMatch[1])}) ?? "")`
+      : `MKXFORM.getValue(${JSON.stringify(fieldMatch[1])})`}`,
     expression
   } : undefined;
 }

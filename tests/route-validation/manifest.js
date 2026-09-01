@@ -46,6 +46,7 @@ const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
 const PARTICIPANT_OVERRIDE_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
   "get-element-info",
+  "search-org",
   ...SUCCESS_OPERATIONS.slice(1, -2),
   "save-workflow-draft",
   "get-workflow-detail",

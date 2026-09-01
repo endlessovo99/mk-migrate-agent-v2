@@ -860,7 +860,7 @@ function buildParallelGatewayNode(node, index, type, nodeById, routes = []) {
 
   return {
     ...element,
-    joinType: "1",
+    joinType: isAnyoneParallelJoin(node) ? "2" : "1",
     hidden: true
   };
 }
@@ -1043,6 +1043,11 @@ function buildBranchRoutes(nodes, outgoingEdges, context) {
 function isConditionalParallelSplit(node) {
   return node?.type === "split" &&
     String(sourceAttributes(node).splitType || "").trim().toLowerCase() === "condition";
+}
+
+function isAnyoneParallelJoin(node) {
+  return node?.type === "join" &&
+    String(sourceAttributes(node).joinType || "").trim().toLowerCase() === "anyone";
 }
 
 function buildBranchRoute(node, edge, index, context, siblingEdges = [], nodeById = new Map()) {

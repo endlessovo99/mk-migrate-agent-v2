@@ -11,12 +11,14 @@ const NON_RESETTABLE_COMPONENTS = new Set([
 ]);
 
 export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules = {}) {
+  const text = String(source.javascript || "");
+  const program = parseProgram(text);
+  const namedCandidates = namedRowEffectHandlerCandidates(source, form, program);
+  if (namedCandidates.length) return namedCandidates;
   if (!hasOnlyDiagnosticAlertViolations(source.functionAudit)) {
     return [];
   }
   if (sourceHasNativeRules(source, formRules, form)) return [];
-  const text = String(source.javascript || "");
-  const program = parseProgram(text);
   if (!program) return [];
 
   const onChangeCalls = program.body
@@ -24,6 +26,11 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
     .filter((call) => call?.callee?.type === "Identifier" &&
       call.callee.name === "AttachXFormValueChangeEventById");
   if (onChangeCalls.length) {
+    const loadCalls = program.body
+      .map(expressionCall)
+      .filter((call) => isWindowLoadCall(call));
+    const executableStatementCount = program.body
+      .filter((statement) => statement.type !== "EmptyStatement").length;
     const hasHardHiddenAssignment = onChangeCalls.some((call) =>
       isFunction(call.arguments?.[1]) &&
       callbackWritesHardHiddenField(call.arguments[1], hardHiddenFieldIds(form)) &&
@@ -31,13 +38,18 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
     );
     if (
       (onChangeCalls.length < 2 && !hasHardHiddenAssignment) ||
-      onChangeCalls.length !== program.body.filter((statement) => statement.type !== "EmptyStatement").length
+      onChangeCalls.length + loadCalls.length !== executableStatementCount
     ) {
       return [];
     }
-    const candidates = onChangeCalls.map((call) =>
-      onChangeCandidate(call, source, form, formRules)
-    );
+    const candidates = [
+      ...loadCalls.map((call) =>
+        onLoadCandidate(call, source, form) || simpleOnLoadCandidate(call, source, form)
+      ),
+      ...onChangeCalls.map((call) =>
+        onChangeCandidate(call, source, form, formRules)
+      )
+    ];
     return candidates.every(Boolean) ? candidates : [];
   }
 
@@ -59,7 +71,7 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
   );
   if (
     usesMainRowResetLifecycle &&
-    (loadCalls.length < 2 || !loadCalls.some((call) => hasResetRowEffect(call.arguments?.[2])))
+    (loadCalls.length < 2 || !loadCalls.some((call) => hasResetRowEffect(windowLoadListener(call))))
   ) {
     return [];
   }
@@ -70,15 +82,176 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
   ) {
     return [];
   }
-  return alertViolation
+  const coveredLegacyFunctions = uniqueStrings(
+    (source.functionAudit?.violations || [])
+      .map((violation) => violation?.name)
+      .filter((name) => ["alert", "window.addEventListener"].includes(name))
+  );
+  return coveredLegacyFunctions.length
     ? candidates.map((candidate) => ({
         ...candidate,
         semanticHints: {
           ...candidate.semanticHints,
-          coveredLegacyFunctions: ["alert"]
+          coveredLegacyFunctions
         }
       }))
     : candidates;
+}
+
+function namedRowEffectHandlerCandidates(source, form, program) {
+  if (!program) return [];
+  const statements = program.body.filter((statement) => statement.type !== "EmptyStatement");
+  const handler = statements.find((statement) => (
+    statement.type === "FunctionDeclaration" &&
+    statement.id?.type === "Identifier" &&
+    statement.params.length === 0 &&
+    statement.body?.type === "BlockStatement"
+  ));
+  if (!handler) return [];
+  const bindingStatement = statements.find((statement) => {
+    const call = expressionCall(statement);
+    return call?.callee?.type === "Identifier" &&
+      call.callee.name === "AttachXFormValueChangeEventById" &&
+      call.arguments?.[1]?.type === "Identifier" &&
+      call.arguments[1].name === handler.id.name;
+  });
+  const loadStatement = statements.find((statement) => {
+    const call = expressionCall(statement);
+    return isWindowLoadCall(call) && callsOnlyNamedHandler(call.arguments?.[2], handler.id.name);
+  });
+  if (!bindingStatement || !loadStatement || statements.length !== 3) return [];
+
+  const binding = expressionCall(bindingStatement);
+  const triggerId = literalValue(binding.arguments?.[0]);
+  if (typeof triggerId !== "string" || !formFieldIds(form).has(triggerId)) return [];
+  const body = handler.body.body.filter((statement) => statement.type !== "EmptyStatement");
+  const declarations = body.filter((statement) => statement.type === "VariableDeclaration");
+  if (declarations.length !== 2 || body.slice(0, 2).some((statement) => statement.type !== "VariableDeclaration")) {
+    return [];
+  }
+  const sourceDeclaration = declarations.find((statement) =>
+    jqueryFieldValueId(statement.declarations?.[0]?.init) === triggerId
+  );
+  const targetDeclaration = declarations.find((statement) =>
+    jqueryFieldElementId(statement.declarations?.[0]?.init)
+  );
+  const sourceAlias = sourceDeclaration?.declarations?.[0]?.id?.name;
+  const targetAlias = targetDeclaration?.declarations?.[0]?.id?.name;
+  const targetId = jqueryFieldElementId(targetDeclaration?.declarations?.[0]?.init);
+  if (
+    !sourceAlias ||
+    !targetAlias ||
+    !targetId ||
+    !hardHiddenFieldIds(form).has(targetId)
+  ) return [];
+  const assignment = body[2]?.type === "ExpressionStatement" ? body[2].expression : undefined;
+  if (
+    assignment?.type !== "CallExpression" ||
+    assignment.callee?.type !== "MemberExpression" ||
+    assignment.callee.computed ||
+    assignment.callee.object?.type !== "Identifier" ||
+    assignment.callee.object.name !== targetAlias ||
+    assignment.callee.property?.name !== "val" ||
+    assignment.arguments?.length !== 1 ||
+    assignment.arguments[0]?.type !== "Identifier" ||
+    assignment.arguments[0].name !== sourceAlias
+  ) return [];
+  const branches = body.slice(3);
+  if (!branches.length || branches.some((statement) => statement.type !== "IfStatement")) return [];
+  const aliases = new Map([[sourceAlias, triggerId]]);
+  const onChangeBranches = compileStatementsForNamedHandler(branches, {
+    aliases,
+    sourceValueName: sourceAlias,
+    targetValueName: "value",
+    form
+  });
+  const onLoadBranches = compileStatementsForNamedHandler(branches, {
+    aliases,
+    sourceValueName: sourceAlias,
+    targetValueName: sourceAlias,
+    form
+  });
+  const rowTargets = rowEffectTargets(handler.body);
+  if (
+    !onChangeBranches ||
+    !onLoadBranches ||
+    !rowTargets.length ||
+    !targetsHaveDistinctLayoutOwners(form, rowTargets)
+  ) return [];
+
+  const sourceRef = source.sourceRef || source.id;
+  const mapping = {
+    source: "named radio value-change row effects and hard-hidden field sync",
+    target: "MKXFORM.getValue/setValue/setFieldAttr",
+    basis: BASIS,
+    reviewRequired: false
+  };
+  const common = {
+    javascript: String(source.javascript || ""),
+    translationStatus: "mapped",
+    coverage: { status: "translated", nativeRules: [], residuals: [] },
+    functionMappings: [mapping],
+    sourceRefs: [sourceRef],
+    semanticHints: {
+      coveredLegacyFunctions: (source.functionAudit?.violations || [])
+        .map((violation) => violation?.name)
+        .filter(Boolean),
+      coveredCalculationRanges: [{
+        sourceRef,
+        name: `namedRadioRowEffects:${handler.id.name}`,
+        start: handler.start,
+        end: loadStatement.end
+      }]
+    }
+  };
+  return [{
+    ...common,
+    index: bindingStatement.start,
+    sourceActionKey: inlineOnChangeSourceActionKey(sourceRef, bindingStatement.start),
+    event: "onChange",
+    scope: "control",
+    controlId: triggerId,
+    function: [
+      "function onChange(value, rowNum, parentRowNum) {",
+      `  MKXFORM.setValue(${JSON.stringify(targetId)}, value);`,
+      ...onChangeBranches,
+      "}"
+    ].join("\n")
+  }, {
+    ...common,
+    index: loadStatement.start,
+    event: "onLoad",
+    scope: "global",
+    function: [
+      "function onLoad() {",
+      `  var ${sourceAlias}Raw = MKXFORM.getValue(${JSON.stringify(triggerId)});`,
+      `  var ${sourceAlias} = Array.isArray(${sourceAlias}Raw) ? ${sourceAlias}Raw[0] : ${sourceAlias}Raw;`,
+      `  MKXFORM.setValue(${JSON.stringify(targetId)}, ${sourceAlias});`,
+      ...onLoadBranches,
+      "}"
+    ].join("\n")
+  }].sort((left, right) => left.index - right.index);
+}
+
+function compileStatementsForNamedHandler(statements, context) {
+  const lines = [];
+  for (const statement of statements) {
+    const compiled = compileStatement(statement, { ...context, indent: "  " });
+    if (!compiled) return undefined;
+    lines.push(...compiled);
+  }
+  return lines;
+}
+
+function callsOnlyNamedHandler(listener, handlerName) {
+  const body = executableListenerBody(listener);
+  const statements = body?.body?.filter((statement) => statement.type !== "EmptyStatement") || [];
+  if (statements.length !== 1 || statements[0].type !== "ExpressionStatement") return false;
+  const call = statements[0].expression;
+  return call?.type === "CallExpression" &&
+    call.callee?.type === "Identifier" &&
+    call.callee.name === handlerName &&
+    call.arguments.length === 0;
 }
 
 export function hardHiddenValueChangeCandidates(source = {}, form = {}, formRules = {}) {
@@ -194,6 +367,7 @@ function compileOnChange(callback, form, options = {}) {
 }
 
 function compileStatement(statement, context) {
+  if (diagnosticConsoleStatement(statement, context)) return [];
   if (statement.type === "IfStatement") return compileIf(statement, context);
   const effect = rowEffect(statement);
   if (effect) {
@@ -280,13 +454,17 @@ function compileCondition(condition, context) {
   }
   const fieldEquality = aliasValueEquality(condition, context.aliases);
   if (fieldEquality) {
-    return `${fieldEquality.alias} == ${JSON.stringify(fieldEquality.value)}`;
+    return `${fieldEquality.alias} ${fieldEquality.operator} ${fieldEquality.valueKind === "undefined" ? "undefined" : JSON.stringify(fieldEquality.value)}`;
+  }
+  const directFieldEquality = directFieldValueEquality(condition, context.form);
+  if (directFieldEquality) {
+    return `MKXFORM.getValue(${JSON.stringify(directFieldEquality.fieldId)}) ${directFieldEquality.operator} ${directFieldEquality.valueKind === "undefined" ? "undefined" : JSON.stringify(directFieldEquality.value)}`;
   }
   return undefined;
 }
 
 function eventValueEquality(node, valueName) {
-  if (node?.type !== "BinaryExpression" || !["==", "==="].includes(node.operator)) {
+  if (node?.type !== "BinaryExpression" || !["==", "===", "!=", "!=="].includes(node.operator)) {
     return undefined;
   }
   if (node.left?.type === "Identifier" && node.left.name === valueName) {
@@ -301,7 +479,7 @@ function eventValueEquality(node, valueName) {
 }
 
 function onLoadCandidate(call, source, form) {
-  const listener = call.arguments?.[2];
+  const listener = windowLoadListener(call);
   if (!isFunction(listener) || listener.body?.type !== "BlockStatement") return undefined;
   const model = loadModel(listener, source, form);
   if (!model) return undefined;
@@ -333,7 +511,7 @@ function onLoadCandidate(call, source, form) {
 }
 
 function simpleOnLoadCandidate(call, source, form) {
-  const listener = call.arguments?.[2];
+  const listener = windowLoadListener(call);
   if (!isFunction(listener) || listener.body?.type !== "BlockStatement") return undefined;
   const model = simpleLoadModel(listener, form);
   if (!model) return undefined;
@@ -363,7 +541,7 @@ function simpleOnLoadCandidate(call, source, form) {
     }] : [])],
     sourceRefs: [sourceRef],
     semanticHints: {
-      mainRowResetLifecycle: true,
+      ...(hasResetRowEffect(listener) ? { mainRowResetLifecycle: true } : {}),
       ...(model.diagnosticAlertCount ? {
         omittedDiagnosticAlerts: {
           count: model.diagnosticAlertCount,
@@ -382,39 +560,66 @@ function simpleOnLoadCandidate(call, source, form) {
 
 function simpleLoadModel(listener, form) {
   if (listener.params?.length) return undefined;
+  const body = executableListenerBody(listener);
+  if (!body) return undefined;
   const aliases = new Map();
-  let branch;
+  const prelude = [];
+  const branches = [];
   let diagnosticAlertCount = 0;
-  for (const statement of listener.body.body) {
+  for (const statement of body.body) {
     if (statement.type === "EmptyStatement") continue;
+    const effect = rowEffect(statement);
+    if (effect) {
+      const compiled = compileRowEffect(effect, form, "  ");
+      if (!compiled) return undefined;
+      prelude.push(...compiled);
+      continue;
+    }
     const alias = legacyFieldAlias(statement);
     if (alias) {
-      if (branch || !formFieldIds(form).has(alias.fieldId) || aliases.has(alias.name)) {
+      if (!formFieldIds(form).has(alias.fieldId) || aliases.has(alias.name)) {
         return undefined;
       }
       aliases.set(alias.name, alias.fieldId);
       continue;
     }
+    const assignment = legacyFieldAssignment(statement, aliases, undefined);
+    if (assignment) {
+      prelude.push(
+        `  MKXFORM.setValue(${JSON.stringify(assignment.fieldId)}, ${assignment.expression});`,
+        `  ${assignment.alias} = ${assignment.expression};`
+      );
+      continue;
+    }
     if (diagnosticAlert(statement, aliases, form)) {
-      if (branch) return undefined;
       diagnosticAlertCount += 1;
       continue;
     }
-    if (statement.type === "IfStatement" && !branch) {
-      branch = statement;
+    if (diagnosticConsoleStatement(statement, { aliases })) continue;
+    if (statement.type === "IfStatement") {
+      branches.push(statement);
       continue;
     }
     return undefined;
   }
-  if (!aliases.size || !branch) return undefined;
-  const lines = compileStatement(branch, {
+  const lines = [...prelude];
+  for (const branch of branches) {
+    const compiled = compileStatement(branch, {
+      aliases,
+      sourceValueName: undefined,
+      targetValueName: undefined,
+      form,
+      indent: "  "
+    });
+    if (!compiled) return undefined;
+    lines.push(...compiled);
+  }
+  return lines.length ? {
     aliases,
-    sourceValueName: undefined,
-    targetValueName: undefined,
-    form,
-    indent: "  "
-  });
-  return lines ? { aliases, lines, diagnosticAlertCount } : undefined;
+    lines,
+    diagnosticAlertCount,
+    textFieldIds: new Set(textValueFieldIds(form))
+  } : undefined;
 }
 
 function renderSimpleOnLoad(model) {
@@ -423,17 +628,29 @@ function renderSimpleOnLoad(model) {
   for (const [alias, fieldId] of model.aliases) {
     const rawAlias = uniqueLocalName(`${alias}Raw`, usedNames);
     usedNames.add(rawAlias);
-    lines.push(
-      `  var ${rawAlias} = MKXFORM.getValue(${JSON.stringify(fieldId)});`,
-      `  var ${alias} = Array.isArray(${rawAlias}) ? ${rawAlias} : String(${rawAlias} ?? "");`
-    );
+    if (model.textFieldIds.has(fieldId)) {
+      const valueAlias = uniqueLocalName(`${alias}Value`, usedNames);
+      usedNames.add(valueAlias);
+      lines.push(
+        `  var ${rawAlias} = MKXFORM.getValue(${JSON.stringify(fieldId)});`,
+        `  var ${valueAlias} = Array.isArray(${rawAlias}) ? ${rawAlias}[0] : ${rawAlias};`,
+        `  var ${alias} = String(${valueAlias} ?? "");`
+      );
+    } else {
+      lines.push(
+        `  var ${rawAlias} = MKXFORM.getValue(${JSON.stringify(fieldId)});`,
+        `  var ${alias} = Array.isArray(${rawAlias}) ? ${rawAlias}[0] : ${rawAlias};`
+      );
+    }
   }
   lines.push(...model.lines, "}");
   return lines.join("\n");
 }
 
 function loadModel(listener, source, form) {
-  const body = listener.body.body.filter((statement) => statement.type !== "EmptyStatement");
+  const executableBody = executableListenerBody(listener);
+  if (!executableBody) return undefined;
+  const body = executableBody.body.filter((statement) => statement.type !== "EmptyStatement");
   const finalChain = [...body].reverse().find((statement) => statement.type === "IfStatement");
   if (!finalChain) return undefined;
   const prelude = parseLoadPrelude(body.slice(0, body.indexOf(finalChain)), form);
@@ -946,7 +1163,8 @@ function legacyFieldAlias(statement) {
   ) {
     return undefined;
   }
-  const fieldId = legacyFieldElementId(statement.declarations[0].init);
+  const fieldId = legacyFieldElementId(statement.declarations[0].init) ||
+    jqueryFieldValueId(statement.declarations[0].init);
   return fieldId
     ? { name: statement.declarations[0].id.name, fieldId }
     : undefined;
@@ -1086,21 +1304,138 @@ function aliasContainsCondition(node, aliases) {
 }
 
 function aliasValueEquality(node, aliases) {
-  if (node?.type !== "BinaryExpression" || !["==", "==="].includes(node.operator)) {
+  if (node?.type !== "BinaryExpression" || !["==", "===", "!=", "!=="].includes(node.operator)) {
     return undefined;
   }
-  const member = node.left?.type === "MemberExpression" ? node.left : node.right;
+  const member = ["MemberExpression", "Identifier"].includes(node.left?.type)
+    ? node.left
+    : node.right;
   const literal = member === node.left ? node.right : node.left;
+  const valueKind = literal?.type === "Identifier" && literal.name === "undefined"
+    ? "undefined"
+    : typeof literalValue(literal) === "string" ? "string" : undefined;
+  if (
+    member?.type === "Identifier" &&
+    valueKind &&
+    aliases.has(member.name)
+  ) {
+    return {
+      alias: member.name,
+      operator: node.operator,
+      value: literalValue(literal),
+      valueKind
+    };
+  }
   if (
     member?.computed ||
     member?.object?.type !== "Identifier" ||
     member?.property?.name !== "value" ||
-    typeof literalValue(literal) !== "string" ||
+    !valueKind ||
     !aliases.has(member.object.name)
   ) {
     return undefined;
   }
-  return { alias: member.object.name, value: literalValue(literal) };
+  return {
+    alias: member.object.name,
+    operator: node.operator,
+    value: literalValue(literal),
+    valueKind
+  };
+}
+
+function directFieldValueEquality(node, form) {
+  if (node?.type !== "BinaryExpression" || !["==", "===", "!=", "!=="].includes(node.operator)) {
+    return undefined;
+  }
+  const leftFieldId = legacyFieldValueId(node.left);
+  const rightFieldId = legacyFieldValueId(node.right);
+  const fieldId = leftFieldId || rightFieldId;
+  const literal = leftFieldId ? node.right : node.left;
+  const valueKind = literal?.type === "Identifier" && literal.name === "undefined"
+    ? "undefined"
+    : typeof literalValue(literal) === "string" ? "string" : undefined;
+  if (!fieldId || !formFieldIds(form).has(fieldId) || !valueKind) {
+    return undefined;
+  }
+  return { fieldId, operator: node.operator, value: literalValue(literal), valueKind };
+}
+
+function legacyFieldValueId(node) {
+  return node?.type === "MemberExpression" &&
+    !node.computed &&
+    node.property?.name === "value"
+    ? legacyFieldElementId(node.object)
+    : undefined;
+}
+
+function jqueryFieldValueId(node) {
+  const valueCall = node?.type === "CallExpression" &&
+    node.callee?.type === "MemberExpression" &&
+    !node.callee.computed &&
+    node.callee.property?.name === "val" &&
+    node.arguments?.length === 0
+    ? node.callee.object
+    : undefined;
+  if (
+    valueCall?.type !== "CallExpression" ||
+    valueCall.callee?.type !== "Identifier" ||
+    valueCall.callee.name !== "$" ||
+    valueCall.arguments?.length !== 1 ||
+    typeof literalValue(valueCall.arguments[0]) !== "string"
+  ) return undefined;
+  return literalValue(valueCall.arguments[0]).match(
+    /extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)/u
+  )?.[1];
+}
+
+function jqueryFieldElementId(node) {
+  if (
+    node?.type !== "CallExpression" ||
+    node.callee?.type !== "Identifier" ||
+    node.callee.name !== "$" ||
+    node.arguments?.length !== 1 ||
+    typeof literalValue(node.arguments[0]) !== "string"
+  ) return undefined;
+  return literalValue(node.arguments[0]).match(
+    /extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)/u
+  )?.[1];
+}
+
+function diagnosticConsoleStatement(statement, context = {}) {
+  const call = expressionCall(statement);
+  if (
+    call?.callee?.type !== "MemberExpression" ||
+    call.callee.computed ||
+    call.callee.object?.type !== "Identifier" ||
+    call.callee.object.name !== "console" ||
+    !["log", "debug", "info"].includes(call.callee.property?.name)
+  ) return false;
+  return (call.arguments || []).every((argument) => (
+    argument?.type === "Literal" ||
+    argument?.type === "Identifier" && (
+      argument.name === context.sourceValueName || context.aliases?.has(argument.name)
+    )
+  ));
+}
+
+function executableListenerBody(listener) {
+  if (!isFunction(listener) || listener.body?.type !== "BlockStatement") return undefined;
+  const statements = listener.body.body.filter((statement) => statement.type !== "EmptyStatement");
+  if (statements.length !== 1 || statements[0].type !== "ExpressionStatement") {
+    return listener.body;
+  }
+  const call = statements[0].expression;
+  if (
+    call?.type !== "CallExpression" ||
+    call.callee?.type !== "Identifier" ||
+    call.callee.name !== "setTimeout" ||
+    call.arguments.length !== 2 ||
+    !isFunction(call.arguments[0]) ||
+    call.arguments[0].params.length !== 0 ||
+    call.arguments[0].body?.type !== "BlockStatement" ||
+    typeof literalValue(call.arguments[1]) !== "number"
+  ) return listener.body;
+  return call.arguments[0].body;
 }
 
 function redundantRadioCondition(node) {
@@ -1128,13 +1463,27 @@ function redundantRadioCondition(node) {
 }
 
 function isWindowLoadCall(call) {
-  return call?.type === "CallExpression" &&
+  const legacy = call?.type === "CallExpression" &&
     call.callee?.type === "Identifier" &&
     call.callee.name === "Com_AddEventListener" &&
     call.arguments?.length === 3 &&
     call.arguments[0]?.type === "Identifier" &&
     call.arguments[0].name === "window" &&
     literalValue(call.arguments[1]) === "load";
+  const native = call?.type === "CallExpression" &&
+    call.callee?.type === "MemberExpression" &&
+    !call.callee.computed &&
+    call.callee.object?.type === "Identifier" &&
+    call.callee.object.name === "window" &&
+    call.callee.property?.name === "addEventListener" &&
+    call.arguments?.length === 2 &&
+    literalValue(call.arguments[0]) === "load";
+  return legacy || native;
+}
+
+function windowLoadListener(call) {
+  if (!isWindowLoadCall(call)) return undefined;
+  return call.callee?.type === "Identifier" ? call.arguments[2] : call.arguments[1];
 }
 
 function formFieldIds(form) {
@@ -1181,8 +1530,9 @@ function targetsHaveDistinctLayoutOwners(form, targets) {
     Object.values(node).forEach(visit);
   };
   visit(form?.layout);
-  if ([...owners.values()].some((matches) => matches.size !== 1)) return false;
-  return new Set([...owners.values()].map((matches) => [...matches][0])).size === targetList.length;
+  if ([...owners.values()].some((matches) => matches.size === 0)) return false;
+  const ownerCount = [...owners.values()].reduce((count, matches) => count + matches.size, 0);
+  return new Set([...owners.values()].flatMap((matches) => [...matches])).size === ownerCount;
 }
 
 function rowEffectTargets(node) {
@@ -1301,7 +1651,9 @@ function hasOnlyDiagnosticAlertViolations(functionAudit = {}) {
   const violations = Array.isArray(functionAudit?.violations)
     ? functionAudit.violations
     : [];
-  return violations.every((violation) => violation?.name === "alert");
+  return violations.every((violation) =>
+    ["alert", "window.addEventListener"].includes(violation?.name)
+  );
 }
 
 function hasDiagnosticAlertViolation(functionAudit = {}) {
@@ -1341,4 +1693,8 @@ function parseProgram(source) {
 
 function nonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function uniqueStrings(values) {
+  return [...new Set((values || []).filter(nonEmptyString))];
 }

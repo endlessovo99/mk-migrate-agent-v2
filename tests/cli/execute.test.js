@@ -103,6 +103,22 @@ describe("execute CLI", () => {
     ]);
   });
 
+  it("passes repeated exact template authorization overrides to the executor", async () => {
+    const { request } = await runExecuteCli({
+      argv: [
+        "--template-authorization-override",
+        " source-post-a = target-post-a ",
+        "--template-authorization-override",
+        "source-post-b=target-post-b"
+      ]
+    });
+
+    assert.deepEqual(request.options.templateAuthorizationOverrides, [
+      { sourceId: "source-post-a", targetFdId: "target-post-a" },
+      { sourceId: "source-post-b", targetFdId: "target-post-b" }
+    ]);
+  });
+
   it("passes repeated direct participant overrides to the executor", async () => {
     const { request } = await runExecuteCli({
       argv: [
@@ -116,6 +132,22 @@ describe("execute CLI", () => {
     assert.deepEqual(request.options.directParticipantOverrides, [
       { sourceTargetId: "legacy-direct-a", targetFdId: "target-person-a" },
       { sourceTargetId: "legacy-direct-b", targetFdId: "target-person-b" }
+    ]);
+  });
+
+  it("passes repeated subprocess template overrides to the executor", async () => {
+    const { request } = await runExecuteCli({
+      argv: [
+        "--subprocess-template-override",
+        " source-child-a = target-child-a ",
+        "--subprocess-template-override",
+        "source-child-b=target-child-b"
+      ]
+    });
+
+    assert.deepEqual(request.options.subProcessTemplateOverrides, [
+      { sourceTemplateId: "source-child-a", targetFdId: "target-child-a" },
+      { sourceTemplateId: "source-child-b", targetFdId: "target-child-b" }
     ]);
   });
 
@@ -176,6 +208,46 @@ describe("execute CLI", () => {
       assert.equal(request, undefined);
       assert.equal(exitCode, 1);
       assert.match(JSON.parse(output.at(-1)).message, /participant-override/);
+    }
+  });
+
+  it("rejects malformed or duplicate template authorization overrides before execution", async () => {
+    for (const argv of [
+      ["--template-authorization-override", "missing-separator"],
+      ["--template-authorization-override", "=missing-source"],
+      ["--template-authorization-override", "missing-target="],
+      ["--template-authorization-override", "source=target=extra"],
+      [
+        "--template-authorization-override",
+        "duplicate-source=target-a",
+        "--template-authorization-override",
+        "duplicate-source=target-b"
+      ]
+    ]) {
+      const { request, exitCode, output } = await runExecuteCli({ argv });
+      assert.equal(request, undefined);
+      assert.equal(exitCode, 1);
+      assert.match(JSON.parse(output.at(-1)).message, /template-authorization-override/);
+    }
+  });
+
+  it("rejects malformed or duplicate subprocess template overrides before execution", async () => {
+    for (const argv of [
+      ["--subprocess-template-override", "missing-separator"],
+      ["--subprocess-template-override", "=missing-source"],
+      ["--subprocess-template-override", "missing-target="],
+      ["--subprocess-template-override", "source=target=extra"],
+      [
+        "--subprocess-template-override",
+        "duplicate-source=target-a",
+        "--subprocess-template-override",
+        "duplicate-source=target-b"
+      ]
+    ]) {
+      const { request, exitCode, output } = await runExecuteCli({ argv });
+      assert.equal(request, undefined);
+      assert.equal(exitCode, 1);
+      assert.match(JSON.parse(output.at(-1)).message, /subprocess-template-override/);
     }
   });
 

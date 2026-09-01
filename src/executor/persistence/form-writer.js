@@ -36,6 +36,7 @@ import {
 
 const CURRENT_TIME_INITIALIZER = 'function(e){var t=(e||{}).controlProps||{},r=t.defaultValueType,n=t.value;if("now"===r&&void 0===n){var o=(new Date).valueOf();return e.controlProps.value=o,o}}';
 const DATE_TIME_OUTPUT_PATTERN = "yyyy-MM-dd hh:mm";
+const DATE_MONTH_PATTERN = "yyyy-MM";
 const NATIVE_DATE_TIME_DATA_PATTERN = "yyyy-MM-dd HH/mm";
 const NATIVE_DATE_TIME_DISPLAY_PATTERN = "yyyy年MM月DD日 HH点mm分";
 const NATIVE_ORG_TYPE_CODE = new Map([
@@ -1261,9 +1262,18 @@ function fieldFontExtendData(field, template, spec) {
 }
 
 function nativeDateTimePatterns(field) {
+  const dataPattern = typeof field.props?.dataPattern === "string"
+    ? field.props.dataPattern.trim()
+    : "";
   const displayPattern = typeof field.props?.displayPattern === "string"
     ? field.props.displayPattern.trim()
     : "";
+  if (dataPattern === DATE_MONTH_PATTERN) {
+    return {
+      dataPattern: DATE_MONTH_PATTERN,
+      displayPattern: displayPattern || DATE_MONTH_PATTERN
+    };
+  }
   if (!displayPattern) return undefined;
   if (displayPattern === DATE_TIME_OUTPUT_PATTERN) {
     return {

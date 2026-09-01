@@ -11,18 +11,22 @@ const invoiceSourceDraft = cleanSourceFile(invoiceFixturePath);
 const invoiceDslDraft = draftSourceDraft(invoiceSourceDraft);
 
 describe("Agent Review non-native row-marker prompt", () => {
-  it("uses the proven onLoad field condition and exact non-required row effects", () => {
-    const { opportunity } = fixtureOpportunity("fd_3e502424ad4b9e.script.2.event.1");
-    const fn = opportunity.suggestedPatchShape.function;
+  it("deterministically maps the proven onLoad field condition and exact non-required row effects", () => {
+    const { action, promptAction } = fixtureAction("fd_3e502424ad4b9e.script.2.event.1");
+    const fn = action.function;
 
+    assert.equal(action.translationStatus, "mapped");
+    assert.equal(action.deterministicBranchProof?.basis, "deterministic-inline-radio-row-effects");
+    assert.equal(promptAction.reviewOpportunities, undefined);
     assert.match(fn, /MKXFORM\.getValue\("fd_aqxyshift"\)/);
-    assert.match(fn, /if \(normalizedValue\.indexOf\("A"\) >= 0\) \{/);
+    assert.match(fn, /String\(is_ywzdValue \?\? ""\)/);
+    assert.match(fn, /if \(is_ywzd\.indexOf\("A"\) >= 0\) \{/);
     assert.match(fn, /MKXFORM\.setFieldAttr\("aqxy_row", 5\)/);
     assert.match(fn, /MKXFORM\.setFieldAttr\("aqxy_row", 4\)/);
     assert.equal(count(fn, 'MKXFORM.setFieldAttr("aqxy_row", 6)'), 2);
     assert.doesNotMatch(fn, /MKXFORM\.setFieldAttr\("aqxy_row", 3\)/);
     assert.doesNotMatch(fn, /\/\* helper or trigger field id \*\//);
-    assert.doesNotMatch(fn, /\?/);
+    assert.doesNotMatch(fn, /MKXFORM\.setFieldAttr\([^\n]*\?/);
   });
 
   it("deterministically combines hard-hidden assignments and row effects", () => {
@@ -71,11 +75,15 @@ describe("Agent Review non-native row-marker prompt", () => {
       "fd_39f8ebfc128778.script.1.event.1",
       "fd_3f3165d0ab5bd6.script.1.event.1"
     ]) {
-      const fn = fixtureOpportunity(actionId).opportunity.suggestedPatchShape.function;
+      const { action, promptAction } = fixtureAction(actionId);
+      const fn = action.function;
+      assert.equal(action.translationStatus, "mapped");
+      assert.equal(action.deterministicBranchProof?.basis, "deterministic-inline-radio-row-effects");
+      assert.equal(promptAction.reviewOpportunities, undefined);
       assert.equal(fn, [
         "function onLoad() {",
-        '  MKXFORM.setFieldAttr("fd_jsx_row", 4)',
-        '  MKXFORM.setFieldAttr("fd_jsx_row", 6)',
+        '  MKXFORM.setFieldAttr("fd_jsx_row", 4);',
+        '  MKXFORM.setFieldAttr("fd_jsx_row", 6);',
         "}"
       ].join("\n"));
       assert.doesNotMatch(fn, /MKXFORM\.getValue|\/\*|\?/);
@@ -90,7 +98,7 @@ describe("Agent Review non-native row-marker prompt", () => {
     );
     const fn = opportunity.suggestedPatchShape.function;
 
-    assert.match(fn, /var normalizedValue = MKXFORM\.getValue\("wayTemp"\)/);
+    assert.match(fn, /var normalizedValue = String\(MKXFORM\.getValue\("wayTemp"\) \?\? ""\)/);
     assert.match(fn, /if \(normalizedValue == "11"\) \{/);
     assert.match(fn, /else if \(normalizedValue == "22"\) \{/);
     assert.equal(count(fn, 'MKXFORM.setFieldAttr("file_row", 4)'), 2);
@@ -98,12 +106,26 @@ describe("Agent Review non-native row-marker prompt", () => {
     assert.equal(count(fn, 'MKXFORM.setFieldAttr("invoice_row4", 5)'), 1);
     assert.equal(count(fn, 'MKXFORM.setFieldAttr("invoice_row4", 4)'), 2);
     assert.doesNotMatch(fn, /invoice_row1(?:0|1|11|2|21|22|3|31)/);
-    assert.doesNotMatch(fn, /Array\.isArray|\?|forEach|\/\*/);
+    assert.doesNotMatch(fn, /Array\.isArray|forEach|\/\*/);
+    assert.doesNotMatch(fn, /MKXFORM\.setFieldAttr\([^\n]*\?/);
   });
 });
 
-function fixtureOpportunity(actionId) {
-  return opportunityFor(sourceDraft, dslDraft, actionId);
+function fixtureAction(actionId) {
+  const actionIndex = dslDraft.scripts.actions.findIndex((action) => action.id === actionId);
+  assert.notEqual(actionIndex, -1);
+  const prompt = buildAgentReviewPrompt(sourceDraft, dslDraft, {
+    compact: true,
+    reviewScope: {
+      actionIndexes: [actionIndex],
+      actionIds: [actionId],
+      includeFormTargets: true
+    }
+  });
+  return {
+    action: dslDraft.scripts.actions[actionIndex],
+    promptAction: prompt.context.dslDraft.scripts.actions[0]
+  };
 }
 
 function opportunityFor(source, dsl, actionId) {
@@ -118,7 +140,7 @@ function opportunityFor(source, dsl, actionId) {
     }
   });
   const action = prompt.context.dslDraft.scripts.actions[0];
-  const opportunity = action.reviewOpportunities.find((item) => (
+  const opportunity = action.reviewOpportunities?.find((item) => (
     item.kind === "row_marker_visibility_candidate"
   ));
   assert.ok(opportunity?.suggestedPatchShape);

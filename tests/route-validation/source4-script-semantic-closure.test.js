@@ -1,0 +1,295 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { checkDraft } from "../../src/dsl/checks.js";
+import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+
+const SOURCE4 = "tests/fixtures/source4";
+
+function stages(sourceId) {
+  const source = cleanSourceFile(`${SOURCE4}/${sourceId}`);
+  return { source, draft: draftSourceDraft(source) };
+}
+
+function actionsByBasis(draft, basis) {
+  return (draft.scripts?.actions || []).filter((action) =>
+    action.functionMappings?.some((mapping) => mapping.basis === basis)
+  );
+}
+
+describe("Source4 script semantic closure", () => {
+  it("keeps attachment non-empty submit guards blocked without a target attachment read API", () => {
+    const cases = [
+      ["1859e7bfaa39079c5e082ab45ada2a9a", "fd_3b737ff6f7c696", undefined],
+      ["19c9dac6eb80b3565aacdd64db6b7e34", "fd_3ef5d3dd57cdcc", undefined],
+      ["19ed50e681ba7fdeab4e00a48dc9da44", "fd_3f536e8d4f6688", undefined],
+      ["19ed50e681ba7fdeab4e00a48dc9da44", "fd_3a4530a5242e44", "fd_3f519912b47f3e"]
+    ];
+
+    for (const [sourceId, attachmentId, conditionFieldId] of cases) {
+      const { draft } = stages(sourceId);
+      const action = draft.scripts.actions.find((candidate) =>
+        candidate.recipe?.kind === "attachment_non_empty" &&
+        candidate.recipe.fieldId === attachmentId
+      );
+
+      assert.equal(action?.translationStatus, "needs_review", `${sourceId}:${attachmentId}`);
+      assert.equal(action.semanticHints?.[0]?.targetApiCandidates?.length, 0);
+      assert.doesNotMatch(action.function, /MKXFORM\.getValue/u);
+      assert.equal(conditionFieldId === undefined || action.function.includes(conditionFieldId), true);
+      assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+    }
+  });
+
+  it("maps source-complete synchronous submit validation chains and rejects malformed source", () => {
+    const completeCases = [
+      ["16af8665a236a1e3c1377e641c38cd23", "fd_3a599e37116792.script.1.event.1"],
+      ["1900f4bec4249fc9cde772a43b8a2e81", "fd_3d0df2cab9db08.script.1.event.1"],
+      ["1900f4bec4249fc9cde772a43b8a2e81", "fd_3d0df29a686de8.script.1.event.1"],
+      ["1900f4bec4249fc9cde772a43b8a2e81", "fd_3d0df01ed548a2.script.1.event.1"],
+      ["1900f4bec4249fc9cde772a43b8a2e81", "fd_3d0ec28ee3916e.script.1.event.1"],
+      ["190fd4c9da66e44314426f746ecb2b4e", "fd_3d35f6de1abd62.script.1.event.1"]
+    ];
+
+    for (const [sourceId, actionId] of completeCases) {
+      const { draft } = stages(sourceId);
+      const action = (draft.scripts?.actions || []).find((candidate) => candidate.id === actionId);
+      assert.equal(action?.translationStatus, "mapped", `${sourceId}:${actionId}`);
+      assert.equal(
+        action.functionMappings?.[0]?.basis,
+        "deterministic-synchronous-submit-validation",
+        `${sourceId}:${actionId}`
+      );
+      assert.match(action.function, /context\.isDraft/u);
+      assert.match(action.function, /MKXFORM\.toast/u);
+      assert.match(action.function, /return false/u);
+      assert.equal(action.deterministicBranchProof?.basis, "deterministic-synchronous-submit-validation");
+      assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+    }
+
+    const { draft: malformed } = stages("1900f4bec4249fc9cde772a43b8a2e81");
+    const malformedAction = malformed.scripts.actions.find((action) =>
+      action.id === "fd_3d0df213be2d04.script.1.event.1"
+    );
+    assert.equal(malformedAction.translationStatus, "needs_review");
+  });
+
+  it("maps mixed onLoad/onChange row effects with source-backed hidden-field assignment", () => {
+    const { draft } = stages("19ed50e681ba7fdeab4e00a48dc9da44");
+    const actions = draft.scripts.actions.filter((action) =>
+      action.sourceRefs?.includes("source.form.jsp.fd_3f526d6e79107c.script.1") ||
+      action.sourceRefs?.includes("source.form.jsp.fd_3f526d6e79107c.script.2")
+    );
+
+    assert.equal(actions.length, 3);
+    assert.equal(actions.every((action) => action.translationStatus === "mapped"), true);
+    assert.equal(actions.every((action) =>
+      action.functionMappings?.some((mapping) =>
+        mapping.basis === "deterministic-inline-radio-row-effects"
+      )
+    ), true);
+    assert.equal(actions.some((action) =>
+      action.event === "onChange" &&
+      action.function.includes('MKXFORM.setValue("fd_3f526d2afe7e46", value)')
+    ), true);
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+  });
+
+  it("maps a radio choice across multi-row groups and mirrors its hidden state", () => {
+    const { draft } = stages("16f7a2202ee38ad5b25e46e4905a56e4");
+    const actions = draft.scripts.actions.filter((action) =>
+      action.sourceRefs?.some((sourceRef) =>
+        sourceRef.startsWith("source.form.jsp.fd_32836909fa859e.script.")
+      )
+    );
+
+    assert.equal(actions.length, 3);
+    assert.equal(actions.every((action) => action.translationStatus === "mapped"), true);
+    assert.equal(actions.every((action) =>
+      action.functionMappings?.some((mapping) =>
+        mapping.basis === "deterministic-inline-radio-row-effects"
+      )
+    ), true);
+    const change = actions.find((action) => action.event === "onChange");
+    assert.match(change.function, /MKXFORM\.setValue\("fd_is_bg", "bg"\)/u);
+    assert.match(change.function, /MKXFORM\.setValue\("fd_is_sq", "sq"\)/u);
+    assert.match(change.function, /MKXFORM\.setFieldAttr\("fd_bg_row", 5\)/u);
+    assert.match(change.function, /MKXFORM\.setFieldAttr\("fd_sq_row", 4\)/u);
+    assert.deepEqual(change.coverage.nativeRules.sort(), [
+      "linkage.fd_32836745f26bca.contains.bg",
+      "linkage.fd_32836745f26bca.contains.sq"
+    ]);
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+  });
+
+  it("maps complete alert-only value-change validation and rejects an undefined diagnostic", () => {
+    const { draft } = stages("1900f4bec4249fc9cde772a43b8a2e81");
+    const mappedIds = [
+      "fd_3d0ec2157143ea.script.1.event.1",
+      "fd_3d0bacafd4153c.script.1.event.1",
+      "fd_3d0ec216e41056.script.1.event.1"
+    ];
+    for (const actionId of mappedIds) {
+      const action = draft.scripts.actions.find((candidate) => candidate.id === actionId);
+      assert.equal(action?.translationStatus, "mapped", actionId);
+      assert.equal(
+        action.functionMappings?.[0]?.basis,
+        "deterministic-synchronous-onchange-alert",
+        actionId
+      );
+      assert.match(action.function, /MKXFORM\.toast/u);
+    }
+    const undefinedDiagnostic = draft.scripts.actions.find((action) =>
+      action.id === "fd_3d0ba88eebbe72.script.1.event.1"
+    );
+    assert.equal(undefinedDiagnostic.translationStatus, "needs_review");
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+  });
+
+  it("closes the generated calculation runtime include only with complete native-calculation evidence", () => {
+    for (const sourceId of [
+      "16a8b7c0fa95aab79b5377e41929cc66",
+      "16a8b7ceb08e85444842a144b75ba94d",
+      "172fe2c19605b509159034b4cccad56c"
+    ]) {
+      const { draft } = stages(sourceId);
+      const nativeTargets = draft.scripts.calculationDecisions
+        .filter((decision) => decision.classification === "native")
+        .flatMap((decision) => decision.targetRefs)
+        .sort();
+      const includeActions = draft.scripts.actions.filter((action) =>
+        action.functionMappings?.some((mapping) =>
+          mapping.basis === "native-calculation-runtime"
+        )
+      );
+
+      assert.equal(includeActions.length > 0, true, sourceId);
+      for (const action of includeActions) {
+        assert.equal(action.translationStatus, "omitted", `${sourceId}:${action.id}`);
+        assert.deepEqual([...action.coverage.nativeCalculations].sort(), nativeTargets);
+        assert.deepEqual(action.coverage.residuals, []);
+      }
+      assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+    }
+  });
+
+  it("maps a named legacy row-effect handler to onChange and onLoad actions", () => {
+    const { draft } = stages("16af8665a236a1e3c1377e641c38cd23");
+    const actions = draft.scripts.actions.filter((action) =>
+      action.sourceRefs?.includes("source.form.jsp.fd_3a23f2021688de.script.1")
+    );
+    assert.equal(actions.length, 2);
+    assert.equal(actions.every((action) => action.translationStatus === "mapped"), true);
+    assert.deepEqual(actions.map((action) => action.event).sort(), ["onChange", "onLoad"]);
+    for (const action of actions) {
+      assert.match(action.function, /MKXFORM\.setValue\("fd_3a23fac7fec066"/u);
+      assert.match(action.function, /MKXFORM\.setFieldAttr\("fd_(?:internal|external)_row"/u);
+      assert.equal(
+        action.functionMappings?.[0]?.basis,
+        "deterministic-inline-radio-row-effects"
+      );
+    }
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+  });
+
+  it("omits an exact disabled mutation only when its source control is absent", () => {
+    for (const sourceId of [
+      "190fd4c9da66e44314426f746ecb2b4e",
+      "19a24476acdcc9ce5b708744206a2724"
+    ]) {
+      const { draft } = stages(sourceId);
+      const action = draft.scripts.actions.find((candidate) =>
+        candidate.id === "fd_3e2f07edbb7efa.script.1.event.1"
+      );
+      assert.equal(action.translationStatus, "omitted", sourceId);
+      assert.equal(
+        action.functionMappings?.[0]?.basis,
+        "legacy-runtime-noop",
+        sourceId
+      );
+      assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+    }
+  });
+
+  it("maps required-field helpers for both initial load and value changes", () => {
+    const { draft } = stages("19c9dac6eb80b3565aacdd64db6b7e34");
+    const actions = actionsByBasis(draft, "deterministic-required-field-toggle");
+    assert.equal(actions.length, 2);
+    assert.deepEqual(actions.map((action) => action.event).sort(), ["onChange", "onLoad"]);
+    for (const action of actions) {
+      assert.equal(action.translationStatus, "mapped");
+      assert.match(action.function, /MKXFORM\.setFieldAttr\("fd_3ef5d116953d84"/u);
+      assert.equal(action.deterministicBranchProof?.basis, "deterministic-required-field-toggle");
+    }
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+  });
+
+  it("lowers an exact laydate month picker to a native yyyy-MM date field", () => {
+    const { source, draft } = stages("178671ba7493e3a9d35d8f740e28fd89");
+    const field = draft.form.fields.find((candidate) => candidate.id === "fd_year_month");
+    const action = draft.scripts.actions.find((candidate) =>
+      candidate.sourceRefs?.includes("source.form.jsp.fd_36dffcc6415756.script.1")
+    );
+
+    assert.equal(field.type, "dateTime");
+    assert.equal(field.componentId, "xform-datetime");
+    assert.equal(field.props.dataPattern, "yyyy-MM");
+    assert.equal(field.props.displayPattern, "yyyy-MM");
+    assert.equal(Object.hasOwn(field.props, "hiddenLabel"), false);
+    assert.equal(action.translationStatus, "omitted");
+    assert.equal(action.functionMappings?.[0]?.basis, "static-form-prop");
+    assert.deepEqual(action.coverage.staticProps, [
+      { fieldId: "fd_year_month", prop: "dataPattern", value: "yyyy-MM" },
+      { fieldId: "fd_year_month", prop: "displayPattern", value: "yyyy-MM" }
+    ]);
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+    const trusted = createTrustedMigrationDsl(source, draft, {
+      externalAgentReviewed: true,
+      reviewerName: "route-validation",
+      checkedAt: "2026-09-01T00:00:00.000Z"
+    });
+    assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
+
+    const incompleteCoverage = structuredClone(draft);
+    incompleteCoverage.scripts.actions.find((candidate) => candidate.id === action.id)
+      .coverage.staticProps = action.coverage.staticProps.filter((entry) => (
+        entry.prop !== "dataPattern"
+      ));
+    assert.equal(checkDraft(incompleteCoverage).ok, false);
+  });
+
+  it("maps a conditional hard-hidden mirror and dependent field resets", () => {
+    const { draft } = stages("18809ca40ff98e01d45ec5d4923811a5");
+    const action = actionsByBasis(draft, "deterministic-conditional-field-reset")[0];
+    assert.equal(action?.translationStatus, "mapped");
+    assert.equal(action.controlId, "fd_invoice_project");
+    assert.match(action.function, /MKXFORM\.setValue\("isclbx", "2"\)/u);
+    assert.match(action.function, /MKXFORM\.setValue\("fd_3bf0989304d83e", ""\)/u);
+    assert.match(action.function, /MKXFORM\.setValue\("fd_project_dept", ""\)/u);
+    assert.match(action.function, /MKXFORM\.setFieldAttr\("wbs_row"/u);
+    assert.equal(action.deterministicBranchProof?.basis, "deterministic-conditional-field-reset");
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+  });
+
+  it("maps nested row-state branches while retaining the unsupported attachment guard", () => {
+    const { draft } = stages("1859e7bfaa39079c5e082ab45ada2a9a");
+    const rowActions = draft.scripts.actions.filter((action) =>
+      [
+        "source.form.jsp.fd_3e74fe6f917cac.script.1",
+        "source.form.jsp.fd_3e74fe6f917cac.script.2"
+      ].some((sourceRef) => action.sourceRefs?.includes(sourceRef))
+    );
+    assert.equal(rowActions.length, 3);
+    assert.equal(rowActions.every((action) => action.translationStatus === "mapped"), true);
+    assert.equal(rowActions.every((action) =>
+      action.functionMappings?.some((mapping) =>
+        mapping.basis === "deterministic-inline-radio-row-effects"
+      )
+    ), true);
+    const attachment = draft.scripts.actions.find((action) =>
+      action.recipe?.fieldId === "fd_3b737ff6f7c696"
+    );
+    assert.equal(attachment.translationStatus, "needs_review");
+    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+  });
+});

@@ -28,7 +28,15 @@ const ENTRY_KEYS_BY_OPERATION = new Map([
     "createTime"
   ])]
 ]);
-const FORBIDDEN_KEY = /authorization|cookie|credential|password|secret|token|username/i;
+const FORBIDDEN_KEY = /cookie|credential|password|secret|token|username/i;
+const TEMPLATE_AUTHORIZATION_COLLECTIONS = [
+  "readers",
+  "editors",
+  "allReaders",
+  "allEditors",
+  "temporaryReaders",
+  "temporaryEditors"
+];
 
 export function appendTranscriptEntry(transcript, entry) {
   if (!entry || typeof entry !== "object" || Array.isArray(entry) || !ENTRY_KEYS_BY_OPERATION.has(entry.operation)) {
@@ -85,13 +93,29 @@ export function sanitizedTranscript(transcript) {
 
 export function assertNoSecretLeak(value, secrets) {
   walk(value, (key, entry) => {
-    if (key && FORBIDDEN_KEY.test(key)) {
+    if (key && isSecretBearingKey(key, entry)) {
       throw integrityError("route.secret_leak", `Secret-bearing key appeared in Route artifacts: ${key}`);
     }
     if (typeof entry === "string" && secrets.some((secret) => secret && entry.includes(secret))) {
       throw integrityError("route.secret_leak", "A credential value appeared in Route artifacts.");
     }
   });
+}
+
+function isSecretBearingKey(key, value) {
+  if (FORBIDDEN_KEY.test(key)) return true;
+  if (!/^authorization$/i.test(key)) return false;
+  return !isTemplateAuthorization(value);
+}
+
+function isTemplateAuthorization(value) {
+  return Boolean(value) &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    typeof value.readerFlag === "boolean" &&
+    TEMPLATE_AUTHORIZATION_COLLECTIONS.every((collectionName) => (
+      Array.isArray(value[collectionName])
+    ));
 }
 
 function walk(value, visit, key = "") {

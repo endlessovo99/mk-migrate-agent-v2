@@ -1,0 +1,16 @@
+{
+  "source": {
+    "kind": "NewOA-native-contract",
+    "baseUrl": "http://oadev.shanghai-electric.com",
+    "digestPath": "/web/tenant/0/digest/2/index.js",
+    "digestSha256": "0dcb7bcd6c05d2bb5c11193eb08a39dac348865555efae8c3798645414b0cb83",
+    "component": "@elem/xform-datetime",
+    "release": "S82LBQSE7",
+    "modulePath": "/web/sys/artifact/elements/xform-datetime/index.js?S82LBQSE7",
+    "moduleSha256": "f6aeeb8238d51f411aae6c44c3f15a8b04adc15fb14bb7f6e758ba1cb8841280",
+    "runtimeEvidence": "EFormatType.DATE_MONTH is yyyy-MM and the picker selects month when dataPattern is neither day nor year."
+  },
+  "fieldId": "fd_amount",
+  "dataPattern": "yyyy-MM",
+  "displayPattern": "yyyy-MM"
+}

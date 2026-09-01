@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-08-28.v14",
+  "version": "2026-09-01.v15",
   "components": [
     {
       "componentId": "xform-button",
@@ -284,6 +284,7 @@
         "properties": {
           "required": { "type": "boolean" },
           "readOnly": { "type": "boolean" },
+          "dataPattern": { "type": "string", "enum": ["yyyy-MM"] },
           "displayPattern": { "type": "string" },
           "defaultValue": { "$ref": "#/$defs/dateTimeDefaultValue" }
         }

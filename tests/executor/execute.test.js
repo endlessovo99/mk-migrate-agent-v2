@@ -90,6 +90,62 @@ describe("executeDsl", () => {
     assert.equal(result.apiStages.at(-1).status, "failed");
   });
 
+  it("blocks a source subprocess template before writes when no target override is provided", async () => {
+    const client = new FakeNewoaClient();
+    const result = await executeDsl(sampleStandaloneSubProcessDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.stage, "resolveSubProcessTemplates");
+    assert.equal(result.diagnostics.at(-1).code, "workflow.subprocess_template_resolution_failed");
+    assert.equal(result.diagnostics.at(-1).details.issues.some((issue) =>
+      issue.reason === "subprocess_template_override_required"
+    ), true);
+    assert.equal(client.calls.some((call) =>
+      ["initTemplate", "addTemplate", "updateTemplate"].includes(call.name)
+    ), false);
+  });
+
+  it("validates and applies a subprocess template override before participant resolution", async () => {
+    const client = new FakeNewoaClient();
+    client.getElementInfo = async (targets) => {
+      client.calls.push({ name: "getElementInfo", payload: { targets } });
+      return targets.includes("current-subprocess-starter")
+        ? [{
+            fdId: "current-subprocess-starter",
+            fdName: "当前子流程起草人",
+            fdOrgType: 8
+          }]
+        : [];
+    };
+    const result = await executeDsl(sampleStandaloneSubProcessDsl(), {
+      client,
+      credentials: TEST_CREDENTIALS,
+      confirmWrite: true,
+      targetCategoryId: "category-1",
+      subProcessTemplateOverrides: [{
+        sourceTemplateId: "legacy-child-template",
+        targetFdId: "migrated-child-template"
+      }]
+    });
+
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    const stage = result.apiStages.find((item) => item.name === "resolveSubProcessTemplates");
+    assert.equal(stage.status, "ok");
+    assert.deepEqual(stage.targetFdIds, ["migrated-child-template"]);
+    const update = client.calls.find((call) => call.name === "updateTemplate").payload;
+    const workflow = JSON.parse(update.mechanisms.lbpmTemplate[0].fdContent);
+    const subprocess = workflow.elements.find((element) => element.id === "N-subprocess");
+    assert.equal(JSON.parse(subprocess.config).subProcess.templateId, "migrated-child-template");
+    assert.equal(result.diagnostics.some((item) =>
+      item.code === "workflow.subprocess_template_override_applied"
+    ), true);
+  });
+
   it("writes an initial same-id workflow draft and verifies readback", async () => {
     const client = new FakeNewoaClient();
     const result = await executeDsl(sampleTrustedDsl(), {
@@ -4056,6 +4112,80 @@ function sampleParallelGatewayWorkflow() {
     ],
     topologicalOrder: ["N1", "N2", "N3", "N4", "N5"]
   };
+}
+
+function sampleStandaloneSubProcessDsl() {
+  const nodes = [
+    {
+      id: "N-start",
+      type: "generalStart",
+      element: "startEvent",
+      name: "Start",
+      sourceRef: "source.workflow.node.N-start",
+      attributes: {},
+      translationStatus: "executable"
+    },
+    {
+      id: "N-subprocess",
+      type: "startSubProcess",
+      element: "subProcess",
+      name: "Start child",
+      sourceRef: "source.workflow.node.N-subprocess",
+      attributes: {},
+      subProcess: {
+        sourceTemplateId: "legacy-child-template",
+        templateName: "Legacy child",
+        modelName: "com.example.Child",
+        startCountType: "1",
+        autoSubmit: false,
+        flowType: "1",
+        startIdentity: {
+          mode: "explicit",
+          members: [{
+            id: "current-subprocess-starter",
+            name: "当前子流程起草人",
+            type: "user_or_org",
+            targetOrgType: 8
+          }]
+        },
+        startParamConfig: [],
+        recoverParamConfig: []
+      },
+      translationStatus: "executable"
+    },
+    {
+      id: "N-end",
+      type: "generalEnd",
+      element: "endEvent",
+      name: "End",
+      sourceRef: "source.workflow.node.N-end",
+      attributes: {},
+      translationStatus: "executable"
+    }
+  ];
+  return sampleTrustedDsl({
+    workflow: {
+      process: { id: "standalone-subprocess" },
+      nodes,
+      edges: [
+        {
+          id: "L-start",
+          source: "N-start",
+          target: "N-subprocess",
+          sourceRef: "source.workflow.edge.L-start",
+          condition: { translationStatus: "executable" }
+        },
+        {
+          id: "L-end",
+          source: "N-subprocess",
+          target: "N-end",
+          sourceRef: "source.workflow.edge.L-end",
+          condition: { translationStatus: "executable" }
+        }
+      ],
+      topologicalOrder: nodes.map((node) => node.id)
+    }
+  });
 }
 
 function sampleFormulaParticipantDsl() {

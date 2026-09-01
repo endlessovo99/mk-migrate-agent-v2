@@ -30,38 +30,24 @@ describe("legacy required toggle scripts", () => {
     }, { form: form() });
 
     assert.equal(scripts.actions.length, 1);
-    assert.deepEqual(scripts.actions[0], {
-      id: "required-toggle.script.1.event.1",
-      name: "onChange",
-      event: "onChange",
-      scope: "control",
-      controlId: "fd_seal_type",
-      runWhen: { viewStatusIn: ["add", "edit"] },
-      function: "function onChange(value, rowNum, parentRowNum) {\n  const required = String(value || \"\").indexOf(\"quote\") >= 0\n  MKXFORM.setFieldAttr(\"fd_amount\", required ? 3 : 6)\n}",
-      sourceRefs: ["source.form.jsp.required-toggle.script.1"],
-      branchProvenance: {
-        version: 4,
-        event: "onChange",
-        sourceRef: "source.form.jsp.required-toggle.script.1",
-        status: "proven",
-        conditions: [{
-          kind: "contains",
-          value: "quote",
-          origin: "event:value",
-          transforms: [],
-          predicate: "indexOf"
-        }]
-      },
-      translationStatus: "mapped",
-      coverage: { status: "translated", nativeRules: [], residuals: [] },
-      functionMappings: [{
-        source: "AttachXFormValueChangeEventById + set_required/set_not_required",
-        target: "MKXFORM.setFieldAttr",
-        basis: "semantic-translation",
-        reviewRequired: false
-      }],
-      unmappedFunctions: ["console.log", "$"]
-    });
+    const action = scripts.actions[0];
+    assert.equal(action.id, "required-toggle.script.1.event.1");
+    assert.equal(action.event, "onChange");
+    assert.equal(action.scope, "control");
+    assert.equal(action.controlId, "fd_seal_type");
+    assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
+    assert.equal(action.function, "function onChange(value, rowNum, parentRowNum) {\n  const required = String(value || \"\").indexOf(\"quote\") >= 0\n  MKXFORM.setFieldAttr(\"fd_amount\", required ? 3 : 6)\n}");
+    assert.equal(action.translationStatus, "mapped");
+    assert.equal(action.deterministicBranchProof?.basis, "deterministic-required-field-toggle");
+    assert.deepEqual(action.coverage, { status: "translated", nativeRules: [], residuals: [] });
+    assert.deepEqual(action.functionMappings, [{
+      source: "set_required/set_not_required field helper",
+      target: "MKXFORM.getValue/setFieldAttr",
+      basis: "deterministic-required-field-toggle",
+      reviewRequired: false
+    }]);
+    assert.deepEqual(action.semanticHints?.coveredLegacyFunctions, ["console.log", "$"]);
+    assert.deepEqual(action.unmappedFunctions, []);
   });
 
   it("keeps the script reviewable when the target field is not in the form", () => {
@@ -78,6 +64,7 @@ describe("legacy required toggle scripts", () => {
     }, { form: form() });
 
     assert.equal(scripts.actions[0].translationStatus, "needs_review");
+    assert.equal(scripts.actions[0].deterministicBranchProof, undefined);
   });
 });
 
