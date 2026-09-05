@@ -2796,11 +2796,14 @@ function personTextCalculationCandidates(source, form, sourceScripts = {}) {
 
 function legacyPersonPropertyHydrationCandidates(source, form) {
   const text = String(source.javascript || "").trim();
-  const binding = text.match(
-    /^AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\.id\1\s*,\s*function\s*\(\s*value\s*,\s*domElement\s*\)\s*\{/u
-  );
+  const bindings = [...text.matchAll(
+    /AttachXFormValueChangeEventById\(\s*(["'])(fd_[A-Za-z0-9_]+)\.id\1\s*,\s*function\s*\(\s*value\s*,\s*domElement\s*\)\s*\{/gu
+  )];
+  const binding = bindings.length === 1 ? bindings[0] : undefined;
+  const prefix = binding ? text.slice(0, binding.index).trim() : "";
   if (
     !binding ||
+    (prefix && !isMatchingPersonPropertyLoadPrefix(prefix, binding[2])) ||
     !/Data_GetOrgPersonBeanNameByKey\s*\(/u.test(text) ||
     !/data\.GetHashMapArray\s*\(\s*\)/u.test(text) ||
     !/GetXFormFieldById\s*\(\s*toIDs\s*\[\s*i\s*\]\s*\[\s*(["'])id\1\s*\]\s*\)\s*\[\s*0\s*\]\.value/u.test(text)
@@ -2832,6 +2835,8 @@ function legacyPersonPropertyHydrationCandidates(source, form) {
       semanticHints: {
         personPropertyHydration: evidence,
         coveredLegacyFunctions: [
+          "AttachXFormValueChangeEventById",
+          "Com_AddEventListener",
           "Data_GetOrgPersonBeanNameByKey",
           "GetXFormFieldById",
           "KMSSData",
@@ -2942,6 +2947,20 @@ function contextPersonPropertyHydrationCandidates(form = {}, excludedTargetIds =
       }
     ];
   });
+}
+
+function isMatchingPersonPropertyLoadPrefix(prefix, addressFieldId) {
+  const match = String(prefix || "").match(
+    /^Com_AddEventListener\(\s*window\s*,\s*(["'])load\1\s*,\s*function\s*\(\s*\)\s*\{([\s\S]*)\}\s*\)\s*;?\s*$/u
+  );
+  if (!match) return false;
+  const body = match[2];
+  return new RegExp(
+    `GetXFormFieldById\\(\\s*(["'])${escapeRegExp(addressFieldId)}\\.id\\1\\s*\\)`
+  ).test(body) &&
+    /Data_GetOrgPersonBeanNameByKey\s*\(/u.test(body) &&
+    /data\.GetHashMapArray\s*\(\s*\)/u.test(body) &&
+    /GetXFormFieldById\s*\(\s*toIDs\s*\[\s*i\s*\]\s*\[\s*(["'])id\1\s*\]\s*\)\s*\[\s*0\s*\]\.value/u.test(body);
 }
 
 function personPropertyHydrationEvidence(addressField, targetField, property) {
