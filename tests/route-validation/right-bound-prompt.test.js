@@ -157,9 +157,14 @@ describe("right-bound prompt Route-validation", () => {
         "explicit-label-bind-id"
       );
       assert.equal(input?.sourceProps?.rightContainer, undefined);
-      assert.equal(sourceControls.has(captionId), false);
-      assert.equal(targetFields.has(captionId), false);
-      assert.equal(targetFields.get(inputId)?.props?.hiddenLabel, undefined);
+      assert.equal(sourceControls.get(captionId)?.sourceType, "description");
+      assert.equal(targetFields.get(captionId)?.componentId, "xform-description");
+      if (targetFields.get(inputId)?.componentId === "xform-datetime") {
+        assert.equal(targetFields.get(inputId)?.sourceProps?.layoutCell?.hiddenLabel, true);
+        assert.equal(targetFields.get(inputId)?.props?.hiddenLabel, undefined);
+      } else {
+        assert.equal(targetFields.get(inputId)?.props?.hiddenLabel, true);
+      }
     }
   });
 

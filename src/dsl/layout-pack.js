@@ -95,7 +95,7 @@ function positiveInteger(value) {
 }
 
 function splitCellReferences(cell = {}, cellIndex) {
-  if (isLayoutReferenceCell(cell)) return [cell];
+  if (isLayoutReferenceCell(cell) || cell.keepInline === true) return [cell];
   for (const key of ["references", "refIds", "fieldIds"]) {
     const references = Array.isArray(cell[key]) ? cell[key].filter(Boolean) : [];
     if (references.length <= 1) continue;

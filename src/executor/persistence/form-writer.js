@@ -1654,9 +1654,10 @@ function buildGridItem(
     migrationGridRow: cell.row,
     migrationRowspan: rowspan
   };
-  const fieldRef = {
-    key: detailModel?.fdTableName || firstRefId,
+  const fieldRef = (refId) => ({
+    key: detailModel?.fdTableName || refId,
     ...migrationAudit,
+    migrationFieldId: refId,
     ...(detailModel
       ? {
           children: detailModel.fdFields
@@ -1664,7 +1665,7 @@ function buildGridItem(
             .map((field) => ({ key: field.fdName }))
         }
       : {})
-  };
+  });
   const column = Number.isInteger(cell.column) ? cell.column : index;
   const gridRow = Number.isInteger(cell.row) ? cell.row : 0;
   const colspan = Number.isInteger(cell.colspan) ? cell.colspan : 1;
@@ -1682,7 +1683,9 @@ function buildGridItem(
       // Audit-only markers; script persistence compiles them to concrete control ids.
       ...migrationAudit
     },
-    children: [fieldRef]
+    children: cell.keepInline === true && !detailModel
+      ? refIds.map((refId) => fieldRef(refId))
+      : [fieldRef(firstRefId)]
   };
 }
 
@@ -1870,10 +1873,10 @@ function layoutNodeToSummaryRow(row, rowIndex, detailFieldByTable) {
     layoutType: row.controlProps?.migrationLayoutType || "layout",
     rows: grid.controlProps?.rows || 1,
     columns: grid.controlProps?.columns || 1,
-    fields: gridItems.flatMap((item) => childFieldIds(gridItemFieldRef(item), detailFieldByTable)),
+    fields: gridItems.flatMap((item) => gridItemFieldIds(item, detailFieldByTable)),
     cells: gridItems.map((item, cellIndex) => {
       const child = gridItemFieldRef(item);
-      const fieldIds = childFieldIds(child, detailFieldByTable);
+      const fieldIds = gridItemFieldIds(item, detailFieldByTable);
       return {
         fieldId: fieldIds[0],
         fieldIds,
@@ -1887,6 +1890,12 @@ function layoutNodeToSummaryRow(row, rowIndex, detailFieldByTable) {
 
 function gridItemFieldRef(item) {
   return (item?.children || [])[0] || {};
+}
+
+function gridItemFieldIds(item, detailFieldByTable) {
+  const fromProps = item?.controlProps?.migrationFieldIds;
+  if (Array.isArray(fromProps) && fromProps.length) return fromProps;
+  return (item?.children || []).flatMap((child) => childFieldIds(child, detailFieldByTable));
 }
 
 function childFieldIds(child, detailFieldByTable) {

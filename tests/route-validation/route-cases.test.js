@@ -56,17 +56,23 @@ describe("offline Route-validation", { concurrency: false }, () => {
 
     assert.equal(fields.get("fd_department")?.title, "部门/客户");
     assert.equal(fields.get("fd_department")?.props?.required, true);
+    assert.equal(fields.get("fd_department")?.props?.hiddenLabel, undefined);
+    assert.equal(fields.get("fd_department")?.sourceProps?.layoutCell?.hiddenLabel, true);
     assert.equal(fields.get("fd_department.name")?.dataOnly, true);
+    assert.equal(fields.get("fd_department.name")?.props?.hiddenLabel, true);
     assert.equal(fields.get("fd_department.name")?.props?.required, undefined);
     assert.equal(fields.get("fd_procurement")?.title, "采购说明");
     assert.equal(fields.get("fd_price")?.title, "定价");
-    assert.equal(fields.has("label_procurement"), false);
-    assert.equal(fields.has("label_price"), false);
+    assert.equal(fields.get("label_procurement")?.componentId, "xform-description");
+    assert.equal(fields.get("label_price")?.componentId, "xform-description");
+    assert.equal(fields.get("fd_procurement")?.props?.hiddenLabel, true);
+    assert.equal(fields.get("fd_price")?.sourceProps?.layoutCell?.hiddenLabel, true);
+    assert.equal(fields.get("fd_price")?.props?.hiddenLabel, undefined);
 
     const expectedRows = [
-      ["fd_department", "fd_manager"],
-      ["fd_requirement", "fd_procurement"],
-      ["fd_quote", "fd_price"]
+      ["label_department", "fd_department", "label_manager", "fd_manager"],
+      ["label_requirement", "fd_requirement", "label_procurement", "fd_procurement"],
+      ["label_quote", "fd_quote", "label_price", "fd_price"]
     ];
     assert.deepEqual(
       result.dsl.form.layout.mkTree.map((row) => ({
@@ -75,8 +81,8 @@ describe("offline Route-validation", { concurrency: false }, () => {
         refs: row.children.flatMap((child) => child.refIds)
       })),
       expectedRows.map((refs) => ({
-        componentId: "xform-flex-1-2-layout",
-        columns: 2,
+        componentId: "xform-flex-1-4-layout",
+        columns: 4,
         refs
       }))
     );
@@ -86,7 +92,7 @@ describe("offline Route-validation", { concurrency: false }, () => {
         columns: row.columns,
         refs: row.cells.flatMap((cell) => cell.fieldIds)
       })),
-      expectedRows.map((refs) => ({ columns: 2, refs }))
+      expectedRows.map((refs) => ({ columns: 4, refs }))
     );
   });
 

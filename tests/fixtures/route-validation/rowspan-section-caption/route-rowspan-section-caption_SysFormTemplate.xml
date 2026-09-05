@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-rowspan-section-caption-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Rowspan Section Caption Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-rowspan-section-caption-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td class=td_normal_title style=&quot;WIDTH: 92px&quot; width=107 rowSpan=2 column=&quot;0&quot; row=&quot;0,1&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_section_caption&quot;,content:&quot;申领内容&quot;,b:&quot;false&quot;}&apos;&gt;申领内容&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td style=&quot;WIDTH: auto&quot; width=1379 colSpan=3 column=&quot;1,2,3&quot; row=&quot;0&quot;&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_claim_lines&quot;,_label_bind:&quot;false&quot;,label:&quot;明细表1&quot;,width:&quot;100%&quot;}&apos; label=&quot;明细表1&quot; showIndex=&quot;true&quot;&gt;
+       &lt;tbody&gt;
+        &lt;tr class=tr_normal_title type=&quot;titleRow&quot;&gt;
+         &lt;td column=&quot;0&quot; row=&quot;0&quot;&gt;&lt;label attach=&quot;fd_claim_lines&quot;&gt;序号&lt;/label&gt;&lt;/td&gt;
+         &lt;td column=&quot;1&quot; row=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_item_name_title&quot;,content:&quot;物品名称（规格）&quot;}&apos;&gt;物品名称（规格）&lt;/label&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr type=&quot;templateRow&quot;&gt;
+         &lt;td column=&quot;0&quot; row=&quot;1&quot; colType=&quot;noTitle&quot;&gt;&lt;/td&gt;
+         &lt;td column=&quot;1&quot; row=&quot;1&quot;&gt;
+          &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_item_name&quot;,label:&quot;物品名称（规格）&quot;,tableName:&quot;fd_claim_lines&quot;,_label_bind:&quot;false&quot;}&apos;&gt;&lt;/div&gt;
+         &lt;/td&gt;
+        &lt;/tr&gt;
+       &lt;/tbody&gt;
+      &lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td style=&quot;WIDTH: auto&quot; width=1378 colSpan=3 column=&quot;1,2,3&quot; row=&quot;1&quot;&gt;
+      &lt;div fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_other_notes&quot;,width:&quot;1102&quot;,height:&quot;80&quot;,_label_bind:&quot;false&quot;,label:&quot;其他&quot;,_label_bind_id:&quot;&quot;,canShow:&quot;true&quot;}&apos;&gt;
+       &lt;textarea id=&quot;fd_other_notes&quot; label=&quot;其他&quot; canShow=&quot;true&quot;&gt;&lt;/textarea&gt;
+      &lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=td_normal_title style=&quot;WIDTH: 92px&quot; width=107 column=&quot;0&quot; row=&quot;2&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_need_caption&quot;,content:&quot;需求情况&quot;}&apos;&gt;需求情况&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td style=&quot;WIDTH: auto&quot; width=1378 colSpan=3 column=&quot;1,2,3&quot; row=&quot;2&quot;&gt;
+      &lt;div fd_type=&quot;textarea&quot; fd_values=&apos;{id:&quot;fd_need_notes&quot;,_label_bind:&quot;true&quot;,label:&quot;需求情况&quot;,_label_bind_id:&quot;fd_need_caption&quot;,canShow:&quot;true&quot;}&apos;&gt;
+       &lt;textarea id=&quot;fd_need_notes&quot; label=&quot;需求情况&quot;&gt;&lt;/textarea&gt;
+      &lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdDisplayJsp</string>
+   <string>&lt;table&gt;
+    &lt;tr&gt;
+     &lt;td class=td_normal_title style=&quot;WIDTH: 92px&quot; rowSpan=2 column=&quot;0&quot; row=&quot;0,1&quot;&gt;
+      &lt;label&gt;申领内容&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td width=1379 colSpan=3 column=&quot;1,2,3&quot; row=&quot;0&quot;&gt;
+      &lt;table id=&quot;TABLE_DL_fd_claim_lines&quot;&gt;&lt;tr&gt;&lt;td&gt;物品名称（规格）&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td width=1378 colSpan=3 column=&quot;1,2,3&quot; row=&quot;1&quot;&gt;
+      &lt;div style=&quot;DISPLAY: inline; WIDTH: 1102px&quot;&gt;
+       &lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_other_notes)&quot; style=&quot;HEIGHT: 80px; WIDTH: 1102px&quot; required=&quot;false&quot; subject=&quot;其他&quot; title=&quot;其他&quot; /&gt;
+      &lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td class=td_normal_title style=&quot;WIDTH: 92px&quot; column=&quot;0&quot; row=&quot;2&quot;&gt;
+      &lt;label&gt;需求情况&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td width=1378 colSpan=3 column=&quot;1,2,3&quot; row=&quot;2&quot;&gt;
+      &lt;div style=&quot;DISPLAY: inline; WIDTH: 940px&quot;&gt;
+       &lt;xform:textarea property=&quot;extendDataFormInfo.value(fd_need_notes)&quot; style=&quot;HEIGHT: 80px; WIDTH: 940px&quot; required=&quot;false&quot; subject=&quot;需求情况&quot; title=&quot;需求情况&quot; /&gt;
+      &lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSubTableProperty name=&quot;fd_claim_lines&quot; label=&quot;明细表1&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_item_name&quot; label=&quot;物品名称（规格）&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_other_notes&quot; label=&quot;其他&quot; type=&quot;String&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_need_notes&quot; label=&quot;需求情况&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

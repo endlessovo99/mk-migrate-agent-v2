@@ -110,6 +110,7 @@ describe("computer equipment form layout and node rights Route-validation", () =
   it("keeps the scheme recommendation rich text in layout and editable at IT administrator", () => {
     const source = cleanSourceFile(fixture);
     const draft = draftSourceDraft(source);
+    const fields = new Map(draft.form.fields.map((field) => [field.id, field]));
     const scheme = source.form.controls.find((field) => field.id === "fd_365b19dc2d1f8c");
     const itAdministrator = draft.workflow.nodes.find((node) => node.id === "N12");
 
@@ -119,9 +120,15 @@ describe("computer equipment form layout and node rights Route-validation", () =
       source.form.dataFields.some((field) => field.id === "fd_365b19dc2d1f8c"),
       false
     );
+    assert.equal(
+      source.form.controls.find((field) => field.id === "fd_365b1962ebf31e")?.title,
+      "方案建议"
+    );
     assert.deepEqual(rowRefs(source.form.layout, "row-7.nested-0.row-1"), [
+      "fd_365b1962ebf31e",
       "fd_365b19dc2d1f8c"
     ]);
+    assert.equal(fields.get("fd_365b19dc2d1f8c")?.props?.hiddenLabel, true);
     assert.deepEqual(itAdministrator?.dataAuthority?.fields?.fd_365b19dc2d1f8c, {
       visible: true,
       editable: true,

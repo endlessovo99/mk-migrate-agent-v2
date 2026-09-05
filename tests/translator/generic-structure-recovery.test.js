@@ -133,14 +133,16 @@ describe("generic structural form recovery", () => {
     assert.equal(fields.get("fd_region_city")?.title, "City");
     assert.equal(fields.has("region_province_suffix"), false);
     assert.equal(fields.has("region_city_suffix"), false);
+    assert.equal(fields.get("region_group_label")?.componentId, "xform-description");
     assert.deepEqual(
       sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
-      ["fd_region_province", "fd_region_city"]
+      ["region_group_label", "fd_region_province", "fd_region_city"]
     );
     assert.deepEqual(
       mkRow?.children.map((cell) => cell.refIds),
-      [["fd_region_province"], ["fd_region_city"]]
+      [["region_group_label"], ["fd_region_province", "fd_region_city"]]
     );
+    assert.equal(mkRow?.children[1]?.keepInline, true);
   });
 
   it("folds an unambiguous post-break styled hint into the owning input placeholder", () => {
@@ -171,11 +173,13 @@ describe("generic structural form recovery", () => {
     });
     assert.equal(fields.has("opportunity_hint"), false);
     assert.equal(fields.has("opportunity_inline_caption"), false);
+    assert.equal(fields.get("opportunity_label")?.componentId, "xform-description");
+    assert.equal(fields.get("fd_opportunity")?.props.hiddenLabel, true);
     assert.deepEqual(
       sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
-      ["fd_opportunity"]
+      ["opportunity_label", "fd_opportunity"]
     );
-    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), [["fd_opportunity"]]);
+    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), [["opportunity_label"], ["fd_opportunity"]]);
   });
 
   it("folds the same direct styled hint pattern into textarea placeholder capability", () => {
@@ -371,18 +375,39 @@ describe("generic structural form recovery", () => {
 
     assert.deepEqual(
       sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
-      dateIds
+      [
+        "delivery_window_label",
+        "fd_delivery_start",
+        "fd_delivery_end",
+        "bid_date_label",
+        "fd_bid_date",
+        "visit_date_label",
+        "fd_visit_date"
+      ]
     );
     assert.equal(fields.has("delivery_start_caption"), false);
     assert.equal(fields.has("delivery_end_caption"), false);
+    assert.equal(fields.get("delivery_window_label")?.componentId, "xform-description");
+    assert.equal(fields.get("bid_date_label")?.componentId, "xform-description");
+    assert.equal(fields.get("visit_date_label")?.componentId, "xform-description");
     assert.equal(fields.get("fd_delivery_start")?.title, "Delivery window - Start");
     assert.equal(fields.get("fd_delivery_end")?.title, "Delivery window - End");
-    assert.equal(mkRow?.componentId, "xform-flex-1-4-layout");
-    assert.equal(mkRow?.props.columns, 4);
-    assert.equal(mkRow?.children.length, 4);
-    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), dateIds.map((id) => [id]));
-    assert.deepEqual(mkRow?.children.map((cell) => cell.column), [0, 1, 2, 3]);
-    assert.equal(mkRow?.children.every((cell) => cell.colspan === 1), true);
+    assert.equal(mkRow?.componentId, "xform-multi-row-table-layout");
+    assert.deepEqual(mkRow?.props, { rows: 1, columns: 7 });
+    assert.equal(mkRow?.children.length, 6);
+    assert.deepEqual(
+      mkRow?.children.map((cell) => cell.refIds),
+      [
+        ["delivery_window_label"],
+        ["fd_delivery_start", "fd_delivery_end"],
+        ["bid_date_label"],
+        ["fd_bid_date"],
+        ["visit_date_label"],
+        ["fd_visit_date"]
+      ]
+    );
+    assert.deepEqual(mkRow?.children.map((cell) => cell.column), [0, 1, 2, 3, 4, 5]);
+    assert.equal(mkRow?.children[1]?.keepInline, true);
   });
 
   it("preserves a five-control source row as one five-column layout and keeps its marker target", () => {
@@ -412,10 +437,16 @@ describe("generic structural form recovery", () => {
     assert.equal(rows.length, 1);
     assert.equal(row.componentId, "xform-multi-row-table-layout");
     assert.deepEqual(row.props, { rows: 1, columns: 5 });
-    assert.equal(row.children.length, 5);
-    assert.deepEqual(row.children.flatMap((cell) => cell.refIds), ids);
-    assert.deepEqual(row.children.map((cell) => cell.row), [0, 0, 0, 0, 0]);
-    assert.deepEqual(row.children.map((cell) => cell.column), [0, 1, 2, 3, 4]);
+    assert.equal(row.children.length, 3);
+    assert.deepEqual(row.children.map((cell) => cell.refIds), [
+      ["fd_slot_alpha"],
+      ["fd_slot_bravo"],
+      ["fd_slot_charlie", "fd_slot_delta", "fd_slot_echo"]
+    ]);
+    assert.equal(row.children[2]?.keepInline, true);
+    assert.deepEqual(row.children.map((cell) => cell.row), [0, 0, 0]);
+    assert.deepEqual(row.children.map((cell) => cell.column), [0, 1, 2]);
+    assert.deepEqual(row.children.map((cell) => cell.colspan), [1, 1, 3]);
     assert.deepEqual(markerTarget?.targets.map((target) => target.id), ids);
     assert.equal(row.children.every((cell) => cell.row === 0 && cell.column < 5), true);
   });
@@ -450,8 +481,14 @@ describe("generic structural form recovery", () => {
     );
     assert.equal(mkRow?.componentId, "xform-flex-1-4-layout");
     assert.deepEqual(mkRow?.props, { columns: 4, sourceColumns: 4 });
-    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), ids.map((id) => [id]));
-    assert.deepEqual(mkRow?.children.map((cell) => cell.column), [0, 1, 2, 3]);
+    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), [
+      ["fd_address_country"],
+      ["fd_address_province"],
+      ["fd_address_city", "fd_address_district"]
+    ]);
+    assert.equal(mkRow?.children[2]?.keepInline, true);
+    assert.deepEqual(mkRow?.children.map((cell) => cell.column), [0, 1, 2]);
+    assert.deepEqual(mkRow?.children.map((cell) => cell.colspan), [1, 1, 2]);
   });
 
   it("keeps same-title trailing labels when a break or visible styling makes them meaningful", () => {
@@ -548,9 +585,13 @@ describe("generic structural form recovery", () => {
       row.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId))
     );
 
-    assert.equal(fields.has("bound_field_label"), false);
+    assert.equal(fields.get("bound_field_label")?.componentId, "xform-description");
     assert.equal(fields.get("fd_bound_value")?.title, "Bound field");
-    assert.deepEqual(rowRefs.find((references) => references.includes("fd_bound_value")), ["fd_bound_value"]);
+    assert.equal(fields.get("fd_bound_value")?.props.hiddenLabel, true);
+    assert.deepEqual(
+      rowRefs.find((references) => references.includes("fd_bound_value")),
+      ["bound_field_label", "fd_bound_value"]
+    );
 
     assert.equal(fields.get("unbound_same_title")?.componentId, "xform-description");
     assert.equal(fields.get("fd_shared_wording")?.componentId, "xform-input");
@@ -559,12 +600,13 @@ describe("generic structural form recovery", () => {
       ["unbound_same_title", "fd_shared_wording"]
     );
 
-    assert.equal(fields.has("different_bound_caption"), false);
+    assert.equal(fields.get("different_bound_caption")?.componentId, "xform-description");
     assert.equal(fields.get("fd_machine_named_value")?.componentId, "xform-input");
     assert.equal(fields.get("fd_machine_named_value")?.title, "Human-readable caption");
+    assert.equal(fields.get("fd_machine_named_value")?.props.hiddenLabel, true);
     assert.deepEqual(
       rowRefs.find((references) => references.includes("fd_machine_named_value")),
-      ["fd_machine_named_value"]
+      ["different_bound_caption", "fd_machine_named_value"]
     );
 
     assert.equal(fields.has("detail_companion_caption"), false);

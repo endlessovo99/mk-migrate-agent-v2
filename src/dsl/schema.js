@@ -874,7 +874,11 @@ function validateMkTreeNode(node, index, refs, diagnostics) {
   const cellCount = node.children.reduce((count, child) => {
     if (!isRecord(child)) return count + 1;
     const refIds = Array.isArray(child.refIds) ? child.refIds.filter(Boolean) : [child.refId].filter(Boolean);
-    return count + (child.refType === "layout" ? 1 : Math.max(refIds.length, 1));
+    return count + (
+      child.refType === "layout" || child.keepInline === true
+        ? 1
+        : Math.max(refIds.length, 1)
+    );
   }, 0);
   const exceedsCapacity = validColumns && validRows && cellCount > columns * rows;
   if (exceedsCapacity) {
@@ -1006,6 +1010,25 @@ function validateMkTreeNode(node, index, refs, diagnostics) {
         "mkTree child column plus colspan must fit within props.columns.",
         `${childPath}/colspan`,
         { columns, column: child.column, colspan: child.colspan }
+      ));
+    }
+    if (child.keepInline !== undefined && child.keepInline !== true) {
+      diagnostics.push(error(
+        "dsl.form.layout.child_keep_inline_invalid",
+        "mkTree child keepInline must be true when provided.",
+        `${childPath}/keepInline`,
+        { keepInline: child.keepInline }
+      ));
+    }
+    if (
+      child.keepInline === true &&
+      child.refType !== "field"
+    ) {
+      diagnostics.push(error(
+        "dsl.form.layout.child_keep_inline_ref_type",
+        "mkTree keepInline children must be field cells.",
+        `${childPath}/keepInline`,
+        { refType: child.refType }
       ));
     }
     if (

@@ -1,3 +1,5 @@
+import { componentSupportsProp } from "../dsl/catalogs.js";
+
 /**
  * Maps a legacy address display-name companion onto MK's single address
  * control while retaining the companion as persisted, non-rendered data.
@@ -22,11 +24,20 @@ export function mapAddressDisplayCompanions(fields, sourceLayout) {
           ...field.props,
           ...(field.props?.required === true || companion.props?.required === true
             ? { required: true }
-            : {})
+            : {}),
+          ...(
+            companion.props?.hiddenLabel === true &&
+            componentSupportsProp(field.componentId, "hiddenLabel")
+              ? { hiddenLabel: true }
+              : {}
+          )
         },
         sourceProps: {
           ...field.sourceProps,
-          addressDisplayCompanionId: companion.id
+          addressDisplayCompanionId: companion.id,
+          ...(companion.sourceProps?.layoutCell
+            ? { layoutCell: companion.sourceProps.layoutCell }
+            : {})
         }
       };
     }
@@ -103,7 +114,6 @@ function isDisplayCompanion(field, address) {
   const addressValues = address?.sourceProps?.designerValues || {};
   return field?.id === `${address?.id}.name` &&
     field?.componentId === "xform-input" &&
-    String(fieldValues._label_bind || "").toLowerCase() !== "true" &&
     Boolean(fieldValues._label_bind_id) &&
     fieldValues._label_bind_id === addressValues._label_bind_id;
 }

@@ -37,4 +37,22 @@ describe("layout packing", () => {
       colspan: 3
     }]);
   });
+
+  it("keeps an inline multi-control cell as one projected cell", () => {
+    const cell = {
+      id: "row-0-cell-1",
+      keepInline: true,
+      refType: "field",
+      refIds: ["fd_dept", "label_slash", "fd_dept_en"],
+      column: 3,
+      colspan: 1
+    };
+
+    assert.deepEqual(projectLayoutGrid([cell], { rows: 1, columns: 4 }).cells, [{
+      ...cell,
+      row: 0,
+      column: 3,
+      colspan: 1
+    }]);
+  });
 });

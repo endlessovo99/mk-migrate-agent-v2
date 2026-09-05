@@ -227,7 +227,7 @@ describe("leading visible subject captions", () => {
       sourceInvoiceRow?.cells.flatMap((cell) =>
         cell.references.map((reference) => reference.referenceId)
       ),
-      ["fphm", "fd_3c23c063629a08"]
+      ["fd_3bd82e63125682", "fphm", "fd_3c23c063629a08"]
     );
     assert.equal(sourceControls.has("fd_3bd82e69a15a7a"), false);
 
@@ -256,8 +256,10 @@ describe("leading visible subject captions", () => {
     assert.equal(fields.has("fd_3bd82e69a15a7a"), false);
     assert.deepEqual(
       invoiceRow?.children.flatMap((cell) => cell.refIds),
-      ["fphm", "fd_3c23c063629a08"]
+      ["fd_3bd82e63125682", "fphm", "fd_3c23c063629a08"]
     );
+    assert.equal(fields.get("fd_3bd82e63125682")?.componentId, "xform-description");
+    assert.equal(invoiceNumber?.props?.hiddenLabel, true);
   });
 
   it("keeps a numbered leading caption separate from a bound attachment", () => {

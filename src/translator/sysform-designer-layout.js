@@ -409,6 +409,8 @@ function appendDesignerLayoutRow(descriptor, context) {
     descriptor.standardTableProjection
   );
   retainEditorCaptionPresentation(titledCells, captionContext, metadataContext, warnings);
+  hideBoundIndependentTitleSubjects(titledCells, captionContext);
+  hideUnboundEditorSubjects(titledCells);
   const widthHints = titledCells.map((cell) => parseCellWidth(cell.attrs));
   const widthUnits = new Set(widthHints.map((hint) => hint?.unit).filter(Boolean));
 
@@ -589,6 +591,84 @@ function isTitleCell(cell) {
   return String(cell.attrs.class || "").split(/\s+/).includes("td_normal_title");
 }
 
+function hideBoundIndependentTitleSubjects(cells, captionContext) {
+  const referencedCaptionIds = captionContext?.referencedCaptionIds || new Set();
+  const externalRightPromptIds = captionContext?.externalRightPromptIds || new Set();
+  const captionOwners = new Map();
+  for (const cell of cells) {
+    for (const control of cell.controls || []) {
+      if (
+        isSourceDescriptionControl(control) &&
+        referencedCaptionIds.has(control.id) &&
+        !externalRightPromptIds.has(control.id)
+      ) {
+        captionOwners.set(control.id, cell);
+      }
+    }
+  }
+
+  for (const cell of cells) {
+    cell.controls = (cell.controls || []).map((control) => {
+      const captionId = control.source?.designerValues?._label_bind_id;
+      const captionCell = captionId ? captionOwners.get(captionId) : undefined;
+      if (
+        !captionCell ||
+        captionCell === cell ||
+        isSourceDescriptionControl(control) ||
+        control.type === "detailTable" ||
+        control.source?.designerHidden ||
+        control.source?.layoutCell?.hiddenLabel === true
+      ) {
+        return control;
+      }
+      return {
+        ...control,
+        source: {
+          ...control.source,
+          layoutCell: {
+            ...control.source?.layoutCell,
+            hiddenLabel: true,
+            relation: "independent-bound-title-cell",
+            captionIds: [captionId]
+          }
+        }
+      };
+    });
+  }
+}
+
+function hideUnboundEditorSubjects(cells) {
+  for (const cell of cells) {
+    cell.controls = (cell.controls || []).map((control) => {
+      if (!isUnboundCaptionlessEditor(control)) return control;
+      return {
+        ...control,
+        source: {
+          ...control.source,
+          layoutCell: {
+            ...control.source?.layoutCell,
+            hiddenLabel: true,
+            relation: "unbound-editor-subject"
+          }
+        }
+      };
+    });
+  }
+}
+
+function isUnboundCaptionlessEditor(control) {
+  const values = control?.source?.designerValues || {};
+  return !isSourceDescriptionControl(control) &&
+    control?.type !== "detailTable" &&
+    !control?.source?.designerHidden &&
+    !control?.source?.boundCaption &&
+    !control?.source?.inlineCaption &&
+    !control?.source?.explicitTitle &&
+    control?.source?.layoutCell?.hiddenLabel !== true &&
+    String(values._label_bind || "").toLowerCase() === "false" &&
+    !String(values._label_bind_id || "").trim();
+}
+
 function retainEditorCaptionPresentation(cells, context, metadataContext, warnings) {
   for (let index = 1; index < cells.length; index += 1) {
     const left = cells[index - 1];
@@ -641,10 +721,10 @@ function retainEditorCaptionPresentation(cells, context, metadataContext, warnin
 }
 
 function hasCompleteSourceGeometry(cells, columns) {
-  if (cells.length < 2 || columns > 8 || new Set(cells.map((cell) => cell.colspan)).size < 2) return false;
+  if (cells.length < 2 || columns > 8) return false;
   let end = 0;
   for (const cell of cells.slice().sort((left, right) => left.column - right.column)) {
-    if (cell.column !== end || (cell.fieldIds || []).length > 1) return false;
+    if (cell.column !== end) return false;
     end += cell.colspan;
   }
   return end === columns;
@@ -985,6 +1065,7 @@ function isSuspiciousDetailTableTitle(title) {
 function matchMetadataField(field, metadataById, metadataByTitle) {
   const exact = metadataById.get(field.id);
   if (exact) return exact;
+  if (isSourceDescriptionControl(field)) return undefined;
 
   const matchTitles = [
     field.title,
@@ -1021,11 +1102,24 @@ function extractLayoutCellControls(html, captionContext, metadataContext, option
     runtimeVisibleFieldIds: captionContext?.runtimeVisibleFieldIds,
     nodeDataAuthorityVisibleFieldIds: captionContext?.nodeDataAuthorityVisibleFieldIds
   }).map((entry) => withBoundCaptionEntry(entry, captionContext));
+  const sameCellBoundCaptionIds = new Set(
+    extractedEntries
+      .filter((entry) =>
+        isSourceDescriptionControl(entry.control) &&
+        boundCaptions.has(entry.control.id) &&
+        extractedEntries.some((candidate) =>
+          candidate.control.source?.designerValues?._label_bind_id === entry.control.id &&
+          !isSourceDescriptionControl(candidate.control)
+        )
+      )
+      .map((entry) => entry.control.id)
+  );
   const entries = extractedEntries.filter((entry) =>
     !isSourceDescriptionControl(entry.control) ||
     !boundCaptions.has(entry.control.id) ||
     externalRightPromptIds.has(entry.control.id) ||
-    options.preserveBoundCaptions === true
+    options.preserveBoundCaptions === true ||
+    !sameCellBoundCaptionIds.has(entry.control.id)
   );
   const controls = entries.map((entry) => entry.control);
   const detailTables = controls.filter((control) => control.type === "detailTable");
@@ -1068,7 +1162,16 @@ function extractLayoutCellControls(html, captionContext, metadataContext, option
 
   const semanticControls = foldInlineCellSemantics(html, entries, metadataContext, {
     ...options,
-    preserveCaptionIds: externalRightPromptIds
+    preserveCaptionIds: new Set([
+      ...externalRightPromptIds,
+      ...extractedEntries
+        .filter((entry) =>
+          isSourceDescriptionControl(entry.control) &&
+          boundCaptions.has(entry.control.id) &&
+          !sameCellBoundCaptionIds.has(entry.control.id)
+        )
+        .map((entry) => entry.control.id)
+    ])
   });
   const fieldControls = semanticControls.filter((control) => !isSourceDescriptionControl(control));
   if (fieldControls.length) {
@@ -1086,9 +1189,12 @@ function extractLayoutCellControls(html, captionContext, metadataContext, option
 
   // Bound captions were removed above. Preserve remaining standalone text,
   // while retaining the legacy guard against ordinary field-title labels.
+  const referencedCaptionIds = captionContext?.referencedCaptionIds || new Set();
   return semanticControls.filter((control) =>
     isSourceDescriptionControl(control) &&
     (
+      boundCaptions.has(control.id) ||
+      referencedCaptionIds.has(control.id) ||
       options.preservePlainLabels === true ||
       externalRightPromptIds.has(control.id) ||
       isStyledSourceDescriptionControl(control) ||

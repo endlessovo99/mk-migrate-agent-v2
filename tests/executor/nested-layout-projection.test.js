@@ -70,6 +70,71 @@ function receptionLayout() {
 }
 
 describe("nested native layout projection", () => {
+  it("keeps a two-column nested caption readable beside a detail table", () => {
+    const inner = layoutNode("layout.inner-table", 1, [{
+      ...fieldCell("layout.inner-table", 0, "fd_lines", 0),
+      refType: "detailTable",
+      widthWeight: 1379
+    }]);
+    const notes = layoutNode("layout.inner-notes", 1, [{
+      ...fieldCell("layout.inner-notes", 0, "fd_notes", 0),
+      widthWeight: 1378
+    }]);
+    const outer = layoutNode("layout.outer-caption", 4, [
+      { ...fieldCell("layout.outer-caption", 0, "fd_caption", 0), widthWeight: 92 },
+      {
+        id: "layout.outer-caption.cell-nested",
+        refType: "layout",
+        refIds: [inner.id, notes.id],
+        sourceRef: "source.form.layout.cell.layout.outer-caption.cell-nested",
+        row: 0,
+        column: 1,
+        colspan: 3
+      }
+    ]);
+    const [projection] = projectNativeLayoutRows([outer, inner, notes]);
+
+    assert.equal(projection.columns, 2);
+    assert.equal(projection.rows, 2);
+    assert.ok(parseFloat(projection.colsStyle[0].value) >= 20);
+    assert.deepEqual(
+      projection.cells.map((cell) => ({
+        field: cell.refIds[0],
+        row: cell.row,
+        column: cell.column,
+        rowspan: cell.rowspan
+      })),
+      [
+        { field: "fd_caption", row: 0, column: 0, rowspan: 2 },
+        { field: "fd_lines", row: 0, column: 1, rowspan: 1 },
+        { field: "fd_notes", row: 1, column: 1, rowspan: 1 }
+      ]
+    );
+  });
+
+  it("does not widen a nested caption column unless a detail table shares the grid", () => {
+    const inner = layoutNode("layout.inner-text", 1, [{
+      ...fieldCell("layout.inner-text", 0, "fd_body", 0),
+      widthWeight: 1379
+    }]);
+    const outer = layoutNode("layout.outer-plain", 4, [
+      { ...fieldCell("layout.outer-plain", 0, "fd_caption", 0), widthWeight: 92 },
+      {
+        id: "layout.outer-plain.cell-nested",
+        refType: "layout",
+        refIds: [inner.id],
+        sourceRef: "source.form.layout.cell.layout.outer-plain.cell-nested",
+        row: 0,
+        column: 1,
+        colspan: 3
+      }
+    ]);
+    const [projection] = projectNativeLayoutRows([outer, inner]);
+
+    assert.equal(projection.columns, 2);
+    assert.ok(parseFloat(projection.colsStyle[0].value) < 20);
+  });
+
   it("preserves complete width ratios on ordinary spanned rows without a pixel floor", () => {
     const left = { ...fieldCell("layout.plain", 0, "fd_left", 0), widthWeight: 20 };
     const right = { ...fieldCell("layout.plain", 1, "fd_right", 1, 3), widthWeight: 80 };

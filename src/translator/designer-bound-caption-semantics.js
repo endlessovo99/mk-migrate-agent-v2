@@ -28,7 +28,6 @@ function isAddressDisplayCompanion(control, address) {
   const controlValues = control?.source?.designerValues || {};
   const addressValues = address?.source?.designerValues || {};
   return control?.id === `${address?.id}.name` &&
-    String(controlValues._label_bind || "").toLowerCase() !== "true" &&
     Boolean(controlValues._label_bind_id) &&
     controlValues._label_bind_id === addressValues._label_bind_id;
 }

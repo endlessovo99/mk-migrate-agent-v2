@@ -1183,9 +1183,11 @@ function observeNativeLayoutRow(
           `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/children/${refIndex}`
         ))
         .filter(Boolean);
-      const inferredRefTypes = refs
-        .map((fieldRef) => nativeRefType(fieldRef, detailByTable, knownFieldIds))
-        .filter(Boolean);
+      const inferredRefTypes = [...new Set(
+        refs
+          .map((fieldRef) => nativeRefType(fieldRef, detailByTable, knownFieldIds))
+          .filter(Boolean)
+      )];
       const refType = inferredRefTypes.length === 1
         ? inferredRefTypes[0]
         : undefined;

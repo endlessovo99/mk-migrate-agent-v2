@@ -85,8 +85,11 @@ export function recoverSharedBoundCaptionGroups(fields, layout) {
     const retainedCaption = fieldsById.get(captionId);
     const retainedCaptionGroup =
       isDescriptionField(retainedCaption) &&
-      members.every(hasRetainedSourceCaptionLayout);
-    if ((!activeMember && !retainedCaptionGroup) || members.length < 2) continue;
+      members.every(hasIndependentSourceCaptionLayout);
+    if (
+      members.length < 2 ||
+      (!activeMember && !retainedCaptionGroup && !isDescriptionField(retainedCaption))
+    ) continue;
     const location = sharedBoundCaptionCellLocation(nextLayout, members);
     if (!location) continue;
 
@@ -146,7 +149,14 @@ export function recoverSharedBoundCaptionGroups(fields, layout) {
 
 export function projectCompoundLayoutCell(sourceRowId, cell, compoundCells = new Map()) {
   const compound = compoundCells.get(layoutCellKey(sourceRowId, cell?.id));
-  if (!compound || compound.fieldIds.length < 2 || compound.fieldIds.length > 4) return undefined;
+  if (!compound || compound.fieldIds.length < 2) return undefined;
+  const remaining = (cell?.references || []).filter((reference) =>
+    reference?.referenceType !== "layout" && reference?.referenceId
+  );
+  if (remaining.length >= 2) {
+    return { cell: { ...cell, keepInline: true } };
+  }
+  if (compound.fieldIds.length > 4) return undefined;
 
   const nestedId = `layout.${sourceRowId}.${cell.id}.inline`;
   const innerColumns = Math.max(
@@ -189,12 +199,12 @@ export function projectCompoundLayoutCell(sourceRowId, cell, compoundCells = new
 function withHiddenSharedLabel(field, groupedFieldIds) {
   const captionId = sharedBoundCaptionId(field);
   const group = captionId ? groupedFieldIds.get(captionId) : undefined;
-  if (!group?.has(field.id) || !componentSupportsProp(field.componentId, "hiddenLabel")) {
-    return field;
-  }
+  if (!group?.has(field.id)) return field;
   return {
     ...field,
-    props: { ...field.props, hiddenLabel: true },
+    ...(componentSupportsProp(field.componentId, "hiddenLabel")
+      ? { props: { ...field.props, hiddenLabel: true } }
+      : {}),
     sourceProps: {
       ...field.sourceProps,
       sharedBoundCaption: { id: captionId }
@@ -215,8 +225,14 @@ function hasRetainedSourceCaptionLayout(field) {
   return field?.sourceProps?.layoutCell?.relation === "retained-source-caption";
 }
 
+function hasIndependentSourceCaptionLayout(field) {
+  const relation = field?.sourceProps?.layoutCell?.relation;
+  return relation === "retained-source-caption" ||
+    relation === "independent-bound-title-cell";
+}
+
 function retainedCaptionId(field) {
-  if (!hasRetainedSourceCaptionLayout(field)) return undefined;
+  if (!hasIndependentSourceCaptionLayout(field)) return undefined;
   const ids = field?.sourceProps?.layoutCell?.captionIds;
   return Array.isArray(ids) && ids.length === 1 ? ids[0] : undefined;
 }

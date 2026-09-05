@@ -2,6 +2,7 @@ import { projectLayoutGrid } from "../../dsl/layout-pack.js";
 
 const DEFAULT_MAX_COLUMNS = 8;
 const MIN_SOURCE_COLUMN_WIDTH_WEIGHT = 135;
+const MIN_NESTED_CAPTION_COLUMN_SHARE = 0.2;
 
 /**
  * Lower the DSL's flat layout registry to the native layout-grid rows NewOA can
@@ -41,14 +42,17 @@ export function projectNativeLayoutRows(mkTree = [], options = {}) {
       projectionColumns
     );
     const sourceColsStyle = sourceWidthColsStyle(compressed.cells, compressed.columns);
+    const colsStyle = ensureNestedCaptionColumnShare(
+      compressed.cells,
+      compressed.columns,
+      sourceColsStyle || compressed.colsStyle
+    );
     return {
       id: root.id,
       rows: Math.max(1, flattened.rows),
       columns: compressed.columns,
       cells: compressed.cells,
-      ...(sourceColsStyle || compressed.colsStyle
-        ? { colsStyle: sourceColsStyle || compressed.colsStyle }
-        : {})
+      ...(colsStyle ? { colsStyle } : {})
     };
   });
 }
@@ -75,7 +79,8 @@ function projectPlainRoot(root) {
       row: integerOr(cell.row, 0),
       column: integerOr(cell.column, 0),
       colspan: positiveInteger(cell.colspan) || 1,
-      rowspan: 1
+      rowspan: 1,
+      ...(cell.keepInline === true ? { keepInline: true } : {})
     }))
   };
 }
@@ -210,6 +215,7 @@ function flattenNode({
         column: plan.bounds.column,
         colspan: plan.bounds.colspan,
         rowspan: groupHeight,
+        ...(plan.cell.keepInline === true ? { keepInline: true } : {}),
         ...(Number.isFinite(plan.cell.widthWeight) && plan.cell.widthWeight > 0
           ? { widthWeight: plan.cell.widthWeight }
           : {})
@@ -367,7 +373,7 @@ function boundsOverlap(plans) {
 function expandOrdinaryReferences(cells, columns) {
   return cells.flatMap((cell, cellIndex) => {
     const refIds = refIdsFor(cell);
-    if (cell?.refType === "layout" || refIds.length <= 1) {
+    if (cell?.refType === "layout" || refIds.length <= 1 || cell?.keepInline === true) {
       return [{ ...cell, refIds }];
     }
     const startRow = integerOr(cell?.row, 0);
@@ -461,6 +467,49 @@ function compressProjectionColumns(cells, projectionColumns) {
 function percentageWidth(units, total) {
   const value = Number(((units / total) * 100).toFixed(12));
   return `${value}%`;
+}
+
+function ensureNestedCaptionColumnShare(cells, columns, colsStyle) {
+  if (!Array.isArray(colsStyle) || colsStyle.length < 2) return colsStyle;
+  const caption = nestedCaptionColumn(cells, columns);
+  if (caption === undefined) return colsStyle;
+  const shares = colsStyle.map((style) => parseFloat(style.value) / 100);
+  if (shares.some((share) => !Number.isFinite(share) || share <= 0)) return colsStyle;
+  if (shares[caption] + 1e-12 >= MIN_NESTED_CAPTION_COLUMN_SHARE) return colsStyle;
+
+  const deficit = MIN_NESTED_CAPTION_COLUMN_SHARE - shares[caption];
+  const donors = shares.map((share, index) => index === caption ? 0 : share);
+  const donorTotal = donors.reduce((sum, share) => sum + share, 0);
+  if (!(donorTotal > deficit)) return colsStyle;
+  const next = shares.map((share, index) =>
+    index === caption
+      ? MIN_NESTED_CAPTION_COLUMN_SHARE
+      : share - deficit * (donors[index] / donorTotal)
+  );
+  return next.map((share, index) => ({
+    startIndex: index,
+    count: 1,
+    value: percentageWidth(share, 1)
+  }));
+}
+
+function nestedCaptionColumn(cells, columns) {
+  if (columns !== 2) return undefined;
+  if (!cells.some((cell) => cell.refType === "detailTable")) return undefined;
+  const candidates = [];
+  for (const cell of cells) {
+    if (
+      (positiveInteger(cell.colspan) || 1) !== 1 ||
+      (positiveInteger(cell.rowspan) || 1) <= 1
+    ) {
+      continue;
+    }
+    const column = integerOr(cell.column, -1);
+    if (column < 0) continue;
+    if (candidates.some((candidate) => candidate !== column)) return undefined;
+    if (!candidates.includes(column)) candidates.push(column);
+  }
+  return candidates.length === 1 ? candidates[0] : undefined;
 }
 
 function sourceWidthColsStyle(cells, columns) {

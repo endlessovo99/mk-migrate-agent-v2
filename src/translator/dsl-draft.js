@@ -1963,9 +1963,11 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
     const nestedNodes = [];
     const sourceCells = originalSourceCells.map((cell) => {
       const projection = projectCompoundLayoutCell(sourceRowId, cell, compoundCells);
-      if (!projection) return cell;
-      nestedNodes.push(projection.node);
-      return projection.cell;
+      if (!projection) {
+        return keepInlineSourceCell(cell, row.preserveSourceGeometry === true);
+      }
+      if (projection.node) nestedNodes.push(projection.node);
+      return keepInlineSourceCell(projection.cell, row.preserveSourceGeometry === true);
     });
     const sourceColumns = Math.max(
       Number.isInteger(row.columns) ? row.columns : 0,
@@ -1982,6 +1984,7 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
       ) &&
       sourceCells.every((cell) =>
         hasLayoutReference(cell) ||
+        cell.keepInline === true ||
         (Array.isArray(cell.references) ? cell.references.length : 0) <= 1
       );
     const sourcePacked = preserveNestedGeometry
@@ -2037,6 +2040,7 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
             ...(tableLayout ? { row: cell.row } : {}),
             column: cell.column,
             colspan: cell.colspan,
+            ...(cell.keepInline === true ? { keepInline: true } : {}),
             ...(Number.isFinite(cell.widthWeight) && cell.widthWeight > 0
               ? { widthWeight: cell.widthWeight }
               : {})
@@ -2069,6 +2073,19 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
     ...nestedNodes
   ]
   );
+}
+
+function keepInlineSourceCell(cell, preserveSourceGeometry) {
+  if (
+    !cell ||
+    cell.keepInline === true ||
+    hasLayoutReference(cell) ||
+    !preserveSourceGeometry ||
+    (Array.isArray(cell.references) ? cell.references.length : 0) <= 1
+  ) {
+    return cell;
+  }
+  return { ...cell, keepInline: true };
 }
 
 function hasLayoutReference(cell) {

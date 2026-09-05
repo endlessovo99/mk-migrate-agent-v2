@@ -77,31 +77,30 @@ describe("submitter defaults, compound fields, and department-leader role lines"
       columns: 4,
       children: [
         { refType: "field", refIds: ["fd_323be79eaaff52"], column: 0, colspan: 1 },
-        { refType: "layout", refIds: ["layout.row-6.row-6-cell-1.inline"], column: 1, colspan: 3 }
+        {
+          refType: "field",
+          refIds: ["fd_seal_type", "fd_39b08d8a51c0ae"],
+          column: 1,
+          colspan: 3,
+          keepInline: true
+        }
       ]
     });
-    assert.deepEqual(rowShape(rows.get("layout.row-6.row-6-cell-1.inline")), {
-      columns: 3,
-      children: [
-        { refType: "field", refIds: ["fd_seal_type"], column: 0, colspan: 2 },
-        { refType: "field", refIds: ["fd_39b08d8a51c0ae"], column: 2, colspan: 1 }
-      ]
-    });
+    assert.equal(rows.has("layout.row-6.row-6-cell-1.inline"), false);
     assert.deepEqual(rowShape(rows.get("layout.row-7")), {
       columns: 4,
       children: [
         { refType: "field", refIds: ["fd_323be79fdd6e6c"], column: 0, colspan: 1 },
-        { refType: "layout", refIds: ["layout.row-7.row-7-cell-1.inline"], column: 1, colspan: 3 }
+        {
+          refType: "field",
+          refIds: ["fd_copy_type", "fd_3251f6412fa8d2", "fd_copy_other_type"],
+          column: 1,
+          colspan: 3,
+          keepInline: true
+        }
       ]
     });
-    assert.deepEqual(rowShape(rows.get("layout.row-7.row-7-cell-1.inline")), {
-      columns: 3,
-      children: [
-        { refType: "field", refIds: ["fd_copy_type"], column: 0, colspan: 1 },
-        { refType: "field", refIds: ["fd_3251f6412fa8d2"], column: 1, colspan: 1 },
-        { refType: "field", refIds: ["fd_copy_other_type"], column: 2, colspan: 1 }
-      ]
-    });
+    assert.equal(rows.has("layout.row-7.row-7-cell-1.inline"), false);
 
     assert.deepEqual(
       projectNativeLayoutRows(dslDraft.form.layout.mkTree)
@@ -109,18 +108,28 @@ describe("submitter defaults, compound fields, and department-leader role lines"
         .map((row) => ({
           id: row.id,
           columns: row.columns,
-          fieldIds: row.cells.flatMap((cell) => cell.refIds)
+          cells: row.cells.map((cell) => ({
+            refIds: cell.refIds,
+            column: cell.column,
+            colspan: cell.colspan
+          }))
         })),
       [
         {
           id: "layout.row-6",
-          columns: 3,
-          fieldIds: ["fd_323be79eaaff52", "fd_seal_type", "fd_39b08d8a51c0ae"]
+          columns: 4,
+          cells: [
+            { refIds: ["fd_323be79eaaff52"], column: 0, colspan: 1 },
+            { refIds: ["fd_seal_type", "fd_39b08d8a51c0ae"], column: 1, colspan: 3 }
+          ]
         },
         {
           id: "layout.row-7",
           columns: 4,
-          fieldIds: ["fd_323be79fdd6e6c", "fd_copy_type", "fd_3251f6412fa8d2", "fd_copy_other_type"]
+          cells: [
+            { refIds: ["fd_323be79fdd6e6c"], column: 0, colspan: 1 },
+            { refIds: ["fd_copy_type", "fd_3251f6412fa8d2", "fd_copy_other_type"], column: 1, colspan: 3 }
+          ]
         }
       ]
     );
@@ -217,7 +226,8 @@ function rowShape(row) {
       refType: child.refType,
       refIds: child.refIds,
       column: child.column,
-      colspan: child.colspan
+      colspan: child.colspan,
+      ...(child.keepInline === true ? { keepInline: true } : {})
     }))
   };
 }
