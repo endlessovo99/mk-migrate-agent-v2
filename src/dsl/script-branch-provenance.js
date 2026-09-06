@@ -17,14 +17,16 @@ export function buildScriptBranchProvenance({
   eventFunctionName,
   eventFunctionStart,
   textFieldIds,
-  programIsEntrypoint = false
+  programIsEntrypoint = false,
+  allowOnChangeStaticFieldReads = false
 } = {}) {
   const analysis = analyzeScriptBranchConditions(source, {
     event,
     eventFunctionName,
     eventFunctionStart,
     textFieldIds,
-    programIsEntrypoint
+    programIsEntrypoint,
+    allowOnChangeStaticFieldReads
   });
   return pruneUndefined({
     version: SCRIPT_BRANCH_PROVENANCE_VERSION,
@@ -33,6 +35,7 @@ export function buildScriptBranchProvenance({
     sourceActionKey,
     status: analysis.status,
     conditions: analysis.conditions,
+    onChangeOperandMode: analysis.onChangeOperandMode,
     reason: analysis.reason
   });
 }
@@ -42,7 +45,8 @@ export function analyzeScriptBranchConditions(source, {
   eventFunctionName,
   eventFunctionStart,
   textFieldIds,
-  programIsEntrypoint = false
+  programIsEntrypoint = false,
+  allowOnChangeStaticFieldReads = false
 } = {}) {
   const text = String(source || "");
   const ast = parseScript(text);
@@ -152,7 +156,11 @@ export function analyzeScriptBranchConditions(source, {
   }
   if (!conditions.length) return { status: "none", conditions: [] };
 
-  const invalidOrigin = conditions.find((condition) => !originAllowedForEvent(condition.origin, event));
+  const invalidOrigin = conditions.find((condition) => !originAllowedForEvent(
+    condition.origin,
+    event,
+    { allowOnChangeStaticFieldReads }
+  ));
   if (invalidOrigin) {
     return {
       status: "unproven",
@@ -164,7 +172,13 @@ export function analyzeScriptBranchConditions(source, {
           : "branch_event_not_supported"
     };
   }
-  return { status: "proven", conditions };
+  return {
+    status: "proven",
+    conditions,
+    ...(event === "onChange" && conditions.some((condition) => condition.origin.startsWith("field:"))
+      ? { onChangeOperandMode: "static-field-read" }
+      : {})
+  };
 
   function collectCondition(test, reason) {
     const expression = text.slice(test.start, test.end);
@@ -198,7 +212,10 @@ export function inspectMappedScriptBranchProvenance(action, expected = action?.b
     return { ok: true, status: "not_mapped", expected };
   }
 
-  const observed = analyzeScriptBranchConditions(action?.function, { event: action?.event });
+  const observed = analyzeScriptBranchConditions(action?.function, {
+    event: action?.event,
+    allowOnChangeStaticFieldReads: expected?.onChangeOperandMode === "static-field-read"
+  });
   if (expected.status === "unproven") {
     return invalid("source_branch_provenance_unproven", expected, observed);
   }
@@ -248,8 +265,24 @@ export function inspectScriptBranchProvenanceEvidence(evidence, action = {}) {
     return { ok: false, reason: "branch_provenance_proven_without_conditions", expected: evidence };
   }
   if (
+    evidence.onChangeOperandMode !== undefined &&
+    (
+      evidence.event !== "onChange" ||
+      evidence.onChangeOperandMode !== "static-field-read" ||
+      evidence.status !== "proven" ||
+      !evidence.conditions.length ||
+      evidence.conditions.some((condition) => !String(condition?.origin || "").startsWith("field:"))
+    )
+  ) {
+    return { ok: false, reason: "branch_provenance_onchange_operand_mode_invalid", expected: evidence };
+  }
+  if (
     evidence.status === "proven" &&
-    evidence.conditions.some((condition) => !validCondition(condition, evidence.event))
+    evidence.conditions.some((condition) => !validCondition(
+      condition,
+      evidence.event,
+      evidence.onChangeOperandMode
+    ))
   ) {
     return { ok: false, reason: "branch_provenance_condition_invalid", expected: evidence };
   }
@@ -549,7 +582,7 @@ function conditionKey(condition) {
   });
 }
 
-function validCondition(condition, event) {
+function validCondition(condition, event, onChangeOperandMode) {
   if (!condition || typeof condition !== "object" || Array.isArray(condition)) return false;
   if (condition.emptyText !== undefined && typeof condition.emptyText !== "boolean") return false;
   if (!["eq", "contains", "regex-set", "truthy", "lt", "lte", "gt", "gte"].includes(condition.kind)) {
@@ -562,11 +595,19 @@ function validCondition(condition, event) {
   } else if (condition.kind === "truthy") {
     if (!["truthy", "falsy"].includes(condition.value)) return false;
   } else if (typeof condition.value !== "string") return false;
-  return originAllowedForEvent(condition.origin, event);
+  return originAllowedForEvent(condition.origin, event, {
+    allowOnChangeStaticFieldReads: onChangeOperandMode === "static-field-read"
+  });
 }
 
-function originAllowedForEvent(origin, event) {
-  if (event === "onChange") return origin === "event:value";
+function originAllowedForEvent(origin, event, { allowOnChangeStaticFieldReads = false } = {}) {
+  if (event === "onChange") {
+    return origin === "event:value" || (
+      allowOnChangeStaticFieldReads &&
+      typeof origin === "string" &&
+      /^field:[A-Za-z0-9_.-]+$/.test(origin)
+    );
+  }
   if (event === "onLoad") return typeof origin === "string" && /^field:[A-Za-z0-9_.-]+$/.test(origin);
   return false;
 }

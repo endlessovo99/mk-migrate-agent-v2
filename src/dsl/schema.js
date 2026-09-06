@@ -1512,7 +1512,7 @@ function validateScriptBranchProvenance(action, path, diagnostics, context) {
   if (nativeRulesOwnAllMappedBranchConditions(action, context.formRules, inspection)) return;
   diagnostics.push(error(
     "dsl.scripts.condition_operand_provenance_unverified",
-    "Mapped script branch conditions must preserve action-local operand provenance: onChange derives from its input value and onLoad derives from the original source field read.",
+    "Mapped script branch conditions must preserve action-local operand provenance: onChange derives from its input value or an explicitly evidenced static field read, and onLoad derives from the original source field read.",
     `${path}/function`,
     {
       reason: inspection.reason,

@@ -300,6 +300,10 @@ function expandNestedLayoutRowDescriptor(
   return [
     {
       ...descriptor,
+      inheritedMarkers: [
+        ...(descriptor.inheritedMarkers || []),
+        ...(nested.domId ? [nested.domId] : [])
+      ],
       html: outsideCells.map((cell) => cell.body).join(""),
       sourceCells: parentCells
     },
@@ -347,7 +351,8 @@ function directStandardTableFragments(html) {
       fragments.push({
         html: html.slice(token.start, end),
         start: token.start,
-        end
+        end,
+        domId: attrValue(token.attrs, "id") || undefined
       });
     }
     tableDepth += 1;

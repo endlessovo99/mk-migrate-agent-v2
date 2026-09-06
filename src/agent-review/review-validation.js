@@ -3,10 +3,17 @@ import { componentSupportsProp } from "../dsl/catalogs.js";
 import { FIELD_TYPES } from "../dsl/schema.js";
 import { nativeFormRuleBelongsToAction } from "../dsl/native-form-rule-projection.js";
 import { inspectMappedScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
+import {
+  buildConditionOperandResolver,
+  traceStaticFieldValueExpression
+} from "../dsl/script-condition-provenance.js";
 import { analyzeScriptFunction, validateSetFieldAttrTargets } from "../dsl/scripts.js";
 import { isSourceBackedMonthField } from "../dsl/static-month-picker.js";
 import { AGENT_REVIEW_PROMPT_VERSION } from "./prompt.js";
-import { classifyActionRowMarkers } from "./row-marker-policy.js";
+import {
+  classifyActionRowMarkers,
+  legacySourceFromGeneratedFunction
+} from "./row-marker-policy.js";
 import {
   validateAssignmentBranchSemantics,
   validateRowMarkerBranchSemantics
@@ -278,7 +285,7 @@ function validateActionBranchProvenanceClosures(dslDraft, patchedDraft, patches)
     }
     diagnostics.push(error(
       "agent.patch.condition_operand_provenance_unverified",
-      "A reviewed mapped script may preserve source branches only when every condition operand is statically traceable to the action-local source: onChange uses its input value and onLoad uses the original source field read.",
+      "A reviewed mapped script may preserve source branches only when every condition operand is statically traceable to the action-local source: onChange uses its input value or an explicitly evidenced static field read, and onLoad uses the original source field read.",
       `/scripts/actions/${actionIndex}/function`,
       {
         actionIndex,
@@ -375,7 +382,8 @@ function validateDeterministicResidualClosures(dslDraft, patchedDraft, patches) 
     if (clearedAssignments.length) {
       const assignmentCheck = validateFieldValueAssignmentClosure(
         protectedResiduals.filter((residual) => residual?.code === "script.residual.field_value_assignment"),
-        functionText
+        functionText,
+        sourceAction?.function
       );
       if (!assignmentCheck.ok) {
         diagnostics.push(error(
@@ -437,8 +445,12 @@ function sameResidualEvidence(left, right) {
   return true;
 }
 
-function validateFieldValueAssignmentClosure(residuals, functionText) {
-  const expectedAssignments = residuals.map(parseResidualAssignment);
+function validateFieldValueAssignmentClosure(residuals, functionText, sourceFunction) {
+  const source = legacySourceFromGeneratedFunction(sourceFunction);
+  const sourceResolver = buildConditionOperandResolver(source);
+  const expectedAssignments = residuals.map((residual) => (
+    parseResidualAssignment(residual, sourceResolver, source)
+  ));
   const observedAssignments = extractSetValueAssignments(functionText);
   const unmatchedObserved = [...observedAssignments];
   const missingAssignments = [];
@@ -476,28 +488,31 @@ function validateFieldValueAssignmentClosure(residuals, functionText) {
   };
 }
 
-function parseResidualAssignment(residual) {
+function parseResidualAssignment(residual, resolver, source) {
   const evidence = String(residual?.evidence || "").trim();
   const match = evidence.match(/\.\s*value\s*=\s*([\s\S]+?)\s*;?$/);
   const value = match?.[1]?.trim();
+  const evidenceIndex = String(source || "").indexOf(evidence);
+  const beforeIndex = evidenceIndex < 0 ? undefined : evidenceIndex + evidence.length;
   return {
     target: nonEmptyString(residual?.target) ? residual.target : undefined,
     evidence: residual?.evidence,
     value,
-    valueSignature: valueExpressionSignature(value)
+    valueSignature: valueExpressionSignature(value, resolver, beforeIndex, source)
   };
 }
 
 function extractSetValueAssignments(functionText) {
   const source = String(functionText || "");
   const analysis = analyzeScriptFunction(source);
+  const resolver = buildConditionOperandResolver(source);
   return analysis.calls
     .filter((call) => call.name === "MKXFORM.setValue")
     .flatMap((call) => {
       const args = parseCallArguments(source, call.index, call.name);
       if (!args || args.length < 2) return [];
       const target = staticStringValue(args[0]);
-      const valueSignature = valueExpressionSignature(args[1]);
+      const valueSignature = valueExpressionSignature(args[1], resolver, call.index, source);
       if (target === undefined || !valueSignature) return [];
       return [{ target, value: args[1].trim(), valueSignature }];
     });
@@ -572,9 +587,13 @@ function parseCallArguments(source, callIndex, callName) {
   return undefined;
 }
 
-function valueExpressionSignature(expression) {
+function valueExpressionSignature(expression, resolver, beforeIndex, source) {
   if (!nonEmptyString(expression)) return undefined;
   const text = expression.trim().replace(/;\s*$/, "").trim();
+  const trace = traceStaticFieldValueExpression(source, text, { resolver, beforeIndex });
+  if (trace?.origin && (!trace.transforms || trace.transforms.length === 0)) {
+    return `field:${trace.origin.slice(6)}`;
+  }
   const stringValue = staticStringValue(text);
   if (stringValue !== undefined) return `string:${JSON.stringify(stringValue)}`;
   if (/^(?:true|false|null|undefined|-?(?:\d+(?:\.\d*)?|\.\d+))$/.test(text)) {

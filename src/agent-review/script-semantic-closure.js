@@ -1,7 +1,8 @@
 import { analyzeScriptFunction } from "../dsl/scripts.js";
 import {
   buildConditionOperandResolver,
-  parseProvenanceCondition
+  parseProvenanceCondition,
+  traceStaticFieldValueExpression
 } from "../dsl/script-condition-provenance.js";
 import { legacySourceFromGeneratedFunction } from "./row-marker-policy.js";
 
@@ -14,7 +15,11 @@ export function validateAssignmentBranchSemantics({
   reviewedFunction,
   residuals
 }) {
-  const expectedAssignments = (residuals || []).map(parseResidualAssignment);
+  const source = legacySourceFromGeneratedFunction(sourceFunction);
+  const sourceResolver = buildConditionOperandResolver(source);
+  const expectedAssignments = (residuals || []).map((residual) => (
+    parseResidualAssignment(residual, sourceResolver, source)
+  ));
   if (
     !expectedAssignments.length ||
     expectedAssignments.some((assignment) => !assignment.target || !assignment.valueSignature)
@@ -22,7 +27,6 @@ export function validateAssignmentBranchSemantics({
     return invalid("assignment_evidence_unparseable");
   }
 
-  const source = legacySourceFromGeneratedFunction(sourceFunction);
   const sourceModel = sourceAssignmentModel(source, expectedAssignments);
   if (!sourceModel.ok) return sourceModel;
 
@@ -116,12 +120,10 @@ function sourceAssignmentModel(source, expectedAssignments) {
     return invalid("source_assignment_evidence_order_changed");
   }
 
-  const candidate = selectSingleChain(source, masked, pairedCalls);
-  if (!candidate.ok) return candidate;
-  const model = assignmentBranchesForChain(
-    candidate.chain,
-    pairedCalls,
+  const model = assignmentBranchModel(
+    source,
     masked,
+    pairedCalls,
     buildOperandResolver(source, masked)
   );
   if (!model.ok) return model;
@@ -148,19 +150,63 @@ function targetAssignmentModel(functionText, expectedAssignments) {
       observedCount: calls.length
     });
   }
-  const candidate = selectSingleChain(source, masked, calls, functionBody.depth);
-  if (!candidate.ok) return candidate;
-  const model = assignmentBranchesForChain(
-    candidate.chain,
-    calls,
+  const model = assignmentBranchModel(
+    source,
     masked,
-    buildOperandResolver(source, masked)
+    calls,
+    buildOperandResolver(source, masked),
+    functionBody.depth
   );
   if (!model.ok) return model;
   if (model.flattenedCallCount !== calls.length) {
     return invalid("target_assignment_outside_condition_chain");
   }
   return model;
+}
+
+function assignmentBranchModel(source, masked, calls, resolveOperand, requiredDepth) {
+  const candidate = selectSingleChain(source, masked, calls, requiredDepth);
+  if (candidate.ok) {
+    return assignmentBranchesForChain(candidate.chain, calls, masked, resolveOperand);
+  }
+  if (candidate.reason !== "multiple_condition_chains") return candidate;
+
+  const chains = conditionalChains(source, masked)
+    .filter((chain) => requiredDepth === undefined || chain.depth === requiredDepth)
+    .filter((chain) => chain.branches.some((branch) => (
+      directCalls(calls, masked, branch.bodyStart, branch.bodyEnd, chain.depth + 1).length > 0
+    )));
+  if (
+    chains.length < 2 ||
+    chains.some((chain) => chain.branches.length !== 1 || chain.elseBody)
+  ) return candidate;
+
+  const conditions = chains.map((chain) => conditionSpec(
+    chain.branches[0].condition,
+    resolveOperand,
+    chain.branches[0].conditionStart
+  ));
+  if (
+    conditions.some((condition) => !condition || condition.kind !== "eq") ||
+    new Set(conditions.map((condition) => condition.operand)).size !== 1 ||
+    new Set(conditions.map(conditionKey)).size !== conditions.length
+  ) return invalid("independent_assignment_conditions_unproven");
+
+  const branches = chains.map((chain) => assignmentSignatures(directCalls(
+    calls,
+    masked,
+    chain.branches[0].bodyStart,
+    chain.branches[0].bodyEnd,
+    chain.depth + 1
+  )));
+  if (branches.some((branch) => branch.length === 0)) {
+    return invalid("assignment_branch_empty");
+  }
+  const flattenedCallCount = branches.reduce((count, branch) => count + branch.length, 0);
+  if (flattenedCallCount !== calls.length) {
+    return invalid("assignment_outside_independent_conditions");
+  }
+  return { ok: true, conditions, branches, flattenedCallCount };
 }
 
 function assignmentBranchesForChain(chain, calls, masked, resolveOperand) {
@@ -475,6 +521,7 @@ function parseConditionalChain(source, masked, start) {
 }
 
 function targetCalls(source, name) {
+  const resolver = buildConditionOperandResolver(source);
   return analyzeScriptFunction(source).calls
     .filter((call) => call.name === name)
     .map((call) => {
@@ -483,7 +530,9 @@ function targetCalls(source, name) {
         index: call.index,
         target: args ? staticStringValue(args[0]) : undefined,
         value: args?.[1]?.trim(),
-        valueSignature: args ? valueExpressionSignature(args[1]) : undefined,
+        valueSignature: args
+          ? valueExpressionSignature(args[1], resolver, call.index, source)
+          : undefined,
         attribute: args && /^[3-6]$/.test(args[1].trim()) ? Number(args[1].trim()) : undefined,
         attributeExpression: args?.[1]
       };
@@ -492,13 +541,14 @@ function targetCalls(source, name) {
 
 function legacyAssignmentCalls(source, masked) {
   const calls = [];
+  const resolver = buildConditionOperandResolver(source);
   const pattern = /\b[A-Za-z_$][\w$]*(?:\s*\[\s*0\s*\])?\s*\.\s*value\s*=\s*([^;\n]+)/g;
   for (const match of source.matchAll(pattern)) {
     if (!codeVisibleAt(masked, match.index)) continue;
     calls.push({
       index: match.index,
       value: match[1].trim(),
-      valueSignature: valueExpressionSignature(match[1])
+      valueSignature: valueExpressionSignature(match[1], resolver, match.index, source)
     });
   }
   return calls;
@@ -630,15 +680,17 @@ function attributeDimension(attribute) {
   return "unknown";
 }
 
-function parseResidualAssignment(residual) {
+function parseResidualAssignment(residual, resolver, source) {
   const evidence = String(residual?.evidence || "").trim();
   const match = evidence.match(/\.\s*value\s*=\s*([\s\S]+?)\s*;?$/);
   const value = match?.[1]?.trim();
+  const evidenceIndex = String(source || "").indexOf(evidence);
+  const beforeIndex = evidenceIndex < 0 ? undefined : evidenceIndex + evidence.length;
   return {
     target: typeof residual?.target === "string" && residual.target.trim()
       ? residual.target
       : undefined,
-    valueSignature: valueExpressionSignature(value)
+    valueSignature: valueExpressionSignature(value, resolver, beforeIndex, source)
   };
 }
 
@@ -671,9 +723,13 @@ function parseCallArguments(source, callIndex, callName) {
   return args;
 }
 
-function valueExpressionSignature(expression) {
+function valueExpressionSignature(expression, resolver, beforeIndex, source) {
   if (typeof expression !== "string" || !expression.trim()) return undefined;
   const text = expression.trim().replace(/;\s*$/, "").trim();
+  const trace = traceStaticFieldValueExpression(source, text, { resolver, beforeIndex });
+  if (trace?.origin && (!trace.transforms || trace.transforms.length === 0)) {
+    return `field:${trace.origin.slice(6)}`;
+  }
   const stringValue = staticStringValue(text);
   if (stringValue !== undefined) return `string:${JSON.stringify(stringValue)}`;
   if (/^(?:true|false|null|undefined|-?(?:\d+(?:\.\d*)?|\.\d+))$/.test(text)) {

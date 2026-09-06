@@ -6,6 +6,7 @@ import {
 import { nativeFormRuleProjectionRef } from "../dsl/native-form-rule-projection.js";
 import { isProvablyInertVariableDeclaration } from "./pure-declarations.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
+import { jqueryContainerVisibilityAnalysis } from "./jquery-container-visibility.js";
 
 const VALUE_CHANGE_API = "AttachXFormValueChangeEventById";
 const ROW_EFFECT_HELPER = "common_dom_row_set_show_required_reset";
@@ -16,6 +17,10 @@ export function sourceFormRulesFromLegacyScripts(scripts) {
 
   for (const source of sources) {
     if (source.displayGate === "xform:viewShow") continue;
+    const containerVisibility = jqueryContainerVisibilityAnalysis(source);
+    for (const rule of containerVisibility?.rules || []) {
+      mergeLinkageRule(linkageById, rule);
+    }
     for (const rule of supplementalWindowLoadRules(source, bridgeAssignments)) {
       mergeLinkageRule(linkageById, rule);
     }

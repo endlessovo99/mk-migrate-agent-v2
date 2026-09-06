@@ -40,7 +40,9 @@ export function buildConditionOperandResolver(source, options = {}) {
         ...(/\.\s*value$/.test(value) && textFields.has(legacyValue[2]) ? { emptyText: true } : {})
       };
     }
-    const legacyElementMember = value.match(/^([A-Za-z_$][\w$]*)\s*\.\s*value$/);
+    const legacyElementMember = value.match(
+      /^([A-Za-z_$][\w$]*)(?:\s*\[\s*0\s*\])?\s*\.\s*value$/
+    );
     if (legacyElementMember) {
       const declaration = bindings.stableInitializer(legacyElementMember[1], {
         beforeIndex,
@@ -141,6 +143,33 @@ export function buildConditionOperandResolver(source, options = {}) {
   );
   resolveOperand.entrypoint = bindings.ok ? bindings.entrypoint : undefined;
   return resolveOperand;
+}
+
+export function traceStaticFieldValueExpression(source, expression, {
+  resolver = buildConditionOperandResolver(source),
+  beforeIndex
+} = {}) {
+  const traced = resolver?.trace?.(expression, { beforeIndex });
+  if (
+    traced?.origin?.startsWith("field:") &&
+    (!traced.transforms || traced.transforms.length === 0)
+  ) {
+    return traced;
+  }
+
+  const value = stripOuterParentheses(String(expression || "").trim());
+  const member = value.match(/^([A-Za-z_$][\w$]*)(?:\s*\[\s*0\s*\])?\s*\.\s*value$/);
+  if (!member) return undefined;
+  const alias = escapeRegExp(member[1]);
+  const declarationPattern = new RegExp(
+    `\\b(?:var|let|const)\\s+${alias}\\s*=\\s*GetXFormFieldById\\(\\s*(["'\`])([^"'\`]+)\\1\\s*\\)`,
+    "g"
+  );
+  const declarations = [...String(source || "").matchAll(declarationPattern)];
+  if (declarations.length !== 1) return undefined;
+  const directWrites = new RegExp(`\\b${alias}\\s*=`, "g");
+  if ([...String(source || "").matchAll(directWrites)].length !== 1) return undefined;
+  return { origin: `field:${declarations[0][2]}`, transforms: [] };
 }
 
 export function parseProvenanceCondition(expression, resolveOperand, context = {}) {
@@ -352,6 +381,10 @@ function appendTransform(trace, transform) {
 
 function staticCapturedLiteral(quote, value) {
   return quote !== "`" || !String(value || "").includes("${");
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function stripOuterParentheses(expression) {

@@ -70,6 +70,7 @@ import { projectChangeScriptClosureCandidates } from "./project-change-script-cl
 import { legacyExcelAndOrgHydrationCandidates } from "./legacy-excel-and-org-hydration.js";
 import { legacySqlDialogRuntimeCandidate } from "./legacy-sql-dialog-runtime.js";
 import { procurementDetailLockAndLinkCandidates } from "./procurement-detail-lock-and-links.js";
+import { jqueryContainerVisibilityCandidates } from "./jquery-container-visibility.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -844,7 +845,8 @@ function mkActionFromCandidate(candidate, index, options = {}) {
           eventFunctionName: candidate.branchFunctionName,
           eventFunctionStart: candidate.branchFunctionStart,
           textFieldIds: textValueFieldIds(options.form),
-          programIsEntrypoint: candidate.branchProgramIsEntrypoint
+          programIsEntrypoint: candidate.branchProgramIsEntrypoint,
+          allowOnChangeStaticFieldReads: Boolean(candidate.branchFunctionName)
         })
     : undefined;
 
@@ -1115,6 +1117,15 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   const sourceWithHelpers = source.helperJavascript
     ? { ...source, javascript: `${source.helperJavascript}\n\n${source.javascript}` }
     : source;
+
+  const jqueryContainerVisibility = jqueryContainerVisibilityCandidates(source, options.formRules);
+  if (jqueryContainerVisibility.length) {
+    return jqueryContainerVisibility.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
 
   const staticFieldDisabled = staticFieldDisabledCandidate(source, options.form);
   if (staticFieldDisabled) {
@@ -1533,7 +1544,6 @@ function simpleCalculationAssignmentCandidates(source, form) {
 
     candidates.push({
       index: match.index,
-      sourceActionKey: inlineOnChangeSourceActionKey(source.sourceRef || source.id, match.index),
       event: "onChange",
       scope: "control",
       controlId: triggerId,
