@@ -358,10 +358,7 @@ function executableProps(field = {}, form = {}, context = {}) {
     props.orgTypes = (contextOrgTypes || field.props.orgTypes).map(normalizeScalar);
   }
   if (Array.isArray(field.props?.options) && field.props.options.length) {
-    props.options = field.props.options.map((option) => ({
-      label: normalizeScalar(option.label ?? option.text ?? option.value),
-      value: normalizeScalar(option.value ?? option.label ?? option.text)
-    }));
+    props.options = field.props.options.map((option) => expectedOption(option));
   }
   if (
     componentSupportsProp(field.componentId, "rowOptions") &&
@@ -373,7 +370,9 @@ function executableProps(field = {}, form = {}, context = {}) {
       context.tableName
     );
   }
-  if (field.componentId === "xform-select~multi") props.multi = true;
+  if (field.componentId === "xform-select~multi" || field.componentId === "xform-checkbox") {
+    props.multi = true;
+  }
   if (field.componentId === "xform-hyperlinks") {
     props.largestSet = field.props?.largestSet ?? 1;
     props.editable = field.props?.editable ?? false;
@@ -494,6 +493,18 @@ function expectedDetailRowOptions(rowOptions, tableName) {
     optionSource: "JavaScript",
     js
   };
+}
+
+function expectedOption(option) {
+  const expected = {
+    label: normalizeScalar(option.label ?? option.text ?? option.value),
+    value: normalizeScalar(option.value ?? option.label ?? option.text)
+  };
+  if (option.type === "other") {
+    expected.type = "other";
+    if (option.isRequired === true) expected.isRequired = true;
+  }
+  return expected;
 }
 
 function expectedRowOption(option) {

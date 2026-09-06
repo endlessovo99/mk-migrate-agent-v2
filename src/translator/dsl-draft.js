@@ -53,6 +53,7 @@ import {
   mapAddressDisplayCompanions,
   removeDataOnlyFieldRefs
 } from "./address-display-companion-mapping.js";
+import { mapCheckboxOtherCompanions } from "./checkbox-other-companion.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -231,14 +232,24 @@ function collectFormFieldIds(form = {}) {
 }
 
 function collectConditionalParallelFieldSpecs(form = {}) {
-  return new Map((form.fields || [])
-    .filter((field) => field?.type !== "detailTable" && field?.id)
-    .map((field) => [field.id, {
-      type: field.type,
-      optionValues: new Set((field.props?.options || [])
-        .map((option) => option?.value)
-        .filter((value) => typeof value === "string"))
-    }]));
+  const specs = new Map();
+  for (const field of form.fields || []) {
+    addConditionalParallelFieldSpec(specs, field);
+    for (const column of field?.columns || []) {
+      addConditionalParallelFieldSpec(specs, column);
+    }
+  }
+  return specs;
+}
+
+function addConditionalParallelFieldSpec(specs, field) {
+  if (!field?.id || field.type === "detailTable") return;
+  specs.set(field.id, {
+    type: field.type,
+    optionValues: new Set((field.props?.options || [])
+      .map((option) => option?.value)
+      .filter((value) => typeof value === "string"))
+  });
 }
 
 function collectFormFieldTitles(form = {}) {
@@ -728,11 +739,11 @@ function draftForm(sourceForm, sourceWorkflow) {
   const controls = Array.isArray(sourceForm.controls) ? sourceForm.controls : [];
   const detailTables = Array.isArray(sourceForm.detailTables) ? sourceForm.detailTables : [];
   const dataFields = Array.isArray(sourceForm.dataFields) ? sourceForm.dataFields : [];
-  const fields = mapAddressDisplayCompanions([
+  const fields = mapCheckboxOtherCompanions(mapAddressDisplayCompanions([
     ...controls.map(draftFieldFromSourceControl),
     ...detailTables.map(draftDetailTableFromSource),
     ...dataFields.map(draftDataFieldFromSource)
-  ], sourceForm.layout);
+  ], sourceForm.layout));
   const presentationFields = markSharedCaptionRobotOutputsDataOnly(fields, sourceWorkflow);
   const sharedCaptionRecovery = recoverSharedBoundCaptionGroups(
     presentationFields,
@@ -1108,7 +1119,12 @@ function targetOptionsFromSource(options) {
   const targetOptions = [];
 
   for (const option of options) {
-    const targetOption = { label: option.label, value: option.value };
+    const targetOption = {
+      label: option.label,
+      value: option.value,
+      ...(option.type ? { type: option.type } : {}),
+      ...(option.isRequired === true ? { isRequired: true } : {})
+    };
     const existing = byValue.get(targetOption.value);
     if (existing) {
       if (existing.labels.has(targetOption.label)) continue;
@@ -1127,6 +1143,9 @@ function targetOptionsFromSource(options) {
 }
 
 function legacyDefaultValueFromSource(source) {
+  const staticOrgDefault = parseLegacyStaticOrgDefault(source);
+  if (staticOrgDefault) return staticOrgDefault;
+
   const candidates = [
     source.sourceProps?.metadataAttributes?.defaultValue,
     source.sourceProps?.designerValues?.defaultValue,
@@ -1143,6 +1162,30 @@ function legacyDefaultValueFromSource(source) {
   }
 
   return undefined;
+}
+
+function parseLegacyStaticOrgDefault(source) {
+  if (!isLegacyAddressSource(source)) return undefined;
+  const designer = source.sourceProps?.designerValues || {};
+  const metadata = source.sourceProps?.metadataAttributes || {};
+  if (
+    String(designer.defaultValue || "").trim().toLowerCase() !== "select" ||
+    String(designer.multiSelect || "").trim().toLowerCase() === "true" ||
+    String(metadata.formula || "").trim().toLowerCase() !== "true" ||
+    String(metadata.type || "").trim() !==
+      "com.landray.kmss.sys.organization.model.SysOrgElement"
+  ) {
+    return undefined;
+  }
+
+  const id = String(designer._selectValue || "").trim();
+  const name = String(designer._selectName || "").trim();
+  const expression = normalizeLegacyExpression(metadata.defaultValue);
+  const match = expression.match(
+    /^OtherFunction\s*\.\s*getModel\s*\(\s*"([^"]+)"\s*,\s*"com\.landray\.kmss\.sys\.organization\.model\.SysOrgElement"\s*,\s*null\s*\)$/u
+  );
+  if (!id || !name || match?.[1] !== id) return undefined;
+  return { kind: "staticOrg", id, name };
 }
 
 function parseLegacyDateTimeDefaultExpression(value, source) {
@@ -1964,10 +2007,10 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
     const sourceCells = originalSourceCells.map((cell) => {
       const projection = projectCompoundLayoutCell(sourceRowId, cell, compoundCells);
       if (!projection) {
-        return keepInlineSourceCell(cell, row.preserveSourceGeometry === true);
+        return keepInlineSourceCell(cell, row.preserveSourceGeometry === true, detailTableIds);
       }
       if (projection.node) nestedNodes.push(projection.node);
-      return keepInlineSourceCell(projection.cell, row.preserveSourceGeometry === true);
+      return keepInlineSourceCell(projection.cell, row.preserveSourceGeometry === true, detailTableIds);
     });
     const sourceColumns = Math.max(
       Number.isInteger(row.columns) ? row.columns : 0,
@@ -1985,29 +2028,28 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
       sourceCells.every((cell) =>
         hasLayoutReference(cell) ||
         cell.keepInline === true ||
-        (Array.isArray(cell.references) ? cell.references.length : 0) <= 1
+        (Array.isArray(cell.references) ? cell.references.length : 0) <= 1 ||
+        cellContainsDetailTable(cell, detailTableIds)
       );
+    const stacked = preserveNestedGeometry
+      ? stackExclusiveDetailTableCells(sourceCells, detailTableIds)
+      : { cells: sourceCells, rows: 1 };
     const sourcePacked = preserveNestedGeometry
-      ? projectLayoutGrid(sourceCells, { rows: 1, columns: sourceColumns })
-      : packLayoutGrid(sourceCells);
-    const segments = splitDetailTableLayoutSegments(sourcePacked.cells, detailTableIds);
+      ? projectLayoutGrid(stacked.cells, { rows: stacked.rows, columns: sourceColumns })
+      : packLayoutGrid(stacked.cells);
+    const segments = preserveNestedGeometry
+      ? [{ kind: packedContainsDetailTable(sourcePacked, detailTableIds) ? "detailTable" : "field", packed: sourcePacked }]
+      : splitPackedDetailTableSegments(sourcePacked, detailTableIds);
     const baseSegmentIndex = Math.max(
       segments.findIndex((segment) => segment.kind === "detailTable"),
       0
     );
 
     const nodes = segments.map((segment, segmentIndex) => {
-      // sourcePacked has already expanded every inline reference into one cell.
       // Preserve one source <tr> as one logical target grid. The table layout
       // caps each native row at its catalog capability and keeps overflow in
       // additional rows of that same grid so row-marker ownership stays intact.
-      const packed = segment.kind === "detailTable"
-        ? packLayoutGrid(segment.cells, { columns: 1 })
-        : preserveNestedGeometry
-          ? projectLayoutGrid(segment.cells, { rows: 1, columns: sourceColumns })
-          : packLayoutGrid(segment.cells, {
-            columns: Math.max(Math.min(segment.cells.length, TABLE_LAYOUT_MAX_COLUMNS), 1)
-          });
+      const packed = segment.packed;
       const tableLayout = packed.rows > 1 || packed.columns > 4;
       const baseSegment = segmentIndex === baseSegmentIndex;
       const segmentSuffix = segments.length > 1 && !baseSegment
@@ -2040,7 +2082,7 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
             ...(tableLayout ? { row: cell.row } : {}),
             column: cell.column,
             colspan: cell.colspan,
-            ...(cell.keepInline === true ? { keepInline: true } : {}),
+            ...(cell.keepInline === true && refType === "field" ? { keepInline: true } : {}),
             ...(Number.isFinite(cell.widthWeight) && cell.widthWeight > 0
               ? { widthWeight: cell.widthWeight }
               : {})
@@ -2075,17 +2117,23 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
   );
 }
 
-function keepInlineSourceCell(cell, preserveSourceGeometry) {
+function keepInlineSourceCell(cell, preserveSourceGeometry, detailTableIds) {
   if (
     !cell ||
     cell.keepInline === true ||
     hasLayoutReference(cell) ||
     !preserveSourceGeometry ||
-    (Array.isArray(cell.references) ? cell.references.length : 0) <= 1
+    (Array.isArray(cell.references) ? cell.references.length : 0) <= 1 ||
+    cellContainsDetailTable(cell, detailTableIds)
   ) {
     return cell;
   }
   return { ...cell, keepInline: true };
+}
+
+function cellContainsDetailTable(cell, detailTableIds) {
+  return Array.isArray(cell?.references) &&
+    cell.references.some((reference) => detailTableIds.has(reference.referenceId));
 }
 
 function hasLayoutReference(cell) {
@@ -2112,29 +2160,97 @@ function tableLayoutMaxColumns() {
   return maximum;
 }
 
-function splitDetailTableLayoutSegments(cells, detailTableIds) {
+function stackExclusiveDetailTableCells(cells, detailTableIds) {
+  const nextCells = [];
+  let rows = 1;
+  for (const cell of cells) {
+    const parts = exclusiveDetailTableCellParts(cell, detailTableIds);
+    const column = Number.isInteger(cell.column) ? cell.column : 0;
+    const colspan = Number.isInteger(cell.colspan) ? cell.colspan : 1;
+    const startRow = Number.isInteger(cell.row) ? cell.row : 0;
+    parts.forEach((part, partIndex) => {
+      nextCells.push({
+        ...part,
+        row: startRow + partIndex,
+        column,
+        colspan
+      });
+    });
+    rows = Math.max(rows, startRow + parts.length);
+  }
+  return { cells: nextCells, rows };
+}
+
+function exclusiveDetailTableCellParts(cell, detailTableIds) {
+  const references = Array.isArray(cell?.references) ? cell.references.filter(Boolean) : [];
+  if (references.length <= 1 || cell?.keepInline === true || hasLayoutReference(cell)) {
+    return [cell];
+  }
+  const detailIndexes = references
+    .map((reference, index) => detailTableIds.has(reference.referenceId) ? index : -1)
+    .filter((index) => index >= 0);
+  if (!detailIndexes.length) return [cell];
+
+  const parts = [];
+  let cursor = 0;
+  for (const detailIndex of detailIndexes) {
+    if (cursor < detailIndex) {
+      parts.push(cellPart(cell, references.slice(cursor, detailIndex), parts.length));
+    }
+    parts.push(cellPart(cell, [references[detailIndex]], parts.length));
+    cursor = detailIndex + 1;
+  }
+  if (cursor < references.length) {
+    parts.push(cellPart(cell, references.slice(cursor), parts.length));
+  }
+  return parts;
+}
+
+function cellPart(cell, references, partIndex) {
+  const { keepInline: _keepInline, ...rest } = cell;
+  return {
+    ...rest,
+    id: `${cell.id || "cell"}-control-${partIndex + 1}`,
+    references
+  };
+}
+
+function splitPackedDetailTableSegments(packed, detailTableIds) {
   const segments = [];
   let ordinaryCells = [];
   const flushOrdinary = () => {
     if (!ordinaryCells.length) return;
-    segments.push({ kind: "field", cells: ordinaryCells });
+    segments.push({
+      kind: "field",
+      packed: packLayoutGrid(ordinaryCells, {
+        columns: Math.max(Math.min(ordinaryCells.length, TABLE_LAYOUT_MAX_COLUMNS), 1)
+      })
+    });
     ordinaryCells = [];
   };
 
-  for (const cell of cells) {
+  for (const cell of packed.cells || []) {
     const references = Array.isArray(cell.references) ? cell.references : [];
-    const detailTable = references.some((reference) =>
-      detailTableIds.has(reference.referenceId)
-    );
-    if (detailTable) {
+    if (references.some((reference) => detailTableIds.has(reference.referenceId))) {
       flushOrdinary();
-      segments.push({ kind: "detailTable", cells: [cell] });
+      segments.push({
+        kind: "detailTable",
+        packed: packLayoutGrid([cell], { columns: 1 })
+      });
     } else {
       ordinaryCells.push(cell);
     }
   }
   flushOrdinary();
   return segments;
+}
+
+function packedContainsDetailTable(packed, detailTableIds) {
+  return (packed?.cells || []).some((cell) =>
+    (Array.isArray(cell.references) ? cell.references : []).some((reference) =>
+      detailTableIds.has(reference.referenceId)
+    )
+  );
 }
 
 function mergeSourceFormRules(left, right) {

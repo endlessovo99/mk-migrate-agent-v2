@@ -553,14 +553,14 @@ describe("detail-table Route-validation", () => {
       const rows = dslDraft.form.layout.mkTree.filter((row) =>
         row.children.some((child) => child.refIds.includes(detailId))
       );
+      const cells = rows.flatMap((row) =>
+        row.children.filter((child) => child.refIds.includes(detailId))
+      );
       assert.equal(rows.length, 1, detailId);
-      assert.equal(rows[0].componentId, "xform-flex-1-1-layout", detailId);
-      assert.equal(rows[0].props.columns, 1, detailId);
-      assert.equal(rows[0].children.length, 1, detailId);
-      assert.deepEqual(rows[0].children[0].refIds, [detailId], detailId);
-      assert.equal(rows[0].children[0].refType, "detailTable", detailId);
-      assert.equal(rows[0].children[0].column, 0, detailId);
-      assert.equal(rows[0].children[0].colspan, 1, detailId);
+      assert.equal(cells.length, 1, detailId);
+      assert.deepEqual(cells[0].refIds, [detailId], detailId);
+      assert.equal(cells[0].refType, "detailTable", detailId);
+      assert.equal(cells[0].keepInline, undefined, detailId);
     }
 
     assert.equal(

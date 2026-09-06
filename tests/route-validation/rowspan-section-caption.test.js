@@ -36,7 +36,7 @@ describe("rowspan section caption beside a nested detail table", () => {
     assert.equal(validation.ok, true);
     assert.equal(
       validation.diagnostics.some((diagnostic) =>
-        diagnostic.code === "dsl.form.layout.detail_table_row_exclusive"
+        diagnostic.code === "dsl.form.layout.detail_table_cell_exclusive"
       ),
       false
     );

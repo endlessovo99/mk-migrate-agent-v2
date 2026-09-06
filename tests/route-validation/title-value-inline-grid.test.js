@@ -29,8 +29,8 @@ describe("four-column title/value rows and same-cell inline controls", () => {
     assert.equal(fields.get("fd_applicant.name")?.props.hiddenLabel, true);
     assert.equal(fields.get("fd_dept.name")?.props.hiddenLabel, true);
     assert.equal(fields.get("fd_dept_en")?.props.hiddenLabel, true);
-    assert.equal(fields.get("fd_applicant")?.props.hiddenLabel, undefined);
-    assert.equal(fields.get("fd_dept")?.props.hiddenLabel, undefined);
+    assert.equal(fields.get("fd_applicant")?.props.hiddenLabel, true);
+    assert.equal(fields.get("fd_dept")?.props.hiddenLabel, true);
     assert.equal(fields.get("fd_applicant")?.sourceProps.layoutCell.hiddenLabel, true);
     assert.equal(fields.get("fd_dept")?.sourceProps.layoutCell.hiddenLabel, true);
 
@@ -162,6 +162,8 @@ describe("four-column title/value rows and same-cell inline controls", () => {
       }))
     );
     assert.equal(readback.form.fields.find((field) => field.id === "fd_fax")?.hiddenLabel, true);
+    assert.equal(readback.form.fields.find((field) => field.id === "fd_applicant")?.hiddenLabel, true);
+    assert.equal(readback.form.fields.find((field) => field.id === "fd_dept")?.hiddenLabel, true);
     assert.equal(readback.form.fields.find((field) => field.id === "fd_applicant.name")?.dataOnly, true);
   });
 });

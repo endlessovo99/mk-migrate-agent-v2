@@ -502,10 +502,7 @@ function observeExecutableProps(controlProps = {}, native = {}) {
     props.orgTypes = controlProps.org.types.map(normalizeScalar);
   }
   if (Array.isArray(controlProps.options) && controlProps.options.length) {
-    props.options = controlProps.options.map((option) => ({
-      label: normalizeScalar(option.label ?? option.text ?? option.value),
-      value: normalizeScalar(option.value ?? option.label ?? option.text)
-    }));
+    props.options = controlProps.options.map((option) => observedOption(option));
   }
   if (
     controlProps["$$tableType"] === "detail" &&
@@ -559,6 +556,18 @@ function observeExecutableProps(controlProps = {}, native = {}) {
     props.maxLength = controlProps.maxLength;
   }
   return props;
+}
+
+function observedOption(option) {
+  const observed = {
+    label: normalizeScalar(option.label ?? option.text ?? option.value),
+    value: normalizeScalar(option.value ?? option.label ?? option.text)
+  };
+  if (option.type === "other") {
+    observed.type = "other";
+    if (option.isRequired === true) observed.isRequired = true;
+  }
+  return observed;
 }
 
 function observedDescriptionContent(value, lang = {}) {
@@ -788,6 +797,8 @@ function nativePrecisionValue(value) {
 
 function observeNativeDefaultValue(controlProps, field) {
   const font = safeParseObject(field?.fdFontExtendData);
+  const staticOrgDefault = observeNativeStaticOrgDefault(controlProps, font, field);
+  if (staticOrgDefault) return staticOrgDefault;
   const type = controlProps.defaultValueType || font.defaultValueType;
   if (type === "now") {
     if (
@@ -849,6 +860,45 @@ function observeNativeDefaultValue(controlProps, field) {
     // Formula expressions are not literal defaults.
   }
   return undefined;
+}
+
+function observeNativeStaticOrgDefault(controlProps, font, field) {
+  const value = controlProps?.defaultValue;
+  const fontValue = font?.defaultValue;
+  if (
+    field?.fdType !== "address" ||
+    !value || typeof value !== "object" || Array.isArray(value) ||
+    !fontValue || typeof fontValue !== "object" || Array.isArray(fontValue) ||
+    controlProps.org?.defaultValueType !== "fixed" ||
+    font.defaultValueType !== "fixed" ||
+    controlProps.multi !== false ||
+    controlProps.preSelectType !== "fixed" ||
+    controlProps.showOrgType !== 0 ||
+    controlProps.maxLength !== 200 ||
+    controlProps["$$allowCustomValue"] !== true ||
+    controlProps.type !== "@elem/xform-address" ||
+    controlProps.range !== "all" ||
+    !Array.isArray(controlProps.relation) || controlProps.relation.length !== 0 ||
+    font.passValue !== false ||
+    font.orgAvailable !== false ||
+    font.showAvatar !== false ||
+    font.trace !== false ||
+    font.range !== "all" ||
+    font.multi !== false ||
+    !Array.isArray(font.relation) || font.relation.length !== 0 ||
+    JSON.stringify(controlProps.org?.orgTypeArr) !== JSON.stringify(font.orgTypeArr) ||
+    text(value.fdId) !== text(fontValue.fdId) ||
+    text(value.fdName) !== text(fontValue.fdName)
+  ) {
+    return undefined;
+  }
+  const id = text(value.fdId);
+  const name = text(value.fdName);
+  return id && name ? { kind: "staticOrg", id, name } : undefined;
+}
+
+function text(value) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function observeNativeDateTimePatterns(controlProps, field) {

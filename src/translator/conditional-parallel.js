@@ -38,13 +38,17 @@ export function normalizeConditionalParallelMultiSelectCondition(value, fieldSpe
     const value = match[3];
     const spec = fieldSpecs instanceof Map ? fieldSpecs.get(fieldId) : undefined;
     if (
-      spec?.type !== "multiSelect" ||
+      !isMembershipFieldType(spec?.type) ||
       !(spec.optionValues instanceof Set) ||
       !spec.optionValues.has(value)
     ) return undefined;
     normalized.push(`$列表.包含$($${fieldId}$, ${JSON.stringify(value)})`);
   }
   return normalized.join(" || ");
+}
+
+function isMembershipFieldType(type) {
+  return type === "multiSelect" || type === "checkbox";
 }
 
 function splitTopLevelOr(value) {

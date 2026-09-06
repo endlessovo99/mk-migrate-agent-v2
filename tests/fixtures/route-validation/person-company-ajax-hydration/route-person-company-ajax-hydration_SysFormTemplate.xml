@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-person-company-ajax-hydration-sysform</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+  <void method="put"><string>fdName</string><string>人员公司异步回填</string></void>
+  <void method="put"><string>fdModelName</string><string>com.landray.kmss.km.review.model.KmReviewTemplate</string></void>
+  <void method="put"><string>fdModelId</string><string>route-person-company-ajax-hydration-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_person&quot;,content:&quot;请假人姓名&quot;}&apos;&gt;请假人姓名&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_select_person.name&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;label_person&quot;,label:&quot;请假人姓名&quot;,required:&quot;true&quot;}&apos;&gt;&lt;input id=&quot;fd_select_person.name&quot;/&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_select_person&quot;,_label_bind:&quot;false&quot;,label:&quot;选择请假人姓名&quot;,_org_person:&quot;true&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;}&apos;&gt;&lt;input id=&quot;fd_select_person&quot;/&gt;&lt;/label&gt;
+      &lt;div id=&quot;jsp_person_org&quot; fd_type=&quot;jsp&quot;&gt;&lt;label&gt;&lt;input type=&quot;hidden&quot; value=&quot;&lt;script&gt;
+AttachXFormValueChangeEventById(&amp;quot;fd_select_person.id&amp;quot;,function(value,domElement){
+  var pId=value[0];
+  var toIDs=[
+    {name:&amp;quot;fdParentOrgName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_person_org)&amp;quot;},
+    {name:&amp;quot;fdParentName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_person_dept)&amp;quot;}
+  ];
+  var kmssdata = new KMSSData();
+  kmssdata.UseCache = false;
+  kmssdata.AddBeanData(Data_GetOrgPersonBeanNameByKey(&amp;quot;&amp;apos;&amp;quot;+pId+&amp;quot;&amp;apos;&amp;quot;,&amp;quot;fdId:fdName:hbmParentOrg.fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&amp;quot;));
+  $.ajax({
+    url:&amp;quot;/sys/organization/sys_org_person/chgPersonInfo.do?method=findCompByChildId&amp;quot;,
+    data:{fdId:pId},
+    type:&amp;quot;post&amp;quot;,
+    cache:false,
+    dataType:&amp;quot;json&amp;quot;,
+    success:function(data) {
+      $(&amp;quot;input[name=&amp;apos;extendDataFormInfo.value(fd_person_org)&amp;apos;]&amp;quot;).val(data.fdName);
+    },
+    error:function() { alert(&amp;quot;异常！&amp;quot;); }
+  });
+});
+&lt;/script&gt;&quot;/&gt;&lt;/label&gt;&lt;/div&gt;
+      &lt;div id=&quot;jsp_display_name&quot; fd_type=&quot;jsp&quot;&gt;&lt;label&gt;&lt;input type=&quot;hidden&quot; value=&quot;&lt;script&gt;
+XFormOnValueChangeFuns.push(function(value,domElement){
+  var name = domElement[0].name;
+  if(name.indexOf(&amp;quot;fd_select_person.id&amp;quot;)&gt;0){
+    var pId=value[0];
+    var toIDs=[{name:&amp;quot;fdName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_display_name)&amp;quot;}];
+    var kmssdata = new KMSSData();
+    kmssdata.UseCache = false;
+    kmssdata.AddBeanData(Data_GetOrgPersonBeanNameByKey(&amp;quot;&amp;apos;&amp;quot;+pId+&amp;quot;&amp;apos;&amp;quot;,&amp;quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&amp;quot;));
+    kmssdata.Parse(function(data){
+      data.Format(&amp;quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&amp;quot;, null, false);
+      data = data.GetHashMapArray();
+      if(data.length==1){
+        for(var i=0;i&lt;toIDs.length;i++){
+          GetXFormFieldById(toIDs[i][&amp;quot;id&amp;quot;])[0].value=data[0][toIDs[i][&amp;quot;name&amp;quot;]]||&amp;quot;&amp;quot;;
+        }
+      }
+      $.ajax({
+        url:&amp;quot;/sys/organization/sys_org_person/chgPersonInfo.do?method=findCompByChildId&amp;quot;,
+        data:{fdId:pId},
+        type:&amp;quot;post&amp;quot;,
+        cache:false,
+        dataType:&amp;quot;json&amp;quot;,
+        success:function(data) {
+          alert(data.fdName);
+          $(&amp;quot;input[name=&amp;apos;extendDataFormInfo.value(fd_person_org)&amp;apos;]&amp;quot;).val(data.fdName);
+        },
+        error:function() { alert(&amp;quot;异常！&amp;quot;); }
+      });
+    });
+  }
+});
+&lt;/script&gt;&quot;/&gt;&lt;/label&gt;&lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_company&quot;,content:&quot;所在公司&quot;}&apos;&gt;所在公司&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;label fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_company&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;label_company&quot;,label:&quot;所在公司&quot;,_org_org:&quot;true&quot;,_org_dept:&quot;true&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;}&apos;&gt;&lt;input id=&quot;fd_company&quot;/&gt;&lt;/label&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_dept&quot;,content:&quot;所在部门&quot;}&apos;&gt;所在部门&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;2&quot; column=&quot;1&quot;&gt;
+      &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_person_dept.name&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;label_dept&quot;,label:&quot;所在部门&quot;}&apos;&gt;&lt;input id=&quot;fd_person_dept.name&quot;/&gt;&lt;/div&gt;
+      &lt;label fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_person_dept&quot;,_label_bind:&quot;false&quot;,label:&quot;所在部门选择&quot;,_org_org:&quot;true&quot;,_org_dept:&quot;true&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;}&apos;&gt;&lt;input id=&quot;fd_person_dept&quot;/&gt;&lt;/label&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_select_person.name&quot; label=&quot;请假人姓名&quot; type=&quot;String&quot; notNull=&quot;true&quot;/&gt;
+    &lt;extendElementProperty name=&quot;fd_select_person&quot; label=&quot;选择请假人姓名&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_PERSON);&quot;/&gt;
+    &lt;extendElementProperty name=&quot;fd_company&quot; label=&quot;所在公司&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_person_dept.name&quot; label=&quot;所在部门&quot; type=&quot;String&quot;/&gt;
+    &lt;extendElementProperty name=&quot;fd_person_dept&quot; label=&quot;所在部门选择&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, &apos;!{idField}&apos;,&apos;!{nameField}&apos;, &apos;;&apos;,ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

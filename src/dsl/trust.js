@@ -71,6 +71,7 @@ export function checkTrust(sourceDraft, migrationDsl) {
   validateCoreProvenance(migrationDsl, sourceRefs, diagnostics);
   validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics);
   validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics);
+  validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics);
   validateWorkflowFormulaProvenance(sourceDraft, migrationDsl, diagnostics);
   validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics);
 
@@ -78,6 +79,43 @@ export function checkTrust(sourceDraft, migrationDsl) {
   diagnostics.push(...executionValidation.diagnostics);
 
   return finalize("trust", diagnostics);
+}
+
+function validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics) {
+  let expectedDraft;
+  try {
+    expectedDraft = draftSourceDraft(sourceDraft);
+  } catch (cause) {
+    diagnostics.push(error(
+      "trust.form.static_address_default_source_rebuild_failed",
+      "Static address defaults could not be independently rebuilt from the Source Draft.",
+      "/form/fields",
+      { error: String(cause?.message || cause) }
+    ));
+    return;
+  }
+
+  const expectedBySourceRef = new Map(flattenFormFields(expectedDraft?.form?.fields)
+    .map((field) => [field.sourceRef, field]));
+  for (const actual of flattenFormFields(migrationDsl?.form?.fields)) {
+    const expected = expectedBySourceRef.get(actual.sourceRef);
+    const expectedDefault = expected?.props?.defaultValue;
+    const actualDefault = actual?.props?.defaultValue;
+    if (expectedDefault?.kind !== "staticOrg" && actualDefault?.kind !== "staticOrg") continue;
+    if (canonicalJson(expectedDefault) === canonicalJson(actualDefault)) continue;
+    diagnostics.push(error(
+      "trust.form.static_address_default_source_mismatch",
+      "Trusted static address defaults must exactly preserve the deterministic source mapping.",
+      "/form/fields",
+      { fieldId: actual?.id || expected?.id, sourceRef: actual?.sourceRef || expected?.sourceRef }
+    ));
+  }
+}
+
+function flattenFormFields(fields = []) {
+  return (Array.isArray(fields) ? fields : []).flatMap((field) =>
+    field?.type === "detailTable" ? field.columns || [] : [field]
+  );
 }
 
 function validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics) {

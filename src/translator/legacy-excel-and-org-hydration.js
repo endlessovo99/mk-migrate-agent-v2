@@ -1,7 +1,8 @@
 export function legacyExcelAndOrgHydrationCandidates(source = {}, form = {}) {
   return [
     legacyExcelImportCandidate(source, form),
-    ...detailJobNumberHydrationCandidates(source, form)
+    ...detailJobNumberHydrationCandidates(source, form),
+    personCompanyAjaxHydrationCandidate(source, form)
   ].filter(Boolean);
 }
 
@@ -108,4 +109,83 @@ function detailJobNumberHydrationCandidates(source, form) {
       }]
     }
   }];
+}
+
+function personCompanyAjaxHydrationCandidate(source, form) {
+  const text = String(source.javascript || "");
+  if (!/chgPersonInfo\.do\?method=findCompByChildId/.test(text)) return undefined;
+  if (!/Data_GetOrgPersonBeanNameByKey/.test(text) || !/KMSSData/.test(text)) return undefined;
+  if (!/\$\.ajax/.test(text)) return undefined;
+  const usesAttachIdSuffix = /AttachXFormValueChangeEventById\(\s*(["'])fd_[A-Za-z0-9_]+\.id\1/.test(text);
+  const usesValueChangePush = /XFormOnValueChangeFuns\.push/.test(text);
+  if (!usesAttachIdSuffix && !usesValueChangePush) return undefined;
+
+  const writeTargets = personCompanyAjaxWriteTargets(text);
+  if (!writeTargets.length) return undefined;
+  const fields = Array.isArray(form?.fields) ? form.fields : [];
+  const unwritable = writeTargets.filter((fieldId) => !isWritablePersonTextField(fields, fieldId));
+  if (unwritable.length !== writeTargets.length) return undefined;
+
+  const sourceRef = source.sourceRef || source.id;
+  const missing = unwritable.join(", ");
+  return {
+    index: Math.max(0, text.indexOf("chgPersonInfo.do")),
+    event: "onLoad",
+    scope: "global",
+    javascript: text,
+    function: "",
+    translationStatus: "omitted",
+    coverage: { status: "covered", nativeRules: [], residuals: [] },
+    functionMappings: [{
+      source: `person company ajax/KMSSData hydration writes ${missing}; findCompByChildId, alert, and missing or non-text targets have no MK equivalent`,
+      target: "manual person/company fields",
+      basis: "legacy-runtime-noop",
+      reviewRequired: false
+    }],
+    sourceRefs: [sourceRef],
+    semanticHints: {
+      coveredLegacyFunctions: [
+        "AttachXFormValueChangeEventById",
+        "XFormOnValueChangeFuns.push",
+        "KMSSData",
+        "Data_GetOrgPersonBeanNameByKey",
+        "GetXFormFieldById",
+        "data.Format",
+        "data.GetHashMapArray",
+        "kmssdata.AddBeanData",
+        "kmssdata.Parse",
+        "$.ajax",
+        "alert"
+      ],
+      coveredCalculationRanges: [{
+        sourceRef,
+        name: "personCompanyAjaxHydration",
+        start: 0,
+        end: Math.max(1, text.length)
+      }]
+    }
+  };
+}
+
+function personCompanyAjaxWriteTargets(text) {
+  const ids = [];
+  const seen = new Set();
+  const patterns = [
+    /\{\s*name\s*:\s*(["'])[^"']+\1\s*,\s*id\s*:\s*(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\2\s*\}/gu,
+    /\$\(\s*(["'])input\[name=(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\2\]\1\s*\)/gu
+  ];
+  for (const pattern of patterns) {
+    for (const match of String(text || "").matchAll(pattern)) {
+      const fieldId = match[3];
+      if (!fieldId || seen.has(fieldId)) continue;
+      seen.add(fieldId);
+      ids.push(fieldId);
+    }
+  }
+  return ids;
+}
+
+function isWritablePersonTextField(fields, fieldId) {
+  const field = fields.find((candidate) => candidate?.id === fieldId);
+  return field?.type !== "detailTable" && field?.componentId === "xform-input";
 }

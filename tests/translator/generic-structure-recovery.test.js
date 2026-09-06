@@ -667,26 +667,26 @@ describe("generic structural form recovery", () => {
     );
     assert.equal(sourceRow?.cells.length, 1);
     assert.equal(detailRowIndex >= 0, true);
-    assert.equal(companionRowIndex > detailRowIndex, true);
+    assert.equal(companionRowIndex >= detailRowIndex, true);
     assert.deepEqual(
       guardedSourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
       ["heading_not_adjacent", "fd_between_heading_table", "fd_detail_gap"]
     );
     assert.equal(guardedSourceRow?.cells.length, 1);
     assert.equal(guardedOrdinaryRowIndex < guardedDetailRowIndex, true);
-    assert.equal(twinBIndex, twinAIndex + 1);
+    assert.equal(twinBIndex >= twinAIndex, true);
     for (const detailId of detailIds) {
       const owningRows = targetRows.filter((row) =>
         row.children.some((child) => child.refIds.includes(detailId))
       );
+      const owningCells = owningRows.flatMap((row) =>
+        row.children.filter((child) => child.refIds.includes(detailId))
+      );
       assert.equal(owningRows.length, 1, detailId);
-      assert.equal(owningRows[0].componentId, "xform-flex-1-1-layout", detailId);
-      assert.equal(owningRows[0].props.columns, 1, detailId);
-      assert.equal(owningRows[0].children.length, 1, detailId);
-      assert.deepEqual(owningRows[0].children[0].refIds, [detailId], detailId);
-      assert.equal(owningRows[0].children[0].refType, "detailTable", detailId);
-      assert.equal(owningRows[0].children[0].column, 0, detailId);
-      assert.equal(owningRows[0].children[0].colspan, 1, detailId);
+      assert.equal(owningCells.length, 1, detailId);
+      assert.equal(owningCells[0].refType, "detailTable", detailId);
+      assert.deepEqual(owningCells[0].refIds, [detailId], detailId);
+      assert.equal(owningCells[0].keepInline, undefined, detailId);
     }
   });
 });

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-checkbox-other-option-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Route Checkbox Other Option</string></void>
+  <void method="put"><string>fdModelId</string><string>route-checkbox-other-option-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0,1&quot;&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_nodes&quot;,label:&quot;Nodes&quot;}&apos;&gt;
+       &lt;tbody&gt;
+        &lt;tr type=&quot;titleRow&quot;&gt;
+         &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_node_auth_title&quot;,content:&quot;节点权限&quot;}&apos;&gt;节点权限&lt;/label&gt;&lt;/td&gt;
+         &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_node_note_title&quot;,content:&quot;备注&quot;}&apos;&gt;备注&lt;/label&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr type=&quot;templateRow&quot;&gt;
+         &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+          &lt;table fd_type=&quot;inputCheckbox&quot; fd_values=&apos;{id:&quot;fd_node_auth&quot;,_label_bind:&quot;true&quot;,label:&quot;节点权限&quot;,_label_bind_id:&quot;fd_node_auth_title&quot;,alignment:&quot;V&quot;,dataType:&quot;String&quot;,items:&quot;起草人可修改处理人|1&amp;#13;&amp;#10;编辑主文档|3&amp;#13;&amp;#10;身份重复不跳过|4&quot;,tableName:&quot;fd_nodes&quot;}&apos;&gt;&lt;/table&gt;
+          &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_node_auth_other_label&quot;,content:&quot;其他：&quot;}&apos;&gt;其他：&lt;/label&gt;
+          &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_node_auth_other&quot;,width:&quot;120&quot;,_label_bind:&quot;false&quot;,label:&quot;节点权限1&quot;,_label_bind_id:&quot;fd_node_auth_title&quot;,dataType:&quot;String&quot;,tableName:&quot;fd_nodes&quot;}&apos;&gt;&lt;/div&gt;
+         &lt;/td&gt;
+         &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;
+          &lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_node_note&quot;,label:&quot;备注&quot;,dataType:&quot;String&quot;,tableName:&quot;fd_nodes&quot;}&apos;&gt;&lt;/div&gt;
+         &lt;/td&gt;
+        &lt;/tr&gt;
+       &lt;/tbody&gt;
+      &lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+      &lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;fd_notice_title&quot;,content:&quot;通知方式&quot;}&apos;&gt;通知方式&lt;/label&gt;
+     &lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;
+      &lt;table fd_type=&quot;inputCheckbox&quot; fd_values=&apos;{id:&quot;fd_notice&quot;,_label_bind:&quot;true&quot;,label:&quot;通知方式&quot;,_label_bind_id:&quot;fd_notice_title&quot;,alignment:&quot;H&quot;,dataType:&quot;String&quot;,items:&quot;待办|1&amp;#13;&amp;#10;邮件|2&quot;}&apos;&gt;&lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSubTableProperty name=&quot;fd_nodes&quot; label=&quot;Nodes&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_node_auth&quot; label=&quot;节点权限&quot; enumValues=&quot;起草人可修改处理人|1;编辑主文档|3;身份重复不跳过|4&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_node_auth_other&quot; label=&quot;节点权限1&quot; type=&quot;String&quot;/&gt;
+     &lt;extendSimpleProperty name=&quot;fd_node_note&quot; label=&quot;备注&quot; type=&quot;String&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name=&quot;fd_notice&quot; label=&quot;通知方式&quot; enumValues=&quot;待办|1;邮件|2&quot; type=&quot;String&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

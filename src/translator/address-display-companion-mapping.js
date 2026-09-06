@@ -26,7 +26,7 @@ export function mapAddressDisplayCompanions(fields, sourceLayout) {
             ? { required: true }
             : {}),
           ...(
-            companion.props?.hiddenLabel === true &&
+            shouldHideAddressLabel(field, companion) &&
             componentSupportsProp(field.componentId, "hiddenLabel")
               ? { hiddenLabel: true }
               : {}
@@ -91,6 +91,12 @@ export function removeDataOnlyFieldRefs(layout, fields) {
       };
     })
   };
+}
+
+function shouldHideAddressLabel(address, companion) {
+  return companion.props?.hiddenLabel === true ||
+    companion.sourceProps?.layoutCell?.hiddenLabel === true ||
+    address.sourceProps?.layoutCell?.hiddenLabel === true;
 }
 
 function addressCompanions(fields, layout) {

@@ -3,6 +3,10 @@ import { executePublishedFormPatch } from "./published-form-patch.js";
 import { NewoaClient, normalizeBaseUrl } from "./newoa-client.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
+import {
+  hasStaticAddressDefaults,
+  resolveStaticAddressDefaults
+} from "./static-address-default-resolver.js";
 import { preparePersistedTemplate, buildWorkflowDraftPayload } from "./persistence.js";
 import {
   applyRequiredTemplateNumberRule,
@@ -320,6 +324,14 @@ export async function executeDsl(input, options = {}) {
           } : {})
         }
       });
+    }
+    if (hasStaticAddressDefaults(executableDsl)) {
+      apiStages.push({ name: "resolveStaticAddressDefaults", status: "started" });
+      const staticDefaultResolution = await resolveStaticAddressDefaults(executableDsl, { client });
+      executableDsl = staticDefaultResolution.dsl;
+      apiStages[apiStages.length - 1].status = "ok";
+      apiStages[apiStages.length - 1].resolvedCount = staticDefaultResolution.resolvedCount;
+      apiStages[apiStages.length - 1].identityCount = staticDefaultResolution.identityCount;
     }
     apiStages.push({ name: "resolveConditionOrgs", status: "started" });
     const conditionOrgResolution = await resolveConditionOrgs(executableDsl, {
@@ -696,7 +708,11 @@ export async function executeDsl(input, options = {}) {
           level: "error",
           code: error?.code || "execute.newoa_api_failed",
           message: redactCredentialValues(error instanceof Error ? error.message : String(error), credentials),
-          path: error?.stage === "resolveWorkflowParticipants" ? "/workflow/participants" : "/execute",
+          path: error?.stage === "resolveWorkflowParticipants"
+            ? "/workflow/participants"
+            : error?.stage === "resolveStaticAddressDefaults"
+              ? "/form/fields"
+              : "/execute",
           ...(Array.isArray(error?.issues)
             ? { details: { issues: redactParticipantIssues(error.issues, credentials) } }
             : {})

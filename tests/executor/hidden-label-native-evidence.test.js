@@ -104,6 +104,12 @@ describe("xform-input hidden-label native persistence", () => {
       type: "multiSelect",
       componentId: "xform-select~multi",
       desktopType: "@elem/xform-select"
+    },
+    {
+      name: "address",
+      type: "text",
+      componentId: "xform-address",
+      desktopType: "@elem/xform-address"
     }
   ]) {
     it(`writes and reads back the shared hidden-label contract for ${testCase.name}`, () => {
@@ -204,10 +210,15 @@ function hiddenLabelDslForOption({ type, componentId }) {
   const field = dsl.form.fields.find((candidate) => candidate.id === fieldId);
   field.type = type;
   field.componentId = componentId;
-  field.props = {
-    hiddenLabel: true,
-    options: [{ label: "选项 A", value: "A" }]
-  };
+  field.props = componentId === "xform-address"
+    ? {
+        hiddenLabel: true,
+        orgTypes: ["ORG_TYPE_ORG", "ORG_TYPE_DEPT"]
+      }
+    : {
+        hiddenLabel: true,
+        options: [{ label: "选项 A", value: "A" }]
+      };
   return dsl;
 }
 

@@ -60,7 +60,7 @@ function dynamicHyperlinkModel(source = {}) {
 
   if (body.length === 2) {
     const branch = body[1];
-    if (branch?.type !== "IfStatement" || !isIdentifier(branch.test, urlDeclaration.name)) return undefined;
+    if (branch?.type !== "IfStatement" || !isUrlOnlyGuard(branch.test, urlDeclaration.name)) return undefined;
     const consequent = nonEmptyStatements(branch.consequent?.body);
     const alternate = nonEmptyStatements(branch.alternate?.body);
     if (consequent.length !== 1 || alternate.length !== 0) return undefined;
@@ -400,6 +400,10 @@ function projectionEvidence(model) {
 
 function isIdentifier(node, name) {
   return node?.type === "Identifier" && node.name === name;
+}
+
+function isUrlOnlyGuard(node, urlVariable) {
+  return isIdentifier(node, urlVariable) || literalBoolean(node) === true;
 }
 
 function generatedHyperlinkFieldId(sourceUrlFieldId) {

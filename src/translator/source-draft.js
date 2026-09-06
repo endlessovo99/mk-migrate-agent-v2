@@ -717,6 +717,7 @@ function sourcePropsFromField(field) {
     inlineCaption: field.source?.inlineCaption,
     inlineHint: field.source?.inlineHint,
     inlineUnit: field.source?.inlineUnit,
+    otherTextCompanion: field.source?.otherTextCompanion,
     restDialog: field.source?.restDialog,
     metadataId: field.source?.metadataId,
     metadataKind: field.source?.metadataKind,

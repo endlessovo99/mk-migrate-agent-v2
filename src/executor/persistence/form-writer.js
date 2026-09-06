@@ -732,10 +732,7 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     });
   }
   if (field.props?.options?.length) {
-    controlProps.options = field.props.options.map((option) => ({
-      label: option.label ?? option.text ?? option.value,
-      value: option.value ?? option.label ?? option.text
-    }));
+    controlProps.options = field.props.options.map((option) => nativeOption(option));
   }
   if (
     tableType === "detail" &&
@@ -749,6 +746,9 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
   }
   if (spec.attrType === "select") {
     controlProps.multi = field.componentId === "xform-select~multi";
+  }
+  if (spec.attrType === "checkbox") {
+    Object.assign(controlProps, nativeCheckboxControlProps(field));
   }
   if (spec.attrType === "attachment") {
     Object.assign(controlProps, {
@@ -996,6 +996,32 @@ function applyButtonNativeActions(mainModel, scripts, lang, context) {
   }
 }
 
+function nativeOption(option = {}) {
+  const native = {
+    label: option.label ?? option.text ?? option.value,
+    value: option.value ?? option.label ?? option.text
+  };
+  if (option.type === "other") {
+    native.type = "other";
+    native.colorSwitch = false;
+    if (option.isRequired === true) native.isRequired = true;
+  }
+  return native;
+}
+
+function nativeCheckboxControlProps(field) {
+  const alignment = String(field.sourceProps?.designerValues?.alignment || "").toUpperCase();
+  const options = Array.isArray(field.props?.options) ? field.props.options : [];
+  const rowCount = options.filter((option) => option?.type !== "other").length;
+  return {
+    multi: true,
+    optionSource: "custom",
+    serialType: "empty",
+    direction: alignment === "V" ? "column" : "row",
+    ...(alignment === "V" ? { rowCount: Math.max(rowCount, 1) } : {})
+  };
+}
+
 function nativeLangToken(fieldId, prop) {
   return `!{${stableHexId(`${fieldId}:${prop}`)}${stableHexId(`${prop}:${fieldId}`)}}`;
 }
@@ -1067,6 +1093,29 @@ function hasNativeNumberPrecision(field) {
 }
 
 function applyDefaultValueToControlProps(controlProps, field, template, spec) {
+  const staticOrgDefault = normalizeStaticOrgDefault(field.props?.defaultValue);
+  if (staticOrgDefault && spec.attrType === "address") {
+    Object.assign(controlProps, {
+      multi: false,
+      preSelectType: "fixed",
+      showOrgType: 0,
+      maxLength: 200,
+      "$$allowCustomValue": true,
+      type: spec.desktop,
+      range: "all",
+      relation: [],
+      defaultValue: {
+        fdId: staticOrgDefault.id,
+        fdName: staticOrgDefault.name
+      }
+    });
+    controlProps.org = {
+      orgTypeArr: addressOrgTypeCodes(field),
+      defaultValueType: "fixed"
+    };
+    return;
+  }
+
   const contextDefault = contextDefaultFormula(field, template, spec);
   if (contextDefault) {
     applyContextDefaultToControlProps(controlProps, contextDefault, spec);
@@ -1192,6 +1241,26 @@ function fieldFontExtendData(field, template, spec) {
     if (!data.defaultValueType) data.defaultValueType = "empty";
   }
 
+  const staticOrgDefault = normalizeStaticOrgDefault(field.props?.defaultValue);
+  if (staticOrgDefault && spec.attrType === "address") {
+    return {
+      ...data,
+      orgTypeArr: addressOrgTypeCodes(field),
+      defaultValueType: "fixed",
+      passValue: false,
+      orgAvailable: false,
+      showAvatar: false,
+      trace: false,
+      range: "all",
+      multi: false,
+      relation: [],
+      defaultValue: {
+        fdId: staticOrgDefault.id,
+        fdName: staticOrgDefault.name
+      }
+    };
+  }
+
   const contextDefault = contextDefaultFormula(field, template, spec);
   if (contextDefault && spec.attrType === "address") {
     return {
@@ -1241,8 +1310,7 @@ function fieldFontExtendData(field, template, spec) {
       defaultValueType: "fixed",
       defaultValue: cloneLiteral(defaultValue),
       options: options.map((option) => ({
-        label: option.label ?? option.text ?? option.value,
-        value: option.value ?? option.label ?? option.text,
+        ...nativeOption(option),
         checked: selected.has(normalizeOptionValue(option.value ?? option.label ?? option.text))
       }))
     };
@@ -1387,6 +1455,21 @@ function normalizeContextDefault(value) {
     source: value.source,
     property: value.property
   };
+}
+
+function normalizeStaticOrgDefault(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  if (value.kind !== "staticOrg") return undefined;
+  const id = String(value.id || "").trim();
+  const name = String(value.name || "").trim();
+  return id && name ? { id, name } : undefined;
+}
+
+function addressOrgTypeCodes(field) {
+  const orgTypes = Array.isArray(field.props?.orgTypes) && field.props.orgTypes.length
+    ? field.props.orgTypes
+    : ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"];
+  return orgTypes.map((orgType) => NATIVE_ORG_TYPE_CODE.get(orgType));
 }
 
 function addressOrgTypesFromDsl(field) {

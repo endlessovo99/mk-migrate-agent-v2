@@ -263,28 +263,20 @@ describe("validateMigrationDsl", () => {
     );
   });
 
-  it("rejects a detail table that does not own a one-cell target row", () => {
+  it("rejects a detail table that shares its mkTree cell with another reference", () => {
     const dsl = sampleTrustedDsl();
     dsl.form.layout.mkTree = [{
       id: "layout.mixed-detail-row",
-      componentId: "xform-flex-1-2-layout",
-      props: { columns: 2, sourceColumns: 2 },
+      componentId: "xform-flex-1-1-layout",
+      props: { columns: 1, sourceColumns: 1 },
       sourceRef: "source.form.layout.row.mixed-detail-row",
       children: [
         {
           id: "layout.mixed-detail-row-detail",
           refType: "detailTable",
-          refIds: ["fd_detail"],
+          refIds: ["fd_detail", "fd_subject"],
           sourceRef: "source.form.layout.cell.mixed-detail-row-detail",
           column: 0,
-          colspan: 1
-        },
-        {
-          id: "layout.mixed-detail-row-field",
-          refType: "field",
-          refIds: ["fd_subject"],
-          sourceRef: "source.form.layout.cell.mixed-detail-row-field",
-          column: 1,
           colspan: 1
         }
       ]
@@ -292,18 +284,71 @@ describe("validateMigrationDsl", () => {
 
     const result = validateMigrationDsl(dsl, { mode: "execute" });
     const diagnostic = result.diagnostics.find((item) =>
-      item.code === "dsl.form.layout.detail_table_row_exclusive"
+      item.code === "dsl.form.layout.detail_table_cell_exclusive"
     );
 
     assert.equal(result.ok, false);
     assert.equal(diagnostic?.path, "/form/layout/mkTree/0");
     assert.deepEqual(diagnostic?.details, {
-      detailTableIds: ["fd_detail"],
-      componentId: "xform-flex-1-2-layout",
-      columns: 2,
-      childCount: 2,
-      expandedRefCount: 2
+      componentId: "xform-flex-1-1-layout",
+      columns: 1,
+      childCount: 1,
+      violations: [{
+        childIndex: 0,
+        childId: "layout.mixed-detail-row-detail",
+        refType: "detailTable",
+        refIds: ["fd_detail", "fd_subject"],
+        detailTableIds: ["fd_detail"],
+        keepInline: false
+      }]
     });
+  });
+
+  it("accepts two detail tables that occupy sibling cells in one target row", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.fields.push({
+      ...structuredClone(dsl.form.fields[2]),
+      id: "fd_detail_second",
+      title: "第二张明细",
+      sourceRef: "source.form.detailTable.fd_detail_second",
+      columns: [{
+        ...structuredClone(dsl.form.fields[2].columns[0]),
+        id: "fd_second_name",
+        sourceRef: "source.form.detailTable.fd_detail_second.column.fd_second_name"
+      }]
+    });
+    dsl.form.layout.mkTree = [{
+      id: "layout.side-by-side-detail-row",
+      componentId: "xform-flex-1-2-layout",
+      props: { columns: 2, sourceColumns: 2 },
+      sourceRef: "source.form.layout.row.side-by-side-detail-row",
+      children: [
+        {
+          id: "layout.side-by-side-detail-row-left",
+          refType: "detailTable",
+          refIds: ["fd_detail"],
+          sourceRef: "source.form.layout.cell.side-by-side-detail-row-left",
+          column: 0,
+          colspan: 1
+        },
+        {
+          id: "layout.side-by-side-detail-row-right",
+          refType: "detailTable",
+          refIds: ["fd_detail_second"],
+          sourceRef: "source.form.layout.cell.side-by-side-detail-row-right",
+          column: 1,
+          colspan: 1
+        }
+      ]
+    }];
+
+    const result = validateMigrationDsl(dsl, { mode: "execute" });
+
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    assert.equal(
+      result.diagnostics.some((item) => item.code === "dsl.form.layout.detail_table_cell_exclusive"),
+      false
+    );
   });
 
   it("rejects detail tables that are missing from the target layout", () => {
@@ -352,7 +397,7 @@ describe("validateMigrationDsl", () => {
       expected: 1
     });
     assert.equal(
-      result.diagnostics.some((item) => item.code === "dsl.form.layout.detail_table_row_exclusive"),
+      result.diagnostics.some((item) => item.code === "dsl.form.layout.detail_table_cell_exclusive"),
       false
     );
   });

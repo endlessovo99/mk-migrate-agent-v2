@@ -138,6 +138,10 @@ describe("conditional-parallel multi-select conditions", () => {
       type: "multiSelect",
       optionValues: new Set(["采购", "维修", "报废"])
     }],
+    ["fd_checkbox", {
+      type: "checkbox",
+      optionValues: new Set(["采购", "维修", "报废"])
+    }],
     ["fd_text", {
       type: "text",
       optionValues: new Set()
@@ -151,6 +155,16 @@ describe("conditional-parallel multi-select conditions", () => {
         specs
       ),
       '$列表.包含$($fd_type$, "采购")'
+    );
+  });
+
+  it("normalizes static allowed checkbox membership", () => {
+    assert.equal(
+      normalizeConditionalParallelMultiSelectCondition(
+        '$fd_checkbox$.contains("采购")',
+        specs
+      ),
+      '$列表.包含$($fd_checkbox$, "采购")'
     );
   });
 

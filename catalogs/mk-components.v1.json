@@ -343,7 +343,7 @@
       "kind": "field",
       "label": "组织选择",
       "description": "NewOA/MK organization/person selector.",
-      "usage": "Use for source organization element controls.",
+      "usage": "Use for source organization element controls. hiddenLabel uses the common desktop/mobile control and label flags when an adjacent bound caption already presents the title; preserve the field title as metadata.",
       "negativeUsage": "Do not use for normal text unless source metadata identifies organization semantics.",
       "allowedScopes": ["field", "detailColumn"],
       "target": { "desktop": "@elem/xform-address", "mobile": "@elem/xform-m-address" },
@@ -353,11 +353,12 @@
         "properties": {
           "required": { "type": "boolean" },
           "readOnly": { "type": "boolean" },
+          "hiddenLabel": { "type": "boolean" },
           "orgTypes": {
             "type": "array",
             "items": { "type": "string", "enum": ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT", "ORG_TYPE_ORG", "ORG_TYPE_POST"] }
           },
-          "defaultValue": { "$ref": "#/$defs/contextDefaultValue" }
+          "defaultValue": { "$ref": "#/$defs/addressDefaultValue" }
         }
       },
       "defaultPolicy": { "executorDefaults": ["orgTypes"] },
@@ -548,7 +549,9 @@
         "required": ["label", "value"],
         "properties": {
           "label": { "type": "string", "minLength": 1 },
-          "value": { "type": "string", "minLength": 1 }
+          "value": { "type": "string", "minLength": 1 },
+          "type": { "type": "string", "enum": ["", "other"] },
+          "isRequired": { "type": "boolean" }
         }
       }
     },
@@ -602,6 +605,22 @@
         "kind": { "type": "string", "enum": ["context"] },
         "source": { "type": "string", "enum": ["creator", "creatorDept", "creatorPost", "submitter", "submitterDept", "now"] },
         "property": { "type": "string", "enum": ["fdName", "fdNo"] }
+      }
+    },
+    "addressDefaultValue": {
+      "anyOf": [
+        { "$ref": "#/$defs/contextDefaultValue" },
+        { "$ref": "#/$defs/staticOrgDefaultValue" }
+      ]
+    },
+    "staticOrgDefaultValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["staticOrg"] },
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 }
       }
     },
     "dateTimeDefaultValue": {

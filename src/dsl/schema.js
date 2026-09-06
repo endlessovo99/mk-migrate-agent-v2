@@ -937,37 +937,40 @@ function validateMkTreeNode(node, index, refs, diagnostics) {
     }
   }
 
-  const expandedRefIds = node.children
-    .filter(isRecord)
-    .flatMap((child) => Array.isArray(child.refIds) ? child.refIds : [child.refId].filter(Boolean));
-  const detailTableIds = expandedRefIds.filter((refId) => refs.detailTableIds.has(refId));
-  if (detailTableIds.length) {
-    const onlyChild = node.children.length === 1 && isRecord(node.children[0])
-      ? node.children[0]
-      : undefined;
-    const childRow = onlyChild?.row ?? 0;
-    const exclusive =
-      node.componentId === "xform-flex-1-1-layout" &&
-      columns === 1 &&
-      expandedRefIds.length === 1 &&
-      onlyChild?.refType === "detailTable" &&
-      childRow === 0 &&
-      onlyChild?.column === 0 &&
-      onlyChild?.colspan === 1;
-    if (!exclusive) {
-      diagnostics.push(error(
-        "dsl.form.layout.detail_table_row_exclusive",
-        "Each detail table must own one full-width 1x1 mkTree row.",
-        path,
-        {
-          detailTableIds,
-          componentId: node.componentId,
-          columns,
-          childCount: node.children.length,
-          expandedRefCount: expandedRefIds.length
-        }
-      ));
+  const exclusiveViolations = [];
+  node.children.filter(isRecord).forEach((child, childIndex) => {
+    const refIds = Array.isArray(child.refIds) ? child.refIds.filter(Boolean) : [child.refId].filter(Boolean);
+    const childDetailTableIds = refIds.filter((refId) => refs.detailTableIds.has(refId));
+    if (!childDetailTableIds.length) return;
+    if (
+      child.refType === "detailTable" &&
+      childDetailTableIds.length === 1 &&
+      refIds.length === 1 &&
+      child.keepInline !== true
+    ) {
+      return;
     }
+    exclusiveViolations.push({
+      childIndex,
+      childId: child.id,
+      refType: child.refType,
+      refIds,
+      detailTableIds: childDetailTableIds,
+      keepInline: child.keepInline === true
+    });
+  });
+  if (exclusiveViolations.length) {
+    diagnostics.push(error(
+      "dsl.form.layout.detail_table_cell_exclusive",
+      "A detail table must occupy its own mkTree cell and must not share that cell with other references.",
+      path,
+      {
+        componentId: node.componentId,
+        columns,
+        childCount: node.children.length,
+        violations: exclusiveViolations
+      }
+    ));
   }
 
   node.children.forEach((child, childIndex) => {

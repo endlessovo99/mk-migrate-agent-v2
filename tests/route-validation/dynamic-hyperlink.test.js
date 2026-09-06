@@ -92,6 +92,28 @@ describe("dynamic invoice hyperlink Route case", () => {
     );
   });
 
+  it("projects the same URL-only anchor when the source wraps it in a literal true guard", () => {
+    const sourceDraft = cleanSourceFile(urlOnlyFixturePath);
+    const source = sourceDraft.scripts.sources.find((candidate) => candidate.sourceRef === urlOnlySourceRef);
+    const replaced = source.javascript.replace("if (url)", "if (true)");
+    assert.notEqual(replaced, source.javascript);
+    source.javascript = replaced;
+
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const hyperlink = dslDraft.form.fields.find((field) => field.id === "invoiceLink");
+    const action = dslDraft.scripts.actions.find((candidate) => candidate.id === urlOnlyActionId);
+
+    assert.equal(hyperlink.componentId, "xform-hyperlinks");
+    assert.equal(action.translationStatus, "mapped");
+    assert.equal(action.functionMappings[0].basis, "deterministic-dynamic-hyperlink");
+    assert.match(action.function, /url\.indexOf\("https:\/\/"\) === 0/u);
+    assert.doesNotMatch(action.function, /document|innerHTML/u);
+    assert.equal(
+      checkDraft(dslDraft).diagnostics.some((diagnostic) => diagnostic.level === "error"),
+      false
+    );
+  });
+
   it("does not project a similarly shaped source that adds an external side effect", () => {
     const sourceDraft = cleanSourceFile(fixturePath);
     const source = sourceDraft.scripts.sources.find((candidate) => candidate.sourceRef === sourceRef);

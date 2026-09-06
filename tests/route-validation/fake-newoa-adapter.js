@@ -18,6 +18,11 @@ const ROUTE_GENERIC_ROLE = Object.freeze({
   fdName: "<直线领导>",
   fdOrgType: 32
 });
+const ROUTE_STATIC_ADDRESS_DEFAULT = Object.freeze({
+  fdId: "route-fixed-org",
+  fdName: "Route Fixed Organization",
+  fdOrgType: 2
+});
 const LEGACY_GENERIC_ROLE_ID = "legacy-direct-manager-role";
 const SIT_CONDITION_ORG_FALLBACK_ID = SIT_CONDITION_ORG_FALLBACKS[0].fdId;
 const SIT_FALLBACK_BY_ID = new Map([
@@ -108,6 +113,9 @@ export class FakeNewoaAdapter {
         return [clone(candidate)];
       }
       if (fdId === LEGACY_GENERIC_ROLE_ID) return [];
+      if (fdId === ROUTE_STATIC_ADDRESS_DEFAULT.fdId) {
+        return [clone(ROUTE_STATIC_ADDRESS_DEFAULT)];
+      }
       const fallback = this.fallbackById.get(fdId);
       if (fallback) {
         return [{

@@ -32,7 +32,29 @@ export function parseMetadataXml(metadataXml = "") {
     fields.push(metadataFieldToDslField(property, { classifyDataOnly: true }));
   }
 
+  recoverStaticOrgDefaultMetadata(fields, metadataXml);
   return { fields };
+}
+
+function recoverStaticOrgDefaultMetadata(fields, metadataXml) {
+  const recoveredByName = new Map();
+  for (const match of String(metadataXml).matchAll(/<extendElementProperty\b([^/>]*?)\/>/gi)) {
+    const attrs = parseXmlAttributes(match[1]);
+    if (
+      attrs.formula === "true" &&
+      /^OtherFunction\s*\.\s*getModel\s*\(\s*"[^"]+"\s*,\s*"com\.landray\.kmss\.sys\.organization\.model\.SysOrgElement"\s*,\s*null\s*\)$/u.test(
+        String(attrs.defaultValue || "")
+      )
+    ) {
+      recoveredByName.set(attrs.name, attrs.defaultValue);
+    }
+  }
+  for (const field of fields) {
+    const recovered = recoveredByName.get(field?.id);
+    if (recovered && field?.source?.metadataKind === "element") {
+      field.source.metadataAttributes.defaultValue = recovered;
+    }
+  }
 }
 
 export function isDataOnlyMetadataField(field = {}) {

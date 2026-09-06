@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-static-address-default-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Static Address Default Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-static-address-default-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;
+    &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_company&quot;,content:&quot;申请公司&quot;}&apos;&gt;申请公司&lt;/label&gt;&lt;/td&gt;
+    &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;label fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_company&quot;,label:&quot;申请公司&quot;,_label_bind_id:&quot;label_company&quot;,_orgType:&quot;ORG_TYPE_ORG|ORG_TYPE_DEPT&quot;,_org_org:&quot;true&quot;,_org_dept:&quot;true&quot;,defaultValue:&quot;select&quot;,_selectValue:&quot;route-fixed-org&quot;,_selectName:&quot;Route Fixed Organization&quot;,required:&quot;true&quot;,multiSelect:&quot;false&quot;}&apos;&gt;&lt;/label&gt;&lt;/td&gt;
+   &lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendElementProperty name=&quot;fd_company&quot; label=&quot;申请公司&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgElement&quot; notNull=&quot;true&quot; formula=&quot;true&quot; defaultValue=&quot;OtherFunction.getModel(&amp;quot;route-fixed-org&amp;quot;, &amp;quot;com.landray.kmss.sys.organization.model.SysOrgElement&amp;quot;, null)&quot; dialogJS=&quot;Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_ORG|ORG_TYPE_DEPT);&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

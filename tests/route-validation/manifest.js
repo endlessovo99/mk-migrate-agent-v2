@@ -74,6 +74,12 @@ const DRAFT_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "add-transfer-record"
 ]);
 
+const STATIC_ADDRESS_DEFAULT_SUCCESS_OPERATIONS = Object.freeze([
+  SUCCESS_OPERATIONS[0],
+  "get-element-info",
+  ...SUCCESS_OPERATIONS.slice(1)
+]);
+
 const CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   "login",
   "get-xform-desktop-digest",
@@ -203,6 +209,38 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "checkbox-other-option-success",
+      source: {
+        kind: "form-only",
+        relativePath: "checkbox-other-option/route-checkbox-other-option_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "person-company-ajax-hydration-success",
+      source: {
+        kind: "form-only",
+        relativePath: "person-company-ajax-hydration/route-person-company-ajax-hydration_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "option-normalization-success",
       source: {
         kind: "form-only",
@@ -232,6 +270,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "needs_manual",
         executionStatus: "written_with_warnings",
         operations: DRAFT_WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "static-address-default-success",
+      source: {
+        kind: "form-only",
+        relativePath: "static-address-default/route-static-address-default_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: STATIC_ADDRESS_DEFAULT_SUCCESS_OPERATIONS
       }
     },
     {

@@ -15,6 +15,7 @@ import {
   isPlainInlineCaption
 } from "./inline-caption-recovery.js";
 import { isSafeInlineUnit } from "./source-text-predicates.js";
+import { annotateCheckboxOtherCompanions } from "./checkbox-other-companion.js";
 import { isStaticHeaderGridShape } from "./standard-table-grid.js";
 import {
   designerVisibilityWarnings,
@@ -1102,6 +1103,7 @@ function extractLayoutCellControls(html, captionContext, metadataContext, option
     runtimeVisibleFieldIds: captionContext?.runtimeVisibleFieldIds,
     nodeDataAuthorityVisibleFieldIds: captionContext?.nodeDataAuthorityVisibleFieldIds
   }).map((entry) => withBoundCaptionEntry(entry, captionContext));
+  annotateCheckboxOtherCompanions(extractedEntries.map((entry) => entry.control));
   const sameCellBoundCaptionIds = new Set(
     extractedEntries
       .filter((entry) =>
@@ -1220,6 +1222,15 @@ function isLinkLabelControl(control) {
   return String(control.source?.designerType || "").toLowerCase() === "linklabel";
 }
 
+function preservedCaptionIdsWithCheckboxOther(entries = [], preserveCaptionIds) {
+  const ids = new Set(preserveCaptionIds || []);
+  for (const entry of entries) {
+    const captionId = entry?.control?.source?.otherTextCompanion?.captionId;
+    if (captionId) ids.add(captionId);
+  }
+  return ids;
+}
+
 function isFullRowPlainHintTextLabel(control, context = {}) {
   if (!isSourceDescriptionControl(control)) return false;
   if (String(control.source?.designerType || "").toLowerCase() !== "textlabel") return false;
@@ -1239,7 +1250,7 @@ function isFullRowPlainHintTextLabel(control, context = {}) {
 function foldInlineCellSemantics(html, entries, metadataContext, options = {}) {
   const captions = foldInlineCaptions(html, entries, {
     crossCellBoundCaptionIds: options.crossCellBoundCaptionIds,
-    preserveCaptionIds: options.preserveCaptionIds
+    preserveCaptionIds: preservedCaptionIdsWithCheckboxOther(entries, options.preserveCaptionIds)
   });
   const units = foldInlineNumberUnits(html, captions, metadataContext);
   return foldInlineHints(html, units, metadataContext)
@@ -1721,7 +1732,7 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
     return { id, title, type: "longText", required, mk: mkForFieldType("longText"), source };
   }
   if (["inputcheckbox", "checkbox"].includes(normalized)) {
-    return { id, title, type: "multiSelect", required, mk: mkForFieldType("multiSelect"), source, ...(options.length ? { options } : {}) };
+    return { id, title, type: "checkbox", required, mk: mkForFieldType("checkbox"), source, ...(options.length ? { options } : {}) };
   }
   if (["inputradio", "radio"].includes(normalized)) {
     return { id, title, type: "radio", required, mk: mkForFieldType("radio"), source, ...(options.length ? { options } : {}) };
@@ -1799,7 +1810,11 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
     for (const [cellIndex, cell] of cells.entries()) {
       if (isNonDataDetailCell(cell.attrs)) continue;
       const sourceColumn = parseColumnSpec(cell.attrs.column, cellIndex).column;
-      for (const control of extractDesignerFieldControls(cell.body, { includeHidden: true })) {
+      const cellControls = annotateCheckboxOtherCompanions(
+        extractDesignerFieldControls(cell.body, { includeHidden: true, includeTextLabels: true })
+      );
+      for (const control of cellControls) {
+        if (isSourceDescriptionControl(control)) continue;
         if (!isDetailColumnControl(control, tableId) || seen.has(control.id)) continue;
         seen.add(control.id);
         const persistedControl = control.source?.designerHidden === true &&
