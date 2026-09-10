@@ -815,6 +815,17 @@ function observeNativeDefaultValue(controlProps, field) {
   if (type === "fixed" && Object.hasOwn(controlProps, "defaultValue")) {
     return { kind: "literal", value: cloneValue(controlProps.defaultValue) };
   }
+  if (type === "empty") {
+    if (
+      controlProps.defaultValueType !== "empty" ||
+      font.defaultValueType !== "empty" ||
+      controlProps.defaultValue !== "" ||
+      font.defaultValue !== ""
+    ) {
+      return undefined;
+    }
+    return { kind: "literal", value: "" };
+  }
 
   const formula = controlProps.defaultValueFormulaVO || font.defaultValueFormulaVO;
   if (type !== "formula" || !formula || typeof formula !== "object") return undefined;

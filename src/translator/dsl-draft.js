@@ -1036,8 +1036,15 @@ function propsFromSource(source, options = {}) {
   const placeholder = typeof inlineHint === "string" && inlineHint.trim()
     ? inlineHint
     : displayText;
+  const pleaseSelectPlaceholder = pleaseSelectPlaceholderFromSource(source, componentId);
   if (componentSupportsProp(componentId, "placeholder") && typeof placeholder === "string" && placeholder.trim()) {
     props.placeholder = placeholder;
+  } else if (
+    componentSupportsProp(componentId, "placeholder") &&
+    typeof pleaseSelectPlaceholder === "string" &&
+    pleaseSelectPlaceholder.trim()
+  ) {
+    props.placeholder = pleaseSelectPlaceholder;
   }
   const inlineUnit = source.sourceProps?.inlineUnit?.content;
   if (componentId === "xform-number" && typeof inlineUnit === "string" && inlineUnit.trim()) {
@@ -1048,7 +1055,8 @@ function propsFromSource(source, options = {}) {
   }
 
   if (componentSupportsProp(componentId, "defaultValue")) {
-    const defaultValue = legacyDefaultValueFromSource(source);
+    const defaultValue = legacyDefaultValueFromSource(source) ||
+      emptyPleaseSelectDefaultFromSource(source, componentId);
     if (defaultValue) props.defaultValue = defaultValue;
   }
   if (componentId === "xform-datetime" && source.sourceType === "dateTime") {
@@ -1195,6 +1203,22 @@ function parseLegacyDateTimeDefaultExpression(value, source) {
     return { kind: "currentTime" };
   }
   return undefined;
+}
+
+function emptyPleaseSelectDefaultFromSource(source, componentId) {
+  if (componentId !== "xform-select") return undefined;
+  const designerDefault = source.sourceProps?.designerValues?.defaultValue;
+  const explicitEmpty = designerDefault !== undefined && String(designerDefault).trim() === "";
+  const pleaseSelect = source.sourceProps?.designerPleaseSelect === true;
+  if (!explicitEmpty && !pleaseSelect) return undefined;
+  return { kind: "literal", value: "" };
+}
+
+function pleaseSelectPlaceholderFromSource(source, componentId) {
+  if (componentId !== "xform-select") return undefined;
+  if (source.sourceProps?.designerPleaseSelect !== true) return undefined;
+  const label = String(source.sourceProps?.pleaseSelectLabel || "").trim();
+  return label || "请选择";
 }
 
 function parseLegacyLiteralDefault(value, source) {
@@ -1940,6 +1964,10 @@ function parseLegacyContextDefaultExpression(value, source) {
     return { kind: "context", source: "creator", property: "fdName" };
   }
 
+  if (legacyCreatorEmployeeNumberExpression(expression)) {
+    return { kind: "context", source: "creator", property: "fdNo" };
+  }
+
   if (/^\$(?:fdDepartment|部门)\$\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
     return { kind: "context", source: "creatorDept", property: "fdName" };
   }
@@ -1969,6 +1997,10 @@ function parseLegacyContextDefaultExpression(value, source) {
   }
 
   return undefined;
+}
+
+function legacyCreatorEmployeeNumberExpression(expression) {
+  return /^\$(?:docCreator|申请人|起草人)\$\s*\.\s*(?:fdNo|getFdNo\s*\(\s*\))$/i.test(expression);
 }
 
 function isLegacyAddressSource(source) {

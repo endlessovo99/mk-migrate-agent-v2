@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>class</string><string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string></void>
+  <void method="put"><string>fdId</string><string>route-creator-employee-number-default-sysform</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+  <void method="put"><string>fdName</string><string>创建人工号默认值</string></void>
+  <void method="put"><string>fdModelName</string><string>com.landray.kmss.km.review.model.KmReviewTemplate</string></void>
+  <void method="put"><string>fdModelId</string><string>route-creator-employee-number-default-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_employee_no&quot;,content:&quot;工号&quot;}&apos;&gt;工号&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_employee_no&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;label_employee_no&quot;,label:&quot;提交人工号&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,formula:&quot;$docCreator$.fdNo&quot;,defaultValue:&quot;$申请人$.fdNo&quot;,reCalculate:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;fd_employee_no&quot; defaultValue=&quot;$申请人$.fdNo&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_employee_no_getter&quot;,content:&quot;申请人工号&quot;}&apos;&gt;申请人工号&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;1&quot; column=&quot;1&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_employee_no_getter&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;label_employee_no_getter&quot;,label:&quot;申请人工号&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,formula:&quot;$docCreator$.getFdNo()&quot;,defaultValue:&quot;$申请人$.getFdNo()&quot;,reCalculate:&quot;false&quot;}&apos;&gt;&lt;input id=&quot;fd_employee_no_getter&quot; defaultValue=&quot;$申请人$.getFdNo()&quot;/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;fd_employee_no&quot; label=&quot;提交人工号&quot; type=&quot;String&quot; length=&quot;200&quot; notNull=&quot;true&quot; formula=&quot;true&quot; defaultValue=&quot;$docCreator$.fdNo&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_employee_no_getter&quot; label=&quot;申请人工号&quot; type=&quot;String&quot; length=&quot;200&quot; notNull=&quot;true&quot; formula=&quot;true&quot; defaultValue=&quot;$docCreator$.getFdNo()&quot;/&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

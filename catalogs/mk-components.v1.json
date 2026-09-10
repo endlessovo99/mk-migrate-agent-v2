@@ -238,6 +238,7 @@
           "required": { "type": "boolean" },
           "readOnly": { "type": "boolean" },
           "hiddenLabel": { "type": "boolean" },
+          "placeholder": { "type": "string" },
           "options": { "$ref": "#/$defs/options" },
           "rowOptions": { "$ref": "#/$defs/rowOptions" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }

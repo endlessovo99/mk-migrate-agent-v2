@@ -719,6 +719,8 @@ function sourcePropsFromField(field) {
     inlineUnit: field.source?.inlineUnit,
     otherTextCompanion: field.source?.otherTextCompanion,
     restDialog: field.source?.restDialog,
+    designerPleaseSelect: field.source?.designerPleaseSelect === true ? true : undefined,
+    pleaseSelectLabel: field.source?.pleaseSelectLabel,
     metadataId: field.source?.metadataId,
     metadataKind: field.source?.metadataKind,
     metadataAttributes: field.source?.metadataAttributes,

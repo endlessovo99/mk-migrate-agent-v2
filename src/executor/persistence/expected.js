@@ -395,7 +395,11 @@ function executableProps(field = {}, form = {}, context = {}) {
   if (componentSupportsProp(field.componentId, "defaultValue") && field.props?.defaultValue !== undefined) {
     const defaultValue = field.props.defaultValue;
     props.defaultValue = cloneJson(
-      isOptionComponent(field.componentId)
+      isOptionComponent(field.componentId) && !(
+        field.componentId === "xform-select" &&
+        defaultValue?.kind === "literal" &&
+        defaultValue.value === ""
+      )
         ? {
             ...defaultValue,
             value: normalizeOptionDefaultValue(defaultValue.value, field.props.options || [])

@@ -71,6 +71,10 @@ describe("function whitelist", () => {
       <INPUT value=$docCreator$.getFdName()>
       <INPUT value=$fdDepartment$.getFdName()>
       <INPUT value=$组织架构.当前用户$().getFdName()>
+      <INPUT value=$申请人$.fdNo>
+      <INPUT value=$docCreator$.fdNo>
+      <INPUT value=$申请人$.getFdNo()>
+      <INPUT value=$docCreator$.getFdNo()>
       UnknownLegacyFunction();
     `);
 

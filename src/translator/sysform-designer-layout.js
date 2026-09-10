@@ -16,7 +16,7 @@ import {
 } from "./inline-caption-recovery.js";
 import { isSafeInlineUnit } from "./source-text-predicates.js";
 import { annotateCheckboxOtherCompanions } from "./checkbox-other-companion.js";
-import { isStaticHeaderGridShape } from "./standard-table-grid.js";
+import { isStaticDescriptionGridShape, isStaticHeaderGridShape } from "./standard-table-grid.js";
 import {
   designerVisibilityWarnings,
   resolveDesignerVisibilityOverrides
@@ -253,8 +253,11 @@ function expandNestedLayoutRowDescriptor(
   if (!nestedRows.length) return [descriptor];
 
   const staticHeaderGrid = isStaticHeaderGrid(nestedRows);
+  const staticDescriptionGrid = !staticHeaderGrid && isStaticDescriptionGrid(nestedRows);
   const projectionMode = staticHeaderGrid
     ? "static-header-grid"
+    : staticDescriptionGrid
+      ? "static-description-grid"
     : /<table\b[^>]*\bfd_type\s*=\s*(["'])detailsTable\1/i.test(nested.html)
       ? "details-table"
       : undefined;
@@ -291,7 +294,7 @@ function expandNestedLayoutRowDescriptor(
       preserveStandalonePlainLabels:
         preservesStandaloneStandardTableLabels(descriptor.standardTableProjection),
       preserveBoundCaptions:
-        descriptor.standardTableProjection?.mode === "static-header-grid"
+        preservesBoundStandardTableCaptions(descriptor.standardTableProjection)
     }),
     ...(sourceCellIndex === nested.sourceCellIndex
       ? { layoutRowIds: nestedRootDescriptors.map((row) => row.id) }
@@ -311,23 +314,33 @@ function expandNestedLayoutRowDescriptor(
   ];
 }
 
-function isStaticHeaderGrid(rows = []) {
-  return isStaticHeaderGridShape(
-    rows.map((row) =>
-      splitDirectChildCells(row).map((cell) =>
-        extractDesignerFieldControls(cell.body, {
-          includeHidden: true,
-          includeTextLabels: true
-        }).map((control) => ({
-          description: isSourceDescriptionControl(control)
-        }))
-      )
+function nestedTableControlRows(rows = []) {
+  return rows.map((row) =>
+    splitDirectChildCells(row).map((cell) =>
+      extractDesignerFieldControls(cell.body, {
+        includeHidden: true,
+        includeTextLabels: true
+      }).map((control) => ({
+        description: isSourceDescriptionControl(control)
+      }))
     )
   );
 }
 
+function isStaticHeaderGrid(rows = []) {
+  return isStaticHeaderGridShape(nestedTableControlRows(rows));
+}
+
+function isStaticDescriptionGrid(rows = []) {
+  return isStaticDescriptionGridShape(nestedTableControlRows(rows));
+}
+
 function preservesStandardTableLabels(projection) {
-  return ["details-table", "static-header-grid"].includes(projection?.mode);
+  return ["details-table", "static-header-grid", "static-description-grid"].includes(projection?.mode);
+}
+
+function preservesBoundStandardTableCaptions(projection) {
+  return ["static-header-grid", "static-description-grid"].includes(projection?.mode);
 }
 
 function preservesStandaloneStandardTableLabels(projection) {
@@ -398,7 +411,7 @@ function appendDesignerLayoutRow(descriptor, context) {
           preserveStandalonePlainLabels:
             preservesStandaloneStandardTableLabels(descriptor.standardTableProjection),
           preserveBoundCaptions:
-            descriptor.standardTableProjection?.mode === "static-header-grid",
+            preservesBoundStandardTableCaptions(descriptor.standardTableProjection),
           cell,
           sourceColumns,
           crossCellBoundCaptionIds: new Set(
@@ -1661,12 +1674,19 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
   const title = cleanText(values.label || values.content || id);
   const required = values.required === "true" || /_required\s*=\s*["']?true["']?|required\s*=\s*["']?true["']?/i.test(attrs);
   const options = parseOptions(values.items);
+  const pleaseSelect = ["select", "inputselect"].includes(normalized)
+    ? designerPleaseSelectEvidence(context.html || "", attrs)
+    : undefined;
   const source = {
     designerId: id,
     designerType: fdType,
     designerValues: sanitizeDesignerValues(normalized, values),
     designerTableName: attrValue(attrs, "tableName") || undefined,
     designerShowStatus: attrValue(attrs, "showStatus") || undefined,
+    ...(pleaseSelect ? {
+      designerPleaseSelect: true,
+      pleaseSelectLabel: pleaseSelect.label
+    } : {}),
     ...(context.rightContainer ? { rightContainer: context.rightContainer } : {}),
     ...(normalized === "restdialog" ? { restDialog: restDialogEvidence(values) } : {}),
     ...(context.displayJspVisibilityOverride
@@ -1780,6 +1800,15 @@ function normalizeDesignerLink(value) {
   const decoded = decodeDesignerValue(value);
   const sanitized = sanitizeCredentialMaterial(decoded);
   return cleanText(sanitized.redactedPaths.length ? "" : sanitized.value);
+}
+
+function designerPleaseSelectEvidence(fragment = "", attrs = "") {
+  const html = `${attrs}\n${fragment}`;
+  const showPleaseSelect = /\bshowPleaseSelect\s*=\s*(["']?)true\1/i.test(html);
+  const face = String(fragment).match(/select_tag_face[^>]*>([^<]*)/i);
+  const faceText = cleanText(face?.[1] || "");
+  if (!showPleaseSelect && !/请选择/.test(faceText)) return undefined;
+  return { label: "请选择" };
 }
 
 function decodeDesignerValue(value) {

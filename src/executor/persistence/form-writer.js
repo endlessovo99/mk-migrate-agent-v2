@@ -1126,6 +1126,17 @@ function applyDefaultValueToControlProps(controlProps, field, template, spec) {
   if (!literalDefault) return;
 
   if (["radio", "checkbox", "select"].includes(spec.attrType)) {
+    if (spec.attrType === "select" && isEmptySelectDefault(literalDefault.value)) {
+      controlProps.defaultValueType = "empty";
+      controlProps.defaultValue = "";
+      if (Array.isArray(controlProps.options)) {
+        controlProps.options = controlProps.options.map((option) => ({
+          ...option,
+          checked: false
+        }));
+      }
+      return;
+    }
     const defaultValue = normalizeOptionDefaultValue(literalDefault.value, controlProps.options);
     controlProps.defaultValueType = "fixed";
     controlProps.defaultValue = cloneLiteral(defaultValue);
@@ -1301,6 +1312,19 @@ function fieldFontExtendData(field, template, spec) {
 
   if (["radio", "checkbox", "select"].includes(spec.attrType)) {
     const options = field.props?.options || [];
+    if (spec.attrType === "select" && isEmptySelectDefault(literalDefault.value)) {
+      return {
+        ...data,
+        passValue: false,
+        trace: false,
+        defaultValueType: "empty",
+        defaultValue: "",
+        options: options.map((option) => ({
+          ...nativeOption(option),
+          checked: false
+        }))
+      };
+    }
     const defaultValue = normalizeOptionDefaultValue(literalDefault.value, options);
     const selected = optionValueSet(defaultValue);
     return {
@@ -1368,6 +1392,10 @@ function normalizeLiteralDefault(value) {
   const literal = value.value;
   if (!["string", "number", "boolean"].includes(typeof literal) && !Array.isArray(literal)) return undefined;
   return { value: cloneLiteral(literal) };
+}
+
+function isEmptySelectDefault(value) {
+  return typeof value === "string" && value === "";
 }
 
 function cloneLiteral(value) {

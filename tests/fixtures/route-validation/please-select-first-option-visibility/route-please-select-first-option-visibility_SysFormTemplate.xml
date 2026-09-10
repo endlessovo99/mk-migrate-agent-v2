@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>class</string><string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string></void>
+  <void method="put"><string>fdId</string><string>route-please-select-first-option-visibility-sysform</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+  <void method="put"><string>fdName</string><string>请选择首选项显隐</string></void>
+  <void method="put"><string>fdModelName</string><string>com.landray.kmss.km.review.model.KmReviewTemplate</string></void>
+  <void method="put"><string>fdModelId</string><string>route-please-select-first-option-visibility-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_bxlx&quot;,content:&quot;报销类型&quot;}&apos;&gt;报销类型&lt;/label&gt;&lt;/td&gt;
+     &lt;td row=&quot;0&quot; column=&quot;1&quot;&gt;
+      &lt;div class=&quot;select_div_box&quot; fd_type=&quot;select&quot; fd_values=&apos;{id:&quot;bxlx&quot;,label:&quot;报销类型&quot;,required:&quot;true&quot;,dataType:&quot;String&quot;,items:&quot;日常运营|rcyy&amp;#13;&amp;#10;宣传活动|xchd&quot;,formula:&quot;&quot;,defaultValue:&quot;&quot;,reCalculate:&quot;false&quot;}&apos;&gt;
+       &lt;label class=&quot;select_tag_face&quot;&gt;--- 请选择 ---&lt;/label&gt;
+       &lt;select id=&quot;bxlx&quot; required=&quot;true&quot; showPleaseSelect=&quot;true&quot;&gt;&lt;/select&gt;
+      &lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr style=&quot;display:none&quot;&gt;
+     &lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+      &lt;div style=&quot;display:none&quot; fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_rcyy&quot;,label:&quot;rcyy&quot;,canShow:&quot;false&quot;,dataType:&quot;String&quot;}&apos;&gt;
+       &lt;input id=&quot;fd_rcyy&quot; class=&quot;inputhidden&quot;/&gt;
+      &lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;2&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;
+      &lt;input type=&quot;hidden&quot; id=&quot;rcyy_row&quot; name=&quot;rcyy_row&quot;/&gt;
+      &lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_rcyy_detail&quot;,label:&quot;日常运营&quot;}&apos;&gt;
+       &lt;tbody&gt;
+        &lt;tr&gt;&lt;td&gt;金额&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr type=&quot;templateRow&quot;&gt;
+         &lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_rcyy_amount&quot;,label:&quot;金额&quot;,tableName:&quot;fd_rcyy_detail&quot;,dataType:&quot;Double&quot;,required:&quot;true&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+       &lt;/tbody&gt;
+      &lt;/table&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row=&quot;3&quot; column=&quot;0,1&quot; colSpan=&quot;2&quot;&gt;
+      &lt;div id=&quot;jsp_bxlx_visibility&quot; fd_type=&quot;jsp&quot;&gt;
+       &lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
+        AttachXFormValueChangeEventById(&quot;bxlx&quot;, function(value, domElement){
+          var is_jbcf=GetXFormFieldById(&quot;fd_rcyy&quot;)[0];
+          if(value.indexOf(&quot;rcyy&quot;)&gt;=0){
+            is_jbcf.value=&quot;rcyy&quot;;
+            common_dom_row_set_show_required_reset(&quot;rcyy_row&quot;,true,true,false);
+          }else{
+            is_jbcf.value=&quot;&quot;;
+            common_dom_row_set_show_required_reset(&quot;rcyy_row&quot;,false,false,false);
+          }
+        });
+       &lt;/script&gt;&lt;/xform:editShow&gt;
+       &lt;script&gt;
+        Com_AddEventListener(window, &quot;load&quot;, function(){
+          var is_jbcf=GetXFormFieldById(&quot;fd_rcyy&quot;)[0];
+          if(is_jbcf.value.indexOf(&quot;rcyy&quot;)&gt;=0){
+            common_dom_row_set_show_required_reset(&quot;rcyy_row&quot;,true,false,false);
+          }else{
+            common_dom_row_set_show_required_reset(&quot;rcyy_row&quot;,false,false,false);
+          }
+        });
+       &lt;/script&gt;&apos;/&gt;
+      &lt;/div&gt;
+     &lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name=&quot;bxlx&quot; label=&quot;报销类型&quot; type=&quot;String&quot; notNull=&quot;true&quot; enumValues=&quot;日常运营|rcyy;宣传活动|xchd&quot;/&gt;
+    &lt;extendSimpleProperty name=&quot;fd_rcyy&quot; label=&quot;rcyy&quot; type=&quot;String&quot; canDisplay=&quot;false&quot; canShow=&quot;false&quot; showStatus=&quot;noShow&quot;/&gt;
+    &lt;extendSubTableProperty name=&quot;fd_rcyy_detail&quot; label=&quot;日常运营&quot;&gt;
+     &lt;extendSimpleProperty name=&quot;fd_rcyy_amount&quot; label=&quot;金额&quot; type=&quot;Double&quot; notNull=&quot;true&quot;/&gt;
+    &lt;/extendSubTableProperty&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>
