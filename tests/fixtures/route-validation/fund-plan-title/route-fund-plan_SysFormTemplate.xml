@@ -1,0 +1,170 @@
+<?xml version='1.0' encoding='utf-8'?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>fdTemplateEdition</string>
+      <string>1</string>
+    </void>
+    <void method="put">
+      <string>class</string>
+      <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&amp;nbsp; 
+&lt;TABLE id=fd_3768cdf4d127ca class=tb_normal style="WIDTH: 98%" align=center label="主表" formDesign="landray" layout2col="undefined" fd_values='{id:"fd_3768cdf4d10eac",label:"主表"}' fd_type="standardTable"&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=216 row="0" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768cdfe6df50c",content:"申请部门",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;申请部门&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=418 row="0" column="1"&gt;&lt;LABEL style="WIDTH: 152px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce54c3907a",width:"120",_label_bind:"true",label:"申请部门",_label_bind_id:"fd_3768cdfe6df50c",_org_person:"false",_orgType:"ORG_TYPE_ORG|ORG_TYPE_DEPT",readOnly:"false",required:"false",businessType:"addressDialog",multiSelect:"false",orgType:"",_org_dept:"true",_org_post:"false",_org_group:"false",defaultValue:"ORG_TYPE_DEPT",_org_org:"true"}' fd_type="address"&gt;&lt;INPUT id=fd_3768ce54c3907a class=inputsgl style="WIDTH: 120px" readOnly value=提交人的部门 ? label="申请部门" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" multiSelect="false" businessType="addressDialog" tableName="fd_3768cdf4d127ca" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true" defaultValue="ORG_TYPE_DEPT"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title width=192 row="0" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768cdff961166",content:"申请人",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;申请人&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=404 row="0" column="3"&gt;&lt;LABEL style="WIDTH: 152px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce5f34ddc4",width:"120",_label_bind:"false",label:"申请人1",_label_bind_id:"fd_3768cdff961166",_org_person:"true",_orgType:"ORG_TYPE_PERSON",readOnly:"false",required:"false",businessType:"addressDialog",multiSelect:"false",orgType:"",_org_org:"false",_org_dept:"false",_org_post:"false",_org_group:"false",defaultValue:"ORG_TYPE_PERSON"}' fd_type="address"&gt;&lt;INPUT id=fd_3768ce5f34ddc4 class=inputsgl style="WIDTH: 120px" readOnly value=提交人 ? label="申请人1" orgType="ORG_TYPE_PERSON" multiSelect="false" businessType="addressDialog" tableName="fd_3768cdf4d127ca" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true" defaultValue="ORG_TYPE_PERSON"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;
+&lt;DIV style="WIDTH: 126px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_398a15eba13fae",width:"120",_label_bind:"false",label:"申请人工号",_label_bind_id:"fd_3768cdff961166",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"$docCreator$.getFdNo()",defaultValue:"$申请人$.getFdNo()",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_398a15eba13fae class=inputsgl style="WIDTH: 120px" readOnly value=$申请人$.getFdNo() ? label="申请人工号" tableName="fd_3768cdf4d127ca" _required="true" required="true" _readOnly="false" thousandShow="false" canShow="true" defaultValue="$申请人$.getFdNo()"&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=222 row="1" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce009a29f4",content:"所属时间（周）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;所属时间（周）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=427 align=left row="1" column="1"&gt;
+&lt;DIV style="WIDTH: 152px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce680734d0",width:"120",_label_bind:"true",label:"所属时间（周）",_label_bind_id:"fd_3768ce009a29f4"}' fd_type="datetime"&gt;&lt;INPUT id=fd_3768ce680734d0 class=inputsgl style="WIDTH: 120px" readOnly ? label="所属时间（周）" businessType="dateDialog" tableName="fd_3768cdf4d127ca" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce6b022212",content:"到",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;到&lt;/LABEL&gt; 
+&lt;DIV style="WIDTH: 152px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce737dae72",width:"120",_label_bind:"false",label:"所属时间（周）2",_label_bind_id:"fd_3768ce009a29f4",canShow:"true",readOnly:"false",required:"false",businessType:"dateDialog",defaultValue:"null",_selectValue:"",reCalculate:"false"}' fd_type="datetime"&gt;&lt;INPUT id=fd_3768ce737dae72 class=inputsgl style="WIDTH: 120px" readOnly ? label="所属时间（周）2" businessType="dateDialog" tableName="fd_3768cdf4d127ca" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true" defaultValue="null"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title width=202 row="1" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce02d7ff86",content:"联系电话",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;联系电话&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=409 row="1" column="3"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce782b4580",width:"120",_label_bind:"true",label:"联系电话",_label_bind_id:"fd_3768ce02d7ff86"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_3768ce782b4580 class=inputsgl style="WIDTH: 120px" readOnly ? label="联系电话" tableName="fd_3768cdf4d127ca" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true"&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=217 row="2" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce0401d5de",content:"资金收入",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;资金收入&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=429 row="2" column="1"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce7a94db2c",width:"120",_label_bind:"true",label:"资金收入",_label_bind_id:"fd_3768ce0401d5de"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_3768ce7a94db2c class=inputsgl style="WIDTH: 120px" readOnly ? label="资金收入" tableName="fd_3768cdf4d127ca" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true"&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce897930fc",content:"元",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;元&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title width=209 row="2" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce0538136e",content:"资金支出",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;资金支出&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=410 row="2" column="3"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce7c22d4ec",width:"120",_label_bind:"true",label:"资金支出",_label_bind_id:"fd_3768ce0538136e"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_3768ce7c22d4ec class=inputsgl style="WIDTH: 120px" readOnly ? label="资金支出" tableName="fd_3768cdf4d127ca" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true"&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce8ee50af4",content:"元",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;元&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=214 row="3" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce0c1ce98a",content:"附件",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1054 colSpan=3 row="3" column="1,2,3"&gt;
+&lt;DIV id=fd_3768cea1e5ade2 style="WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline" label="附件" formDesign="landray" fd_values='{id:"fd_3768cea1e5ade2",_label_bind:"true",label:"附件",_label_bind_id:"fd_3768ce0c1ce98a"}' fd_type="attachment" tableName="fd_3768cdf4d127ca" enabledFileType fdMulti="true"&gt;&lt;BUTTON onclick="return false;" class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick="return false;" class=btnopt&gt;删除&lt;/BUTTON&gt; 
+&lt;TABLE&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick="return false;" type=checkbox&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;INPUT onclick="return false;" type=checkbox&gt;&lt;/TD&gt;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;INPUT onclick="return false;" type=checkbox&gt;&lt;/TD&gt;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=214 row="4" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3768ce0d680042",content:"备注",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;备注&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1054 colSpan=3 row="4" column="1,2,3"&gt;&lt;IMG id=fd_3768cfeafa278c style="HEIGHT: 220px; WIDTH: 80%; DISPLAY: inline" src="style/img/rtf.jpg" label="备注" formDesign="landray" fd_values='{id:"fd_3768cfeafa278c",_label_bind:"true",label:"备注",_label_bind_id:"fd_3768ce0d680042",width:"80%",height:"220"}' fd_type="rtf" businessType="rtfEditor" tableName="fd_3768cdf4d127ca" canShow="false" pHeight="220" pWidth="80%" needFilter="false"&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>route-fund-plan-fdModelId</string>
+    </void>
+    <void method="put">
+      <string>fdId</string>
+      <string>route-fund-plan-fdId</string>
+    </void>
+    <void method="put">
+      <string>fdDisplayJsp</string>
+      <string>&lt;%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%&gt;
+&lt;%@ include file="/resource/jsp/common.jsp"%&gt;
+&lt;%@ page import="com.landray.kmss.web.taglib.xform.TagUtils" %&gt;
+&lt;TABLE id=fd_3768cdf4d127ca class=tb_normal  align=center label="主表"  layout2col="undefined"  style="width:100%;"&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=216 row="0" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;申请部门&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=418 row="0" column="1"&gt;
+			&lt;LABEL style="WIDTH: 152px; DISPLAY: inline"   &gt;&lt;xform:address propertyId="extendDataFormInfo.value(fd_3768ce54c3907a.id)" propertyName="extendDataFormInfo.value(fd_3768ce54c3907a.name)" mulSelect="false" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" subject="申请部门" title="申请部门" style="WIDTH: 120px" required="false" onValueChange="__xformDispatch" isLoadDataDict="false" /&gt;&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title width=192 row="0" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;申请人&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=404 row="0" column="3"&gt;
+			&lt;LABEL style="WIDTH: 152px; DISPLAY: inline"   &gt;&lt;xform:address propertyId="extendDataFormInfo.value(fd_3768ce5f34ddc4.id)" propertyName="extendDataFormInfo.value(fd_3768ce5f34ddc4.name)" mulSelect="false" orgType="ORG_TYPE_PERSON" subject="申请人1" title="申请人1" style="WIDTH: 120px" required="false" onValueChange="__xformDispatch" isLoadDataDict="false" /&gt;&lt;/LABEL&gt;
+
+
+			&lt;DIV style="WIDTH: 126px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_398a15eba13fae)" style="WIDTH: 120px" required="true" subject="申请人工号" title="申请人工号" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=222 row="1" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;所属时间（周）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=427 align=left row="1" column="1"&gt;
+
+			&lt;DIV style="WIDTH: 152px; DISPLAY: inline"   &gt;&lt;xform:datetime property="extendDataFormInfo.value(fd_3768ce680734d0)" style="WIDTH: 120px" required="false" subject="所属时间（周）" title="所属时间（周）" onValueChange="__xformDispatch" dateTimeType="date" isLoadDataDict="false" /&gt;&lt;/DIV&gt;
+
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;到&lt;/LABEL&gt;
+ 
+
+			&lt;DIV style="WIDTH: 152px; DISPLAY: inline"   &gt;&lt;xform:datetime property="extendDataFormInfo.value(fd_3768ce737dae72)" style="WIDTH: 120px" required="false" subject="所属时间（周）2" title="所属时间（周）2" onValueChange="__xformDispatch" dateTimeType="date" isLoadDataDict="false" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title width=202 row="1" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;联系电话&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=409 row="1" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3768ce782b4580)" style="WIDTH: 120px" required="false" subject="联系电话" title="联系电话" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=217 row="2" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;资金收入&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=429 row="2" column="1"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3768ce7a94db2c)" style="WIDTH: 120px" required="false" subject="资金收入" title="资金收入" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;元&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title width=209 row="2" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;资金支出&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=410 row="2" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3768ce7c22d4ec)" style="WIDTH: 120px" required="false" subject="资金支出" title="资金支出" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;元&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=214 row="3" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;附件&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1054 colSpan=3 row="3" column="1,2,3"&gt;
+
+&lt;c:import url="/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == 'add' || _xformMainForm.method_GET == 'edit') ? 'edit' : 'view') : (_xformRight == 'edit' ? 'edit' : 'view')}.jsp" charEncoding="UTF-8"&gt;
+	&lt;c:param name="fdAttType" value="byte" /&gt;
+	&lt;c:param name="fdMulti" value="true" /&gt;
+	&lt;c:param name="fdShowMsg" value="true" /&gt;
+	&lt;c:param name="fdImgHtmlProperty" /&gt;
+	&lt;c:param name="fdKey" value="fd_3768cea1e5ade2" /&gt;
+	&lt;c:param name="fdModelId" value="${_xformMainForm.fdId}" /&gt;
+	&lt;c:param name="fdModelName" value="${_xformMainForm.modelClass.name}" /&gt;
+	&lt;c:param name="formBeanName" value="_xformMainForm" /&gt;
+&lt;/c:import&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title width=214 row="4" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;备注&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1054 colSpan=3 row="4" column="1,2,3"&gt;
+			&lt;xform:rtf property="extendDataFormInfo.value(fd_3768cfeafa278c)" height="220" width="80%" needFilter="false" toolbarSet="Default" /&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdMetadataXml</string>
+      <string>&lt;model &gt;
+&lt;extendElementProperty name="fd_3768ce54c3907a" label="申请部门" type="com.landray.kmss.sys.organization.model.SysOrgElement" defaultValue="OrgFunction.getCurrentDept()" formula="true" dialogJS="Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_ORG|ORG_TYPE_DEPT);" /&gt;
+&lt;extendElementProperty name="fd_3768ce5f34ddc4" label="申请人1" type="com.landray.kmss.sys.organization.model.SysOrgPerson" defaultValue="OrgFunction.getCurrentUser()" formula="true" dialogJS="Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_PERSON);" /&gt;
+&lt;extendSimpleProperty name="fd_398a15eba13fae" label="申请人工号" type="String" length="200" notNull="true" formula="true" defaultValue="$docCreator$.getFdNo()" /&gt;
+&lt;extendSimpleProperty name="fd_3768ce680734d0" label="所属时间（周）" type="Date" /&gt;
+&lt;extendSimpleProperty name="fd_3768ce737dae72" label="所属时间（周）2" type="Date" /&gt;
+&lt;extendSimpleProperty name="fd_3768ce782b4580" label="联系电话" type="String" length="200" /&gt;
+&lt;extendSimpleProperty name="fd_3768ce7a94db2c" label="资金收入" type="String" length="200" /&gt;
+&lt;extendSimpleProperty name="fd_3768ce7c22d4ec" label="资金支出" type="String" length="200" /&gt;
+
+&lt;extendSimpleProperty name="fd_3768cfeafa278c" label="备注" type="RTF" length="1000000" /&gt;
+&lt;/model&gt;</string>
+    </void>
+  </object>
+</java>

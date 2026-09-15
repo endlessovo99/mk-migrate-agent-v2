@@ -6,6 +6,7 @@ import {
 } from "./form-rules-writer.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { projectNativeLayoutRows } from "./layout-projection.js";
+import { inlineCellLayout } from "./inline-cell-layout.js";
 import {
   detailTableEditOperations,
   detailTableViewOperations
@@ -1616,7 +1617,7 @@ function buildViewModel(config, template, mainModel, form, detailModelsByField) 
 }
 
 function buildViewConfig(mainModel, form, detailModelsByField) {
-  const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField);
+  const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields);
   const mainContainer = {
     key: "main",
     type: "main",
@@ -1672,14 +1673,14 @@ function appearanceNode(tableName, mainContainer) {
   };
 }
 
-function buildRows(rows, detailModelsByField) {
+function buildRows(rows, detailModelsByField, fields) {
   const rowsById = new Map(rows.map((row) => [row.id, row]));
   return projectNativeLayoutRows(rows).map((projection) =>
-    buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField)
+    buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField, fields)
   );
 }
 
-function buildLayoutGridRow(row, projection, rowsById, detailModelsByField) {
+function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fields) {
   const cells = projection.cells;
   const layoutId = `layout~${stableShortId(row.id)}`;
   const gridId = `@elem/layout-grid~${stableShortId(`${row.id}:grid`)}`;
@@ -1721,7 +1722,7 @@ function buildLayoutGridRow(row, projection, rowsById, detailModelsByField) {
             index,
             rowsById,
             detailModelsByField,
-            { explicitRowSpan: isNestedProjection }
+            { explicitRowSpan: isNestedProjection, fields }
           ))
       }
     ]
@@ -1780,6 +1781,8 @@ function buildGridItem(
   const column = Number.isInteger(cell.column) ? cell.column : index;
   const gridRow = Number.isInteger(cell.row) ? cell.row : 0;
   const colspan = Number.isInteger(cell.colspan) ? cell.colspan : 1;
+  const inlineLayout = inlineCellLayout(cell, options.fields);
+  const inlineId = `@elem/xform-row~${stableShortId(`${itemIdentity}:inline`)}`;
   return {
     key: itemId,
     type: "@elem/layout-grid.GridItem",
@@ -1794,8 +1797,14 @@ function buildGridItem(
       // Audit-only markers; script persistence compiles them to concrete control ids.
       ...migrationAudit
     },
-    children: cell.keepInline === true && !detailModel
-      ? refIds.map((refId) => fieldRef(refId))
+    children: inlineLayout && !detailModel
+      ? [{
+          key: inlineId,
+          type: inlineLayout.type,
+          kind: "container",
+          controlProps: { id: inlineId, spans: inlineLayout.spans, style: inlineLayout.style },
+          children: refIds.map((refId) => fieldRef(refId))
+        }]
       : [fieldRef(firstRefId)]
   };
 }

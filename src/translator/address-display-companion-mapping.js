@@ -1,8 +1,8 @@
 import { componentSupportsProp } from "../dsl/catalogs.js";
 
 /**
- * Maps a legacy address display-name companion onto MK's single address
- * control while retaining the companion as persisted, non-rendered data.
+ * Retains explicitly visible address display-name inputs beside their selector.
+ * Companions without independent visible-input evidence keep the single-control mapping.
  * This is target selection and therefore belongs at the DSL mapping seam.
  */
 export function mapAddressDisplayCompanions(fields, sourceLayout) {
@@ -22,7 +22,7 @@ export function mapAddressDisplayCompanions(fields, sourceLayout) {
         ...field,
         props: {
           ...field.props,
-          ...(field.props?.required === true || companion.props?.required === true
+          ...(field.props?.required === true || (!isVisibleCompanion(companion) && companion.props?.required === true)
             ? { required: true }
             : {}),
           ...(
@@ -42,6 +42,7 @@ export function mapAddressDisplayCompanions(fields, sourceLayout) {
       };
     }
     if (!companions.has(field.id)) return field;
+    if (isVisibleCompanion(field)) return field;
     const { required: _required, ...props } = field.props || {};
     return {
       ...field,
@@ -53,6 +54,15 @@ export function mapAddressDisplayCompanions(fields, sourceLayout) {
       }
     };
   });
+}
+
+function isVisibleCompanion(field) {
+  const values = field.sourceProps?.designerValues || {};
+  return field.dataOnly !== true && field.props?.hidden !== true &&
+    (String(values._label_bind).toLowerCase() === "true" ||
+      (field.sourceProps?.layoutCell?.relation === "retained-source-caption" &&
+        field.sourceProps?.layoutCell?.renderer === "xform:xtext")) &&
+    Number(values.width) > 0 && String(values.canShow).toLowerCase() !== "false";
 }
 
 export function removeDataOnlyFieldRefs(layout, fields) {

@@ -1,0 +1,273 @@
+<?xml version='1.0' encoding='utf-8'?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>fdTemplateEdition</string>
+      <string>2</string>
+    </void>
+    <void method="put">
+      <string>class</string>
+      <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&amp;nbsp; 
+&lt;TABLE id=fd_3255d4e39522ae class=tb_normal style="WIDTH: 98%" align=center fd_type="standardTable" fd_values='{id:"fd_3255d4e3953f4c",label:"主表"}' layout2col="undefined" formDesign="landray" label="主表"&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 58px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=169 column="0" row="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 60px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d548f1e220",content:"请假人姓名",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;请假人姓名&lt;/LABEL&gt; 
+&lt;DIV id=fd_33f8a170de2b86 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_33f8a170de2b86"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;script&gt;&amp;#13;&amp;#10;AttachXFormValueChangeEventById(&amp;quot;fd_select_person.id&amp;quot;,function(value,domElement){&amp;#13;&amp;#10;&amp;#9;&amp;#9;var pId=value[0];&amp;#13;&amp;#10;&amp;#9;&amp;#9;//需要从后台取值的属性与表单中的ID键值对&amp;#13;&amp;#10;&amp;#9;&amp;#9;var toIDs=[&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;{name:&amp;quot;fdParentOrgName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_person_org)&amp;quot;},&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;{name:&amp;quot;fdParentName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_person_dept)&amp;quot;}];&amp;#13;&amp;#10;&amp;#9;&amp;#9;//获取当前ID的索引号&amp;#13;&amp;#10;&amp;#9;&amp;#9;var s = name.substring(name.indexOf(&amp;quot;(&amp;quot;)+1);&amp;#13;&amp;#10;&amp;#9;&amp;#9;s = s.substring(0,s.indexOf(&amp;quot;)&amp;quot;));&amp;#13;&amp;#10;&amp;#9;&amp;#9;var index = s.split(&amp;quot;.&amp;quot;)[1];&amp;#13;&amp;#10;&amp;#9;&amp;#9;//从后台获取数据并赋值&amp;#13;&amp;#10;&amp;#9;&amp;#9;var kmssdata = new KMSSData();&amp;#13;&amp;#10;&amp;#9;&amp;#9;kmssdata.UseCache = false;&amp;#13;&amp;#10;&amp;#9;&amp;#9;kmssdata.AddBeanData(Data_GetOrgPersonBeanNameByKey(&amp;quot;'&amp;quot;+pId+&amp;quot;'&amp;quot;,&amp;quot;fdId:fdName:hbmParentOrg.fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&amp;quot;));&amp;#9;&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#13;&amp;#10;  $.ajax( {  &amp;#13;&amp;#10;      url:'/sys/organization/sys_org_person/chgPersonInfo.do?method=findCompByChildId',// 跳转到action地址，需要调整对应的应用服务名称（如：ekp）&amp;#13;&amp;#10;     data:{fdId:pId},  &amp;#13;&amp;#10;     type:'post',  &amp;#13;&amp;#10;     cache:false,  &amp;#13;&amp;#10;     dataType:'json',  &amp;#13;&amp;#10;      success:function(data) {  &amp;#13;&amp;#10;        $(&amp;quot;input[name='extendDataFormInfo.value(fd_person_org)']&amp;quot;) .val(data.fdName);&amp;#13;&amp;#10;            &amp;#13;&amp;#10;      },&amp;#13;&amp;#10;      error : function() {  &amp;#13;&amp;#10;           // view(&amp;quot;异常！&amp;quot;);  &amp;#13;&amp;#10;           alert(&amp;quot;异常！&amp;quot;);  &amp;#13;&amp;#10;      }&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#13;&amp;#10;&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&lt;/script&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;
+&lt;DIV id=fd_33f8b24ab357a6 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_33f8b24ab357a6"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;script&gt;&amp;#13;&amp;#10;XFormOnValueChangeFuns.push(function(value,domElement){&amp;#13;&amp;#10;&amp;#9;var name = domElement[0].name;&amp;#13;&amp;#10;if(name.indexOf(&amp;quot;fd_select_person.id&amp;quot;)&gt;0){//表单地址本中ID后缀&amp;#13;&amp;#10;&amp;#9;&amp;#9;var pId=value[0];&amp;#13;&amp;#10;&amp;#9;&amp;#9;//需要从后台取值的属性与表单中的ID键值对&amp;#13;&amp;#10;&amp;#9;&amp;#9;var toIDs=[&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;{name:&amp;quot;fdName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_display_name)&amp;quot;}];&amp;#13;&amp;#10;&amp;#9;&amp;#9;//获取当前ID的索引号&amp;#13;&amp;#10;&amp;#9;&amp;#9;var s = name.substring(name.indexOf(&amp;quot;(&amp;quot;)+1);&amp;#13;&amp;#10;&amp;#9;&amp;#9;s = s.substring(0,s.indexOf(&amp;quot;)&amp;quot;));&amp;#13;&amp;#10;&amp;#9;&amp;#9;var index = s.split(&amp;quot;.&amp;quot;)[1];&amp;#13;&amp;#10;&amp;#9;&amp;#9;//从后台获取数据并赋值&amp;#13;&amp;#10;&amp;#9;&amp;#9;var kmssdata = new KMSSData();&amp;#13;&amp;#10;&amp;#9;&amp;#9;kmssdata.UseCache = false;&amp;#13;&amp;#10;&amp;#9;&amp;#9;kmssdata.AddBeanData(Data_GetOrgPersonBeanNameByKey(&amp;quot;'&amp;quot;+pId+&amp;quot;'&amp;quot;,&amp;quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&amp;quot;));&amp;#13;&amp;#10;&amp;#9;&amp;#9;kmssdata.Parse(function(data){&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;data.Format(&amp;quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&amp;quot;, null, false);&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;data = data.GetHashMapArray();&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;if(data.length==1){&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;&amp;#9;for(var i=0;i&lt;toIDs.length;i++){&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;&amp;#9;&amp;#9;GetXFormFieldById(toIDs[i][&amp;quot;id&amp;quot;])[0].value=data[0][toIDs[i][&amp;quot;name&amp;quot;]]||&amp;quot;&amp;quot;;&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;&amp;#9;}&amp;#13;&amp;#10;&amp;#9;&amp;#9;&amp;#9;}&amp;#13;&amp;#10;$.ajax( {  &amp;#13;&amp;#10;      url:'/sys/organization/sys_org_person/chgPersonInfo.do?method=findCompByChildId',// 跳转到action地址，需要调整对应的应用服务名称（如：ekp）&amp;#13;&amp;#10;     data:{fdId:pId},  &amp;#13;&amp;#10;     type:'post',  &amp;#13;&amp;#10;     cache:false,  &amp;#13;&amp;#10;     dataType:'json',  &amp;#13;&amp;#10;     success:function(data) {  &amp;#13;&amp;#10;&amp;#9;alert(data.fdName)&amp;#13;&amp;#10;        $(&amp;quot;input[name='extendDataFormInfo.value(fd_person_org)']&amp;quot;) .val(data.fdName);&amp;#13;&amp;#10;            &amp;#13;&amp;#10;      },  &amp;#13;&amp;#10;      error : function() {  &amp;#13;&amp;#10;           // view(&amp;quot;异常！&amp;quot;);  &amp;#13;&amp;#10;           alert(&amp;quot;异常！&amp;quot;);  &amp;#13;&amp;#10;      }  &amp;#9;&amp;#13;&amp;#10;&amp;#9;&amp;#9;});&amp;#13;&amp;#10;&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&amp;#13;&amp;#10;&amp;#9;}&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&lt;/script&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 390px" width=441 column="1" row="0"&gt;
+&lt;DIV style="WIDTH: 198px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_select_person.name",width:"193",_label_bind:"true",label:"请假人姓名",_label_bind_id:"fd_3255d548f1e220",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_select_person.name class=inputsgl style="WIDTH: 193px" readOnly label="请假人姓名" canShow="true" required ? thousandShow="false" _readOnly="false" _required="true" tableName="fd_3255d4e39522ae"&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;
+&lt;DIV id=fd_325680cdeeb718 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_325680cdeeb718"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;xform:editShow&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;LABEL style="WIDTH: 32px; DISPLAY: inline" fd_type="address" fd_values='{id:"fd_select_person",width:"0",_label_bind:"false",label:"选择请假人姓名",_label_bind_id:"fd_3255d548f1e220",_org_person:"true",_orgType:"ORG_TYPE_PERSON",readOnly:"false",required:"false",businessType:"addressDialog",multiSelect:"false",orgType:"",_org_org:"false",_org_dept:"false",_org_post:"false",_org_group:"false",defaultValue:"null"}' formDesign="landray"&gt;&lt;INPUT id=fd_select_person class=inputsgl style="WIDTH: 0px" readOnly label="选择请假人姓名" canShow="true" required ? thousandShow="true" _readOnly="false" _required="false" tableName="fd_3255d4e39522ae" defaultValue="null" multiSelect="false" orgType="ORG_TYPE_PERSON" businessType="addressDialog"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 5px; FONT-WEIGHT: normal; COLOR: #ff0000; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_325680e6d2262a",content:"*",font:"",size:"",color:"#FF0000",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;*&lt;/LABEL&gt; 
+&lt;DIV id=fd_325680c12f5ebe title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_325680c12f5ebe"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;/xform:editShow&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title width=501 column="2" row="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 48px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d5a2ae788a",content:"联系电话",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;联系电话&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=592 column="3" row="0"&gt;
+&lt;DIV style="WIDTH: 125px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_person_phone",width:"125",_label_bind:"true",label:"联系电话",_label_bind_id:"fd_3255d5a2ae788a",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_person_phone class=inputsgl style="WIDTH: 125px" readOnly label="联系电话" canShow="true" required ? thousandShow="false" _readOnly="false" _required="false" tableName="fd_3255d4e39522ae"&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=159 column="0" row="1"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 48px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d568ad65b6",content:"所在公司",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;所在公司&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 390px" width=415 column="1" row="1"&gt;&lt;LABEL style="WIDTH: 152px; DISPLAY: inline" fd_type="address" fd_values='{id:"fd_375205562cdaa8",width:"120",_label_bind:"true",label:"所在公司",_label_bind_id:"fd_3255d568ad65b6",_org_person:"false",_orgType:"ORG_TYPE_ORG|ORG_TYPE_DEPT",readOnly:"false",required:"false",businessType:"addressDialog",multiSelect:"false",orgType:"",_org_dept:"true",_org_post:"false",_org_group:"false",defaultValue:"select",_selectValue:"16392a9fdc6b59731ea2afd4f8b8b715",_selectName:"上海电气集团数字科技有限公司",_org_org:"true"}' formDesign="landray"&gt;&lt;INPUT id=fd_375205562cdaa8 class=inputsgl style="WIDTH: 120px" readOnly value=上海电气集团数字科技有限公司 label="所在公司" canShow="true" required="false" ? thousandShow="true" _readOnly="false" _required="false" tableName="fd_3255d4e39522ae" defaultValue="select" multiSelect="false" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" businessType="addressDialog" selectedValue="16392a9fdc6b59731ea2afd4f8b8b715" selectedName="上海电气集团数字科技有限公司"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title width=528 column="2" row="1"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 48px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d5a9556db6",content:"上报日期",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;上报日期&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=611 column="3" row="1"&gt;
+&lt;DIV style="WIDTH: 148px; DISPLAY: inline" fd_type="datetime" fd_values='{id:"fd_3255d66ae9a53e",width:"120",_label_bind:"true",label:"上报日期",_label_bind_id:"fd_3255d5a9556db6",canShow:"true",readOnly:"false",required:"false",businessType:"dateDialog",defaultValue:"nowTime",_selectValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;INPUT id=fd_3255d66ae9a53e class=inputsgl style="WIDTH: 120px" readOnly value=当前时间 label="上报日期" canShow="true" required ? thousandShow="true" _readOnly="false" _required="false" tableName="fd_3255d4e39522ae" defaultValue="nowTime" businessType="dateDialog"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=154 column="0" row="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 48px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d593cba6b6",content:"所在部门",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;所在部门&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 390px" width=405 column="1" row="2"&gt;
+&lt;DIV style="WIDTH: 198px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_person_dept.name",width:"198",_label_bind:"true",label:"所在部门",_label_bind_id:"fd_3255d593cba6b6",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_person_dept.name class=inputsgl style="WIDTH: 198px" readOnly label="所在部门" canShow="true" required ? thousandShow="false" _readOnly="false" _required="false" tableName="fd_3255d4e39522ae"&gt;&lt;/DIV&gt;
+&lt;DIV id=fd_332f9965fb22e8 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_332f9965fb22e8"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;xform:editShow&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;LABEL style="WIDTH: 28px; DISPLAY: inline" fd_type="address" fd_values='{id:"fd_person_dept",width:"0",_label_bind:"false",label:"所在部门选择",_label_bind_id:"fd_3255d593cba6b6",_org_person:"false",_orgType:"ORG_TYPE_ORG|ORG_TYPE_DEPT",readOnly:"false",required:"false",businessType:"addressDialog",multiSelect:"false",orgType:"",_org_org:"true",_org_dept:"true",_org_post:"false",_org_group:"false",defaultValue:"ORG_TYPE_DEPT"}' formDesign="landray"&gt;&lt;INPUT id=fd_person_dept class=inputsgl style="WIDTH: 0px" readOnly value=提交人的部门 label="所在部门选择" canShow="true" required ? thousandShow="true" _readOnly="false" _required="false" tableName="fd_3255d4e39522ae" defaultValue="ORG_TYPE_DEPT" multiSelect="false" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" businessType="addressDialog"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt; 
+&lt;DIV id=fd_332f99646f9d58 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_332f99646f9d58"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;/xform:editShow&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title width=541 column="2" row="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 60px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3263f32f1ee420",content:"临时负责人",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;临时负责人&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=619 column="3" row="2"&gt;
+&lt;DIV style="WIDTH: 122px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_3263f33a24f62c",width:"122",_label_bind:"true",label:"临时负责人",_label_bind_id:"fd_3263f32f1ee420"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_3263f33a24f62c class=inputsgl style="WIDTH: 122px" readOnly label="临时负责人" canShow="true" required ? thousandShow="true" _readOnly="false" _required="false" tableName="fd_3255d4e39522ae"&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=152 column="0" row="3"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 48px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d5b5aed1f6",content:"请假期限",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;请假期限&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1572 colSpan=3 align=left column="1,2,3" row="3"&gt;
+&lt;DIV style="WIDTH: 148px; DISPLAY: inline" fd_type="datetime" fd_values='{id:"fd_begin_date",width:"120",_label_bind:"false",label:"请假期限开始时间",_label_bind_id:"fd_3255d5b5aed1f6",canShow:"true",readOnly:"false",required:"false",businessType:"dateDialog",defaultValue:"null",_selectValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;INPUT id=fd_begin_date class=inputsgl style="WIDTH: 120px" readOnly label="请假期限开始时间" canShow="true" required ? thousandShow="true" _readOnly="false" _required="false" tableName="fd_3255d4e39522ae" defaultValue="null" businessType="dateDialog"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 24px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d5d680de54",content:"至   ",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;至&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt; 
+&lt;DIV style="WIDTH: 332px; DISPLAY: inline" fd_type="datetime" fd_values='{id:"fd_end_date",width:"120",_label_bind:"false",label:"请假期限结束时间",_label_bind_id:"fd_3255d5b5aed1f6",canShow:"true",readOnly:"false",required:"false",businessType:"dateDialog",defaultValue:"null",_selectValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;INPUT id=fd_end_date class=inputsgl style="WIDTH: 120px" readOnly label="请假期限结束时间" canShow="true" required ? thousandShow="true" _readOnly="false" _required="false" tableName="fd_3255d4e39522ae" defaultValue="null" businessType="dateDialog"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 38px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=152 column="0" row="4"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 60px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d85fa894e6",content:"请假人身份",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;请假人身份&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1572 colSpan=3 align=left column="1,2,3" row="4"&gt;
+&lt;TABLE class=tb_noborder style="WIDTH: 265px; DISPLAY: inline" fd_type="inputRadio" fd_values='{id:"fd_type",_label_bind:"true",label:"请假人身份",_label_bind_id:"fd_3255d85fa894e6",canShow:"true",required:"true",alignment:"H",dataType:"String",items:"总监|0&amp;#13;&amp;#10;副总监、产品总监、业务总监|1",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray"&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_type type=radio value=0 label="请假人身份" required="true" _required="true" tableName="fd_3255d4e39522ae" itemValues="0;1" items="总监;副总监、产品总监、业务总监" alignment="H"&gt;&lt;LABEL attach="fd_type"&gt;总监&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_type type=radio value=1 attach="fd_type"&gt;&lt;LABEL attach="fd_type"&gt;副总监、产品总监、业务总监&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=152 column="0" row="5"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: 48px; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d5ef6fe5b2",content:"请假事由",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;请假事由&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1572 colSpan=3 column="1,2,3" row="5"&gt;
+&lt;DIV style="WIDTH: 941px; DISPLAY: inline" fd_type="textarea" fd_values='{id:"fd_coments",width:"941",height:"208",_label_bind:"true",label:"请假事由",_label_bind_id:"fd_3255d5ef6fe5b2",canShow:"true",readOnly:"false",required:"false",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;TEXTAREA id=fd_coments class=inputmul style="HEIGHT: 208px; WIDTH: 941px" label="请假事由" canShow="true" required ? _readOnly="false" _required="false" tableName="fd_3255d4e39522ae" defaultValue=""&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1723 colSpan=4 column="0,1,2,3" row="6"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3255d5f9ab040e",content:"归口部门：运营优化中心&amp;#13;&amp;#10;",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;归口部门：运营优化中心&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>route-leader-leave-fdModelId</string>
+    </void>
+    <void method="put">
+      <string>fdId</string>
+      <string>route-leader-leave-fdId</string>
+    </void>
+    <void method="put">
+      <string>fdDisplayJsp</string>
+      <string>&lt;%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%&gt;
+&lt;%@ include file="/resource/jsp/common.jsp"%&gt;
+&lt;%@ page import="com.landray.kmss.web.taglib.xform.TagUtils" %&gt;
+&lt;TABLE id=fd_3255d4e39522ae class=tb_normal  align=center   layout2col="undefined"  label="主表" style="width:100%;"&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 58px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=169 column="0" row="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;请假人姓名&lt;/LABEL&gt;
+ 
+&lt;script&gt;
+AttachXFormValueChangeEventById("fd_select_person.id",function(value,domElement){
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[
+			{name:"fdParentOrgName",id:"extendDataFormInfo.value(fd_person_org)"},
+			{name:"fdParentName",id:"extendDataFormInfo.value(fd_person_dept)"}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf("(")+1);
+		s = s.substring(0,s.indexOf(")"));
+		var index = s.split(".")[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgPersonBeanNameByKey("'"+pId+"'","fdId:fdName:hbmParentOrg.fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail"));	
+		
+  $.ajax( {  
+      url:'/sys/organization/sys_org_person/chgPersonInfo.do?method=findCompByChildId',// 跳转到action地址，需要调整对应的应用服务名称（如：ekp）
+     data:{fdId:pId},  
+     type:'post',  
+     cache:false,  
+     dataType:'json',  
+      success:function(data) {  
+        $("input[name='extendDataFormInfo.value(fd_person_org)']") .val(data.fdName);
+            
+      },
+      error : function() {  
+           // view("异常！");  
+           alert("异常！");  
+      }
+});
+		
+
+});
+&lt;/script&gt;
+
+&lt;script&gt;
+XFormOnValueChangeFuns.push(function(value,domElement){
+	var name = domElement[0].name;
+if(name.indexOf("fd_select_person.id")&gt;0){//表单地址本中ID后缀
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[
+			{name:"fdName",id:"extendDataFormInfo.value(fd_display_name)"}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf("(")+1);
+		s = s.substring(0,s.indexOf(")"));
+		var index = s.split(".")[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgPersonBeanNameByKey("'"+pId+"'","fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail"));
+		kmssdata.Parse(function(data){
+			data.Format("fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail", null, false);
+			data = data.GetHashMapArray();
+			if(data.length==1){
+				for(var i=0;i&lt;toIDs.length;i++){
+					GetXFormFieldById(toIDs[i]["id"])[0].value=data[0][toIDs[i]["name"]]||"";
+				}
+			}
+$.ajax( {  
+      url:'/sys/organization/sys_org_person/chgPersonInfo.do?method=findCompByChildId',// 跳转到action地址，需要调整对应的应用服务名称（如：ekp）
+     data:{fdId:pId},  
+     type:'post',  
+     cache:false,  
+     dataType:'json',  
+     success:function(data) {  
+	alert(data.fdName)
+        $("input[name='extendDataFormInfo.value(fd_person_org)']") .val(data.fdName);
+            
+      },  
+      error : function() {  
+           // view("异常！");  
+           alert("异常！");  
+      }  	
+		});
+
+});
+
+	}
+});
+&lt;/script&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 390px" width=441 column="1" row="0"&gt;
+
+			&lt;DIV style="WIDTH: 198px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_select_person.name)" style="WIDTH: 193px" required="true" subject="请假人姓名" title="请假人姓名" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+&lt;xform:editShow&gt;
+
+			&lt;LABEL style="WIDTH: 32px; DISPLAY: inline"   &gt;&lt;xform:address propertyId="extendDataFormInfo.value(fd_select_person.id)" propertyName="extendDataFormInfo.value(fd_select_person.name)" mulSelect="false" orgType="ORG_TYPE_PERSON" subject="选择请假人姓名" title="选择请假人姓名" style="WIDTH: 0px" required="false" onValueChange="__xformDispatch" isLoadDataDict="false" /&gt;&lt;/LABEL&gt;
+
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; COLOR: #ff0000; FONT-STYLE: normal; DISPLAY: inline"   &gt;*&lt;/LABEL&gt;
+ 
+&lt;/xform:editShow&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title width=501 column="2" row="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;联系电话&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=592 column="3" row="0"&gt;
+
+			&lt;DIV style="WIDTH: 125px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_person_phone)" style="WIDTH: 125px" required="false" subject="联系电话" title="联系电话" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=159 column="0" row="1"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;所在公司&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 390px" width=415 column="1" row="1"&gt;
+			&lt;LABEL style="WIDTH: 152px; DISPLAY: inline"   &gt;&lt;xform:address propertyId="extendDataFormInfo.value(fd_375205562cdaa8.id)" propertyName="extendDataFormInfo.value(fd_375205562cdaa8.name)" mulSelect="false" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" subject="所在公司" title="所在公司" style="WIDTH: 120px" required="false" onValueChange="__xformDispatch" isLoadDataDict="false" /&gt;&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title width=528 column="2" row="1"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;上报日期&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=611 column="3" row="1"&gt;
+
+			&lt;DIV style="WIDTH: 148px; DISPLAY: inline"   &gt;&lt;xform:datetime property="extendDataFormInfo.value(fd_3255d66ae9a53e)" style="WIDTH: 120px" required="false" subject="上报日期" title="上报日期" onValueChange="__xformDispatch" dateTimeType="date" isLoadDataDict="false" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=154 column="0" row="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;所在部门&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 390px" width=405 column="1" row="2"&gt;
+
+			&lt;DIV style="WIDTH: 198px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_person_dept.name)" style="WIDTH: 198px" required="false" subject="所在部门" title="所在部门" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+&lt;xform:editShow&gt;
+
+			&lt;LABEL style="WIDTH: 28px; DISPLAY: inline"   &gt;&lt;xform:address propertyId="extendDataFormInfo.value(fd_person_dept.id)" propertyName="extendDataFormInfo.value(fd_person_dept.name)" mulSelect="false" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" subject="所在部门选择" title="所在部门选择" style="WIDTH: 0px" required="false" onValueChange="__xformDispatch" isLoadDataDict="false" /&gt;&lt;/LABEL&gt;
+ 
+&lt;/xform:editShow&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title width=541 column="2" row="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;临时负责人&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=619 column="3" row="2"&gt;
+
+			&lt;DIV style="WIDTH: 122px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3263f33a24f62c)" style="WIDTH: 122px" required="false" subject="临时负责人" title="临时负责人" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=152 column="0" row="3"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;请假期限&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1572 colSpan=3 align=left column="1,2,3" row="3"&gt;
+
+			&lt;DIV style="WIDTH: 148px; DISPLAY: inline"   &gt;&lt;xform:datetime property="extendDataFormInfo.value(fd_begin_date)" style="WIDTH: 120px" required="false" subject="请假期限开始时间" title="请假期限开始时间" onValueChange="__xformDispatch" dateTimeType="date" isLoadDataDict="false" /&gt;&lt;/DIV&gt;
+
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;至&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/LABEL&gt;
+ 
+
+			&lt;DIV style="WIDTH: 332px; DISPLAY: inline"   &gt;&lt;xform:datetime property="extendDataFormInfo.value(fd_end_date)" style="WIDTH: 120px" required="false" subject="请假期限结束时间" title="请假期限结束时间" onValueChange="__xformDispatch" dateTimeType="date" isLoadDataDict="false" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 38px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=152 column="0" row="4"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;请假人身份&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1572 colSpan=3 align=left column="1,2,3" row="4"&gt;
+
+			&lt;xform:radio  property="extendDataFormInfo.value(fd_type)" alignment="H" required="true" subject="请假人身份" title="请假人身份" onValueChange="__xformDispatch"&gt;
+			&lt;xform:simpleDataSource  value="0"&gt;总监&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="1"&gt;副总监、产品总监、业务总监&lt;/xform:simpleDataSource&gt;
+			&lt;/xform:radio&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 139px" width=152 column="0" row="5"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none;  FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;请假事由&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1572 colSpan=3 column="1,2,3" row="5"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 941px; DISPLAY: inline"   &gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_coments)" style="HEIGHT: 208px; WIDTH: 941px" required="false" subject="请假事由" title="请假事由" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1723 colSpan=4 column="0,1,2,3" row="6"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;归口部门：运营优化中心&lt;BR&gt;&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdMetadataXml</string>
+      <string>&lt;model &gt;
+&lt;extendSimpleProperty name="fd_select_person.name" label="请假人姓名" type="String" length="200" notNull="true" /&gt;
+&lt;extendElementProperty name="fd_select_person" label="选择请假人姓名" type="com.landray.kmss.sys.organization.model.SysOrgPerson" dialogJS="Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_PERSON);" /&gt;
+&lt;extendSimpleProperty name="fd_person_phone" label="联系电话" type="String" length="200" /&gt;
+&lt;extendElementProperty name="fd_375205562cdaa8" label="所在公司" type="com.landray.kmss.sys.organization.model.SysOrgElement" formula="true" defaultValue="OtherFunction.getModel(&amp;quot;16392a9fdc6b59731ea2afd4f8b8b715&amp;quot;, &amp;quot;com.landray.kmss.sys.organization.model.SysOrgElement&amp;quot;, null)" dialogJS="Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_ORG|ORG_TYPE_DEPT);" /&gt;
+&lt;extendSimpleProperty name="fd_3255d66ae9a53e" label="上报日期" type="Date" formula="true" defaultValue="DateTimeFunction.getNow()" /&gt;
+&lt;extendSimpleProperty name="fd_person_dept.name" label="所在部门" type="String" length="200" /&gt;
+&lt;extendElementProperty name="fd_person_dept" label="所在部门选择" type="com.landray.kmss.sys.organization.model.SysOrgElement" defaultValue="OrgFunction.getCurrentDept()" formula="true" dialogJS="Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_ORG|ORG_TYPE_DEPT);" /&gt;
+&lt;extendSimpleProperty name="fd_3263f33a24f62c" label="临时负责人" type="String" length="200" /&gt;
+&lt;extendSimpleProperty name="fd_begin_date" label="请假期限开始时间" type="Date" /&gt;
+&lt;extendSimpleProperty name="fd_end_date" label="请假期限结束时间" type="Date" /&gt;
+&lt;extendSimpleProperty name="fd_type" label="请假人身份" notNull="true" enumValues="总监|0;副总监、产品总监、业务总监|1" type="String" /&gt;
+&lt;extendSimpleProperty name="fd_coments" label="请假事由" type="String" length="" /&gt;
+&lt;/model&gt;</string>
+    </void>
+  </object>
+</java>

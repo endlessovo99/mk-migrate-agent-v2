@@ -179,14 +179,14 @@ function unconditionallyRenderedRichTextFieldIds(displayJsp = "") {
 
 function displayJspFieldId(property = "") {
   const match = String(property).match(
-    /^extendDataFormInfo\.value\(([A-Za-z_][\w-]*)\)$/
+    /^extendDataFormInfo\.value\(([A-Za-z_][\w-]*(?:\.name)?)\)$/
   );
   return match?.[1] || propertyFieldId(property);
 }
 
 function editorLabelEvidence(displayJsp) {
   const decoded = decodeEntities(displayJsp);
-  const editors = new Set(["xform:rtf", "xform:textarea", "xform:xtext"]);
+  const editors = new Set(["xform:rtf", "xform:textarea", "xform:xtext", "xform:address"]);
   const conditionalTags = new Set([
     "c:choose", "c:foreach", "c:if", "c:otherwise", "c:when",
     "xform:editshow", "xform:right", "xform:viewshow"
@@ -206,7 +206,11 @@ function editorLabelEvidence(displayJsp) {
       else if (rowStack.length) rows.push({ start: rowStack.pop(), end: token.end });
     }
     if (token.closing || !editors.has(token.name)) continue;
-    const id = displayJspFieldId(attrValue(token.attrs, "property"));
+    const addressId = attrValue(token.attrs, "propertyId").match(/^extendDataFormInfo\.value\(([A-Za-z_][\w-]*)\.id\)$/)?.[1];
+    const addressName = attrValue(token.attrs, "propertyName").match(/^extendDataFormInfo\.value\(([A-Za-z_][\w-]*)\.name\)$/)?.[1];
+    const id = token.name === "xform:address"
+      ? (addressId && addressId === addressName ? addressId : undefined)
+      : displayJspFieldId(attrValue(token.attrs, "property"));
     if (!id) continue;
     const entries = renderings.get(id) || [];
     entries.push({

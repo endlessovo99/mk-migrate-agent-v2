@@ -1,3 +1,4 @@
+import { inlineCellLayout } from "./inline-cell-layout.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import {
@@ -255,6 +256,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
             : undefined,
           refType: cell.refType,
           fieldIds: fieldIdsForCell,
+          inlineLayout: inlineCellLayout(cell, form.fields),
           row: cell.row,
           column: cell.column,
           colspan: cell.colspan,

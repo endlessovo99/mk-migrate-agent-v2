@@ -1,3 +1,4 @@
+import { observeInlineCellLayout } from "./inline-cell-layout.js";
 import { PLATFORM_OWNED } from "./invariants.js";
 import {
   decodeRequiredJsonObject,
@@ -1233,7 +1234,9 @@ function observeNativeLayoutRow(
     columns: Number.isInteger(grid.controlProps?.columns) ? grid.controlProps.columns : 1,
     colsStyle: observeGridStyles(grid.controlProps?.colsStyle),
     cells: gridItems.map((item, cellIndex) => {
-      const refs = Array.isArray(item.children) ? item.children : [];
+      const inlineLayout = observeInlineCellLayout(item);
+      const children = inlineLayout ? item.children[0].children : item.children;
+      const refs = Array.isArray(children) ? children : [];
       const fieldIds = refs
         .flatMap((fieldRef, refIndex) => nativeFieldIdsFromRef(
           fieldRef,
@@ -1281,6 +1284,7 @@ function observeNativeLayoutRow(
         ),
         fieldIds,
         row: gridRow,
+        inlineLayout,
         column,
         colspan,
         rowspan

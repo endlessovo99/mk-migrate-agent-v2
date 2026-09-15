@@ -1871,6 +1871,8 @@ function detailHeaderSemanticsByColumn(rows) {
   const ambiguous = new Set();
 
   for (const row of rows) {
+    // Footer captions describe aggregates, never column headers.
+    if (isDetailFooterRow(row)) continue;
     const cells = splitDirectChildCells(row);
     for (const [cellIndex, cell] of cells.entries()) {
       const semantics = detailHeaderSemantics(cell.body);

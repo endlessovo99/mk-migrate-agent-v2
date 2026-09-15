@@ -20,7 +20,7 @@ describe("detail-table keepInline projection", () => {
 
     assert.equal(fields.get("fd_use_dept")?.componentId, "xform-address");
     assert.equal(fields.get("fd_use_dept")?.props.hiddenLabel, true);
-    assert.equal(fields.get("fd_use_dept.name")?.dataOnly, true);
+    assert.notEqual(fields.get("fd_use_dept.name")?.dataOnly, true);
     assert.equal(fields.get("fd_use_group")?.props.hiddenLabel, true);
 
     assert.deepEqual(

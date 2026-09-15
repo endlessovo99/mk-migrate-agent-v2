@@ -62,10 +62,13 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
   ) {
     return [];
   }
-  const candidates = loadCalls.map((call) =>
+  const compiledCandidates = loadCalls.map((call) =>
     onLoadCandidate(call, source, form) || simpleOnLoadCandidate(call, source, form)
   );
-  if (!candidates.every(Boolean)) return [];
+  if (!compiledCandidates.every(Boolean)) return [];
+  const candidates = compiledCandidates.map((candidate) =>
+    delegateBridgedLoadVisibility(candidate, source, formRules, form)
+  );
   const usesMainRowResetLifecycle = candidates.some((candidate) =>
     candidate.semanticHints?.mainRowResetLifecycle === true
   );
@@ -96,6 +99,41 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
         }
       }))
     : candidates;
+}
+
+// A proven load bridge already projects row visibility from the editable source
+// selector. Do not let its stale/empty hidden helper overwrite that native rule.
+// Keep required/reset calls and all effects without a complete native counterpart.
+function delegateBridgedLoadVisibility(candidate, source, formRules, form) {
+  const sourceRef = source.sourceRef || source.id;
+  let functionText = candidate.function;
+  const delegated = [];
+  for (const rule of formRules?.linkage || []) {
+    if (rule.trigger !== "load" || rule.meta?.sourceJsp !== sourceRef ||
+        rule.meta?.partialNativeRowEffects !== true || !rule.meta.bridgeSourceJsp ||
+        rule.translationStatus !== "executable") continue;
+    for (const effect of rule.effects || []) {
+      if (effect.type !== "visible" || typeof effect.value !== "boolean" ||
+          !(rule.else || []).some(other => other.type === "visible" &&
+            other.target === effect.target && other.value === !effect.value)) continue;
+      const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), effect.target);
+      if (resolved?.source !== "rowMarker" || resolved.unresolved?.length ||
+          !resolved.targets?.some(target => target.kind === "detailTable")) continue;
+      const show = `MKXFORM.setFieldAttr(${JSON.stringify(effect.target)}, 5);`;
+      const hide = `MKXFORM.setFieldAttr(${JSON.stringify(effect.target)}, 4);`;
+      if (!functionText.includes(show) || !functionText.includes(hide)) continue;
+      functionText = functionText.split(show).join("").split(hide).join("");
+      delegated.push(rule.id);
+    }
+  }
+  if (!delegated.length) return candidate;
+  return {
+    ...candidate,
+    function: functionText,
+    coverage: { ...candidate.coverage, nativeRules: uniqueStrings([
+      ...(candidate.coverage?.nativeRules || []), ...delegated
+    ]) }
+  };
 }
 
 function namedRowEffectHandlerCandidates(source, form, program) {

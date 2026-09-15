@@ -1960,8 +1960,12 @@ function parseLegacyContextDefaultExpression(value, source) {
     return { kind: "context", source: "creatorPost" };
   }
 
-  if (/^\$(?:docCreator|申请人)\$\s*\.\s*getFdName\s*\(\s*\)$/i.test(expression)) {
+  if (/^\$(?:docCreator|申请人)\$\s*\.\s*(?:fdName|getFdName\s*\(\s*\))$/i.test(expression)) {
     return { kind: "context", source: "creator", property: "fdName" };
+  }
+
+  if (/^\$(?:docCreator|申请人)\$\s*\.\s*fdParent\s*\.\s*fdName$/i.test(expression)) {
+    return { kind: "context", source: "creatorDept", property: "fdName" };
   }
 
   if (legacyCreatorEmployeeNumberExpression(expression)) {

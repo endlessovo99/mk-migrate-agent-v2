@@ -622,6 +622,15 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
           actual: actualCell.fieldIds
         }));
       }
+      if (expectedCell.inlineLayout !== undefined &&
+          stableStringify(expectedCell.inlineLayout) !== stableStringify(actualCell.inlineLayout)) {
+        diagnostics.push(mismatch("form", "readback.form.layout_inline_layout_mismatch", "Readback same-cell horizontal layout does not match DSL.", {
+          invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.inlineLayout`,
+          path: `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/inlineLayout`,
+          expected: expectedCell.inlineLayout,
+          actual: actualCell.inlineLayout
+        }));
+      }
       if (
         expectedCell.row !== actualCell.row ||
         expectedCell.column !== actualCell.column ||

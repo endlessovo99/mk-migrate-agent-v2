@@ -34,8 +34,8 @@ describe("four-column title/value rows and same-cell inline controls", () => {
     assert.equal(fields.get("fd_applicant")?.sourceProps.layoutCell.hiddenLabel, true);
     assert.equal(fields.get("fd_dept")?.sourceProps.layoutCell.hiddenLabel, true);
 
-    assert.equal(fields.get("fd_applicant.name")?.dataOnly, true);
-    assert.equal(fields.get("fd_dept.name")?.dataOnly, true);
+    assert.equal(fields.get("fd_applicant.name")?.dataOnly, undefined);
+    assert.equal(fields.get("fd_dept.name")?.dataOnly, undefined);
     assert.equal(
       fields.get("fd_applicant")?.sourceProps.addressDisplayCompanionId,
       "fd_applicant.name"
@@ -52,7 +52,7 @@ describe("four-column title/value rows and same-cell inline controls", () => {
         { refType: "field", refIds: ["label_applicant"], column: 0, colspan: 1 },
         {
           refType: "field",
-          refIds: ["fd_applicant", "label_required"],
+          refIds: ["fd_applicant.name", "fd_applicant", "label_required"],
           column: 1,
           colspan: 1,
           keepInline: true
@@ -60,7 +60,7 @@ describe("four-column title/value rows and same-cell inline controls", () => {
         { refType: "field", refIds: ["label_dept"], column: 2, colspan: 1 },
         {
           refType: "field",
-          refIds: ["fd_dept", "label_slash", "fd_dept_en"],
+          refIds: ["fd_dept.name", "fd_dept", "label_slash", "fd_dept_en"],
           column: 3,
           colspan: 1,
           keepInline: true
@@ -107,9 +107,9 @@ describe("four-column title/value rows and same-cell inline controls", () => {
           columns: 4,
           cells: [
             { refIds: ["label_applicant"], column: 0, colspan: 1 },
-            { refIds: ["fd_applicant", "label_required"], column: 1, colspan: 1 },
+            { refIds: ["fd_applicant.name", "fd_applicant", "label_required"], column: 1, colspan: 1 },
             { refIds: ["label_dept"], column: 2, colspan: 1 },
-            { refIds: ["fd_dept", "label_slash", "fd_dept_en"], column: 3, colspan: 1 }
+            { refIds: ["fd_dept.name", "fd_dept", "label_slash", "fd_dept_en"], column: 3, colspan: 1 }
           ]
         },
         {
@@ -164,7 +164,7 @@ describe("four-column title/value rows and same-cell inline controls", () => {
     assert.equal(readback.form.fields.find((field) => field.id === "fd_fax")?.hiddenLabel, true);
     assert.equal(readback.form.fields.find((field) => field.id === "fd_applicant")?.hiddenLabel, true);
     assert.equal(readback.form.fields.find((field) => field.id === "fd_dept")?.hiddenLabel, true);
-    assert.equal(readback.form.fields.find((field) => field.id === "fd_applicant.name")?.dataOnly, true);
+    assert.equal(readback.form.fields.find((field) => field.id === "fd_applicant.name")?.dataOnly, false);
   });
 });
 

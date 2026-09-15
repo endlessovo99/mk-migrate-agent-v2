@@ -1,0 +1,813 @@
+<?xml version='1.0' encoding='utf-8'?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>fdTemplateEdition</string>
+      <string>32</string>
+    </void>
+    <void method="put">
+      <string>class</string>
+      <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&amp;nbsp; 
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 22px; WIDTH: 1px; POSITION: absolute; LEFT: 588px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 235px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%" position="left"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 22px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 633px; Z-INDEX: 1; DISPLAY: none; TOP: 235px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%" position="right"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 46px; POSITION: absolute; LEFT: 588px; Z-INDEX: 1; DISPLAY: none; TOP: 235px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="leftUp"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="up"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="rightUp"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 46px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 588px; Z-INDEX: 1; DISPLAY: none; TOP: 255px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="leftDown"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="rightDown"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="down"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 151px; WIDTH: 1px; POSITION: absolute; LEFT: 157px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 688px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%" position="left"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 151px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 1131px; Z-INDEX: 1; DISPLAY: none; TOP: 688px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%" position="right"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 975px; POSITION: absolute; LEFT: 157px; Z-INDEX: 1; DISPLAY: none; TOP: 688px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="leftUp"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="up"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="rightUp"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 975px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 157px; Z-INDEX: 1; DISPLAY: none; TOP: 837px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="leftDown"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="rightDown"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="down"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 22px; WIDTH: 1px; POSITION: absolute; LEFT: 20px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 412px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%" position="left"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 22px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 49px; Z-INDEX: 1; DISPLAY: none; TOP: 412px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%" position="right"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 30px; POSITION: absolute; LEFT: 20px; Z-INDEX: 1; DISPLAY: none; TOP: 412px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="leftUp"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="up"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="rightUp"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 30px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 20px; Z-INDEX: 1; DISPLAY: none; TOP: 432px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="leftDown"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="rightDown"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="down"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;TABLE id=fd_37ba4923f60c62 class=tb_normal style="WIDTH: 98%" align=center label="主表" formDesign="landray" layout2col="undefined" fd_values='{id:"fd_37ba4923f60eee",label:"主表"}' fd_type="standardTable"&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="0" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4934fa7dc8",content:"申请人",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;申请人&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="0" column="1"&gt;&lt;LABEL style="WIDTH: 152px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4a798ceaee",width:"120",_label_bind:"false",label:"申请人1",_label_bind_id:"fd_378372734d1744",_org_person:"true",_orgType:"ORG_TYPE_PERSON",readOnly:"false",required:"false",businessType:"addressDialog",multiSelect:"false",orgType:"",_org_org:"false",_org_dept:"false",_org_post:"false",_org_group:"false",defaultValue:"ORG_TYPE_PERSON"}' fd_type="address"&gt;&lt;INPUT id=fd_37ba4a798ceaee class=inputsgl style="WIDTH: 120px" readOnly value=提交人 label="申请人1" orgType="ORG_TYPE_PERSON" multiSelect="false" businessType="addressDialog" defaultValue="ORG_TYPE_PERSON" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true" ?&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="0" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4935ff980a",content:"申请人部门",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;申请人部门&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="0" column="3"&gt;&lt;LABEL style="WIDTH: 152px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4a71aeb34a",width:"120",_label_bind:"false",label:"部门1",_label_bind_id:"fd_37837207fa8ac8",_org_person:"false",_orgType:"ORG_TYPE_ORG|ORG_TYPE_DEPT",readOnly:"false",required:"false",businessType:"addressDialog",multiSelect:"false",orgType:"",_org_dept:"true",_org_post:"false",_org_group:"false",defaultValue:"ORG_TYPE_DEPT",_org_org:"true"}' fd_type="address"&gt;&lt;INPUT id=fd_37ba4a71aeb34a class=inputsgl style="WIDTH: 120px" readOnly value=提交人的部门 label="部门1" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" multiSelect="false" businessType="addressDialog" defaultValue="ORG_TYPE_DEPT" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true" ?&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="1" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4937171e04",content:"申请人工号",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;申请人工号&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="1" column="1"&gt;
+&lt;DIV style="WIDTH: 226px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4a80b518e2",width:"220",_label_bind:"false",label:" 申请人工号",_label_bind_id:"fd_3783728cc1255e",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4a80b518e2 class=inputsgl style="WIDTH: 220px" readOnly label=" 申请人工号" tableName="fd_37ba4923f60c62" _required="true" required="true" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="1" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4938ab32e2",content:"申请人手机",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;申请人手机&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 align=left row="1" column="3"&gt;
+&lt;DIV style="WIDTH: 226px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4a876bfe4a",width:"220",_label_bind:"false",label:" 申请人手机",_label_bind_id:"fd_378372a63ded84",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4a876bfe4a class=inputsgl style="WIDTH: 220px" readOnly label=" 申请人手机" tableName="fd_37ba4923f60c62" _required="true" required="true" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="2" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba49677af7a2",content:"成本中心及代码",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;成本中心及代码&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="2" column="1"&gt;
+&lt;DIV class=select_div_box style="WIDTH: 108px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ab3064aba",_label_bind:"false",label:" 成本中心代码",_label_bind_id:"fd_378372b8f3ee60",canShow:"true",required:"true",dataType:"String",items:"运营优化中心280210001&amp;#13;&amp;#10;质量及交付管理中心280210005&amp;#13;&amp;#10;业务拓展中心-市场280220001&amp;#13;&amp;#10;业务拓展中心-销售280220002&amp;#13;&amp;#10;大客户及解决方案中心280230001&amp;#13;&amp;#10;工业互联网创新中心280230003&amp;#13;&amp;#10;软件开发中心280230004&amp;#13;&amp;#10;基础架构中心280230005&amp;#13;&amp;#10;大客户及解决方案中心-售前280223001&amp;#13;&amp;#10;创新研发中心-售前280223003&amp;#13;&amp;#10;基础架构中心-售前280223005&amp;#13;&amp;#10;智慧供应链产品中心280230006",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="select"&gt;&lt;LABEL class=select_tag_left&gt;&lt;LABEL class=select_tag_right&gt;&lt;LABEL class=select_tag_face&gt;--- 请选择 ---&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;SELECT id=fd_37ba4ab3064aba style="DISPLAY: none" label=" 成本中心代码" tableName="fd_37ba4923f60c62" _required="true" required="true" canShow="true" items="运营优化中心280210001;质量及交付管理中心280210005;业务拓展中心-市场280220001;业务拓展中心-销售280220002;大客户及解决方案中心280230001;工业互联网创新中心280230003;软件开发中心280230004;基础架构中心280230005;大客户及解决方案中心-售前280223001;创新研发中心-售前280223003;基础架构中心-售前280223005;智慧供应链产品中心280230006" itemValues="运营优化中心280210001;质量及交付管理中心280210005;业务拓展中心-市场280220001;业务拓展中心-销售280220002;大客户及解决方案中心280230001;工业互联网创新中心280230003;软件开发中心280230004;基础架构中心280230005;大客户及解决方案中心-售前280223001;创新研发中心-售前280223003;基础架构中心-售前280223005;智慧供应链产品中心280230006"&gt;&lt;/SELECT&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="2" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4969fb9158",content:"报账方式",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;报账方式&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="2" column="3"&gt;
+&lt;DIV class=select_div_box style="WIDTH: 107px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4af640c896",_label_bind:"false",label:" 报账方式",_label_bind_id:"fd_37837404fc8350",canShow:"true",required:"true",dataType:"String",items:"预付（网银）&amp;#13;&amp;#10;预付（汇票）&amp;#13;&amp;#10;应付款（网银）&amp;#13;&amp;#10;预付（个人）&amp;#13;&amp;#10;其他",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="select"&gt;&lt;LABEL class=select_tag_left&gt;&lt;LABEL class=select_tag_right&gt;&lt;LABEL class=select_tag_face&gt;--- 请选择 ---&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;SELECT id=fd_37ba4af640c896 style="DISPLAY: none" label=" 报账方式" tableName="fd_37ba4923f60c62" _required="true" required="true" canShow="true" items="预付（网银）;预付（汇票）;应付款（网银）;预付（个人）;其他" itemValues="预付（网银）;预付（汇票）;应付款（网银）;预付（个人）;其他"&gt;&lt;/SELECT&gt;&lt;/DIV&gt;
+&lt;DIV style="WIDTH: 215px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4afee2219c",width:"215",_label_bind:"true",label:"报账方式",_label_bind_id:"fd_37ba4969fb9158"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4afee2219c class=inputsgl style="WIDTH: 215px" readOnly label="报账方式" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true" ?&gt;&lt;/DIV&gt;
+&lt;DIV id=fd_37ba4b06ccaeec title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4b06ccaeec"}' fd_type="jsp" mobileView="enable"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value='&lt;script&gt;&amp;#13;&amp;#10;&amp;#13;&amp;#10;Com_AddEventListener(window, "load",&amp;#13;&amp;#10;function(){&amp;#13;&amp;#10;&amp;#13;&amp;#10;          var d=GetXFormFieldById("fd_37ba4afee2219c")[0];&amp;#13;&amp;#10;          if(d){&amp;#13;&amp;#10;            d.setAttribute("placeholder","其他请具体说明");}&amp;#13;&amp;#10;             });&amp;#13;&amp;#10;&lt;/script&gt;'&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="3" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba49a84d234c",content:"历史借款是否已归还",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;历史借款是否已归还&lt;/LABEL&gt; 
+&lt;DIV id=fd_37ba51f16962c8 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba51f16962c8"}' fd_type="jsp" mobileView="enable"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value='&lt;xform:editShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;//默认历史借款说明&amp;#13;&amp;#10;Com_AddEventListener(window, "load",&amp;#13;&amp;#10;     function(){setTimeout(function(){common_dom_row_set_show_required_reset("lsjk_row",false,false,false);&amp;#13;&amp;#10;},510);});&amp;#13;&amp;#10;&amp;#13;&amp;#10;&amp;#13;&amp;#10;//如果否，则显示历史借款说明&amp;#13;&amp;#10;AttachXFormValueChangeEventById("fd_37ba4b1f5b174a", function(value, domElement){&amp;#13;&amp;#10;     var is_qtfy=GetXFormFieldById("fd_lsjk")[0];&amp;#13;&amp;#10;      if(value.indexOf("n")&gt;=0){&amp;#13;&amp;#10;          is_qtfy.value="n";&amp;#13;&amp;#10;          common_dom_row_set_show_required_reset("lsjk_row",true,true,false);      &amp;#13;&amp;#10;    }else{&amp;#13;&amp;#10;          is_qtfy.value="";&amp;#13;&amp;#10;          common_dom_row_set_show_required_reset("lsjk_row",false,false,false);      &amp;#13;&amp;#10;   }&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:editShow&gt;&amp;#13;&amp;#10;&lt;xform:viewShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;//默认隐藏差旅报销相关信息&amp;#13;&amp;#10;Com_AddEventListener(window, "load",&amp;#13;&amp;#10;    function(){&amp;#13;&amp;#10; var is_clbx=GetXFormFieldById("fd_lsjk")[0];&amp;#13;&amp;#10; if(is_clbx.value.indexOf("n")&gt;=0){&amp;#13;&amp;#10; common_dom_row_set_show_required_reset("lsjk_row",true,false,false);&amp;#13;&amp;#10;&amp;#13;&amp;#10; }else{&amp;#13;&amp;#10; common_dom_row_set_show_required_reset("lsjk_row",false,false,false);&amp;#13;&amp;#10;&amp;#13;&amp;#10; }&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:viewShow&gt;'&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="3" column="1"&gt;
+&lt;TABLE class=tb_noborder style="WIDTH: 82px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4b1f5b174a",_label_bind:"true",label:"历史借款是否已归还",_label_bind_id:"fd_37ba49a84d234c",canShow:"true",required:"true",alignment:"H",dataType:"String",items:"是|y&amp;#13;&amp;#10;否|n",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputRadio"&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_37ba4b1f5b174a type=radio value=y label="历史借款是否已归还" tableName="fd_37ba4923f60c62" _required="true" required="true" items="是;否" itemValues="y;n" alignment="H"&gt;&lt;LABEL attach="fd_37ba4b1f5b174a"&gt;是&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_37ba4b1f5b174a type=radio value=n attach="fd_37ba4b1f5b174a"&gt;&lt;LABEL attach="fd_37ba4b1f5b174a"&gt;否&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="3" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37c1589db268c8",content:"报销性质",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;报销性质&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="3" column="3"&gt;
+&lt;TABLE class=tb_noborder style="WIDTH: 467px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37c158ae9ff540",_label_bind:"true",label:"报销性质",_label_bind_id:"fd_37c1589db268c8",canShow:"true",required:"true",alignment:"H",dataType:"String",items:"对私请款|1&amp;#13;&amp;#10;对公请款（无供应商/客户代码）|2&amp;#13;&amp;#10;对公请款（有供应商/客户代码）|5",formula:"",defaultValue:"1",reCalculate:"false"}' fd_type="inputRadio"&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_37c158ae9ff540 CHECKED type=radio value=1 label="报销性质" defaultValue="1" tableName="fd_37ba4923f60c62" _required="true" required="true" items="对私请款;对公请款（无供应商/客户代码）;对公请款（有供应商/客户代码）" itemValues="1;2;5" alignment="H"&gt;&lt;LABEL attach="fd_37c158ae9ff540"&gt;对私请款&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_37c158ae9ff540 type=radio value=2 attach="fd_37c158ae9ff540"&gt;&lt;LABEL attach="fd_37c158ae9ff540"&gt;对公请款（无供应商/客户代码）&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_37c158ae9ff540 type=radio value=5 attach="fd_37c158ae9ff540"&gt;&lt;LABEL attach="fd_37c158ae9ff540"&gt;对公请款（有供应商/客户代码）&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV id=fd_37c30178361fe2 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37c30178361fe2"}' fd_type="jsp" mobileView="enable"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value='&lt;xform:editShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;var leftId = "fd_37c158ae9ff540";&amp;#13;&amp;#10;var rightId = "fd_37ba4caea633aa";&amp;#13;&amp;#10;Com_AddEventListener(window, "load", function(){&amp;#13;&amp;#10;     changeJvCompany();&amp;#13;&amp;#10;&amp;#13;&amp;#10;});&amp;#13;&amp;#10;AttachXFormValueChangeEventById(leftId,changeJvCompany);&amp;#13;&amp;#10;&amp;#13;&amp;#10;function changeJvCompany(){&amp;#13;&amp;#10;   var radio = GetXFormFieldById(leftId);&amp;#13;&amp;#10;   var radioLength = radio.length;&amp;#13;&amp;#10;   var radioValue;&amp;#13;&amp;#10;   for(var i = 0;i &lt; radioLength;i++)&amp;#13;&amp;#10;   {&amp;#13;&amp;#10;    if(radio[i].checked)&amp;#13;&amp;#10;    {&amp;#13;&amp;#10;     var radioValue = radio[i].value;&amp;#13;&amp;#10;    }&amp;#13;&amp;#10;  }&amp;#13;&amp;#10;  var domArr =  GetXFormFieldById(rightId);&amp;#13;&amp;#10;&amp;#13;&amp;#10; if(radioValue=="5"){&amp;#13;&amp;#10;      for(var i=0;i&lt;domArr.length;i++){&amp;#13;&amp;#10;           domArr[i].parentNode.parentNode.style.display = "";&amp;#13;&amp;#10;           domArr[i].validate = "required";&amp;#13;&amp;#10;&amp;#13;&amp;#10;     } &amp;#13;&amp;#10;  }else{&amp;#13;&amp;#10;      for(var i=0;i&lt;domArr.length;i++){&amp;#13;&amp;#10;           domArr[i].parentNode.parentNode.style.display = "none";&amp;#13;&amp;#10;            domArr[i].validate = "";&amp;#13;&amp;#10;&amp;#13;&amp;#10;     } &amp;#13;&amp;#10;  }&amp;#13;&amp;#10;&amp;#13;&amp;#10;}&amp;#13;&amp;#10;&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:editShow&gt;'&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="4" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4bd58bbb56",content:"历史借款未清原因",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;历史借款未清原因&lt;/LABEL&gt; 
+&lt;DIV id=fd_37ba516389364c title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba516389364c"}' fd_type="jsp" mobileView="enable"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value='&lt;input type="hidden" id="lsjk_row" name="lsjk_row"/&gt;'&gt;&lt;/LABEL&gt;&lt;/DIV&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_lsjk",width:"120",_label_bind:"false",label:"lsjk",_label_bind_id:"",canShow:"false",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="false"&gt;&lt;INPUT id=fd_lsjk class=inputhidden style="WIDTH: 120px" readOnly label="lsjk" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="false" ?&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1402 colSpan=3 row="4" column="1,2,3"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4bc84ddd44",width:"100%",height:"80",_label_bind:"true",label:"历史借款未清原因",_label_bind_id:"fd_37ba4bd58bbb56",canShow:"true",readOnly:"false",required:"true",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="textarea"&gt;&lt;TEXTAREA id=fd_37ba4bc84ddd44 class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="历史借款未清原因" defaultValue="" tableName="fd_37ba4923f60c62" _required="true" required="true" _readOnly="false" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 align=left row="5" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ef2407034",content:"金额",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;金额&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="5" column="1"&gt;
+&lt;DIV id=fd_37ba4efab1131e style="WIDTH: 200px; DISPLAY: inline" label="金额" formDesign="landray" fd_values='{id:"fd_37ba4efab1131e",_label_bind:"true",label:"金额",_label_bind_id:"fd_37ba4ef2407034",width:"200",dataType:"Double",canShow:"true",readOnly:"true",autoCalculate:"true",expression_id:"$fd_37ba4d347ea8da$ + $fd_37ba4d4516de0e$ + $fd_37ba4d56156ae8$ + $fd_37ba4dec51b26c$ + $fd_37ba4e2d00eb44$ + $fd_37ba4e4764caf4$ + $fd_37ba4eae17cfa2$",expression_name:"$交通费预算$ + $住宿费预算$ + $餐补预算$ + $会务费预算$ + $保证金$ + $其他$ + $预算$",decimal:"2",thousandShow:"true",formula:"",defaultValue:"0",reCalculate:"false"}' fd_type="calculation" _readOnly="true" thousandShow="true" canShow="true" readOnly="true" dataType="Double" scale="2" expression_id="$fd_37ba4d347ea8da$ + $fd_37ba4d4516de0e$ + $fd_37ba4d56156ae8$ + $fd_37ba4dec51b26c$ + $fd_37ba4e2d00eb44$ + $fd_37ba4e4764caf4$ + $fd_37ba4eae17cfa2$" autoCalculate="true" expression_mode="notRow"&gt;&lt;INPUT title=计算控件 class=inputsgl style="WIDTH: 170px" value="$交通费预算$ + $住宿费预算$ + $餐补预算$ + $会务费预算$ + $保证金$ + $其他$ + $预算$" thousandShow="true"&gt; &lt;A href="javascript:void(0);"&gt;计算&lt;/A&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=289 row="5" column="2" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4f0f657cfe",content:"付款银行信息(财务填写)",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;付款银行信息(财务填写)&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="5" column="3"&gt;
+&lt;DIV id=fd_386271c8765496 style="BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px" formDesign="landray" fd_values='{id:"fd_386271c8765496"}' fd_type="right"&gt;
+&lt;DIV class=rightIconBar style="CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red"&gt;&lt;/DIV&gt;
+&lt;TABLE class=righBar style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none" cellPadding=1&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 18px"&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px" mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px" def_N11="false" def_N9="false"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px" readerNames="" readerIds=""&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px"&gt;&amp;nbsp;&lt;SPAN ondblclick="Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);" style="BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px"&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV class=select_div_box style="WIDTH: 101px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_386271bff5be34",_label_bind:"true",label:"付款银行信息(财务填写)",_label_bind_id:"fd_37ba4f0f657cfe",canShow:"true",required:"false",dataType:"String",items:"中国工商银行外滩支行&amp;#13;&amp;#10;中国建设银行第四支行&amp;#13;&amp;#10;浦东发展银行陆家嘴支行",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="select"&gt;&lt;LABEL class=select_tag_left&gt;&lt;LABEL class=select_tag_right&gt;&lt;LABEL class=select_tag_face&gt;--- 请选择 ---&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;SELECT id=fd_386271bff5be34 style="DISPLAY: none" label="付款银行信息(财务填写)" tableName="fd_386271c8765496" _required="false" required="false" canShow="true" items="中国工商银行外滩支行;中国建设银行第四支行;浦东发展银行陆家嘴支行" itemValues="中国工商银行外滩支行;中国建设银行第四支行;浦东发展银行陆家嘴支行"&gt;&lt;/SELECT&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="6" column="0,1,2,3"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4beacd705a",content:"收款人信息",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;收款人信息&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="7" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4c6b2d5c98",content:"收款人/收款单位名称",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;收款人/收款单位名称&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="7" column="1"&gt;
+&lt;DIV style="WIDTH: 426px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4c8e877d14",width:"420",_label_bind:"true",label:"收款人/收款单位名称",_label_bind_id:"fd_37ba4c6b2d5c98",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4c8e877d14 class=inputsgl style="WIDTH: 420px" readOnly label="收款人/收款单位名称" tableName="fd_37ba4923f60c62" _required="true" required="true" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="7" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_396460dd244944",content:"收款人工号",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;收款人工号&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="7" column="3"&gt;
+&lt;DIV style="WIDTH: 126px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_396460df89287e",width:"120",_label_bind:"false",label:"收款人工号",_label_bind_id:"fd_37ba4c6b2d5c98",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_396460df89287e class=inputsgl style="WIDTH: 120px" readOnly label="收款人工号" tableName="fd_37ba4923f60c62" _required="true" required="true" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="8" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4c755a46d6",content:"收款人/收款单位银行账户",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;收款人/收款单位银行账户&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="8" column="1"&gt;
+&lt;DIV style="WIDTH: 426px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4c9ac79584",width:"420",_label_bind:"true",label:"收款人/收款单位银行账户",_label_bind_id:"fd_37ba4c755a46d6",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4c9ac79584 class=inputsgl style="WIDTH: 420px" readOnly label="收款人/收款单位银行账户" tableName="fd_37ba4923f60c62" _required="true" required="true" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="8" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4c7b0fadb0",content:"收款人/收款单位开户行信息",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;收款人/收款单位开户行信息&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="8" column="3"&gt;
+&lt;DIV style="WIDTH: 426px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ca306d78e",width:"420",_label_bind:"true",label:"收款人/收款单位开户行信息",_label_bind_id:"fd_37ba4c7b0fadb0",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4ca306d78e class=inputsgl style="WIDTH: 420px" readOnly label="收款人/收款单位开户行信息" tableName="fd_37ba4923f60c62" _required="true" required="true" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="9" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4c84c3b55c",content:"供应商/客户代码(财务填写)",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;供应商/客户代码(财务填写)&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1396 colSpan=3 row="9" column="1,2,3"&gt;&amp;nbsp; 
+&lt;DIV id=fd_3838f8d40caefe style="BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px" formDesign="landray" fd_values='{id:"fd_3838f8d40caefe"}' fd_type="right"&gt;
+&lt;DIV class=rightIconBar style="CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red"&gt;&lt;/DIV&gt;
+&lt;TABLE class=righBar style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none" cellPadding=1&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 18px"&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px" mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px" def_N11="false" def_N9="false"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px" readerNames="" readerIds=""&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px"&gt;&amp;nbsp;&lt;SPAN ondblclick="Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);" style="BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px"&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV style="WIDTH: 420px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4caea633aa",width:"420",_label_bind:"true",label:"供应商/客户代码(财务填写)",_label_bind_id:"fd_37ba4c84c3b55c",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4caea633aa class=inputsgl style="WIDTH: 420px" readOnly label="供应商/客户代码(财务填写)" tableName="fd_3838f8d40caefe" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="10" column="0,1,2,3"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ccf885bae",content:"差旅费说明",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;差旅费说明&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="11" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ce15a7ed8",content:"事由、路线、名单、日期",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;事由、路线、名单、日期&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1396 colSpan=3 row="11" column="1,2,3"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ce8ce446c",width:"100%",height:"80",_label_bind:"true",label:"事由、路线、名单、日期",_label_bind_id:"fd_37ba4ce15a7ed8",canShow:"true",readOnly:"false",required:"false",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="textarea"&gt;&lt;TEXTAREA id=fd_37ba4ce8ce446c class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="事由、路线、名单、日期" defaultValue="" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 row="12" column="0,1,2,3"&gt;
+&lt;TABLE id=fd_37ba4d0571dbe2 class=tb_normal style="WIDTH: 98%" align=center label="表格1" formDesign="landray" layout2col="undefined" fd_values='{id:"fd_37ba4d0571ea16",label:"表格1"}' fd_type="standardTable"&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 57px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 220px" width=304 row="0" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37c222e5b8e7fa",content:"内容及科目编号（财务填写）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;内容及科目编号（财务填写）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 400px" width=536 row="0" column="1"&gt;
+&lt;DIV id=fd_37c22363986cc6 style="BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px" formDesign="landray" fd_values='{id:"fd_37c22363986cc6"}' fd_type="right"&gt;
+&lt;DIV class=rightIconBar style="CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red"&gt;&lt;/DIV&gt;
+&lt;TABLE class=righBar style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none" cellPadding=1&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 18px"&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px" mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px" def_N11="false" def_N9="false"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px" readerNames="" readerIds=""&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px"&gt;&amp;nbsp;&lt;SPAN ondblclick="Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);" style="BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px"&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37c22359d0f3a6",width:"100%",_label_bind:"false",label:"差旅费内容及科目编号（财务填写）",_label_bind_id:"fd_37c222e5b8e7fa",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37c22359d0f3a6 class=inputsgl style="WIDTH: 100%" readOnly label="差旅费内容及科目编号（财务填写）" tableName="fd_37c22363986cc6" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 152px" width=217 row="0" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4d3d376b14",content:"住宿费预算（元）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;住宿费预算（元）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 465px" width=619 row="0" column="3"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4d4516de0e",width:"120",_label_bind:"false",label:"住宿费预算",_label_bind_id:"fd_37ba4d3d376b14",canShow:"true",readOnly:"false",required:"false",dataType:"Double",validate:"number",decimal:"2",begin:"",end:"",thousandShow:"false",formula:"",defaultValue:"0",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4d4516de0e class=inputsgl style="WIDTH: 120px" readOnly value=0 label="住宿费预算" defaultValue="0" tableName="fd_37ba4d0571dbe2" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ? dataType="number" scale="2" endNum="" beginNum="" _dataType="Double" validate="{dataType:'number',decimal:2}"&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 220px" width=304 row="1" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4d2cd045ac",content:"交通费预算（元）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;交通费预算（元）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 400px" width=536 row="1" column="1"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4d347ea8da",width:"120",_label_bind:"false",label:"交通费预算",_label_bind_id:"fd_37837a69e49aea",canShow:"true",readOnly:"false",required:"false",dataType:"Double",validate:"number",thousandShow:"false",formula:"",defaultValue:"0",reCalculate:"false",decimal:"0",begin:"",end:""}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4d347ea8da class=inputsgl style="WIDTH: 120px" readOnly value=0 label="交通费预算" defaultValue="0" tableName="fd_37ba4d0571dbe2" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ? dataType="number" scale="0" endNum="" beginNum="" _dataType="Double" validate="{dataType:'number',decimal:0}"&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 152px" width=217 row="1" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4d50f2e3ec",content:"餐补预算（元）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;餐补预算（元）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 465px" width=619 row="1" column="3"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4d56156ae8",width:"120",_label_bind:"false",label:"餐补预算",_label_bind_id:"fd_37ba4d50f2e3ec",canShow:"true",readOnly:"false",required:"false",dataType:"Double",validate:"number",thousandShow:"false",formula:"",defaultValue:"0",reCalculate:"false",decimal:"2",begin:"",end:""}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4d56156ae8 class=inputsgl style="WIDTH: 120px" readOnly value=0 label="餐补预算" defaultValue="0" tableName="fd_37ba4d0571dbe2" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ? dataType="number" scale="2" endNum="" beginNum="" _dataType="Double" validate="{dataType:'number',decimal:2}"&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="13" column="0,1,2,3"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4d7417a92c",content:"会务费说明",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;会务费说明&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="14" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4d8e0387f4",content:"事由",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;事由&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1396 colSpan=3 row="14" column="1,2,3"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4dadf89712",width:"100%",height:"80",_label_bind:"true",label:"事由",_label_bind_id:"fd_37ba4d8e0387f4",canShow:"true",readOnly:"false",required:"false",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="textarea"&gt;&lt;TEXTAREA id=fd_37ba4dadf89712 class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="事由" defaultValue="" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="15" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37c0092a773f3c",content:"内容及科目编号（财务填写）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;内容及科目编号（财务填写）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="15" column="1"&gt;
+&lt;DIV id=fd_37c22368d9b568 style="BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px" formDesign="landray" fd_values='{id:"fd_37c22368d9b568"}' fd_type="right"&gt;
+&lt;DIV class=rightIconBar style="CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red"&gt;&lt;/DIV&gt;
+&lt;TABLE class=righBar style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none" cellPadding=1&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 18px"&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px" mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px" def_N11="false" def_N9="false"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px" readerNames="" readerIds=""&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px"&gt;&amp;nbsp;&lt;SPAN ondblclick="Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);" style="BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px"&gt;权限区段2&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37c2235c0247c8",width:"100%",_label_bind:"false",label:"会务费内容及科目编号（财务填写）",_label_bind_id:"fd_37c0092a773f3c",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37c2235c0247c8 class=inputsgl style="WIDTH: 100%" readOnly label="会务费内容及科目编号（财务填写）" tableName="fd_37c22368d9b568" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="15" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4dbd3280a6",content:"预算",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;预算&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="15" column="3"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4dec51b26c",width:"120",_label_bind:"false",label:"会务费预算",_label_bind_id:"fd_37ba4dbd3280a6",canShow:"true",readOnly:"false",required:"false",dataType:"Double",validate:"number",decimal:"2",begin:"",end:"",thousandShow:"false",formula:"",defaultValue:"0",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4dec51b26c class=inputsgl style="WIDTH: 120px" readOnly value=0 label="会务费预算" defaultValue="0" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ? dataType="number" scale="2" endNum="" beginNum="" _dataType="Double" validate="{dataType:'number',decimal:2}"&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="16" column="0,1,2,3"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4df7de3b8c",content:"招投标费说明",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;招投标费说明&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="17" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e09277788",content:"项目名称",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;项目名称&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=472 row="17" column="1"&gt;
+&lt;DIV style="WIDTH: 420px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e0b9e8284",width:"420",_label_bind:"true",label:"项目名称",_label_bind_id:"fd_37ba4e09277788",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4e0b9e8284 class=inputsgl style="WIDTH: 420px" readOnly label="项目名称" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=289 row="17" column="2" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3843e36f5a19ae",content:"客户代码（财务填写）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;客户代码（财务填写）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=635 row="17" column="3"&gt;
+&lt;DIV id=fd_3843e394c8b0c8 style="BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px" formDesign="landray" fd_values='{id:"fd_3843e394c8b0c8"}' fd_type="right"&gt;
+&lt;DIV class=rightIconBar style="CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red"&gt;&lt;/DIV&gt;
+&lt;TABLE class=righBar style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none" cellPadding=1&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 18px"&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px" mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px" def_N11="false" def_N9="false"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px" readerNames="" readerIds=""&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px"&gt;&amp;nbsp;&lt;SPAN ondblclick="Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);" style="BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px"&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV style="WIDTH: 245px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3843e3771434aa",width:"245",_label_bind:"true",label:"客户代码（财务填写）",_label_bind_id:"fd_3843e36f5a19ae",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_3843e3771434aa class=inputsgl style="WIDTH: 245px" readOnly label="客户代码（财务填写）" tableName="fd_3843e394c8b0c8" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="18" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37feab6ce06a2c",content:"内容及科目编号（财务填写）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;内容及科目编号（财务填写）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="18" column="1"&gt;
+&lt;DIV id=fd_37feab7926d0de style="BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px" formDesign="landray" fd_values='{id:"fd_37feab7926d0de"}' fd_type="right"&gt;
+&lt;DIV class=rightIconBar style="CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red"&gt;&lt;/DIV&gt;
+&lt;TABLE class=righBar style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none" cellPadding=1&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 18px"&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px" mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px" def_N11="false" def_N9="false"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px" readerNames="" readerIds=""&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px"&gt;&amp;nbsp;&lt;SPAN ondblclick="Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);" style="BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px"&gt;权限区段1&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37feab70fe8088",width:"100%",_label_bind:"false",label:"招投标内容及科目编号（财务填写）",_label_bind_id:"fd_37c0092a773f3c",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"1221020000 其他应收款-保证金-一般企业使用",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37feab70fe8088 class=inputsgl style="WIDTH: 100%" readOnly value="1221020000 其他应收款-保证金-一般企业使用" label="招投标内容及科目编号（财务填写）" defaultValue="1221020000 其他应收款-保证金-一般企业使用" tableName="fd_37feab7926d0de" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=287 row="18" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e18784cbe",content:"支付内容",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;支付内容&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=639 row="18" column="3"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e1a6aa3a0",width:"100%",height:"80",_label_bind:"true",label:"支付内容",_label_bind_id:"fd_37ba4e18784cbe",canShow:"true",readOnly:"false",required:"false",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="textarea"&gt;&lt;TEXTAREA id=fd_37ba4e1a6aa3a0 class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="支付内容" defaultValue="" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="19" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e2a7c42c4",content:"保证金",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;保证金&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="19" column="1"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e2d00eb44",width:"120",_label_bind:"true",label:"保证金",_label_bind_id:"fd_37ba4e2a7c42c4",canShow:"true",readOnly:"false",required:"false",dataType:"Double",validate:"number",decimal:"2",begin:"",end:"",thousandShow:"false",formula:"",defaultValue:"0",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4e2d00eb44 class=inputsgl style="WIDTH: 120px" readOnly value=0 label="保证金" defaultValue="0" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ? dataType="number" scale="2" endNum="" beginNum="" _dataType="Double" validate="{dataType:'number',decimal:2}"&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=287 row="19" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e3e5a6166",content:"其他",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;其他&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=638 row="19" column="3"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e4764caf4",width:"120",_label_bind:"false",label:"其他",_label_bind_id:"fd_37837b93689d9a",canShow:"true",readOnly:"false",required:"false",dataType:"Double",validate:"number",decimal:"2",begin:"",end:"",thousandShow:"false",formula:"",defaultValue:"0",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4e4764caf4 class=inputsgl style="WIDTH: 120px" readOnly value=0 label="其他" defaultValue="0" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ? dataType="number" scale="2" endNum="" beginNum="" _dataType="Double" validate="{dataType:'number',decimal:2}"&gt;&lt;/DIV&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e4f8387ce",width:"120",_label_bind:"false",label:"其他费用",_label_bind_id:"",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4e4f8387ce class=inputsgl style="WIDTH: 120px" readOnly label="其他费用" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;/DIV&gt;
+&lt;DIV id=fd_37ba4e5b114712 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e5b114712"}' fd_type="jsp" mobileView="enable"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value='&lt;script&gt;&amp;#13;&amp;#10;&amp;#13;&amp;#10;Com_AddEventListener(window, "load",&amp;#13;&amp;#10;function(){&amp;#13;&amp;#10;&amp;#13;&amp;#10;          var d=GetXFormFieldById("fd_37ba4e4f8387ce")[0];&amp;#13;&amp;#10;          if(d){&amp;#13;&amp;#10;            d.setAttribute("placeholder","其他请具体说明");}&amp;#13;&amp;#10;             });&amp;#13;&amp;#10;&lt;/script&gt;'&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="20" column="0,1,2,3"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4e8a48b7a0",content:"其他费用请说明",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;其他费用请说明&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="21" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ebe8c5ddc",content:"内容简述",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;内容简述&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1397 colSpan=3 row="21" column="1,2,3"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ec862a022",width:"100%",height:"80",_label_bind:"true",label:"内容简述",_label_bind_id:"fd_37ba4ebe8c5ddc",canShow:"true",readOnly:"false",required:"false",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="textarea"&gt;&lt;TEXTAREA id=fd_37ba4ec862a022 class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="内容简述" defaultValue="" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="22" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37c009619907fc",content:"内容及科目编号（财务填写）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;内容及科目编号（财务填写）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="22" column="1"&gt;
+&lt;DIV id=fd_37c2236e061c28 style="BORDER-TOP: orange 1px dotted; HEIGHT: 18px; BORDER-RIGHT: orange 1px dotted; WIDTH: 100%; BORDER-BOTTOM: orange 1px dotted; PADDING-BOTTOM: 1px; PADDING-TOP: 1px; PADDING-LEFT: 1px; MIN-HEIGHT: 18px; BORDER-LEFT: orange 1px dotted; PADDING-RIGHT: 1px" formDesign="landray" fd_values='{id:"fd_37c2236e061c28"}' fd_type="right"&gt;
+&lt;DIV class=rightIconBar style="CURSOR: move; HEIGHT: 10px; WIDTH: 10px; POSITION: absolute; BACKGROUND-COLOR: red"&gt;&lt;/DIV&gt;
+&lt;TABLE class=righBar style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-COLLAPSE: collapse; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: none" cellPadding=1&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 18px"&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; WIDTH: 36px; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetModeCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=可编辑 class=modeCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -64px; BORDER-BOTTOM: 0px; FLOAT: left; BORDER-LEFT: 0px" mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;BUTTON onclick=Designer_Control_Right_SetDefaultCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=非默认权限 class=defaultCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -96px; BORDER-BOTTOM: 0px; FLOAT: right; BORDER-LEFT: 0px" def_N11="false" def_N9="false"&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: red 1px solid; BORDER-RIGHT: red 1px solid; BORDER-BOTTOM: red 1px solid; BORDER-LEFT: red 1px solid; DISPLAY: none; BACKGROUND-COLOR: #fbd4b4"&gt;&lt;BUTTON onclick=Designer_Control_Right_SetReaderCellValue(this); ondblclick=Designer_Control_Right_CancelBubbleFun(event); onmousedown=Designer_Control_Right_CancelBubbleFun(event); title=未设置读者 class=readerCell style="CURSOR: pointer; BORDER-TOP: 0px; HEIGHT: 16px; BORDER-RIGHT: 0px; WIDTH: 16px; BACKGROUND: url(style/img/right_icon.gif) no-repeat 0px -16px; BORDER-BOTTOM: 0px; BORDER-LEFT: 0px" readerNames="" readerIds=""&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/BUTTON&gt;&lt;/TD&gt;
+&lt;TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: medium none; PADDING-RIGHT: 2px"&gt;&amp;nbsp;&lt;SPAN ondblclick="Designer_Control_Right_CancelBubbleFun(event); Designer_Control_Right_ShowLabelEditor(this);" style="BORDER-TOP: 0px; BORDER-RIGHT: 0px; BORDER-BOTTOM: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px; PADDING-LEFT: 0px; BORDER-LEFT: 0px; MARGIN: 0px; LINE-HEIGHT: 16px; PADDING-RIGHT: 0px"&gt;权限区段3&lt;/SPAN&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37c2235e01c08c",width:"100%",_label_bind:"true",label:"内容及科目编号（财务填写）",_label_bind_id:"fd_37c009619907fc",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37c2235e01c08c class=inputsgl style="WIDTH: 100%" readOnly label="内容及科目编号（财务填写）" tableName="fd_37c2236e061c28" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ?&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=287 row="22" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ea6f521b8",content:"预算",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;预算&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=638 row="22" column="3"&gt;
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4eae17cfa2",width:"120",_label_bind:"true",label:"预算",_label_bind_id:"fd_37ba4ea6f521b8",canShow:"true",readOnly:"false",required:"false",dataType:"Double",validate:"number",decimal:"2",begin:"",end:"",thousandShow:"false",formula:"",defaultValue:"0",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_37ba4eae17cfa2 class=inputsgl style="WIDTH: 120px" readOnly value=0 label="预算" defaultValue="0" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="true" ? dataType="number" scale="2" endNum="" beginNum="" _dataType="Double" validate="{dataType:'number',decimal:2}"&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="23" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37feab9c9fe3fc",content:"备注",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;备注&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1397 colSpan=3 row="23" column="1,2,3"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37feaba290943c",width:"100%",height:"80",_label_bind:"true",label:"备注",_label_bind_id:"fd_37feab9c9fe3fc",canShow:"true",readOnly:"false",required:"false",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="textarea"&gt;&lt;TEXTAREA id=fd_37feaba290943c class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="备注" defaultValue="" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="24" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37ba4ed01282ac",content:"附件",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;附件&lt;/LABEL&gt; 
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_37e72207d3d7d0",width:"120",_label_bind:"false",label:"编号",_label_bind_id:"",canShow:"false",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"1",defaultValue:"1",reCalculate:"false"}' fd_type="inputText" canShow="false"&gt;&lt;INPUT id=fd_37e72207d3d7d0 class=inputhidden style="WIDTH: 120px" readOnly value=1 label="编号" defaultValue="1" tableName="fd_37ba4923f60c62" _required="false" required="false" _readOnly="false" thousandShow="false" canShow="false" ?&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1397 colSpan=3 row="24" column="1,2,3"&gt;
+&lt;DIV id=fd_37ba4ed7fa4138 style="WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline" label="附件" formDesign="landray" fd_values='{id:"fd_37ba4ed7fa4138",_label_bind:"true",label:"附件",_label_bind_id:"fd_37ba4ed01282ac"}' fd_type="attachment" tableName="fd_37ba4923f60c62" enabledFileType fdMulti="true"&gt;&lt;BUTTON onclick="return false;" class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick="return false;" class=btnopt&gt;删除&lt;/BUTTON&gt; 
+&lt;TABLE&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick="return false;" type=checkbox&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;INPUT onclick="return false;" type=checkbox&gt;&lt;/TD&gt;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;INPUT onclick="return false;" type=checkbox&gt;&lt;/TD&gt;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>route-payment-title-fdModelId</string>
+    </void>
+    <void method="put">
+      <string>fdId</string>
+      <string>route-payment-title-fdId</string>
+    </void>
+    <void method="put">
+      <string>fdDisplayJsp</string>
+      <string>&lt;%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%&gt;
+&lt;%@ include file="/resource/jsp/common.jsp"%&gt;
+&lt;%@ page import="com.landray.kmss.web.taglib.xform.TagUtils" %&gt;
+&lt;TABLE id=fd_37ba4923f60c62 class=tb_normal  align=center label="主表"  layout2col="undefined"  style="width:100%;"&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="0" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;申请人&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="0" column="1"&gt;
+			&lt;LABEL style="WIDTH: 152px; DISPLAY: inline"   &gt;&lt;xform:address propertyId="extendDataFormInfo.value(fd_37ba4a798ceaee.id)" propertyName="extendDataFormInfo.value(fd_37ba4a798ceaee.name)" mulSelect="false" orgType="ORG_TYPE_PERSON" subject="申请人1" title="申请人1" style="WIDTH: 120px" required="false" onValueChange="__xformDispatch" isLoadDataDict="false" /&gt;&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="0" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;申请人部门&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="0" column="3"&gt;
+			&lt;LABEL style="WIDTH: 152px; DISPLAY: inline"   &gt;&lt;xform:address propertyId="extendDataFormInfo.value(fd_37ba4a71aeb34a.id)" propertyName="extendDataFormInfo.value(fd_37ba4a71aeb34a.name)" mulSelect="false" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" subject="部门1" title="部门1" style="WIDTH: 120px" required="false" onValueChange="__xformDispatch" isLoadDataDict="false" /&gt;&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="1" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;申请人工号&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="1" column="1"&gt;
+
+			&lt;DIV style="WIDTH: 226px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4a80b518e2)" style="WIDTH: 220px" required="true" subject=" 申请人工号" title=" 申请人工号" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="1" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;申请人手机&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 align=left row="1" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 226px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4a876bfe4a)" style="WIDTH: 220px" required="true" subject=" 申请人手机" title=" 申请人手机" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="2" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;成本中心及代码&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="2" column="1"&gt;
+
+			&lt;xform:select  property="extendDataFormInfo.value(fd_37ba4ab3064aba)" subject=" 成本中心代码" title=" 成本中心代码" required="true" showPleaseSelect="true" onValueChange="__xformDispatch"&gt;
+			&lt;xform:simpleDataSource  value="运营优化中心280210001"&gt;运营优化中心280210001&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="质量及交付管理中心280210005"&gt;质量及交付管理中心280210005&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="业务拓展中心-市场280220001"&gt;业务拓展中心-市场280220001&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="业务拓展中心-销售280220002"&gt;业务拓展中心-销售280220002&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="大客户及解决方案中心280230001"&gt;大客户及解决方案中心280230001&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="工业互联网创新中心280230003"&gt;工业互联网创新中心280230003&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="软件开发中心280230004"&gt;软件开发中心280230004&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="基础架构中心280230005"&gt;基础架构中心280230005&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="大客户及解决方案中心-售前280223001"&gt;大客户及解决方案中心-售前280223001&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="创新研发中心-售前280223003"&gt;创新研发中心-售前280223003&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="基础架构中心-售前280223005"&gt;基础架构中心-售前280223005&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="智慧供应链产品中心280230006"&gt;智慧供应链产品中心280230006&lt;/xform:simpleDataSource&gt;
+			&lt;/xform:select&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="2" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;报账方式&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="2" column="3"&gt;
+
+			&lt;xform:select  property="extendDataFormInfo.value(fd_37ba4af640c896)" subject=" 报账方式" title=" 报账方式" required="true" showPleaseSelect="true" onValueChange="__xformDispatch"&gt;
+			&lt;xform:simpleDataSource  value="预付（网银）"&gt;预付（网银）&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="预付（汇票）"&gt;预付（汇票）&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="应付款（网银）"&gt;应付款（网银）&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="预付（个人）"&gt;预付（个人）&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="其他"&gt;其他&lt;/xform:simpleDataSource&gt;
+			&lt;/xform:select&gt;
+
+
+			&lt;DIV style="WIDTH: 215px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4afee2219c)" style="WIDTH: 215px" required="false" subject="报账方式" title="报账方式" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+&lt;script&gt;
+
+Com_AddEventListener(window, "load",
+function(){
+
+          var d=GetXFormFieldById("fd_37ba4afee2219c")[0];
+          if(d){
+            d.setAttribute("placeholder","其他请具体说明");}
+             });
+&lt;/script&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="3" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;历史借款是否已归还&lt;/LABEL&gt;
+ 
+&lt;xform:editShow&gt;
+&lt;script&gt;
+//默认历史借款说明
+Com_AddEventListener(window, "load",
+     function(){setTimeout(function(){common_dom_row_set_show_required_reset("lsjk_row",false,false,false);
+},510);});
+
+
+//如果否，则显示历史借款说明
+AttachXFormValueChangeEventById("fd_37ba4b1f5b174a", function(value, domElement){
+     var is_qtfy=GetXFormFieldById("fd_lsjk")[0];
+      if(value.indexOf("n")&gt;=0){
+          is_qtfy.value="n";
+          common_dom_row_set_show_required_reset("lsjk_row",true,true,false);      
+    }else{
+          is_qtfy.value="";
+          common_dom_row_set_show_required_reset("lsjk_row",false,false,false);      
+   }
+});
+&lt;/script&gt;
+&lt;/xform:editShow&gt;
+&lt;xform:viewShow&gt;
+&lt;script&gt;
+//默认隐藏差旅报销相关信息
+Com_AddEventListener(window, "load",
+    function(){
+ var is_clbx=GetXFormFieldById("fd_lsjk")[0];
+ if(is_clbx.value.indexOf("n")&gt;=0){
+ common_dom_row_set_show_required_reset("lsjk_row",true,false,false);
+
+ }else{
+ common_dom_row_set_show_required_reset("lsjk_row",false,false,false);
+
+ }
+});
+
+&lt;/script&gt;
+&lt;/xform:viewShow&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="3" column="1"&gt;
+
+			&lt;xform:radio  property="extendDataFormInfo.value(fd_37ba4b1f5b174a)" alignment="H" required="true" subject="历史借款是否已归还" title="历史借款是否已归还" onValueChange="__xformDispatch"&gt;
+			&lt;xform:simpleDataSource  value="y"&gt;是&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="n"&gt;否&lt;/xform:simpleDataSource&gt;
+			&lt;/xform:radio&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="3" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;报销性质&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="3" column="3"&gt;
+
+			&lt;xform:radio  property="extendDataFormInfo.value(fd_37c158ae9ff540)" alignment="H" required="true" subject="报销性质" title="报销性质" onValueChange="__xformDispatch"&gt;
+			&lt;xform:simpleDataSource  value="1"&gt;对私请款&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="2"&gt;对公请款（无供应商/客户代码）&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="5"&gt;对公请款（有供应商/客户代码）&lt;/xform:simpleDataSource&gt;
+			&lt;/xform:radio&gt;
+
+&lt;xform:editShow&gt;
+&lt;script&gt;
+var leftId = "fd_37c158ae9ff540";
+var rightId = "fd_37ba4caea633aa";
+Com_AddEventListener(window, "load", function(){
+     changeJvCompany();
+
+});
+AttachXFormValueChangeEventById(leftId,changeJvCompany);
+
+function changeJvCompany(){
+   var radio = GetXFormFieldById(leftId);
+   var radioLength = radio.length;
+   var radioValue;
+   for(var i = 0;i &lt; radioLength;i++)
+   {
+    if(radio[i].checked)
+    {
+     var radioValue = radio[i].value;
+    }
+  }
+  var domArr =  GetXFormFieldById(rightId);
+
+ if(radioValue=="5"){
+      for(var i=0;i&lt;domArr.length;i++){
+           domArr[i].parentNode.parentNode.style.display = "";
+           domArr[i].validate = "required";
+
+     } 
+  }else{
+      for(var i=0;i&lt;domArr.length;i++){
+           domArr[i].parentNode.parentNode.style.display = "none";
+            domArr[i].validate = "";
+
+     } 
+  }
+
+}
+
+&lt;/script&gt;
+&lt;/xform:editShow&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="4" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;历史借款未清原因&lt;/LABEL&gt;
+ 
+&lt;input type="hidden" id="lsjk_row" name="lsjk_row"/&gt;
+
+
+			&lt;DIV style="display:none;"    canShow="false"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_lsjk)" style="WIDTH: 120px" required="false" showStatus="noShow" subject="lsjk" title="lsjk" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1402 colSpan=3 row="4" column="1,2,3"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"    _required=true&gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_37ba4bc84ddd44)" style="HEIGHT: 80px; WIDTH: 100%" required="true" subject="历史借款未清原因" title="历史借款未清原因" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 align=left row="5" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;金额&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="5" column="1"&gt;
+
+	&lt;%if ("readOnly".equals(request.getAttribute("SysForm.base.showStatus"))) {%&gt;
+			&lt;script&gt;Com_IncludeFile('calculation_script.js','../sys/xform/designer/calculation/');&lt;/script&gt;
+	&lt;%}%&gt;
+&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4efab1131e)" style="WIDTH: 200px; DISPLAY: inline" showStatus="${requestScope['SysForm.showStatus']}" editReadOnlyStyle="inputsgl" dataType="Double" subject="金额" title="金额" isLoadDataDict="false" htmlElementProperties=" calculation='true' readonly  isRow='false' expression='$fd_37ba4d347ea8da$ + $fd_37ba4d4516de0e$ + $fd_37ba4d56156ae8$ + $fd_37ba4dec51b26c$ + $fd_37ba4e2d00eb44$ + $fd_37ba4e4764caf4$ + $fd_37ba4eae17cfa2$' autoCalculate='true' thousandShow='true' scale='2'" /&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=289 row="5" column="2" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;付款银行信息(财务填写)&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="5" column="3"&gt;
+
+			&lt;xform:right  mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit" def_N11="false" def_N9="false"&gt;
+			&lt;xform:select  property="extendDataFormInfo.value(fd_386271bff5be34)" subject="付款银行信息(财务填写)" title="付款银行信息(财务填写)" required="false" showPleaseSelect="true" onValueChange="__xformDispatch"&gt;
+			&lt;xform:simpleDataSource  value="中国工商银行外滩支行"&gt;中国工商银行外滩支行&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="中国建设银行第四支行"&gt;中国建设银行第四支行&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="浦东发展银行陆家嘴支行"&gt;浦东发展银行陆家嘴支行&lt;/xform:simpleDataSource&gt;
+			&lt;/xform:select&gt;
+
+			&lt;/xform:right&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="6" column="0,1,2,3"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;收款人信息&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="7" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;收款人/收款单位名称&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="7" column="1"&gt;
+
+			&lt;DIV style="WIDTH: 426px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4c8e877d14)" style="WIDTH: 420px" required="true" subject="收款人/收款单位名称" title="收款人/收款单位名称" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="7" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;收款人工号&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="7" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 126px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_396460df89287e)" style="WIDTH: 120px" required="true" subject="收款人工号" title="收款人工号" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="8" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;收款人/收款单位银行账户&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="8" column="1"&gt;
+
+			&lt;DIV style="WIDTH: 426px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4c9ac79584)" style="WIDTH: 420px" required="true" subject="收款人/收款单位银行账户" title="收款人/收款单位银行账户" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="8" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;收款人/收款单位开户行信息&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="8" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 426px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4ca306d78e)" style="WIDTH: 420px" required="true" subject="收款人/收款单位开户行信息" title="收款人/收款单位开户行信息" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="9" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;供应商/客户代码(财务填写)&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1396 colSpan=3 row="9" column="1,2,3"&gt;&amp;nbsp; 
+
+			&lt;xform:right  mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit" def_N11="false" def_N9="false"&gt;
+			&lt;DIV style="WIDTH: 420px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4caea633aa)" style="WIDTH: 420px" required="false" subject="供应商/客户代码(财务填写)" title="供应商/客户代码(财务填写)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;/xform:right&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="10" column="0,1,2,3"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;差旅费说明&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="11" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;事由、路线、名单、日期&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1396 colSpan=3 row="11" column="1,2,3"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"   &gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_37ba4ce8ce446c)" style="HEIGHT: 80px; WIDTH: 100%" required="false" subject="事由、路线、名单、日期" title="事由、路线、名单、日期" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 row="12" column="0,1,2,3"&gt;
+&lt;TABLE id=fd_37ba4d0571dbe2 class=tb_normal  align=center label="表格1"  layout2col="undefined"  style="width:100%;"&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 57px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 220px" width=304 row="0" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;内容及科目编号（财务填写）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 400px" width=536 row="0" column="1"&gt;
+
+			&lt;xform:right  mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit" def_N11="false" def_N9="false"&gt;
+			&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37c22359d0f3a6)" style="WIDTH: 100%" required="false" subject="差旅费内容及科目编号（财务填写）" title="差旅费内容及科目编号（财务填写）" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;/xform:right&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 152px" width=217 row="0" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;住宿费预算（元）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 465px" width=619 row="0" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4d4516de0e)" style="WIDTH: 120px" required="false" htmlElementProperties="thousandShow='false'" dataType="Double" subject="住宿费预算" title="住宿费预算" validators=" number number scaleLength(2)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 220px" width=304 row="1" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;交通费预算（元）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 400px" width=536 row="1" column="1"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4d347ea8da)" style="WIDTH: 120px" required="false" htmlElementProperties="thousandShow='false'" dataType="Double" subject="交通费预算" title="交通费预算" validators=" number number scaleLength(0)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 152px" width=217 row="1" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;餐补预算（元）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 465px" width=619 row="1" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4d56156ae8)" style="WIDTH: 120px" required="false" htmlElementProperties="thousandShow='false'" dataType="Double" subject="餐补预算" title="餐补预算" validators=" number number scaleLength(2)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="13" column="0,1,2,3"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;会务费说明&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="14" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;事由&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1396 colSpan=3 row="14" column="1,2,3"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"   &gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_37ba4dadf89712)" style="HEIGHT: 80px; WIDTH: 100%" required="false" subject="事由" title="事由" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="15" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;内容及科目编号（财务填写）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="15" column="1"&gt;
+
+			&lt;xform:right  mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit" def_N11="false" def_N9="false"&gt;
+			&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37c2235c0247c8)" style="WIDTH: 100%" required="false" subject="会务费内容及科目编号（财务填写）" title="会务费内容及科目编号（财务填写）" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;/xform:right&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=289 row="15" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;预算&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=635 row="15" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4dec51b26c)" style="WIDTH: 120px" required="false" htmlElementProperties="thousandShow='false'" dataType="Double" subject="会务费预算" title="会务费预算" validators=" number number scaleLength(2)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="16" column="0,1,2,3"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;招投标费说明&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=333 row="17" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;项目名称&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=472 row="17" column="1"&gt;
+
+			&lt;DIV style="WIDTH: 420px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4e0b9e8284)" style="WIDTH: 420px" required="false" subject="项目名称" title="项目名称" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=289 row="17" column="2" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;客户代码（财务填写）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=635 row="17" column="3"&gt;
+
+			&lt;xform:right  mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit" def_N11="false" def_N9="false"&gt;
+			&lt;DIV style="WIDTH: 245px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3843e3771434aa)" style="WIDTH: 245px" required="false" subject="客户代码（财务填写）" title="客户代码（财务填写）" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;/xform:right&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="18" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;内容及科目编号（财务填写）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="18" column="1"&gt;
+
+			&lt;xform:right  mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit" def_N11="false" def_N9="false"&gt;
+			&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37feab70fe8088)" style="WIDTH: 100%" required="false" subject="招投标内容及科目编号（财务填写）" title="招投标内容及科目编号（财务填写）" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;/xform:right&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=287 row="18" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;支付内容&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=639 row="18" column="3"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"   &gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_37ba4e1a6aa3a0)" style="HEIGHT: 80px; WIDTH: 100%" required="false" subject="支付内容" title="支付内容" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="19" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;保证金&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="19" column="1"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4e2d00eb44)" style="WIDTH: 120px" required="false" htmlElementProperties="thousandShow='false'" dataType="Double" subject="保证金" title="保证金" validators=" number number scaleLength(2)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=287 row="19" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;其他&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=638 row="19" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4e4764caf4)" style="WIDTH: 120px" required="false" htmlElementProperties="thousandShow='false'" dataType="Double" subject="其他" title="其他" validators=" number number scaleLength(2)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4e4f8387ce)" style="WIDTH: 120px" required="false" subject="其他费用" title="其他费用" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+&lt;script&gt;
+
+Com_AddEventListener(window, "load",
+function(){
+
+          var d=GetXFormFieldById("fd_37ba4e4f8387ce")[0];
+          if(d){
+            d.setAttribute("placeholder","其他请具体说明");}
+             });
+&lt;/script&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: auto" width=1728 colSpan=4 align=center row="20" column="0,1,2,3"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;其他费用请说明&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="21" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;内容简述&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1397 colSpan=3 row="21" column="1,2,3"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"   &gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_37ba4ec862a022)" style="HEIGHT: 80px; WIDTH: 100%" required="false" subject="内容简述" title="内容简述" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="22" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;内容及科目编号（财务填写）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 457px" width=472 row="22" column="1"&gt;
+
+			&lt;xform:right  mode_d="view" mode_g="view" mode_N11="edit" mode_N9="edit" def_N11="false" def_N9="false"&gt;
+			&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37c2235e01c08c)" style="WIDTH: 100%" required="false" subject="内容及科目编号（财务填写）" title="内容及科目编号（财务填写）" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;/xform:right&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 290px" width=287 row="22" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;预算&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 629px" width=638 row="22" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 120px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ba4eae17cfa2)" style="WIDTH: 120px" required="false" htmlElementProperties="thousandShow='false'" dataType="Double" subject="预算" title="预算" validators=" number number scaleLength(2)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="23" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;备注&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1397 colSpan=3 row="23" column="1,2,3"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"   &gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_37feaba290943c)" style="HEIGHT: 80px; WIDTH: 100%" required="false" subject="备注" title="备注" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 331px" width=331 row="24" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;附件&lt;/LABEL&gt;
+ 
+
+			&lt;DIV style="display:none;"    canShow="false"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37e72207d3d7d0)" style="WIDTH: 120px" required="false" showStatus="noShow" subject="编号" title="编号" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1397 colSpan=3 row="24" column="1,2,3"&gt;
+
+&lt;c:import url="/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == 'add' || _xformMainForm.method_GET == 'edit') ? 'edit' : 'view') : (_xformRight == 'edit' ? 'edit' : 'view')}.jsp" charEncoding="UTF-8"&gt;
+	&lt;c:param name="fdAttType" value="byte" /&gt;
+	&lt;c:param name="fdMulti" value="true" /&gt;
+	&lt;c:param name="fdShowMsg" value="true" /&gt;
+	&lt;c:param name="fdImgHtmlProperty" /&gt;
+	&lt;c:param name="fdKey" value="fd_37ba4ed7fa4138" /&gt;
+	&lt;c:param name="fdModelId" value="${_xformMainForm.fdId}" /&gt;
+	&lt;c:param name="fdModelName" value="${_xformMainForm.modelClass.name}" /&gt;
+	&lt;c:param name="formBeanName" value="_xformMainForm" /&gt;
+&lt;/c:import&gt;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdMetadataXml</string>
+      <string>&lt;model &gt;
+&lt;extendElementProperty name="fd_37ba4a798ceaee" label="申请人1" type="com.landray.kmss.sys.organization.model.SysOrgPerson" defaultValue="OrgFunction.getCurrentUser()" formula="true" dialogJS="Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_PERSON);" /&gt;
+&lt;extendElementProperty name="fd_37ba4a71aeb34a" label="部门1" type="com.landray.kmss.sys.organization.model.SysOrgElement" defaultValue="OrgFunction.getCurrentDept()" formula="true" dialogJS="Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_ORG|ORG_TYPE_DEPT);" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4a80b518e2" label=" 申请人工号" type="String" length="200" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4a876bfe4a" label=" 申请人手机" type="String" length="200" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4ab3064aba" label=" 成本中心代码" notNull="true" enumValues="运营优化中心280210001|运营优化中心280210001;质量及交付管理中心280210005|质量及交付管理中心280210005;业务拓展中心-市场280220001|业务拓展中心-市场280220001;业务拓展中心-销售280220002|业务拓展中心-销售280220002;大客户及解决方案中心280230001|大客户及解决方案中心280230001;工业互联网创新中心280230003|工业互联网创新中心280230003;软件开发中心280230004|软件开发中心280230004;基础架构中心280230005|基础架构中心280230005;大客户及解决方案中心-售前280223001|大客户及解决方案中心-售前280223001;创新研发中心-售前280223003|创新研发中心-售前280223003;基础架构中心-售前280223005|基础架构中心-售前280223005;智慧供应链产品中心280230006|智慧供应链产品中心280230006" type="String" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4af640c896" label=" 报账方式" notNull="true" enumValues="预付（网银）|预付（网银）;预付（汇票）|预付（汇票）;应付款（网银）|应付款（网银）;预付（个人）|预付（个人）;其他|其他" type="String" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4afee2219c" label="报账方式" type="String" length="200" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4b1f5b174a" label="历史借款是否已归还" notNull="true" enumValues="是|y;否|n" type="String" /&gt;
+&lt;extendSimpleProperty name="fd_37c158ae9ff540" label="报销性质" notNull="true" enumValues="对私请款|1;对公请款（无供应商/客户代码）|2;对公请款（有供应商/客户代码）|5" type="String" defaultValue="1" /&gt;
+&lt;extendSimpleProperty name="fd_lsjk" label="lsjk" type="String" length="200" canDisplay="false" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4bc84ddd44" label="历史借款未清原因" type="String" length="" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4efab1131e" label="金额" type="Double" defaultValue="0" scale="2" /&gt;
+&lt;extendSimpleProperty name="fd_386271bff5be34" label="付款银行信息(财务填写)" enumValues="中国工商银行外滩支行|中国工商银行外滩支行;中国建设银行第四支行|中国建设银行第四支行;浦东发展银行陆家嘴支行|浦东发展银行陆家嘴支行" type="String" /&gt;
+
+&lt;extendSimpleProperty name="fd_37ba4c8e877d14" label="收款人/收款单位名称" type="String" length="200" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_396460df89287e" label="收款人工号" type="String" length="200" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4c9ac79584" label="收款人/收款单位银行账户" type="String" length="200" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4ca306d78e" label="收款人/收款单位开户行信息" type="String" length="200" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4caea633aa" label="供应商/客户代码(财务填写)" type="String" length="200" /&gt;
+
+&lt;extendSimpleProperty name="fd_37ba4ce8ce446c" label="事由、路线、名单、日期" type="String" length="" /&gt;
+&lt;extendSimpleProperty name="fd_37c22359d0f3a6" label="差旅费内容及科目编号（财务填写）" type="String" length="200" /&gt;
+
+&lt;extendSimpleProperty name="fd_37ba4d4516de0e" label="住宿费预算" type="Double" length="10" scale="2" defaultValue="0" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4d347ea8da" label="交通费预算" type="Double" length="10" defaultValue="0" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4d56156ae8" label="餐补预算" type="Double" length="10" scale="2" defaultValue="0" /&gt;
+
+&lt;extendSimpleProperty name="fd_37ba4dadf89712" label="事由" type="String" length="" /&gt;
+&lt;extendSimpleProperty name="fd_37c2235c0247c8" label="会务费内容及科目编号（财务填写）" type="String" length="200" /&gt;
+
+&lt;extendSimpleProperty name="fd_37ba4dec51b26c" label="会务费预算" type="Double" length="10" scale="2" defaultValue="0" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4e0b9e8284" label="项目名称" type="String" length="200" /&gt;
+&lt;extendSimpleProperty name="fd_3843e3771434aa" label="客户代码（财务填写）" type="String" length="200" /&gt;
+
+&lt;extendSimpleProperty name="fd_37feab70fe8088" label="招投标内容及科目编号（财务填写）" type="String" length="200" defaultValue="1221020000 其他应收款-保证金-一般企业使用" /&gt;
+
+&lt;extendSimpleProperty name="fd_37ba4e1a6aa3a0" label="支付内容" type="String" length="" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4e2d00eb44" label="保证金" type="Double" length="10" scale="2" defaultValue="0" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4e4764caf4" label="其他" type="Double" length="10" scale="2" defaultValue="0" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4e4f8387ce" label="其他费用" type="String" length="200" /&gt;
+&lt;extendSimpleProperty name="fd_37ba4ec862a022" label="内容简述" type="String" length="" /&gt;
+&lt;extendSimpleProperty name="fd_37c2235e01c08c" label="内容及科目编号（财务填写）" type="String" length="200" /&gt;
+
+&lt;extendSimpleProperty name="fd_37ba4eae17cfa2" label="预算" type="Double" length="10" scale="2" defaultValue="0" /&gt;
+&lt;extendSimpleProperty name="fd_37feaba290943c" label="备注" type="String" length="" /&gt;
+&lt;extendSimpleProperty name="fd_37e72207d3d7d0" label="编号" type="String" length="200" formula="true" defaultValue="1" canDisplay="false" /&gt;
+
+&lt;/model&gt;</string>
+    </void>
+  </object>
+</java>

@@ -1,0 +1,439 @@
+<?xml version='1.0' encoding='utf-8'?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>fdTemplateEdition</string>
+      <string>22</string>
+    </void>
+    <void method="put">
+      <string>class</string>
+      <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&amp;nbsp; 
+&lt;TABLE id=fd_3292fb9c02fe58 class=tb_normal style="WIDTH: 98%" align=center fd_type="standardTable" fd_values='{id:"fd_3292fb9c03086e",label:"主表"}' layout2col="undefined" formDesign="landray" label="主表"&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 39px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=224 column="0" row="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fc2a50f2d2",content:"申请人姓名",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;申请人姓名&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 400px" width=397 column="1" row="0"&gt;&lt;LABEL style="WIDTH: 188px; DISPLAY: inline" fd_type="address" fd_values='{id:"fd_3338c67b8f19da",width:"150",_label_bind:"true",label:"申请人姓名",_label_bind_id:"fd_3292fc2a50f2d2",_org_person:"true",_orgType:"ORG_TYPE_PERSON",readOnly:"false",required:"true",businessType:"addressDialog",multiSelect:"false",orgType:"",_org_org:"false",_org_dept:"false",_org_post:"false",_org_group:"false",defaultValue:"ORG_TYPE_PERSON"}' formDesign="landray"&gt;&lt;INPUT id=fd_3338c67b8f19da class=inputsgl style="WIDTH: 150px" readOnly value=提交人 label="申请人姓名" multiSelect="false" orgType="ORG_TYPE_PERSON" defaultValue="ORG_TYPE_PERSON" businessType="addressDialog" thousandShow="true" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 195px" width=235 column="2" row="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fc00e02d44",content:"申请部门",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;申请部门&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 408px" width=519 column="3" row="0"&gt;
+&lt;DIV style="WIDTH: 156px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_3293e0c29f78ac.name",width:"150",_label_bind:"false",label:"申请人1",_label_bind_id:"fd_3292fc2a50f2d2",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_3293e0c29f78ac.name class=inputsgl style="WIDTH: 150px" readOnly label="申请人1" thousandShow="false" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;
+&lt;DIV id=fd_3293e087072e50 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_3293e087072e50"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;xform:editShow&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;LABEL style="WIDTH: 32px; DISPLAY: inline" fd_type="address" fd_values='{id:"fd_3293e0c29f78ac",width:"0",_label_bind:"false",label:"申请人2",_label_bind_id:"fd_3292fc2a50f2d2",_org_person:"false",_orgType:"ORG_TYPE_ORG|ORG_TYPE_DEPT",readOnly:"false",required:"false",businessType:"addressDialog",multiSelect:"true",orgType:"",_org_org:"true",_org_dept:"true",_org_post:"false",_org_group:"false",defaultValue:"ORG_TYPE_DEPT"}' formDesign="landray"&gt;&lt;INPUT id=fd_3293e0c29f78ac class=inputsgl style="WIDTH: 0px" readOnly value=提交人的部门 label="申请人2" multiSelect="true" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" defaultValue="ORG_TYPE_DEPT" businessType="addressDialog" thousandShow="true" _readOnly="false" _required="false" required="false" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt; 
+&lt;DIV id=fd_3293e0d0f650c8 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_3293e0d0f650c8"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;/xform:editShow&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 39px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=224 column="0" row="1"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fc986f1146",content:"团队负责人姓名",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;团队负责人姓名&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 400px" width=397 column="1" row="1"&gt;
+&lt;DIV style="WIDTH: 300px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_3338c6d3cbab04",width:"300",_label_bind:"true",label:"团队负责人姓名",_label_bind_id:"fd_3292fc986f1146",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_3338c6d3cbab04 class=inputsgl style="WIDTH: 300px" readOnly label="团队负责人姓名" thousandShow="false" _readOnly="false" _required="false" required="false" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 195px" width=235 column="2" row="1"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fc56943766",content:"申请日期",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;申请日期&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 408px" width=519 column="3" row="1"&gt;
+&lt;DIV style="WIDTH: 188px; DISPLAY: inline" fd_type="datetime" fd_values='{id:"fd_3292fdec23dee8",width:"150",_label_bind:"true",label:"申请日期",_label_bind_id:"fd_3292fc56943766",canShow:"true",readOnly:"false",required:"true",businessType:"dateDialog",defaultValue:"nowTime",_selectValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;INPUT id=fd_3292fdec23dee8 class=inputsgl style="WIDTH: 150px" readOnly value=当前时间 label="申请日期" defaultValue="nowTime" businessType="dateDialog" thousandShow="true" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=224 column="0" row="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_38ee526eba2a28",content:"是否科研项目",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;是否科研项目&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=397 align=left column="1" row="2"&gt;
+&lt;TABLE class=tb_noborder style="WIDTH: 76px; DISPLAY: inline" fd_type="inputRadio" fd_values='{id:"fd_38ee5277876934",_label_bind:"true",label:"是否科研项目",_label_bind_id:"fd_38ee526eba2a28",canShow:"true",required:"false",alignment:"H",dataType:"String",items:"是|2&amp;#13;&amp;#10;否|1",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray"&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38ee5277876934 type=radio value=2 label="是否科研项目" _required="false" required="false" tableName="fd_3292fb9c02fe58" alignment="H" itemValues="2;1" items="是;否"&gt;&lt;LABEL attach="fd_38ee5277876934"&gt;是&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38ee5277876934 type=radio value=1 attach="fd_38ee5277876934"&gt;&lt;LABEL attach="fd_38ee5277876934"&gt;否&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV id=fd_38ee5440fca2da title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_38ee5440fca2da"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value='&lt;xform:editShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;var leftId = "fd_38ee5277876934";&amp;#13;&amp;#10;var rightId = "fd_38ee53cabd8d1a";&amp;#13;&amp;#10;Com_AddEventListener(window, "load", function(){&amp;#13;&amp;#10;     changeJvCompany();&amp;#13;&amp;#10;&amp;#13;&amp;#10;});&amp;#13;&amp;#10;AttachXFormValueChangeEventById(leftId,changeJvCompany);&amp;#13;&amp;#10;&amp;#13;&amp;#10;function changeJvCompany(){&amp;#13;&amp;#10;   var radio = GetXFormFieldById(leftId);&amp;#13;&amp;#10;   var radioLength = radio.length;&amp;#13;&amp;#10;   var radioValue;&amp;#13;&amp;#10;   for(var i = 0;i &lt; radioLength;i++)&amp;#13;&amp;#10;   {&amp;#13;&amp;#10;    if(radio[i].checked)&amp;#13;&amp;#10;    {&amp;#13;&amp;#10;     var radioValue = radio[i].value;&amp;#13;&amp;#10;    }&amp;#13;&amp;#10;  }&amp;#13;&amp;#10;  var domArr =  GetXFormFieldById(rightId);&amp;#13;&amp;#10;&amp;#13;&amp;#10; if(radioValue=="1"){&amp;#13;&amp;#10;      for(var i=0;i&lt;domArr.length;i++){&amp;#13;&amp;#10;           domArr[i].parentNode.parentNode.style.display = "";&amp;#13;&amp;#10;           domArr[i].validate = "required";&amp;#13;&amp;#10;&amp;#13;&amp;#10;     } &amp;#13;&amp;#10;  }else{&amp;#13;&amp;#10;      for(var i=0;i&lt;domArr.length;i++){&amp;#13;&amp;#10;           domArr[i].parentNode.parentNode.style.display = "none";&amp;#13;&amp;#10;            domArr[i].validate = "";&amp;#13;&amp;#10;&amp;#13;&amp;#10;     } &amp;#13;&amp;#10;  }&amp;#13;&amp;#10;&amp;#13;&amp;#10;}&amp;#13;&amp;#10;&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:editShow&gt;'&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=235 column="2" row="2" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_38ee529eb0b13e",content:"项目类型",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;项目类型&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=517 column="3" row="2"&gt;
+&lt;TABLE class=tb_noborder style="WIDTH: 240px; DISPLAY: inline" fd_type="inputRadio" fd_values='{id:"fd_38ee53cabd8d1a",_label_bind:"true",label:"项目类型",_label_bind_id:"fd_38ee529eb0b13e",canShow:"true",required:"false",alignment:"H",dataType:"String",items:"非科研项目|1&amp;#13;&amp;#10;售前项目|2&amp;#13;&amp;#10;非项目|3",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray"&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38ee53cabd8d1a type=radio value=1 label="项目类型" _required="false" required="false" tableName="fd_3292fb9c02fe58" alignment="H" itemValues="1;2;3" items="非科研项目;售前项目;非项目"&gt;&lt;LABEL attach="fd_38ee53cabd8d1a"&gt;非科研项目&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38ee53cabd8d1a type=radio value=2 attach="fd_38ee53cabd8d1a"&gt;&lt;LABEL attach="fd_38ee53cabd8d1a"&gt;售前项目&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;NOBR&gt;&lt;INPUT id=fd_38ee53cabd8d1a type=radio value=3 attach="fd_38ee53cabd8d1a"&gt;&lt;LABEL attach="fd_38ee53cabd8d1a"&gt;非项目&lt;/LABEL&gt;&amp;nbsp;&lt;/NOBR&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV id=fd_391c43990a3b92 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_391c43990a3b92"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value='&lt;xform:editShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;&amp;#13;&amp;#10;//如果选择其他费用，则显示其他费用相关信息&amp;#13;&amp;#10;AttachXFormValueChangeEventById("fd_38ee53cabd8d1a", function(value, domElement){&amp;#13;&amp;#10;     var is_qtfy=GetXFormFieldById("fd_is_qtfy")[0];&amp;#13;&amp;#10;      if(value.indexOf("3")&gt;=0){&amp;#13;&amp;#10;          is_qtfy.value="3";&amp;#13;&amp;#10;          common_dom_row_set_show_required_reset("qtfy_row",false,false,false);      &amp;#13;&amp;#10;    }else{&amp;#13;&amp;#10;          is_qtfy.value="";&amp;#13;&amp;#10;          common_dom_row_set_show_required_reset("qtfy_row",true,true,false);      &amp;#13;&amp;#10;   }&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:editShow&gt;&amp;#13;&amp;#10;&lt;xform:viewShow&gt;&amp;#13;&amp;#10;&lt;script&gt;&amp;#13;&amp;#10;//默认隐藏其他费用相关信息&amp;#13;&amp;#10;Com_AddEventListener(window, "load",&amp;#13;&amp;#10;    function(){&amp;#13;&amp;#10; var is_qtfy=GetXFormFieldById("fd_is_qtfy")[0];&amp;#13;&amp;#10; if(is_qtfy.value.indexOf("3")&gt;=0){&amp;#13;&amp;#10; common_dom_row_set_show_required_reset("qtfy_row",false,false,false);&amp;#13;&amp;#10;&amp;#13;&amp;#10; }else{&amp;#13;&amp;#10; common_dom_row_set_show_required_reset("qtfy_row",true,false,false);&amp;#13;&amp;#10;&amp;#13;&amp;#10; }&amp;#13;&amp;#10;});&amp;#13;&amp;#10;&amp;#13;&amp;#10;&lt;/script&gt;&amp;#13;&amp;#10;&lt;/xform:viewShow&gt;'&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=223 column="0" row="3"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_37ab890a140558",content:"项目名称",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;项目名称&lt;/LABEL&gt; 
+&lt;DIV style="WIDTH: 120px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_is_qtfy",width:"120",_label_bind:"false",label:"11",_label_bind_id:"",canShow:"false",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="false"&gt;&lt;INPUT id=fd_is_qtfy class=inputhidden style="WIDTH: 120px" readOnly label="11" thousandShow="false" _readOnly="false" _required="false" required="false" tableName="fd_3292fb9c02fe58" canShow="false" ?&gt;&lt;/DIV&gt;
+&lt;DIV id=fd_391c4396aebac0 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_391c4396aebac0"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value='&lt;input type="hidden" id="qtfy_row" name="qtfy_row"/&gt;'&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=397 align=left column="1" row="3"&gt;
+&lt;DIV style="WIDTH: 306px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_37ab891cbee858",width:"300",_label_bind:"true",label:"项目名称",_label_bind_id:"fd_37ab890a140558",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_37ab891cbee858 class=inputsgl style="WIDTH: 300px" readOnly label="项目名称" thousandShow="false" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=237 column="2" row="3" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_37ab8913fb445e",content:"WBS号",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;WBS号&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=517 column="3" row="3"&gt;
+&lt;DIV style="WIDTH: 306px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_37ab89265a9fe2",width:"300",_label_bind:"true",label:"WBS号",_label_bind_id:"fd_37ab8913fb445e",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_37ab89265a9fe2 class=inputsgl style="WIDTH: 300px" readOnly label="WBS号" thousandShow="false" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 39px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="4"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fcc2eed958",content:"出差日期",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;出差日期&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=397 align=left column="1" row="4"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3338c6eb722f84",content:"从",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;从&lt;/LABEL&gt; 
+&lt;DIV style="WIDTH: 158px; DISPLAY: inline" fd_type="datetime" fd_values='{id:"fd_3338c6f1c75364",width:"120",_label_bind:"false",label:"出差日期-始",_label_bind_id:"fd_3292fcc2eed958",canShow:"true",readOnly:"false",required:"true",businessType:"dateDialog",defaultValue:"nowTime",_selectValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;INPUT id=fd_3338c6f1c75364 class=inputsgl style="WIDTH: 120px" readOnly value=当前时间 label="出差日期-始" defaultValue="nowTime" businessType="dateDialog" thousandShow="true" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3338c6f3294d1e",content:"到",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;到&lt;/LABEL&gt; 
+&lt;DIV style="WIDTH: 158px; DISPLAY: inline" fd_type="datetime" fd_values='{id:"fd_3338c6f75b7c46",width:"120",_label_bind:"false",label:"出差日期-末",_label_bind_id:"fd_3292fcc2eed958",canShow:"true",readOnly:"false",required:"true",businessType:"dateDialog",defaultValue:"nowTime",_selectValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;INPUT id=fd_3338c6f75b7c46 class=inputsgl style="WIDTH: 120px" readOnly value=当前时间 label="出差日期-末" defaultValue="nowTime" businessType="dateDialog" thousandShow="true" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3338c6fc2da9de",content:"，  共",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;，&amp;nbsp;&amp;nbsp;共&lt;/LABEL&gt; 
+&lt;DIV id=fd_37a9d0f55033f2 style="WIDTH: 200px; DISPLAY: inline" fd_type="calculation" fd_values='{id:"fd_37a9d0f55033f2",_label_bind:"true",label:"出差日期",_label_bind_id:"fd_3292fcc2eed958",width:"200",dataType:"Double",canShow:"true",readOnly:"true",autoCalculate:"true",expression_id:"(($fd_3338c6f75b7c46$ - $fd_3338c6f1c75364$ )  / (1000 * 3600 * 24 )  )  + 1",expression_name:"(($出差日期-末$ - $出差日期-始$ )  / (1000 * 3600 * 24 )  )  + 1",decimal:"1",thousandShow:"false",formula:"",defaultValue:"1",reCalculate:"false"}' formDesign="landray" label="出差日期" thousandShow="false" _readOnly="true" canShow="true" dataType="Double" scale="1" readOnly="true" expression_mode="notRow" autoCalculate="true" expression_id="(($fd_3338c6f75b7c46$ - $fd_3338c6f1c75364$ )  / (1000 * 3600 * 24 )  )  + 1"&gt;&lt;INPUT title=计算控件 class=inputsgl style="WIDTH: 170px" value="(($出差日期-末$ - $出差日期-始$ )  / (1000 * 3600 * 24 )  )  + 1" thousandShow="false"&gt; &lt;A href="javascript:void(0);"&gt;计算&lt;/A&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_37a9d1029fb078",content:"天",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;天&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=238 column="2" row="4" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_37af6afb153c2c",content:"出行方式",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;出行方式&lt;/LABEL&gt; 
+&lt;DIV id=fd_3972939a9a7fd2 style="WIDTH: 16px; DISPLAY: inline" fd_type="brcontrol" fd_values='{id:"fd_3972939a9a7fd2"}' formDesign="landray"&gt;&lt;LABEL title=换行 style="HEIGHT: 16px; WIDTH: 16px; BACKGROUND: url(style/img/br.png) no-repeat; MARGIN: 2px 4px 0px 2px"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;
+&lt;DIV id=brcontrol-fd_3972939a9a7fd2&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; COLOR: #ff0000; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3972938f95e834",content:"备注：出差机票由部门管理员统一预订",font:"",size:"",color:"#FF0000",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;备注：出差机票由部门管理员统一预订&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD width=517 column="3" row="4"&gt;
+&lt;DIV class=select_div_box style="WIDTH: 108px; DISPLAY: inline" fd_type="select" fd_values='{id:"fd_37c0a161e290b6",_label_bind:"true",label:"备注：出差机票由部门管理员统一预订",_label_bind_id:"fd_3972938f95e834",canShow:"true",required:"true",dataType:"String",items:"飞机&amp;#13;&amp;#10;高铁&amp;#13;&amp;#10;公务车&amp;#13;&amp;#10;其他",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;LABEL class=select_tag_left&gt;&lt;LABEL class=select_tag_right&gt;&lt;LABEL class=select_tag_face&gt;--- 请选择 ---&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;SELECT id=fd_37c0a161e290b6 style="DISPLAY: none" label="备注：出差机票由部门管理员统一预订" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" itemValues="飞机;高铁;公务车;其他" items="飞机;高铁;公务车;其他"&gt;&lt;/SELECT&gt;&lt;/DIV&gt;
+&lt;DIV style="WIDTH: 150px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_37af6b2741ecea",width:"150",_label_bind:"false",label:"出行方式其他情况",_label_bind_id:"fd_37af6afb153c2c",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_37af6b2741ecea class=inputsgl style="WIDTH: 150px" readOnly label="出行方式其他情况" thousandShow="false" _readOnly="false" _required="false" required="false" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;/DIV&gt;
+&lt;DIV id=fd_37af6b2a37c184 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_37af6b2a37c184"}' formDesign="landray" mobileView="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value='&lt;script&gt;&amp;#13;&amp;#10;&amp;#13;&amp;#10;Com_AddEventListener(window, "load",&amp;#13;&amp;#10;function(){&amp;#13;&amp;#10;&amp;#13;&amp;#10;          var d=GetXFormFieldById("fd_37af6b2741ecea")[0];&amp;#13;&amp;#10;          if(d){&amp;#13;&amp;#10;            d.setAttribute("placeholder","其他出现方式请说明");}&amp;#13;&amp;#10;             });&amp;#13;&amp;#10;&lt;/script&gt;'&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 71px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="5"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fce669eb0c",content:"出差人员名单",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;出差人员名单&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1153 colSpan=3 column="1,2,3" row="5"&gt;
+&lt;DIV style="WIDTH: 806px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_3292fdff35e8c2",width:"800",_label_bind:"true",label:"出差人员名单",_label_bind_id:"fd_3292fce669eb0c",canShow:"true",readOnly:"false",required:"true",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_3292fdff35e8c2 class=inputsgl style="WIDTH: 800px" readOnly label="出差人员名单" thousandShow="false" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ?&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3338c720a408cc",content:"，    共",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;，&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;共&lt;/LABEL&gt; 
+&lt;DIV style="WIDTH: 86px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_3338c72d754b2c",width:"80",_label_bind:"false",label:"出差人员名单2",_label_bind_id:"fd_3292fce669eb0c",canShow:"true",readOnly:"false",required:"true",dataType:"Double",validate:"number",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false",decimal:"0",begin:"",end:""}' formDesign="landray" canShow="true"&gt;&lt;INPUT id=fd_3338c72d754b2c class=inputsgl style="WIDTH: 80px" readOnly label="出差人员名单2" thousandShow="false" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ? dataType="number" scale="0" endNum="" beginNum="" _dataType="Double" validate="{dataType:'number',decimal:0}"&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3338c72ec66fb8",content:"人",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;人&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 34px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="6"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fd4b7ec45e",content:"出差线路（地点）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;出差线路（地点）&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1159 colSpan=3 column="1,2,3" row="6"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" fd_type="textarea" fd_values='{id:"fd_3338c79f8d2b0a",width:"100%",height:"80",_label_bind:"true",label:"出差线路（地点）",_label_bind_id:"fd_3292fd4b7ec45e",canShow:"true",readOnly:"false",required:"true",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;TEXTAREA id=fd_3338c79f8d2b0a class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="出差线路（地点）" defaultValue="" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 34px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="7"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fd82a9c21a",content:"出差事由",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;出差事由&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1159 colSpan=3 column="1,2,3" row="7"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" fd_type="textarea" fd_values='{id:"fd_3338c7939f7c82",width:"100%",height:"80",_label_bind:"true",label:"出差事由",_label_bind_id:"fd_3292fd82a9c21a",canShow:"true",readOnly:"false",required:"true",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;TEXTAREA id=fd_3338c7939f7c82 class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="出差事由" defaultValue="" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="8"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_38ee52507ea7c6",content:"日程安排",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;日程安排&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1153 colSpan=3 column="1,2,3" row="8"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" fd_type="textarea" fd_values='{id:"fd_38ee5259363f88",width:"100%",height:"80",_label_bind:"true",label:"日程安排",_label_bind_id:"fd_38ee52507ea7c6",canShow:"true",readOnly:"false",required:"false",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;TEXTAREA id=fd_38ee5259363f88 class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="日程安排" defaultValue="" _readOnly="false" _required="false" required="false" tableName="fd_3292fb9c02fe58" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="9"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fd62f251ec",content:"出差费用预测&amp;#13;&amp;#10;（含机票、住宿、餐补及相关费用）&amp;#13;&amp;#10;",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;出差费用预测&lt;BR&gt;（含机票、住宿、餐补及相关费用）&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1159 colSpan=3 column="1,2,3" row="9"&gt;
+&lt;DIV style="WIDTH: 100%; WHITE-SPACE: nowrap; DISPLAY: inline" fd_type="textarea" fd_values='{id:"fd_3292fd8b461f94",width:"100%",height:"80",_label_bind:"true",label:"出差费用预测&amp;#13;&amp;#10;（含机票、住宿、餐补及相关费用）&amp;#13;&amp;#10;",_label_bind_id:"fd_3292fd62f251ec",canShow:"true",readOnly:"false",required:"true",dataType:"String",maxlength:"",formula:"",defaultValue:"",reCalculate:"false"}' formDesign="landray"&gt;&lt;TEXTAREA id=fd_3292fd8b461f94 class=inputmul style="HEIGHT: 80px; WIDTH: 100%" label="出差费用预测&amp;#13;&amp;#10;（含机票、住宿、餐补及相关费用）&amp;#13;&amp;#10;" defaultValue="" _readOnly="false" _required="true" required="true" tableName="fd_3292fb9c02fe58" canShow="true" ? pWidth="100%"&gt;&lt;/TEXTAREA&gt;&lt;SPAN class=txtstrong&gt;*&lt;/SPAN&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="10"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_3292fe29f964da",content:"附件",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formDesign="landray"&gt;附件&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1153 colSpan=3 column="1,2,3" row="10"&gt;
+&lt;DIV id=fd_3292fe217f20bc style="WIDTH: 235px; TEXT-ALIGN: left; DISPLAY: inline" fd_type="attachment" fd_values='{id:"fd_3292fe217f20bc",_label_bind:"true",label:"附件",_label_bind_id:"fd_3292fe29f964da"}' formDesign="landray" label="附件" tableName="fd_3292fb9c02fe58" fdMulti="true" enabledFileType&gt;&lt;BUTTON onclick="return false;" class=btnopt&gt;添加&lt;/BUTTON&gt;&lt;BUTTON onclick="return false;" class=btnopt&gt;删除&lt;/BUTTON&gt; 
+&lt;TABLE&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title&gt;&lt;INPUT onclick="return false;" type=checkbox&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title&gt;文件名&lt;/TD&gt;
+&lt;TD class=td_normal_title&gt;文件大小&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;INPUT onclick="return false;" type=checkbox&gt;&lt;/TD&gt;
+&lt;TD&gt;表单自己定义 帮助文档.doc&lt;/TD&gt;
+&lt;TD&gt;50.5KB&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD&gt;&lt;INPUT onclick="return false;" type=checkbox&gt;&lt;/TD&gt;
+&lt;TD&gt;EKP-J 帮助文档.doc&lt;/TD&gt;
+&lt;TD&gt;100.5KB&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 19px; WIDTH: 1px; POSITION: absolute; LEFT: 520px; BORDER-LEFT: #000000 1px dashed; Z-INDEX: 1; DISPLAY: none; TOP: 274px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%" position="left"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 19px; BORDER-RIGHT: #000000 1px dashed; WIDTH: 1px; POSITION: absolute; LEFT: 1049px; Z-INDEX: 1; DISPLAY: none; TOP: 274px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: e-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; MARGIN-TOP: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: 50%" position="right"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; BORDER-TOP: #000000 1px dashed; HEIGHT: 1px; WIDTH: 530px; POSITION: absolute; LEFT: 520px; Z-INDEX: 1; DISPLAY: none; TOP: 274px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="leftUp"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="up"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; TOP: -4px" position="rightUp"&gt;&lt;/DIV&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; HEIGHT: 1px; WIDTH: 530px; BORDER-BOTTOM: #000000 1px dashed; POSITION: absolute; LEFT: 520px; Z-INDEX: 1; DISPLAY: none; TOP: 291px"&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: ne-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; LEFT: -4px; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="leftDown"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: nw-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; RIGHT: -4px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="rightDown"&gt;&lt;/DIV&gt;
+&lt;DIV style="FONT-SIZE: 0px; CURSOR: n-resize; BORDER-TOP: #000000 1px solid; HEIGHT: 7px; BORDER-RIGHT: #000000 1px solid; WIDTH: 7px; BORDER-BOTTOM: #000000 1px solid; POSITION: absolute; MARGIN-LEFT: -4px; LEFT: 50%; BORDER-LEFT: #000000 1px solid; DISPLAY: none; BOTTOM: -4px" position="down"&gt;&lt;/DIV&gt;&lt;/DIV&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>route-travel-applicant-fdModelId</string>
+    </void>
+    <void method="put">
+      <string>fdId</string>
+      <string>route-travel-applicant-fdId</string>
+    </void>
+    <void method="put">
+      <string>fdDisplayJsp</string>
+      <string>&lt;%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%&gt;
+&lt;%@ include file="/resource/jsp/common.jsp"%&gt;
+&lt;%@ page import="com.landray.kmss.web.taglib.xform.TagUtils" %&gt;
+&lt;TABLE id=fd_3292fb9c02fe58 class=tb_normal  align=center   layout2col="undefined"  label="主表" style="width:100%;"&gt;
+&lt;TBODY&gt;
+&lt;TR style="HEIGHT: 39px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=224 column="0" row="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;申请人姓名&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 400px" width=397 column="1" row="0"&gt;
+			&lt;LABEL style="WIDTH: 188px; DISPLAY: inline"    _required=true&gt;&lt;xform:address propertyId="extendDataFormInfo.value(fd_3338c67b8f19da.id)" propertyName="extendDataFormInfo.value(fd_3338c67b8f19da.name)" mulSelect="false" orgType="ORG_TYPE_PERSON" subject="申请人姓名" title="申请人姓名" style="WIDTH: 150px" required="true" onValueChange="__xformDispatch" isLoadDataDict="false" /&gt;&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 195px" width=235 column="2" row="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;申请部门&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 408px" width=519 column="3" row="0"&gt;
+
+			&lt;DIV style="WIDTH: 156px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3293e0c29f78ac.name)" style="WIDTH: 150px" required="true" subject="申请人1" title="申请人1" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+&lt;xform:editShow&gt;
+
+			&lt;LABEL style="WIDTH: 32px; DISPLAY: inline"   &gt;&lt;xform:address propertyId="extendDataFormInfo.value(fd_3293e0c29f78ac.id)" propertyName="extendDataFormInfo.value(fd_3293e0c29f78ac.name)" mulSelect="true" orgType="ORG_TYPE_ORG|ORG_TYPE_DEPT" subject="申请人2" title="申请人2" style="WIDTH: 0px" required="false" onValueChange="__xformDispatch" isLoadDataDict="false" /&gt;&lt;/LABEL&gt;
+ 
+&lt;/xform:editShow&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 39px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=224 column="0" row="1"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;团队负责人姓名&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 400px" width=397 column="1" row="1"&gt;
+
+			&lt;DIV style="WIDTH: 300px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3338c6d3cbab04)" style="WIDTH: 300px" required="false" subject="团队负责人姓名" title="团队负责人姓名" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 195px" width=235 column="2" row="1"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;申请日期&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 408px" width=519 column="3" row="1"&gt;
+
+			&lt;DIV style="WIDTH: 188px; DISPLAY: inline"    _required=true&gt;&lt;xform:datetime property="extendDataFormInfo.value(fd_3292fdec23dee8)" style="WIDTH: 150px" required="true" subject="申请日期" title="申请日期" onValueChange="__xformDispatch" dateTimeType="date" isLoadDataDict="false" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=224 column="0" row="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;是否科研项目&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=397 align=left column="1" row="2"&gt;
+
+			&lt;xform:radio  property="extendDataFormInfo.value(fd_38ee5277876934)" alignment="H" required="false" subject="是否科研项目" title="是否科研项目" onValueChange="__xformDispatch"&gt;
+			&lt;xform:simpleDataSource  value="2"&gt;是&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="1"&gt;否&lt;/xform:simpleDataSource&gt;
+			&lt;/xform:radio&gt;
+
+&lt;xform:editShow&gt;
+&lt;script&gt;
+var leftId = "fd_38ee5277876934";
+var rightId = "fd_38ee53cabd8d1a";
+Com_AddEventListener(window, "load", function(){
+     changeJvCompany();
+
+});
+AttachXFormValueChangeEventById(leftId,changeJvCompany);
+
+function changeJvCompany(){
+   var radio = GetXFormFieldById(leftId);
+   var radioLength = radio.length;
+   var radioValue;
+   for(var i = 0;i &lt; radioLength;i++)
+   {
+    if(radio[i].checked)
+    {
+     var radioValue = radio[i].value;
+    }
+  }
+  var domArr =  GetXFormFieldById(rightId);
+
+ if(radioValue=="1"){
+      for(var i=0;i&lt;domArr.length;i++){
+           domArr[i].parentNode.parentNode.style.display = "";
+           domArr[i].validate = "required";
+
+     } 
+  }else{
+      for(var i=0;i&lt;domArr.length;i++){
+           domArr[i].parentNode.parentNode.style.display = "none";
+            domArr[i].validate = "";
+
+     } 
+  }
+
+}
+
+&lt;/script&gt;
+&lt;/xform:editShow&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=235 column="2" row="2" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;项目类型&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=517 column="3" row="2"&gt;
+
+			&lt;xform:radio  property="extendDataFormInfo.value(fd_38ee53cabd8d1a)" alignment="H" required="false" subject="项目类型" title="项目类型" onValueChange="__xformDispatch"&gt;
+			&lt;xform:simpleDataSource  value="1"&gt;非科研项目&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="2"&gt;售前项目&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="3"&gt;非项目&lt;/xform:simpleDataSource&gt;
+			&lt;/xform:radio&gt;
+
+&lt;xform:editShow&gt;
+&lt;script&gt;
+
+//如果选择其他费用，则显示其他费用相关信息
+AttachXFormValueChangeEventById("fd_38ee53cabd8d1a", function(value, domElement){
+     var is_qtfy=GetXFormFieldById("fd_is_qtfy")[0];
+      if(value.indexOf("3")&gt;=0){
+          is_qtfy.value="3";
+          common_dom_row_set_show_required_reset("qtfy_row",false,false,false);      
+    }else{
+          is_qtfy.value="";
+          common_dom_row_set_show_required_reset("qtfy_row",true,true,false);      
+   }
+});
+
+&lt;/script&gt;
+&lt;/xform:editShow&gt;
+&lt;xform:viewShow&gt;
+&lt;script&gt;
+//默认隐藏其他费用相关信息
+Com_AddEventListener(window, "load",
+    function(){
+ var is_qtfy=GetXFormFieldById("fd_is_qtfy")[0];
+ if(is_qtfy.value.indexOf("3")&gt;=0){
+ common_dom_row_set_show_required_reset("qtfy_row",false,false,false);
+
+ }else{
+ common_dom_row_set_show_required_reset("qtfy_row",true,false,false);
+
+ }
+});
+
+&lt;/script&gt;
+&lt;/xform:viewShow&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=223 column="0" row="3"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;项目名称&lt;/LABEL&gt;
+ 
+
+			&lt;DIV style="display:none;"    canShow="false"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_is_qtfy)" style="WIDTH: 120px" required="false" showStatus="noShow" subject="11" title="11" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+&lt;input type="hidden" id="qtfy_row" name="qtfy_row"/&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=397 align=left column="1" row="3"&gt;
+
+			&lt;DIV style="WIDTH: 306px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ab891cbee858)" style="WIDTH: 300px" required="true" subject="项目名称" title="项目名称" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=237 column="2" row="3" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;WBS号&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=517 column="3" row="3"&gt;
+
+			&lt;DIV style="WIDTH: 306px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37ab89265a9fe2)" style="WIDTH: 300px" required="true" subject="WBS号" title="WBS号" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 39px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="4"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;出差日期&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=397 align=left column="1" row="4"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;从&lt;/LABEL&gt;
+ 
+
+			&lt;DIV style="WIDTH: 158px; DISPLAY: inline"    _required=true&gt;&lt;xform:datetime property="extendDataFormInfo.value(fd_3338c6f1c75364)" style="WIDTH: 120px" required="true" subject="出差日期-始" title="出差日期-始" onValueChange="__xformDispatch" dateTimeType="date" isLoadDataDict="false" /&gt;&lt;/DIV&gt;
+
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;到&lt;/LABEL&gt;
+ 
+
+			&lt;DIV style="WIDTH: 158px; DISPLAY: inline"    _required=true&gt;&lt;xform:datetime property="extendDataFormInfo.value(fd_3338c6f75b7c46)" style="WIDTH: 120px" required="true" subject="出差日期-末" title="出差日期-末" onValueChange="__xformDispatch" dateTimeType="date" isLoadDataDict="false" /&gt;&lt;/DIV&gt;
+
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;，&amp;nbsp;&amp;nbsp;共&lt;/LABEL&gt;
+ 
+
+	&lt;%if ("readOnly".equals(request.getAttribute("SysForm.base.showStatus"))) {%&gt;
+			&lt;script&gt;Com_IncludeFile('calculation_script.js','../sys/xform/designer/calculation/');&lt;/script&gt;
+	&lt;%}%&gt;
+&lt;xform:xtext property="extendDataFormInfo.value(fd_37a9d0f55033f2)" style="WIDTH: 200px; DISPLAY: inline" showStatus="${requestScope['SysForm.showStatus']}" editReadOnlyStyle="inputsgl" dataType="Double" subject="出差日期" title="出差日期" isLoadDataDict="false" htmlElementProperties=" calculation='true' readonly  isRow='false' expression='(($fd_3338c6f75b7c46$ - $fd_3338c6f1c75364$ )  / (1000 * 3600 * 24 )  )  + 1' autoCalculate='true' thousandShow='false' scale='1'" /&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;天&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=238 column="2" row="4" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;出行方式&lt;/LABEL&gt;
+ 
+
+&lt;DIV id=brcontrol-fd_3972939a9a7fd2&gt;&lt;/DIV&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; COLOR: #ff0000; FONT-STYLE: normal; DISPLAY: inline"   &gt;备注：出差机票由部门管理员统一预订&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD width=517 column="3" row="4"&gt;
+
+			&lt;xform:select  property="extendDataFormInfo.value(fd_37c0a161e290b6)" subject="备注：出差机票由部门管理员统一预订" title="备注：出差机票由部门管理员统一预订" required="true" showPleaseSelect="true" onValueChange="__xformDispatch"&gt;
+			&lt;xform:simpleDataSource  value="飞机"&gt;飞机&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="高铁"&gt;高铁&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="公务车"&gt;公务车&lt;/xform:simpleDataSource&gt;
+			&lt;xform:simpleDataSource  value="其他"&gt;其他&lt;/xform:simpleDataSource&gt;
+			&lt;/xform:select&gt;
+
+
+			&lt;DIV style="WIDTH: 150px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_37af6b2741ecea)" style="WIDTH: 150px" required="false" subject="出行方式其他情况" title="出行方式其他情况" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+&lt;script&gt;
+
+Com_AddEventListener(window, "load",
+function(){
+
+          var d=GetXFormFieldById("fd_37af6b2741ecea")[0];
+          if(d){
+            d.setAttribute("placeholder","其他出现方式请说明");}
+             });
+&lt;/script&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 71px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="5"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;出差人员名单&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1153 colSpan=3 column="1,2,3" row="5"&gt;
+
+			&lt;DIV style="WIDTH: 806px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3292fdff35e8c2)" style="WIDTH: 800px" required="true" subject="出差人员名单" title="出差人员名单" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;，&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;共&lt;/LABEL&gt;
+ 
+
+			&lt;DIV style="WIDTH: 86px; DISPLAY: inline"    canShow="true" _required=true&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3338c72d754b2c)" style="WIDTH: 80px" required="true" htmlElementProperties="thousandShow='false'" dataType="Double" subject="出差人员名单2" title="出差人员名单2" validators=" number number scaleLength(0)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;人&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 34px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="6"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;出差线路（地点）&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1159 colSpan=3 column="1,2,3" row="6"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"    _required=true&gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_3338c79f8d2b0a)" style="HEIGHT: 80px; WIDTH: 100%" required="true" subject="出差线路（地点）" title="出差线路（地点）" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR style="HEIGHT: 34px"&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="7"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;出差事由&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1159 colSpan=3 column="1,2,3" row="7"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"    _required=true&gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_3338c7939f7c82)" style="HEIGHT: 80px; WIDTH: 100%" required="true" subject="出差事由" title="出差事由" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="8"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;日程安排&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1153 colSpan=3 column="1,2,3" row="8"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"   &gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_38ee5259363f88)" style="HEIGHT: 80px; WIDTH: 100%" required="false" subject="日程安排" title="日程安排" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="9"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;出差费用预测&lt;BR&gt;（含机票、住宿、餐补及相关费用）&lt;BR&gt;&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1159 colSpan=3 column="1,2,3" row="9"&gt;
+
+			&lt;DIV style="word-wrap:break-word;word-break:break-all;WIDTH: 100%;  ; DISPLAY: inline"    _required=true&gt;&lt;xform:textarea property="extendDataFormInfo.value(fd_3292fd8b461f94)" style="HEIGHT: 80px; WIDTH: 100%" required="true" subject="出差费用预测&amp;amp;#13;&amp;amp;#10;（含机票、住宿、餐补及相关费用）&amp;amp;#13;&amp;amp;#10;" title="出差费用预测&amp;amp;#13;&amp;amp;#10;（含机票、住宿、餐补及相关费用）&amp;amp;#13;&amp;amp;#10;" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 216px" width=222 column="0" row="10"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;附件&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: auto" width=1153 colSpan=3 column="1,2,3" row="10"&gt;
+
+&lt;c:import url="/sys/attachment/sys_att_main/sysAttMain_${empty _xformRight ? ((_xformMainForm.method_GET == 'add' || _xformMainForm.method_GET == 'edit') ? 'edit' : 'view') : (_xformRight == 'edit' ? 'edit' : 'view')}.jsp" charEncoding="UTF-8"&gt;
+	&lt;c:param name="fdAttType" value="byte" /&gt;
+	&lt;c:param name="fdMulti" value="true" /&gt;
+	&lt;c:param name="fdShowMsg" value="true" /&gt;
+	&lt;c:param name="fdImgHtmlProperty" /&gt;
+	&lt;c:param name="fdKey" value="fd_3292fe217f20bc" /&gt;
+	&lt;c:param name="fdModelId" value="${_xformMainForm.fdId}" /&gt;
+	&lt;c:param name="fdModelName" value="${_xformMainForm.modelClass.name}" /&gt;
+	&lt;c:param name="formBeanName" value="_xformMainForm" /&gt;
+&lt;/c:import&gt;
+&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdMetadataXml</string>
+      <string>&lt;model &gt;
+&lt;extendElementProperty name="fd_3338c67b8f19da" label="申请人姓名" type="com.landray.kmss.sys.organization.model.SysOrgPerson" notNull="true" defaultValue="OrgFunction.getCurrentUser()" formula="true" dialogJS="Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_PERSON);" /&gt;
+&lt;extendSimpleProperty name="fd_3293e0c29f78ac.name" label="申请人1" type="String" length="200" notNull="true" /&gt;
+&lt;extendElementProperty name="fd_3293e0c29f78ac" label="申请人2" type="com.landray.kmss.sys.organization.model.SysOrgElement" mutiValueSplit=";" defaultValue="OrgFunction.getCurrentDept()" formula="true" dialogJS="Dialog_Address(!{mulSelect}, '!{idField}','!{nameField}', ';',ORG_TYPE_ORG|ORG_TYPE_DEPT);" /&gt;
+&lt;extendSimpleProperty name="fd_3338c6d3cbab04" label="团队负责人姓名" type="String" length="200" /&gt;
+&lt;extendSimpleProperty name="fd_3292fdec23dee8" label="申请日期" type="Date" notNull="true" formula="true" defaultValue="DateTimeFunction.getNow()" /&gt;
+&lt;extendSimpleProperty name="fd_38ee5277876934" label="是否科研项目" enumValues="是|2;否|1" type="String" /&gt;
+&lt;extendSimpleProperty name="fd_38ee53cabd8d1a" label="项目类型" enumValues="非科研项目|1;售前项目|2;非项目|3" type="String" /&gt;
+&lt;extendSimpleProperty name="fd_is_qtfy" label="11" type="String" length="200" canDisplay="false" /&gt;
+&lt;extendSimpleProperty name="fd_37ab891cbee858" label="项目名称" type="String" length="200" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_37ab89265a9fe2" label="WBS号" type="String" length="200" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_3338c6f75b7c46" label="出差日期-末" type="Date" notNull="true" formula="true" defaultValue="DateTimeFunction.getNow()" /&gt;
+&lt;extendSimpleProperty name="fd_37a9d0f55033f2" label="出差日期" type="Double" defaultValue="1" scale="1" /&gt;
+&lt;extendSimpleProperty name="fd_3338c6f1c75364" label="出差日期-始" type="Date" notNull="true" formula="true" defaultValue="DateTimeFunction.getNow()" /&gt;
+&lt;extendSimpleProperty name="fd_37c0a161e290b6" label="备注：出差机票由部门管理员统一预订" notNull="true" enumValues="飞机|飞机;高铁|高铁;公务车|公务车;其他|其他" type="String" /&gt;
+&lt;extendSimpleProperty name="fd_37af6b2741ecea" label="出行方式其他情况" type="String" length="200" /&gt;
+&lt;extendSimpleProperty name="fd_3292fdff35e8c2" label="出差人员名单" type="String" length="200" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_3338c72d754b2c" label="出差人员名单2" type="Double" length="10" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_3338c79f8d2b0a" label="出差线路（地点）" type="String" length="" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_3338c7939f7c82" label="出差事由" type="String" length="" notNull="true" /&gt;
+&lt;extendSimpleProperty name="fd_38ee5259363f88" label="日程安排" type="String" length="" /&gt;
+&lt;extendSimpleProperty name="fd_3292fd8b461f94" label="出差费用预测
+（含机票、住宿、餐补及相关费用）
+" type="String" length="" notNull="true" /&gt;
+
+&lt;/model&gt;</string>
+    </void>
+  </object>
+</java>

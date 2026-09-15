@@ -11,7 +11,7 @@ const invoiceSourceDraft = cleanSourceFile(invoiceFixturePath);
 const invoiceDslDraft = draftSourceDraft(invoiceSourceDraft);
 
 describe("Agent Review non-native row-marker prompt", () => {
-  it("deterministically maps the proven onLoad field condition and exact non-required row effects", () => {
+  it("delegates bridged detail visibility while retaining the proven non-required row effects", () => {
     const { action, promptAction } = fixtureAction("fd_3e502424ad4b9e.script.2.event.1");
     const fn = action.function;
 
@@ -21,8 +21,9 @@ describe("Agent Review non-native row-marker prompt", () => {
     assert.match(fn, /MKXFORM\.getValue\("fd_aqxyshift"\)/);
     assert.match(fn, /String\(is_ywzdValue \?\? ""\)/);
     assert.match(fn, /if \(is_ywzd\.indexOf\("A"\) >= 0\) \{/);
-    assert.match(fn, /MKXFORM\.setFieldAttr\("aqxy_row", 5\)/);
-    assert.match(fn, /MKXFORM\.setFieldAttr\("aqxy_row", 4\)/);
+    assert.doesNotMatch(fn, /MKXFORM\.setFieldAttr\("aqxy_row", 5\)/);
+    assert.doesNotMatch(fn, /MKXFORM\.setFieldAttr\("aqxy_row", 4\)/);
+    assert.ok(action.coverage.nativeRules.length > 0);
     assert.equal(count(fn, 'MKXFORM.setFieldAttr("aqxy_row", 6)'), 2);
     assert.doesNotMatch(fn, /MKXFORM\.setFieldAttr\("aqxy_row", 3\)/);
     assert.doesNotMatch(fn, /\/\* helper or trigger field id \*\//);
