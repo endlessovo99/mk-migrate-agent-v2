@@ -134,7 +134,8 @@ describe("semantic source props Route case", { concurrency: false }, () => {
     const readbackAmount = result.execution.readback.form.fields.find((field) => field.id === "fd_estimate");
 
     assert.equal(sourceAmount.sourceProps.inlineUnit.content, "元");
-    assert.equal(source.form.controls.some((field) => field.id === "estimate_unit"), false);
+    assert.equal(source.form.controls.some((field) => field.id === "estimate_unit"), true);
+    assert.equal(dsl.form.fields.some((field) => field.id === "estimate_unit"), false);
     assert.equal(dslAmount.props.unit, "元");
     assert.equal(readbackAmount.unit, "元");
   });

@@ -205,6 +205,7 @@ export function summarizeDslForm(form = {}, formRules = {}) {
       cells: (row.cells || []).map((cell) => ({
         fieldId: childRefIds(cell)[0],
         fieldIds: childRefIds(cell),
+        ...(cell.contentFlow ? { contentFlow: structuredClone(cell.contentFlow) } : {}),
         ownerNodeId: cell.ownerNodeId,
         ownerNodePath: cell.ownerNodePath,
         refType: cell.refType,
@@ -931,16 +932,16 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
               mobile: { hiddenLabel: true },
               visible: false
             }
-        : isButton
-          ? { desktop: {}, showText: false, title: label, mobile: {} }
-          : hiddenLabel
+        : hiddenLabel
             ? {
                 desktop: { hiddenLabel: true },
                 showText: false,
                 title: label,
                 mobile: { hiddenLabel: true }
               }
-            : { desktop: {}, title: label, mobile: {} }
+            : isButton
+              ? { desktop: {}, showText: false, title: label, mobile: {} }
+              : { desktop: {}, title: label, mobile: {} }
     },
     env: isDescription ? ["xform", "print"] : ["xform"]
   };
@@ -1527,6 +1528,7 @@ function detailModelAttribute(field, model) {
   const target = componentTarget("xform-detail-table", "@elem/xform-detail-table", "@elem/xform-m-detail-table");
   const controlId = `${target.desktop}~${stableShortId(field.id)}`;
   const label = persistedFieldLabel(field);
+  const hiddenLabel = componentSupportsProp(field.componentId, "hiddenLabel") && field.props?.hiddenLabel === true;
   return {
     uuid: model.fdTableName,
     config: {
@@ -1550,8 +1552,9 @@ function detailModelAttribute(field, model) {
         alignTitle: "left",
         nest: false,
         id: controlId,
-        desktop: { type: target.desktop },
-        mobile: { type: target.mobile },
+        desktop: { type: target.desktop, ...(hiddenLabel ? { hiddenLabel: true } : {}) },
+        mobile: { type: target.mobile, ...(hiddenLabel ? { hiddenLabel: true } : {}) },
+        ...(hiddenLabel ? { showText: false } : {}),
         code: field.id,
         name: model.fdTableName,
         uuid: model.fdTableName,
@@ -1565,7 +1568,9 @@ function detailModelAttribute(field, model) {
       },
       kind: "container",
       label,
-      labelProps: { desktop: {}, mobile: {} }
+      labelProps: hiddenLabel
+        ? { desktop: { hiddenLabel: true }, mobile: { hiddenLabel: true }, showText: false, title: label }
+        : { desktop: {}, mobile: {} }
     }
   };
 }
@@ -1797,16 +1802,44 @@ function buildGridItem(
       // Audit-only markers; script persistence compiles them to concrete control ids.
       ...migrationAudit
     },
-    children: inlineLayout && !detailModel
-      ? [{
-          key: inlineId,
-          type: inlineLayout.type,
-          kind: "container",
-          controlProps: { id: inlineId, spans: inlineLayout.spans, style: inlineLayout.style },
-          children: refIds.map((refId) => fieldRef(refId))
-        }]
-      : [fieldRef(firstRefId)]
+    children: cell.contentFlow && !detailModel
+      ? [buildContentFlow(cell.contentFlow, itemId, fieldRef)]
+      : inlineLayout && !detailModel
+        ? [{
+            key: inlineId,
+            type: inlineLayout.type,
+            kind: "container",
+            controlProps: { id: inlineId, spans: inlineLayout.spans, style: inlineLayout.style },
+            children: refIds.map((refId) => fieldRef(refId))
+          }]
+        : [fieldRef(firstRefId)]
   };
+}
+
+function buildContentFlow(flow, itemId, fieldRef) {
+  const items = new Map(flow.items.map((item) => [item.referenceId, item]));
+  const container = (identity, type, controlProps, children) => {
+    const id = `${type}~${stableShortId(identity)}`;
+    return { key: id, type, kind: "container", controlProps: { id, ...controlProps }, children };
+  };
+  // XForm registers native div containers; generic @elem/flex is not registered.
+  return container(`${itemId}:flow`, "div", {
+    style: { display: "flex", flexDirection: "column", width: "100%", minWidth: 0 }
+  }, flow.lines.map((line, lineIndex) => container(`${itemId}:flow:${lineIndex}`, "div", {
+    style: {
+      display: "flex", flexWrap: "wrap", alignItems: "center", minWidth: 0,
+      ...(line.length === 0 ? { minHeight: "1.5em" } : {})
+    }
+  }, line.map((referenceId) => {
+    const width = items.get(referenceId)?.width;
+    return container(`${itemId}:flow:${lineIndex}:${referenceId}`, "div", {
+      style: {
+        flex: width ? "0 0 auto" : "0 1 auto",
+        minWidth: 0, maxWidth: "100%", overflow: "visible",
+        ...(width ? { width: `${width.value}${width.unit}` } : {})
+      }
+    }, [fieldRef(referenceId)]);
+  }))));
 }
 
 /** Preserve the primary legacy marker as audit metadata only. */

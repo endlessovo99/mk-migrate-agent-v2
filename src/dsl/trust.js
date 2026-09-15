@@ -3,6 +3,7 @@ import { validateMigrationDsl } from "./schema.js";
 import { draftSourceDraft, MIGRATION_DSL_VERSION } from "../translator/dsl-draft.js";
 import { SOURCE_DRAFT_VERSION } from "../translator/source-draft.js";
 import { inspectWorkflowFormulaProvenance } from "../translator/workflow-formula-participants.js";
+import { sourcePresentationIssues } from "./source-presentation.js";
 import {
   claimsDeterministicScriptTranslation,
   deterministicManualResidualDecisionIds
@@ -71,7 +72,19 @@ export function checkTrust(sourceDraft, migrationDsl) {
   validateCoreProvenance(migrationDsl, sourceRefs, diagnostics);
   validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics);
   validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics);
-  validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics);
+  const expectedDraft = validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics);
+  const dataOnlySourceRefs = new Set(flattenFormFields(expectedDraft?.form?.fields)
+    .filter((field) => field.dataOnly === true).map((field) => field.sourceRef));
+  const presentationReferenceMap = new Map((expectedDraft?.form?.fields || [])
+    .filter((field) => field.sourceProps?.addressDisplayCompanionId)
+    .map((field) => [field.sourceProps.addressDisplayCompanionId, field.sourceProps?.originalId || field.id]));
+  for (const issue of sourcePresentationIssues(sourceDraft?.form, migrationDsl?.form, { dataOnlySourceRefs, presentationReferenceMap })) {
+    diagnostics.push(error(
+      `trust.form.presentation_${issue.reason}_mismatch`,
+      "Target presentation must preserve source line boundaries, item dimensions, hidden titles and unit text.",
+      "/form", issue
+    ));
+  }
   validateWorkflowFormulaProvenance(sourceDraft, migrationDsl, diagnostics);
   validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics);
 
@@ -110,6 +123,7 @@ function validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagn
       { fieldId: actual?.id || expected?.id, sourceRef: actual?.sourceRef || expected?.sourceRef }
     ));
   }
+  return expectedDraft;
 }
 
 function flattenFormFields(fields = []) {

@@ -1,0 +1,15 @@
+{
+  "source": {
+    "type": "user_or_org",
+    "name": "legacy-support-login",
+    "sourceId": "same-support-person-id",
+    "sourceOrgType": 8,
+    "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+    "sourceLoginName": "legacy-support-login"
+  },
+  "target": {
+    "fdId": "same-support-person-id",
+    "fdName": "系统支持人员",
+    "fdOrgType": 8
+  }
+}

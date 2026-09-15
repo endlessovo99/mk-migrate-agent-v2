@@ -43,7 +43,7 @@ describe("business-card source form layout", () => {
     assert.deepEqual(refs[3], ["fd_person_dept.name", "fd_person_dept", "fd_33965150c0040c", "fd_339651595696c2"]);
   });
 
-  it("persists one title per group and horizontal native rows with usable input shares", () => {
+  it("persists one title per group and horizontal native flow with source widths", () => {
     const prepared = preparedForm();
     const config = xformConfig(prepared.update);
     const nativeFields = new Map(config.dataModel[0].fdFields.map((field) => [field.fdName, field]));
@@ -59,12 +59,33 @@ describe("business-card source form layout", () => {
     assert.equal(first.controlProps.rows, 1);
     assert.equal(first.controlProps.columns, 4);
     assert.deepEqual(first.controlProps.colsStyle, second.controlProps.colsStyle);
-    assert.equal(first.children[1].children[0].type, "@elem/xform-row");
-    assert.deepEqual(first.children[1].children[0].controlProps.spans, [11, 11, 2]);
-    assert.deepEqual(second.children[1].children[0].controlProps.spans, [11, 2, 11]);
-    assert.equal(second.children[3].children[0].key, "fd_325692094a72b8");
+    const firstLine = first.children[1].children[0].children[0];
+    const secondLine = second.children[1].children[0].children[0];
+    assert.equal(firstLine.controlProps.style.display, "flex");
+    assert.deepEqual(firstLine.children.map(item => item.controlProps.style.width), ["199px", "32px", "5px"]);
+    assert.deepEqual(secondLine.children.map(item => item.controlProps.style.width), ["124px", undefined, "120px"]);
+    assert.equal(second.children[3].children[0].children[0].children[0].children[0].key, "fd_325692094a72b8");
     const readback = prepared.verify(prepared.update);
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
+  });
+
+  it("uses and verifies horizontal row shares when the DSL has no explicit content flow", () => {
+    const legacy = structuredClone(draft);
+    for (const row of legacy.form.layout.mkTree) {
+      for (const cell of row.children) delete cell.contentFlow;
+    }
+    const prepared = prepareSample(legacy);
+    const config = xformConfig(prepared.update);
+    const inline = desktopGrid(config).children[1].children[0];
+    assert.equal(inline.type, "@elem/xform-row");
+    assert.deepEqual(inline.controlProps.spans, [11, 11, 2]);
+    assert.equal(prepared.verify(prepared.update).ok, true);
+    const scene = JSON.parse(config.viewModel[0].fdConfig);
+    delete scene.view.render.desktop[0].children[0].children[0].children[0].children[1].children[0].controlProps.spans;
+    config.viewModel[0].fdConfig = JSON.stringify(scene);
+    const mutated = structuredClone(prepared.update);
+    mutated.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+    assert.ok(prepared.verify(mutated).diagnostics.some(item => item.code === "readback.form.layout_inline_layout_mismatch"));
   });
 
   it("keeps the stored-only mapping for hidden, zero-width, or unbound companions", () => {
@@ -83,12 +104,12 @@ describe("business-card source form layout", () => {
     const mutated = structuredClone(prepared.update);
     const config = xformConfig(mutated);
     const scene = JSON.parse(config.viewModel[0].fdConfig);
-    delete scene.view.render.desktop[0].children[0].children[1].children[0].children[1].children[0].controlProps.spans;
+    delete scene.view.render.desktop[0].children[0].children[1].children[0].children[1].children[0].children[0].children[0].controlProps.style.width;
     config.viewModel[0].fdConfig = JSON.stringify(scene);
     mutated.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
     const result = prepared.verify(mutated);
     assert.equal(result.ok, false);
-    assert.ok(result.diagnostics.some((item) => item.code === "readback.form.layout_inline_layout_mismatch"));
+    assert.ok(result.diagnostics.some((item) => item.code === "readback.form.layout_content_flow_invalid"));
   });
 
   it("rejects a readback which removes the restored name input", () => {
@@ -96,8 +117,11 @@ describe("business-card source form layout", () => {
     const mutated = structuredClone(prepared.update);
     const config = xformConfig(mutated);
     const scene = JSON.parse(config.viewModel[0].fdConfig);
-    const cell = scene.view.render.desktop[0].children[0].children[0].children[0].children[1];
-    cell.children[0].children = cell.children[0].children.filter((child) => child.key !== "fd_display_name.name");
+    for (const device of ["desktop", "mobile"]) {
+      const cell = scene.view.render[device][0].children[0].children[0].children[0].children[1];
+      const line = cell.children[0].children[0];
+      line.children = line.children.filter((item) => item.children[0].key !== "fd_display_name.name");
+    }
     config.viewModel[0].fdConfig = JSON.stringify(scene);
     mutated.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
     const result = prepared.verify(mutated);

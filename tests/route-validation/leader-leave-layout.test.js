@@ -26,12 +26,13 @@ describe("leader leave source layout", () => {
     const prepared = prepare();
     const config = xformConfig(prepared.update);
     const rows = JSON.parse(config.viewModel[0].fdConfig).view.render.desktop[0].children[0].children;
-    for (const [rowIndex, spans] of [[0, [11, 11, 2]], [2, [12, 12]], [3, [11, 2, 11]]]) {
+    for (const [rowIndex, widths] of [[0, ["198px", "32px", "5px"]], [2, ["198px", "28px"]], [3, ["148px", "24px", "332px"]]]) {
       const grid = rows[rowIndex].children[0];
       assert.equal(grid.controlProps.columns, 4);
       const inline = grid.children[1].children[0];
-      assert.equal(inline.type, "@elem/xform-row");
-      assert.deepEqual(inline.controlProps.spans, spans);
+      assert.equal(inline.type, "div");
+      assert.equal(inline.children[0].controlProps.style.display, "flex");
+      assert.deepEqual(inline.children[0].children.map(item => item.controlProps.style.width), widths);
     }
     for (const field of config.dataModel[0].fdFields.filter((field) => ids.includes(field.fdName))) {
       const attrs = JSON.parse(field.fdAttribute).config;

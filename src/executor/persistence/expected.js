@@ -257,6 +257,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
           refType: cell.refType,
           fieldIds: fieldIdsForCell,
           inlineLayout: inlineCellLayout(cell, form.fields),
+          ...(cell.contentFlow ? { contentFlow: structuredClone(cell.contentFlow) } : {}),
           row: cell.row,
           column: cell.column,
           colspan: cell.colspan,

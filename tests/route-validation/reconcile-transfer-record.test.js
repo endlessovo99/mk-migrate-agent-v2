@@ -175,6 +175,31 @@ describe("transfer-record reconciliation Route", () => {
     assert.equal(client.hasTemplateWrite(), false);
   });
 
+  for (const change of [
+    { name: "content-flow layout", mutate(dsl) {
+      const cell = dsl.form.layout.mkTree.flatMap((row) => row.children).find((cell) => cell.refType === "field");
+      cell.contentFlow = { lines: [cell.refIds], items: cell.refIds.map((referenceId) => ({ referenceId })) };
+    } },
+    { name: "new detail-table hidden-label capability", mutate(dsl) {
+      dsl.form.fields.find((field) => field.componentId === "xform-detail-table").props.hiddenLabel = true;
+    } }
+  ]) {
+    it(`does not bridge v14 evidence containing ${change.name}`, async () => {
+      const fixture = reconciliationFixture();
+      fixture.dsl.catalogs.components.version = "2026-08-28.v14";
+      fixture.priorExecutionReport.plan.catalogs.components.version = "2026-08-28.v14";
+      change.mutate(fixture.dsl);
+      fixture.dslDigest = reconciliationEvidenceDigest(fixture.dsl);
+      fixture.priorReportDigest = reconciliationEvidenceDigest(fixture.priorExecutionReport);
+      const client = new ReconciliationFakeClient(fixture.template);
+      const result = await reconcileTransferRecord(fixture.dsl, reconcileOptions(fixture, {
+        client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport
+      }));
+      assert.equal(result.ok, false);
+      assert.equal(client.calls.length, 0);
+    });
+  }
+
   it("blocks new participant or fallback choices outside the retained execution evidence", async () => {
     const fixture = reconciliationFixture();
     const client = new ReconciliationFakeClient(fixture.template);

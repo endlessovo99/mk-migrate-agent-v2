@@ -106,7 +106,11 @@ describe("translateSysFormTemplateXml", () => {
       fieldId: "fd_fjmx",
       fieldIds: ["fd_fjmx"],
       column: 1,
-      colspan: 3
+      colspan: 3,
+      contentFlow: {
+        lines: [["fd_fjmx"]],
+        items: [{ referenceId: "fd_fjmx" }]
+      }
     });
     assert.equal(
       dsl.review.warnings.some((warning) => warning.code === "source.sysform.metadata_id_mismatch"),

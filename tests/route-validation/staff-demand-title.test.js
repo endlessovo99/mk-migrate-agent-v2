@@ -32,9 +32,10 @@ describe("staff demand numeric titles", () => {
     }
     const rows = JSON.parse(config.viewModel[0].fdConfig).view.render.desktop[0].children[0].children;
     const range = rows[1].children[0].children[5].children[0];
-    assert.equal(range.type, "@elem/xform-row");
-    assert.deepEqual(range.controlProps.spans, [12, 12]);
-    assert.deepEqual(range.children.map(f => f.key), numericIds.slice(1));
+    assert.equal(range.type, "div");
+    assert.equal(range.children[0].controlProps.style.display, "flex");
+    assert.deepEqual(range.children[0].children.map(item => item.controlProps.style.width), ["64px", "68px"]);
+    assert.deepEqual(range.children[0].children.map(item => item.children[0].key), numericIds.slice(1));
     const result = prepared.verify(prepared.update);
     assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
   });

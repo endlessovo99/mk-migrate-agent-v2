@@ -631,6 +631,14 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
           actual: actualCell.inlineLayout
         }));
       }
+      if (stableStringify(expectedCell.contentFlow) !== stableStringify(actualCell.contentFlow)) {
+        diagnostics.push(mismatch("form", "readback.form.layout_content_flow_mismatch", "Readback cell line breaks, wrapping, or item widths do not match DSL.", {
+          invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.contentFlow`,
+          path: `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/contentFlow`,
+          expected: expectedCell.contentFlow,
+          actual: actualCell.contentFlow
+        }));
+      }
       if (
         expectedCell.row !== actualCell.row ||
         expectedCell.column !== actualCell.column ||

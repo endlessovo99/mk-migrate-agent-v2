@@ -25,15 +25,15 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(staticRequiredAction.function, "");
     assert.equal(result.execution.readback.form.fields.find((field) => field.id === "fd_subject").required, true);
     assert.deepEqual(result.execution.readback.form.subjectRule, {});
-    assert.deepEqual(result.dsl.form.layout.mkTree[0].children.map((cell) => cell.column), [0, 1, 2]);
+    assert.deepEqual(result.dsl.form.layout.mkTree[0].children.map((cell) => cell.column), [0, 1]);
     assert.deepEqual(
       result.dsl.form.layout.mkTree[0].children.map((cell) => cell.refIds),
-      [["fd_subject"], ["fd_amount"], ["fd_cny_upper"]]
+      [["fd_subject", "fd_amount"], ["fd_cny_upper"]]
     );
-    assert.deepEqual(result.execution.readback.form.layoutRows[0].cells.map((cell) => cell.column), [0, 1, 2]);
+    assert.deepEqual(result.execution.readback.form.layoutRows[0].cells.map((cell) => cell.column), [0, 1]);
     assert.deepEqual(
       result.execution.readback.form.layoutRows[0].cells.map((cell) => cell.fieldIds),
-      [["fd_subject"], ["fd_amount"], ["fd_cny_upper"]]
+      [["fd_subject", "fd_amount"], ["fd_cny_upper"]]
     );
     assert.equal(result.dsl.form.layout.mkTree[0].props.sourceColumns, 4);
     assert.equal(result.execution.readback.form.scripts.persistedActionCount, 0);
@@ -56,7 +56,7 @@ describe("offline Route-validation", { concurrency: false }, () => {
 
     assert.equal(fields.get("fd_department")?.title, "部门/客户");
     assert.equal(fields.get("fd_department")?.props?.required, true);
-    assert.equal(fields.get("fd_department")?.props?.hiddenLabel, undefined);
+    assert.equal(fields.get("fd_department")?.props?.hiddenLabel, true);
     assert.equal(fields.get("fd_department")?.sourceProps?.layoutCell?.hiddenLabel, true);
     assert.equal(fields.get("fd_department.name")?.dataOnly, true);
     assert.equal(fields.get("fd_department.name")?.props?.hiddenLabel, true);
@@ -67,7 +67,7 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(fields.get("label_price")?.componentId, "xform-description");
     assert.equal(fields.get("fd_procurement")?.props?.hiddenLabel, true);
     assert.equal(fields.get("fd_price")?.sourceProps?.layoutCell?.hiddenLabel, true);
-    assert.equal(fields.get("fd_price")?.props?.hiddenLabel, undefined);
+    assert.equal(fields.get("fd_price")?.props?.hiddenLabel, true);
 
     const expectedRows = [
       ["label_department", "fd_department", "label_manager", "fd_manager"],

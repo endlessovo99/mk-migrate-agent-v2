@@ -500,7 +500,8 @@ function repairDsl(sourceDraft, priorSourceDraft, input, priorExecutionReport) {
   }
   const fromVersion = input?.catalogs?.components?.version;
   if (
-    fromVersion !== "2026-08-28.v14" || CATALOG_VERSIONS.components !== "2026-09-01.v15" ||
+    fromVersion !== "2026-08-28.v14" || !["2026-09-01.v15", "2026-09-12.v16"].includes(CATALOG_VERSIONS.components) ||
+    hasV16Presentation(input) ||
     priorExecutionReport?.plan?.catalogs?.components?.version !== fromVersion
   ) return { ok: false, diagnostics: trust.diagnostics };
   const adapted = structuredClone(input);
@@ -625,7 +626,8 @@ function validateCalculationDslEvolution(priorDsl, currentDsl, report) {
     currentAggregate?.kind !== "aggregate" || currentAggregate.operation !== "sum" ||
     currentRow?.kind !== "formula" ||
     priorDsl?.catalogs?.components?.version !== "2026-08-28.v14" ||
-    currentDsl?.catalogs?.components?.version !== "2026-09-01.v15"
+    !["2026-09-01.v15", "2026-09-12.v16"].includes(currentDsl?.catalogs?.components?.version) ||
+    hasV16Presentation(priorDsl) || hasV16Presentation(currentDsl)
   ) {
     return {
       ok: false,
@@ -662,6 +664,19 @@ function validateCalculationDslEvolution(priorDsl, currentDsl, report) {
       ]
     }
   };
+}
+
+function hasV16Presentation(dsl) {
+  const newLabelComponents = new Set([
+    "xform-button", "xform-hyperlinks", "xform-subject", "xform-datetime",
+    "xform-number", "xform-calculate", "xform-attach", "xform-detail-table"
+  ]);
+  const containsFlow = (value) => Boolean(value && typeof value === "object" && (
+    Object.hasOwn(value, "contentFlow") || Object.values(value).some(containsFlow)
+  ));
+  return containsFlow(dsl?.form?.layout) || (dsl?.form?.fields || []).some((field) =>
+    [field, ...(field.columns || [])].some((candidate) => newLabelComponents.has(candidate.componentId) &&
+      Object.hasOwn(candidate.props || {}, "hiddenLabel")));
 }
 
 function validatePriorExecution(report, { input, plan, baseUrl, targetTemplateId, repairKind }) {

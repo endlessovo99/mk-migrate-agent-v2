@@ -2,7 +2,7 @@
 // (runtime). A native xform-row is needed inside it; styling GridItem alone
 // does not arrange the field controls horizontally.
 export function inlineCellLayout(cell, fields = []) {
-  if (cell.keepInline !== true || cell.refType !== "field" || !Array.isArray(cell.refIds) || cell.refIds.length < 2) {
+  if (cell.contentFlow || cell.keepInline !== true || cell.refType !== "field" || !Array.isArray(cell.refIds) || cell.refIds.length < 2) {
     return undefined;
   }
   const byId = new Map(fields.map((field) => [field.id, field]));

@@ -80,7 +80,8 @@ function projectPlainRoot(root) {
       column: integerOr(cell.column, 0),
       colspan: positiveInteger(cell.colspan) || 1,
       rowspan: 1,
-      ...(cell.keepInline === true ? { keepInline: true } : {})
+      ...(cell.keepInline === true ? { keepInline: true } : {}),
+      ...(cell.contentFlow ? { contentFlow: structuredClone(cell.contentFlow) } : {})
     }))
   };
 }
@@ -216,6 +217,7 @@ function flattenNode({
         colspan: plan.bounds.colspan,
         rowspan: groupHeight,
         ...(plan.cell.keepInline === true ? { keepInline: true } : {}),
+        ...(plan.cell.contentFlow ? { contentFlow: structuredClone(plan.cell.contentFlow) } : {}),
         ...(Number.isFinite(plan.cell.widthWeight) && plan.cell.widthWeight > 0
           ? { widthWeight: plan.cell.widthWeight }
           : {})

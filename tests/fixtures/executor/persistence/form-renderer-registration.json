@@ -1,0 +1,20 @@
+{
+  "provenance": {
+    "url": "http://oadev.shanghai-electric.com/web/sys-xform/desktop/api/XFormIDE/index.js?4dc12919af1531c82de2356c4ded8777",
+    "moduleId": "18217",
+    "bundleSha256": "3e1e44c44d665b34f6279735f610aa80a7f644515359b860fea1bd32dca347bb",
+    "retrievedAt": "2026-09-12T09:54:09.298Z"
+  },
+  "builtins": "{form:\"form\",div:\"div\",span:\"span\",fieldset:tt}",
+  "errors": "{input:\"input\",CONTROL_GROUP:\"div\",error:function(){return/*#__PURE__*/(0,i.createElement)(\"div\",{},\"控件渲染错误，不存在指定的控件类型，请检查配置的控件类型是否注册\")}}",
+  "fallback": "function to(e,t){var n=null;return tn[e]&&(n={kind:\"container\",type:e,component:tn[e]}),n||(n={kind:\"control\",type:e,component:tr[e]||(null==t?void 0:t[\"control:error\"])||tr.error}),n}",
+  "lookup": "function(e){return n.registeredFormItems[\"\".concat(e.kind,\":\").concat(e.type)]}",
+  "methods": {
+    "registerFormItems": "function(e){var t=e.reduce(function(e,t){return e[\"\".concat(t.kind,\":\").concat(t.type)]=t.component,e},{});Object.assign(this.registeredFormItems,t)}",
+    "registerInnerFormItems": "function(e){var t=this,n=e&&function e(t,n){return\"string\"==typeof t||/*#__PURE__*/(0,i.isValidElement)(t)?null:(Array.isArray(t)?t:[t]).reduce(function(t,n){return n.kind&&n.type&&(t[n.kind]?-1===t[n.kind].indexOf(n.type)&&t[n.kind].push(n.type):t[n.kind]=[n.type],n.children&&e(n.children,t)),t},n||{})}(e,s({},e.kind,[e.type])),r=[];n&&Object.entries(n).forEach(function(e){var n=e[0],o=e[1];o&&o.forEach(function(e){t.registeredFormItems[\"\".concat(n,\":\").concat(e)]||r.push(e)})});var o=r.length&&r.map(function(e){var n=to(e,t.registeredFormItems);return n||console.error('The control is not registered and does not exist in the internal control list, please register manually. control type is \"'.concat(e,'\"')),n}).filter(function(e){return e});o&&o.length&&this.registerFormItems(o)}",
+    "renderFormControl": "function(e,t){var n=/*#__PURE__*/(0,i.createElement)(e,t2(e,t.props),this.renderFormItems(t.children||t.props.children));return t.__cmpt__=n,n}",
+    "renderFormContainer": "function(e,t){var n=/*#__PURE__*/(0,i.createElement)(e,t2(e,t.props),this.renderFormItems(t.children||t.props.children));return t.__cmpt__=n,n}",
+    "renderFormItem": "function(e){if(t5(e))return e;var t=this.getFormItemComponent(e);if(!t&&(this.registerInnerFormItems(e),!(t=this.getFormItemComponent(e))))return null;switch(e.kind){case\"container\":return this.renderFormContainer(t,e);case\"control\":return this.renderFormControl(t,e);case\"widget\":return this.renderFormWidget(t,e);default:return null}}",
+    "renderFormItems": "function(e){var t=this;return t5(e)?e:e&&e.length?e.map(function(e){return t.renderFormItem(e)}):null}"
+  }
+}
