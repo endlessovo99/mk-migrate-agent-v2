@@ -871,7 +871,7 @@ describe("resolveWorkflowParticipants", () => {
     }
   });
 
-  it("revalidates a parentless source post only when the same current id and name match", async () => {
+  it("revalidates a parentless source post by its exact current id and type", async () => {
     const sourceId = "current-parentless-post";
     const dsl = dslWithExplicitMembers([sourceMember({
       name: "财务部_部长",
@@ -900,7 +900,7 @@ describe("resolveWorkflowParticipants", () => {
     assert.equal(result.overrides[0].exactSourceIdRevalidation, true);
   });
 
-  it("rejects parentless same-id revalidation when the current target name changed", async () => {
+  it("accepts parentless same-id revalidation when the current target name changed", async () => {
     const sourceId = "reassigned-parentless-post";
     const dsl = dslWithExplicitMembers([sourceMember({
       name: "原岗位",
@@ -918,14 +918,14 @@ describe("resolveWorkflowParticipants", () => {
       })]
     });
 
-    await assert.rejects(
-      () => resolveWorkflowParticipants(dsl, {
-        client,
-        participantOverrides: [{ sourceId, targetFdId: sourceId }]
-      }),
-      (error) => error instanceof ParticipantResolutionError &&
-        error.issues.some((issue) => issue.reason === "override_target_name_mismatch")
-    );
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      participantOverrides: [{ sourceId, targetFdId: sourceId }]
+    });
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].id, sourceId);
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].name, "其他岗位");
+    assert.equal(result.overrides[0].sourceEvidence.name, "原岗位");
+    assert.equal(result.overrides[0].exactSourceIdRevalidation, true);
     assert.deepEqual(client.calls, []);
     assert.deepEqual(client.elementCalls, [[sourceId]]);
   });

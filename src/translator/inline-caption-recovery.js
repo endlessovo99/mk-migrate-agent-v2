@@ -3,6 +3,7 @@ import {
   isStyledSourceDescriptionControl
 } from "./source-description-control.js";
 import { scanHtmlTags } from "./designer-html-tokenizer.js";
+import { hasTopLevelDesignerBreak } from "./designer-content-flow.js";
 import {
   hasSubjectCaptionAffinity,
   isSafeInlineUnit
@@ -168,7 +169,7 @@ function hasOnlyInlineWhitespaceBetween(html, left, right) {
 
 function hasDesignerBreakBetween(html, left, right) {
   const between = String(html || "").slice(left.end, right.start);
-  return /\bfd_type\s*=\s*(["'])brcontrol\1/i.test(between);
+  return hasTopLevelDesignerBreak(between);
 }
 
 function withUnboundSubjectCaption(control, caption) {

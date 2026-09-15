@@ -176,7 +176,8 @@ function remapLayout(layout, idMap) {
                 ...child,
                 refIds: Array.isArray(child.refIds)
                   ? child.refIds.map((refId) => mapFieldId(refId, idMap))
-                  : child.refIds
+                  : child.refIds,
+                ...(child.contentFlow ? { contentFlow: remapStructuredValue(child.contentFlow, idMap) } : {})
               }))
             : row.children
         }))
@@ -195,6 +196,7 @@ function remapSourceGrid(sourceGrid, idMap) {
       cells: Array.isArray(row.cells)
         ? row.cells.map((cell) => ({
             ...cell,
+            ...(cell.contentFlow ? { contentFlow: remapStructuredValue(cell.contentFlow, idMap) } : {}),
             references: Array.isArray(cell.references)
               ? cell.references.map((reference) => ({
                   ...reference,

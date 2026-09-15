@@ -760,24 +760,6 @@ async function resolveExplicitParticipantOverride(
       }
     };
   }
-  if (
-    exactSourceIdRevalidation &&
-    normalizeText(target.fdName) !== normalizeText(identity.member.name)
-  ) {
-    return {
-      ...identity,
-      issue: {
-        reason: "override_target_name_mismatch",
-        name: identity.member.name,
-        sourceId: override.sourceId,
-        sourceOrgType: identity.member.sourceOrgType,
-        targetId: override.targetFdId,
-        targetName: target.fdName,
-        paths: identity.paths
-      }
-    };
-  }
-
   return {
     ...identity,
     target,
@@ -848,7 +830,10 @@ async function resolveTemplateAuthorizationOverride(
       }
     };
   }
-  if (normalizeText(target.fdName) !== normalizeText(identity.member.name)) {
+  if (
+    normalizeText(override.sourceId) !== normalizeText(target.fdId) &&
+    normalizeText(target.fdName) !== normalizeText(identity.member.name)
+  ) {
     return {
       ...identity,
       issue: {

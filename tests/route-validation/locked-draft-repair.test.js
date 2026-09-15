@@ -208,6 +208,45 @@ describe("scoped locked-draft repair Route", () => {
     assert.equal(result.ok, false);
     assert.equal(client.hasWrite(), false);
   });
+
+  for (const change of [
+    { name: "content-flow layout", mutate(dsl) {
+      const cell = dsl.form.layout.mkTree.flatMap((row) => row.children).find((cell) => cell.refType === "field");
+      cell.contentFlow = { lines: [cell.refIds], items: cell.refIds.map((referenceId) => ({ referenceId })) };
+    } },
+    { name: "new calculated-field hidden-label capability", mutate(dsl) {
+      findTestDslField(dsl, "fd_35523eca33541a").props.hiddenLabel = true;
+    } }
+  ]) {
+    it(`rejects ${change.name} in purported historical v14 calculation evidence`, async () => {
+      const fixture = calculationFixture();
+      for (const dsl of [fixture.dsl, fixture.priorDsl]) change.mutate(dsl);
+      fixture.dslDigest = lockedDraftEvidenceDigest(fixture.dsl);
+      fixture.priorDslDigest = lockedDraftEvidenceDigest(fixture.priorDsl);
+      const client = new LockedDraftFakeClient(fixture.template);
+      const result = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
+        client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport,
+        repairKind: "calculation"
+      }));
+      assert.equal(result.ok, false);
+      assert.ok(result.diagnostics.some((item) => item.code === "locked_draft.calculation_dsl_evolution_invalid"));
+      assert.equal(client.calls.length, 0);
+    });
+  }
+
+  it("still rejects an unrelated layout delta alongside the allowed calculation changes", async () => {
+    const fixture = calculationFixture();
+    fixture.dsl.form.layout.mkTree[0].children[0].column += 1;
+    fixture.dslDigest = lockedDraftEvidenceDigest(fixture.dsl);
+    const client = new LockedDraftFakeClient(fixture.template);
+    const result = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
+      client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport,
+      repairKind: "calculation"
+    }));
+    assert.equal(result.ok, false);
+    assert.ok(result.diagnostics.some((item) => item.code === "locked_draft.calculation_dsl_evolution_invalid"));
+    assert.equal(client.calls.length, 0);
+  });
 });
 
 function authorizationFixture() {
@@ -350,6 +389,13 @@ function calculationFixture() {
   const sourceDraft = cleanSourceFile(
     "tests/fixtures/source4/188d28d4a52c772acda09c04a739f0c0/188d28da17a2f4450dcc7af497f9e9e3_SysFormTemplate.xml"
   );
+  // This recovery fixture represents retained v14 evidence, before content-flow
+  // capture and the additional native hidden-label capabilities existed.
+  removeContentFlow(sourceDraft.form.layout);
+  for (const field of [...(sourceDraft.form.controls || []), ...(sourceDraft.form.dataFields || []),
+    ...(sourceDraft.form.detailTables || []).flatMap((table) => [table, ...(table.columns || [])])]) {
+    if (field.sourceProps?.layoutCell) delete field.sourceProps.layoutCell.hiddenLabel;
+  }
   const priorSourceDraft = structuredClone(sourceDraft);
   priorSourceDraft.issues = [
     ...(priorSourceDraft.issues || []),
@@ -362,6 +408,11 @@ function calculationFixture() {
     }
   ];
   const dslDraft = draftSourceDraft(sourceDraft);
+  const newLabelComponents = new Set(["xform-button", "xform-hyperlinks", "xform-subject", "xform-datetime",
+    "xform-number", "xform-calculate", "xform-attach", "xform-detail-table"]);
+  for (const field of dslDraft.form.fields.flatMap((field) => [field, ...(field.columns || [])])) {
+    if (newLabelComponents.has(field.componentId)) delete field.props.hiddenLabel;
+  }
   const dsl = createTrustedMigrationDsl(sourceDraft, dslDraft, {
     externalAgentReviewed: true,
     reviewerName: "route-validation",
@@ -469,6 +520,12 @@ function calculationFixture() {
     priorSourceDraftDigest: lockedDraftEvidenceDigest(priorSourceDraft),
     priorReportDigest: lockedDraftEvidenceDigest(priorExecutionReport)
   };
+}
+
+function removeContentFlow(value) {
+  if (!value || typeof value !== "object") return;
+  delete value.contentFlow;
+  Object.values(value).forEach(removeContentFlow);
 }
 
 function repairOptions(fixture, overrides = {}) {

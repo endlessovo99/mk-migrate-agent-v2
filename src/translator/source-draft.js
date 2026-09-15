@@ -5,6 +5,7 @@ import { translateLbpmProcessDefinitionXml } from "./lbpm-process-definition-ada
 import { sourceFormRulesFromLegacyScripts } from "./sysform-form-rules.js";
 import { translateSysFormTemplateXml } from "./sysform-template-adapter.js";
 import { isHiddenMetadataAttributes } from "./sysform-metadata.js";
+import { filterContentFlow } from "./designer-content-flow.js";
 import {
   cleanText,
   parseRootHashMap,
@@ -766,6 +767,7 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
           rowspan: cell.rowspan,
           widthWeight: cell.widthWeight,
           references: [...fieldRefs, ...layoutRefs],
+          contentFlow: filterContentFlow(cell.contentFlow, fieldRefs.map((ref) => ref.referenceId)),
           evidence: {
             row: row.sourceRow ?? String(rowIndex),
             column: cell.column,

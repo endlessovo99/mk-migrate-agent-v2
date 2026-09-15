@@ -264,7 +264,7 @@ describe("Source4 script semantic closure", () => {
     assert.equal(field.componentId, "xform-datetime");
     assert.equal(field.props.dataPattern, "yyyy-MM");
     assert.equal(field.props.displayPattern, "yyyy-MM");
-    assert.equal(Object.hasOwn(field.props, "hiddenLabel"), false);
+    assert.equal(field.props.hiddenLabel, true);
     assert.equal(action.translationStatus, "omitted");
     assert.equal(action.functionMappings?.[0]?.basis, "static-form-prop");
     assert.deepEqual(action.coverage.staticProps, [

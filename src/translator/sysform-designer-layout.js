@@ -4,6 +4,7 @@ import { sanitizeCredentialMaterial } from "../credential-material.js";
 import { isDataOnlyMetadataField } from "./sysform-metadata.js";
 import { restDialogEvidence, sanitizeDesignerValues } from "./rest-dialog.js";
 import { parseDesignerFdValues } from "./designer-control-values.js";
+import { designerContentFlow, filterContentFlow } from "./designer-content-flow.js";
 import { componentForSourceType } from "./field-component.js";
 import { descriptionFieldFromMarkedRow, extractRowMarkers } from "./designer-row-markers.js";
 import {
@@ -472,6 +473,7 @@ function appendDesignerLayoutRow(descriptor, context) {
         cellFieldIds.push(control.id);
       }
       if (!cellFieldIds.length) return;
+      const contentFlow = designerContentFlow(cell.body, cellFieldIds);
 
       cells.push({
         id: `${descriptor.id}-cell-${column.column}${groupIndex ? `-${groupIndex}` : ""}`,
@@ -479,6 +481,7 @@ function appendDesignerLayoutRow(descriptor, context) {
         fieldIds: cellFieldIds,
         column: column.column,
         colspan: column.colspan,
+        ...(contentFlow ? { contentFlow } : {}),
         ...(widthWeight ? { widthWeight } : {}),
         ...(rowspan > 1 ? { rowspan } : {})
       });
@@ -1270,12 +1273,12 @@ function foldInlineCellSemantics(html, entries, metadataContext, options = {}) {
     crossCellBoundCaptionIds: options.crossCellBoundCaptionIds,
     preserveCaptionIds: preservedCaptionIdsWithCheckboxOther(entries, options.preserveCaptionIds)
   });
-  const units = foldInlineNumberUnits(html, captions, metadataContext);
+  const units = annotateInlineNumberUnits(html, captions, metadataContext);
   return foldInlineHints(html, units, metadataContext)
     .map((entry) => entry.control);
 }
 
-function foldInlineNumberUnits(html, entries, metadataContext) {
+function annotateInlineNumberUnits(html, entries, metadataContext) {
   const folded = [];
 
   for (let index = 0; index < entries.length;) {
@@ -1291,11 +1294,7 @@ function foldInlineNumberUnits(html, entries, metadataContext) {
       hasOnlyInlineWhitespaceGap(html, current, next) &&
       isSafeInlineUnit(next.control.title)
     ) {
-      folded.push(mergeControlEntries(
-        current,
-        next,
-        withInlineUnit(current.control, next.control)
-      ));
+      folded.push({ ...current, control: withInlineUnit(current.control, next.control) }, next);
       index += 2;
       continue;
     }
@@ -2200,11 +2199,15 @@ function rebuildLayoutCell(cell, fieldIds, layoutRowIds) {
     fieldId: _fieldId,
     fieldIds: _fieldIds,
     layoutRowIds: _layoutRowIds,
+    contentFlow: _contentFlow,
     ...cellWithoutRefs
   } = cell;
   return {
     ...cellWithoutRefs,
     ...(fieldIds.length ? { fieldId: fieldIds[0], fieldIds } : {}),
+    ...(cell.contentFlow && fieldIds.length
+      ? { contentFlow: filterContentFlow(cell.contentFlow, fieldIds) }
+      : {}),
     ...(layoutRowIds.length ? { layoutRowIds } : {})
   };
 }

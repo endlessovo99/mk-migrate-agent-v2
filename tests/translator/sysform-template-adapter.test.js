@@ -106,7 +106,11 @@ describe("translateSysFormTemplateXml", () => {
       fieldId: "fd_fjmx",
       fieldIds: ["fd_fjmx"],
       column: 1,
-      colspan: 3
+      colspan: 3,
+      contentFlow: {
+        lines: [["fd_fjmx"]],
+        items: [{ referenceId: "fd_fjmx" }]
+      }
     });
     assert.equal(
       dsl.review.warnings.some((warning) => warning.code === "source.sysform.metadata_id_mismatch"),
@@ -624,9 +628,10 @@ describe("translateSysFormTemplateXml", () => {
     const reportTime = dsl.form.fields.find((item) => item.id === "fd_report_time");
 
     assert.equal(eventTime?.componentId, "xform-datetime");
-    assert.deepEqual(eventTime?.props, { displayPattern: "yyyy-MM-dd hh:mm" });
+    assert.deepEqual(eventTime?.props, { hiddenLabel: true, displayPattern: "yyyy-MM-dd hh:mm" });
     assert.equal(reportTime?.componentId, "xform-datetime");
     assert.deepEqual(reportTime?.props, {
+      hiddenLabel: true,
       defaultValue: { kind: "currentTime" },
       displayPattern: "yyyy-MM-dd hh:mm"
     });

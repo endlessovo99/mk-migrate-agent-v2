@@ -420,13 +420,14 @@ function observeDetailField(model, modelIndex, lang) {
       };
     });
   const controlBinding = observeNativeControlBinding(model.fdAttribute);
+  const attribute = safeParseObject(model.fdAttribute);
   return {
     id: normalizeScalar(detailFieldNameForModel(model)),
     title: normalizeScalar(model.fdName),
     type: "detailTable",
     component: "xform-detail-table",
     dataOnly: false,
-    props: {},
+    props: hasCompleteHiddenLabelEvidence(attribute?.config?.controlProps, attribute) ? { hiddenLabel: true } : {},
     columns,
     persistence: {
       fieldId: normalizeScalar(detailFieldNameForModel(model)),
@@ -1200,6 +1201,21 @@ function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
       mobileRenderedDetailColumns
     );
   }
+  if (observedRows.some((row) => row.cells.some((cell) => cell.contentFlow))) {
+    const mobileMain = (mobileRoots[0].children || []).find((child) => child?.key === "main") || mobileRoots[0].children?.[0];
+    const mobileRows = (mobileMain?.children || []).map((row, index) => observeNativeLayoutRow(
+      row, index, detailByTable, fieldIds, mobileRenderedDetailColumns, diagnostics
+    )).filter(Boolean);
+    observedRows.forEach((row, rowIndex) => row.cells.forEach((cell, cellIndex) => {
+      if (stableStringify(cell.contentFlow) !== stableStringify(mobileRows[rowIndex]?.cells[cellIndex]?.contentFlow)) {
+        diagnostics.push(diagnostic({
+          level: "error", code: "readback.form.layout_content_flow_scene_mismatch",
+          message: "Desktop and mobile cell content flows differ.", partition: "form",
+          decodePath: `/readback/form/mobileLayoutRows/${rowIndex}/cells/${cellIndex}/contentFlow`
+        }));
+      }
+    }));
+  }
   return observedRows;
 }
 
@@ -1234,6 +1250,7 @@ function observeNativeLayoutRow(
     colsStyle: observeGridStyles(grid.controlProps?.colsStyle),
     cells: gridItems.map((item, cellIndex) => {
       const refs = Array.isArray(item.children) ? item.children : [];
+      const contentFlow = observeContentFlow(refs, diagnostics, `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/contentFlow`);
       const fieldIds = refs
         .flatMap((fieldRef, refIndex) => nativeFieldIdsFromRef(
           fieldRef,
@@ -1280,6 +1297,7 @@ function observeNativeLayoutRow(
           refs.find((ref) => ref?.migrationRefType)?.migrationRefType
         ),
         fieldIds,
+        ...(contentFlow ? { contentFlow } : {}),
         row: gridRow,
         column,
         colspan,
@@ -1287,6 +1305,60 @@ function observeNativeLayoutRow(
       };
     })
   };
+}
+
+function observeContentFlow(refs, diagnostics, decodePath) {
+  if (refs.length !== 1 || refs[0]?.type !== "div") return undefined;
+  const fail = () => {
+    diagnostics.push(diagnostic({
+      level: "error", code: "readback.form.layout_content_flow_invalid",
+      message: "Native content flow must retain its explicit lines, wrapping containers, and item widths.",
+      partition: "form", decodePath
+    }));
+    return undefined;
+  };
+  const root = refs[0];
+  if (root.kind !== "container" || !hasNativeFlowProps(root.controlProps, "container") ||
+      stableStringify(root.controlProps?.style) !== stableStringify({ display: "flex", flexDirection: "column", width: "100%", minWidth: 0 }) ||
+      !Array.isArray(root.children) || root.children.length === 0) return fail();
+  const lines = [];
+  const items = [];
+  for (const line of root.children) {
+    if (line.type !== "div" || line.kind !== "container" || !hasNativeFlowProps(line.controlProps, "container") || !Array.isArray(line.children)) return fail();
+    const lineStyle = { display: "flex", flexWrap: "wrap", alignItems: "center", minWidth: 0,
+      ...(line.children.length === 0 ? { minHeight: "1.5em" } : {}) };
+    if (stableStringify(line.controlProps?.style) !== stableStringify(lineStyle)) return fail();
+    const ids = [];
+    for (const item of line.children) {
+      if (item.type !== "div" || item.kind !== "container" || !hasNativeFlowProps(item.controlProps, "item") || !Array.isArray(item.children) || item.children.length !== 1) return fail();
+      const reference = item.children[0];
+      if (!reference || typeof reference.key !== "string" || reference.kind === "container") return fail();
+      const style = item.controlProps?.style;
+      let width;
+      if (style?.width !== undefined) {
+        const match = /^(\d+(?:\.\d+)?(?:e[+-]?\d+)?)(px|%)$/.exec(String(style.width));
+        if (!match || Number(match[1]) < 0) return fail();
+        width = { value: Number(match[1]), unit: match[2] };
+      }
+      const itemStyle = {
+        flex: width ? "0 0 auto" : "0 1 auto", minWidth: 0, maxWidth: "100%", overflow: "visible",
+        ...(width ? { width: `${width.value}${width.unit}` } : {})
+      };
+      if (stableStringify(style) !== stableStringify(itemStyle)) return fail();
+      ids.push(reference.key);
+      items.push({ referenceId: reference.key, ...(width ? { width } : {}) });
+    }
+    lines.push(ids);
+  }
+  return { lines, items };
+}
+
+function hasNativeFlowProps(props, kind) {
+  if (!props || typeof props !== "object") return false;
+  // Classes and hidden attributes may override the explicit flow styles.
+  if (props.className || props.hidden) return false;
+  if (kind === "container") return !props.align && !props.justify && !props.isMobilePageBackground;
+  return !props.colGutter && !props.rowGutter;
 }
 
 function observeGridStyles(value) {
@@ -1328,6 +1400,11 @@ function nativeFieldIdsFromRef(
     return [detailFieldId];
   }
   if (knownFieldIds.has(fieldRef.key)) return [normalizeScalar(fieldRef.key)];
+  if (isNativeFlowContainer(fieldRef)) {
+    return (fieldRef.children || []).flatMap((child, index) => nativeFieldIdsFromRef(
+      child, detailByTable, knownFieldIds, renderedDetailColumns, diagnostics, `${decodePath}/children/${index}`
+    ));
+  }
   if (fieldRef.key) {
     diagnostics.push(diagnostic({
       level: "warning",
@@ -1378,7 +1455,15 @@ function nativeRefType(fieldRef, detailByTable, knownFieldIds) {
   if (fieldRef.migrationRefType === "layout") return undefined;
   if (detailByTable.has(fieldRef.key)) return "detailTable";
   if (knownFieldIds.has(fieldRef.key)) return "field";
+  if (isNativeFlowContainer(fieldRef)) {
+    const types = [...new Set((fieldRef.children || []).map((child) => nativeRefType(child, detailByTable, knownFieldIds)).filter(Boolean))];
+    return types.length === 1 ? types[0] : undefined;
+  }
   return undefined;
+}
+
+function isNativeFlowContainer(value) {
+  return value?.kind === "container" && value.type === "div";
 }
 
 function nonEmptyMarker(value) {

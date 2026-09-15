@@ -1,0 +1,36 @@
+{
+  "kind": "independent-upstream-runtime-evidence",
+  "moduleId": "@elem/xform-fieldset",
+  "fixture": "xform-fieldset.cjs",
+  "sources": [
+    {
+      "platform": "desktop",
+      "url": "https://p-sit.onewo.com/web/sys/artifact/elements/xform-bundle-desktop/index.js?oz1kzHQkD8",
+      "retrievedOn": "2026-09-12",
+      "bundleSha256": "2d38ace6af06283cfe3cea9f8978a1d5470218fc68fd0106e66722e7d2f1158a",
+      "moduleByteRange": {
+        "startInclusive": 165866,
+        "endExclusive": 194482
+      },
+      "moduleSha256": "93b1005a35c78a6d12cf76b6facbf75f0105c7f7a8951029cac8c0812b1d9f2d"
+    },
+    {
+      "platform": "mobile",
+      "url": "https://p-sit.onewo.com/web/sys/artifact/elements/xform-bundle-mobile/index.js?oKubaI3gQr",
+      "retrievedOn": "2026-09-12",
+      "bundleSha256": "5caf54bdd8ab7ea2daba896562673ea4d3a905c6a75c07a747f927e946779ddf",
+      "moduleByteRange": {
+        "startInclusive": 165864,
+        "endExclusive": 194480
+      },
+      "moduleSha256": "93b1005a35c78a6d12cf76b6facbf75f0105c7f7a8951029cac8c0812b1d9f2d"
+    }
+  ],
+  "mechanism": {
+    "hiddenLabelBinding": "me=e.hiddenLabel",
+    "titleBinding": "Ht=t.useMemo((function(){return K||J}),[J,K,Nt])",
+    "titleRenderGate": "Ht&&!me&&xo&&c.createElement",
+    "requiredMarkerGate": "te&&(me||\"control\"===ho)&&c.createElement"
+  },
+  "scope": "The native shared field wrapper suppresses its title using hiddenLabel on both platforms. This does not alter the child control value, calculation rules, unit formatting, hidden controls, or description content."
+}

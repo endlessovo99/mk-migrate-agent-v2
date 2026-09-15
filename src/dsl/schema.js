@@ -45,6 +45,7 @@ import { scriptRecipeValidationIssues } from "./script-recipes.js";
 import { isSourceBackedMonthField } from "./static-month-picker.js";
 import { subProcessValidationIssues } from "./subprocess.js";
 import { projectLayoutGrid } from "./layout-pack.js";
+import { contentFlowIssues } from "./content-flow.js";
 import { findUnredactedCredentialPaths } from "../credential-material.js";
 
 export const DSL_VERSION = "2.0-migration";
@@ -1049,6 +1050,17 @@ function validateMkTreeNode(node, index, refs, diagnostics) {
       diagnostics.push(error("dsl.form.layout.child_ref_type_invalid", "mkTree child refType must be field, detailTable, or layout.", `${childPath}/refType`));
     }
     const refIds = Array.isArray(child.refIds) ? child.refIds : [child.refId].filter(Boolean);
+    if (child.contentFlow !== undefined) {
+      const issues = contentFlowIssues(child.contentFlow, refIds);
+      if (child.refType !== "field" || (refIds.length > 1 && child.keepInline !== true)) {
+        issues.push("contentFlow requires a grouped field cell");
+      }
+      if (issues.length) diagnostics.push(error(
+        "dsl.form.layout.content_flow_invalid",
+        "Cell content flow must preserve ordered field references, line boundaries and valid dimensions.",
+        `${childPath}/contentFlow`, { issues }
+      ));
+    }
     if (!refIds.length) {
       diagnostics.push(error("dsl.form.layout.child_ref_required", "mkTree child must reference at least one field, detail table, or layout node.", `${childPath}/refIds`));
     }

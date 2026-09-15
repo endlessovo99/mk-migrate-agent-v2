@@ -255,6 +255,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
             : undefined,
           refType: cell.refType,
           fieldIds: fieldIdsForCell,
+          ...(cell.contentFlow ? { contentFlow: structuredClone(cell.contentFlow) } : {}),
           row: cell.row,
           column: cell.column,
           colspan: cell.colspan,

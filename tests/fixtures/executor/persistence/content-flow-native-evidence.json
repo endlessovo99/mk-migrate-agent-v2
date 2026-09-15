@@ -1,0 +1,25 @@
+{
+  "retrievedAt": "2026-09-12T07:38:23.544Z",
+  "method": "GET",
+  "origin": "http://oadev.shanghai-electric.com",
+  "artifacts": [
+    {
+      "file": "content-flow-native-flex.js",
+      "sha256": "90b5a1b05853cc59990bf10aa1249e48d897b50adff77fca4f7ed02eba9e8344",
+      "sourcePath": "/web/sys/artifact/elements/flex/index.js"
+    },
+    {
+      "file": "content-flow-native-flex.css",
+      "sha256": "28df8f72c59f18f2d7c1e382ea67fc15d8a73f673a6a3e388f215434dc097320",
+      "sourcePath": "/web/sys/artifact/elements/flex/index.css"
+    }
+  ],
+  "contract": {
+    "container": "@elem/flex",
+    "item": "@elem/flex.FlexItem",
+    "containerStyle": "passed to root div",
+    "itemStyle": "style.flex bypasses calculated flex; style.width, minWidth, maxWidth, overflow pass to item div",
+    "borders": "Neither native container nor item stylesheet defines borders"
+  },
+  "boundary": "Original independently fetched native renderer and CSS; no NewOA form write was performed."
+}

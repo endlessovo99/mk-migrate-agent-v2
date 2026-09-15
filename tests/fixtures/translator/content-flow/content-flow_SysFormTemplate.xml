@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>source-content-flow</string></void>
+<void method="put"><string>fdName</string><string>Source Content Flow</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot; width=&quot;600&quot;&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;lead&quot;,content:&quot;范围&quot;,b:&quot;true&quot;}&apos;&gt;范围&lt;/label&gt;
+&lt;div fd_type=&quot;datetime&quot; style=&quot;width:120px&quot; fd_values=&apos;{id:&quot;fd_start&quot;,label:&quot;起点&quot;,width:&quot;999&quot;,_label_bind:&quot;false&quot;}&apos;&gt;&lt;input/&gt;&lt;BR/&gt;&lt;/div&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;middle&quot;,content:&quot;至&quot;}&apos;&gt;至&lt;/label&gt;
+&lt;div fd_type=&quot;datetime&quot; width=&quot;200&quot; style=&quot;width:40%&quot; fd_values=&apos;{id:&quot;fd_end&quot;,label:&quot;终点&quot;,_label_bind:&quot;false&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;tail&quot;,content:&quot;止&quot;}&apos;&gt;止&lt;/label&gt;
+&lt;div id=&quot;break_1&quot; fd_type=&quot;brcontrol&quot; fd_values=&apos;{id:&quot;break_1&quot;}&apos;&gt;&lt;label&gt;&lt;br/&gt;&lt;/label&gt;&lt;/div&gt;&lt;div id=&quot;brcontrol-break_1&quot;&gt;&lt;/div&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_code&quot;,label:&quot;编码&quot;,width:&quot;80&quot;,_label_bind:&quot;false&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;suffix&quot;,content:&quot;后缀&quot;,b:&quot;true&quot;}&apos;&gt;后缀&lt;/label&gt;
+&lt;BR&gt;&lt;BR/&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;note&quot;,content:&quot;最终说明&quot;,b:&quot;true&quot;}&apos;&gt;最终说明&lt;/label&gt;
+&lt;div fd_type=&quot;inputText&quot; width=&quot;75.5&quot; fd_values=&apos;{id:&quot;fd_last&quot;,label:&quot;末项&quot;,_label_bind:&quot;false&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;script&gt;const example = &quot;&lt;BR&gt;&quot;;&lt;/script&gt;
+&lt;div fd_type=&quot;jsp&quot; fd_values=&apos;{id:&quot;jsp_1&quot;}&apos;&gt;&lt;input type=&quot;hidden&quot; value=&quot;&amp;lt;BR&amp;gt;&quot;/&gt;&lt;br/&gt;&lt;/div&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;after&quot;,content:&quot;结束&quot;,b:&quot;true&quot;}&apos;&gt;结束&lt;/label&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;name_caption&quot;,content:&quot;姓名&quot;}&apos;&gt;姓名&lt;/label&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_name&quot;,label:&quot;姓名&quot;,_label_bind:&quot;true&quot;,_label_bind_id:&quot;name_caption&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;br/&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_hidden&quot;,label:&quot;隐藏值&quot;,canShow:&quot;false&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;br/&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_remaining&quot;,label:&quot;剩余项&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_amount&quot;,label:&quot;金额&quot;,dataType:&quot;Double&quot;,width:&quot;90&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;amount_unit&quot;,content:&quot;元&quot;}&apos;&gt;元&lt;/label&gt;
+&lt;br/&gt;
+&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;fd_total&quot;,label:&quot;合计&quot;,dataType:&quot;Double&quot;,expression_id:&quot;$fd_amount$ + 1&quot;,width:&quot;70&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;total_unit&quot;,content:&quot;天&quot;}&apos;&gt;天&lt;/label&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_repeated&quot;,label:&quot;同名&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;BR&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;repeated_caption&quot;,content:&quot;同名&quot;}&apos;&gt;同名&lt;/label&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_internal&quot;,label:&quot;内部&quot;}&apos;&gt;&lt;input/&gt;&lt;BR/&gt;&lt;/div&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;internal_caption&quot;,content:&quot;内部&quot;}&apos;&gt;内部&lt;/label&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;5&quot; column=&quot;0&quot;&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_data_only&quot;,label:&quot;仅存储&quot;,canShow:&quot;true&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;BR&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_metric&quot;,label:&quot;度量&quot;,dataType:&quot;Double&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;BR&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;metric_unit&quot;,content:&quot;米&quot;}&apos;&gt;米&lt;/label&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;div class=&quot;presentation&quot;&gt;&lt;span&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;wrapped_caption&quot;,content:&quot;范围&quot;,b:&quot;true&quot;}&apos;&gt;范围&lt;/label&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_wrapped_a&quot;,label:&quot;起点&quot;,width:&quot;100&quot;}&apos;&gt;&lt;input/&gt;&lt;br/&gt;&lt;/div&gt;
+&lt;/span&gt;&lt;BR&gt;
+&lt;div fd_type=&quot;right&quot; fd_values=&apos;{id:&quot;rights_wrapper&quot;,rightName:&quot;条件区域&quot;}&apos;&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_wrapped_b&quot;,label:&quot;终点&quot;,width:&quot;50%&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;BR&gt;
+&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;wrapped_note&quot;,content:&quot;说明&quot;,b:&quot;true&quot;}&apos;&gt;说明&lt;/label&gt;
+&lt;/div&gt;
+&lt;table&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;内部文字&lt;BR&gt;内部换行&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_wrapped_tail&quot;,label:&quot;尾项&quot;,width:&quot;0&quot;}&apos;&gt;&lt;input/&gt;&lt;/div&gt;
+&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name=&quot;fd_amount&quot; label=&quot;金额&quot; type=&quot;Double&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_total&quot; label=&quot;合计&quot; type=&quot;Double&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_data_only&quot; label=&quot;仅存储&quot; type=&quot;String&quot; canDisplay=&quot;false&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_metric&quot; label=&quot;度量&quot; type=&quot;Double&quot;/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

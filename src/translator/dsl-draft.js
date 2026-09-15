@@ -9,6 +9,8 @@ import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "..
 import { inspectNativeFormRuleProjection } from "../dsl/native-form-rule-projection.js";
 import { deterministicManualResidualDecisionId } from "../dsl/deterministic-script-translations.js";
 import { packLayoutGrid, projectLayoutGrid } from "../dsl/layout-pack.js";
+import { selectContentFlow } from "../dsl/content-flow.js";
+import { projectCompanionPresentation, projectUnitPresentation } from "./form-presentation.js";
 import {
   applyFieldIdMapToForm,
   applyFieldIdMapToScripts,
@@ -66,7 +68,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     throw new Error("draft requires a source-draft artifact");
   }
 
-  const rawForm = projectDynamicHyperlinkForm(
+  const rawForm = projectUnitPresentation(projectDynamicHyperlinkForm(
     appendStaticJspDescriptionFields(
       applySourceNumericDetailInferences(
         applyNativeCalculationInferences(
@@ -82,7 +84,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceDraft.scripts
     ),
     sourceDraft.scripts
-  );
+  ));
   const fieldIdMap = buildFieldIdMap(rawForm);
   const mappedForm = applyDetailCascadeRowOptions(
     applyFieldIdMapToForm(rawForm, fieldIdMap),
@@ -750,7 +752,7 @@ function draftForm(sourceForm, sourceWorkflow) {
     sourceForm.layout || { source: "fdDesignerHtml", rows: [] }
   );
   const renderLayout = removeDataOnlyFieldRefs(
-    sharedCaptionRecovery.layout,
+    projectCompanionPresentation(sharedCaptionRecovery.layout, sharedCaptionRecovery.fields),
     sharedCaptionRecovery.fields
   );
   const calculationFields = rebindAggregateCalculationTables(
@@ -879,7 +881,10 @@ function appendHardHiddenFieldsToLayout(form) {
             : [];
         const keptRefIds = refIds.filter((refId) => !hardHiddenIds.has(refId));
         if (!keptRefIds.length) return [];
-        if (Array.isArray(child.refIds)) return [{ ...child, refIds: keptRefIds }];
+        if (Array.isArray(child.refIds)) return [{
+          ...child, refIds: keptRefIds,
+          ...(child.contentFlow ? { contentFlow: selectContentFlow(child.contentFlow, keptRefIds) } : {})
+        }];
         return [{ ...child, refId: keptRefIds[0] }];
       });
       return children.length ? { ...row, children } : undefined;
@@ -955,7 +960,7 @@ function draftDetailTableFromSource(table) {
     title: targetDetailTableTitle(table),
     type: "detailTable",
     componentId: "xform-detail-table",
-    props: {},
+    props: sourceHiddenLabelProps(table, "xform-detail-table"),
     sourceProps: table.sourceProps || {},
     sourceRef: table.sourceRef,
     generated: false,
@@ -978,6 +983,14 @@ function targetDetailTableTitle(table) {
   const hint = String(table?.sourceProps?.detailTitleHint?.content ?? "")
     .replace(/[\s\u00a0]+/gu, "");
   return hint ? `${baseTitle}(${hint})` : baseTitle;
+}
+
+function sourceHiddenLabelProps(source, componentId) {
+  return (
+    ((hasActiveExternalRightPrompt(source) && source.sourceProps?.rightContainer) ||
+      source.sourceProps?.layoutCell?.hiddenLabel === true) &&
+    componentSupportsProp(componentId, "hiddenLabel")
+  ) ? { hiddenLabel: true } : {};
 }
 
 function propsFromSource(source, options = {}) {
@@ -1014,22 +1027,13 @@ function propsFromSource(source, options = {}) {
     return props;
   }
 
-  const props = {};
+  const props = sourceHiddenLabelProps(source, componentId);
   if (source.required) props.required = true;
   if (
     componentSupportsProp(componentId, "readOnly") &&
     String(source.sourceProps?.designerValues?.readOnly).trim().toLowerCase() === "true"
   ) {
     props.readOnly = true;
-  }
-  if (
-    (
-      (hasActiveExternalRightPrompt(source) && source.sourceProps?.rightContainer) ||
-      source.sourceProps?.layoutCell?.hiddenLabel === true
-    ) &&
-    componentSupportsProp(componentId, "hiddenLabel")
-  ) {
-    props.hiddenLabel = true;
   }
   const inlineHint = source.sourceProps?.inlineHint?.content;
   const displayText = source.sourceProps?.displayText?.content;
@@ -2115,6 +2119,9 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
             column: cell.column,
             colspan: cell.colspan,
             ...(cell.keepInline === true && refType === "field" ? { keepInline: true } : {}),
+            ...(cell.contentFlow && refType === "field"
+              ? { contentFlow: selectContentFlow(cell.contentFlow, references.map((ref) => ref.referenceId)) }
+              : {}),
             ...(Number.isFinite(cell.widthWeight) && cell.widthWeight > 0
               ? { widthWeight: cell.widthWeight }
               : {})
@@ -2150,6 +2157,13 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
 }
 
 function keepInlineSourceCell(cell, preserveSourceGeometry, detailTableIds) {
+  if (cell?.contentFlow && !hasLayoutReference(cell) && !cellContainsDetailTable(cell, detailTableIds)) {
+    return {
+      ...cell,
+      ...((cell.references || []).length > 1 ? { keepInline: true } : {}),
+      contentFlow: selectContentFlow(cell.contentFlow, (cell.references || []).map((ref) => ref.referenceId))
+    };
+  }
   if (
     !cell ||
     cell.keepInline === true ||
@@ -2239,11 +2253,15 @@ function exclusiveDetailTableCellParts(cell, detailTableIds) {
 }
 
 function cellPart(cell, references, partIndex) {
-  const { keepInline: _keepInline, ...rest } = cell;
+  const { keepInline: _keepInline, contentFlow, ...rest } = cell;
+  const fieldFlow = contentFlow && references.every((ref) => ref.referenceType === "control")
+    ? selectContentFlow(contentFlow, references.map((ref) => ref.referenceId))
+    : undefined;
   return {
     ...rest,
     id: `${cell.id || "cell"}-control-${partIndex + 1}`,
-    references
+    references,
+    ...(fieldFlow ? { contentFlow: fieldFlow, ...(references.length > 1 ? { keepInline: true } : {}) } : {})
   };
 }
 

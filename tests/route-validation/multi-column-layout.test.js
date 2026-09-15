@@ -9,15 +9,15 @@ const fixture =
   "tests/fixtures/route-validation/multi-column-cap/route-multi-column-cap_SysFormTemplate.xml";
 
 describe("multi-column layout route fixture", () => {
-  it("caps table layouts at eight columns and reflows the ninth control", () => {
+  it("preserves a source cell with eight or nine controls as one flowing cell", () => {
     const source = cleanSourceFile(fixture);
     const dsl = draftSourceDraft(source);
     const catalogComponent = COMPONENTS_BY_ID.get("xform-multi-row-table-layout");
     const eightIds = Array.from({ length: 8 }, (_, index) => `fd_eight_${index + 1}`);
     const nineIds = Array.from({ length: 9 }, (_, index) => `fd_nine_${index + 1}`);
 
-    assertLayout(source, dsl, "fd_eight_row", eightIds, { rows: 1, columns: 8 });
-    assertLayout(source, dsl, "fd_nine_row", nineIds, { rows: 2, columns: 8 });
+    assertLayout(source, dsl, "fd_eight_row", eightIds);
+    assertLayout(source, dsl, "fd_nine_row", nineIds);
     assert.equal(catalogComponent?.target?.desktop, "@elem/layout-grid");
     assert.equal(catalogComponent?.target?.mobile, "@elem/layout-grid");
     assert.equal(catalogComponent?.target?.designerItemTid, designerItemTid);
@@ -25,7 +25,7 @@ describe("multi-column layout route fixture", () => {
   });
 });
 
-function assertLayout(source, dsl, markerId, fieldIds, expectedGrid) {
+function assertLayout(source, dsl, markerId, fieldIds) {
   const sourceRow = source.form.layout.rows.find((row) =>
     row.sourceMarkers?.includes(markerId)
   );
@@ -38,11 +38,10 @@ function assertLayout(source, dsl, markerId, fieldIds, expectedGrid) {
     sourceRow?.cells[0].references.map((reference) => reference.referenceId),
     fieldIds
   );
-  assert.equal(targetRow?.componentId, "xform-multi-row-table-layout");
-  assert.deepEqual(targetRow?.props, expectedGrid);
+  assert.equal(targetRow?.componentId, "xform-flex-1-1-layout");
+  assert.equal(targetRow?.props.columns, 1);
   assert.deepEqual(targetRow?.children.flatMap((cell) => cell.refIds), fieldIds);
-  assert.deepEqual(
-    targetRow?.children.map((cell, index) => [cell.row, cell.column]),
-    fieldIds.map((_, index) => [Math.floor(index / 8), index % 8])
-  );
+  assert.equal(targetRow.children.length, 1);
+  assert.equal(targetRow.children[0].keepInline, true);
+  assert.deepEqual(targetRow.children[0].contentFlow.lines, [fieldIds]);
 }

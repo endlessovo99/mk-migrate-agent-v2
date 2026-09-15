@@ -377,9 +377,9 @@ function reconciliationDsl(sourceDraft, priorSourceDraft, input, priorExecutionR
   const toVersion = CATALOG_VERSIONS.components;
   if (
     fromVersion !== "2026-08-28.v14" ||
-    toVersion !== "2026-09-01.v15" ||
+    !["2026-09-01.v15", "2026-09-12.v16"].includes(toVersion) ||
     priorExecutionReport?.plan?.catalogs?.components?.version !== fromVersion ||
-    usesV15OnlyMonthPattern(input)
+    usesV15OnlyMonthPattern(input) || hasV16Presentation(input)
   ) {
     return { ok: false, diagnostics: trust.diagnostics, trust };
   }
@@ -406,6 +406,19 @@ function reconciliationDsl(sourceDraft, priorSourceDraft, input, priorExecutionR
       adaptedDslDigest: digest(adapted)
     }
   };
+}
+
+function hasV16Presentation(dsl) {
+  const newLabelComponents = new Set([
+    "xform-button", "xform-hyperlinks", "xform-subject", "xform-datetime",
+    "xform-number", "xform-calculate", "xform-attach", "xform-detail-table"
+  ]);
+  const containsFlow = (value) => Boolean(value && typeof value === "object" && (
+    Object.hasOwn(value, "contentFlow") || Object.values(value).some(containsFlow)
+  ));
+  return containsFlow(dsl?.form?.layout) || (dsl?.form?.fields || []).some((field) =>
+    [field, ...(field.columns || [])].some((candidate) => newLabelComponents.has(candidate.componentId) &&
+      Object.hasOwn(candidate.props || {}, "hiddenLabel")));
 }
 
 function usesV15OnlyMonthPattern(dsl) {

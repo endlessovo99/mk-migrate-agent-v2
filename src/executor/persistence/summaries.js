@@ -56,6 +56,7 @@ export function buildFormSummary(observedForm, observedRules, observedScripts) {
     cells: (row.cells || []).map((cell) => ({
       fieldId: (cell.fieldIds || [])[0],
       fieldIds: cell.fieldIds || [],
+      ...(cell.contentFlow ? { contentFlow: structuredClone(cell.contentFlow) } : {}),
       ownerNodeId: cell.ownerNodeId,
       ownerNodePath: cell.ownerNodePath,
       refType: cell.refType,

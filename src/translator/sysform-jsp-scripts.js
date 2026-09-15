@@ -226,7 +226,7 @@ export function applyStaticScriptProperties(form = {}, scripts = {}) {
         requiredField.componentId === "xform-input"
       ) {
         const dateProps = {};
-        for (const prop of ["required", "readOnly", "defaultValue"]) {
+        for (const prop of ["required", "readOnly", "hiddenLabel", "defaultValue"]) {
           if (requiredField.props?.[prop] !== undefined) dateProps[prop] = requiredField.props[prop];
         }
         return {
