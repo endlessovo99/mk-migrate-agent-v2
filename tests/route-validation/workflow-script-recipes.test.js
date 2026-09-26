@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { buildWorkflowContent, projectTemplate, verifyTemplate } from "../helpers/persistence.js";
+import { runInNewContext } from "node:vm";
+import { buildWorkflowContent, projectTemplate, verifyTemplate, xformConfig } from "../helpers/persistence.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 import { validateMigrationDsl } from "../../src/dsl/schema.js";
@@ -92,11 +93,14 @@ describe("workflow Script recipes", () => {
     );
   });
 
-  it("maps a main multi-select field to login-name handlers through a deterministic Script recipe", () => {
+  it("maps a main checkbox field to login-name handlers through a deterministic Script recipe", () => {
     const sourceDraft = cleanSourceFile(MAIN_FIELD_LOGIN_MAP_SOURCE);
     const dslDraft = draftSourceDraft(sourceDraft);
     const node = dslDraft.workflow.nodes.find((item) => item.id === "N25");
+    const field = dslDraft.form.fields.find((item) => item.id === "fd_3ddc891890c9aa");
 
+    assert.equal(field.componentId, "xform-checkbox");
+    assert.equal(field.type, "checkbox");
     assert.equal(node.participants.mode, "script_formula");
     assert.equal(node.participants.recipe, "main_field_contains_login_names");
     assert.equal(node.participants.fieldId, "fd_3ddc891890c9aa");
@@ -114,27 +118,23 @@ describe("workflow Script recipes", () => {
     ]);
     assert.equal(node.translationStatus, "executable");
 
-    const workflow = {
-      process: { id: "main-field-login-map" },
-      nodes: [
-        workflowNode("N_LOGIN_START", "generalStart", "startEvent", "startNode"),
-        node,
-        workflowNode("N_LOGIN_END", "generalEnd", "endEvent", "endNode")
-      ],
-      edges: [
-        workflowEdge("L_LOGIN_IN", "N_LOGIN_START", node.id),
-        workflowEdge("L_LOGIN_OUT", node.id, "N_LOGIN_END")
-      ],
-      topologicalOrder: ["N_LOGIN_START", node.id, "N_LOGIN_END"]
-    };
     const trusted = sampleTrustedDsl({
       template: dslDraft.template,
       form: dslDraft.form,
-      workflow
+      workflow: focusedParticipantWorkflow(node)
     });
-    assert.equal(validateMigrationDsl(trusted, { mode: "execute" }).ok, true);
+    const validation = validateMigrationDsl(trusted, { mode: "execute" });
+    assert.equal(validation.ok, true, JSON.stringify(validation.diagnostics));
 
     const template = projectTemplate(trusted);
+    const nativeField = xformConfig(template).dataModel
+      .find((model) => model.fdType === "main").fdFields
+      .find((item) => item.fdName === field.id);
+    const controlProps = JSON.parse(nativeField.fdAttribute).config.controlProps;
+    assert.equal(nativeField.fdType, "checkbox");
+    assert.equal(controlProps.desktop.type, "@elem/xform-checkbox");
+    assert.equal(controlProps.mobile.type, "@elem/xform-m-checkbox");
+    assert.equal(controlProps.multi, true);
     const verified = verifyTemplate(trusted, template);
     assert.equal(verified.ok, true, JSON.stringify(verified.diagnostics, null, 2));
 
@@ -145,6 +145,78 @@ describe("workflow Script recipes", () => {
     assert.match(rule.script, /template-id-fd_3ddc891890c9aa/);
     assert.match(rule.script, /func\.sysorg\.getPersonByLoginName/);
     assert.match(rule.script, /68300325/);
+
+    const executableScript = rule.script
+      .replaceAll("${data.template-id-fd_3ddc891890c9aa}", "selectedValues")
+      .replaceAll("${func.sysorg.getPersonByLoginName}", "lookup");
+    for (const [selectedValues, expected] of [
+      [[], []],
+      [["0", "1", "3"], ["68300215", "10219823"]],
+      [["2", "5", "8"], ["10100891", "68300046", "68300325"]],
+      [["6", "8"], ["68300046"]],
+      ["4", ["68300296"]]
+    ]) {
+      const result = runInNewContext(`(function () { ${executableScript} })()`, {
+        selectedValues,
+        lookup: (loginName) => [loginName]
+      }, { timeout: 1000 });
+      assert.deepEqual(Array.from(result), expected, JSON.stringify(selectedValues));
+    }
+
+    rule.script = rule.script.replace("template-id-fd_3ddc891890c9aa", "template-id-wrong-field");
+    projected.handlers.ruleKey = JSON.stringify(rule);
+    template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(content);
+    const wrongBinding = verifyTemplate(trusted, template);
+    assert.equal(wrongBinding.ok, false);
+    assert.equal(wrongBinding.diagnostics.some((item) =>
+      item.code === "readback.workflow.participant_mismatch"
+    ), true, JSON.stringify(wrongBinding.diagnostics));
+  });
+
+  it("keeps main-field login mapping restricted to supported option components and existing options", () => {
+    const dslDraft = draftSourceDraft(cleanSourceFile(MAIN_FIELD_LOGIN_MAP_SOURCE));
+    const node = dslDraft.workflow.nodes.find((item) => item.id === "N25");
+    const trusted = sampleTrustedDsl({
+      form: dslDraft.form,
+      workflow: focusedParticipantWorkflow(node)
+    });
+
+    for (const [componentId, type] of [
+      ["xform-select", "singleSelect"],
+      ["xform-select~multi", "multiSelect"],
+      ["xform-checkbox", "checkbox"]
+    ]) {
+      const compatible = structuredClone(trusted);
+      Object.assign(compatible.form.fields.find((field) => field.id === node.participants.fieldId), {
+        componentId, type
+      });
+      const validation = validateMigrationDsl(compatible, { mode: "execute" });
+      assert.equal(validation.ok, true, JSON.stringify(validation.diagnostics));
+    }
+
+    for (const [componentId, type] of [
+      ["xform-input", "text"],
+      ["xform-address", "text"],
+      ["xform-radio", "radio"]
+    ]) {
+      const incompatible = structuredClone(trusted);
+      Object.assign(incompatible.form.fields.find((field) => field.id === node.participants.fieldId), {
+        componentId, type, props: {}
+      });
+      const validation = validateMigrationDsl(incompatible, { mode: "execute" });
+      assert.equal(validation.ok, false, componentId);
+      assert.equal(validation.diagnostics.some((item) =>
+        item.code === "workflow.participants.script_formula_main_field_component"
+      ), true, JSON.stringify(validation.diagnostics));
+    }
+
+    const missingOption = structuredClone(trusted);
+    missingOption.workflow.nodes[1].participants.branches[0].value = "missing-option";
+    const validation = validateMigrationDsl(missingOption, { mode: "execute" });
+    assert.equal(validation.ok, false);
+    assert.equal(validation.diagnostics.some((item) =>
+      item.code === "workflow.participants.script_formula_branch_value_missing"
+    ), true, JSON.stringify(validation.diagnostics));
   });
 
   it("keeps adjacent-only duplicate identity skipping distinct from global skipping", () => {
@@ -494,6 +566,22 @@ describe("workflow Script recipes", () => {
     assert.equal(verified.ok, true, JSON.stringify(verified.diagnostics, null, 2));
   });
 });
+
+function focusedParticipantWorkflow(node) {
+  return {
+    process: { id: "main-field-login-map" },
+    nodes: [
+      workflowNode("N_LOGIN_START", "generalStart", "startEvent", "startNode"),
+      node,
+      workflowNode("N_LOGIN_END", "generalEnd", "endEvent", "endNode")
+    ],
+    edges: [
+      workflowEdge("L_LOGIN_IN", "N_LOGIN_START", node.id),
+      workflowEdge("L_LOGIN_OUT", node.id, "N_LOGIN_END")
+    ],
+    topologicalOrder: ["N_LOGIN_START", node.id, "N_LOGIN_END"]
+  };
+}
 
 function focusedConditionWorkflow(edge) {
   const condition = edge.condition || {

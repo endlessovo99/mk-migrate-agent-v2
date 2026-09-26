@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { buildDeterministicScriptBranchProof } from "../../src/dsl/deterministic-script-translations.js";
+import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { runRouteCase } from "./run-route-case.js";
 
@@ -165,7 +167,7 @@ describe("calculation migration Route case", () => {
   });
 
   it("maps a safe synchronous onChange recalculation without legacy DOM code", () => {
-    const { dsl } = stages();
+    const { source, dsl } = stages();
     const action = dsl.scripts.actions.find((candidate) =>
       candidate.event === "onChange" && candidate.controlId === "fd_recompute_input"
     );
@@ -174,7 +176,51 @@ describe("calculation migration Route case", () => {
     assert.deepEqual(action?.runWhen, { viewStatusIn: ["add", "edit"] });
     assert.match(action?.function || "", /MKXFORM\.setValue\(['"]fd_recompute_output['"], Number\(value \|\| 0\) \* 2\)/);
     assert.doesNotMatch(action?.function || "", /SetXFormFieldValueById|jQuery|\$\(/);
+    const sourceScript = source.scripts.sources.find((script) =>
+      script.sourceRef === action.sourceRefs[0]
+    );
+    const callbackIndex = sourceScript.javascript.indexOf("AttachXFormValueChangeEventById");
+    assert.ok(callbackIndex >= 0);
+    assert.equal(action.sourceActionKey, `${sourceScript.sourceRef}#onChange@${callbackIndex}`);
+    assert.equal(action.deterministicBranchProof?.basis, "deterministic-calculation-assignment");
     assert.equal(dsl.scripts.warnings.length, 0);
+
+    const writes = [];
+    const onChange = executeAction(action, {
+      setValue: (fieldId, value) => writes.push([fieldId, value])
+    });
+    onChange("7");
+    onChange("");
+    assert.deepEqual(writes, [["fd_recompute_output", 14], ["fd_recompute_output", 0]]);
+  });
+
+  it("rejects recalculation source or target drift even with a rebuilt target proof", () => {
+    for (const change of ["source-expression", "callback-binding", "target-expression"]) {
+      const { source, dsl } = stages();
+      const trusted = createTrustedMigrationDsl(source, dsl, { externalAgentReviewed: true });
+      assert.equal(checkTrust(source, trusted).ok, true);
+      const action = trusted.scripts.actions.find((candidate) =>
+        candidate.controlId === "fd_recompute_input" && candidate.event === "onChange"
+      );
+      if (change === "source-expression") {
+        const sourceScript = source.scripts.sources.find((script) =>
+          script.sourceRef === action.sourceRefs[0]
+        );
+        assert.match(sourceScript.javascript, /\* 2/);
+        sourceScript.javascript = sourceScript.javascript.replace("* 2", "* 3");
+      } else {
+        if (change === "callback-binding") action.sourceActionKey = action.sourceActionKey.replace(/@\d+$/, "@1");
+        else action.function = action.function.replace("* 2", "* 3");
+        action.deterministicBranchProof = buildDeterministicScriptBranchProof(action);
+        assert.ok(action.deterministicBranchProof);
+      }
+
+      const result = checkTrust(source, trusted);
+      assert.equal(result.ok, false, change);
+      assert.ok(result.diagnostics.some((diagnostic) =>
+        diagnostic.code === "trust.deterministic_script_source_mismatch"
+      ), change);
+    }
   });
 
   it("scopes runtime-difference locals to one caller and rejects reordered reads", () => {

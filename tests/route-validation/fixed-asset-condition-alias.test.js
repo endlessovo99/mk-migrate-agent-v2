@@ -15,6 +15,10 @@ describe("fixed-asset N12 condition alias Route-validation", () => {
     const sourceEdges = new Map(source.workflow.edges.map((edge) => [edge.id, edge]));
     const draftEdges = new Map(draft.workflow.edges.map((edge) => [edge.id, edge]));
 
+    assert.deepEqual(
+      draft.form.fields.filter((field) => field.title === "资产类别").map((field) => field.type).sort(),
+      ["description", "radio"]
+    );
     assert.equal(sourceEdges.get("L13")?.condition, "$fd_assetCategory$ == 0");
     assert.equal(
       sourceEdges.get("L14")?.condition,
@@ -67,5 +71,32 @@ describe("fixed-asset N12 condition alias Route-validation", () => {
       dataSourceLoad?.functionMappings?.[0]?.basis,
       "deterministic-static-field-disabled"
     );
+  });
+
+  it("does not resolve an old field to a same-title description when no value field matches", () => {
+    const source = cleanSourceFile(fixture);
+    source.form.controls.find((field) => field.id === "fd_assetCategory").title = "另一类别";
+
+    const draft = draftSourceDraft(source);
+    const condition = draft.workflow.edges.find((edge) => edge.id === "L14").condition;
+    assert.equal(condition.targetText, source.workflow.edges.find((edge) => edge.id === "L14").condition);
+    assert.equal(condition.translationStatus, "display_only");
+  });
+
+  it("keeps old-field recovery ambiguous when two value fields share the title", () => {
+    const source = cleanSourceFile(fixture);
+    const category = source.form.controls.find((field) => field.id === "fd_assetCategory");
+    source.form.controls.push({
+      id: "fd_otherCategory",
+      sourceRef: "source.form.control.fd_otherCategory",
+      title: category.title,
+      sourceType: category.sourceType,
+      options: structuredClone(category.options)
+    });
+
+    const draft = draftSourceDraft(source);
+    const condition = draft.workflow.edges.find((edge) => edge.id === "L14").condition;
+    assert.equal(condition.targetText, source.workflow.edges.find((edge) => edge.id === "L14").condition);
+    assert.equal(condition.translationStatus, "display_only");
   });
 });

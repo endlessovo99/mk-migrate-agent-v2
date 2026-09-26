@@ -269,6 +269,7 @@ function collectFormFieldTitles(form = {}) {
 
 function addUniqueFieldTitle(titlesById, duplicateIds, field) {
   if (!field?.id || duplicateIds.has(field.id)) return;
+  if (["description", "button", "detailTable"].includes(field.type)) return;
   if (titlesById.has(field.id)) {
     duplicateIds.add(field.id);
     titlesById.delete(field.id);

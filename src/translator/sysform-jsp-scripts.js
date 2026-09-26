@@ -1544,6 +1544,7 @@ function simpleCalculationAssignmentCandidates(source, form) {
 
     candidates.push({
       index: match.index,
+      sourceActionKey: inlineOnChangeSourceActionKey(source.sourceRef || source.id, match.index),
       event: "onChange",
       scope: "control",
       controlId: triggerId,
