@@ -19,7 +19,7 @@ This repo is not a full replacement for `mk-migrate-agent` yet. The old repo rem
 - Supported source shapes: a single `*_SysFormTemplate.xml`, or a paired source directory with one `*_SysFormTemplate.xml` and one `*_LbpmProcessDefinition.xml`.
 - DSL is the only public boundary between translation and execution.
 - No frontend.
-- No batch execution.
+- Batch XML migration, repair records, and reviewed batch repair through the CLI; see [batch operations](docs/operations/batch-migration.md).
 - No PI/Agent execution path.
 - API-first execution; browser automation is not used by the v2 executor.
 - NewOA writes target a configurable HTTP/HTTPS root origin and require explicit confirmation, credentials, and a target category `fdId`; the default origin is `https://p-sit.onewo.com`.

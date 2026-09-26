@@ -27,11 +27,12 @@ An explicitly confirmed locked-draft recovery may act only on a named, still-dra
 - Do not port broad v1 modules wholesale.
 - Add features only when a fixture and a route-validation test exist.
 - Preserve DSL as the only public boundary between translation and execution.
+- Batch execution and repair orchestration may wrap the existing XML/DSL path. Persist task identity, write intent and receipts; unknown writes must never be automatically replayed. Batch repair must retain immutable per-item evidence and all existing scoped target-repair gates.
 
 ## Current Non-Goals
 
 - No frontend.
-- No batch.
+- No batch publication or unrestricted updates to existing templates.
 - No source formats outside the current XML route-validation scope.
 - Current source input is either `*_SysFormTemplate.xml` or a paired directory with `*_SysFormTemplate.xml` and `*_LbpmProcessDefinition.xml`, optionally plus `*_KmReviewTemplate.xml` for the authoritative template name and, only when its root `fdId` matches both paired template IDs, fail-closed recovery of exact workflow person source identity evidence from fixed root author/authorization containers.
 - No PI/Agent execution.

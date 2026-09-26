@@ -1,4 +1,5 @@
 import { buildDryRunPlan } from "./dry-run.js";
+import { createExecutionJournal } from "./execution-journal.js";
 import { executePublishedFormPatch } from "./published-form-patch.js";
 import { NewoaClient, normalizeBaseUrl } from "./newoa-client.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
@@ -27,6 +28,12 @@ import {
 
 export async function executeDsl(input, options = {}) {
   if (options.publishedFormPatch === true) return executePublishedFormPatch(input, options);
+  const writes = createExecutionJournal(options.journal);
+  const result = await executeDraftDsl(input, options, writes);
+  return { ...result, ...writes.summary() };
+}
+
+async function executeDraftDsl(input, options, writes) {
   const plan = buildDryRunPlan(input);
 
   if (!plan.ok) {
@@ -492,9 +499,13 @@ export async function executeDsl(input, options = {}) {
       apiStages[apiStages.length - 1].status = "ok";
 
       apiStages.push({ name: "add", status: "started" });
-      const created = await client.addTemplate(createPayload);
-      templateId = created.fdId;
-      createdFdIds.push(templateId);
+      await writes.write({ operation: "add" }, () => client.addTemplate(createPayload), (created) => {
+        if (!nonEmptyString(created?.fdId)) throw new Error("Create template response did not include fdId.");
+        templateId = created.fdId;
+        createdFdIds.push(templateId);
+        apiStages[apiStages.length - 1].templateId = templateId;
+        return { targetTemplateId: templateId };
+      });
       apiStages[apiStages.length - 1].status = "ok";
       apiStages[apiStages.length - 1].templateId = templateId;
       apiStages.push({ name: "get", status: "started", templateId });
@@ -549,13 +560,22 @@ export async function executeDsl(input, options = {}) {
 
     const savePayload = applyRequiredTemplateNumberRule(prepared.update);
     apiStages.push({ name: "update", status: "started", templateId });
-    await client.updateTemplate(savePayload);
+    await writes.write(
+      { operation: "update", targetTemplateId: templateId },
+      () => client.updateTemplate(savePayload),
+      () => ({ targetTemplateId: templateId })
+    );
     apiStages[apiStages.length - 1].status = "ok";
     let workflowTemplateDetail;
     const workflowTemplateId = savePayload.mechanisms?.lbpmTemplate?.[0]?.fdId || "";
     if (executableDsl.workflow) {
       apiStages.push({ name: "saveWorkflowDraft", status: "started", templateId: workflowTemplateId });
-      const savedWorkflowDraft = await client.saveWorkflowDraft(buildWorkflowDraftPayload(savePayload));
+      const workflowDraftPayload = buildWorkflowDraftPayload(savePayload);
+      const savedWorkflowDraft = await writes.write(
+        { operation: "saveWorkflowDraft", targetTemplateId: templateId },
+        () => client.saveWorkflowDraft(workflowDraftPayload),
+        (result) => ({ targetTemplateId: templateId, workflowDraftId: requireWorkflowDraftId(result) })
+      );
       const draftId = requireWorkflowDraftId(savedWorkflowDraft);
       apiStages[apiStages.length - 1].status = "ok";
       apiStages[apiStages.length - 1].draftId = draftId;
@@ -626,11 +646,16 @@ export async function executeDsl(input, options = {}) {
       templateId
     });
     try {
-      await client.addTransferRecord(transferRecordPayload);
+      await writes.write(
+        { operation: "addTransferRecord", targetTemplateId: templateId, recordId: transferRecordPayload.fdId },
+        () => client.addTransferRecord(transferRecordPayload),
+        () => ({ targetTemplateId: templateId, recordId: transferRecordPayload.fdId })
+      );
       apiStages[apiStages.length - 1].status = "ok";
-    } catch {
+    } catch (error) {
+      const writeOutcomeUnknown = error?.writeOutcomeUnknown === true;
       apiStages[apiStages.length - 1].status = "failed";
-      apiStages[apiStages.length - 1].writeOutcomeUnknown = true;
+      apiStages[apiStages.length - 1].writeOutcomeUnknown = writeOutcomeUnknown;
       return {
         ok: false,
         status: "transfer_record_failed",
@@ -647,8 +672,10 @@ export async function executeDsl(input, options = {}) {
           ...diagnostics,
           {
             level: "error",
-            code: "transfer_record.write_outcome_unknown",
-            message: "The template migration was verified, but the transfer-record write outcome is unknown. Do not rerun the migration or automatically retry with a new record id.",
+            code: writeOutcomeUnknown ? "transfer_record.write_outcome_unknown" : error.code,
+            message: writeOutcomeUnknown
+              ? "The template migration was verified, but the transfer-record write outcome is unknown. Do not rerun the migration or automatically retry with a new record id."
+              : "The template migration was verified, but the transfer-record write intent could not be persisted. The record was not submitted. Do not rerun the migration.",
             path: "/transferRecord"
           }
         ],
@@ -656,8 +683,8 @@ export async function executeDsl(input, options = {}) {
         plan,
         readback,
         transferRecord: transferRecordSummary(transferRecordPayload, {
-          status: "outcome_unknown",
-          writeOutcomeUnknown: true
+          status: writeOutcomeUnknown ? "outcome_unknown" : "not_attempted",
+          writeOutcomeUnknown
         })
       };
     }
@@ -680,15 +707,16 @@ export async function executeDsl(input, options = {}) {
   } catch (error) {
     if (apiStages.length && apiStages[apiStages.length - 1].status === "started") {
       apiStages[apiStages.length - 1].status = "failed";
+      if (error?.writeOutcomeUnknown === true) apiStages[apiStages.length - 1].writeOutcomeUnknown = true;
     }
     return {
       ok: false,
       status: "failed",
-      stage: error?.stage || inferFailureStage(error),
-      failedAt: error?.stage || inferFailureStage(error),
+      stage: error?.stage || apiStages.at(-1)?.name || inferFailureStage(error),
+      failedAt: error?.stage || apiStages.at(-1)?.name || inferFailureStage(error),
       baseUrl,
       templateId: templateId || undefined,
-      createdFdIds: apiStages.some((stage) => stage.name === "add" && stage.status === "ok")
+      createdFdIds: apiStages.some((stage) => stage.name === "add" && stage.templateId)
         ? [templateId].filter(Boolean)
         : [],
       updatedFdIds: apiStages.some((stage) => stage.name === "update" && stage.status === "ok")

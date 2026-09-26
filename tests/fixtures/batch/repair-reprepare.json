@@ -1,0 +1,9 @@
+{
+  "title": "重新生成受影响的脚本翻译",
+  "rootCause": "相同脚本模式缺少确定性翻译规则",
+  "reason": "已补充规则及路由验证，重新生成并审查 DSL",
+  "evidence": ["tests/fixtures/route-validation/multi-batch/route-multi-batch_SysFormTemplate.xml"],
+  "version": "1",
+  "selector": { "diagnosticCodes": ["script.unsupported"] },
+  "action": { "kind": "reprepare" }
+}

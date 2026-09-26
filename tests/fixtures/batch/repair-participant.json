@@ -1,0 +1,17 @@
+{
+  "title": "补充审批人映射",
+  "rootCause": "源审批人在目标环境无法唯一匹配",
+  "reason": "根据已核实的人员映射重新执行预检",
+  "evidence": [{ "sourceId": "legacy-person", "targetFdId": "target-person", "review": "fixture-only mapping evidence" }],
+  "version": "1",
+  "selector": { "diagnosticCodes": ["workflow.participant_resolution_failed"] },
+  "action": {
+    "kind": "execution_options",
+    "options": {
+      "participantOverrides": [
+        { "sourceId": "legacy-person", "targetFdId": "target-person" },
+        { "sourceId": "other-template-person", "targetFdId": "other-target-person" }
+      ]
+    }
+  }
+}

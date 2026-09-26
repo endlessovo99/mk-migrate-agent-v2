@@ -14,8 +14,10 @@ import { loadFunctionWhitelist } from "../translator/function-whitelist.js";
 import { cleanSourceFile, draftSourceDraft, translateSourceFile } from "../translator/index.js";
 import { selectNewoaBaseUrl } from "./base-url.js";
 import { selectFallbackFdIds } from "./fallback-fd-ids.js";
+import { runBatchCommand } from "./batch.js";
 
 const commands = new Map([
+  ["batch", runBatchCommand],
   ["clean", runClean],
   ["draft", runDraft],
   ["translate", runTranslate],
@@ -516,6 +518,8 @@ function printJson(value) {
 
 function printUsage() {
   console.error("Usage:");
+  console.error("  MK_BATCH_DATABASE_URL=... node src/cli/main.js batch <create|prepare|status|approve|run|pause|resume|recover|retry|item|repair-create|repair-preview|repair-apply|repair-history> ...");
+  console.error("    See docs/operations/batch-migration.md for manifests, scoped approvals, recovery and repair history.");
   console.error("  node src/cli/main.js clean <source-dir|sysform.xml> [--template-name <original-name>] [--workflow-reference-dir <initdata-dir>] [--out source-draft.json]");
   console.error("  node src/cli/main.js draft <source-draft.json> [--out dsl-draft.json]");
   console.error("  node src/cli/main.js translate <source-dir|sysform.xml> [--template-name <original-name>] [--workflow-reference-dir <initdata-dir>] [--out dsl-draft.json]");

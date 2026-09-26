@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "name": "离线路由批量迁移",
+  "migrationKey": "route-validation-batch-v1",
+  "baseUrl": "https://p-sit.onewo.com",
+  "targetCategoryId": "route-category-id",
+  "executionConcurrency": 1,
+  "items": [
+    { "sourcePath": "../route-validation/paired" },
+    { "sourcePath": "../route-validation/form-only/route-form-only_SysFormTemplate.xml", "templateName": "批量路由独立表单" }
+  ]
+}

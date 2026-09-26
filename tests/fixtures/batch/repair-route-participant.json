@@ -1,0 +1,14 @@
+{
+  "title": "修复路由样本审批人映射",
+  "rootCause": "原映射的目标人员不存在",
+  "reason": "使用路由样本中已验证的显式人员映射",
+  "evidence": ["tests/fixtures/route-validation/companion-person-source"],
+  "version": "1",
+  "selector": { "diagnosticCodes": ["workflow.participant_resolution_failed"] },
+  "action": {
+    "kind": "execution_options",
+    "options": {
+      "participantOverrides": [{ "sourceId": "legacy-companion-reviewer", "targetFdId": "route-explicit-person-override" }]
+    }
+  }
+}
