@@ -121,6 +121,20 @@ describe("source content flow and presentation fidelity", () => {
     assert.ok(checkTrust(source, trusted).diagnostics.some((item) => item.code === "trust.form.presentation_content_flow_mismatch"));
   });
 
+  it("validates the folded travel applicant selector against source display dimensions", () => {
+    const source = cleanSourceFile("tests/fixtures/route-validation/travel-applicant-input/route-travel-applicant_SysFormTemplate.xml");
+    const draft = draftSourceDraft(source);
+    const trusted = createTrustedMigrationDsl(source, draft, { externalAgentReviewed: true });
+    assert.equal(checkTrust(source, trusted).diagnostics.some((item) => item.code.startsWith("trust.form.presentation_")), false);
+    const address = trusted.form.fields.find((field) => field.sourceProps?.addressDisplayCompanionId);
+    assert.ok(address);
+    const companion = trusted.form.fields.find((field) => field.id === address.sourceProps.addressDisplayCompanionId);
+    assert.equal(companion, undefined);
+    const cell = trusted.form.layout.mkTree.flatMap((row) => row.children).find((item) => item.refIds?.includes(address.id));
+    cell.contentFlow.items[0].width.value = 1;
+    assert.ok(checkTrust(source, trusted).diagnostics.some((item) => item.code === "trust.form.presentation_content_flow_mismatch"));
+  });
+
   it("places a merged address at the visible companion even when the zero-width stub comes first", () => {
     const source = cleanSourceFile("tests/fixtures/route-validation/compact-procurement-layout/route-compact-procurement-layout_SysFormTemplate.xml");
     const cell = source.form.layout.rows.flatMap((row) => row.cells)

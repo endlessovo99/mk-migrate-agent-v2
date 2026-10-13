@@ -75,8 +75,11 @@ export function checkTrust(sourceDraft, migrationDsl) {
   const expectedDraft = validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics);
   const dataOnlySourceRefs = new Set(flattenFormFields(expectedDraft?.form?.fields)
     .filter((field) => field.dataOnly === true).map((field) => field.sourceRef));
+  const dataOnlyFieldIds = new Set((expectedDraft?.form?.fields || [])
+    .filter((field) => field.dataOnly === true).map((field) => field.id));
   const presentationReferenceMap = new Map((expectedDraft?.form?.fields || [])
-    .filter((field) => field.sourceProps?.addressDisplayCompanionId)
+    .filter((field) => dataOnlyFieldIds.has(field.sourceProps?.addressDisplayCompanionId) ||
+      field.sourceProps?.consumedAddressDisplayCompanionId)
     .map((field) => [field.sourceProps.addressDisplayCompanionId, field.sourceProps?.originalId || field.id]));
   for (const issue of sourcePresentationIssues(sourceDraft?.form, migrationDsl?.form, { dataOnlySourceRefs, presentationReferenceMap })) {
     diagnostics.push(error(

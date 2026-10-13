@@ -1,3 +1,4 @@
+import { foldRedundantAddressCompanions } from "./redundant-address-companion.js";
 import {
   catalogRefs,
   COMPONENTS_BY_ID,
@@ -68,7 +69,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     throw new Error("draft requires a source-draft artifact");
   }
 
-  const rawForm = projectUnitPresentation(projectDynamicHyperlinkForm(
+  const rawForm = foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
     appendStaticJspDescriptionFields(
       applySourceNumericDetailInferences(
         applyNativeCalculationInferences(
@@ -84,7 +85,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceDraft.scripts
     ),
     sourceDraft.scripts
-  ));
+  )), sourceDraft);
   const fieldIdMap = buildFieldIdMap(rawForm);
   const mappedForm = applyDetailCascadeRowOptions(
     applyFieldIdMapToForm(rawForm, fieldIdMap),

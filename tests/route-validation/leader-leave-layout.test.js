@@ -7,14 +7,15 @@ import { prepareSample, xformConfig } from "../helpers/persistence.js";
 
 const source = cleanSourceFile("tests/fixtures/route-validation/leader-leave-layout/route-leader-leave-layout_SysFormTemplate.xml");
 const draft = draftSourceDraft(source);
-const ids = ["fd_select_person.name", "fd_select_person", "fd_person_dept.name", "fd_person_dept", "fd_3255d66ae9a53e", "fd_begin_date", "fd_end_date"];
+const ids = ["fd_select_person.name", "fd_select_person", "fd_person_dept", "fd_3255d66ae9a53e", "fd_begin_date", "fd_end_date"];
 const prepare = () => prepareSample(createTrustedMigrationDsl(source, draft, {
   externalAgentReviewed: true, reviewerName: "route-validation", checkedAt: "2026-09-10T00:00:00.000Z"
 }));
 
 describe("leader leave source layout", () => {
-  it("retains visible companion inputs and hides titles backed by source captions including dates", () => {
+  it("retains independent inputs, folds the department display pair, and hides duplicate titles", () => {
     assert.equal(validateMigrationDsl(draft, { mode: "draft" }).ok, true);
+    assert.ok(!draft.form.fields.some(field => field.id === "fd_person_dept.name"));
     for (const id of ids) {
       const field = draft.form.fields.find((field) => field.id === id);
       assert.notEqual(field.dataOnly, true, id);
@@ -26,7 +27,7 @@ describe("leader leave source layout", () => {
     const prepared = prepare();
     const config = xformConfig(prepared.update);
     const rows = JSON.parse(config.viewModel[0].fdConfig).view.render.desktop[0].children[0].children;
-    for (const [rowIndex, widths] of [[0, ["198px", "32px", "5px"]], [2, ["198px", "28px"]], [3, ["148px", "24px", "332px"]]]) {
+    for (const [rowIndex, widths] of [[0, ["198px", "32px", "5px"]], [2, ["198px"]], [3, ["148px", "24px", "332px"]]]) {
       const grid = rows[rowIndex].children[0];
       assert.equal(grid.controlProps.columns, 4);
       const inline = grid.children[1].children[0];

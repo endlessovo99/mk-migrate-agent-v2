@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8'?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>class</string>
+      <string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string>
+    </void>
+    <void method="put">
+      <string>fdId</string>
+      <string>route-it-procurement</string>
+    </void>
+    <void method="put">
+      <string>fdName</string>
+      <string>IT采购部门伴随字段</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>route-it-procurement-template</string>
+    </void>
+    <void method="put">
+      <string>fdModelName</string>
+      <string>com.landray.kmss.km.review.model.KmReviewTemplate</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 175px" width=192 column="0" row="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_327d1fd51e827a",content:"使用部门&amp;#13;&amp;#10;",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formdesign="landray"&gt;使用部门&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 553px" width=570 column="1" row="0"&gt;
+&lt;DIV style="WIDTH: 198px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_use_dept.name",width:"198",_label_bind:"true",label:"使用部门&amp;#13;&amp;#10;",_label_bind_id:"fd_327d1fd51e827a",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formdesign="landray" canshow="true"&gt;&lt;INPUT id=fd_use_dept.name class=inputsgl style="WIDTH: 198px" readOnly ?="" label="使用部门&amp;#13;&amp;#10;" canshow="true" required="" _required="false" tablename="fd_327d1fb29400f6" _readonly="false" thousandshow="false"&gt;&lt;/DIV&gt;
+&lt;DIV id=fd_3353b762882dc2 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_3353b762882dc2"}' formdesign="landray" mobileview="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;xform:editShow&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;LABEL style="WIDTH: 28px; DISPLAY: inline" fd_type="address" fd_values='{id:"fd_use_dept",width:"0",_label_bind:"false",label:"使用部门选择",_label_bind_id:"fd_327d1fd51e827a",_org_person:"false",_orgType:"ORG_TYPE_ORG|ORG_TYPE_DEPT",readOnly:"false",required:"false",businessType:"addressDialog",multiSelect:"false",orgType:"",_org_dept:"true",_org_post:"false",_org_group:"false",defaultValue:"ORG_TYPE_DEPT",_org_org:"true"}' formdesign="landray"&gt;&lt;INPUT id=fd_use_dept class=inputsgl style="WIDTH: 0px" readOnly value=提交人的部门 ?="" label="使用部门选择" canshow="true" required="" _required="false" tablename="fd_327d1fb29400f6" _readonly="false" thousandshow="true" defaultvalue="ORG_TYPE_DEPT" orgtype="ORG_TYPE_ORG|ORG_TYPE_DEPT" multiselect="false" businesstype="addressDialog"&gt;&lt;LABEL&gt;&amp;nbsp;&lt;A&gt;选择&lt;/A&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;
+&lt;DIV id=fd_3353b76170afa8 title=JSP片段 style="WIDTH: 16px; DISPLAY: inline" fd_type="jsp" fd_values='{id:"fd_3353b76170afa8"}' formdesign="landray" mobileview="default"&gt;&lt;LABEL ondblclick="Designer_Control_JSP_ShowEditFrame(event, this);" class=button_img style="BACKGROUND-POSITION: center -480px; MARGIN: 2px 3px 3px 2px"&gt;&lt;INPUT type=hidden value="&lt;/xform:editShow&gt;"&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 279px" width=253 column="2" row="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" fd_type="textLabel" fd_values='{id:"fd_327d1fd5ce793c",content:"使用人&amp;#13;&amp;#10;",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' formdesign="landray"&gt;使用人&lt;BR&gt;&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 420px" width=535 column="3" row="0"&gt;
+&lt;DIV style="WIDTH: 181px; DISPLAY: inline" fd_type="inputText" fd_values='{id:"fd_use_group",width:"181",_label_bind:"true",label:"使用人&amp;#13;&amp;#10;",_label_bind_id:"fd_327d1fd5ce793c",canShow:"true",readOnly:"false",required:"false",dataType:"String",validate:"false",thousandShow:"false",formula:"",defaultValue:"",reCalculate:"false"}' formdesign="landray" canshow="true"&gt;&lt;INPUT id=fd_use_group class=inputsgl style="WIDTH: 181px" readOnly ?="" label="使用人&amp;#13;&amp;#10;" canshow="true" required="" _required="false" tablename="fd_327d1fb29400f6" _readonly="false" thousandshow="false"&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/tbody&gt;&lt;/table&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdModel</string>
+      <string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_use_dept.name" label="使用部门" type="String"/&gt;&lt;extendElementProperty name="fd_use_dept" label="使用部门选择" type="com.landray.kmss.sys.organization.model.SysOrgElement"/&gt;&lt;/metadata&gt;</string>
+    </void>
+  </object>
+</java>
