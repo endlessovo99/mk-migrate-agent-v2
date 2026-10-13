@@ -22,12 +22,21 @@ export const DEFAULT_TEMPORARY_ORG_FALLBACKS = deepFreeze({
 });
 
 export function resolveTemporaryOrgFallbacks(fallbackFdIds = {}) {
-  return deepFreeze(Object.fromEntries(
+  const resolved = Object.fromEntries(
     Object.entries(DEFAULT_TEMPORARY_ORG_FALLBACKS).map(([kind, fallback]) => [kind, {
       ...fallback,
       fdId: configuredFdId(fallbackFdIds?.[kind]) || fallback.fdId
     }])
-  ));
+  );
+  const roleId = configuredFdId(fallbackFdIds?.role);
+  if (roleId) {
+    resolved.role = {
+      fdId: roleId,
+      fdName: "AI迁移默认角色线",
+      fdOrgType: 32
+    };
+  }
+  return deepFreeze(resolved);
 }
 
 function configuredFdId(value) {

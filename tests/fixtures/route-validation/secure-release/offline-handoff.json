@@ -1,0 +1,7 @@
+{
+  "format": "mk-migrate-offline-request-v1",
+  "requestId": "0123456789abcdef0123456789abcdef",
+  "runtime": "/run/mk-migrate/engine",
+  "releaseId": "fixture-offline-release",
+  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

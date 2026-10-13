@@ -194,7 +194,8 @@ export async function resolveWorkflowParticipants(dsl, {
     ? unresolvedResolutions.filter((resolution) => isSitFallbackEligible(resolution, {
       allowTemplateAuthorizationFallback,
       allowMissingDirectPersonFallback,
-      allowMissingDirectPostFallback
+      allowMissingDirectPostFallback,
+      configuredFallbacks
     }))
     : [];
   const fallbackResolutionSet = new Set(fallbackResolutions);
@@ -859,9 +860,7 @@ async function resolveTemplateAuthorizationOverride(
 function confirmedFallbackOverride(identity, override, targetBaseUrl, configuredFallbacks) {
   if (!allowsTemporaryOrgFallbacks(targetBaseUrl) || !configuredFallbacks) return false;
   const sourceOrgType = normalizeOrgType(identity.member?.sourceOrgType);
-  const fallback = sourceOrgType === "32"
-    ? configuredFallbacks.group
-    : temporaryFallbackForSourceOrgType(sourceOrgType, configuredFallbacks);
+  const fallback = temporaryFallbackForSourceOrgType(sourceOrgType, configuredFallbacks);
   return normalizeText(override.targetFdId) === normalizeText(fallback?.fdId);
 }
 
@@ -1026,7 +1025,8 @@ function deduplicateResolvedParticipantCollections(dsl) {
 function isSitFallbackEligible(resolution, {
   allowTemplateAuthorizationFallback = false,
   allowMissingDirectPersonFallback = false,
-  allowMissingDirectPostFallback = false
+  allowMissingDirectPostFallback = false,
+  configuredFallbacks
 } = {}) {
   if (
     resolution.scope === "template_authorization" &&
@@ -1040,7 +1040,7 @@ function isSitFallbackEligible(resolution, {
       (targetOrgType === "4" && allowMissingDirectPostFallback === true);
   }
   if (resolution.kind !== "source" || !SIT_FALLBACK_REASONS.has(resolution.issue?.reason)) return false;
-  if (normalizeOrgType(resolution.member?.sourceOrgType) === "32") return false;
+  if (normalizeOrgType(resolution.member?.sourceOrgType) === "32" && !configuredFallbacks?.role?.fdId) return false;
   if (resolution.issue.reason === "not_found" || resolution.issue.reason === "search_failed") return true;
   return Array.isArray(resolution.issue.missing) &&
     resolution.issue.missing.length > 0 &&
@@ -1064,9 +1064,11 @@ function temporaryFallbackForSourceOrgType(sourceOrgType, fallbacks) {
     4: fallbacks.post,
     8: fallbacks.person,
     16: fallbacks.group,
+    32: fallbacks.role,
     128: fallbacks.post,
     256: fallbacks.person
   };
+  if (normalized === "32") return fallbacks.role;
   return bySourceOrgType[normalized] || fallbacks.person;
 }
 

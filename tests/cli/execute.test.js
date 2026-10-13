@@ -222,6 +222,7 @@ describe("execute CLI", () => {
         NEWOA_FALLBACK_ORGANIZATION_FD_ID: "organization-fallback-id",
         NEWOA_FALLBACK_GROUP_FD_ID: "group-fallback-id",
         NEWOA_FALLBACK_POST_FD_ID: "post-fallback-id",
+        NEWOA_ROLELINEBACK_FD_ID: "role-line-fallback-id",
         NEWOA_UNUSED_FALLBACK_FD_ID: "ignored",
         NEWOA_FALLBACK_UNUSED_FD_ID: "   "
       }
@@ -231,7 +232,8 @@ describe("execute CLI", () => {
       person: "person-fallback-id",
       organization: "organization-fallback-id",
       group: "group-fallback-id",
-      post: "post-fallback-id"
+      post: "post-fallback-id",
+      role: "role-line-fallback-id"
     });
   });
 

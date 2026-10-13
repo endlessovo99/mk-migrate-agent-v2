@@ -1,0 +1,4 @@
+#!/bin/sh
+exec env -u NODE_OPTIONS -u NODE_COMPILE_CACHE -u NODE_V8_COVERAGE \
+  NODE_DISABLE_COMPILE_CACHE=1 \
+  node /opt/mk-migrate/launcher/server.mjs "$@"

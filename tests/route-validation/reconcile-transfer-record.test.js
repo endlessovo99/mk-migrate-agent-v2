@@ -12,6 +12,7 @@ import {
   reconciliationEvidenceDigest
 } from "../../src/executor/reconcile-transfer-record.js";
 import { sampleSourceDraft, sampleTrustedDsl } from "../helpers/sample-dsl.js";
+import { prepareRequiredTemplateTheme } from "../../src/executor/template-theme.js";
 
 const TARGET_TEMPLATE_ID = "reconcile-target-template-id";
 const WORKFLOW_TEMPLATE_ID = "reconcile-workflow-template-id";
@@ -23,6 +24,27 @@ const CREDENTIALS = Object.freeze({
 });
 
 describe("transfer-record reconciliation Route", () => {
+  it("retains a recorded theme requirement during reconciliation without rewriting the theme", async () => {
+    const fixture = reconciliationFixture();
+    fixture.priorExecutionReport.readback.theme = { contractVersion: 1, status: "mismatch", desktop: "classic", mobile: "classic" };
+    fixture.priorReportDigest = reconciliationEvidenceDigest(fixture.priorExecutionReport);
+    const client = new ReconciliationFakeClient(fixture.template);
+    const options = reconcileOptions(fixture, {
+      client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport
+    });
+    const missing = await reconcileTransferRecord(fixture.dsl, options);
+    assert.equal(missing.ok, false);
+    assert.equal(missing.readback.theme.status, "mismatch");
+    assert.equal(client.hasTemplateWrite(), false);
+    assert.equal(client.operations().includes("add-transfer-record"), false);
+
+    client.template = prepareRequiredTemplateTheme(fixture.template).update;
+    const retained = await reconcileTransferRecord(fixture.dsl, options);
+    assert.equal(retained.ok, true, JSON.stringify(retained.diagnostics));
+    assert.equal(retained.readback.theme.status, "verified");
+    assert.equal(client.hasTemplateWrite(), false);
+  });
+
   it("previews without writes, then records exactly once without template or workflow mutation", async (t) => {
     const fixture = reconciliationFixture();
     const client = new ReconciliationFakeClient(fixture.template);

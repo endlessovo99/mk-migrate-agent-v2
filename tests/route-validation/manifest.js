@@ -571,6 +571,27 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "shanghai-electric-oaqas-https-fallback-success",
+      source: {
+        kind: "paired",
+        relativePath: "conditional-detail"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      baseUrl: "https://oaqas.shanghai-electric.com",
+      fallbackFdIds: {
+        person: "route-configured-person-fallback",
+        organization: "route-configured-organization-fallback"
+      },
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: CONDITIONAL_WORKFLOW_SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "kmreview-named-success",
       source: {
         kind: "paired",

@@ -15,6 +15,7 @@ import { preparePersistedTemplate } from "../../src/executor/persistence.js";
 import { applyRequiredTemplateNumberRule } from "../../src/executor/template-number-rule.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { sampleBaseTemplate, sampleEnvelope } from "../helpers/persistence.js";
+import { prepareRequiredTemplateTheme } from "../../src/executor/template-theme.js";
 
 const TARGET_TEMPLATE_ID = "locked-target-template-id";
 const WORKFLOW_TEMPLATE_ID = "locked-workflow-template-id";
@@ -26,6 +27,26 @@ const CREDENTIALS = Object.freeze({
 });
 
 describe("scoped locked-draft repair Route", () => {
+  it("does not let an authorization repair silently fix or ignore a lost classic theme", async () => {
+    const fixture = authorizationFixture();
+    fixture.priorExecutionReport.readback.theme = { contractVersion: 1, status: "verified", desktop: "classic", mobile: "classic" };
+    fixture.priorReportDigest = lockedDraftEvidenceDigest(fixture.priorExecutionReport);
+    const client = new LockedDraftFakeClient(fixture.template, fixture.workflow);
+    const options = repairOptions(fixture, {
+      client, repairKind: "template_authorization", sourceDraft: fixture.sourceDraft,
+      priorExecutionReport: fixture.priorExecutionReport
+    });
+    const missing = await repairLockedDraft(fixture.dsl, options);
+    assert.equal(missing.ok, false);
+    assert.ok(missing.diagnostics.some((diagnostic) => diagnostic.code === "locked_draft.theme_repair_out_of_scope"));
+    assert.equal(client.hasWrite(), false);
+
+    client.template = prepareRequiredTemplateTheme(fixture.template).update;
+    const retained = await repairLockedDraft(fixture.dsl, options);
+    assert.equal(retained.ok, true, JSON.stringify(retained.diagnostics));
+    assert.equal(client.hasWrite(), false);
+  });
+
   it("repairs only the evidenced authorization collections and records the migration", async (t) => {
     const fixture = authorizationFixture();
     const client = new LockedDraftFakeClient(fixture.template, fixture.workflow);

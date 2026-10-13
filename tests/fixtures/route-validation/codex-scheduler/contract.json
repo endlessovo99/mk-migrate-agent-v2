@@ -1,0 +1,16 @@
+{
+  "timeZone": "Asia/Shanghai",
+  "source": "../multi-batch/route-multi-batch_SysFormTemplate.xml",
+  "cases": [
+    { "at": "2026-10-11T22:45:00Z", "mode": "weekday-night", "size": 20, "due": true },
+    { "at": "2026-10-11T23:00:00Z", "mode": "weekday-day", "size": 10, "due": true },
+    { "at": "2026-10-11T23:15:00Z", "mode": "weekday-day", "size": 10, "due": false },
+    { "at": "2026-10-11T23:20:37Z", "mode": "weekday-day", "size": 10, "due": true },
+    { "at": "2026-10-12T10:40:00Z", "mode": "weekday-day", "size": 10, "due": true },
+    { "at": "2026-10-12T11:00:00Z", "mode": "weekday-night", "size": 20, "due": true },
+    { "at": "2026-10-16T16:00:00Z", "mode": "weekend", "size": 20, "due": true },
+    { "at": "2026-10-17T04:20:00Z", "mode": "weekend", "size": 20, "due": false },
+    { "at": "2026-10-18T04:15:00Z", "mode": "weekend", "size": 20, "due": true },
+    { "at": "2026-10-18T16:00:00Z", "mode": "weekday-night", "size": 20, "due": true }
+  ]
+}

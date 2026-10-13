@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "stateDir": "/var/lib/mk-migrate/codex-scheduler",
+  "codexCommand": "/usr/local/bin/codex",
+  "engineCommand": "/usr/local/bin/mk-migrate-secure",
+  "runtimeDir": "/run/mk-migrate",
+  "skillPath": "/root/.agents/skills/mk-migrate-server/SKILL.md",
+  "maxSessions": 20,
+  "minAvailableMemoryMB": 3072,
+  "estimatedSessionMemoryMB": 512,
+  "minFreeDiskMB": 5120,
+  "maxLocalRepairAttempts": 2,
+  "maxAutoRepairAttempts": 10,
+  "longSessionMinutes": 120,
+  "schedule": {
+    "weekday": [
+      { "id": "weekday-day", "start": "07:00", "end": "19:00", "batchSize": 10, "intervalMinutes": 20 },
+      { "id": "weekday-night", "start": "19:00", "end": "07:00", "batchSize": 20, "intervalMinutes": 15 }
+    ],
+    "weekend": [
+      { "id": "weekend", "start": "00:00", "end": "24:00", "batchSize": 20, "intervalMinutes": 15 }
+    ]
+  }
+}

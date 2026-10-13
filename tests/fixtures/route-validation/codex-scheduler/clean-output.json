@@ -1,0 +1,6 @@
+{
+  "source": "../multi-batch/route-multi-batch_SysFormTemplate.xml",
+  "stdoutPaddingBytes": 3145728,
+  "oldMaxBufferBytes": 2097152,
+  "sourceId": "route-multi-batch-template"
+}

@@ -1,0 +1,10 @@
+{
+  "request": {
+    "model": "fixture-model",
+    "system": "Offline transport contract fixture",
+    "context": { "fixture": true },
+    "promptVersion": "secure-release-transport-fixture"
+  },
+  "response": { "output_text": "{\"patches\":[],\"diagnostics\":[]}" },
+  "nonRetriedStatuses": [400, 401, 404, 501, 503]
+}

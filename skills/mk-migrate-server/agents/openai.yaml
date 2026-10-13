@@ -1,0 +1,4 @@
+interface:
+  display_name: "服务器 NewOA 迁移"
+  short_description: "在加密部署服务器执行 XML 迁移，复用任务授权并主动使用已配置兜底"
+  default_prompt: "请使用 $mk-migrate-server 完成我指定的迁移任务，按已有配置主动兜底，校验通过后直接写入新草稿并汇报结果。"

@@ -11,6 +11,7 @@ import { preparePersistedTemplate } from "./persistence.js";
 import { stableStringify } from "./persistence/normalize.js";
 import { withoutMechanismTokens } from "./published-form-patch.js";
 import { attachRequiredTemplateNumberRuleReadback } from "./template-number-rule.js";
+import { prepareRequiredTemplateTheme } from "./template-theme.js";
 import { buildTransferRecordPayload, generateTransferRecordId } from "./transfer-record.js";
 import { createLockedDraftState } from "./locked-draft-state.js";
 import { validateLockedDraftSourceEvidence } from "./locked-draft-source-evidence.js";
@@ -168,10 +169,13 @@ export async function reconcileTransferRecord(input, options = {}) {
     requireValue(firstSnapshot === secondSnapshot, "reconcile.snapshot_changed");
 
     apiStages.push(stage("readback", "started"));
-    const readback = attachRequiredTemplateNumberRuleReadback(
+    const numberedReadback = attachRequiredTemplateNumberRuleReadback(
       prepared.verify(attachedReadback(second.template, second.workflow)),
       second.template
     );
+    const readback = options.priorExecutionReport.readback?.theme
+      ? prepareRequiredTemplateTheme(prepared.update).verify(numberedReadback, second.template)
+      : numberedReadback;
     current(apiStages).status = "ok";
     diagnostics.push(...readback.diagnostics);
 

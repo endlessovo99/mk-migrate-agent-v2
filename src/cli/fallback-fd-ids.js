@@ -2,7 +2,8 @@ const FALLBACK_ENV_KEYS = Object.freeze({
   person: "NEWOA_FALLBACK_PERSON_FD_ID",
   organization: "NEWOA_FALLBACK_ORGANIZATION_FD_ID",
   group: "NEWOA_FALLBACK_GROUP_FD_ID",
-  post: "NEWOA_FALLBACK_POST_FD_ID"
+  post: "NEWOA_FALLBACK_POST_FD_ID",
+  role: "NEWOA_ROLELINEBACK_FD_ID"
 });
 
 export function selectFallbackFdIds(env = {}) {

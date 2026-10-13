@@ -1,6 +1,7 @@
 import { checkExecute } from "../dsl/checks.js";
 import { summarizeFormRules } from "../dsl/form-rules.js";
 import { summarizeScriptActionSupport } from "../dsl/scripts.js";
+import { REQUIRED_TEMPLATE_THEME } from "./template-theme.js";
 
 export function buildDryRunPlan(input) {
   const validation = checkExecute(input);
@@ -80,12 +81,14 @@ export function buildDryRunPlan(input) {
       {
         id: "save-template-draft",
         action: "api.save-template-draft",
+        theme: { ...REQUIRED_TEMPLATE_THEME },
         status: validation.ok ? "planned" : "blocked",
         safety: "requires confirmWrite"
       },
       {
         id: "readback",
         action: "api.readback-template",
+        expectedTheme: { ...REQUIRED_TEMPLATE_THEME },
         status: validation.ok ? "planned" : "blocked",
         expectedFieldCount: fields.length,
         expectedDataOnlyFieldCount: dataOnlyFieldCount,

@@ -1,0 +1,79 @@
+{
+  "id": "mk-classic-theme",
+  "version": 1,
+  "theme": {
+    "desktop": {
+      "name": "classic",
+      "status": "done",
+      "viewAttr": {
+        "desktopLayout": "horizontal",
+        "desktopDividerStyleSelect": "default",
+        "desktopPaddingMode": "standard",
+        "logo": { "isUpload": false },
+        "title": "经典主题",
+        "labelTextAlign": "left",
+        "desktopTitleStyle": { "color": "#000000", "fontSize": 14 },
+        "desktopTitleBgColor": "#F8F8F8",
+        "desktopValueStyle": { "color": "#000000", "fontSize": 14 },
+        "desktopDividerTitleStyle": { "color": "#000000", "fontWeight": "bold", "fontSize": 16 },
+        "desktopDividerColor": "rgb(66, 133, 244, 1)",
+        "mobileDividerColor": "",
+        "formTitle": {
+          "colorStyle": "#DDDDDD", "lineSelect": "thin", "styleSelect": "default",
+          "titleStyle": { "fontWeight": "bold", "fontSize": 24 },
+          "titleTextAlign": "center", "title": ""
+        },
+        "desktopGridItemStyle": {
+          "backgroundColor": "",
+          "borderBottom": "1px solid #d2d2d2", "borderTop": "1px solid #d2d2d2",
+          "borderLeft": "1px solid #d2d2d2", "borderRight": "1px solid #d2d2d2"
+        },
+        "desktopValidatorInfoUIType": "normal",
+        "backgroundSetting": {
+          "type": "color",
+          "data": { "color": { "r": 255, "g": 255, "b": 255, "a": 1 }, "toFade": false, "height": 400, "autoHeight": true }
+        },
+        "desktopTheme": "classic"
+      }
+    },
+    "mobile": {
+      "name": "classic",
+      "status": "done",
+      "viewAttr": {
+        "mobileLayout": "vertical",
+        "mobileDividerStyleSelect": "default",
+        "mobileDividerColor": "",
+        "mobileTheme": "classic",
+        "formTitle": {
+          "colorStyle": "#DDDDDD", "lineSelect": "thin", "styleSelect": "default",
+          "titleStyle": { "fontWeight": "bold", "fontSize": 24 },
+          "titleTextAlign": "center", "title": ""
+        }
+      }
+    }
+  },
+  "controlStyle": {
+    "desktop": {
+      "labelStyle": { "color": "#000000", "fontSize": 14 },
+      "controlValueStyle": { "color": "#000000", "fontSize": 14 },
+      "desktopTitleBgColor": "#F8F8F8",
+      "desktopPaddingMode": "standard",
+      "desktopTheme": "classic",
+      "layout": "horizontal",
+      "titleStyle": { "color": "#000000", "fontWeight": "bold", "fontSize": 16 },
+      "color": "",
+      "labelTextAlign": "left",
+      "desktopGridItemStyle": {
+        "backgroundColor": "",
+        "borderBottom": "1px solid #d2d2d2", "borderTop": "1px solid #d2d2d2",
+        "borderLeft": "1px solid #d2d2d2", "borderRight": "1px solid #d2d2d2"
+      }
+    },
+    "mobile": {
+      "mobileTheme": "classic",
+      "layout": "vertical",
+      "labelStyle": { "color": "#000000", "fontSize": 14 },
+      "controlValueStyle": { "color": "#000000", "fontSize": 14 }
+    }
+  }
+}

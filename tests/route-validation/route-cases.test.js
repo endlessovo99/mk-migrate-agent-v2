@@ -168,6 +168,26 @@ describe("offline Route-validation", { concurrency: false }, () => {
     );
   });
 
+  it("validates native rules and persists condition-organization fallback on the HTTPS oaqas origin", async () => {
+    const result = await runRouteCase("shanghai-electric-oaqas-https-fallback-success");
+
+    assert.equal(result.execution.ok, true);
+    assert.equal(result.execution.baseUrl, "https://oaqas.shanghai-electric.com");
+    const fallback = result.execution.diagnostics.find((item) => (
+      item.code === "workflow.condition_org_sit_fallback_applied"
+    ));
+    assert.deepEqual(fallback.details.fallbackOrgs.map((entry) => entry.target.fdId), [
+      "route-configured-organization-fallback"
+    ]);
+    assert.equal(result.execution.diagnostics.some((item) => (
+      item.code === "workflow.participant_sit_fallback_applied"
+    )), false);
+    assert.deepEqual(
+      result.transcript.filter((entry) => entry.operation === "get-element-info").map((entry) => entry.targets),
+      [["legacy-conditional-reviewer"], ["route-configured-organization-fallback"]]
+    );
+  });
+
   it("executes a paired form and workflow source through the public migration route", async () => {
     const result = await runRouteCase("paired-success");
 

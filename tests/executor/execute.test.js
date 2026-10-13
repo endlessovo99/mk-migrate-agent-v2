@@ -3944,6 +3944,31 @@ describe("executeDsl", () => {
     );
   });
 
+  it("accepts the verified Shanghai Electric oaqas XForm deployment pair", () => {
+    const digest = {
+      [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeModule]: {
+        hash: "a3ec998c10af6bbce34dd6caffe4a203"
+      },
+      [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideModule]: {
+        hash: "4dc12919af1531c82de2356c4ded8777"
+      }
+    };
+    const capability = inspectNativeFormRuleRuntimeDigest(digest, {
+      baseUrl: "http://oaqas.shanghai-electric.com"
+    });
+    assert.equal(capability.ok, true);
+    assert.equal(capability.deploymentId, "shanghai-electric-oaqas-2026-09-24");
+    assert.equal(
+      inspectNativeFormRuleRuntimeBundleHashes({
+        runtimeSha256: "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+        ideSha256: "3e1e44c44d665b34f6279735f610aa80a7f644515359b860fea1bd32dca347bb",
+        expectedRuntimeSha256: capability.expectedRuntimeSha256,
+        expectedIdeSha256: capability.expectedIdeSha256
+      }).ok,
+      true
+    );
+  });
+
   it("blocks gated native-rule writes when the XForm runtime capability is unverified", async () => {
     for (const [label, configure] of [
       ["hash-mismatch", (client) => {

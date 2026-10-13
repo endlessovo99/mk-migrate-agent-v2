@@ -44,6 +44,7 @@ export class OpenAIResponsesReviewProvider {
     const endpoint = `${config.baseUrl.replace(/\/+$/, "")}/v1/responses`;
     const body = {
       model: config.model,
+      stream: false,
       input: [
         { role: "system", content: prompt.system },
         { role: "user", content: JSON.stringify(prompt.context, null, 2) }
@@ -171,18 +172,30 @@ export function extractResponseText(responseJson) {
   if (typeof responseJson?.output_text === "string") return responseJson.output_text;
   if (typeof responseJson?.content === "string") return responseJson.content;
 
-  for (const output of responseJson?.output || []) {
-    if (typeof output?.text === "string") return output.text;
-    if (typeof output?.content === "string") return output.content;
-    for (const content of output?.content || []) {
-      if (typeof content?.text === "string") return content.text;
-      if (typeof content?.content === "string") return content.content;
-    }
+  const outputs = Array.isArray(responseJson?.output) ? responseJson.output : [];
+  const ordered = [
+    ...outputs.filter((output) => output?.type === "message"),
+    ...outputs.filter((output) => output?.type !== "message" && output?.type !== "reasoning")
+  ];
+  for (const output of ordered) {
+    const text = textFromOutput(output);
+    if (text) return text;
   }
 
   const choice = responseJson?.choices?.[0];
   if (typeof choice?.message?.content === "string") return choice.message.content;
   if (typeof choice?.text === "string") return choice.text;
+  return "";
+}
+
+function textFromOutput(output) {
+  if (typeof output?.text === "string" && output.text) return output.text;
+  if (typeof output?.content === "string" && output.content) return output.content;
+  for (const content of output?.content || []) {
+    if (content?.type === "reasoning_text") continue;
+    if (typeof content?.text === "string" && content.text) return content.text;
+    if (typeof content?.content === "string" && content.content) return content.content;
+  }
   return "";
 }
 

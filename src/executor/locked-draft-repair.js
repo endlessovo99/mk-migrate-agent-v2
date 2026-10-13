@@ -12,6 +12,7 @@ import { withoutMechanismTokens } from "./published-form-patch.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { attachRequiredTemplateNumberRuleReadback } from "./template-number-rule.js";
+import { prepareRequiredTemplateTheme } from "./template-theme.js";
 import { buildTransferRecordPayload, generateTransferRecordId } from "./transfer-record.js";
 import { createLockedDraftState } from "./locked-draft-state.js";
 import { prepareLockedDraftRepair } from "./locked-draft-repair-plan.js";
@@ -130,6 +131,18 @@ export async function repairLockedDraft(input, options = {}) {
       label: "second"
     });
     requireValue(bundleDigest(before) === bundleDigest(second), "locked_draft.snapshot_changed");
+    let theme;
+    if (options.priorExecutionReport.readback?.theme) {
+      const projection = preparePersistedTemplate({
+        dsl: conditionResolution.dsl,
+        envelope: executionEnvelope(second.template, second.workflow, targetCategoryId),
+        baseTemplate: second.template
+      });
+      requireValue(projection.ok, "locked_draft.readback_projection_failed");
+      theme = prepareRequiredTemplateTheme(projection.update);
+      requireValue(theme.verify({ ok: true, status: "verified" }, second.template).ok,
+        "locked_draft.theme_repair_out_of_scope");
+    }
     requireValue(
       bundleDigest(preparedRepair.before) === bundleDigest(before),
       "locked_draft.repair_snapshot_mismatch"
@@ -243,10 +256,11 @@ export async function repairLockedDraft(input, options = {}) {
       baseTemplate: after.template
     });
     requireValue(persisted.ok, "locked_draft.readback_projection_failed");
-    const readback = attachRequiredTemplateNumberRuleReadback(
+    const numberedReadback = attachRequiredTemplateNumberRuleReadback(
       persisted.verify(attachedReadback(after)),
       after.template
     );
+    const readback = theme ? theme.verify(numberedReadback, after.template) : numberedReadback;
     diagnostics.push(...readback.diagnostics);
     if (!nativeVerification.ok || !completeReadback(readback)) {
       const result = {

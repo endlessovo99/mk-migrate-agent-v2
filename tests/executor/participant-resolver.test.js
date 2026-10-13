@@ -195,6 +195,27 @@ describe("resolveWorkflowParticipants", () => {
     assert.deepEqual(client.elementCalls, [Object.values(fallbackFdIds).sort()]);
   });
 
+  it("uses a validated person fallback on the HTTPS oaqas origin without rewriting the input DSL", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "缺失人员",
+      sourceOrgType: 8,
+      sourceParentName: "源部门"
+    })]);
+    const originalDsl = structuredClone(dsl);
+    const client = new SearchClient({}, sitFallbackElementResults());
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: "https://oaqas.shanghai-electric.com"
+    });
+
+    assert.equal(result.fallbackCount, 1);
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].id, SIT_FALLBACK_PERSON.fdId);
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].targetOrgType, 8);
+    assert.deepEqual(client.elementCalls, [[SIT_FALLBACK_PERSON.fdId]]);
+    assert.deepEqual(dsl, originalDsl);
+  });
+
   it("uses an explicitly authorized configured fallback for unresolved template permissions", async () => {
     const fallbackPostId = "configured-template-permission-post-id";
     const dsl = dslWithExplicitMembers([]);
@@ -963,7 +984,7 @@ describe("resolveWorkflowParticipants", () => {
     const personSourceId = "legacy-parentless-person";
     const roleSourceId = "legacy-missing-role";
     const personTargetId = "configured-person-fallback";
-    const groupTargetId = "configured-group-fallback";
+    const roleTargetId = "configured-role-line-fallback";
     const dsl = dslWithExplicitMembers([
       sourceMember({
         name: "熊涛",
@@ -984,20 +1005,20 @@ describe("resolveWorkflowParticipants", () => {
         fdName: "配置兜底人",
         fdOrgType: 8
       })],
-      [groupTargetId]: [currentOrg({
-        fdId: groupTargetId,
-        fdName: "配置兜底群组",
-        fdOrgType: 16
+      [roleTargetId]: [currentOrg({
+        fdId: roleTargetId,
+        fdName: "配置兜底角色线",
+        fdOrgType: 32
       })]
     });
 
     const result = await resolveWorkflowParticipants(dsl, {
       client,
       targetBaseUrl: NEWOA_SIT_BASE_URL,
-      fallbackFdIds: { person: personTargetId, group: groupTargetId },
+      fallbackFdIds: { person: personTargetId, role: roleTargetId },
       participantOverrides: [
         { sourceId: personSourceId, targetFdId: personTargetId },
-        { sourceId: roleSourceId, targetFdId: groupTargetId }
+        { sourceId: roleSourceId, targetFdId: roleTargetId }
       ]
     });
 
@@ -1008,7 +1029,7 @@ describe("resolveWorkflowParticipants", () => {
       })),
       [
         { id: personTargetId, targetOrgType: 8 },
-        { id: groupTargetId, targetOrgType: 16 }
+        { id: roleTargetId, targetOrgType: 32 }
       ]
     );
     assert.equal(result.overrideIdentityCount, 2);
@@ -1092,6 +1113,53 @@ describe("resolveWorkflowParticipants", () => {
     assert.deepEqual(
       result.dsl.workflow.nodes[1].participants.members.map((member) => member.id),
       [targetFdId]
+    );
+  });
+
+  it("replaces a missing role line with NEWOA_ROLELINEBACK_FD_ID on an allowed origin", async () => {
+    const roleId = "legacy-role-missing";
+    const fallbackId = "configured-role-line";
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "综合事务管理员",
+      sourceId: roleId,
+      sourceOrgType: 32,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement"
+    })]);
+    const client = new SearchClient({}, {
+      [fallbackId]: [currentOrg({
+        fdId: fallbackId,
+        fdName: "兜底角色线",
+        fdOrgType: 32
+      })]
+    });
+
+    const result = await resolveWorkflowParticipants(dsl, {
+      client,
+      targetBaseUrl: "http://oaqas.shanghai-electric.com",
+      fallbackFdIds: { role: fallbackId }
+    });
+
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].id, fallbackId);
+    assert.equal(result.dsl.workflow.nodes[1].participants.members[0].targetOrgType, 32);
+    assert.equal(result.fallbackCount, 1);
+  });
+
+  it("keeps a missing role line blocking when no role fallback is configured", async () => {
+    const dsl = dslWithExplicitMembers([sourceMember({
+      name: "综合事务管理员",
+      sourceId: "legacy-role-missing",
+      sourceOrgType: 32,
+      sourceOrgClass: "com.landray.kmss.sys.organization.model.SysOrgElement"
+    })]);
+    const client = new SearchClient();
+
+    await assert.rejects(
+      () => resolveWorkflowParticipants(dsl, {
+        client,
+        targetBaseUrl: "http://oaqas.shanghai-electric.com"
+      }),
+      (error) => error instanceof ParticipantResolutionError &&
+        error.issues.some((issue) => issue.reason === "not_found")
     );
   });
 

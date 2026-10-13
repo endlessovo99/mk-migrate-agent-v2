@@ -37,6 +37,8 @@ Preparation uses the normal model environment (`OPENAI_BASE_URL`, `OPENAI_API_KE
 
 Inspect the status report's `proposal` and `approvalDigest`. Approval covers the prepared items listed there, with their exact DSL, target and mapping configuration. It does not authorize later additions or modified items.
 
+For the [encrypted server Codex workflow](codex-cli-migration.md), the user's explicit batch migration request authorizes normal draft execution within that scope. After checking the actual proposal, the operator records approval with the current digest and `--confirm-write` without requesting a second human confirmation. Use a truthful actor such as `codex-server` and retain the user's original request as the authorization evidence. This does not authorize preparation-only tasks, scope expansion, separately gated target repair or uncertain-write replay. Configured fallbacks and their required switches must be fixed in each item's `executionOptions` before approval.
+
 ```bash
 node src/cli/main.js batch approve <batch-id> --expected-digest <approvalDigest> --confirm-write --actor <operator>
 node src/cli/main.js batch run <batch-id> --confirm-write --concurrency 2

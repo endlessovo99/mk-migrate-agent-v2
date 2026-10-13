@@ -1,0 +1,7 @@
+{
+  "sourceCase": "form-only-success",
+  "encryptedRoots": ["src/", "catalogs/"],
+  "plaintextArtifacts": ["input.xml", "migration.dsl.json", "execution.report.json"],
+  "excludedPaths": [".git/", ".tmp/", "input/", "tests/", "docs/", "node_modules/"],
+  "unsafePaths": ["../escape.js", "/tmp/escape.js", "src/../../escape.js", "src\\escape.js", "src/.env", "src/x.js/child.js"]
+}

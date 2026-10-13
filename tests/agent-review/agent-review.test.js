@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { join } from "node:path";
 import { runAgentReview } from "../../src/agent-review/index.js";
 import { buildAgentReviewPrompt } from "../../src/agent-review/prompt.js";
-import { OpenAIResponsesReviewProvider } from "../../src/agent-review/provider.js";
+import { extractResponseText, OpenAIResponsesReviewProvider } from "../../src/agent-review/provider.js";
 import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
 import { main } from "../../src/cli/main.js";
 import { buildScriptBranchProvenance } from "../../src/dsl/script-branch-provenance.js";
@@ -1809,6 +1809,22 @@ describe("agent-review", () => {
     await provider.review({ sourceDraft: sampleSourceDraft(), dslDraft: sampleDraftDsl() });
 
     assert.deepEqual(submittedBody.thinking, { type: "disabled" });
+  });
+
+  it("reads the message output when a reasoning item precedes it", () => {
+    const message = "{\"ok\":true}";
+    assert.equal(extractResponseText({
+      output: [
+        {
+          type: "reasoning",
+          content: [{ type: "reasoning_text", text: "Need to return JSON only." }]
+        },
+        {
+          type: "message",
+          content: [{ type: "output_text", text: message }]
+        }
+      ]
+    }), message);
   });
 
   it("does not leak OPENAI_API_KEY into reports when provider errors include it", async () => {

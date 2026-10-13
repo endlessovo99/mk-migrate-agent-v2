@@ -1,0 +1,9 @@
+{
+  "sourceCase": "generic-role-participant-success",
+  "baseUrl": "https://oaqas.shanghai-electric.com",
+  "fallback": {
+    "fdId": "route-configured-role-line",
+    "fdName": "Route Configured Role Line",
+    "fdOrgType": 32
+  }
+}

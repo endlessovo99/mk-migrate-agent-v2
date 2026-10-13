@@ -1,0 +1,11 @@
+{
+  "theme": { "desktop": "classic", "mobile": "classic" },
+  "desktop": {
+    "layout": "horizontal",
+    "titleBackground": "#F8F8F8",
+    "gridBorder": "1px solid #d2d2d2"
+  },
+  "mobile": { "layout": "vertical" },
+  "description": { "color": "#C00000", "fontWeight": "bold" },
+  "failureCases": ["drop-theme", "desktop-default", "mobile-default", "mobile-selector", "drop-styles", "desktop-border", "mobile-value", "invalid-view"]
+}

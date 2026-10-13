@@ -1,4 +1,5 @@
 import { buildDryRunPlan } from "./dry-run.js";
+import { prepareRequiredTemplateTheme } from "./template-theme.js";
 import { createExecutionJournal } from "./execution-journal.js";
 import { executePublishedFormPatch } from "./published-form-patch.js";
 import { NewoaClient, normalizeBaseUrl } from "./newoa-client.js";
@@ -558,7 +559,9 @@ async function executeDraftDsl(input, options, writes) {
       }
     }
 
-    const savePayload = applyRequiredTemplateNumberRule(prepared.update);
+    const numberedPayload = applyRequiredTemplateNumberRule(prepared.update);
+    const theme = updatesExistingTemplate ? undefined : prepareRequiredTemplateTheme(numberedPayload);
+    const savePayload = theme?.update || numberedPayload;
     apiStages.push({ name: "update", status: "started", templateId });
     await writes.write(
       { operation: "update", targetTemplateId: templateId },
@@ -598,7 +601,7 @@ async function executeDraftDsl(input, options, writes) {
       assertCurrentWorkflowTopLinkage(readbackTemplate, workflowTemplateDetail, workflowTemplateId);
     }
     apiStages[apiStages.length - 1].status = "ok";
-    const readback = attachRequiredTemplateNumberRuleReadback(
+    const numberedReadback = attachRequiredTemplateNumberRuleReadback(
       prepared.verify(
         workflowTemplateDetail
           ? attachWorkflowReadback(readbackTemplate, workflowTemplateDetail)
@@ -606,6 +609,7 @@ async function executeDraftDsl(input, options, writes) {
       ),
       readbackTemplate
     );
+    const readback = theme ? theme.verify(numberedReadback, readbackTemplate) : numberedReadback;
     diagnostics.push(...readback.diagnostics);
 
     if (!readback.ok) {

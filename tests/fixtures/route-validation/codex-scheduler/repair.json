@@ -1,0 +1,32 @@
+{
+  "maxAutomaticRepairs": 10,
+  "stdoutCopies": [
+    { "name": "execute-001.stdout.json", "includeWrote": true },
+    { "name": "execution-001.stdout.json", "includeWrote": true },
+    { "name": "execution-001.stdout.json", "includeWrote": false }
+  ],
+  "safeFailure": {
+    "ok": false,
+    "status": "blocked",
+    "stage": "resolveWorkflowParticipants",
+    "remoteWriteAttempted": false,
+    "writeOutcomeUnknown": false,
+    "createdFdIds": [],
+    "updatedFdIds": [],
+    "apiStages": [{ "name": "resolveWorkflowParticipants", "status": "failed" }],
+    "diagnostics": [{ "level": "error", "code": "workflow.participant_resolution_failed" }]
+  },
+  "unsafeChanges": [
+    { "remoteWriteAttempted": true },
+    { "writeOutcomeUnknown": true },
+    { "templateId": "already-created" },
+    { "createdFdIds": ["already-created"] },
+    { "updatedFdIds": ["already-updated"] },
+    { "transferRecord": { "fdId": "record-001", "fdTargetId": "target-001" } },
+    { "transferRecord": { "status": "recorded" } },
+    { "status": "transfer_record_failed" },
+    { "readback": { "ok": false } },
+    { "apiStages": [{ "name": "add", "status": "started" }] },
+    { "createdFdIds": "malformed" }
+  ]
+}
