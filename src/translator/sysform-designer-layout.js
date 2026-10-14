@@ -16,7 +16,7 @@ import {
   isPlainInlineCaption
 } from "./inline-caption-recovery.js";
 import { isSafeInlineUnit } from "./source-text-predicates.js";
-import { annotateCheckboxOtherCompanions } from "./checkbox-other-companion.js";
+import { annotateChoiceOtherCompanions } from "./choice-other-companion.js";
 import { isStaticDescriptionGridShape, isStaticHeaderGridShape } from "./standard-table-grid.js";
 import {
   designerVisibilityWarnings,
@@ -317,14 +317,15 @@ function expandNestedLayoutRowDescriptor(
 
 function nestedTableControlRows(rows = []) {
   return rows.map((row) =>
-    splitDirectChildCells(row).map((cell) =>
-      extractDesignerFieldControls(cell.body, {
+    splitDirectChildCells(row).map((cell, index) => ({
+      ...parseColumnSpec(cell.attrs.column, index),
+      controls: extractDesignerFieldControls(cell.body, {
         includeHidden: true,
         includeTextLabels: true
       }).map((control) => ({
         description: isSourceDescriptionControl(control)
       }))
-    )
+    }))
   );
 }
 
@@ -526,7 +527,8 @@ function appendDesignerLayoutRow(descriptor, context) {
       sourceRow: descriptor.sourceRow,
       ...(sourceMarkers.length ? { sourceMarkers } : {}),
       columns: Math.max(sourceColumns, ...cells.map((cell) => cell.column + cell.colspan), 1),
-      ...(!descriptor.standardTableProjection && hasCompleteSourceGeometry(cells, sourceColumns)
+      ...((descriptor.standardTableProjection?.mode === "static-header-grid" ||
+        (descriptor.standardTableProjection?.mode !== "details-table" && hasCompleteSourceGeometry(cells, sourceColumns)))
         ? { preserveSourceGeometry: true }
         : {}),
       cells
@@ -566,6 +568,23 @@ function recoverAdjacentTitleCells(cells, captionContext, metadataContext, proje
     });
     const caption = candidates[0];
     const control = valueCell.controls[0];
+    const evidence = captionContext.editorLabelEvidence.get(control.id);
+    if (
+      !captionCell.controls.length && candidates.length === 1 && isPlainInlineCaption(caption) &&
+      cleanText(caption.title) && cleanText(captionCell.body) === cleanText(caption.title) &&
+      !caption.source?.designerHidden && !captionContext.rightContainerByControlId.has(caption.id) &&
+      !isSourceDescriptionControl(control) && !control.source?.designerHidden &&
+      !control.source?.boundCaption && !control.source?.inlineCaption && !control.source?.explicitTitle &&
+      String(control.source?.designerValues?._label_bind || "").toLowerCase() === "false" &&
+      !isDataOnlyMetadataField(metadataContext.byId.get(control.id)) &&
+      evidence?.verified && !evidence.conditionalRow &&
+      normalizeMatchText(evidence.rowText).includes(normalizeMatchText(caption.title))
+    ) {
+      // The rendered row, not an inactive/stale label binding, proves this
+      // independent caption. The normal editor-evidence pass hides its subject.
+      result[index] = { ...captionCell, controls: [caption] };
+      continue;
+    }
     if (
       candidates.length !== 1 || !isPlainInlineCaption(caption) ||
       !cleanText(caption.title) ||
@@ -706,13 +725,19 @@ function retainEditorCaptionPresentation(cells, context, metadataContext, warnin
     if (start.column + start.colspan !== parseColumnSpec(right.attrs.column, index).column) continue;
     right.controls = right.controls.map((control) => {
       const evidence = context.editorLabelEvidence.get(control.id);
+      const externalCaption = control.source?.boundCaption;
+      const retainedExternalCaption = externalCaption?.relation === "external-right-prompt" &&
+        !control.id.endsWith(".name") &&
+        String(control.source?.designerValues?._label_bind).toLowerCase() === "false" &&
+        captions.some((caption) => caption.id === externalCaption.id);
       if (
         !evidence || isSourceDescriptionControl(control) || control.source?.designerHidden ||
-        control.source?.boundCaption || control.source?.inlineCaption || control.source?.explicitTitle ||
+        (control.source?.boundCaption && !retainedExternalCaption) ||
+        control.source?.inlineCaption || control.source?.explicitTitle ||
         isDataOnlyMetadataField(metadataContext.byId.get(control.id))
       ) return control;
       const rowText = normalizeMatchText(evidence.rowText);
-      if (!evidence.verified || !captions.every((caption) => {
+      if (!evidence.verified || (retainedExternalCaption && evidence.conditionalRow) || !captions.every((caption) => {
         const text = normalizeMatchText(caption.title);
         return text && rowText.includes(text);
       })) {
@@ -1124,7 +1149,7 @@ function extractLayoutCellControls(html, captionContext, metadataContext, option
     runtimeVisibleFieldIds: captionContext?.runtimeVisibleFieldIds,
     nodeDataAuthorityVisibleFieldIds: captionContext?.nodeDataAuthorityVisibleFieldIds
   }).map((entry) => withBoundCaptionEntry(entry, captionContext));
-  annotateCheckboxOtherCompanions(extractedEntries.map((entry) => entry.control));
+  annotateChoiceOtherCompanions(extractedEntries.map((entry) => entry.control));
   const sameCellBoundCaptionIds = new Set(
     extractedEntries
       .filter((entry) =>
@@ -1843,7 +1868,7 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
     for (const [cellIndex, cell] of cells.entries()) {
       if (isNonDataDetailCell(cell.attrs)) continue;
       const sourceColumn = parseColumnSpec(cell.attrs.column, cellIndex).column;
-      const cellControls = annotateCheckboxOtherCompanions(
+      const cellControls = annotateChoiceOtherCompanions(
         extractDesignerFieldControls(cell.body, { includeHidden: true, includeTextLabels: true })
       );
       for (const control of cellControls) {

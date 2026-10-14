@@ -1,5 +1,4 @@
 {
-  "endpointUrl": "http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add",
   "endpointPath": "/data/sys-transfer/transferRecord/add",
   "fixedFields": {
     "fdModuleName": "流程管理",

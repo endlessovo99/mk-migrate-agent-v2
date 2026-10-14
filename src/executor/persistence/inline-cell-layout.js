@@ -34,3 +34,29 @@ export function observeInlineCellLayout(item) {
     }
   };
 }
+
+/** Preserve room for editors whose physical widths come from source flow. */
+export function contentFlowFieldPadding(form = {}) {
+  const fields = new Map((form.fields || []).map((field) => [field.id, field]));
+  const padding = new Map();
+  for (const row of form.layout?.mkTree || []) {
+    for (const cell of row.children || []) {
+      const flow = cell.contentFlow;
+      if (!flow) continue;
+      for (const item of flow.items || []) {
+        const field = fields.get(item.referenceId);
+        if (item.width?.unit !== "px" || item.width.value <= 0 ||
+            !field?.props?.hiddenLabel || !["xform-input", "xform-radio"].includes(field.componentId)) continue;
+        padding.set(field.id, { top: "8px", right: "0px", bottom: "8px", left: field.props.required ? "12px" : "0px" });
+        if (item.width.value > 100) continue;
+        const line = flow.lines.find((ids) => ids.includes(field.id));
+        if (line?.length !== 2) continue;
+        const unit = fields.get(line.find((id) => id !== field.id));
+        if (unit?.componentId === "xform-description" && /^[^\r\n]{1,4}$/u.test(String(unit.props?.content || "").trim())) {
+          padding.set(unit.id, { top: "8px", right: "0px", bottom: "8px", left: "0px" });
+        }
+      }
+    }
+  }
+  return padding;
+}

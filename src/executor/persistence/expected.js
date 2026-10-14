@@ -1,4 +1,4 @@
-import { inlineCellLayout } from "./inline-cell-layout.js";
+import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import {
@@ -215,7 +215,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
       ));
     }
   });
-  const projectedLayoutRows = projectNativeLayoutRows(rows, { maxColumns: 8 });
+  const projectedLayoutRows = projectNativeLayoutRows(rows);
   const layoutRows = projectedLayoutRows.map((row, rowIndex) => {
     const requiresTopologyMarkers = row.cells.some((cell) => cell.ownerNodeId !== row.id);
     return {
@@ -267,6 +267,10 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     };
   });
 
+  const flowPadding = contentFlowFieldPadding(form);
+  for (const field of expectedFields) {
+    if (flowPadding.has(field.id)) field.props.layoutPadding = flowPadding.get(field.id);
+  }
   return {
     fields: expectedFields,
     calculationOrder: expectedCalculationOrder(form, diagnostics),

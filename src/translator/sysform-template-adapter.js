@@ -186,11 +186,13 @@ function displayJspFieldId(property = "") {
 
 function editorLabelEvidence(displayJsp) {
   const decoded = decodeEntities(displayJsp);
-  const editors = new Set(["xform:rtf", "xform:textarea", "xform:xtext", "xform:address"]);
+  const editors = new Set(["xform:rtf", "xform:textarea", "xform:xtext", "xform:address", "xform:radio"]);
   const conditionalTags = new Set([
     "c:choose", "c:foreach", "c:if", "c:otherwise", "c:when",
-    "xform:editshow", "xform:right", "xform:viewshow"
+    "xform:editshow", "xform:viewshow"
   ]);
+  // xform:right controls access to its child; it does not add an editor label.
+  // Its permission modes remain source evidence for the workflow authority path.
   const rows = [];
   const rowStack = [];
   const renderings = new Map();
@@ -230,6 +232,7 @@ function editorLabelEvidence(displayJsp) {
     return [id, {
       renderer: entry.renderer,
       verified: entries.length === 1 && entry.unconditional && Boolean(rowHtml) && !rowHtml.includes("<%"),
+      conditionalRow: [...scanHtmlTags(rowHtml)].some(token => conditionalTags.has(token.name)),
       rowText: cleanText(rowHtml),
       sourceRef: "source.form.fdDisplayJsp"
     }];

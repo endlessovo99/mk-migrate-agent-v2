@@ -1,0 +1,17 @@
+{
+  "origin": "http://oaqas.shanghai-electric.com",
+  "componentId": "@elem/layout-grid",
+  "releaseHash": "7cXr6BLxSb",
+  "retrievedAt": "2026-10-14T10:25:50.976342+00:00",
+  "files": {
+    "layout-grid.cjs": {
+      "url": "http://oaqas.shanghai-electric.com/web/sys/artifact/elements/layout-grid/index.js?7cXr6BLxSb",
+      "sha256": "7bf3520cbbe663a95a14f6dd4a4ece589a5e157a7607a8753f2bfd7d359e14a6"
+    },
+    "layout-grid.css": {
+      "url": "http://oaqas.shanghai-electric.com/web/sys/artifact/elements/layout-grid/index.css?7cXr6BLxSb",
+      "sha256": "f1e6f16816c851f47bb266158e6899bd1f4ed1ee2077790b44cbb426b5720659"
+    }
+  },
+  "scope": "Native renderer uses columns directly for CSS grid tracks and GridItem uses numeric start/end boundaries. The eight-column DSL designer preset is not a native rendering limit. This fixture does not prove server normalization or browser interaction."
+}

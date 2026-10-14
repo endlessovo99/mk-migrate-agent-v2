@@ -6,7 +6,7 @@ import {
 } from "./form-rules-writer.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { projectNativeLayoutRows } from "./layout-projection.js";
-import { inlineCellLayout } from "./inline-cell-layout.js";
+import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
 import {
   detailTableEditOperations,
   detailTableViewOperations
@@ -1654,6 +1654,12 @@ function buildControlStyle(form = {}) {
         layout: "vertical",
         ...(style ? { controlValueStyle: style } : {})
       }
+    };
+  }
+  for (const [id, paddingControl] of contentFlowFieldPadding(form)) {
+    styles[id] = {
+      ...styles[id],
+      desktop: { ...styles[id]?.desktop, paddingControl }
     };
   }
   return styles;

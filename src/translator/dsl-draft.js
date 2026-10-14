@@ -41,6 +41,7 @@ import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
 import { projectDynamicHyperlinkForm } from "./dynamic-hyperlink.js";
 import { multiRadioRowHelperFormRules } from "./multi-radio-row-helper.js";
 import { applyDetailCascadeRowOptions } from "./detail-cascade-actions.js";
+import { INLINE_RADIO_ROW_EFFECTS_BASIS } from "./inline-radio-row-effects.js";
 import {
   DETAIL_MAIN_ROW_LIFECYCLE_BASIS
 } from "./detail-main-row-lifecycle.js";
@@ -56,7 +57,7 @@ import {
   mapAddressDisplayCompanions,
   removeDataOnlyFieldRefs
 } from "./address-display-companion-mapping.js";
-import { mapCheckboxOtherCompanions } from "./checkbox-other-companion.js";
+import { mapChoiceOtherCompanions } from "./choice-other-companion.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -172,7 +173,9 @@ function removeDeterministicScriptOwnedFormRules(formRules, scripts) {
   const ownedSourceRefs = new Set(
     (scripts?.actions || [])
       .filter((action) => action.functionMappings?.some((mapping) =>
-        mapping?.basis === DETAIL_MAIN_ROW_LIFECYCLE_BASIS
+        mapping?.basis === DETAIL_MAIN_ROW_LIFECYCLE_BASIS ||
+        (mapping?.basis === INLINE_RADIO_ROW_EFFECTS_BASIS &&
+          action.semanticHints?.ownsLegacyRowEffects === true)
       ))
       .flatMap((action) => action.sourceRefs || [])
       .filter(Boolean)
@@ -743,7 +746,7 @@ function draftForm(sourceForm, sourceWorkflow) {
   const controls = Array.isArray(sourceForm.controls) ? sourceForm.controls : [];
   const detailTables = Array.isArray(sourceForm.detailTables) ? sourceForm.detailTables : [];
   const dataFields = Array.isArray(sourceForm.dataFields) ? sourceForm.dataFields : [];
-  const fields = mapCheckboxOtherCompanions(mapAddressDisplayCompanions([
+  const fields = mapChoiceOtherCompanions(mapAddressDisplayCompanions([
     ...controls.map(draftFieldFromSourceControl),
     ...detailTables.map(draftDetailTableFromSource),
     ...dataFields.map(draftDataFieldFromSource)

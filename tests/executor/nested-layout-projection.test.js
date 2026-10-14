@@ -333,7 +333,29 @@ describe("nested native layout projection", () => {
     );
   });
 
-  it("falls back to the root source columns when no exact grid exists up to eight", () => {
+  it("preserves three nested coprime grids without an internal eight-by-eight limit", () => {
+    const inner = layoutNode("inner-sevenths", 7, Array.from({ length: 7 }, (_, index) =>
+      fieldCell("inner-sevenths", index, `fd_deep_${index}`, index)
+    ));
+    const middle = layoutNode("middle-fifths", 5, [
+      fieldCell("middle-fifths", 0, "fd_middle_title", 0),
+      { refType: "layout", refIds: [inner.id], column: 1, colspan: 4 }
+    ]);
+    const outer = layoutNode("outer-thirds", 3, [
+      fieldCell("outer-thirds", 0, "fd_outer_title", 0),
+      { refType: "layout", refIds: [middle.id], column: 1, colspan: 2 }
+    ]);
+    const [projection] = projectNativeLayoutRows([outer, middle, inner]);
+    assert.equal(projection.rows, 1);
+    assert.equal(projection.columns, 9);
+    const widths = projection.colsStyle.map(style => parseFloat(style.value));
+    assert.ok(Math.abs(widths[0] - 100 / 3) < 1e-9);
+    assert.ok(Math.abs(widths[1] - 200 / 15) < 1e-9);
+    assert.ok(widths.slice(2).every(width => Math.abs(width - 800 / 105) < 1e-9));
+    assert.equal(hasProjectedOverlap(projection), false);
+  });
+
+  it("preserves fifths and sevenths using their exact shared native boundaries", () => {
     const fifths = layoutNode(
       "layout.fifths",
       5,
@@ -360,7 +382,13 @@ describe("nested native layout projection", () => {
 
     const [projection] = projectNativeLayoutRows([outer, fifths, sevenths]);
 
-    assert.equal(projection.columns, 4);
+    assert.equal(projection.columns, 11);
+    assert.equal(projection.rows, 2);
+    const widths = projection.colsStyle.map(style => parseFloat(style.value));
+    for (const cell of projection.cells) {
+      const share = widths.slice(cell.column, cell.column + cell.colspan).reduce((sum, value) => sum + value, 0);
+      assert.ok(Math.abs(share - 100 / (cell.row === 0 ? 5 : 7)) < 1e-9);
+    }
     assert.equal(hasProjectedOverlap(projection), false);
   });
 
@@ -411,7 +439,7 @@ describe("nested native layout projection", () => {
     }]);
   });
 
-  it("wraps a nested row when its source columns exceed the available parent region", () => {
+  it("keeps eight nested cells on one row beside a spanning section title", () => {
     const inner = layoutNode(
       "layout.inner-wide",
       8,
@@ -443,13 +471,11 @@ describe("nested native layout projection", () => {
     const [projection] = projectNativeLayoutRows([outer, inner]);
     assert.deepEqual(
       { rows: projection.rows, columns: projection.columns },
-      { rows: 3, columns: 4 }
+      { rows: 1, columns: 9 }
     );
     assert.deepEqual(projection.colsStyle, [
       { startIndex: 0, count: 1, value: "62.5%" },
-      { startIndex: 1, count: 1, value: "12.5%" },
-      { startIndex: 2, count: 1, value: "12.5%" },
-      { startIndex: 3, count: 1, value: "12.5%" }
+      ...Array.from({ length: 8 }, (_, index) => ({ startIndex: index + 1, count: 1, value: "4.6875%" }))
     ]);
     assert.deepEqual(
       projection.cells.map((cell) => ({
@@ -460,15 +486,10 @@ describe("nested native layout projection", () => {
         rowspan: cell.rowspan
       })),
       [
-        { field: "fd_wide_title", row: 0, column: 0, colspan: 1, rowspan: 3 },
-        { field: "fd_wide_1", row: 0, column: 1, colspan: 1, rowspan: 1 },
-        { field: "fd_wide_2", row: 0, column: 2, colspan: 1, rowspan: 1 },
-        { field: "fd_wide_3", row: 0, column: 3, colspan: 1, rowspan: 1 },
-        { field: "fd_wide_4", row: 1, column: 1, colspan: 1, rowspan: 1 },
-        { field: "fd_wide_5", row: 1, column: 2, colspan: 1, rowspan: 1 },
-        { field: "fd_wide_6", row: 1, column: 3, colspan: 1, rowspan: 1 },
-        { field: "fd_wide_7", row: 2, column: 1, colspan: 1, rowspan: 1 },
-        { field: "fd_wide_8", row: 2, column: 2, colspan: 1, rowspan: 1 }
+        { field: "fd_wide_title", row: 0, column: 0, colspan: 1, rowspan: 1 },
+        ...Array.from({ length: 8 }, (_, index) => ({
+          field: `fd_wide_${index + 1}`, row: 0, column: index + 1, colspan: 1, rowspan: 1
+        }))
       ]
     );
     assert.equal(hasProjectedOverlap(projection), false);

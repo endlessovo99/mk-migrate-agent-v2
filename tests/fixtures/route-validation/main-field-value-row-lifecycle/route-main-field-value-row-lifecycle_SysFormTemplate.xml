@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-main-field-value-row-sysform</string></void>
+  <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+  <void method="put"><string>fdName</string><string>Main field value row lifecycle</string></void>
+  <void method="put"><string>fdModelId</string><string>route-main-field-value-row-template</string></void>
+  <void method="put"><string>fdDisplayJsp</string><string>&lt;xform:editShow&gt;&lt;script&gt;
+AttachXFormValueChangeEventById("fd_type", function(value, domElement) {
+ if(value.indexOf("A")&gt;=0){
+  SetXFormFieldValueById("fd_state_A","A");
+  common_dom_row_set_show_required_reset("fd_A_row",true,true,false);
+ }else{
+  SetXFormFieldValueById("fd_state_A","");
+  common_dom_row_set_show_required_reset("fd_A_row",false,false,false);
+ }
+});
+AttachXFormValueChangeEventById("fd_type", function(value, domElement) {
+ if(value.indexOf("B")&gt;=0){
+  SetXFormFieldValueById("fd_state_B","B");
+  common_dom_row_set_show_required_reset("fd_B_row",true,true,false);
+ }else{
+  SetXFormFieldValueById("fd_state_B","");
+  common_dom_row_set_show_required_reset("fd_B_row",false,false,false);
+ }
+});
+&lt;/script&gt;&lt;/xform:editShow&gt;
+&lt;script&gt;
+Com_AddEventListener(window,"load",function(){
+ common_dom_row_set_show_required_reset("fd_A_row",false,false,false);
+ if(GetXFormFieldValueById("fd_state_A")=="A"){
+  common_dom_row_set_show_required_reset("fd_A_row",true,false,false);
+ }else{
+  common_dom_row_set_show_required_reset("fd_A_row",false,false,false);
+ }
+});
+Com_AddEventListener(window,"load",function(){
+ common_dom_row_set_show_required_reset("fd_B_row",false,false,false);
+ if(GetXFormFieldValueById("fd_state_B")=="B"){
+  common_dom_row_set_show_required_reset("fd_B_row",true,false,false);
+ }else{
+  common_dom_row_set_show_required_reset("fd_B_row",false,false,false);
+ }
+});
+&lt;/script&gt;
+&lt;xform:editShow&gt;&lt;script&gt;
+AttachXFormValueChangeEventById("fd_other", function(value, domElement) {
+ if(value.indexOf("C")&gt;=0){
+  SetXFormFieldValueById("fd_state_C","C");
+  common_dom_row_set_show_required_reset("fd_C_row",true,true,false);
+ }else{
+  SetXFormFieldValueById("fd_state_C","");
+  common_dom_row_set_show_required_reset("fd_C_row",false,false,false);
+ }
+});
+&lt;/script&gt;&lt;/xform:editShow&gt;
+&lt;script&gt;
+Com_AddEventListener(window,"load",function(){
+ common_dom_row_set_show_required_reset("fd_C_row",false,false,false);
+ if(GetXFormFieldValueById("fd_state_C")=="C"){
+  common_dom_row_set_show_required_reset("fd_C_row",true,false,false);
+ }else{
+  common_dom_row_set_show_required_reset("fd_C_row",false,false,false);
+ }
+});
+&lt;/script&gt;</string></void>
+  <void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_type",label:"Selector 0",dataType:"String",items:"A|A;B|B;C|C"}'&gt;&lt;input id="fd_type"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_other",label:"Selector 1",dataType:"String",items:"A|A;B|B;C|C"}'&gt;&lt;input id="fd_other"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" id="fd_A_primary_row" name="fd_A_primary_row"/&gt;&lt;input type="hidden" id="fd_A_row" name="fd_A_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value_A",label:"Value A",dataType:"String",required:"true"}'&gt;&lt;input id="fd_value_A"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;input type="hidden" id="fd_B_row" name="fd_B_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value_B",label:"Value B",dataType:"String",required:"true"}'&gt;&lt;input id="fd_value_B"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="4" column="0"&gt;&lt;input type="hidden" id="fd_C_row" name="fd_C_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value_C",label:"Value C",dataType:"String",required:"true"}'&gt;&lt;input id="fd_value_C"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="5" column="0"&gt;&lt;div style="display:none" fd_type="inputText" fd_values='{id:"fd_state_A",label:"State A",dataType:"String",canShow:"false",showStatus:"noShow"}'&gt;&lt;input id="fd_state_A"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="6" column="0"&gt;&lt;div style="display:none" fd_type="inputText" fd_values='{id:"fd_state_B",label:"State B",dataType:"String",canShow:"false",showStatus:"noShow"}'&gt;&lt;input id="fd_state_B"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="7" column="0"&gt;&lt;div style="display:none" fd_type="inputText" fd_values='{id:"fd_state_C",label:"State C",dataType:"String",canShow:"false",showStatus:"noShow"}'&gt;&lt;input id="fd_state_C"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+  <void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_type" label="fd_type" type="String"/&gt;&lt;extendSimpleProperty name="fd_other" label="fd_other" type="String"/&gt;&lt;extendSimpleProperty name="fd_value_A" label="fd_value_A" type="String"/&gt;&lt;extendSimpleProperty name="fd_value_B" label="fd_value_B" type="String"/&gt;&lt;extendSimpleProperty name="fd_value_C" label="fd_value_C" type="String"/&gt;&lt;extendSimpleProperty name="fd_state_A" label="fd_state_A" type="String"/&gt;&lt;extendSimpleProperty name="fd_state_B" label="fd_state_B" type="String"/&gt;&lt;extendSimpleProperty name="fd_state_C" label="fd_state_C" type="String"/&gt;&lt;/metadata&gt;</string></void>
+ </object>
+</java>

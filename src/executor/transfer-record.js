@@ -1,9 +1,6 @@
 import { randomBytes } from "node:crypto";
 
 export const TRANSFER_RECORD_ENDPOINT_PATH = "/data/sys-transfer/transferRecord/add";
-export const TRANSFER_RECORD_ENDPOINT_URL =
-  `http://oadev.shanghai-electric.com${TRANSFER_RECORD_ENDPOINT_PATH}`;
-
 export const TRANSFER_RECORD_FIXED_FIELDS = Object.freeze({
   fdModuleName: "流程管理",
   fdModuleId: "frameworkMeta#km-review",

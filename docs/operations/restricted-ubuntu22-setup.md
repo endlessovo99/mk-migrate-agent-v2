@@ -47,7 +47,7 @@ npm 随 Node.js 发行包一起安装，不需要单独下载。软件安装完�
 | 企业 DNS 和时间服务 | 使用运维提供的内网服务 |
 | 内网 Git 仓库地址及端口 | 如需从内网仓库获取项目源码 |
 
-当前迁移记录回调固定为 `http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add`，修改 `NEWOA_BASE_URL` 不会改变它。真实迁移前必须确认该地址及其固定任务配置适用于目标环境。
+迁移记录回调使用实际模板 origin 加 `/data/sys-transfer/transferRecord/add`，与 `NEWOA_BASE_URL` 或本次 `--base-url` 保持同环境。固定任务字段继续按迁移记录合同提交。
 
 ## 1 安装基础软件
 
@@ -390,12 +390,12 @@ codex
 | Codex 能聊天但工具调用失败 | Responses 的 SSE、工具调用及工具结果回传是否完整兼容 |
 | TLS 证书错误 | 企业 CA 是否安装，证书域名是否匹配，当前进程是否加载 CA |
 | Codex 沙箱启动失败 | bubblewrap 与系统加固策略是否兼容，由运维处理，不直接关闭沙箱 |
-| 模板已创建，但迁移记录失败 | 固定回调地址、鉴权及迁移报告；保留证据，不重新创建模板 |
+| 模板已创建，但迁移记录失败 | 目标环境回调地址、鉴权及迁移报告；保留证据，不重新创建模板 |
 
 ## 真实迁移前的最后准备
 
 - 确认目标 NewOA 根地址、测试分类 fdId、迁移账号及加密密码。
-- 确认固定回调地址和其中的固定任务配置适用于目标环境。
+- 确认同环境回调地址和迁移记录任务字段适用于目标环境。
 - 明确授权只创建新的 `MK_TEST_` 草稿；`execute --confirm-write` 不属于前面的环境验证步骤。
 - 批量迁移先准备专用 PostgreSQL 数据库或 schema，再按[批量迁移操作说明](batch-migration.md)进行准备和批准。
 - 保留源码版本、模型配置、检查点密钥、执行报告和状态锁；结果不确定的写入不得自动重试。
@@ -405,7 +405,7 @@ codex
 - [项目说明](../../README.md)
 - [模型审查接口实现](../../src/agent-review/provider.js)
 - [项目环境文件加载](../../src/default-environment.js)
-- [固定迁移记录回调](../../src/executor/transfer-record.js)
+- [迁移记录回调](../../src/executor/transfer-record.js)
 - [Codex CLI 安装文档](https://learn.chatgpt.com/docs/codex/cli)
 - [Codex 配置参考](https://learn.chatgpt.com/docs/config-file/config-reference)
 - [Codex Linux 沙箱说明](https://learn.chatgpt.com/docs/sandboxing)

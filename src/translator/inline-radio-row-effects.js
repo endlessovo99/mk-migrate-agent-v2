@@ -1,9 +1,11 @@
 import { parse } from "acorn";
 import { buildFormRuleRefIndex, resolveEffectTarget } from "../dsl/form-rules.js";
-import { textValueFieldIds } from "../dsl/script-condition-provenance.js";
+import { buildSetFieldAttrTargetIndex } from "../dsl/scripts.js";
+import { buildConditionOperandResolver, textValueFieldIds } from "../dsl/script-condition-provenance.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
 
-const BASIS = "deterministic-inline-radio-row-effects";
+export const INLINE_RADIO_ROW_EFFECTS_BASIS = "deterministic-inline-radio-row-effects";
+const BASIS = INLINE_RADIO_ROW_EFFECTS_BASIS;
 const ROW_HELPER = "common_dom_row_set_show_required_reset";
 const NON_RESETTABLE_COMPONENTS = new Set([
   "xform-button",
@@ -18,6 +20,8 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
   if (!hasOnlyDiagnosticAlertViolations(source.functionAudit)) {
     return [];
   }
+  const mainFieldValueRows = mainFieldValueRowLifecycleCandidates(source, form, program);
+  if (mainFieldValueRows.length) return mainFieldValueRows;
   if (sourceHasNativeRules(source, formRules, form)) return [];
   if (!program) return [];
 
@@ -99,6 +103,88 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
         }
       }))
     : candidates;
+}
+
+// Compile the complete main-row lifecycle before projecting native rules. Load
+// reads the persisted helper, whereas change writes it from the event value.
+function mainFieldValueRowLifecycleCandidates(source, form, program) {
+  const statements = program?.body?.filter(statement => statement.type !== "EmptyStatement");
+  if (!statements?.length || source.functionAudit?.violations?.length) return [];
+  const sourceRef = source.sourceRef || source.id;
+  const sourceBindings = buildConditionOperandResolver(String(source.javascript || ""));
+  const mainFields = new Set((form?.fields || [])
+    .filter(field => field.type !== "detailTable").map(field => field.id));
+  const index = buildFormRuleRefIndex(form);
+  const rowMarkerTargets = buildSetFieldAttrTargetIndex(form).secondaryMarkerToPrimary;
+  const candidates = statements.map(statement => {
+    const call = expressionCall(statement);
+    const change = call?.callee?.type === "Identifier" &&
+      call.callee.name === "AttachXFormValueChangeEventById" && call.arguments?.length === 2;
+    const load = isWindowLoadCall(call) && call.callee?.type === "Identifier";
+    if (!change && !load) return undefined;
+    const listener = change ? call.arguments[1] : windowLoadListener(call);
+    const controlId = change ? literalValue(call.arguments[0]) : undefined;
+    if (!isFunction(listener) || listener.body?.type !== "BlockStatement" ||
+        (change && (!mainFields.has(controlId) || listener.params?.[0]?.type !== "Identifier")) ||
+        (load && listener.params?.length)) return undefined;
+    const targets = rowEffectTargets(listener);
+    if (!targets.length || !targetsHaveDistinctLayoutOwners(form, targets) ||
+        targets.some(target => {
+          const resolved = resolveEffectTarget(index, target);
+          return resolved?.source !== "rowMarker" || resolved.unresolved?.length ||
+            !resolved.targets?.length || resolved.targets.some(item => item.kind !== "field");
+        })) return undefined;
+    let valid = true;
+    let hasValueApi = false;
+    const visit = node => {
+      if (!node || typeof node !== "object") return;
+      if (node.type === "CallExpression" && node.callee?.type === "Identifier") {
+        const name = node.callee.name;
+        if (!sourceBindings.isUnshadowedGlobal(name, node.callee.start)) valid = false;
+        if (["GetXFormFieldValueById", "SetXFormFieldValueById"].includes(name)) hasValueApi = true;
+      }
+      for (const value of Object.values(node)) {
+        if (Array.isArray(value)) value.forEach(visit);
+        else if (value && typeof value === "object") visit(value);
+      }
+    };
+    visit(call);
+    if (!valid || !hasValueApi) return undefined;
+    const lines = compileBlock(listener.body, {
+      aliases: new Map(),
+      sourceValueName: change ? listener.params[0].name : undefined,
+      targetValueName: change ? "value" : undefined,
+      form,
+      mainValueApis: true,
+      rowMarkerTargets,
+      indent: "  "
+    });
+    if (!lines) return undefined;
+    const event = change ? "onChange" : "onLoad";
+    return {
+      index: call.start,
+      ...(change ? { sourceActionKey: inlineOnChangeSourceActionKey(sourceRef, call.start) } : {}),
+      event,
+      scope: change ? "control" : "global",
+      controlId,
+      javascript: String(source.javascript || ""),
+      function: [`function ${event}(${change ? "value, rowNum, parentRowNum" : ""}) {`, ...lines, "}"].join("\n"),
+      translationStatus: "mapped",
+      coverage: { status: "translated", nativeRules: [], residuals: [] },
+      functionMappings: [{
+        source: "main-field value API row lifecycle",
+        target: "MKXFORM.getValue/setValue/setFieldAttr",
+        basis: BASIS,
+        reviewRequired: false
+      }],
+      sourceRefs: [sourceRef],
+      semanticHints: {
+        ownsLegacyRowEffects: true,
+        coveredCalculationRanges: [{ sourceRef, name: `mainFieldValueRows:${event}`, start: call.start, end: call.end }]
+      }
+    };
+  });
+  return candidates.every(Boolean) ? candidates : [];
 }
 
 // A proven load bridge already projects row visibility from the editable source
@@ -409,9 +495,20 @@ function compileStatement(statement, context) {
   if (statement.type === "IfStatement") return compileIf(statement, context);
   const effect = rowEffect(statement);
   if (effect) {
+    const target = context.rowMarkerTargets?.get(effect.target) || effect.target;
     return context.restoreStaticRequiredBaseline
       ? compileBaselineRowEffect(effect, context.form, context.indent)
-      : compileRowEffect(effect, context.form, context.indent);
+      : compileRowEffect({ ...effect, target }, context.form, context.indent);
+  }
+  if (context.mainValueApis) {
+    const call = expressionCall(statement);
+    const id = literalValue(call?.arguments?.[0]);
+    const value = literalValue(call?.arguments?.[1]);
+    if (call?.callee?.type === "Identifier" && call.callee.name === "SetXFormFieldValueById" &&
+        call.arguments.length === 2 && typeof value === "string" &&
+        context.form.fields.some(field => field.id === id && field.type !== "detailTable")) {
+      return [`${context.indent}MKXFORM.setValue(${JSON.stringify(id)}, ${JSON.stringify(value)});`];
+    }
   }
   const assignment = legacyFieldAssignment(statement, context.aliases, context.sourceValueName);
   if (assignment) {
@@ -494,7 +591,7 @@ function compileCondition(condition, context) {
   if (fieldEquality) {
     return `${fieldEquality.alias} ${fieldEquality.operator} ${fieldEquality.valueKind === "undefined" ? "undefined" : JSON.stringify(fieldEquality.value)}`;
   }
-  const directFieldEquality = directFieldValueEquality(condition, context.form);
+  const directFieldEquality = directFieldValueEquality(condition, context.form, context.mainValueApis);
   if (directFieldEquality) {
     return `MKXFORM.getValue(${JSON.stringify(directFieldEquality.fieldId)}) ${directFieldEquality.operator} ${directFieldEquality.valueKind === "undefined" ? "undefined" : JSON.stringify(directFieldEquality.value)}`;
   }
@@ -1381,18 +1478,23 @@ function aliasValueEquality(node, aliases) {
   };
 }
 
-function directFieldValueEquality(node, form) {
+function directFieldValueEquality(node, form, mainValueApis = false) {
   if (node?.type !== "BinaryExpression" || !["==", "===", "!=", "!=="].includes(node.operator)) {
     return undefined;
   }
-  const leftFieldId = legacyFieldValueId(node.left);
-  const rightFieldId = legacyFieldValueId(node.right);
+  const valueId = value => legacyFieldValueId(value) || (mainValueApis &&
+    value?.type === "CallExpression" && value.callee?.type === "Identifier" &&
+    value.callee.name === "GetXFormFieldValueById" && value.arguments?.length === 1 &&
+    typeof literalValue(value.arguments[0]) === "string" ? literalValue(value.arguments[0]) : undefined);
+  const leftFieldId = valueId(node.left);
+  const rightFieldId = valueId(node.right);
   const fieldId = leftFieldId || rightFieldId;
   const literal = leftFieldId ? node.right : node.left;
   const valueKind = literal?.type === "Identifier" && literal.name === "undefined"
     ? "undefined"
     : typeof literalValue(literal) === "string" ? "string" : undefined;
-  if (!fieldId || !formFieldIds(form).has(fieldId) || !valueKind) {
+  if (!fieldId || !formFieldIds(form).has(fieldId) || !valueKind ||
+      (mainValueApis && !form.fields.some(field => field.id === fieldId && field.type !== "detailTable"))) {
     return undefined;
   }
   return { fieldId, operator: node.operator, value: literalValue(literal), valueKind };

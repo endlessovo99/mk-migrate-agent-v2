@@ -96,7 +96,7 @@ codex \
 - 当前 skill 的 HTTPS oaqas 支持依赖引擎已包含 `https://oaqas.shanghai-electric.com` 的兜底白名单和原生表单规则登记。安装 skill 不会给旧引擎添加这些能力；更新包仍走现有加密发布流程。
 - 兜底变量和开关在 skill 的 `references/fallback-and-recovery.md`；实际目标存在性和类型仍由执行器验证。不修改或输出凭据。
 - 批次内部审批可以由 Agent 根据真实用户迁移任务和实际方案登记；digest、版本及未知写入隔离继续生效。特殊已有目标修复仍需要其原有单独授权条件。
-- 固定迁移记录回调 `http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add` 不随模板 origin 改变。普通迁移使用既有合同，不自动改成 HTTPS 或其他主机。
+- 迁移记录回调使用模板的实际 origin 加 `/data/sys-transfer/transferRecord/add`，复用同环境登录取得的令牌；不跨环境发送登录令牌。
 
 维护时将匹配版本的 skill 与引擎一起交付，但分开安装；skill 保持在账号技能目录，不放进加密源码运行目录。skill 包的 `MANIFEST.json` 记录源快照和文件摘要，不代表服务器已安装该引擎版本。
 

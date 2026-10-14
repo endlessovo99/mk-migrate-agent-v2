@@ -209,6 +209,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "choice-other-option-success",
+      source: {
+        kind: "form-only",
+        relativePath: "choice-other-option/route-choice-other-option_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
       id: "checkbox-other-option-success",
       source: {
         kind: "form-only",
@@ -365,6 +381,46 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         reviewStatus: "needs_manual",
         dryRunStatus: "needs_manual",
         executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "permission-caption-row-success",
+      source: { kind: "form-only", relativePath: "permission-caption-row/route-permission-caption-row_SysFormTemplate.xml" },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "nested-spanned-header-grid-success",
+      source: {
+        kind: "form-only",
+        relativePath: "nested-spanned-header-grid/route-nested-spanned-header-grid_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "main-field-value-row-lifecycle-success",
+      source: {
+        kind: "form-only",
+        relativePath: "main-field-value-row-lifecycle/route-main-field-value-row-lifecycle_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
         operations: SUCCESS_OPERATIONS
       }
     },

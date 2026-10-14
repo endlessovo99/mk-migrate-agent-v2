@@ -99,4 +99,4 @@ mk-migrate-secure run -- execute "$MK_TASK_DIR/migration.dsl.json" \
 
 每次启动 `execute` 都可能产生远端副作用。命令完成后保存退出码、完整报告和必要的脱敏错误。失败后先按恢复表判断，不能直接再执行本命令。原始可信 DSL 保持不变，运行期身份替换由执行器生成并回读验证。
 
-`ok: true` 后检查创建 fdId、模板草稿状态、回读和迁移记录结果再汇报完成。`readback_failed`、`transfer_record_failed` 不能报迁移成功。迁移记录回调固定为 `http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add`，与目标模板 origin 分开；正常授权包含工具的这一提交，不擅自改地址或重试回调。
+`ok: true` 后检查创建 fdId、模板草稿状态、回读和迁移记录结果再汇报完成。`readback_failed`、`transfer_record_failed` 不能报迁移成功。迁移记录回调为目标模板 origin 下的 `/data/sys-transfer/transferRecord/add`，使用同环境登录令牌；正常授权包含工具的这一提交，不擅自改地址或重试回调。

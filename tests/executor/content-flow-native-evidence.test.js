@@ -15,6 +15,35 @@ const flow = {
 };
 
 describe("native cell content flow", () => {
+  it("reserves usable space for a narrow editor and its source unit without changing the stored width", () => {
+    const dsl = flowDsl();
+    const editor = dsl.form.fields.find(field => field.id === "fd_subject");
+    editor.props.hiddenLabel = true;
+    editor.props.required = true;
+    dsl.form.fields.find(field => field.id === "fd_note").props.content = "%";
+    const cell = dsl.form.layout.mkTree[0].children[0];
+    cell.refIds = ["fd_subject", "fd_note"];
+    cell.contentFlow = { lines: [cell.refIds], items: [
+      { referenceId: "fd_subject", width: { value: 66, unit: "px" } },
+      { referenceId: "fd_note" }
+    ] };
+    const prepared = prepareSample(dsl);
+    const config = xformConfig(prepared.update);
+    const view = JSON.parse(config.viewModel[0].fdConfig);
+    assert.deepEqual(view.controlStyle.fd_subject.desktop.paddingControl,
+      { top: "8px", right: "0px", bottom: "8px", left: "12px" });
+    assert.deepEqual(view.controlStyle.fd_note.desktop.paddingControl,
+      { top: "8px", right: "0px", bottom: "8px", left: "0px" });
+    assert.equal(view.controlStyle.fd_subject.mobile, undefined);
+    const result = prepared.verify(prepared.update);
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    assert.deepEqual(result.form.layoutRows[0].cells[0].contentFlow, cell.contentFlow);
+    delete view.controlStyle.fd_subject.desktop.paddingControl;
+    config.viewModel[0].fdConfig = JSON.stringify(view);
+    prepared.update.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
+    assert.equal(prepared.verify(prepared.update).ok, false, "lost native padding must fail readback");
+  });
+
   it("keeps explicit lines, empty lines, wrapping, and physical item widths through readback", () => {
     const prepared = prepareSample(flowDsl());
     const result = prepared.verify(prepared.update);

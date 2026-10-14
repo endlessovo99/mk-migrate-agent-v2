@@ -30,7 +30,15 @@ Field names and visible captions are separate facts. When independent adjacent t
 
 Multiple controls that already occupy one source cell stay in that cell. A positive-width, visible `*.name` input with its own active label binding remains a visible text input beside its zero-width address selector; its required state stays on the input. Other display companions retain the single-address-control mapping and are stored without rendering. Punctuation or unit text that is not a folded number unit remains as an inline description in that cell. The native writer keeps those references as one GridItem. Explicit DSL `contentFlow` uses native flex containers to preserve source line breaks, wrapping, and item widths. A `keepInline` group without `contentFlow` uses a native `xform-row` inside that GridItem: short descriptions get a small column share, while editors share the remaining width. An inner horizontal container is necessary because NewOA wraps GridItem contents in a vertical receiver. Readback checks the chosen layout contract as well as field references; lost horizontal layout fails verification.
 
-Unequal spans in a complete, unambiguous ordinary source row are retained in the target grid, including rows whose cells still hold more than one inline control. This ordinary-row path accepts quoted or unquoted HTML widths and pixel or percentage CSS values. Only measurements with compatible units in the row become width weights; the writer emits native `colsStyle` only when the column measurements are complete and consistent. Otherwise the source spans remain the layout evidence, without guessing missing widths. Nested-table regions retain their separate, existing projection policy.
+Unequal spans in a complete, unambiguous source row are retained in the target grid, including nested standard-table rows and cells holding multiple inline controls. Ordinary rows accept quoted or unquoted HTML widths and pixel or percentage CSS values. Only measurements with compatible units in the row become width weights; the writer emits native `colsStyle` for an ordinary row only when its column measurements are complete and consistent. Otherwise its source spans remain the layout evidence, without guessing missing widths.
+
+A nested static table retains its description-only header when at least two column headings align with inputs in a body row. A blank corner and later merged explanation rows are allowed when their column extents agree. Header captions remain separate controls; the input-plus-unit cells and later `colspan` values keep their source positions. Two-column label/value forms and mixed input/header rows do not establish this header pattern.
+
+A headerless nested title/value row can retain its independent caption when the adjacent editor has inactive label binding, even if a stale binding ID points elsewhere. Recovery requires a unique rendered JSP editor and the same visible caption in an unconditional source row. An `xform:right` permission wrapper does not add an editor title: its permissions remain intact while the retained caption supplies the visible title and the native editor subject is hidden. This also applies to retained external permission captions beside text and radio editors. Conditional rows and explicit `showLabel` renderers do not establish this evidence.
+
+For source flow input/radio items with positive pixel widths and independently hidden titles, desktop persistence uses compact native field padding, retaining space for required markers. A short unit beside an editor at most 100px wide receives compact spacing. Source-width column projection reserves a larger minimum weight for tables containing narrow inline items, accounting for both native wrappers in the classic theme. Source control widths, explicit line breaks, field types, and mobile padding remain intact; readback verifies the native padding and column widths as well as the content flow.
+
+Single-choice and multiple-choice controls can fold a same-cell “其他” caption and text companion into one native other option. An existing numbered or parenthesized other label, including “其他附件”, establishes the same relation when the adjacent text field's title matches that choice group. Intake retains the original option value and label as source evidence; the DSL mapper replaces the option with `label: "其他"`, `value: "other_"`, `type: "other"`, and `isRequired: true`. The companion remains stored as a data-only field and is removed from the visible layout and unconditional required checks. Main fields and detail columns follow the same mapping. An ordinary other option without a text companion, unrelated adjacent text, or multiple competing other options does not establish this relation.
 
 `clean` writes a source-only `source-draft.json`. It contains source controls, detail tables, source layout rows/cells, workflow DAG nodes/edges, source attributes, and source issues. It must not contain target `componentId`, `mkType`, or `@elem/*` target identifiers.
 
@@ -101,16 +109,17 @@ NewOA's native layout grid does not persist a grid inside a `GridItem`.
 Execution therefore lowers each nested root to one native multi-row grid:
 ordinary sibling cells retain their proportional region and use native
 `rowSpan`/`columnSpan` across the nested stack, while nested leaf controls are
-direct children of sibling `GridItem` nodes. The executor may use a
-one-to-eight-column integer lattice internally to calculate exact fractional
-boundaries, but it collapses unused boundaries before persistence and writes
-the resulting non-uniform widths as native `colsStyle`. An internal
-eight-column calculation therefore becomes five visible columns when only five
-semantic width segments exist; it is not exposed as an arbitrary eight-column
-designer layout. Ordinary non-nested rows retain their reviewed DSL grid. If
-no exact nested calculation exists within eight internal units, the root's
-original column count is retained and controls wrap inside their owned region
-instead of overlapping or widening unrelated rows.
+direct children of sibling `GridItem` nodes. The executor computes an exact
+common integer denominator for nested column boundaries, collapses unused
+boundaries, and writes their proportional widths as native `colsStyle`.
+Flattening may need more than eight native columns: a section caption beside
+an eight-column table needs nine. The retained native renderer in
+`tests/fixtures/executor/persistence/layout-grid-runtime/` accepts those tracks
+and merged-cell boundaries without clamping. The catalog limit still applies
+to each individual DSL node, not to the flattened native grid. Inexact numeric
+coordinates fail rather than silently reflowing a source row. Ordinary
+non-nested rows retain their reviewed DSL grid. Renderer replay and fake
+readback do not establish live server normalization or browser acceptance.
 
 Each lowered native cell carries its complete layout ownership path from the
 native root to the leaf owner. Readback compares that path, the reference type,

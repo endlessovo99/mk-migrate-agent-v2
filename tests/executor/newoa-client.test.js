@@ -42,7 +42,7 @@ describe("NewoaClient", () => {
 
     assert.equal(responses.length, 0);
     assert.deepEqual(calls[1], {
-      url: "http://oadev.shanghai-electric.com/data/sys-transfer/transferRecord/add",
+      url: "https://p-sit.onewo.com/data/sys-transfer/transferRecord/add",
       options: {
         method: "POST",
         headers: {
@@ -55,6 +55,22 @@ describe("NewoaClient", () => {
     assert.deepEqual(result, { fdId: "transfer-record-id" });
     assert.equal(JSON.stringify(result).includes(authToken), false);
     assert.equal(calls[1].options.body.includes(authToken), false);
+  });
+
+  it("keeps transfer-record authentication on the selected template origin", async () => {
+    for (const baseUrl of ["http://oaqas.shanghai-electric.com", "https://oaqas.shanghai-electric.com", "http://localhost:8088"]) {
+      const calls = [];
+      const client = new NewoaClient({ baseUrl, fetchImpl: async (url, options) => {
+        calls.push({ url, options });
+        return calls.length === 1
+          ? jsonResponse({ success: true }, { cookies: ["X-AUTH-TOKEN=origin-scoped-token; Path=/; HttpOnly"] })
+          : jsonResponse({ success: true, data: { fdId: "record-id" } });
+      } });
+      await client.login({ username: "fixture-user", encryptedPassword: "fixture-password" });
+      await client.addTransferRecord({ fdId: "record-id" });
+      assert.equal(calls[1].url, `${baseUrl}/data/sys-transfer/transferRecord/add`);
+      assert.equal(calls[1].options.headers["X-AUTH-TOKEN"], "origin-scoped-token");
+    }
   });
 
   it("fails before the transfer-record request when login has no X-AUTH-TOKEN cookie", async () => {

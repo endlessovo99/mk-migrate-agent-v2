@@ -1090,6 +1090,8 @@ function applyViewControlStyles(fields, viewModel) {
     ? scene.controlStyle
     : {};
   for (const field of fields) {
+    const padding = controlStyle[field.id]?.desktop?.paddingControl;
+    if (padding !== undefined) field.props.layoutPadding = structuredClone(padding);
     if (field?.component !== "xform-description") continue;
     const value = controlStyle[field.id]?.desktop?.controlValueStyle;
     if (!value || typeof value !== "object" || Array.isArray(value)) continue;

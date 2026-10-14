@@ -4,8 +4,7 @@ import { describe, it } from "node:test";
 import {
   buildTransferRecordPayload,
   generateTransferRecordId,
-  TRANSFER_RECORD_ENDPOINT_PATH,
-  TRANSFER_RECORD_ENDPOINT_URL
+  TRANSFER_RECORD_ENDPOINT_PATH
 } from "../../src/executor/transfer-record.js";
 
 const expected = JSON.parse(readFileSync(
@@ -25,7 +24,6 @@ describe("transfer record contract", () => {
     });
 
     assert.equal(TRANSFER_RECORD_ENDPOINT_PATH, expected.endpointPath);
-    assert.equal(TRANSFER_RECORD_ENDPOINT_URL, expected.endpointUrl);
     assert.deepEqual(payload, {
       fdId: "1j7jicsdnw1ef0wcjew2r072ra16f5sn02w0",
       ...expected.fixedFields,

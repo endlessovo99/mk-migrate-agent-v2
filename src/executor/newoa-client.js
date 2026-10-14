@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { TRANSFER_RECORD_ENDPOINT_URL } from "./transfer-record.js";
+import { TRANSFER_RECORD_ENDPOINT_PATH } from "./transfer-record.js";
 
 export const NEWOA_SIT_BASE_URL = "https://p-sit.onewo.com";
 export const NEWOA_POC_BASE_URL = "http://mkpaaspoc.shanghai-electric.com";
@@ -74,7 +74,7 @@ export class NewoaClient {
     const authToken = transferRecordAuthToken(this.cookie);
     let response;
     try {
-      response = await this.fetch(TRANSFER_RECORD_ENDPOINT_URL, {
+      response = await this.fetch(`${this.baseUrl}${TRANSFER_RECORD_ENDPOINT_PATH}`, {
         method: "POST",
         headers: {
           "content-type": "application/json",

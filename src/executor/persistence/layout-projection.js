@@ -1,7 +1,7 @@
 import { projectLayoutGrid } from "../../dsl/layout-pack.js";
 
-const DEFAULT_MAX_COLUMNS = 8;
 const MIN_SOURCE_COLUMN_WIDTH_WEIGHT = 135;
+const MIN_INLINE_SOURCE_COLUMN_WIDTH_WEIGHT = 180;
 const MIN_NESTED_CAPTION_COLUMN_SHARE = 0.2;
 
 /**
@@ -9,7 +9,7 @@ const MIN_NESTED_CAPTION_COLUMN_SHARE = 0.2;
  * persist. Native layout-grid does not safely support grid-in-grid, so a root
  * containing layout references is projected into one proportional grid.
  */
-export function projectNativeLayoutRows(mkTree = [], options = {}) {
+export function projectNativeLayoutRows(mkTree = []) {
   const nodes = Array.isArray(mkTree) ? mkTree.filter(isRecord) : [];
   const nodesById = new Map(nodes.map((node) => [node.id, node]).filter(([id]) => nonEmptyString(id)));
   const referencedLayoutIds = new Set(
@@ -20,14 +20,13 @@ export function projectNativeLayoutRows(mkTree = [], options = {}) {
     )
   );
   const roots = nodes.filter((node) => !referencedLayoutIds.has(node.id));
-  const maxColumns = positiveInteger(options.maxColumns) || DEFAULT_MAX_COLUMNS;
 
   return roots.map((root) => {
     if (!hasLayoutReference(root)) {
       return projectPlainRoot(root);
     }
 
-    const projectionColumns = selectProjectionColumns(root, nodesById, maxColumns);
+    const projectionColumns = exactProjectionColumns(root, nodesById);
     const flattened = flattenNode({
       node: root,
       nodesById,
@@ -229,88 +228,33 @@ function flattenNode({
   return { rows: projectedRow, cells: projectedCells };
 }
 
-function selectProjectionColumns(root, nodesById, maxColumns) {
-  // This is an internal integer lattice, not the number of native columns.
-  // Nested ratios such as an outer 1/4 + an inner five-column grid need 20
-  // lattice units, but compress back to only six visible native columns.
-  const internalLimit = maxColumns * maxColumns;
-  for (let candidate = 1; candidate <= internalLimit; candidate += 1) {
-    if (hasExactRecursiveBoundaries({
-      node: root,
-      nodesById,
-      regionColspan: candidate,
-      ancestors: new Set()
-    }) && projectedVisibleColumnCount(root, nodesById, candidate) <= maxColumns) {
-      return candidate;
-    }
-  }
-  return positiveInteger(root.props?.columns) || 1;
-}
-
-function projectedVisibleColumnCount(root, nodesById, projectionColumns) {
-  const flattened = flattenNode({
-    node: root,
-    nodesById,
-    regionColumn: 0,
-    regionColspan: projectionColumns,
-    totalColumns: projectionColumns,
-    ancestors: new Set(),
-    ownerNodePath: [root.id]
-  });
-  return compressProjectionColumns(
-    orderedCells(flattened.cells),
-    projectionColumns
-  ).columns;
-}
-
-function hasExactRecursiveBoundaries({
-  node,
-  nodesById,
-  regionColspan,
-  ancestors
-}) {
-  if (!node || ancestors.has(node.id)) return false;
+// Each source node keeps its catalog column limit. Flattening several nodes
+// can require more native boundaries; layout-grid itself renders every column.
+// Use a common denominator so the projection never rounds cells onto each other.
+function exactProjectionColumns(node, nodesById, ancestors = new Set()) {
+  if (!node || ancestors.has(node.id)) return 1;
   const nextAncestors = new Set(ancestors);
   nextAncestors.add(node.id);
-
   const sourceColumns = positiveInteger(node.props?.columns) || 1;
-  const expandedCells = expandOrdinaryReferences(node.children || [], sourceColumns);
-  for (const cell of expandedCells) {
-    const sourceColumn = integerOr(cell.column, 0);
-    const sourceColspan = positiveInteger(cell.colspan) || 1;
-    const sourceStart = Math.max(
-      0,
-      Math.min(sourceColumns, sourceColumn)
-    );
-    const sourceEnd = Math.max(
-      sourceStart,
-      Math.min(sourceColumns, sourceColumn + sourceColspan)
-    );
-    const startNumerator = sourceStart * regionColspan;
-    const endNumerator = sourceEnd * regionColspan;
-    if (
-      startNumerator % sourceColumns !== 0 ||
-      endNumerator % sourceColumns !== 0
-    ) {
-      return false;
-    }
+  let columns = sourceColumns;
+  for (const cell of expandOrdinaryReferences(node.children || [], sourceColumns)) {
     if (cell.refType !== "layout") continue;
-
-    const childRegionColspan = (endNumerator - startNumerator) / sourceColumns;
+    const span = positiveInteger(cell.colspan) || 1;
     for (const layoutId of refIdsFor(cell)) {
-      const child = nodesById.get(layoutId);
-      if (!child) continue;
-      if (!hasExactRecursiveBoundaries({
-        node: child,
-        nodesById,
-        regionColspan: childRegionColspan,
-        ancestors: nextAncestors
-      })) {
-        return false;
+      const childColumns = exactProjectionColumns(nodesById.get(layoutId), nodesById, nextAncestors);
+      const required = sourceColumns * (childColumns / gcd(span, childColumns));
+      columns = (columns / gcd(columns, required)) * required;
+      if (!Number.isSafeInteger(columns) || !Number.isSafeInteger(columns * sourceColumns)) {
+        throw new Error(`Nested layout ${node.id} exceeds exact coordinate precision.`);
       }
     }
   }
-  return true;
+  return columns;
+}
+
+function gcd(left, right) {
+  while (right) [left, right] = [right, left % right];
+  return left;
 }
 
 function placePlansWithoutOverlap(plans, {
@@ -515,6 +459,12 @@ function nestedCaptionColumn(cells, columns) {
 }
 
 function sourceWidthColsStyle(cells, columns) {
+  const hasNarrowInlineItems = cells.some((cell) => cell.contentFlow?.lines?.some((line) =>
+    line.length > 1 && cell.contentFlow.items.some((item) => line.includes(item.referenceId) &&
+      item.width?.unit === "px" && item.width.value > 0 && item.width.value <= 100)
+  ));
+  // Input and unit wrappers both consume space in the classic theme.
+  const minimumWeight = hasNarrowInlineItems ? MIN_INLINE_SOURCE_COLUMN_WIDTH_WEIGHT : MIN_SOURCE_COLUMN_WIDTH_WEIGHT;
   const weights = Array.from({ length: columns });
   for (const cell of orderedCells(cells)) {
     const column = integerOr(cell.column, -1);
@@ -540,7 +490,7 @@ function sourceWidthColsStyle(cells, columns) {
     // A literal legacy 62px column otherwise leaves only a couple of pixels
     // for labels such as 类型/A型 and makes a real five-column table look like
     // a three-column table. Preserve proportions above this renderer floor.
-    weights[index] = Math.max(weights[index], MIN_SOURCE_COLUMN_WIDTH_WEIGHT);
+    weights[index] = Math.max(weights[index], minimumWeight);
   }
   const total = weights.reduce((sum, weight) => sum + weight, 0);
   if (!(total > 0)) return undefined;
