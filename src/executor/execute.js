@@ -218,6 +218,12 @@ async function executeDraftDsl(input, options, writes) {
     apiStages[apiStages.length - 1].status = "ok";
     apiStages[apiStages.length - 1].resolvedCount = participantResolution.resolvedCount;
     apiStages[apiStages.length - 1].identityCount = participantResolution.identityCount;
+    if (participantResolution.departmentIdResolutions?.length) {
+      apiStages[apiStages.length - 1].departmentIdResolutions = redactCredentialValuesDeep(
+        participantResolution.departmentIdResolutions,
+        credentials
+      );
+    }
     if (participantResolution.overrideCount > 0) {
       const overrideAudits = redactCredentialValuesDeep(
         participantResolution.overrides,

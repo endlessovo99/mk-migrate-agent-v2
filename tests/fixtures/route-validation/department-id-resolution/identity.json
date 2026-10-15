@@ -1,0 +1,24 @@
+{
+  "source": {
+    "type": "user_or_org",
+    "name": "Fixture Shared Department",
+    "sourceId": "fixture-stable-department",
+    "sourceOrgType": 2,
+    "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgElement",
+    "sourceParentName": "Fixture Parent"
+  },
+  "target": {
+    "fdId": "fixture-stable-department",
+    "fdName": "Fixture Shared Department",
+    "fdOrgType": 2,
+    "fdParentName": "Fixture Root/Fixture Parent",
+    "fdIsAvailable": true
+  },
+  "sameNameOtherDepartment": {
+    "fdId": "fixture-other-department",
+    "fdName": "Fixture Shared Department",
+    "fdOrgType": 2,
+    "fdParentName": "Fixture Root/Fixture Parent",
+    "fdIsAvailable": true
+  }
+}
