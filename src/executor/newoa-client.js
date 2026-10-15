@@ -184,7 +184,7 @@ export class NewoaClient {
     return body.data;
   }
 
-  async getElementInfo(targets) {
+  async getElementInfo(targets, { departmentEvidence = false } = {}) {
     const normalizedTargets = [...new Set(
       (Array.isArray(targets) ? targets : [targets])
         .map((target) => String(target || "").trim())
@@ -195,7 +195,9 @@ export class NewoaClient {
     }
     const body = await this.postJson("sys-org", "sysOrgElementQuery/getElementInfo", {
       targets: normalizedTargets,
-      colums: ["fdId", "fdName", "fdOrgType"]
+      colums: departmentEvidence === true
+        ? ["fdId", "fdName", "fdOrgType", "fdIsAvailable", "fdParentName"]
+        : ["fdId", "fdName", "fdOrgType"]
     });
     if (!Array.isArray(body?.data)) {
       throw clientStageError("sysOrgElementQuery/getElementInfo", "organization element validation response did not include an array");

@@ -139,6 +139,7 @@ describe("resolveWorkflowParticipants", () => {
     ].sort());
     assert.deepEqual(client.calls, ["不存在岗位", "不存在群组", "不存在部门"]);
     assert.deepEqual(client.elementCalls, [
+      ["legacy-dept-missing"],
       [
         SIT_FALLBACK_POST.fdId,
         SIT_FALLBACK_GROUP.fdId,
@@ -192,7 +193,7 @@ describe("resolveWorkflowParticipants", () => {
       ]
     );
     assert.deepEqual(result.fallbackTargetIds, Object.values(fallbackFdIds).sort());
-    assert.deepEqual(client.elementCalls, [Object.values(fallbackFdIds).sort()]);
+    assert.deepEqual(client.elementCalls, [["legacy-id"], Object.values(fallbackFdIds).sort()]);
   });
 
   it("uses a validated person fallback on the HTTPS oaqas origin without rewriting the input DSL", async () => {

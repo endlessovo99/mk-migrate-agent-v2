@@ -270,6 +270,21 @@ export async function resolveWorkflowParticipants(dsl, {
   const directOverrideTargetIds = [...new Set(
     directOverrideResolutions.map((resolution) => resolution.target.fdId)
   )].sort();
+  const departmentIdResolutions = resolutions
+    .filter((resolution) => resolution.departmentIdResolved)
+    .map((resolution) => ({
+      ...buildParticipantOverrideAudit(resolution),
+      scope: resolution.scope,
+      target: {
+        fdId: normalizeText(resolution.target.fdId),
+        fdName: normalizeText(resolution.target.fdName),
+        fdOrgType: resolution.target.fdOrgType,
+        fdIsAvailable: true,
+        ...(normalizeText(candidateParentName(resolution.target))
+          ? { fdParentName: normalizeText(candidateParentName(resolution.target)) }
+          : {})
+      }
+    }));
   let resolvedCount = 0;
   let fallbackCount = configuredFormulaFallback.referenceCount;
   let overrideCount = 0;
@@ -328,7 +343,8 @@ export async function resolveWorkflowParticipants(dsl, {
       fallbackTargetsByOrgType,
       ...(fallbackTargetIds.length === 1 ? { fallbackTargetId: fallbackTargetIds[0] } : {})
     } : {}),
-    ...(directTargetFallbacks.length ? { directTargetFallbacks } : {})
+    ...(directTargetFallbacks.length ? { directTargetFallbacks } : {}),
+    ...(departmentIdResolutions.length ? { departmentIdResolutions } : {})
   };
 }
 
@@ -1265,6 +1281,17 @@ async function resolveIdentity(identity, client, caches) {
     return validateCurrentTargetIdentity(identity, client, caches.elementCache);
   }
 
+  const departmentResolution = await resolveStableSourceDepartmentIdentity(
+    identity, client, caches.elementCache
+  );
+  if (departmentResolution) return departmentResolution;
+  if (hasStableSourceDepartmentId(identity.member) && typeof client?.searchOrg !== "function") {
+    return {
+      ...identity,
+      issue: { reason: "search_unavailable", sourceId: identity.member.sourceId, paths: identity.paths }
+    };
+  }
+
   const evidenceIssue = validateSourceEvidence(identity);
   if (evidenceIssue) return { ...identity, issue: evidenceIssue };
 
@@ -1301,6 +1328,49 @@ async function resolveIdentity(identity, client, caches) {
   );
   const matches = matchCurrentCandidates(identity.member, candidates);
   return resolutionFromMatches(identity, matches);
+}
+
+function hasStableSourceDepartmentId(member = {}) {
+  return normalizeOrgType(member.sourceOrgType) === "2" && Boolean(normalizeText(member.sourceId));
+}
+
+/** An empty exact lookup may use legacy matching; a conflicting identity must not. */
+async function resolveStableSourceDepartmentIdentity(identity, client, elementCache) {
+  if (!hasStableSourceDepartmentId(identity.member)) return undefined;
+  const departmentId = normalizeText(identity.member.sourceId);
+  const blocked = (reason, extra = {}) => ({
+    ...identity,
+    issue: {
+      reason, sourceId: departmentId, name: identity.member.name,
+      sourceOrgType: 2, paths: identity.paths, ...extra
+    }
+  });
+  let lookup;
+  try {
+    lookup = await currentElementsByExactId(departmentId, client, elementCache, { departmentEvidence: true });
+  } catch {
+    return blocked("source_department_id_lookup_failed");
+  }
+  const { response, candidates, exactMatches } = lookup;
+  if (Array.isArray(response) && response.length === 0) return undefined;
+  if (!Array.isArray(response) || response.length !== 1 || candidates.length !== 1 || exactMatches.length !== 1) {
+    return blocked("source_department_id_response_invalid", { candidateIds: candidates.map(candidate => candidate.fdId) });
+  }
+  const target = exactMatches[0];
+  if (normalizeOrgType(target.fdOrgType) !== "2") {
+    return blocked("source_department_id_type_mismatch", { targetOrgType: target.fdOrgType });
+  }
+  if (target.fdIsAvailable !== true) return blocked("source_department_id_unavailable");
+  const sourceName = normalizeText(identity.member.name);
+  if (sourceName && normalizeText(target.fdName) !== sourceName) {
+    return blocked("source_department_id_name_mismatch", { targetName: target.fdName });
+  }
+  const sourceParent = normalizeText(identity.member.sourceParentName);
+  const targetParent = normalizeText(candidateParentName(target));
+  if (sourceParent && targetParent && !parentNameMatches(sourceParent, targetParent)) {
+    return blocked("source_department_id_parent_mismatch", { sourceParentName: sourceParent, targetParentName: targetParent });
+  }
+  return { ...identity, target, departmentIdResolved: true };
 }
 
 async function resolveStableSourceRoleIdentity(identity, client, elementCache) {
@@ -1407,14 +1477,19 @@ async function validateCurrentTargetIdentity(identity, client, elementCache) {
   };
 }
 
-async function currentElementsByExactId(targetId, client, elementCache) {
-  let candidatesPromise = elementCache.get(targetId);
+async function currentElementsByExactId(targetId, client, elementCache, { departmentEvidence = false } = {}) {
+  const key = departmentEvidence ? `department\0${targetId}` : targetId;
+  let candidatesPromise = elementCache.get(key);
   if (!candidatesPromise) {
-    candidatesPromise = Promise.resolve(client.getElementInfo([targetId]));
-    elementCache.set(targetId, candidatesPromise);
+    candidatesPromise = Promise.resolve(departmentEvidence
+      ? client.getElementInfo([targetId], { departmentEvidence: true })
+      : client.getElementInfo([targetId]));
+    elementCache.set(key, candidatesPromise);
   }
-  const candidates = currentElementCandidates(await candidatesPromise);
+  const response = await candidatesPromise;
+  const candidates = currentElementCandidates(response);
   return {
+    response,
     candidates,
     exactMatches: candidates.filter((candidate) => (
       normalizeText(candidate.fdId) === targetId
@@ -1618,10 +1693,13 @@ function requiredClientCapabilityIssues(
   const stableRoleSources = unresolvedSources.filter((identity) => (
     hasStableSourceRoleId(identity.member)
   ));
+  const departmentSources = unresolvedSources.filter((identity) => hasStableSourceDepartmentId(identity.member));
   const searchedSources = unresolvedSources.filter((identity) => (
-    !hasStableSourceRoleId(identity.member) ||
-    Boolean(normalizeText(identity.member?.sourceParentName)) ||
-    isBracketedGenericRole(identity.member)
+    !hasStableSourceDepartmentId(identity.member) && (
+      !hasStableSourceRoleId(identity.member) ||
+      Boolean(normalizeText(identity.member?.sourceParentName)) ||
+      isBracketedGenericRole(identity.member)
+    )
   ));
   const overriddenSources = values.filter((identity) => (
     identity.kind === "source" &&
@@ -1643,6 +1721,13 @@ function requiredClientCapabilityIssues(
       reason: "source_role_validation_unavailable",
       message: "NewOA client does not provide exact role-line identity validation.",
       paths: stableRoleSources.flatMap((identity) => identity.paths)
+    });
+  }
+  if (departmentSources.length > 0 && typeof client?.getElementInfo !== "function") {
+    issues.push({
+      reason: "source_department_validation_unavailable",
+      message: "NewOA client does not provide exact department identity validation.",
+      paths: departmentSources.flatMap((identity) => identity.paths)
     });
   }
   const targetIdentities = values.filter((identity) => identity.kind === "target");
