@@ -108,7 +108,10 @@ function lowerTemplateAuthorizationForNativePersistence(dsl) {
       authorization: {
         ...authorization,
         readers,
-        editors
+        editors,
+        // Native full-reading rights include the materialized formal editors.
+        // This projection does not change source or temporary authorization.
+        allReaders: unionAuthorizationMembers(authorization.allReaders, editors)
       }
     }
   };

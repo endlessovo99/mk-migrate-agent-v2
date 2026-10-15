@@ -1,3 +1,4 @@
+import { sourceNumberEditors } from "../dsl/source-number-editor.js";
 import { componentSupportsProp } from "../dsl/catalogs.js";
 import { mergeContentFlowReferences, selectContentFlow } from "../dsl/content-flow.js";
 
@@ -25,13 +26,14 @@ export function projectCompanionPresentation(layout, fields) {
 
 /** Unit text is consumed only after its target control can render it natively. */
 export function projectUnitPresentation(form) {
+  const numberEditors = sourceNumberEditors(form);
   const fieldsById = new Map((form.fields || []).map((field) => [field.id, field]));
   const consumed = new Set();
   const fields = (form.fields || []).map((field) => {
     const unit = field.sourceProps?.inlineUnit;
     if (!unit?.content) return field;
     const { unit: _unit, ...props } = field.props || {};
-    if (!componentSupportsProp(field.componentId, "unit")) return { ...field, props };
+    if (numberEditors.has(field.id) || !componentSupportsProp(field.componentId, "unit")) return { ...field, props };
     const text = fieldsById.get(unit.id);
     if (text && text.componentId === "xform-description" &&
       String(text.props?.content || "").trim() === String(unit.content).trim()) {

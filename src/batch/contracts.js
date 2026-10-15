@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { sha256Digest } from "../agent-review/digest.js";
+import { validateWorkflowSignOptions } from "../dsl/workflow-sign-contract.js";
 
 export const now = () => new Date().toISOString();
 export const newId = (prefix) => `${prefix}-${randomUUID()}`;
@@ -31,7 +32,9 @@ const mappingKeys = {
 };
 export function executionOptions(value = {}) {
   exactKeys(value, [...Object.keys(mappingKeys), "fallbackFdIds", "allowTemplateAuthorizationFallback",
-    "allowMissingDirectPersonFallback", "allowMissingDirectPostFallback", "directPersonFallbackIds"], "executionOptions");
+    "allowMissingDirectPersonFallback", "allowMissingDirectPostFallback", "directPersonFallbackIds", "workflowCooperationDefault",
+    "workflowSignDocumentPolicy", "workflowOperationSetOverrides"], "executionOptions");
+  requireValue(validateWorkflowSignOptions(value).ok, "Invalid explicit sign execution policy");
   for (const [key, sourceKey] of Object.entries(mappingKeys)) {
     if (!(key in value)) continue;
     requireValue(Array.isArray(value[key]), `${key} must be an array`);
@@ -46,6 +49,9 @@ export function executionOptions(value = {}) {
   }
   for (const key of ["allowTemplateAuthorizationFallback", "allowMissingDirectPersonFallback", "allowMissingDirectPostFallback"]) {
     if (key in value) requireValue(typeof value[key] === "boolean", `${key} must be boolean`);
+  }
+  if ("workflowCooperationDefault" in value) {
+    requireValue(["1", "2", "3"].includes(value.workflowCooperationDefault), "workflowCooperationDefault must be an explicit string 1, 2, or 3");
   }
   if ("fallbackFdIds" in value) {
     exactKeys(value.fallbackFdIds, ["person", "organization", "group", "post", "role"], "fallbackFdIds");

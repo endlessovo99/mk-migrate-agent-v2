@@ -23,6 +23,7 @@ export function translateSysFormTemplateXml(xml, options = {}) {
     knownFieldIds: collectMetadataFieldIds(metadata)
   });
   const form = buildDesignerFirstForm(template.fdDesignerHtml || "", metadata, warnings, {
+    runtimeDisplayHtml: template.fdDisplayJsp || "",
     runtimeVisibleFieldIds: unconditionallyRenderedRichTextFieldIds(
       template.fdDisplayJsp || ""
     ),

@@ -4,7 +4,7 @@ import { sanitizeCredentialMaterial } from "../credential-material.js";
 import { isDataOnlyMetadataField } from "./sysform-metadata.js";
 import { restDialogEvidence, sanitizeDesignerValues } from "./rest-dialog.js";
 import { parseDesignerFdValues } from "./designer-control-values.js";
-import { designerContentFlow, filterContentFlow } from "./designer-content-flow.js";
+import { designerContentFlow, filterContentFlow, runtimeSelectWidthEvidence } from "./designer-content-flow.js";
 import { componentForSourceType } from "./field-component.js";
 import { descriptionFieldFromMarkedRow, extractRowMarkers } from "./designer-row-markers.js";
 import {
@@ -17,6 +17,9 @@ import {
 } from "./inline-caption-recovery.js";
 import { isSafeInlineUnit } from "./source-text-predicates.js";
 import { annotateChoiceOtherCompanions } from "./choice-other-companion.js";
+import { annotateRuntimeTextReadOnly } from "./runtime-text-readonly.js";
+import { annotateRuntimeSelectEmpty } from "./runtime-select-empty.js";
+import { runtimeIndependentCaptionEvidence } from "./runtime-independent-caption.js";
 import { isStaticDescriptionGridShape, isStaticHeaderGridShape } from "./standard-table-grid.js";
 import {
   designerVisibilityWarnings,
@@ -117,7 +120,7 @@ export function buildDesignerFirstForm(html, metadata, warnings, options = {}) {
 
   warnSuspiciousDetailTableTitles(fields, warnings);
   return {
-    fields,
+    fields: annotateRuntimeSelectEmpty(annotateRuntimeTextReadOnly(fields, options.runtimeDisplayHtml || "", warnings), options.runtimeDisplayHtml || ""),
     dataFields,
     layout: removeDataOnlyFieldsFromLayout(designer.layout, dataOnlyIds)
   };
@@ -160,6 +163,8 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
     nodeDataAuthorityVisibleFieldIds
   );
   captionContext.editorLabelEvidence = options.editorLabelEvidence || new Map();
+  captionContext.independentCaptions = runtimeIndependentCaptionEvidence(decoded, options.runtimeDisplayHtml || "");
+  captionContext.runtimeSelectWidths = runtimeSelectWidthEvidence(options.runtimeDisplayHtml || "");
   const metadataContext = metadataMatchContext(metadataFields);
   const fields = [];
   const fieldIds = new Set();
@@ -301,6 +306,43 @@ function expandNestedLayoutRowDescriptor(
       ? { layoutRowIds: nestedRootDescriptors.map((row) => row.id) }
       : {})
   }));
+  const inlineDescriptors = [];
+  const parentCell = parentCells[nested.sourceCellIndex];
+  if (parentCell.controls.some((control) => !control.source?.designerHidden)) {
+    const sourceCell = sourceCells[nested.sourceCellIndex];
+    const parts = [
+      ["before", sourceCell.body.slice(0, nested.start)],
+      ["after", sourceCell.body.slice(nested.end)]
+    ];
+    const inlineIds = new Map();
+    for (const [position, body] of parts) {
+      const controls = extractLayoutCellControls(body, captionContext, metadataContext, {
+        preservePlainLabels: preservesStandardTableLabels(descriptor.standardTableProjection),
+        preserveStandalonePlainLabels: preservesStandaloneStandardTableLabels(descriptor.standardTableProjection),
+        preserveBoundCaptions: preservesBoundStandardTableCaptions(descriptor.standardTableProjection)
+      });
+      if (!controls.length) continue;
+      const id = `${descriptor.id}.cell-${nested.sourceCellIndex}.${position}`;
+      inlineDescriptors.push({
+        id,
+        sourceRow: `${descriptor.sourceRow}.${nested.sourceCellIndex}.${position}`,
+        // Row markers belong to the enclosing source row, including aliases
+        // appearing beside the nested table.
+        html: "",
+        inheritedMarkers: [],
+        sourceCells: [{ attrs: { column: "0" }, body, controls }]
+      });
+      if (controls.some((control) => !control.source?.designerHidden)) inlineIds.set(position, id);
+    }
+    // A source TD owns one outer grid slot. Its ordinary content and nested
+    // table remain ordered child rows inside that slot.
+    parentCell.controls = [];
+    parentCell.layoutRowIds = [
+      inlineIds.get("before"),
+      ...parentCell.layoutRowIds,
+      inlineIds.get("after")
+    ].filter(Boolean);
+  }
   return [
     {
       ...descriptor,
@@ -311,6 +353,7 @@ function expandNestedLayoutRowDescriptor(
       html: outsideCells.map((cell) => cell.body).join(""),
       sourceCells: parentCells
     },
+    ...inlineDescriptors,
     ...nestedDescriptors
   ];
 }
@@ -474,7 +517,7 @@ function appendDesignerLayoutRow(descriptor, context) {
         cellFieldIds.push(control.id);
       }
       if (!cellFieldIds.length) return;
-      const contentFlow = designerContentFlow(cell.body, cellFieldIds);
+      const contentFlow = designerContentFlow(cell.body, cellFieldIds, captionContext.runtimeSelectWidths);
 
       cells.push({
         id: `${descriptor.id}-cell-${column.column}${groupIndex ? `-${groupIndex}` : ""}`,
@@ -568,6 +611,22 @@ function recoverAdjacentTitleCells(cells, captionContext, metadataContext, proje
     });
     const caption = candidates[0];
     const control = valueCell.controls[0];
+    const independentCaption = captionContext.independentCaptions?.get(control.id);
+    if (independentCaption && candidates.length === 1 && caption?.id === independentCaption.captionId &&
+      cleanText(caption.title) === independentCaption.content && !caption.source?.designerHidden &&
+      !control.source?.designerHidden && !control.source?.boundCaption && !control.source?.inlineCaption &&
+      !control.source?.explicitTitle && !isDataOnlyMetadataField(metadataContext.byId.get(control.id))) {
+      result[index] = { ...captionCell, controls: [caption] };
+      result[index + 1] = { ...valueCell, controls: [{
+        ...control,
+        source: { ...control.source, layoutCell: {
+          ...control.source?.layoutCell, hiddenLabel: true,
+          relation: "runtime-independent-title-cell", captionIds: [caption.id],
+          evidence: independentCaption
+        } }
+      }] };
+      continue;
+    }
     const evidence = captionContext.editorLabelEvidence.get(control.id);
     if (
       !captionCell.controls.length && candidates.length === 1 && isPlainInlineCaption(caption) &&
@@ -724,6 +783,7 @@ function retainEditorCaptionPresentation(cells, context, metadataContext, warnin
     const start = parseColumnSpec(left.attrs.column, index - 1);
     if (start.column + start.colspan !== parseColumnSpec(right.attrs.column, index).column) continue;
     right.controls = right.controls.map((control) => {
+      if (control.source?.layoutCell?.relation === "runtime-independent-title-cell") return control;
       const evidence = context.editorLabelEvidence.get(control.id);
       const externalCaption = control.source?.boundCaption;
       const retainedExternalCaption = externalCaption?.relation === "external-right-prompt" &&

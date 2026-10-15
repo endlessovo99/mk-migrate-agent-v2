@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-timed-initialization-form</string></void>
+<void method="put"><string>fdModelId</string><string>route-timed-initialization-template</string></void>
+<void method="put"><string>fdName</string><string>Timed initialization</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_mode",label:"Mode",dataType:"String",items:"A|A;B|B;C|C;D|D"}'&gt;&lt;input id="fd_mode"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="fd_a_row" name="fd_a_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload_a",label:"Payload a",dataType:"String"}'&gt;&lt;input id="fd_payload_a"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" id="fd_b_row" name="fd_b_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload_b",label:"Payload b",dataType:"String"}'&gt;&lt;input id="fd_payload_b"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;input type="hidden" id="fd_c_row" name="fd_c_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload_c",label:"Payload c",dataType:"String"}'&gt;&lt;input id="fd_payload_c"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="4" column="0"&gt;&lt;input type="hidden" id="fd_d_row" name="fd_d_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload_d",label:"Payload d",dataType:"String"}'&gt;&lt;input id="fd_payload_d"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="5" column="0"&gt;&lt;input type="hidden" id="fd_or_row" name="fd_or_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload_or",label:"Payload or",dataType:"String"}'&gt;&lt;input id="fd_payload_or"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_mode" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload_a" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload_b" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload_c" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload_d" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload_or" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;
+Com_AddEventListener(window, "load",
+     function(){setTimeout(function(){
+        common_dom_row_set_show_required_reset("fd_a_row",false,false,false);
+        common_dom_row_set_show_required_reset("fd_b_row",false,false,false);
+        common_dom_row_set_show_required_reset("fd_c_row",false,false,false);
+        common_dom_row_set_show_required_reset("fd_d_row",false,false,false);
+         var current=$('[name="extendDataFormInfo.value(fd_mode)"]:checked').val();
+         console.log("value",current);
+         if(current==='A'){
+          common_dom_row_set_show_required_reset("fd_a_row",true,true,false);
+          common_dom_row_set_show_required_reset("fd_b_row",false,false,false);
+          common_dom_row_set_show_required_reset("fd_c_row",false,false,false); 
+          common_dom_row_set_show_required_reset("fd_d_row",false,false,false); 
+         }else if(current==='B'){
+            common_dom_row_set_show_required_reset("fd_b_row",true,true,false); 
+            common_dom_row_set_show_required_reset("fd_c_row",false,false,false);
+            common_dom_row_set_show_required_reset("fd_a_row",false,false,false);
+            common_dom_row_set_show_required_reset("fd_d_row",false,false,false); 
+         }else if(current==='C'){
+            common_dom_row_set_show_required_reset("fd_c_row",true,true,false); 
+            common_dom_row_set_show_required_reset("fd_a_row",false,false,false);
+            common_dom_row_set_show_required_reset("fd_b_row",false,false,false);
+            common_dom_row_set_show_required_reset("fd_d_row",false,false,false); 
+         }else if(current==='D'){
+            common_dom_row_set_show_required_reset("fd_a_row",false,false,false);
+            common_dom_row_set_show_required_reset("fd_b_row",false,false,false);
+            common_dom_row_set_show_required_reset("fd_c_row",false,false,false);
+            common_dom_row_set_show_required_reset("fd_d_row",true,true,false);
+         }
+
+},510);});
+
+
+&lt;/script&gt;&lt;script&gt;Com_AddEventListener(window,"load",function(){setTimeout(function(){
+common_dom_row_set_show_required_reset("fd_or_row",false,false,false);
+var current=$('[name="extendDataFormInfo.value(fd_mode)"]:checked').val();
+if(current=="A"||current=="B"||current=="C"){
+common_dom_row_set_show_required_reset("fd_or_row",true,true,false);
+}
+},510);});&lt;/script&gt;</string></void>
+</object></java>

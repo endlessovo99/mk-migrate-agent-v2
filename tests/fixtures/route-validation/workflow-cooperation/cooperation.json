@@ -1,0 +1,11 @@
+{
+  "default": "3",
+  "nodes": [
+    { "id": "N_zero", "type": "review", "processType": "0", "expected": "3" },
+    { "id": "N_one", "type": "review", "processType": "1", "expected": "1" },
+    { "id": "N_two", "type": "review", "processType": "2", "expected": "2" },
+    { "id": "N_three", "type": "review", "processType": "3", "expected": "3" },
+    { "id": "N_missing", "type": "review", "expected": "2" },
+    { "id": "N_send", "type": "send", "processType": "0", "expected": "3" }
+  ]
+}

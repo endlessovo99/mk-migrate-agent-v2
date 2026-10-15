@@ -1,3 +1,4 @@
+import { sourceNumberEditors } from "../../dsl/source-number-editor.js";
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
@@ -257,7 +258,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
           refType: cell.refType,
           fieldIds: fieldIdsForCell,
           inlineLayout: inlineCellLayout(cell, form.fields),
-          ...(cell.contentFlow ? { contentFlow: structuredClone(cell.contentFlow) } : {}),
+          ...(cell.contentFlow ? { contentFlow: expectedContentFlow(cell.contentFlow, form.fields, sourceNumberEditors(form)), mobileContentFlow: expectedContentFlow(cell.contentFlow, form.fields) } : {}),
           row: cell.row,
           column: cell.column,
           colspan: cell.colspan,
@@ -267,6 +268,16 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     };
   });
 
+  const numberEditors = sourceNumberEditors(form);
+  for (const field of expectedFields) {
+    if (!numberEditors.has(field.id)) continue;
+    field.props.nativeNumberUnit = "";
+    field.props.nativeNumberTableType = "main";
+    field.props.nativeNumberDecorations = {};
+    field.props.nativeNumberEditorStyle = { theme: {}, style: { desktop: {
+      desktopTheme: "classic", desktopPaddingMode: "standard", layout: "horizontal"
+    } } };
+  }
   const flowPadding = contentFlowFieldPadding(form);
   for (const field of expectedFields) {
     if (flowPadding.has(field.id)) field.props.layoutPadding = flowPadding.get(field.id);
@@ -344,6 +355,7 @@ function expectedCalculationDependencies(entry, knownRefs) {
 
 function executableProps(field = {}, form = {}, context = {}) {
   const props = {};
+  if (field.componentId === "xform-number") props.nativeNumberControls = !sourceNumberEditors(form).has(field.id);
   if (field.props?.required === true) props.required = true;
   if (componentSupportsProp(field.componentId, "readOnly") && field.props?.readOnly === true) {
     props.readOnly = true;
@@ -931,12 +943,16 @@ function buildExpectedWorkflow(workflow, diagnostics, context = {}) {
       name: normalizeScalar(node.name),
       type: node.type,
       element: node.element || defaultElementForType(node.type),
+      cooperateType: ["review", "send", "sign"].includes(node.type)
+        ? node.cooperateType ?? (attributes.processType || "2")
+        : undefined,
       help: nonEmptyString(node.help) ? normalizeScalar(node.help) : undefined,
       mustModifyHandlerNodeIds: splitRelatedNodeIds(attributes.mustModifyHandlerNodeIds),
       canModifyHandlerNodeIds: splitRelatedNodeIds(attributes.canModifyHandlerNodeIds),
       participants: summarizeParticipants(node, initiatorSelectTargetNodeIds.has(node.id), context),
       alternativeParticipants: summarizeAlternativeParticipants(node.participants),
       sendConfig: summarizeSendConfig(node),
+      signConfig: summarizeSignConfig(node, nodes, diagnostics),
       manualBranch: summarizeExpectedManualBranch(node),
       parallelGateway: summarizeExpectedParallelGateway(node, edges),
       dataAuthority: summarizeDataAuthority(node, context),
@@ -1495,7 +1511,7 @@ function sourceAttributes(node) {
 }
 
 function expectedIgnoreOnSameIdentity(node) {
-  if (!node || !["review", "send"].includes(node.type)) return undefined;
+  if (!node || !["review", "send", "sign"].includes(node.type)) return undefined;
   const attrs = sourceAttributes(node);
   const fields = node.dataAuthority?.fields || {};
   const hasRequiredField = Object.values(fields).some((field) => field?.required === true);
@@ -1517,6 +1533,39 @@ function expectedIgnoreOnSameIdentity(node) {
     return "3";
   }
   return "2";
+}
+
+function summarizeSignConfig(node, nodes, diagnostics) {
+  if (node.type !== "sign") return undefined;
+  if (!nonEmptyString(node.operationRefId) || ["default", "custom"].includes(node.operationRefId)) {
+    diagnostics.push(projectionError("projection.workflow.sign_policy_unresolved", "Sign nodes require the resolved explicit operation reference.", { nodeId: node.id }));
+  }
+  const attrs = sourceAttributes(node);
+  const selectable = nodes.some(candidate => splitRelatedNodeIds(sourceAttributes(candidate).canModifyHandlerNodeIds).includes(node.id));
+  return {
+    operationRefId: node.operationRefId,
+    operations: [],
+    // Approved native sign defaults; do not derive this contract from writer output.
+    required: true,
+    formKey: "default",
+    allowUploadAttachments: "true",
+    openModifyProcessAuthority: "true",
+    modifyProcessAuthority: "1",
+    openNodeAuthority: "true",
+    nodeAuthority: "2",
+    allowMobileHandle: "true",
+    allowSendDing: "true",
+    checkPermission: { fdType: "all" },
+    fdScene: { fdMode: 0 },
+    openDataAuthority: node.dataAuthority?.enabled !== false && Object.keys(node.dataAuthority?.fields || {}).length > 0,
+    emptyHandlerType: selectable || attrs.ignoreOnHandlerEmpty === "true" ? 1 : 2,
+    recalculateHandler: attrs.recalculateHandler,
+    canModifyProcess: attrs.canModifyFlow ?? "false",
+    canModifyCommentViewPermission: attrs.canModifyNotionPopedom ?? "false",
+    handSignRequired: "false",
+    isUseAlternativeHandlerOnly: node.participants?.useAlternativeOnly === true ? "true" : "false",
+    mainDocumentPermissionPresent: false
+  };
 }
 
 function splitRelatedNodeIds(value = "") {
@@ -2133,4 +2182,22 @@ export function expectedRuleFingerprint(rule) {
     conditions: rule.conditions,
     effects: rule.effects
   });
+}
+
+// This is persisted layout meaning, independent of the native writer's styles.
+function expectedContentFlow(flow, fields = [], numberEditors = new Map()) {
+  const result = structuredClone(flow);
+  for (const item of result.items) {
+    const profile = numberEditors.get(item.referenceId);
+    // Main classic-standard control padding is 16px on each side. Source outer width is audit data.
+    if (profile) item.width = { value: profile.inputPx + 16 + 16, unit: "px" };
+  }
+  if (flow.lines.length === 1 && flow.lines[0].length === 1 && flow.items.length === 1) {
+    const item = flow.items[0];
+    const field = fields.find(field => field.id === item.referenceId);
+    if (item.width === undefined && field?.componentId === "xform-select") {
+      result.items[0].fillAvailable = true;
+    }
+  }
+  return result;
 }

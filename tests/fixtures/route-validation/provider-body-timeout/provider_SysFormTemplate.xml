@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>synthetic-provider-timeout-form</string></void>
+<void method="put"><string>fdModelId</string><string>synthetic-provider-timeout-template</string></void>
+<void method="put"><string>fdName</string><string>Synthetic provider response deadline</string></void>
+<void method="put"><string>fdDesignerHtml</string><string><![CDATA[<table fd_type="standardTable"><tbody><tr><td row="0" column="0"><div fd_type="inputText" fd_values='{id:"fd_note",label:"Note",dataType:"String"}' formDesign="landray"></div></td></tr></tbody></table>]]></string></void>
+<void method="put"><string>fdMetadataXml</string><string><![CDATA[<metadata><extendSimpleProperty name="fd_note" label="Note" type="String" length="200"/></metadata>]]></string></void>
+</object></java>

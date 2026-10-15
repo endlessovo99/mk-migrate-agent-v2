@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
 import { checkDraft } from "../../src/dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
@@ -40,8 +41,23 @@ describe("Source4 workflow write gates", () => {
     assert.equal(gateways.length, 12);
     assert.equal(gateways.every((node) => node.translationStatus === "executable"), true);
 
-    const trusted = trustSourceDraft(sourceDraft, dslDraft);
+    const reviewed = reviewTimedPriceLoad(sourceDraft, dslDraft, timedPriceInitialization);
+    assert.equal(reviewed.ok, true, JSON.stringify(reviewed.diagnostics));
+    const trusted = trustSourceDraft(sourceDraft, reviewed.dslDraft);
     assert.equal(buildDryRunPlan(trusted).ok, true);
+  });
+
+  it("rejects an immediate Source4 initialization even when its final row states match", () => {
+    const sourceDraft = cleanSourceFile(source4("17af0f6388dd27ab1d7d54543f0886fa"));
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const immediate = timedPriceInitialization.replace("setTimeout(function () {", "").replace("}, 510);", "");
+    const reviewed = reviewTimedPriceLoad(sourceDraft, dslDraft, immediate);
+    assert.equal(reviewed.ok, false);
+    assert.ok(reviewed.diagnostics.some(item => item.code === "agent.patch.row_marker_semantics_unverified" &&
+      item.details.reason === "source_or_scheduling_unproven"));
+    const unreviewed = createTrustedMigrationDsl(sourceDraft, dslDraft, { externalAgentReviewed: true, reviewerName: "route-validation", checkedAt });
+    assert.equal(checkTrust(sourceDraft, unreviewed).ok, false);
+    assert.equal(buildDryRunPlan(unreviewed).ok, false);
   });
 
   it("retains complete source identities when only the parent-name lookup hint is absent", () => {
@@ -224,6 +240,42 @@ describe("Source4 workflow write gates", () => {
     assert.equal(buildDryRunPlan(trusted).ok, false);
   });
 });
+
+const timedPriceInitialization = `function onLoad() {
+  setTimeout(function () {
+    MKXFORM.setFieldAttr("fd_one_row", 4);
+    MKXFORM.setFieldAttr("fd_one_row", 6);
+    MKXFORM.setFieldAttr("fd_two_row", 4);
+    MKXFORM.setFieldAttr("fd_two_row", 6);
+    MKXFORM.setFieldAttr("fd_three_row", 4);
+    MKXFORM.setFieldAttr("fd_three_row", 6);
+    var current = MKXFORM.getValue("fd_39d245962fff08");
+    if (current == "1") {
+      MKXFORM.setFieldAttr("fd_three_row", 5);
+      MKXFORM.setFieldAttr("fd_three_row", 3);
+    } else if (current == "2") {
+      MKXFORM.setFieldAttr("fd_two_row", 5);
+      MKXFORM.setFieldAttr("fd_two_row", 3);
+    } else {
+      MKXFORM.setFieldAttr("fd_one_row", 5);
+      MKXFORM.setFieldAttr("fd_one_row", 3);
+    }
+  }, 510);
+}`;
+
+function reviewTimedPriceLoad(sourceDraft, dslDraft, functionText) {
+  const index = dslDraft.scripts.actions.findIndex(action => action.event === "onLoad" && action.translationStatus === "needs_review");
+  assert.ok(index >= 0);
+  const action = dslDraft.scripts.actions[index];
+  const values = { function: functionText, translationStatus: "mapped",
+    functionMappings: [{ source: "scheduled row initialization", target: "same timer and ordered MKXFORM effects", basis: "semantic-translation", reviewRequired: false }],
+    coverage: { status: "translated", nativeRules: [], residuals: [] } };
+  const patches = Object.entries(values).map(([key, value]) => ({
+    op: "replace", path: `/scripts/actions/${index}/${key}`, value, sourceRefs: action.sourceRefs,
+    evidence: ["Keep the source 510ms callback, read phase and every row effect in order."], rationale: "Test the full reviewed schedule.", confidence: 0.99
+  }));
+  return applyEvidenceBackedPatches(dslDraft, patches, { sourceDraft, sourceRefs: collectSourceRefs(sourceDraft) });
+}
 
 function trustSourceDraft(sourceDraft, dslDraft) {
   const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {

@@ -5,6 +5,9 @@ import { executePublishedFormPatch } from "./published-form-patch.js";
 import { NewoaClient, normalizeBaseUrl } from "./newoa-client.js";
 import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
+import { resolveWorkflowCooperation } from "./workflow-cooperation.js";
+import { resolveWorkflowSignPolicy, verifyWorkflowSignReadback } from "./workflow-sign-policy.js";
+import { hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
 import {
   hasStaticAddressDefaults,
   resolveStaticAddressDefaults
@@ -62,6 +65,7 @@ async function executeDraftDsl(input, options, writes) {
   let templateId = "";
   let executableDsl = input;
   let transferRecordPreflight;
+  let signPolicy;
   const targetTemplateId = nonEmptyString(options.targetTemplateId)
     ? options.targetTemplateId.trim()
     : "";
@@ -72,6 +76,35 @@ async function executeDraftDsl(input, options, writes) {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    if (options.workflowCooperationDefault !== undefined ||
+        input.workflow?.nodes?.some(node => ["review", "send", "sign"].includes(node.type))) {
+      const stage = { name: "resolveWorkflowCooperation", status: "started" };
+      apiStages.push(stage);
+      const cooperation = await resolveWorkflowCooperation(executableDsl, {
+        client, workflowCooperationDefault: options.workflowCooperationDefault,
+        targetBaseUrl: baseUrl, now: options.now || new Date()
+      });
+      executableDsl = cooperation.dsl;
+      Object.assign(stage, { status: "ok", nodes: cooperation.nodes, fallbackCount: cooperation.fallbackCount,
+        ...(cooperation.config ? { config: cooperation.config } : {}) });
+      if (cooperation.fallbackCount) diagnostics.push({
+        level: "warning", code: "workflow.cooperation_current_default_applied",
+        message: "Source zero cooperation values used the explicitly selected and currently verified target default; source business semantics remain pending confirmation.",
+        path: "/workflow/nodes", details: { nodes: cooperation.nodes.filter(node => node.basis === "explicit-current-default"), config: cooperation.config }
+      });
+    }
+    if (options.workflowSignDocumentPolicy !== undefined || options.workflowOperationSetOverrides !== undefined ||
+        input.workflow?.nodes?.some(node => node.type === "sign" || hasSourceSignDeclaration(node))) {
+      const stage = { name: "resolveWorkflowSignPolicy", status: "started" };
+      apiStages.push(stage);
+      const resolved = await resolveWorkflowSignPolicy(executableDsl, { ...options, client });
+      executableDsl = resolved.dsl;
+      signPolicy = resolved.policy;
+      Object.assign(stage, { status: "ok", ...signPolicy });
+      diagnostics.push({ level: "warning", code: "workflow.sign.explicit_policy_applied", path: "/workflow/nodes",
+        message: "Sign nodes use the explicitly approved operation set; source main-document permissions remain audit-only under the form-only policy, not equivalent target permissions.",
+        details: { documentAudit: signPolicy.documentAudit, operationSets: signPolicy.operationSets } });
+    }
     apiStages.push({ name: "transferRecordPreflight", status: "started" });
     try {
       if (
@@ -615,7 +648,17 @@ async function executeDraftDsl(input, options, writes) {
       ),
       readbackTemplate
     );
-    const readback = theme ? theme.verify(numberedReadback, readbackTemplate) : numberedReadback;
+    let readback = theme ? theme.verify(numberedReadback, readbackTemplate) : numberedReadback;
+    if (signPolicy?.nodes.length && readback.ok) {
+      const stage = { name: "verifyWorkflowSignOperationSets", status: "started" };
+      apiStages.push(stage);
+      const signReadback = await verifyWorkflowSignReadback(signPolicy,
+        workflowTemplateDetail ? attachWorkflowReadback(readbackTemplate, workflowTemplateDetail) : readbackTemplate, client);
+      Object.assign(stage, { status: signReadback.ok ? "ok" : "failed", ...signReadback });
+      readback = { ...readback, signPolicy: signReadback,
+        ...(signReadback.ok ? {} : { ok: false, status: "mismatch", partitions: { ...readback.partitions, workflow: "mismatch" } }),
+        diagnostics: [...readback.diagnostics, ...signReadback.diagnostics] };
+    }
     diagnostics.push(...readback.diagnostics);
 
     if (!readback.ok) {

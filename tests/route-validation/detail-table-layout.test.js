@@ -465,15 +465,19 @@ describe("detail-table Route-validation", () => {
             .filter((reference) => reference.referenceType === "layout")
             .map((reference) => reference.referenceId)
         ),
-      ["row-16.nested-0.row-2"]
+      ["row-16.cell-0.before", "row-16.nested-0.row-2"]
+    );
+    assert.deepEqual(
+      sourceDraft.form.layout.rows
+        .find((row) => row.id === "row-16.cell-0.before")
+        ?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
+      ["fd_384596230af2e0", "fd_3845963b9cb07e"]
     );
 
     const dslDraft = draftSourceDraft(sourceDraft);
     const validation = validateMigrationDsl(dslDraft, { mode: "draft" });
     assert.equal(
-      validation.diagnostics.some((item) =>
-        item.code === "dsl.form.layout.layout_ref_missing"
-      ),
+      validation.diagnostics.some((item) => item.level === "error"),
       false
     );
   });

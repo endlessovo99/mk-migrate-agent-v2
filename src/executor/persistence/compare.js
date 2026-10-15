@@ -639,6 +639,14 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
           actual: actualCell.contentFlow
         }));
       }
+      if (stableStringify(expectedCell.mobileContentFlow) !== stableStringify(actualCell.mobileContentFlow)) {
+        diagnostics.push(mismatch("form", "readback.form.layout_content_flow_scene_mismatch", "Mobile cell content flow does not match its source-width projection.", {
+          invariantKey: `form.layout.rows.${rowIndex}.cells.${cellIndex}.mobileContentFlow`,
+          path: `/readback/form/layoutRows/${rowIndex}/cells/${cellIndex}/mobileContentFlow`,
+          expected: expectedCell.mobileContentFlow,
+          actual: actualCell.mobileContentFlow
+        }));
+      }
       if (
         expectedCell.row !== actualCell.row ||
         expectedCell.column !== actualCell.column ||
@@ -983,6 +991,13 @@ function compareWorkflow(expected, actual, diagnostics) {
     }
     assertEqual(diagnostics, "workflow", "readback.workflow.node_type_mismatch", `workflow.nodes.${node.id}.type`, node.type, actualNode.type);
     assertEqual(diagnostics, "workflow", "readback.workflow.node_element_mismatch", `workflow.nodes.${node.id}.element`, node.element, actualNode.element);
+    if (node.cooperateType !== undefined && node.cooperateType !== actualNode.cooperateType) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.cooperation_type_mismatch", "Readback workflow cooperation type mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.cooperateType`,
+        path: `/readback/workflow/nodes/${node.id}/cooperateType`,
+        expected: node.cooperateType, actual: actualNode.cooperateType
+      }));
+    }
     if (node.name && actualNode.name && node.name !== actualNode.name) {
       diagnostics.push(mismatch("workflow", "readback.workflow.node_name_mismatch", "Readback workflow node name mismatch.", {
         invariantKey: `workflow.nodes.${node.id}.name`,
@@ -1044,6 +1059,12 @@ function compareWorkflow(expected, actual, diagnostics) {
         path: `/readback/workflow/nodes/${node.id}/alternativeParticipants`,
         expected: node.alternativeParticipants,
         actual: actualNode.alternativeParticipants
+      }));
+    }
+    if (node.signConfig && stableStringify(node.signConfig) !== stableStringify(actualNode.signConfig || {})) {
+      diagnostics.push(mismatch("workflow", "readback.workflow.sign_config_mismatch", "Readback sign-node policy and flags mismatch.", {
+        invariantKey: `workflow.nodes.${node.id}.signConfig`, path: `/readback/workflow/nodes/${node.id}/signConfig`,
+        expected: node.signConfig, actual: actualNode.signConfig
       }));
     }
     if (node.sendConfig &&

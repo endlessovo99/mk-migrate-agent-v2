@@ -1,0 +1,9 @@
+{
+  "title": "Use the explicitly selected native cooperation default for legacy zero",
+  "rootCause": "The source numeric zero is not a valid native frontend option",
+  "reason": "Apply the caller's provisional target-default policy while retaining source evidence",
+  "evidence": ["Offline route fixture: current native default is explicitly 2; it is not source 0 plus 1"],
+  "version": "1",
+  "selector": { "diagnosticCodes": ["workflow.participants.empty"] },
+  "action": { "kind": "execution_options", "options": { "workflowCooperationDefault": "2" } }
+}

@@ -23,7 +23,7 @@ describe("dynamic invoice hyperlink Route case", () => {
     assert.equal(sourceUrl.dataOnly, undefined);
     assert.equal(sourceUrl.componentId, "xform-hidden");
     assert.equal(sourceUrl.sourceProps.hardHidden, true);
-    assert.deepEqual(hyperlink.props, { largestSet: 1, editable: false });
+    assert.deepEqual(hyperlink.props, { largestSet: 1, editable: false, readOnly: true });
     assert.equal(hyperlink.type, "hyperlinks");
     assert.equal(hyperlink.componentId, "xform-hyperlinks");
     assert.equal(hyperlink.generated, true);
@@ -70,7 +70,7 @@ describe("dynamic invoice hyperlink Route case", () => {
     assert.equal(sourceUrl.dataOnly, undefined);
     assert.equal(sourceUrl.componentId, "xform-hidden");
     assert.equal(sourceUrl.sourceProps.hardHidden, true);
-    assert.deepEqual(hyperlink.props, { largestSet: 1, editable: false });
+    assert.deepEqual(hyperlink.props, { largestSet: 1, editable: false, readOnly: true });
     assert.equal(hyperlink.type, "hyperlinks");
     assert.equal(hyperlink.componentId, "xform-hyperlinks");
     assert.equal(hyperlink.generated, true);

@@ -191,6 +191,7 @@ function mainFieldValueRowLifecycleCandidates(source, form, program) {
 // selector. Do not let its stale/empty hidden helper overwrite that native rule.
 // Keep required/reset calls and all effects without a complete native counterpart.
 function delegateBridgedLoadVisibility(candidate, source, formRules, form) {
+  if (candidate.translationStatus !== "mapped") return candidate;
   const sourceRef = source.sourceRef || source.id;
   let functionText = candidate.function;
   const delegated = [];
@@ -205,8 +206,9 @@ function delegateBridgedLoadVisibility(candidate, source, formRules, form) {
       const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), effect.target);
       if (resolved?.source !== "rowMarker" || resolved.unresolved?.length ||
           !resolved.targets?.some(target => target.kind === "detailTable")) continue;
-      const show = `MKXFORM.setFieldAttr(${JSON.stringify(effect.target)}, 5);`;
-      const hide = `MKXFORM.setFieldAttr(${JSON.stringify(effect.target)}, 4);`;
+      const target = canonicalRowMarker(effect.target, form);
+      const show = `MKXFORM.setFieldAttr(${JSON.stringify(target)}, 5);`;
+      const hide = `MKXFORM.setFieldAttr(${JSON.stringify(target)}, 4);`;
       if (!functionText.includes(show) || !functionText.includes(hide)) continue;
       functionText = functionText.split(show).join("").split(hide).join("");
       delegated.push(rule.id);
@@ -616,6 +618,17 @@ function eventValueEquality(node, valueName) {
 function onLoadCandidate(call, source, form) {
   const listener = windowLoadListener(call);
   if (!isFunction(listener) || listener.body?.type !== "BlockStatement") return undefined;
+  const timer = listenerTimerCall(listener);
+  if (timer && rowEffectTargets(timer.arguments[0]).length) {
+    // Keep this callback unresolved without discarding independent callbacks
+    // that the same source script can still translate deterministically.
+    return {
+      index: call.start, event: "onLoad", scope: "global",
+      javascript: String(source.javascript || "").slice(call.start, call.end),
+      translationStatus: "needs_review",
+      sourceRefs: [source.sourceRef || source.id]
+    };
+  }
   const model = loadModel(listener, source, form);
   if (!model) return undefined;
   const sourceRef = source.sourceRef || source.id;
@@ -624,7 +637,7 @@ function onLoadCandidate(call, source, form) {
     event: "onLoad",
     scope: "global",
     javascript: String(source.javascript || ""),
-    function: renderOnLoad(model),
+    function: renderOnLoad(model, form),
     translationStatus: "mapped",
     coverage: { status: "translated", nativeRules: [], residuals: [] },
     functionMappings: [{
@@ -1170,7 +1183,7 @@ function parseLoadBranch(block, form) {
   return { effects, nested };
 }
 
-function renderOnLoad(model) {
+function renderOnLoad(model, form) {
   const [mainRead, nestedRead] = model.reads;
   const lines = [
     "function onLoad() {",
@@ -1180,18 +1193,18 @@ function renderOnLoad(model) {
     "  var nestedValue = Array.isArray(rawNested) ? rawNested[0] : rawNested;"
   ];
   for (const target of model.initialTargets) {
-    lines.push(...renderRowEffect({ target, visible: false, required: false }, "  "));
+    lines.push(...renderRowEffect({ target, visible: false, required: false }, "  ", form));
   }
   model.main.branches.forEach((branch, index) => {
     lines.push(`${index === 0 ? "  if" : "  } else if"} (mainValue == ${JSON.stringify(branch.value)}) {`);
     for (const effect of branch.effects) {
-      lines.push(...renderRowEffect(effect, "    "));
+      lines.push(...renderRowEffect(effect, "    ", form));
     }
     if (branch.nested) {
       branch.nested.branches.forEach((nested, nestedIndex) => {
         lines.push(`${nestedIndex === 0 ? "    if" : "    } else if"} (nestedValue == ${JSON.stringify(nested.value)}) {`);
         for (const effect of nested.effects) {
-          lines.push(...renderRowEffect(effect, "      "));
+          lines.push(...renderRowEffect(effect, "      ", form));
         }
       });
       lines.push("    }");
@@ -1203,7 +1216,7 @@ function renderOnLoad(model) {
 
 function compileRowEffect(effect, form, indent) {
   if (!effect || !layoutMarkerSet(form).has(effect.target)) return undefined;
-  const lines = renderRowEffect(effect, indent);
+  const lines = renderRowEffect(effect, indent, form);
   if (!effect.reset) return lines;
 
   const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), effect.target);
@@ -1246,7 +1259,7 @@ function compileBaselineRowEffect(effect, form, indent) {
   }
 
   const lines = [
-    `${indent}MKXFORM.setFieldAttr(${JSON.stringify(effect.target)}, ${effect.visible ? 5 : 4});`
+    `${indent}MKXFORM.setFieldAttr(${JSON.stringify(canonicalRowMarker(effect.target, form))}, ${effect.visible ? 5 : 4});`
   ];
   for (const target of resolved.targets) {
     if (target.kind === "detailTable") continue;
@@ -1262,11 +1275,16 @@ function compileBaselineRowEffect(effect, form, indent) {
   return lines;
 }
 
-function renderRowEffect(effect, indent) {
+function renderRowEffect(effect, indent, form) {
+  const target = canonicalRowMarker(effect.target, form);
   return [
-    `${indent}MKXFORM.setFieldAttr(${JSON.stringify(effect.target)}, ${effect.visible ? 5 : 4});`,
-    `${indent}MKXFORM.setFieldAttr(${JSON.stringify(effect.target)}, ${effect.required ? 3 : 6});`
+    `${indent}MKXFORM.setFieldAttr(${JSON.stringify(target)}, ${effect.visible ? 5 : 4});`,
+    `${indent}MKXFORM.setFieldAttr(${JSON.stringify(target)}, ${effect.required ? 3 : 6});`
   ];
+}
+
+function canonicalRowMarker(target, form) {
+  return buildSetFieldAttrTargetIndex(form).secondaryMarkerToPrimary.get(target) || target;
 }
 
 function rowEffect(statement) {
@@ -1560,22 +1578,20 @@ function diagnosticConsoleStatement(statement, context = {}) {
 
 function executableListenerBody(listener) {
   if (!isFunction(listener) || listener.body?.type !== "BlockStatement") return undefined;
+  // Never fold a scheduled callback into the immediate load event.
+  return listenerTimerCall(listener) ? undefined : listener.body;
+}
+
+function listenerTimerCall(listener) {
+  if (!isFunction(listener) || listener.body?.type !== "BlockStatement") return undefined;
   const statements = listener.body.body.filter((statement) => statement.type !== "EmptyStatement");
-  if (statements.length !== 1 || statements[0].type !== "ExpressionStatement") {
-    return listener.body;
-  }
+  if (statements.length !== 1 || statements[0].type !== "ExpressionStatement") return undefined;
   const call = statements[0].expression;
-  if (
-    call?.type !== "CallExpression" ||
-    call.callee?.type !== "Identifier" ||
-    call.callee.name !== "setTimeout" ||
-    call.arguments.length !== 2 ||
-    !isFunction(call.arguments[0]) ||
-    call.arguments[0].params.length !== 0 ||
-    call.arguments[0].body?.type !== "BlockStatement" ||
-    typeof literalValue(call.arguments[1]) !== "number"
-  ) return listener.body;
-  return call.arguments[0].body;
+  return call?.type === "CallExpression" && call.callee?.type === "Identifier" &&
+    call.callee.name === "setTimeout" && call.arguments.length === 2 &&
+    isFunction(call.arguments[0]) && call.arguments[0].params.length === 0 &&
+    call.arguments[0].body?.type === "BlockStatement" && typeof literalValue(call.arguments[1]) === "number"
+    ? call : undefined;
 }
 
 function redundantRadioCondition(node) {

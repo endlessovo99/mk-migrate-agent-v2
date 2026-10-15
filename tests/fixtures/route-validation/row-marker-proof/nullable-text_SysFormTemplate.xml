@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>timed-getter-form</string></void>
+<void method="put"><string>fdModelId</string><string>timed-getter-template</string></void>
+<void method="put"><string>fdName</string><string>Timed getter proof</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_choice",label:"Choice",dataType:"String",items:"Yes|YES;No|NO"}'&gt;&lt;select id="fd_choice"&gt;&lt;option value="YES"&gt;Yes&lt;/option&gt;&lt;option value="NO"&gt;No&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="fd_details_row" name="fd_details_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload",label:"Payload",dataType:"String"}'&gt;&lt;input id="fd_payload"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_choice" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;Com_AddEventListener(window,"load",function(){
+ common_dom_row_set_show_required_reset("fd_details_row",false,false,false);
+ var current=GetXFormFieldById("fd_choice")[0].value;
+ if(current.indexOf("YES")>=0) { common_dom_row_set_show_required_reset("fd_details_row",true,true,false); }
+ else { common_dom_row_set_show_required_reset("fd_details_row",false,false,false); }
+});&lt;/script&gt;</string></void>
+</object></java>

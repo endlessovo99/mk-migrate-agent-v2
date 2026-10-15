@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
+import { draftSourceDraft } from "../../src/translator/index.js";
+import { checkTrust } from "../../src/dsl/trust.js";
 import { sha256Digest } from "../../src/agent-review/digest.js";
 import { NEWOA_SIT_BASE_URL } from "../../src/executor/newoa-client.js";
 import {
@@ -24,6 +26,61 @@ const CREDENTIALS = Object.freeze({
 });
 
 describe("transfer-record reconciliation Route", () => {
+  it("does not bridge v14 input maxLength even when its v18 source proof is otherwise valid", async () => {
+    const fixture = reconciliationFixture();
+    const field = fixture.dsl.form.fields.find((field) => field.componentId === "xform-input");
+    const source = fixture.sourceDraft.form.controls.find((source) => source.sourceRef === field.sourceRef);
+    source.sourceProps = { designerValues: { maxlength: "18" }, metadataAttributes: { length: "18" } };
+    field.props.maxLength = 18;
+    fixture.dsl.review.warnings.push(...draftSourceDraft(fixture.sourceDraft).review.warnings.filter((warning) => warning.code === "source.form.input_length_target_counting"));
+    fixture.dsl.trust.digests.sourceDraft = sha256Digest(fixture.sourceDraft);
+    assert.equal(checkTrust(fixture.sourceDraft, fixture.dsl).ok, true);
+    fixture.dsl.catalogs.components.version = "2026-08-28.v14";
+    fixture.priorExecutionReport.plan.catalogs.components.version = "2026-08-28.v14";
+    fixture.dslDigest = reconciliationEvidenceDigest(fixture.dsl);
+    fixture.priorReportDigest = reconciliationEvidenceDigest(fixture.priorExecutionReport);
+    const client = new ReconciliationFakeClient(fixture.template);
+    const result = await reconcileTransferRecord(fixture.dsl, reconcileOptions(fixture, {
+      client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport
+    }));
+    assert.equal(result.ok, false);
+    assert.equal(client.calls.length, 0);
+    assert.ok(result.diagnostics.some((item) => item.code === "catalog.components.version_mismatch"));
+  });
+
+  it("keeps the v14 bridge tied to the exact retained version and report digest", async () => {
+    for (const mutation of ["other-version", "report-version", "stale-report-digest"]) {
+      const fixture = reconciliationFixture();
+      fixture.dsl.catalogs.components.version = mutation === "other-version" ? "2026-10-15.v17" : "2026-08-28.v14";
+      fixture.priorExecutionReport.plan.catalogs.components.version = mutation === "report-version" ? "2026-10-15.v17" : fixture.dsl.catalogs.components.version;
+      fixture.dslDigest = reconciliationEvidenceDigest(fixture.dsl);
+      fixture.priorReportDigest = reconciliationEvidenceDigest(fixture.priorExecutionReport);
+      if (mutation === "stale-report-digest") fixture.priorExecutionReport.templateId = "tampered-retained-target";
+      const client = new ReconciliationFakeClient(fixture.template);
+      const result = await reconcileTransferRecord(fixture.dsl, reconcileOptions(fixture, {
+        client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport
+      }));
+      assert.equal(result.ok, false, mutation);
+      assert.equal(client.calls.length, 0, mutation);
+      assert.ok(result.diagnostics.some((item) => item.code === (mutation === "stale-report-digest" ? "reconcile.prior_report_digest_mismatch" : "catalog.components.version_mismatch")));
+    }
+  });
+  it("rejects missing native cooperation without inventing a default during record-only recovery", async () => {
+    const fixture = reconciliationFixture();
+    const client = new ReconciliationFakeClient(fixture.template);
+    const workflow = client.template.mechanisms.lbpmTemplate[0];
+    const content = JSON.parse(workflow.fdContent);
+    delete content.elements.find(node => node.id === "N2").cooperateType;
+    workflow.fdContent = JSON.stringify(content);
+    const result = await reconcileTransferRecord(fixture.dsl, reconcileOptions(fixture, {
+      client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport
+    }));
+    assert.equal(result.ok, false);
+    assert.ok(result.diagnostics.some(item => item.code === "readback.workflow.cooperation_type_mismatch"));
+    assert.equal(client.hasTemplateWrite(), false);
+    assert.equal(client.operations().includes("add-transfer-record"), false);
+  });
+
   it("retains a recorded theme requirement during reconciliation without rewriting the theme", async () => {
     const fixture = reconciliationFixture();
     fixture.priorExecutionReport.readback.theme = { contractVersion: 1, status: "mismatch", desktop: "classic", mobile: "classic" };
@@ -178,8 +235,9 @@ describe("transfer-record reconciliation Route", () => {
     assert.equal(client.hasTemplateWrite(), false);
   });
 
-  it("bridges the evidenced v14 component catalog only for readback verification", async () => {
+  it("bridges evidenced v14 to current v18 only for readback verification", async () => {
     const fixture = reconciliationFixture();
+    assert.equal(fixture.dsl.catalogs.components.version, "2026-10-15.v18");
     fixture.dsl.catalogs.components.version = "2026-08-28.v14";
     fixture.priorExecutionReport.plan.catalogs.components.version = "2026-08-28.v14";
     fixture.dslDigest = reconciliationEvidenceDigest(fixture.dsl);
@@ -198,6 +256,12 @@ describe("transfer-record reconciliation Route", () => {
   });
 
   for (const change of [
+    ...[true, false].map((readOnly) => ({ name: `new hyperlink readOnly=${readOnly} capability`, mutate(dsl) {
+      const field = dsl.form.fields.find((candidate) => candidate.type !== "detailTable");
+      field.type = "hyperlinks";
+      field.componentId = "xform-hyperlinks";
+      field.props = { readOnly };
+    } })),
     { name: "content-flow layout", mutate(dsl) {
       const cell = dsl.form.layout.mkTree.flatMap((row) => row.children).find((cell) => cell.refType === "field");
       cell.contentFlow = { lines: [cell.refIds], items: cell.refIds.map((referenceId) => ({ referenceId })) };
@@ -303,6 +367,7 @@ function reconciliationFixture() {
     "tests/fixtures/executor/persistence/workflow-detail-authority-native.json",
     "utf8"
   ));
+  nativeWorkflow.fdContent.elements.find(node => node.id === "N2").cooperateType = "2";
   const viewOnly = { isShow: true, isEdit: false, isRequire: false };
   const operations = nativeWorkflow.fdTemplateFormAuths.N2.fd_detail.operations;
   nativeWorkflow.fdTemplateFormAuths.N2 = {

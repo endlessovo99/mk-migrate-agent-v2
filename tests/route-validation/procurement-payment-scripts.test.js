@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import vm from "node:vm";
 import { checkDraft } from "../../src/dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
@@ -140,6 +141,7 @@ describe("procurement payment script Route case", () => {
       "deterministic-procurement-payment-department-consistency"
     );
     assert.match(department.function, /MKXFORM\.getValue\("\$\{table:fd_pur_pay_req\}"\)/u);
+    assertDepartmentConsistencyValues(department, "fd_pur_pay_req", "department");
 
     assert.equal(wbsActions.length, 3);
     for (const action of wbsActions) {
@@ -212,6 +214,7 @@ describe("procurement payment script Route case", () => {
       );
       assert.equal(action?.translationStatus, "mapped", tableId);
       assert.match(action.function, new RegExp(`\\[${JSON.stringify(columnId)}\\]`, "u"));
+      assertDepartmentConsistencyValues(action, tableId, columnId);
       assert.equal(
         action.deterministicBranchProof.basis,
         "deterministic-procurement-payment-department-consistency"
@@ -220,3 +223,20 @@ describe("procurement payment script Route case", () => {
     assert.equal(checkDraft(dslDraft).ok, true);
   });
 });
+
+function assertDepartmentConsistencyValues(action, tableId, columnId) {
+  for (const [values, expected] of [
+    [["A", ""], false], [["", "A"], false], [["A", "B"], false],
+    [["A", "A"], true], [["", ""], true], [[undefined, "A"], true], [[null, "A"], true], [[], true]
+  ]) {
+    const context = vm.createContext({ MKXFORM: {
+      getValue(id) {
+        assert.equal(id, `\${table:${tableId}}`);
+        return values.map((value) => ({ [columnId]: value }));
+      },
+      toast() {}
+    } });
+    vm.runInContext(action.function, context, { timeout: 1000 });
+    assert.equal(context.onBeforeSubmit({ isDraft: false }), expected, `${tableId}:${JSON.stringify(values)}`);
+  }
+}

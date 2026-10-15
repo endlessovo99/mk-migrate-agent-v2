@@ -1,3 +1,5 @@
+import { selectEmptyEventProof } from "./source-select-empty-event.js";
+import { inspectSourceSignNode, hasSourceSignDeclaration } from "./workflow-sign-contract.js";
 import {
   componentSupportsProp,
   validateCatalogVersions,
@@ -68,7 +70,7 @@ export const FIELD_TYPES = new Set([
 ]);
 
 const SCRIPT_COVERAGE_STATUSES = new Set(["none", "partial", "uncovered", "covered", "translated"]);
-const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "robot", "startSubProcess", "recoverSubProcess", "conditionBranch", "manualBranch", "split", "join", "generalEnd"]);
+const WORKFLOW_NODE_TYPES = new Set(["generalStart", "draft", "review", "send", "sign", "robot", "startSubProcess", "recoverSubProcess", "conditionBranch", "manualBranch", "split", "join", "generalEnd"]);
 const WORKFLOW_NODE_ELEMENTS = new Set(["startEvent", "manualTask", "exclusiveGateway", "parallelGateway", "subProcess", "robot", "endEvent"]);
 const WORKFLOW_PARTICIPANT_MODES = new Set([
   "empty",
@@ -1519,7 +1521,13 @@ function validateScriptBranchProvenance(action, path, diagnostics, context) {
   }
   if (action.translationStatus !== "mapped") return;
 
-  const inspection = inspectMappedScriptBranchProvenance(action, action.branchProvenance);
+  const emptyEvent = selectEmptyEventProof(action, { sourceForm: context.form, targetForm: context.form });
+  if (!emptyEvent.ok) {
+    diagnostics.push(error("dsl.scripts.select_empty_event_unverified", "A native select event must retain its source-backed null-only bridge and exact predicate/effect shape.", `${path}/function`, { reason: emptyEvent.reason }));
+    return;
+  }
+  const proofAction = emptyEvent.adapted ? { ...action, function: emptyEvent.function } : action;
+  const inspection = inspectMappedScriptBranchProvenance(proofAction, action.branchProvenance);
   if (inspection.ok) return;
   if (nativeRulesOwnAllMappedBranchConditions(action, context.formRules, inspection)) return;
   diagnostics.push(error(
@@ -2246,6 +2254,22 @@ function validateWorkflowNodes(nodes, diagnostics, context) {
     }
     if (node.help !== undefined && !nonEmptyString(node.help)) {
       diagnostics.push(error("dsl.workflow.node.help_type", "Workflow node help must be a non-empty string when provided.", `${path}/help`));
+    }
+    if (node.cooperateType !== undefined &&
+        (!["review", "send", "sign"].includes(node.type) || !["1", "2", "3"].includes(node.cooperateType))) {
+      diagnostics.push(error("dsl.workflow.cooperation_type_invalid", "Explicit cooperation type must be a native string enum on a review/send node.", `${path}/cooperateType`));
+    }
+    if (node.type === "sign" || hasSourceSignDeclaration(node)) {
+      if (Object.hasOwn(node, "operationRefId")) {
+        diagnostics.push(error("dsl.workflow.sign_runtime_reference_forbidden",
+          "The native sign operation reference must be derived by the executor from the explicit checked operation-set policy, not supplied in public DSL.", `${path}/operationRefId`));
+      }
+      try {
+        inspectSourceSignNode(node);
+        if (node.type !== "sign" || node.element !== "manualTask") throw new Error("Sign source requires sign/manualTask.");
+      } catch (cause) {
+        diagnostics.push(error(cause.code || "dsl.workflow.sign_invalid", cause.message, path));
+      }
     }
     validateWorkflowCredentialMaterial(node, diagnostics, path);
     validateParticipants(node.participants, diagnostics, `${path}/participants`, context);

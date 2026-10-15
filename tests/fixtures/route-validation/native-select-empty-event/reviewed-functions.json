@@ -1,0 +1,3 @@
+{
+  "onChange": "function onChange(value, rowNum, parentRowNum) {\n  if ((value === null ? \"\" : value).indexOf(\"READY\") >= 0) {\n    MKXFORM.setValue(\"fd_marker\", \"active\");\n  } else {\n    MKXFORM.setValue(\"fd_marker\", \"inactive\");\n  }\n}"
+}

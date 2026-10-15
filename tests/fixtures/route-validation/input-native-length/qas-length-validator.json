@@ -1,0 +1,10 @@
+{
+  "evidence": {
+    "origin": "https://oaqas.shanghai-electric.com",
+    "asset": "XFormRuntime.js",
+    "sha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+    "moduleId": 33853,
+    "boundary": "Native target validator only; no claim about source EKP maxLength"
+  },
+  "validatorFunction": "function(e,t,n){if(\"number\"==typeof t&&0!==d){t<=s&&t>=d?n():n(\"\".concat((0,o.fmtMsg)(\":merge.moreLimit\",\"超出%${maxLength}%个英文字符限制\").replace(\"%${maxLength}%\",\"\".concat(s))));return}if(\"string\"==typeof t){(t=t.replace(/[\\x80-\\xFF]/g,\"**\").replace(/[^\\x00-\\x7f]/g,\"***\")).length<=s?n():n(\"\".concat((0,o.fmtMsg)(\":merge.moreLimit\",\"超出%${maxLength}%个英文字符限制\").replace(\"%${maxLength}%\",\"\".concat(s))));return}if(Array.isArray(t)&&t.every(function(e){return\"string\"==typeof e})){(t=(t=t.join(\"\")).replace(/[\\x80-\\xFF]/g,\"**\").replace(/[^\\x00-\\x7f]/g,\"***\")).length<=s?n():n(\"\".concat((0,o.fmtMsg)(\":merge.moreLimit\",\"超出%${maxLength}%个英文字符限制\").replace(\"%${maxLength}%\",\"\".concat(s))));return}n()}"
+}

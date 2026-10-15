@@ -7,6 +7,13 @@ import { main } from "../../src/cli/main.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 
 describe("execute CLI", () => {
+  it("passes only an explicitly supplied workflow cooperation default", async () => {
+    const supplied = await runExecuteCli({ argv: ["--workflow-cooperation-default", "3"] });
+    assert.equal(supplied.request.options.workflowCooperationDefault, "3");
+    const omitted = await runExecuteCli();
+    assert.equal(omitted.request.options.workflowCooperationDefault, undefined);
+  });
+
   it("passes the separately confirmed published form patch scope without widening normal execute", async () => {
     const { request } = await runExecuteCli({ argv: [
       "--published-form-patch", "--confirm-write", "--target-template-id", "published-template",

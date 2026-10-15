@@ -37,6 +37,19 @@ export function sourcePresentationIssues(sourceForm = {}, targetForm = {}, {
       target.props?.hiddenLabel !== true) {
       add("hidden_label", { fieldId: target.id, sourceId: source.id, sourceRef: source.sourceRef });
     }
+    const layoutCell = source.sourceProps?.layoutCell;
+    if (layoutCell?.relation === "runtime-independent-title-cell") {
+      for (const captionId of layoutCell.captionIds || []) {
+        const caption = sourceById.get(captionId);
+        const targetCaption = targetBySourceId.get(captionId);
+        if (!caption || !targetCaption || targetCaption.id !== caption.id ||
+          targetCaption.componentId !== "xform-description" ||
+          normalizedUnit(targetCaption.props?.content) !== normalizedUnit(caption.title) ||
+          isNonRendered(targetCaption)) {
+          add("independent_caption", { fieldId: target.id, sourceCaptionId: captionId, sourceRef: caption?.sourceRef });
+        }
+      }
+    }
     const unit = source.sourceProps?.inlineUnit;
     if (!unit?.id || !unit?.content) continue;
     const expectedUnit = normalizedUnit(unit.content);

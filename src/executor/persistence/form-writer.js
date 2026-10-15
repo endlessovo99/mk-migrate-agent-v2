@@ -1,3 +1,4 @@
+import { sourceNumberEditors } from "../../dsl/source-number-editor.js";
 import {
   applyExpressionFormulaVoToModels,
   buildNativeFormRuleConfig,
@@ -532,6 +533,7 @@ function buildMainModel(template, xform, config, form, lang) {
   main.fdTableNameAlias = main.fdTableName;
 
   const systemFields = (existing.fdFields || []).filter((field) => field.fdIsSystem);
+  const numberEditors = sourceNumberEditors(form);
   const normalFields = (form.fields || []).filter((field) => field.type !== "detailTable");
   main.fdFields = [
     ...systemFields,
@@ -541,7 +543,8 @@ function buildMainModel(template, xform, config, form, lang) {
       main,
       systemFields.length + index + 1,
       "main",
-      lang
+      lang,
+      numberEditors.has(field.id)
     ))
   ];
   return main;
@@ -635,7 +638,7 @@ function assertUniqueNativeTableNames(dataModels) {
   }
 }
 
-function canonicalField(field, template, model, order, tableType, lang) {
+function canonicalField(field, template, model, order, tableType, lang, sourceNumberEditor = false) {
   const spec = componentSpec(field);
   const fdLength = fieldLengthFromDsl(field, spec);
   const isDisplayOnly = ["desc", "button"].includes(spec.attrType);
@@ -650,8 +653,8 @@ function canonicalField(field, template, model, order, tableType, lang) {
       ? { fdColumn: `fd_${field.id}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48) }
       : {}),
     fdType: spec.fdType,
-    fdAttribute: JSON.stringify(fieldAttribute(field, template, model.fdTableName, tableType, spec, lang)),
-    fdFontExtendData: JSON.stringify(fieldFontExtendData(field, template, spec)),
+    fdAttribute: JSON.stringify(fieldAttribute(field, template, model.fdTableName, tableType, spec, lang, sourceNumberEditor)),
+    fdFontExtendData: JSON.stringify(fieldFontExtendData(field, template, spec, sourceNumberEditor)),
     fdDataType: spec.fdDataType,
     fdDictType: spec.fdDictType,
     ...(fdLength !== undefined ? { fdLength } : {}),
@@ -674,10 +677,11 @@ function fieldLengthFromDsl(field, spec) {
   if (spec.attrType === "textarea") {
     return textareaMaxLengthFromDsl(field);
   }
+  if (field.componentId === "xform-input") return inputMaxLengthFromDsl(field) ?? 200;
   return 200;
 }
 
-function fieldAttribute(field, template, tableName, tableType, spec, lang) {
+function fieldAttribute(field, template, tableName, tableType, spec, lang, sourceNumberEditor) {
   const controlId = `${spec.desktop}~${stableShortId(field.id)}`;
   const label = persistedFieldLabel(field);
   const descriptionTextToken = linkedDescriptionTextToken(field);
@@ -761,6 +765,10 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
       maxLength: 200,
       anonymous: false
     });
+  }
+  if (field.componentId === "xform-input") {
+    const maxLength = inputMaxLengthFromDsl(field);
+    if (maxLength !== undefined) controlProps.maxLength = maxLength;
   }
   if (spec.attrType === "textarea") {
     if (typeof controlProps.placeholder !== "string") controlProps.placeholder = "请输入";
@@ -895,6 +903,13 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang) {
     });
   }
 
+  if (spec.attrType === "number") {
+    controlProps.showCount = !sourceNumberEditor;
+    if (sourceNumberEditor && !controlProps.numberFormat) {
+      controlProps.numberFormat = nativeNumberFormat("");
+      controlProps.defaultValueType = "formula";
+    }
+  }
   applyDefaultValueToControlProps(controlProps, field, template, spec);
 
   const isHidden = spec.attrType === "hidden";
@@ -1191,7 +1206,7 @@ function applyContextDefaultToControlProps(controlProps, contextDefault, spec) {
   }
 }
 
-function fieldFontExtendData(field, template, spec) {
+function fieldFontExtendData(field, template, spec, sourceNumberEditor) {
   const data = spec.attrType === "hidden"
     ? { passValue: true, hidden: true, defaultValueType: "formula" }
     : {};
@@ -1254,6 +1269,10 @@ function fieldFontExtendData(field, template, spec) {
     if (!data.defaultValueType) data.defaultValueType = "empty";
   }
 
+  if (spec.attrType === "number") {
+    data.showCount = !sourceNumberEditor;
+    if (sourceNumberEditor && data.unit === undefined) Object.assign(data, nativeNumberFormat(""), { defaultValueType: "formula" });
+  }
   const staticOrgDefault = normalizeStaticOrgDefault(field.props?.defaultValue);
   if (staticOrgDefault && spec.attrType === "address") {
     return {
@@ -1510,6 +1529,11 @@ function addressOrgTypesFromDsl(field) {
   return types.length ? Array.from(new Set(types)) : ["ORG_TYPE_PERSON", "ORG_TYPE_DEPT"];
 }
 
+function inputMaxLengthFromDsl(field) {
+  const value = field.props?.maxLength;
+  return Number.isSafeInteger(value) && value > 0 ? value : undefined;
+}
+
 function textareaMaxLengthFromDsl(field) {
   return normalizeMaxLength(field.props?.maxLength);
 }
@@ -1622,7 +1646,8 @@ function buildViewModel(config, template, mainModel, form, detailModelsByField) 
 }
 
 function buildViewConfig(mainModel, form, detailModelsByField) {
-  const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields);
+  const budgets = new Map([...sourceNumberEditors(form)].map(([id, profile]) => [id, profile.inputPx + 32]));
+  const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields, budgets);
   const mainContainer = {
     key: "main",
     type: "main",
@@ -1634,7 +1659,7 @@ function buildViewConfig(mainModel, form, detailModelsByField) {
     view: {
       render: {
         desktop: [appearanceNode(mainModel.fdTableName, clone(mainContainer))],
-        mobile: [appearanceNode(mainModel.fdTableName, clone(mainContainer))]
+        mobile: [appearanceNode(mainModel.fdTableName, { ...clone(mainContainer), children: buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields) })]
       }
     },
     theme: {},
@@ -1655,6 +1680,9 @@ function buildControlStyle(form = {}) {
         ...(style ? { controlValueStyle: style } : {})
       }
     };
+  }
+  for (const id of sourceNumberEditors(form).keys()) {
+    styles[id] = { desktop: { desktopTheme: "classic", desktopPaddingMode: "standard", layout: "horizontal" } };
   }
   for (const [id, paddingControl] of contentFlowFieldPadding(form)) {
     styles[id] = {
@@ -1684,14 +1712,14 @@ function appearanceNode(tableName, mainContainer) {
   };
 }
 
-function buildRows(rows, detailModelsByField, fields) {
+function buildRows(rows, detailModelsByField, fields, budgets = new Map()) {
   const rowsById = new Map(rows.map((row) => [row.id, row]));
   return projectNativeLayoutRows(rows).map((projection) =>
-    buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField, fields)
+    buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField, fields, budgets)
   );
 }
 
-function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fields) {
+function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fields, budgets) {
   const cells = projection.cells;
   const layoutId = `layout~${stableShortId(row.id)}`;
   const gridId = `@elem/layout-grid~${stableShortId(`${row.id}:grid`)}`;
@@ -1733,7 +1761,7 @@ function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fiel
             index,
             rowsById,
             detailModelsByField,
-            { explicitRowSpan: isNestedProjection, fields }
+            { explicitRowSpan: isNestedProjection, fields, budgets }
           ))
       }
     ]
@@ -1809,7 +1837,7 @@ function buildGridItem(
       ...migrationAudit
     },
     children: cell.contentFlow && !detailModel
-      ? [buildContentFlow(cell.contentFlow, itemId, fieldRef)]
+      ? [buildContentFlow(cell.contentFlow, itemId, fieldRef, options.fields, options.budgets)]
       : inlineLayout && !detailModel
         ? [{
             key: inlineId,
@@ -1822,7 +1850,11 @@ function buildGridItem(
   };
 }
 
-function buildContentFlow(flow, itemId, fieldRef) {
+function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map()) {
+  const soleItem = flow.items.length === 1 && flow.lines.length === 1 && flow.lines[0].length === 1
+    ? flow.items[0] : undefined;
+  const fillSelector = soleItem && soleItem.width === undefined &&
+    fields.some(field => field.id === soleItem.referenceId && field.componentId === "xform-select");
   const items = new Map(flow.items.map((item) => [item.referenceId, item]));
   const container = (identity, type, controlProps, children) => {
     const id = `${type}~${stableShortId(identity)}`;
@@ -1837,12 +1869,12 @@ function buildContentFlow(flow, itemId, fieldRef) {
       ...(line.length === 0 ? { minHeight: "1.5em" } : {})
     }
   }, line.map((referenceId) => {
-    const width = items.get(referenceId)?.width;
+    const width = budgets.has(referenceId) ? { unit: "px", value: budgets.get(referenceId) } : items.get(referenceId)?.width;
     return container(`${itemId}:flow:${lineIndex}:${referenceId}`, "div", {
       style: {
-        flex: width ? "0 0 auto" : "0 1 auto",
+        flex: fillSelector ? "1 1 0" : width ? "0 0 auto" : "0 1 auto",
         minWidth: 0, maxWidth: "100%", overflow: "visible",
-        ...(width ? { width: `${width.value}${width.unit}` } : {})
+        ...(fillSelector ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {})
       }
     }, [fieldRef(referenceId)]);
   }))));

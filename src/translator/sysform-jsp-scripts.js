@@ -2,6 +2,7 @@ import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitel
 import { componentSupportsProp } from "../dsl/catalogs.js";
 import { buildScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
 import { textValueFieldIds } from "../dsl/script-condition-provenance.js";
+import { maskJavaScriptComments } from "../dsl/javascript-comments.js";
 import { buildDeterministicScriptBranchProof } from "../dsl/deterministic-script-translations.js";
 import {
   analyzeJavaScriptFunctionBodyBindings
@@ -71,6 +72,8 @@ import { legacyExcelAndOrgHydrationCandidates } from "./legacy-excel-and-org-hyd
 import { legacySqlDialogRuntimeCandidate } from "./legacy-sql-dialog-runtime.js";
 import { procurementDetailLockAndLinkCandidates } from "./procurement-detail-lock-and-links.js";
 import { jqueryContainerVisibilityCandidates } from "./jquery-container-visibility.js";
+import { detailColumnConsistencyCandidate } from "./detail-column-consistency.js";
+import { jqueryReadyInitializationCandidates } from "./jquery-ready-initialization.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -141,7 +144,7 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
     );
     return composeValueChangeCallbackCandidates(
       source,
-      primaryCandidates,
+      [...primaryCandidates, ...jqueryReadyInitializationCandidates(source)],
       selectionCandidates
     );
   });
@@ -437,7 +440,7 @@ function extractLegacyScriptSemanticFacts(javascript = "", functionAudit = {}) {
   const text = String(javascript || "");
   return pruneUndefined({
     legacyFunctionCalls: legacyFunctionCallsFromAudit(functionAudit),
-    fieldIds: uniqueStrings([...text.matchAll(/\bfd_[A-Za-z0-9_]+\b/g)].map((match) => match[0])),
+    fieldIds: uniqueStrings([...maskJavaScriptComments(text).matchAll(/\bfd_[A-Za-z0-9_]+\b/g)].map((match) => match[0])),
     rowMarkers: rowMarkersFromLegacyScript(text),
     eventBindings: eventBindingsFromLegacyScript(text)
   });
@@ -1215,7 +1218,7 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }));
   }
 
-  const procurementPaymentScripts = procurementPaymentScriptCandidates(sourceWithHelpers, options.form);
+  const procurementPaymentScripts = procurementPaymentScriptCandidates(sourceWithHelpers, options.form, options.sourceScripts);
   if (procurementPaymentScripts.length) {
     return procurementPaymentScripts.map((candidate, index) => ({
       ...candidate,
@@ -3715,11 +3718,11 @@ const QUALITY_FAST_REPORT_BRANCHES = [
   { condition: "input2 === 'jdzlsj' && input3 === 'jjyx' && input1 === 'cxqy'", rowMarker: "fd_jdjjcx_row" }
 ];
 
-function procurementPaymentScriptCandidates(source, form) {
+function procurementPaymentScriptCandidates(source, form, sourceScripts) {
   return [
     procurementPaymentAttachmentSubmitCandidate(source, form),
     procurementPaymentWbsVisibilityCandidate(source, form),
-    procurementPaymentDepartmentConsistencyCandidate(source, form)
+    detailColumnConsistencyCandidate(source, form, sourceScripts)
   ].flat().filter(Boolean).sort((left, right) => left.index - right.index);
 }
 
@@ -3822,57 +3825,6 @@ function procurementPaymentWbsVisibilityCandidate(source, form) {
       semanticHints
     } : undefined
   ].filter(Boolean);
-}
-
-function procurementPaymentDepartmentConsistencyCandidate(source, form) {
-  const text = String(source.javascript || "");
-  const call = text.match(/list_check\(\s*["']([^"']+)["']\s*,\s*["']([^"']+)["']\s*\)/);
-  if (!call) return undefined;
-  const [, tableId, columnId] = call;
-  const detailTable = fieldById(form, tableId);
-  if (
-    !detailTable ||
-    !Array.isArray(detailTable.columns) ||
-    !detailTable.columns.some((column) => column.id === columnId)
-  ) return undefined;
-  const message = text.match(/alert\(\s*(["'])([^"']+)\1\s*\)/)?.[2] || "项目所属部门不一致，请更改!";
-  return {
-    index: text.indexOf("Com_Parameter.event.submit.push"),
-    event: "onBeforeSubmit",
-    scope: "global",
-    function: [
-      "function onBeforeSubmit(context) {",
-      "  if (context && context.isDraft) return true",
-      `  var rows = MKXFORM.getValue("\${table:${tableId}}") || []`,
-      "  var previous = null",
-      "  for (var index = 0; index < rows.length; index += 1) {",
-      `    var value = rows[index] && rows[index][${JSON.stringify(columnId)}]`,
-      "    if (value === undefined || value === null || value === \"\") continue",
-      "    value = String(value)",
-      "    if (previous !== null && previous !== value) {",
-      `      MKXFORM.toast(${JSON.stringify(message)})`,
-      "      return false",
-      "    }",
-      "    previous = value",
-      "  }",
-      "  return true",
-      "}"
-    ].join("\n"),
-    translationStatus: "mapped",
-    coverage: { status: "translated", nativeRules: [], residuals: [] },
-    functionMappings: [{
-      source: "DocList_TableInfo department consistency submit guard",
-      target: "onBeforeSubmit + MKXFORM.getValue detail table rows",
-      basis: "deterministic-procurement-payment-department-consistency",
-      reviewRequired: false
-    }],
-    semanticHints: {
-      coveredCalculationRanges: coveredRangesForText(text, "", {
-        sourceRef: source.sourceRef,
-        name: "procurement_payment_department_consistency"
-      })
-    }
-  };
 }
 
 function legacyHelperDefinitionsCandidate(source) {

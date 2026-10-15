@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-09-12.v16",
+  "version": "2026-10-15.v18",
   "components": [
     {
       "componentId": "xform-button",
@@ -26,7 +26,7 @@
       "kind": "field",
       "label": "单行文本",
       "description": "NewOA/MK single-line text field.",
-      "usage": "Use for short free-text source controls.",
+      "usage": "Use for short free-text source controls. Explicit maxLength adopts target-native weighted length validation, not HTML input truncation or proven source-validator equivalence.",
       "negativeUsage": "Do not use for multiline text, attachments, options, or detail-table containers.",
       "allowedScopes": ["field", "detailColumn"],
       "target": { "desktop": "@elem/xform-input", "mobile": "@elem/xform-m-input" },
@@ -38,11 +38,12 @@
           "readOnly": { "type": "boolean" },
           "hiddenLabel": { "type": "boolean" },
           "placeholder": { "type": "string" },
-          "defaultValue": { "$ref": "#/$defs/defaultValue" }
+          "defaultValue": { "$ref": "#/$defs/defaultValue" },
+          "maxLength": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 }
         }
       },
       "defaultPolicy": { "executorDefaults": ["placeholder"] },
-      "omitPolicy": { "omitWhenAbsent": [] }
+      "omitPolicy": { "omitWhenAbsent": ["maxLength"] }
     },
     {
       "componentId": "xform-hidden",
@@ -86,6 +87,7 @@
             ]
           },
           "editable": { "type": "boolean" },
+          "readOnly": { "type": "boolean" },
           "links": {
             "type": "array",
             "items": {

@@ -495,6 +495,14 @@ function observeExecutableProps(controlProps = {}, native = {}) {
     props.placeholder = normalizeScalar(controlProps.placeholder);
   }
   const unit = observeNativeNumberUnit(controlProps, native.field, native.lang);
+  if (component === "xform-number") {
+    const font = safeParseObject(native.field?.fdFontExtendData);
+    if (typeof controlProps.showCount === "boolean" && controlProps.showCount === font.showCount) props.nativeNumberControls = controlProps.showCount;
+    if (controlProps.numberFormat?.unit === "" && font.unit === "") props.nativeNumberUnit = "";
+    else if (unit !== undefined) props.nativeNumberUnit = unit;
+    props.nativeNumberTableType = controlProps["$$tableType"];
+    props.nativeNumberDecorations = nativeNumberDecorations({ controlProps, labelProps: native.attribute?.config?.labelProps, font });
+  }
   if (unit !== undefined) props.unit = unit;
   if (Array.isArray(controlProps.org?.orgTypeArr)) {
     props.orgTypes = controlProps.org.orgTypeArr.map((code) =>
@@ -551,7 +559,15 @@ function observeExecutableProps(controlProps = {}, native = {}) {
       url: normalizeScalar(option.value ?? option.url ?? option.label)
     }));
   }
-  if (
+  if (component === "xform-input") {
+    // The runtime derives its length validator from varchar fdLength. An attribute
+    // alone cannot prove the cap, and contradictory persisted facts fail closed.
+    const length = native.field?.fdLength;
+    if (native.field?.fdDataType === "varchar" && native.field?.fdType === "text" &&
+        Number.isSafeInteger(length) && length > 0 && controlProps.maxLength === length) {
+      props.maxLength = length;
+    }
+  } else if (
     controlProps.maxLength !== undefined &&
     componentSupportsProp(component, "maxLength")
   ) {
@@ -756,8 +772,8 @@ function observeNativeNumberPrecision(controlProps, native, observedUnit) {
     nativePrecisionValue(numberFormat.precision) !== valuePrecision ||
     nativePrecisionValue(fontExtendData.precision) !== valuePrecision ||
     numberFormat.formatType !== fontExtendData.formatType ||
-    controlProps.showCount !== true ||
-    fontExtendData.showCount !== true ||
+    typeof controlProps.showCount !== "boolean" ||
+    fontExtendData.showCount !== controlProps.showCount ||
     controlProps.defaultValueType !== "formula" ||
     fontExtendData.defaultValueType !== "formula"
   ) {
@@ -1090,6 +1106,9 @@ function applyViewControlStyles(fields, viewModel) {
     ? scene.controlStyle
     : {};
   for (const field of fields) {
+    if (field.component === "xform-number") {
+      field.props.nativeNumberEditorStyle = { theme: scene.theme, style: controlStyle[field.id] || {} };
+    }
     const padding = controlStyle[field.id]?.desktop?.paddingControl;
     if (padding !== undefined) field.props.layoutPadding = structuredClone(padding);
     if (field?.component !== "xform-description") continue;
@@ -1210,12 +1229,8 @@ function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
       row, index, detailByTable, fieldIds, mobileRenderedDetailColumns, diagnostics
     )).filter(Boolean);
     observedRows.forEach((row, rowIndex) => row.cells.forEach((cell, cellIndex) => {
-      if (stableStringify(cell.contentFlow) !== stableStringify(mobileRows[rowIndex]?.cells[cellIndex]?.contentFlow)) {
-        diagnostics.push(diagnostic({
-          level: "error", code: "readback.form.layout_content_flow_scene_mismatch",
-          message: "Desktop and mobile cell content flows differ.", partition: "form",
-          decodePath: `/readback/form/mobileLayoutRows/${rowIndex}/cells/${cellIndex}/contentFlow`
-        }));
+      if (cell.contentFlow || mobileRows[rowIndex]?.cells[cellIndex]?.contentFlow) {
+        cell.mobileContentFlow = mobileRows[rowIndex]?.cells[cellIndex]?.contentFlow;
       }
     }));
   }
@@ -1340,19 +1355,21 @@ function observeContentFlow(refs, diagnostics, decodePath) {
       const reference = item.children[0];
       if (!reference || typeof reference.key !== "string" || reference.kind === "container") return fail();
       const style = item.controlProps?.style;
+      const fillAvailable = style?.flex === "1 1 0" && style?.width === "100%";
+      if (fillAvailable && (root.children.length !== 1 || line.children.length !== 1)) return fail();
       let width;
-      if (style?.width !== undefined) {
+      if (!fillAvailable && style?.width !== undefined) {
         const match = /^(\d+(?:\.\d+)?(?:e[+-]?\d+)?)(px|%)$/.exec(String(style.width));
         if (!match || Number(match[1]) < 0) return fail();
         width = { value: Number(match[1]), unit: match[2] };
       }
       const itemStyle = {
-        flex: width ? "0 0 auto" : "0 1 auto", minWidth: 0, maxWidth: "100%", overflow: "visible",
-        ...(width ? { width: `${width.value}${width.unit}` } : {})
+        flex: fillAvailable ? "1 1 0" : width ? "0 0 auto" : "0 1 auto", minWidth: 0, maxWidth: "100%", overflow: "visible",
+        ...(fillAvailable ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {})
       };
       if (stableStringify(style) !== stableStringify(itemStyle)) return fail();
       ids.push(reference.key);
-      items.push({ referenceId: reference.key, ...(width ? { width } : {}) });
+      items.push({ referenceId: reference.key, ...(width ? { width } : {}), ...(fillAvailable ? { fillAvailable: true } : {}) });
     }
     lines.push(ids);
   }
@@ -1830,12 +1847,36 @@ function observeWorkflow(lbpm, template, options = {}) {
       name: normalizeScalar(node.name || node.attributes?.name || ""),
       type: normalizeScalar(node.type),
       element: normalizeScalar(node.element),
+      cooperateType: node.cooperateType,
       help: observeNativeNodeHelp(node),
       mustModifyHandlerNodeIds: splitRelatedNodeIds(node.mustModifyHandlerNodes),
       canModifyHandlerNodeIds: splitRelatedNodeIds(node.canModifyHandlerNodes),
       participants: observeParticipants(node, initiatorSelectTargetNodeIds.has(node.id)),
       alternativeParticipants: observeAlternativeParticipants(node),
       sendConfig: observeSendConfig(node),
+      signConfig: node.type === "sign" ? {
+        operationRefId: node.operationRefId,
+        operations: node.operations,
+        required: node.required,
+        formKey: node.formKey,
+        allowUploadAttachments: node.allowUploadAttachments,
+        openModifyProcessAuthority: node.openModifyProcessAuthority,
+        modifyProcessAuthority: node.modifyProcessAuthority,
+        openNodeAuthority: node.openNodeAuthority,
+        nodeAuthority: node.nodeAuthority,
+        allowMobileHandle: node.allowMobileHandle,
+        allowSendDing: node.allowSendDing,
+        checkPermission: node.checkPermission,
+        fdScene: node.fdScene,
+        openDataAuthority: node.openDataAuthority,
+        emptyHandlerType: node.emptyHandlerType,
+        recalculateHandler: node.recalculateHandler,
+        canModifyProcess: node.canModifyProcess,
+        canModifyCommentViewPermission: node.canModifyCommentViewPermission,
+        handSignRequired: node.handSignRequired,
+        isUseAlternativeHandlerOnly: node.isUseAlternativeHandlerOnly,
+        mainDocumentPermissionPresent: Object.hasOwn(node, "canModifyMainDoc")
+      } : undefined,
       manualBranch: observeManualBranch(node),
       parallelGateway: observeParallelGateway(node),
       dataAuthority: observeDataAuthority(formAuths[node.id], {
@@ -3123,4 +3164,14 @@ function safeParseObject(value) {
   } catch {
     return {};
   }
+}
+
+// Report actual decoration overrides; never infer the source editor policy here.
+function nativeNumberDecorations(value, path = "", result = {}) {
+  for (const [key, child] of Object.entries(value || {})) {
+    const next = path ? `${path}.${key}` : key;
+    if (/prefix|suffix|padding|theme|layout|labelStyle|controlValueStyle/i.test(key)) result[next] = child;
+    else if (child && typeof child === "object" && !Array.isArray(child)) nativeNumberDecorations(child, next, result);
+  }
+  return result;
 }

@@ -17,10 +17,10 @@ describe("independent conditional-parallel native evidence", () => {
     assert.equal(written.elements.find((element) => element.id === "QA20").splitType, "1");
     assert.equal(written.elements.find((element) => element.id === "QA50").joinType, "2");
 
-    const readback = prepared.verify(independentAllAnyoneReadback());
+    const readback = prepared.verify(independentAllAnyoneReadback({ syntheticCooperation: true }));
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
 
-    const mutated = independentAllAnyoneReadback();
+    const mutated = independentAllAnyoneReadback({ syntheticCooperation: true });
     mutateWorkflow(mutated, (content) => {
       content.elements.find((element) => element.id === "QA50").joinType = "1";
     });
@@ -48,7 +48,7 @@ describe("independent conditional-parallel native evidence", () => {
 
   it("verifies native gateway, condition, and document-creator semantics", () => {
     const prepared = prepareSample(conditionalParallelDsl());
-    const template = independentReadback();
+    const template = independentReadback({ syntheticCooperation: true });
 
     const readback = prepared.verify(template);
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
@@ -103,7 +103,7 @@ describe("independent conditional-parallel native evidence", () => {
     ];
 
     for (const testCase of cases) {
-      const mutation = independentReadback();
+      const mutation = independentReadback({ syntheticCooperation: true });
       mutateWorkflow(mutation, testCase.mutate);
       const diagnostics = prepared.verify(mutation).diagnostics;
       assert.equal(
@@ -111,6 +111,17 @@ describe("independent conditional-parallel native evidence", () => {
         true,
         `${testCase.name}: ${JSON.stringify(diagnostics)}`
       );
+    }
+  });
+
+  it("rejects incomplete native fragments without a synthetic cooperation envelope", () => {
+    for (const [dsl, template] of [
+      [conditionalParallelDsl(), independentReadback()],
+      [allAnyoneParallelDsl(), independentAllAnyoneReadback()]
+    ]) {
+      const readback = prepareSample(dsl).verify(template);
+      assert.equal(readback.ok, false);
+      assert.deepEqual([...new Set(readback.diagnostics.filter(item => item.level === "error").map(item => item.code))], ["readback.workflow.cooperation_type_mismatch"]);
     }
   });
 });
@@ -211,9 +222,10 @@ function allAnyoneParallelDsl() {
   });
 }
 
-function independentReadback() {
+function independentReadback({ syntheticCooperation = false } = {}) {
   const template = JSON.parse(readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8"));
   const workflow = JSON.parse(readFileSync(join(fixtureDir, "conditional-parallel-native-workflow.json"), "utf8"));
+  if (syntheticCooperation) completeSyntheticCooperation(workflow);
   const config = xformConfig(template);
   const attr = JSON.parse(config.attribute.formAttr);
   attr.subjectRule = {};
@@ -223,9 +235,10 @@ function independentReadback() {
   return template;
 }
 
-function independentAllAnyoneReadback() {
+function independentAllAnyoneReadback({ syntheticCooperation = false } = {}) {
   const template = JSON.parse(readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8"));
   const workflow = JSON.parse(readFileSync(join(fixtureDir, "all-anyone-parallel-native-workflow.json"), "utf8"));
+  if (syntheticCooperation) completeSyntheticCooperation(workflow);
   const config = xformConfig(template);
   const attr = JSON.parse(config.attribute.formAttr);
   attr.subjectRule = {};
@@ -233,6 +246,15 @@ function independentAllAnyoneReadback() {
   template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
   template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(workflow);
   return template;
+}
+
+function completeSyntheticCooperation(workflow) {
+  // The independent gateway fragments omit cooperation. This test-only value
+  // completes the synthetic envelope; it is not a captured native value.
+  for (const node of workflow.elements.filter(node => ["review", "send"].includes(node.type))) {
+    assert.equal(Object.hasOwn(node, "cooperateType"), false);
+    node.cooperateType = "2";
+  }
 }
 
 function mutateWorkflow(template, mutate) {

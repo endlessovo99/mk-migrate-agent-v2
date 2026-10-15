@@ -15,6 +15,7 @@ import { prepareRequiredTemplateTheme } from "./template-theme.js";
 import { buildTransferRecordPayload, generateTransferRecordId } from "./transfer-record.js";
 import { createLockedDraftState } from "./locked-draft-state.js";
 import { validateLockedDraftSourceEvidence } from "./locked-draft-source-evidence.js";
+import { restoreRetainedSingletonAuthorization } from "./retained-singleton-authorization.js";
 
 const VERIFIED_PARTITIONS = Object.freeze([
   "envelope",
@@ -57,7 +58,8 @@ export async function reconcileTransferRecord(input, options = {}) {
   if (!plan.ok) return invalid(plan);
   const priorResolution = applyPriorResolutionEvidence(
     executableInput,
-    options.priorExecutionReport
+    options.priorExecutionReport,
+    options.sourceDraft
   );
   if (!priorResolution.ok) {
     return {
@@ -103,6 +105,7 @@ export async function reconcileTransferRecord(input, options = {}) {
     updatedFdIds: [],
     validationPolicy: executableInput?.validationPolicy,
     catalogs: executableInput?.catalogs,
+    priorResolutionEvidence: priorResolution.audit,
     apiStages,
     plan
   });
@@ -381,9 +384,9 @@ function reconciliationDsl(sourceDraft, priorSourceDraft, input, priorExecutionR
   const toVersion = CATALOG_VERSIONS.components;
   if (
     fromVersion !== "2026-08-28.v14" ||
-    !["2026-09-01.v15", "2026-09-12.v16"].includes(toVersion) ||
+    !["2026-09-01.v15", "2026-09-12.v16", "2026-10-15.v17", "2026-10-15.v18"].includes(toVersion) ||
     priorExecutionReport?.plan?.catalogs?.components?.version !== fromVersion ||
-    usesV15OnlyMonthPattern(input) || hasV16Presentation(input)
+    usesV15OnlyMonthPattern(input) || hasPostV14Presentation(input)
   ) {
     return { ok: false, diagnostics: trust.diagnostics, trust };
   }
@@ -412,7 +415,7 @@ function reconciliationDsl(sourceDraft, priorSourceDraft, input, priorExecutionR
   };
 }
 
-function hasV16Presentation(dsl) {
+function hasPostV14Presentation(dsl) {
   const newLabelComponents = new Set([
     "xform-button", "xform-hyperlinks", "xform-subject", "xform-datetime",
     "xform-number", "xform-calculate", "xform-attach", "xform-detail-table"
@@ -421,8 +424,13 @@ function hasV16Presentation(dsl) {
     Object.hasOwn(value, "contentFlow") || Object.values(value).some(containsFlow)
   ));
   return containsFlow(dsl?.form?.layout) || (dsl?.form?.fields || []).some((field) =>
-    [field, ...(field.columns || [])].some((candidate) => newLabelComponents.has(candidate.componentId) &&
-      Object.hasOwn(candidate.props || {}, "hiddenLabel")));
+    [field, ...(field.columns || [])].some((candidate) => (
+      newLabelComponents.has(candidate.componentId) && Object.hasOwn(candidate.props || {}, "hiddenLabel")
+    ) || (
+      candidate.componentId === "xform-hyperlinks" && Object.hasOwn(candidate.props || {}, "readOnly")
+    ) || (
+      candidate.componentId === "xform-input" && Object.hasOwn(candidate.props || {}, "maxLength")
+    )));
 }
 
 function usesV15OnlyMonthPattern(dsl) {
@@ -437,14 +445,14 @@ function usesV15OnlyMonthPattern(dsl) {
   });
 }
 
-function applyPriorResolutionEvidence(dsl, report) {
+function applyPriorResolutionEvidence(dsl, report, sourceDraft) {
   const resolutionStage = (report?.apiStages || []).find((entry) => (
     entry?.name === "resolveWorkflowParticipants" && entry?.status === "ok"
   ));
   const overrides = Array.isArray(resolutionStage?.overrides)
     ? resolutionStage.overrides
     : [];
-  if (!overrides.length) return { ok: true, dsl, audit: [] };
+  if (!overrides.length) return restoreRetainedSingletonAuthorization(dsl, sourceDraft, report);
   const next = structuredClone(dsl);
   const audit = [];
   try {
@@ -489,7 +497,8 @@ function applyPriorResolutionEvidence(dsl, report) {
         paths: [...entry.paths]
       });
     }
-    return { ok: true, dsl: next, audit };
+    const retained = restoreRetainedSingletonAuthorization(next, sourceDraft, report);
+    return retained.ok ? { ...retained, audit: [...audit, ...retained.audit] } : retained;
   } catch (error) {
     return {
       ok: false,

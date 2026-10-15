@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-mixed-nested-sysform</string></void>
+<void method="put"><string>fdName</string><string>mixed-nested</string></void>
+<void method="put"><string>fdModelId</string><string>route-mixed-nested-template</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0,1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_outer",label:"fd_outer",dataType:"String",}'&gt;&lt;input id="fd_outer"/&gt;&lt;/div&gt;&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_inner",label:"fd_inner",dataType:"String",}'&gt;&lt;input id="fd_inner"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_outer" label="fd_outer" type="String"/&gt;&lt;extendSimpleProperty name="fd_inner" label="fd_inner" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string></string></void>
+</object></java>

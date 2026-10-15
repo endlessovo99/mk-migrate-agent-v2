@@ -230,13 +230,9 @@ export function inspectMappedScriptBranchProvenance(action, expected = action?.b
   if (!sameConditionSequence(expected.conditions, observed.conditions)) {
     return invalid("branch_condition_provenance_changed", expected, observed);
   }
-  if (expected.conditions.some((condition, index) => {
-    if (condition.emptyText !== true) return false;
-    const transforms = observed.conditions[index].transforms;
-    const nullish = transforms.indexOf("nullish-empty");
-    const string = transforms.indexOf("string");
-    return nullish < 0 || string < nullish || transforms.includes("default-empty");
-  })) {
+  if (expected.conditions.some((condition, index) => (
+    !preservesEmptyText(condition, observed.conditions[index])
+  ))) {
     return invalid("legacy_text_empty_value_not_preserved", expected, observed);
   }
   return { ok: true, status: "matched", expected, observed };
@@ -555,6 +551,14 @@ function isAstNode(value) {
 }
 
 function normalizedCondition(condition) {
+  if (condition.kind === "or") {
+    return {
+      kind: "or",
+      origin: condition.operand,
+      left: normalizedCondition(condition.left),
+      right: normalizedCondition(condition.right)
+    };
+  }
   return pruneUndefined({
     kind: condition.kind,
     value: condition.value,
@@ -574,6 +578,7 @@ function sameConditionSequence(expected, observed) {
 }
 
 function conditionKey(condition) {
+  if (condition.kind === "or") return JSON.stringify(compoundConditionShape(condition));
   return JSON.stringify({
     kind: condition.kind,
     value: condition.value,
@@ -583,6 +588,18 @@ function conditionKey(condition) {
 }
 
 function validCondition(condition, event, onChangeOperandMode) {
+  if (condition?.kind === "or") {
+    let leaves = 0;
+    function validOr(node, depth = 0) {
+      if (!node || depth > 8 || node.origin !== condition.origin) return false;
+      if (node.kind === "or") return validOr(node.left, depth + 1) && validOr(node.right, depth + 1);
+      return ++leaves <= 8 && ["eq", "contains"].includes(node.kind) &&
+        typeof node.predicate === "string" && Array.isArray(node.transforms) &&
+        node.transforms.every((value) => typeof value === "string") &&
+        validCondition(node, event, onChangeOperandMode);
+    }
+    return validOr(condition);
+  }
   if (!condition || typeof condition !== "object" || Array.isArray(condition)) return false;
   if (condition.emptyText !== undefined && typeof condition.emptyText !== "boolean") return false;
   if (!["eq", "contains", "regex-set", "truthy", "lt", "lte", "gt", "gte"].includes(condition.kind)) {
@@ -598,6 +615,31 @@ function validCondition(condition, event, onChangeOperandMode) {
   return originAllowedForEvent(condition.origin, event, {
     allowOnChangeStaticFieldReads: onChangeOperandMode === "static-field-read"
   });
+}
+
+function compoundConditionShape(condition) {
+  return condition.kind === "or"
+    ? {
+        kind: "or", origin: condition.origin,
+        left: compoundConditionShape(condition.left),
+        right: compoundConditionShape(condition.right)
+      }
+    : {
+        kind: condition.kind, value: condition.value, origin: condition.origin,
+        predicate: condition.predicate, transforms: condition.transforms
+      };
+}
+
+function preservesEmptyText(expected, observed) {
+  if (expected.kind === "or") {
+    return preservesEmptyText(expected.left, observed.left) &&
+      preservesEmptyText(expected.right, observed.right);
+  }
+  if (expected.emptyText !== true) return true;
+  const transforms = observed.transforms;
+  const nullish = transforms.indexOf("nullish-empty");
+  const string = transforms.indexOf("string");
+  return nullish >= 0 && string >= nullish && !transforms.includes("default-empty");
 }
 
 function originAllowedForEvent(origin, event, { allowOnChangeStaticFieldReads = false } = {}) {
