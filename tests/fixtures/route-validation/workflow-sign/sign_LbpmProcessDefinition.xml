@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>class</string>
+      <string>com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition</string>
+    </void>
+    <void method="put">
+      <string>fdContent</string>
+      <string>&lt;process fdId="fixture-sign-process" description="modelName=com.landray.kmss.km.review.model.KmReviewTemplate&amp;amp;modelKey=reviewMainDoc&amp;amp;templateId=fixture-sign-template&amp;amp;lbpmTmpId=fixture-sign-lbpm"&gt;&lt;nodes&gt;&lt;startNode id="START" name="Start" /&gt;&lt;signNode id="S1" name="Sign 1" handlerIds="person-a;person-b" handlerNames="Person-A;Person-B" handlerSelectType="org" processType="1" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" /&gt;&lt;signNode id="S2" name="Sign 2" handlerIds="post-a" handlerNames="Post-A" handlerSelectType="org" processType="1" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" /&gt;&lt;signNode id="S3" name="Sign 3" handlerIds="person-c" handlerNames="Person-C" handlerSelectType="org" processType="0" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" /&gt;&lt;signNode id="S4" name="Sign 4" handlerIds="person-d" handlerNames="Person-D" handlerSelectType="org" processType="0" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" /&gt;&lt;signNode id="S5" name="Sign 5" handlerIds="person-d;person-b" handlerNames="Person-D;Person-B" handlerSelectType="org" processType="2" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" /&gt;&lt;signNode id="S6" name="Sign 6" handlerIds="person-b" handlerNames="Person-B" handlerSelectType="org" processType="0" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" /&gt;&lt;endNode id="END" name="End" /&gt;&lt;/nodes&gt;&lt;lines&gt;&lt;line id="L1" startNodeId="START" endNodeId="S1" /&gt;&lt;line id="L2" startNodeId="S1" endNodeId="S2" /&gt;&lt;line id="L3" startNodeId="S2" endNodeId="S3" /&gt;&lt;line id="L4" startNodeId="S3" endNodeId="S4" /&gt;&lt;line id="L5" startNodeId="S4" endNodeId="S5" /&gt;&lt;line id="L6" startNodeId="S5" endNodeId="S6" /&gt;&lt;line id="L7" startNodeId="S6" endNodeId="END" /&gt;&lt;/lines&gt;&lt;/process&gt;</string>
+    </void>
+    <void method="put">
+      <string>nodeDefinitions</string>
+      <object class="java.util.ArrayList">
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdContent</string>
+              <string>&lt;signNode id="S1" name="Sign 1" handlerIds="person-a;person-b" handlerNames="Person-A;Person-B" handlerSelectType="org" processType="1" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" canModifyMainDoc="true" canModifyFlow="false" canModifyNotionPopedom="false" ignoreOnHandlerSame="false" onAdjoinHandlerSame="false" dayOfNotify="3" hourOfNotify="0" minuteOfNotify="0" dayOfPass="0" hourOfPass="0" minuteOfPass="0" tranNotifyDraft="3" hourOfTranNotifyDraft="0" minuteOfTranNotifyDraft="0" tranNotifyPrivate="3" hourOfTranNotifyPrivate="0" minuteOfTranNotifyPrivate="0"&gt;&lt;operations refId="fixture-source-operations" /&gt;&lt;/signNode&gt;</string>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdContent</string>
+              <string>&lt;signNode id="S2" name="Sign 2" handlerIds="post-a" handlerNames="Post-A" handlerSelectType="org" processType="1" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" canModifyMainDoc="false" canModifyFlow="false" canModifyNotionPopedom="false" ignoreOnHandlerSame="true" onAdjoinHandlerSame="true" dayOfNotify="3" hourOfNotify="0" minuteOfNotify="0" dayOfPass="0" hourOfPass="0" minuteOfPass="0" tranNotifyDraft="3" hourOfTranNotifyDraft="0" minuteOfTranNotifyDraft="0" tranNotifyPrivate="3" hourOfTranNotifyPrivate="0" minuteOfTranNotifyPrivate="0"&gt;&lt;operations refId="fixture-source-operations" /&gt;&lt;/signNode&gt;</string>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdContent</string>
+              <string>&lt;signNode id="S3" name="Sign 3" handlerIds="person-c" handlerNames="Person-C" handlerSelectType="org" processType="0" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" canModifyMainDoc="false" canModifyFlow="false" canModifyNotionPopedom="false" ignoreOnHandlerSame="true" onAdjoinHandlerSame="true" dayOfNotify="3" hourOfNotify="0" minuteOfNotify="0" dayOfPass="0" hourOfPass="0" minuteOfPass="0" tranNotifyDraft="3" hourOfTranNotifyDraft="0" minuteOfTranNotifyDraft="0" tranNotifyPrivate="3" hourOfTranNotifyPrivate="0" minuteOfTranNotifyPrivate="0"&gt;&lt;operations refId="fixture-source-operations" /&gt;&lt;/signNode&gt;</string>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdContent</string>
+              <string>&lt;signNode id="S4" name="Sign 4" handlerIds="person-d" handlerNames="Person-D" handlerSelectType="org" processType="0" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" canModifyMainDoc="true" canModifyFlow="false" canModifyNotionPopedom="false" ignoreOnHandlerSame="false" onAdjoinHandlerSame="false" dayOfNotify="3" hourOfNotify="0" minuteOfNotify="0" dayOfPass="0" hourOfPass="0" minuteOfPass="0" tranNotifyDraft="3" hourOfTranNotifyDraft="0" minuteOfTranNotifyDraft="0" tranNotifyPrivate="3" hourOfTranNotifyPrivate="0" minuteOfTranNotifyPrivate="0"&gt;&lt;operations refId="fixture-source-operations" /&gt;&lt;/signNode&gt;</string>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdContent</string>
+              <string>&lt;signNode id="S5" name="Sign 5" handlerIds="person-d;person-b" handlerNames="Person-D;Person-B" handlerSelectType="org" processType="2" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" canModifyMainDoc="true" canModifyFlow="false" canModifyNotionPopedom="false" ignoreOnHandlerSame="false" onAdjoinHandlerSame="false" dayOfNotify="3" hourOfNotify="0" minuteOfNotify="0" dayOfPass="0" hourOfPass="0" minuteOfPass="0" tranNotifyDraft="3" hourOfTranNotifyDraft="0" minuteOfTranNotifyDraft="0" tranNotifyPrivate="3" hourOfTranNotifyPrivate="0" minuteOfTranNotifyPrivate="0"&gt;&lt;operations refId="fixture-source-operations" /&gt;&lt;/signNode&gt;</string>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdContent</string>
+              <string>&lt;signNode id="S6" name="Sign 6" handlerIds="person-b" handlerNames="Person-B" handlerSelectType="org" processType="0" ignoreOnHandlerEmpty="false" recalculateHandler="true" useOptHandlerOnly="false" optHandlerCalType="2" optHandlerSelectType="org" canModifyMainDoc="true" canModifyFlow="false" canModifyNotionPopedom="false" ignoreOnHandlerSame="false" onAdjoinHandlerSame="false" dayOfNotify="3" hourOfNotify="0" minuteOfNotify="0" dayOfPass="0" hourOfPass="0" minuteOfPass="0" tranNotifyDraft="3" hourOfTranNotifyDraft="0" minuteOfTranNotifyDraft="0" tranNotifyPrivate="3" hourOfTranNotifyPrivate="0" minuteOfTranNotifyPrivate="0"&gt;&lt;operations refId="fixture-source-operations" /&gt;&lt;/signNode&gt;</string>
+            </void>
+          </object>
+        </void>
+      </object>
+    </void>
+    <void method="put">
+      <string>nodeDefinitionHandlers</string>
+      <object class="java.util.ArrayList">
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdIndex</string>
+              <int>0</int>
+            </void>
+            <void method="put">
+              <string>fdFactId</string>
+              <string>S1</string>
+            </void>
+            <void method="put">
+              <string>fdAttribute</string>
+              <string>handlerIds</string>
+            </void>
+            <void method="put">
+              <string>fdHandler</string>
+              <object class="java.util.HashMap">
+                <void method="put">
+                  <string>fdId</string>
+                  <string>person-a</string>
+                </void>
+                <void method="put">
+                  <string>fdName</string>
+                  <string>Person-A</string>
+                </void>
+                <void method="put">
+                  <string>fdOrgType</string>
+                  <int>8</int>
+                </void>
+                <void method="put">
+                  <string>class</string>
+                  <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string>
+                </void>
+              </object>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdIndex</string>
+              <int>1</int>
+            </void>
+            <void method="put">
+              <string>fdFactId</string>
+              <string>S1</string>
+            </void>
+            <void method="put">
+              <string>fdAttribute</string>
+              <string>handlerIds</string>
+            </void>
+            <void method="put">
+              <string>fdHandler</string>
+              <object class="java.util.HashMap">
+                <void method="put">
+                  <string>fdId</string>
+                  <string>person-b</string>
+                </void>
+                <void method="put">
+                  <string>fdName</string>
+                  <string>Person-B</string>
+                </void>
+                <void method="put">
+                  <string>fdOrgType</string>
+                  <int>8</int>
+                </void>
+                <void method="put">
+                  <string>class</string>
+                  <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string>
+                </void>
+              </object>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdIndex</string>
+              <int>0</int>
+            </void>
+            <void method="put">
+              <string>fdFactId</string>
+              <string>S2</string>
+            </void>
+            <void method="put">
+              <string>fdAttribute</string>
+              <string>handlerIds</string>
+            </void>
+            <void method="put">
+              <string>fdHandler</string>
+              <object class="java.util.HashMap">
+                <void method="put">
+                  <string>fdId</string>
+                  <string>post-a</string>
+                </void>
+                <void method="put">
+                  <string>fdName</string>
+                  <string>Post-A</string>
+                </void>
+                <void method="put">
+                  <string>fdOrgType</string>
+                  <int>4</int>
+                </void>
+                <void method="put">
+                  <string>class</string>
+                  <string>com.landray.kmss.sys.organization.model.SysOrgPost</string>
+                </void>
+              </object>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdIndex</string>
+              <int>0</int>
+            </void>
+            <void method="put">
+              <string>fdFactId</string>
+              <string>S3</string>
+            </void>
+            <void method="put">
+              <string>fdAttribute</string>
+              <string>handlerIds</string>
+            </void>
+            <void method="put">
+              <string>fdHandler</string>
+              <object class="java.util.HashMap">
+                <void method="put">
+                  <string>fdId</string>
+                  <string>person-c</string>
+                </void>
+                <void method="put">
+                  <string>fdName</string>
+                  <string>Person-C</string>
+                </void>
+                <void method="put">
+                  <string>fdOrgType</string>
+                  <int>8</int>
+                </void>
+                <void method="put">
+                  <string>class</string>
+                  <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string>
+                </void>
+              </object>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdIndex</string>
+              <int>0</int>
+            </void>
+            <void method="put">
+              <string>fdFactId</string>
+              <string>S4</string>
+            </void>
+            <void method="put">
+              <string>fdAttribute</string>
+              <string>handlerIds</string>
+            </void>
+            <void method="put">
+              <string>fdHandler</string>
+              <object class="java.util.HashMap">
+                <void method="put">
+                  <string>fdId</string>
+                  <string>person-d</string>
+                </void>
+                <void method="put">
+                  <string>fdName</string>
+                  <string>Person-D</string>
+                </void>
+                <void method="put">
+                  <string>fdOrgType</string>
+                  <int>8</int>
+                </void>
+                <void method="put">
+                  <string>class</string>
+                  <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string>
+                </void>
+              </object>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdIndex</string>
+              <int>0</int>
+            </void>
+            <void method="put">
+              <string>fdFactId</string>
+              <string>S5</string>
+            </void>
+            <void method="put">
+              <string>fdAttribute</string>
+              <string>handlerIds</string>
+            </void>
+            <void method="put">
+              <string>fdHandler</string>
+              <object class="java.util.HashMap">
+                <void method="put">
+                  <string>fdId</string>
+                  <string>person-d</string>
+                </void>
+                <void method="put">
+                  <string>fdName</string>
+                  <string>Person-D</string>
+                </void>
+                <void method="put">
+                  <string>fdOrgType</string>
+                  <int>8</int>
+                </void>
+                <void method="put">
+                  <string>class</string>
+                  <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string>
+                </void>
+              </object>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdIndex</string>
+              <int>1</int>
+            </void>
+            <void method="put">
+              <string>fdFactId</string>
+              <string>S5</string>
+            </void>
+            <void method="put">
+              <string>fdAttribute</string>
+              <string>handlerIds</string>
+            </void>
+            <void method="put">
+              <string>fdHandler</string>
+              <object class="java.util.HashMap">
+                <void method="put">
+                  <string>fdId</string>
+                  <string>person-b</string>
+                </void>
+                <void method="put">
+                  <string>fdName</string>
+                  <string>Person-B</string>
+                </void>
+                <void method="put">
+                  <string>fdOrgType</string>
+                  <int>8</int>
+                </void>
+                <void method="put">
+                  <string>class</string>
+                  <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string>
+                </void>
+              </object>
+            </void>
+          </object>
+        </void>
+        <void method="add">
+          <object class="java.util.HashMap">
+            <void method="put">
+              <string>fdIndex</string>
+              <int>0</int>
+            </void>
+            <void method="put">
+              <string>fdFactId</string>
+              <string>S6</string>
+            </void>
+            <void method="put">
+              <string>fdAttribute</string>
+              <string>handlerIds</string>
+            </void>
+            <void method="put">
+              <string>fdHandler</string>
+              <object class="java.util.HashMap">
+                <void method="put">
+                  <string>fdId</string>
+                  <string>person-b</string>
+                </void>
+                <void method="put">
+                  <string>fdName</string>
+                  <string>Person-B</string>
+                </void>
+                <void method="put">
+                  <string>fdOrgType</string>
+                  <int>8</int>
+                </void>
+                <void method="put">
+                  <string>class</string>
+                  <string>com.landray.kmss.sys.organization.model.SysOrgPerson</string>
+                </void>
+              </object>
+            </void>
+          </object>
+        </void>
+      </object>
+    </void>
+  </object>
+</java>

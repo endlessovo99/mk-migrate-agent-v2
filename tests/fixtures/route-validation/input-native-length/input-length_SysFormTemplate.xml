@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>synthetic-input-length-form</string></void>
+<void method="put"><string>fdModelId</string><string>synthetic-input-length-template</string></void>
+<void method="put"><string>fdName</string><string>Synthetic native input length policy</string></void>
+<void method="put"><string>fdDesignerHtml</string><string><![CDATA[<table fd_type="standardTable"><tbody>
+<tr><td row="0" column="0"><div fd_type="inputText" fd_values='{id:"fd_code",label:"Code",dataType:"String",maxlength:"18"}' formDesign="landray"></div></td></tr>
+<tr><td row="1" column="0"><div fd_type="inputText" fd_values='{id:"fd_note",label:"Uncapped note",dataType:"String"}' formDesign="landray"></div></td></tr>
+<tr><td row="2" column="0"><div fd_type="textarea" fd_values='{id:"fd_description",label:"Description",dataType:"String",maxlength:"600"}' formDesign="landray"></div></td></tr>
+<tr><td row="3" column="0"><table fd_type="detailsTable" fd_values='{id:"fd_items",label:"Items"}'><tbody>
+<tr><td>Title</td><td>Model</td><td>Unit</td></tr><tr type="templateRow">
+<td><div fd_type="inputText" fd_values='{id:"item_title",label:"Title",tableName:"fd_items",dataType:"String",maxlength:"70"}' formDesign="landray"></div></td>
+<td><div fd_type="inputText" fd_values='{id:"item_model",label:"Model",tableName:"fd_items",dataType:"String",maxlength:"36"}' formDesign="landray"></div></td>
+<td><div fd_type="inputText" fd_values='{id:"item_unit",label:"Unit",tableName:"fd_items",dataType:"String",maxlength:"10"}' formDesign="landray"></div></td>
+</tr></tbody></table></td></tr></tbody></table>]]></string></void>
+<void method="put"><string>fdDisplayJsp</string><string><![CDATA[<xform:editShow>
+<xform:xtext property="extendDataFormInfo.value(fd_code)" validators="maxLength(18)"/>
+<xform:xtext property="extendDataFormInfo.value(fd_note)"/>
+<xform:textarea property="extendDataFormInfo.value(fd_description)" validators="maxLength(600)"/>
+<xform:xtext property="extendDataFormInfo.value(fd_items.!{index}.item_title)" validators="maxLength(70)"/>
+<xform:xtext property="extendDataFormInfo.value(fd_items.!{index}.item_model)" validators="maxLength(36)"/>
+<xform:xtext property="extendDataFormInfo.value(fd_items.!{index}.item_unit)" validators="maxLength(10)"/>
+</xform:editShow>]]></string></void>
+<void method="put"><string>fdMetadataXml</string><string><![CDATA[<metadata>
+<extendSimpleProperty name="fd_code" label="Code" type="String" length="18"/>
+<extendSimpleProperty name="fd_note" label="Uncapped note" type="String" length="200"/>
+<extendSimpleProperty name="fd_description" label="Description" type="String" length="600"/>
+<extendSubTableProperty name="fd_items" label="Items">
+<extendSimpleProperty name="item_title" label="Title" type="String" length="70"/>
+<extendSimpleProperty name="item_model" label="Model" type="String" length="36"/>
+<extendSimpleProperty name="item_unit" label="Unit" type="String" length="10"/>
+</extendSubTableProperty></metadata>]]></string></void>
+</object></java>

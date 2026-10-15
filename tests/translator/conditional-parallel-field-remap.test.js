@@ -50,6 +50,17 @@ describe("conditional-parallel field identity remapping", () => {
 
     const nativeReadback = structuredClone(prepared.update);
     nativeReadback.mechanisms.lbpmTemplate[0].fdContent = readFileSync(nativeWorkflowFixture, "utf8");
+    const incomplete = prepared.verify(nativeReadback);
+    assert.equal(incomplete.ok, false);
+    assert.deepEqual([...new Set(incomplete.diagnostics.filter(item => item.level === "error").map(item => item.code))], ["readback.workflow.cooperation_type_mismatch"]);
+    const syntheticWorkflow = JSON.parse(nativeReadback.mechanisms.lbpmTemplate[0].fdContent);
+    // Complete the independently authored condition fragment in memory; the
+    // cooperation default is synthetic and does not alter the saved fixture.
+    for (const node of syntheticWorkflow.elements.filter(node => ["review", "send"].includes(node.type))) {
+      assert.equal(Object.hasOwn(node, "cooperateType"), false);
+      node.cooperateType = "2";
+    }
+    nativeReadback.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(syntheticWorkflow);
     const readback = prepared.verify(nativeReadback);
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
 

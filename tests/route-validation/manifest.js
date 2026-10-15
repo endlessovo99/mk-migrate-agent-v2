@@ -1,10 +1,21 @@
 import { integrityError } from "./integrity.js";
+import { readFileSync } from "node:fs";
+import { executionOptions } from "../../src/batch/contracts.js";
+
+const SIGN_OPTIONS = JSON.parse(readFileSync(new URL("../fixtures/route-validation/workflow-sign/sign-policy.json", import.meta.url), "utf8"));
+const SIGN_OPERATIONS = JSON.parse(readFileSync(new URL("../fixtures/route-validation/workflow-sign/operation-set.json", import.meta.url), "utf8"));
 
 export const REVIEW_SCENARIOS = Object.freeze([
   "accept",
   "warning",
   "audited-row-marker-orphan-noop",
-  "fail-if-called"
+  "event-value-assignment",
+  "same-operand-or-proof",
+  "timed-initialization",
+  "row-marker-proof",
+  "native-select-empty-event",
+  "fail-if-called",
+  "provider-body-timeout"
 ]);
 export const NEWOA_SCENARIOS = Object.freeze([
   "persist",
@@ -111,6 +122,203 @@ const CONDITIONAL_PARALLEL_SUCCESS_OPERATIONS = Object.freeze([
 export const ROUTE_CASE_MANIFEST = deepFreeze({
   version: 1,
   cases: [
+    {
+      id: "source-sign-explicit-policy-success",
+      source: { kind: "paired", relativePath: "workflow-sign" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      executionOptions: SIGN_OPTIONS,
+      workflowOperationSets: [SIGN_OPERATIONS],
+      organizationCandidates: [{ fdId: "post-a", fdName: "Post-A", fdOrgType: 4 }],
+      expected: {
+        reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings",
+        operations: ["login", "get-workflow-cooperation-config", "get-workflow-operation-set", ...Array(5).fill("get-element-info"),
+          ...SUCCESS_OPERATIONS.slice(1, -2), "save-workflow-draft", "get-workflow-detail", "get-readback", "get-workflow-operation-set", "add-transfer-record"]
+      }
+    },
+    {
+      id: "provider-body-timeout-blocks-review",
+      source: { kind: "form-only", relativePath: "provider-body-timeout/provider_SysFormTemplate.xml" },
+      reviewScenario: "provider-body-timeout",
+      newoaScenario: "persist",
+      confirmWrite: false,
+      expected: {
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.network",
+        operations: []
+      }
+    },
+    {
+      id: "input-native-length-success",
+      source: { kind: "form-only", relativePath: "input-native-length/input-length_SysFormTemplate.xml" },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "written_with_warnings",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "sql-selector-readonly-projection-without-write",
+      source: { kind: "form-only", relativePath: "sql-selector-readonly/sql-readonly_SysFormTemplate.xml" },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: false,
+      expected: {
+        reviewStatus: "needs_manual",
+        dryRunStatus: "needs_manual",
+        executionStatus: "blocked",
+        operations: []
+      }
+    },
+    {
+      id: "jquery-ready-initialization-remains-gated",
+      source: { kind: "form-only", relativePath: "jquery-ready-initialization/ready-initialization_SysFormTemplate.xml" },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: false,
+      expected: {
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.incomplete",
+        operations: []
+      }
+    },
+    {
+      id: "detail-column-consistency-success",
+      source: { kind: "form-only", relativePath: "detail-column-consistency/detail-consistency_SysFormTemplate.xml" },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: { reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "singleton-select-width-success",
+      source: { kind: "form-only", relativePath: "native-field-width/single-selector_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "runtime-independent-caption-width-success",
+      source: { kind: "form-only", relativePath: "native-field-width/amount-caption_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "designer-select-face-width-success",
+      source: { kind: "form-only", relativePath: "designer-select-face-width/select-face_SysFormTemplate.xml" },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "numeric-editor-width-success",
+      source: { kind: "form-only", relativePath: "numeric-editor-width/numeric-editor-width_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "native-select-empty-event-success",
+      source: { kind: "form-only", relativePath: "native-select-empty-event/select-empty_SysFormTemplate.xml" },
+      reviewScenario: "native-select-empty-event", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "row-marker-timed-select-proof-success",
+      source: { kind: "form-only", relativePath: "row-marker-proof/timed-getter_SysFormTemplate.xml" },
+      reviewScenario: "row-marker-proof", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "row-marker-atomic-proof-success",
+      source: { kind: "form-only", relativePath: "row-marker-proof/synchronous-existing-getter-contract_SysFormTemplate.xml" },
+      reviewScenario: "row-marker-proof", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "timed-initialization-retains-schedule",
+      source: {
+        kind: "form-only",
+        relativePath: "timed-initialization/timed-initialization_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: false,
+      expected: {
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.incomplete",
+        operations: []
+      }
+    },
+    {
+      id: "timed-initialization-success",
+      source: {
+        kind: "form-only",
+        relativePath: "timed-initialization/timed-initialization_SysFormTemplate.xml"
+      },
+      reviewScenario: "timed-initialization",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "same-operand-or-proof-success",
+      source: {
+        kind: "form-only",
+        relativePath: "same-operand-or-proof/same-operand-or-proof_SysFormTemplate.xml"
+      },
+      reviewScenario: "same-operand-or-proof",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "timer-helper-context-remains-gated",
+      source: {
+        kind: "form-only",
+        relativePath: "timer-helper-context/timer-helper_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: false,
+      expected: {
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.incomplete",
+        operations: []
+      }
+    },
+    {
+      id: "dynamic-hyperlink-target-success",
+      source: {
+        kind: "form-only",
+        relativePath: "dynamic-hyperlink-target/route-hyperlink-target_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
     {
       id: "form-only-success",
       source: {
@@ -406,6 +614,118 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
         dryRunStatus: "passed",
         executionStatus: "written",
         operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "row-marker-grid-mixed-nested-success",
+      source: {
+        kind: "form-only",
+        relativePath: "row-marker-grid/mixed-nested_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "row-marker-grid-alias-lifecycle-success",
+      source: {
+        kind: "form-only",
+        relativePath: "row-marker-grid/alias-lifecycle_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "row-marker-grid-alias-nested-load-success",
+      source: {
+        kind: "form-only",
+        relativePath: "row-marker-grid/alias-nested-load_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "event-value-assignment-prefix-success",
+      source: {
+        kind: "form-only",
+        relativePath: "event-value-assignment/event-prefix_SysFormTemplate.xml"
+      },
+      reviewScenario: "event-value-assignment",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "event-value-assignment-else-success",
+      source: {
+        kind: "form-only",
+        relativePath: "event-value-assignment/event-else_SysFormTemplate.xml"
+      },
+      reviewScenario: "event-value-assignment",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        reviewStatus: "passed",
+        dryRunStatus: "passed",
+        executionStatus: "written",
+        operations: SUCCESS_OPERATIONS
+      }
+    },
+    {
+      id: "script-field-reference-comments-blocked",
+      source: {
+        kind: "form-only",
+        relativePath: "script-field-reference-comments/route-comment-fields_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: false,
+      expected: {
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.incomplete",
+        operations: []
+      }
+    },
+    {
+      id: "review-helper-context-remains-gated",
+      source: {
+        kind: "form-only",
+        relativePath: "review-helper-context/shared-helper_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: false,
+      expected: {
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.incomplete",
+        operations: []
       }
     },
     {
@@ -836,6 +1156,7 @@ export function validateRouteManifest(manifest) {
         !validParticipantOverrides(routeCase.participantOverrides)) {
       throw integrityError("route.manifest.invalid", `Route case ${routeCase.id} has invalid participant overrides.`);
     }
+    if (routeCase.executionOptions !== undefined) executionOptions(routeCase.executionOptions);
     const expected = routeCase.expected;
     const reviewTerminal = expected.terminalStage === "review";
     if (!nonEmptyString(expected.reviewStatus) ||

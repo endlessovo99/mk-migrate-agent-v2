@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 
 import { sha256Digest } from "../../src/agent-review/digest.js";
-import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
 import {
   lockedDraftEvidenceDigest,
@@ -27,6 +27,72 @@ const CREDENTIALS = Object.freeze({
 });
 
 describe("scoped locked-draft repair Route", () => {
+  it("bridges v14 authorization evidence to v18 without changing the retained artifacts or repair paths", async () => {
+    const fixture = authorizationFixture({ historical: true });
+    assert.equal(fixture.dsl.catalogs.components.version, "2026-10-15.v18");
+    fixture.dsl.catalogs.components.version = "2026-08-28.v14";
+    fixture.priorExecutionReport.plan.catalogs.components.version = "2026-08-28.v14";
+    fixture.dslDigest = lockedDraftEvidenceDigest(fixture.dsl);
+    fixture.priorReportDigest = lockedDraftEvidenceDigest(fixture.priorExecutionReport);
+    const retained = JSON.stringify({ source: fixture.sourceDraft, dsl: fixture.dsl, report: fixture.priorExecutionReport });
+    const client = new LockedDraftFakeClient(fixture.template, fixture.workflow);
+    const preview = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
+      client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport,
+      repairKind: "template_authorization"
+    }));
+    assert.equal(preview.ok, true, JSON.stringify(preview.diagnostics));
+    assert.deepEqual(preview.plan.changedPaths, ["/fdAllEditors", "/fdAllReaders", "/fdEditors", "/mechanisms/lbpmTemplate/0/fdEditors", "/workflowDetail/fdEditors"]);
+    assert.equal(client.hasWrite(), false);
+    assert.equal(JSON.stringify({ source: fixture.sourceDraft, dsl: fixture.dsl, report: fixture.priorExecutionReport }), retained);
+  });
+
+  it("does not authorize a new input length through retained v14 authorization repair evidence", async () => {
+    const fixture = authorizationFixture({ historical: true });
+    const fields = fixture.dsl.form.fields.flatMap((field) => field.type === "detailTable" ? field.columns : [field]);
+    const field = fields.find((field) => field.componentId === "xform-input");
+    const sources = [...fixture.sourceDraft.form.controls, ...(fixture.sourceDraft.form.dataFields || []), ...fixture.sourceDraft.form.detailTables.flatMap((table) => table.columns)];
+    const source = sources.find((source) => source.sourceRef === field.sourceRef);
+    source.sourceProps.designerValues = { ...source.sourceProps.designerValues, maxlength: "18" };
+    source.sourceProps.metadataAttributes = { ...source.sourceProps.metadataAttributes, length: "18" };
+    field.props.maxLength = 18;
+    fixture.dsl.review.warnings.push(...draftSourceDraft(fixture.sourceDraft).review.warnings.filter((warning) => warning.code === "source.form.input_length_target_counting"));
+    fixture.dsl.trust.digests.sourceDraft = sha256Digest(fixture.sourceDraft);
+    assert.equal(checkTrust(fixture.sourceDraft, fixture.dsl).ok, true);
+    fixture.dsl.catalogs.components.version = "2026-08-28.v14";
+    fixture.priorExecutionReport.plan.catalogs.components.version = "2026-08-28.v14";
+    fixture.dslDigest = lockedDraftEvidenceDigest(fixture.dsl);
+    fixture.priorReportDigest = lockedDraftEvidenceDigest(fixture.priorExecutionReport);
+    const client = new LockedDraftFakeClient(fixture.template, fixture.workflow);
+    const result = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
+      client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport,
+      repairKind: "template_authorization"
+    }));
+    assert.equal(result.ok, false);
+    assert.equal(client.calls.length, 0);
+    assert.ok(result.diagnostics.some((item) => item.code === "catalog.components.version_mismatch"));
+  });
+
+  it("keeps calculation evolution limited to v18 and the retained immutable evidence", async () => {
+    for (const mutation of ["other-version", "current-cap", "stale-prior-dsl", "stale-report"]) {
+      const fixture = calculationFixture();
+      assert.equal(fixture.dsl.catalogs.components.version, "2026-10-15.v18");
+      if (mutation === "other-version") { fixture.dsl.catalogs.components.version = "unapproved-component-version"; fixture.dslDigest = lockedDraftEvidenceDigest(fixture.dsl); }
+      if (mutation === "current-cap") {
+        const field = fixture.dsl.form.fields.flatMap((field) => field.type === "detailTable" ? field.columns : [field]).find((field) => field.componentId === "xform-input");
+        assert.ok(field); field.props.maxLength = 18; fixture.dslDigest = lockedDraftEvidenceDigest(fixture.dsl);
+      }
+      if (mutation === "stale-prior-dsl") fixture.priorDsl.template.name = "tampered retained DSL";
+      if (mutation === "stale-report") fixture.priorExecutionReport.templateId = "tampered retained target";
+      const client = new LockedDraftFakeClient(fixture.template);
+      const result = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
+        client, sourceDraft: fixture.sourceDraft, priorExecutionReport: fixture.priorExecutionReport, repairKind: "calculation"
+      }));
+      assert.equal(result.ok, false, mutation);
+      assert.equal(client.calls.length, 0, mutation);
+      const code = mutation === "stale-prior-dsl" ? "locked_draft.prior_dsl_digest_mismatch" : mutation === "stale-report" ? "locked_draft.report_digest_mismatch" : "locked_draft.calculation_dsl_evolution_invalid";
+      assert.ok(result.diagnostics.some((item) => item.code === code), mutation);
+    }
+  });
   it("does not let an authorization repair silently fix or ignore a lost classic theme", async () => {
     const fixture = authorizationFixture();
     fixture.priorExecutionReport.readback.theme = { contractVersion: 1, status: "verified", desktop: "classic", mobile: "classic" };
@@ -108,6 +174,7 @@ describe("scoped locked-draft repair Route", () => {
 
   it("repairs only the three calculation-native paths without saving workflow", async (t) => {
     const fixture = calculationFixture();
+    assert.equal(fixture.dsl.catalogs.components.version, "2026-10-15.v18");
     const client = new LockedDraftFakeClient(fixture.template);
     const preview = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
       client,
@@ -231,6 +298,16 @@ describe("scoped locked-draft repair Route", () => {
   });
 
   for (const change of [
+    ...[true, false].map((readOnly) => ({ name: `new hyperlink readOnly=${readOnly} capability`, mutate(dsl) {
+      const field = dsl.form.fields.find((candidate) => candidate.type !== "detailTable");
+      field.type = "hyperlinks";
+      field.componentId = "xform-hyperlinks";
+      field.props = { readOnly };
+    } })),
+    { name: "new input maxLength capability", mutate(dsl) {
+      const field = dsl.form.fields.flatMap((field) => field.type === "detailTable" ? field.columns : [field]).find((field) => field.componentId === "xform-input");
+      assert.ok(field); field.props.maxLength = 18;
+    } },
     { name: "content-flow layout", mutate(dsl) {
       const cell = dsl.form.layout.mkTree.flatMap((row) => row.children).find((cell) => cell.refType === "field");
       cell.contentFlow = { lines: [cell.refIds], items: cell.refIds.map((referenceId) => ({ referenceId })) };
@@ -270,10 +347,18 @@ describe("scoped locked-draft repair Route", () => {
   });
 });
 
-function authorizationFixture() {
+function authorizationFixture({ historical = false } = {}) {
   const sourceDraft = cleanSourceFile(
     "tests/fixtures/route-validation/workflow-data-authority"
   );
+  if (historical) {
+    // Retained v14 fixtures do not claim later content-flow or hidden-label capture.
+    removeContentFlow(sourceDraft.form.layout);
+    for (const field of [...(sourceDraft.form.controls || []), ...(sourceDraft.form.dataFields || []),
+      ...(sourceDraft.form.detailTables || []).flatMap((table) => [table, ...(table.columns || [])])]) {
+      if (field.sourceProps?.layoutCell) delete field.sourceProps.layoutCell.hiddenLabel;
+    }
+  }
   const sourceMember = {
     type: "user_or_org",
     sourceId: MEMBER_ID,

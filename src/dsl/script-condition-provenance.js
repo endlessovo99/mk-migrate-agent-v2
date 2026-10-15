@@ -1,3 +1,4 @@
+import { parseExpressionAt } from "acorn";
 import { buildJavaScriptBindingModel } from "./javascript-binding-provenance.js";
 
 export function textValueFieldIds(form = {}) {
@@ -176,6 +177,19 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
   const text = stripOuterParentheses(String(expression || "").trim());
   if (!text || /^(?:true|false)$/.test(text)) return undefined;
 
+  if (text.includes("||")) {
+    let ast;
+    try {
+      ast = parseExpressionAt(text, 0, { ecmaVersion: "latest" });
+    } catch {
+      return undefined;
+    }
+    if (text.slice(ast.end).trim()) return undefined;
+    if (ast.type === "LogicalExpression" && ast.operator === "||") {
+      return sameOperandOrCondition(ast, text, resolveOperand, context);
+    }
+  }
+
   const negated = text.match(/^!\s*([\s\S]+)$/);
   const negatedTrace = negated ? operandTrace(resolveOperand, negated[1], context) : undefined;
   if (negatedTrace?.origin) {
@@ -349,6 +363,29 @@ export function parseProvenanceCondition(expression, resolveOperand, context = {
     };
   }
   return undefined;
+}
+
+// Keep the source's ordered short-circuit tree. Only existing atomic predicates
+// with one proven operand can participate; this is not Boolean simplification.
+function sameOperandOrCondition(ast, text, resolveOperand, context) {
+  let leaves = 0;
+  function visit(node, depth = 0) {
+    if (depth > 8) return undefined;
+    if (node.type === "LogicalExpression") {
+      if (node.operator !== "||") return undefined;
+      const left = visit(node.left, depth + 1);
+      const right = visit(node.right, depth + 1);
+      if (!left || !right || left.operand !== right.operand) return undefined;
+      return { kind: "or", operand: left.operand, left, right };
+    }
+    if (++leaves > 8) return undefined;
+    const expression = text.slice(node.start, node.end);
+    // Atomic recognition rejects assignments, updates, unknown calls and
+    // compound/negated leaves. Binding provenance still owns every read.
+    const condition = parseProvenanceCondition(expression, resolveOperand, context);
+    return condition && ["eq", "contains"].includes(condition.kind) ? condition : undefined;
+  }
+  return visit(ast);
 }
 
 function relationalKind(operator) {

@@ -20,12 +20,12 @@ function actionsByBasis(draft, basis) {
 describe("Source4 script semantic closure", () => {
   it("lowers unconditional attachment non-empty guards to native required fields", () => {
     const cases = [
-      ["1859e7bfaa39079c5e082ab45ada2a9a", "fd_3b737ff6f7c696", true],
+      ["1859e7bfaa39079c5e082ab45ada2a9a", "fd_3b737ff6f7c696", true, "fd_3e74fe6f917cac.script.1.event.1"],
       ["19c9dac6eb80b3565aacdd64db6b7e34", "fd_3ef5d3dd57cdcc", true],
       ["19ed50e681ba7fdeab4e00a48dc9da44", "fd_3f536e8d4f6688", false]
     ];
 
-    for (const [sourceId, attachmentId, fullyClosed] of cases) {
+    for (const [sourceId, attachmentId, fullyClosed, delayedLoadId] of cases) {
       const { source, draft } = stages(sourceId);
       const field = draft.form.fields.find((candidate) => candidate.id === attachmentId);
       const action = draft.scripts.actions.find((candidate) =>
@@ -50,7 +50,14 @@ describe("Source4 script semantic closure", () => {
         reviewerName: "route-validation",
         checkedAt: "2026-09-01T00:00:00.000Z"
       });
-      if (fullyClosed) {
+      if (fullyClosed && delayedLoadId) {
+        const delayed = draft.scripts.actions.find(candidate => candidate.id === delayedLoadId);
+        assert.equal(delayed?.translationStatus, "needs_review");
+        assert.match(delayed.function, /Source JSP JavaScript:[\s\S]*setTimeout/u);
+        const trust = checkTrust(source, trusted);
+        assert.equal(trust.ok, false);
+        assert.deepEqual(trust.diagnostics.filter(item => item.level === "error").map(item => item.code), ["dsl.scripts.needs_review"]);
+      } else if (fullyClosed) {
         assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
       }
     }
@@ -111,8 +118,13 @@ describe("Source4 script semantic closure", () => {
     );
 
     assert.equal(actions.length, 3);
-    assert.equal(actions.every((action) => action.translationStatus === "mapped"), true);
-    assert.equal(actions.every((action) =>
+    const delayedLoad = actions.find(action => action.event === "onLoad" && action.runWhen?.viewStatusIn?.includes("edit"));
+    assert.equal(delayedLoad?.translationStatus, "needs_review");
+    assert.match(delayedLoad.function, /Source JSP JavaScript:[\s\S]*setTimeout/u);
+    const immediateActions = actions.filter(action => action !== delayedLoad);
+    assert.equal(immediateActions.length, 2);
+    assert.equal(immediateActions.every((action) => action.translationStatus === "mapped"), true);
+    assert.equal(immediateActions.every((action) =>
       action.functionMappings?.some((mapping) =>
         mapping.basis === "deterministic-inline-radio-row-effects"
       )
@@ -502,8 +514,13 @@ describe("Source4 script semantic closure", () => {
       ].some((sourceRef) => action.sourceRefs?.includes(sourceRef))
     );
     assert.equal(rowActions.length, 3);
-    assert.equal(rowActions.every((action) => action.translationStatus === "mapped"), true);
-    assert.equal(rowActions.every((action) =>
+    const delayedLoad = rowActions.find(action => action.event === "onLoad" && action.runWhen?.viewStatusIn?.includes("edit"));
+    assert.equal(delayedLoad?.translationStatus, "needs_review");
+    assert.match(delayedLoad.function, /Source JSP JavaScript:[\s\S]*setTimeout/u);
+    const immediateActions = rowActions.filter(action => action !== delayedLoad);
+    assert.equal(immediateActions.length, 2);
+    assert.equal(immediateActions.every((action) => action.translationStatus === "mapped"), true);
+    assert.equal(immediateActions.every((action) =>
       action.functionMappings?.some((mapping) =>
         mapping.basis === "deterministic-inline-radio-row-effects"
       )

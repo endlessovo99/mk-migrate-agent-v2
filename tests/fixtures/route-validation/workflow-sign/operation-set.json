@@ -1,0 +1,65 @@
+{
+  "fdId": "fixture-sign-operation-set",
+  "fdName": "Fixture Standard Sign",
+  "fdNodeType": "sign",
+  "fdFlowType": "0",
+  "fdIsDefault": true,
+  "fdOperations": [
+    {
+      "fdId": "fixture-operation-1",
+      "fdName": "Fixture Operation 1",
+      "fdType": "drafter_retract",
+      "fdIdentity": 1,
+      "fdIndex": 500,
+      "fdAttributes": "[{\"id\":\"element\",\"value\":\"operation\"},{\"id\":\"srcName\",\"value\":\"Fixture Operation 1\"},{\"id\":\"notifyMessage\",\"value\":\"\"},{\"id\":\"users\",\"value\":[]},{\"id\":\"isContentRequired\",\"value\":false},{\"id\":\"customizeUsageContent\",\"value\":\"\"}]"
+    },
+    {
+      "fdId": "fixture-operation-2",
+      "fdName": "Fixture Operation 2",
+      "fdType": "drafter_urge",
+      "fdIdentity": 1,
+      "fdIndex": 500,
+      "fdAttributes": "[{\"id\":\"element\",\"value\":\"operation\"},{\"id\":\"srcName\",\"value\":\"Fixture Operation 2\"},{\"id\":\"notifyMessage\",\"value\":\"\"},{\"id\":\"participantScope\",\"value\":{\"members\":[],\"type\":\"allOrg\",\"id\":\"participantScope\",\"ruleName\":\"不限\",\"source\":\"2\",\"ruleKey\":\"allOrg\",\"element\":\"users\"}},{\"id\":\"rejectScope\",\"value\":\"\"},{\"id\":\"customizeUsageContent\",\"value\":\"\"},{\"id\":\"isContentRequired\",\"value\":false},{\"id\":\"fdLanguage\"}]"
+    },
+    {
+      "fdId": "fixture-operation-3",
+      "fdName": "Fixture Operation 3",
+      "fdType": "drafter_abandon",
+      "fdIdentity": 1,
+      "fdIndex": 500,
+      "fdAttributes": "[{\"id\":\"element\",\"value\":\"operation\"},{\"id\":\"srcName\",\"value\":\"Fixture Operation 3\"},{\"id\":\"notifyMessage\",\"value\":\"\"},{\"id\":\"users\",\"value\":[]},{\"id\":\"isContentRequired\",\"value\":true},{\"id\":\"customizeUsageContent\",\"value\":\"\"}]"
+    },
+    {
+      "fdId": "fixture-operation-4",
+      "fdName": "Fixture Operation 4",
+      "fdType": "handler_sign",
+      "fdIdentity": 2,
+      "fdIndex": 500,
+      "fdAttributes": "[{\"id\":\"element\",\"value\":\"operation\"},{\"id\":\"srcName\",\"value\":\"Fixture Operation 4\"},{\"id\":\"isAlway\",\"value\":true},{\"id\":\"notifyMessage\",\"value\":\"\"},{\"id\":\"users\",\"value\":[]},{\"id\":\"isContentRequired\",\"value\":true},{\"id\":\"customizeUsageContent\",\"value\":\"\"}]"
+    },
+    {
+      "fdId": "fixture-operation-5",
+      "fdName": "Fixture Operation 5",
+      "fdType": "handler_abandon",
+      "fdIdentity": 2,
+      "fdIndex": 500,
+      "fdAttributes": "[{\"id\":\"element\",\"value\":\"operation\"},{\"id\":\"srcName\",\"value\":\"Fixture Operation 5\"},{\"id\":\"notifyMessage\",\"value\":\"\"},{\"id\":\"users\",\"value\":[]},{\"id\":\"isContentRequired\",\"value\":true},{\"id\":\"customizeUsageContent\",\"value\":\"\"}]"
+    },
+    {
+      "fdId": "fixture-operation-6",
+      "fdName": "Fixture Operation 6",
+      "fdType": "historyHandler_retract",
+      "fdIdentity": 3,
+      "fdIndex": 500,
+      "fdAttributes": "[{\"id\":\"element\",\"value\":\"operation\"},{\"id\":\"srcName\",\"value\":\"Fixture Operation 6\"},{\"id\":\"notifyMessage\",\"value\":\"\"},{\"id\":\"users\",\"value\":[]},{\"id\":\"isContentRequired\",\"value\":false},{\"id\":\"customizeUsageContent\",\"value\":\"\"}]"
+    },
+    {
+      "fdId": "fixture-operation-7",
+      "fdName": "Fixture Operation 7",
+      "fdType": "historyHandler_urge",
+      "fdIdentity": 3,
+      "fdIndex": 500,
+      "fdAttributes": "[{\"id\":\"element\",\"value\":\"operation\"},{\"id\":\"srcName\",\"value\":\"Fixture Operation 7\"},{\"id\":\"notifyMessage\",\"value\":\"\"},{\"id\":\"participantScope\",\"value\":{\"members\":[],\"type\":\"allOrg\",\"id\":\"participantScope\",\"ruleName\":\"不限\",\"source\":\"2\",\"ruleKey\":\"allOrg\",\"element\":\"users\"}},{\"id\":\"rejectScope\",\"value\":\"\"},{\"id\":\"customizeUsageContent\",\"value\":\"\"},{\"id\":\"isContentRequired\",\"value\":false},{\"id\":\"fdLanguage\"}]"
+    }
+  ]
+}

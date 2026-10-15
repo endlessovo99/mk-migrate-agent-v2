@@ -1,0 +1,15 @@
+{
+  "workflowSignDocumentPolicy": "form-only-audit",
+  "workflowOperationSetOverrides": [
+    {
+      "sourceNodeType": "signNode",
+      "sourceOperationRefId": "fixture-source-operations",
+      "targetNodeType": "sign",
+      "targetFlowType": "0",
+      "targetOperationRefId": "fixture-sign-operation-set",
+      "expectedDefault": true,
+      "expectedSemanticDigest": "sha256:29c980abd2bf1d6a366faae4736da7df848c21eb44acc66457720a89a51d10c8"
+    }
+  ],
+  "workflowCooperationDefault": "3"
+}

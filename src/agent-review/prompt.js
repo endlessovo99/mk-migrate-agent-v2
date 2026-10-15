@@ -1,4 +1,7 @@
+import { parse } from "acorn";
 import { COMPONENT_CATALOG, FUNCTION_CATALOG, VALIDATION_POLICY } from "../dsl/catalogs.js";
+import { buildJavaScriptBindingModel } from "../dsl/javascript-binding-provenance.js";
+import { maskJavaScriptComments } from "../dsl/javascript-comments.js";
 import { scriptTargetApiSummary } from "../dsl/scripts.js";
 import { isSourceBackedMonthField } from "../dsl/static-month-picker.js";
 import { JSP_TRANSLATION_PLAYBOOK } from "./playbook.js";
@@ -8,7 +11,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v14";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v16";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -65,6 +68,8 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Translate JSP scripts semantically using jspTranslationPlaybook, functionCatalog, source evidence, formRules evidence, and targetApi. Pattern matching is evidence extraction only, not the translation authority.",
       "Trusted mapped scripts must not use document/window DOM APIs.",
       "Use dslDraft.scripts.actions[].actionSource as the action-local JSP excerpt. Treat sourceDraft.scripts.sources[].javascriptWindows as background context; do not charge helper definitions or other callbacks to a specific action unless the action-local excerpt invokes them and their behavior is not otherwise covered.",
+      "actionSource.localHelperDefinitions contains only directly called or statically named timer-callback source declarations with sourceRef/range/displayGate audit. A declaration is evidence, not proof of runtime availability or target support. Preserve its displayGate context; helperDefinitionAudit omissions leave incomplete evidence. Never expand action sourceRefs or patch scope because a sibling helper is shown.",
+      "helperDefinitionAudit.callbackReferences records source timer callback references, not proof of equivalent target timing or date behavior. Do not omit or rewrite scheduling, cancellation, or callback behavior without independent source-to-target evidence; helper visibility alone never closes coverage.",
       "Use reviewOpportunities only as evidence scaffolding. They are not deterministic translation results; accept them only when action-local source, formRules, targetApi, and playbook coverage standards agree.",
       "coverage.nativeRules is action-local evidence: preserve every eligible rule id already present, never attach control-change rules to a global onLoad action, accept a rule carrying meta.runWhen only with the deterministic view-status-formula proof, and never omit an eligible executable rule for the same control/source when claiming status=covered.",
       "Native-covered closure rule: when action-local behavior is fully covered, coverage.status=\"covered\", coverage.nativeRules references executable rules, and coverage.residuals is empty, close that action as native-covered omitted while preserving runWhen audit evidence. Patch function:\"\", translationStatus:\"omitted\", functionMappings to native-form-rule evidence, and preserve covered coverage/nativeRules/residuals. Do not invent residuals from DOM/helper noise for these already-covered actions.",
@@ -730,6 +735,7 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
   const summarizedActions = hasExplicitFocus
     ? actionEntries.filter(({ index }) => focusedIndexes.has(index))
     : actionEntries;
+  const helperIndex = focusedIndexes.size ? sourceHelperIndex(sourceDraft) : undefined;
 
   return pruneUndefined({
     source: scripts?.source,
@@ -756,7 +762,7 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
         semanticHints: action.semanticHints,
         reviewOpportunities: focused ? reviewOpportunitiesForAction(action, formRules, index, form, sourceDraft) : undefined,
         actionSource: focused
-          ? actionSourceSummary(action, compact ? 5200 : 6200, sourceDraft, compact ? 5200 : 10000)
+          ? actionSourceSummary(action, compact ? 5200 : 6200, helperIndex, compact ? 5200 : 10000)
           : actionSourceSummary(action, 520),
         unmappedFunctions: focused ? action.unmappedFunctions : undefined,
         functionLength: String(action.function || "").length,
@@ -766,125 +772,361 @@ function scriptActionReviewSummary(scripts = {}, formRules = {}, form = {}, focu
   });
 }
 
-function actionSourceSummary(action = {}, limit = 1200, sourceDraft, helperBudget = 0) {
+function actionSourceSummary(action = {}, limit = 1200, helperIndex, helperBudget = 0) {
   const source = legacySourceFromGeneratedFunction(action.function);
   if (!source) return undefined;
+  const helpers = helperBudget > 0
+    ? localHelperDefinitions(action, source, helperIndex, helperBudget)
+    : undefined;
   return pruneUndefined({
     excerptLength: Math.min(source.length, limit),
     originalLength: source.length,
     truncated: source.length > limit,
     excerpt: previewText(source, limit),
-    fieldIds: uniqueStrings([...source.matchAll(/\bfd_[A-Za-z0-9_]+\b/g)].map((match) => match[0])).slice(0, 32),
+    fieldIds: uniqueStrings([...maskJavaScriptComments(source).matchAll(/\bfd_[A-Za-z0-9_]+\b/g)].map((match) => match[0])).slice(0, 32),
     rowMarkers: rowMarkersFromText(source).slice(0, 32),
     legacyCalls: legacyCallsFromText(source).slice(0, 16),
-    localHelperDefinitions: helperBudget > 0
-      ? localHelperDefinitions(action, source, sourceDraft, helperBudget)
-      : undefined
+    localHelperDefinitions: helpers?.definitions,
+    helperDefinitionAudit: helpers?.audit
   });
 }
 
-function localHelperDefinitions(action, actionSource, sourceDraft = {}, budget = 10000) {
+function localHelperDefinitions(action, actionSource, index, budget = 10000) {
   const sourceRefs = new Set(Array.isArray(action?.sourceRefs) ? action.sourceRefs : []);
-  const sourceTexts = (sourceDraft?.scripts?.sources || [])
-    .filter((source) => sourceRefs.has(source?.sourceRef) || sourceRefs.has(source?.id))
-    .map((source) => String(source?.javascript || ""))
-    .filter(Boolean);
-  if (!sourceTexts.length) return [];
-
-  const queue = calledFunctionNames(actionSource).map((name) => ({ name, depth: 0 }));
-  const queued = new Set(queue.map((item) => item.name));
   const definitions = [];
-  let used = 0;
-  while (queue.length && used < budget) {
+  const audit = { maxCharacters: budget, usedCharacters: 0, maxDepth: 2, omitted: [], callbackReferences: [] };
+  if (!index?.sources.some((source) => sourceRefs.has(source.sourceRef) || sourceRefs.has(source.id))) {
+    audit.omitted.push({ reason: "action_source_missing" });
+    return { definitions, audit };
+  }
+  if (index.parseFailures.length || index.dynamicGlobalWrite) {
+    audit.omitted.push({
+      reason: index.parseFailures.length ? "source_parse_unverified" : "dynamic_global_write",
+      sourceRefs: index.parseFailures.length ? index.parseFailures : uniqueStrings(index.globalWrites.map((write) => write.sourceRef)),
+      writeEvidence: index.globalWrites
+    });
+    return { definitions, audit };
+  }
+
+  if (!parseHelperEvidence(actionSource)) {
+    audit.omitted.push({ reason: "action_parse_unverified" });
+    return { definitions, audit };
+  }
+  const queue = calledFunctionNames(actionSource, false, audit.omitted, {
+    index, audit, rangeBasis: "action-source", sourceRefs: [...sourceRefs]
+  }).map((name) => ({ name, depth: 0 }));
+  const queued = new Set(queue.map((item) => item.name));
+  while (queue.length) {
     const { name, depth } = queue.shift();
-    const definition = sourceTexts
-      .map((text) => namedFunctionDefinition(text, name))
-      .find(Boolean);
-    if (!definition || used + definition.length > budget) continue;
-    definitions.push({ name, definition });
-    used += definition.length;
-    if (depth >= 2) continue;
-    for (const calledName of calledFunctionNames(definition)) {
+    const candidates = index.definitions.get(name) || [];
+    if (!candidates.length && !index.unstableNames.has(name)) continue;
+    const candidate = candidates[0];
+    const reason = candidates.length > 1 ? "ambiguous_declaration"
+      : index.unstableNames.has(name) ? "runtime_binding_unverified"
+      : depth > audit.maxDepth ? "depth_limit"
+      : audit.usedCharacters + candidate.definition.length > budget ? "character_budget"
+      : undefined;
+    if (reason) {
+      audit.omitted.push({
+        name, reason, sourceRefs: candidates.map((item) => item.sourceRef),
+        writeEvidence: index.globalWrites.filter((write) => write.names?.includes(name))
+      });
+      continue;
+    }
+    definitions.push({
+      name,
+      definition: candidate.definition,
+      sourceRef: candidate.sourceRef,
+      sourceRange: candidate.sourceRange,
+      displayGate: candidate.displayGate,
+      depth
+    });
+    audit.usedCharacters += candidate.definition.length;
+    for (const calledName of calledFunctionNames(candidate.definition, true, audit.omitted, {
+      index, audit, rangeBasis: "helper-definition", sourceRefs: [candidate.sourceRef], helperName: candidate.name
+    })) {
       if (queued.has(calledName)) continue;
       queued.add(calledName);
       queue.push({ name: calledName, depth: depth + 1 });
     }
   }
-  return definitions;
+  return { definitions, audit };
 }
 
-function calledFunctionNames(text = "") {
-  const names = [];
-  const seen = new Set();
-  const pattern = /(^|[^.\w$])([A-Za-z_$][\w$]*)\s*\(/g;
-  for (const match of String(text || "").matchAll(pattern)) {
-    const name = match[2];
-    if (["function", "if", "for", "while", "switch", "catch", "typeof", "return", "new"].includes(name)) continue;
-    if (seen.has(name)) continue;
-    seen.add(name);
-    names.push(name);
-  }
-  return names;
-}
-
-function namedFunctionDefinition(text = "", name = "") {
-  const pattern = new RegExp(`\\bfunction\\s+${escapeRegExp(name)}\\s*\\([^)]*\\)\\s*\\{`);
-  const match = pattern.exec(String(text || ""));
-  if (!match) return "";
-  const open = match.index + match[0].length - 1;
-  const close = balancedClose(text, open, "{", "}");
-  return close > open ? String(text).slice(match.index, close + 1).trim() : "";
-}
-
-function escapeRegExp(value) {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function balancedClose(text = "", openIndex, openChar, closeChar) {
-  let depth = 0;
-  let quote = "";
-  let lineComment = false;
-  let blockComment = false;
-  for (let index = openIndex; index < text.length; index += 1) {
-    const char = text[index];
-    const next = text[index + 1];
-    if (lineComment) {
-      if (char === "\n") lineComment = false;
+// This index supplies declaration evidence only. It does not evaluate source
+// scripts or infer the runtime value of assigned, shadowed or ambiguous names.
+function sourceHelperIndex(sourceDraft = {}) {
+  const sources = sourceDraft?.scripts?.sources || [];
+  const index = {
+    sources, definitions: new Map(), unstableNames: new Set(), parseFailures: [],
+    dynamicGlobalWrite: false, globalWrites: [], globalAliases: new Set(), evalAliases: new Set(), aliasTaints: new Map()
+  };
+  const contexts = sources.map((source) => {
+    const text = String(source.javascript || "");
+    return { source, text, ast: parseHelperEvidence(text), bindings: buildJavaScriptBindingModel(text) };
+  });
+  collectHelperAliasTaints(contexts, index);
+  for (const { source, text, ast, bindings } of contexts) {
+    if (!ast || !bindings.ok || !source.sourceRef) {
+      index.parseFailures.push(source.sourceRef || source.id || "missing-source-ref");
       continue;
     }
-    if (blockComment) {
-      if (char === "*" && next === "/") {
-        blockComment = false;
-        index += 1;
+    for (const node of ast.body) {
+      if (node.type !== "FunctionDeclaration" || !node.id?.name) continue;
+      const name = node.id.name;
+      const candidates = index.definitions.get(name) || [];
+      candidates.push({
+        name,
+        definition: text.slice(node.start, node.end),
+        sourceRef: source.sourceRef,
+        sourceRange: { start: node.start, end: node.end },
+        displayGate: source.displayGate
+      });
+      index.definitions.set(name, candidates);
+      const binding = bindings.bindingAtUse(name, text.length);
+      if (binding?.ambiguous || binding?.effects.some((effect) => ["write", "mutation"].includes(effect.kind))) {
+        index.unstableNames.add(name);
       }
-      continue;
     }
-    if (quote) {
-      if (char === "\\") {
-        index += 1;
-        continue;
+    visitHelperAst(ast, (node) => {
+      if (node.type === "Identifier") {
+        const binding = bindings.bindingAtUse(node.name, node.start);
+        if (binding?.scope?.kind === "program" && [...binding.kinds].some((kind) => kind !== "function")) {
+          index.unstableNames.add(node.name);
+        }
       }
-      if (char === quote) quote = "";
-      continue;
-    }
-    if (char === "/" && next === "/") {
-      lineComment = true;
-      index += 1;
-      continue;
-    }
-    if (char === "/" && next === "*") {
-      blockComment = true;
-      index += 1;
-      continue;
-    }
-    if (["\"", "'", "`"].includes(char)) {
-      quote = char;
-      continue;
-    }
-    if (char === openChar) depth += 1;
-    if (char === closeChar && --depth === 0) return index;
+      if (node.type === "FunctionDeclaration" && !ast.body.includes(node)) {
+        const binding = bindings.bindingAtUse(node.id?.name, node.start);
+        if (binding?.scope?.functionScope?.kind === "program") index.unstableNames.add(node.id.name);
+      }
+      const assignment = ["AssignmentExpression", "ForInStatement", "ForOfStatement"].includes(node.type) ? node.left
+        : node.type === "UpdateExpression" || (node.type === "UnaryExpression" && node.operator === "delete") ? node.argument
+        : undefined;
+      for (const target of helperAssignmentTargets(assignment)) {
+        if (target.type === "Identifier") {
+          const binding = bindings.bindingAtUse(target.name, target.start);
+          if (!binding || binding.scope.kind === "program") index.unstableNames.add(target.name);
+        }
+        const global = target.type === "MemberExpression"
+          ? helperGlobalObject(target.object, bindings, index.globalAliases, index.aliasTaints) : undefined;
+        if (global) {
+          const name = staticHelperProperty(target);
+          recordHelperGlobalWrite(index, source, node, name === undefined ? undefined : [name], "assignment", global);
+        }
+      }
+      if (node.type !== "CallExpression") return;
+      const callee = node.callee.type === "SequenceExpression" ? node.callee.expressions.at(-1) : node.callee;
+      const directEval = helperGlobalObject(callee, bindings, index.evalAliases, index.aliasTaints, new Set(), ["eval"]);
+      const memberEval = callee.type === "MemberExpression" && staticHelperProperty(callee) === "eval" &&
+        helperGlobalObject(callee.object, bindings, index.globalAliases, index.aliasTaints);
+      if (directEval || memberEval) recordHelperGlobalWrite(index, source, node, undefined, "dynamic_eval");
+      if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier" ||
+          !["Object", "Reflect"].includes(callee.object.name) ||
+          !bindings.isUnshadowedGlobal(callee.object.name, callee.start)) return;
+      const method = `${callee.object.name}.${staticHelperProperty(callee)}`;
+      const supported = ["Object.assign", "Object.defineProperty", "Object.defineProperties", "Reflect.set", "Reflect.defineProperty", "Reflect.deleteProperty"];
+      if (!supported.includes(method)) return;
+      const global = helperGlobalObject(node.arguments[0], bindings, index.globalAliases, index.aliasTaints);
+      if (!global) return;
+      let names;
+      if (method === "Object.assign" || method === "Object.defineProperties") {
+        const objects = method === "Object.assign" ? node.arguments.slice(1) : [node.arguments[1]];
+        const keys = objects.map(helperObjectKeys);
+        names = keys.every(Array.isArray) ? keys.flat() : undefined;
+      } else {
+        const key = node.arguments[1];
+        names = key?.type === "Literal" && ["string", "number"].includes(typeof key.value) ? [String(key.value)] : undefined;
+      }
+      recordHelperGlobalWrite(index, source, node, names, method, global);
+    });
   }
-  return -1;
+  return index;
+}
+
+// Taint records possible global/eval identity, never the value at a program
+// point. A later assignment cannot clear it; local parameter bindings stay distinct.
+function collectHelperAliasTaints(contexts, index) {
+  for (let pass = 0; pass < 3; pass += 1) {
+    for (const { ast, bindings } of contexts) {
+      if (!ast || !bindings.ok) continue;
+      visitHelperAst(ast, (node) => {
+        const target = node.type === "VariableDeclarator" ? node.id
+          : node.type === "AssignmentExpression" && node.operator === "=" ? node.left : undefined;
+        const value = node.type === "VariableDeclarator" ? node.init : node.right;
+        if (target?.type !== "Identifier" || !value) return;
+        const binding = bindings.bindingAtUse(target.name, target.start);
+        for (const [kind, names, roots] of [
+          ["global", index.globalAliases, undefined],
+          ["eval", index.evalAliases, ["eval"]]
+        ]) {
+          if (!helperGlobalObject(value, bindings, names, index.aliasTaints, new Set(), roots)) continue;
+          if (binding) {
+            const taints = index.aliasTaints.get(binding) || new Set();
+            taints.add(kind);
+            index.aliasTaints.set(binding, taints);
+          }
+          if (!binding || binding.scope.kind === "program") names.add(target.name);
+        }
+      });
+    }
+  }
+}
+
+function helperGlobalObject(node, bindings, globalAliases, aliasTaints = new Map(), seen = new Set(), roots = ["window", "globalThis", "self"]) {
+  if (!node) return undefined;
+  const alternatives = node.type === "ConditionalExpression" ? [node.consequent, node.alternate]
+    : node.type === "LogicalExpression" ? [node.left, node.right]
+    : node.type === "SequenceExpression" ? node.expressions : [];
+  for (const alternative of alternatives) {
+    const possible = helperGlobalObject({ ...alternative, start: node.start }, bindings, globalAliases, aliasTaints, seen, roots);
+    if (possible) return { ...possible, certainty: "unverified_global_alias" };
+  }
+  if (node.type === "ThisExpression" && roots.includes("window") && bindings.scopeAt(node.start).functionScope.kind === "program") {
+    return { root: "this", certainty: "global" };
+  }
+  if (node.type !== "Identifier") return undefined;
+  if (roots.includes(node.name) && bindings.isUnshadowedGlobal(node.name, node.start)) {
+    return { root: node.name, certainty: "global" };
+  }
+  const binding = bindings.bindingAtUse(node.name, node.start);
+  const tainted = aliasTaints.get(binding)?.has(roots.includes("eval") ? "eval" : "global");
+  const fallback = tainted || (globalAliases.has(node.name) && (!binding || binding.scope.kind === "program"))
+    ? { alias: node.name, certainty: "unverified_global_alias" } : undefined;
+  if (seen.has(node.name) || seen.size >= 3) return fallback;
+  if (!binding || binding.declarations.length !== 1) return fallback;
+  const declaration = binding.declarations[0];
+  const expression = parseHelperEvidence(`(${declaration.expression || ""})`)?.body[0]?.expression;
+  if (!expression) return fallback;
+  const nextSeen = new Set([...seen, node.name]);
+  const origin = helperGlobalObject({ ...expression, start: declaration.expressionIndex }, bindings, globalAliases, aliasTaints, nextSeen, roots);
+  if (!origin) return fallback;
+  const stable = !binding.ambiguous && !declaration.controlFlowUnproven && declaration.index < node.start &&
+    !binding.effects.some((effect) => effect.kind === "write");
+  return { ...origin, alias: node.name, certainty: stable ? origin.certainty : "unverified_global_alias" };
+}
+
+function staticHelperProperty(node) {
+  if (!node.computed && node.property.type === "Identifier") return node.property.name;
+  if (node.property.type === "Literal" && ["string", "number"].includes(typeof node.property.value)) {
+    return String(node.property.value);
+  }
+  return undefined;
+}
+
+function helperObjectKeys(node) {
+  if (node?.type !== "ObjectExpression") return undefined;
+  const keys = [];
+  for (const property of node.properties) {
+    if (property.type !== "Property") return undefined;
+    const key = staticHelperProperty({ ...property, property: property.key });
+    if (key === undefined) return undefined;
+    keys.push(key);
+  }
+  return keys;
+}
+
+function recordHelperGlobalWrite(index, source, node, names, kind, target) {
+  if (Array.isArray(names) && !names.length) return;
+  index.globalWrites.push({
+    kind, sourceRef: source.sourceRef, sourceRange: { start: node.start, end: node.end }, names, target
+  });
+  if (names === undefined) index.dynamicGlobalWrite = true;
+  else names.forEach((name) => index.unstableNames.add(name));
+}
+
+function calledFunctionNames(text = "", helperBody = false, omitted = [], helperContext) {
+  const ast = parseHelperEvidence(text);
+  const bindings = buildJavaScriptBindingModel(text);
+  if (!ast || !bindings.ok) return [];
+  const names = new Set();
+  const visit = (node, parent) => {
+    if (!node || typeof node !== "object") return;
+    if (node.type === "FunctionDeclaration") {
+      if (helperBody && node === ast.body[0]) visit(node.body);
+      return;
+    }
+    if (["FunctionExpression", "ArrowFunctionExpression"].includes(node.type) &&
+        !(parent?.type === "CallExpression" &&
+          (parent.callee === node || parent.arguments.includes(node)))) return;
+    if (node.type === "CallExpression" && node.callee.type === "Identifier") {
+      const binding = bindings.bindingAtUse(node.callee.name, node.callee.start);
+      if (!binding || (binding.scope.kind === "program" && !binding.ambiguous &&
+          binding.kinds.size === 1 && binding.kinds.has("function"))) {
+        names.add(node.callee.name);
+      } else {
+        omitted.push({ name: node.callee.name, reason: "shadowed_or_local_binding" });
+      }
+      if (node.callee.name === "setTimeout" && helperContext) {
+        const callback = node.arguments[0];
+        if (binding || helperContext.index.definitions.has("setTimeout") || helperContext.index.unstableNames.has("setTimeout")) {
+          omitted.push({ name: "setTimeout", reason: "scheduler_binding_unverified" });
+        } else if (callback?.type === "Identifier") {
+          const callbackBinding = bindings.bindingAtUse(callback.name, callback.start);
+          if (callbackBinding && !(callbackBinding.scope.kind === "program" && !callbackBinding.ambiguous &&
+              callbackBinding.kinds.size === 1 && callbackBinding.kinds.has("function"))) {
+            omitted.push({ name: callback.name, reason: "scheduler_callback_binding_unverified" });
+          } else {
+            names.add(callback.name);
+            if (!helperContext.index.definitions.has(callback.name) && !helperContext.index.unstableNames.has(callback.name)) {
+              omitted.push({ name: callback.name, reason: "scheduler_callback_definition_missing" });
+            }
+            const references = helperContext.audit.callbackReferences;
+            if (references.length < 16) {
+              references.push({
+                api: "setTimeout", callback: callback.name,
+                sourceRefs: helperContext.sourceRefs, helperName: helperContext.helperName,
+                rangeBasis: helperContext.rangeBasis, range: { start: node.start, end: node.end },
+                delaySource: node.arguments[1]
+                  ? previewText(text.slice(node.arguments[1].start, node.arguments[1].end), 120)
+                  : undefined
+              });
+            } else {
+              helperContext.audit.callbackReferencesTruncated = true;
+            }
+          }
+        } else if (!callback || !["FunctionExpression", "ArrowFunctionExpression"].includes(callback.type)) {
+          omitted.push({ name: "setTimeout", reason: "scheduler_callback_not_static" });
+        }
+      }
+    }
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) value.forEach((child) => visit(child, node));
+      else if (value && typeof value === "object") visit(value, node);
+    }
+  };
+  visit(ast);
+  return [...names];
+}
+
+function helperAssignmentTargets(node) {
+  if (!node) return [];
+  if (["Identifier", "MemberExpression"].includes(node.type)) return [node];
+  if (node.type === "ArrayPattern") return node.elements.flatMap(helperAssignmentTargets);
+  if (node.type === "ObjectPattern") return node.properties.flatMap((property) =>
+    helperAssignmentTargets(property.type === "RestElement" ? property.argument : property.value));
+  if (node.type === "AssignmentPattern") return helperAssignmentTargets(node.left);
+  if (node.type === "RestElement") return helperAssignmentTargets(node.argument);
+  return [];
+}
+
+function parseHelperEvidence(text) {
+  try {
+    return parse(String(text || ""), {
+      ecmaVersion: "latest", sourceType: "script", allowReturnOutsideFunction: true,
+      allowAwaitOutsideFunction: true, allowHashBang: true
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+function visitHelperAst(node, visit) {
+  if (!node || typeof node !== "object") return;
+  visit(node);
+  for (const value of Object.values(node)) {
+    if (Array.isArray(value)) value.forEach((child) => visitHelperAst(child, visit));
+    else if (value && typeof value === "object") visitHelperAst(value, visit);
+  }
 }
 
 function legacyCallsFromText(text = "") {

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-comment-fields-sysform</string></void>
+<void method="put"><string>fdName</string><string>Comment field evidence</string></void>
+<void method="put"><string>fdModelId</string><string>route-comment-fields-template</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_choice",label:"Choice",dataType:"String",items:"A|A;B|B"}'&gt;&lt;input id="fd_choice"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_copy",label:"Copy",dataType:"String"}'&gt;&lt;input id="fd_copy"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_choice" type="String"/&gt;&lt;extendSimpleProperty name="fd_copy" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;// 🧵 fd_line_comment
+/* first line
+   🦊 fd_block_comment */
+XFormOnValueChangeFuns.push(function(value, domElement) {
+  var fd_code_real = value;
+  var url = "https://example.invalid/fd_url_real//tail";
+  var text = "/* fd_string_block */ // fd_string_line";
+  var pattern = /fd_regex_real\/\//;
+  var template = `// fd_template_text ${/* fd_template_comment */ "fd_template_expr"}`;
+  var quotient = 12 / 3;
+  var name = domElement[0].name;
+  if (name.indexOf("fd_choice") &gt; 0) {
+    GetXFormFieldById("fd_copy")[0].value = value; // fd_inline_comment
+  }
+});&lt;/script&gt;</string></void>
+</object></java>

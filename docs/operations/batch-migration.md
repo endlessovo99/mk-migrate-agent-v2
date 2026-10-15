@@ -25,6 +25,14 @@ Create a manifest. Source paths are relative to this file. Each source is an exi
 
 Each item may contain `executionOptions` with explicit participant/template-authorization/direct-participant mappings, type-specific fallback IDs, and the existing fallback switches. The CLI validates this allowlist; category, origin, target template and credentials cannot be overridden there. Batch fallbacks belong in the manifest, so later environment changes cannot silently change an approved plan.
 
+`workflowCooperationDefault` is an optional explicit string `"1"`, `"2"`, or `"3"`. It authorizes using the current native cooperation default for source `processType: "0"`; it does not establish what the legacy numeric value meant. The executor reads `lbpmConfig/getConfigs` and requires its current `nodeHandlerTurningWay` to equal the approved value before any write. Native values 1/2/3 retain their target meaning, conflicting or unknown source values are rejected, and original source attributes remain intact. Per-node decisions are retained in the execution report. Normal execution rejects source 0 without this policy; historical target recovery does not silently apply it. The direct execute CLI exposes the same option as `--workflow-cooperation-default <1|2|3>`.
+
+Source sign nodes require an explicit operation-set mapping in `workflowOperationSetOverrides`. Each entry contains `sourceNodeType: "signNode"`, the exact `sourceOperationRefId`, `targetNodeType: "sign"`, `targetFlowType: "0"`, the exact `targetOperationRefId`, `expectedDefault: true`, and `expectedSemanticDigest`. The supported target is the native default standard-sign operation set. Read the exact target entity through `lbpmOperMain/get`, verify its identity and type, and use `signOperationSetDigest` from `src/executor/workflow-sign-policy.js` to calculate the digest. Do not use a hash of raw JSON or a hand-built projection. The executor checks the live entity before writing and checks the operation set referenced by the actual workflow readback before transfer recording. An unavailable or changed entity blocks completion.
+
+When a source sign node declares main-document editing permissions, `workflowSignDocumentPolicy: "form-only-audit"` requires explicit caller authorization that the process uses the form only. This preserves each source permission in the audit without mapping main-document editing. It does not establish business equivalence. Keep this authorization and any operation-set substitution in task evidence. Ambiguous source structure or handlers remain blocked; these options do not bypass source trust.
+
+Both options belong in the item execution options and approval digest, not in public DSL. The direct execute CLI accepts `--workflow-sign-document-policy form-only-audit` and `--workflow-operation-set-overrides <json-file>`; the JSON file contains the mapping array. Changing options for an unexecuted item uses the existing repair preview/apply and new approval workflow. These options do not extend the published-form, locked-draft or record-only recovery permissions.
+
 ```bash
 node src/cli/main.js batch create manifest.json
 node src/cli/main.js batch prepare <batch-id> --concurrency 2
@@ -76,6 +84,8 @@ A repair describes one evidenced problem; each application records what happened
   }
 }
 ```
+
+An `execution_options` repair may also register `workflowCooperationDefault` for an unexecuted trusted item with evidenced source-0 review/send nodes. It retains the existing paused-batch, exact preview, no-remote-effects and new-approval requirements; live default validation remains deferred to the executor. Conflicting source attribute copies and unrelated nodes do not establish applicability.
 
 Diagnostic codes narrow candidates; they do not establish applicability. Mapping changes also require matching, unambiguous identities in each DSL; target type/existence is still checked by the executor. Other local actions are `reprepare` (regenerate from the frozen XML using a fixed repaired tool version) and `replace_dsl` (explicit per-item `itemId`, `expectedDslDigest`, `dsl`, validated against source evidence).
 

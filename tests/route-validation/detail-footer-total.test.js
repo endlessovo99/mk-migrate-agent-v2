@@ -5,6 +5,8 @@ import {
   collectSourceRefs
 } from "../../src/agent-review/review-validation.js";
 import { buildFormRuleRefIndex, resolveEffectTarget } from "../../src/dsl/form-rules.js";
+import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { buildDryRunPlan } from "../../src/executor/dry-run.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import {
   formAttr,
@@ -341,17 +343,12 @@ describe("detail footer total Route case", () => {
       ...reviewScriptPatches(
         actionIndexes.editLoad,
         dsl.scripts.actions[actionIndexes.editLoad],
-        loadVisibilityFunction("fd_3c66895473ff5c", true)
+        timedLoadVisibilityFunction()
       ),
       ...reviewScriptPatches(
         actionIndexes.change,
         dsl.scripts.actions[actionIndexes.change],
         changeHelperFunction("fd_3c6a790de91eb0")
-      ),
-      ...reviewScriptPatches(
-        actionIndexes.viewLoad,
-        dsl.scripts.actions[actionIndexes.viewLoad],
-        loadVisibilityFunction("fd_3c6a790de91eb0", false)
       )
     ];
     const reviewed = applyEvidenceBackedPatches(dsl, patches, {
@@ -360,6 +357,14 @@ describe("detail footer total Route case", () => {
     });
 
     assert.equal(reviewed.ok, true, JSON.stringify(reviewed.diagnostics));
+    assert.deepEqual(reviewed.dslDraft.scripts.actions[actionIndexes.viewLoad], dsl.scripts.actions[actionIndexes.viewLoad]);
+    const trusted = createTrustedMigrationDsl(sourceDraft, reviewed.dslDraft, {
+      externalAgentReviewed: true, reviewerName: "route-validation", checkedAt: "2026-10-15T00:00:00.000Z"
+    });
+    const trust = checkTrust(sourceDraft, trusted);
+    assert.equal(trust.ok, true, JSON.stringify(trust.diagnostics));
+    const plan = buildDryRunPlan(trusted);
+    assert.equal(plan.ok, true, JSON.stringify(plan.diagnostics));
     assert.equal(
       reviewed.dslDraft.scripts.actions.every((action) =>
         action.translationStatus === "mapped" && action.coverage.status === "translated"
@@ -378,6 +383,20 @@ describe("detail footer total Route case", () => {
       readback.form.scripts.actions.map((action) => action.guardViewStatusIn).sort(),
       [["add", "edit"], ["add", "edit"], ["view"]].sort()
     );
+  });
+
+  it("rejects the former immediate final-state mapping for the scheduled edit load", () => {
+    const sourceDraft = cleanSourceFile(fixture);
+    const dsl = draftSourceDraft(sourceDraft);
+    const index = dsl.scripts.actions.findIndex(action => action.event === "onLoad" && action.runWhen?.viewStatusIn?.includes("edit"));
+    const reviewed = applyEvidenceBackedPatches(dsl, reviewScriptPatches(index, dsl.scripts.actions[index],
+      loadVisibilityFunction("fd_3c66895473ff5c", true)), { sourceDraft, sourceRefs: collectSourceRefs(sourceDraft) });
+    assert.equal(reviewed.ok, false);
+    assert.ok(reviewed.diagnostics.some(item => item.code === "agent.patch.row_marker_semantics_unverified" &&
+      item.details.reason === "source_or_scheduling_unproven"));
+    const unreviewed = createTrustedMigrationDsl(sourceDraft, dsl, { externalAgentReviewed: true, reviewerName: "route-validation" });
+    assert.equal(checkTrust(sourceDraft, unreviewed).ok, false);
+    assert.equal(buildDryRunPlan(unreviewed).ok, false);
   });
 });
 
@@ -458,6 +477,27 @@ function loadVisibilityFunction(valueFieldId, requiredWhenVisible) {
     }),
     "}"
   ].join("\n");
+}
+
+function timedLoadVisibilityFunction() {
+  const names = ["one", "two", "three", "four"];
+  const branches = [
+    ["A", "one", ["one", "two", "three", "four"]],
+    ["B", "two", ["two", "three", "one", "four"]],
+    ["C", "three", ["three", "one", "two", "four"]],
+    ["D", "four", ["one", "two", "three", "four"]]
+  ];
+  const effects = (name, visible) => [
+    `MKXFORM.setFieldAttr("fd_${name}_row", ${visible ? 5 : 4});`,
+    `MKXFORM.setFieldAttr("fd_${name}_row", ${visible ? 3 : 6});`
+  ];
+  return ["function onLoad() {", "setTimeout(function () {",
+    ...names.flatMap(name => effects(name, false)),
+    'var current = MKXFORM.getValue("fd_3c66895473ff5c");',
+    ...branches.flatMap(([value, visible, order], index) => [
+      `${index ? "else if" : "if"} (current === "${value}") {`,
+      ...order.flatMap(name => effects(name, name === visible)), "}"
+    ]), "}, 510);", "}"].join("\n");
 }
 
 function changeHelperFunction(helperFieldId) {

@@ -59,10 +59,14 @@ export async function runRouteCase(caseId) {
     }
 
     const adapter = new FakeNewoaAdapter(routeCase.newoaScenario, {
+      workflowCooperationDefault: routeCase.executionOptions?.workflowCooperationDefault ?? "2",
+      workflowOperationSets: routeCase.workflowOperationSets,
+      organizationCandidates: routeCase.organizationCandidates,
       fallbackFdIds: routeCase.fallbackFdIds,
       templateAuthorization: reviewResult.dsl.template?.authorization
     });
     const execution = await executeDsl(reviewResult.dsl, {
+      ...routeCase.executionOptions,
       client: adapter,
       credentials: TEST_CREDENTIALS,
       confirmWrite: routeCase.confirmWrite,

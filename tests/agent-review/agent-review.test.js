@@ -1021,7 +1021,7 @@ describe("agent-review", () => {
     ));
     assert.notEqual(actionIndex, -1);
     const action = dslDraft.scripts.actions[actionIndex];
-    const reviewedFunction = (fieldId) => [
+    const formerImmediateFunction = (fieldId) => [
       "function onLoad() {",
       `  var rawValue = MKXFORM.getValue(${JSON.stringify(fieldId)})`,
       "  var value = Array.isArray(rawValue) ? rawValue[0] : rawValue",
@@ -1032,24 +1032,39 @@ describe("agent-review", () => {
       ...completeOnLoadRowBranch("else", "", undefined),
       "}"
     ].join("\n");
-    const apply = (fieldId) => applyEvidenceBackedPatches(
+    const timedFixture = JSON.parse(readFileSync(new URL(
+      "../fixtures/route-validation/timed-initialization/reviewed-functions.json", import.meta.url
+    ), "utf8")).atomic;
+    const reviewedFunction = (fieldId) => {
+      let text = timedFixture.replaceAll("fd_mode", fieldId);
+      for (const [fixtureMarker, sourceMarker] of [
+        ["fd_a_row", "fd_one_row"], ["fd_b_row", "fd_two_row"],
+        ["fd_c_row", "fd_three_row"], ["fd_d_row", "fd_four_row"]
+      ]) text = text.replaceAll(fixtureMarker, sourceMarker);
+      return text;
+    };
+    const apply = (fn) => applyEvidenceBackedPatches(
       dslDraft,
-      assignmentClosurePatches(actionIndex, action, reviewedFunction(fieldId)),
+      assignmentClosurePatches(actionIndex, action, fn),
       { sourceRefs: collectSourceRefs(sourceDraft), sourceDraft }
     );
 
-    const correct = apply("fd_3c66895473ff5c");
-    const wrong = apply("fd_3c6a790de91eb0");
+    const correct = apply(reviewedFunction("fd_3c66895473ff5c"));
+    const wrong = apply(reviewedFunction("fd_3c6a790de91eb0"));
+    const immediate = apply(formerImmediateFunction("fd_3c66895473ff5c"));
+    assert.equal(immediate.ok, false);
+    assert.ok(immediate.diagnostics.some(item =>
+      item.code === "agent.patch.row_marker_semantics_unverified" &&
+      item.details.reason === "source_or_scheduling_unproven"));
 
     assert.equal(correct.ok, true, JSON.stringify(correct.diagnostics));
     assert.equal(wrong.ok, false);
     assert.equal(
       wrong.diagnostics.some((item) => (
         item.code === "agent.patch.row_marker_semantics_unverified" &&
-        item.details.conditionalReason === "target_row_condition_chain_changed" &&
-        item.details.conditionalDetails?.observedConditions?.every((condition) => (
-          condition.operand === "field:fd_3c6a790de91eb0"
-        ))
+        item.details.reason === "timed_initialization_order_changed" &&
+        item.details.expected?.find(token => token.kind === "read")?.field === "field:fd_3c66895473ff5c" &&
+        item.details.observed?.find(token => token.kind === "read")?.field === "field:fd_3c6a790de91eb0"
       )),
       true,
       JSON.stringify(wrong.diagnostics)

@@ -19,6 +19,7 @@ describe("native participant evidence", () => {
     config.attribute.formAttr = JSON.stringify(attr);
     template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
     template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(workflow);
+    completeSyntheticCooperationEnvelope(prepared, template);
 
     const readback = prepared.verify(template);
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
@@ -59,6 +60,7 @@ describe("native participant evidence", () => {
     config.attribute.formAttr = JSON.stringify(attr);
     template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
     template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(workflow);
+    completeSyntheticCooperationEnvelope(prepared, template);
 
     const readback = prepared.verify(template);
 
@@ -79,6 +81,7 @@ describe("native participant evidence", () => {
     config.attribute.formAttr = JSON.stringify(attr);
     template.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
     template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(workflow);
+    completeSyntheticCooperationEnvelope(prepared, template);
 
     const readback = prepared.verify(template);
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
@@ -123,6 +126,20 @@ describe("native participant evidence", () => {
     }
   });
 });
+
+function completeSyntheticCooperationEnvelope(prepared, template) {
+  const incomplete = prepared.verify(template);
+  assert.equal(incomplete.ok, false);
+  assert.deepEqual([...new Set(incomplete.diagnostics.filter(item => item.level === "error").map(item => item.code))], ["readback.workflow.cooperation_type_mismatch"]);
+  const workflow = JSON.parse(template.mechanisms.lbpmTemplate[0].fdContent);
+  // Only handler shapes come from the native/authored fragments. Cooperation
+  // is explicitly synthetic, matching the unchanged source-absent default.
+  for (const node of workflow.elements.filter(node => ["review", "send"].includes(node.type))) {
+    assert.equal(Object.hasOwn(node, "cooperateType"), false);
+    node.cooperateType = "2";
+  }
+  template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(workflow);
+}
 
 function nativeFormulaParticipantDsl() {
   const nodes = [

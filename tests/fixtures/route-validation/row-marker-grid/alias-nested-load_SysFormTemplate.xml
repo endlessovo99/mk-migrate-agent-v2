@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-alias-nested-load-sysform</string></void>
+<void method="put"><string>fdName</string><string>alias-nested-load</string></void>
+<void method="put"><string>fdModelId</string><string>route-alias-nested-load-template</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_type",label:"fd_type",dataType:"String",items:"A|A;B|B;C|C"}'&gt;&lt;input id="fd_type"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_other",label:"fd_other",dataType:"String",items:"A|A;B|B"}'&gt;&lt;input id="fd_other"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" id="fd_primary_row" name="fd_primary_row"/&gt;&lt;input type="hidden" id="fd_alias_row" name="fd_alias_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value",label:"fd_value",dataType:"String",}'&gt;&lt;input id="fd_value"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_state",label:"fd_state",dataType:"String",}'&gt;&lt;input id="fd_state"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_type" label="fd_type" type="String"/&gt;&lt;extendSimpleProperty name="fd_other" label="fd_other" type="String"/&gt;&lt;extendSimpleProperty name="fd_value" label="fd_value" type="String"/&gt;&lt;extendSimpleProperty name="fd_state" label="fd_state" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;
+Com_AddEventListener(window, "load",
+     function(){
+var adjCat=GetXFormFieldById("fd_state")[0]; 
+          common_dom_row_set_show_required_reset("fd_alias_row",false,false,false); 
+        cat=GetXFormFieldById("fd_type");
+        var selectvalue1=null;   
+        for (var i=0;i&lt;cat.length;i++){
+            if(cat[i].checked) {
+                  selectvalue1=cat[i].value;
+                  break;
+            }
+        }
+        inpt=document.getElementsByTagName("input");
+        for (var i=0;i&lt;inpt.length;i++){              
+            if(inpt[i].getAttribute("type")=="radio")  {
+                if (inpt[i].getAttribute("checked")==""){
+                     if (inpt[i].parentNode.innerHTML.indexOf("Main A") != -1){
+                        var flag1=1;
+                     }else if (inpt[i].parentNode.innerHTML.indexOf("Main B") != -1){
+                        flag1=2;
+                     }else if (inpt[i].parentNode.innerHTML.indexOf("Main C") != -1){
+                        flag1=3;
+                     }
+                     break;
+                }
+            }
+        }
+        cat=GetXFormFieldById("fd_other");
+        var selectvalue2=null;   
+        for (var i=0;i&lt;cat.length;i++){
+            if(cat[i].checked) {
+                  selectvalue2=cat[i].value;
+                  break;
+            }
+        }
+        inpt=document.getElementsByTagName("input");
+        var cnt=0;
+        for (var i=0;i&lt;inpt.length;i++){              
+            if(inpt[i].getAttribute("type")=="radio")  {
+                if (inpt[i].getAttribute("checked")==""){
+                     cnt++;
+                     if(cnt&lt;2){continue;}
+                     if (inpt[i].parentNode.innerHTML.indexOf("Nested A") != -1){
+                        var flag2=1;
+                     }else if (inpt[i].parentNode.innerHTML.indexOf("Nested B") != -1){
+                        flag2=2;
+                     }
+                     break;
+                }
+            }
+        }
+        if(selectvalue1=="A" || flag1==1) {    
+            }else if(selectvalue1=="B" || flag1==2) {
+          }else if(selectvalue1=="C" || flag1==3) {
+          if(selectvalue2=="A" || flag2==1) {
+            common_dom_row_set_show_required_reset("fd_alias_row",true,false,false);
+          }else if(selectvalue2=="B" || flag2==2) {
+            common_dom_row_set_show_required_reset("fd_alias_row",false,false,false);
+          }         
+     }
+});&lt;/script&gt;</string></void>
+</object></java>

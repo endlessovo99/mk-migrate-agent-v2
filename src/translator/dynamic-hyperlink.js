@@ -65,7 +65,7 @@ function dynamicHyperlinkModel(source = {}) {
     const alternate = nonEmptyStatements(branch.alternate?.body);
     if (consequent.length !== 1 || alternate.length !== 0) return undefined;
     const anchor = dynamicAnchorAssignment(consequent[0], urlDeclaration.name);
-    if (!anchor || anchor.label !== "查看发票") return undefined;
+    if (!anchor || (anchor.target !== "_blank" && anchor.label !== "查看发票")) return undefined;
     return {
       source: text,
       sourceRef: source.sourceRef || source.id,
@@ -75,6 +75,7 @@ function dynamicHyperlinkModel(source = {}) {
       urlVariable: urlDeclaration.name,
       containerId: anchor.containerId,
       label: anchor.label,
+      ...(anchor.target ? { anchorTarget: anchor.target } : {}),
       generatedFieldId: generatedHyperlinkFieldId(urlDeclaration.fieldId),
       variant: "url-only"
     };
@@ -100,7 +101,7 @@ function dynamicHyperlinkModel(source = {}) {
     !sameFlags(inactiveRow.flags, [false, false, false])
   ) return undefined;
   const anchor = dynamicAnchorAssignment(consequent[1], urlDeclaration.name);
-  if (!anchor || anchor.label !== "查看发票") return undefined;
+  if (!anchor || (anchor.target !== "_blank" && anchor.label !== "查看发票")) return undefined;
 
   return {
     source: text,
@@ -115,6 +116,7 @@ function dynamicHyperlinkModel(source = {}) {
     rowMarker: activeRow.marker,
     containerId: anchor.containerId,
     label: anchor.label,
+    ...(anchor.target ? { anchorTarget: anchor.target } : {}),
     generatedFieldId: generatedHyperlinkFieldId(urlDeclaration.fieldId),
     variant: "conditioned"
   };
@@ -213,15 +215,18 @@ function dynamicAnchorAssignment(statement, urlVariable) {
   ) return undefined;
   const containerId = literalString(getter.arguments[0]);
   const pieces = flattenStringConcat(expression.right);
+  const prefix = literalString(pieces?.[0]);
+  const target = ["<a target='_blank' href='", `<a target="_blank" href='`].includes(prefix)
+    ? "_blank" : undefined;
   if (
     !containerId || pieces?.length !== 3 ||
-    literalString(pieces[0]) !== "<a href='" ||
+    (prefix !== "<a href='" && target !== "_blank") ||
     pieces[1]?.type !== "Identifier" || pieces[1].name !== urlVariable ||
     typeof literalString(pieces[2]) !== "string"
   ) return undefined;
   const suffix = literalString(pieces[2]);
-  const match = suffix.match(/^'>([^<>]+)<\/a>$/u);
-  return match ? { containerId, label: match[1] } : undefined;
+  const match = suffix.match(/^'>([^<>&]+)<\/a>$/u);
+  return match ? { containerId, label: match[1], ...(target ? { target } : {}) } : undefined;
 }
 
 function flattenStringConcat(node) {
@@ -272,7 +277,7 @@ function projectModel(form, model) {
     title: model.label,
     type: "hyperlinks",
     componentId: "xform-hyperlinks",
-    props: { largestSet: 1, editable: false },
+    props: { largestSet: 1, editable: false, readOnly: true },
     sourceProps: { dynamicHyperlinkProjection: evidence },
     sourceRef: model.sourceRef,
     generated: true,
@@ -350,13 +355,15 @@ function isHiddenField(field) {
 }
 
 function compiledDynamicHyperlinkFunction(model) {
+  const urlVariable = "url";
+  const conditionVariable = "conditionValue";
   if (model.variant === "url-only") {
     return [
       "function onLoad() {",
-      `  var ${model.urlVariable} = String(MKXFORM.getValue(${JSON.stringify(model.sourceUrlFieldId)}) || "").trim()`,
-      `  var safeUrl = ${model.urlVariable}.indexOf("https://") === 0 || ${model.urlVariable}.indexOf("http://") === 0`,
+      `  var ${urlVariable} = String(MKXFORM.getValue(${JSON.stringify(model.sourceUrlFieldId)}) || "").trim()`,
+      `  var safeUrl = ${urlVariable}.indexOf("https://") === 0 || ${urlVariable}.indexOf("http://") === 0`,
       "  if (safeUrl) {",
-      `    MKXFORM.setValue(${JSON.stringify(model.generatedFieldId)}, JSON.stringify([{ linkTitle: ${JSON.stringify(model.label)}, url: ${model.urlVariable} }]))`,
+      `    MKXFORM.setValue(${JSON.stringify(model.generatedFieldId)}, JSON.stringify([{ linkTitle: ${JSON.stringify(model.label)}, url: ${urlVariable} }]))`,
       "  } else {",
       `    MKXFORM.setValue(${JSON.stringify(model.generatedFieldId)}, "")`,
       "  }",
@@ -364,17 +371,19 @@ function compiledDynamicHyperlinkFunction(model) {
     ].join("\n");
   }
   const values = model.allowedValues.map((value) => (
-    `${model.conditionVariable} == ${JSON.stringify(value)}`
+    `${conditionVariable} == ${JSON.stringify(value)}`
   )).join(" || ");
   return [
     "function onLoad() {",
-    `  var ${model.urlVariable} = String(MKXFORM.getValue(${JSON.stringify(model.sourceUrlFieldId)}) || "").trim()`,
-    `  var ${model.conditionVariable} = MKXFORM.getValue(${JSON.stringify(model.conditionFieldId)})`,
-    `  var safeUrl = ${model.urlVariable}.indexOf("https://") === 0 || ${model.urlVariable}.indexOf("http://") === 0`,
+    `  var ${urlVariable} = String(MKXFORM.getValue(${JSON.stringify(model.sourceUrlFieldId)}) || "").trim()`,
+    `  var ${conditionVariable} = MKXFORM.getValue(${JSON.stringify(model.conditionFieldId)})`,
+    `  var safeUrl = ${urlVariable}.indexOf("https://") === 0 || ${urlVariable}.indexOf("http://") === 0`,
     `  if (safeUrl && (${values})) {`,
-    `    MKXFORM.setValue(${JSON.stringify(model.generatedFieldId)}, JSON.stringify([{ linkTitle: ${JSON.stringify(model.label)}, url: ${model.urlVariable} }]))`,
+    `    MKXFORM.setValue(${JSON.stringify(model.generatedFieldId)}, JSON.stringify([{ linkTitle: ${JSON.stringify(model.label)}, url: ${urlVariable} }]))`,
     `    MKXFORM.setFieldAttr(${JSON.stringify(model.rowMarker)}, 5)`,
     `    MKXFORM.setFieldAttr(${JSON.stringify(model.rowMarker)}, 3)`,
+    `    MKXFORM.setFieldAttr(${JSON.stringify(model.generatedFieldId)}, 6)`,
+    `    MKXFORM.setFieldAttr(${JSON.stringify(model.generatedFieldId)}, 1)`,
     "  } else {",
     `    MKXFORM.setValue(${JSON.stringify(model.generatedFieldId)}, "")`,
     `    MKXFORM.setFieldAttr(${JSON.stringify(model.rowMarker)}, 4)`,
@@ -393,6 +402,7 @@ function projectionEvidence(model) {
     rowMarker: model.rowMarker,
     containerId: model.containerId,
     label: model.label,
+    ...(model.anchorTarget ? { anchorTarget: model.anchorTarget } : {}),
     generatedFieldId: model.generatedFieldId,
     urlPolicy: "http-or-https"
   };

@@ -229,6 +229,25 @@ export class NewoaClient {
     return body.data;
   }
 
+  async getWorkflowCooperationConfig() {
+    const body = await this.postSysLbpm("lbpmConfig/getConfigs");
+    if (body?.success !== true || !body.data || typeof body.data !== "object" || Array.isArray(body.data)) {
+      throw clientStageError("getWorkflowCooperationConfig", "workflow cooperation configuration response is not a successful object");
+    }
+    return { nodeHandlerTurningWay: body.data.nodeHandlerTurningWay };
+  }
+
+  async getWorkflowOperationSet(fdId) {
+    if (typeof fdId !== "string" || !fdId.trim() || fdId !== fdId.trim() || ["default", "custom"].includes(fdId)) {
+      throw clientStageError("getWorkflowOperationSet", "An exact operation-set identity is required.");
+    }
+    const body = await this.postSysLbpm("lbpmOperMain/get", { fdId });
+    if (body?.success !== true || body.data?.fdId !== fdId) {
+      throw clientStageError("getWorkflowOperationSet", "Operation-set readback identity or success flag is invalid.");
+    }
+    return body.data;
+  }
+
   async updateTemplate(payload) {
     const body = await this.postKmReview("kmReviewTemplate/update", payload);
     return body?.data || { fdId: payload.fdId };

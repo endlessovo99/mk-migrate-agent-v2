@@ -473,6 +473,7 @@ const EXECUTABLE_NODE_TYPES = new Set([
   "generalEnd",
   "draft",
   "review",
+  "sign",
   "send",
   "robot",
   "startSubProcess",
@@ -553,6 +554,7 @@ function buildNodeElement(node, index, outgoingEdges, nodeById, branchRoutes, co
     ),
     join: (value, valueIndex) => buildParallelGatewayNode(value, valueIndex, "join", nodeById),
     send: (value) => buildArtificialNode(value, "send", context),
+    sign: (value) => buildSignNode(value, context),
     robot: buildRobotNode,
     startSubProcess: buildStartSubProcessNode,
     review: (value) => buildArtificialNode(value, "review", context)
@@ -654,7 +656,7 @@ function buildArtificialNode(node, type, context = {}) {
     scope: "artificial",
     number: node.id,
     relateId: node.id,
-    cooperateType: attrs.processType || "2",
+    cooperateType: node.cooperateType ?? (attrs.processType || "2"),
     ignoreOnSameIdentity: resolveIgnoreOnSameIdentity(node, attrs),
     handlerIds: nativeHandlerIds(node.participants, attrs),
     handlerNames: nativeHandlerNames(node.participants, attrs),
@@ -682,6 +684,25 @@ function buildArtificialNode(node, type, context = {}) {
     ...commentAuthority(),
     nodeNotifyType: "{\"system\":\"todo\"}",
     nodeNotifyContentType: "system"
+  };
+}
+
+function buildSignNode(node, context) {
+  if (typeof node.operationRefId !== "string" || !node.operationRefId || ["default", "custom"].includes(node.operationRefId)) {
+    throw Object.assign(new Error("Sign operation reference must be resolved before persistence."), { code: "projection.workflow.sign_policy_unresolved" });
+  }
+  const attrs = sourceAttributes(node);
+  const { canCirculated, allowQuickApproval, approvalFormConfigType, ...shared } = buildArtificialNode(node, "sign", context);
+  return {
+    ...shared,
+    operationRefId: node.operationRefId,
+    operations: [],
+    canModifyProcess: attrs.canModifyFlow ?? "false",
+    canModifyCommentViewPermission: attrs.canModifyNotionPopedom ?? "false",
+    checkPermission: { fdType: "all" },
+    fdNoticeMethod: { fdType: "system" },
+    fdNoticeContent: { nodeNotifyContentType: "system" },
+    language: { nameCn: node.name, nameUs: "Sign Node" }
   };
 }
 
@@ -3027,6 +3048,7 @@ function migrationNodeSource(node) {
     name: node.name || "",
     attributes,
     definition,
+    ...(node.operations !== undefined ? { operations: node.operations } : {}),
     subProcess: node.subProcess,
     sourceXml: omitLegacyHandlerFormula ? "" : node.sourceXml || ""
   };
@@ -3097,7 +3119,8 @@ function summarizeDefinition(definition) {
   if (!definition) return undefined;
   return {
     type: definition.type,
-    attributes: { ...(definition.attributes || {}) }
+    attributes: { ...(definition.attributes || {}) },
+    ...(definition.operations !== undefined ? { operations: definition.operations } : {})
   };
 }
 

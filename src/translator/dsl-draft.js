@@ -1,3 +1,4 @@
+import { inspectSourceSignNode, hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
 import { foldRedundantAddressCompanions } from "./redundant-address-companion.js";
 import {
   catalogRefs,
@@ -58,6 +59,10 @@ import {
   removeDataOnlyFieldRefs
 } from "./address-display-companion-mapping.js";
 import { mapChoiceOtherCompanions } from "./choice-other-companion.js";
+import { sourceRequiresReadOnly } from "../dsl/source-readonly.js";
+import {
+  sourceInputLength, inputLengthRequirements, inputLengthPolicyWarning, inputLengthSourceError
+} from "../dsl/source-input-length.js";
 
 export const MIGRATION_DSL_VERSION = "2.0-migration";
 
@@ -118,6 +123,11 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     mappedScripts
   );
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
+  const inputLengths = inputLengthRequirements(sourceDraft.form, form);
+  const reviewErrors = [
+    ...(sourceIssuesToErrors(sourceDraft.issues || []) || []),
+    ...inputLengths.filter(({ fact }) => fact.status !== "valid").map(inputLengthSourceError)
+  ];
   const workflow = sourceDraft.workflow
     ? applyFieldIdMapToWorkflow(
         draftWorkflow(
@@ -157,8 +167,11 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     scripts,
     workflow,
     review: {
-      warnings: sourceIssuesToWarnings(sourceDraft.issues || []),
-      errors: sourceIssuesToErrors(sourceDraft.issues || []),
+      warnings: [
+        ...sourceIssuesToWarnings(sourceDraft.issues || []),
+        ...inputLengths.filter(({ fact }) => fact.status === "valid").map(inputLengthPolicyWarning)
+      ],
+      errors: reviewErrors.length ? reviewErrors : undefined,
       reviewCandidates: reviewCandidatesFromIssues(sourceDraft.issues || []),
       decisions: undefined
     },
@@ -1036,7 +1049,7 @@ function propsFromSource(source, options = {}) {
   if (source.required) props.required = true;
   if (
     componentSupportsProp(componentId, "readOnly") &&
-    String(source.sourceProps?.designerValues?.readOnly).trim().toLowerCase() === "true"
+    sourceRequiresReadOnly(source)
   ) {
     props.readOnly = true;
   }
@@ -1089,6 +1102,11 @@ function propsFromSource(source, options = {}) {
   if (componentId === "xform-calculate") {
     const calculation = legacyCalculationFromSource(source, options);
     if (calculation) props.calculation = calculation;
+  }
+
+  if (componentId === "xform-input") {
+    const length = sourceInputLength(source);
+    if (length.status === "valid") props.maxLength = length.limit;
   }
 
   if (componentId === "xform-textarea" || componentId === "xform-rich-text") {
@@ -2818,6 +2836,8 @@ function draftWorkflow(
         sourceRef: node.sourceRef,
         attributes: node.attributes || {},
         definition: node.definition,
+        ...(node.operations !== undefined ? { operations: node.operations } : {}),
+        ...(node.signSourceIssues !== undefined ? { signSourceIssues: node.signSourceIssues } : {}),
         handlerEntities: node.handlerEntities,
         optionalHandlerEntities: node.optionalHandlerEntities,
         directTargetAmbiguities: node.directTargetAmbiguities,
@@ -3020,8 +3040,8 @@ function participantsFromSourceNode(node, participantSelections, knownFieldTitle
   const handlerMembers = participantMembersFromHandlerEntities(node.handlerEntities);
   const alternativeMembers = participantMembersFromHandlerEntities(node.optionalHandlerEntities);
   const participantEvidence = {
-    alternativeMembers: alternativeMembers.length ? alternativeMembers : undefined,
-    useAlternativeOnly: alternativeMembers.length ? booleanAttribute(attrs, "useOptHandlerOnly") : undefined
+    alternativeMembers: alternativeMembers.length || node.sourceType === "signNode" ? alternativeMembers : undefined,
+    useAlternativeOnly: alternativeMembers.length || node.sourceType === "signNode" ? booleanAttribute(attrs, "useOptHandlerOnly") : undefined
   };
 
   const formulaParticipant = failClosedMismatchedFormulaFieldTitle(
@@ -3173,6 +3193,10 @@ function manualBranchDecisionType(node) {
 
 function mapWorkflowNodeType(node = {}, nodeById = new Map()) {
   const sourceType = node.sourceType || "";
+  if (hasSourceSignDeclaration(node)) {
+    try { inspectSourceSignNode(node); return { type: "sign", element: "manualTask" }; }
+    catch { return { type: "sign", element: "manualTask", needsReview: true }; }
+  }
   const normalized = String(sourceType).toLowerCase();
   if (normalized === "startsubprocessnode") return { type: "startSubProcess", element: "subProcess", participants: false };
   if (normalized === "recoversubprocessnode") return { type: "recoverSubProcess", element: "subProcess", participants: false };

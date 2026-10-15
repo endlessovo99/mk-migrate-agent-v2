@@ -1,10 +1,48 @@
+import { OpenAIResponsesReviewProvider } from "../../src/agent-review/provider.js";
 import { REVIEW_SCENARIOS } from "./manifest.js";
 import { integrityError } from "./integrity.js";
 import { reviewAuditedRowMarkerOrphan } from "./fake-review-scenarios/audited-row-marker-orphan.js";
+import { reviewEventValueAssignment } from "./fake-review-scenarios/event-value-assignment.js";
+import { reviewSameOperandOr } from "./fake-review-scenarios/same-operand-or-proof.js";
+import { reviewTimedInitialization } from "./fake-review-scenarios/timed-initialization.js";
+import { reviewRowMarkerProof } from "./fake-review-scenarios/row-marker-proof.js";
+import { reviewNativeSelectEmptyEvent } from "./fake-review-scenarios/native-select-empty-event.js";
 
 export function createFakeReviewProvider(scenario) {
   if (!REVIEW_SCENARIOS.includes(scenario)) {
     throw integrityError("route.scenario.review_unknown", `Unknown review scenario: ${scenario}`);
+  }
+
+  if (scenario === "provider-body-timeout") {
+    let bodyEntered = false;
+    let sentPrefix = false;
+    // Construct the native response before the request clock; only body I/O is slow.
+    const response = new Response(new ReadableStream({
+      pull(controller) {
+        bodyEntered = true;
+        if (!sentPrefix) {
+          sentPrefix = true;
+          controller.enqueue(new TextEncoder().encode('{"output_text":"'));
+        }
+      }
+    }, { highWaterMark: 0 }));
+    const provider = new OpenAIResponsesReviewProvider({
+      env: {
+        OPENAI_BASE_URL: "https://fixture.invalid", OPENAI_API_KEY: "route-provider-timeout-key",
+        OPENAI_MODEL: "route-body-timeout-fixture", OPENAI_REQUEST_TIMEOUT_MS: "250"
+      },
+      fetchImpl: async () => response
+    });
+    return {
+      metadata: () => provider.metadata(),
+      async review(input) {
+        const result = await provider.review(input);
+        if (!bodyEntered) {
+          throw integrityError("route.review.body_not_entered", "The timeout fixture did not begin reading its native response body.");
+        }
+        return result;
+      }
+    };
   }
 
   return {
@@ -24,6 +62,16 @@ export function createFakeReviewProvider(scenario) {
       }
       const response = scenario === "audited-row-marker-orphan-noop"
         ? reviewAuditedRowMarkerOrphan({ sourceDraft, dslDraft, reviewScope })
+        : scenario === "event-value-assignment"
+          ? reviewEventValueAssignment({ dslDraft, reviewScope })
+        : scenario === "same-operand-or-proof"
+          ? reviewSameOperandOr({ dslDraft, reviewScope })
+        : scenario === "timed-initialization"
+          ? reviewTimedInitialization({ dslDraft, reviewScope })
+        : scenario === "row-marker-proof"
+          ? reviewRowMarkerProof({ sourceDraft, dslDraft, reviewScope })
+        : scenario === "native-select-empty-event"
+          ? reviewNativeSelectEmptyEvent({ dslDraft, reviewScope })
         : {
             summary: scenario === "warning"
               ? "Accepted with one deterministic manual-review warning."

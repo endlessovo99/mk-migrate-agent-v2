@@ -1,9 +1,15 @@
+import { sourceNumberEditors } from "./source-number-editor.js";
+import { selectEmptyEventProof } from "./source-select-empty-event.js";
+import { validateAssignmentBranchSemantics } from "../agent-review/script-semantic-closure.js";
 import { catalogRefs, validationPolicyRef, validateCatalogVersions } from "./catalogs.js";
 import { validateMigrationDsl } from "./schema.js";
 import { draftSourceDraft, MIGRATION_DSL_VERSION } from "../translator/dsl-draft.js";
 import { SOURCE_DRAFT_VERSION } from "../translator/source-draft.js";
 import { inspectWorkflowFormulaProvenance } from "../translator/workflow-formula-participants.js";
 import { sourcePresentationIssues } from "./source-presentation.js";
+import { sourceRequiresReadOnly } from "./source-readonly.js";
+import { inputLengthRequirements, inputLengthPolicyWarning } from "./source-input-length.js";
+import { validateSourceSignIntegrity } from "./workflow-sign-contract.js";
 import {
   claimsDeterministicScriptTranslation,
   deterministicManualResidualDecisionIds
@@ -73,6 +79,9 @@ export function checkTrust(sourceDraft, migrationDsl) {
   validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics);
   validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics);
   const expectedDraft = validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics);
+  diagnostics.push(...validateSourceSignIntegrity(sourceDraft, migrationDsl, expectedDraft?.workflow).diagnostics);
+  validateInputLengthSourceRestrictions(sourceDraft, migrationDsl, expectedDraft, diagnostics);
+  validateSourceNumberEditors(sourceDraft, migrationDsl, expectedDraft, diagnostics);
   const dataOnlySourceRefs = new Set(flattenFormFields(expectedDraft?.form?.fields)
     .filter((field) => field.dataOnly === true).map((field) => field.sourceRef));
   const dataOnlyFieldIds = new Set((expectedDraft?.form?.fields || [])
@@ -156,8 +165,7 @@ function validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnosti
     field.type === "detailTable" ? field.columns || [] : [field]
   );
   for (const source of sourceFields) {
-    if (source.sourceType === "description" ||
-      String(source.sourceProps?.designerValues?.readOnly).trim().toLowerCase() !== "true") continue;
+    if (source.sourceType === "description" || !sourceRequiresReadOnly(source)) continue;
     const actual = actualFields.find((field) => field.sourceRef === source.sourceRef);
     if (actual?.props?.readOnly === true || actual?.componentId === "xform-description") continue;
     diagnostics.push(error(
@@ -165,6 +173,67 @@ function validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnosti
       "Trusted fields must preserve the source static read-only restriction.",
       "/form/fields",
       { fieldId: actual?.id || source.id, sourceRef: source.sourceRef }
+    ));
+  }
+}
+
+function validateInputLengthSourceRestrictions(sourceDraft, migrationDsl, expectedDraft, diagnostics) {
+  if (!expectedDraft) return;
+  const actualFields = flattenFormFields(migrationDsl?.form?.fields);
+  const requirements = inputLengthRequirements(sourceDraft?.form, expectedDraft.form);
+  const requiredRefs = new Set(requirements.map(({ source }) => source.sourceRef));
+  for (const requirement of requirements) {
+    const { source, field, path, fact } = requirement;
+    const details = { fieldId: field.id, sourceRef: source.sourceRef };
+    if (fact.status !== "valid") {
+      diagnostics.push(error(
+        `trust.form.input_length_source_${fact.status}`,
+        "An invalid or conflicting source input limit cannot be trusted by replacing the candidate value or deleting draft errors.",
+        `${path}/props/maxLength`, {
+          ...details, evidence: fact.evidence,
+          ...(fact.sourceIds ? { sourceFieldIds: fact.sourceIds } : {})
+        }
+      ));
+      continue;
+    }
+    const actual = actualFields.filter((field) => field.sourceRef === source.sourceRef);
+    if (actual.length !== 1 || actual[0].componentId !== "xform-input" || actual[0].props?.maxLength !== fact.limit) {
+      diagnostics.push(error(
+        "trust.form.input_length_source_mismatch",
+        "Trusted input fields must exactly preserve the explicit source length under the supported input projection.",
+        `${path}/props/maxLength`, { ...details, expected: fact.limit }
+      ));
+    }
+    const expectedWarning = inputLengthPolicyWarning(requirement);
+    if (!(migrationDsl.review?.warnings || []).some((warning) =>
+      warning.code === expectedWarning.code && warning.message === expectedWarning.message &&
+      warning.path === expectedWarning.path && canonicalJson(warning.details) === canonicalJson(expectedWarning.details))) {
+      diagnostics.push(error(
+        "trust.form.input_length_policy_missing",
+        "Trusted input limits must retain the explicit target-counting policy and its source evidence; source equivalence is not implied.",
+        "/review/warnings", details
+      ));
+    }
+  }
+  const expectedFields = flattenFormFields(expectedDraft.form?.fields);
+  const expectedInputRefs = new Set(expectedFields
+    .filter((field) => field.componentId === "xform-input").map((field) => field.sourceRef));
+  for (const actual of actualFields) {
+    const otherComponents = expectedFields.filter((field) =>
+      field.sourceRef === actual.sourceRef && field.componentId !== "xform-input");
+    if (actual.componentId === "xform-input" && otherComponents.length &&
+        (actual.props?.maxLength !== undefined || otherComponents.some((field) => field.props?.maxLength !== undefined))) {
+      diagnostics.push(error(
+        "trust.form.input_length_component_transition_unproven",
+        "Changing a non-input field into an input does not prove the new length-counting policy or permit dropping its source limit.",
+        "/form/fields", { fieldId: actual.id, sourceRef: actual.sourceRef }
+      ));
+    }
+    if (!expectedInputRefs.has(actual.sourceRef) || requiredRefs.has(actual.sourceRef) || actual.props?.maxLength === undefined) continue;
+    diagnostics.push(error(
+      "trust.form.input_length_source_missing",
+      "Input maxLength requires an explicit source validation limit; storage metadata alone is insufficient.",
+      "/form/fields", { fieldId: actual.id, sourceRef: actual.sourceRef }
     ));
   }
 }
@@ -189,6 +258,27 @@ function validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics) 
   }
 
   const expectedActions = expectedDraft?.scripts?.actions || [];
+  for (const expected of expectedActions) {
+    const matches = actualActions.filter(action => scriptActionSourceBindingKey(action) === scriptActionSourceBindingKey(expected));
+    if (matches.length !== 1) continue; // The existing immutable binding-count gate reports missing/changed owners.
+    const actual = matches[0];
+    const proof = selectEmptyEventProof(actual, { sourceAction: expected, sourceForm: sourceDraft.form, targetForm: migrationDsl.form,
+      sourceFormRules: expectedDraft.formRules, targetFormRules: migrationDsl.formRules, authoritative: true });
+    const assignments = proof.ok && proof.adapted ? validateAssignmentBranchSemantics({ sourceFunction: expected.function,
+      reviewedFunction: proof.function, form: expectedDraft.form,
+      residuals: (expected.coverage?.residuals || []).filter(residual => residual.code === "script.residual.field_value_assignment") }) : { ok: true };
+    if (!proof.ok || !assignments.ok) diagnostics.push(error("trust.script_select_empty_source_mismatch",
+      "Native select event adaptation must be independently justified by the fixed SourceDraft and preserve every source assignment branch.",
+      `/scripts/actions/${actualActions.indexOf(actual)}/function`, { reason: proof.reason || assignments.reason }));
+  }
+  for (const action of expectedActions.filter(action => action.semanticHints?.jqueryReadyInitialization)) {
+    diagnostics.push(error(
+      "trust.script_ready_lifecycle_unproven",
+      "The authoritative source contains document-ready initialization without a proven target lifecycle contract.",
+      "/scripts/actions",
+      { actionId: action.id, sourceRefs: action.sourceRefs }
+    ));
+  }
   validateScriptActionSourceBindings(
     expectedActions.filter(isSourceBoundScriptAction),
     actualActions.filter(isSourceBoundScriptAction),
@@ -549,4 +639,30 @@ function nonEmptyString(value) {
 
 function escapePointer(value) {
   return String(value).replace(/~/g, "~0").replace(/\//g, "~1");
+}
+
+function validateSourceNumberEditors(sourceDraft, candidate, expected, diagnostics) {
+  const sourceProfiles = sourceNumberEditors(sourceDraft?.form);
+  const candidateProfiles = sourceNumberEditors(candidate?.form);
+  const fields = flattenFormFields(candidate?.form?.fields);
+  const fixedFields = expected?.form?.fields || [];
+  const fail = (fieldId, reason) => diagnostics.push(error("trust.form.number_editor_source_mismatch",
+    "Numeric text editor projection must preserve fixed source identity, width, units and numeric semantics.", "/form", { fieldId, reason }));
+  for (const [id, profile] of sourceProfiles) {
+    const fixed = fixedFields.find(field => field.id === id);
+    const matches = fields.filter(field => field.sourceRef === profile.sourceRef || field.id === id);
+    const actual = matches[0];
+    const semantics = field => ({ id: field?.id, type: field?.type, componentId: field?.componentId, sourceRef: field?.sourceRef,
+      sourceProps: field?.sourceProps, required: field?.props?.required, hiddenLabel: field?.props?.hiddenLabel,
+      readOnly: field?.props?.readOnly, precision: field?.props?.precision, unit: field?.props?.unit,
+      calculation: field?.props?.calculation, defaultValue: field?.props?.defaultValue });
+    if (matches.length !== 1 || !candidateProfiles.has(id) || canonicalJson(semantics(actual)) !== canonicalJson(semantics(fixed)) ||
+        canonicalJson(candidateProfiles.get(id)) !== canonicalJson(profile)) fail(id, "source_profile");
+    if (profile.unitId) {
+      const unit = fixedFields.find(field => field.id === profile.unitId);
+      const units = fields.filter(field => field.id === unit?.id || field.sourceRef === unit?.sourceRef);
+      if (units.length !== 1 || canonicalJson(units[0]) !== canonicalJson(unit)) fail(id, "external_unit");
+    }
+  }
+  for (const id of candidateProfiles.keys()) if (!sourceProfiles.has(id)) fail(id, "unproven_profile");
 }

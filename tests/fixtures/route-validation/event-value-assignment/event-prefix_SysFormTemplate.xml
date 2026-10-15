@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-event-prefix-sysform</string></void>
+<void method="put"><string>fdName</string><string>event-prefix</string></void>
+<void method="put"><string>fdModelId</string><string>route-event-prefix-template</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_trigger",label:"fd_trigger",dataType:"String",items:"A|A;B|B;C|C"}'&gt;&lt;input id="fd_trigger"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_copy",label:"fd_copy",dataType:"String"}'&gt;&lt;input id="fd_copy"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" id="fd_toggle_row" name="fd_toggle_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_dependent",label:"fd_dependent",dataType:"String"}'&gt;&lt;input id="fd_dependent"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;div fd_type="inputCheckbox" fd_values='{id:"fd_clear",label:"fd_clear",dataType:"String",items:"X|X;Y|Y"}'&gt;&lt;input id="fd_clear"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_trigger" label="fd_trigger" type="String"/&gt;&lt;extendSimpleProperty name="fd_copy" label="fd_copy" type="String"/&gt;&lt;extendSimpleProperty name="fd_dependent" label="fd_dependent" type="String"/&gt;&lt;extendSimpleProperty name="fd_clear" label="fd_clear" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;AttachXFormValueChangeEventById("fd_trigger", function(value, domElement) {
+var copy = GetXFormFieldById("fd_copy")[0];
+copy.value=value;
+if(value.indexOf("A")&gt;=0){
+common_dom_row_set_show_required_reset("fd_toggle_row",true,true,false);
+}else{
+common_dom_row_set_show_required_reset("fd_toggle_row",false,false,false);
+$('input[name="extendDataFormInfo.value(fd_clear)"]').val("");
+$('input[name="_extendDataFormInfo.value(fd_clear)"]').prop("checked", false);
+}
+});&lt;/script&gt;</string></void>
+</object></java>

@@ -1,0 +1,4 @@
+{
+  "onLoad": "function onLoad() {\n  MKXFORM.setFieldAttr(\"extra_row\", 4);\n  MKXFORM.setFieldAttr(\"extra_row\", 6);\n  var current = MKXFORM.getValue(\"fd_mode\");\n  if (current == 'A' || current == 'B' || current == 'C') {\n    MKXFORM.setFieldAttr(\"extra_row\", 5);\n    MKXFORM.setFieldAttr(\"extra_row\", 3);\n  }\n}",
+  "onChange": "function onChange(value) {\n  MKXFORM.setFieldAttr(\"extra_row\", 4);\n  MKXFORM.setFieldAttr(\"extra_row\", 6);\n  if (value.indexOf(\"A\") >= 0 || value.indexOf(\"B\") >= 0 || value.indexOf(\"C\") >= 0) {\n    MKXFORM.setValue(\"fd_marker\", \"active\");\n    MKXFORM.setFieldAttr(\"extra_row\", 5);\n    MKXFORM.setFieldAttr(\"extra_row\", 3);\n  } else {\n    MKXFORM.setValue(\"fd_marker\", \"\");\n  }\n}"
+}

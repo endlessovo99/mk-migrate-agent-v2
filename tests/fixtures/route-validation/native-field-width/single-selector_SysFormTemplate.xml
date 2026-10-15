@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>single-selector-width</string></void>
+<void method="put"><string>fdModelId</string><string>single-selector-width-template</string></void>
+<void method="put"><string>fdName</string><string>Single selector width</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table id="main_select" fd_type="standardTable"&gt;&lt;tr&gt;&lt;td column="0" row="0" width="800"&gt;&lt;div fd_type="select" fd_values='{id:"fd_single",label:"Option",items:"A long option to read fully|A",dataType:"String"}'&gt;&lt;select&gt;&lt;option value="A"&gt;A long option to read fully&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;table id="main_select"&gt;&lt;tr&gt;&lt;td column="0" row="0" width="800"&gt;&lt;xform:select property="extendDataFormInfo.value(fd_single)"/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_single" label="Option" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

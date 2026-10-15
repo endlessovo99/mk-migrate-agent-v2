@@ -46,6 +46,9 @@ export class FakeNewoaAdapter {
     this.template = undefined;
     this.workflowDraft = undefined;
     this.updated = false;
+    this.workflowCooperationDefault = Object.hasOwn(options, "workflowCooperationDefault") ? options.workflowCooperationDefault : "2";
+    this.workflowOperationSets = options.workflowOperationSets || [];
+    this.organizationCandidates = options.organizationCandidates || [];
     this.authorizationCandidates = authorizationCandidates(options.templateAuthorization);
     this.authorizationCandidateById = new Map(
       this.authorizationCandidates.map((candidate) => [candidate.fdId, candidate])
@@ -63,6 +66,18 @@ export class FakeNewoaAdapter {
   }
 
   async assertTransferRecordAuthentication() {}
+
+  async getWorkflowCooperationConfig() {
+    this.record({ operation: "get-workflow-cooperation-config" });
+    return { nodeHandlerTurningWay: this.workflowCooperationDefault };
+  }
+
+  async getWorkflowOperationSet(fdId) {
+    this.record({ operation: "get-workflow-operation-set", fdId });
+    const entity = this.workflowOperationSets.find(value => value.fdId === fdId);
+    if (!entity) throw new Error("Fake operation-set identity is not configured.");
+    return clone(entity);
+  }
 
   async getXFormDesktopDigest() {
     this.record({ operation: "get-xform-desktop-digest" });
@@ -89,6 +104,8 @@ export class FakeNewoaAdapter {
 
   async searchOrg(key) {
     this.record({ operation: "search-org", key });
+    const configured = this.organizationCandidates.filter(candidate => candidate.fdName === key);
+    if (configured.length) return clone(configured);
     const authorizationMatches = this.authorizationCandidates.filter((candidate) => (
       candidate.searchKeys.includes(key)
     ));
@@ -107,6 +124,8 @@ export class FakeNewoaAdapter {
   async getElementInfo(targets) {
     this.record({ operation: "get-element-info", targets: clone(targets) });
     return targets.flatMap((fdId) => {
+      const configured = this.organizationCandidates.find(candidate => candidate.fdId === fdId);
+      if (configured) return [clone(configured)];
       const authorizationCandidate = this.authorizationCandidateById.get(fdId);
       if (authorizationCandidate) {
         const { searchKeys: _searchKeys, ...candidate } = authorizationCandidate;

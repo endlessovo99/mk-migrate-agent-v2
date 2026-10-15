@@ -706,6 +706,8 @@ function sourcePropsFromField(field) {
     designerId: field.source?.designerId,
     designerType: field.source?.designerType,
     designerValues: field.source?.designerValues,
+    runtimeTextReadOnly: field.source?.runtimeTextReadOnly,
+    runtimeSelectEmpty: field.source?.runtimeSelectEmpty,
     designerTableName: field.source?.designerTableName,
     explicitTitle: field.source?.explicitTitle,
     detailTitleHint: field.source?.detailTitleHint,
@@ -796,9 +798,13 @@ function sourceWorkflowFromLegacyWorkflow(workflow, context = {}) {
     handlerEntities: node.handlerEntities,
     optionalHandlerEntities: node.optionalHandlerEntities,
     directTargetAmbiguities: node.directTargetAmbiguities,
+    ...(node.operations !== undefined ? { operations: node.operations } : {}),
+    ...(node.signSourceIssues !== undefined ? { signSourceIssues: node.signSourceIssues } : {}),
     definition: node.definition ? {
       sourceType: node.definition.type,
-      attributes: node.definition.attributes || {}
+      attributes: node.definition.attributes || {},
+      ...(node.definition.operations !== undefined ? { operations: node.definition.operations } : {}),
+      ...(node.definition.signSourceIssues !== undefined ? { signSourceIssues: node.definition.signSourceIssues } : {})
     } : undefined,
     dataAuthority: sourceNodeDataAuthority(
       nodeDataAuthorities[node.id],

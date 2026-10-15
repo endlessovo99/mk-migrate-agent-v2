@@ -55,33 +55,32 @@ export class OpenAIResponsesReviewProvider {
     };
     if (config.thinking) body.thinking = { type: config.thinking };
 
-    let response;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), config.requestTimeoutMs);
-    try {
-      response = await this.fetchImpl(endpoint, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${config.apiKey}`
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal
-      });
-    } catch (requestError) {
+    const transport = await receiveResponseWithinDeadline((signal) => this.fetchImpl(endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${config.apiKey}`
+      },
+      body: JSON.stringify(body),
+      signal
+    }), config.requestTimeoutMs);
+    if (!transport.ok) {
       return blockedProviderResult({
         ...this.metadata(),
         stage: "agent-review.network",
-        diagnostics: [error("agent.provider.network_error", redactSecrets(
-          requestError instanceof Error ? requestError.message : String(requestError),
-          config.apiKey
-        ), "/provider/network")]
+        diagnostics: [error(
+          transport.timedOut ? "agent.provider.request_timeout" : transport.phase === "body" ? "agent.provider.body_read_error" : "agent.provider.network_error",
+          transport.timedOut ? `OpenAI Responses request exceeded its ${config.requestTimeoutMs} ms deadline.` : redactSecrets(
+            transportErrorMessage(transport.cause), config.apiKey
+          ), "/provider/network", {
+            phase: transport.phase,
+            ...(transport.timedOut ? { timeoutMs: config.requestTimeoutMs } : {})
+          }
+        )]
       });
-    } finally {
-      clearTimeout(timeout);
     }
+    const { response, responseText } = transport;
 
-    const responseText = await safeReadResponseText(response);
     if (!response.ok) {
       return blockedProviderResult({
         ...this.metadata(),
@@ -218,12 +217,85 @@ function blockedProviderResult(input) {
   };
 }
 
-async function safeReadResponseText(response) {
+// Bound both headers and complete body consumption. AbortSignal is the transport
+// cancellation contract; the deadline also bounds async test/custom transports
+// that ignore it. Cleanup is best-effort and must not extend that deadline.
+async function receiveResponseWithinDeadline(request, timeoutMs) {
+  const controller = new AbortController();
+  const deadlineAt = performance.now() + timeoutMs;
+  const timeoutError = new Error("Provider request deadline exceeded.");
+  let response, reader, timer;
+  let phase = "headers", timedOut = false, stopped = false;
+  const cancelTransport = () => {
+    if (stopped) return;
+    stopped = true;
+    controller.abort();
+    if (reader) ignoreCleanup(() => reader.cancel());
+    else cancelResponseBody(response);
+  };
+  const checkDeadline = () => {
+    if (timedOut || performance.now() >= deadlineAt) {
+      timedOut = true;
+      throw timeoutError;
+    }
+  };
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      timedOut = true;
+      cancelTransport();
+      reject(timeoutError);
+    }, timeoutMs);
+  });
+  const pending = (async () => {
+    response = await request(controller.signal);
+    if (timedOut || performance.now() >= deadlineAt) {
+      timedOut = true;
+      if (stopped) cancelResponseBody(response);
+      else cancelTransport();
+      throw timeoutError;
+    }
+    phase = "body";
+    const responseText = await readResponseText(response, (value) => { reader = value; }, checkDeadline);
+    checkDeadline();
+    return { response, responseText };
+  })();
   try {
-    return await response.text();
-  } catch {
-    return "";
+    return { ok: true, ...await Promise.race([pending, deadline]) };
+  } catch (cause) {
+    if (performance.now() >= deadlineAt) timedOut = true;
+    cancelTransport();
+    return { ok: false, cause, phase, timedOut };
+  } finally {
+    clearTimeout(timer);
+    if (reader) ignoreCleanup(() => reader.releaseLock());
   }
+}
+
+async function readResponseText(response, ownReader, checkDeadline) {
+  if (typeof response?.body?.getReader !== "function") return response.text();
+  const reader = response.body.getReader();
+  ownReader(reader);
+  const decoder = new TextDecoder();
+  let text = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    checkDeadline();
+    if (done) return text + decoder.decode();
+    text += decoder.decode(value, { stream: true });
+  }
+}
+
+function cancelResponseBody(response) {
+  ignoreCleanup(() => response?.body?.cancel?.());
+}
+
+function ignoreCleanup(callback) {
+  try { Promise.resolve(callback()).catch(() => {}); } catch {}
+}
+
+function transportErrorMessage(cause) {
+  try { return cause instanceof Error ? cause.message : String(cause); }
+  catch { return "Provider response transport failed."; }
 }
 
 function preview(value, apiKey) {

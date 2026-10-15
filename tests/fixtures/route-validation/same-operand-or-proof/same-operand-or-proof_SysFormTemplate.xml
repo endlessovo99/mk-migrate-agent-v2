@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>class</string><string>com.landray.kmss.sys.xform.base.model.SysFormTemplate</string></void>
+<void method="put"><string>fdId</string><string>route-or-sysform</string></void>
+<void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+<void method="put"><string>fdName</string><string>Same Operand OR Proof</string></void>
+<void method="put"><string>fdModelName</string><string>com.landray.kmss.km.review.model.KmReviewTemplate</string></void>
+<void method="put"><string>fdModelId</string><string>route-or-template</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;select fd_type="inputSelect" fd_values='{id:"fd_mode",label:"Mode",items:"A|A&amp;#10;B|B&amp;#10;C|C&amp;#10;Other|D"}'&gt;&lt;/select&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="extra_row" name="extra_row"/&gt;&lt;input fd_type="inputText" fd_values='{id:"fd_payload",label:"Payload"}'/&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" fd_type="inputText" fd_values='{id:"fd_marker",label:"Marker"}'/&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;&lt;div id="jsp_or" fd_type="jsp"&gt;&lt;input type="hidden" value="&amp;lt;script&amp;gt;Com_AddEventListener(window, &amp;quot;load&amp;quot;, function () {
+  common_dom_row_set_show_required_reset(&amp;quot;extra_row&amp;quot;, false, false, false);
+  var current = $(&amp;#x27;[name=&amp;quot;extendDataFormInfo.value(fd_mode)&amp;quot;]:checked&amp;#x27;).val();
+  if (current == &amp;#x27;A&amp;#x27; || current == &amp;#x27;B&amp;#x27; || current == &amp;#x27;C&amp;#x27;) {
+    common_dom_row_set_show_required_reset(&amp;quot;extra_row&amp;quot;, true, true, false);
+  }
+});
+AttachXFormValueChangeEventById(&amp;quot;fd_mode&amp;quot;, function (value) {
+  common_dom_row_set_show_required_reset(&amp;quot;extra_row&amp;quot;, false, false, false);
+  var marker = GetXFormFieldById(&amp;quot;fd_marker&amp;quot;)[0];
+  if (value.indexOf(&amp;quot;A&amp;quot;) &amp;gt;= 0 || value.indexOf(&amp;quot;B&amp;quot;) &amp;gt;= 0 || value.indexOf(&amp;quot;C&amp;quot;) &amp;gt;= 0) {
+    marker.value = &amp;quot;active&amp;quot;;
+    common_dom_row_set_show_required_reset(&amp;quot;extra_row&amp;quot;, true, true, false);
+  } else {
+    marker.value = &amp;quot;&amp;quot;;
+  }
+});&amp;lt;/script&amp;gt;"/&gt;&lt;/div&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_mode" label="Mode" enumValues="A|A&amp;#10;B|B&amp;#10;C|C&amp;#10;Other|D"/&gt;&lt;extendSimpleProperty name="fd_payload" label="Payload" type="String"/&gt;&lt;extendSimpleProperty name="fd_marker" label="Marker" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

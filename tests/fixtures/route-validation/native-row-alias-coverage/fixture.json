@@ -1,0 +1,7 @@
+{
+  "sourceRef": "source.form.jsp.native-row-alias.script.1",
+  "sourceActionKey": "source.form.jsp.native-row-alias.script.1#onChange@0",
+  "markerAliases": ["row_primary", "row_alias"],
+  "sourceJavascript": "AttachXFormValueChangeEventById(\"fd_mode\", function(value) {\n  SetXFormFieldValueById(\"fd_marker\", value, false);\n  if (value == \"A\") {\n    common_dom_row_set_show_required_reset(\"row_primary\", true, true, false);\n    common_dom_row_set_show_required_reset(\"row_alias\", true, true, false);\n  } else {\n    common_dom_row_set_show_required_reset(\"row_primary\", false, false, false);\n    common_dom_row_set_show_required_reset(\"row_alias\", false, false, false);\n  }\n});",
+  "reviewedFunction": "function onChange(value) { MKXFORM.setValue(\"fd_marker\", value); }"
+}

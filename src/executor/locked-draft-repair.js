@@ -514,8 +514,8 @@ function repairDsl(sourceDraft, priorSourceDraft, input, priorExecutionReport) {
   }
   const fromVersion = input?.catalogs?.components?.version;
   if (
-    fromVersion !== "2026-08-28.v14" || !["2026-09-01.v15", "2026-09-12.v16"].includes(CATALOG_VERSIONS.components) ||
-    hasV16Presentation(input) ||
+    fromVersion !== "2026-08-28.v14" || !["2026-09-01.v15", "2026-09-12.v16", "2026-10-15.v17", "2026-10-15.v18"].includes(CATALOG_VERSIONS.components) ||
+    hasPostV14Presentation(input) ||
     priorExecutionReport?.plan?.catalogs?.components?.version !== fromVersion
   ) return { ok: false, diagnostics: trust.diagnostics };
   const adapted = structuredClone(input);
@@ -640,8 +640,8 @@ function validateCalculationDslEvolution(priorDsl, currentDsl, report) {
     currentAggregate?.kind !== "aggregate" || currentAggregate.operation !== "sum" ||
     currentRow?.kind !== "formula" ||
     priorDsl?.catalogs?.components?.version !== "2026-08-28.v14" ||
-    !["2026-09-01.v15", "2026-09-12.v16"].includes(currentDsl?.catalogs?.components?.version) ||
-    hasV16Presentation(priorDsl) || hasV16Presentation(currentDsl)
+    !["2026-09-01.v15", "2026-09-12.v16", "2026-10-15.v17", "2026-10-15.v18"].includes(currentDsl?.catalogs?.components?.version) ||
+    hasPostV14Presentation(priorDsl) || hasPostV14Presentation(currentDsl)
   ) {
     return {
       ok: false,
@@ -680,7 +680,7 @@ function validateCalculationDslEvolution(priorDsl, currentDsl, report) {
   };
 }
 
-function hasV16Presentation(dsl) {
+function hasPostV14Presentation(dsl) {
   const newLabelComponents = new Set([
     "xform-button", "xform-hyperlinks", "xform-subject", "xform-datetime",
     "xform-number", "xform-calculate", "xform-attach", "xform-detail-table"
@@ -689,8 +689,13 @@ function hasV16Presentation(dsl) {
     Object.hasOwn(value, "contentFlow") || Object.values(value).some(containsFlow)
   ));
   return containsFlow(dsl?.form?.layout) || (dsl?.form?.fields || []).some((field) =>
-    [field, ...(field.columns || [])].some((candidate) => newLabelComponents.has(candidate.componentId) &&
-      Object.hasOwn(candidate.props || {}, "hiddenLabel")));
+    [field, ...(field.columns || [])].some((candidate) => (
+      newLabelComponents.has(candidate.componentId) && Object.hasOwn(candidate.props || {}, "hiddenLabel")
+    ) || (
+      candidate.componentId === "xform-hyperlinks" && Object.hasOwn(candidate.props || {}, "readOnly")
+    ) || (
+      candidate.componentId === "xform-input" && Object.hasOwn(candidate.props || {}, "maxLength")
+    )));
 }
 
 function validatePriorExecution(report, { input, plan, baseUrl, targetTemplateId, repairKind }) {

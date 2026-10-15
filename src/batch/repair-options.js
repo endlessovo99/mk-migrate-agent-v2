@@ -1,3 +1,4 @@
+import { validateWorkflowSignOptions, inspectSourceSignNode, hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
 const KEYS = {
   participantOverrides: "sourceId",
   templateAuthorizationOverrides: "sourceId",
@@ -8,9 +9,15 @@ const AUTHORIZATION_COLLECTIONS = [
 ];
 
 export function validateRepairOptions(options) {
-  exactKeys(options, Object.keys(KEYS), "action.options");
-  if (!Object.keys(options).length) throw new Error("Repair execution options must contain explicit mappings.");
+  exactKeys(options, [...Object.keys(KEYS), "workflowCooperationDefault", "workflowSignDocumentPolicy", "workflowOperationSetOverrides"], "action.options");
+  if (!validateWorkflowSignOptions(options).ok) throw new Error("Invalid explicit sign repair policy.");
+  if (!Object.keys(options).length) throw new Error("Repair execution options must contain explicit mappings or a cooperation default.");
   for (const [key, entries] of Object.entries(options)) {
+    if (["workflowSignDocumentPolicy", "workflowOperationSetOverrides"].includes(key)) continue;
+    if (key === "workflowCooperationDefault") {
+      if (!["1", "2", "3"].includes(entries)) throw new Error("workflowCooperationDefault must be an explicit string 1, 2, or 3.");
+      continue;
+    }
     if (!Array.isArray(entries) || !entries.length) throw new Error(`${key} must be a non-empty mapping array.`);
     const ids = new Set();
     for (const entry of entries) {
@@ -37,6 +44,39 @@ export function applicableRepairOptions(dsl, current, proposed) {
   const diagnostics = [];
   let matchingMappings = 0;
   for (const [key, entries] of Object.entries(proposed)) {
+    if (["workflowSignDocumentPolicy", "workflowOperationSetOverrides"].includes(key)) {
+      const contracts = (dsl?.workflow?.nodes || []).filter(node => hasSourceSignDeclaration(node) || node.type === "sign").flatMap(node => {
+        try { return [inspectSourceSignNode(node)]; }
+        catch { diagnostics.push({ level: "error", code: "batch.repair.sign_source_ambiguous", nodeId: node.id }); return []; }
+      });
+      if (key === "workflowSignDocumentPolicy") {
+        const applicable = contracts.filter(contract => contract.hasDocumentValue);
+        if (applicable.length) { result[key] = entries; matchingMappings += applicable.length; }
+      } else {
+        const applicable = entries.filter(entry => contracts.some(contract => contract.sourceOperationRefId === entry.sourceOperationRefId));
+        const merged = new Map((result[key] || []).map(entry => [entry.sourceOperationRefId, entry]));
+        for (const entry of applicable) merged.set(entry.sourceOperationRefId, structuredClone(entry));
+        if (applicable.length) { result[key] = [...merged.values()]; matchingMappings += applicable.length; }
+      }
+      continue;
+    }
+    if (key === "workflowCooperationDefault") {
+      const candidates = (dsl?.workflow?.nodes || []).filter(node => {
+        if (!["review", "send", "sign"].includes(node.type)) return false;
+        const direct = node.attributes?.processType;
+        const defined = node.definition?.attributes?.processType;
+        if (direct !== undefined && defined !== undefined && direct !== defined) {
+          diagnostics.push({ level: "error", code: "batch.repair.cooperation_source_ambiguous", nodeId: node.id });
+          return false;
+        }
+        return (defined ?? direct) === "0";
+      });
+      if (candidates.length) {
+        result.workflowCooperationDefault = entries;
+        matchingMappings += candidates.length;
+      }
+      continue;
+    }
     const sourceKey = KEYS[key];
     const direct = key === "directParticipantOverrides";
     const members = key === "templateAuthorizationOverrides" ? authorization : workflow;

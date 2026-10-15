@@ -1,4 +1,6 @@
 import { checkDraft } from "../dsl/checks.js";
+import { selectEmptyEventProof } from "../dsl/source-select-empty-event.js";
+import { draftSourceDraft } from "../translator/dsl-draft.js";
 import { componentSupportsProp } from "../dsl/catalogs.js";
 import { FIELD_TYPES } from "../dsl/schema.js";
 import { nativeFormRuleBelongsToAction } from "../dsl/native-form-rule-projection.js";
@@ -10,6 +12,7 @@ import {
 import { analyzeScriptFunction, validateSetFieldAttrTargets } from "../dsl/scripts.js";
 import { isSourceBackedMonthField } from "../dsl/static-month-picker.js";
 import { AGENT_REVIEW_PROMPT_VERSION } from "./prompt.js";
+import { jqueryReadyInitializationCandidates } from "../translator/jquery-ready-initialization.js";
 import {
   classifyActionRowMarkers,
   legacySourceFromGeneratedFunction
@@ -193,23 +196,54 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     });
   });
 
+  const emptyEventDiagnostics = [];
+  let fixedActions = dslDraft.scripts?.actions || [];
+  let fixedFormRules = dslDraft.formRules;
+  const hasRuntimeSelectFacts = sourceDraft?.form?.controls?.some(field => Object.hasOwn(field.sourceProps || {}, "runtimeSelectEmpty"));
+  if (hasRuntimeSelectFacts) {
+    try { const fixed = draftSourceDraft(sourceDraft); fixedActions = fixed.scripts?.actions || []; fixedFormRules = fixed.formRules; }
+    catch { emptyEventDiagnostics.push(error("agent.patch.select_empty_source_rebuild_failed", "Fixed source select-event evidence could not be rebuilt.", "/scripts/actions")); }
+    for (const expected of fixedActions) {
+      const field = sourceDraft.form.controls.find(field => field.id === expected.controlId);
+      if (!field?.sourceProps?.runtimeSelectEmpty || expected.event !== "onChange" ||
+          !expected.branchProvenance?.conditions?.some(condition => condition.kind === "contains" && condition.origin === "event:value") ||
+          !expected.coverage?.residuals?.some(residual => residual.code === "script.residual.field_value_assignment")) continue;
+      if ((patchedDraft.scripts?.actions || []).filter(action => action.id === expected.id && action.sourceActionKey === expected.sourceActionKey).length !== 1) {
+        emptyEventDiagnostics.push(error("agent.patch.select_empty_owner_missing", "A source-backed select event action cannot be deleted or replaced by another owner.", "/scripts/actions", { actionId: expected.id }));
+      }
+    }
+  }
+  const proofDraft = { ...patchedDraft, scripts: { ...patchedDraft.scripts, actions: (patchedDraft.scripts?.actions || []).map((action, index) => {
+    const sourceAction = fixedActions.find(expected => expected.id === action.id && expected.sourceActionKey === action.sourceActionKey) || dslDraft.scripts?.actions?.[index];
+    const proof = selectEmptyEventProof(action, { sourceAction,
+      sourceForm: sourceDraft?.form || dslDraft.form, targetForm: patchedDraft.form,
+      sourceFormRules: fixedFormRules, targetFormRules: patchedDraft.formRules, authoritative: true });
+    if (!proof.ok || proof.adapted && !sourceDraft) {
+      emptyEventDiagnostics.push(error("agent.patch.select_empty_event_unverified", "Native select null adaptation requires fixed source empty-choice evidence and the original owner, predicate and effects.",
+        `/scripts/actions/${index}/function`, { reason: proof.reason || "source_draft_required" }));
+      return action;
+    }
+    return proof.adapted ? { ...action, function: proof.function } : action;
+  }) } };
   const rowMarkerDiagnostics = validateRowMarkerClosures(
     dslDraft,
-    patchedDraft,
+    proofDraft,
     acceptedPatches,
     sourceDraft
   );
   const residualDiagnostics = validateDeterministicResidualClosures(
     dslDraft,
-    patchedDraft,
+    proofDraft,
     acceptedPatches
   );
   const branchProvenanceDiagnostics = validateActionBranchProvenanceClosures(
     dslDraft,
-    patchedDraft,
+    proofDraft,
     acceptedPatches
   );
   const closureDiagnostics = [
+    ...emptyEventDiagnostics,
+    ...validateReadyLifecycleClosures(dslDraft, patchedDraft, acceptedPatches, sourceDraft),
     ...rowMarkerDiagnostics,
     ...residualDiagnostics,
     ...branchProvenanceDiagnostics
@@ -232,6 +266,32 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     rejectedPatches,
     decisions
   };
+}
+
+function validateReadyLifecycleClosures(dslDraft, patchedDraft, patches, sourceDraft) {
+  const expected = (sourceDraft?.scripts?.sources || []).flatMap(source => jqueryReadyInitializationCandidates(source));
+  const touched = new Set(patches.flatMap(patch => {
+    const match = String(patch.path).match(/^\/scripts\/actions\/(\d+)\//);
+    return match ? [Number(match[1])] : [];
+  }));
+  const diagnostics = [];
+  for (const index of touched) {
+    const original = dslDraft?.scripts?.actions?.[index];
+    const ready = original?.semanticHints?.jqueryReadyInitialization || expected.some(candidate =>
+      candidate.sourceActionKey === original?.sourceActionKey &&
+      original?.sourceRefs?.includes(candidate.source.sourceRef));
+    if (!ready) continue;
+    const proposed = patchedDraft?.scripts?.actions?.[index];
+    if (!["mapped", "omitted"].includes(proposed?.translationStatus) &&
+        proposed?.coverage?.residuals?.some(item => item.code === "script.residual.jquery_ready_initialization")) continue;
+    diagnostics.push(error(
+      "agent.patch.ready_lifecycle_unproven",
+      "Document-ready registration and initialization have no proven target lifecycle contract; retain the pending action and its source residual.",
+      `/scripts/actions/${index}/translationStatus`,
+      { actionId: original?.id }
+    ));
+  }
+  return diagnostics;
 }
 
 function validateActionBranchProvenanceClosures(dslDraft, patchedDraft, patches) {
@@ -400,6 +460,7 @@ function validateDeterministicResidualClosures(dslDraft, patchedDraft, patches) 
         const semanticCheck = validateAssignmentBranchSemantics({
           sourceFunction: sourceAction?.function,
           reviewedFunction: functionText,
+          form: dslDraft?.form,
           residuals: protectedResiduals.filter((residual) => (
             residual?.code === "script.residual.field_value_assignment"
           ))
@@ -768,7 +829,13 @@ function validateRowMarkerClosures(dslDraft, patchedDraft, patches, sourceDraft)
       sourceFunction: sourceAction.function,
       reviewedFunction: reviewedAction.function,
       resolvedMarkers: policy.resolvedMarkers,
-      primaryMarkerByAlias: primaryLayoutMarkerByAlias(dslDraft?.form)
+      primaryMarkerByAlias: primaryLayoutMarkerByAlias(dslDraft?.form),
+      sourceControls: sourceDraft.form?.controls,
+      sourceForm: sourceDraft.form,
+      sourceScripts: sourceDraft.scripts,
+      sourceRefs: sourceAction.sourceRefs,
+      auditedOrphanMarkers: policy.orphanMarkers,
+      targetFields: patchedDraft.form?.fields
     });
     if (!semanticCheck.ok) {
       diagnostics.push(error(
@@ -950,7 +1017,11 @@ function rowEffectsByDimension(effects, primaryMarkerByAlias, resolvedTargets) {
     if (!resolvedTargets.has(target)) continue;
     const dimension = `${target}:${effect.type}`;
     if (!result.has(dimension)) result.set(dimension, []);
-    result.get(dimension).push({ ...effect, target });
+    const states = result.get(dimension);
+    // Layout aliases may repeat the same state; opposite states remain distinct.
+    if (!states.some((state) => state.value === effect.value)) {
+      states.push({ ...effect, target });
+    }
   }
   return result;
 }

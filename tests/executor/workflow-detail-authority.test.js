@@ -118,7 +118,10 @@ describe("workflow detail-table data authority", () => {
     const prepared = prepareSample(detailAuthorityDsl({
       fd_name: hiddenAuthority()
     }));
-    const brokenNative = independentNativeDetailAuthorityReadback();
+    const incompleteFragment = prepared.verify(independentNativeDetailAuthorityReadback());
+    assert.equal(incompleteFragment.ok, false);
+    assert.ok(incompleteFragment.diagnostics.some(item => item.code === "readback.workflow.cooperation_type_mismatch"));
+    const brokenNative = independentNativeDetailAuthorityReadback({ syntheticCooperation: true });
     const broken = prepared.verify(brokenNative);
 
     assert.equal(broken.ok, false);
@@ -131,7 +134,7 @@ describe("workflow detail-table data authority", () => {
       JSON.stringify(broken.diagnostics)
     );
 
-    const correctedNative = independentNativeDetailAuthorityReadback();
+    const correctedNative = independentNativeDetailAuthorityReadback({ syntheticCooperation: true });
     const { auth, tableName } = nativeDetailAuthority(correctedNative);
     auth[tableName].isShow = true;
     auth[tableName].isEdit = true;
@@ -145,6 +148,15 @@ describe("workflow detail-table data authority", () => {
 
     assert.equal(corrected.ok, true, JSON.stringify(corrected.diagnostics));
     assert.equal(corrected.partitions.workflow, "verified");
+
+    const missingCooperation = structuredClone(correctedNative);
+    const lbpm = missingCooperation.mechanisms.lbpmTemplate[0];
+    const content = JSON.parse(lbpm.fdContent);
+    delete content.elements.find(node => node.id === "N2").cooperateType;
+    lbpm.fdContent = JSON.stringify(content);
+    const incomplete = prepared.verify(missingCooperation);
+    assert.equal(incomplete.ok, false);
+    assert.deepEqual(incomplete.diagnostics.filter(item => item.level === "error").map(item => item.code), ["readback.workflow.cooperation_type_mismatch"]);
   });
 
   it("rejects readback that mutates the derived detail-table visibility", () => {
@@ -456,7 +468,7 @@ function operationState(value) {
   );
 }
 
-function independentNativeDetailAuthorityReadback() {
+function independentNativeDetailAuthorityReadback({ syntheticCooperation = false } = {}) {
   const template = JSON.parse(
     readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8")
   );
@@ -491,6 +503,13 @@ function independentNativeDetailAuthorityReadback() {
   const workflow = JSON.parse(
     readFileSync(join(fixtureDir, "workflow-detail-authority-native.json"), "utf8")
   );
+  if (syntheticCooperation) {
+    // The sanitized authority repro is a partial node envelope. This value is
+    // synthetic completion, not an assertion about the original capture.
+    const node = workflow.fdContent.elements.find(node => node.id === "N2");
+    assert.equal(Object.hasOwn(node, "cooperateType"), false);
+    node.cooperateType = "2";
+  }
   template.mechanisms.lbpmTemplate[0].fdContent = JSON.stringify(workflow.fdContent);
   template.mechanisms.lbpmTemplate[0].fdTemplateFormAuths =
     workflow.fdTemplateFormAuths;

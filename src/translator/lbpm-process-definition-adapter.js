@@ -1,5 +1,6 @@
 import { sanitizeCredentialMaterial } from "../credential-material.js";
 import { parseRootHashMapValue } from "./xml-utils.js";
+import { scanHtmlTags, findMatchingCloseTag } from "./designer-html-tokenizer.js";
 
 export function translateLbpmProcessDefinitionXml(xml, options = {}) {
   const contents = extractFdContents(xml);
@@ -74,7 +75,14 @@ function parseNodeDefinitionContents(contents) {
     const parsedAttributes = parseXmlAttributes(root.attributesText);
     const sanitized = sanitizeCredentialMaterial(parsedAttributes, { path: "/attributes" });
     const attributes = sanitized.value;
-    if (!attributes.id || definitions.has(attributes.id)) continue;
+    if (!attributes.id) continue;
+    if (definitions.has(attributes.id)) {
+      if (root.name === "signNode" || definitions.get(attributes.id).type === "signNode") {
+        definitions.get(attributes.id).operations = [{ duplicateDefinition: true }];
+        definitions.get(attributes.id).signSourceIssues = ["duplicate-sign-definition"];
+      }
+      continue;
+    }
 
     const sanitizedRoot = replaceSanitizedAttributes(root.sourceXml, parsedAttributes, attributes);
     const sourceXml = content.replace(root.sourceXml, sanitizedRoot);
@@ -82,7 +90,11 @@ function parseNodeDefinitionContents(contents) {
     definitions.set(attributes.id, {
       type: root.name,
       attributes,
-      sourceXml
+      sourceXml,
+      ...(root.name === "signNode" ? {
+        operations: signOperationEvidence(sourceXml, attributes.id, "definition") || [],
+        ...(duplicateAttributeNames(root.attributesText).length ? { signSourceIssues: duplicateAttributeNames(root.attributesText).map(name => `duplicate-root-attribute:${name}`) } : {})
+      } : {})
     });
 
     if (sanitized.redactedPaths.length) {
@@ -98,6 +110,55 @@ function parseNodeDefinitionContents(contents) {
   }
 
   return { definitions, warnings };
+}
+
+function signOperationEvidence(xml, nodeId, location) {
+  const tokens = [...scanHtmlTags(xml)], root = tokens[0];
+  if (!root || root.selfClosing) return undefined;
+  const close = findMatchingCloseTag(xml, root.end, root.name);
+  if (close < root.end) return [{ invalidRoot: true }];
+  const rootName = xml.slice(root.start + 1).match(/^([\w:-]+)/)?.[1];
+  if (xml.slice(close).match(/^<\/([\w:-]+)\s*>/)?.[1] !== rootName) return [{ invalidRoot: true }];
+  if (location === "definition") {
+    const end = scanHtmlTags(xml, close).next().value?.end;
+    const outside = xml.slice(0, root.start) + xml.slice(end);
+    if (outside.replace(/<!--[\s\S]*?-->/g, "").trim()) return [{ unsupportedDefinitionEnvelope: true }];
+  }
+  const body = xml.slice(root.end, close), children = [...scanHtmlTags(body)];
+  const result = [], consumed = []; let depth = 0;
+  for (const token of children) {
+    if (token.closing) { depth--; continue; }
+    if (depth === 0) {
+      const end = token.selfClosing ? token.end : findMatchingCloseTag(body, token.end, token.name);
+      const text = token.selfClosing ? "" : body.slice(token.end, end);
+      const closing = token.selfClosing ? token : end >= token.end ? scanHtmlTags(body, end).next().value : undefined;
+      const rawName = body.slice(token.start + 1).match(/^([\w:-]+)/)?.[1];
+      if (closing?.end >= token.end) consumed.push([token.start, closing.end]);
+      const attributes = sanitizeCredentialMaterial(parseXmlAttributes(token.attrs), { path: "/operations/attributes" }).value;
+      result.push({
+        sourceRef: `source.workflow.node.${nodeId}.${location}.operations.${result.length}`,
+        attributes, childElementCount: [...scanHtmlTags(text)].filter(item => !item.closing).length,
+        text: text.trim() ? "[unsupported operation content]" : text,
+        ...(rawName !== "operations" || duplicateAttributeNames(token.attrs).length || end < token.end ||
+          (!token.selfClosing && body.slice(end).match(/^<\/([\w:-]+)\s*>/)?.[1] !== "operations") ? { unsupportedShape: true } : {})
+      });
+    }
+    if (!token.selfClosing) depth++;
+  }
+  let residual = body;
+  for (const [start, end] of consumed.reverse()) residual = residual.slice(0, start) + residual.slice(end);
+  if (depth !== 0 || residual.replace(/<!--[\s\S]*?-->/g, "").trim()) result.push({ unsupportedRootContent: true });
+  return result;
+}
+
+function duplicateAttributeNames(text) {
+  const seen = new Set(), duplicates = new Set();
+  // Consume each quoted value before looking for the next XML attribute name.
+  for (const match of text.matchAll(/([\w:-]+)\s*=\s*(["'])([\s\S]*?)\2/g)) {
+    if (seen.has(match[1])) duplicates.add(match[1]);
+    seen.add(match[1]);
+  }
+  return [...duplicates];
 }
 
 function replaceSanitizedAttributes(sourceXml, original, sanitized) {
@@ -147,7 +208,14 @@ function parseProcessXml(processXml, nodeDefinitions = new Map(), handlerIndex =
     }
 
     if (tag.endsWith("Node")) {
-      nodes.push(nodeFromAttributes(tag, tagAttributes, nodeDefinitions.get(tagAttributes.id), token.sourceXml, handlerIndex));
+      const node = nodeFromAttributes(tag, tagAttributes, nodeDefinitions.get(tagAttributes.id), token.sourceXml, handlerIndex);
+      if (tag === "signNode" || node.definition?.type === "signNode" || node.definition?.signSourceIssues?.length) {
+        const duplicateNames = duplicateAttributeNames(token.attributesText);
+        if (duplicateNames.length) node.signSourceIssues = duplicateNames.map(name => `duplicate-root-attribute:${name}`);
+        const operations = signOperationEvidence(processXml.slice(token.start), node.id, "direct");
+        if (operations !== undefined) node.operations = operations;
+      }
+      nodes.push(node);
     }
   }
 
@@ -196,6 +264,7 @@ function scanStartTags(xml) {
     }
 
     tags.push({
+      start: index,
       name,
       attributesText: xml.slice(attributesStart, cursor),
       sourceXml: xml.slice(index, cursor + 1)

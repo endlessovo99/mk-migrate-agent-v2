@@ -1,0 +1,46 @@
+{
+  "authorization": {
+    "readerFlag": false,
+    "readers": [],
+    "editors": [],
+    "allReaders": [
+      {
+        "id": "reader-r",
+        "name": "Reader R",
+        "targetOrgType": 8,
+        "sourceId": "source-reader-r",
+        "sourceOrgType": 8,
+        "sourceRef": "source.template.authorization.reader-r"
+      }
+    ],
+    "allEditors": [
+      {
+        "id": "editor-e",
+        "name": "Editor E",
+        "targetOrgType": 8,
+        "sourceId": "source-editor-e",
+        "sourceOrgType": 8,
+        "sourceRef": "source.template.authorization.editor-e"
+      }
+    ],
+    "temporaryReaders": [],
+    "temporaryEditors": []
+  },
+  "expected": {
+    "readers": [
+      "reader-r"
+    ],
+    "editors": [
+      "editor-e"
+    ],
+    "allReaders": [
+      "editor-e",
+      "reader-r"
+    ],
+    "allEditors": [
+      "editor-e"
+    ],
+    "temporaryReaders": [],
+    "temporaryEditors": []
+  }
+}

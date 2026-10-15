@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-event-else-sysform</string></void>
+<void method="put"><string>fdName</string><string>event-else</string></void>
+<void method="put"><string>fdModelId</string><string>route-event-else-template</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_trigger",label:"fd_trigger",dataType:"String",items:"A|A;B|B;C|C"}'&gt;&lt;input id="fd_trigger"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_copy",label:"fd_copy",dataType:"String"}'&gt;&lt;input id="fd_copy"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_trigger" label="fd_trigger" type="String"/&gt;&lt;extendSimpleProperty name="fd_copy" label="fd_copy" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;AttachXFormValueChangeEventById("fd_trigger", function(value, domElement) {
+var copy = GetXFormFieldById("fd_copy")[0];
+if(value.indexOf("A")&gt;=0){
+copy.value="first";
+copy.value="A";
+}else{
+copy.value=value;
+}
+});&lt;/script&gt;</string></void>
+</object></java>

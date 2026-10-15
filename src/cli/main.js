@@ -8,6 +8,7 @@ import { checkDraft, checkExecute } from "../dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../dsl/trust.js";
 import { buildDryRunPlan } from "../executor/dry-run.js";
 import { executeDsl } from "../executor/execute.js";
+import { validateWorkflowSignOptions } from "../dsl/workflow-sign-contract.js";
 import { repairLockedDraft } from "../executor/locked-draft-repair.js";
 import { reconcileTransferRecord } from "../executor/reconcile-transfer-record.js";
 import { loadFunctionWhitelist } from "../translator/function-whitelist.js";
@@ -233,6 +234,7 @@ async function runExecute(argv, options = {}) {
   const env = options.env || process.env;
   const execute = options.executeDsl || executeDsl;
   const report = await execute(readJson(inputPath), {
+    ...signExecutionOptions(args),
     confirmWrite: args["confirm-write"] === true,
     targetCategoryId: args["target-category-id"],
     targetTemplateId: args["target-template-id"],
@@ -243,6 +245,7 @@ async function runExecute(argv, options = {}) {
     artifactsDir: args["artifacts-dir"],
     baseUrl: selectNewoaBaseUrl(args["base-url"], env.NEWOA_BASE_URL),
     fallbackFdIds: selectFallbackFdIds(env),
+    workflowCooperationDefault: args["workflow-cooperation-default"],
     participantOverrides: parseParticipantOverrides(args["participant-override"]),
     templateAuthorizationOverrides: parseTemplateAuthorizationOverrides(
       args["template-authorization-override"]
@@ -438,6 +441,15 @@ function parseParticipantOverrides(value) {
   });
 }
 
+function signExecutionOptions(args) {
+  const options = {
+    ...(args["workflow-sign-document-policy"] !== undefined ? { workflowSignDocumentPolicy: args["workflow-sign-document-policy"] } : {}),
+    ...(args["workflow-operation-set-overrides"] !== undefined ? { workflowOperationSetOverrides: readJson(args["workflow-operation-set-overrides"]) } : {})
+  };
+  if (!validateWorkflowSignOptions(options).ok) throw new Error("Invalid explicit sign execution options.");
+  return options;
+}
+
 function parseTemplateAuthorizationOverrides(value) {
   return parseOverridePairs(value, {
     optionName: "--template-authorization-override",
@@ -532,7 +544,7 @@ function printUsage() {
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
   console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js reconcile-transfer-record <migration.dsl.json> --source <source-dir|sysform.xml> [--prior-source-draft <source-draft.json> --expected-prior-source-draft-digest <sha256>] --prior-execution-report <readback-failed-report.json> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
   console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js repair-locked-draft <migration.dsl.json> --source <source-dir|sysform.xml> [--prior-source-draft <source-draft.json> --expected-prior-source-draft-digest <sha256>] --prior-execution-report <readback-failed-report.json> --repair-kind <template_authorization|calculation> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--prior-migration-dsl <historical.dsl.json> --expected-prior-dsl-digest <sha256>] [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
-  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--allow-template-authorization-fallback] [--allow-missing-direct-person-fallback] [--allow-missing-direct-post-fallback] [--direct-person-fallback-id <sourceFdId>]... [--participant-override <sourceId>=<targetFdId>]... [--template-authorization-override <sourceId>=<targetFdId>]... [--direct-participant-override <sourceTargetId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--workflow-cooperation-default <1|2|3>] [--workflow-sign-document-policy form-only-audit] [--workflow-operation-set-overrides <json-file>] [--allow-template-authorization-fallback] [--allow-missing-direct-person-fallback] [--allow-missing-direct-post-fallback] [--direct-person-fallback-id <sourceFdId>]... [--participant-override <sourceId>=<targetFdId>]... [--template-authorization-override <sourceId>=<targetFdId>]... [--direct-participant-override <sourceTargetId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
   console.error("    Published form repair additionally requires --published-form-patch --target-template-id <fdId> --expected-snapshot-digest <sha256> --artifacts-dir <new-directory> [--readonly-field <id>]... [--script-action <id>]...");
 }
 

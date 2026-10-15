@@ -2,6 +2,8 @@ import { integrityError } from "./integrity.js";
 
 const ENTRY_KEYS_BY_OPERATION = new Map([
   ["login", new Set(["operation"])],
+  ["get-workflow-cooperation-config", new Set(["operation"])],
+  ["get-workflow-operation-set", new Set(["operation", "fdId"])],
   ["search-org", new Set(["operation", "key"])],
   ["get-element-info", new Set(["operation", "targets"])],
   ["init", new Set(["operation"])],
@@ -53,7 +55,8 @@ export function appendTranscriptEntry(transcript, entry) {
     "categoryId",
     "recordId",
     "sourceTemplateId",
-    "targetTemplateId"
+    "targetTemplateId",
+    "fdId"
   ]) {
     if (Object.hasOwn(entry, key) && !nonEmptyString(entry[key])) {
       throw integrityError("route.transcript.invalid", `Transcript ${key} must be a non-empty string.`);

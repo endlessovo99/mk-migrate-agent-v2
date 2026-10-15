@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>width-scope-fixture</string></void>
+<void method="put"><string>fdModelId</string><string>width-scope-template</string></void>
+<void method="put"><string>fdName</string><string>Width scope fixture</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table id="main_fixture" fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="td_normal_title" width="180" column="0" row="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_caption_actual",content:"Amount",b:"false",i:"false",underline:"false"}'&gt;Amount&lt;/label&gt;&lt;/td&gt;&lt;td width="600" colspan="3" column="1,2,3" row="0"&gt;&lt;div style="width:120px;display:inline" fd_type="inputText" fd_values='{id:"fd_amount",width:"120",_label_bind:"true",_label_bind_id:"fd_caption_missing",label:"Amount",dataType:"Double",validate:"number",decimal:"0",readOnly:"false",required:"false"}'&gt;&lt;input style="width:120px"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;table id="main_fixture"&gt;&lt;tr&gt;&lt;td class="td_normal_title" width="180" column="0" row="0"&gt;&lt;label&gt;Amount&lt;/label&gt;&lt;/td&gt;&lt;td width="600" colspan="3" column="1,2,3" row="0"&gt;&lt;div style="width:120px;display:inline"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_amount)" style="width:120px" dataType="Double" title="Amount"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_amount" label="Amount" type="Double"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>
