@@ -19,7 +19,7 @@ describe("checkbox other-option mapping", () => {
     assert.equal(auth.sourceProps.designerType, "inputCheckbox");
     assert.deepEqual(auth.sourceProps.otherTextCompanion, {
       id: "fd_node_auth_other",
-      otherRequired: true,
+      otherRequired: false,
       captionId: "fd_node_auth_other_label",
       caption: "其他："
     });
@@ -27,7 +27,7 @@ describe("checkbox other-option mapping", () => {
     assert.equal(notice.sourceType, "checkbox");
   });
 
-  it("folds the other companion into one checkbox option and hides the companion from layout", () => {
+  it("preserves independent fields and blocks unsupported compound detail rendering", () => {
     const source = cleanSourceFile(fixture);
     const dsl = draftSourceDraft(source);
     const table = dsl.form.fields.find((field) => field.id === "fd_nodes");
@@ -43,15 +43,16 @@ describe("checkbox other-option mapping", () => {
     assert.deepEqual(auth.props.options, [
       { label: "起草人可修改处理人", value: "1" },
       { label: "编辑主文档", value: "3" },
-      { label: "身份重复不跳过", value: "4" },
-      { label: "其他", value: "other_", type: "other", isRequired: true }
+      { label: "身份重复不跳过", value: "4" }
     ]);
-    assert.equal(other.dataOnly, true);
+    assert.notEqual(other.dataOnly, true);
     assert.equal(other.componentId, "xform-input");
     assert.equal(notice.type, "checkbox");
     assert.equal(notice.componentId, "xform-checkbox");
     assert.equal(notice.props.options.some((option) => option.type === "other"), false);
-    assert.deepEqual(renderedColumnIds, ["fd_node_auth", "fd_node_note"]);
-    assert.equal(checkDraft(dsl).ok, true);
+    assert.deepEqual(renderedColumnIds, ["fd_node_auth", "fd_node_auth_other", "fd_node_note"]);
+    // These are retained identities only; no unsupported expanded detail view is executed.
+    assert.equal(checkDraft(dsl).ok, false);
+    assert.ok(checkDraft(dsl).diagnostics.some(item => item.code === "source.form.choice_other_detail_layout_unproven"));
   });
 });

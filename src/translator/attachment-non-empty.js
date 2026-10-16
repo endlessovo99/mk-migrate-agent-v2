@@ -48,6 +48,15 @@ function isDirectAttachmentGuard(callback, fieldId) {
   const activeCount = singleVariable(activeBody[0]);
   if (!activeCount || !isLiteral(activeCount.init, 0)) return false;
   const countName = activeCount.id.name;
+  const loop = forLoopParts(activeBody[1]);
+  const localNames = [validatorName, countName, loop?.indexName];
+  if (
+    !loop || new Set(localNames).size !== localNames.length ||
+    localNames.some((name) => ["alert", directAttachmentList(fieldId)[0]].includes(name)) ||
+    ![body[0], activeBody[0], activeBody[1].init].every((statement) =>
+      ["var", "let"].includes(statement.kind)
+    )
+  ) return false;
   if (!isActiveAttachmentLoop(activeBody[1], fieldId, countName)) return false;
   if (
     !isZeroTest(activeBody[2].test, countName) ||
@@ -58,7 +67,7 @@ function isDirectAttachmentGuard(callback, fieldId) {
   if (
     !isNegatedIdentifier(body[3].test, validatorName) ||
     !isSingleAlert(body[3].consequent) ||
-    !isSingleAssignment(body[3].alternate, validatorName, true)
+    (body[3].alternate && !isSingleAssignment(body[3].alternate, validatorName, true))
   ) return false;
   return isReturn(body[4], validatorName);
 }

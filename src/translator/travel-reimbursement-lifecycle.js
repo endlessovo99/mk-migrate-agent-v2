@@ -221,7 +221,8 @@ function lifecycleCandidates(source, model) {
         model.sources.wbs.sourceRef,
         model.sources.finance.sourceRef,
         model.sources.payeeCalculation.sourceRef,
-        model.sources.roundingHelper.sourceRef
+        model.sources.roundingHelper.sourceRef,
+        ...model.submitHelpers.sourceRefs
       ],
       ranges: [
         model.ranges.submit,
@@ -229,7 +230,8 @@ function lifecycleCandidates(source, model) {
         model.ranges.financeFlag,
         model.ranges.payeeCalculation,
         model.ranges.payeeAggregate,
-        model.ranges.roundingHelper
+        model.ranges.roundingHelper,
+        ...model.submitHelpers.ranges
       ],
       mapping: {
         source: "WBS/card/payee-difference/save-marker submit queue",

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-last-body-styled-description</string></void>
+<void method="put"><string>fdModelId</string><string>route-last-body-template-styled-description</string></void>
+<void method="put"><string>fdName</string><string>Mobile last body styled-description</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;TABLE fd_type=&quot;standardTable&quot; id=&quot;last_body_table&quot;&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD row=&quot;0&quot; column=&quot;0&quot; width=&quot;100&quot;&gt;&lt;LABEL fd_type=&quot;textLabel&quot; fd_values=&#x27;{id:&quot;caption_main&quot;,content:&quot;Body details&quot;}&#x27;&gt;Body details&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row=&quot;0&quot; column=&quot;1,2,3&quot; colspan=&quot;3&quot; width=&quot;900&quot;&gt;&lt;LABEL fd_type=&quot;textLabel&quot; fd_values=&#x27;{id:&quot;body_notice&quot;,content:&quot;Notice:
+Keep the original text.&quot;,color:&quot;#FF0000&quot;}&#x27; style=&quot;COLOR:#FF0000;DISPLAY:inline&quot;&gt;Notice:&lt;BR&gt;Keep the original text.&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;TABLE fd_type=&quot;standardTable&quot; id=&quot;last_body_table&quot;&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD row=&quot;0&quot; column=&quot;0&quot; width=&quot;100&quot;&gt;&lt;LABEL id=&quot;caption_main&quot;&gt;Body details&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row=&quot;0&quot; column=&quot;1,2,3&quot; colspan=&quot;3&quot; width=&quot;900&quot;&gt;&lt;LABEL id=&quot;body_notice&quot; style=&quot;COLOR:#FF0000&quot;&gt;Notice:&lt;BR&gt;Keep the original text.&lt;/LABEL&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+</object></java>

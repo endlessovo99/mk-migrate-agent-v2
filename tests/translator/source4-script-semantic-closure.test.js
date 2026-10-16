@@ -430,7 +430,7 @@ describe("Source4 script semantic closure", () => {
     assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
   });
 
-  it("omits generated SQLDialog Dialog_List runtime onto a required text field", () => {
+  it("keeps generated SQLDialog lookup unresolved while preserving its required text projection", () => {
     const { source, draft } = stages("18a8356e42d059a3140a2644792895c3");
     const field = draft.form.fields.find((candidate) => candidate.id === "fd_3c333949ed6ad4");
     const action = draft.scripts.actions.find((candidate) =>
@@ -439,8 +439,10 @@ describe("Source4 script semantic closure", () => {
 
     assert.equal(field.type, "text");
     assert.equal(field.props.required, true);
-    assert.equal(action?.translationStatus, "omitted");
-    assert.equal(action.functionMappings?.[0]?.basis, "legacy-runtime-noop");
+    assert.equal(action?.translationStatus, "needs_review");
+    assert.equal(action.coverage.status, "uncovered");
+    assert.ok(action.coverage.residuals.length);
+    assert.notEqual(action.functionMappings?.[0]?.basis, "legacy-runtime-noop");
     assert.match(action.functionMappings[0].source, /Dialog_List|SQLDialog/u);
     assert.equal(
       draft.review.warnings.some((warning) => warning.code === "source.sysform.sql_dialog_partial"),
@@ -451,7 +453,9 @@ describe("Source4 script semantic closure", () => {
       reviewerName: "route-validation",
       checkedAt: "2026-09-01T00:00:00.000Z"
     });
-    assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
+    const check = checkTrust(source, trusted);
+    assert.equal(check.ok, false);
+    assert.ok(check.diagnostics.some(item => item.code === "trust.form.remote_dialog_unbound"));
   });
 
   it("maps detail pointer-lock and omits unbound view-mode URL rewriting", () => {
@@ -476,7 +480,10 @@ describe("Source4 script semantic closure", () => {
       reviewerName: "route-validation",
       checkedAt: "2026-09-01T00:00:00.000Z"
     });
-    assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
+    const checked = checkTrust(source, trusted);
+    assert.equal(checked.ok, false);
+    assert.deepEqual(new Set(checked.diagnostics.filter(item => item.level === "error").map(item => item.code)),
+      new Set(["trust.form.remote_dialog_unbound", "dsl.form.remote_dialog_unbound"]));
   });
 
   it("keeps source-backed dependent option recipes review-required", () => {

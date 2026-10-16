@@ -21,6 +21,15 @@ export function parseXmlAttributes(text = "") {
 }
 
 export function parseRootHashMapStringPuts(xml = "") {
+  return rootStringPuts(xml, decodeEntities);
+}
+
+/** XML text semantics, without additionally interpreting the embedded HTML entities. */
+export function parseRootHashMapXmlStringPuts(xml = "") {
+  return rootStringPuts(xml, decodeXmlTextOnce, true);
+}
+
+function rootStringPuts(xml, decodeString, rejectDuplicate = false) {
   const text = String(xml);
   const root = findOutermostHashMap(text);
   if (!root) return {};
@@ -43,7 +52,8 @@ export function parseRootHashMapStringPuts(xml = "") {
     if (!childClose || childClose.end > rootClose.start) break;
 
     if (child.name.toLowerCase() === "void" && attrValue(child.tag, "method") === "put") {
-      const pair = parseDirectStringPair(text.slice(child.end, childClose.start));
+      const pair = parseDirectStringPair(text.slice(child.end, childClose.start), decodeString);
+      if (pair && rejectDuplicate && Object.hasOwn(values, pair.key)) return {};
       if (pair && values[pair.key] === undefined) {
         values[pair.key] = pair.value;
       }
@@ -53,6 +63,27 @@ export function parseRootHashMapStringPuts(xml = "") {
   }
 
   return values;
+}
+
+function decodeXmlTextOnce(text) {
+  if (/<|\]\]>|[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text)) return undefined;
+  const named = { amp: "&", quot: '"', apos: "'", lt: "<", gt: ">" };
+  let offset = 0, result = "";
+  for (const match of text.matchAll(/&([^;&\s]+);/g)) {
+    const preceding = text.slice(offset, match.index);
+    if (preceding.includes("&")) return undefined;
+    let value = Object.hasOwn(named, match[1]) ? named[match[1]] : undefined;
+    if (value === undefined) {
+      const numeric = /^#(?:x([0-9a-fA-F]+)|(\d+))$/.exec(match[1]);
+      const code = numeric && Number.parseInt(numeric[1] || numeric[2], numeric[1] ? 16 : 10);
+      if (!Number.isInteger(code) || !([9, 10, 13].includes(code) || code >= 0x20 && code <= 0xd7ff ||
+          code >= 0xe000 && code <= 0xfffd || code >= 0x10000 && code <= 0x10ffff)) return undefined;
+      value = String.fromCodePoint(code);
+    }
+    result += preceding + value; offset = match.index + match[0].length;
+  }
+  const trailing = text.slice(offset);
+  return trailing.includes("&") ? undefined : result + trailing;
 }
 
 export function parseRootHashMap(xml = "") {
@@ -257,15 +288,13 @@ function parseJavaDecoderElement(xml, element) {
   return undefined;
 }
 
-function parseDirectStringPair(body) {
+function parseDirectStringPair(body, decodeString = decodeEntities) {
   const match = String(body).match(
     /^\s*<string\b[^>]*>([\s\S]*?)<\/string>\s*<string\b[^>]*>([\s\S]*?)<\/string>\s*$/i
   );
   if (!match) return undefined;
-  return {
-    key: decodeEntities(match[1]),
-    value: decodeEntities(match[2])
-  };
+  const key = decodeString(match[1]), value = decodeString(match[2]);
+  return key === undefined || value === undefined ? undefined : { key, value };
 }
 
 function isClosingTag(tag) {

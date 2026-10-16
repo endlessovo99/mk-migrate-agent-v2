@@ -222,13 +222,26 @@ describe("same-operand OR proof Route-validation", () => {
     });
   }
 
-  it("allows only cataloged debug-only console output with pure arguments beside proved source effects", () => {
+  it("preserves pure source console output and refuses dropped diagnostics", () => {
     const { source } = scenario();
     source.scripts.sources[0].javascript = source.scripts.sources[0].javascript.replace(
-      'function (value) {', 'function (value) { console.log("Mode", value); console.warn("Diagnostic");'
+      'function (value) {', 'function (value) { console.log("Mode", value);'
     );
-    const result = reviewed(source, draftSourceDraft(source));
+    const mapped = { ...functions, onChange: functions.onChange.replace(
+      "function onChange(value) {", 'function onChange(value) { console.log("Mode", value);'
+    ) };
+    const draft = draftSourceDraft(source);
+    const result = reviewed(source, draft, mapped);
     assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    const dropped = reviewed(source, draft);
+    assert.equal(dropped.ok, false);
+    assert.ok(dropped.diagnostics.some(item => item.code === "agent.patch.row_marker_semantics_unverified"));
+
+    const withWarning = structuredClone(source);
+    withWarning.scripts.sources[0].javascript = withWarning.scripts.sources[0].javascript.replace(
+      'console.log("Mode", value);', 'console.log("Mode", value); console.warn("Diagnostic");'
+    );
+    assert.equal(reviewed(withWarning, draftSourceDraft(withWarning), mapped).ok, false);
   });
 
   it("does not omit an additional recognized source field assignment", () => {

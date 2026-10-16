@@ -1,0 +1,111 @@
+{
+  "kind": "Synthetic historical incomplete mapping counterexample, never approval or business evidence",
+  "actions": [
+    {
+      "id": "fd_script.script.1.event.1",
+      "name": "onChange",
+      "event": "onChange",
+      "scope": "control",
+      "controlId": "fd_choice",
+      "tableId": "fd_detail",
+      "function": "function onChange(value, rowNum, parentRowNum) {\n  /* mk-migrate:view-status=add,edit */\n  if (MKXFORM.viewStatus != \"add\" && MKXFORM.viewStatus != \"edit\") return;\n  var selectedValue = Array.isArray(value) ? value[0] : value\n  var active = String(selectedValue) === \"gh\"\n  MKXFORM.updateControl(\"${table:fd_detail}.fd_hidden\", rowNum, active ? \"true\" : \"\")\n  MKXFORM.updateControlStyle(\"${table:fd_detail}.fd_notes\", rowNum, { display: active ? \"block\" : \"none\" })\n  MKXFORM.setDetailFieldItemAttr(\"${table:fd_detail}\", active ? 5 : 4, rowNum, \"${table:fd_detail}.fd_notes\")\n  MKXFORM.setDetailFieldItemAttr(\"${table:fd_detail}\", active ? 3 : 6, rowNum, \"${table:fd_detail}.fd_notes\")\n}",
+      "sourceRefs": [
+        "source.form.jsp.fd_script.script.1"
+      ],
+      "deterministicBranchProof": {
+        "version": 2,
+        "basis": "deterministic-detail-row-control-state",
+        "functionSha256": "5e51b4f1e685890e1fb8112759a4842e7b4b3b82c133de9c4e3f43e9413f3888",
+        "identitySha256": "ed00d0eca29987fbfc6409edd7d1cda3b33a651e559f8e3b6ba4d1acebfc2cd3"
+      },
+      "translationStatus": "mapped",
+      "coverage": {
+        "status": "translated",
+        "nativeRules": [],
+        "residuals": []
+      },
+      "functionMappings": [
+        {
+          "source": "exact detail-row controlDisplay hidden/display/validate toggle",
+          "target": "control onChange + MKXFORM.updateControl/updateControlStyle/setDetailFieldItemAttr",
+          "basis": "deterministic-detail-row-control-state",
+          "reviewRequired": false
+        }
+      ],
+      "recipe": {
+        "kind": "detail_row_control_state",
+        "tableId": "fd_detail",
+        "triggerControlId": "fd_choice",
+        "targetControlId": "fd_notes",
+        "hiddenControlId": "fd_hidden",
+        "matchValue": "gh"
+      },
+      "semanticHints": {
+        "coveredCalculationRanges": [
+          {
+            "sourceRef": "source.form.jsp.fd_script.script.1",
+            "name": "controlDisplay",
+            "start": 0,
+            "end": 791
+          }
+        ]
+      },
+      "unmappedFunctions": []
+    },
+    {
+      "id": "fd_script.script.1.event.2",
+      "name": "onLoad",
+      "event": "onLoad",
+      "scope": "global",
+      "function": "function onLoad() {\n  var rows = MKXFORM.getValue(\"${table:fd_detail}\") || []\n  for (var rowNum = 0; rowNum < rows.length; rowNum += 1) {\n    var active = String(rows[rowNum][\"fd_choice\"] || \"\") === \"gh\" || String(rows[rowNum][\"fd_hidden\"] || \"\") === \"true\"\n    MKXFORM.updateControl(\"${table:fd_detail}.fd_hidden\", rowNum, active ? \"true\" : \"\")\n    MKXFORM.updateControlStyle(\"${table:fd_detail}.fd_notes\", rowNum, { display: active ? \"block\" : \"none\" })\n    MKXFORM.setDetailFieldItemAttr(\"${table:fd_detail}\", active ? 5 : 4, rowNum, \"${table:fd_detail}.fd_notes\")\n    MKXFORM.setDetailFieldItemAttr(\"${table:fd_detail}\", active ? 3 : 6, rowNum, \"${table:fd_detail}.fd_notes\")\n  }\n}",
+      "sourceRefs": [
+        "source.form.jsp.fd_script.script.1"
+      ],
+      "deterministicBranchProof": {
+        "version": 2,
+        "basis": "deterministic-detail-row-lifecycle",
+        "functionSha256": "8f54af381491d23edd7b451703955396634675985e185b5c83d633319632460e",
+        "identitySha256": "6a763633781fdec1da75d1b79a78127ea24c0bfddda773b0246806d37b991c88"
+      },
+      "translationStatus": "mapped",
+      "coverage": {
+        "status": "translated",
+        "nativeRules": [],
+        "residuals": []
+      },
+      "functionMappings": [
+        {
+          "source": "exact window-load detail-row controlDisplay initialization",
+          "target": "global onLoad + MKXFORM.getValue/updateControl/updateControlStyle/setDetailFieldItemAttr",
+          "basis": "deterministic-detail-row-lifecycle",
+          "reviewRequired": false
+        }
+      ],
+      "recipe": {
+        "kind": "detail_row_lifecycle",
+        "tableId": "fd_detail",
+        "triggerControlId": "fd_choice",
+        "targetControlId": "fd_notes",
+        "hiddenControlId": "fd_hidden",
+        "matchValue": "gh",
+        "rowLifecycle": {
+          "existingRows": "on_load_initialization",
+          "addedRows": "native_detail_control_event",
+          "deletedRows": "native_detail_runtime",
+          "legacyDomCleanup": "not_applicable_native_runtime"
+        }
+      },
+      "semanticHints": {
+        "coveredCalculationRanges": [
+          {
+            "sourceRef": "source.form.jsp.fd_script.script.1",
+            "name": "window.load",
+            "start": 1005,
+            "end": 1910
+          }
+        ]
+      },
+      "unmappedFunctions": []
+    }
+  ]
+}

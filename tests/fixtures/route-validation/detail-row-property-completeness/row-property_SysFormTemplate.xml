@@ -1,0 +1,44 @@
+<java><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>detail-property-source</string></void><void method="put"><string>fdModelId</string><string>detail-property-model</string></void><void method="put"><string>fdName</string><string>Synthetic detail row property</string></void><void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable" id="layout"&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputCheckbox" fd_values='{id:"fd_main",label:"Category",dataType:"String",items:"Equipment|sb
+Other|other"}'&gt;&lt;input id="fd_main"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="fd_detail_row" name="fd_detail_row"/&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_detail",label:"Asset rows"}'&gt;&lt;tbody&gt;&lt;tr type="titleRow"&gt;&lt;td column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_header_choice",content:"Purchase type"}'&gt;Purchase type&lt;/label&gt;&lt;/td&gt;&lt;td column="1"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_header_notes",content:"Replacement note"}'&gt;Replacement note&lt;/label&gt;&lt;/td&gt;&lt;td column="2"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_header_hidden",content:"Replacement state"}'&gt;Replacement state&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;
+&lt;td&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_choice",label:"Purchase type",items:"New|xg
+Replace|gh"}'&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;td&gt;&lt;div fd_type="textarea" fd_values='{id:"fd_notes",label:"replacement asset number",_label_bind:"false",_label_bind_id:"fd_header_notes",dataType:"String"}'&gt;&lt;textarea id="fd_notes"&gt;replacement asset number&lt;/textarea&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;td&gt;&lt;div fd_type="hidden" fd_values='{id:"fd_hidden",label:"Replacement state",dataType:"String"}'&gt;&lt;input id="fd_hidden" type="hidden"/&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;div id="fd_script" fd_type="jsp"&gt;&lt;input type="hidden" value="&amp;lt;script&amp;gt;function controlDisplay(value,i){
+ var hidden=document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_hidden)&amp;quot;)[0];
+ if(value==&amp;quot;gh&amp;quot;){
+  hidden.value=&amp;quot;true&amp;quot;;
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].style.display=&amp;quot;&amp;quot;;
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;placeholder&amp;quot;,&amp;quot;replacement details&amp;quot;);
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;validate&amp;quot;,&amp;quot;required&amp;quot;);
+ }else{
+  hidden.value=&amp;quot;&amp;quot;;
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].style.display=&amp;quot;none&amp;quot;;
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;validate&amp;quot;,&amp;quot;&amp;quot;);
+ }
+}
+function wireRows(){for(var i=0;i&amp;lt;1;i++){
+ var trigger=document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_choice)&amp;quot;)[0];
+ trigger.setAttribute(&amp;quot;onclick&amp;quot;,&amp;quot;controlDisplay(this.value,&amp;quot;+i+&amp;quot;)&amp;quot;);
+}}
+Com_AddEventListener(window,&amp;quot;load&amp;quot;,function(){
+ wireRows();
+ var enabled=GetXFormFieldById(&amp;quot;fd_main&amp;quot;)[0].value;
+ var rows=GetXFormFieldById(&amp;quot;fd_detail&amp;quot;);
+ if(enabled==&amp;quot;sb&amp;quot; &amp;amp;&amp;amp; rows.length&amp;gt;0){
+  var hidden=document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.0.fd_hidden)&amp;quot;)[0];
+  if(hidden.value==&amp;quot;true&amp;quot;){
+   document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.0.fd_notes)&amp;quot;)[0].style.display=&amp;quot;&amp;quot;;
+   document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.0.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;placeholder&amp;quot;,&amp;quot;replacement details&amp;quot;);
+   document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.0.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;validate&amp;quot;,&amp;quot;required&amp;quot;);
+  }else{
+   document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.0.fd_notes)&amp;quot;)[0].style.display=&amp;quot;none&amp;quot;;
+   document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.0.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;validate&amp;quot;,&amp;quot;&amp;quot;);
+  }
+ }
+});&amp;lt;/script&amp;gt;"/&gt;&lt;/div&gt;</string></void><void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_main" label="Category" type="String" enumValues="Equipment|sb
+Other|other"/&gt;
+&lt;extendSubTableProperty name="fd_detail" label="Asset rows"&gt;&lt;extendSimpleProperty name="fd_choice" label="Purchase type" enumValues="New|xg
+Replace|gh"/&gt;&lt;extendSimpleProperty name="fd_notes" label="Replacement note" type="String"/&gt;&lt;extendSimpleProperty name="fd_hidden" label="Replacement state" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;/metadata&gt;</string></void></object></java>

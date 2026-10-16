@@ -2,7 +2,8 @@ import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
 import { DETAIL_TABLE_IDS, FIELD_IDS, SOURCE_IDS } from "./travel-reimbursement-lifecycle-contract.js";
 import {
   hasExactTravelReimbursementBehaviorEvidence,
-  inspectTravelReimbursementStaticEvidence
+  inspectTravelReimbursementStaticEvidence,
+  inspectTravelSubmitDetailHelpers
 } from "./travel-reimbursement-lifecycle-evidence.js";
 
 const lifecycleModelCache = new WeakMap();
@@ -34,6 +35,8 @@ function modelInputEvidence(sourceScripts, form, formRules) {
     FIELD_IDS.payeeTotal,
     FIELD_IDS.payeeDifference
   ]);
+  const detailFieldIds = new Set(["fd_bseg_projk", "fd_card_number"]);
+  const detailTableIds = new Set([DETAIL_TABLE_IDS.project, DETAIL_TABLE_IDS.payee]);
   return {
     sources: sources.map((source) => ({
       source,
@@ -42,17 +45,22 @@ function modelInputEvidence(sourceScripts, form, formRules) {
       displayGate: source?.displayGate,
       javascript: source?.javascript
     })),
-    form: JSON.stringify((form?.fields || [])
-      .filter((field) =>
-        field?.type !== "detailTable" &&
-        relevantFieldIds.has(field?.id)
-      )
-      .map((field) => ({
+    form: JSON.stringify((form?.fields || []).flatMap((field) => {
+      const columns = (field?.columns || []).filter((column) => detailFieldIds.has(column?.id));
+      if (detailTableIds.has(field?.id) || columns.length || detailFieldIds.has(field?.id)) {
+        return [{ id: field.id, type: field.type, sourceRef: field.sourceRef,
+          columns: columns.map((column) => ({
+            id: column.id, type: column.type, componentId: column.componentId,
+            sourceRef: column.sourceRef, sourceProps: column.sourceProps
+          })) }];
+      }
+      return relevantFieldIds.has(field?.id) ? [{
         id: field.id,
         componentId: field.componentId,
         options: field.props?.options,
         calculation: field.props?.calculation
-      }))),
+      }] : [];
+    })),
     rules: JSON.stringify((formRules?.linkage || []).filter((rule) =>
       rule?.source === FIELD_IDS.cityMode
     ))
@@ -79,6 +87,10 @@ function sameModelInputEvidence(left, right) {
 
 function buildModel(sourceScripts = {}, form = {}, formRules = {}) {
   const sources = Array.isArray(sourceScripts?.sources) ? sourceScripts.sources : [];
+  if (
+    new Set(sources.map((source) => source.id)).size !== sources.length ||
+    new Set(sources.map((source) => source.sourceRef)).size !== sources.length
+  ) return undefined;
   const byId = new Map(sources.map((source, index) => [source.id, { source, index }]));
   if (Object.values(SOURCE_IDS).some((id) => !byId.has(id))) return undefined;
 
@@ -160,6 +172,13 @@ function buildModel(sourceScripts = {}, form = {}, formRules = {}) {
   ) {
     return undefined;
   }
+
+  const submitHelpers = inspectTravelSubmitDetailHelpers({
+    sources,
+    submitText: submitBinding.text,
+    form
+  });
+  if (!submitHelpers) return undefined;
 
   const citySourceActionKey = inlineOnChangeSourceActionKey(
     lifecycleEntry.source.sourceRef,
@@ -247,6 +266,7 @@ function buildModel(sourceScripts = {}, form = {}, formRules = {}) {
       roundingHelper: roundingHelper.source
     },
     commonWbs,
+    submitHelpers,
     firstOptions,
     secondOptions,
     optionGroups,

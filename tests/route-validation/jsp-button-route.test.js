@@ -7,7 +7,7 @@ import { projectTemplate, xformConfig } from "../helpers/persistence.js";
 
 const source = "tests/fixtures/source/1927955f6e544383f46970f48468a743";
 
-it("routes a nested JSP click handler to an executable MK button draft", () => {
+it("projects the nested JSP click handler while unbound REST keeps the full source blocked", () => {
   const sourceDraft = cleanSourceFile(source);
   const dsl = draftSourceDraft(sourceDraft);
   const result = checkDraft(dsl);
@@ -91,7 +91,9 @@ it("routes a nested JSP click handler to an executable MK button draft", () => {
   });
 
   const trustResult = checkTrust(trustSourceDraft, trusted);
-  assert.equal(trustResult.ok, true, JSON.stringify(trustResult.diagnostics));
+  assert.equal(trustResult.ok, false);
+  assert.deepEqual(new Set(trustResult.diagnostics.filter(item => item.level === "error").map(item => item.code)),
+    new Set(["trust.form.remote_dialog_unbound", "dsl.form.remote_dialog_unbound"]));
   const native = projectTemplate(trusted);
   const nativeFormAttr = JSON.parse(xformConfig(native).attribute.formAttr);
   const dispatcher = nativeFormAttr.controlAction.global.onBeforeSubmit[0].function;

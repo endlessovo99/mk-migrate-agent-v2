@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>native-formula-scope-source</string></void>
+<void method="put"><string>fdModelId</string><string>native-formula-scope-model</string></void>
+<void method="put"><string>fdName</string><string>Native formula condition scope</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table id="scope_table" fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_selector",label:"Choice",dataType:"String",items:"Alpha|A;Beta|B"}'&gt;&lt;input id="fd_selector"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="fd_value_row" name="fd_value_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value",label:"Value",dataType:"String",required:"true"}'&gt;&lt;input id="fd_value"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;xform:editShow&gt;&lt;script&gt;
+AttachXFormValueChangeEventById("fd_selector", function(value, domElement) {
+ if(value.indexOf("A")&gt;=0){
+  common_dom_row_set_show_required_reset("fd_value_row",true,true,false);
+ }else{
+  common_dom_row_set_show_required_reset("fd_value_row",false,false,false);
+ }
+});
+&lt;/script&gt;&lt;/xform:editShow&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_selector" label="Choice" type="String"/&gt;&lt;extendSimpleProperty name="fd_value" label="Value" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

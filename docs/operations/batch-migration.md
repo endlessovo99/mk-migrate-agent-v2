@@ -89,6 +89,8 @@ An `execution_options` repair may also register `workflowCooperationDefault` for
 
 Diagnostic codes narrow candidates; they do not establish applicability. Mapping changes also require matching, unambiguous identities in each DSL; target type/existence is still checked by the executor. Other local actions are `reprepare` (regenerate from the frozen XML using a fixed repaired tool version) and `replace_dsl` (explicit per-item `itemId`, `expectedDslDigest`, `dsl`, validated against source evidence).
 
+For `reprepare` only, selector code `BATCH_ENGINE_CHANGED` also matches an item's retained nonempty engine digest when it differs from the current engine. This permits rebuilding stale ready artifacts before approving or attempting execution. The preview retains the original diagnostics and engine digest; it does not insert an execution failure. Existing remote-effect, uncertain-write, active-item and completed-item exclusions still apply, and application clears approval before regeneration.
+
 ```bash
 node src/cli/main.js batch repair-create repair.json
 node src/cli/main.js batch pause <batch-id>

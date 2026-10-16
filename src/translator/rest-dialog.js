@@ -19,7 +19,9 @@ const SAFE_DESIGNER_VALUE_KEYS = new Set([
 export function sanitizeDesignerValues(normalizedType, values) {
   if (!["restdialog", "linklabel"].includes(normalizedType)) return values;
   return Object.fromEntries(
-    Object.entries(values || {}).filter(([key]) => SAFE_DESIGNER_VALUE_KEYS.has(key))
+    Object.entries(values || {}).filter(([key, value]) => SAFE_DESIGNER_VALUE_KEYS.has(key) ||
+      normalizedType === "restdialog" && key === "txtReadOnly" &&
+      (typeof value === "boolean" || typeof value === "string" && /^(?:true|false)$/i.test(value.trim())))
   );
 }
 

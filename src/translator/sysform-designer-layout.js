@@ -4,7 +4,10 @@ import { sanitizeCredentialMaterial } from "../credential-material.js";
 import { isDataOnlyMetadataField } from "./sysform-metadata.js";
 import { restDialogEvidence, sanitizeDesignerValues } from "./rest-dialog.js";
 import { parseDesignerFdValues } from "./designer-control-values.js";
-import { designerContentFlow, filterContentFlow, runtimeSelectWidthEvidence } from "./designer-content-flow.js";
+import { sourceRadioGroupingValues } from "./radio-source-proof.js";
+import {
+  designerContentFlow, filterContentFlow, runtimeSelectWidthEvidence, runtimeCheckboxWidthEvidence, runtimeRadioWidthlessEvidence
+} from "./designer-content-flow.js";
 import { componentForSourceType } from "./field-component.js";
 import { descriptionFieldFromMarkedRow, extractRowMarkers } from "./designer-row-markers.js";
 import {
@@ -18,6 +21,8 @@ import {
 import { isSafeInlineUnit } from "./source-text-predicates.js";
 import { annotateChoiceOtherCompanions } from "./choice-other-companion.js";
 import { annotateRuntimeTextReadOnly } from "./runtime-text-readonly.js";
+import { annotateRuntimeNumberDisplayWidth } from "./runtime-number-display-width.js";
+import { runtimeCaptionWidthEvidence, runtimePlainCaptionEvidenceWithMarkers, runtimeCaptionTrailingBlankCells } from "./runtime-caption-width.js";
 import { annotateRuntimeSelectEmpty } from "./runtime-select-empty.js";
 import { runtimeIndependentCaptionEvidence } from "./runtime-independent-caption.js";
 import { isStaticDescriptionGridShape, isStaticHeaderGridShape } from "./standard-table-grid.js";
@@ -120,7 +125,10 @@ export function buildDesignerFirstForm(html, metadata, warnings, options = {}) {
 
   warnSuspiciousDetailTableTitles(fields, warnings);
   return {
-    fields: annotateRuntimeSelectEmpty(annotateRuntimeTextReadOnly(fields, options.runtimeDisplayHtml || "", warnings), options.runtimeDisplayHtml || ""),
+    fields: annotateRuntimeNumberDisplayWidth(
+      annotateRuntimeSelectEmpty(annotateRuntimeTextReadOnly(fields, options.runtimeDisplayHtml || "", warnings), options.runtimeDisplayHtml || ""),
+      options.runtimeDisplayHtml || "", metadataFields, html, designer.layout
+    ),
     dataFields,
     layout: removeDataOnlyFieldsFromLayout(designer.layout, dataOnlyIds)
   };
@@ -165,6 +173,17 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
   captionContext.editorLabelEvidence = options.editorLabelEvidence || new Map();
   captionContext.independentCaptions = runtimeIndependentCaptionEvidence(decoded, options.runtimeDisplayHtml || "");
   captionContext.runtimeSelectWidths = runtimeSelectWidthEvidence(options.runtimeDisplayHtml || "");
+  captionContext.runtimeCheckboxWidths = runtimeCheckboxWidthEvidence(options.runtimeDisplayHtml || "");
+  captionContext.runtimeWidthlessRadios = runtimeRadioWidthlessEvidence(html, options.runtimeDisplayHtml || "", metadataFields);
+  captionContext.runtimeWidthlessCaptions = runtimeCaptionWidthEvidence(html, options.runtimeDisplayHtml || "", metadataFields);
+  const plainCaptions = runtimePlainCaptionEvidenceWithMarkers(html, options.runtimeDisplayHtml || "", metadataFields);
+  captionContext.runtimePlainCaptions = plainCaptions.ids;
+  captionContext.runtimePlainCaptionMarkerIds = plainCaptions.markerIds;
+  captionContext.runtimeTrailingBlankCells = runtimeCaptionTrailingBlankCells(
+    options.trailingBlankSource?.designer || "", options.trailingBlankSource?.runtime || "", plainCaptions.ids,
+    { scriptFragments: options.trailingBlankSource?.scriptFragments, scriptSources: options.trailingBlankSource?.scriptSources }
+  );
+  captionContext.runtimeWidthlessCaptions = new Set([...captionContext.runtimeWidthlessCaptions, ...plainCaptions.ids]);
   const metadataContext = metadataMatchContext(metadataFields);
   const fields = [];
   const fieldIds = new Set();
@@ -441,6 +460,9 @@ function appendDesignerLayoutRow(descriptor, context) {
   const boundCaptionCellIndexes = Array.isArray(descriptor.sourceCells)
     ? new Map()
     : indexBoundCaptionCells(sourceCells, captionContext.boundCaptions);
+  const independentCaptionCellIndexes = Array.isArray(descriptor.sourceCells)
+    ? new Map()
+    : indexIndependentCaptionCells(sourceCells, captionContext);
   const sourceColumns = sourceCells.reduce((max, cell, cellIndex) => {
     const column = parseColumnSpec(cell.attrs.column, cellIndex);
     return Math.max(max, column.column + column.colspan);
@@ -459,8 +481,14 @@ function appendDesignerLayoutRow(descriptor, context) {
             preservesBoundStandardTableCaptions(descriptor.standardTableProjection),
           cell,
           sourceColumns,
+          uniqueVisibleCaptionIds: captionContext.uniqueVisibleCaptionIds,
           crossCellBoundCaptionIds: new Set(
             [...boundCaptionCellIndexes]
+              .filter(([, captionCellIndex]) => captionCellIndex !== cellIndex)
+              .map(([captionId]) => captionId)
+          ),
+          crossCellIndependentCaptionIds: new Set(
+            [...independentCaptionCellIndexes]
               .filter(([, captionCellIndex]) => captionCellIndex !== cellIndex)
               .map(([captionId]) => captionId)
           )
@@ -480,7 +508,11 @@ function appendDesignerLayoutRow(descriptor, context) {
 
   titledCells.forEach((cell, cellIndex) => {
     const widthWeight = widthUnits.size <= 1 ? widthHints[cellIndex]?.value : undefined;
-    let controls = cell.controls;
+    let controls = cell.controls.map(control => captionContext.runtimePlainCaptions.has(control.id)
+      ? { ...control, source: { ...control.source, runtimePlainCaption: true,
+          ...(captionContext.runtimePlainCaptionMarkerIds.has(control.id)
+            ? { runtimePlainCaptionMarkerIds: captionContext.runtimePlainCaptionMarkerIds.get(control.id) } : {}) } }
+      : control);
     if (
       descriptor.standardTableProjection?.mode === "static-header-grid" &&
       descriptor.standardTableProjection?.rowRole === "body"
@@ -517,7 +549,8 @@ function appendDesignerLayoutRow(descriptor, context) {
         cellFieldIds.push(control.id);
       }
       if (!cellFieldIds.length) return;
-      const contentFlow = designerContentFlow(cell.body, cellFieldIds, captionContext.runtimeSelectWidths);
+      const contentFlow = designerContentFlow(cell.body, cellFieldIds,
+        captionContext.runtimeSelectWidths, captionContext.runtimeCheckboxWidths, captionContext.runtimeWidthlessCaptions, captionContext.runtimeWidthlessRadios);
 
       cells.push({
         id: `${descriptor.id}-cell-${column.column}${groupIndex ? `-${groupIndex}` : ""}`,
@@ -565,6 +598,13 @@ function appendDesignerLayoutRow(descriptor, context) {
   }
 
   if (cells.length) {
+    const trailingBlankCells = captionContext.runtimeTrailingBlankCells.get(cells[0]?.fieldIds?.[0]);
+    const matchedTrailingBlanks = trailingBlankCells && !sourceMarkers.length && !descriptor.standardTableProjection &&
+      String(trailingBlankCells.rowIndex) === descriptor.sourceRow && sourceColumns === trailingBlankCells.sourceColumns &&
+      cells.length === 2 && cells.every((cell, index) => cell.column === index && cell.colspan === 1 &&
+        [undefined, 1].includes(cell.rowspan) && cell.fieldIds?.length === 1 && !cell.layoutRowIds?.length &&
+        cell.fieldIds[0] === (index === 0 ? trailingBlankCells.captionId : trailingBlankCells.bodyId) &&
+        cell.widthWeight === trailingBlankCells.keptWidthWeights[index]);
     layoutRows.push({
       id: descriptor.id,
       sourceRow: descriptor.sourceRow,
@@ -574,6 +614,7 @@ function appendDesignerLayoutRow(descriptor, context) {
         (descriptor.standardTableProjection?.mode !== "details-table" && hasCompleteSourceGeometry(cells, sourceColumns)))
         ? { preserveSourceGeometry: true }
         : {}),
+      ...(matchedTrailingBlanks ? { trailingBlankCells } : {}),
       cells
     });
   }
@@ -799,7 +840,9 @@ function retainEditorCaptionPresentation(cells, context, metadataContext, warnin
       const rowText = normalizeMatchText(evidence.rowText);
       if (!evidence.verified || (retainedExternalCaption && evidence.conditionalRow) || !captions.every((caption) => {
         const text = normalizeMatchText(caption.title);
-        return text && rowText.includes(text);
+        return text && (evidence.staticCaptions
+          ? evidence.staticCaptions.filter(value => normalizeMatchText(value) === text).length === 1
+          : rowText.includes(text));
       })) {
         warnings.push({
           code: "source.sysform.label_visibility_unverified",
@@ -944,6 +987,35 @@ function indexBoundCaptionCells(sourceCells, boundCaptions) {
     }
   });
   return indexes;
+}
+
+function indexIndependentCaptionCells(sourceCells, captionContext) {
+  const occurrences = new Map();
+  const references = new Map();
+  sourceCells.forEach((cell, cellIndex) => {
+    for (const control of extractDesignerFieldControls(cell.body, {
+      includeHidden: true, includeTextLabels: true
+    })) {
+      const entries = occurrences.get(control.id) || [];
+      entries.push({ control, cellIndex });
+      occurrences.set(control.id, entries);
+      const captionId = control.source?.designerValues?._label_bind_id;
+      if (!captionId || isSourceDescriptionControl(control) || control.source?.designerHidden) continue;
+      const users = references.get(captionId) || [];
+      users.push(control.id);
+      references.set(captionId, users);
+    }
+  });
+  const result = new Map();
+  for (const [captionId, users] of references) {
+    const captions = occurrences.get(captionId) || [];
+    if (new Set(users).size !== users.length ||
+        users.some(id => occurrences.get(id)?.length !== 1 || captionContext.controlIdOccurrences.get(id) !== 1) ||
+        captions.length !== 1 || !captionContext.uniqueVisibleCaptionIds.has(captionId)) continue;
+    const [{ control, cellIndex }] = captions;
+    if (isSourceDescriptionControl(control) && !control.source?.designerHidden) result.set(captionId, cellIndex);
+  }
+  return result;
 }
 
 function recoverDesignerAttachments(html, fields, fieldIds, layoutRows, warnings) {
@@ -1356,6 +1428,8 @@ function isFullRowPlainHintTextLabel(control, context = {}) {
 function foldInlineCellSemantics(html, entries, metadataContext, options = {}) {
   const captions = foldInlineCaptions(html, entries, {
     crossCellBoundCaptionIds: options.crossCellBoundCaptionIds,
+    crossCellIndependentCaptionIds: options.crossCellIndependentCaptionIds,
+    uniqueVisibleCaptionIds: options.uniqueVisibleCaptionIds,
     preserveCaptionIds: preservedCaptionIdsWithCheckboxOther(entries, options.preserveCaptionIds)
   });
   const units = annotateInlineNumberUnits(html, captions, metadataContext);
@@ -1574,6 +1648,14 @@ function designerBoundCaptionContext(
       .filter((control) => isSourceDescriptionControl(control))
       .map((control) => [control.id, control])
   );
+  const controlIdOccurrences = new Map();
+  for (const control of controls) {
+    controlIdOccurrences.set(control.id, (controlIdOccurrences.get(control.id) || 0) + 1);
+  }
+  const uniqueVisibleCaptionIds = new Set(controls
+    .filter(control => isSourceDescriptionControl(control) && !control.source?.designerHidden &&
+      controlIdOccurrences.get(control.id) === 1)
+    .map(control => control.id));
   const references = controls
     .filter((control) =>
       !isSourceDescriptionControl(control) &&
@@ -1614,6 +1696,8 @@ function designerBoundCaptionContext(
   }
   return {
     boundCaptions,
+    controlIdOccurrences,
+    uniqueVisibleCaptionIds,
     referencedCaptionIds: new Set(references),
     externalRightPromptIds,
     rightContainerByControlId,
@@ -1765,6 +1849,7 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
     designerId: id,
     designerType: fdType,
     designerValues: sanitizeDesignerValues(normalized, values),
+    ...(normalized === "inputradio" ? { designerRadioLayoutLiteral: Boolean(sourceRadioGroupingValues(attrs)) } : {}),
     designerTableName: attrValue(attrs, "tableName") || undefined,
     designerShowStatus: attrValue(attrs, "showStatus") || undefined,
     ...(pleaseSelect ? {

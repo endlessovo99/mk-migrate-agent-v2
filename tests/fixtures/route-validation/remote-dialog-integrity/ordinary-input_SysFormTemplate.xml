@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>synthetic-ordinary-input-form</string></void>
+<void method="put"><string>fdModelId</string><string>synthetic-ordinary-input-template</string></void>
+<void method="put"><string>fdName</string><string>Synthetic ordinary-input</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div formDesign="landray" fd_type="inputText" fd_values="{id:&amp;quot;fd_lookup&amp;quot;,label:&amp;quot;Synthetic lookup&amp;quot;,dataType:&amp;quot;String&amp;quot;,txtReadOnly:&amp;quot;true&amp;quot;,required:&amp;quot;false&amp;quot;,sqlvalue:&amp;quot;CANARY015 query metadata text only&amp;quot;,sqlResource:&amp;quot;CANARY015_RESOURCE&amp;quot;}"&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values="{id:&amp;quot;fd_code&amp;quot;,label:&amp;quot;Code&amp;quot;,dataType:&amp;quot;String&amp;quot;}"&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string></string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_lookup" type="String"/&gt;&lt;extendSimpleProperty name="fd_code" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

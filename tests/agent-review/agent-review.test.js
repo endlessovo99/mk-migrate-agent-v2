@@ -1036,7 +1036,8 @@ describe("agent-review", () => {
       "../fixtures/route-validation/timed-initialization/reviewed-functions.json", import.meta.url
     ), "utf8")).atomic;
     const reviewedFunction = (fieldId) => {
-      let text = timedFixture.replaceAll("fd_mode", fieldId);
+      let text = timedFixture.replaceAll("fd_mode", fieldId)
+        .replace('console.log("value",current);', 'console.log("之前选的",current);');
       for (const [fixtureMarker, sourceMarker] of [
         ["fd_a_row", "fd_one_row"], ["fd_b_row", "fd_two_row"],
         ["fd_c_row", "fd_three_row"], ["fd_d_row", "fd_four_row"]
@@ -1601,7 +1602,7 @@ describe("agent-review", () => {
     assert.deepEqual(result.dsl.scripts.actions[0].coverage.nativeRules, ["linkage.fd_amount.contains.A"]);
   });
 
-  it("maps complete detail-row controlDisplay deterministically without treating onclick binding as residual", async () => {
+  it("keeps unproven detail-row dispatch bindings pending instead of ignoring extra onclick effects", async () => {
     const sourceJavascript = [
       "function controlDisplay(value,i){",
       "var hidden=document.getElementsByName(\"extendDataFormInfo.value(fd_detail.\"+i+\".fd_isout_val)\")[0];",
@@ -1685,11 +1686,16 @@ describe("agent-review", () => {
       }
     });
     const sourceAction = onlyDraftedScriptAction(sourceDraft);
-    assert.equal(sourceAction.translationStatus, "mapped");
-    assert.equal(sourceAction.functionMappings[0].basis, "deterministic-detail-row-control-state");
-    assert.equal(sourceAction.function.includes("MKXFORM.setDetailFieldItemAttr"), true);
-    assert.equal(sourceAction.coverage?.status, "translated");
-    assert.equal(sourceAction.coverage?.residuals?.length || 0, 0);
+    assert.equal(sourceAction.scope, "control");
+    assert.equal(sourceAction.event, "onChange");
+    assert.equal(sourceAction.tableId, "fd_detail");
+    assert.equal(sourceAction.controlId, "fd_choice");
+    assert.equal(sourceAction.translationStatus, "needs_review");
+    assert.equal(sourceAction.function.includes("__xformDispatch(this.value)"), true);
+    assert.equal(sourceAction.function.includes("MKXFORM.setDetailFieldItemAttr"), false);
+    assert.equal(sourceAction.coverage.status, "uncovered");
+    assert.equal(sourceAction.coverage.residuals.some(residual =>
+      residual.code === "script.residual.detail_row_effect_unproven"), true);
 
     const dslDraft = sampleDraftDsl({
       workflow: undefined,
@@ -1700,17 +1706,20 @@ describe("agent-review", () => {
       }
     });
     const prompt = buildAgentReviewPrompt(sourceDraft, dslDraft);
-    assert.equal(prompt.system.includes("legacy onclick/setAttribute/__xformDispatch snippets are event-binding scaffolding"), true);
+    assert.equal(prompt.system.includes("scaffolding only when the fixed source proves complete event binding and effects"), true);
+    assert.equal(prompt.system.includes("Preserve specific detail-row effect and lifecycle residuals"), true);
 
     const result = await runAgentReview(sourceDraft, dslDraft, {
       provider: new FakeReviewProvider(reviewResponse({ patches: [] }))
     });
 
-    assert.equal(result.ok, true, JSON.stringify(result.report?.diagnostics || result.diagnostics));
-    assert.equal(result.dsl.scripts.actions[0].translationStatus, "mapped");
-    assert.equal(result.dsl.scripts.actions[0].function.includes("MKXFORM.setDetailFieldItemAttr"), true);
-    assert.equal(result.dsl.scripts.actions[0].coverage.status, "translated");
-    assert.equal(result.dsl.scripts.actions[0].functionMappings[0].basis, "deterministic-detail-row-control-state");
+    assert.equal(result.ok, false);
+    assert.equal(result.report.stage, "agent-review.incomplete");
+    assert.equal(result.dsl, undefined);
+    assert.equal(result.dslDraft.scripts.actions[0].translationStatus, "needs_review");
+    assert.equal(result.dslDraft.scripts.actions[0].function.includes("__xformDispatch(this.value)"), true);
+    assert.equal(result.dslDraft.scripts.actions[0].coverage.residuals.some(residual =>
+      residual.code === "script.residual.detail_row_effect_unproven"), true);
   });
 
   it("blocks error diagnostics from the model before trusted output", async () => {

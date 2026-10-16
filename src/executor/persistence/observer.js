@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { nativeCheckboxLayout } from "../../dsl/source-checkbox-layout.js";
+import { nativeRadioLayout } from "../../dsl/source-radio-layout.js";
 import { observeInlineCellLayout } from "./inline-cell-layout.js";
 import { PLATFORM_OWNED } from "./invariants.js";
 import {
@@ -25,6 +28,10 @@ import {
 } from "./script-dispatcher-contract.js";
 import { inspectLeadingViewStatusGuard } from "./view-status-guard.js";
 import { componentSupportsProp } from "../../dsl/catalogs.js";
+
+const CLASSIC_THEME = JSON.parse(readFileSync(new URL("../../../catalogs/mk-classic-theme.v1.json", import.meta.url), "utf8"));
+const NUMBER_EDITOR_STYLE_KEYS = new Set(["desktop.desktopTheme", "desktop.desktopPaddingMode", "desktop.layout"]);
+const INLINE_EDITOR_STYLE_KEYS = new Set([...NUMBER_EDITOR_STYLE_KEYS, "desktop.labelStyle.fontSize", "desktop.controlValueStyle.fontSize"]);
 
 const CURRENT_TIME_INITIALIZER = 'function(e){var t=(e||{}).controlProps||{},r=t.defaultValueType,n=t.value;if("now"===r&&void 0===n){var o=(new Date).valueOf();return e.controlProps.value=o,o}}';
 const DATE_TIME_OUTPUT_PATTERN = "yyyy-MM-dd hh:mm";
@@ -231,7 +238,7 @@ function observeForm(config, xform, options = {}) {
         Object.values(field.renderedColumnIdsByScene).flat()
       )];
     }
-    applyViewControlStyles(fields, viewModelResult.value[0]);
+    applyViewControlStyles(fields, viewModelResult.value[0], models);
   }
 
   const attribute = config.attribute && typeof config.attribute === "object" ? config.attribute : {};
@@ -487,6 +494,11 @@ function observeNativeControlBinding(value) {
 function observeExecutableProps(controlProps = {}, native = {}) {
   const props = {};
   const component = inferComponent(native.field, controlProps);
+  if (component === "xform-checkbox") props.nativeCheckboxLayout = nativeCheckboxLayout(controlProps);
+  if (component === "xform-radio") props.nativeRadioLayout = nativeRadioLayout(controlProps);
+  if (["xform-input", "xform-datetime"].includes(component)) {
+    props.nativeInlineEditorState = observeInlineEditorState(controlProps, native.attribute?.config?.labelProps);
+  }
   if (controlProps.required === true) props.required = true;
   if (hasCompleteHiddenLabelEvidence(controlProps, native.attribute)) {
     props.hiddenLabel = true;
@@ -496,12 +508,23 @@ function observeExecutableProps(controlProps = {}, native = {}) {
   }
   const unit = observeNativeNumberUnit(controlProps, native.field, native.lang);
   if (component === "xform-number") {
+    const mobile = controlProps.mobile || {}, effective = { ...controlProps, ...mobile };
+    props.nativeMobileNumberHint = {
+      ownPresent: Object.hasOwn(mobile, "placeholder"), value: mobile.placeholder, type: mobile.type,
+      effectiveValue: effective.placeholder, effectiveType: effective.type
+    };
     const font = safeParseObject(native.field?.fdFontExtendData);
     if (typeof controlProps.showCount === "boolean" && controlProps.showCount === font.showCount) props.nativeNumberControls = controlProps.showCount;
     if (controlProps.numberFormat?.unit === "" && font.unit === "") props.nativeNumberUnit = "";
     else if (unit !== undefined) props.nativeNumberUnit = unit;
     props.nativeNumberTableType = controlProps["$$tableType"];
     props.nativeNumberDecorations = nativeNumberDecorations({ controlProps, labelProps: native.attribute?.config?.labelProps, font });
+  }
+  if (["xform-number", "xform-calculate"].includes(component)) {
+    props.nativeNumberDisplayDecorations = nativeDisplayDecorations({
+      controlProps, labelProps: native.attribute?.config?.labelProps,
+      font: safeParseObject(native.field?.fdFontExtendData)
+    });
   }
   if (unit !== undefined) props.unit = unit;
   if (Array.isArray(controlProps.org?.orgTypeArr)) {
@@ -1100,14 +1123,59 @@ function hasMatchingNativeNumberFormatProfile(numberFormat, fontExtendData) {
     fontExtendData.symbol === null;
 }
 
-function applyViewControlStyles(fields, viewModel) {
+function observeInlineEditorState(controlProps, labelProps = {}) {
+  const props = { ...controlProps, ...controlProps.desktop };
+  const nonempty = value => value !== undefined && value !== null && value !== "" &&
+    (typeof value !== "object" || Object.keys(value).length > 0);
+  const decorations = Object.fromEntries(Object.entries(props).filter(([key, value]) =>
+    /prefix|suffix|^(?:style|className|controlClass|labelClass|xformStyle|customTitle)$/i.test(key) && nonempty(value) &&
+    !(["enablePrefix", "enableSuffix"].includes(key) && value === false)));
+  const labelDecorations = Object.fromEntries(Object.entries({ ...labelProps, ...labelProps.desktop })
+    .filter(([key, value]) => !["title", "desktop", "mobile"].includes(key) && nonempty(value) &&
+      !(["hiddenLabel", "hidden"].includes(key) && value === false) &&
+      !(["showText", "visible"].includes(key) && value === true)));
+  return {
+    labelVisible: props.hiddenLabel === undefined || props.hiddenLabel === false,
+    editable: [undefined, "", "edit", "add"].includes(props.showStatus) && props.readOnly !== true &&
+      props.disabled !== true && props.hidden !== true && props.visible !== false,
+    required: props.required === true, decorations, labelDecorations
+  };
+}
+
+function applyViewControlStyles(fields, viewModel, models) {
   const scene = safeParseObject(viewModel?.fdConfig);
   const controlStyle = scene.controlStyle && typeof scene.controlStyle === "object" && !Array.isArray(scene.controlStyle)
     ? scene.controlStyle
     : {};
+  for (const field of fields.flatMap(field => [field, ...(field.columns || [])])) {
+    if (field.component === "xform-radio") {
+      const native = models.flatMap(model => model.fdFields || []).find(native => native.fdName === field.id);
+      field.props.nativeRadioLayout = nativeRadioLayout(safeParseObject(native?.fdAttribute).config?.controlProps, controlStyle[field.id]);
+    }
+    const hint = field.props?.nativeMobileNumberHint;
+    if (!hint) continue;
+    const overlay = controlStyle[field.id]?.mobile || {};
+    if (Object.hasOwn(overlay, "placeholder")) hint.effectiveValue = overlay.placeholder;
+    if (Object.hasOwn(overlay, "type")) hint.effectiveType = overlay.type;
+  }
   for (const field of fields) {
+    if (["xform-input", "xform-datetime"].includes(field.component)) {
+      field.props.nativeInlineEditorStyle = {
+        theme: withoutThemeDefaults(scene.theme, CLASSIC_THEME.theme) || {},
+        style: withoutThemeDefaults(controlStyle[field.id] || {}, CLASSIC_THEME.controlStyle, INLINE_EDITOR_STYLE_KEYS) || {}
+      };
+    }
     if (field.component === "xform-number") {
-      field.props.nativeNumberEditorStyle = { theme: scene.theme, style: controlStyle[field.id] || {} };
+      field.props.nativeNumberEditorStyle = {
+        theme: withoutThemeDefaults(scene.theme, CLASSIC_THEME.theme) || {},
+        style: withoutThemeDefaults(controlStyle[field.id] || {}, CLASSIC_THEME.controlStyle, NUMBER_EDITOR_STYLE_KEYS) || {}
+      };
+    }
+    if (["xform-number", "xform-calculate"].includes(field.component)) {
+      field.props.nativeNumberDisplayStyle = {
+        theme: withoutThemeDefaults(scene.theme, CLASSIC_THEME.theme) || {},
+        style: withoutThemeDefaults(controlStyle[field.id] || {}, CLASSIC_THEME.controlStyle, NUMBER_EDITOR_STYLE_KEYS) || {}
+      };
     }
     const padding = controlStyle[field.id]?.desktop?.paddingControl;
     if (padding !== undefined) field.props.layoutPadding = structuredClone(padding);
@@ -1228,11 +1296,28 @@ function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
     const mobileRows = (mobileMain?.children || []).map((row, index) => observeNativeLayoutRow(
       row, index, detailByTable, fieldIds, mobileRenderedDetailColumns, diagnostics
     )).filter(Boolean);
-    observedRows.forEach((row, rowIndex) => row.cells.forEach((cell, cellIndex) => {
+    observedRows.forEach((row, rowIndex) => {
+      const mobileRow = mobileRows[rowIndex];
+      row.mobileGrid = mobileRow && {
+        rows: mobileRow.rows,
+        columns: mobileRow.columns,
+        colsStyle: mobileRow.colsStyle,
+        style: mobileRow.gridStyle,
+        rowsStyle: mobileRow.rowsStyle,
+        cells: mobileRow.cells.map(cell => ({
+          fieldIds: cell.fieldIds,
+          row: cell.row,
+          column: cell.column,
+          colspan: cell.colspan,
+          rowspan: cell.rowspan
+        }))
+      };
+      row.cells.forEach((cell, cellIndex) => {
       if (cell.contentFlow || mobileRows[rowIndex]?.cells[cellIndex]?.contentFlow) {
         cell.mobileContentFlow = mobileRows[rowIndex]?.cells[cellIndex]?.contentFlow;
       }
-    }));
+      });
+    });
   }
   return observedRows;
 }
@@ -1266,6 +1351,8 @@ function observeNativeLayoutRow(
     rows: Number.isInteger(grid.controlProps?.rows) ? grid.controlProps.rows : 1,
     columns: Number.isInteger(grid.controlProps?.columns) ? grid.controlProps.columns : 1,
     colsStyle: observeGridStyles(grid.controlProps?.colsStyle),
+    gridStyle: grid.controlProps?.style,
+    rowsStyle: observeNaturalRowMinimums(grid.controlProps),
     cells: gridItems.map((item, cellIndex) => {
       const inlineLayout = observeInlineCellLayout(item);
       const children = inlineLayout ? item.children[0].children : item.children;
@@ -1382,6 +1469,21 @@ function hasNativeFlowProps(props, kind) {
   if (props.className || props.hidden) return false;
   if (kind === "container") return !props.align && !props.justify && !props.isMobilePageBackground;
   return !props.colGutter && !props.rowGutter;
+}
+
+function observeNaturalRowMinimums(props = {}) {
+  const value = props.rowsStyle;
+  if (value == null || Array.isArray(value) && value.length === 0) return undefined;
+  // This SDK represents row minima with zero-width dummy elements. In-range
+  // zero minima do not alter natural row height when no gaps/custom class apply.
+  if (!props.className && !props.rowGutter && !props.colGutter &&
+      Object.keys(props.style || {}).every(key => key === "overflowX") &&
+      Number.isInteger(props.rows) && Array.isArray(value) && value.every(entry =>
+        entry && Object.keys(entry).every(key => ["startIndex", "count", "value"].includes(key)) &&
+        Number.isInteger(entry.startIndex) && entry.startIndex >= 0 &&
+        Number.isInteger(entry.count) && entry.count > 0 && entry.startIndex + entry.count <= props.rows &&
+        (entry.value === 0 || typeof entry.value === "string" && /^0(?:\.0+)?(?:px)?$/.test(entry.value)))) return undefined;
+  return value;
 }
 
 function observeGridStyles(value) {
@@ -1530,6 +1632,7 @@ function observeNativeRule(rule, kind, detailByTable = new Map()) {
           field: "$formula",
           op: "formula",
           valueType: normalizeScalar(item.valueType),
+          nativeScope: { type: item.type ?? "", tableType: item.tableType ?? "" },
           evalType: normalizeScalar(item.value?.type),
           voMode: normalizeScalar(item.value?.vo?.mode),
           voContent: normalizeScalar(item.value?.vo?.content),
@@ -3174,4 +3277,31 @@ function nativeNumberDecorations(value, path = "", result = {}) {
     else if (child && typeof child === "object" && !Array.isArray(child)) nativeNumberDecorations(child, next, result);
   }
   return result;
+}
+
+function nativeDisplayDecorations(value, path = "", result = {}) {
+  nativeNumberDecorations(value, path, result);
+  for (const [key, child] of Object.entries(value || {})) {
+    const next = path ? `${path}.${key}` : key;
+    if (key.toLowerCase() === "unit" && child !== undefined && child !== null && child !== "") result[next] = child;
+    else if (child && typeof child === "object" && !Array.isArray(child)) nativeDisplayDecorations(child, next, result);
+  }
+  return result;
+}
+
+// Theme application adds the exact versioned preset after persistence preparation.
+// Retain every deviation, and always retain the desktop keys owned by the editor budget.
+function withoutThemeDefaults(actual, defaults, retained = new Set(), path = "") {
+  if (retained.has(path)) return actual;
+  if (actual === null || typeof actual !== "object" || Array.isArray(actual)) {
+    return stableStringify(actual) === stableStringify(defaults) ? undefined : actual;
+  }
+  if (!defaults || typeof defaults !== "object" || Array.isArray(defaults)) return actual;
+  const result = {};
+  for (const [key, value] of Object.entries(actual)) {
+    if (!Object.hasOwn(defaults, key)) { result[key] = value; continue; }
+    const next = withoutThemeDefaults(value, defaults[key], retained, path ? `${path}.${key}` : key);
+    if (next !== undefined) result[key] = next;
+  }
+  return Object.keys(result).length ? result : undefined;
 }

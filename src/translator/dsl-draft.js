@@ -1,3 +1,4 @@
+import { choiceOtherSourceErrors } from "../dsl/source-choice-other-companion.js";
 import { inspectSourceSignNode, hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
 import { foldRedundantAddressCompanions } from "./redundant-address-companion.js";
 import {
@@ -60,6 +61,7 @@ import {
 } from "./address-display-companion-mapping.js";
 import { mapChoiceOtherCompanions } from "./choice-other-companion.js";
 import { sourceRequiresReadOnly } from "../dsl/source-readonly.js";
+import { remoteDialogDiagnostics } from "../dsl/remote-dialog.js";
 import {
   sourceInputLength, inputLengthRequirements, inputLengthPolicyWarning, inputLengthSourceError
 } from "../dsl/source-input-length.js";
@@ -125,6 +127,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
   const inputLengths = inputLengthRequirements(sourceDraft.form, form);
   const reviewErrors = [
+    ...choiceOtherSourceErrors(sourceDraft.form),
     ...(sourceIssuesToErrors(sourceDraft.issues || []) || []),
     ...inputLengths.filter(({ fact }) => fact.status !== "valid").map(inputLengthSourceError)
   ];
@@ -169,6 +172,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     review: {
       warnings: [
         ...sourceIssuesToWarnings(sourceDraft.issues || []),
+        ...remoteDialogDiagnostics(form).map(item => ({ ...item, level: "warning" })),
         ...inputLengths.filter(({ fact }) => fact.status === "valid").map(inputLengthPolicyWarning)
       ],
       errors: reviewErrors.length ? reviewErrors : undefined,

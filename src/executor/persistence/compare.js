@@ -561,6 +561,15 @@ function compareLayout(expectedRows, actualRows, diagnostics, fields) {
         }
       ));
     }
+    if (expectedRow.mobileGrid !== undefined &&
+        stableStringify(expectedRow.mobileGrid) !== stableStringify(actualRow.mobileGrid)) {
+      diagnostics.push(mismatch("form", "readback.form.mobile_grid_mismatch", "Readback mobile grid does not retain the source positions and native content minima.", {
+        invariantKey: `form.layout.rows.${rowIndex}.mobileGrid`,
+        path: `/readback/form/layoutRows/${rowIndex}/mobileGrid`,
+        expected: expectedRow.mobileGrid,
+        actual: actualRow.mobileGrid
+      }));
+    }
     if ((expectedRow.cells || []).length !== (actualRow.cells || []).length) {
       diagnostics.push(mismatch("form", "readback.form.layout_cells_mismatch", "Readback form layout cell count does not match DSL.", {
         invariantKey: `form.layout.rows.${rowIndex}.cells`,

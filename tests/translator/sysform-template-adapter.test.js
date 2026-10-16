@@ -367,13 +367,11 @@ describe("translateSysFormTemplateXml", () => {
       { viewStatusIn: ["add", "edit"] }
     ]);
     assert.equal(detailActions[0].recipe.kind, "detail_row_control_state");
-    assert.equal(detailActions[0].translationStatus, "mapped");
-    assert.equal(
-      detailActions[0].functionMappings?.some((mapping) =>
-        mapping.basis === "deterministic-detail-row-control-state"
-      ),
-      true
-    );
+    assert.equal(detailActions[0].translationStatus, "needs_review");
+    assert.equal(detailActions[0].coverage.status, "uncovered");
+    assert.equal(detailActions[0].coverage.residuals.some(residual =>
+      residual.code === "script.residual.detail_row_effect_unproven"), true);
+    assert.match(detailActions[0].function, /setAttribute\(\s*["']placeholder["']/);
   });
 
   it("preserves edit, view, and ungated JSP display contexts on drafted actions", () => {

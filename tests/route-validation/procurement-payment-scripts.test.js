@@ -167,10 +167,9 @@ describe("procurement payment script Route case", () => {
       reviewerName: "route-test",
       checkedAt: "2026-07-28T00:00:00.000Z"
     });
-    assert.equal(
-      checkTrust(sourceDraft, trusted).diagnostics.some((diagnostic) => diagnostic.level === "error"),
-      false
-    );
+    const trustErrors = checkTrust(sourceDraft, trusted).diagnostics.filter(item => item.level === "error");
+    assert.deepEqual(new Set(trustErrors.map(item => item.code)),
+      new Set(["trust.form.remote_dialog_unbound", "dsl.form.remote_dialog_unbound"]));
 
     const prepared = prepareSample(trusted);
     const readback = prepared.verify(prepared.update);

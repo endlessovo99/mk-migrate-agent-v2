@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { buildFormRuleRefIndex, resolveEffectTarget } from "../../src/dsl/form-rules.js";
 import { applyAdjacentDetailTableTitles } from "../../src/translator/designer-structure-recovery.js";
+import { MK_FIELD_ID_MAX_LENGTH } from "../../src/translator/field-id-remap.js";
 import { draftSourceDraft, cleanSourceFile } from "../../src/translator/index.js";
 
 const fixture = "tests/fixtures/route-validation/structural-recovery/route-structural-recovery_SysFormTemplate.xml";
@@ -145,7 +146,7 @@ describe("generic structural form recovery", () => {
     assert.equal(mkRow?.children[1]?.keepInline, true);
   });
 
-  it("folds an unambiguous post-break styled hint into the owning input placeholder", () => {
+  it("preserves the visible leading caption and folds the post-break hint into its input placeholder", () => {
     const source = cleanSourceFile(inlineContentFixture);
     const dsl = draftSourceDraft(source);
     const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
@@ -158,6 +159,15 @@ describe("generic structural form recovery", () => {
       row.children.some((cell) => cell.refIds.includes("fd_opportunity"))
     );
     const hint = "Example: REF-123; enter NONE if unavailable";
+    const captionRef = "source.form.control.opportunity_inline_caption";
+    const captions = dsl.form.fields.filter((field) => field.sourceRef === captionRef);
+    assert.equal(captions.length, 1);
+    const caption = captions[0];
+    assert.equal(source.form.controls.find((field) => field.sourceRef === captionRef)?.id, "opportunity_inline_caption");
+    assert.equal(caption.sourceProps.originalId, "opportunity_inline_caption");
+    assert.equal(caption.id.length <= MK_FIELD_ID_MAX_LENGTH, true);
+    assert.equal(caption.componentId, "xform-description");
+    assert.equal(caption.props.content, "Opportunity ID");
 
     assert.equal(fields.get("fd_opportunity")?.componentId, "xform-input");
     assert.equal(fields.get("fd_opportunity")?.props.placeholder, hint);
@@ -177,9 +187,10 @@ describe("generic structural form recovery", () => {
     assert.equal(fields.get("fd_opportunity")?.props.hiddenLabel, true);
     assert.deepEqual(
       sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
-      ["opportunity_label", "fd_opportunity"]
+      ["opportunity_label", caption.id, "fd_opportunity"]
     );
-    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), [["opportunity_label"], ["fd_opportunity"]]);
+    assert.deepEqual(mkRow?.children.map((cell) => cell.refIds), [["opportunity_label"], [caption.id, "fd_opportunity"]]);
+    assert.deepEqual(mkRow?.children[1]?.contentFlow.lines, [[caption.id, "fd_opportunity"], []]);
   });
 
   it("folds the same direct styled hint pattern into textarea placeholder capability", () => {
@@ -359,7 +370,7 @@ describe("generic structural form recovery", () => {
     assert.equal(fields.get("guarded_hint")?.componentId, "xform-description");
   });
 
-  it("keeps four real controls in one four-column row after removing inline range captions", () => {
+  it("keeps four date controls and their visible range captions in the original row", () => {
     const source = cleanSourceFile(inlineContentFixture);
     const dsl = draftSourceDraft(source);
     const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
@@ -377,7 +388,9 @@ describe("generic structural form recovery", () => {
       sourceRow?.cells.flatMap((cell) => cell.references.map((reference) => reference.referenceId)),
       [
         "delivery_window_label",
+        "delivery_start_caption",
         "fd_delivery_start",
+        "delivery_end_caption",
         "fd_delivery_end",
         "bid_date_label",
         "fd_bid_date",
@@ -385,8 +398,12 @@ describe("generic structural form recovery", () => {
         "fd_visit_date"
       ]
     );
-    assert.equal(fields.has("delivery_start_caption"), false);
-    assert.equal(fields.has("delivery_end_caption"), false);
+    for (const [id, content] of [["delivery_start_caption", "Start:"], ["delivery_end_caption", "End:"]]) {
+      assert.equal(fields.get(id)?.componentId, "xform-description");
+      assert.equal(fields.get(id)?.sourceRef, `source.form.control.${id}`);
+      assert.equal(fields.get(id)?.props.content, content);
+    }
+    assert.deepEqual(mkRow?.children.flatMap((cell) => cell.refIds).filter((id) => dateIds.includes(id)), dateIds);
     assert.equal(fields.get("delivery_window_label")?.componentId, "xform-description");
     assert.equal(fields.get("bid_date_label")?.componentId, "xform-description");
     assert.equal(fields.get("visit_date_label")?.componentId, "xform-description");
@@ -399,7 +416,7 @@ describe("generic structural form recovery", () => {
       mkRow?.children.map((cell) => cell.refIds),
       [
         ["delivery_window_label"],
-        ["fd_delivery_start", "fd_delivery_end"],
+        ["delivery_start_caption", "fd_delivery_start", "delivery_end_caption", "fd_delivery_end"],
         ["bid_date_label"],
         ["fd_bid_date"],
         ["visit_date_label"],
@@ -408,6 +425,10 @@ describe("generic structural form recovery", () => {
     );
     assert.deepEqual(mkRow?.children.map((cell) => cell.column), [0, 1, 2, 3, 4, 5]);
     assert.equal(mkRow?.children[1]?.keepInline, true);
+    assert.deepEqual(mkRow?.children[1]?.contentFlow.lines, [
+      ["delivery_start_caption", "fd_delivery_start"],
+      ["delivery_end_caption", "fd_delivery_end"]
+    ]);
   });
 
   it("preserves a five-control source row as one five-column layout and keeps its marker target", () => {

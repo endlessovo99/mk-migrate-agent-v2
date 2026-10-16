@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>select-empty-form</string></void>
+<void method="put"><string>fdModelId</string><string>select-empty-template</string></void>
+<void method="put"><string>fdName</string><string>Select empty event</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div class="select_div_box" fd_type="select" fd_values='{id:"fd_choice",label:"Choice",dataType:"String",required:"true",defaultValue:"",items:"Ready|READY;Other|OTHER"}'&gt;&lt;label class="select_tag_face"&gt;---请选择---&lt;/label&gt;&lt;select id="fd_choice" style="display:none"&gt;&lt;/select&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="fd_details_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload",label:"Payload",dataType:"String"}'&gt;&lt;input id="fd_payload"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr style="display:none"&gt;&lt;td row="2" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_marker",label:"Marker",dataType:"String",canShow:"false"}'&gt;&lt;input id="fd_marker"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_choice" type="String" enumValues="Ready|READY;Other|OTHER"/&gt;&lt;extendSimpleProperty name="fd_payload" type="String"/&gt;&lt;extendSimpleProperty name="fd_marker" type="String" canDisplay="false"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;xform:select property="extendDataFormInfo.value(fd_choice)" required="true" showPleaseSelect="true" onValueChange="__xformDispatch"&gt;&lt;xform:simpleDataSource value="READY"&gt;Ready&lt;/xform:simpleDataSource&gt;&lt;xform:simpleDataSource value="OTHER"&gt;Other&lt;/xform:simpleDataSource&gt;&lt;/xform:select&gt;
+&lt;script&gt;AttachXFormValueChangeEventById("fd_choice", function(value, domElement) {
+unknownCall();var marker=GetXFormFieldById("fd_marker")[0];
+if(value.indexOf("READY")&gt;=0){marker.value="active";common_dom_row_set_show_required_reset("fd_details_row",true,true,false);}
+else{marker.value="inactive";common_dom_row_set_show_required_reset("fd_details_row",false,false,false);}
+});&lt;/script&gt;</string></void>
+</object></java>

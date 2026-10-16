@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>synthetic-generated-sql-form</string></void>
+<void method="put"><string>fdModelId</string><string>synthetic-generated-sql-template</string></void>
+<void method="put"><string>fdName</string><string>Synthetic generated SQL lookup</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;label fd_type="SQLDialog" fd_values="{id:"fd_lookup",label:"Project",required:"true",txtReadOnly:"true",sqlResource:"CANARY015_SQL_RESOURCE",sqlvalue:"select code,title,departmentCode,department from CANARY015_SQL_PROJECTS",queryColumn:"code,title",_inputParams:"{'inputParams':[]}",_outputParams:"{'outputParams':[{'name':'DEPARTMENTCODE','isUse':'true','idField':'$fd_department_code$','nameField':'$Department code$'},{'name':'DEPARTMENT','isUse':'true','idField':'$fd_department$','nameField':'$Department$'}]}"}" formDesign="landray"&gt;&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_department_code",label:"Department code",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_department",label:"Department",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;xform:text property="extendDataFormInfo.value(fd_lookup)" showStatus="noShow"/&gt;&lt;xform:text property="extendDataFormInfo.value(fd_lookup_name)" htmlElementProperties="readOnly='readOnly'" required="true"/&gt;&lt;script&gt;function _sqlSelectAfterCallBackFun_fd_lookup(rtnVal){
+ if(rtnVal==null||rtnVal=='undefined'){return;}
+ var rows=rtnVal.GetHashMapArray();
+ for(var i=0;i&lt;rows.length;i++){
+  var code=document.getElementsByName("extendDataFormInfo.value(fd_department_code)")[0];
+  if(code){code.value=rows[i].DEPARTMENTCODE==null?"":rows[i].DEPARTMENTCODE;}
+  var department=document.getElementsByName("extendDataFormInfo.value(fd_department)")[0];
+  if(department){department.value=rows[i].DEPARTMENT==null?"":rows[i].DEPARTMENT;}
+ }
+ if(rows.length==0){
+  var code=document.getElementsByName("extendDataFormInfo.value(fd_department_code)")[0];if(code){code.value='';}
+  var department=document.getElementsByName("extendDataFormInfo.value(fd_department)")[0];if(department){department.value='';}
+ }
+}
+function getSqlValue_fd_lookup(sql){return sql;}
+function _clickSqlSelect_fd_lookup(){
+ var sqlvalue=encodeURIComponent(getSqlValue_fd_lookup("select code,title,departmentCode,department from CANARY015_SQL_PROJECTS"));
+ Dialog_List(false,"extendDataFormInfo.value(fd_lookup)","extendDataFormInfo.value(fd_lookup_name)",";","SQLDialogXMLData&amp;isLoadData=true&amp;sqlResource=CANARY015_SQL_RESOURCE&amp;sqlValue="+sqlvalue,_sqlSelectAfterCallBackFun_fd_lookup,"SQLDialogXMLData&amp;keyword=!{keyword}&amp;column=code,title&amp;sqlResource=CANARY015_SQL_RESOURCE&amp;sqlValue="+sqlvalue);
+ return false;
+}&lt;/script&gt;&lt;a href="javascript:void(0)" onclick="_clickSqlSelect_fd_lookup()"&gt;Select&lt;/a&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_lookup" label="Project" type="String" notNull="true"/&gt;&lt;extendSimpleProperty name="fd_department_code" label="Department code" type="String"/&gt;&lt;extendSimpleProperty name="fd_department" label="Department" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

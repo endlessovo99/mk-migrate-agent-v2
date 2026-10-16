@@ -391,6 +391,17 @@ export function analyzeLegacyScriptFormRules(source) {
       nativeChainStarts,
       resolveOperand
     );
+    const rowPropertyEffects = unsupportedDetailPropertyEffects(callback.body, uncoveredBehavior);
+    if (rowPropertyEffects.length) {
+      untranslatedRowEffects.push(residual({
+        code: "script.residual.detail_row_property_unproven",
+        type: "detailRowPropertyUnproven",
+        message: "Native row rules do not represent these same-row control property mutations.",
+        sourceRef: source.sourceRef,
+        trigger: callback.source,
+        evidence: rowPropertyEffects.join(" | ")
+      }));
+    }
     if (uncoveredBehavior.length) {
       untranslatedRowEffects.push(residual({
         code: "script.residual.form_rule_behavior_uncovered",
@@ -1029,7 +1040,6 @@ function isScaffoldingExpressionStatement(expression) {
   if (isLocalValueCaptureAssignment(expression)) return true;
   if (isDetailFieldStyleDisplayAssignment(expression)) return true;
   if (isOnclickSetAttributeCall(expression)) return true;
-  if (isDetailFieldPlaceholderSetAttributeCall(expression)) return true;
   return false;
 }
 
@@ -1154,17 +1164,51 @@ function isOnclickSetAttributeCall(expression) {
   return attr?.type === "Literal" && String(attr.value || "").toLowerCase() === "onclick";
 }
 
-function isDetailFieldPlaceholderSetAttributeCall(expression) {
-  if (
-    expression?.type !== "CallExpression" ||
-    expression.callee?.type !== "MemberExpression" ||
-    propertyName(expression.callee.property) !== "setAttribute"
-  ) return false;
-  const attr = expression.arguments?.[0];
-  if (attr?.type !== "Literal" || String(attr.value || "").toLowerCase() !== "placeholder") {
-    return false;
+function unsupportedDetailPropertyEffects(body, uncoveredBehavior = []) {
+  let ast;
+  try { ast = parse(body, { ecmaVersion: "latest", allowReturnOutsideFunction: true }); }
+  catch { return []; }
+  const effects = [];
+  let hasRowGetter = false;
+  walkJavaScriptAst(ast, node => {
+    if (isDetailFieldNameLookup(node) && node.type === "CallExpression" &&
+        isDetailRowAddress(node.arguments?.[0])) hasRowGetter = true;
+    const method = node?.type === "CallExpression" && node.callee?.type === "MemberExpression" ? propertyName(node.callee.property) : "";
+    const attribute = node.arguments?.[0];
+    const setter = method === "setAttribute" && isDetailRowFieldElementAccess(node.callee.object) &&
+      !(attribute?.type === "Literal" && ["validate", "onclick"].includes(String(attribute.value)));
+    const assignment = node?.type === "AssignmentExpression" && node.left?.type === "MemberExpression" &&
+      isDetailRowFieldElementAccess(node.left.object) && !["value", "checked"].includes(propertyName(node.left.property));
+    if (setter || assignment) effects.push(oneLine(body.slice(node.start, node.end)));
+  });
+  // An alias, dynamic property or escape may hide the final receiver. Existing
+  // uncovered callback behavior plus a concrete row getter is not native-rule
+  // coverage, even when direct receiver attribution cannot be completed.
+  return effects.length ? effects : hasRowGetter ? uncoveredBehavior : [];
+}
+
+function isDetailRowFieldElementAccess(node) {
+  if (!isDetailFieldElementAccess(node)) return false;
+  const lookup = node.object;
+  return isDetailRowAddress(lookup.arguments?.[0]);
+}
+
+function isDetailRowAddress(node) {
+  const address = detailAddressShape(node);
+  return /^extendDataFormInfo\.value\(fd_[A-Za-z0-9_]+\.(?:\d+|\$\{\})\.fd_[A-Za-z0-9_]+\)$/.test(address || "");
+}
+
+function detailAddressShape(node) {
+  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
+  if (node?.type === "Identifier") return "${}";
+  if (node?.type === "BinaryExpression" && node.operator === "+") {
+    const left = detailAddressShape(node.left), right = detailAddressShape(node.right);
+    return left !== undefined && right !== undefined ? left + right : undefined;
   }
-  return isDetailFieldElementAccess(expression.callee.object);
+  if (node?.type === "TemplateLiteral") {
+    return node.quasis.map(quasi => quasi.value.cooked).join("${}");
+  }
+  return undefined;
 }
 
 function isNullLiteral(expression) {

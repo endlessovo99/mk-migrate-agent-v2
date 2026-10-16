@@ -1,0 +1,4 @@
+{
+  "timed": "function onLoad(){setTimeout(function(){\nconsole.log(\"begin\");\nMKXFORM.setFieldAttr(\"fd_panel_row\",4);MKXFORM.setFieldAttr(\"fd_panel_row\",6);\nvar current=MKXFORM.getValue(\"fd_mode\");\nconsole.log(\"value\",current);\nif(current===\"A\"){console.log(\"active\");MKXFORM.setFieldAttr(\"fd_panel_row\",5);MKXFORM.setFieldAttr(\"fd_panel_row\",3);}\nelse{MKXFORM.setFieldAttr(\"fd_panel_row\",4);MKXFORM.setFieldAttr(\"fd_panel_row\",6);}\nconsole.log(\"end\",current);\n},510);}",
+  "sync": "function onLoad(){\nconsole.log(\"begin\");\nMKXFORM.setFieldAttr(\"fd_panel_row\",4);MKXFORM.setFieldAttr(\"fd_panel_row\",6);\nvar current=MKXFORM.getValue(\"fd_mode\");\nconsole.log(\"value\",current);\nif(current===\"A\"){console.log(\"active\");MKXFORM.setFieldAttr(\"fd_panel_row\",5);MKXFORM.setFieldAttr(\"fd_panel_row\",3);}\nelse{MKXFORM.setFieldAttr(\"fd_panel_row\",4);MKXFORM.setFieldAttr(\"fd_panel_row\",6);}\nconsole.log(\"end\",current);\n}"
+}

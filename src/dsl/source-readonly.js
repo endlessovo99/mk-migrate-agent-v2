@@ -4,7 +4,7 @@ export function sourceRequiresReadOnly(field = {}) {
   if (isDesignerTrue(props.designerValues?.readOnly)) return true;
   if (props.runtimeTextReadOnly?.readOnly === true) return true;
   const sqlTextReadOnly = props.designerValues?.txtReadOnly;
-  return String(props.designerType || "").toLowerCase() === "sqldialog" &&
+  return ["sqldialog", "restdialog"].includes(String(props.designerType || "").toLowerCase()) &&
     (sqlTextReadOnly === true ||
       (typeof sqlTextReadOnly === "string" && isDesignerTrue(sqlTextReadOnly)));
 }

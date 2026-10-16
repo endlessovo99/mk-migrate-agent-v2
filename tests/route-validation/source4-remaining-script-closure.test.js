@@ -19,7 +19,7 @@ const CLOSED_IDS = [
 ];
 
 describe("Source4 remaining script-closure Route case", () => {
-  it("trusts the remaining source4 fixtures after script semantic closure", () => {
+  it("trusts closed scripts and keeps remote lookup behavior explicitly unresolved", () => {
     for (const sourceId of CLOSED_IDS) {
       const source = cleanSourceFile(`${SOURCE4}/${sourceId}`);
       const draft = draftSourceDraft(source);
@@ -27,7 +27,9 @@ describe("Source4 remaining script-closure Route case", () => {
         .filter((action) => action.translationStatus === "needs_review")
         .map((action) => action.id);
 
-      assert.deepEqual(reviewActions, [], sourceId);
+      const remotePending = draft.scripts.actions.filter(action => action.translationStatus === "needs_review" &&
+        action.coverage?.residuals?.some(item => item.code === "script.residual.remote_dialog_unbound"));
+      assert.deepEqual(reviewActions, remotePending.map(action => action.id), sourceId);
       assert.equal(checkDraft(draft).ok, true, `${sourceId}: ${JSON.stringify(checkDraft(draft).diagnostics)}`);
       const trusted = createTrustedMigrationDsl(source, draft, {
         externalAgentReviewed: true,
@@ -35,7 +37,9 @@ describe("Source4 remaining script-closure Route case", () => {
         checkedAt: "2026-09-01T00:00:00.000Z"
       });
       const trust = checkTrust(source, trusted);
-      assert.equal(trust.ok, true, `${sourceId}: ${JSON.stringify(trust.diagnostics)}`);
+      const hasRemote = draft.review.warnings.some(item => item.code === "dsl.form.remote_dialog_unbound");
+      assert.equal(trust.ok, !hasRemote, sourceId);
+      if (hasRemote) assert.ok(trust.diagnostics.some(item => item.code === "trust.form.remote_dialog_unbound"));
     }
   });
 

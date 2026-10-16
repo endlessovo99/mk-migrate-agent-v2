@@ -1,0 +1,35 @@
+{
+  "scope": "Static exact primary AST evidence. Only the finite trigger predicate is retained as a regression fixture; no whole vendor executes.",
+  "preview": {
+    "path": ".tmp/tasks/ekp-oaqas-20261014/evidence/resume-20261015/budget-runtime-source/attempt-001/01-api-Preview.js",
+    "sha256": "1e3f8a52c10d7ad4e57ef291deb3df4fbc1f9b7246da28878dde2beff52f3437",
+    "trigger": {
+      "start": 3436476,
+      "end": 3436612,
+      "source": "i.every(function(e){return\"main\"===e.type||\"single\"===e.tableType})&&i.some(function(e){return r.split(\".\").slice(-1)[0]===e.fieldName})",
+      "sha256": "f085657b5db581a0812fe04e19f7334893a81bd1a8678df3266ef0a72e866399"
+    }
+  },
+  "ide": {
+    "path": ".tmp/travel-blank-diagnosis-20260912/XFormIDE.js",
+    "sha256": "3e1e44c44d665b34f6279735f610aa80a7f644515359b860fea1bd32dca347bb",
+    "displayRuleMetadata": {
+      "start": 1955914,
+      "end": 1956113,
+      "source": "{ruleName:\"\",active:!0,choices:{items:[{fieldKey:\"\",operate:\"\",value:\"\",fieldID:\"995\",type:\"\",valueType:\"formula\",tableType:\"\"}]},result:[{displayFlag:\"\",type:\"\",fieldKey:\"\",title:\"\",fieldID:\"945\"}]}",
+      "sha256": "569fbe2e74affbb166e009767d1c247159c3b6cf3b111d374bc246fb24bb5d39"
+    },
+    "formulaState": {
+      "start": 2001958,
+      "end": 2002207,
+      "source": "{valueType:\"formula\",value:function(e,t){var n,r,o,a={};if(Array.isArray(e)&&e.length>0&&e[t]){var i=null===(o=null===(r=null===(n=e[t])||void 0===n?void 0:n.choices)||void 0===r?void 0:r.items)||void 0===o?void 0:o[0];i&&(a=i.value)}return a}(t,y)}",
+      "sha256": "db28c751a41b9aa811867531fb83bda97abd647dc19210fd688efc1897d3ddd1"
+    },
+    "formulaSaveHandler": {
+      "start": 2004940,
+      "end": 2005258,
+      "source": "function(e){var r,o,a,i=Object.assign(Object.assign({},L),{value:e});$(i);var l=(0,f.default)(t);l[y].choices.items=[Object.assign(Object.assign(Object.assign({},(null===(a=null===(o=null===(r=l[y])||void 0===r?void 0:r.choices)||void 0===o?void 0:o.items)||void 0===a?void 0:a[0])||{}),i),{condNodeType:x})],n(l),g()}",
+      "sha256": "b4f116264d797c93cd899687fa8babfd15afbbea926f99576cff4c5d53216b23"
+    }
+  }
+}

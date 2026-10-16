@@ -1,5 +1,13 @@
-import { sourceNumberEditors } from "./source-number-editor.js";
+import { choiceOtherCompanionDiagnostics } from "./source-choice-other-companion.js";
+import { mobileCaptionSourceDiagnostics } from "./source-mobile-caption-grid.js";
+import { radioSourceDiagnostics } from "./source-radio-layout.js";
+import { detailRowSourceEffectDiagnostics } from "./source-detail-row-effects.js";
+import { sourceNumberEditors, sourceNumberDisplays } from "./source-number-editor.js";
+import { sourceCheckboxLayouts } from "./source-checkbox-layout.js";
+import { sourceInlineEditorWidths } from "./source-inline-editor-width.js";
+import { remoteDialogSourceDiagnostics } from "./remote-dialog.js";
 import { selectEmptyEventProof } from "./source-select-empty-event.js";
+import { sourceRowDiagnosticProof } from "./source-row-diagnostic.js";
 import { validateAssignmentBranchSemantics } from "../agent-review/script-semantic-closure.js";
 import { catalogRefs, validationPolicyRef, validateCatalogVersions } from "./catalogs.js";
 import { validateMigrationDsl } from "./schema.js";
@@ -78,10 +86,17 @@ export function checkTrust(sourceDraft, migrationDsl) {
   validateCoreProvenance(migrationDsl, sourceRefs, diagnostics);
   validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics);
   validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics);
+  diagnostics.push(...remoteDialogSourceDiagnostics(sourceDraft?.form, migrationDsl?.form));
   const expectedDraft = validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics);
+  diagnostics.push(...choiceOtherCompanionDiagnostics(sourceDraft?.form, migrationDsl?.form, expectedDraft?.form));
+  diagnostics.push(...mobileCaptionSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));
+  diagnostics.push(...radioSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));
   diagnostics.push(...validateSourceSignIntegrity(sourceDraft, migrationDsl, expectedDraft?.workflow).diagnostics);
   validateInputLengthSourceRestrictions(sourceDraft, migrationDsl, expectedDraft, diagnostics);
   validateSourceNumberEditors(sourceDraft, migrationDsl, expectedDraft, diagnostics);
+  validateSourceNumberDisplays(sourceDraft, migrationDsl, expectedDraft, diagnostics);
+  validateSourceCheckboxLayouts(sourceDraft, migrationDsl, expectedDraft, diagnostics);
+  validateSourceInlineEditorWidths(sourceDraft, migrationDsl, expectedDraft, diagnostics);
   const dataOnlySourceRefs = new Set(flattenFormFields(expectedDraft?.form?.fields)
     .filter((field) => field.dataOnly === true).map((field) => field.sourceRef));
   const dataOnlyFieldIds = new Set((expectedDraft?.form?.fields || [])
@@ -258,11 +273,13 @@ function validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics) 
   }
 
   const expectedActions = expectedDraft?.scripts?.actions || [];
+  diagnostics.push(...detailRowSourceEffectDiagnostics(expectedActions, actualActions));
   for (const expected of expectedActions) {
     const matches = actualActions.filter(action => scriptActionSourceBindingKey(action) === scriptActionSourceBindingKey(expected));
     if (matches.length !== 1) continue; // The existing immutable binding-count gate reports missing/changed owners.
     const actual = matches[0];
     const proof = selectEmptyEventProof(actual, { sourceAction: expected, sourceForm: sourceDraft.form, targetForm: migrationDsl.form,
+      sourceScripts: sourceDraft.scripts?.sources,
       sourceFormRules: expectedDraft.formRules, targetFormRules: migrationDsl.formRules, authoritative: true });
     const assignments = proof.ok && proof.adapted ? validateAssignmentBranchSemantics({ sourceFunction: expected.function,
       reviewedFunction: proof.function, form: expectedDraft.form,
@@ -270,6 +287,12 @@ function validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics) 
     if (!proof.ok || !assignments.ok) diagnostics.push(error("trust.script_select_empty_source_mismatch",
       "Native select event adaptation must be independently justified by the fixed SourceDraft and preserve every source assignment branch.",
       `/scripts/actions/${actualActions.indexOf(actual)}/function`, { reason: proof.reason || assignments.reason }));
+    const rowDiagnostics = sourceRowDiagnosticProof({ sourceAction: expected, action: actual, sourceDraft,
+      expectedForm: expectedDraft.form, targetForm: migrationDsl.form,
+      sourceFormRules: expectedDraft.formRules, targetFormRules: migrationDsl.formRules, emptyEventProof: proof });
+    if (!rowDiagnostics.ok) diagnostics.push(error("trust.script_row_diagnostic_source_mismatch",
+      "Source row diagnostics must retain the original callback, reads, arguments and effect order.",
+      `/scripts/actions/${actualActions.indexOf(actual)}/function`, { reason: rowDiagnostics.reason }));
   }
   for (const action of expectedActions.filter(action => action.semanticHints?.jqueryReadyInitialization)) {
     diagnostics.push(error(
@@ -642,12 +665,74 @@ function escapePointer(value) {
 }
 
 function validateSourceNumberEditors(sourceDraft, candidate, expected, diagnostics) {
-  const sourceProfiles = sourceNumberEditors(sourceDraft?.form);
-  const candidateProfiles = sourceNumberEditors(candidate?.form);
+  validateSourceNumberProfiles(sourceDraft, candidate, expected, diagnostics, sourceNumberEditors,
+    "trust.form.number_editor_source_mismatch",
+    "Numeric text editor projection must preserve fixed source identity, width, units and numeric semantics.");
+}
+
+function validateSourceNumberDisplays(sourceDraft, candidate, expected, diagnostics) {
+  validateSourceNumberProfiles(sourceDraft, candidate, expected, diagnostics, sourceNumberDisplays,
+    "trust.form.number_display_source_mismatch",
+    "Readonly numeric display projection must preserve fixed source identity, runtime width, permissions and numeric semantics.");
+}
+
+function validateSourceCheckboxLayouts(sourceDraft, candidate, expected, diagnostics) {
+  const sourceProfiles = sourceCheckboxLayouts(sourceDraft?.form);
+  const fixedProfiles = sourceCheckboxLayouts(expected?.form);
+  const actualProfiles = sourceCheckboxLayouts(candidate?.form);
+  const fixedFields = flattenFormFields(expected?.form?.fields);
+  const actualFields = flattenFormFields(candidate?.form?.fields);
+  const semantics = field => ({ id: field?.id, type: field?.type, componentId: field?.componentId,
+    sourceRef: field?.sourceRef, dataOnly: field?.dataOnly === true, options: field?.props?.options,
+    designerId: field?.sourceProps?.designerId, designerType: field?.sourceProps?.designerType,
+    designerValues: field?.sourceProps?.designerValues,
+    otherTextCompanion: field?.sourceProps?.otherTextCompanion,
+    otherTextCompanionId: field?.sourceProps?.otherTextCompanionId });
+  const refs = new Set([...sourceProfiles.keys(), ...fixedProfiles.keys(), ...actualProfiles.keys()]);
+  for (const sourceRef of refs) {
+    const fixed = fixedFields.filter(field => field.sourceRef === sourceRef);
+    const actual = actualFields.filter(field => field.sourceRef === sourceRef);
+    if (!sourceProfiles.has(sourceRef) || !fixedProfiles.has(sourceRef) || fixed.length !== 1 || actual.length !== 1 ||
+        canonicalJson(fixedProfiles.get(sourceRef)) !== canonicalJson(actualProfiles.get(sourceRef)) ||
+        canonicalJson(semantics(fixed[0])) !== canonicalJson(semantics(actual[0]))) {
+      diagnostics.push(error("trust.form.checkbox_layout_source_mismatch",
+        "Checkbox grouping must preserve fixed source alignment, complete options, identity, scope and other-text topology.",
+        "/form", { sourceRef }));
+    }
+  }
+}
+
+function validateSourceInlineEditorWidths(sourceDraft, candidate, expected, diagnostics) {
+  const sourceProfiles = sourceInlineEditorWidths(sourceDraft?.form);
+  const fixedProfiles = sourceInlineEditorWidths(expected?.form);
+  const actualProfiles = sourceInlineEditorWidths(candidate?.form);
+  const fixedFields = flattenFormFields(expected?.form?.fields);
+  const actualFields = flattenFormFields(candidate?.form?.fields);
+  const semantics = field => ({ id: field?.id, type: field?.type, componentId: field?.componentId,
+    sourceRef: field?.sourceRef, title: field?.title, dataOnly: field?.dataOnly === true,
+    sourceProps: field?.sourceProps, props: field?.props });
+  const fail = id => diagnostics.push(error("trust.form.inline_editor_width_source_mismatch",
+    "Inline editor sizing must preserve fixed source identity, title, permissions, metadata and complete field semantics.",
+    "/form", { fieldId: id }));
+  for (const [id, profile] of sourceProfiles) {
+    const fixed = fixedFields.filter(field => field.id === id || field.sourceRef === profile.sourceRef);
+    const actual = actualFields.filter(field => field.id === id || field.sourceRef === profile.sourceRef);
+    if (fixed.length !== 1 || actual.length !== 1 ||
+        canonicalJson(semantics(fixed[0])) !== canonicalJson(semantics(actual[0])) ||
+        fixedProfiles.has(id) && (!actualProfiles.has(id) ||
+          canonicalJson(fixedProfiles.get(id)) !== canonicalJson(actualProfiles.get(id))) ||
+        !fixedProfiles.has(id) && actualProfiles.has(id)) fail(id);
+  }
+  for (const id of actualProfiles.keys()) if (!sourceProfiles.has(id) || !fixedProfiles.has(id)) fail(id);
+}
+
+function validateSourceNumberProfiles(sourceDraft, candidate, expected, diagnostics, profilesFor, code, message) {
+  const sourceProfiles = profilesFor(sourceDraft?.form);
+  const fixedProfiles = profilesFor(expected?.form);
+  const candidateProfiles = profilesFor(candidate?.form);
   const fields = flattenFormFields(candidate?.form?.fields);
   const fixedFields = expected?.form?.fields || [];
-  const fail = (fieldId, reason) => diagnostics.push(error("trust.form.number_editor_source_mismatch",
-    "Numeric text editor projection must preserve fixed source identity, width, units and numeric semantics.", "/form", { fieldId, reason }));
+  const fail = (fieldId, reason) => diagnostics.push(error(code, message, "/form", { fieldId, reason }));
   for (const [id, profile] of sourceProfiles) {
     const fixed = fixedFields.find(field => field.id === id);
     const matches = fields.filter(field => field.sourceRef === profile.sourceRef || field.id === id);
@@ -656,13 +741,17 @@ function validateSourceNumberEditors(sourceDraft, candidate, expected, diagnosti
       sourceProps: field?.sourceProps, required: field?.props?.required, hiddenLabel: field?.props?.hiddenLabel,
       readOnly: field?.props?.readOnly, precision: field?.props?.precision, unit: field?.props?.unit,
       calculation: field?.props?.calculation, defaultValue: field?.props?.defaultValue });
-    if (matches.length !== 1 || !candidateProfiles.has(id) || canonicalJson(semantics(actual)) !== canonicalJson(semantics(fixed)) ||
-        canonicalJson(candidateProfiles.get(id)) !== canonicalJson(profile)) fail(id, "source_profile");
-    if (profile.unitId) {
+    // Fixed source calculations and script-derived restrictions can remove editor eligibility.
+    // Compare their complete fixed semantics too; candidate changes cannot choose the policy scope.
+    const editorExpected = fixedProfiles.has(id);
+    if (matches.length !== 1 || canonicalJson(semantics(actual)) !== canonicalJson(semantics(fixed)) ||
+        editorExpected && (!candidateProfiles.has(id) || canonicalJson(candidateProfiles.get(id)) !== canonicalJson(profile)) ||
+        !editorExpected && candidateProfiles.has(id)) fail(id, "source_profile");
+    if (editorExpected && profile.unitId) {
       const unit = fixedFields.find(field => field.id === profile.unitId);
       const units = fields.filter(field => field.id === unit?.id || field.sourceRef === unit?.sourceRef);
       if (units.length !== 1 || canonicalJson(units[0]) !== canonicalJson(unit)) fail(id, "external_unit");
     }
   }
-  for (const id of candidateProfiles.keys()) if (!sourceProfiles.has(id)) fail(id, "unproven_profile");
+  for (const id of candidateProfiles.keys()) if (!sourceProfiles.has(id) || !fixedProfiles.has(id)) fail(id, "unproven_profile");
 }

@@ -1,4 +1,9 @@
-import { sourceNumberEditors } from "../../dsl/source-number-editor.js";
+import { sourceNumberEditors, sourceNumberDisplays } from "../../dsl/source-number-editor.js";
+import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
+import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
+import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.js";
+import { mobileNumberBudgets, mobileNumberGrid } from "./mobile-number-layout.js";
+import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
@@ -217,8 +222,13 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     }
   });
   const projectedLayoutRows = projectNativeLayoutRows(rows);
+  const mobileBudgets = mobileNumberBudgets(form);
+  const mobileCaptions = sourceMobileCaptionGrids(form);
+  const inlineEditors = sourceInlineEditorWidths(form);
+  const inlineBudgets = new Map([...inlineEditors].map(([id, profile]) => [id, profile.nativeOuterPx]));
   const layoutRows = projectedLayoutRows.map((row, rowIndex) => {
     const requiresTopologyMarkers = row.cells.some((cell) => cell.ownerNodeId !== row.id);
+    const mobileGrid = mobileNumberGrid(row, mobileBudgets, mobileCaptions);
     return {
       id: row.id,
       rootNodeId: requiresTopologyMarkers ? row.id : undefined,
@@ -228,6 +238,18 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
       colsStyle: Array.isArray(row.colsStyle)
         ? row.colsStyle.map((style) => ({ ...style }))
         : undefined,
+      ...(mobileGrid ? { mobileGrid: {
+        ...mobileGrid,
+        rows: row.rows,
+        columns: row.columns,
+        cells: row.cells.filter(cell => cell.refType !== "layout").map(cell => ({
+          fieldIds: cell.refIds,
+          row: cell.row,
+          column: cell.column,
+          colspan: cell.colspan,
+          rowspan: cell.rowspan ?? 1
+        }))
+      } } : {}),
       cells: row.cells.map((cell, cellIndex) => {
         const fieldIdsForCell = cell.refType === "layout"
           ? []
@@ -258,7 +280,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
           refType: cell.refType,
           fieldIds: fieldIdsForCell,
           inlineLayout: inlineCellLayout(cell, form.fields),
-          ...(cell.contentFlow ? { contentFlow: expectedContentFlow(cell.contentFlow, form.fields, sourceNumberEditors(form)), mobileContentFlow: expectedContentFlow(cell.contentFlow, form.fields) } : {}),
+          ...(cell.contentFlow ? { contentFlow: expectedContentFlow(cell.contentFlow, form.fields, new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]), inlineBudgets), mobileContentFlow: expectedContentFlow(cell.contentFlow, form.fields, new Map(), mobileBudgets) } : {}),
           row: cell.row,
           column: cell.column,
           colspan: cell.colspan,
@@ -277,6 +299,23 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     field.props.nativeNumberEditorStyle = { theme: {}, style: { desktop: {
       desktopTheme: "classic", desktopPaddingMode: "standard", layout: "horizontal"
     } } };
+  }
+  const numberDisplays = sourceNumberDisplays(form);
+  for (const field of expectedFields) {
+    if (!numberDisplays.has(field.id)) continue;
+    field.props.nativeNumberDisplayStyle = { theme: {}, style: { desktop: {
+      desktopTheme: "classic", desktopPaddingMode: "standard", layout: "horizontal"
+    } } };
+    field.props.nativeNumberDisplayDecorations = {};
+  }
+  for (const field of expectedFields) {
+    if (!inlineEditors.has(field.id)) continue;
+    field.props.nativeInlineEditorStyle = { theme: {}, style: { desktop: {
+      desktopTheme: "classic", desktopPaddingMode: "standard", layout: "horizontal",
+      labelStyle: { fontSize: 14 }, controlValueStyle: { fontSize: 14 }
+    } } };
+    field.props.nativeInlineEditorState = { labelVisible: true, editable: true,
+      required: field.props.required === true, decorations: {}, labelDecorations: {} };
   }
   const flowPadding = contentFlowFieldPadding(form);
   for (const field of expectedFields) {
@@ -355,7 +394,17 @@ function expectedCalculationDependencies(entry, knownRefs) {
 
 function executableProps(field = {}, form = {}, context = {}) {
   const props = {};
+  const checkbox = sourceCheckboxLayouts(form).get(field.sourceRef);
+  if (checkbox) props.nativeCheckboxLayout = checkbox.expected;
+  const radio = sourceRadioLayouts(form).get(field.sourceRef);
+  if (radio) props.nativeRadioLayout = radio.expected;
   if (field.componentId === "xform-number") props.nativeNumberControls = !sourceNumberEditors(form).has(field.id);
+  if (field.componentId === "xform-number" && !Object.hasOwn(field.props || {}, "placeholder")) {
+    props.nativeMobileNumberHint = {
+      ownPresent: true, value: "", type: "@elem/xform-m-number",
+      effectiveValue: "", effectiveType: "@elem/xform-m-number"
+    };
+  }
   if (field.props?.required === true) props.required = true;
   if (componentSupportsProp(field.componentId, "readOnly") && field.props?.readOnly === true) {
     props.readOnly = true;
@@ -682,6 +731,7 @@ function pushRuleSemantics(rules, {
         field: "$formula",
         op: "formula",
         valueType: "formula",
+        nativeScope: { type: "", tableType: "" },
         evalType: "Eval",
         voMode: "formula",
         voContent: normalizeScalar(nativeFormula.script),
@@ -2185,12 +2235,13 @@ export function expectedRuleFingerprint(rule) {
 }
 
 // This is persisted layout meaning, independent of the native writer's styles.
-function expectedContentFlow(flow, fields = [], numberEditors = new Map()) {
+function expectedContentFlow(flow, fields = [], numberEditors = new Map(), nativeBudgets = new Map()) {
   const result = structuredClone(flow);
   for (const item of result.items) {
     const profile = numberEditors.get(item.referenceId);
     // Main classic-standard control padding is 16px on each side. Source outer width is audit data.
     if (profile) item.width = { value: profile.inputPx + 16 + 16, unit: "px" };
+    if (nativeBudgets.has(item.referenceId)) item.width = { value: nativeBudgets.get(item.referenceId), unit: "px" };
   }
   if (flow.lines.length === 1 && flow.lines[0].length === 1 && flow.items.length === 1) {
     const item = flow.items[0];

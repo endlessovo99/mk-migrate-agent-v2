@@ -37,6 +37,12 @@ describe("independent semantic native evidence", () => {
     );
   });
 
+  it("rejects the historical missing mobile hint without rewriting the native evidence fixtures", () => {
+    const readback = prepareSample(semanticDsl()).verify(independentNativeReadback({ mobileEmptyHint: false }));
+    assert.equal(readback.ok, false);
+    assert.ok(readback.diagnostics.some(item => item.code === "readback.form.prop_nativeMobileNumberHint_mismatch"));
+  });
+
   for (const testCase of [
     {
       name: "missing unit",
@@ -199,7 +205,7 @@ function semanticDsl() {
   return dsl;
 }
 
-function independentNativeReadback() {
+function independentNativeReadback({ mobileEmptyHint = true } = {}) {
   const template = JSON.parse(
     readFileSync(join(fixtureDir, "form-only-native-readback.json"), "utf8")
   );
@@ -216,6 +222,9 @@ function independentNativeReadback() {
   amountAttribute.config.type = "@elem/xform-number";
   amountAttribute.config.controlProps.desktop.type = "@elem/xform-number";
   amountAttribute.config.controlProps.mobile.type = "@elem/xform-m-number";
+  // Current synthetic assembly adds the new display policy; retained native
+  // unit/help fixtures remain unchanged and do not claim to contain this value.
+  if (mobileEmptyHint) amountAttribute.config.controlProps.mobile.placeholder = "";
   Object.assign(amountAttribute.config.controlProps, nativeEvidence.formControl.controlProps);
   delete amountAttribute.config.controlProps.unit;
   amount.fdAttribute = JSON.stringify(amountAttribute);

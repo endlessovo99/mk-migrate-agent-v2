@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<java class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>fdId</string>
+   <string>numeric-derived-calculation-form</string>
+  </void>
+  <void method="put">
+   <string>fdModelId</string>
+   <string>numeric-derived-calculation-template</string>
+  </void>
+  <void method="put">
+   <string>fdName</string>
+   <string>Synthetic numeric derived calculation</string>
+  </void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="td_normal_title" width="180" column="0" row="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_total_caption",content:"Total"}'&gt;Total&lt;/label&gt;&lt;/td&gt;&lt;td width="600" column="1" row="0"&gt;&lt;div style="width:120px;display:inline" fd_type="inputText" fd_values='{id:"fd_total",width:"120",_label_bind:"true",_label_bind_id:"fd_total_caption",label:"Total",dataType:"Double",validate:"number",decimal:"2",readOnly:"false",required:"false"}'&gt;&lt;input style="width:120px" /&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td class="td_normal_title" width="180" column="0" row="1"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_input_caption",content:"Input"}'&gt;Input&lt;/label&gt;&lt;/td&gt;&lt;td width="600" column="1" row="1"&gt;&lt;div style="width:50px;display:inline" fd_type="inputText" fd_values='{id:"fd_input",width:"50",_label_bind:"true",_label_bind_id:"fd_input_caption",label:"Input",dataType:"Double",validate:"number",decimal:"2",readOnly:"false",required:"false"}'&gt;&lt;input style="width:50px" /&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdDisplayJsp</string>
+   <string>&lt;table&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="td_normal_title" width="180" column="0" row="0"&gt;&lt;label&gt;Total&lt;/label&gt;&lt;/td&gt;&lt;td width="600" column="1" row="0"&gt;&lt;div style="width:120px;display:inline"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_total)" style="width:120px" dataType="Double" validators="number scaleLength(2)" /&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td class="td_normal_title" width="180" column="0" row="1"&gt;&lt;label&gt;Input&lt;/label&gt;&lt;/td&gt;&lt;td width="600" column="1" row="1"&gt;&lt;div style="width:50px;display:inline"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_input)" style="width:50px" dataType="Double" validators="number scaleLength(2)" /&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_total" label="Total" type="Double" scale="2" formula="true" defaultValue="$fd_input$ * 2" recalculateOnSave="true"/&gt;&lt;extendSimpleProperty name="fd_input" label="Input" type="Double" scale="2"/&gt;&lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

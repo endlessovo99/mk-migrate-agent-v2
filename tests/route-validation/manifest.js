@@ -123,6 +123,30 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
   version: 1,
   cases: [
     {
+      id: "choice-other-independent-main-success",
+      source: { kind: "form-only", relativePath: "choice-other-companion-fidelity/main-checkbox_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "choice-other-independent-radio-success",
+      source: { kind: "form-only", relativePath: "choice-other-companion-fidelity/main-radio_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "detail-row-property-blocked-before-transport",
+      source: { kind: "form-only", relativePath: "detail-row-property-completeness/row-property_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { terminalStage: "review", reviewStatus: "blocked", reviewStage: "agent-review.incomplete", operations: [] }
+    },
+    {
+      id: "main-row-property-blocked-before-transport",
+      source: { kind: "form-only", relativePath: "detail-row-property-completeness/main-row-property_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { terminalStage: "review", reviewStatus: "blocked", reviewStage: "agent-review.incomplete", operations: [] }
+    },
+    {
       id: "source-sign-explicit-policy-success",
       source: { kind: "paired", relativePath: "workflow-sign" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
@@ -168,11 +192,23 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       newoaScenario: "persist",
       confirmWrite: false,
       expected: {
-        reviewStatus: "needs_manual",
-        dryRunStatus: "needs_manual",
-        executionStatus: "blocked",
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.patch-validation",
         operations: []
       }
+    },
+    {
+      id: "unbound-rest-selector-blocks-before-write",
+      source: { kind: "form-only", relativePath: "remote-dialog-integrity/rest-string-true_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { terminalStage: "review", reviewStatus: "blocked", reviewStage: "agent-review.patch-validation", operations: [] }
+    },
+    {
+      id: "generated-sql-lookup-blocks-before-write",
+      source: { kind: "form-only", relativePath: "remote-dialog-integrity/sql-generated_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { terminalStage: "review", reviewStatus: "blocked", reviewStage: "agent-review.patch-validation", operations: [] }
     },
     {
       id: "jquery-ready-initialization-remains-gated",
@@ -208,6 +244,18 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
     },
     {
+      id: "leading-inline-caption-success",
+      source: { kind: "form-only", relativePath: "leading-inline-caption/shared-leading_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "designer-checkbox-width-success",
+      source: { kind: "form-only", relativePath: "designer-checkbox-width/checkbox-width_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "designer-select-face-width-success",
       source: { kind: "form-only", relativePath: "designer-select-face-width/select-face_SysFormTemplate.xml" },
       reviewScenario: "accept",
@@ -216,8 +264,128 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
     },
     {
+      id: "mobile-number-empty-placeholder-success",
+      source: { kind: "form-only", relativePath: "mobile-number-empty-placeholder/mobile-number-empty-placeholder_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "radio-static-multiline-label-success",
+      source: { kind: "form-only", relativePath: "radio-source-presentation/literal-qualification/multiline-label_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "radio-source-literal-unproven-blocks-review",
+      source: { kind: "form-only", relativePath: "radio-source-presentation/literal-qualification/comment-phantom-H_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { terminalStage: "review", reviewStatus: "blocked", reviewStage: "agent-review.patch-validation", operations: [] }
+    },
+    {
+      id: "radio-source-presentation-raw-success",
+      source: { kind: "form-only", relativePath: "radio-source-presentation/raw-exporter_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "radio-source-presentation-success",
+      source: { kind: "form-only", relativePath: "radio-source-presentation/radio-source-presentation_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "numeric-editor-width-success",
       source: { kind: "form-only", relativePath: "numeric-editor-width/numeric-editor-width_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "readonly-number-display-width-success",
+      source: { kind: "form-only", relativePath: "readonly-number-display-width/readonly-number-width_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "mobile-number-layout-success",
+      source: { kind: "form-only", relativePath: "mobile-number-layout/mobile-number-layout_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "mobile-plain-caption-success",
+      source: { kind: "form-only", relativePath: "mobile-plain-caption/mobile-plain-caption_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "mobile-mixed-caption-success",
+      source: { kind: "form-only", relativePath: "mobile-mixed-caption/mobile-mixed-caption_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "typed-hidden-caption-success",
+      source: { kind: "form-only", relativePath: "typed-hidden-caption/typed-hidden-caption_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "mobile-caption-last-body-success",
+      source: { kind: "form-only", relativePath: "mobile-caption-last-body/mobile-caption-last-body_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "mobile-caption-trailing-empty-success",
+      source: { kind: "form-only", relativePath: "mobile-caption-trailing-empty/trailing-empty_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "mobile-caption-trailing-empty-event-success",
+      source: { kind: "form-only", relativePath: "mobile-caption-trailing-empty/local-event_SysFormTemplate.xml" },
+      reviewScenario: "native-select-empty-event", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "mobile-caption-trailing-empty-editor-event-success",
+      source: { kind: "form-only", relativePath: "mobile-caption-trailing-empty/editor-local-event_SysFormTemplate.xml" },
+      reviewScenario: "native-select-empty-event", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "mobile-caption-trailing-break-success",
+      source: { kind: "form-only", relativePath: "mobile-caption-trailing-break/caption-trailing-break_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "native-formula-condition-scope-success",
+      source: { kind: "form-only", relativePath: "native-formula-condition-scope/native-formula-condition-scope_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: NATIVE_FORMULA_SUCCESS_OPERATIONS }
+    },
+    {
+      id: "inline-editor-width-success",
+      source: { kind: "form-only", relativePath: "inline-editor-width/inline-editor-width_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "static-jsp-caption-evidence-success",
+      source: { kind: "form-only", relativePath: "static-jsp-caption-evidence/static-jsp-caption_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "designer-caption-width-success",
+      source: { kind: "form-only", relativePath: "designer-caption-width/designer-caption-width_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "checkbox-source-direction-success",
+      source: { kind: "form-only", relativePath: "checkbox-source-direction/checkbox-direction_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
     },
@@ -369,6 +537,12 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
+      id: "attachment-without-identity-else-success",
+      source: { kind: "form-only", relativePath: "attachment-identity-else/route-direct-without-else_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "compact-procurement-layout-success",
       source: {
         kind: "form-only",
@@ -417,7 +591,7 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       }
     },
     {
-      id: "choice-other-option-success",
+      id: "choice-other-mixed-unproven-blocked-before-transport",
       source: {
         kind: "form-only",
         relativePath: "choice-other-option/route-choice-other-option_SysFormTemplate.xml"
@@ -426,14 +600,14 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       newoaScenario: "persist",
       confirmWrite: true,
       expected: {
-        reviewStatus: "passed",
-        dryRunStatus: "passed",
-        executionStatus: "written",
-        operations: SUCCESS_OPERATIONS
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.input",
+        operations: []
       }
     },
     {
-      id: "checkbox-other-option-success",
+      id: "checkbox-other-option-detail-blocked-before-transport",
       source: {
         kind: "form-only",
         relativePath: "checkbox-other-option/route-checkbox-other-option_SysFormTemplate.xml"
@@ -442,10 +616,10 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       newoaScenario: "persist",
       confirmWrite: true,
       expected: {
-        reviewStatus: "passed",
-        dryRunStatus: "passed",
-        executionStatus: "written",
-        operations: SUCCESS_OPERATIONS
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.input",
+        operations: []
       }
     },
     {

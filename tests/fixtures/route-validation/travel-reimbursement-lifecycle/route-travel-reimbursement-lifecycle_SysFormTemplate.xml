@@ -294,7 +294,54 @@
 
    &lt;div id=&quot;fd_3d19de502071ba&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&lt;xform:editShow&gt;&lt;script&gt;
     var theFinanceFlag = 1;
-   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;</string>
+   &lt;/script&gt;&lt;/xform:editShow&gt;&apos;/&gt;&lt;/div&gt;&lt;div fd_type="jsp" id="fd_route_submit_helpers" fd_values='{id:"fd_route_submit_helpers"}'&gt;&lt;input type="hidden" value="&amp;lt;xform:editShow&amp;gt;&amp;lt;script&amp;gt;function getFormFieldValue(elementId) {
+            return getFormFieldValue(elementId, '', 0);
+        }
+function getFormFieldValue(elementId, type, containSelectText) {
+            if (type == 'radio') {
+                return $('input[name=&amp;quot;extendDataFormInfo.value(' + elementId + ')&amp;quot;]:checked').val();
+            } else if (type == 'select') {
+                return $('select[name=&amp;quot;extendDataFormInfo.value(' + elementId + ')&amp;quot;]').val();
+            } else if (type == 'table') {
+                var doms = $('[name=&amp;quot;' + elementId + '&amp;quot;]');
+                if (doms &amp;amp;&amp;amp; doms.length &amp;gt; 0) {
+                    if (doms[0].type == 'radio') {
+                        return $('[name=&amp;quot;' + elementId + '&amp;quot;]:checked').val();
+                    } else if (doms[0].tagName === 'SELECT' &amp;amp;&amp;amp; containSelectText) {
+                        var field = $('[name=&amp;quot;' + elementId + '&amp;quot;]');
+                        var text = field.find(&amp;quot;option:selected&amp;quot;).text();
+                        var val = field.val();
+                        return ((text ? text : '') + &amp;quot;|&amp;quot; + (val ? val : ''));
+                    }
+                }
+                return $('[name=&amp;quot;' + elementId + '&amp;quot;]').val();
+            } else {
+                var elementVal = $('[name=&amp;quot;' + elementId + '&amp;quot;]').val();
+                if (elementVal) {
+                    return elementVal;
+                }
+                var elementVal = GetXFormFieldValueById(elementId);
+                return elementVal &amp;amp;&amp;amp; elementVal.length == 1 ? elementVal[0] : elementVal;
+            }
+        }
+function buildDetailTableFieldId(tbId, columnId) {
+    return 'extendDataFormInfo.value(' + tbId + '.!{index}.' + columnId + ')';
+}
+function _DocList_FormFieldValue(tbId, fieldId) {
+            var detailFieldId = buildDetailTableFieldId(tbId, fieldId);
+            var tbInfo = DocList_TableInfo[&amp;quot;TABLE_DL_&amp;quot; + tbId];
+            var fieldValue = [];
+            if (tbInfo) {
+                for (var i = 0; i &amp;lt; tbInfo.lastIndex - 1; i++) {
+                    var rowFieldId = detailFieldId.replace('!{index}', i);
+                    var rowFieldValue = getFormFieldValue(rowFieldId, 'table');
+                    if (rowFieldValue) {
+                        fieldValue.push(rowFieldValue);
+                    }
+                }
+            }
+            return fieldValue;
+        }&amp;lt;/script&amp;gt;&amp;lt;/xform:editShow&amp;gt;"/&gt;&lt;/div&gt;</string>
   </void>
   <void method="put">
    <string>fdMetadataXml</string>

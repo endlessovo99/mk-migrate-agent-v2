@@ -250,6 +250,7 @@ const timedPriceInitialization = `function onLoad() {
     MKXFORM.setFieldAttr("fd_three_row", 4);
     MKXFORM.setFieldAttr("fd_three_row", 6);
     var current = MKXFORM.getValue("fd_39d245962fff08");
+    console.log("之前选的", current);
     if (current == "1") {
       MKXFORM.setFieldAttr("fd_three_row", 5);
       MKXFORM.setFieldAttr("fd_three_row", 3);

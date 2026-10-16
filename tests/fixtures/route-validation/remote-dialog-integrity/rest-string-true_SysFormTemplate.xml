@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>synthetic-rest-string-true-form</string></void>
+<void method="put"><string>fdModelId</string><string>synthetic-rest-string-true-template</string></void>
+<void method="put"><string>fdName</string><string>Synthetic rest-string-true</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div formDesign="landray" fd_type="RestDialog" fd_values="{id:&amp;quot;fd_lookup&amp;quot;,label:&amp;quot;Synthetic lookup&amp;quot;,dataType:&amp;quot;String&amp;quot;,txtReadOnly:&amp;quot;true&amp;quot;,required:&amp;quot;false&amp;quot;,restApiPath:&amp;quot;https://synthetic.invalid/lookup?token=CANARY015_ENDPOINT_SECRET&amp;quot;,authorization:&amp;quot;CANARY015_AUTH_SECRET&amp;quot;,requestHeaders:&amp;quot;Authorization: CANARY015_HEADER_SECRET&amp;quot;,requestMethod:&amp;quot;GET&amp;quot;,searchKey:&amp;quot;synthetic_name&amp;quot;,_outputParams:&amp;quot;{'outputParams':[{'outParamName':'code','idField':'$fd_code$','nameField':'$Code$'}]}&amp;quot;}"&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values="{id:&amp;quot;fd_code&amp;quot;,label:&amp;quot;Code&amp;quot;,dataType:&amp;quot;String&amp;quot;}"&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string></string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_lookup" type="String"/&gt;&lt;extendSimpleProperty name="fd_code" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

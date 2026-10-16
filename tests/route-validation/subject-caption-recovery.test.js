@@ -180,7 +180,8 @@ describe("unbound cross-cell captions", () => {
 
 describe("leading visible subject captions", () => {
   it("uses visible textLabel captions as titles for unbound invoice subjects", () => {
-    const dsl = draftSourceDraft(cleanSourceFile(fixturePath));
+    const source = cleanSourceFile(fixturePath);
+    const dsl = draftSourceDraft(source);
     const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
 
     assert.equal(fields.get("fd_3c539454d0fdf6")?.title, "建筑服务发生省市");
@@ -193,14 +194,19 @@ describe("leading visible subject captions", () => {
       content: "建筑服务省市",
       relation: "unbound-control-subject-distinct-from-visible-caption"
     });
-    assert.equal(fields.has("fd_3c5394120cadc8"), false);
+    assert.equal(fields.get("fd_3c5394120cadc8")?.componentId, "xform-description");
+    assert.equal(fields.get("fd_3c5394120cadc8")?.props.content,
+      source.form.controls.find(field => field.id === "fd_3c5394120cadc8")?.title);
+    assert.equal(fields.get("fd_3c539454d0fdf6")?.props.hiddenLabel, true);
 
     assert.equal(fields.get("fd_3c539457ff1db0")?.title, "建筑服务发生所在详细地址");
     assert.deepEqual(fields.get("fd_3c539457ff1db0")?.sourceProps.subjectLabel, {
       content: "建筑服务详细地址",
       relation: "unbound-control-subject-distinct-from-visible-caption"
     });
-    assert.equal(fields.has("fd_3c53941e6eb7ba"), false);
+    assert.equal(fields.get("fd_3c53941e6eb7ba")?.componentId, "xform-description");
+    assert.equal(fields.get("fd_3c53941e6eb7ba")?.props.content,
+      source.form.controls.find(field => field.id === "fd_3c53941e6eb7ba")?.title);
   });
 
   it("uses a directly leading visible caption over a distinct bound field subject", () => {
@@ -227,9 +233,9 @@ describe("leading visible subject captions", () => {
       sourceInvoiceRow?.cells.flatMap((cell) =>
         cell.references.map((reference) => reference.referenceId)
       ),
-      ["fd_3bd82e63125682", "fphm", "fd_3c23c063629a08"]
+      ["fd_3bd82e63125682", "fd_3bd82e69a15a7a", "fphm", "fd_3c23c063629a08"]
     );
-    assert.equal(sourceControls.has("fd_3bd82e69a15a7a"), false);
+    assert.equal(sourceControls.get("fd_3bd82e69a15a7a")?.sourceType, "description");
 
     const dsl = draftSourceDraft(source);
     const fields = new Map(dsl.form.fields.map((field) => [field.id, field]));
@@ -253,10 +259,12 @@ describe("leading visible subject captions", () => {
       content: "发票信息",
       relation: "explicit-label-bind-id"
     });
-    assert.equal(fields.has("fd_3bd82e69a15a7a"), false);
+    assert.equal(fields.get("fd_3bd82e69a15a7a")?.componentId, "xform-description");
+    assert.equal(fields.get("fd_3bd82e69a15a7a")?.props.content,
+      sourceControls.get("fd_3bd82e69a15a7a")?.title);
     assert.deepEqual(
       invoiceRow?.children.flatMap((cell) => cell.refIds),
-      ["fd_3bd82e63125682", "fphm", "fd_3c23c063629a08"]
+      ["fd_3bd82e63125682", "fd_3bd82e69a15a7a", "fphm", "fd_3c23c063629a08"]
     );
     assert.equal(fields.get("fd_3bd82e63125682")?.componentId, "xform-description");
     assert.equal(invoiceNumber?.props?.hiddenLabel, true);

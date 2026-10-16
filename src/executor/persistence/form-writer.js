@@ -1,4 +1,8 @@
-import { sourceNumberEditors } from "../../dsl/source-number-editor.js";
+import { sourceNumberEditors, sourceNumberDisplays } from "../../dsl/source-number-editor.js";
+import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
+import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
+import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.js";
+import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import {
   applyExpressionFormulaVoToModels,
   buildNativeFormRuleConfig,
@@ -7,6 +11,7 @@ import {
 } from "./form-rules-writer.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { projectNativeLayoutRows } from "./layout-projection.js";
+import { mobileNumberBudgets, mobileNumberGrid } from "./mobile-number-layout.js";
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
 import {
   detailTableEditOperations,
@@ -534,6 +539,7 @@ function buildMainModel(template, xform, config, form, lang) {
 
   const systemFields = (existing.fdFields || []).filter((field) => field.fdIsSystem);
   const numberEditors = sourceNumberEditors(form);
+  const checkboxLayouts = new Map([...sourceCheckboxLayouts(form), ...sourceRadioLayouts(form)]);
   const normalFields = (form.fields || []).filter((field) => field.type !== "detailTable");
   main.fdFields = [
     ...systemFields,
@@ -544,13 +550,15 @@ function buildMainModel(template, xform, config, form, lang) {
       systemFields.length + index + 1,
       "main",
       lang,
-      numberEditors.has(field.id)
+      numberEditors.has(field.id),
+      checkboxLayouts.get(field.sourceRef)
     ))
   ];
   return main;
 }
 
 function buildDetailModels(template, form, mainModel, lang) {
+  const checkboxLayouts = new Map([...sourceCheckboxLayouts(form), ...sourceRadioLayouts(form)]);
   return (form.fields || [])
     .filter((field) => field.type === "detailTable")
     .map((field) => {
@@ -571,7 +579,7 @@ function buildDetailModels(template, form, mainModel, lang) {
         fdFontExtendData: "{\"passValue\":false}"
       };
       model.fdFields = [
-        ...(field.columns || []).map((column, index) => canonicalField(column, template, model, index + 1, "detail", lang)),
+        ...(field.columns || []).map((column, index) => canonicalField(column, template, model, index + 1, "detail", lang, false, checkboxLayouts.get(column.sourceRef))),
         ...detailSystemFields(model)
       ];
       model.fdAttribute = JSON.stringify(detailModelAttribute(field, model));
@@ -638,7 +646,7 @@ function assertUniqueNativeTableNames(dataModels) {
   }
 }
 
-function canonicalField(field, template, model, order, tableType, lang, sourceNumberEditor = false) {
+function canonicalField(field, template, model, order, tableType, lang, sourceNumberEditor = false, checkboxLayout) {
   const spec = componentSpec(field);
   const fdLength = fieldLengthFromDsl(field, spec);
   const isDisplayOnly = ["desc", "button"].includes(spec.attrType);
@@ -653,7 +661,7 @@ function canonicalField(field, template, model, order, tableType, lang, sourceNu
       ? { fdColumn: `fd_${field.id}`.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48) }
       : {}),
     fdType: spec.fdType,
-    fdAttribute: JSON.stringify(fieldAttribute(field, template, model.fdTableName, tableType, spec, lang, sourceNumberEditor)),
+    fdAttribute: JSON.stringify(fieldAttribute(field, template, model.fdTableName, tableType, spec, lang, sourceNumberEditor, checkboxLayout)),
     fdFontExtendData: JSON.stringify(fieldFontExtendData(field, template, spec, sourceNumberEditor)),
     fdDataType: spec.fdDataType,
     fdDictType: spec.fdDictType,
@@ -681,7 +689,7 @@ function fieldLengthFromDsl(field, spec) {
   return 200;
 }
 
-function fieldAttribute(field, template, tableName, tableType, spec, lang, sourceNumberEditor) {
+function fieldAttribute(field, template, tableName, tableType, spec, lang, sourceNumberEditor, checkboxLayout) {
   const controlId = `${spec.desktop}~${stableShortId(field.id)}`;
   const label = persistedFieldLabel(field);
   const descriptionTextToken = linkedDescriptionTextToken(field);
@@ -727,6 +735,11 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang, sourc
   if (componentSupportsProp(field.componentId, "placeholder") && typeof field.props?.placeholder === "string") {
     controlProps.placeholder = field.props.placeholder;
   }
+  if (field.componentId === "xform-number" && spec.mobile === "@elem/xform-m-number" &&
+      !Object.hasOwn(field.props || {}, "placeholder")) {
+    // undefined activates the mobile component's untranslated default key.
+    controlProps.mobile.placeholder = "";
+  }
   if (componentSupportsProp(field.componentId, "unit") && typeof field.props?.unit === "string") {
     const unit = field.props.unit.trim();
     const unitToken = nativeLangToken(field.id, "numberFormat");
@@ -754,8 +767,9 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang, sourc
     controlProps.multi = field.componentId === "xform-select~multi";
   }
   if (spec.attrType === "checkbox") {
-    Object.assign(controlProps, nativeCheckboxControlProps(field));
+    Object.assign(controlProps, nativeCheckboxControlProps(field), checkboxLayout?.nativeProps);
   }
+  if (spec.attrType === "radio") Object.assign(controlProps, checkboxLayout?.nativeProps);
   if (spec.attrType === "attachment") {
     Object.assign(controlProps, {
       showText: false,
@@ -1646,7 +1660,9 @@ function buildViewModel(config, template, mainModel, form, detailModelsByField) 
 }
 
 function buildViewConfig(mainModel, form, detailModelsByField) {
-  const budgets = new Map([...sourceNumberEditors(form)].map(([id, profile]) => [id, profile.inputPx + 32]));
+  const budgets = new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]
+    .map(([id, profile]) => [id, profile.inputPx + 32]));
+  for (const [id, profile] of sourceInlineEditorWidths(form)) budgets.set(id, profile.nativeOuterPx);
   const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields, budgets);
   const mainContainer = {
     key: "main",
@@ -1659,7 +1675,7 @@ function buildViewConfig(mainModel, form, detailModelsByField) {
     view: {
       render: {
         desktop: [appearanceNode(mainModel.fdTableName, clone(mainContainer))],
-        mobile: [appearanceNode(mainModel.fdTableName, { ...clone(mainContainer), children: buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields) })]
+        mobile: [appearanceNode(mainModel.fdTableName, { ...clone(mainContainer), children: buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields, mobileNumberBudgets(form), true, sourceMobileCaptionGrids(form)) })]
       }
     },
     theme: {},
@@ -1681,8 +1697,12 @@ function buildControlStyle(form = {}) {
       }
     };
   }
-  for (const id of sourceNumberEditors(form).keys()) {
+  for (const id of new Set([...sourceNumberEditors(form).keys(), ...sourceNumberDisplays(form).keys()])) {
     styles[id] = { desktop: { desktopTheme: "classic", desktopPaddingMode: "standard", layout: "horizontal" } };
+  }
+  for (const id of sourceInlineEditorWidths(form).keys()) {
+    styles[id] = { desktop: { desktopTheme: "classic", desktopPaddingMode: "standard", layout: "horizontal",
+      labelStyle: { fontSize: 14 }, controlValueStyle: { fontSize: 14 } } };
   }
   for (const [id, paddingControl] of contentFlowFieldPadding(form)) {
     styles[id] = {
@@ -1712,14 +1732,14 @@ function appearanceNode(tableName, mainContainer) {
   };
 }
 
-function buildRows(rows, detailModelsByField, fields, budgets = new Map()) {
+function buildRows(rows, detailModelsByField, fields, budgets = new Map(), mobile = false, captionProfiles = new Map()) {
   const rowsById = new Map(rows.map((row) => [row.id, row]));
   return projectNativeLayoutRows(rows).map((projection) =>
-    buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField, fields, budgets)
+    buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField, fields, budgets, mobile, captionProfiles)
   );
 }
 
-function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fields, budgets) {
+function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fields, budgets, mobile, captionProfiles) {
   const cells = projection.cells;
   const layoutId = `layout~${stableShortId(row.id)}`;
   const gridId = `@elem/layout-grid~${stableShortId(`${row.id}:grid`)}`;
@@ -1727,6 +1747,7 @@ function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fiel
   const displayRows = projection.rows;
   const migrationRowId = migrationRowIdFor(row);
   const isNestedProjection = cells.some((cell) => cell.ownerNodeId !== row.id);
+  const mobileGrid = mobile ? mobileNumberGrid(projection, budgets, captionProfiles) : undefined;
   return {
     key: layoutId,
     type: "layout",
@@ -1751,7 +1772,8 @@ function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fiel
           id: gridId,
           ...(Array.isArray(projection.colsStyle)
             ? { colsStyle: structuredClone(projection.colsStyle) }
-            : {})
+            : {}),
+          ...mobileGrid
         },
         children: cells
           .filter((cell) => cell.refType !== "layout")

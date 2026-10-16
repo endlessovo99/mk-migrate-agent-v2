@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<java class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put">
+   <string>fdId</string>
+   <string>locked-calculation-form</string>
+  </void>
+  <void method="put">
+   <string>fdModelId</string>
+   <string>locked-calculation-template</string>
+  </void>
+  <void method="put">
+   <string>fdName</string>
+   <string>Synthetic locked calculation repair</string>
+  </void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_note",label:"Note",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;table fd_type="detailsTable" fd_values='{id:"table",label:"Line items"}'&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;Quantity&lt;/td&gt;&lt;td&gt;Unit price&lt;/td&gt;&lt;td&gt;Line total&lt;/td&gt;&lt;/tr&gt;
+&lt;tr type="templateRow"&gt;
+&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_353dcf33199452",label:"Quantity",tableName:"table",dataType:"Double",decimal:"2"}'&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_353dcf34336cb2",label:"Unit price",tableName:"table",dataType:"Double",decimal:"2"}'&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;td&gt;&lt;div fd_type="calculation" fd_values='{id:"fd_35523eceb856e4",label:"Line total",tableName:"table",dataType:"Double",decimal:"2",readOnly:"true",autoCalculate:"true",expression_id:"$table.fd_353dcf33199452$*$table.fd_353dcf34336cb2$",expression_name:"$Line items.Quantity$*$Line items.Unit price$",reCalculate:"false"}'&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;div fd_type="calculation" fd_values='{id:"fd_35523eca33541a",label:"Grand total",dataType:"Double",decimal:"2",readOnly:"true",autoCalculate:"true",expression_id:"$XForm_CalculatioFuns_Sum$($table.fd_35523eceb856e4$)",expression_name:"$List.Sum$($Line items.Line total$)",reCalculate:"false"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;</string>
+  </void>
+  <void method="put">
+   <string>fdDisplayJsp</string>
+   <string />
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_note" label="Note" type="String"/&gt;
+&lt;extendSubTableProperty name="table" label="Line items"&gt;
+&lt;extendSimpleProperty name="fd_353dcf33199452" label="Quantity" type="Double" scale="2"/&gt;
+&lt;extendSimpleProperty name="fd_353dcf34336cb2" label="Unit price" type="Double" scale="2"/&gt;
+&lt;extendSimpleProperty name="fd_35523eceb856e4" label="Line total" type="Double" scale="2"/&gt;
+&lt;/extendSubTableProperty&gt;&lt;extendSimpleProperty name="fd_35523eca33541a" label="Grand total" type="Double" scale="2"/&gt;&lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>

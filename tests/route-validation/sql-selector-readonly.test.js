@@ -13,6 +13,12 @@ import { runRouteCase } from "./run-route-case.js";
 const fixture = "tests/fixtures/route-validation/sql-selector-readonly/sql-readonly_SysFormTemplate.xml";
 const stages = () => { const source = cleanSourceFile(fixture); return { source, dsl: draftSourceDraft(source) }; };
 const companion = dsl => dsl.form.fields.find(field => field.id === "fd_lines").columns.find(field => field.id === "project_name");
+const assertRemoteUnbound = (source, dsl) => {
+  const checked = checkTrust(source, createTrustedMigrationDsl(source, dsl, { externalAgentReviewed: true }));
+  assert.equal(checked.ok, false);
+  assert.ok(checked.diagnostics.some(item => item.code === "trust.form.remote_dialog_unbound"));
+  assert.ok(!checked.diagnostics.some(item => item.code === "trust.form.read_only_source_mismatch"));
+};
 const rootProperties = parseRootHashMapStringPuts(readFileSync(fixture, "utf8"));
 const runtimeTag = rootProperties.fdDisplayJsp.match(/<xform:text property="extendDataFormInfo.value\(fd_lines\.\!\{index\}\.project_name\)"[^>]*\/>/)[0];
 
@@ -120,8 +126,7 @@ describe("SQL selector text restrictions", () => {
       });
       assert.notEqual(dsl.form.fields.find(field => field.id === "fd_project").props.readOnly, true);
       assert.notEqual(dsl.form.fields.find(field => field.id === "fd_lines").columns.find(field => field.id === "project").props.readOnly, true);
-      const result = checkTrust(source, createTrustedMigrationDsl(source, dsl, { externalAgentReviewed: true }));
-      assert.equal(result.ok, true);
+      assertRemoteUnbound(source, dsl);
     });
   }
 
@@ -135,7 +140,7 @@ describe("SQL selector text restrictions", () => {
       const dsl = draftSourceDraft(source);
       assert.notEqual(dsl.form.fields.find(field => field.id === "fd_project").props.readOnly, true);
       assert.notEqual(dsl.form.fields.find(field => field.id === "fd_lines").columns.find(field => field.id === "project").props.readOnly, true);
-      assert.equal(checkTrust(source, createTrustedMigrationDsl(source, dsl, { externalAgentReviewed: true })).ok, true);
+      assertRemoteUnbound(source, dsl);
     });
   }
 
@@ -188,7 +193,7 @@ describe("SQL selector text restrictions", () => {
         assert.ok(result.diagnostics.some(item => item.code === "trust.form.read_only_source_mismatch"));
       }
     }
-    assert.equal(checkTrust(source, createTrustedMigrationDsl(source, dsl, { externalAgentReviewed: true })).ok, true);
+    assertRemoteUnbound(source, dsl);
   });
 
   it("persists all three text restrictions and rejects each native attribute/add/edit permission loss", () => {
@@ -216,11 +221,12 @@ describe("SQL selector text restrictions", () => {
     }
   });
 
-  it("keeps SQL partial warnings explicit through review and dry-run without target operations", async () => {
+  it("blocks unbound SQL during review while retaining restrictions and source warnings", async () => {
     const result = await runRouteCase("sql-selector-readonly-projection-without-write");
     assert.ok(result.dsl.review.warnings.some(item => item.code === "source.sysform.sql_dialog_partial"));
     assert.equal(companion(result.dsl).props.readOnly, true);
-    assert.equal(result.execution.status, "blocked");
+    assert.equal(result.review.status, "blocked");
+    assert.equal(result.execution, undefined);
     assert.deepEqual(result.transcript, []);
   });
 });

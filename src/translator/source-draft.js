@@ -706,8 +706,12 @@ function sourcePropsFromField(field) {
     designerId: field.source?.designerId,
     designerType: field.source?.designerType,
     designerValues: field.source?.designerValues,
+    designerRadioLayoutLiteral: field.source?.designerRadioLayoutLiteral,
     runtimeTextReadOnly: field.source?.runtimeTextReadOnly,
     runtimeSelectEmpty: field.source?.runtimeSelectEmpty,
+    runtimeNumberDisplayWidth: field.source?.runtimeNumberDisplayWidth,
+    runtimePlainCaption: field.source?.runtimePlainCaption,
+    runtimePlainCaptionMarkerIds: field.source?.runtimePlainCaptionMarkerIds,
     designerTableName: field.source?.designerTableName,
     explicitTitle: field.source?.explicitTitle,
     detailTitleHint: field.source?.detailTitleHint,
@@ -749,6 +753,7 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
       sourceRow: row.sourceRow ?? String(rowIndex),
       sourceMarkers: Array.isArray(row.sourceMarkers) && row.sourceMarkers.length ? row.sourceMarkers : undefined,
       preserveSourceGeometry: row.preserveSourceGeometry === true ? true : undefined,
+      ...(row.trailingBlankCells ? { trailingBlankCells: row.trailingBlankCells } : {}),
       columns: row.columns,
       cells: (row.cells || []).map((cell, cellIndex) => {
         const fieldRefs = cellFieldIds(cell).map((fieldId) => ({

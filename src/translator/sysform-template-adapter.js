@@ -2,7 +2,8 @@ import { basename } from "node:path";
 import { DSL_VERSION } from "../dsl/schema.js";
 import { auditFunctionWhitelist, functionWhitelistErrors } from "./function-whitelist.js";
 import { buildDesignerFirstForm } from "./sysform-designer-layout.js";
-import { scanHtmlTags } from "./designer-html-tokenizer.js";
+import { isVoidLikeTag, scanHtmlTags } from "./designer-html-tokenizer.js";
+import { parseStaticMarkupAttributes, staticSourceMarkup } from "./source-static-markup.js";
 import { extractSysFormJspScripts } from "./sysform-jsp-scripts.js";
 import { parseMetadataXml } from "./sysform-metadata.js";
 import { extractSysFormNodeDataAuthorities } from "./sysform-rights.js";
@@ -12,11 +13,14 @@ import {
   decodeEntities,
   parseFdValues,
   parseRootHashMapStringPuts,
+  parseRootHashMapXmlStringPuts,
   propertyFieldId
 } from "./xml-utils.js";
 
 export function translateSysFormTemplateXml(xml, options = {}) {
   const template = parseSysFormTemplateXml(xml);
+  const literalTemplate = parseRootHashMapXmlStringPuts(xml);
+  const scripts = extractSysFormJspScripts(template, { functionWhitelist: options.functionWhitelist });
   const metadata = parseMetadataXml(template.fdMetadataXml || "");
   const warnings = [];
   const preliminaryNodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
@@ -24,6 +28,8 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   });
   const form = buildDesignerFirstForm(template.fdDesignerHtml || "", metadata, warnings, {
     runtimeDisplayHtml: template.fdDisplayJsp || "",
+    trailingBlankSource: { designer: literalTemplate.fdDesignerHtml || "", runtime: literalTemplate.fdDisplayJsp || "",
+      scriptFragments: scripts?.fragments, scriptSources: scripts?.sources },
     runtimeVisibleFieldIds: unconditionallyRenderedRichTextFieldIds(
       template.fdDisplayJsp || ""
     ),
@@ -46,7 +52,6 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   const functionWhitelist = options.functionWhitelist
     ? auditFunctionWhitelist(template.fdDesignerHtml || "", options.functionWhitelist, { path: "/fdDesignerHtml" })
     : undefined;
-  const scripts = extractSysFormJspScripts(template, { functionWhitelist: options.functionWhitelist });
 
   if (!template.fdDesignerHtml) {
     warnings.push({
@@ -198,6 +203,7 @@ function editorLabelEvidence(displayJsp) {
   const rowStack = [];
   const renderings = new Map();
   let conditionalDepth = 0;
+  const staticEvidence = staticJspLabelEvidence(displayJsp, editors, conditionalTags);
   for (const token of scanHtmlTags(decoded)) {
     if (conditionalTags.has(token.name)) {
       conditionalDepth = Math.max(0, conditionalDepth + (
@@ -230,14 +236,111 @@ function editorLabelEvidence(displayJsp) {
     const row = rows.filter((item) => item.start <= entry.offset && entry.offset < item.end)
       .sort((left, right) => (left.end - left.start) - (right.end - right.start))[0];
     const rowHtml = row ? decoded.slice(row.start, row.end) : "";
+    const hasJsp = rowHtml.includes("<%");
+    const staticEntry = hasJsp && staticEvidence?.get(id);
     return [id, {
       renderer: entry.renderer,
-      verified: entries.length === 1 && entry.unconditional && Boolean(rowHtml) && !rowHtml.includes("<%"),
+      verified: entries.length === 1 && entry.unconditional && Boolean(rowHtml) && (
+        hasJsp ? staticEntry?.renderer === entry.renderer : true
+      ),
       conditionalRow: [...scanHtmlTags(rowHtml)].some(token => conditionalTags.has(token.name)),
       rowText: cleanText(rowHtml),
+      ...(hasJsp ? { staticCaptions: staticEntry?.captions || [] } : {}),
       sourceRef: "source.form.fdDisplayJsp"
     }];
   }));
+}
+
+// This proof only extends rows previously rejected for containing JSP. Other rows
+// retain the existing caption contract. Scan original markup so escaped examples
+// cannot become renderer or caption tokens through another entity decode.
+function staticJspLabelEvidence(displayJsp, editors, conditionalTags) {
+  const html = staticSourceMarkup(displayJsp);
+  if (html === undefined) return undefined;
+  const stack = [], nodes = [], bindings = new Map();
+  for (const token of scanHtmlTags(html)) {
+    if (token.closing) {
+      const node = stack.pop();
+      if (!node || node.name !== token.name) return undefined;
+      node.contentEnd = token.start;
+      node.end = token.end;
+      continue;
+    }
+    const attrs = parseStaticMarkupAttributes(token.attrs);
+    const uncertain = !attrs || conditionalTags.has(token.name) ||
+      token.name.includes(":") && !editors.has(token.name) && token.name !== "xform:right" ||
+      attrs.has("hidden") || ["false", "noshow"].includes(attrs.get("canshow")?.toLowerCase()) ||
+      attrs.get("showstatus")?.toLowerCase() === "noshow" ||
+      !staticCaptionAppearance(attrs) ||
+      [...attrs].some(([key, value]) => /\$\{|<%/.test(value) && !(editors.has(token.name) && key === "showstatus"));
+    const parent = stack.at(-1);
+    const node = { ...token, attrs, parent, children: [], visible: !uncertain && (!parent || parent.visible), contentStart: token.end, contentEnd: token.end, end: token.end };
+    parent?.children.push(node);
+    nodes.push(node);
+    const property = attrs?.get("property");
+    const binding = property?.match(/^extendDataFormInfo\s*\.\s*value\s*\(\s*([A-Za-z_][\w-]*)\s*\)$/)?.[1];
+    if (binding) bindings.set(binding, [...(bindings.get(binding) || []), node]);
+    if (!attrs && /(?:^|\s)property\s*=/i.test(token.attrs)) return undefined;
+    if (!token.selfClosing && !isVoidLikeTag(token.name)) stack.push(node);
+  }
+  if (stack.length) return undefined;
+  const result = new Map();
+  for (const node of nodes) {
+    if (!editors.has(node.name) || !node.visible || !node.attrs) continue;
+    const property = node.attrs.get("property");
+    const id = property?.match(/^extendDataFormInfo\.value\(([A-Za-z_][\w-]*)\)$/)?.[1];
+    const status = node.attrs.get("showstatus"), label = node.attrs.get("showlabel");
+    const inner = parseStaticMarkupAttributes(node.attrs.get("htmlelementproperties") || "");
+    if (!id || bindings.get(id)?.length !== 1 || (node.name === "xform:xtext" && !node.selfClosing) ||
+        !inner || !staticCaptionAppearance(inner) || inner.has("hidden") ||
+        ![undefined, "", "false"].includes(label?.toLowerCase()) ||
+        !(status === undefined || status === "" || /^\$\{requestScope\[(["'])SysForm\.showStatus\1\]\}$/.test(status))) continue;
+    let cell = node.parent;
+    while (cell && !["td", "th"].includes(cell.name)) cell = cell.parent;
+    const row = cell?.parent;
+    if (!cell || row?.name !== "tr") continue;
+    const cells = row.children.filter(child => ["td", "th"].includes(child.name));
+    const previous = cells[cells.indexOf(cell) - 1];
+    if (!previous?.visible) continue;
+    const captions = nodes.filter(caption => {
+      if (caption.name !== "label" || !caption.visible || caption.selfClosing) return false;
+      let ancestor = caption.parent;
+      while (ancestor && ancestor !== previous && ancestor.name !== "table") ancestor = ancestor.parent;
+      return ancestor === previous;
+    }).filter(caption => {
+      const descendants = nodes.filter(child => child.start > caption.start && child.start < caption.end);
+      return descendants.every(child => child.visible) && !/\$\{|<%/.test(html.slice(caption.contentStart, caption.contentEnd));
+    }).map(caption => decodeEntities(html.slice(caption.contentStart, caption.contentEnd).replace(/<[^>]*>/g, ""))
+      .replace(/\s+/g, " ").trim()).filter(Boolean);
+    result.set(id, { renderer: node.name, captions });
+  }
+  return result;
+}
+
+function staticCaptionAppearance(attrs) {
+  if (!attrs) return false;
+  const dimension = value => /^(?:auto|\d+(?:\.\d+)?(?:px|%)?)$/i.test(value) &&
+    (value.toLowerCase() === "auto" || Number.parseFloat(value) > 0);
+  if (["width", "height"].some(key => attrs.has(key) && !dimension(attrs.get(key)))) return false;
+  const values = {
+    width: dimension,
+    height: dimension,
+    display: value => /^(?:inline|inline-block|block|table|table-row|table-cell|table-row-group)$/i.test(value),
+    "vertical-align": value => /^(?:top|middle|bottom|baseline)$/i.test(value),
+    "text-align": value => /^(?:left|right|center|justify|start|end)$/i.test(value),
+    "text-decoration": value => /^(?:none|underline|line-through)$/i.test(value),
+    "font-weight": value => /^(?:normal|bold|[1-9]00)$/i.test(value),
+    "font-style": value => /^(?:normal|italic|oblique)$/i.test(value)
+  };
+  const seen = new Set();
+  for (const declaration of (attrs.get("style") || "").split(";")) {
+    if (!declaration.trim()) continue;
+    const match = /^\s*([-a-z]+)\s*:\s*([^:]+?)\s*$/i.exec(declaration);
+    const key = match?.[1].toLowerCase();
+    if (!match || seen.has(key) || !Object.hasOwn(values, key) || !values[key](match[2])) return false;
+    seen.add(key);
+  }
+  return true;
 }
 
 function extractDesignerTitle(html = "") {

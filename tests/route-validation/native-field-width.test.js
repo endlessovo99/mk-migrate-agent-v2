@@ -58,7 +58,7 @@ describe("native field width route validation", () => {
     const prepared = prepareSample(dsl), view = nativeView(prepared.update);
     assert.equal(field.sourceProps.designerValues.width, "120");
     assert.equal(parentOf(view.view.render.desktop[0], "fd_amount").controlProps.style.width, "152px");
-    assert.equal(parentOf(view.view.render.mobile[0], "fd_amount").controlProps.style.width, "120px");
+    assert.equal(parentOf(view.view.render.mobile[0], "fd_amount").controlProps.style.width, "152px");
     assert.equal(prepared.verify(prepared.update).ok, true);
   });
 

@@ -78,11 +78,8 @@ export function foldInlineCaptions(html, entries, options = {}) {
         next.control.source?.boundCaption?.content
       )
     ) {
-      folded.push(mergedEntry(
-        current,
-        next,
-        withBoundSubjectCaption(next.control, current.control)
-      ));
+      folded.push(...leadingCaptionEntries(html, current, next,
+        withBoundSubjectCaption(next.control, current.control), options));
       index += 2;
       continue;
     }
@@ -93,11 +90,8 @@ export function foldInlineCaptions(html, entries, options = {}) {
       !separatedByBreak &&
       captionMatchesTitleEnd(current.control.title, next.control.title)
     ) {
-      folded.push(mergedEntry(
-        current,
-        next,
-        withInlineCaption(next.control, current.control, next.control.title, "leading-title-segment")
-      ));
+      folded.push(...leadingCaptionEntries(html, current, next,
+        withInlineCaption(next.control, current.control, next.control.title, "leading-title-segment"), options));
       index += 2;
       continue;
     }
@@ -111,11 +105,8 @@ export function foldInlineCaptions(html, entries, options = {}) {
       isUnboundSubjectField(next.control) &&
       !isSafeInlineUnit(current.control.title)
     ) {
-      folded.push(mergedEntry(
-        current,
-        next,
-        withUnboundSubjectCaption(next.control, current.control)
-      ));
+      folded.push(...leadingCaptionEntries(html, current, next,
+        withUnboundSubjectCaption(next.control, current.control), options));
       index += 2;
       continue;
     }
@@ -125,6 +116,22 @@ export function foldInlineCaptions(html, entries, options = {}) {
   }
 
   return folded;
+}
+
+function leadingCaptionEntries(html, caption, field, foldedControl, options) {
+  const boundId = field.control.source?.designerValues?._label_bind_id;
+  const inactiveRightPrompt = field.control.source?.boundCaption?.relation === "external-right-prompt" &&
+    String(field.control.source?.designerValues?._label_bind || "").toLowerCase() !== "true";
+  if (boundId && boundId !== caption.control.id &&
+      !inactiveRightPrompt &&
+      options.uniqueVisibleCaptionIds?.has(caption.control.id) &&
+      options.crossCellIndependentCaptionIds?.has(boundId) &&
+      hasOnlyInlineWhitespaceBetween(html, caption, field)) {
+    // The other cell supplies the group title, so the field's intrinsic title
+    // will be hidden. Keep this original caption as a separate visible entity.
+    return [caption, { ...field, control: foldedControl }];
+  }
+  return [mergedEntry(caption, field, foldedControl)];
 }
 
 function isPreservedCaption(control, preserveCaptionIds) {

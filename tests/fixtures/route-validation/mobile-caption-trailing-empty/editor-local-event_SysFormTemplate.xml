@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>fdId</string>
+      <string>normalized-tail-form</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>normalized-tail-template</string>
+    </void>
+    <void method="put">
+      <string>fdName</string>
+      <string>Normalized tail cells with exporter editor hints</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&lt;TABLE fd_type="standardTable" id="tail_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" style_borderbottomwidth="null" style_bordertopwidth="null" style_borderrightwidth="null" style_borderleftwidth="null" style_verticalalign="middle" style_textalign="center" row="0" column="0" width="156" style="WIDTH:140px;VERTICAL-ALIGN:middle;TEXT-ALIGN:center"&gt;&lt;LABEL fd_type="textLabel" fd_values='{id:"caption_choice",content:"Choice with tail blanks"}'&gt;Choice with tail blanks&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1" width="746" style="WIDTH:539px"&gt;&lt;DIV fd_type="select" class="select_div_box" style="DISPLAY:inline" fd_values='{id:"fd_choice",_label_bind:"true",label:"Choice with tail blanks",_label_bind_id:"caption_choice",dataType:"String",required:"true",defaultValue:"",items:"Ready|READY
+Other|OTHER"}'&gt;&lt;LABEL class="select_tag_left"&gt;&lt;LABEL class="select_tag_right"&gt;&lt;LABEL class="select_tag_face"&gt;--- 请选择 ---&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;/LABEL&gt;&lt;SPAN class="txtstrong"&gt;*&lt;/SPAN&gt;&lt;SELECT id="fd_choice" style="DISPLAY:none"&gt;&lt;/SELECT&gt;&lt;/DIV&gt;&lt;DIV fd_type="JSP" id="local_event" fd_values='{id:"local_event",label:"Retained local event"}'&gt;&lt;LABEL class="button_img" style="BACKGROUND-POSITION:center -480px;MARGIN:2px 3px 3px 2px" ondblclick=" Designer_Control_JSP_ShowEditFrame(event, this); "&gt;&lt;INPUT type="hidden" value="&amp;lt;script&amp;gt;AttachXFormValueChangeEventById(&amp;quot;fd_choice&amp;quot;, function(value, domElement) {
+var marker=GetXFormFieldById(&amp;quot;fd_marker&amp;quot;)[0];
+if(value.indexOf(&amp;quot;READY&amp;quot;)&amp;gt;=0){marker.value=&amp;quot;active&amp;quot;;common_dom_row_set_show_required_reset(&amp;quot;fd_details_row&amp;quot;,true,true,false);}
+else{marker.value=&amp;quot;inactive&amp;quot;;common_dom_row_set_show_required_reset(&amp;quot;fd_details_row&amp;quot;,false,false,false);}
+});&amp;lt;/script&amp;gt;"/&gt;&lt;/LABEL&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;TD class="tb_normal" style_borderbottomwidth="null" style_bordertopwidth="null" style_borderrightwidth="null" style_borderleftwidth="null" style_verticalalign="middle" style_textalign="left" row="0" column="2" width="106" style="WIDTH:139px;VERTICAL-ALIGN:middle;TEXT-ALIGN:left"&gt;&amp;nbsp;&lt;/TD&gt;&lt;TD row="0" column="3" width="346" style="WIDTH:343px"&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;TR&gt;&lt;TD row="1" column="0,1,2,3" colspan="4"&gt;&lt;INPUT type="hidden" id="fd_details_row"/&gt;&lt;DIV fd_type="inputText" fd_values='{id:"fd_payload",label:"Payload",dataType:"String"}'&gt;&lt;INPUT id="fd_payload"/&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;TR style="display:none"&gt;&lt;TD row="2" column="0,1,2,3" colspan="4"&gt;&lt;DIV fd_type="inputText" fd_values='{id:"fd_marker",label:"Marker",dataType:"String",canShow:"false"}'&gt;&lt;INPUT id="fd_marker"/&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdMetadataXml</string>
+      <string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_choice" type="String" enumValues="Ready|READY;Other|OTHER" notNull="true"/&gt;&lt;extendSimpleProperty name="fd_payload" type="String"/&gt;&lt;extendSimpleProperty name="fd_marker" type="String" canDisplay="false"/&gt;&lt;/metadata&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdDisplayJsp</string>
+      <string>&lt;TABLE fd_type="standardTable" id="tail_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" style_borderbottomwidth="null" style_bordertopwidth="null" style_borderrightwidth="null" style_borderleftwidth="null" style_verticalalign="middle" style_textalign="center" row="0" column="0" width="156" style="WIDTH:140px;VERTICAL-ALIGN:middle;TEXT-ALIGN:center"&gt;&lt;LABEL&gt;Choice with tail blanks&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1" width="746" style="WIDTH:539px"&gt;&lt;xform:select property="extendDataFormInfo.value(fd_choice)" required="true" showPleaseSelect="true" subject="Choice with tail blanks" title="Choice with tail blanks" onValueChange="__xformDispatch"&gt;&lt;xform:simpleDataSource value="READY"&gt;Ready&lt;/xform:simpleDataSource&gt;&lt;xform:simpleDataSource value="OTHER"&gt;Other&lt;/xform:simpleDataSource&gt;&lt;/xform:select&gt;&lt;script&gt;AttachXFormValueChangeEventById("fd_choice", function(value, domElement) {
+var marker=GetXFormFieldById("fd_marker")[0];
+if(value.indexOf("READY")&gt;=0){marker.value="active";common_dom_row_set_show_required_reset("fd_details_row",true,true,false);}
+else{marker.value="inactive";common_dom_row_set_show_required_reset("fd_details_row",false,false,false);}
+});&lt;/script&gt;&lt;/TD&gt;&lt;TD class="tb_normal" style_borderbottomwidth="null" style_bordertopwidth="null" style_borderrightwidth="null" style_borderleftwidth="null" style_verticalalign="middle" style_textalign="left" row="0" column="2" width="106" style="WIDTH:139px;VERTICAL-ALIGN:middle;TEXT-ALIGN:left"&gt;&amp;nbsp;&lt;/TD&gt;&lt;TD row="0" column="3" width="346" style="WIDTH:343px"&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;TR&gt;&lt;TD row="1" column="0,1,2,3" colspan="4"&gt;&lt;INPUT type="hidden" id="fd_details_row"/&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_payload)"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;TR style="display:none"&gt;&lt;TD row="2" column="0,1,2,3" colspan="4"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_marker)"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+  </object>
+</java>

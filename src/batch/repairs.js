@@ -113,6 +113,10 @@ function planItem(definition, item, currentEngineDigest) {
   if (item.activeAttemptId || ["preparing", "running"].includes(item.status)) return skip("item_active");
   if (!["pending", "ready", "blocked", "needs_repair"].includes(item.status)) return skip("unsupported_item_status");
   const codes = new Set((item.diagnostics || []).map((entry) => entry.code));
+  if (definition.action.kind === "reprepare" && typeof item.engineDigest === "string" &&
+      item.engineDigest.trim() && item.engineDigest !== currentEngineDigest) {
+    codes.add("BATCH_ENGINE_CHANGED");
+  }
   if (!definition.selector.diagnosticCodes.some((code) => codes.has(code))) return skip("diagnostic_not_matched");
   const sourceId = item.sourceId || item.sourceDraft?.source?.sourceId || item.dsl?.derivedFrom?.sourceId;
   if (definition.selector.sourceIds && !definition.selector.sourceIds.includes(sourceId)) return skip("source_not_matched");

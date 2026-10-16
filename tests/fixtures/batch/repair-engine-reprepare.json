@@ -1,0 +1,9 @@
+{
+  "title": "Rebuild artifacts after an engine change",
+  "rootCause": "Prepared artifacts bind a previous engine digest",
+  "reason": "Regenerate from the retained source before requesting a new approval",
+  "evidence": ["tests/route-validation/batch-engine-reprepare.test.js"],
+  "version": "1",
+  "selector": { "diagnosticCodes": ["BATCH_ENGINE_CHANGED"] },
+  "action": { "kind": "reprepare" }
+}

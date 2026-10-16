@@ -1,3 +1,4 @@
+import { detailRowSourceEffectResiduals } from "../dsl/source-detail-row-effects.js";
 import { parse } from "acorn";
 import { COMPONENT_CATALOG, FUNCTION_CATALOG, VALIDATION_POLICY } from "../dsl/catalogs.js";
 import { buildJavaScriptBindingModel } from "../dsl/javascript-binding-provenance.js";
@@ -75,7 +76,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Native-covered closure rule: when action-local behavior is fully covered, coverage.status=\"covered\", coverage.nativeRules references executable rules, and coverage.residuals is empty, close that action as native-covered omitted while preserving runWhen audit evidence. Patch function:\"\", translationStatus:\"omitted\", functionMappings to native-form-rule evidence, and preserve covered coverage/nativeRules/residuals. Do not invent residuals from DOM/helper noise for these already-covered actions.",
       "Static-property closure rule: when an ungated action only sets required=true or a literal placeholder already present on a supported DSL field, coverage.staticProps records the exact {fieldId,prop,value} evidence. Patch function:\"\", translationStatus:\"omitted\", functionMappings with basis static-form-prop, and preserve nativeRules:[], staticProps, and residuals:[]; never invent a formRule id or change the evidenced field prop.",
       "Native-calculation closure rule: when coverage.status=\"covered\", coverage.nativeCalculations lists target fields with verified xform-calculate props and coverage.residuals is empty, the legacy callback is only a duplicate trigger. If coverage.nativeDisplayFields is also present, it is source-backed evidence that the listed xform-description field is controlled by a deterministic sibling translation; preserve that list too. Patch function:\"\", translationStatus:\"omitted\", functionMappings with basis native-calculation, and preserve nativeCalculations, nativeDisplayFields when present, and residuals; do not retain legacy DOM or jQuery code.",
-      "For detail-row visibility candidates, legacy onclick/setAttribute/__xformDispatch snippets are event-binding scaffolding when the DSL action already has event=onChange and matching tableId/controlId. Do not treat that scaffolding as residual; translate the action-local business function body instead.",
+      "For detail-row visibility candidates, legacy onclick/setAttribute/__xformDispatch snippets are scaffolding only when the fixed source proves complete event binding and effects. Preserve specific detail-row effect and lifecycle residuals; matching event/table/control metadata does not justify ignoring extra calls or property mutations.",
       "Use sourceDraft.scripts.sources[].javascriptWindows as layered source excerpts. When javascriptLength exceeds the excerpt length, do not assume the excerpt is the complete source.",
       "Non-whitelisted EKP functions are not automatically blocking. First infer their intent from source evidence and surrounding script context, then translate safely to targetApi JavaScript when confidence is high.",
       "If a non-whitelisted function cannot be safely inferred, leave the action needs_review or manual and explain the unresolved function in diagnostics.",
@@ -1293,7 +1294,8 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
       });
     }
     if (hint.kind === "detail_row_visibility") {
-      opportunities.push({
+      const sourcePending = detailRowSourceEffectResiduals(action).length > 0;
+      const opportunity = {
         kind: "detail_row_visibility_candidate",
         actionIndex,
         targetApis: hint.targetApiCandidates || ["MKXFORM.updateControl", "MKXFORM.updateControlStyle", "MKXFORM.setDetailFieldItemAttr"],
@@ -1302,13 +1304,14 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
         targetControlId: hint.targetControlId,
         hiddenControlId: hint.hiddenControlId,
         requiredBusinessSemantics: [
-          "Normalize the onChange value and compare it with the legacy trigger value gh.",
+          "Preserve the actual source comparison literal exactly, including whitespace and escapes; never assume a fixed trigger value.",
+          "Prove the complete source event binding and every source effect before claiming a native translation.",
           "Write same-row hidden helper state when hiddenControlId is present.",
           "Show/hide the same-row targetControlId.",
           "Set required/not-required state for the same-row targetControlId when the source validate attribute toggles required."
         ],
-        eventScaffoldingPolicy: "Ignore legacy onclick/setAttribute/__xformDispatch event-binding scaffolding after verifying the DSL action already preserves event=onChange, tableId, and controlId.",
-        safeDecision: "If the complete action-local business function body is visible, map to onChange(value,rowNum,parentRowNum), use ${table:<tableId>}.<controlId> placeholders, and cover hidden state, display, and required-state semantics with targetApi.",
+        eventScaffoldingPolicy: "Only fixed-source proof of complete binding and effects establishes scaffolding; matching event/table/control metadata does not justify ignoring extra calls or mutations.",
+        safeDecision: "Map only after fixed-source evidence proves the complete event binding and every source effect equivalent to supported targetApi behavior, preserving the actual source comparison literal.",
         suggestedPatchShape: {
           function: `function onChange(value, rowNum, parentRowNum) {
   var selectedValue = Array.isArray(value) ? value[0] : value
@@ -1329,7 +1332,13 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
           coverage: { status: "translated", nativeRules: [], residuals: [] }
         },
         coverageDecision: "Use coverage.status translated with empty residuals when hidden helper write, display toggle, and required toggle are represented with targetApi; do not add residuals for event-binding scaffolding already represented by the DSL action boundary."
-      });
+      };
+      if (sourcePending) {
+        delete opportunity.suggestedPatchShape;
+        opportunity.safeDecision = "Keep needs_review and every original source residual until complete source/native contracts prove all effects and binding or lifecycle semantics.";
+        opportunity.coverageDecision = "Preserve needs_review, the original non-closed coverage and every specific detail-row source residual; do not supply an executable or empty-residual closure.";
+      }
+      opportunities.push(opportunity);
     }
     if (hint.kind === "detail_row_load_initialization") {
       opportunities.push({
@@ -1340,7 +1349,9 @@ function reviewOpportunitiesForAction(action = {}, formRules = {}, actionIndex, 
         triggerControlId: hint.triggerControlId,
         targetControlId: hint.targetControlId,
         hiddenControlId: hint.hiddenControlId,
-        safeDecision: "If the action-local onLoad source is fully understood, initialize row marker visibility/required state with MKXFORM.setFieldAttr(<sourceMarker>, 4|5|3|6) and initialize detail-row target visibility by reading MKXFORM.getValue('${table:<tableId>}') and using rowNum in MKXFORM.updateControlStyle. Never pass ${table:<detailTableId>} to setFieldAttr.",
+        safeDecision: detailRowSourceEffectResiduals(action).length
+          ? "Keep needs_review and every original source residual until complete source/native contracts prove all effects and lifecycle semantics."
+          : "If the action-local onLoad source is fully understood, initialize row marker visibility/required state with MKXFORM.setFieldAttr(<sourceMarker>, 4|5|3|6) and initialize detail-row target visibility by reading MKXFORM.getValue('${table:<tableId>}') and using rowNum in MKXFORM.updateControlStyle. Never pass ${table:<detailTableId>} to setFieldAttr.",
         unsafeDecision: "Keep needs_review when the onLoad body includes DOM lifecycle, row add/delete hooks, validation routines, or selected-value reconstruction that cannot be fully expressed with targetApi and native formRules."
       });
     }

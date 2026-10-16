@@ -1,4 +1,5 @@
 import { selectEmptyEventProof } from "./source-select-empty-event.js";
+import { remoteDialogDiagnostics } from "./remote-dialog.js";
 import { inspectSourceSignNode, hasSourceSignDeclaration } from "./workflow-sign-contract.js";
 import {
   componentSupportsProp,
@@ -131,6 +132,7 @@ export function validateMigrationDsl(input, options = {}) {
   validateCatalogVersions(root, diagnostics);
   validateTemplate(root.template, diagnostics);
   const formContext = validateForm(root.form, diagnostics);
+  if (mode === "execute") diagnostics.push(...remoteDialogDiagnostics(root.form));
   validateFormRules(root.formRules, diagnostics, { mode, form: root.form, scripts: root.scripts });
   validateScripts(root.scripts, diagnostics, {
     mode,
@@ -332,7 +334,7 @@ function validateForm(form, diagnostics) {
   const detailColumnIdsByTable = new Map(
     (form.fields || [])
       .filter((field) => field?.type === "detailTable")
-      .map((field) => [field.id, new Set((field.columns || []).map((column) => column?.id).filter(nonEmptyString))])
+      .map((field) => [field.id, new Set((Array.isArray(field.columns) ? field.columns : []).map((column) => column?.id).filter(nonEmptyString))])
   );
   validateAggregateCalculationReferences(
     form.fields,
@@ -355,7 +357,7 @@ function validateAggregateCalculationReferences(fields, detailColumnIdsByTable, 
       );
       return;
     }
-    (field.columns || []).forEach((column, columnIndex) => {
+    (Array.isArray(field.columns) ? field.columns : []).forEach((column, columnIndex) => {
       validateAggregateCalculationReference(
         column,
         `/form/fields/${fieldIndex}/columns/${columnIndex}`,
@@ -648,7 +650,7 @@ function collectDataAuthorityFieldIds(fields) {
     if (!isRecord(field)) continue;
     if (nonEmptyString(field.id)) ids.add(field.id);
     if (field.type !== "detailTable") continue;
-    for (const column of field.columns || []) {
+    for (const column of Array.isArray(field.columns) ? field.columns : []) {
       if (nonEmptyString(column?.id)) ids.add(column.id);
     }
   }

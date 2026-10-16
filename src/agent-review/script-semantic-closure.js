@@ -108,7 +108,7 @@ export function validateRowMarkerBranchSemantics({
     const stateMismatch = compareScenarioStates(sourceModel.states, targetModel.states);
     return stateMismatch
       ? invalid("row_branch_association_changed", stateMismatch)
-      : validateOrderedRowEffects(source, reviewedFunction, resolved, canonicalTarget, sourceModel.conditions, { auditedOrphanMarkers, sourceControls, sourceForm, targetFields });
+      : validateOrderedRowEffects(source, reviewedFunction, resolved, canonicalTarget, sourceModel.conditions, { auditedOrphanMarkers, sourceControls, sourceForm, sourceScripts, sourceRefs, targetFields });
   }
 
   const conditional = targetConditionalRowModel(
@@ -138,7 +138,7 @@ export function validateRowMarkerBranchSemantics({
   if (stateMismatch) {
     return invalid("row_branch_association_changed", stateMismatch);
   }
-  return validateOrderedRowEffects(source, reviewedFunction, resolved, canonicalTarget, sourceModel.conditions, { auditedOrphanMarkers, sourceControls, sourceForm, targetFields });
+  return validateOrderedRowEffects(source, reviewedFunction, resolved, canonicalTarget, sourceModel.conditions, { auditedOrphanMarkers, sourceControls, sourceForm, sourceScripts, sourceRefs, targetFields });
 }
 
 // A timer is part of the action, not a transparent wrapper. This recognizer
@@ -220,6 +220,10 @@ function timedRowEnvelope(text, program, legacy) {
 // Tokens retain observable reads and each row dimension in statement order,
 // including separate if/else branches. This is not a JavaScript evaluator.
 function timedRowTokens(node, context) {
+  if (!context.diagnosticBindings) {
+    const tokens = timedRowTokens(node, { ...context, diagnosticBindings: new Map() });
+    return tokens && uniqueDiagnosticReads(tokens) ? tokens : undefined;
+  }
   const { text, resolver, legacy, resolved, canonicalTarget } = context;
   if (node.type === "EmptyStatement") return [];
   if (node.type === "BlockStatement" || node.type === "Program") {
@@ -236,7 +240,9 @@ function timedRowTokens(node, context) {
           if (condition.kind !== "eq" || declaration.init.type === "Identifier") return undefined;
           context.aliases.set(declaration.id.name, condition);
         } else if (!resolver.trace(value, { beforeIndex: declaration.init.start })) return undefined;
-        return rowExpressionReads(declaration.init, context);
+        const reads = rowExpressionReads(declaration.init, context);
+        rememberDiagnosticRead(declaration, reads, context);
+        return reads;
       });
       return declarations.every(Boolean) ? declarations.flat() : undefined;
     }
@@ -245,8 +251,10 @@ function timedRowTokens(node, context) {
       const trace = resolver.trace(text.slice(declaration.init.start, declaration.init.end), {
         beforeIndex: declaration.init.start
       });
-      return trace?.origin?.startsWith("field:") && !trace.transforms?.length
-        ? { kind: "read", field: trace.origin } : undefined;
+      if (!trace?.origin?.startsWith("field:") || trace.transforms?.length) return undefined;
+      const read = { kind: "read", field: trace.origin };
+      rememberDiagnosticRead(declaration, [read], context);
+      return read;
     });
     return reads.every(Boolean) ? reads : undefined;
   }
@@ -265,8 +273,9 @@ function timedRowTokens(node, context) {
     if (!condition || !context.atomic && (!["eq", "or"].includes(condition.kind) || !condition.operand?.startsWith("field:")) ||
         node.consequent.type !== "BlockStatement" ||
         node.alternate && !["BlockStatement", "IfStatement"].includes(node.alternate.type)) return undefined;
-    const yes = timedRowTokens(node.consequent, context);
-    const no = node.alternate ? timedRowTokens(node.alternate, context) : [];
+    const branchContext = () => ({ ...context, diagnosticBindings: new Map(context.diagnosticBindings) });
+    const yes = timedRowTokens(node.consequent, branchContext());
+    const no = node.alternate ? timedRowTokens(node.alternate, branchContext()) : [];
     const reads = context.atomic ? rowExpressionReads(node.test, context) : [];
     return yes && no && reads ? [...reads, { kind: "if", condition, yes, no }] : undefined;
   }
@@ -277,6 +286,8 @@ function timedRowTokens(node, context) {
   }
   if (node.type !== "ExpressionStatement" || node.expression.type !== "CallExpression" || node.expression.optional) return undefined;
   const call = node.expression;
+  const diagnostic = rowDiagnosticToken(call, context);
+  if (diagnostic) return [diagnostic];
   if (legacy) {
     if (call.callee.type === "Identifier" && call.callee.name === "common_dom_row_set_show_required_reset" &&
         resolver.isUnshadowedGlobal(call.callee.name, call.start) && call.arguments.length === 4 &&
@@ -288,14 +299,6 @@ function timedRowTokens(node, context) {
         kind: "attribute", target: canonicalTarget(target), attribute
       }));
     }
-    const callee = call.callee;
-    if (callee.type === "MemberExpression" && !callee.computed && !callee.optional &&
-        callee.object?.type === "Identifier" && callee.object.name === "console" &&
-        resolver.isUnshadowedGlobal("console", call.start) &&
-        JS_METHOD_CATALOG.staticMethods.some(entry => entry.name === `console.${callee.property?.name}` &&
-          entry.status === "supported" && entry.notes?.startsWith("Debug only")) &&
-        call.arguments.every(argument => argument.type === "Literal" ||
-          argument.type === "Identifier" && resolver.trace(argument.name, { beforeIndex: argument.start }))) return [];
     return undefined;
   }
   const callee = call.callee;
@@ -317,6 +320,82 @@ function timedRowTokens(node, context) {
   const [target, attribute] = call.arguments.map(argument => argument.value);
   return resolved.has(target) && [3, 4, 5, 6].includes(attribute)
     ? [{ kind: "attribute", target, attribute }] : undefined;
+}
+
+function rememberDiagnosticRead(declaration, reads, context) {
+  if (reads?.length === 1 && reads[0].kind === "read" &&
+      (timedFieldRead(declaration.init, context) || orderedHiddenStringRead(declaration.init, context))) {
+    context.diagnosticBindings.set(declaration.init.start, reads[0].field);
+  }
+}
+
+// The synchronous row grammar already admits this indexed value getter for
+// retained hidden String fields. It is not a DOM handle or a timer extension.
+function orderedHiddenStringRead(node, { atomic, legacy, resolver, sourceForm, sourceControls, targetFields }) {
+  if (!atomic || !legacy || sourceForm?.controls !== sourceControls ||
+      node?.type !== "MemberExpression" || node.optional || !node.computed ||
+      node.property.type !== "Literal" || node.property.value !== 0 ||
+      node.object.type !== "CallExpression" || node.object.optional ||
+      node.object.callee.type !== "Identifier" || node.object.callee.name !== "GetXFormFieldValueById" ||
+      !resolver.isUnshadowedGlobal("GetXFormFieldValueById", node.start) || node.object.arguments.length !== 1 ||
+      node.object.arguments[0].type !== "Literal" || typeof node.object.arguments[0].value !== "string") return false;
+  const id = node.object.arguments[0].value;
+  const matches = (sourceForm.dataFields || []).filter(field => field.id === id);
+  const all = [...(sourceForm.controls || []), ...(sourceForm.dataFields || []),
+    ...(sourceForm.detailTables || []).flatMap(table => table.columns || table.controls || [])];
+  if (matches.length !== 1 || all.filter(field => field.id === id).length !== 1) return false;
+  const field = matches[0], props = field.sourceProps || {}, values = props.designerValues || {};
+  const targets = (targetFields || []).filter(target => target.id === id);
+  if (!field.sourceRef || all.filter(item => item.sourceRef === field.sourceRef).length !== 1 ||
+      targets.length !== 1) return false;
+  const target = targets[0], targetSource = target.sourceProps || {};
+  return field.sourceType === "text" && props.hardHidden === true && props.designerType === "inputText" &&
+    props.designerId === id && values.id === id && values.dataType === "String" && values.canShow === "false" &&
+    props.metadataId === id && props.metadataKind === "simple" && props.metadataAttributes?.name === id &&
+    props.metadataAttributes?.type === "String" && props.metadataAttributes?.kind === "simple" &&
+    props.metadataAttributes?.canDisplay === "false" && target.type === "text" && target.componentId === "xform-hidden" &&
+    target.sourceRef === field.sourceRef && targetSource.hardHidden === true && targetSource.designerId === id &&
+    targetSource.metadataId === id && targetSource.metadataKind === "simple" &&
+    targetSource.metadataAttributes?.name === id && targetSource.metadataAttributes?.type === "String" &&
+    targetSource.metadataAttributes?.canDisplay === "false";
+}
+
+function rowDiagnosticToken(call, context) {
+  const { resolver } = context, callee = call.callee;
+  if (callee.type !== "MemberExpression" || callee.computed || callee.optional ||
+      callee.object?.type !== "Identifier" || callee.object.name !== "console" ||
+      callee.property?.name !== "log" || !resolver.isUnshadowedGlobal("console", call.start)) return undefined;
+  const args = call.arguments.map(argument => {
+    if (argument.type === "Literal" && (argument.value === null ||
+        ["string", "boolean"].includes(typeof argument.value) ||
+        typeof argument.value === "number" && Number.isFinite(argument.value))) {
+      return { kind: "literal", type: argument.value === null ? "null" : typeof argument.value, value: argument.value };
+    }
+    if (argument.type !== "Identifier") return undefined;
+    const trace = resolver.trace(argument.name, { beforeIndex: argument.start });
+    if (!trace || trace.transforms?.length) return undefined;
+    if (trace.origin === "event:value") return { kind: "event" };
+    const declaration = resolver.stableInitializer(argument.name, { beforeIndex: argument.start, sameFunction: true });
+    return declaration && context.diagnosticBindings.get(declaration.expressionIndex) === trace.origin
+      ? { kind: "field", field: trace.origin } : undefined;
+  });
+  return args.every(Boolean) ? { kind: "diagnostic", method: "console.log", args } : undefined;
+}
+
+// A field origin alone cannot identify which value snapshot was logged.
+// Restrict the new local diagnostics to one explicit read in this callback;
+// callbacks without field diagnostics keep their existing read grammar.
+function uniqueDiagnosticReads(tokens) {
+  const reads = new Map(), logged = new Set();
+  function visit(items) {
+    for (const token of items) {
+      if (token.kind === "read") reads.set(token.field, (reads.get(token.field) || 0) + 1);
+      if (token.kind === "diagnostic") for (const arg of token.args) if (arg.kind === "field") logged.add(arg.field);
+      if (token.kind === "if") { visit(token.yes); visit(token.no); }
+    }
+  }
+  visit(tokens);
+  return [...logged].every(field => reads.get(field) === 1);
 }
 
 function timedFieldRead(node, context) {
@@ -602,7 +681,7 @@ function stableSourceValueGetter({ sourceScripts, sourceRefs }) {
 // Complete synchronous closure reuses the timer's token walk. Old branch-state
 // checks still own condition association; tokens additionally retain every read
 // and effect, including duplicates and prelude effects that a final-state map loses.
-function validateOrderedRowEffects(source, reviewed, resolved, canonicalTarget, conditions, fieldEvidence) {
+export function validateOrderedRowEffects(source, reviewed, resolved, canonicalTarget, conditions, fieldEvidence) {
   const before = synchronousRowEnvelope(source, true), after = synchronousRowEnvelope(reviewed, false);
   if (!before || !after) return invalid("row_ordered_shape_unproven");
   const clears = orderedChoiceClearEvidence(source, reviewed, before, fieldEvidence);
@@ -812,7 +891,9 @@ function validateOrTargetShape(source, reviewed) {
         const primitive = member?.type === "Identifier" && ["String", "Number"].includes(member.name) &&
           resolver.isUnshadowedGlobal(member.name, node.start) &&
           resolver.trace(reviewed.slice(node.start, node.end), { beforeIndex: node.start });
-        if (!primitive) ok = false;
+        const diagnostic = member?.type === "MemberExpression" && member.object?.name === "console" &&
+          orSourceExpressionSupported(node, resolver, reviewed);
+        if (!primitive && !diagnostic) ok = false;
       }
     }
     if (node.type === "IfStatement") {

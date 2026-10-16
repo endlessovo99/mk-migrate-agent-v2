@@ -431,8 +431,8 @@ function buildFormulaConditionItem(rule, branch, formIndex, nativeIndex) {
     fieldName: "",
     fieldKey: "",
     label: "",
-    tableType: "main",
-    type: "main",
+    tableType: "",
+    type: "",
     operate: "",
     valueType: "formula",
     value: {

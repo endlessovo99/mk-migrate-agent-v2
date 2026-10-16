@@ -363,6 +363,20 @@ describe("detail footer total Route case", () => {
     });
     const trust = checkTrust(sourceDraft, trusted);
     assert.equal(trust.ok, true, JSON.stringify(trust.diagnostics));
+    const missingDiagnostic = structuredClone(trusted);
+    missingDiagnostic.scripts.actions[actionIndexes.change].function =
+      missingDiagnostic.scripts.actions[actionIndexes.change].function.replace('    console.log("check来了C这里");', "");
+    assert.notEqual(missingDiagnostic.scripts.actions[actionIndexes.change].function,
+      trusted.scripts.actions[actionIndexes.change].function);
+    assert.equal(checkTrust(sourceDraft, missingDiagnostic).ok, false,
+      "Native row ownership must not permit deleting a residual branch diagnostic");
+    const changedNativeRule = structuredClone(trusted);
+    const nativeRuleId = changedNativeRule.scripts.actions[actionIndexes.change].coverage.nativeRules[0];
+    assert.ok(nativeRuleId);
+    const nativeRule = changedNativeRule.formRules.linkage.find(rule => rule.id === nativeRuleId);
+    nativeRule.effects[0].value = !nativeRule.effects[0].value;
+    assert.equal(checkTrust(sourceDraft, changedNativeRule).ok, false,
+      "The residual proof view cannot borrow altered native row effects");
     const plan = buildDryRunPlan(trusted);
     assert.equal(plan.ok, true, JSON.stringify(plan.diagnostics));
     assert.equal(
@@ -494,6 +508,7 @@ function timedLoadVisibilityFunction() {
   return ["function onLoad() {", "setTimeout(function () {",
     ...names.flatMap(name => effects(name, false)),
     'var current = MKXFORM.getValue("fd_3c66895473ff5c");',
+    'console.log("之前选的", current);',
     ...branches.flatMap(([value, visible, order], index) => [
       `${index ? "else if" : "if"} (current === "${value}") {`,
       ...order.flatMap(name => effects(name, name === visible)), "}"
@@ -504,10 +519,11 @@ function changeHelperFunction(helperFieldId) {
   const values = ["A", "B", "C", "D"];
   return [
     "function onChange(value, rowNum, parentRowNum) {",
-    "  var selectedValue = Array.isArray(value) ? value[0] : value",
+    '  console.log("选的是", value);',
     ...values.flatMap((value, index) => [
-      `  ${index === 0 ? "if" : "else if"} (String(selectedValue || \"\").indexOf(${JSON.stringify(value)}) >= 0) {`,
+      `  ${index === 0 ? "if" : "else if"} (value.indexOf(${JSON.stringify(value)}) >= 0) {`,
       `    MKXFORM.setValue(${JSON.stringify(helperFieldId)}, ${JSON.stringify(value)})`,
+      ...(value === "C" ? ['    console.log("check来了C这里");'] : value === "D" ? ['    console.log("check来了D这里");'] : []),
       "  }"
     ]),
     "  else {",

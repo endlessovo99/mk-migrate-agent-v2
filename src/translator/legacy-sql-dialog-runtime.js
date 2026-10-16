@@ -16,23 +16,18 @@ export function legacySqlDialogRuntimeCandidate(source = {}, form = {}) {
     scope: "global",
     javascript: text,
     function: "",
-    translationStatus: "omitted",
-    coverage: { status: "covered", nativeRules: [], residuals: [] },
+    translationStatus: "needs_review",
+    coverage: { status: "uncovered", nativeRules: [], residuals: [{
+      code: "script.residual.remote_dialog_unbound",
+      message: "Generated SQL lookup and callback behavior has no verified target implementation.",
+      sourceRef
+    }] },
     functionMappings: [{
       source: `generated SQLDialog Dialog_List runtime for ${fieldId}`,
-      target: "visible required text field; remote SQL lookup remains manual",
-      basis: "legacy-runtime-noop",
-      reviewRequired: false
+      target: "unimplemented remote lookup and callback",
+      basis: "untranslated-source",
+      reviewRequired: true
     }],
-    sourceRefs: [sourceRef],
-    semanticHints: {
-      coveredLegacyFunctions: ["Dialog_List", "RegExp", "rtnVal.GetHashMapArray"],
-      coveredCalculationRanges: [{
-        sourceRef,
-        name: "legacySqlDialogRuntime",
-        start: 0,
-        end: Math.max(1, text.length)
-      }]
-    }
+    sourceRefs: [sourceRef]
   };
 }

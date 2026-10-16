@@ -1,3 +1,4 @@
+import { choiceOtherSourceErrors } from "../dsl/source-choice-other-companion.js";
 import { isValidCheckpointSigningKey } from "./checkpoint.js";
 import { AGENT_REVIEW_PROMPT_VERSION } from "./prompt.js";
 import { OpenAIResponsesReviewProvider } from "./provider.js";
@@ -37,7 +38,12 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
   const checkpointEnabled = isValidCheckpointSigningKey(checkpointSigningKey);
   const resumeRequested = options.resumeCheckpoint !== undefined;
   const checkpointRequested = resumeRequested || typeof options.onCheckpoint === "function";
-  const inputDiagnostics = validateInputs(sourceDraft, dslDraft);
+  const inputDiagnostics = [
+    ...validateInputs(sourceDraft, dslDraft),
+    ...choiceOtherSourceErrors(sourceDraft?.form)
+      .filter(item => ["source.form.choice_other_detail_layout_unproven", "source.form.choice_other_reserved_value_unproven"].includes(item.code))
+      .map(item => ({ ...item, level: "error" }))
+  ];
   if (inputDiagnostics.length) {
     const result = blockedResult({
       ...metadata,

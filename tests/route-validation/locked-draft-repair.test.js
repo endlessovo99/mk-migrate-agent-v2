@@ -211,6 +211,28 @@ describe("scoped locked-draft repair Route", () => {
     assert.equal(client.calls.filter((call) => call.operation === "add-transfer-record").length, 1);
   });
 
+  it("rejects retained calculation evidence whose unchanged source still has an unbound SQL selector", async () => {
+    const fixture = calculationFixture({ historicalRemote: true });
+    const sourceFields = [
+      ...(fixture.sourceDraft.form.controls || []),
+      ...(fixture.sourceDraft.form.dataFields || []),
+      ...(fixture.sourceDraft.form.detailTables || []).flatMap((table) => table.columns || [])
+    ];
+    assert.ok(sourceFields.some((field) => field.sourceProps?.designerType === "SQLDialog"));
+    const client = new LockedDraftFakeClient(fixture.template);
+    const result = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
+      client,
+      sourceDraft: fixture.sourceDraft,
+      priorExecutionReport: fixture.priorExecutionReport,
+      repairKind: "calculation"
+    }));
+
+    assert.equal(result.ok, false);
+    assert.ok(result.diagnostics.some((item) => item.code === "trust.form.remote_dialog_unbound"));
+    assert.equal(client.calls.length, 0);
+    assert.equal(client.hasWrite(), false);
+  });
+
   it("fails readback and withholds the record when unrelated native state changes", async (t) => {
     const fixture = authorizationFixture();
     const client = new LockedDraftFakeClient(fixture.template, fixture.workflow);
@@ -491,9 +513,11 @@ function authorizationFixture({ historical = false } = {}) {
   };
 }
 
-function calculationFixture() {
+function calculationFixture({ historicalRemote = false } = {}) {
   const sourceDraft = cleanSourceFile(
-    "tests/fixtures/source4/188d28d4a52c772acda09c04a739f0c0/188d28da17a2f4450dcc7af497f9e9e3_SysFormTemplate.xml"
+    historicalRemote
+      ? "tests/fixtures/source4/188d28d4a52c772acda09c04a739f0c0/188d28da17a2f4450dcc7af497f9e9e3_SysFormTemplate.xml"
+      : "tests/fixtures/route-validation/locked-draft-calculation/locked-calculation_SysFormTemplate.xml"
   );
   // This recovery fixture represents retained v14 evidence, before content-flow
   // capture and the additional native hidden-label capabilities existed.

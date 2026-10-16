@@ -1,4 +1,9 @@
+import { choiceOtherCompanionDiagnostics } from "../dsl/source-choice-other-companion.js";
+import { mobileCaptionSourceDiagnostics } from "../dsl/source-mobile-caption-grid.js";
+import { radioSourceDiagnostics } from "../dsl/source-radio-layout.js";
+import { detailRowSourceEffectDiagnostics } from "../dsl/source-detail-row-effects.js";
 import { checkDraft } from "../dsl/checks.js";
+import { remoteDialogSourceDiagnostics } from "../dsl/remote-dialog.js";
 import { selectEmptyEventProof } from "../dsl/source-select-empty-event.js";
 import { draftSourceDraft } from "../translator/dsl-draft.js";
 import { componentSupportsProp } from "../dsl/catalogs.js";
@@ -207,7 +212,7 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
       const field = sourceDraft.form.controls.find(field => field.id === expected.controlId);
       if (!field?.sourceProps?.runtimeSelectEmpty || expected.event !== "onChange" ||
           !expected.branchProvenance?.conditions?.some(condition => condition.kind === "contains" && condition.origin === "event:value") ||
-          !expected.coverage?.residuals?.some(residual => residual.code === "script.residual.field_value_assignment")) continue;
+          !(expected.coverage?.residuals?.length > 0)) continue;
       if ((patchedDraft.scripts?.actions || []).filter(action => action.id === expected.id && action.sourceActionKey === expected.sourceActionKey).length !== 1) {
         emptyEventDiagnostics.push(error("agent.patch.select_empty_owner_missing", "A source-backed select event action cannot be deleted or replaced by another owner.", "/scripts/actions", { actionId: expected.id }));
       }
@@ -217,6 +222,7 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     const sourceAction = fixedActions.find(expected => expected.id === action.id && expected.sourceActionKey === action.sourceActionKey) || dslDraft.scripts?.actions?.[index];
     const proof = selectEmptyEventProof(action, { sourceAction,
       sourceForm: sourceDraft?.form || dslDraft.form, targetForm: patchedDraft.form,
+      sourceScripts: sourceDraft?.scripts?.sources,
       sourceFormRules: fixedFormRules, targetFormRules: patchedDraft.formRules, authoritative: true });
     if (!proof.ok || proof.adapted && !sourceDraft) {
       emptyEventDiagnostics.push(error("agent.patch.select_empty_event_unverified", "Native select null adaptation requires fixed source empty-choice evidence and the original owner, predicate and effects.",
@@ -241,7 +247,21 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     proofDraft,
     acceptedPatches
   );
+  let sourceEffectActions = dslDraft.scripts?.actions || [];
+  let fixedSourceForm = dslDraft.form;
+  const sourceEffectDiagnostics = [];
+  if (sourceDraft) {
+    try { const fixed = draftSourceDraft(sourceDraft); sourceEffectActions = fixed.scripts?.actions || []; fixedSourceForm = fixed.form; }
+    catch { sourceEffectDiagnostics.push(error("agent.patch.detail_row_source_rebuild_failed",
+      "Fixed source script effects could not be independently rebuilt.", "/scripts/actions")); }
+  }
   const closureDiagnostics = [
+    ...(sourceDraft ? choiceOtherCompanionDiagnostics(sourceDraft.form, patchedDraft.form, fixedSourceForm, { prefix: "agent.patch.form" }) : []),
+    ...(sourceDraft ? mobileCaptionSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
+    ...(sourceDraft ? radioSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
+    ...sourceEffectDiagnostics,
+    ...detailRowSourceEffectDiagnostics(sourceEffectActions, patchedDraft.scripts?.actions || [], { prefix: "agent.patch" }),
+    ...remoteDialogSourceDiagnostics(sourceDraft?.form, patchedDraft.form, { prefix: "agent.patch.form" }),
     ...emptyEventDiagnostics,
     ...validateReadyLifecycleClosures(dslDraft, patchedDraft, acceptedPatches, sourceDraft),
     ...rowMarkerDiagnostics,

@@ -75,35 +75,20 @@ describe("four blocking route capabilities", () => {
     );
 
     const lifecycle = actionFor("detail_row_lifecycle");
-    assert.equal(lifecycle.translationStatus, "mapped");
-    assert.equal(lifecycle.coverage.status, "translated");
-    assert.deepEqual(lifecycle.coverage.nativeRules, []);
-    assert.deepEqual(lifecycle.coverage.residuals, []);
-    assert.equal(lifecycle.recipe.reviewRuleIds == null, true);
+    assert.equal(lifecycle.translationStatus, "needs_review");
+    assert.equal(lifecycle.coverage.status, "partial");
+    assert.deepEqual(lifecycle.coverage.nativeRules, ["linkage.fd_trigger.contains.restricted"]);
+    assert.equal(lifecycle.coverage.residuals.some(residual =>
+      residual.code === "script.residual.detail_row_lifecycle_unproven"), true);
+    assert.equal(lifecycle.recipe.reviewRuleIds.length, 0);
     assert.deepEqual(lifecycle.recipe.rowLifecycle, {
       existingRows: "on_load_initialization",
       addedRows: "native_detail_control_event",
       deletedRows: "native_detail_runtime",
       legacyDomCleanup: "not_applicable_native_runtime"
     });
-    assert.equal(
-      lifecycle.functionMappings?.some((mapping) => mapping.basis === "deterministic-detail-row-lifecycle"),
-      true
-    );
-    assert.equal(
-      lifecycle.function.includes(
-        'MKXFORM.setDetailFieldItemAttr("${table:fd_detail}", active ? 5 : 4, rowNum, "${table:fd_detail}.fd_target_detail")'
-      ),
-      true,
-      lifecycle.function
-    );
-    assert.equal(
-      lifecycle.function.includes(
-        'MKXFORM.setDetailFieldItemAttr("${table:fd_detail}", active ? 3 : 6, rowNum, "${table:fd_detail}.fd_target_detail")'
-      ),
-      true,
-      lifecycle.function
-    );
+    assert.match(lifecycle.function, /wireRows\(\)/);
+    assert.equal(lifecycle.function.includes("MKXFORM.setDetailFieldItemAttr"), false);
 
     const actionIndexes = draft.scripts.actions
       .map((action, index) => ({ action, index }))
@@ -118,7 +103,7 @@ describe("four blocking route capabilities", () => {
     assert.equal(opportunities.includes("dependent_select_options_candidate"), true);
     assert.equal(opportunities.includes("attachment_non_empty_candidate"), true);
     assert.equal(opportunities.includes("detail_row_visibility_candidate"), false);
-    assert.equal(opportunities.includes("detail_row_load_initialization_candidate"), false);
+    assert.equal(opportunities.includes("detail_row_load_initialization_candidate"), true);
     const gatedRowAction = draft.scripts.actions.find((action) =>
       action.coverage?.nativeRules?.includes("linkage.fd_trigger.contains.restricted")
     );

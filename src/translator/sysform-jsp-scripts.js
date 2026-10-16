@@ -45,10 +45,9 @@ import { multiRadioRowHelperCandidates } from "./multi-radio-row-helper.js";
 import { detailCascadeActionCandidates } from "./detail-cascade-actions.js";
 import {
   buildDetailRowControlStateFunction,
-  buildDetailRowLifecycleFunction,
   coveredRangesForText,
-  detailMatchValue as detailControlMatchValue,
-  isCompleteDetailControlDisplay
+  detailControlDisplayProof,
+  detailControlDisplayBindingProof
 } from "./detail-row-control-state.js";
 import {
   travelReimbursementLifecycleCandidates
@@ -4340,8 +4339,11 @@ function extractDetailControlDisplayCandidates(source) {
     javascript
   };
 
-  if (isCompleteDetailControlDisplay(parts.functionText) && parts.hiddenControlId) {
-    const matchValue = detailControlMatchValue(parts.functionText);
+  const proof = detailControlDisplayProof(parts.functionText);
+  if (proof && proof.tableId === parts.trigger.tableId && proof.tableId === parts.target.tableId &&
+      proof.targetControlId === parts.target.controlId && proof.hiddenControlId === parts.hiddenControlId &&
+      detailControlDisplayBindingProof(text, parts.trigger)) {
+    const matchValue = proof.matchValue;
     const mappedParts = {
       ...parts,
       tableId: parts.trigger.tableId,
@@ -4382,6 +4384,16 @@ function extractDetailControlDisplayCandidates(source) {
   return [{
     ...base,
     ...recipeCandidate,
+    translationStatus: "needs_review",
+    coverage: {
+      status: "uncovered", nativeRules: [], residuals: [{
+        code: "script.residual.detail_row_effect_unproven",
+        type: "detailRowEffectUnproven",
+        message: "The complete detail-row helper effects are not represented by the proven hidden/display/required recipe.",
+        sourceRef: source.sourceRef || source.id,
+        evidence: parts.functionText
+      }]
+    },
     semanticHints: [{
       kind: "detail_row_visibility",
       triggerTableId: parts.trigger.tableId,
@@ -4488,56 +4500,6 @@ function extractWindowLoadCandidates(source, options = {}) {
         : match.index + match[0].lastIndexOf("function")
     };
 
-    if (
-      detailDisplay &&
-      isCompleteDetailControlDisplay(detailDisplay.functionText) &&
-      detailDisplay.hiddenControlId
-    ) {
-      const matchValue = detailControlMatchValue(detailDisplay.functionText);
-      const mappedParts = {
-        ...detailDisplay,
-        tableId: detailDisplay.trigger.tableId,
-        triggerControlId: detailDisplay.trigger.controlId,
-        targetControlId: detailDisplay.target.controlId,
-        matchValue
-      };
-      const fn = buildDetailRowLifecycleFunction(mappedParts);
-      const sourceRef = source.sourceRef || source.id;
-      candidates.push({
-        ...base,
-        function: fn,
-        translationStatus: "mapped",
-        coverage: { status: "translated", nativeRules: [], residuals: [] },
-        functionMappings: [{
-          source: "exact window-load detail-row controlDisplay initialization",
-          target: "global onLoad + MKXFORM.getValue/updateControl/updateControlStyle/setDetailFieldItemAttr",
-          basis: "deterministic-detail-row-lifecycle",
-          reviewRequired: false
-        }],
-        recipe: {
-          kind: "detail_row_lifecycle",
-          tableId: detailDisplay.trigger.tableId,
-          triggerControlId: detailDisplay.trigger.controlId,
-          targetControlId: detailDisplay.target.controlId,
-          hiddenControlId: detailDisplay.hiddenControlId,
-          matchValue,
-          rowLifecycle: {
-            existingRows: "on_load_initialization",
-            addedRows: "native_detail_control_event",
-            deletedRows: "native_detail_runtime",
-            legacyDomCleanup: "not_applicable_native_runtime"
-          }
-        },
-        semanticHints: {
-          coveredCalculationRanges: coveredRangesForText(text, javascript, {
-            sourceRef,
-            name: "window.load"
-          })
-        }
-      });
-      continue;
-    }
-
     const lifecycle = detailDisplay
       ? detailRowLifecycleCandidate(detailDisplay, options.formRules, source.sourceRef)
       : undefined;
@@ -4545,6 +4507,18 @@ function extractWindowLoadCandidates(source, options = {}) {
       ...base,
       ...(lifecycle || {}),
       ...(detailDisplay ? {
+        translationStatus: "needs_review",
+        coverage: {
+          ...(lifecycle?.coverage || { nativeRules: [] }),
+          status: lifecycle?.coverage?.nativeRules?.length ? "partial" : "uncovered",
+          residuals: [...(lifecycle?.coverage?.residuals || []), {
+            code: "script.residual.detail_row_lifecycle_unproven",
+            type: "detailRowLifecycleUnproven",
+            message: "Window-load wiring and initialization require a complete source-equivalent lifecycle translation; a row-state helper alone does not prove this listener.",
+            sourceRef: source.sourceRef || source.id,
+            evidence: javascript
+          }]
+        },
         semanticHints: [{
           kind: "detail_row_load_initialization",
           triggerTableId: detailDisplay.trigger.tableId,
@@ -4557,7 +4531,7 @@ function extractWindowLoadCandidates(source, options = {}) {
             "MKXFORM.updateControlStyle",
             "MKXFORM.setDetailFieldItemAttr"
           ],
-          evidence: "Legacy window-load code initializes same-row detail control display from existing row values."
+          evidence: "Legacy window-load code accompanies a same-row helper; its wiring, conditions and initialization have not been proven equivalent to native lifecycle behavior."
         }]
       } : {})
     });

@@ -1,6 +1,54 @@
 import { parse } from "acorn";
 import { DETAIL_TABLE_IDS, FIELD_IDS } from "./travel-reimbursement-lifecycle-contract.js";
 
+const SUBMIT_DETAIL_HELPERS = new Map([
+  ["_DocList_FormFieldValue", `function _DocList_FormFieldValue(tbId, fieldId) {
+    var detailFieldId = buildDetailTableFieldId(tbId, fieldId);
+    var tbInfo = DocList_TableInfo["TABLE_DL_" + tbId];
+    var fieldValue = [];
+    if (tbInfo) {
+        for (var i = 0; i < tbInfo.lastIndex - 1; i++) {
+            var rowFieldId = detailFieldId.replace('!{index}', i);
+            var rowFieldValue = getFormFieldValue(rowFieldId, 'table');
+            if (rowFieldValue) {
+                fieldValue.push(rowFieldValue);
+            }
+        }
+    }
+    return fieldValue;
+}`],
+  ["buildDetailTableFieldId", `function buildDetailTableFieldId(tbId, columnId) {
+    return 'extendDataFormInfo.value(' + tbId + '.!{index}.' + columnId + ')';
+}`],
+  ["getFormFieldValue", `function getFormFieldValue(elementId, type, containSelectText) {
+    if (type == 'radio') {
+        return $('input[name="extendDataFormInfo.value(' + elementId + ')"]:checked').val();
+    } else if (type == 'select') {
+        return $('select[name="extendDataFormInfo.value(' + elementId + ')"]').val();
+    } else if (type == 'table') {
+        var doms = $('[name="' + elementId + '"]');
+        if (doms && doms.length > 0) {
+            if (doms[0].type == 'radio') {
+                return $('[name="' + elementId + '"]:checked').val();
+            } else if (doms[0].tagName === 'SELECT' && containSelectText) {
+                var field = $('[name="' + elementId + '"]');
+                var text = field.find("option:selected").text();
+                var val = field.val();
+                return ((text ? text : '') + "|" + (val ? val : ''));
+            }
+        }
+        return $('[name="' + elementId + '"]').val();
+    } else {
+        var elementVal = $('[name="' + elementId + '"]').val();
+        if (elementVal) {
+            return elementVal;
+        }
+        var elementVal = GetXFormFieldValueById(elementId);
+        return elementVal && elementVal.length == 1 ? elementVal[0] : elementVal;
+    }
+}`]
+].map(([name, text]) => [name, parseScriptAst(text).body[0]]));
+
 export function inspectTravelReimbursementStaticEvidence({
   sources,
   wbsSource,
@@ -73,6 +121,179 @@ export function hasExactTravelReimbursementBehaviorEvidence({
     hasExactTwoDecimalRounding(roundingText) &&
     hasExactPayeeNativeCalculations(form)
   );
+}
+
+export function inspectTravelSubmitDetailHelpers({ sources, submitText, form }) {
+  const declarations = new Map([...SUBMIT_DETAIL_HELPERS.keys()].map((name) => [name, []]));
+  for (const source of sources) {
+    if (source.displayGate === "xform:viewShow") continue;
+    const ast = parseScriptAst(source.javascript);
+    if (!ast) return undefined;
+    const nodes = collectAstNodes(ast);
+    const helperDeclarations = nodes.filter((node) =>
+      node.type === "FunctionDeclaration" && declarations.has(node.id?.name)
+    );
+    if (
+      helperDeclarations.some((node) => !ast.body.includes(node)) ||
+      (helperDeclarations.length && ast.body.some((node) => node.type !== "FunctionDeclaration")) ||
+      (helperDeclarations.length && source.displayGate && source.displayGate !== "xform:editShow") ||
+      nodes.some((node) => helperBindingIsOverwritten(node, declarations))
+    ) return undefined;
+    for (const node of helperDeclarations) {
+      declarations.get(node.id.name).push({ source, node });
+    }
+  }
+
+  const ranges = [];
+  for (const [name, entries] of declarations) {
+    // Function declarations in one script are hoisted; its last declaration wins.
+    // Cross-script overrides have no proven ordering contract here.
+    if (!entries.length || new Set(entries.map((entry) => entry.source)).size !== 1) {
+      return undefined;
+    }
+    const effective = entries.at(-1);
+    if (!sameAst(effective.node, SUBMIT_DETAIL_HELPERS.get(name))) return undefined;
+    ranges.push({ sourceRef: effective.source.sourceRef, name,
+      start: effective.node.start, end: effective.node.end });
+  }
+
+  const columns = [
+    { tableId: DETAIL_TABLE_IDS.project, fieldId: "fd_bseg_projk" },
+    { tableId: DETAIL_TABLE_IDS.payee, fieldId: "fd_card_number" }
+  ];
+  if (
+    !columns.every((binding) => isSourceDetailTextColumn(form, binding)) ||
+    !hasExactSubmitHelperBindings(submitText)
+  ) return undefined;
+  return { ranges, sourceRefs: [...new Set(ranges.map((range) => range.sourceRef))], columns };
+}
+
+function helperBindingIsOverwritten(node, names) {
+  const target = node.type === "AssignmentExpression" ? node.left
+    : node.type === "UpdateExpression" ? node.argument
+      : node.type === "VariableDeclarator" ? node.id : undefined;
+  if (target?.type === "Identifier" && names.has(target.name)) return true;
+  if (["ObjectPattern", "ArrayPattern"].includes(target?.type) &&
+    collectAstNodes(target).some((part) => part.type === "Identifier" && names.has(part.name))) return true;
+  if (target?.type === "MemberExpression") {
+    const property = target.computed ? target.property?.value : target.property?.name;
+    if (names.has(property)) return true;
+    if (target.computed && target.property?.type !== "Literal" &&
+      ["window", "globalThis", "self"].includes(target.object?.name)) return true;
+  }
+  if (
+    ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"].includes(node.type) &&
+    node.params.some((param) => collectAstNodes(param).some((part) => names.has(part.name)))
+  ) return true;
+  if (node.type === "CatchClause" && names.has(node.param?.name)) return true;
+  if (node.type === "WithStatement") return true;
+  if ((node.type === "CallExpression" || node.type === "NewExpression") &&
+    ["eval", "Function"].includes(node.callee?.name)) return true;
+  if (node.type === "CallExpression" &&
+    ["defineProperty", "defineProperties", "assign", "set"].includes(node.callee?.property?.name) &&
+    ["window", "globalThis", "self"].includes(node.arguments[0]?.name)) return true;
+  return false;
+}
+
+function isSourceDetailTextColumn(form, { tableId, fieldId }) {
+  const fields = form?.fields || [];
+  const tables = fields.filter((field) => field.id === tableId && field.type === "detailTable");
+  const occurrences = fields.flatMap((field) => [field, ...(field.columns || [])])
+    .filter((field) => field.id === fieldId);
+  const column = tables.length === 1
+    ? (tables[0].columns || []).find((field) => field.id === fieldId) : undefined;
+  const source = column?.sourceProps;
+  return Boolean(
+    occurrences.length === 1 && column &&
+    column.type === "text" && column.componentId === "xform-input" &&
+    tables[0].sourceRef === `source.form.detailTable.${tableId}` &&
+    column.sourceRef === `source.form.detailTable.${tableId}.column.${fieldId}` &&
+    source?.designerId === fieldId && source.designerType === "inputText" &&
+    source.designerValues?.id === fieldId &&
+    (source.designerValues.tableName === undefined || source.designerValues.tableName === tableId) &&
+    source.designerValues.dataType === "String" &&
+    (source.metadataId === undefined || source.metadataId === fieldId) &&
+    (source.metadataKind === undefined || source.metadataKind === "simple") &&
+    (source.metadataAttributes === undefined ||
+      source.metadataAttributes?.name === fieldId && source.metadataAttributes.type === "String")
+  );
+}
+
+function hasExactSubmitHelperBindings(text) {
+  const callback = parseScriptAst(text)?.body?.[0]?.expression?.arguments?.[0];
+  if (callback?.type !== "FunctionExpression") return false;
+  const nodes = collectAstNodes(callback.body);
+  if (nodes.filter((node) => isIdentifierCall(node, "_DocList_FormFieldValue")).length !== 2) {
+    return false;
+  }
+  for (const [list, tableVariable, tableId, fieldId, message, check] of [
+    ["wbsList", "projectNumListTableId", DETAIL_TABLE_IDS.project, "fd_bseg_projk", "wbsMsg", {
+      type: "BinaryExpression", operator: "<",
+      left: callExpression(memberExpression(identifierExpression("wbsData"), "indexOf"), [{
+        type: "MemberExpression", computed: true,
+        object: identifierExpression("wbsList"), property: identifierExpression("i")
+      }]), right: literalExpression(0)
+    }],
+    ["tempPayeeList", "getPayeeTableId", DETAIL_TABLE_IDS.payee, "fd_card_number", "payeeMsg", {
+      type: "BinaryExpression", operator: "<", left: cardNumberLengthExpression(),
+      right: literalExpression(16)
+    }]
+  ]) {
+    const declarations = nodes.filter((node) =>
+      node.type === "VariableDeclarator" && node.id?.name === list
+    );
+    const tableDeclarations = nodes.filter((node) =>
+      node.type === "VariableDeclarator" && node.id?.name === tableVariable
+    );
+    const guards = nodes.filter((node) =>
+      node.type === "IfStatement" && node.test?.type === "Identifier" && node.test.name === list
+    );
+    const loop = guards[0]?.consequent?.body?.[0];
+    const validation = loop?.body?.body?.[0];
+    if (
+      declarations.length !== 1 || tableDeclarations.length !== 1 ||
+      !isLiteralValue(tableDeclarations[0].init, tableId) ||
+      !isIdentifierCall(declarations[0].init, "_DocList_FormFieldValue", [
+        identifierExpression(tableVariable), literalExpression(fieldId)
+      ]) || tableDeclarations[0].start >= declarations[0].start ||
+      guards.length !== 1 || guards[0].alternate || guards[0].consequent.body?.length !== 1 ||
+      loop?.type !== "ForStatement" || loop.body?.body?.length !== 1 ||
+      !sameAst(loop.init, parseScriptAst("var i = 0;").body[0]) ||
+      !isBinary(loop.test, "<", identifierExpression("i"), memberExpression(identifierExpression(list), "length")) ||
+      !matchesAstShape(loop.update, { type: "UpdateExpression", operator: "++", prefix: false,
+        argument: identifierExpression("i") }) ||
+      validation?.type !== "IfStatement" || validation.alternate ||
+      !matchesAstShape(validation.test, check) || validation.consequent?.body?.length !== 2 ||
+      !isIndexedMessageAssignment(validation.consequent.body[0], message) ||
+      !isAssignmentStatement(validation.consequent.body[1], "errorFlag", literalExpression(true)) ||
+      nodes.filter((node) => node.type === "Identifier" && node.name === list).length !== 4 ||
+      nodes.filter((node) => node.type === "Identifier" && node.name === tableVariable).length !== 2
+    ) return false;
+  }
+  return nodes.filter((node) => node.type === "VariableDeclarator" && node.id?.name === "wbsData")
+    .every((node) => matchesAstShape(node.init, identifierExpression("commonWBSStr"))) &&
+    nodes.filter((node) => node.type === "Identifier" && node.name === "wbsData").length === 2;
+}
+
+function isIndexedMessageAssignment(statement, message) {
+  return [",", "、"].some((separator) => isAssignmentStatement(statement, message, {
+    type: "BinaryExpression", operator: "+",
+    left: { type: "BinaryExpression", operator: "+",
+      left: identifierExpression(message), right: literalExpression(separator) },
+    right: { type: "BinaryExpression", operator: "+",
+      left: identifierExpression("i"), right: literalExpression(1) }
+  }));
+}
+
+function sameAst(left, right) {
+  const shape = (value) => {
+    if (Array.isArray(value)) return value.map(shape);
+    if (!value || typeof value !== "object") return value;
+    return Object.fromEntries(Object.entries(value)
+      .filter(([key]) => !["start", "end", "loc", "range", "raw"].includes(key))
+      .map(([key, child]) => [key, shape(child)]));
+  };
+  return JSON.stringify(shape(left)) === JSON.stringify(shape(right));
 }
 
 function hasExactLifecycleAnchors(parts) {

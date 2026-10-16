@@ -1,0 +1,2 @@
+# Source XML fixtures preserve exported line endings used by parser proofs.
+tests/fixtures/**/*.xml -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
