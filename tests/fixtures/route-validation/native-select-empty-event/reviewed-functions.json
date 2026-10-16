@@ -1,3 +1,4 @@
 {
-  "onChange": "function onChange(value, rowNum, parentRowNum) {\n  if ((value === null ? \"\" : value).indexOf(\"READY\") >= 0) {\n    MKXFORM.setValue(\"fd_marker\", \"active\");\n  } else {\n    MKXFORM.setValue(\"fd_marker\", \"inactive\");\n  }\n}"
+  "onChange": "function onChange(value, rowNum, parentRowNum) {\n  if ((value === null ? \"\" : value).indexOf(\"READY\") >= 0) {\n    MKXFORM.setValue(\"fd_marker\", \"active\");\n  } else {\n    MKXFORM.setValue(\"fd_marker\", \"inactive\");\n  }\n}",
+  "diagnosticMap": "function onChange(value, rowNum, parentRowNum) {\n  console.log(\"trace\", value === null ? \"\" : value);\n  var lookup = { \"READY\": \"active\", \"OTHER\": \"inactive\" };\n  MKXFORM.setValue(\"fd_marker\", lookup[value]);\n}"
 }

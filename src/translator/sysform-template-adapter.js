@@ -23,10 +23,12 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   const scripts = extractSysFormJspScripts(template, { functionWhitelist: options.functionWhitelist });
   const metadata = parseMetadataXml(template.fdMetadataXml || "");
   const warnings = [];
+  const errors = [];
   const preliminaryNodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
     knownFieldIds: collectMetadataFieldIds(metadata)
   });
   const form = buildDesignerFirstForm(template.fdDesignerHtml || "", metadata, warnings, {
+    errors,
     runtimeDisplayHtml: template.fdDisplayJsp || "",
     trailingBlankSource: { designer: literalTemplate.fdDesignerHtml || "", runtime: literalTemplate.fdDisplayJsp || "",
       scriptFragments: scripts?.fragments, scriptSources: scripts?.sources },
@@ -48,7 +50,6 @@ export function translateSysFormTemplateXml(xml, options = {}) {
     template.fdName ||
     extractDesignerTitle(template.fdDesignerHtml || "") ||
     basename(options.sourcePath || "SysFormTemplate.xml").replace(/_SysFormTemplate\.xml$/i, "");
-  const errors = [];
   const functionWhitelist = options.functionWhitelist
     ? auditFunctionWhitelist(template.fdDesignerHtml || "", options.functionWhitelist, { path: "/fdDesignerHtml" })
     : undefined;

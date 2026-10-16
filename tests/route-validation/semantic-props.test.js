@@ -171,9 +171,18 @@ describe("semantic source props Route case", { concurrency: false }, () => {
   });
 
   it("projects context-default main address controls with the native runtime contract", async () => {
-    const { dsl } = stages();
+    const { source, dsl } = stages();
     const address = dsl.form.fields.find((field) => field.id === "fd_requester_dept");
+    const sourceAddress = source.form.controls.find(field => field.id === address.id);
+    assert.deepEqual(sourceAddress.sourceProps.boundCaption, {
+      id: "label_requester_dept", content: "需求人部门", relation: "explicit-label-bind-id"
+    });
+    const label = dsl.form.fields.find(field => field.id === "label_requester_dept");
+    assert.equal(label.componentId, "xform-description");
+    assert.equal(label.sourceRef, source.form.controls.find(field => field.id === label.id).sourceRef);
+    assert.equal(label.props.content, sourceAddress.sourceProps.boundCaption.content);
     assert.deepEqual(address.props, {
+      hiddenLabel: true,
       required: true,
       defaultValue: { kind: "context", source: "creatorDept" },
       orgTypes: ["ORG_TYPE_ORG", "ORG_TYPE_DEPT"]

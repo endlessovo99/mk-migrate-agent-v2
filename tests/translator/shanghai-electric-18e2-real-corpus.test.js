@@ -5,6 +5,7 @@ import {
   inspectDeterministicScriptBranchProof
 } from "../../src/dsl/deterministic-script-translations.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { projectNativeLayoutRows } from "../../src/executor/persistence/layout-projection.js";
 
 const sourcePath = "tests/fixtures/source/18e2b225a8abe4503405e6e4bb88aba0";
 
@@ -17,7 +18,19 @@ describe("Shanghai Electric 18e2 route regression", () => {
       .flatMap((candidate) => [candidate, ...(candidate.columns || [])])
       .find((candidate) => candidate.id === originalId || candidate.sourceProps?.originalId === originalId)?.id;
 
-    assert.equal(dsl.form.fields.length, 105);
+    assert.equal(dsl.form.fields.length, 150);
+    assert.equal(dsl.form.fields.filter(candidate => candidate.componentId !== "xform-description").length, 82);
+    assert.equal(dsl.form.fields.filter(candidate => candidate.componentId === "xform-description").length, 68);
+    const captionIds = new Set(source.form.controls.filter(control => control.sourceProps?.boundCaption?.relation === "explicit-label-bind-id")
+      .map(control => control.sourceProps.boundCaption.id));
+    assert.equal(captionIds.size, 45);
+    assert.equal(dsl.form.fields.filter(candidate => !captionIds.has(candidate.id)).length, 105);
+    for (const id of captionIds) {
+      const label = field(id), original = source.form.controls.find(control => control.id === id);
+      assert.equal(label.componentId, "xform-description");
+      assert.equal(label.sourceRef, original.sourceRef);
+      assert.equal(label.props.content, original.sourceProps.designerValues.content);
+    }
     assert.equal(field("fd_person_name").title, "出差人员");
 
     const hardHiddenIds = [
@@ -90,27 +103,47 @@ describe("Shanghai Electric 18e2 route regression", () => {
       row.children.some((child) => child.refIds.includes(id))
     );
     const rowRefs = (id) => rowFor(id).children.flatMap((child) => child.refIds);
-    assert.deepEqual(rowRefs("fd_trafficCity_detail"), ["fd_trafficCity_detail"]);
-    assert.deepEqual(rowRefs("fd_overnight_days"), ["fd_overnight_days", "fd_allowance_days"]);
-    assert.deepEqual(rowRefs("fd_everyday_allowance"), [
+    const rowBusinessRefs = id => {
+      const row = rowFor(id), refs = rowRefs(id);
+      const original = source.form.layout.rows.find(candidate => candidate.sourceRef === row.sourceRef);
+      assert.ok(original, `source row for ${id}`);
+      assert.deepEqual(refs.filter(ref => captionIds.has(ref)), original.cells.flatMap(cell => cell.references.map(ref => ref.referenceId))
+        .filter(ref => captionIds.has(ref)), `${id}: exact source caption order`);
+      return refs.filter(ref => !captionIds.has(ref));
+    };
+    assert.deepEqual(rowBusinessRefs("fd_trafficCity_detail"), ["fd_trafficCity_detail"]);
+    assert.deepEqual(rowBusinessRefs("fd_overnight_days"), ["fd_overnight_days", "fd_allowance_days"]);
+    assert.deepEqual(rowBusinessRefs("fd_everyday_allowance"), [
       "fd_everyday_allowance",
       "fd_35b0aaa40e93c8",
       "fd_allowance_chg"
     ]);
-    assert.deepEqual(rowRefs("fd_allowance_bg"), [
+    assert.deepEqual(rowBusinessRefs("fd_allowance_bg"), [
       "fd_allowance_bg",
       "fd_3e9c3d229756d2",
       "fd_allowance_fzh"
     ]);
-    assert.deepEqual(rowRefs("fd_total_allowance"), ["fd_3e9c3c5d538988", "fd_total_allowance"]);
-    assert.deepEqual(rowRefs("fd_hotel"), ["fd_hotel", "fd_other_total_amount"]);
-    for (const id of [
-      "fd_trafficCity_detail",
-      "fd_bus_metro_taxi_detail",
-      "fd_train_detail",
-      "fd_flight_detail"
+    assert.deepEqual(rowBusinessRefs("fd_total_allowance"), ["fd_3e9c3c5d538988", "fd_total_allowance"]);
+    assert.deepEqual(rowBusinessRefs("fd_hotel"), ["fd_hotel", "fd_other_total_amount"]);
+    for (const [id, columns, component] of [
+      ["fd_trafficCity_detail", 4, "xform-flex-1-4-layout"],
+      ["fd_bus_metro_taxi_detail", 4, "xform-flex-1-4-layout"],
+      ["fd_train_detail", 6, "xform-multi-row-table-layout"],
+      ["fd_flight_detail", 6, "xform-multi-row-table-layout"]
     ]) {
-      assert.equal(rowFor(id).componentId, "xform-flex-1-1-layout", id);
+      const row = rowFor(id);
+      const original = source.form.layout.rows.find(candidate => candidate.sourceRef === row.sourceRef);
+      assert.equal(original.columns, columns, id);
+      assert.deepEqual(original.cells.map(cell => ({
+        column: cell.column, colspan: cell.colspan, refs: cell.references.map(ref => ref.referenceId)
+      })), [{ column: 0, colspan: columns, refs: [id] }], id);
+      assert.equal(row.componentId, component, id);
+      assert.equal(row.props.columns, columns, id);
+      assert.deepEqual(row.children.map(cell => ({ column: cell.column, colspan: cell.colspan, refIds: cell.refIds })),
+        [{ column: 0, colspan: columns, refIds: [id] }], id);
+      const [native] = projectNativeLayoutRows([row]);
+      assert.deepEqual(native.cells.map(cell => ({ column: cell.column, colspan: cell.colspan, refIds: cell.refIds })),
+        [{ column: 0, colspan: native.columns, refIds: [id] }], `${id}: native detail occupies its entire source row`);
     }
     assert.equal(
       dsl.form.layout.mkTree.some((row) =>

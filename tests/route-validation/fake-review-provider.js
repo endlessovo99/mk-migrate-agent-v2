@@ -6,7 +6,7 @@ import { reviewEventValueAssignment } from "./fake-review-scenarios/event-value-
 import { reviewSameOperandOr } from "./fake-review-scenarios/same-operand-or-proof.js";
 import { reviewTimedInitialization } from "./fake-review-scenarios/timed-initialization.js";
 import { reviewRowMarkerProof } from "./fake-review-scenarios/row-marker-proof.js";
-import { reviewNativeSelectEmptyEvent } from "./fake-review-scenarios/native-select-empty-event.js";
+import { reviewNativeSelectEmptyEvent, reviewNativeSelectDiagnosticMap } from "./fake-review-scenarios/native-select-empty-event.js";
 
 export function createFakeReviewProvider(scenario) {
   if (!REVIEW_SCENARIOS.includes(scenario)) {
@@ -72,6 +72,8 @@ export function createFakeReviewProvider(scenario) {
           ? reviewRowMarkerProof({ sourceDraft, dslDraft, reviewScope })
         : scenario === "native-select-empty-event"
           ? reviewNativeSelectEmptyEvent({ dslDraft, reviewScope })
+        : scenario === "native-select-diagnostic-map"
+          ? reviewNativeSelectDiagnosticMap({ dslDraft, reviewScope })
         : {
             summary: scenario === "warning"
               ? "Accepted with one deterministic manual-review warning."

@@ -1,0 +1,31 @@
+{
+  "retainedRuns": [
+    {
+      "id": "repair-run-applied",
+      "status": "applied",
+      "items": [{
+        "itemId": "retained-item-applied",
+        "before": { "snapshot": "retained immutable source snapshot", "dsl": { "artifact": "dsl-draft" } },
+        "after": { "snapshot": "retained immutable repaired snapshot", "dsl": { "artifact": "dsl-draft" } }
+      }]
+    },
+    {
+      "id": "repair-run-preview",
+      "status": "preview",
+      "items": [{
+        "itemId": "retained-item-preview",
+        "before": { "snapshot": "retained preview source snapshot", "dsl": { "artifact": "dsl-draft" } },
+        "after": { "snapshot": "retained preview repaired snapshot", "dsl": { "artifact": "dsl-draft" } }
+      }]
+    }
+  ],
+  "applyingRun": {
+    "id": "repair-run-applying",
+    "status": "applying",
+    "items": [{
+      "itemId": "retained-item-applying",
+      "before": { "snapshot": "retained scoped repair source snapshot" },
+      "after": { "snapshot": "retained scoped repair planned snapshot" }
+    }]
+  }
+}

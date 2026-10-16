@@ -18,6 +18,7 @@ import { sourcePresentationIssues } from "./source-presentation.js";
 import { sourceRequiresReadOnly } from "./source-readonly.js";
 import { inputLengthRequirements, inputLengthPolicyWarning } from "./source-input-length.js";
 import { validateSourceSignIntegrity } from "./workflow-sign-contract.js";
+import { nestedGeometrySourceDiagnostics } from "../translator/sysform-designer-layout.js";
 import {
   claimsDeterministicScriptTranslation,
   deterministicManualResidualDecisionIds
@@ -59,6 +60,8 @@ export function createTrustedMigrationDsl(sourceDraft, dslDraft, options = {}) {
     }
   };
   trusted.review = pruneUndefined({
+    ...(nestedGeometrySourceDiagnostics(sourceDraft).length
+      ? { errors: nestedGeometrySourceDiagnostics(sourceDraft) } : {}),
     warnings: [
       ...(trusted.review?.warnings || []),
       ...(options.reviewWarnings || [])
@@ -72,6 +75,7 @@ export function createTrustedMigrationDsl(sourceDraft, dslDraft, options = {}) {
 
 export function checkTrust(sourceDraft, migrationDsl) {
   const diagnostics = [];
+  diagnostics.push(...nestedGeometrySourceDiagnostics(sourceDraft));
   if (sourceDraft?.version !== SOURCE_DRAFT_VERSION || sourceDraft?.artifact !== "source-draft") {
     diagnostics.push(error("trust.source_draft_required", "check trust requires a source-draft artifact.", "/sourceDraft"));
   }
@@ -281,7 +285,7 @@ function validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics) 
     const proof = selectEmptyEventProof(actual, { sourceAction: expected, sourceForm: sourceDraft.form, targetForm: migrationDsl.form,
       sourceScripts: sourceDraft.scripts?.sources,
       sourceFormRules: expectedDraft.formRules, targetFormRules: migrationDsl.formRules, authoritative: true });
-    const assignments = proof.ok && proof.adapted ? validateAssignmentBranchSemantics({ sourceFunction: expected.function,
+    const assignments = proof.ok && proof.adapted && !proof.diagnosticOnly ? validateAssignmentBranchSemantics({ sourceFunction: expected.function,
       reviewedFunction: proof.function, form: expectedDraft.form,
       residuals: (expected.coverage?.residuals || []).filter(residual => residual.code === "script.residual.field_value_assignment") }) : { ok: true };
     if (!proof.ok || !assignments.ok) diagnostics.push(error("trust.script_select_empty_source_mismatch",

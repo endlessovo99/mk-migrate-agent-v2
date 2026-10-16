@@ -72,11 +72,24 @@ describe("detail footer total Route case", () => {
     const dsl = draftSourceDraft(sourceDraft);
     const linkage = sourceDraft.formRules.linkage;
     const refIndex = buildFormRuleRefIndex(dsl.form);
+    const nativeFields = xformConfig(projectTemplate(dsl)).dataModel.flatMap(model => model.fdFields || []);
+    for (const id of ["fd_3c671bc8ffa7de", "fd_3c671bcfd0c6b8"]) {
+      const sourceLabel = sourceDraft.form.controls.find(field => field.id === id);
+      const label = dsl.form.fields.find(field => field.id === id);
+      assert.equal(sourceLabel.sourceProps.designerType, "textLabel");
+      assert.equal(label.componentId, "xform-description");
+      assert.equal(label.sourceRef, sourceLabel.sourceRef);
+      assert.equal(label.props.content, sourceLabel.sourceProps.designerValues.content);
+      const nativeLabel = nativeFields.find(field => field.fdName === id);
+      assert.equal(JSON.parse(nativeLabel.fdAttribute).config.controlProps.content, label.props.content);
+    }
     const expectedVisible = {
       A: [
         "fd_3c6719a6f103f0",
         "fd_3c671a66ad66ca",
         "fd_3c671ba820a120",
+        "fd_3c671bc8ffa7de",
+        "fd_3c671bcfd0c6b8",
         "fd_3c671bd534a3ee"
       ],
       B: ["fd_3c671d59b7128e", "fd_3c671e0549112e"],
@@ -86,12 +99,16 @@ describe("detail footer total Route case", () => {
         "fd_3c6719a6f103f0",
         "fd_3c671a66ad66ca",
         "fd_3c671ba820a120",
+        "fd_3c671bc8ffa7de",
+        "fd_3c671bcfd0c6b8",
         "fd_3c671bd534a3ee"
       ],
       BA: [
         "fd_3c6719a6f103f0",
         "fd_3c671a66ad66ca",
         "fd_3c671ba820a120",
+        "fd_3c671bc8ffa7de",
+        "fd_3c671bcfd0c6b8",
         "fd_3c671bd534a3ee"
       ],
       "": []

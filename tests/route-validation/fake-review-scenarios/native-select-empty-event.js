@@ -1,6 +1,14 @@
 import { readFileSync } from "node:fs";
 
 export function reviewNativeSelectEmptyEvent({ dslDraft, reviewScope }) {
+  return reviewSelectFunction(dslDraft, reviewScope, "onChange");
+}
+
+export function reviewNativeSelectDiagnosticMap({ dslDraft, reviewScope }) {
+  return reviewSelectFunction(dslDraft, reviewScope, "diagnosticMap");
+}
+
+function reviewSelectFunction(dslDraft, reviewScope, functionName) {
   const functions = JSON.parse(readFileSync(new URL("../../fixtures/route-validation/native-select-empty-event/reviewed-functions.json", import.meta.url), "utf8"));
   const patches = dslDraft.scripts.actions.flatMap((action, index) => {
     if (reviewScope?.actionIndexes && !reviewScope.actionIndexes.includes(index)) return [];
@@ -12,7 +20,7 @@ export function reviewNativeSelectEmptyEvent({ dslDraft, reviewScope }) {
       rationale: "Adapt only native null to the source empty value, preserving all other inputs and source effects."
     };
     const values = {
-      function: functions.onChange, translationStatus: "mapped",
+      function: functions[functionName], translationStatus: "mapped",
       functionMappings: (action.functionMappings || []).map(mapping => ({ ...mapping, basis: "semantic-translation", reviewRequired: false })),
       coverage: { status: "translated", nativeRules: action.coverage?.nativeRules || [], residuals: [] }
     };

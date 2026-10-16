@@ -2,7 +2,7 @@ import { canonicalJson } from "../agent-review/digest.js";
 import { parse, parseExpressionAt } from "acorn";
 import { buildJavaScriptBindingModel } from "./javascript-binding-provenance.js";
 import { parseOptions } from "../translator/xml-utils.js";
-import { proveSelectEmptySourceCallback } from "./source-select-empty-callback.js";
+import { proveSelectEmptySourceCallback, selectEmptyDiagnosticMapSource, diagnosticMapLiteral, hasEventIndexedLiteralMap } from "./source-select-empty-callback.js";
 
 // This view exists only for proof. The actual action function is never changed.
 // A recorded source empty choice and the native select null event represent the
@@ -13,10 +13,13 @@ export function selectEmptyEventProof(action, { sourceAction = action, sourceFor
   if (sourceAction?.event !== "onChange" || sourceAction.scope !== "control") return unchanged;
   const conditions = sourceAction.branchProvenance?.conditions || [];
   const relevant = conditions.some(condition => condition.kind === "contains" && condition.origin === "event:value" && condition.predicate === "indexOf");
-  if (!relevant) return unchanged;
   const main = sourceForm?.controls || (sourceForm?.fields || []).filter(field => field.type !== "detailTable");
   const originals = (main || []).filter(field => field.id === sourceAction.controlId);
   const original = originals.length === 1 ? originals[0] : undefined;
+  if (!relevant) {
+    if (conditions.length || sourceAction.branchProvenance?.status !== "none") return unchanged;
+    return diagnosticMapEventProof(action, { sourceAction, original, sourceForm, targetForm, sourceScripts, authoritative, unchanged });
+  }
   const props = original?.sourceProps || {};
   const hasFact = Object.hasOwn(props, "runtimeSelectEmpty");
   const looksAdapted = /===\s*null\s*\?/.test(String(action?.function || ""));
@@ -126,6 +129,80 @@ export function selectEmptyEventProof(action, { sourceAction = action, sourceFor
   }
   return { ok: true, adapted: true, function: proofFunction,
     evidence: { controlId: original.id, sourceRef: original.sourceRef, targetComponent: "xform-select", nullAs: "", nonNull: "unchanged", domain, needle } };
+}
+
+function diagnosticMapEventProof(action, { sourceAction, original, sourceForm, targetForm, sourceScripts, authoritative, unchanged }) {
+  if ((original?.sourceType || original?.type) !== "singleSelect") return unchanged;
+  if (!["mapped", "omitted"].includes(action?.translationStatus)) return unchanged;
+  const source = authoritative ? selectEmptyDiagnosticMapSource({ action: sourceAction, sources: sourceScripts, form: sourceForm,
+    targetMapCandidate: targetHasDiagnosticMapRead(action.function) }) : undefined;
+  if (source && !source.ok) return invalid(source.reason);
+  if (action.translationStatus === "omitted") return source?.relevant ? invalid("diagnostic_map_source_action_omitted") : unchanged;
+  const text = String(action.function || "");
+  if (!source?.relevant && !/===\s*null\s*\?/.test(text)) return unchanged;
+  let ast;
+  try { ast = parse(text, { ecmaVersion: "latest" }); } catch { return invalid("source_empty_action_parse_failed"); }
+  const roots = ast.body.filter(statement => statement.type !== "EmptyStatement"), root = roots[0];
+  if (roots.length !== 1 || root.type !== "FunctionDeclaration" || root.id?.name !== "onChange" || root.async || root.generator ||
+      !root.params.length || root.params.some(parameter => parameter.type !== "Identifier")) return invalid("source_empty_action_shape_unproven");
+  const bindings = buildJavaScriptBindingModel(text, { event: "onChange" });
+  if (!bindings.ok || !bindings.eventBinding) return invalid("source_empty_event_binding_unproven");
+  const isEvent = node => node?.type === "Identifier" && bindings.bindingAtUse(node.name, node.start) === bindings.eventBinding &&
+    bindings.stableEventUse(bindings.eventBinding, bindings.scopeAt(node.start), node.start);
+  const bridges = [], trace = [], body = root.body.body.filter(statement => statement.type !== "EmptyStatement");
+  let index = 0;
+  for (; index < body.length; index++) {
+    const call = body[index].type === "ExpressionStatement" && body[index].expression, callee = call?.callee;
+    if (call?.type !== "CallExpression" || call.optional || callee.type !== "MemberExpression" || callee.optional || callee.computed ||
+        callee.object.type !== "Identifier" || callee.object.name !== "console" || callee.property.name !== "log" ||
+        !bindings.isUnshadowedGlobal("console", call.start)) break;
+    const args = [];
+    for (const argument of call.arguments) {
+      if (argument.type === "Literal" && !argument.regex && (argument.value === null || ["string", "boolean"].includes(typeof argument.value) ||
+          typeof argument.value === "number" && Number.isFinite(argument.value))) { args.push({ kind: "literal", value: argument.value }); continue; }
+      if (argument.type !== "ConditionalExpression" || argument.test.type !== "BinaryExpression" || argument.test.operator !== "===" ||
+          !isEvent(argument.test.left) || argument.test.right.type !== "Literal" || argument.test.right.value !== null ||
+          argument.consequent.type !== "Literal" || argument.consequent.value !== "" || !isEvent(argument.alternate)) return invalid("diagnostic_map_null_bridge_unproven");
+      bridges.push(argument); args.push({ kind: "event" });
+    }
+    trace.push({ type: "console.log", args });
+  }
+  if (!sameOwner(sourceAction, action)) return invalid("source_empty_action_owner_changed");
+  const targets = (targetForm?.fields || []).filter(field => field.id === sourceAction.controlId);
+  if (targets.length !== 1 || targets[0].componentId !== "xform-select" || targets[0].sourceRef !== original.sourceRef) return invalid("source_empty_select_contract_unproven");
+  const requiresBridge = source?.trace?.some(log => log.args.some(argument => argument.kind === "event"));
+  if ((bridges.length || requiresBridge) && !qualifies(original, targets[0], sourceForm, targetForm)) return invalid("source_empty_select_contract_unproven");
+  if (requiresBridge && !bridges.length || authoritative && (!source.relevant || canonicalJson(trace) !== canonicalJson(source.trace))) return invalid("diagnostic_map_trace_unproven");
+  if ((sourceAction.coverage?.nativeRules || []).length || (action.coverage?.nativeRules || []).length) return invalid("diagnostic_map_native_credit_unproven");
+  // The bridge cannot hide other expressions: the remaining supported callback
+  // is exactly one literal lookup declaration and one event-indexed field write.
+  const remaining = body.slice(index), declaration = remaining[0], write = remaining[1]?.expression;
+  if (remaining.length !== 2 || declaration.type !== "VariableDeclaration" || declaration.declarations.length !== 1 ||
+      declaration.declarations[0].id.type !== "Identifier") return invalid("diagnostic_map_target_effect_unproven");
+  const local = declaration.declarations[0], map = diagnosticMapLiteral(local.init), binding = bindings.bindingAtUse(local.id.name, local.id.start);
+  const lookup = write?.arguments?.[1];
+  if (!map || !binding || binding.ambiguous || binding.declarations.length !== 1 || binding.effects.some(effect => effect.kind !== "escape" || effect.index !== write?.end) ||
+      remaining[1].type !== "ExpressionStatement" || write?.type !== "CallExpression" || write.optional ||
+      write.callee.type !== "MemberExpression" || write.callee.computed || write.callee.optional || write.callee.object.type !== "Identifier" ||
+      write.callee.object.name !== "MKXFORM" || write.callee.property.name !== "setValue" || !bindings.isUnshadowedGlobal("MKXFORM", write.start) ||
+      write.arguments.length !== 2 || write.arguments[0].type !== "Literal" || typeof write.arguments[0].value !== "string" ||
+      lookup?.type !== "MemberExpression" || !lookup.computed || lookup.optional || lookup.object.type !== "Identifier" ||
+      bindings.bindingAtUse(lookup.object.name, lookup.object.start) !== binding || !isEvent(lookup.property)) return invalid("diagnostic_map_target_effect_unproven");
+  if ((bridges.length || requiresBridge) && map.filter(([key]) => key === "").at(-1)?.[1] !== map.filter(([key]) => key === "null").at(-1)?.[1]) return invalid("diagnostic_map_empty_effect_changed");
+  if (authoritative && canonicalJson({ target: write.arguments[0].value, map }) !== canonicalJson(source.effect)) return invalid("diagnostic_map_effect_changed");
+  let proofFunction = text;
+  for (const bridge of bridges.sort((left, right) => right.start - left.start)) {
+    proofFunction = proofFunction.slice(0, bridge.start) + root.params[0].name + proofFunction.slice(bridge.end);
+  }
+  return { ok: true, adapted: bridges.length > 0, diagnosticOnly: true, function: proofFunction };
+}
+
+function targetHasDiagnosticMapRead(text) {
+  let ast;
+  try { ast = parse(String(text || ""), { ecmaVersion: "latest" }); } catch { return false; }
+  const bindings = buildJavaScriptBindingModel(text, { event: "onChange" });
+  if (!bindings.ok || !bindings.eventBinding) return false;
+  return hasEventIndexedLiteralMap(ast, bindings);
 }
 
 function qualifies(source, target, sourceForm, targetForm) {

@@ -14,6 +14,7 @@ export const REVIEW_SCENARIOS = Object.freeze([
   "timed-initialization",
   "row-marker-proof",
   "native-select-empty-event",
+  "native-select-diagnostic-map",
   "fail-if-called",
   "provider-body-timeout"
 ]);
@@ -394,6 +395,12 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       source: { kind: "form-only", relativePath: "native-select-empty-event/select-empty_SysFormTemplate.xml" },
       reviewScenario: "native-select-empty-event", newoaScenario: "persist", confirmWrite: true,
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "native-select-diagnostic-map-success",
+      source: { kind: "form-only", relativePath: "native-select-empty-event/diagnostic-map_SysFormTemplate.xml" },
+      reviewScenario: "native-select-diagnostic-map", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings", operations: SUCCESS_OPERATIONS }
     },
     {
       id: "row-marker-timed-select-proof-success",

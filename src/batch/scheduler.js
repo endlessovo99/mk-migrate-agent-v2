@@ -24,7 +24,7 @@ export async function setBatchStatus(store, batchId, status) {
     const batch = await tx.get("batch", batchId);
     requireValue(batch, "Batch not found");
     if (status === "running") {
-      const runs = await tx.list("repair_run", { batchId });
+      const runs = await tx.list("repair_run", { batchId }, { fields: ["status"] });
       requireValue(!runs.some((run) => run.status === "applying"), "A scoped repair is still applying; investigate its retained evidence", "BATCH_REPAIR_IN_PROGRESS");
     }
     return tx.mutate("batch", batchId, (value) => ({ ...value, status, updatedAt: now() }));

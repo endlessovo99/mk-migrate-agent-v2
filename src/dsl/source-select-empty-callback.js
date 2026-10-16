@@ -5,26 +5,10 @@ import { buildJavaScriptBindingModel } from "./javascript-binding-provenance.js"
 
 /** Prove the whole fixed-source callback before its null bridge closes residuals. */
 export function proveSelectEmptySourceCallback({ action, sources, form, formRules, needle, writes, targetTrace } = {}) {
-  const owner = sourceOwner(action, sources);
-  if (!owner || typeof needle !== "string" || !needle || !Array.isArray(writes)) return invalid("owner_unproven");
-  const text = owner.source.javascript;
-  let program;
-  try { program = parse(text, { ecmaVersion: "latest" }); }
-  catch { return invalid("parse_failed"); }
-  const statements = program.body.filter(statement => statement.type !== "EmptyStatement");
-  const registrations = statements.filter(statement => statement.type === "ExpressionStatement" &&
-    statement.expression.type === "CallExpression" && statement.expression.start === owner.offset);
-  if (registrations.length !== 1) return invalid("registration_unproven");
-  const call = registrations[0].expression, callback = call.arguments[1];
-  const identities = fieldIdentities(form);
-  if (!identities || call.optional || call.callee.type !== "Identifier" || call.callee.name !== "AttachXFormValueChangeEventById" ||
-      call.arguments.length !== 2 || !stringLiteral(call.arguments[0]) || identities.target(call.arguments[0].value) !== action.controlId ||
-      callback?.type !== "FunctionExpression" || callback.id || callback.async || callback.generator ||
-      callback.params.length < 1 || callback.params.length > 2 || callback.params.some(parameter => parameter.type !== "Identifier") ||
-      new Set(callback.params.map(parameter => parameter.name)).size !== callback.params.length) return invalid("registration_unproven");
-  const bindings = buildJavaScriptBindingModel(text, { event: "onChange", eventFunctionStart: callback.start });
-  if (!bindings.ok || !bindings.eventBinding || bindings.entrypoint?.start !== callback.start ||
-      !bindings.isUnshadowedGlobal("AttachXFormValueChangeEventById", call.start)) return invalid("binding_unproven");
+  const context = sourceCallbackContext(action, sources, form);
+  if (!context.ok) return context;
+  if (typeof needle !== "string" || !needle || !Array.isArray(writes)) return invalid("owner_unproven");
+  const { callback, bindings, identities } = context;
 
   const getters = new Map(), sourceWrites = [], branches = [[], []];
   const trace = { before: [], branches: [[], []], after: [] };
@@ -32,19 +16,7 @@ export function proveSelectEmptySourceCallback({ action, sources, form, formRule
   const eventValue = node => node?.type === "Identifier" &&
     bindings.bindingAtUse(node.name, node.start) === bindings.eventBinding &&
     bindings.stableEventUse(bindings.eventBinding, bindings.scopeAt(node.start), node.start);
-  const diagnostic = expression => {
-    if (expression?.type !== "CallExpression" || expression.optional || expression.callee.type !== "MemberExpression" ||
-        expression.callee.computed || expression.callee.optional || expression.callee.object.type !== "Identifier" ||
-        expression.callee.object.name !== "console" || expression.callee.property.type !== "Identifier" ||
-        expression.callee.property.name !== "log" || !bindings.isUnshadowedGlobal("console", expression.start)) return undefined;
-    const args = [];
-    for (const argument of expression.arguments) {
-      if (primitiveLiteral(argument)) args.push({ kind: "literal", value: argument.value });
-      else if (eventValue(argument)) args.push({ kind: "event" });
-      else return undefined;
-    }
-    return { type: "console.log", args };
-  };
+  const diagnostic = expression => sourceDiagnostic(expression, bindings, eventValue);
   const declaration = (statement, allowGetter) => {
     if (!["var", "let", "const"].includes(statement.kind)) return false;
     return statement.declarations.every(declarator => {
@@ -115,7 +87,7 @@ export function proveSelectEmptySourceCallback({ action, sources, form, formRule
     if (!getter.assignments.size || binding.effects.some(effect =>
       effect.kind !== "mutation" || !getter.assignments.has(effect.index))) return invalid("getter_binding_unproven");
   }
-  if (!nativeEffects(action, owner.source.sourceRef, needle, branches, formRules)) return invalid("native_effects_unproven");
+  if (!nativeEffects(action, context.owner.source.sourceRef, needle, branches, formRules)) return invalid("native_effects_unproven");
   if (targetTrace === undefined) {
     if ([...trace.before, ...trace.branches.flat(), ...trace.after].some(step => step.type === "console.log")) return invalid("trace_missing");
   } else if (!validTrace(targetTrace) || canonicalJson(trace) !== canonicalJson(targetTrace) ||
@@ -124,6 +96,146 @@ export function proveSelectEmptySourceCallback({ action, sources, form, formRule
     return invalid("trace_unproven");
   }
   return { ok: true };
+}
+
+function sourceCallbackContext(action, sources, form) {
+  const owner = sourceOwner(action, sources);
+  if (!owner) return invalid("owner_unproven");
+  const text = owner.source.javascript;
+  let program;
+  try { program = parse(text, { ecmaVersion: "latest" }); }
+  catch { return invalid("parse_failed"); }
+  const statements = program.body.filter(statement => statement.type !== "EmptyStatement");
+  const registrations = statements.filter(statement => statement.type === "ExpressionStatement" &&
+    statement.expression.type === "CallExpression" && statement.expression.start === owner.offset);
+  if (registrations.length !== 1) return invalid("registration_unproven");
+  const call = registrations[0].expression, callback = call.arguments[1];
+  const identities = fieldIdentities(form);
+  if (!identities || call.optional || call.callee.type !== "Identifier" || call.callee.name !== "AttachXFormValueChangeEventById" ||
+      call.arguments.length !== 2 || !stringLiteral(call.arguments[0]) || identities.target(call.arguments[0].value) !== action.controlId ||
+      callback?.type !== "FunctionExpression" || callback.id || callback.async || callback.generator ||
+      callback.params.length < 1 || callback.params.length > 2 || callback.params.some(parameter => parameter.type !== "Identifier") ||
+      new Set(callback.params.map(parameter => parameter.name)).size !== callback.params.length) return invalid("registration_unproven");
+  const bindings = buildJavaScriptBindingModel(text, { event: "onChange", eventFunctionStart: callback.start });
+  if (!bindings.ok || !bindings.eventBinding || bindings.entrypoint?.start !== callback.start ||
+      !bindings.isUnshadowedGlobal("AttachXFormValueChangeEventById", call.start)) return invalid("binding_unproven");
+
+  return { ok: true, owner, callback, bindings, identities, statements };
+}
+
+// Only this source-backed, synchronous map grammar may lend its diagnostic
+// argument a representation bridge. No other source calls are discarded.
+export function selectEmptyDiagnosticMapSource({ action, sources, form, targetMapCandidate = false } = {}) {
+  const context = sourceCallbackContext(action, sources, form);
+  if (!context.ok) return context;
+  const { callback, bindings, identities, statements } = context;
+  const eventValue = node => node?.type === "Identifier" &&
+    bindings.bindingAtUse(node.name, node.start) === bindings.eventBinding &&
+    bindings.stableEventUse(bindings.eventBinding, bindings.scopeAt(node.start), node.start);
+  const body = callback.body.body.filter(statement => statement.type !== "EmptyStatement");
+  // Recognition establishes a proof obligation, not credit. An unsupported
+  // consumer of this map read must fail the whole callback grammar below.
+  if (!hasEventIndexedLiteralMap(callback.body, bindings) && !targetMapCandidate) return { ok: true, relevant: false };
+  const trace = [];
+  let index = 0;
+  while (index < body.length) {
+    const statement = body[index], log = statement.type === "ExpressionStatement" &&
+      sourceDiagnostic(statement.expression, bindings, eventValue);
+    if (!log) break;
+    trace.push(log); index++;
+  }
+  if (statements.length !== 1) return invalid("diagnostic_map_source_effect_unproven");
+  const locals = new Map(), allowedCalls = new Set();
+  const literalString = (node, seen = new Set()) => {
+    if (stringLiteral(node)) return node.value;
+    if (node?.type === "BinaryExpression" && node.operator === "+") {
+      const left = literalString(node.left, seen), right = literalString(node.right, seen);
+      return typeof left === "string" && typeof right === "string" ? left + right : undefined;
+    }
+    if (node?.type !== "Identifier") return undefined;
+    const binding = bindings.bindingAtUse(node.name, node.start), local = locals.get(binding);
+    if (!local || seen.has(binding)) return undefined;
+    const next = new Set(seen); next.add(binding);
+    return literalString(local.node, next);
+  };
+  let effect;
+  for (; index < body.length; index++) {
+    const statement = body[index];
+    if (statement.type === "VariableDeclaration" && !effect) {
+      for (const declaration of statement.declarations) {
+        const binding = declaration.id.type === "Identifier" && bindings.bindingAtUse(declaration.id.name, declaration.id.start);
+        if (!binding || binding.ambiguous || binding.declarations.length !== 1 || binding.effects.some(effect => effect.kind !== "escape") || !declaration.init) return invalid("diagnostic_map_source_binding_unproven");
+        const node = declaration.init, map = diagnosticMapLiteral(node);
+        if (primitiveLiteral(node) || map) { locals.set(binding, { node, map }); continue; }
+        if (node.type !== "CallExpression" || node.optional || node.callee.type !== "Identifier" ||
+            !["$", "jQuery"].includes(node.callee.name) || !bindings.isUnshadowedGlobal(node.callee.name, node.start) ||
+            node.arguments.length !== 1) return invalid("diagnostic_map_source_getter_unproven");
+        const selector = literalString(node.arguments[0]);
+        const id = selector?.match(/^\s*(?:input|select|textarea)?\[name\s*=\s*(["'])extendDataFormInfo\.value\(([A-Za-z_][\w-]*)\)\1\]\s*$/)?.[2];
+        const targetId = id && identities.target(id);
+        if (!targetId) return invalid("diagnostic_map_source_selector_unproven");
+        allowedCalls.add(node.end);
+        locals.set(binding, { node, targetId });
+      }
+      continue;
+    }
+    const call = statement.type === "ExpressionStatement" && statement.expression, member = call?.callee;
+    if (effect || call?.type !== "CallExpression" || call.optional || member.type !== "MemberExpression" || member.computed || member.optional ||
+        member.object.type !== "Identifier" || member.property.name !== "val" || call.arguments.length !== 1) return invalid("diagnostic_map_source_effect_unproven");
+    const destination = locals.get(bindings.bindingAtUse(member.object.name, member.object.start)), lookup = call.arguments[0];
+    if (!destination?.targetId || lookup.type !== "MemberExpression" || !lookup.computed || lookup.optional ||
+        lookup.object.type !== "Identifier" || !eventValue(lookup.property)) return invalid("diagnostic_map_source_effect_unproven");
+    const map = locals.get(bindings.bindingAtUse(lookup.object.name, lookup.object.start))?.map;
+    if (!map) return invalid("diagnostic_map_source_lookup_unproven");
+    effect = { target: destination.targetId, map };
+    allowedCalls.add(call.end);
+  }
+  if ([...locals.keys()].some(binding => binding.effects.some(effect => !allowedCalls.has(effect.index)))) return invalid("diagnostic_map_source_binding_unproven");
+  return effect ? { ok: true, relevant: true, trace, effect } : invalid("diagnostic_map_source_effect_unproven");
+}
+
+export function diagnosticMapLiteral(node) {
+  if (node?.type !== "ObjectExpression" || !node.properties.length || node.properties.some(property =>
+    property.type !== "Property" || property.computed || property.method || property.kind !== "init" ||
+    staticPropertyKey(property.key) === undefined || !stringLiteral(property.value))) return undefined;
+  return node.properties.map(property => [staticPropertyKey(property.key), property.value.value]);
+}
+
+function staticPropertyKey(node) {
+  if (node?.type === "Identifier") return node.name;
+  if (stringLiteral(node)) return node.value;
+  if (node?.type === "Literal" && typeof node.value === "number" && Number.isFinite(node.value)) return String(node.value);
+  return undefined;
+}
+
+export function hasEventIndexedLiteralMap(ast, bindings) {
+  const nodes = [];
+  const visit = node => {
+    if (!node || typeof node !== "object") return;
+    nodes.push(node);
+    for (const value of Object.values(node)) if (Array.isArray(value)) value.forEach(visit);
+    else if (value && typeof value === "object") visit(value);
+  };
+  visit(ast);
+  const maps = new Set(nodes.filter(node => node.type === "VariableDeclarator" && node.id.type === "Identifier" && node.init?.type === "ObjectExpression")
+    .map(node => bindings.bindingAtUse(node.id.name, node.id.start)));
+  return nodes.some(node => node.type === "MemberExpression" && node.computed && node.object.type === "Identifier" && node.property.type === "Identifier" &&
+    maps.has(bindings.bindingAtUse(node.object.name, node.object.start)) &&
+    bindings.bindingAtUse(node.property.name, node.property.start) === bindings.eventBinding);
+}
+
+function sourceDiagnostic(expression, bindings, eventValue) {
+  if (expression?.type !== "CallExpression" || expression.optional || expression.callee.type !== "MemberExpression" ||
+      expression.callee.computed || expression.callee.optional || expression.callee.object.type !== "Identifier" ||
+      expression.callee.object.name !== "console" || expression.callee.property.type !== "Identifier" ||
+      expression.callee.property.name !== "log" || !bindings.isUnshadowedGlobal("console", expression.start)) return undefined;
+  const args = [];
+  for (const argument of expression.arguments) {
+    if (primitiveLiteral(argument)) args.push({ kind: "literal", value: argument.value });
+    else if (eventValue(argument)) args.push({ kind: "event" });
+    else return undefined;
+  }
+  return { type: "console.log", args };
 }
 
 function sourceOwner(action, sources) {

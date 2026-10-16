@@ -61,6 +61,7 @@ import {
 } from "./address-display-companion-mapping.js";
 import { mapChoiceOtherCompanions } from "./choice-other-companion.js";
 import { sourceRequiresReadOnly } from "../dsl/source-readonly.js";
+import { staticRectangleGridProfile } from "./standard-table-grid.js";
 import { remoteDialogDiagnostics } from "../dsl/remote-dialog.js";
 import {
   sourceInputLength, inputLengthRequirements, inputLengthPolicyWarning, inputLengthSourceError
@@ -788,7 +789,8 @@ function draftForm(sourceForm, sourceWorkflow) {
       mkTree: draftMkTree(
         renderLayout,
         new Set(detailTables.map((table) => table.id)),
-        sharedCaptionRecovery.compoundCells
+        sharedCaptionRecovery.compoundCells,
+        sharedCaptionRecovery.fields
       )
     }
   };
@@ -2065,10 +2067,15 @@ function normalizeLegacyExpression(value) {
     .trim();
 }
 
-function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
+function draftMkTree(layout, detailTableIds, compoundCells = new Map(), fields = []) {
   const rows = Array.isArray(layout.rows) ? layout.rows : [];
+  const rectangleGroups = sourceRectangleGroups(rows, fields);
+  const consumedRows = new Set([...rectangleGroups.values()].flatMap(group => group.rowIds));
   const projectedRows = rows.map((row, rowIndex) => {
     const sourceRowId = row.id || `row-${rowIndex}`;
+    const rectangle = rectangleGroups.get(sourceRowId);
+    if (rectangle) return { sourceRowId, ...draftRectangleNodes(row, rectangle.profile.plan) };
+    if (consumedRows.has(sourceRowId)) return { sourceRowId, nodes: [], nestedNodes: [] };
     const originalSourceCells = Array.isArray(row.cells) ? row.cells : [];
     const nestedNodes = [];
     const sourceCells = originalSourceCells.map((cell) => {
@@ -2185,6 +2192,70 @@ function draftMkTree(layout, detailTableIds, compoundCells = new Map()) {
     ...nestedNodes
   ]
   );
+}
+
+function sourceRectangleGroups(rows, fields) {
+  const byId = new Map(rows.map(row => [row.id, row]));
+  const fieldsById = new Map(fields.map(field => [field.id, field]));
+  const result = new Map();
+  for (const row of rows) {
+    if (row.cells?.length !== 1) continue;
+    const owner = row.cells[0], refs = owner.references || [];
+    if (refs.length < 2 || refs.some(ref => ref.referenceType !== "layout")) continue;
+    const children = refs.map(ref => byId.get(ref.referenceId));
+    if (children.some(child => !child)) continue;
+    const profile = staticRectangleGridProfile(children.map(child => ({
+      sourceMarkers: child.sourceMarkers,
+      cells: child.cells.map(cell => ({
+        ...cell, rowspan: cell.rowspan || 1,
+        controls: (cell.references || []).map(ref => {
+          const field = fieldsById.get(ref.referenceId);
+          return { id: field?.id, description: field?.componentId === "xform-description",
+            hidden: !field || field.dataOnly || field.sourceProps?.hardHidden,
+            detail: ref.referenceType !== "control" || field?.type === "detailTable" };
+        })
+      }))
+    })), { maxColumns: TABLE_LAYOUT_MAX_COLUMNS });
+    if (!profile) continue;
+    const childIds = new Set(children.map(child => child.id));
+    if (rows.some(candidate => candidate.cells?.some(cell => cell !== owner &&
+      cell.references?.some(ref => ref.referenceType === "layout" && childIds.has(ref.referenceId))))) continue;
+    result.set(row.id, { profile, rowIds: [...childIds] });
+  }
+  return result;
+}
+
+function draftRectangleNodes(container, plan) {
+  const rootId = `layout.${container.id}`, registry = [];
+  let serial = 0;
+  const leaf = (cell, column, colspan) => ({
+    id: `layout.${cell.id}`, refType: "field",
+    refIds: cell.references.map(ref => ref.referenceId), sourceRef: cell.sourceRef,
+    column, colspan,
+    ...(cell.references.length > 1 ? { keepInline: true } : {}),
+    ...(cell.contentFlow ? { contentFlow: selectContentFlow(cell.contentFlow, cell.references.map(ref => ref.referenceId)) } : {}),
+    ...(Number.isFinite(cell.widthWeight) && cell.widthWeight > 0 ? { widthWeight: cell.widthWeight } : {})
+  });
+  const emit = (current, id) => {
+    if (current.type === "stack" && !id) return current.children.flatMap(child => emit(child));
+    const nodeId = id || `${rootId}.rectangle-${++serial}`;
+    const columns = current.type === "grid" ? current.columns : 1;
+    const children = current.type === "leaf" ? [leaf(current.cell, 0, 1)]
+      : current.type === "stack" ? [{ id: `${nodeId}.stack`, refType: "layout", refIds: current.children.flatMap(child => emit(child)), sourceRef: container.cells[0].sourceRef, column: 0, colspan: 1 }]
+      : current.children.map((child, index) => child.plan.type === "leaf"
+        ? leaf(child.plan.cell, child.column, child.colspan)
+        : { id: `${nodeId}.region-${index}`, refType: "layout", refIds: emit(child.plan), sourceRef: container.cells[0].sourceRef, column: child.column, colspan: child.colspan });
+    registry.push({
+      id: nodeId, componentId: columns > 4 ? TABLE_LAYOUT_COMPONENT_ID : `xform-flex-1-${columns}-layout`,
+      props: columns > 4 ? { rows: 1, columns } : { columns },
+      sourceRef: container.sourceRef,
+      ...(id && container.sourceMarkers?.length ? { sourceMarkers: container.sourceMarkers } : {}),
+      children
+    });
+    return [nodeId];
+  };
+  emit(plan, rootId);
+  return { nodes: registry.filter(node => node.id === rootId), nestedNodes: registry.filter(node => node.id !== rootId) };
 }
 
 function keepInlineSourceCell(cell, preserveSourceGeometry, detailTableIds) {

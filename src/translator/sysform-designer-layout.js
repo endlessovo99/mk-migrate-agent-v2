@@ -20,12 +20,12 @@ import {
 } from "./inline-caption-recovery.js";
 import { isSafeInlineUnit } from "./source-text-predicates.js";
 import { annotateChoiceOtherCompanions } from "./choice-other-companion.js";
-import { annotateRuntimeTextReadOnly } from "./runtime-text-readonly.js";
+import { annotateRuntimeSqlHiddenPrimary, annotateRuntimeTextReadOnly } from "./runtime-text-readonly.js";
 import { annotateRuntimeNumberDisplayWidth } from "./runtime-number-display-width.js";
 import { runtimeCaptionWidthEvidence, runtimePlainCaptionEvidenceWithMarkers, runtimeCaptionTrailingBlankCells } from "./runtime-caption-width.js";
 import { annotateRuntimeSelectEmpty } from "./runtime-select-empty.js";
 import { runtimeIndependentCaptionEvidence } from "./runtime-independent-caption.js";
-import { isStaticDescriptionGridShape, isStaticHeaderGridShape } from "./standard-table-grid.js";
+import { isStaticDescriptionGridShape, isStaticHeaderGridShape, staticRectangleGridProfile, staticRectangleCellContent } from "./standard-table-grid.js";
 import {
   designerVisibilityWarnings,
   resolveDesignerVisibilityOverrides
@@ -126,7 +126,9 @@ export function buildDesignerFirstForm(html, metadata, warnings, options = {}) {
   warnSuspiciousDetailTableTitles(fields, warnings);
   return {
     fields: annotateRuntimeNumberDisplayWidth(
-      annotateRuntimeSelectEmpty(annotateRuntimeTextReadOnly(fields, options.runtimeDisplayHtml || "", warnings), options.runtimeDisplayHtml || ""),
+      annotateRuntimeSelectEmpty(annotateRuntimeSqlHiddenPrimary(
+        annotateRuntimeTextReadOnly(fields, options.runtimeDisplayHtml || "", warnings), options.runtimeDisplayHtml || ""
+      ), options.runtimeDisplayHtml || ""),
       options.runtimeDisplayHtml || "", metadataFields, html, designer.layout
     ),
     dataFields,
@@ -170,6 +172,12 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
     runtimeVisibleFieldIds,
     nodeDataAuthorityVisibleFieldIds
   );
+  captionContext.standardTableIdOccurrences = new Map();
+  for (const token of scanHtmlTags(decoded)) {
+    if (token.name !== "table" || token.closing || attrValue(token.raw, "fd_type").toLowerCase() !== "standardtable") continue;
+    const id = attrValue(token.raw, "id");
+    if (id) captionContext.standardTableIdOccurrences.set(id, (captionContext.standardTableIdOccurrences.get(id) || 0) + 1);
+  }
   captionContext.editorLabelEvidence = options.editorLabelEvidence || new Map();
   captionContext.independentCaptions = runtimeIndependentCaptionEvidence(decoded, options.runtimeDisplayHtml || "");
   captionContext.runtimeSelectWidths = runtimeSelectWidthEvidence(options.runtimeDisplayHtml || "");
@@ -190,6 +198,8 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
   const hiddenFields = [];
   const hiddenFieldIds = new Set();
   const layoutRows = [];
+  const nestedGeometryGroups = new Map();
+  const errors = options.errors || [];
 
   rows.forEach((rowHtml, rowIndex) => {
     const rowDescriptors = nestedLayoutRowDescriptors(
@@ -197,7 +207,8 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
       rowIndex,
       captionContext,
       metadataContext,
-      warnings
+      warnings,
+      errors
     );
     for (const descriptor of rowDescriptors) {
       appendDesignerLayoutRow(descriptor, {
@@ -208,11 +219,12 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
         fieldIds,
         hiddenFields,
         hiddenFieldIds,
-        layoutRows
+        layoutRows,
+        nestedGeometryGroups
       });
     }
   });
-  applyRowspanLayoutNesting(layoutRows);
+  applyRowspanLayoutNesting(layoutRows, nestedGeometryGroups, errors);
 
   const adjacentRowTitles = applyAdjacentRowDetailTableTitles(
     fields,
@@ -249,21 +261,23 @@ function nestedLayoutRowDescriptors(
   rowIndex,
   captionContext,
   metadataContext,
-  warnings
+  warnings,
+  errors
 ) {
   return expandNestedLayoutRowDescriptor({
     html: rowHtml,
     id: `row-${rowIndex}`,
     sourceRow: String(rowIndex),
     inheritedMarkers: []
-  }, captionContext, metadataContext, warnings);
+  }, captionContext, metadataContext, warnings, errors);
 }
 
 function expandNestedLayoutRowDescriptor(
   descriptor,
   captionContext,
   metadataContext,
-  warnings
+  warnings,
+  errors
 ) {
   const sourceCells = splitDirectChildCells(descriptor.html);
   const nestedTables = sourceCells.flatMap((cell, sourceCellIndex) =>
@@ -276,10 +290,29 @@ function expandNestedLayoutRowDescriptor(
   const nested = nestedTables[0];
   const nestedRows = splitDirectChildRows(extractFirstTbodyContent(nested.html) || nested.html);
   if (!nestedRows.length) return [descriptor];
+  const outsideMarkers = sourceCells.flatMap((cell, index) => extractRowMarkers(index === nested.sourceCellIndex
+    ? `${cell.body.slice(0, nested.start)}${cell.body.slice(nested.end)}` : cell.body));
+  const ambiguousAlias = nested.domId && (captionContext.standardTableIdOccurrences.get(nested.domId) !== 1 ||
+    captionContext.controlIdOccurrences.has(nested.domId) || isDataOnlyMetadataField(metadataContext.byId.get(nested.domId)) ||
+    outsideMarkers.includes(nested.domId) || descriptor.inheritedMarkers?.includes(nested.domId));
+  const rectangleProfile = ambiguousAlias ? undefined : staticRectangleGridProfile(rectangleControlRows(nestedRows, captionContext, metadataContext, nested.domId));
+  const sharedColumns = coherentNestedTableColumns(nestedRows);
+  const hasMergedCells = nestedRows.some(html => splitDirectChildCells(html).some(cell => {
+    const rowspan = cell.attrs.rowspan ?? cell.attrs.rowSpan;
+    const colspan = cell.attrs.colspan ?? cell.attrs.colSpan;
+    return (rowspan !== undefined && String(rowspan).trim() !== "1") ||
+      (colspan !== undefined && String(colspan).trim() !== "1") ||
+      String(cell.attrs.column ?? "").split(",").length > 1;
+  }));
+  if (hasMergedCells && !sharedColumns && !rectangleProfile) {
+    nestedGeometryError(errors, descriptor.id, "incomplete_or_conflicting_coordinates");
+  }
 
   const staticHeaderGrid = isStaticHeaderGrid(nestedRows);
   const staticDescriptionGrid = !staticHeaderGrid && isStaticDescriptionGrid(nestedRows);
-  const projectionMode = staticHeaderGrid
+  const projectionMode = rectangleProfile
+    ? "static-rectangular-grid"
+    : staticHeaderGrid
     ? "static-header-grid"
     : staticDescriptionGrid
       ? "static-description-grid"
@@ -293,7 +326,13 @@ function expandNestedLayoutRowDescriptor(
     inheritedMarkers: [],
     standardTableProjection: {
       mode: projectionMode || "plain",
-      rowRole: nestedRowIndex === 0 ? "header" : "body"
+      rowRole: nestedRowIndex < (rectangleProfile?.headerRows || 1) ? "header" : "body",
+      ...(rectangleProfile ? { rectangleComposition: true, headerRows: rectangleProfile.headerRows,
+        headerCaptionIds: rectangleProfile.headerCaptionIds, sharedColumns: rectangleProfile.columns } : {}),
+      ...(sharedColumns ? {
+        sharedColumns, group: `${descriptor.id}.nested-0`, rowIndex: nestedRowIndex,
+        spans: splitDirectChildCells(html).filter(cell => parseRowspan(cell.attrs.rowspan ?? cell.attrs.rowSpan) > 1).length
+      } : {})
     }
   }));
   const nestedDescriptors = nestedRootDescriptors.flatMap((nestedDescriptor) =>
@@ -301,7 +340,8 @@ function expandNestedLayoutRowDescriptor(
       nestedDescriptor,
       captionContext,
       metadataContext,
-      warnings
+      warnings,
+      errors
     )
   );
   const outsideCells = sourceCells.map((cell, sourceCellIndex) => ({
@@ -322,7 +362,7 @@ function expandNestedLayoutRowDescriptor(
         preservesBoundStandardTableCaptions(descriptor.standardTableProjection)
     }),
     ...(sourceCellIndex === nested.sourceCellIndex
-      ? { layoutRowIds: nestedRootDescriptors.map((row) => row.id) }
+      ? { layoutRowIds: rectangleProfile ? [`${descriptor.id}.nested-0`] : nestedRootDescriptors.map((row) => row.id) }
       : {})
   }));
   const inlineDescriptors = [];
@@ -367,14 +407,54 @@ function expandNestedLayoutRowDescriptor(
       ...descriptor,
       inheritedMarkers: [
         ...(descriptor.inheritedMarkers || []),
-        ...(nested.domId ? [nested.domId] : [])
+        ...(!rectangleProfile && nested.domId ? [nested.domId] : [])
       ],
       html: outsideCells.map((cell) => cell.body).join(""),
       sourceCells: parentCells
     },
     ...inlineDescriptors,
+    ...(rectangleProfile ? [{
+      id: `${descriptor.id}.nested-0`,
+      sourceRow: `${descriptor.sourceRow}.table-0`,
+      html: "",
+      inheritedMarkers: nested.domId ? [nested.domId] : [],
+      sourceCells: [{ attrs: { column: "0" }, body: "", controls: [], layoutRowIds: nestedRootDescriptors.map(row => row.id) }]
+    }] : []),
     ...nestedDescriptors
   ];
+}
+
+function rectangleControlRows(rows, captionContext, metadataContext, tableId) {
+  return rows.map((html, rowIndex) => ({
+    sourceMarkers: extractRowMarkers(html),
+    cells: splitDirectChildCells(html).map(cell => {
+      const coordinates = String(cell.attrs.column ?? "").trim();
+      const values = coordinates.split(",").map(value => Number(value.trim()));
+      const colspan = cell.attrs.colspan ?? cell.attrs.colSpan;
+      const rowspan = cell.attrs.rowspan ?? cell.attrs.rowSpan;
+      const span = parseRowspan(rowspan);
+      const rawControls = extractDesignerFieldControls(cell.body, { includeHidden: true, includeTextLabels: true });
+      const contentComplete = staticRectangleCellContent(cell.body, rawControls, tableId);
+      const materialized = extractLayoutCellControls(cell.body, captionContext, metadataContext, {
+        preservePlainLabels: true, preserveStandalonePlainLabels: true, preserveBoundCaptions: true
+      });
+      const rawIds = rawControls.map(control => control.id);
+      return {
+        column: values[0], colspan: values.length, rowspan: span,
+        coordinatesValid: contentComplete && /^\d+(?:\s*,\s*\d+)*$/.test(coordinates) &&
+          values.every((value, index) => Number.isSafeInteger(value) && value === values[0] + index) &&
+          (colspan === undefined || String(colspan).trim() === String(values.length)) &&
+          (rowspan === undefined || /^[1-9]\d*$/.test(String(rowspan).trim())) &&
+          (cell.attrs.row === undefined || (/^\d+(?:\s*,\s*\d+)*$/.test(String(cell.attrs.row).trim()) && String(cell.attrs.row).split(",").map(value => Number(value.trim()))
+            .every((value, index, array) => array.length === span && value === rowIndex + index))) &&
+          rawIds.length === materialized.length && materialized.every((control, index) => control.id === rawIds[index]),
+        controls: materialized.map(control => ({
+          id: control.id, description: isSourceDescriptionControl(control),
+          hidden: control.source?.designerHidden === true || isDataOnlyMetadataField(metadataContext.byId.get(control.id)), detail: control.type === "detailTable"
+        }))
+      };
+    })
+  }));
 }
 
 function nestedTableControlRows(rows = []) {
@@ -400,11 +480,11 @@ function isStaticDescriptionGrid(rows = []) {
 }
 
 function preservesStandardTableLabels(projection) {
-  return ["details-table", "static-header-grid", "static-description-grid"].includes(projection?.mode);
+  return ["details-table", "static-header-grid", "static-description-grid", "static-rectangular-grid"].includes(projection?.mode);
 }
 
 function preservesBoundStandardTableCaptions(projection) {
-  return ["static-header-grid", "static-description-grid"].includes(projection?.mode);
+  return ["static-header-grid", "static-description-grid", "static-rectangular-grid"].includes(projection?.mode);
 }
 
 function preservesStandaloneStandardTableLabels(projection) {
@@ -446,7 +526,8 @@ function appendDesignerLayoutRow(descriptor, context) {
     fieldIds,
     hiddenFields,
     hiddenFieldIds,
-    layoutRows
+    layoutRows,
+    nestedGeometryGroups
   } = context;
   const rowHtml = descriptor.html;
   const cells = [];
@@ -466,7 +547,7 @@ function appendDesignerLayoutRow(descriptor, context) {
   const sourceColumns = sourceCells.reduce((max, cell, cellIndex) => {
     const column = parseColumnSpec(cell.attrs.column, cellIndex);
     return Math.max(max, column.column + column.colspan);
-  }, 1);
+  }, descriptor.standardTableProjection?.sharedColumns || 1);
 
   const controlCells = sourceCells.map((cell, cellIndex) => ({
     ...cell,
@@ -508,13 +589,15 @@ function appendDesignerLayoutRow(descriptor, context) {
 
   titledCells.forEach((cell, cellIndex) => {
     const widthWeight = widthUnits.size <= 1 ? widthHints[cellIndex]?.value : undefined;
+    const column = parseColumnSpec(cell.attrs.column, cellIndex);
     let controls = cell.controls.map(control => captionContext.runtimePlainCaptions.has(control.id)
       ? { ...control, source: { ...control.source, runtimePlainCaption: true,
           ...(captionContext.runtimePlainCaptionMarkerIds.has(control.id)
             ? { runtimePlainCaptionMarkerIds: captionContext.runtimePlainCaptionMarkerIds.get(control.id) } : {}) } }
       : control);
     if (
-      descriptor.standardTableProjection?.mode === "static-header-grid" &&
+      (descriptor.standardTableProjection?.mode === "static-header-grid" ||
+        (descriptor.standardTableProjection?.mode === "static-rectangular-grid" && descriptor.standardTableProjection.headerRows > 0)) &&
       descriptor.standardTableProjection?.rowRole === "body"
     ) {
       controls = controls.map((control) => isSourceDescriptionControl(control)
@@ -524,13 +607,15 @@ function appendDesignerLayoutRow(descriptor, context) {
             source: {
               ...control.source,
               layoutCell: {
+                ...(descriptor.standardTableProjection?.rectangleComposition ? control.source?.layoutCell : {}),
                 hiddenLabel: true,
-                relation: "standard-table-column-header"
+                relation: "standard-table-column-header",
+                ...(descriptor.standardTableProjection?.headerCaptionIds?.[column.column]
+                  ? { captionIds: descriptor.standardTableProjection.headerCaptionIds[column.column] } : {})
               }
             }
           });
     }
-    const column = parseColumnSpec(cell.attrs.column, cellIndex);
     const rowspan = parseRowspan(cell.attrs.rowspan ?? cell.attrs.rowSpan);
     const controlGroups = controls.length ? groupLayoutCellControls(controls) : [];
     controlGroups.forEach((group, groupIndex) => {
@@ -597,6 +682,13 @@ function appendDesignerLayoutRow(descriptor, context) {
     }
   }
 
+  if (descriptor.standardTableProjection?.sharedColumns && !descriptor.standardTableProjection.rectangleComposition) {
+    nestedGeometryGroups.set(descriptor.id, {
+      group: descriptor.standardTableProjection.group,
+      rowIndex: descriptor.standardTableProjection.rowIndex,
+      spans: descriptor.standardTableProjection.spans
+    });
+  }
   if (cells.length) {
     const trailingBlankCells = captionContext.runtimeTrailingBlankCells.get(cells[0]?.fieldIds?.[0]);
     const matchedTrailingBlanks = trailingBlankCells && !sourceMarkers.length && !descriptor.standardTableProjection &&
@@ -610,7 +702,7 @@ function appendDesignerLayoutRow(descriptor, context) {
       sourceRow: descriptor.sourceRow,
       ...(sourceMarkers.length ? { sourceMarkers } : {}),
       columns: Math.max(sourceColumns, ...cells.map((cell) => cell.column + cell.colspan), 1),
-      ...((descriptor.standardTableProjection?.mode === "static-header-grid" ||
+      ...((descriptor.standardTableProjection?.sharedColumns || descriptor.standardTableProjection?.mode === "static-header-grid" ||
         (descriptor.standardTableProjection?.mode !== "details-table" && hasCompleteSourceGeometry(cells, sourceColumns)))
         ? { preserveSourceGeometry: true }
         : {}),
@@ -890,17 +982,104 @@ function parseCellWidth(attrs = {}) {
     : undefined;
 }
 
-function applyRowspanLayoutNesting(layoutRows) {
+// Custom grid coordinates must agree with the physical cells and active
+// rowspans. Empty TDs participate in the shared basis without becoming fields.
+function coherentNestedTableColumns(rows) {
+  const occupied = new Map();
+  let columns = 0;
+  for (const [rowIndex, html] of rows.entries()) {
+    for (const [column, end] of occupied) if (end <= rowIndex) occupied.delete(column);
+    const cells = splitDirectChildCells(html);
+    if (!cells.length) return undefined;
+    let cursor = 0;
+    for (const cell of cells) {
+      const value = String(cell.attrs.column ?? "").trim();
+      if (!/^\d+(?:\s*,\s*\d+)*$/.test(value)) return undefined;
+      const coordinates = value.split(",").map(Number);
+      if (coordinates.some((column, index) => !Number.isSafeInteger(column) || column !== coordinates[0] + index)) return undefined;
+      while (occupied.has(cursor)) cursor++;
+      if (coordinates[0] !== cursor) return undefined;
+      const colspan = coordinates.length;
+      const declaredColspan = cell.attrs.colspan ?? cell.attrs.colSpan;
+      if (declaredColspan !== undefined && String(declaredColspan).trim() !== String(colspan)) return undefined;
+      const declaredRowspan = cell.attrs.rowspan ?? cell.attrs.rowSpan;
+      if (declaredRowspan !== undefined && !/^[1-9]\d*$/.test(String(declaredRowspan).trim())) return undefined;
+      const rowspan = parseRowspan(declaredRowspan);
+      if (rowIndex + rowspan > rows.length) return undefined;
+      for (let column = cursor; column < cursor + colspan; column++) {
+        if (occupied.has(column)) return undefined;
+        occupied.set(column, rowIndex + rowspan);
+      }
+      cursor += colspan;
+      columns = Math.max(columns, cursor);
+    }
+  }
+  // Wider unmerged grids retain the existing catalog-limited wrapping policy.
+  // Any merged cell on that unsupported basis is rejected by the caller.
+  return columns && columns <= 8 ? columns : undefined;
+}
+
+function nestedGeometryError(errors, rowId, reason) {
+  errors.push({
+    code: "source.sysform.nested_geometry_unproven",
+    message: "Nested source table geometry cannot be preserved by the supported layout nesting.",
+    path: "/fdDesignerHtml",
+    details: { sourceRef: `source.form.layout.row.${rowId}`, reason }
+  });
+}
+
+// Fatal geometry facts come from the fixed Source Draft, never target review
+// metadata. Both patch review and trust use the same narrow source obligation.
+export function nestedGeometrySourceDiagnostics(sourceDraft) {
+  return (sourceDraft?.issues || [])
+    .filter(issue => issue.level === "error" && issue.code === "source.sysform.nested_geometry_unproven")
+    .map(issue => ({
+      level: "error",
+      code: "source.sysform.nested_geometry_unproven",
+      message: "Nested source table geometry cannot be preserved by the supported layout nesting.",
+      path: "/form/layout",
+      ...(/^source\.form\.layout\.row\.row-\d+[\w.-]*$/.test(issue.evidence?.sourceRef || "")
+        ? { details: { sourceRef: issue.evidence.sourceRef } } : {})
+    }));
+}
+
+function applyRowspanLayoutNesting(layoutRows, nestedGeometryGroups, errors) {
+  const converted = new Set();
+  const position = row => nestedGeometryGroups.get(row.id) || (/^\d+$/.test(String(row.sourceRow ?? ""))
+    ? { group: "root", rowIndex: Number(row.sourceRow) } : undefined);
   for (let rowIndex = 0; rowIndex < layoutRows.length; rowIndex += 1) {
     const row = layoutRows[rowIndex];
-    if (!/^\d+$/.test(String(row.sourceRow ?? ""))) continue;
+    const location = position(row);
+    if (!location || row.id.includes(".rowspan-")) continue;
     const spanningCells = (row.cells || []).filter((cell) => parseRowspan(cell.rowspan) > 1);
-    if (spanningCells.length !== 1) continue;
+    const reject = reason => {
+      if (location.group !== "root") nestedGeometryError(errors, row.id, reason);
+    };
+    if (location.group !== "root" && location.spans !== spanningCells.length) {
+      reject("unrepresented_source_span"); continue;
+    }
+    if (!spanningCells.length) continue;
+    if (spanningCells.length !== 1) { reject("multiple_spanning_cells"); continue; }
+    if (location.group !== "root" && row.sourceMarkers?.length) {
+      reject("spanning_row_marker_scope"); continue;
+    }
 
     const spanningCell = spanningCells[0];
     const rowspan = parseRowspan(spanningCell.rowspan);
-    const coveredRows = layoutRows.slice(rowIndex, rowIndex + rowspan);
-    if (coveredRows.length !== rowspan) continue;
+    const coveredRows = layoutRows.filter(candidate => {
+      const next = position(candidate);
+      return next?.group === location.group && next.rowIndex >= location.rowIndex && next.rowIndex < location.rowIndex + rowspan;
+    });
+    if (coveredRows.length !== rowspan || coveredRows.some((candidate, index) => position(candidate).rowIndex !== location.rowIndex + index)) {
+      reject("incomplete_covered_rows"); continue;
+    }
+    const absorbed = new Set(coveredRows.slice(1).map(candidate => candidate.id));
+    const owners = layoutRows.flatMap(candidate => (candidate.cells || []).filter(cell => cell.layoutRowIds?.includes(row.id)));
+    const owner = owners[0];
+    if (location.group !== "root" && (owners.length !== 1 || coveredRows.some(candidate => !owner.layoutRowIds.includes(candidate.id)) ||
+        layoutRows.some(candidate => (candidate.cells || []).some(cell => cell !== owner && cell.layoutRowIds?.some(id => absorbed.has(id)))))) {
+      reject("cross_group_layout_owner"); continue;
+    }
 
     const regionColumn = spanningCell.column + spanningCell.colspan;
     const firstRegionCells = row.cells.filter((cell) => cell !== spanningCell);
@@ -910,9 +1089,11 @@ function applyRowspanLayoutNesting(layoutRows) {
       firstRegionCells.some((cell) => cell.column < regionColumn) ||
       coveredRows.slice(1).some((coveredRow) =>
         !(coveredRow.cells || []).length ||
-        coveredRow.cells.some((cell) => cell.column < regionColumn)
+        position(coveredRow)?.spans > 0 ||
+        coveredRow.cells.some((cell) => cell.column < regionColumn || parseRowspan(cell.rowspan) > 1)
       )
     ) {
+      reject("unsupported_span_region");
       continue;
     }
 
@@ -970,8 +1151,22 @@ function applyRowspanLayoutNesting(layoutRows) {
       ]
     };
 
-    layoutRows.splice(rowIndex, rowspan, outer, ...nestedRows);
-    rowIndex += nestedRows.length;
+    converted.add(row.id);
+    layoutRows[rowIndex] = outer;
+    for (const nestedRow of nestedRows.slice(1)) {
+      const index = layoutRows.findIndex(candidate => candidate.id === nestedRow.id);
+      layoutRows[index] = nestedRow;
+      nestedGeometryGroups.delete(nestedRow.id);
+    }
+    if (location.group !== "root") owner.layoutRowIds = owner.layoutRowIds.filter(id => !absorbed.has(id));
+    layoutRows.splice(rowIndex + 1, 0, nestedRows[0]);
+    rowIndex++;
+  }
+  for (const [id, evidence] of nestedGeometryGroups) {
+    if (evidence.spans && !converted.has(id) && !errors.some(error =>
+      error.code === "source.sysform.nested_geometry_unproven" && error.details?.sourceRef === `source.form.layout.row.${id}`)) {
+      nestedGeometryError(errors, id, "unrepresented_source_span");
+    }
   }
 }
 

@@ -6,6 +6,7 @@ import { checkDraft } from "../dsl/checks.js";
 import { remoteDialogSourceDiagnostics } from "../dsl/remote-dialog.js";
 import { selectEmptyEventProof } from "../dsl/source-select-empty-event.js";
 import { draftSourceDraft } from "../translator/dsl-draft.js";
+import { nestedGeometrySourceDiagnostics } from "../translator/sysform-designer-layout.js";
 import { componentSupportsProp } from "../dsl/catalogs.js";
 import { FIELD_TYPES } from "../dsl/schema.js";
 import { nativeFormRuleBelongsToAction } from "../dsl/native-form-rule-projection.js";
@@ -256,6 +257,7 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
       "Fixed source script effects could not be independently rebuilt.", "/scripts/actions")); }
   }
   const closureDiagnostics = [
+    ...nestedGeometrySourceDiagnostics(sourceDraft),
     ...(sourceDraft ? choiceOtherCompanionDiagnostics(sourceDraft.form, patchedDraft.form, fixedSourceForm, { prefix: "agent.patch.form" }) : []),
     ...(sourceDraft ? mobileCaptionSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
     ...(sourceDraft ? radioSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
