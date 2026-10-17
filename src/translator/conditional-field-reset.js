@@ -1,5 +1,7 @@
 import { parse } from "acorn";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
+import { buildConditionOperandResolver } from "../dsl/script-condition-provenance.js";
+import { compileStaticRowEffect } from "./inline-radio-row-effects.js";
 
 const BASIS = "deterministic-conditional-field-reset";
 
@@ -10,6 +12,19 @@ export function conditionalFieldResetCandidates(source = {}, form = {}) {
   if (statements.length !== 1 || statements[0].type !== "ExpressionStatement") return [];
   const binding = valueChangeBinding(statements[0].expression);
   if (!binding || !formFieldIds(form).has(binding.controlId)) return [];
+  const bindings = buildConditionOperandResolver(text);
+  let globalsUnshadowed = true;
+  const inspect = node => {
+    if (!node || typeof node !== "object") return;
+    if (node.type === "CallExpression" && node.callee?.type === "Identifier" &&
+        !bindings.isUnshadowedGlobal(node.callee.name, node.callee.start)) globalsUnshadowed = false;
+    for (const child of Object.values(node)) {
+      if (Array.isArray(child)) child.forEach(inspect);
+      else if (child && typeof child === "object") inspect(child);
+    }
+  };
+  inspect(program);
+  if (!globalsUnshadowed) return [];
 
   const state = {
     aliases: new Map(),
@@ -94,10 +109,9 @@ function compileStatements(statements, state, indent) {
     }
     const row = rowEffect(statement, state.form);
     if (row) {
-      lines.push(
-        `${indent}MKXFORM.setFieldAttr(${JSON.stringify(row.target)}, ${row.visible ? 5 : 4})`,
-        `${indent}MKXFORM.setFieldAttr(${JSON.stringify(row.target)}, ${row.required ? 3 : 6})`
-      );
+      const compiled = compileStaticRowEffect(row, state.form, indent);
+      if (!compiled) return undefined;
+      lines.push(...compiled);
       state.rowEffects += 1;
       continue;
     }
@@ -177,7 +191,8 @@ function rowEffect(statement, form) {
   return {
     target: call.arguments[0].value,
     visible: call.arguments[1].value,
-    required: call.arguments[2].value
+    required: call.arguments[2].value,
+    reset: call.arguments[3].value
   };
 }
 
@@ -247,10 +262,9 @@ function formField(form, fieldId) {
 }
 
 function formFieldIds(form) {
-  return new Set((form?.fields || []).flatMap((field) => [
-    field?.id,
-    ...(field?.columns || []).map((column) => column?.id)
-  ]).filter(Boolean));
+  return new Set((form?.fields || [])
+    .filter(field => field?.type !== "detailTable")
+    .map(field => field?.id).filter(Boolean));
 }
 
 function layoutMarkerSet(form) {

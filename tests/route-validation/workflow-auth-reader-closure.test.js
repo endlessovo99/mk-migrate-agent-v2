@@ -34,12 +34,12 @@ describe("formal workflow editor reading closure Route-validation", () => {
     await withNetworkGuard(async () => {
       const { dsl } = route();
       class NativeClosureClient extends FakeNewoaAdapter {
-        async getElementInfo(targets) {
-          const candidates = await super.getElementInfo(targets);
+        async getElementInfo(targets, options) {
+          const candidates = await super.getElementInfo(targets, options);
           const members = Object.values(dsl.template.authorization).filter(Array.isArray).flat();
           return candidates.map(candidate => {
             const member = members.find(member => member.id === candidate.fdId);
-            return member ? { fdId: member.id, fdName: member.name, fdOrgType: member.targetOrgType } : candidate;
+            return member ? { fdId: member.id, fdName: member.name, fdOrgType: member.targetOrgType, fdIsBusiness: true } : candidate;
           });
         }
         async getTemplate(id) {
@@ -114,6 +114,6 @@ describe("formal workflow editor reading closure Route-validation", () => {
     authorization.allReaders.push(member("direct-editor"));
     const { prepared } = route(authorization);
     assert.deepEqual(ids(prepared.update.fdAllReaders), ["direct-editor", "editor-e", "reader-r"]);
-    assert.deepEqual(ids(prepared.update.fdAllEditors), ["editor-e"]);
+    assert.deepEqual(ids(prepared.update.fdAllEditors), ["direct-editor", "editor-e"]);
   });
 });

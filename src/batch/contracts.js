@@ -83,7 +83,8 @@ export function engineDigest() {
 
 export function itemBinding(item) {
   return { id: item.id, sourceDigest: item.sourceDigest, dslDigest: item.dslDigest,
-    sourceDraftDigest: item.sourceDraftDigest, engineDigest: item.engineDigest, executionOptions: item.executionOptions };
+    sourceDraftDigest: item.sourceDraftDigest, engineDigest: item.engineDigest, executionOptions: item.executionOptions,
+    ...(item.migrationPolicies ? { migrationPolicies: item.migrationPolicies } : {}) };
 }
 
 export function safeFailure(error) {

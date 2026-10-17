@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-colliding-row-form</string></void>
+<void method="put"><string>fdName</string><string>Separate source row and hidden field identity</string></void>
+<void method="put"><string>fdModelId</string><string>route-colliding-row-model</string></void>
+<void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;
+AttachXFormValueChangeEventById("fd_type",function(value,domElement){
+ if(value=="A"){
+  SetXFormFieldValueById("fd_state","A");
+  common_dom_row_set_show_required_reset("fd_marker_row",true,true,false);
+ }else{
+  SetXFormFieldValueById("fd_state","");
+  common_dom_row_set_show_required_reset("fd_marker_row",false,false,false);
+ }
+});
+Com_AddEventListener(window,"load",function(){
+ common_dom_row_set_show_required_reset("fd_marker_row",false,false,false);
+ var state=GetXFormFieldById("fd_state")[0].value;
+ if(state=="A"){
+  common_dom_row_set_show_required_reset("fd_marker_row",true,false,false);
+ }
+});
+&lt;/script&gt;</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_type",label:"Type",dataType:"String",items:"A|A;B|B"}'&gt;&lt;input id="fd_type"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_marker_row",label:"Marker value",dataType:"String",canShow:"false"}'&gt;&lt;input type="hidden" id="fd_marker_row" name="fd_marker_row"/&gt;&lt;/div&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value",label:"Payload",dataType:"String"}'&gt;&lt;input id="fd_value"/&gt;&lt;/div&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_lines",label:"Lines"}'&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Line&lt;/td&gt;&lt;/tr&gt;&lt;tr type="templateRow"&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_line",label:"Line",tableName:"fd_lines",dataType:"String"}'&gt;&lt;input id="fd_line"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_state",label:"State",dataType:"String",canShow:"false"}'&gt;&lt;input type="hidden" id="fd_state" name="fd_state"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_type" label="fd_type" type="String"/&gt;&lt;extendSimpleProperty name="fd_marker_row" label="fd_marker_row" type="String"/&gt;&lt;extendSimpleProperty name="fd_value" label="fd_value" type="String"/&gt;&lt;extendSimpleProperty name="fd_state" label="fd_state" type="String"/&gt;&lt;extendSubTableProperty name="fd_lines" label="Lines"&gt;&lt;extendSimpleProperty name="fd_line" label="Line" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;/metadata&gt;</string></void>
+</object></java>

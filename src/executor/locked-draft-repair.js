@@ -38,6 +38,10 @@ export async function repairLockedDraft(input, options = {}) {
   if (!trusted.ok) return invalid(trusted.diagnostics);
   const plan = buildDryRunPlan(trusted.dsl);
   if (!plan.ok) return { ...invalid(plan.diagnostics), plan };
+  if (options.authorizationProfile !== undefined) {
+    return blocked([{ level: 'error', code: 'locked_draft.derived_readers_not_writable',
+      message: 'The aggregate-only reader profile is retired; use separately authorized source-bound closeout.', path: '/authorizationProfile' }], plan, options.baseUrl);
+  }
   const priorResolution = applyPriorResolutionEvidence(trusted.dsl, options.priorExecutionReport);
   if (!priorResolution.ok) return invalid(priorResolution.diagnostics);
   const target = normalizedTarget(options.baseUrl);

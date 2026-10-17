@@ -104,7 +104,9 @@ async function verifyFormulaCapability(client,baseUrl){
 
 function validateArtifacts(input,o){
  requireValue(['finalize_record','repair_readers','restore_graph'].includes(o.mode),'mode_invalid');requireValue(normalizeBaseUrl(o.baseUrl)===o.baseUrl,'origin_invalid');
+ requireValue(o.client?.baseUrl===undefined||o.client.baseUrl===o.baseUrl,'client_origin_mismatch');
  requireValue(text(o.targetTemplateId)&&text(o.targetCategoryId)&&text(o.credentials?.username)&&text(o.credentials?.encryptedPassword),'target_and_credentials_required');
+ if(input.migrationPolicies)requireValue(input.migrationPolicies.scope?.baseUrl===o.baseUrl&&input.migrationPolicies.scope?.targetCategoryId===o.targetCategoryId,'migration_policy_scope_mismatch');
  requireValue(o.expectedDslDigest===sha256Digest(input)&&o.expectedPriorDslDigest===sha256Digest(o.priorDsl)&&o.expectedPriorReportDigest===sha256Digest(o.priorExecutionReport),'artifact_digest_mismatch');
  requireValue(checkTrust(o.sourceDraft,input).ok&&sourceReadScopeBindingIssues(o.sourceDraft).length===0&&o.sourceDraft.template.authorization.readScope?.mode==='everyone','source_trust_required');
  requireValue(o.priorDsl?.trust?.digests?.sourceDraft===sha256Digest(o.priorSourceDraft),'historical_source_digest_mismatch');

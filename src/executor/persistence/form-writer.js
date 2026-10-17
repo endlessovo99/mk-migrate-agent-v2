@@ -1,8 +1,10 @@
 import { sourceNumberEditors, sourceNumberDisplays } from "../../dsl/source-number-editor.js";
+import {renderMainTableReferences} from "../../dsl/native-main-table-reference.js";
 import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
 import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
 import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.js";
 import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
+import { approvedDetailColumnWidths } from "../../dsl/approved-detail-presentation.js";
 import {
   applyExpressionFormulaVoToModels,
   buildNativeFormRuleConfig,
@@ -70,19 +72,23 @@ export function applyFormPayload(template, dsl) {
   const mainModel = buildMainModel(next, xform, config, form, lang);
   const detailModels = buildDetailModels(next, form, mainModel, lang);
   const dataModels = [mainModel, ...detailModels];
+  if (dataModels.some(model => (model.fdFields || []).some(field => field?.fdIsSystem && field.fdName === "mechanisms"))) {
+    throw new Error("Native system fields must not shadow the reserved mechanism context.");
+  }
   assertUniqueNativeTableNames(dataModels);
   assertUniqueNativeControlIds(dataModels);
   const detailModelsByField = new Map(
     detailModels.map((model) => [model.dynamicProps?.detailFieldName, model]).filter(([fieldId]) => Boolean(fieldId))
   );
-  applyButtonNativeActions(mainModel, dsl.scripts, lang, { mainModel, detailModelsByField });
+  applyButtonNativeActions(mainModel, dsl.scripts, lang, { mainModel, detailModelsByField, form, xformId: xform.fdId });
 
   const fieldAuth = buildFieldAuth(mainModel, detailModels, form);
   const existingFormAttr = parseJsonObject(config.attribute?.formAttr || "{}");
   const controlAction = buildControlAction(existingFormAttr.controlAction, dsl.scripts, {
     mainModel,
     detailModelsByField,
-    form
+    form,
+    xformId: xform.fdId
   });
   const nativeFormRules = buildNativeFormRuleConfig(dsl.formRules, form, dataModels, dsl.scripts, {
     templateName: next.fdName
@@ -468,8 +474,12 @@ function controlActionKey(action, context) {
 }
 
 function renderScriptFunction(source, context = {}, action = {}) {
-  const compiled = compileSetFieldAttrRowMarkerTargets(source, context.form);
-  const rendered = String(compiled || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
+  const qualified=renderMainTableReferences(source,context.mainModel?.fdTableName,context.form);
+  const compiled = compileSetFieldAttrRowMarkerTargets(qualified, context.form);
+  const rendered = String(compiled || "").replace(/\$\{xform:id\}/g, () => {
+    if (!/^[A-Za-z0-9_-]{8,100}$/.test(String(context.xformId || ""))) throw new Error("Native form identity is required to materialize the xform placeholder.");
+    return context.xformId;
+  }).replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
     const sourceTableId = String(tableId || "").trim();
     const model = context.detailModelsByField?.get(sourceTableId);
     return model?.fdTableName || sourceTableId;
@@ -1567,6 +1577,11 @@ function detailModelAttribute(field, model) {
   const controlId = `${target.desktop}~${stableShortId(field.id)}`;
   const label = persistedFieldLabel(field);
   const hiddenLabel = componentSupportsProp(field.componentId, "hiddenLabel") && field.props?.hiddenLabel === true;
+  const approvedWidths = approvedDetailColumnWidths(field);
+  const columnWidth = Object.fromEntries(Object.entries(approvedWidths).map(([id, width]) => {
+    const native = model.fdFields.find(column => column.fdName === id);
+    return [parseJsonObject(native?.fdAttribute).config?.controlProps?.id, width];
+  }).filter(([id]) => id));
   return {
     uuid: model.fdTableName,
     config: {
@@ -1576,6 +1591,7 @@ function detailModelAttribute(field, model) {
         passValue: false,
         mode: "table",
         defaultRowNumber: 1,
+        ...(Object.keys(columnWidth).length ? { columnWidth } : {}),
         showNumber: true,
         showFieldName: true,
         showRowSelection: true,

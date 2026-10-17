@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-branch-local-sysform</string></void>
+<void method="put"><string>fdModelId</string><string>route-branch-local-template</string></void>
+<void method="put"><string>fdName</string><string>Branch-local literal main-field writes</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_mode",label:"Mode",dataType:"String"}'&gt;&lt;input id="fd_mode"/&gt;&lt;/div&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_gate",label:"Gate",dataType:"String"}'&gt;&lt;input id="fd_gate"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;input type="hidden" id="fd_a_row" name="fd_a_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload_a",label:"A value",dataType:"String"}'&gt;&lt;input id="fd_payload_a"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;input type="hidden" id="fd_b_row" name="fd_b_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload_b",label:"B value",dataType:"String"}'&gt;&lt;input id="fd_payload_b"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputText" style="display:none" fd_values='{id:"fd_mirror",label:"Mirror",dataType:"String",canShow:"false",showStatus:"noShow"}'&gt;&lt;input type="hidden" id="fd_mirror"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_mode" label="Mode" type="String"/&gt;&lt;extendSimpleProperty name="fd_gate" label="Gate" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload_a" label="A value" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload_b" label="B value" type="String"/&gt;&lt;extendSimpleProperty name="fd_mirror" label="Mirror" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;Com_AddEventListener(window,"load",function(){
+  setTimeout(function(){
+    var mode=GetXFormFieldById("fd_mode")[0].value;
+    if(mode=="A"){
+      if(GetXFormFieldById("fd_gate")[0].value=="YES"){
+        var h=GetXFormFieldById("fd_mirror")[0];
+        h.value="nested-on";
+        common_dom_row_set_show_required_reset("fd_a_row",true,true,false);
+      }else{
+        var k=GetXFormFieldById("fd_mirror")[0];
+        k.value="";
+        common_dom_row_set_show_required_reset("fd_b_row",true,false,false);
+      }
+    }else{
+      common_dom_row_set_show_required_reset("fd_a_row",false,false,false);
+    }
+  },510);
+});&lt;/script&gt;</string></void>
+</object></java>

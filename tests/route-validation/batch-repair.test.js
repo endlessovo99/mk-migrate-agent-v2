@@ -26,7 +26,7 @@ it("Route-validation retains a prewrite failure, applies a reviewed mapping repa
     };
     const failedClient = new FakeNewoaAdapter("persist", { templateAuthorization: reviewed.dsl.template.authorization });
     const getElementInfo = failedClient.getElementInfo.bind(failedClient);
-    failedClient.getElementInfo = async (targets) => targets.includes("missing-person") ? [] : getElementInfo(targets);
+    failedClient.getElementInfo = async (targets, options) => targets.includes("missing-person") ? [] : getElementInfo(targets, options);
     const failed = await executeDsl(reviewed.dsl, { ...executionOptions, ...options, client: failedClient });
     assert.equal(failed.ok, false);
     assert.ok(failed.diagnostics.some((diagnostic) => diagnostic.code === "workflow.participant_resolution_failed"));

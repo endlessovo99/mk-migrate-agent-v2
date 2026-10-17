@@ -1,4 +1,5 @@
 import { buildDryRunPlan } from "./dry-run.js";
+import {verifyTemplateReadRuntime} from './template-read-scope.js';
 import { prepareRequiredTemplateTheme } from "./template-theme.js";
 import { createExecutionJournal } from "./execution-journal.js";
 import { executePublishedFormPatch } from "./published-form-patch.js";
@@ -7,6 +8,7 @@ import { resolveWorkflowParticipants } from "./participant-resolver.js";
 import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { resolveWorkflowCooperation } from "./workflow-cooperation.js";
 import { resolveWorkflowSignPolicy, verifyWorkflowSignReadback } from "./workflow-sign-policy.js";
+import { verifyRemoteSelectorResources } from "./remote-selector-resources.js";
 import { hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
 import {
   hasStaticAddressDefaults,
@@ -54,6 +56,16 @@ async function executeDraftDsl(input, options, writes) {
   const credentials = options.credentials || {};
   const target = resolveBaseUrl(options.baseUrl);
   const safety = validateSafety(options, target.diagnostics);
+  if (options.client?.baseUrl !== undefined && options.client.baseUrl !== target.baseUrl) {
+    safety.push({ level: "error", code: "execute.client_origin_mismatch", message: "The injected client must declare the configured target origin.", path: "/execute/client/baseUrl" });
+  }
+  if (input.migrationPolicies && (input.migrationPolicies.scope?.baseUrl !== target.baseUrl ||
+      input.migrationPolicies.scope?.targetCategoryId !== options.targetCategoryId)) {
+    safety.push({ level: "error", code: "execute.migration_policy_scope_mismatch", message: "Approved migration policy origin and category must match execution.", path: "/migrationPolicies/scope" });
+  }
+  if (input.migrationPolicies && nonEmptyString(options.targetTemplateId)) {
+    safety.push({ level: "error", code: "execute.migration_policy_new_draft_required", message: "Approved migration behavior policies apply only to newly created drafts.", path: "/migrationPolicies" });
+  }
   if (safety.length) {
     return blocked(plan, safety, target.baseUrl);
   }
@@ -76,6 +88,15 @@ async function executeDraftDsl(input, options, writes) {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    const hasRemoteSelectors = input.migrationPolicies?.decisions?.some(decision => decision.kind === "native-tic-rest-selector");
+    if (hasRemoteSelectors) {
+      const stage = { name: "verifyRemoteSelectorResources", status: "started" };
+      apiStages.push(stage);
+      const resources = await verifyRemoteSelectorResources(input, { client, baseUrl });
+      Object.assign(stage, { status: resources.ok ? "ok" : "failed", resources: resources.resources });
+      if (!resources.ok) return { ...blocked(plan, [...diagnostics, ...resources.diagnostics], baseUrl),
+        stage: stage.name, failedAt: stage.name, apiStages };
+    }
     if (options.workflowCooperationDefault !== undefined ||
         input.workflow?.nodes?.some(node => ["review", "send", "sign"].includes(node.type))) {
       const stage = { name: "resolveWorkflowCooperation", status: "started" };
@@ -248,6 +269,7 @@ async function executeDraftDsl(input, options, writes) {
       directPersonFallbackIds: options.directPersonFallbackIds
     });
     executableDsl = participantResolution.dsl;
+    if(participantResolution.nativeTemplateReadScope)apiStages[apiStages.length-1].nativeTemplateReadScope=participantResolution.nativeTemplateReadScope;
     apiStages[apiStages.length - 1].status = "ok";
     apiStages[apiStages.length - 1].resolvedCount = participantResolution.resolvedCount;
     apiStages[apiStages.length - 1].identityCount = participantResolution.identityCount;
@@ -649,6 +671,14 @@ async function executeDraftDsl(input, options, writes) {
       readbackTemplate
     );
     let readback = theme ? theme.verify(numberedReadback, readbackTemplate) : numberedReadback;
+    if(executableDsl.template?.authorization?.readScope){
+      const stage={name:'verifyTemplateReadScope',status:'started'};apiStages.push(stage);
+      const readerRuntime=await verifyTemplateReadRuntime(executableDsl,{client,targetBaseUrl:baseUrl});
+      stage.status=readerRuntime.ok?'ok':'failed';
+      readback={...readback,nativeTemplateReadScope:readerRuntime,
+        ...(readerRuntime.ok?{}:{ok:false,status:'mismatch',partitions:{...readback.partitions,workflow:'mismatch'}}),
+        diagnostics:[...readback.diagnostics,...(readerRuntime.diagnostics||[])]};
+    }
     if (signPolicy?.nodes.length && readback.ok) {
       const stage = { name: "verifyWorkflowSignOperationSets", status: "started" };
       apiStages.push(stage);
@@ -658,6 +688,16 @@ async function executeDraftDsl(input, options, writes) {
       readback = { ...readback, signPolicy: signReadback,
         ...(signReadback.ok ? {} : { ok: false, status: "mismatch", partitions: { ...readback.partitions, workflow: "mismatch" } }),
         diagnostics: [...readback.diagnostics, ...signReadback.diagnostics] };
+    }
+    if (hasRemoteSelectors) {
+      const stage = { name: "verifyRemoteSelectorReadback", status: "started" };
+      apiStages.push(stage);
+      const resources = await verifyRemoteSelectorResources(input, { client, baseUrl });
+      Object.assign(stage, { status: resources.ok ? "ok" : "failed", resources: resources.resources });
+      readback = { ...readback, ok: readback.ok && resources.ok, remoteResources: resources,
+        ...(resources.ok ? {} : { status: "readback_failed" }),
+        partitions: { ...readback.partitions, remoteResources: resources.ok ? "verified" : "mismatch" },
+        diagnostics: [...readback.diagnostics, ...resources.diagnostics] };
     }
     diagnostics.push(...readback.diagnostics);
 

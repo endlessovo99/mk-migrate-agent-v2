@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { checkDraft } from "../../src/dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { inspectDeterministicScriptBranchProof } from "../../src/dsl/deterministic-script-translations.js";
 
 const SOURCE4 = "tests/fixtures/source4";
 
@@ -52,11 +53,12 @@ describe("Source4 script semantic closure", () => {
       });
       if (fullyClosed && delayedLoadId) {
         const delayed = draft.scripts.actions.find(candidate => candidate.id === delayedLoadId);
-        assert.equal(delayed?.translationStatus, "needs_review");
-        assert.match(delayed.function, /Source JSP JavaScript:[\s\S]*setTimeout/u);
+        assert.equal(delayed?.translationStatus, "mapped");
+        assert.equal(inspectDeterministicScriptBranchProof(delayed).ok,true);
+        assert.match(delayed.function, /setTimeout[\s\S]*510/u);
+        assert.match(delayed.function,/current != undefined/u);
         const trust = checkTrust(source, trusted);
-        assert.equal(trust.ok, false);
-        assert.deepEqual(trust.diagnostics.filter(item => item.level === "error").map(item => item.code), ["dsl.scripts.needs_review"]);
+        assert.equal(trust.ok, true,JSON.stringify(trust.diagnostics));
       } else if (fullyClosed) {
         assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
       }
@@ -119,8 +121,9 @@ describe("Source4 script semantic closure", () => {
 
     assert.equal(actions.length, 3);
     const delayedLoad = actions.find(action => action.event === "onLoad" && action.runWhen?.viewStatusIn?.includes("edit"));
-    assert.equal(delayedLoad?.translationStatus, "needs_review");
-    assert.match(delayedLoad.function, /Source JSP JavaScript:[\s\S]*setTimeout/u);
+    assert.equal(delayedLoad?.translationStatus, "mapped");
+    assert.equal(inspectDeterministicScriptBranchProof(delayedLoad).ok, true);
+    assert.match(delayedLoad.function, /setTimeout\(function\(\) \{[\s\S]*\}, 510\);/u);
     const immediateActions = actions.filter(action => action !== delayedLoad);
     assert.equal(immediateActions.length, 2);
     assert.equal(immediateActions.every((action) => action.translationStatus === "mapped"), true);
@@ -406,7 +409,7 @@ describe("Source4 script semantic closure", () => {
     assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
   });
 
-  it("omits IE Excel import onto native detail import and drops unverified job-number hydration", () => {
+  it("keeps unverified positional Excel import pending beside the retained job-number hydration audit", () => {
     const { source, draft } = stages("184d0e88f3949b8870a0558420682dee");
     const excel = draft.scripts.actions.find((action) =>
       action.sourceRefs?.includes("source.form.jsp.fd_3607e68357f368.script.1")
@@ -415,9 +418,9 @@ describe("Source4 script semantic closure", () => {
       action.sourceRefs?.includes("source.form.jsp.fd_3343d66e1c0210.script.1")
     );
 
-    assert.equal(excel?.translationStatus, "omitted");
-    assert.equal(excel.functionMappings?.[0]?.basis, "legacy-runtime-noop");
-    assert.match(excel.functionMappings[0].source, /fd_input_post|fd_update_odm/u);
+    assert.equal(excel?.translationStatus, "needs_review");
+    assert.equal(excel.functionMappings?.[0]?.basis, "untranslated-source");
+    assert.ok(excel.semanticHints.legacyExcelImport.missingFieldIds.some(id => /fd_input_post|fd_update_odm/u.test(id)));
     assert.equal(hydration?.translationStatus, "omitted");
     assert.equal(hydration.functionMappings?.[0]?.basis, "legacy-runtime-noop");
     assert.match(hydration.functionMappings[0].source, /fd_job_number|xform-input/u);
@@ -427,7 +430,8 @@ describe("Source4 script semantic closure", () => {
       reviewerName: "route-validation",
       checkedAt: "2026-09-01T00:00:00.000Z"
     });
-    assert.equal(checkTrust(source, trusted).ok, true, JSON.stringify(checkTrust(source, trusted).diagnostics));
+    assert.equal(checkTrust(source, trusted).ok, false);
+    assert.ok(checkTrust(source, trusted).diagnostics.some(item => item.code === "dsl.scripts.needs_review"));
   });
 
   it("keeps generated SQLDialog lookup unresolved while preserving its required text projection", () => {
@@ -522,8 +526,10 @@ describe("Source4 script semantic closure", () => {
     );
     assert.equal(rowActions.length, 3);
     const delayedLoad = rowActions.find(action => action.event === "onLoad" && action.runWhen?.viewStatusIn?.includes("edit"));
-    assert.equal(delayedLoad?.translationStatus, "needs_review");
-    assert.match(delayedLoad.function, /Source JSP JavaScript:[\s\S]*setTimeout/u);
+    assert.equal(delayedLoad?.translationStatus, "mapped");
+    assert.equal(inspectDeterministicScriptBranchProof(delayedLoad).ok,true);
+    assert.match(delayedLoad.function, /setTimeout[\s\S]*510/u);
+    assert.match(delayedLoad.function,/current != undefined/u);
     const immediateActions = rowActions.filter(action => action !== delayedLoad);
     assert.equal(immediateActions.length, 2);
     assert.equal(immediateActions.every((action) => action.translationStatus === "mapped"), true);

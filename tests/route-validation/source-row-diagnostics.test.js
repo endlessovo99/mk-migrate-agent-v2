@@ -3,11 +3,14 @@ import { it } from "node:test";
 import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import vm from "node:vm";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
 import { createTrustedMigrationDsl, checkTrust } from "../../src/dsl/trust.js";
 import { validateRowMarkerBranchSemantics } from "../../src/agent-review/script-semantic-closure.js";
 import { parseRootHashMapStringPuts } from "../../src/translator/xml-utils.js";
+import { inspectDeterministicScriptBranchProof } from "../../src/dsl/deterministic-script-translations.js";
+import { buildDryRunPlan } from "../../src/executor/dry-run.js";
 
 const directory = "tests/fixtures/route-validation/source-row-diagnostics/";
 const functions = JSON.parse(readFileSync(`${directory}reviewed-functions.json`, "utf8"));
@@ -48,12 +51,33 @@ function gates(source, draft, fn) {
 }
 const stripLogs = text => text.replace(/console\.log\([^;]*\);/g, "");
 const accepted = result => ({ apply: result.applied.ok, trust: result.trust.ok });
+function assertCurrentMapping(source, draft, reviewedFunction) {
+  const action=draft.scripts.actions[0];
+  if(action.translationStatus!=="mapped") {
+    assert.deepEqual(accepted(gates(source,draft,reviewedFunction)),{apply:true,trust:true});
+    return;
+  }
+  assert.equal(inspectDeterministicScriptBranchProof(action).ok,true);
+  for(const value of ["A","B",undefined])assert.deepEqual(observe(action.function,value),observe(reviewedFunction,value));
+  const trusted=createTrustedMigrationDsl(source,draft,{externalAgentReviewed:true});
+  assert.equal(checkTrust(source,trusted).ok,true);
+  assert.equal(buildDryRunPlan(trusted).ok,true);
+}
+function observe(text,value) {
+  const calls=[],queue=[];
+  vm.runInNewContext(`${text}; onLoad();`,{
+    setTimeout(fn,delay){calls.push(["schedule",delay]);queue.push(fn);},
+    console:{log(...args){calls.push(["log",...args]);}},
+    MKXFORM:{getValue(id){calls.push(["read",id,value]);return value;},setFieldAttr(id,attr){calls.push(["attribute",id,attr]);}}
+  });
+  for(const fn of queue)fn();return calls;
+}
 
 it("uses complete synthetic XML with one real load action and an existing source field read", () => {
   for (const name of ["timed-getter", "sync-getter", "timed-radio"]) {
     const { source, draft } = load(name);
     assert.equal(source.scripts.sources.length, 1); assert.equal(draft.scripts.actions.length, 1);
-    assert.equal(draft.scripts.actions[0].event, "onLoad"); assert.equal(draft.scripts.actions[0].translationStatus, "needs_review");
+    assert.equal(draft.scripts.actions[0].event, "onLoad"); assert.equal(draft.scripts.actions[0].translationStatus, name==="timed-radio"?"mapped":"needs_review");
     assert.ok(source.scripts.sources[0].javascript.includes('console.log("value",current)'));
     assert.equal(source.form.controls[0].id, "fd_mode");
     assert.equal(source.form.layout.rows.filter(row => row.sourceMarkers?.includes("fd_panel_row")).length, 1);
@@ -63,14 +87,13 @@ it("uses complete synthetic XML with one real load action and an existing source
 
 for (const name of ["timed-getter", "sync-getter", "timed-radio"]) it(`preserves ${name} literal and stable-local diagnostics through public gates`, () => {
   const { source, draft } = load(name), target = name === "sync-getter" ? functions.sync : functions.timed;
-  const result = gates(source, draft, target);
-  assert.deepEqual(accepted(result), { apply: true, trust: true }, JSON.stringify(result));
+  assertCurrentMapping(source,draft,target);
 });
 
 it("keeps the old no-diagnostic row recipe unchanged", () => {
   for (const name of ["timed-getter", "sync-getter", "timed-radio"]) {
     const { source, draft } = changedSource(name, stripLogs);
-    assert.deepEqual(accepted(gates(source, draft, stripLogs(name === "sync-getter" ? functions.sync : functions.timed))), { apply: true, trust: true });
+    assertCurrentMapping(source,draft,stripLogs(name === "sync-getter" ? functions.sync : functions.timed));
   }
 });
 

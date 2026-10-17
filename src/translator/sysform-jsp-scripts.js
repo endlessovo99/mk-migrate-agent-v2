@@ -40,6 +40,7 @@ import { financeDetailGenerationTranslation } from "./finance-detail-generation.
 import { analyzeLegacyDetailSumHelper } from "./legacy-detail-sum.js";
 import { namedValueChangeAssignmentCandidates } from "./named-value-change-assignment.js";
 import { localCurrencyHelperCandidates } from "./local-currency-helper.js";
+import { closedMainFieldEffectCandidates } from "./closed-main-field-effects.js";
 import { dynamicHyperlinkCandidates } from "./dynamic-hyperlink.js";
 import { multiRadioRowHelperCandidates } from "./multi-radio-row-helper.js";
 import { detailCascadeActionCandidates } from "./detail-cascade-actions.js";
@@ -68,11 +69,25 @@ import { radioOptionVisibilityCandidates } from "./radio-option-visibility.js";
 import { radioCheckedOnclickLifecycleCandidates } from "./radio-checked-onclick-lifecycle.js";
 import { projectChangeScriptClosureCandidates } from "./project-change-script-closures.js";
 import { legacyExcelAndOrgHydrationCandidates } from "./legacy-excel-and-org-hydration.js";
+import { legacyDetailOrgHydrationCandidates } from "./legacy-detail-org-hydration.js";
+import { legacyDetailOrgEventDomain } from "./legacy-detail-org-domain.js";
+import { conditionalAttachmentRequirementCandidates } from "./conditional-attachment-requirement.js";
+import { normalizeAuditedSourceRowOrphans } from "./source-row-orphan-normalization.js";
+import {
+  legacyDetailAggregateEffectCandidates,
+  legacyPersonTextCountCandidates
+} from "./legacy-detail-aggregate-effects.js";
+import { literalArrayRowLifecycleCandidates } from "./literal-array-row-lifecycle.js";
+import { sharedJsonStateCandidates } from "./source-shared-json-state.js";
+import { sharedJsonStateSourceDomain } from "./source-shared-json-state-domain.js";
+import { approvedRuntimePolicySourceFacts } from "./approved-runtime-policies.js";
 import { legacySqlDialogRuntimeCandidate } from "./legacy-sql-dialog-runtime.js";
 import { procurementDetailLockAndLinkCandidates } from "./procurement-detail-lock-and-links.js";
 import { jqueryContainerVisibilityCandidates } from "./jquery-container-visibility.js";
 import { detailColumnConsistencyCandidate } from "./detail-column-consistency.js";
 import { jqueryReadyInitializationCandidates } from "./jquery-ready-initialization.js";
+import {dateOverlapLifecycleCandidates} from "./date-overlap-lifecycle.js";
+import {scalarSourceChangeCandidates} from "./scalar-source-change.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -96,9 +111,14 @@ export function extractSysFormJspScripts(template = {}, options = {}) {
       });
     });
   });
+  const displaySources = extractDisplayJspScripts(template.fdDisplayJsp || "");
+  // Runtime libraries are independent of designer JSP callbacks. Supplement
+  // only this closed declarative import; ordinary runtime callbacks still use
+  // the existing designer-first boundary and are never duplicated.
+  const hasCurrencyImport = designerScriptSources.some(source => isChinaValueRuntimeInclude(source.javascript));
   const displayScriptSources = designerScriptSources.length
-    ? []
-    : extractDisplayJspScripts(template.fdDisplayJsp || "");
+    ? (hasCurrencyImport ? [] : displaySources.filter(source => !source.displayGate && isChinaValueRuntimeInclude(source.javascript) && unconditionalRuntimeImport(template.fdDisplayJsp, source)).slice(0, 1))
+    : displaySources;
   const sources = [...designerScriptSources, ...displayScriptSources].map((source) => {
     const functionAudit = auditFunctionWhitelist(source.javascript, whitelist, {
       path: source.sourceRef,
@@ -113,6 +133,12 @@ export function extractSysFormJspScripts(template = {}, options = {}) {
   const buttons = designerFragments.flatMap((fragment) => extractJspButtons(fragment, sources));
 
   if (!designerFragments.length && !sources.length && !template.fdDisplayJsp) return undefined;
+  const detailOrgEventDomain = legacyDetailOrgEventDomain(template, sources);
+  if (detailOrgEventDomain) sources[0].semanticFacts.staticDetailOrgEventDomain = detailOrgEventDomain;
+  const sharedStateDomain = sharedJsonStateSourceDomain(template, sources);
+  if (sharedStateDomain) sources[0].semanticFacts.sharedJsonStateSourceDomain = sharedStateDomain;
+  const approvedRuntimeFacts = approvedRuntimePolicySourceFacts(template, sources);
+  if (approvedRuntimeFacts) sources[0].semanticFacts.approvedRuntimePolicies = approvedRuntimeFacts;
 
   return pruneUndefined({
     source: "sysform-jsp",
@@ -133,9 +159,38 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
   if (!sources.length && !buttons.length) return undefined;
 
   const sourceCandidates = sources.flatMap((source, sourceIndex) => {
+    const dateOverlap=dateOverlapLifecycleCandidates(source,options.form,sourceScripts);
+    if(dateOverlap.length===7)return dateOverlap;
     const primaryCandidates = eventCandidatesFromSource(source, sourceIndex, {
       ...options,
       sourceScripts
+    });
+    const aggregateCandidates = new Map([
+      ...legacyDetailAggregateEffectCandidates(source, options.form, sourceScripts),
+      ...legacyPersonTextCountCandidates(source, options.form, sourceScripts)
+    ]
+      .map(candidate => [candidate.sourceActionKey, candidate]));
+    const literalArrayCandidates = [
+      ...literalArrayRowLifecycleCandidates(source, options.form, sourceScripts),
+      ...sharedJsonStateCandidates(source, options.form, sourceScripts),
+      ...closedMainFieldEffectCandidates(source, options.form, sourceScripts)
+    ];
+    const replacements = new Map(literalArrayCandidates.map(candidate => [candidate.sourceActionKey || candidate.id, candidate]));
+    const replacementKey = candidate => normalizeHelperInjectedSourceActionKey(
+      candidate.sourceActionKey, candidate.source || source
+    ) || candidate.id;
+    const pending = candidate => !candidate.translationStatus || candidate.translationStatus === "needs_review";
+    const replaceable = primaryCandidates.filter(candidate => pending(candidate) &&
+      replacements.has(replacementKey(candidate)));
+    const ownsWholeSource = replaceable.length === primaryCandidates.length;
+    const provenCandidates = primaryCandidates.map(candidate => {
+      const aggregate = candidate.sourceActionKey && aggregateCandidates.get(candidate.sourceActionKey);
+      if (aggregate) return { ...aggregate, id: candidate.id, sourceActionKey: candidate.sourceActionKey };
+      const replacement = pending(candidate) && replacements.get(replacementKey(candidate));
+      if (!replacement || replacement.event !== candidate.event || replacement.controlId !== candidate.controlId) return candidate;
+      const { ownsLegacyRowEffects, ...semanticHints } = replacement.semanticHints;
+      return { ...replacement, id: candidate.id, sourceActionKey: candidate.sourceActionKey,
+        semanticHints: { ...semanticHints, ...(ownsWholeSource && ownsLegacyRowEffects ? { ownsLegacyRowEffects: true } : {}) } };
     });
     const selectionCandidates = sameRowRadioSelectionCandidates(
       source,
@@ -143,7 +198,7 @@ export function draftMkScriptsFromSourceScripts(sourceScripts = {}, options = {}
     );
     return composeValueChangeCallbackCandidates(
       source,
-      [...primaryCandidates, ...jqueryReadyInitializationCandidates(source)],
+      [...provenCandidates, ...jqueryReadyInitializationCandidates(source)],
       selectionCandidates
     );
   });
@@ -1094,6 +1149,18 @@ function runWhenFromDisplayGate(displayGate) {
 
 function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   if (!hasExecutableJavascript(source.javascript)) return [];
+  const conditionalAttachment = conditionalAttachmentRequirementCandidates(source, options.form, options.sourceScripts);
+  if (conditionalAttachment.length) {
+    return conditionalAttachment.map(candidate => ({ ...candidate, source }));
+  }
+  const detailOrgHydration = legacyDetailOrgHydrationCandidates(source, options.form, options.sourceScripts);
+  if (detailOrgHydration.length) {
+    return detailOrgHydration.map((candidate, index) => ({
+      ...candidate,
+      id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
+      source
+    }));
+  }
   const personPropertyHydration = legacyPersonPropertyHydrationCandidates(
     source,
     options.form
@@ -1284,26 +1351,33 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }));
   }
 
+  const rowOrphanNormalization = normalizeAuditedSourceRowOrphans(source, options.form);
+  const rowEffectSource = rowOrphanNormalization ? { ...source, javascript: rowOrphanNormalization.javascript } : source;
+  const retainRowOrphanEvidence = candidate => rowOrphanNormalization ? {
+    ...candidate,
+    javascript: source.javascript,
+    semanticHints: { ...candidate.semanticHints, auditedOrphanRowNormalization: rowOrphanNormalization.evidence }
+  } : candidate;
   const inlineRadioRowEffects = inlineRadioRowEffectCandidates(
-    source,
+    rowEffectSource,
     options.form,
     options.formRules
   );
   if (inlineRadioRowEffects.length) {
     return inlineRadioRowEffects.map((candidate, index) => ({
-      ...candidate,
+      ...retainRowOrphanEvidence(candidate),
       id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
       source
     }));
   }
 
   const conditionalFieldResets = conditionalFieldResetCandidates(
-    source,
+    rowEffectSource,
     options.form
   );
   if (conditionalFieldResets.length) {
     return conditionalFieldResets.map((candidate, index) => ({
-      ...candidate,
+      ...retainRowOrphanEvidence(candidate),
       id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`,
       source
     }));
@@ -1489,6 +1563,9 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
     }));
   }
 
+  const scalarSourceChanges=scalarSourceChangeCandidates(sourceWithHelpers,options.form,options.sourceScripts);
+  if(scalarSourceChanges.length===1)return scalarSourceChanges.map((candidate,index)=>({...candidate,id:(source.id||'script.'+(sourceIndex+1))+'.event.'+(index+1),source:sourceWithHelpers}));
+
   const directSemanticCandidates = [
     simpleViewRowMarkerCandidate(sourceWithHelpers, options.form),
     payeeDiffDisplayCandidate(sourceWithHelpers, options.form)
@@ -1572,7 +1649,7 @@ function simpleCalculationAssignmentCandidates(source, form) {
 
 function chinaValueRuntimeCandidates(source, form) {
   const text = String(source.javascript || "").trim();
-  if (!/^Com_IncludeFile\(\s*(["'])chinaValue_script\.js\1\s*,\s*(["'])\.\.\/sys\/xform\/designer\/chinaValue\/\2\s*\)\s*;?$/u.test(text)) {
+  if (!isChinaValueRuntimeInclude(text)) {
     return [];
   }
 
@@ -1615,6 +1692,25 @@ function chinaValueRuntimeCandidates(source, form) {
       function: chinaValueRuntimeFunction("onLoad", sourceId, targetId)
     }, sourceId, targetId, source.sourceRef)
   ]);
+}
+
+function isChinaValueRuntimeInclude(text) {
+  return /^\s*Com_IncludeFile\(\s*(["'])chinaValue_script\.js\1\s*,\s*(["'])\.\.\/sys\/xform\/designer\/chinaValue\/\2\s*\)\s*;?\s*$/u.test(String(text || ""));
+}
+
+function unconditionalRuntimeImport(jsp, source) {
+  const text = decodeDeep(jsp || "");
+  const scripts = [...text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].filter(match => decodeDeep(match[1]).trim());
+  const index = Number(source.id?.match(/\.script\.(\d+)$/)?.[1]) - 1;
+  if (!Number.isInteger(index) || !scripts[index]) return false;
+  let depth = 0;
+  for (const match of text.slice(0, scripts[index].index).matchAll(/<%(?!@)([\s\S]*?)%>/g)) {
+    const code = match[1].trim();
+    if (/^if\s*\([^{}]*\)\s*\{$/.test(code)) depth++;
+    else if (code === "}" && depth > 0) depth--;
+    else return false;
+  }
+  return depth === 0;
 }
 
 function chinaValueRuntimeCandidate(candidate, sourceId, targetId, sourceRef) {

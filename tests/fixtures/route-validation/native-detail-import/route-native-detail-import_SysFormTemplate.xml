@@ -1,0 +1,52 @@
+<java><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>fixture-native-import-sysform</string></void><void method="put"><string>fdModelId</string><string>fixture-native-import-model</string></void><void method="put"><string>fdName</string><string>Native confirmed detail import</string></void><void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;label fd_type="linkLabel" fd_values='{id:"fd_download",content:"Download template",link:"https://files.example.invalid/old.xlsx"}'&gt;Download template&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;table fd_type="detailsTable" fd_values='{id:"detailList",label:"Imported rows"}'&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;fd_job&lt;/td&gt;&lt;td&gt;fd_name&lt;/td&gt;&lt;td&gt;fd_org.name&lt;/td&gt;&lt;td&gt;fd_date&lt;/td&gt;&lt;td&gt;fd_flag&lt;/td&gt;&lt;/tr&gt;&lt;tr type="templateRow"&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_job",label:"fd_job",dataType:"String"}'&gt;&lt;input id="fd_job"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_name",label:"fd_name",dataType:"String"}'&gt;&lt;input id="fd_name"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_org.name",label:"fd_org.name",dataType:"String"}'&gt;&lt;input id="fd_org.name"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_date",label:"fd_date",dataType:"String"}'&gt;&lt;input id="fd_date"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_flag",label:"fd_flag",dataType:"String"}'&gt;&lt;input id="fd_flag"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;div fd_type="jsp" id="jsp_fixture_excel"&gt;&lt;input type="hidden" value='&amp;lt;xform:editShow&amp;gt;&amp;lt;div onclick=&amp;quot;importExcel()&amp;quot;&amp;gt;Excel import&amp;lt;/div&amp;gt;&amp;lt;script&amp;gt;var ImportExcel_Parameter = new Array();
+        //目前只支持IE,其他浏览器需要后续完善
+        function importExcel() {
+            //开始导入Excel的起始行
+            var startRowNo = 2;
+            var startCellNo = 2;
+            //明细表中的需要导入控件的fdId,请按照Excel模板的列逐个匹配，不能允许跨列
+            var detailTableId = &amp;quot;detailList&amp;quot;;
+            var detailControlIds =
+                &amp;quot;fd_job;fd_name;fd_missing;fd_org.name;fd_date;fd_flag&amp;quot;;
+
+            //一下代码无效修改，修改需谨慎
+            //获取Excel中指定的内容
+            parsingExcelContent(startRowNo, startCellNo, detailTableId, detailControlIds);
+
+        }
+
+        function parsingExcelContent(startRowNo, startCellNo, detailTableId, detailControlIds) {
+            var parsingContent = new Array(detailTableId, detailControlIds, startRowNo, startCellNo);
+            var params = new Array(detailTableId, detailControlIds, startRowNo, startCellNo);
+            var style = &amp;quot;dialogWidth:650px; dialogHeight:350px; status:0;scroll:0; help:0; resizable:1&amp;quot;;
+            var excelContent ;
+            if (window.showModalDialog) {
+                excelContent = window.showModalDialog(Com_Parameter.ContextPath +
+                    &amp;quot;km/review/km_review_detail_excel/kmReviewDetailImport_excel.jsp&amp;quot;, params, style);
+            } else {
+                ImportExcel_Parameter = params;
+                excelContent = window.open(Com_Parameter.ContextPath +
+                    &amp;quot;km/review/km_review_detail_excel/kmReviewDetailImport_excel.jsp&amp;quot;, params, style);
+            }
+            if (excelContent != null) {
+                _DocList_AddRows(detailTableId, excelContent);
+                //  _DocList_AddRows(&amp;apos;TABLE_DL_fd_sap_accl_sub_tab&amp;apos;, arrValues);
+            }
+        }
+        //根据每行的控件值，添加行并设置值
+        function _DocList_AddRows(detailTableId, rowsCtrlValue) {
+            var optTB = document.getElementById(&amp;quot;TABLE_DL_&amp;quot; + detailTableId);
+            var tbInfo = DocList_TableInfo[optTB.id];
+            for (var i = tbInfo.lastIndex - 1; i &amp;gt; 0; i--) {
+                optTB.deleteRow(i);
+                tbInfo.lastIndex--;
+                for (var j = i; j &amp;lt; tbInfo.lastIndex; j++) {
+                    DocListFunc_RefreshIndex(tbInfo, j);
+                }
+            }
+
+            //添加
+            for (var i = 0; i &amp;lt; rowsCtrlValue.length; i++) {
+                DocList_AddRow(optTB, null, rowsCtrlValue[i]);
+            }
+        }&amp;lt;/script&amp;gt;&amp;lt;/xform:editShow&amp;gt;'/&gt;&lt;/div&gt;</string></void><void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSubTableProperty name="detailList"&gt;&lt;extendSimpleProperty name="fd_job" type="String"/&gt;&lt;extendSimpleProperty name="fd_name" type="String"/&gt;&lt;extendSimpleProperty name="fd_org.name" type="String"/&gt;&lt;extendSimpleProperty name="fd_date" type="String"/&gt;&lt;extendSimpleProperty name="fd_flag" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;/metadata&gt;</string></void></object></java>

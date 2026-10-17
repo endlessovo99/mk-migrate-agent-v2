@@ -1,0 +1,1433 @@
+{
+  "version": 1,
+  "description": "Identity-anonymized native nonempty reader/editor observations; expected aggregates were captured independently before this implementation.",
+  "sourceCorpusSha256": "77cd2b7bbf86fb5b630feb02171cde121c621fc3d4a08b1f71e7c35d0ff325af",
+  "cases": [
+    {
+      "case": 1,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3"
+      ],
+      "editors": [
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-4",
+        "member-2",
+        "member-3",
+        "member-5",
+        "member-6",
+        "member-7"
+      ],
+      "expectedAllEditors": [
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7"
+      ]
+    },
+    {
+      "case": 2,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15",
+        "member-16",
+        "member-17",
+        "member-18"
+      ],
+      "editors": [
+        "member-19"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15",
+        "member-16",
+        "member-17",
+        "member-18",
+        "member-19"
+      ],
+      "expectedAllEditors": [
+        "member-19"
+      ]
+    },
+    {
+      "case": 3,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ],
+      "expectedAllEditors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ]
+    },
+    {
+      "case": 4,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3"
+      ],
+      "editors": [
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-4",
+        "member-5",
+        "member-3",
+        "member-6",
+        "member-7"
+      ],
+      "expectedAllEditors": [
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7"
+      ]
+    },
+    {
+      "case": 5,
+      "readers": [
+        "member-1",
+        "member-2"
+      ],
+      "editors": [
+        "member-3"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3"
+      ],
+      "expectedAllEditors": [
+        "member-3"
+      ]
+    },
+    {
+      "case": 6,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15",
+        "member-16",
+        "member-17",
+        "member-18",
+        "member-19",
+        "member-20",
+        "member-21",
+        "member-22",
+        "member-23",
+        "member-24",
+        "member-25",
+        "member-26",
+        "member-27",
+        "member-28",
+        "member-29",
+        "member-30",
+        "member-31",
+        "member-32"
+      ],
+      "editors": [
+        "member-33",
+        "member-34",
+        "member-35",
+        "member-32"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-33",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15",
+        "member-16",
+        "member-17",
+        "member-18",
+        "member-19",
+        "member-34",
+        "member-20",
+        "member-21",
+        "member-22",
+        "member-23",
+        "member-24",
+        "member-25",
+        "member-26",
+        "member-27",
+        "member-28",
+        "member-29",
+        "member-30",
+        "member-31",
+        "member-35",
+        "member-32"
+      ],
+      "expectedAllEditors": [
+        "member-33",
+        "member-34",
+        "member-35",
+        "member-32"
+      ]
+    },
+    {
+      "case": 7,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3"
+      ],
+      "editors": [
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-4",
+        "member-3",
+        "member-5"
+      ],
+      "expectedAllEditors": [
+        "member-4",
+        "member-5"
+      ]
+    },
+    {
+      "case": 8,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllEditors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ]
+    },
+    {
+      "case": 9,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15",
+        "member-16",
+        "member-17",
+        "member-18",
+        "member-19",
+        "member-20",
+        "member-21",
+        "member-22",
+        "member-23",
+        "member-24",
+        "member-25",
+        "member-26",
+        "member-27",
+        "member-28",
+        "member-29",
+        "member-30",
+        "member-31",
+        "member-32",
+        "member-33",
+        "member-34",
+        "member-35",
+        "member-36",
+        "member-37",
+        "member-38",
+        "member-39",
+        "member-40",
+        "member-41",
+        "member-42",
+        "member-43",
+        "member-44",
+        "member-45",
+        "member-46",
+        "member-47",
+        "member-48",
+        "member-49",
+        "member-50",
+        "member-51",
+        "member-52",
+        "member-53",
+        "member-54",
+        "member-55",
+        "member-56",
+        "member-57",
+        "member-58",
+        "member-59",
+        "member-60",
+        "member-61",
+        "member-62",
+        "member-63",
+        "member-64",
+        "member-65",
+        "member-66",
+        "member-67",
+        "member-68",
+        "member-69",
+        "member-70",
+        "member-71",
+        "member-72",
+        "member-73",
+        "member-74",
+        "member-75",
+        "member-76",
+        "member-77",
+        "member-78",
+        "member-79",
+        "member-80",
+        "member-81",
+        "member-82",
+        "member-83",
+        "member-84",
+        "member-85",
+        "member-86",
+        "member-87",
+        "member-88",
+        "member-89",
+        "member-90",
+        "member-91",
+        "member-92",
+        "member-93",
+        "member-94",
+        "member-95",
+        "member-96",
+        "member-97",
+        "member-98",
+        "member-99",
+        "member-100",
+        "member-101",
+        "member-102",
+        "member-103",
+        "member-104",
+        "member-105",
+        "member-106",
+        "member-107",
+        "member-108",
+        "member-109",
+        "member-110",
+        "member-111",
+        "member-112",
+        "member-113",
+        "member-114",
+        "member-115",
+        "member-116",
+        "member-117",
+        "member-118",
+        "member-119",
+        "member-120",
+        "member-121",
+        "member-122",
+        "member-123",
+        "member-124",
+        "member-125",
+        "member-126",
+        "member-127",
+        "member-128",
+        "member-129",
+        "member-130",
+        "member-131",
+        "member-132",
+        "member-133",
+        "member-134",
+        "member-135",
+        "member-136",
+        "member-137",
+        "member-138",
+        "member-139",
+        "member-140",
+        "member-141",
+        "member-142",
+        "member-143",
+        "member-144",
+        "member-145",
+        "member-146",
+        "member-147",
+        "member-148",
+        "member-149",
+        "member-150",
+        "member-151"
+      ],
+      "editors": [
+        "member-152",
+        "member-153",
+        "member-151"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15",
+        "member-16",
+        "member-17",
+        "member-18",
+        "member-19",
+        "member-20",
+        "member-21",
+        "member-22",
+        "member-23",
+        "member-24",
+        "member-25",
+        "member-26",
+        "member-27",
+        "member-28",
+        "member-29",
+        "member-30",
+        "member-31",
+        "member-32",
+        "member-33",
+        "member-34",
+        "member-35",
+        "member-36",
+        "member-37",
+        "member-38",
+        "member-39",
+        "member-40",
+        "member-41",
+        "member-42",
+        "member-43",
+        "member-44",
+        "member-45",
+        "member-46",
+        "member-47",
+        "member-48",
+        "member-49",
+        "member-50",
+        "member-51",
+        "member-52",
+        "member-53",
+        "member-54",
+        "member-55",
+        "member-56",
+        "member-57",
+        "member-58",
+        "member-59",
+        "member-152",
+        "member-60",
+        "member-61",
+        "member-62",
+        "member-63",
+        "member-64",
+        "member-65",
+        "member-66",
+        "member-67",
+        "member-68",
+        "member-69",
+        "member-70",
+        "member-71",
+        "member-72",
+        "member-73",
+        "member-74",
+        "member-75",
+        "member-153",
+        "member-76",
+        "member-77",
+        "member-78",
+        "member-79",
+        "member-80",
+        "member-81",
+        "member-82",
+        "member-83",
+        "member-84",
+        "member-85",
+        "member-86",
+        "member-87",
+        "member-88",
+        "member-89",
+        "member-90",
+        "member-91",
+        "member-92",
+        "member-93",
+        "member-94",
+        "member-95",
+        "member-96",
+        "member-97",
+        "member-98",
+        "member-99",
+        "member-100",
+        "member-101",
+        "member-102",
+        "member-103",
+        "member-104",
+        "member-105",
+        "member-106",
+        "member-107",
+        "member-108",
+        "member-109",
+        "member-110",
+        "member-111",
+        "member-112",
+        "member-113",
+        "member-114",
+        "member-115",
+        "member-116",
+        "member-117",
+        "member-118",
+        "member-119",
+        "member-120",
+        "member-121",
+        "member-122",
+        "member-123",
+        "member-124",
+        "member-125",
+        "member-126",
+        "member-127",
+        "member-128",
+        "member-129",
+        "member-130",
+        "member-131",
+        "member-132",
+        "member-133",
+        "member-134",
+        "member-135",
+        "member-136",
+        "member-137",
+        "member-138",
+        "member-139",
+        "member-140",
+        "member-141",
+        "member-142",
+        "member-143",
+        "member-144",
+        "member-145",
+        "member-146",
+        "member-147",
+        "member-148",
+        "member-149",
+        "member-150",
+        "member-151"
+      ],
+      "expectedAllEditors": [
+        "member-152",
+        "member-153",
+        "member-151"
+      ]
+    },
+    {
+      "case": 10,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllEditors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ]
+    },
+    {
+      "case": 11,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11"
+      ],
+      "editors": [
+        "member-12",
+        "member-2",
+        "member-13",
+        "member-9",
+        "member-14",
+        "member-15"
+      ],
+      "expectedAllReaders": [
+        "member-12",
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-13",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-14",
+        "member-15"
+      ],
+      "expectedAllEditors": [
+        "member-12",
+        "member-2",
+        "member-13",
+        "member-9",
+        "member-14",
+        "member-15"
+      ]
+    },
+    {
+      "case": 12,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "editors": [
+        "member-4",
+        "member-6"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ],
+      "expectedAllEditors": [
+        "member-4",
+        "member-6"
+      ]
+    },
+    {
+      "case": 13,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ],
+      "expectedAllEditors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ]
+    },
+    {
+      "case": 14,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ],
+      "expectedAllEditors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ]
+    },
+    {
+      "case": 15,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2"
+      ],
+      "expectedAllReaders": [
+        "member-2",
+        "member-1"
+      ],
+      "expectedAllEditors": [
+        "member-2"
+      ]
+    },
+    {
+      "case": 16,
+      "readers": [
+        "member-1",
+        "member-2"
+      ],
+      "editors": [
+        "member-3",
+        "member-4"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4"
+      ],
+      "expectedAllEditors": [
+        "member-3",
+        "member-4"
+      ]
+    },
+    {
+      "case": 17,
+      "readers": [
+        "member-1",
+        "member-2"
+      ],
+      "editors": [
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllReaders": [
+        "member-3",
+        "member-1",
+        "member-2",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllEditors": [
+        "member-3",
+        "member-4",
+        "member-5"
+      ]
+    },
+    {
+      "case": 18,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15"
+      ],
+      "editors": [
+        "member-16",
+        "member-15"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-16",
+        "member-15"
+      ],
+      "expectedAllEditors": [
+        "member-16",
+        "member-15"
+      ]
+    },
+    {
+      "case": 19,
+      "readers": [
+        "member-1",
+        "member-2"
+      ],
+      "editors": [
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllEditors": [
+        "member-3",
+        "member-4",
+        "member-5"
+      ]
+    },
+    {
+      "case": 20,
+      "readers": [
+        "member-1",
+        "member-2"
+      ],
+      "editors": [
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllEditors": [
+        "member-3",
+        "member-4",
+        "member-5"
+      ]
+    },
+    {
+      "case": 21,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2",
+        "member-3"
+      ],
+      "expectedAllReaders": [
+        "member-2",
+        "member-1",
+        "member-3"
+      ],
+      "expectedAllEditors": [
+        "member-2",
+        "member-3"
+      ]
+    },
+    {
+      "case": 22,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15"
+      ],
+      "editors": [
+        "member-16"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-16",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15"
+      ],
+      "expectedAllEditors": [
+        "member-16"
+      ]
+    },
+    {
+      "case": 23,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8"
+      ],
+      "editors": [
+        "member-5",
+        "member-9",
+        "member-10"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-9",
+        "member-8",
+        "member-10"
+      ],
+      "expectedAllEditors": [
+        "member-5",
+        "member-9",
+        "member-10"
+      ]
+    },
+    {
+      "case": 24,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "expectedAllEditors": [
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ]
+    },
+    {
+      "case": 25,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2",
+        "member-3",
+        "member-4"
+      ],
+      "expectedAllReaders": [
+        "member-2",
+        "member-1",
+        "member-3",
+        "member-4"
+      ],
+      "expectedAllEditors": [
+        "member-2",
+        "member-3",
+        "member-4"
+      ]
+    },
+    {
+      "case": 26,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6"
+      ],
+      "editors": [
+        "member-7",
+        "member-2",
+        "member-8",
+        "member-4",
+        "member-9"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-7",
+        "member-2",
+        "member-3",
+        "member-8",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-9"
+      ],
+      "expectedAllEditors": [
+        "member-7",
+        "member-2",
+        "member-8",
+        "member-4",
+        "member-9"
+      ]
+    },
+    {
+      "case": 27,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2"
+      ],
+      "expectedAllEditors": [
+        "member-2"
+      ]
+    },
+    {
+      "case": 28,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15",
+        "member-16",
+        "member-17",
+        "member-18",
+        "member-19",
+        "member-20",
+        "member-21",
+        "member-22",
+        "member-23",
+        "member-24",
+        "member-25",
+        "member-26",
+        "member-27",
+        "member-28",
+        "member-29",
+        "member-30",
+        "member-31",
+        "member-32",
+        "member-33",
+        "member-34",
+        "member-35",
+        "member-36",
+        "member-37",
+        "member-38",
+        "member-39",
+        "member-40",
+        "member-41",
+        "member-42",
+        "member-43",
+        "member-44",
+        "member-45",
+        "member-46"
+      ],
+      "editors": [
+        "member-47",
+        "member-48",
+        "member-14",
+        "member-49",
+        "member-18",
+        "member-50",
+        "member-51",
+        "member-52"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-47",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-48",
+        "member-13",
+        "member-14",
+        "member-15",
+        "member-49",
+        "member-16",
+        "member-17",
+        "member-18",
+        "member-50",
+        "member-19",
+        "member-20",
+        "member-21",
+        "member-22",
+        "member-23",
+        "member-24",
+        "member-25",
+        "member-26",
+        "member-51",
+        "member-27",
+        "member-28",
+        "member-29",
+        "member-30",
+        "member-31",
+        "member-32",
+        "member-33",
+        "member-34",
+        "member-35",
+        "member-36",
+        "member-37",
+        "member-38",
+        "member-39",
+        "member-40",
+        "member-41",
+        "member-42",
+        "member-43",
+        "member-44",
+        "member-45",
+        "member-46",
+        "member-52"
+      ],
+      "expectedAllEditors": [
+        "member-47",
+        "member-48",
+        "member-14",
+        "member-49",
+        "member-18",
+        "member-50",
+        "member-51",
+        "member-52"
+      ]
+    },
+    {
+      "case": 29,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-13",
+        "member-14",
+        "member-15",
+        "member-16"
+      ],
+      "editors": [
+        "member-17",
+        "member-18",
+        "member-19"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-6",
+        "member-7",
+        "member-8",
+        "member-9",
+        "member-10",
+        "member-11",
+        "member-12",
+        "member-17",
+        "member-13",
+        "member-14",
+        "member-18",
+        "member-15",
+        "member-19",
+        "member-16"
+      ],
+      "expectedAllEditors": [
+        "member-17",
+        "member-18",
+        "member-19"
+      ]
+    },
+    {
+      "case": 30,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "editors": [
+        "member-6",
+        "member-7"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-6",
+        "member-4",
+        "member-5",
+        "member-7"
+      ],
+      "expectedAllEditors": [
+        "member-6",
+        "member-7"
+      ]
+    },
+    {
+      "case": 31,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "editors": [
+        "member-6",
+        "member-7"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-6",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-7"
+      ],
+      "expectedAllEditors": [
+        "member-6",
+        "member-7"
+      ]
+    },
+    {
+      "case": 32,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3",
+        "member-4",
+        "member-5"
+      ],
+      "editors": [
+        "member-6",
+        "member-7"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-6",
+        "member-3",
+        "member-4",
+        "member-5",
+        "member-7"
+      ],
+      "expectedAllEditors": [
+        "member-6",
+        "member-7"
+      ]
+    },
+    {
+      "case": 33,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2"
+      ],
+      "expectedAllReaders": [
+        "member-2",
+        "member-1"
+      ],
+      "expectedAllEditors": [
+        "member-2"
+      ]
+    },
+    {
+      "case": 34,
+      "readers": [
+        "member-1",
+        "member-2",
+        "member-3"
+      ],
+      "editors": [
+        "member-3"
+      ],
+      "expectedAllReaders": [
+        "member-1",
+        "member-2",
+        "member-3"
+      ],
+      "expectedAllEditors": [
+        "member-3"
+      ]
+    },
+    {
+      "case": 35,
+      "readers": [
+        "member-1"
+      ],
+      "editors": [
+        "member-2"
+      ],
+      "expectedAllReaders": [
+        "member-2",
+        "member-1"
+      ],
+      "expectedAllEditors": [
+        "member-2"
+      ]
+    }
+  ]
+}

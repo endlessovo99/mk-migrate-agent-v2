@@ -1,0 +1,131 @@
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>fixture-date-overlap-form</string></void><void method="put"><string>fdModelId</string><string>fixture-date-overlap-model</string></void><void method="put"><string>fdName</string><string>Date overlap lifecycle fixture</string></void><void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;datetime&quot; fd_values='{id:&quot;fd_curr_begin&quot;,label:&quot;fd_curr_begin&quot;,required:&quot;true&quot;,canShow:&quot;true&quot;,businessType:&quot;dateDialog&quot;}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;datetime&quot; fd_values='{id:&quot;fd_curr_finish&quot;,label:&quot;fd_curr_finish&quot;,required:&quot;true&quot;,canShow:&quot;true&quot;,businessType:&quot;dateDialog&quot;}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;datetime&quot; fd_values='{id:&quot;fd_prior_begin&quot;,label:&quot;fd_prior_begin&quot;,required:&quot;false&quot;,canShow:&quot;true&quot;,businessType:&quot;dateDialog&quot;}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;datetime&quot; fd_values='{id:&quot;fd_prior_finish&quot;,label:&quot;fd_prior_finish&quot;,required:&quot;false&quot;,canShow:&quot;true&quot;,businessType:&quot;dateDialog&quot;}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values='{id:&quot;fd_current_days&quot;,label:&quot;fd_current_days&quot;,required:&quot;false&quot;,canShow:&quot;true&quot;,dataType:&quot;Double&quot;}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values='{id:&quot;fd_prior_days&quot;,label:&quot;fd_prior_days&quot;,required:&quot;false&quot;,canShow:&quot;true&quot;,dataType:&quot;String&quot;}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values='{id:&quot;fd_total_days&quot;,label:&quot;fd_total_days&quot;,required:&quot;false&quot;,canShow:&quot;true&quot;,dataType:&quot;Double&quot;}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void><void method="put"><string>fdDisplayJsp</string><string>&lt;table&gt;&lt;tr&gt;&lt;td&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_curr_begin)&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_curr_finish)&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_prior_begin)&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_prior_finish)&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_current_days)&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_prior_days)&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_total_days)&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;xform:editShow&gt;&lt;script&gt;// 日期格式化工具，输出 yyyy-MM-dd
+function printDay(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, &quot;0&quot;);
+    const d = String(dateObj.getDate()).padStart(2, &quot;0&quot;);
+    return `${y}-${m}-${d}`;
+}
+
+/**
+ * 计算两段日期区间重叠总天数（首尾均包含）
+ * @param {string} currStart 本次开始 fd_curr_begin
+ * @param {string} currEnd   本次结束 fd_curr_finish
+ * @param {string} hisStart  上次开始 fd_prior_begin
+ * @param {string} hisEnd    上次结束 fd_prior_finish
+ * @returns {number} 重叠天数，无重叠返回0
+ */
+function computeIntersectionDays(currStart, currEnd, hisStart, hisEnd) {
+    console.log(&quot;====区间重叠计算分割线====&quot;);
+    console.log(&quot;本次区间原始：&quot;, currStart, &quot; ~ &quot;, currEnd);
+    console.log(&quot;历史区间原始：&quot;, hisStart, &quot; ~ &quot;, hisEnd);
+
+    // 任意一个日期为空直接返回0
+    if (!currStart || !currEnd || !hisStart || !hisEnd) {
+        console.log(&quot;存在空日期，公共重叠天数 = 0&quot;);
+        return 0;
+    }
+
+    // 转为日期对象
+    const cS = new Date(currStart);
+    const cE = new Date(currEnd);
+    const hS = new Date(hisStart);
+    const hE = new Date(hisEnd);
+
+    // 校验日期合法性
+    const dateList = [cS, cE, hS, hE];
+    if (dateList.some(item =&gt; isNaN(item.getTime()))) {
+        console.log(&quot;存在非法日期格式，公共重叠天数 = 0&quot;);
+        return 0;
+    }
+
+    // 自动修正区间颠倒（开始晚于结束）
+    const currMin = cS &lt; cE ? cS : cE;
+    const currMax = cS &gt; cE ? cS : cE;
+    const hisMin = hS &lt; hE ? hS : hE;
+    const hisMax = hS &gt; hE ? hS : hE;
+
+    // 重叠区间：取较大的起点、较小的终点
+    const overlapStart = currMin &gt; hisMin ? currMin : hisMin;
+    const overlapEnd = currMax &lt; hisMax ? currMax : hisMax;
+
+    console.log(&quot;标准化本次区间：&quot;, printDay(currMin), &quot; ~ &quot;, printDay(currMax));
+    console.log(&quot;标准化历史区间：&quot;, printDay(hisMin), &quot; ~ &quot;, printDay(hisMax));
+    console.log(&quot;重叠区间：&quot;, printDay(overlapStart), &quot; ~ &quot;, printDay(overlapEnd));
+
+    // 起点大于终点 = 无重叠
+    if (overlapStart &gt; overlapEnd) {
+        console.log(&quot;两段区间无交集，公共重叠天数 = 0&quot;);
+        return 0;
+    }
+
+    // 计算天数，包含首尾两天
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const diffMs = overlapEnd.getTime() - overlapStart.getTime();
+    const overlapDays = Math.floor(diffMs / oneDayMs) + 1;
+
+    console.log(&quot;最终公共重叠天数 =&quot;, overlapDays);
+    return overlapDays;
+}
+
+// 统一执行业务计算逻辑
+function updatePeriods() {
+    // 读取4个日期控件值
+    const startValue = $('input[name=&quot;extendDataFormInfo.value(fd_curr_begin)&quot;]').val();
+    const endValue = $('input[name=&quot;extendDataFormInfo.value(fd_curr_finish)&quot;]').val();
+    const hisStartVal = $('input[name=&quot;extendDataFormInfo.value(fd_prior_begin)&quot;]').val();
+    const hisEndVal = $('input[name=&quot;extendDataFormInfo.value(fd_prior_finish)&quot;]').val();
+
+    // 计算两段区间重叠天数
+    const overlapDays = computeIntersectionDays(startValue, endValue, hisStartVal, hisEndVal);
+
+    // 读取两个数值字段
+    const val1 = $('input[name=&quot;extendDataFormInfo.value(fd_current_days)&quot;]').val();
+    const val2 = $('input[name=&quot;extendDataFormInfo.value(fd_prior_days)&quot;]').val();
+
+    // 空/非数字转为0
+    const num1 = parseFloat(val1) || 0;
+    const num2 = parseFloat(val2) || 0;
+
+    const sumTotal = num1 + num2;
+    const finalNum = sumTotal - overlapDays;
+
+    console.log(&quot;fd_current_days(本次数值) =&quot;, num1);
+    console.log(&quot;fd_prior_days(历次数值) =&quot;, num2);
+    console.log(&quot;两数求和 =&quot;, sumTotal);
+    console.log(&quot;参与扣减重叠天数 =&quot;, overlapDays);
+    console.log(&quot;最终结果(和-重叠天数) =&quot;, finalNum);
+
+    // 赋值到结果控件
+    $('input[name=&quot;extendDataFormInfo.value(fd_total_days)&quot;]').val(finalNum);
+}
+
+// 绑定所有参与计算的字段变更事件
+function bindPeriods() {
+    // 本次起止日期
+    AttachXFormValueChangeEventById(&quot;fd_curr_begin&quot;, function () {
+        setTimeout(updatePeriods, 150);
+    });
+    AttachXFormValueChangeEventById(&quot;fd_curr_finish&quot;, function () {
+        setTimeout(updatePeriods, 150);
+    });
+    // 历史起止日期
+    AttachXFormValueChangeEventById(&quot;fd_prior_begin&quot;, function () {
+        setTimeout(updatePeriods, 150);
+    });
+    AttachXFormValueChangeEventById(&quot;fd_prior_finish&quot;, function () {
+        setTimeout(updatePeriods, 150);
+    });
+    // 两个数字输入框
+    AttachXFormValueChangeEventById(&quot;fd_current_days&quot;, function () {
+        setTimeout(updatePeriods, 150);
+    });
+    AttachXFormValueChangeEventById(&quot;fd_prior_days&quot;, function () {
+        setTimeout(updatePeriods, 150);
+    });
+}
+
+// 页面加载完成初始化
+$(function () {
+    bindPeriods();
+    updatePeriods();
+});&lt;/script&gt;&lt;/xform:editShow&gt;</string></void><void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name=&quot;fd_curr_begin&quot; label=&quot;fd_curr_begin&quot; type=&quot;Date&quot; notNull=&quot;true&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_curr_finish&quot; label=&quot;fd_curr_finish&quot; type=&quot;Date&quot; notNull=&quot;true&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_prior_begin&quot; label=&quot;fd_prior_begin&quot; type=&quot;Date&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_prior_finish&quot; label=&quot;fd_prior_finish&quot; type=&quot;Date&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_current_days&quot; label=&quot;fd_current_days&quot; type=&quot;Double&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_prior_days&quot; label=&quot;fd_prior_days&quot; type=&quot;String&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_total_days&quot; label=&quot;fd_total_days&quot; type=&quot;Double&quot;/&gt;&lt;/metadata&gt;</string></void></object></java>

@@ -410,6 +410,13 @@ function compareDetailPersistence(expected = {}, actual = {}, diagnostics) {
     }
 
     const actualColumns = new Map((model.columns || []).map((column) => [column.id, column]));
+    for (const [columnId, width] of Object.entries(expectedModel.approvedColumnWidths || {})) {
+      if (model.columnWidths?.[columnId] === width) continue;
+      diagnostics.push(mismatch("form", "readback.form.approved_detail_column_width_mismatch", "Readback must retain the approved derived-column width.", {
+        invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.columns.${columnId}.width`,
+        path: `${modelPath}/fdAttribute/config/controlProps/columnWidth`, expected: width, actual: model.columnWidths?.[columnId]
+      }));
+    }
     for (const columnId of expectedModel.columnIds || []) {
       const column = actualColumns.get(columnId);
       if (!column) continue;

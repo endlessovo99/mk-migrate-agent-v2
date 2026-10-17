@@ -53,6 +53,7 @@ describe("Route-validation Source2 companion participant evidence", {
           return [{
             fdId: sourceId,
             fdName: "张康永",
+            fdIsBusiness: true,
             fdOrgType: 8,
             fdLoginName: "68300032"
           }];
@@ -61,6 +62,7 @@ describe("Route-validation Source2 companion participant evidence", {
           return [{
             fdId: "current-system-support",
             fdName: "张康永-系统支持",
+            fdIsBusiness: true,
             fdOrgType: 8,
             fdLoginName: "683-SYS-ZKY"
           }];
@@ -80,7 +82,8 @@ describe("Route-validation Source2 companion participant evidence", {
         return [{
           fdId: targetFdId,
           fdName: "张康永",
-          fdOrgType: 8
+          fdIsBusiness: true,
+            fdOrgType: 8
         }];
       }
     };

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-orphan-anchor-sysform</string></void>
+<void method="put"><string>fdModelId</string><string>route-orphan-anchor-template</string></void>
+<void method="put"><string>fdName</string><string>orphan-anchor-witness</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_document_url",label:"URL",dataType:"String"}'&gt;&lt;input id="fd_document_url"/&gt;&lt;/div&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_category",label:"Category",dataType:"String"}'&gt;&lt;input id="fd_category"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="fd_present_row" name="fd_present_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_note",label:"Note",dataType:"String"}'&gt;&lt;input id="fd_note"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;table&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_document_url)" dataType="String"/&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_category)" dataType="String"/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;input type="hidden" id="fd_present_row" name="fd_present_row"/&gt;&lt;div id="documentAnchor"&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;script&gt;Com_AddEventListener(window, "load", function () {
+  var resource = GetXFormFieldById("fd_document_url")[0].value;
+  var category = GetXFormFieldById("fd_category")[0].value;
+  common_dom_row_set_show_required_reset("fd_retired_row", true, true, false);
+  document.getElementById("documentAnchor").innerHTML = "&lt;a href='" + resource + "'&gt;查看发票&lt;/a&gt;";
+});&lt;/script&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_document_url" label="fd_document_url" type="String"/&gt;&lt;extendSimpleProperty name="fd_category" label="fd_category" type="String"/&gt;&lt;extendSimpleProperty name="fd_note" label="fd_note" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

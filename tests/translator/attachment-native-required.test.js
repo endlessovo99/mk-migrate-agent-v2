@@ -57,8 +57,11 @@ describe("attachment native-required closure", () => {
     const field = draft.form.fields.find((candidate) => candidate.id === fieldId);
     const action = draft.scripts.actions.find((candidate) =>
       candidate.recipe?.kind === "attachment_non_empty" &&
-      candidate.recipe.fieldId === fieldId
+      candidate.recipe.fieldId === fieldId ||
+      candidate.functionMappings?.some(mapping => mapping.basis === "deterministic-conditional-attachment-submit") &&
+      candidate.semanticHints?.conditionalAttachmentRequirement?.fieldId === fieldId
     );
+    action.recipe = { kind: "attachment_non_empty", fieldId, message: "请上传附件" };
     field.props.required = true;
     action.function = "";
     action.translationStatus = "omitted";

@@ -1,6 +1,6 @@
 {
   "id": "mk-js-methods",
-  "version": "2026-07-09.v2",
+  "version": "2026-10-17.v3",
   "description": "Evidence-backed base JavaScript surface allowed in translated MK/NewOA form scripts for the current XML route-validation scope.",
   "evidencePolicy": "Methods are admitted only when they are standard ECMAScript/browser timer/encoding primitives already exercised by route-validation fixtures or needed by translated MK script examples. DOM APIs and browser storage remain outside this catalog and are blocked by script validation.",
   "globals": [
@@ -59,6 +59,9 @@
     { "name": "flatMap", "status": "supported", "receiver": "Array", "evidence": "Standard ECMAScript array method; existing validator allowed it before this catalog.", "notes": "Allowed for simple array normalization." },
     { "name": "forEach", "status": "supported", "receiver": "Array", "evidence": "Standard ECMAScript array method; existing validator allowed it before this catalog.", "notes": "Allowed for iteration without relying on return value." },
     { "name": "getTime", "status": "supported", "receiver": "Date", "evidence": "Standard ECMAScript Date method used by route-validation JSP fixtures for date comparison.", "notes": "Allowed for date comparison in submit guards and value-change handlers." },
+    { "name": "getFullYear", "status": "supported", "receiver": "Date", "evidence": "Standard ECMAScript Date getter retained verbatim by the complete source-bound date-overlap lifecycle fixture.", "notes": "Read-only calendar formatting; source ownership and script proof gates still apply." },
+    { "name": "getMonth", "status": "supported", "receiver": "Date", "evidence": "Standard ECMAScript Date getter retained verbatim by the complete source-bound date-overlap lifecycle fixture.", "notes": "Read-only calendar formatting; source ownership and script proof gates still apply." },
+    { "name": "getDate", "status": "supported", "receiver": "Date", "evidence": "Standard ECMAScript Date getter retained verbatim by the complete source-bound date-overlap lifecycle fixture.", "notes": "Read-only calendar formatting; source ownership and script proof gates still apply." },
     { "name": "includes", "status": "supported", "receiver": "Array|string", "evidence": "Standard ECMAScript instance method; existing validator allowed it before this catalog.", "notes": "Allowed for contains checks." },
     { "name": "indexOf", "status": "supported", "receiver": "Array|string", "evidence": "Route-validation fixture scripts use indexOf-style checks; existing validator allowed it before this catalog.", "notes": "Allowed for contains checks." },
     { "name": "join", "status": "supported", "receiver": "Array", "evidence": "Standard ECMAScript array method; existing validator allowed it before this catalog.", "notes": "Allowed for simple string assembly." },

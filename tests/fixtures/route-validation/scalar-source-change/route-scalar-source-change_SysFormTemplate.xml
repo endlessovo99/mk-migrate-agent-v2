@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><java class="java.beans.XMLDecoder"><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>route-scalar-source-form</string></void><void method="put"><string>fdModelId</string><string>route-scalar-source-template</string></void><void method="put"><string>fdName</string><string>MK_TEST_Scalar Source Changes</string></void><void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="datetime" fd_values='{id:"fd_start",label:"fd_start",dataType:"Date",businessType:"dateDialog"}'&gt;&lt;input id="fd_start"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="datetime" fd_values='{id:"fd_end",label:"fd_end",dataType:"Date",businessType:"dateDialog"}'&gt;&lt;input id="fd_end"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_budget",label:"fd_budget",dataType:"Double"}'&gt;&lt;input id="fd_budget"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_base",label:"fd_base",dataType:"Double"}'&gt;&lt;input id="fd_base"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="4" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_extra",label:"fd_extra",dataType:"Double"}'&gt;&lt;input id="fd_extra"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="5" column="0"&gt;&lt;div fd_type="calculation" fd_values='{id:"fd_total",label:"fd_total",dataType:"Double",expression_id:"$fd_base$ + $fd_extra$",autoCalculate:"true",readOnly:"true"}'&gt;&lt;input id="fd_total"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="6" column="0"&gt;&lt;div id="fd_scalar_rules" fd_type="jsp"&gt;&lt;input type="hidden" value="&amp;lt;script&amp;gt;AttachXFormValueChangeEventById(&amp;quot;fd_end&amp;quot;, function(value, domElement){
+     var start=GetXFormFieldById(&amp;quot;fd_start&amp;quot;)[0].value; //计算数值
+      console.log('event',value);
+
+     console.log('start',start);
+     const first = new Date(start);
+     const last = new Date(value);
+     console.log(first);
+     console.log(last);
+     if(start.length==0){
+        alert('Fill start first')
+     }
+     if(first&amp;gt;last){
+        alert('Start must precede end');
+        var current=$('[name=&amp;quot;extendDataFormInfo.value(fd_end)&amp;quot;]');
+        current.val('');
+     }
+});&amp;lt;/script&amp;gt;&amp;lt;script&amp;gt;AttachXFormValueChangeEventById(&amp;quot;fd_budget&amp;quot;, function(value, domElement){
+     var total=GetXFormFieldById(&amp;quot;fd_total&amp;quot;)[0].value; //获取累计数值
+       var current=$('[name=&amp;quot;extendDataFormInfo.value(fd_budget)&amp;quot;]');
+     if (value &amp;lt;= 0){
+        alert('Budget must be positive');
+        current.val('');
+     }else{
+         console.log('budget',value);
+     console.log('total',total);
+     if(Number(value)&amp;lt;Number(total)){
+        alert('Total exceeds budget')
+     }
+     }
+    
+     
+});&amp;lt;/script&amp;gt;&amp;lt;script&amp;gt;AttachXFormValueChangeEventById(&amp;quot;fd_total&amp;quot;, function(value, domElement){
+     var budget=GetXFormFieldById(&amp;quot;fd_budget&amp;quot;)[0].value; //获取累计数值
+     if(Number(value)&amp;gt;Number(budget)){
+        alert('Total must fit budget')
+     }
+    
+     
+});&amp;lt;/script&amp;gt;"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void><void method="put"><string>fdDisplayJsp</string><string>&lt;xform:xtext property="extendDataFormInfo.value(fd_start)" dataType="Date" /&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_end)" dataType="Date" /&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_budget)" dataType="Double" /&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_base)" dataType="Double" /&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_extra)" dataType="Double" /&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_total)" dataType="Double" /&gt;</string></void><void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_start" label="fd_start" type="Date"/&gt;&lt;extendSimpleProperty name="fd_end" label="fd_end" type="Date"/&gt;&lt;extendSimpleProperty name="fd_budget" label="fd_budget" type="Double"/&gt;&lt;extendSimpleProperty name="fd_base" label="fd_base" type="Double"/&gt;&lt;extendSimpleProperty name="fd_extra" label="fd_extra" type="Double"/&gt;&lt;extendSimpleProperty name="fd_total" label="fd_total" type="Double" formula="true"/&gt;&lt;/metadata&gt;</string></void></object></java>

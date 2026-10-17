@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?><java class="java.beans.XMLDecoder"><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>route-single-reset-orphan-form</string></void>
+<void method="put"><string>fdModelId</string><string>route-single-reset-orphan-template</string></void>
+<void method="put"><string>fdName</string><string>Audited orphan row normalization</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;label fd_type="inputRadio" fd_values='{id:"fd_mode",label:"Mode",dataType:"String",items:"A|A;B|B"}'&gt;&lt;input id="fd_mode"/&gt;&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;input type="hidden" id="fd_a_row" name="fd_a_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload_a",label:"A value"}'&gt;&lt;input id="fd_payload_a"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;input type="hidden" id="fd_b_row" name="fd_b_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload_b",label:"B value"}'&gt;&lt;input id="fd_payload_b"/&gt;&lt;/div&gt;&lt;label fd_type="inputCheckbox" fd_values='{id:"fd_reset",label:"Dependent radio",dataType:"String",items:"Y|Y;N|N"}'&gt;&lt;input id="fd_reset"/&gt;&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputText" style="display:none" fd_values='{id:"fd_mirror",label:"Mirror",dataType:"String",canShow:"false",showStatus:"noShow"}'&gt;&lt;input type="hidden" id="fd_mirror"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_mode" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload_a" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload_b" type="String"/&gt;&lt;extendSimpleProperty name="fd_reset" type="String"/&gt;&lt;extendSimpleProperty name="fd_mirror" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;Com_AddEventListener(window,"load",function(){
+ common_dom_row_set_show_required_reset("fd_a_row",false,false,false);
+ common_dom_row_set_show_required_reset("fd_removed_row",false,false,false);
+ if(GetXFormFieldById("fd_mirror")[0].value=="A"){
+  common_dom_row_set_show_required_reset("fd_a_row",true,true,true);
+  common_dom_row_set_show_required_reset("fd_removed_row",true,true,true);
+ }else{
+  common_dom_row_set_show_required_reset("fd_a_row",false,false,true);
+  common_dom_row_set_show_required_reset("fd_removed_row",false,false,true);
+ }
+});&lt;/script&gt;</string></void></object></java>

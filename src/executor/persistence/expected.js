@@ -1,4 +1,6 @@
 import { sourceNumberEditors, sourceNumberDisplays } from "../../dsl/source-number-editor.js";
+import {renderMainTableReferences,MAIN_TABLE_PLACEHOLDER} from "../../dsl/native-main-table-reference.js";
+import { approvedDetailColumnWidths } from "../../dsl/approved-detail-presentation.js";
 import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
 import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
 import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.js";
@@ -72,7 +74,7 @@ export function buildExpectedInvariants(dsl, envelope) {
     dsl?.scripts,
     diagnostics
   );
-  const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, envelope?.tableName, diagnostics);
+  const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, envelope?.tableName, diagnostics, envelope?.templateId);
   const workflowExpected = dsl?.workflow
     ? buildExpectedWorkflow(dsl.workflow, diagnostics, {
       templateId: envelope?.templateId,
@@ -341,6 +343,8 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
           requireModelControlBinding: true,
           requireFieldModelBinding: true,
           requireFieldTableBinding: true,
+          ...(Object.keys(approvedDetailColumnWidths((form.fields || []).find(source => source.id === field.id))).length
+            ? { approvedColumnWidths: approvedDetailColumnWidths((form.fields || []).find(source => source.id === field.id)) } : {}),
           columnIds: field.columns.map((column) => column.id)
         }))
     }
@@ -851,7 +855,7 @@ function normalizeRuleValue(value) {
   return normalizeScalar(value);
 }
 
-function buildExpectedScripts(scripts = {}, form = {}, mainTableName, diagnostics) {
+function buildExpectedScripts(scripts = {}, form = {}, mainTableName, diagnostics, xformId) {
   const actions = [];
   const detailTableNames = Object.fromEntries(
     (Array.isArray(form?.fields) ? form.fields : [])
@@ -882,7 +886,14 @@ function buildExpectedScripts(scripts = {}, form = {}, mainTableName, diagnostic
       continue;
     }
     const event = action.event || action.name;
-    const renderedBody = renderExpectedScriptBody(action.function, detailTableNames, form);
+    if (action.function.includes("${xform:id}") && !/^[A-Za-z0-9_-]{8,100}$/.test(String(xformId || ""))) {
+      diagnostics.push(projectionError("projection.scripts.xform_identity_missing", "Native form identity is required for the script xform placeholder.", { actionId: action.id }));
+      continue;
+    }
+    if(action.function.includes(MAIN_TABLE_PLACEHOLDER)&&!/^[A-Za-z_][A-Za-z0-9_]{0,99}$/.test(String(mainTableName||""))){
+      diagnostics.push(projectionError("projection.scripts.main_table_identity_missing","Native main model identity is required for main-field display reads.",{actionId:action.id}));continue;
+    }
+    const renderedBody = renderExpectedScriptBody(action.function, detailTableNames, form, xformId,mainTableName);
     const scope = action.scope || "global";
     const controlId = action.tableId && action.controlId === action.tableId
       ? detailTableNames[action.tableId]
@@ -926,9 +937,10 @@ function expectedSingletonDispatchers(scriptActions = []) {
   return [...grouped.entries()].map(([event, actions]) => singletonDispatcherContract(event, actions));
 }
 
-function renderExpectedScriptBody(source, detailTableNames = {}, form = {}) {
-  const compiled = compileSetFieldAttrRowMarkerTargets(source, form);
-  return String(compiled || "").replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
+function renderExpectedScriptBody(source, detailTableNames = {}, form = {}, xformId,mainTableName) {
+  const qualified=renderMainTableReferences(source,mainTableName,form);
+  const compiled = compileSetFieldAttrRowMarkerTargets(qualified, form);
+  return String(compiled || "").replace(/\$\{xform:id\}/g, () => xformId).replace(/\$\{table:([^}]+)\}/g, (_, tableId) => {
     const sourceTableId = String(tableId || "").trim();
     return detailTableNames[sourceTableId] || sourceTableId;
   });
@@ -1170,7 +1182,7 @@ function isFormulaParticipantMode(mode) {
 
 function collectDefaultEdgeIds(nodes = [], edges = []) {
   const conditionBranchNodeIds = new Set(
-    nodes.filter(isNativeFormulaGatewayNode).map((node) => node.id)
+    nodes.filter((node) => isNativeFormulaGatewayNode(node) || node?.type === "manualBranch").map((node) => node.id)
   );
   const edgesBySource = new Map();
   for (const edge of edges) {

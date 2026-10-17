@@ -1,0 +1,57 @@
+<java><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>fixture-approved-import</string></void>
+<void method="put"><string>fdModelId</string><string>fixture-excel-natural-template</string></void>
+<void method="put"><string>fdName</string><string>Approved import transaction boundary</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;table fd_type="detailsTable" fd_values='{id:"detailList",label:"Imported rows"}'&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Column 1&lt;/td&gt;&lt;td&gt;Column 2&lt;/td&gt;&lt;td&gt;Column 3&lt;/td&gt;&lt;td&gt;Column 4&lt;/td&gt;&lt;td&gt;Column 5&lt;/td&gt;&lt;td&gt;Column 6&lt;/td&gt;&lt;td&gt;Column 7&lt;/td&gt;&lt;td&gt;Column 8&lt;/td&gt;&lt;td&gt;Column 9&lt;/td&gt;&lt;td&gt;Column 10&lt;/td&gt;&lt;td&gt;Column 11&lt;/td&gt;&lt;td&gt;Column 12&lt;/td&gt;&lt;/tr&gt;&lt;tr type="templateRow"&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"groupIndex",label:"Column 1"}'&gt;&lt;input id="groupIndex"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"spmc",label:"Column 2"}'&gt;&lt;input id="spmc"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="select" fd_values='{id:"spbm",label:"Code",dataType:"String",items:"A|3050100000000000000;B|3040502019900000000"}'&gt;&lt;input id="spbm"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"ggxh",label:"Column 4"}'&gt;&lt;input id="ggxh"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"dw",label:"Column 5"}'&gt;&lt;input id="dw"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"spsl",label:"Column 6"}'&gt;&lt;input id="spsl"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"dj",label:"Column 7"}'&gt;&lt;input id="dj"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"je",label:"Column 8"}'&gt;&lt;input id="je"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"slvno",label:"Column 9"}'&gt;&lt;input id="slvno"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"sapxsdd",label:"Column 10"}'&gt;&lt;input id="sapxsdd"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"sapwbs",label:"Column 11"}'&gt;&lt;input id="sapwbs"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"sapcgdd",label:"Column 12"}'&gt;&lt;input id="sapcgdd"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="invoice_row5" name="invoice_row5"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value_a",label:"A",dataType:"String"}'&gt;&lt;input id="fd_value_a"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" id="invoice_row6" name="invoice_row6"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value_b",label:"B",dataType:"String"}'&gt;&lt;input id="fd_value_b"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;div fd_type="jsp" id="jsp_fixture_excel"&gt;&lt;input type="hidden" value='&amp;lt;xform:editShow&amp;gt;&amp;lt;script&amp;gt;var ImportExcel_Parameter = new Array();
+        //目前只支持IE,其他浏览器需要后续完善
+        function importExcel() {
+            //开始导入Excel的起始行
+            var startRowNo = 4;
+            var startCellNo = 0;
+            //明细表中的需要导入控件的fdId,请按照Excel模板的列逐个匹配，不能允许跨列
+            var detailTableId = &amp;quot;detailList&amp;quot;;
+            var detailControlIds =
+                &amp;quot;groupIndex;spmc;spbm;ggxh;dw;spsl;dj;je;slvno;slvno;slvno;slvno;slvno;sapxsdd;sapwbs;sapcgdd;&amp;quot;;
+
+            //一下代码无效修改，修改需谨慎
+            //获取Excel中指定的内容
+            parsingExcelContent(startRowNo, startCellNo, detailTableId, detailControlIds);
+
+        }
+
+        function parsingExcelContent(startRowNo, startCellNo, detailTableId, detailControlIds) {
+            var parsingContent = new Array(detailTableId, detailControlIds, startRowNo, startCellNo);
+            var params = new Array(detailTableId, detailControlIds, startRowNo, startCellNo);
+            var style = &amp;quot;dialogWidth:650px; dialogHeight:350px; status:0;scroll:0; help:0; resizable:1&amp;quot;;
+            var excelContent ;
+            if (window.showModalDialog) {
+                excelContent = window.showModalDialog(Com_Parameter.ContextPath +
+                    &amp;quot;km/review/km_review_detail_excel/kmReviewDetailImport_excel.jsp&amp;quot;, params, style);
+            } else {
+                ImportExcel_Parameter = params;
+                excelContent = window.open(Com_Parameter.ContextPath +
+                    &amp;quot;km/review/km_review_detail_excel/kmReviewDetailImport_excel.jsp&amp;quot;, params, style);
+            }
+            if (excelContent != null) {
+                _DocList_AddRows(detailTableId, excelContent);
+                //  _DocList_AddRows(&amp;apos;TABLE_DL_fd_sap_accl_sub_tab&amp;apos;, arrValues);
+            }
+        }
+        //根据每行的控件值，添加行并设置值
+        function _DocList_AddRows(detailTableId, rowsCtrlValue) {
+            var optTB = document.getElementById(&amp;quot;TABLE_DL_&amp;quot; + detailTableId);
+            var tbInfo = DocList_TableInfo[optTB.id];
+            for (var i = tbInfo.lastIndex - 1; i &amp;gt; 0; i--) {
+                optTB.deleteRow(i);
+                tbInfo.lastIndex--;
+                for (var j = i; j &amp;lt; tbInfo.lastIndex; j++) {
+                    DocListFunc_RefreshIndex(tbInfo, j);
+                }
+            }
+
+            //添加
+            for (var i = 0; i &amp;lt; rowsCtrlValue.length; i++) {
+                DocList_AddRow(optTB, null, rowsCtrlValue[i]);
+            }
+        }&amp;lt;/script&amp;gt;&amp;lt;/xform:editShow&amp;gt;'/&gt;&lt;/div&gt;&lt;div fd_type="jsp" id="jsp_approved_row"&gt;&lt;input type="hidden" value='&amp;lt;xform:editShow&amp;gt;&amp;lt;script&amp;gt;AttachXFormValueChangeEventById(&amp;quot;spbm&amp;quot;,function(value,domElement){if(value==3050100000000000000){SetXFormFieldValueById(&amp;quot;fd_retired_state&amp;quot;,&amp;quot;3050100000000000000&amp;quot;);common_dom_row_set_show_required_reset(&amp;quot;invoice_row5&amp;quot;,true,true,false);common_dom_row_set_show_required_reset(&amp;quot;invoice_row6&amp;quot;,false,false,false);}else if(value==3040502019900000000){SetXFormFieldValueById(&amp;quot;fd_retired_state&amp;quot;,3040502019900000000);common_dom_row_set_show_required_reset(&amp;quot;invoice_row5&amp;quot;,false,false,false);common_dom_row_set_show_required_reset(&amp;quot;invoice_row6&amp;quot;,true,true,false);}else{common_dom_row_set_show_required_reset(&amp;quot;invoice_row5&amp;quot;,false,false,false);common_dom_row_set_show_required_reset(&amp;quot;invoice_row6&amp;quot;,false,false,false);}});&amp;lt;/script&amp;gt;&amp;lt;/xform:editShow&amp;gt;'/&gt;&lt;/div&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSubTableProperty name="detailList" label="Imported rows"&gt;&lt;extendSimpleProperty name="groupIndex" type="String" label="Column 1"/&gt;&lt;extendSimpleProperty name="spmc" type="String" label="Column 2"/&gt;&lt;extendSimpleProperty name="spbm" type="String" label="Code" enumValues="A|3050100000000000000;B|3040502019900000000"/&gt;&lt;extendSimpleProperty name="ggxh" type="String" label="Column 4"/&gt;&lt;extendSimpleProperty name="dw" type="String" label="Column 5"/&gt;&lt;extendSimpleProperty name="spsl" type="String" label="Column 6"/&gt;&lt;extendSimpleProperty name="dj" type="String" label="Column 7"/&gt;&lt;extendSimpleProperty name="je" type="String" label="Column 8"/&gt;&lt;extendSimpleProperty name="slvno" type="String" label="Column 9"/&gt;&lt;extendSimpleProperty name="sapxsdd" type="String" label="Column 10"/&gt;&lt;extendSimpleProperty name="sapwbs" type="String" label="Column 11"/&gt;&lt;extendSimpleProperty name="sapcgdd" type="String" label="Column 12"/&gt;&lt;/extendSubTableProperty&gt;&lt;extendSimpleProperty name="fd_value_a" type="String"/&gt;&lt;extendSimpleProperty name="fd_value_b" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;xform:editShow&gt;&lt;script&gt;AttachXFormValueChangeEventById("spbm",function(value,domElement){if(value==3050100000000000000){SetXFormFieldValueById("fd_retired_state","3050100000000000000");common_dom_row_set_show_required_reset("invoice_row5",true,true,false);common_dom_row_set_show_required_reset("invoice_row6",false,false,false);}else if(value==3040502019900000000){SetXFormFieldValueById("fd_retired_state",3040502019900000000);common_dom_row_set_show_required_reset("invoice_row5",false,false,false);common_dom_row_set_show_required_reset("invoice_row6",true,true,false);}else{common_dom_row_set_show_required_reset("invoice_row5",false,false,false);common_dom_row_set_show_required_reset("invoice_row6",false,false,false);}});&lt;/script&gt;&lt;/xform:editShow&gt;</string></void></object></java>

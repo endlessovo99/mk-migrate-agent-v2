@@ -1,8 +1,11 @@
+import {buildMigrationPolicyReviewProtection,isMigrationPolicyProtectedReviewTarget} from "./policy-review-protection.js";
+import {verifiedDateOverlapReadyAction} from "../translator/date-overlap-lifecycle.js";
 import { choiceOtherCompanionDiagnostics } from "../dsl/source-choice-other-companion.js";
 import { mobileCaptionSourceDiagnostics } from "../dsl/source-mobile-caption-grid.js";
 import { radioSourceDiagnostics } from "../dsl/source-radio-layout.js";
 import { detailRowSourceEffectDiagnostics } from "../dsl/source-detail-row-effects.js";
 import { checkDraft } from "../dsl/checks.js";
+import { layoutRowTargets } from "../dsl/layout-row-targets.js";
 import { remoteDialogSourceDiagnostics } from "../dsl/remote-dialog.js";
 import { selectEmptyEventProof } from "../dsl/source-select-empty-event.js";
 import { draftSourceDraft } from "../translator/dsl-draft.js";
@@ -11,6 +14,7 @@ import { componentSupportsProp } from "../dsl/catalogs.js";
 import { FIELD_TYPES } from "../dsl/schema.js";
 import { nativeFormRuleBelongsToAction } from "../dsl/native-form-rule-projection.js";
 import { inspectMappedScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
+import { hasVerifiedDeterministicScriptBranchProof } from "../dsl/deterministic-script-translations.js";
 import {
   buildConditionOperandResolver,
   traceStaticFieldValueExpression
@@ -160,12 +164,14 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
   const sourceRefs = options.sourceRefs || new Set();
   const sourceDraft = options.sourceDraft;
   const reviewScope = options.reviewScope;
+  const policyProtection = buildMigrationPolicyReviewProtection(sourceDraft,dslDraft);
+  if (patches.length && !policyProtection.ok) return {ok:false,diagnostics:policyProtection.diagnostics,rejectedPatches:patches.map((patch,index)=>patchSummary(patch,index,policyProtection.diagnostics))};
 
   patches.forEach((patch, index) => {
     const normalizedPatch = options.normalizeSourceRefs === true
       ? normalizePatchSourceRefs(patch, dslDraft)
       : patch;
-    const result = validatePatch(normalizedPatch, index, dslDraft, sourceRefs, seenPaths, reviewScope);
+    const result = validatePatch(normalizedPatch, index, dslDraft, sourceRefs, seenPaths, reviewScope, policyProtection);
     if (!result.ok) {
       diagnostics.push(...result.diagnostics);
       rejectedPatches.push(patchSummary(normalizedPatch, index, result.diagnostics));
@@ -263,7 +269,7 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     ...(sourceDraft ? radioSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
     ...sourceEffectDiagnostics,
     ...detailRowSourceEffectDiagnostics(sourceEffectActions, patchedDraft.scripts?.actions || [], { prefix: "agent.patch" }),
-    ...remoteDialogSourceDiagnostics(sourceDraft?.form, patchedDraft.form, { prefix: "agent.patch.form" }),
+    ...remoteDialogSourceDiagnostics(sourceDraft?.form, patchedDraft.form, { prefix: "agent.patch.form", dsl:patchedDraft }),
     ...emptyEventDiagnostics,
     ...validateReadyLifecycleClosures(dslDraft, patchedDraft, acceptedPatches, sourceDraft),
     ...rowMarkerDiagnostics,
@@ -304,6 +310,7 @@ function validateReadyLifecycleClosures(dslDraft, patchedDraft, patches, sourceD
       original?.sourceRefs?.includes(candidate.source.sourceRef));
     if (!ready) continue;
     const proposed = patchedDraft?.scripts?.actions?.[index];
+    if(verifiedDateOverlapReadyAction(sourceDraft,dslDraft.form,original)&&verifiedDateOverlapReadyAction(sourceDraft,patchedDraft.form,proposed)&&hasVerifiedDeterministicScriptBranchProof(proposed))continue;
     if (!["mapped", "omitted"].includes(proposed?.translationStatus) &&
         proposed?.coverage?.residuals?.some(item => item.code === "script.residual.jquery_ready_initialization")) continue;
     diagnostics.push(error(
@@ -749,6 +756,7 @@ function validateRowMarkerClosures(dslDraft, patchedDraft, patches, sourceDraft)
     return match ? [Number(match[1])] : [];
   }));
   const diagnostics = [];
+  let rebuiltDraft;
 
   for (const actionIndex of touchedActionIndexes) {
     const sourceAction = dslDraft?.scripts?.actions?.[actionIndex];
@@ -756,7 +764,22 @@ function validateRowMarkerClosures(dslDraft, patchedDraft, patches, sourceDraft)
     if (!sourceAction || !reviewedAction) continue;
     if (!["mapped", "omitted"].includes(reviewedAction.translationStatus)) continue;
 
-    const policy = classifyActionRowMarkers(sourceAction, dslDraft?.form, sourceDraft);
+    let rowSourceAction = sourceAction;
+    let policy = classifyActionRowMarkers(rowSourceAction, dslDraft?.form, sourceDraft);
+    if (!policy.markers.length && hasVerifiedDeterministicScriptBranchProof(sourceAction)) {
+      rebuiltDraft ||= draftSourceDraft(sourceDraft);
+      const expected = rebuiltDraft.scripts?.actions?.find(action => action.id === sourceAction.id);
+      if (expected && JSON.stringify(expected.deterministicBranchProof) === JSON.stringify(sourceAction.deterministicBranchProof)) {
+        const ranges = (expected.semanticHints?.coveredCalculationRanges || []).filter(range =>
+          range.name === `timedMainRows:${expected.event}` && expected.sourceRefs?.includes(range.sourceRef));
+        const original = ranges.length === 1 && sourceDraft.scripts?.sources?.find(source => source.sourceRef === ranges[0].sourceRef);
+        if (original) {
+          const source = original.javascript.slice(ranges[0].start, ranges[0].end);
+          rowSourceAction = { ...sourceAction, function: `function sourceEvidence() {\n// Source JSP JavaScript:\n${source.split("\n").map(line => `// ${line}`).join("\n")}\n}` };
+          policy = classifyActionRowMarkers(rowSourceAction, dslDraft?.form, sourceDraft);
+        }
+      }
+    }
     if (policy.unresolvedMarkers.length) {
       diagnostics.push(error(
         "agent.patch.row_marker_orphan_evidence_invalid",
@@ -848,7 +871,7 @@ function validateRowMarkerClosures(dslDraft, patchedDraft, patches, sourceDraft)
     }
 
     const semanticCheck = validateRowMarkerBranchSemantics({
-      sourceFunction: sourceAction.function,
+      sourceFunction: rowSourceAction.function,
       reviewedFunction: reviewedAction.function,
       resolvedMarkers: policy.resolvedMarkers,
       primaryMarkerByAlias: primaryLayoutMarkerByAlias(dslDraft?.form),
@@ -1128,11 +1151,8 @@ function codeWithoutStringsAndComments(source) {
 
 function primaryLayoutMarkerByAlias(form) {
   const primaryByAlias = new Map();
-  for (const row of Array.isArray(form?.layout?.mkTree) ? form.layout.mkTree : []) {
-    const markers = (Array.isArray(row?.sourceMarkers) ? row.sourceMarkers : [])
-      .filter(nonEmptyString);
-    if (!markers.length) continue;
-    for (const marker of markers) primaryByAlias.set(marker, markers[0]);
+  for (const { markers, target } of layoutRowTargets(form)) {
+    for (const marker of markers) primaryByAlias.set(marker, target);
   }
   return primaryByAlias;
 }
@@ -1170,7 +1190,7 @@ function failedReview(input) {
   };
 }
 
-function validatePatch(patch, index, dslDraft, sourceRefs, seenPaths, reviewScope) {
+function validatePatch(patch, index, dslDraft, sourceRefs, seenPaths, reviewScope, policyProtection) {
   const path = `/patches/${index}`;
   const diagnostics = [];
   if (!isRecord(patch)) {
@@ -1209,6 +1229,8 @@ function validatePatch(patch, index, dslDraft, sourceRefs, seenPaths, reviewScop
       reviewScope
     }));
   }
+
+  if (target.ok && isMigrationPolicyProtectedReviewTarget(policyProtection,dslDraft,target)) diagnostics.push(error("agent.patch.policy_owned_target", "This target is fixed by the independently rebuilt approved migration policy and cannot be changed by ordinary model review.", `${path}/path`, {path:patch.path}));
 
   if (seenPaths.has(patch.path)) {
     diagnostics.push(error("agent.patch.path_duplicate", "Agent patch response must not patch the same path more than once.", `${path}/path`, {

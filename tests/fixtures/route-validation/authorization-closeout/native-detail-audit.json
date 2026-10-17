@@ -9,7 +9,8 @@
         "fdName": "Line amount",
         "fdType": "Double"
       }
-    ]
+    ],
+    "fdType": "detail"
   },
   "observedAdditions": {
     "fdAlter": {

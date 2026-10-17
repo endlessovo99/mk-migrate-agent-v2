@@ -1,8 +1,11 @@
 import { parse } from "acorn";
-import { buildFormRuleRefIndex, resolveEffectTarget } from "../dsl/form-rules.js";
+import { resolveSourceRowEffectTarget } from "../dsl/form-rules.js";
+import { canonicalRowTarget, layoutRowTargets } from "../dsl/layout-row-targets.js";
 import { buildSetFieldAttrTargetIndex } from "../dsl/scripts.js";
 import { buildConditionOperandResolver, textValueFieldIds } from "../dsl/script-condition-provenance.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
+import { branchLocalLiteralWrites } from "./branch-local-field-writes.js";
+import { approvedScalarStringReadExpression } from "./approved-scalar-string-read.js";
 
 export const INLINE_RADIO_ROW_EFFECTS_BASIS = "deterministic-inline-radio-row-effects";
 const BASIS = INLINE_RADIO_ROW_EFFECTS_BASIS;
@@ -12,9 +15,52 @@ const NON_RESETTABLE_COMPONENTS = new Set([
   "xform-description"
 ]);
 
-export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules = {}) {
+export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules = {}, options = {}) {
   const text = String(source.javascript || "");
   const program = parseProgram(text);
+  const legacy = legacyInlineRadioRowEffectCandidates(source, form, formRules, program, options);
+  const strict = timedMainRowLifecycleCandidates(source, form, program, options);
+  const sourceRef = source.sourceRef || source.id;
+  const key = candidate => `${candidate.event}:${candidate.sourceActionKey || candidate.index}`;
+  const hazards = new Map();
+  for (const statement of program?.body || []) {
+    const call = expressionCall(statement), load = isWindowLoadCall(call);
+    const change = call?.callee?.type === "Identifier" && call.callee.name === "AttachXFormValueChangeEventById";
+    if (!load && !change) continue;
+    const listener = load ? windowLoadListener(call) : call.arguments?.[1];
+    const body = listenerTimerCall(listener)?.arguments[0]?.body || listener?.body;
+    if (!body || !hasInvalidatedDomHandleRead(body, form)) continue;
+    const event = load ? "onLoad" : "onChange";
+    const pending = { index: call.start, event, scope: load ? "global" : "control",
+      ...(load ? {} : { controlId: literalValue(call.arguments[0]), sourceActionKey: inlineOnChangeSourceActionKey(sourceRef, call.start) }),
+      javascript: text.slice(call.start, call.end), translationStatus: "needs_review", sourceRefs: [sourceRef] };
+    hazards.set(key(pending), pending);
+  }
+  const enforceLiveHandles = candidates => candidates.map(candidate => hazards.get(key(candidate)) || candidate);
+  if (options.approvedScalarReadFieldIds?.length && strict.some(candidate => candidate.translationStatus === "mapped")) {
+    return enforceLiveHandles(strict);
+  }
+  if (!legacy.length) {
+    // Existing diagnostic-alert qualification owns the complete source. A
+    // failed qualification must remain available to later review recipes.
+    if (hasDiagnosticAlertViolation(source.functionAudit)) return [];
+    // A completely unsupported strict attempt must not hide a later specialist
+    // recipe. A proved live-handle hazard still retains its pending boundary.
+    return strict.some(candidate => candidate.translationStatus === "mapped") || strict.some(candidate => hazards.has(key(candidate)))
+      ? enforceLiveHandles(strict) : [];
+  }
+  const replacements = new Map(strict.filter(candidate => candidate.translationStatus === "mapped").map(candidate => [key(candidate), candidate]));
+  const retainsLegacyMapping = legacy.some(candidate => candidate.translationStatus === "mapped" && !hazards.has(key(candidate)));
+  return enforceLiveHandles(legacy.map(candidate => {
+    if (candidate.translationStatus === "mapped" || !replacements.has(key(candidate))) return candidate;
+    const replacement = replacements.get(key(candidate));
+    if (!retainsLegacyMapping || !replacement.semanticHints?.ownsLegacyRowEffects) return replacement;
+    const { ownsLegacyRowEffects, ...semanticHints } = replacement.semanticHints;
+    return { ...replacement, semanticHints };
+  }));
+}
+
+function legacyInlineRadioRowEffectCandidates(source, form, formRules, program, options = {}) {
   const namedCandidates = namedRowEffectHandlerCandidates(source, form, program);
   if (namedCandidates.length) return namedCandidates;
   if (!hasOnlyDiagnosticAlertViolations(source.functionAudit)) {
@@ -41,7 +87,7 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
       Boolean(compileOnChange(call.arguments[1], form))
     );
     if (
-      (onChangeCalls.length < 2 && !hasHardHiddenAssignment) ||
+      (onChangeCalls.length < 2 && !hasHardHiddenAssignment && options.approvedPolicyNormalization !== true) ||
       onChangeCalls.length + loadCalls.length !== executableStatementCount
     ) {
       return [];
@@ -51,7 +97,7 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
         onLoadCandidate(call, source, form) || simpleOnLoadCandidate(call, source, form)
       ),
       ...onChangeCalls.map((call) =>
-        onChangeCandidate(call, source, form, formRules)
+        onChangeCandidate(call, source, form, formRules, options)
       )
     ];
     return candidates.every(Boolean) ? candidates : [];
@@ -105,6 +151,169 @@ export function inlineRadioRowEffectCandidates(source = {}, form = {}, formRules
     : candidates;
 }
 
+// Compile only complete callback boundaries. Scheduling and each callback body
+// remain in their source positions; unsupported siblings stay explicit.
+function timedMainRowLifecycleCandidates(source, form, program, options = {}) {
+  const statements = program?.body?.filter(statement => statement.type !== "EmptyStatement");
+  if (!statements?.length) return [];
+  const calls = statements.map(expressionCall);
+  const immediateContainerRead = node => {
+    if (!node || typeof node !== "object") return false;
+    if (node.type === "MemberExpression" && !node.computed && node.property?.name === "value" &&
+        node.object?.type === "MemberExpression" && node.object.computed && literalValue(node.object.property) === 0 &&
+        node.object.object?.type === "CallExpression" && node.object.object.callee?.type === "Identifier" &&
+        node.object.object.callee.name === "GetXFormFieldById") return true;
+    if (node.type === "LogicalExpression" && node.operator === "&&" && node.left?.type === "Identifier" &&
+        node.right?.type === "BinaryExpression" && node.right.left?.type === "MemberExpression" &&
+        node.right.left.object?.name === node.left.name && node.right.left.property?.name === "value") return true;
+    if (node.type === "CallExpression" && node.callee?.type === "MemberExpression" && node.callee.property?.name === "indexOf" &&
+        node.callee.object?.type === "MemberExpression" && node.callee.object.property?.name === "value") return true;
+    return Object.values(node).some(child => Array.isArray(child) ? child.some(immediateContainerRead)
+      : child && typeof child === "object" && immediateContainerRead(child));
+  };
+  if (!calls.some(call => isWindowLoadCall(call) && (listenerTimerCall(windowLoadListener(call)) || immediateContainerRead(windowLoadListener(call))))) return [];
+  if (calls.some(call => !isWindowLoadCall(call) && !(call?.callee?.type === "Identifier" &&
+    call.callee.name === "AttachXFormValueChangeEventById" && call.arguments?.length === 2))) return [];
+  const sourceRef = source.sourceRef || source.id;
+  const resolver = buildConditionOperandResolver(String(source.javascript || ""));
+  const localWrites = branchLocalLiteralWrites(source, form);
+  const localWritePairs = new Map((localWrites?.pairs || []).map(pair => [pair.start, pair]));
+  const rowMarkerTargets = buildSetFieldAttrTargetIndex(form).secondaryMarkerToPrimary;
+  const candidates = calls.map(call => {
+    const load = isWindowLoadCall(call);
+    const event = load ? "onLoad" : "onChange";
+    const listener = load ? windowLoadListener(call) : call.arguments[1];
+    const controlId = load ? undefined : literalValue(call.arguments[0]);
+    const timer = load ? listenerTimerCall(listener) : undefined;
+    const callback = timer?.arguments[0] || listener;
+    const unresolved = () => ({ index: call.start, event, scope: load ? "global" : "control", controlId,
+      ...(load ? {} : { sourceActionKey: inlineOnChangeSourceActionKey(sourceRef, call.start) }),
+      javascript: String(source.javascript || "").slice(call.start, call.end),
+      translationStatus: "needs_review", sourceRefs: [sourceRef] });
+    if (!isFunction(listener) || listener.async || listener.generator || listener.id ||
+        listener.body?.type !== "BlockStatement" || (load && listener.params.length) ||
+        (!load && (!formFieldIds(form).has(controlId) || listener.params?.[0]?.type !== "Identifier")) ||
+        callback.async || callback.generator || callback.id || (timer && (callback.params.length ||
+          !Number.isInteger(literalValue(timer.arguments[1])) || literalValue(timer.arguments[1]) < 0 ||
+          literalValue(timer.arguments[1]) > 2147483647))) return unresolved();
+    let valid = true;
+    const inspect = node => {
+      if (!node || typeof node !== "object") return;
+      if (node.type === "CallExpression") {
+        const callee = node.callee;
+        if (callee?.type === "Identifier" && !resolver.isUnshadowedGlobal(callee.name, callee.start)) valid = false;
+        if (callee?.type === "Identifier" && callee.name === "GetXFormFieldValueById") valid = false;
+        if (callee?.type === "MemberExpression" && callee.object?.type === "Identifier" &&
+            callee.object.name === "console" && !resolver.isUnshadowedGlobal("console", callee.object.start)) valid = false;
+        if (callee?.type === "MemberExpression" && callee.property?.name === "val" && node.arguments.length === 0 &&
+            !strictCheckedRadioRead(node, form)) valid = false;
+      }
+      for (const child of Object.values(node)) {
+        if (Array.isArray(child)) child.forEach(inspect);
+        else if (child && typeof child === "object") inspect(child);
+      }
+    };
+    inspect(call);
+    const targets = rowEffectTargets(callback);
+    if (!valid || !targets.length || !targetsHaveDistinctLayoutOwners(form, targets) ||
+        hasInvalidatedDomHandleRead(callback.body, form)) return unresolved();
+    const lines = compileBlock(callback.body, { aliases: new Map(), form,
+      sourceValueName: load ? undefined : listener.params[0].name,
+      targetValueName: load ? undefined : "value", mainValueApis: true,
+      rowMarkerTargets, usedNames: declaredLocalNames(callback), preserveDiagnostics: true, objectAliases: new Set(),
+      jqueryRadioClear: true, branchLocalWrites: localWritePairs,
+      approvedScalarReadFieldIds: options.approvedScalarReadFieldIds, indent: timer ? "    " : "  " });
+    if (!lines) return unresolved();
+    return { index: call.start, event, scope: load ? "global" : "control", controlId,
+      ...(load ? {} : { sourceActionKey: inlineOnChangeSourceActionKey(sourceRef, call.start) }),
+      javascript: String(source.javascript || "").slice(call.start, call.end),
+      function: [`function ${event}(${load ? "" : "value, rowNum, parentRowNum"}) {`,
+        ...(timer ? ["  setTimeout(function() {", ...lines, `  }, ${JSON.stringify(literalValue(timer.arguments[1]))});`] : lines), "}"].join("\n"),
+      translationStatus: "mapped", coverage: { status: "translated", nativeRules: [], residuals: [] },
+      functionMappings: [{ source: "ordered main-row lifecycle with source scheduling",
+        target: "setTimeout + MKXFORM.getValue/setValue/setFieldAttr", basis: BASIS, reviewRequired: false }],
+      sourceRefs: [sourceRef], semanticHints: {
+        ...(timer ? { sourceTimerDelay: literalValue(timer.arguments[1]) } : {}),
+        ...(localWrites ? { branchLocalLiteralWrites: localWrites } : {}),
+        coveredCalculationRanges: [{ sourceRef, name: `timedMainRows:${event}`, start: call.start, end: call.end }]
+      } };
+  });
+  return candidates.every(candidate => candidate.translationStatus === "mapped")
+    ? candidates.map(candidate => ({ ...candidate, semanticHints: { ...candidate.semanticHints, ownsLegacyRowEffects: true } }))
+    : candidates;
+}
+
+// DOM handles stay live across aliases and row resets. The scalar renderer
+// cannot claim these reads when a supported write may change the same field.
+function hasInvalidatedDomHandleRead(body, form) {
+  const handles = new Map(), scalarAliases = new Set(), reads = new Set(), writes = new Set();
+  let invalidScalarMember = false;
+  const walk = (node, visit, parent) => {
+    if (!node || typeof node !== "object") return;
+    visit(node, parent);
+    for (const child of Object.values(node)) {
+      if (Array.isArray(child)) child.forEach(value => walk(value, visit, node));
+      else if (child && typeof child === "object") walk(child, visit, node);
+    }
+  };
+  walk(body, node => {
+    if (node.type !== "VariableDeclarator" || node.id?.type !== "Identifier") return;
+    const fieldId = legacyFieldElementId(node.init);
+    if (fieldId) handles.set(node.id.name, fieldId);
+    else if (legacyFieldValueId(node.init)) scalarAliases.add(node.id.name);
+  });
+  walk(body, (node, parent) => {
+    if (node.type === "MemberExpression" && !node.computed && node.property?.name === "value" && node.object?.type === "Identifier") {
+      const fieldId = handles.get(node.object.name);
+      if (scalarAliases.has(node.object.name)) invalidScalarMember = true;
+      if (fieldId) {
+        const assigned = parent?.type === "AssignmentExpression" && parent.left === node;
+        (assigned ? writes : reads).add(fieldId);
+      }
+    }
+    const effect = rowEffect(node);
+    if (effect?.reset) {
+      const resolved = resolveSourceRowEffectTarget(form, effect.target);
+      for (const target of resolved?.targets || []) if (target.kind === "field") writes.add(target.id);
+    }
+    if (node.type !== "CallExpression") return;
+    if (node.callee?.type === "Identifier" && node.callee.name === "SetXFormFieldValueById") {
+      const fieldId = literalValue(node.arguments[0]);
+      if (typeof fieldId === "string") writes.add(fieldId);
+    }
+    if (node.callee?.type === "MemberExpression" && ["val", "prop"].includes(node.callee.property?.name) && node.arguments.length) {
+      const selector = node.callee.object;
+      if (selector?.type === "CallExpression" && selector.callee?.name === "$") {
+        const fieldId = literalValue(selector.arguments[0])?.match(/extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)/)?.[1];
+        if (fieldId) writes.add(fieldId);
+      }
+    }
+  });
+  return invalidScalarMember || [...reads].some(fieldId => writes.has(fieldId));
+}
+
+function strictCheckedRadioRead(node, form) {
+  const call = node?.callee?.object;
+  if (call?.type !== "CallExpression" || call.callee?.name !== "$" || call.arguments?.length !== 1) return false;
+  const fieldId = literalValue(call.arguments[0])?.match(/^\[name=(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\1\]:checked$/)?.[2];
+  return !!fieldId && form.fields.some(field => field.id === fieldId && field.type !== "detailTable" && field.componentId === "xform-radio");
+}
+
+function jqueryRadioClearPair(first, second, form) {
+  const one = expressionCall(first), two = expressionCall(second);
+  const selector = (call, method) => call?.type === "CallExpression" && call.callee?.type === "MemberExpression" &&
+    !call.callee.computed && call.callee.property?.name === method && call.callee.object?.type === "CallExpression" &&
+    call.callee.object.callee?.type === "Identifier" && call.callee.object.callee.name === "$" && call.callee.object.arguments.length === 1
+    ? literalValue(call.callee.object.arguments[0]) : undefined;
+  if (one?.arguments?.length !== 1 || literalValue(one.arguments[0]) !== "" || two?.arguments?.length !== 2 ||
+      literalValue(two.arguments[0]) !== "checked" || literalValue(two.arguments[1]) !== false) return undefined;
+  const firstId = selector(one, "val")?.match(/^input\[name=(["'])extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\1\]$/)?.[2];
+  const secondId = selector(two, "prop")?.match(/^input\[name=(["'])_extendDataFormInfo\.value\((fd_[A-Za-z0-9_]+)\)\1\]$/)?.[2];
+  const field = firstId && firstId === secondId && form.fields.find(field => field.id === firstId && field.type !== "detailTable");
+  return field && ["xform-radio", "xform-checkbox"].includes(field.componentId)
+    ? { fieldId: firstId, value: field.componentId === "xform-checkbox" ? [] : "" } : undefined;
+}
+
 // Compile the complete main-row lifecycle before projecting native rules. Load
 // reads the persisted helper, whereas change writes it from the event value.
 function mainFieldValueRowLifecycleCandidates(source, form, program) {
@@ -114,7 +323,6 @@ function mainFieldValueRowLifecycleCandidates(source, form, program) {
   const sourceBindings = buildConditionOperandResolver(String(source.javascript || ""));
   const mainFields = new Set((form?.fields || [])
     .filter(field => field.type !== "detailTable").map(field => field.id));
-  const index = buildFormRuleRefIndex(form);
   const rowMarkerTargets = buildSetFieldAttrTargetIndex(form).secondaryMarkerToPrimary;
   const candidates = statements.map(statement => {
     const call = expressionCall(statement);
@@ -130,9 +338,9 @@ function mainFieldValueRowLifecycleCandidates(source, form, program) {
     const targets = rowEffectTargets(listener);
     if (!targets.length || !targetsHaveDistinctLayoutOwners(form, targets) ||
         targets.some(target => {
-          const resolved = resolveEffectTarget(index, target);
+          const resolved = resolveSourceRowEffectTarget(form, target);
           return resolved?.source !== "rowMarker" || resolved.unresolved?.length ||
-            !resolved.targets?.length || resolved.targets.some(item => item.kind !== "field");
+            !resolved.targets?.length || resolved.targets.some(item => !["field", "detailTable"].includes(item.kind));
         })) return undefined;
     let valid = true;
     let hasValueApi = false;
@@ -157,6 +365,7 @@ function mainFieldValueRowLifecycleCandidates(source, form, program) {
       form,
       mainValueApis: true,
       rowMarkerTargets,
+      usedNames: declaredLocalNames(listener),
       indent: "  "
     });
     if (!lines) return undefined;
@@ -203,7 +412,7 @@ function delegateBridgedLoadVisibility(candidate, source, formRules, form) {
       if (effect.type !== "visible" || typeof effect.value !== "boolean" ||
           !(rule.else || []).some(other => other.type === "visible" &&
             other.target === effect.target && other.value === !effect.value)) continue;
-      const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), effect.target);
+      const resolved = resolveSourceRowEffectTarget(form, effect.target);
       if (resolved?.source !== "rowMarker" || resolved.unresolved?.length ||
           !resolved.targets?.some(target => target.kind === "detailTable")) continue;
       const target = canonicalRowMarker(effect.target, form);
@@ -403,7 +612,7 @@ export function hardHiddenValueChangeCandidates(source = {}, form = {}, formRule
     .filter(Boolean);
 }
 
-function onChangeCandidate(call, source, form, formRules) {
+function onChangeCandidate(call, source, form, formRules, options = {}) {
   if (
     call.arguments?.length !== 2 ||
     typeof literalValue(call.arguments[0]) !== "string" ||
@@ -420,7 +629,7 @@ function onChangeCandidate(call, source, form, formRules) {
     controlId
   );
   const compiled = compileOnChange(call.arguments[1], form, {
-    restoreStaticRequiredBaseline
+    restoreStaticRequiredBaseline, approvedScalarReadFieldIds: options.approvedScalarReadFieldIds
   });
   if (!compiled) return undefined;
   const rowTargets = rowEffectTargets(call.arguments[1]);
@@ -474,7 +683,8 @@ function compileOnChange(callback, form, options = {}) {
       if (!formFieldIds(form).has(alias.fieldId) || aliases.has(alias.name)) return undefined;
       aliases.set(alias.name, alias.fieldId);
       const read = `MKXFORM.getValue(${JSON.stringify(alias.fieldId)})`;
-      lines.push(`  var ${alias.name} = ${textFields.has(alias.fieldId) ? `String(${read} ?? "")` : read};`);
+      const approvedRead = approvedScalarStringReadExpression(alias.fieldId, form, options.approvedScalarReadFieldIds);
+      lines.push(`  var ${alias.name} = ${approvedRead || (textFields.has(alias.fieldId) ? `String(${read} ?? "")` : read)};`);
       continue;
     }
     const compiled = compileStatement(statement, {
@@ -493,14 +703,28 @@ function compileOnChange(callback, form, options = {}) {
 }
 
 function compileStatement(statement, context) {
-  if (diagnosticConsoleStatement(statement, context)) return [];
+  if (statement?.type === "VariableDeclaration" && context.mainValueApis && !context.nestedBranch) {
+    const alias = legacyFieldAlias(statement);
+    if (!alias || !formFieldIds(context.form).has(alias.fieldId) || context.aliases.has(alias.name)) return undefined;
+    context.aliases.set(alias.name, alias.fieldId);
+    if (context.objectAliases && legacyFieldElementId(statement.declarations[0].init)) context.objectAliases.add(alias.name);
+    return renderFieldAlias(alias, context.form, context.indent, context.usedNames || new Set(context.aliases.keys()), context.approvedScalarReadFieldIds);
+  }
+  if (diagnosticConsoleStatement(statement, context)) {
+    if (!context.preserveDiagnostics) return [];
+    const call = expressionCall(statement);
+    if (call.arguments.some(argument => argument.type === "Identifier" && context.objectAliases?.has(argument.name))) return undefined;
+    const args = call.arguments.map(argument => argument.type === "Literal" ? JSON.stringify(argument.value)
+      : argument.name === context.sourceValueName ? context.targetValueName : argument.name);
+    return [`${context.indent}console.${call.callee.property.name}(${args.join(", ")});`];
+  }
   if (statement.type === "IfStatement") return compileIf(statement, context);
   const effect = rowEffect(statement);
   if (effect) {
     const target = context.rowMarkerTargets?.get(effect.target) || effect.target;
     return context.restoreStaticRequiredBaseline
       ? compileBaselineRowEffect(effect, context.form, context.indent)
-      : compileRowEffect({ ...effect, target }, context.form, context.indent);
+      : compileStaticRowEffect({ ...effect, target }, context.form, context.indent);
   }
   if (context.mainValueApis) {
     const call = expressionCall(statement);
@@ -514,9 +738,12 @@ function compileStatement(statement, context) {
   }
   const assignment = legacyFieldAssignment(statement, context.aliases, context.sourceValueName);
   if (assignment) {
+    if (context.objectAliases && !context.objectAliases.has(assignment.alias)) return undefined;
+    const expression = assignment.expression === context.sourceValueName
+      ? context.targetValueName : assignment.expression;
     return [
-      `${context.indent}MKXFORM.setValue(${JSON.stringify(assignment.fieldId)}, ${assignment.expression});`,
-      `${context.indent}${assignment.alias} = ${assignment.expression};`
+      `${context.indent}MKXFORM.setValue(${JSON.stringify(assignment.fieldId)}, ${expression});`,
+      `${context.indent}${assignment.alias} = ${expression};`
     ];
   }
   return undefined;
@@ -536,6 +763,7 @@ function compileIf(statement, context) {
   if (!condition) return undefined;
   const consequent = compileBlock(statement.consequent, {
     ...context,
+    nestedBranch: true,
     indent: `${context.indent}  `
   });
   if (!consequent) return undefined;
@@ -552,6 +780,7 @@ function compileIf(statement, context) {
   }
   const alternate = compileBlock(statement.alternate, {
     ...context,
+    nestedBranch: true,
     indent: `${context.indent}  `
   });
   if (!alternate) return undefined;
@@ -562,8 +791,21 @@ function compileIf(statement, context) {
 function compileBlock(block, context) {
   const statements = block?.type === "BlockStatement" ? block.body : [block];
   const lines = [];
-  for (const statement of statements) {
+  for (let index = 0; index < statements.length; index += 1) {
+    const statement = statements[index];
     if (statement?.type === "EmptyStatement") continue;
+    const localWrite = context.nestedBranch && context.mainValueApis && context.branchLocalWrites?.get(statement.start);
+    if (localWrite && localWrite.writeStart === statements[index + 1]?.start && localWrite.end === statements[index + 1].end) {
+      lines.push(`${context.indent}MKXFORM.setValue(${JSON.stringify(localWrite.fieldId)}, ${JSON.stringify(localWrite.value)});`);
+      index += 1;
+      continue;
+    }
+    const cleared = context.jqueryRadioClear && jqueryRadioClearPair(statement, statements[index + 1], context.form);
+    if (cleared) {
+      lines.push(`${context.indent}MKXFORM.setValue(${JSON.stringify(cleared.fieldId)}, ${JSON.stringify(cleared.value)});`);
+      index += 1;
+      continue;
+    }
     const compiled = compileStatement(statement, context);
     if (!compiled) return undefined;
     lines.push(...compiled);
@@ -572,6 +814,7 @@ function compileBlock(block, context) {
 }
 
 function compileCondition(condition, context) {
+  if (condition?.type === "Identifier" && context.objectAliases?.has(condition.name)) return "true";
   if (condition?.type === "LogicalExpression" && condition.operator === "&&") {
     const left = compileCondition(condition.left, context);
     const right = compileCondition(condition.right, context);
@@ -711,48 +954,25 @@ function simpleLoadModel(listener, form) {
   const body = executableListenerBody(listener);
   if (!body) return undefined;
   const aliases = new Map();
-  const prelude = [];
-  const branches = [];
+  const usedNames = declaredLocalNames(listener);
+  const lines = [];
   let diagnosticAlertCount = 0;
   for (const statement of body.body) {
     if (statement.type === "EmptyStatement") continue;
-    const effect = rowEffect(statement);
-    if (effect) {
-      const compiled = compileRowEffect(effect, form, "  ");
-      if (!compiled) return undefined;
-      prelude.push(...compiled);
-      continue;
-    }
     const alias = legacyFieldAlias(statement);
     if (alias) {
-      if (!formFieldIds(form).has(alias.fieldId) || aliases.has(alias.name)) {
-        return undefined;
-      }
+      if (!formFieldIds(form).has(alias.fieldId) || aliases.has(alias.name)) return undefined;
       aliases.set(alias.name, alias.fieldId);
-      continue;
-    }
-    const assignment = legacyFieldAssignment(statement, aliases, undefined);
-    if (assignment) {
-      prelude.push(
-        `  MKXFORM.setValue(${JSON.stringify(assignment.fieldId)}, ${assignment.expression});`,
-        `  ${assignment.alias} = ${assignment.expression};`
-      );
+      // Read the field at its source position. A preceding row reset can change
+      // the value, and a later branch must observe that updated value.
+      lines.push(...renderFieldAlias(alias, form, "  ", usedNames));
       continue;
     }
     if (diagnosticAlert(statement, aliases, form)) {
       diagnosticAlertCount += 1;
       continue;
     }
-    if (diagnosticConsoleStatement(statement, { aliases })) continue;
-    if (statement.type === "IfStatement") {
-      branches.push(statement);
-      continue;
-    }
-    return undefined;
-  }
-  const lines = [...prelude];
-  for (const branch of branches) {
-    const compiled = compileStatement(branch, {
+    const compiled = compileStatement(statement, {
       aliases,
       sourceValueName: undefined,
       targetValueName: undefined,
@@ -762,37 +982,44 @@ function simpleLoadModel(listener, form) {
     if (!compiled) return undefined;
     lines.push(...compiled);
   }
-  return lines.length ? {
-    aliases,
-    lines,
-    diagnosticAlertCount,
-    textFieldIds: new Set(textValueFieldIds(form))
-  } : undefined;
+  return lines.length ? { lines, diagnosticAlertCount } : undefined;
+}
+
+function renderFieldAlias(alias, form, indent, usedNames, approvedScalarReadFieldIds) {
+  const approvedRead = approvedScalarStringReadExpression(alias.fieldId, form, approvedScalarReadFieldIds);
+  if (approvedRead) return [`${indent}var ${alias.name} = ${approvedRead};`];
+  const rawAlias = uniqueLocalName(`${alias.name}Raw`, usedNames);
+  usedNames.add(rawAlias);
+  const lines = [`${indent}var ${rawAlias} = MKXFORM.getValue(${JSON.stringify(alias.fieldId)});`];
+  if (new Set(textValueFieldIds(form)).has(alias.fieldId)) {
+    const valueAlias = uniqueLocalName(`${alias.name}Value`, usedNames);
+    usedNames.add(valueAlias);
+    lines.push(
+      `${indent}var ${valueAlias} = Array.isArray(${rawAlias}) ? ${rawAlias}[0] : ${rawAlias};`,
+      `${indent}var ${alias.name} = String(${valueAlias} ?? "");`
+    );
+  } else {
+    lines.push(`${indent}var ${alias.name} = Array.isArray(${rawAlias}) ? ${rawAlias}[0] : ${rawAlias};`);
+  }
+  return lines;
+}
+
+function declaredLocalNames(node) {
+  const names = new Set();
+  const visit = value => {
+    if (!value || typeof value !== "object") return;
+    if (value.type === "Identifier") names.add(value.name);
+    for (const child of Object.values(value)) {
+      if (Array.isArray(child)) child.forEach(visit);
+      else if (child && typeof child === "object") visit(child);
+    }
+  };
+  visit(node);
+  return names;
 }
 
 function renderSimpleOnLoad(model) {
-  const lines = ["function onLoad() {"];
-  const usedNames = new Set(model.aliases.keys());
-  for (const [alias, fieldId] of model.aliases) {
-    const rawAlias = uniqueLocalName(`${alias}Raw`, usedNames);
-    usedNames.add(rawAlias);
-    if (model.textFieldIds.has(fieldId)) {
-      const valueAlias = uniqueLocalName(`${alias}Value`, usedNames);
-      usedNames.add(valueAlias);
-      lines.push(
-        `  var ${rawAlias} = MKXFORM.getValue(${JSON.stringify(fieldId)});`,
-        `  var ${valueAlias} = Array.isArray(${rawAlias}) ? ${rawAlias}[0] : ${rawAlias};`,
-        `  var ${alias} = String(${valueAlias} ?? "");`
-      );
-    } else {
-      lines.push(
-        `  var ${rawAlias} = MKXFORM.getValue(${JSON.stringify(fieldId)});`,
-        `  var ${alias} = Array.isArray(${rawAlias}) ? ${rawAlias}[0] : ${rawAlias};`
-      );
-    }
-  }
-  lines.push(...model.lines, "}");
-  return lines.join("\n");
+  return ["function onLoad() {", ...model.lines, "}"].join("\n");
 }
 
 function loadModel(listener, source, form) {
@@ -1214,12 +1441,17 @@ function renderOnLoad(model, form) {
   return lines.join("\n");
 }
 
-function compileRowEffect(effect, form, indent) {
-  if (!effect || !layoutMarkerSet(form).has(effect.target)) return undefined;
+export function compileStaticRowEffect(effect, form, indent = "") {
+  if (!effect || !canonicalRowTarget(form, effect.target)) return undefined;
   const lines = renderRowEffect(effect, indent, form);
   if (!effect.reset) return lines;
+  const row = layoutRowTargets(form).find(entry => entry.target === canonicalRowTarget(form, effect.target));
+  const mainIds = formFieldIds(form);
+  // A same-name hidden anchor is a value-bearing source control as well as a
+  // marker. Its reset semantics need evidence beyond the visible layout row.
+  if (row?.markers.some(marker => mainIds.has(marker))) return undefined;
 
-  const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), effect.target);
+  const resolved = resolveSourceRowEffectTarget(form, effect.target);
   if (
     resolved?.source !== "rowMarker" ||
     resolved.unresolved?.length ||
@@ -1248,8 +1480,8 @@ function compileRowEffect(effect, form, indent) {
  * readonly outputs and captions do not inherit the row's required styling.
  */
 function compileBaselineRowEffect(effect, form, indent) {
-  if (!effect || !layoutMarkerSet(form).has(effect.target)) return undefined;
-  const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), effect.target);
+  if (!effect || !canonicalRowTarget(form, effect.target)) return undefined;
+  const resolved = resolveSourceRowEffectTarget(form, effect.target);
   if (
     resolved?.source !== "rowMarker" ||
     resolved.unresolved?.length ||
@@ -1284,7 +1516,7 @@ function renderRowEffect(effect, indent, form) {
 }
 
 function canonicalRowMarker(target, form) {
-  return buildSetFieldAttrTargetIndex(form).secondaryMarkerToPrimary.get(target) || target;
+  return canonicalRowTarget(form, target);
 }
 
 function rowEffect(statement) {
@@ -1316,8 +1548,8 @@ function legacyFieldAlias(statement) {
   ) {
     return undefined;
   }
-  const fieldId = legacyFieldElementId(statement.declarations[0].init) ||
-    jqueryFieldValueId(statement.declarations[0].init);
+  const init = statement.declarations[0].init;
+  const fieldId = legacyFieldElementId(init) || legacyFieldValueId(init) || jqueryFieldValueId(init);
   return fieldId
     ? { name: statement.declarations[0].id.name, fieldId }
     : undefined;
@@ -1500,12 +1732,8 @@ function directFieldValueEquality(node, form, mainValueApis = false) {
   if (node?.type !== "BinaryExpression" || !["==", "===", "!=", "!=="].includes(node.operator)) {
     return undefined;
   }
-  const valueId = value => legacyFieldValueId(value) || (mainValueApis &&
-    value?.type === "CallExpression" && value.callee?.type === "Identifier" &&
-    value.callee.name === "GetXFormFieldValueById" && value.arguments?.length === 1 &&
-    typeof literalValue(value.arguments[0]) === "string" ? literalValue(value.arguments[0]) : undefined);
-  const leftFieldId = valueId(node.left);
-  const rightFieldId = valueId(node.right);
+  const leftFieldId = legacyFieldValueId(node.left) || singletonStringValueId(node.left, node.right, node.operator, form);
+  const rightFieldId = legacyFieldValueId(node.right) || singletonStringValueId(node.right, node.left, node.operator, form);
   const fieldId = leftFieldId || rightFieldId;
   const literal = leftFieldId ? node.right : node.left;
   const valueKind = literal?.type === "Identifier" && literal.name === "undefined"
@@ -1516,6 +1744,20 @@ function directFieldValueEquality(node, form, mainValueApis = false) {
     return undefined;
   }
   return { fieldId, operator: node.operator, value: literalValue(literal), valueKind };
+}
+
+function singletonStringValueId(node, other, operator, form) {
+  if (!["==", "!="].includes(operator) || typeof literalValue(other) !== "string" || literalValue(other) === "" ||
+      node?.type !== "CallExpression" || node.callee?.type !== "Identifier" ||
+      node.callee.name !== "GetXFormFieldValueById" || node.arguments.length !== 1) return undefined;
+  const id = literalValue(node.arguments[0]);
+  const field = form.fields?.find(field => field.id === id && ["text", "longText"].includes(field.type) && field.dataOnly === true);
+  const fact = field?.sourceProps?.mainStringValueBindingFact;
+  if (!field || fact?.version !== 1 || fact.status !== "verified" || fact.fieldId !== id ||
+      fact.metadata?.count !== 1 || fact.metadata.type !== "String" ||
+      !["designer", "display"].every(surface => fact.surfaces?.[surface]?.logicalBindingCount === 1 &&
+        fact.surfaces[surface].hiddenBindingCount === 1 && fact.surfaces[surface].issues?.length === 0)) return undefined;
+  return id;
 }
 
 function legacyFieldValueId(node) {

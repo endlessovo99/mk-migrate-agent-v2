@@ -4,6 +4,9 @@ import { appendTranscriptEntry, sanitizedTranscript } from "./transcript.js";
 import { SIT_PARTICIPANT_FALLBACKS } from "../../src/executor/participant-resolver.js";
 import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-resolver.js";
 import { NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY } from "../../src/executor/native-form-rule-runtime-capability.js";
+import {readFileSync} from 'node:fs';
+import {materializeNativeTemplateAuthorization} from '../helpers/native-template-authorization.js';
+const NATIVE_TEMPLATE_READER_CAPABILITY=JSON.parse(readFileSync(new URL('../fixtures/route-validation/everyone-template-authorization/native-contract.json',import.meta.url),'utf8'));
 
 const CREATED_TEMPLATE_ID = "route-created-template";
 const CREATED_WORKFLOW_TEMPLATE_ID = "route-created-workflow-template";
@@ -48,6 +51,8 @@ export class FakeNewoaAdapter {
     this.updated = false;
     this.workflowCooperationDefault = Object.hasOwn(options, "workflowCooperationDefault") ? options.workflowCooperationDefault : "2";
     this.workflowOperationSets = options.workflowOperationSets || [];
+    this.readerOptions=options;
+    this.nativeEveryone=options.nativeEveryone||options.organizationCandidates?.find(c=>c.fdAccount?.fdLoginName==='everyone')||{fdId:'route-native-everyone',fdName:'Route Everyone',fdOrgType:8,fdIsAvailable:true,fdIsBusiness:false,fdAccount:{fdLoginName:'everyone'}};
     this.organizationCandidates = options.organizationCandidates || [];
     this.authorizationCandidates = authorizationCandidates(options.templateAuthorization);
     this.authorizationCandidateById = new Map(
@@ -104,7 +109,7 @@ export class FakeNewoaAdapter {
 
   async searchOrg(key) {
     this.record({ operation: "search-org", key });
-    const configured = this.organizationCandidates.filter(candidate => candidate.fdName === key);
+    const configured = this.organizationCandidates.filter(candidate => candidate.fdIsBusiness!==false&&[candidate.fdName,candidate.fdNo,candidate.fdLoginName,candidate.fdAccount?.fdLoginName].includes(key));
     if (configured.length) return clone(configured);
     const authorizationMatches = this.authorizationCandidates.filter((candidate) => (
       candidate.searchKeys.includes(key)
@@ -121,9 +126,9 @@ export class FakeNewoaAdapter {
     return [];
   }
 
-  async getElementInfo(targets) {
+  async getElementInfo(targets, {departmentEvidence=false, builtinEvidence=false}={}) {
     this.record({ operation: "get-element-info", targets: clone(targets) });
-    return targets.flatMap((fdId) => {
+    const rows = targets.flatMap((fdId) => {
       const configured = this.organizationCandidates.find(candidate => candidate.fdId === fdId);
       if (configured) return [clone(configured)];
       const authorizationCandidate = this.authorizationCandidateById.get(fdId);
@@ -141,15 +146,22 @@ export class FakeNewoaAdapter {
           fdId: fallback.fdId,
           fdName: fallback.fdName,
           fdOrgType: fallback.fdOrgType,
+          fdIsBusiness: true,
+          fdIsAvailable: true,
           ...(fallback.fdNo ? { fdNo: fallback.fdNo } : {})
         }];
       }
       return [{
         fdId,
         fdName: fdId,
-        fdOrgType: 8
+        fdOrgType: 8,
+        fdIsBusiness: true,
+        fdIsAvailable: true
       }];
     });
+    const columns = builtinEvidence ? ['fdId','fdName','fdOrgType','fdIsAvailable','fdIsBusiness','fdAccount','fdLoginName','fdNo']
+      : departmentEvidence ? ['fdId','fdName','fdOrgType','fdIsAvailable','fdParentName'] : ['fdId','fdName','fdOrgType'];
+    return rows.map(row=>Object.fromEntries(columns.filter(key=>Object.hasOwn(row,key)).map(key=>[key,row[key]])));
   }
 
   async initTemplate() {
@@ -183,6 +195,7 @@ export class FakeNewoaAdapter {
 
   async addTemplate(payload) {
     this.template = clone(payload);
+    this.materializeNativeReaders();
     this.template.fdId = CREATED_TEMPLATE_ID;
     const lbpm = this.template.mechanisms?.lbpmTemplate?.[0];
     if (lbpm) lbpm.fdId = CREATED_WORKFLOW_TEMPLATE_ID;
@@ -219,9 +232,19 @@ export class FakeNewoaAdapter {
       throw error;
     }
     this.template = clone(payload);
+    this.materializeNativeReaders();
     this.updated = true;
     return { fdId: payload.fdId || CREATED_TEMPLATE_ID };
   }
+
+  materializeNativeReaders(){
+    if(this.readerOptions.nativeTemplateAuthorization===false)return;
+    materializeNativeTemplateAuthorization(this.template,{everyone:this.nativeEveryone,templateEmptyNotUse:this.readerOptions.templateEmptyNotUse});
+  }
+
+  async getKmReviewDesktopDigest(){this.record({operation:'get-template-reader-digest'});return {[NATIVE_TEMPLATE_READER_CAPABILITY.digestKey]:{hash:this.readerOptions.templateReaderRelease||NATIVE_TEMPLATE_READER_CAPABILITY.release}};}
+  async getKmReviewTemplateEditSha256(){this.record({operation:'get-template-reader-module'});return this.readerOptions.templateReaderSha256||NATIVE_TEMPLATE_READER_CAPABILITY.sha256;}
+  async getTemplateReaderConfiguration(){this.record({operation:'get-template-reader-config'});return this.readerOptions.templateEmptyNotUse===undefined?{}:{business:{templateEmptyNotUse:this.readerOptions.templateEmptyNotUse}};}
 
   async saveWorkflowDraft(payload) {
     this.record({
@@ -299,6 +322,7 @@ function authorizationCandidates(authorization) {
         fdId: member.sourceId,
         fdName: member.name,
         fdOrgType: member.sourceOrgType,
+        fdIsBusiness: true,
         ...(Number(member.sourceOrgType) === 2 ? { fdIsAvailable: true } : {}),
         ...(member.sourceLoginName ? {
           fdLoginName: member.sourceLoginName,

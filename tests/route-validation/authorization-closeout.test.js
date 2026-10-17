@@ -241,3 +241,8 @@ it('ordinary resume, claims, limit changes and older repairs respect the active 
  }finally{release();await applying;}
  assert.equal((await f.store.get('item',f.item.id)).status,'succeeded');await setBatchStatus(f.store,'other-origin-batch','running');assert.equal((await f.store.get('batch','other-origin-batch')).status,'running');assert.equal(writes(f.c).length,1);
  }finally{release?.();fs.rmSync(f.root,{recursive:true,force:true});}}));
+
+it('audit initialization cannot be normalized on an unproved non-detail model',async()=>withNetworkGuard(async()=>{
+ for(const kind of ['main','system',undefined]){const f=await detailAuditScenario();try{for(const b of [f.before,f.after]){const c=JSON.parse(b.template.mechanisms['sys-xform'].fdConfig);if(kind===undefined)delete c.dataModel.at(-1).fdType;else c.dataModel.at(-1).fdType=kind;b.template.mechanisms['sys-xform'].fdConfig=JSON.stringify(c);}assert.equal(protectedAuthorizationDelta(f.before,f.after,[editor]),false);}finally{fs.rmSync(f.root,{recursive:true,force:true});}}
+}));
+it('an unchanged opaque model remains protected without gaining audit normalization',async()=>withNetworkGuard(async()=>{const f=await detailAuditScenario();try{const before=JSON.parse(f.before.template.mechanisms['sys-xform'].fdConfig),after=JSON.parse(f.after.template.mechanisms['sys-xform'].fdConfig);before.dataModel.at(-1).fdType='system';after.dataModel[after.dataModel.length-1]=clone(before.dataModel.at(-1));f.before.template.mechanisms['sys-xform'].fdConfig=JSON.stringify(before);f.after.template.mechanisms['sys-xform'].fdConfig=JSON.stringify(after);assert.equal(protectedAuthorizationDelta(f.before,f.after,[editor]),true);}finally{fs.rmSync(f.root,{recursive:true,force:true});}}));

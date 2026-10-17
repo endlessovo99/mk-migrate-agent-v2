@@ -1,4 +1,6 @@
 import { selectEmptyEventProof } from "./source-select-empty-event.js";
+import {mainTableReadReferenceDiagnostics} from "./native-main-table-reference.js";
+import {templateReadScopeIssues} from './template-read-scope.js';
 import { remoteDialogDiagnostics } from "./remote-dialog.js";
 import { inspectSourceSignNode, hasSourceSignDeclaration } from "./workflow-sign-contract.js";
 import {
@@ -50,6 +52,7 @@ import { subProcessValidationIssues } from "./subprocess.js";
 import { projectLayoutGrid } from "./layout-pack.js";
 import { contentFlowIssues } from "./content-flow.js";
 import { findUnredactedCredentialPaths } from "../credential-material.js";
+import { migrationPolicyDslDiagnostics } from "../translator/approved-migration-policies.js";
 
 export const DSL_VERSION = "2.0-migration";
 
@@ -113,6 +116,7 @@ const TEMPLATE_AUTHORIZATION_COLLECTIONS = Object.freeze([
 
 export function validateMigrationDsl(input, options = {}) {
   const diagnostics = [];
+  diagnostics.push(...migrationPolicyDslDiagnostics(input));
   const root = isRecord(input) ? input : {};
   const mode = options.mode || "any";
 
@@ -132,7 +136,7 @@ export function validateMigrationDsl(input, options = {}) {
   validateCatalogVersions(root, diagnostics);
   validateTemplate(root.template, diagnostics);
   const formContext = validateForm(root.form, diagnostics);
-  if (mode === "execute") diagnostics.push(...remoteDialogDiagnostics(root.form));
+  if (mode === "execute") diagnostics.push(...remoteDialogDiagnostics(root.form,{dsl:root}));
   validateFormRules(root.formRules, diagnostics, { mode, form: root.form, scripts: root.scripts });
   validateScripts(root.scripts, diagnostics, {
     mode,
@@ -250,6 +254,7 @@ function validateTemplateAuthorization(value, diagnostics) {
     ));
     return;
   }
+  for(const reason of templateReadScopeIssues(value))diagnostics.push(error('dsl.template.authorization.read_scope_invalid','Template effective reader mode needs exact source-bound everyone evidence.',`${path}/readScope`,{reason}));
   if (typeof value.readerFlag !== "boolean") {
     diagnostics.push(error(
       "dsl.template.authorization.reader_flag_required",
@@ -1964,7 +1969,7 @@ function validateScriptActionTarget(action, path, diagnostics, context) {
       return;
     }
 
-    const support = resolveControlEventSupport(target, action.event);
+    const support = resolveControlEventSupport(target, action.event, action);
     if (support.status === "unsupported") {
       diagnostics.push(error("dsl.scripts.control_event_unsupported", "Control script action event is not supported by the target MK component.", `${path}/event`, {
         actual: action.event,
@@ -2032,6 +2037,7 @@ function validateScriptActionFunction(action, path, diagnostics, context) {
   }
 
   if (context.mode === "execute" || action.translationStatus === "mapped") {
+    for(const issue of mainTableReadReferenceDiagnostics(action.function,context.form))diagnostics.push(error("dsl.scripts.main_table_reference_invalid","Main-table placeholders require one existing native main-field read.",`${path}/function`,issue));
     const analysis = analyzeScriptFunction(action.function);
     if (analysis.unsupportedSyntax.length) {
       diagnostics.push(error("dsl.scripts.mk_async_syntax_forbidden", "MK runtime scripts must be synchronous and cannot use async or await.", `${path}/function`, {

@@ -110,7 +110,8 @@ describe("structured fixed-post targets", () => {
             ? {
                 fdId: TARGET_PERSON_ID,
                 fdName: "梁文德",
-                fdOrgType: 8
+                fdIsBusiness: true,
+            fdOrgType: 8
               }
             : {
                 fdId: TARGET_POST_ID,
@@ -144,7 +145,8 @@ describe("structured fixed-post targets", () => {
             return [{
               fdId: TARGET_POST_ID,
               fdName: "错误人员目标",
-              fdOrgType: 8
+              fdIsBusiness: true,
+            fdOrgType: 8
             }];
           }
         }

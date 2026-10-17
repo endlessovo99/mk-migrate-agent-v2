@@ -1,3 +1,6 @@
+import {isOmittedRemoteManualField} from "./omitted-remote-selector.js";
+import {sourceReadScopeBindingIssues} from './template-read-scope.js';
+import {verifiedDateOverlapReadyAction} from "../translator/date-overlap-lifecycle.js";
 import { choiceOtherCompanionDiagnostics } from "./source-choice-other-companion.js";
 import { mobileCaptionSourceDiagnostics } from "./source-mobile-caption-grid.js";
 import { radioSourceDiagnostics } from "./source-radio-layout.js";
@@ -19,6 +22,7 @@ import { sourceRequiresReadOnly } from "./source-readonly.js";
 import { inputLengthRequirements, inputLengthPolicyWarning } from "./source-input-length.js";
 import { validateSourceSignIntegrity } from "./workflow-sign-contract.js";
 import { nestedGeometrySourceDiagnostics } from "../translator/sysform-designer-layout.js";
+import { migrationPolicyProvenanceDiagnostics } from "../translator/approved-migration-policies.js";
 import {
   claimsDeterministicScriptTranslation,
   deterministicManualResidualDecisionIds
@@ -89,9 +93,10 @@ export function checkTrust(sourceDraft, migrationDsl) {
   validateDerivedFrom(sourceDraft, migrationDsl, diagnostics);
   validateCoreProvenance(migrationDsl, sourceRefs, diagnostics);
   validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics);
-  validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics);
-  diagnostics.push(...remoteDialogSourceDiagnostics(sourceDraft?.form, migrationDsl?.form));
+  diagnostics.push(...remoteDialogSourceDiagnostics(sourceDraft?.form, migrationDsl?.form,{dsl:migrationDsl}));
   const expectedDraft = validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics);
+  validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics,expectedDraft);
+  diagnostics.push(...migrationPolicyProvenanceDiagnostics(sourceDraft, expectedDraft, migrationDsl));
   diagnostics.push(...choiceOtherCompanionDiagnostics(sourceDraft?.form, migrationDsl?.form, expectedDraft?.form));
   diagnostics.push(...mobileCaptionSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));
   diagnostics.push(...radioSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));
@@ -101,6 +106,7 @@ export function checkTrust(sourceDraft, migrationDsl) {
   validateSourceNumberDisplays(sourceDraft, migrationDsl, expectedDraft, diagnostics);
   validateSourceCheckboxLayouts(sourceDraft, migrationDsl, expectedDraft, diagnostics);
   validateSourceInlineEditorWidths(sourceDraft, migrationDsl, expectedDraft, diagnostics);
+  validateFixedSourceFieldFacts(expectedDraft, migrationDsl, diagnostics);
   const dataOnlySourceRefs = new Set(flattenFormFields(expectedDraft?.form?.fields)
     .filter((field) => field.dataOnly === true).map((field) => field.sourceRef));
   const dataOnlyFieldIds = new Set((expectedDraft?.form?.fields || [])
@@ -163,7 +169,30 @@ function flattenFormFields(fields = []) {
   );
 }
 
+function validateFixedSourceFieldFacts(expectedDraft, migrationDsl, diagnostics) {
+  if (!expectedDraft) return;
+  const expectedFields = flattenFormFields(expectedDraft.form?.fields);
+  const actualFields = flattenFormFields(migrationDsl?.form?.fields);
+  for (const [key, code] of [["mainStringValueBindingFact", "main_string_binding"], ["remoteSelectorSourceContract", "remote_selector_contract"], ["approvedRemoteSelectorSourceFact", "remote_selector_runtime"], ["remoteSelectorOmissionSourceFact", "remote_selector_omission"],
+    ["dynamicHyperlinkProjection", "dynamic_hyperlink_projection"]]) {
+    const refs = new Set([...expectedFields, ...actualFields]
+      .filter(field => field.sourceProps?.[key] !== undefined).map(field => field.sourceRef));
+    for (const ref of refs) {
+      const expected = expectedFields.filter(field => field.sourceRef === ref);
+      const actual = actualFields.filter(field => field.sourceRef === ref);
+      if (expected.length === 1 && actual.length === 1 && canonicalJson(expected[0].sourceProps?.[key]) ===
+          canonicalJson(actual[0].sourceProps?.[key])) continue;
+      diagnostics.push(error(
+        `trust.form.${code}_source_mismatch`,
+        "Fixed field facts must exactly preserve the current source export evidence.",
+        "/form/fields", { sourceRef: ref }
+      ));
+    }
+  }
+}
+
 function validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics) {
+  for(const reason of sourceReadScopeBindingIssues(sourceDraft))diagnostics.push(error('trust.template.read_scope_source_mismatch','Reader mode must bind the current paired source XML and authorization.', '/template/authorization/readScope',{reason}));
   const expected = sourceDraft?.template?.authorization;
   const actual = migrationDsl?.template?.authorization;
   if (canonicalJson(expected) === canonicalJson(actual)) return;
@@ -174,7 +203,7 @@ function validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diag
   ));
 }
 
-function validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics) {
+function validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics,expectedDraft) {
   const sourceFields = [
     ...(sourceDraft?.form?.controls || []),
     ...(sourceDraft?.form?.dataFields || []),
@@ -187,6 +216,8 @@ function validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnosti
     if (source.sourceType === "description" || !sourceRequiresReadOnly(source)) continue;
     const actual = actualFields.find((field) => field.sourceRef === source.sourceRef);
     if (actual?.props?.readOnly === true || actual?.componentId === "xform-description") continue;
+    const expected=flattenFormFields(expectedDraft?.form?.fields).find(field=>field.sourceRef===source.sourceRef);
+    if (expected && isOmittedRemoteManualField(expectedDraft,expected) && actual?.props?.readOnly===false) continue;
     diagnostics.push(error(
       "trust.form.read_only_source_mismatch",
       "Trusted fields must preserve the source static read-only restriction.",
@@ -299,6 +330,7 @@ function validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics) 
       `/scripts/actions/${actualActions.indexOf(actual)}/function`, { reason: rowDiagnostics.reason }));
   }
   for (const action of expectedActions.filter(action => action.semanticHints?.jqueryReadyInitialization)) {
+    if(verifiedDateOverlapReadyAction(sourceDraft,expectedDraft.form,action))continue;
     diagnostics.push(error(
       "trust.script_ready_lifecycle_unproven",
       "The authoritative source contains document-ready initialization without a proven target lifecycle contract.",

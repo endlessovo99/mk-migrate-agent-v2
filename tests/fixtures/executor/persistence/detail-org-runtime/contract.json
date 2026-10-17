@@ -1,0 +1,123 @@
+{
+  "source": {
+    "origin": "https://oaqas.shanghai-electric.com",
+    "baseUrl": "/web/sys/artifact/elements/xform-base/index.js?FhCQn3KCy9",
+    "sha256": "b4f4b7e2ca8a11f79542321d001853890a44c4676edbfe661466f6ebc5678d4a"
+  },
+  "dispatch": "function(t,e,r){var n=t.id,o=t.tableType,i=t.tableName;window.MXFORM_ACTIONS=window.MXFORM_ACTIONS||{};for(var a=window.MXFORM_ACTIONS,u=a[n],l=arguments.length,c=new Array(l>3?l-3:0),s=3;s<l;s++)c[s-3]=arguments[s];u?(a[n].actionFuns=e,-1===u.actionTypes.indexOf(r)&&(null==e?void 0:e[r])&&u.actionTypes.push(r),u.actionParams[r]=c):(a[n]={},a[n].actionTableName=i,a[n].actionTableType=o,a[n].actionFuns=e,a[n].actionTypes=(null==e?void 0:e[r])?[r]:[],a[n].actionParams=O({},r,c)),\"detail\"===o&&\"onChange\"===r||du(o,i,![\"onSuccess\",\"onBeforeImport\",\"onBeforeDel\",\"onNestBeforeInsert\",\"onNestBeforeDel\",\"onNestBeforeCopy\"].includes(r))}",
+  "runner": "function(t,e){var r=!(arguments.length>2&&void 0!==arguments[2])||arguments[2],n=window.MXFORM_ACTIONS=window.MXFORM_ACTIONS||{};if(r)clearTimeout(n.timer),n.timer=setTimeout((function(){var t=Object.keys(n);t.length&&(t.forEach((function(t){if(\"timer\"!==t){var e=n[t]||{},r=e.actionFuns,o=e.actionTypes,i=e.actionParams;o.length&&o.forEach((function(t){r[t].forEach((function(e){try{null==e||e.function.apply(e,S(i[t]))}catch(t){console.error(t,\"at actionFunsRunner\")}}))})),delete window.MXFORM_ACTIONS[t]}})),delete window.MXFORM_ACTIONS.timer)}),100);else{var o=Object.keys(n);o.length&&(o.forEach((function(r){if(\"timer\"!==r){var o=n[r]||{},i=o.actionFuns,a=o.actionTypes,u=o.actionParams,l=o.actionTableType,c=o.actionTableName;if(l!==t)return;if(\"*\"!==e&&c!==e)return;a.length&&a.forEach((function(t){i[t].forEach((function(e){try{null==e||e.function.apply(e,S(u[t]))}catch(t){console.error(t,\"at actionFunsRunner\")}}))})),delete window.MXFORM_ACTIONS[r]}})),delete window.MXFORM_ACTIONS.timer)}}",
+  "address": {
+    "url": "/web/sys/artifact/elements/xform-address/index.js?U7hKwMmSaI",
+    "sha256": "77afe829e03f3bb39d0a9886301ac2cadb6e76826a98e60f0b18292a5e1a8662",
+    "dispatch": "r.actionFunsRunner({id:p,tableName:P,tableType:N},M,\"onChange\",t,L,C)",
+    "propertyNames": "p=e.id,N=e.$$tableType,P=e.$$tableName,M=e.controlActions,L=e.rowIndex,C=e.parentRowIndex"
+  },
+  "orgApis": [
+    {
+      "name": "查找人员和岗位",
+      "description": "{sys-org:sysorg.getElementDatas.desc}",
+      "arguments": [
+        {
+          "description": "{sys-org:sysorg.addressInfo}",
+          "id": "address",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "ORG_ALL",
+            "properties": {
+              "fdId": {
+                "description": "{sys-org:sysorg.person.fdId}",
+                "id": "fdId",
+                "type": "string",
+                "required": true
+              },
+              "fdName": {
+                "description": "{sys-org:sysorg.person.fdName}",
+                "id": "fdName",
+                "type": "string",
+                "required": false
+              }
+            }
+          }
+        }
+      ],
+      "id": "sysorg.getElementDatas",
+      "returnType": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "fdOrgType": {
+              "description": "{sys-org:sysorg.fdOrgType}",
+              "id": "fdOrgType",
+              "type": "integer"
+            },
+            "fdId": {
+              "description": "{sys-org:sysorg.person.fdId}",
+              "id": "fdId",
+              "type": "string"
+            },
+            "fdName": {
+              "description": "{sys-org:sysorg.person.fdName}",
+              "id": "fdName",
+              "type": "string"
+            }
+          }
+        }
+      },
+      "example": {
+        "address": [
+          {
+            "fdId": "15f8165c9524792842872204d97a2a18w0"
+          }
+        ]
+      }
+    },
+    {
+      "name": "根据用户ID查找人员",
+      "description": "{sys-org:sysorg.getPersonByPersonId.desc}",
+      "arguments": [
+        {
+          "description": "{sys-org:sysorg.person.fdId}",
+          "id": "fdPersonId",
+          "type": "string"
+        }
+      ],
+      "id": "sysorg.getPersonByPersonId",
+      "returnType": {
+        "type": "object",
+        "properties": {
+          "fdOrgType": {
+            "description": "{sys-org:sysorg.fdOrgType}",
+            "id": "fdOrgType",
+            "type": "integer"
+          },
+          "fdLoginName": {
+            "description": "{sys-org:sysorg.loginName}",
+            "id": "fdLoginName",
+            "type": "string"
+          },
+          "fdId": {
+            "description": "{sys-org:sysorg.person.fdId}",
+            "id": "fdId",
+            "type": "string"
+          },
+          "fdName": {
+            "description": "{sys-org:sysorg.person.fdName}",
+            "id": "fdName",
+            "type": "string"
+          }
+        }
+      },
+      "example": {
+        "fdPersonId": "1fjnd3td6w2bwacuw1tembm4367hujn3qmw0"
+      }
+    }
+  ],
+  "fetchedAt": "2026-10-17T03:52:10.880Z",
+  "detailTable": {
+    "url": "/web/sys/artifact/elements/xform-detail-table/index.js?8fch0oB37j",
+    "sha256": "d507ec85a5f10b66f31896a11bca7c49f177a3666a7c692fb56c413215b1a663",
+    "rowProperties": "rowIndex:a,parentRowIndex:s"
+  }
+}

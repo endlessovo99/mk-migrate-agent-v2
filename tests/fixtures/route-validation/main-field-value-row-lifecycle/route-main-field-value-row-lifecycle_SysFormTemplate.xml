@@ -5,7 +5,7 @@
   <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
   <void method="put"><string>fdName</string><string>Main field value row lifecycle</string></void>
   <void method="put"><string>fdModelId</string><string>route-main-field-value-row-template</string></void>
-  <void method="put"><string>fdDisplayJsp</string><string>&lt;xform:editShow&gt;&lt;script&gt;
+  <void method="put"><string>fdDisplayJsp</string><string>&lt;input type="hidden" name="extendDataFormInfo.value(fd_state_A)"/&gt;&lt;input type="hidden" name="extendDataFormInfo.value(fd_state_B)"/&gt;&lt;input type="hidden" name="extendDataFormInfo.value(fd_state_C)"/&gt;&lt;xform:editShow&gt;&lt;script&gt;
 AttachXFormValueChangeEventById("fd_type", function(value, domElement) {
  if(value.indexOf("A")&gt;=0){
   SetXFormFieldValueById("fd_state_A","A");

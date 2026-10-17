@@ -1,0 +1,7 @@
+{
+  "sourcePath": ".tmp/tasks/ekp-oaqas-fix13-20261017/remaining-inline-advice/xform-input.js",
+  "sourceSha256": "26058a04fb2dec5b93cb0787a130f14fb19ff11af5f98955e5051d8c61cf56cd",
+  "start": 5169,
+  "end": 5319,
+  "text": "function(e){var t=e.target.value;J(t);var n=t;D&&D(n),_&&Object.keys(_).length&&r.actionFunsRunner({id:u,tableName:C,tableType:P},_,\"onChange\",n,M,U)}"
+}

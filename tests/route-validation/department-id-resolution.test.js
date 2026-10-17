@@ -183,7 +183,7 @@ describe("source department exact-ID Route-validation", { concurrency: false }, 
   for (const orgType of [1, 4, 8, 16]) {
     it(`preserves existing name resolution for non-department type ${orgType}`, async () => {
       const source = { ...fixture.source, sourceOrgType: orgType };
-      const target = { ...fixture.sameNameOtherDepartment, fdOrgType: orgType };
+      const target = { ...fixture.sameNameOtherDepartment, fdOrgType: orgType, ...(orgType===8?{fdIsBusiness:true}:{}) };
       const client = clientFor({ search: [target] });
       const result = await resolveWorkflowParticipants(routeDsl(source), { client });
       assert.equal(result.dsl.workflow.nodes[1].participants.members[0].id, target.fdId);

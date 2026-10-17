@@ -1,0 +1,23 @@
+{
+  "origin": "https://oaqas.shanghai-electric.com",
+  "assetUrl": "/web/sys-xform/desktop/api/XFormRuntime/index.js?a3ec998c10af6bbce34dd6caffe4a203",
+  "sourceSha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+  "initRuntime": {
+    "moduleId": 68170,
+    "startUtf16": 245811,
+    "endUtf16": 246726,
+    "startUtf8": 251736,
+    "endUtf8": 252651,
+    "sha256": "789a4aeec6585ba24133c68edf9e3e0ede2178dd07d03471e2d2404514bf6edd",
+    "text": "function(e){var t,n=e.$$form,l=e.$$detailForms,f=e.mode,s=e.docStatus,p=e.$$lbpm,m=e.processInstanceId,h=e.dataModels,g=e.formId,b=e.viewDetail,_=e.$$controlRef,w=e.popupOnOk,O=e.popupOnCancel,x=e.formAttr,j={};return j.MKXFORM_DATA_CONTAINER={$$beforeSubmit:[],$$afterSubmit:[]},f&&(j.viewStatus=f),j.docStatus=s||void 0,j.processInstanceId=m,j.platform=mk.getSysConfig(\"platform\"),j.dataModels=h,j.formId=g,j.formSizeType=null===(t=null==b?void 0:b.viewFeature)||void 0===t?void 0:t.formSizeType,j.$$FORM=n,j.$$LBPM=p,j.$$DETAILFORMS=l,j.$$CONTROLREF=_,j.popupOnOk=w,j.popupOnCancel=O,j.businessFieldsValue={},A.register(j,v.default),A.register(j,a.default),A.register(j,c.default),A.register(j,r.default),A.register(j,i.default),A.register(j,u.default),A.register(j,o.default),A.register(j,d.default),A.register(j,d.default),(null==x?void 0:x.controlAction)&&(0,y.registerGlobalEnvToWindow)(x.controlAction,j),j}"
+  },
+  "parseActionFun": {
+    "moduleId": 10435,
+    "startUtf16": 412298,
+    "endUtf16": 412939,
+    "startUtf8": 422367,
+    "endUtf8": 423008,
+    "sha256": "92c25bb04490800f680f132712c20b52169701ec1c5a6aa7683351d801ab5a55",
+    "text": "function c(e,t){var n=e&&Object.keys(e);if(n.length){var r={};return n.forEach(function(n){var o=e[n].map(function(e){if(null==e||!e.function)return console.error(\"There is a lack of valid action function information at parseActionInfos. Action name is \",e.name),null;try{var n=Function(\"MKXFORM\",\"return (\".concat(e.function,\")\"))(t);if(\"function\"==typeof n)return{name:e.name,function:n};return console.warn(\"The wrong function format, check the configured function for errors\"),null}catch(t){return console.error(t,\" at parseActionInfos, please check \",e.function),null}}).filter(function(e){return e});o.length&&(r[n]=o)}),r}return null}"
+  }
+}

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-detail-aggregate-form</string></void>
+<void method="put"><string>fdName</string><string>Source-proven detail aggregate effects</string></void>
+<void method="put"><string>fdModelId</string><string>route-detail-aggregate-model</string></void>
+<void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;function readSourceField(elementId, type, containSelectText) {
+            if (type == 'radio') {
+                return $('input[name="extendDataFormInfo.value(' + elementId + ')"]:checked').val();
+            } else if (type == 'select') {
+                return $('select[name="extendDataFormInfo.value(' + elementId + ')"]').val();
+            } else if (type == 'table') {
+                var doms = $('[name="' + elementId + '"]');
+                if (doms &amp;&amp; doms.length &gt; 0) {
+                    if (doms[0].type == 'radio') {
+                        return $('[name="' + elementId + '"]:checked').val();
+                    } else if (doms[0].tagName === 'SELECT' &amp;&amp; containSelectText) {
+                        var field = $('[name="' + elementId + '"]');
+                        var text = field.find("option:selected").text();
+                        var val = field.val();
+                        return ((text ? text : '') + "|" + (val ? val : ''));
+                    }
+                }
+                return $('[name="' + elementId + '"]').val();
+            } else {
+                var elementVal = $('[name="' + elementId + '"]').val();
+                if (elementVal) {
+                    return elementVal;
+                }
+                var elementVal = GetXFormFieldValueById(elementId);
+                return elementVal &amp;&amp; elementVal.length == 1 ? elementVal[0] : elementVal;
+            }
+        }
+
+function fieldAddress(tbId, columnId) {
+            return 'extendDataFormInfo.value(' + tbId + '.!{index}.' + columnId + ')';
+        }
+
+function collectCurrentRows(tbId, fieldIds, containSelectText) {
+            var detailValue = [];
+            var tbInfo = DocList_TableInfo["TABLE_DL_" + tbId];
+            if (tbInfo) {
+                for (var i = 0; i &lt; tbInfo.lastIndex - 1; i++) {
+                    var rowValue = new Object();
+                    for (var j = 0; j &lt; fieldIds.length; ++j) {
+                        var detailFieldId = fieldAddress(tbId, fieldIds[j]);
+                        var rowFieldId = detailFieldId.replace('!{index}', i);
+                        var rowFieldValue = readSourceField(rowFieldId, 'table', containSelectText);
+                        rowValue[fieldIds[j]] = rowFieldValue ? rowFieldValue : '';
+                    }
+                    detailValue.push(rowValue);
+                }
+            }
+            return detailValue;
+        }
+
+function roundAmount(value) {
+            var precision = 2;
+            var power = Math.pow(10, precision);
+            return Math.round(value * power) / power;
+        }&lt;/script&gt;&lt;script&gt;function computeLineAmount(domElement) {
+            var cusNum = Number(GetXFormSameRowFieldById(domElement, "fd_external")[0].value);
+            var comNum = Number(GetXFormSameRowFieldById(domElement, "fd_internal")[0].value);
+
+            // 	同一行的小计
+            var tempObj = GetXFormSameRowFieldById(domElement, "fd_total")[0];
+            var sumNum = roundAmount(cusNum + comNum);
+            if (sumNum &gt; 0) {
+                tempObj.value = sumNum;
+            } else {
+                tempObj.value = 0;
+            }
+
+        }
+
+        function classifyCurrentLines() {
+            var tbId = 'fd_lines';
+            var fieldId = 'fd_place';
+            var trafficDetailList = collectCurrentRows(tbId, [fieldId]);
+            var isFoodAdd = '0'; // 
+            for (var i = 0; i &lt; trafficDetailList.length; ++i) {
+                var trafficRow = trafficDetailList[i];
+                if (trafficRow[fieldId] == '0' || trafficRow[fieldId] == '1') {
+                    isFoodAdd = '1'; // 
+                        break;
+                }
+            }
+
+            SetXFormFieldValueById('fd_has_place', isFoodAdd)
+            
+        }
+
+
+
+
+        // 来宾名单变化-计算人数，
+        AttachXFormValueChangeEventById("fd_external", function(value, domElement){
+            computeLineAmount(domElement);
+        });
+        AttachXFormValueChangeEventById("fd_internal", function(value, domElement){
+            computeLineAmount(domElement);
+        });
+        AttachXFormValueChangeEventById("fd_place", function(value, domElement){
+            classifyCurrentLines();
+        });&lt;/script&gt;</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_has_place",label:"Result",dataType:"String"}'&gt;&lt;input id="fd_has_place"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_lines",label:"Lines"}'&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;fd_external&lt;/td&gt;&lt;td&gt;fd_internal&lt;/td&gt;&lt;td&gt;fd_total&lt;/td&gt;&lt;td&gt;fd_place&lt;/td&gt;&lt;/tr&gt;&lt;tr type="templateRow"&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_external",label:"External count",tableName:"fd_lines",dataType:"Number"}'&gt;&lt;input id="fd_external"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_internal",label:"Internal count",tableName:"fd_lines",dataType:"Number"}'&gt;&lt;input id="fd_internal"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_total",label:"Total count",tableName:"fd_lines",dataType:"Number"}'&gt;&lt;input id="fd_total"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_place",label:"Place",tableName:"fd_lines",dataType:"String",items:"Zero|0;One|1;Other|2"}'&gt;&lt;input id="fd_place"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_has_place" label="Result" type="String"/&gt;&lt;extendSubTableProperty name="fd_lines" label="Lines"&gt;&lt;extendSimpleProperty name="fd_external" label="External count" type="Number"/&gt;&lt;extendSimpleProperty name="fd_internal" label="Internal count" type="Number"/&gt;&lt;extendSimpleProperty name="fd_total" label="Total count" type="Number"/&gt;&lt;extendSimpleProperty name="fd_place" label="Place" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;/metadata&gt;</string></void>
+</object></java>

@@ -6,6 +6,7 @@ import { inspectDeterministicScriptBranchProof } from "../../src/dsl/determinist
 import { inlineRadioRowEffectCandidates } from "../../src/translator/inline-radio-row-effects.js";
 import { runRouteCase } from "./run-route-case.js";
 import { localCorpusIt } from "../helpers/local-corpus.js";
+import vm from "node:vm";
 
 const fixture = "tests/fixtures/route-validation/main-field-value-row-lifecycle/route-main-field-value-row-lifecycle_SysFormTemplate.xml";
 const corpus = "tests/fixtures/source/18b940a16be81952fdd4eb64816aa02c";
@@ -54,6 +55,30 @@ describe("main-field value API row lifecycle Route case", () => {
     assert.equal(result.execution.ok, true);
     assert.equal(result.execution.readback.ok, true);
     assert.equal(result.execution.readback.form.scripts.actions.length, 6);
+  });
+
+  it("limits a direct legacy value list to loose nonempty-string comparisons of hidden String controls", () => {
+    const source=cleanSourceFile(fixture),draft=draftSourceDraft(source);
+    const original=source.scripts.sources.find(item=>item.javascript.includes('GetXFormFieldValueById("fd_state_A")'));
+    const mapped=inlineRadioRowEffectCandidates(original,draft.form,draft.formRules);
+    assert.equal(mapped.length,2);
+    for(const value of [undefined,"","A","B","A,B"]){
+      const observed=[],expected=[],loads=[];
+      vm.runInNewContext(original.javascript,{window:{},Com_AddEventListener(_w,_e,fn){loads.push(fn);},
+        GetXFormFieldValueById(id){const current=id==="fd_state_A"?value:undefined;return current===undefined?[]:[current];},
+        common_dom_row_set_show_required_reset(id,show,required,reset){assert.equal(reset,false);expected.push([id,show?5:4],[id,required?3:6]);}});
+      for(const fn of loads)fn();
+      for(const action of mapped)vm.runInNewContext(`${action.function};onLoad();`,{MKXFORM:{getValue(id){return id==="fd_state_A"?value:undefined;},setFieldAttr(id,attr){observed.push([id,attr]);}}});
+      // The compiler canonicalizes a secondary source marker before persistence.
+      for(const effect of expected)if(effect[0]==="fd_A_row")effect[0]="fd_A_primary_row";
+      assert.deepEqual(observed,expected);
+    }
+    for(const javascript of [original.javascript.replaceAll(')==',')==='),original.javascript.replaceAll('=="A"','==""')]){
+      assert.notEqual(javascript,original.javascript);
+      assert.equal(inlineRadioRowEffectCandidates({...original,javascript},draft.form,draft.formRules).some(action=>action.translationStatus==="mapped"),false);
+    }
+    const visible=structuredClone(draft.form);visible.fields.find(field=>field.id==="fd_state_A").dataOnly=false;
+    assert.equal(inlineRadioRowEffectCandidates(original,visible,draft.formRules).some(action=>action.translationStatus==="mapped"),false);
   });
 
   it("does not accept a source with an unhandled side effect or a shadowed platform API", () => {

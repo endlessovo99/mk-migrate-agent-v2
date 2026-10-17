@@ -1,3 +1,5 @@
+import { canonicalRowTarget, layoutRowTargets } from "./layout-row-targets.js";
+
 export const FORM_RULE_OPERATORS = new Set([
   "eq",
   "ne",
@@ -115,9 +117,12 @@ export function buildFormRuleRefIndex(form = {}) {
     sourceRowGroups.set(sourceRef, group);
   }
 
+  const targetByRow = new Map(layoutRowTargets(form).map(entry => [entry.row, entry.target]));
   for (const row of rows) {
-    const sourceMarkers = Array.isArray(row?.sourceMarkers) ? row.sourceMarkers : [];
+    const sourceMarkers = Array.isArray(row?.sourceMarkers) ? [...row.sourceMarkers] : [];
     if (!sourceMarkers.length) continue;
+    const canonical = targetByRow.get(row);
+    if (canonical && !sourceMarkers.includes(canonical)) sourceMarkers.push(canonical);
     const ownRefIds = descendantLeafRefIds(row, layoutRowsById);
     const sourceGroup = sourceRowGroups.get(normalizeRef(row.sourceRef));
     const rowIds = [...new Set((sourceGroup?.rowIds || [row.id]).filter(Boolean))];
@@ -188,6 +193,13 @@ export function resolveEffectTarget(index, ref) {
     marker,
     targets
   };
+}
+
+/** Resolve an explicitly source-backed row helper without treating a same-name
+ * hidden main field as the row's only target. */
+export function resolveSourceRowEffectTarget(form, sourceMarker) {
+  const canonical = canonicalRowTarget(form, sourceMarker);
+  return canonical ? resolveEffectTarget(buildFormRuleRefIndex(form), canonical) : undefined;
 }
 
 /**

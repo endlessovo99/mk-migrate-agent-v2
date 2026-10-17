@@ -1,4 +1,6 @@
 import { parse } from "acorn";
+import { createHash } from "node:crypto";
+import { canonicalJson } from "../agent-review/digest.js";
 
 const GENERATED_REASON = "Project an exact legacy dynamic invoice anchor into a stored NewOA hyperlink control.";
 
@@ -57,6 +59,26 @@ function dynamicHyperlinkModel(source = {}) {
   const body = nonEmptyStatements(binding.callback.body?.body);
   const urlDeclaration = legacyFieldDeclaration(body[0]);
   if (!urlDeclaration) return undefined;
+
+  const witness = source.semanticFacts?.orphanBeforeAnchorWitness;
+  if (body.length === 4 && validPointWitness(witness, source, statements[0], body)) {
+    const unusedRead = legacyFieldDeclaration(body[1]);
+    const anchor = dynamicAnchorAssignment(body[3], urlDeclaration.name);
+    const markers = witness.rawMarkup.runtimeAnchor.rowMarkers;
+    if (!unusedRead || !anchor || markers.length !== 1) return undefined;
+    return {
+      source: text, sourceRef: source.sourceRef || source.id,
+      bindingStart: statements[0].start, bindingEnd: statements[0].end,
+      sourceUrlFieldId: urlDeclaration.fieldId,
+      unusedReadFieldId: unusedRead.fieldId,
+      destinationRowMarker: markers[0],
+      urlVariable: urlDeclaration.name, containerId: anchor.containerId, label: anchor.label,
+      ...(anchor.target ? { anchorTarget: anchor.target } : {}),
+      generatedFieldId: generatedHyperlinkFieldId(urlDeclaration.fieldId),
+      orphanCallWitnessSha256: witness.witnessSha256,
+      variant: "orphan-before-anchor"
+    };
+  }
 
   if (body.length === 2) {
     const branch = body[1];
@@ -120,6 +142,21 @@ function dynamicHyperlinkModel(source = {}) {
     generatedFieldId: generatedHyperlinkFieldId(urlDeclaration.fieldId),
     variant: "conditioned"
   };
+}
+
+function validPointWitness(witness, source, statement, body) {
+  if (!witness || witness.version !== 1 || witness.sourceRef !== (source.sourceRef || source.id) ||
+      witness.sourceJavascriptSha256 !== hash(source.javascript) ||
+      witness.sourceRange?.start !== statement.start || witness.sourceRange?.end !== statement.end ||
+      witness.rowCall?.start !== body[2].start || witness.rowCall?.end !== body[2].end ||
+      witness.anchor?.start !== body[3].start || witness.anchor?.end !== body[3].end ||
+      !Array.isArray(witness.rawMarkup?.runtimeAnchor?.rowMarkers)) return false;
+  const { witnessSha256, ...payload } = witness;
+  return witnessSha256 === hash(canonicalJson(payload));
+}
+
+function hash(value) {
+  return createHash("sha256").update(String(value)).digest("hex");
 }
 
 function loadBinding(expression) {
@@ -199,7 +236,7 @@ function rowStateCall(statement) {
   return { marker, flags };
 }
 
-function dynamicAnchorAssignment(statement, urlVariable) {
+export function dynamicAnchorAssignment(statement, urlVariable) {
   const expression = statement?.type === "ExpressionStatement" ? statement.expression : undefined;
   if (
     expression?.type !== "AssignmentExpression" || expression.operator !== "=" ||
@@ -238,11 +275,12 @@ function canProjectModel(form, model) {
   const fields = mainFields(form);
   if (
     !fields.has(model.sourceUrlFieldId) ||
-    (model.conditionFieldId && !fields.has(model.conditionFieldId))
+    (model.conditionFieldId && !fields.has(model.conditionFieldId)) ||
+    (model.unusedReadFieldId && !fields.has(model.unusedReadFieldId))
   ) return false;
   if (fields.has(model.generatedFieldId)) return false;
   if (model.variant === "url-only") return true;
-  const rows = markerRows(form, model.rowMarker);
+  const rows = markerRows(form, model.destinationRowMarker || model.rowMarker);
   return rows.length === 1 &&
     rows[0].componentId === "xform-flex-1-1-layout" &&
     rows[0].props?.columns === 1 &&
@@ -261,9 +299,10 @@ function hasProjectedModel(form, model) {
         row?.children?.some((child) => child?.refIds?.includes(model.generatedFieldId))
       ));
   }
-  const rows = markerRows(form, model.rowMarker);
+  const rows = markerRows(form, model.destinationRowMarker || model.rowMarker);
   return fields.has(model.sourceUrlFieldId) &&
-    fields.has(model.conditionFieldId) &&
+    (!model.conditionFieldId || fields.has(model.conditionFieldId)) &&
+    (!model.unusedReadFieldId || fields.has(model.unusedReadFieldId)) &&
     field?.componentId === "xform-hyperlinks" &&
     field?.sourceProps?.dynamicHyperlinkProjection?.sourceRef === model.sourceRef &&
     rows.length === 1 &&
@@ -320,7 +359,7 @@ function projectModel(form, model) {
     layout: {
       ...(form.layout || {}),
       mkTree: (form.layout?.mkTree || []).map((row) => {
-        if (!row?.sourceMarkers?.includes(model.rowMarker)) return row;
+        if (!row?.sourceMarkers?.includes(model.destinationRowMarker || model.rowMarker)) return row;
         return {
           ...row,
           componentId: "xform-flex-1-2-layout",
@@ -357,10 +396,11 @@ function isHiddenField(field) {
 function compiledDynamicHyperlinkFunction(model) {
   const urlVariable = "url";
   const conditionVariable = "conditionValue";
-  if (model.variant === "url-only") {
+  if (["url-only", "orphan-before-anchor"].includes(model.variant)) {
     return [
       "function onLoad() {",
       `  var ${urlVariable} = String(MKXFORM.getValue(${JSON.stringify(model.sourceUrlFieldId)}) || "").trim()`,
+      ...(model.unusedReadFieldId ? [`  MKXFORM.getValue(${JSON.stringify(model.unusedReadFieldId)})`] : []),
       `  var safeUrl = ${urlVariable}.indexOf("https://") === 0 || ${urlVariable}.indexOf("http://") === 0`,
       "  if (safeUrl) {",
       `    MKXFORM.setValue(${JSON.stringify(model.generatedFieldId)}, JSON.stringify([{ linkTitle: ${JSON.stringify(model.label)}, url: ${urlVariable} }]))`,
@@ -400,6 +440,8 @@ function projectionEvidence(model) {
     conditionFieldId: model.conditionFieldId,
     allowedValues: model.allowedValues,
     rowMarker: model.rowMarker,
+    ...(model.destinationRowMarker ? { destinationRowMarker: model.destinationRowMarker,
+      orphanCallWitnessSha256: model.orphanCallWitnessSha256, unusedReadFieldId: model.unusedReadFieldId } : {}),
     containerId: model.containerId,
     label: model.label,
     ...(model.anchorTarget ? { anchorTarget: model.anchorTarget } : {}),

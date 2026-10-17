@@ -197,3 +197,14 @@ function walk(node, visitor, parent) {
 function indent(text, prefix) {
   return String(text).split("\n").map((line) => `${prefix}${line}`).join("\n");
 }
+
+/** Pure AST safety only. Callers must independently establish source provenance. */
+export function isPureLocalCurrencyHelperDeclaration(text) {
+  if (typeof text !== "string") return false;
+  let program;
+  try { program = parse(text, { ecmaVersion: "latest", sourceType: "script" }); } catch { return false; }
+  if (program.body.length !== 1) return false;
+  const helper = program.body[0];
+  return helper.type === "FunctionDeclaration" && !helper.async && !helper.generator &&
+    helper.params.length === 1 && helper.params[0]?.type === "Identifier" && safeLocalCurrencyHelper(helper);
+}

@@ -1,9 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { sha256Digest } from "../agent-review/digest.js";
+import { hasUnknownNativeWrite } from "../executor/authorization-closeout-evidence.js";
 import { checkTrust } from "../dsl/trust.js";
 import { checkExecute } from "../dsl/checks.js";
 import { applicableRepairOptions, exactKeys, validateRepairOptions } from "./repair-options.js";
 import { engineDigest } from "./contracts.js";
+import { cleanSnapshot } from "./intake.js";
+import { attachMigrationPolicies, validateMigrationPolicies } from "../translator/approved-migration-policies.js";
 
 export async function createRepair(store, definition) {
   validateDefinition(definition);
@@ -18,7 +21,7 @@ export async function previewRepair(store, repairId, { batchId, itemIds } = {}) 
   const currentEngineDigest = engineDigest();
   return store.transaction(async (tx) => {
     await tx.mutate("batch", batchId, () => null);
-    await requireDocument(tx, "batch", batchId);
+    const batch = await requireDocument(tx, "batch", batchId);
     const repair = await requireDocument(tx, "repair", repairId);
     validateDefinition(repair.definition);
     const candidates = await tx.list("item", { batchId });
@@ -27,7 +30,7 @@ export async function previewRepair(store, repairId, { batchId, itemIds } = {}) 
       throw repairError("item_outside_batch", "Every selected item must belong to the selected batch.");
     }
     const items = candidates.filter((item) => !selected || selected.has(item.id))
-      .sort((a, b) => a.id.localeCompare(b.id)).map((item) => planItem(repair.definition, item, currentEngineDigest));
+      .sort((a, b) => a.id.localeCompare(b.id)).map((item) => planItem(repair.definition, item, currentEngineDigest, batch));
     const plan = {
       repairId, batchId, repairVersion: repair.version, repairDigest: sha256Digest(repair.definition),
       definition: copy(repair.definition), engineDigest: currentEngineDigest, items,
@@ -66,7 +69,7 @@ export async function applyRepair(store, previewId, { expectedDigest, confirmApp
       if (!planned.applicable) continue;
       await tx.mutate("item", planned.itemId, () => null);
       const item = await requireDocument(tx, "item", planned.itemId);
-      const current = planItem(repair.definition, item, currentEngineDigest);
+      const current = planItem(repair.definition, item, currentEngineDigest, batch);
       if (item.batchId !== run.batchId || sha256Digest(current) !== sha256Digest(planned)) {
         throw repairError("stale_preview", `Item ${item.id} changed after preview; preview again.`);
       }
@@ -96,7 +99,7 @@ export async function applyRepair(store, previewId, { expectedDigest, confirmApp
   });
 }
 
-function planItem(definition, item, currentEngineDigest) {
+function planItem(definition, item, currentEngineDigest, batch) {
   const before = copy(item);
   const result = {
     itemId: item.id, applicable: false, reason: null, before, after: before, diff: [],
@@ -108,7 +111,12 @@ function planItem(definition, item, currentEngineDigest) {
   if (item.writeStarted || item.targetTemplateId || item.attempts?.some((attempt) => attempt.writeStarted || attempt.targetTemplateId)) {
     return skip("needs_scoped_target_repair");
   }
-  if (item.status === "outcome_unknown") return skip("write_outcome_unknown");
+  if (hasUnknownNativeWrite(item) || item.attempts?.some(attempt => hasUnknownNativeWrite(attempt.report))) return skip("write_outcome_unknown");
+  if (definition.action.kind === "migration_policies" && (item.remoteWriteAttempted || item.writeOutcomeUnknown ||
+      item.attempts?.some(attempt => attempt.steps?.length || attempt.report?.remoteWriteAttempted ||
+        attempt.report?.writeOutcomeUnknown || attempt.report?.createdFdIds?.length || attempt.report?.updatedFdIds?.length))) {
+    return skip("needs_scoped_target_repair");
+  }
   if (item.status === "succeeded") return skip("already_succeeded");
   if (item.activeAttemptId || ["preparing", "running"].includes(item.status)) return skip("item_active");
   if (!["pending", "ready", "blocked", "needs_repair"].includes(item.status)) return skip("unsupported_item_status");
@@ -116,6 +124,12 @@ function planItem(definition, item, currentEngineDigest) {
   if (definition.action.kind === "reprepare" && typeof item.engineDigest === "string" &&
       item.engineDigest.trim() && item.engineDigest !== currentEngineDigest) {
     codes.add("BATCH_ENGINE_CHANGED");
+  }
+  // A policy can be registered before the first model call without inventing an execution failure.
+  // The normal scope, paused-batch, source binding and remote-effect exclusions still apply.
+  if (definition.action.kind === "migration_policies" &&
+      sha256Digest(item.migrationPolicies || null) !== sha256Digest(definition.action.policies)) {
+    codes.add("BATCH_MIGRATION_POLICY_CHANGED");
   }
   if (!definition.selector.diagnosticCodes.some((code) => codes.has(code))) return skip("diagnostic_not_matched");
   const sourceId = item.sourceId || item.sourceDraft?.source?.sourceId || item.dsl?.derivedFrom?.sourceId;
@@ -126,6 +140,14 @@ function planItem(definition, item, currentEngineDigest) {
   if (action.kind === "reprepare") {
     after = { ...after, status: "pending", dsl: null, dslDraft: null, dslDigest: null,
       checkpoint: null, approval: null, activeAttemptId: null, diagnostics: [] };
+  } else if (action.kind === "migration_policies") {
+    const original = cleanSnapshot(item.snapshot, item.templateName);
+    let sourceDraft;
+    try { sourceDraft = attachMigrationPolicies(original, action.policies, { baseUrl: batch.baseUrl, targetCategoryId: batch.targetCategoryId }); }
+    catch (cause) { return skip("migration_policy_invalid", [{level:"error",code:"batch.repair.migration_policy_invalid",message:cause.message}]); }
+    after = { ...after, migrationPolicies: copy(action.policies), sourceDraft, sourceDraftDigest: sha256Digest(sourceDraft),
+      status: "pending", dsl: null, dslDraft: null, dslDigest: null, checkpoint: null, approval: null,
+      activeAttemptId: null, diagnostics: [] };
   } else if (action.kind === "execution_options") {
     if (!item.dsl) return skip("trusted_dsl_required");
     validation = validateDsl(item.sourceDraft, item.dsl);
@@ -176,6 +198,10 @@ function validateDefinition(definition) {
   if (definition.selector.sourceIds !== undefined) requireStrings(definition.selector.sourceIds, "selector.sourceIds");
   const action = definition.action;
   if (action?.kind === "reprepare") exactKeys(action, ["kind"], "action");
+  else if (action?.kind === "migration_policies") {
+    exactKeys(action, ["kind", "policies"], "action");
+    if (!validateMigrationPolicies(action.policies).ok) throw new Error("Invalid explicit migration policies.");
+  }
   else if (action?.kind === "execution_options") {
     exactKeys(action, ["kind", "options"], "action");
     validateRepairOptions(action.options);

@@ -1,0 +1,109 @@
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-radio-ordinal-form</string></void>
+<void method="put"><string>fdModelId</string><string>route-radio-ordinal-template</string></void>
+<void method="put"><string>fdName</string><string>MK_TEST_Source Radio Ordinal Load</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_amount",label:"Amount",dataType:"Double",decimal:"2"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="0" column="1"&gt;&lt;div fd_type="chinaValue" fd_values='{id:"fd_upper",label:"Upper",dataType:"String",relatedid:"fd_amount"}' relatedid="fd_amount"&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="radio" fd_values='{id:"fd_choice",label:"Choice",dataType:"String",enumValues:"Alpha|A;Beta|B"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="1" column="1"&gt;&lt;div fd_type="checkbox" fd_values='{id:"fd_checks",label:"Checks",dataType:"String",enumValues:"First|X;Second|Y"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" id="fd_A_row" name="fd_A_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_a",label:"A note",dataType:"String"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="2" column="1"&gt;A row&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;input type="hidden" id="fd_B_row" name="fd_B_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_b",label:"B note",dataType:"String"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="3" column="1"&gt;B row&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="4" column="0"&gt;&lt;div fd_type="inputText" style="display:none" fd_values='{id:"fd_mirror",label:"Joined choices",dataType:"String",canShow:"false",showStatus:"noShow"}'&gt;&lt;input id="fd_mirror" type="hidden"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="5" column="0,1" colspan="2"&gt;&lt;div id="fd_behavior" fd_type="jsp"&gt;&lt;input type="hidden" name="htmlContent" value="&amp;lt;script&amp;gt;
+function convertCurrency(amount) { return &amp;quot;amount:&amp;quot; + amount; }
+AttachXFormValueChangeEventById(&amp;quot;fd_amount&amp;quot;, function(value, domElement) {
+ var old = GetXFormFieldById(&amp;quot;fd_retired_upper&amp;quot;)[0];
+ old.value = convertCurrency(value);
+});
+AttachXFormValueChangeEventById(&amp;quot;fd_choice&amp;quot;, function(value, domElement) {
+ if (value.indexOf(&amp;quot;A&amp;quot;) &amp;gt;= 0) {
+  GetXFormFieldById(&amp;quot;fd_b&amp;quot;)[0].value = &amp;quot;&amp;quot;;
+  common_dom_row_set_show_required_reset(&amp;quot;fd_A_row&amp;quot;, true, true, false);
+  common_dom_row_set_show_required_reset(&amp;quot;fd_B_row&amp;quot;, false, false, false);
+ } else if (value.indexOf(&amp;quot;B&amp;quot;) &amp;gt;= 0) {
+  GetXFormFieldById(&amp;quot;fd_a&amp;quot;)[0].value = &amp;quot;&amp;quot;;
+  common_dom_row_set_show_required_reset(&amp;quot;fd_A_row&amp;quot;, false, false, false);
+  common_dom_row_set_show_required_reset(&amp;quot;fd_B_row&amp;quot;, true, true, false);
+ }
+});
+AttachXFormValueChangeEventById(&amp;quot;fd_checks&amp;quot;, function(value, domElement) {
+ obj = GetXFormFieldById(&amp;quot;fd_checks&amp;quot;);
+ mirror = GetXFormFieldById(&amp;quot;fd_mirror&amp;quot;)[0];
+ checked = [];
+ for (var i=0;i&amp;lt;obj.length;i++) {
+  if (obj[i].checked) checked.push(obj[i].value);
+ }
+ joined = checked.join(&amp;quot;-&amp;quot;);
+ mirror.value = joined;
+});
+&amp;lt;/script&amp;gt;
+&amp;lt;script&amp;gt;
+Com_AddEventListener(window,&amp;quot;load&amp;quot;,function() {
+ var one = GetXFormFieldById(&amp;quot;fd_a&amp;quot;)[0];
+ if (one) { one.setAttribute(&amp;quot;placeholder&amp;quot;, &amp;quot;first hint&amp;quot;); }
+ var absent = GetXFormFieldById(&amp;quot;fd_retired_hint&amp;quot;)[0];
+ if (absent) { absent.setAttribute(&amp;quot;placeholder&amp;quot;, &amp;quot;retired hint&amp;quot;); }
+ var last = GetXFormFieldById(&amp;quot;fd_a&amp;quot;)[0];
+ if (last) { last.setAttribute(&amp;quot;placeholder&amp;quot;, &amp;quot;final hint&amp;quot;); }
+});
+&amp;lt;/script&amp;gt;"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="6" column="0"&gt;&lt;div fd_type="radio" fd_values='{id:"fd_middle1",label:"fd_middle1",dataType:"String",enumValues:"M one|m1;M two|m2"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="7" column="0"&gt;&lt;div fd_type="radio" fd_values='{id:"fd_middle2",label:"fd_middle2",dataType:"String",enumValues:"N one|n1;N two|n2"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="8" column="0"&gt;&lt;div fd_type="radio" fd_values='{id:"fd_contract",label:"fd_contract",dataType:"String",enumValues:"Yes|y;No|n"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="9" column="0"&gt;&lt;div fd_type="radio" fd_values='{id:"fd_extra1",label:"fd_extra1",dataType:"String",enumValues:"Extra one|e1;Extra two|e2"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="10" column="0"&gt;&lt;div fd_type="radio" fd_values='{id:"fd_extra2",label:"fd_extra2",dataType:"String",enumValues:"Last one|z1;Last two|z2"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="11" column="0"&gt;&lt;div id="fd_ordinal" fd_type="jsp"&gt;&lt;input type="hidden" name="htmlContent" value="&amp;lt;script&amp;gt;
+Com_AddEventListener(window,&amp;quot;load&amp;quot;,function() {
+ var note = GetXFormFieldById(&amp;quot;fd_a&amp;quot;)[0];
+ if (note) { note.setAttribute(&amp;quot;placeholder&amp;quot;, &amp;quot;first&amp;quot;); }
+ var absent = GetXFormFieldById(&amp;quot;fd_retired_hint&amp;quot;)[0];
+ if (absent) { absent.setAttribute(&amp;quot;placeholder&amp;quot;, &amp;quot;retired&amp;quot;); }
+ var last = GetXFormFieldById(&amp;quot;fd_a&amp;quot;)[0];
+ if (last) { last.setAttribute(&amp;quot;placeholder&amp;quot;, &amp;quot;final hint&amp;quot;); }
+ common_dom_row_set_show_required_reset(&amp;quot;fd_A_row&amp;quot;,false,false,false);
+ common_dom_row_set_show_required_reset(&amp;quot;fd_B_row&amp;quot;,false,false,false);
+ var amount = GetXFormFieldById(&amp;quot;fd_amount&amp;quot;)[0];
+ cat=GetXFormFieldById(&amp;quot;fd_choice&amp;quot;);
+ var choice=null;
+ for(var i=0;i&amp;lt;cat.length;i++) { if(cat[i].checked) { choice=cat[i].value; break; } }
+ cat=GetXFormFieldById(&amp;quot;fd_contract&amp;quot;);
+ var contract=null;
+ for(var i=0;i&amp;lt;cat.length;i++) { if(cat[i].checked) { contract=cat[i].value; break; } }
+ inpt=document.getElementsByTagName(&amp;quot;input&amp;quot;);
+ var count=1;
+ for(var i=0;i&amp;lt;inpt.length;i++) {
+  if(inpt[i].getAttribute(&amp;quot;type&amp;quot;)==&amp;quot;radio&amp;quot;) {
+   if(inpt[i].getAttribute(&amp;quot;checked&amp;quot;)==&amp;quot;&amp;quot;) {
+    if(count==1) {
+     if(inpt[i].parentNode.innerHTML.indexOf(&amp;quot;Alpha&amp;quot;)!=-1) { var flag=1; }
+     else if(inpt[i].parentNode.innerHTML.indexOf(&amp;quot;Beta&amp;quot;)!=-1) { flag=2; }
+    }
+    if(count==4) {
+     if(inpt[i].parentNode.innerHTML.indexOf(&amp;quot;Yes&amp;quot;)!=-1) { var flag2=1; }
+     else { flag2=2; }
+     break;
+    }
+    count++;
+   }
+  }
+ }
+ if(choice==&amp;quot;A&amp;quot; || flag==1) {
+  common_dom_row_set_show_required_reset(&amp;quot;fd_A_row&amp;quot;,true,true,false);
+ } else if(choice==&amp;quot;B&amp;quot; || flag==2) {
+  common_dom_row_set_show_required_reset(&amp;quot;fd_B_row&amp;quot;,true,false,false);
+ }
+ if(contract==&amp;quot;n&amp;quot; || flag2==2) {
+  amount.value=&amp;quot;&amp;quot;;
+  common_dom_row_set_show_required_reset(&amp;quot;fd_B_row&amp;quot;,true,false,false);
+ } else if(contract==&amp;quot;y&amp;quot; || flag2==1) {
+  common_dom_row_set_show_required_reset(&amp;quot;fd_B_row&amp;quot;,false,false,false);
+ }
+});
+&amp;lt;/script&amp;gt;"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;xform:xtext property="extendDataFormInfo.value(fd_amount)" dataType="Double"/&gt;
+&lt;xform:xtext property="extendDataFormInfo.value(fd_upper)" dataType="String" showStatus="readOnly" htmlElementProperties="relatedid='fd_amount' chinavalue='true' isrow='false'"/&gt;
+&lt;script&gt;Com_IncludeFile('chinaValue_script.js','../sys/xform/designer/chinaValue/');&lt;/script&gt;
+&lt;xform:radio property="extendDataFormInfo.value(fd_choice)"&gt;&lt;xform:simpleDataSource value="A"&gt;Alpha&lt;/xform:simpleDataSource&gt;&lt;xform:simpleDataSource value="B"&gt;Beta&lt;/xform:simpleDataSource&gt;&lt;/xform:radio&gt;
+&lt;xform:radio property="extendDataFormInfo.value(fd_middle1)"&gt;&lt;xform:simpleDataSource value="m1"&gt;M one&lt;/xform:simpleDataSource&gt;&lt;xform:simpleDataSource value="m2"&gt;M two&lt;/xform:simpleDataSource&gt;&lt;/xform:radio&gt;
+&lt;xform:radio property="extendDataFormInfo.value(fd_middle2)"&gt;&lt;xform:simpleDataSource value="n1"&gt;N one&lt;/xform:simpleDataSource&gt;&lt;xform:simpleDataSource value="n2"&gt;N two&lt;/xform:simpleDataSource&gt;&lt;/xform:radio&gt;
+&lt;xform:radio property="extendDataFormInfo.value(fd_contract)"&gt;&lt;xform:simpleDataSource value="y"&gt;Yes&lt;/xform:simpleDataSource&gt;&lt;xform:simpleDataSource value="n"&gt;No&lt;/xform:simpleDataSource&gt;&lt;/xform:radio&gt;
+&lt;xform:radio property="extendDataFormInfo.value(fd_extra1)"&gt;&lt;xform:simpleDataSource value="e1"&gt;Extra one&lt;/xform:simpleDataSource&gt;&lt;xform:simpleDataSource value="e2"&gt;Extra two&lt;/xform:simpleDataSource&gt;&lt;/xform:radio&gt;
+&lt;xform:radio property="extendDataFormInfo.value(fd_extra2)"&gt;&lt;xform:simpleDataSource value="z1"&gt;Last one&lt;/xform:simpleDataSource&gt;&lt;xform:simpleDataSource value="z2"&gt;Last two&lt;/xform:simpleDataSource&gt;&lt;/xform:radio&gt;
+</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;
+&lt;extendSimpleProperty name="fd_amount" label="Amount" type="Double" scale="2"/&gt;
+&lt;extendSimpleProperty name="fd_upper" label="Upper" type="String" relatedid="fd_amount"/&gt;
+&lt;extendSimpleProperty name="fd_choice" label="Choice" type="String" enumValues="Alpha|A;Beta|B"/&gt;
+&lt;extendSimpleProperty name="fd_checks" label="Checks" type="String" enumValues="First|X;Second|Y"/&gt;
+&lt;extendSimpleProperty name="fd_a" label="A note" type="String"/&gt;
+&lt;extendSimpleProperty name="fd_b" label="B note" type="String"/&gt;
+&lt;extendSimpleProperty name="fd_mirror" label="Joined choices" type="String" canDisplay="false"/&gt;
+&lt;extendSimpleProperty name="fd_middle1" label="fd_middle1" type="String" enumValues="M one|m1;M two|m2"/&gt;&lt;extendSimpleProperty name="fd_middle2" label="fd_middle2" type="String" enumValues="N one|n1;N two|n2"/&gt;&lt;extendSimpleProperty name="fd_contract" label="fd_contract" type="String" enumValues="Yes|y;No|n"/&gt;&lt;extendSimpleProperty name="fd_extra1" label="fd_extra1" type="String" enumValues="Extra one|e1;Extra two|e2"/&gt;&lt;extendSimpleProperty name="fd_extra2" label="fd_extra2" type="String" enumValues="Last one|z1;Last two|z2"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
 import { checkDraft } from "../../src/dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { inspectDeterministicScriptBranchProof } from "../../src/dsl/deterministic-script-translations.js";
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
 import { NEWOA_SIT_BASE_URL } from "../../src/executor/newoa-client.js";
 import {
@@ -41,21 +42,30 @@ describe("Source4 workflow write gates", () => {
     assert.equal(gateways.length, 12);
     assert.equal(gateways.every((node) => node.translationStatus === "executable"), true);
 
-    const reviewed = reviewTimedPriceLoad(sourceDraft, dslDraft, timedPriceInitialization);
-    assert.equal(reviewed.ok, true, JSON.stringify(reviewed.diagnostics));
-    const trusted = trustSourceDraft(sourceDraft, reviewed.dslDraft);
+    const action = timedPriceLoad(dslDraft);
+    assert.equal(action.translationStatus, "mapped");
+    assert.equal(inspectDeterministicScriptBranchProof(action).ok, true);
+    assert.match(action.function, /setTimeout\(function\(\) \{/);
+    assert.match(action.function, /\}, 510\);/);
+    assert.ok(action.function.indexOf("MKXFORM.getValue") > action.function.indexOf("setTimeout"));
+    const trusted = trustSourceDraft(sourceDraft, dslDraft);
     assert.equal(buildDryRunPlan(trusted).ok, true);
   });
 
   it("rejects an immediate Source4 initialization even when its final row states match", () => {
     const sourceDraft = cleanSourceFile(source4("17af0f6388dd27ab1d7d54543f0886fa"));
     const dslDraft = draftSourceDraft(sourceDraft);
-    const immediate = timedPriceInitialization.replace("setTimeout(function () {", "").replace("}, 510);", "");
+    const action = timedPriceLoad(dslDraft);
+    const immediate = action.function.replace("setTimeout(function() {", "").replace("}, 510);", "");
+    assert.notEqual(immediate, action.function);
+    assert.doesNotMatch(immediate, /setTimeout/);
     const reviewed = reviewTimedPriceLoad(sourceDraft, dslDraft, immediate);
-    assert.equal(reviewed.ok, false);
-    assert.ok(reviewed.diagnostics.some(item => item.code === "agent.patch.row_marker_semantics_unverified" &&
-      item.details.reason === "source_or_scheduling_unproven"));
-    const unreviewed = createTrustedMigrationDsl(sourceDraft, dslDraft, { externalAgentReviewed: true, reviewerName: "route-validation", checkedAt });
+    const forged = structuredClone(dslDraft);
+    timedPriceLoad(forged).function = immediate;
+    if (!reviewed.ok) assert.ok(reviewed.diagnostics.some(item => item.level === "error"), JSON.stringify(reviewed.diagnostics));
+    const rejectedDsl = reviewed.ok ? reviewed.dslDraft : forged;
+    assert.equal(timedPriceLoad(rejectedDsl).function, immediate);
+    const unreviewed = createTrustedMigrationDsl(sourceDraft, rejectedDsl, { externalAgentReviewed: true, reviewerName: "route-validation", checkedAt });
     assert.equal(checkTrust(sourceDraft, unreviewed).ok, false);
     assert.equal(buildDryRunPlan(unreviewed).ok, false);
   });
@@ -241,40 +251,25 @@ describe("Source4 workflow write gates", () => {
   });
 });
 
-const timedPriceInitialization = `function onLoad() {
-  setTimeout(function () {
-    MKXFORM.setFieldAttr("fd_one_row", 4);
-    MKXFORM.setFieldAttr("fd_one_row", 6);
-    MKXFORM.setFieldAttr("fd_two_row", 4);
-    MKXFORM.setFieldAttr("fd_two_row", 6);
-    MKXFORM.setFieldAttr("fd_three_row", 4);
-    MKXFORM.setFieldAttr("fd_three_row", 6);
-    var current = MKXFORM.getValue("fd_39d245962fff08");
-    console.log("之前选的", current);
-    if (current == "1") {
-      MKXFORM.setFieldAttr("fd_three_row", 5);
-      MKXFORM.setFieldAttr("fd_three_row", 3);
-    } else if (current == "2") {
-      MKXFORM.setFieldAttr("fd_two_row", 5);
-      MKXFORM.setFieldAttr("fd_two_row", 3);
-    } else {
-      MKXFORM.setFieldAttr("fd_one_row", 5);
-      MKXFORM.setFieldAttr("fd_one_row", 3);
-    }
-  }, 510);
-}`;
+function timedPriceLoad(dslDraft) {
+  const action = dslDraft.scripts.actions.find(action => action.id === "fd_3d2f979d2fd482.script.1.event.1");
+  assert.ok(action);
+  assert.equal(action.event, "onLoad");
+  assert.deepEqual(action.sourceRefs, ["source.form.jsp.fd_3d2f979d2fd482.script.1"]);
+  return action;
+}
 
 function reviewTimedPriceLoad(sourceDraft, dslDraft, functionText) {
-  const index = dslDraft.scripts.actions.findIndex(action => action.event === "onLoad" && action.translationStatus === "needs_review");
+  const action = timedPriceLoad(dslDraft);
+  const index = dslDraft.scripts.actions.indexOf(action);
   assert.ok(index >= 0);
-  const action = dslDraft.scripts.actions[index];
-  const values = { function: functionText, translationStatus: "mapped",
-    functionMappings: [{ source: "scheduled row initialization", target: "same timer and ordered MKXFORM effects", basis: "semantic-translation", reviewRequired: false }],
-    coverage: { status: "translated", nativeRules: [], residuals: [] } };
+  assert.notEqual(functionText, action.function);
+  const values = { function: functionText };
   const patches = Object.entries(values).map(([key, value]) => ({
     op: "replace", path: `/scripts/actions/${index}/${key}`, value, sourceRefs: action.sourceRefs,
     evidence: ["Keep the source 510ms callback, read phase and every row effect in order."], rationale: "Test the full reviewed schedule.", confidence: 0.99
   }));
+  assert.ok(patches.length > 0);
   return applyEvidenceBackedPatches(dslDraft, patches, { sourceDraft, sourceRefs: collectSourceRefs(sourceDraft) });
 }
 

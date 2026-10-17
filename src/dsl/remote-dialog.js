@@ -1,3 +1,5 @@
+import {omittedSelectorBinding} from "./omitted-remote-selector.js";
+import {remoteSelectorBinding} from "./native-remote-selector-profile.js";
 const remoteKinds = new Set(['sqldialog', 'restdialog']);
 const normalized = value => typeof value === 'string' ? value.toLowerCase() : '';
 const own = (value, key) => Object.hasOwn(value || {}, key);
@@ -40,22 +42,23 @@ function diagnostic(prefix, reason, path, field) {
     path, details: {fieldId: field.id, sourceRef: field.sourceRef}};
 }
 
-/** Typed remote controls have no implemented target binding. Candidate metadata cannot create that capability. */
-export function remoteDialogDiagnostics(form, {prefix = 'dsl.form'} = {}) {
+/** Unproved controls stay blocked; only the complete fixed source-policy binding is admitted. */
+export function remoteDialogDiagnostics(form, {prefix = 'dsl.form', dsl} = {}) {
   return fields(form).flatMap(({field, path}) => {
     const declared = declaration(field);
     if (!declared) return [];
+    if (!declared.conflict && (remoteSelectorBinding(dsl,field)||omittedSelectorBinding(dsl,field))) return [];
     return [diagnostic(prefix, declared.conflict ? 'source_type_conflict' : 'unbound', path, field)];
   });
 }
 
 /** Compare with fixed Source Draft occurrences rather than a candidate's editable hints. Never put raw query/configuration values into diagnostics. */
-export function remoteDialogSourceDiagnostics(sourceForm, candidateForm, {prefix = 'trust.form'} = {}) {
+export function remoteDialogSourceDiagnostics(sourceForm, candidateForm, {prefix = 'trust.form', dsl} = {}) {
   const source = fields(sourceForm), identities = fields(sourceForm, true), target = fields(candidateForm, true), diagnostics = [];
   for (const {field, path} of source) {
     const declared = declaration(field);
     if (!declared) continue;
-    diagnostics.push(diagnostic(prefix, declared.conflict ? 'source_type_conflict' : 'unbound', path, field));
+    if (declared.conflict || !(remoteSelectorBinding(dsl, target.find(entry=>entry.field.sourceRef===field.sourceRef)?.field || {})||omittedSelectorBinding(dsl,target.find(entry=>entry.field.sourceRef===field.sourceRef)?.field || {}))) diagnostics.push(diagnostic(prefix, declared.conflict ? 'source_type_conflict' : 'unbound', path, field));
     const sameSource = identities.filter(entry => entry.field.sourceRef === field.sourceRef);
     if (!field.sourceRef || sameSource.length !== 1) diagnostics.push(diagnostic(prefix, 'source_ref_ambiguous', path, field));
     const matches = target.filter(entry => entry.field.sourceRef === field.sourceRef);

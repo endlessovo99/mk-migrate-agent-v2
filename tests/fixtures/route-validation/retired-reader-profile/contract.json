@@ -1,0 +1,1 @@
+{"profile":"formal-editor-readers-only","expectedCode":"locked_draft.derived_readers_not_writable","expectedTargetRequests":0,"reason":"An effective reader aggregate cannot be treated as an independently writable permission collection."}

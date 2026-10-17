@@ -1,0 +1,63 @@
+{
+  "description": "Captured native NewOA attachment read and required-normalization functions. Execute these original functions against a minimal native form; no HTTP or target writes.",
+  "runtimeSha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+  "offsetUnit": "UTF-16 JavaScript source offset",
+  "parts": {
+    "api": {
+      "start": 216896,
+      "end": 217464,
+      "source": "function(e){for(var t,n,i,u,a,c,l=arguments.length,f=Array(l>1?l-1:0),s=1;s<l;s++)f[s-1]=arguments[s];1===f.length&&(u=f[0]),2===f.length&&(a=null===(t=null==f?void 0:f[0])||void 0===t?void 0:t.detailRowIndex,c=null===(n=null==f?void 0:f[0])||void 0===n?void 0:n.nestRowIndex,u=null==f?void 0:f[1]);var d=(0,o.$$form)(u);if(d){var p=(0,r.getValue)({form:d,key:e,detailRowIndex:a,nestRowIndex:c}),v=null===(i=d.getFormConfig(e))||void 0===i?void 0:i.type;return\"string\"==typeof v&&[\"@elem/xform-attach\",\"@elem/xform-m-attach\"].includes(v)&&\"string\"==typeof p?void 0:p}}",
+      "sha256": "e57201b5f440694b5defd5ae5568665d18731ebdaf298a848129470448558c34"
+    },
+    "requiredTransform": {
+      "start": 423011,
+      "end": 423214,
+      "source": "function(e){var t;return(t=(null==e?void 0:e.mechanismKey)?e.mechanismValue:e)&&(\"string\"==typeof t?t=null:Array.isArray(t)&&!(t=t.filter(function(e){return\"DELETE\"!==e.fdBindType})).length&&(t=null)),t}",
+      "sha256": "b0730fd1e2fc4fbc64c5050832c5ba24ca35d71f0c274c6944432075a5e1ee68"
+    },
+    "configs": {
+      "start": 626768,
+      "end": 626898,
+      "source": "function x(e){if(!e)return{};if(!e.__formConfigs__){var t=e.getFormConfig();t&&(e.__formConfigs__=t)}return e.__formConfigs__||{}}",
+      "sha256": "5d4e33a6e1fc3747ffeebd46b83c7b9cda12ed1dbefcc0d4017cb3b0ae48c1aa"
+    },
+    "config": {
+      "start": 626904,
+      "end": 627373,
+      "source": "function(e){var t,n,r=e.form,o=e.key,i=x(r);if(i){var u=null==r?void 0:r.businessInfos,a=o;u&&M({form:r,key:o})&&!o.includes(\".\")&&(a=\"\".concat(u.tableName,\".\").concat(o));var c=null==r?void 0:r.mainInfos;return c&&I({form:r,key:o})&&!o.includes(\".\")&&(a=\"\".concat(c.tableName,\".\").concat(o)),null!==(t=i[a])&&void 0!==t?t:(null==o?void 0:o.indexOf(\".\"))===-1?i[\"\".concat(null===(n=null==r?void 0:r.businessInfos)||void 0===n?void 0:n.tableName,\".\").concat(o)]:void 0}}",
+      "sha256": "fa53ef3dcd4c47d600e101b656b0e3247fd13e4a09f8d9552917524a271ab04f"
+    },
+    "business": {
+      "start": 627374,
+      "end": 627518,
+      "source": "function M(e){var t,n,r=e.form,o=e.key;return null===(n=null===(t=r.businessInfos)||void 0===t?void 0:t.names)||void 0===n?void 0:n.includes(o)}",
+      "sha256": "e2d77ca0ca12bc0b9f723db917448e40fad3d91ba6ecfc5423b31b3414a4a2f1"
+    },
+    "main": {
+      "start": 627518,
+      "end": 627658,
+      "source": "function I(e){var t,n,r=e.form,o=e.key;return null===(n=null===(t=r.mainInfos)||void 0===t?void 0:t.names)||void 0===n?void 0:n.includes(o)}",
+      "sha256": "648d8e75e59e12375ac920b4948cb13a864f61ae88186280914e1b0f798cad61"
+    },
+    "detached": {
+      "start": 635562,
+      "end": 635743,
+      "source": "function u(e){var t,n,r;return null===(r=null===(n=null===(t=e.detachedValues)||void 0===t?void 0:t.mechanisms)||void 0===n?void 0:n[\"sys-xform\"])||void 0===r?void 0:r.dynamicProps}",
+      "sha256": "e6b8230b11106f09c8c891d18915e650155b82bef78c336f462c1b25fa961197"
+    },
+    "attached": {
+      "start": 635743,
+      "end": 637337,
+      "source": "function a(e){var t,n,o,i,u,a,c,l,f,s,d,p,v,m,y,h,g=e.form,b=e.key,A=e.detailTableName,_=e.nestTableName,w=e.detailRowIndex,O=e.nestRowIndex,x=e.config,j=b.split(\".\");if(1===j.length&&(null===(t=x.controlProps)||void 0===t?void 0:t.$$tableType)!==r.EDataModelType.detail){var M=\"\".concat(null===(n=g.businessInfos)||void 0===n?void 0:n.tableName,\".\").concat(j[0]);return null!==(a=null!==(i=null===(o=g.attachedValues)||void 0===o?void 0:o[M])&&void 0!==i?i:null===(u=g.getFieldsValue())||void 0===u?void 0:u[M])&&void 0!==a?a:null===(c=g.detachedValues)||void 0===c?void 0:c[M]}var I=null!==(d=null!==(f=null===(l=g.attachedValues)||void 0===l?void 0:l[b])&&void 0!==f?f:null===(s=g.getFieldsValue())||void 0===s?void 0:s[b])&&void 0!==d?d:null===(p=g.detachedValues)||void 0===p?void 0:p[b];if(!A&&!_)return I;var S=Number(w),P=Number(O),E=!Number.isNaN(S)||S<0,k=!Number.isNaN(P)||P<0;function C(e,t,n){if(n.length<1)return e;var r=n[0],o=n.filter(function(e,t){return t>0});switch(r){case\"array\":return null==e?void 0:e.map(function(e){return C(e,t,o)});case\"object\":return C(null==e?void 0:e[t],t,o)}}if(A){var T=null!==(m=null===(v=g.attachedValues)||void 0===v?void 0:v[A])&&void 0!==m?m:null===(y=g.getFieldsValue())||void 0===y?void 0:y[A];if(h=T.dataState?T.values||[]:T,E&&(h=null==h?void 0:h[S]),b===A)return T;if(A&&!_)return C(h,j[1],E?[\"object\"]:[\"array\",\"object\"]);if(_)return(h=C(h,_,E?[\"object\"]:[\"array\",\"object\"]),k&&(h=C(h,P,E?[\"object\"]:[\"array\",\"object\"])),b===_)?h:h=E?C(h,j[1],k?[\"object\"]:[\"array\",\"object\"]):C(h,j[1],k?[\"array\",\"object\"]:[\"array\",\"array\",\"object\"])}}",
+      "sha256": "0e17efd7cc872cd31cc958cfdc3ddc141aecde21c5d43a4f42d84a7c3f7d0739"
+    },
+    "getter": {
+      "start": 637444,
+      "end": 638827,
+      "source": "function l(e){var t,n,r=e.form,c=e.key,l=e.detailRowIndex,f=e.nestRowIndex,s=function(e){var t=e.form,n=e.key,r=(0,i.getFormConfig)({form:t,key:n}),u=\"\",a=\"\",c=!1;if(!r)for(var l=(0,i.getFormConfigs)(t),f=Object.keys(l),s=0,d=f.length;s<d&&!c;s++){var p=l[f[s]],v=p.type,m=p.key,y=p.controlProps;if([o.DETAIL_TABLE_DESKTOP,o.DETAIL_TABLE_MOBILE].includes(v)){var h=y.columns;if(Array.isArray(h)&&h.length>0)for(var g=0,b=h.length;g<b&&!c;g++){var A=h[g],_=A.type,w=A.key,O=A.children;if(n===w){c=!0,u=m,[o.DETAIL_TABLE_DESKTOP,o.DETAIL_TABLE_MOBILE].includes(_)&&(a=w);break}if([o.DETAIL_TABLE_DESKTOP,o.DETAIL_TABLE_MOBILE].includes(_)){for(var x=0,j=null==O?void 0:O.length;x<j;x++)if(n===O[x].key){c=!0,u=m,a=w;break}}}}}return[o.DETAIL_TABLE_DESKTOP,o.DETAIL_TABLE_MOBILE].includes(null==r?void 0:r.type)&&(u=n),{config:r,detailTableName:u,nestTableName:a}}({form:r,key:c}),d=s.config,p=s.detailTableName,v=s.nestTableName;return d||p||v?null!==(t=a({form:r,key:c,detailTableName:p,nestTableName:v,detailRowIndex:l,nestRowIndex:f,config:d}))&&void 0!==t?t:null===(n=null==d?void 0:d.controlProps)||void 0===n?void 0:n.value:function(e){var t,n,r=e.form,o=e.key,i=o.split(\".\");if(1===i.length)return(null===(t=u(r))||void 0===t?void 0:t[o])||(null===(n=r.detachedValues)||void 0===n?void 0:n[o]);for(var a=u(r),c=0;c<i.length;c++){if(!a)return;a=a[i[c]]}return a}({form:r,key:c})}",
+      "sha256": "db1e71eb33ad438696f44fc861996af01ba722f59ef1822dbb82c4a2d1c04499"
+    }
+  },
+  "scope": "Actual captured API + lower getter + attached value/config helpers execute against a minimal native form fixture. readOnly/hidden flags are not examined by the getter; fixture hidden field uses native config value fallback. This does not establish all real hidden-form storage lifecycles.",
+  "observedApiRestriction": "Only string-valued attachment reads return undefined; nonstring raw values pass through."
+}

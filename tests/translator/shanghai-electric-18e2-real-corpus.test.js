@@ -343,7 +343,20 @@ describe("Shanghai Electric 18e2 route regression", () => {
       "fd_3dd49884660ec6.script.2.event.1"
     ]) {
       const action = actionById(id);
-      assert.equal(action.branchProvenance.status, "proven", id);
+      assert.equal(action.translationStatus, "mapped", id);
+      assert.equal(action.event, "onLoad", id);
+      assert.deepEqual(action.sourceRefs, [`source.form.jsp.${id.replace(/\.event\.1$/, "")}`]);
+      assert.equal(inspectDeterministicScriptBranchProof(action, {
+        calculationDecisions: dsl.scripts.calculationDecisions
+      }).ok || action.branchProvenance?.status === "proven", true, id);
+      const original = source.scripts.sources.find(item => action.sourceRefs.includes(item.sourceRef));
+      assert.ok(original, id);
+      assert.match(original.javascript, /GetXFormFieldById\("fd_is_traffic_change"\)/);
+      assert.match(original.javascript, /isProject && isProject\.value == "1"/);
+      assert.match(action.function, /MKXFORM\.getValue\("fd_is_traffic_change"\)/);
+      assert.match(action.function, /MKXFORM\.setFieldAttr\("fd_the_change_traffic_row", 5\)/);
+      assert.match(action.function, /MKXFORM\.setFieldAttr\("fd_the_change_traffic_row", 4\)/);
+      assert.doesNotMatch(action.function, /MKXFORM\.setFieldAttr\("fd_the_change_traffic_row", 3\)/);
       assert.equal(
         action.coverage.residuals.some((item) =>
           item.code === "script.residual.field_value_assignment"

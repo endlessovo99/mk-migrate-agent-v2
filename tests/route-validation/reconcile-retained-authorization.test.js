@@ -199,7 +199,7 @@ class Client {
   constructor(template) { this.template = structuredClone(template); this.calls = []; this.reads = 0; }
   async login() { this.calls.push({ operation: "login" }); }
   async assertTransferRecordAuthentication() { this.calls.push({ operation: "record-auth" }); }
-  async getElementInfo(ids) { this.calls.push({ operation: "exact", ids }); return ids[0] === "reader-r" && this.readerResult !== undefined ? this.readerResult : [...fixture.targets, ...["target-a", "target-b"].map(fdId => ({ fdId, fdName: fdId, fdOrgType: 8 }))].filter(t => ids.includes(t.fdId)); }
+  async getElementInfo(ids) { this.calls.push({ operation: "exact", ids }); return ids[0] === "reader-r" && this.readerResult !== undefined ? this.readerResult : [...fixture.targets, ...["target-a", "target-b"].map(fdId => ({ fdId, fdName: fdId, fdOrgType: 8, fdIsBusiness: true }))].filter(t => ids.includes(t.fdId)); }
   async searchOrg() { this.calls.push({ operation: "search" }); throw new Error("retained authorization must never search"); }
   async getTemplate() { this.calls.push({ operation: "get-template" }); this.reads++; const t = structuredClone(this.template); if (this.drift && this.reads > 1) t.fdName += "changed"; return t; }
   async getWorkflowTemplateDetail() { this.calls.push({ operation: "get-workflow" }); return structuredClone(this.template.mechanisms.lbpmTemplate[0]); }

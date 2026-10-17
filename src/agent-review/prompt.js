@@ -1,3 +1,4 @@
+import {buildMigrationPolicyReviewProtection,isMigrationPolicyProtectedReviewTarget} from "./policy-review-protection.js";
 import { detailRowSourceEffectResiduals } from "../dsl/source-detail-row-effects.js";
 import { parse } from "acorn";
 import { COMPONENT_CATALOG, FUNCTION_CATALOG, VALIDATION_POLICY } from "../dsl/catalogs.js";
@@ -34,7 +35,8 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
   const reviewScope = options.reviewScope === undefined
     ? undefined
     : normalizeReviewScope(options.reviewScope, dslDraft?.scripts?.actions);
-  const concretePatchTargets = buildConcretePatchTargets(dslDraft, reviewScope);
+  const policyProtection = buildMigrationPolicyReviewProtection(sourceDraft, dslDraft);
+  const concretePatchTargets = buildConcretePatchTargets(dslDraft, reviewScope, policyProtection);
   const allowedConcretePatchPaths = concretePatchTargets.flatMap((target) => target.allowedPatchPaths);
   const focusedActionIndexes = reviewScope?.actionIndexes;
   const focusedScriptSourceRefs = focusedSourceRefsForScripts(dslDraft?.scripts, focusedActionIndexes);
@@ -45,6 +47,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
     promptVersion: AGENT_REVIEW_PROMPT_VERSION,
     system: [
       "You review a NewOA/MK migration DSL draft after deterministic translation.",
+      ...(policyProtection.targets.length ? ["Approved migration-policy targets listed in policyReviewProtection are immutable. Do not restore their former source labels, change their type/props, or rewrite their fixed scripts. Their current approved native implementation is authoritative; review only allowedConcretePatchPaths."] : []),
       "Return only strict JSON with exactly these top-level keys: summary, patches, diagnostics.",
       "Do not return a complete DSL.",
       "Only propose evidence-backed replace patches for allowed form and script DSL paths.",
@@ -121,6 +124,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       allowedPatchPaths,
       patchTargetSummary: patchTargetSummary(dslDraft, concretePatchTargets, allowedConcretePatchPaths),
       allowedConcretePatchPaths,
+      ...(policyProtection.targets.length || !policyProtection.ok ? { policyReviewProtection: policyProtection } : {}),
       concretePatchTargets,
       prohibitedPatchScopes: [
         "/workflow",
@@ -286,7 +290,7 @@ function allowedPatchPatterns(reviewScope) {
   return patterns;
 }
 
-function buildConcretePatchTargets(dslDraft, reviewScope) {
+function buildConcretePatchTargets(dslDraft, reviewScope, policyProtection) {
   const fields = Array.isArray(dslDraft?.form?.fields) ? dslDraft.form.fields : [];
   const scriptActions = Array.isArray(dslDraft?.scripts?.actions) ? dslDraft.scripts.actions : [];
   const targets = [];
@@ -294,8 +298,8 @@ function buildConcretePatchTargets(dslDraft, reviewScope) {
 
   if (!reviewScope || reviewScope.includeFormTargets) fields.forEach((field, fieldIndex) => {
     const pathBase = `/form/fields/${fieldIndex}`;
-    const patchProperties = allowedFormPatchProperties(field);
-    targets.push(targetSummary({
+    const patchProperties = isMigrationPolicyProtectedReviewTarget(policyProtection,dslDraft,{scope:"field",fieldIndex}) ? [] : allowedFormPatchProperties(field);
+    if (patchProperties.length) targets.push(targetSummary({
       scope: "field",
       index: fieldIndex,
       pathBase,
@@ -306,8 +310,8 @@ function buildConcretePatchTargets(dslDraft, reviewScope) {
     const columns = Array.isArray(field?.columns) ? field.columns : [];
     columns.forEach((column, columnIndex) => {
       const columnPathBase = `${pathBase}/columns/${columnIndex}`;
-      const columnPatchProperties = allowedFormPatchProperties(column);
-      targets.push(targetSummary({
+      const columnPatchProperties = isMigrationPolicyProtectedReviewTarget(policyProtection,dslDraft,{scope:"column",fieldIndex,columnIndex}) ? [] : allowedFormPatchProperties(column);
+      if (columnPatchProperties.length) targets.push(targetSummary({
         scope: "column",
         fieldIndex,
         columnIndex,
@@ -321,6 +325,7 @@ function buildConcretePatchTargets(dslDraft, reviewScope) {
 
   scriptActions.forEach((action, actionIndex) => {
     if (reviewScope && !reviewScope.actionIndexes.includes(actionIndex)) return;
+    if (isMigrationPolicyProtectedReviewTarget(policyProtection,dslDraft,{scope:"scriptAction",actionIndex})) return;
     const pathBase = `/scripts/actions/${actionIndex}`;
     targets.push(targetSummary({
       scope: "scriptAction",

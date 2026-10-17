@@ -1,0 +1,10 @@
+{
+  "capabilityId": "native-template-public-readers-v1",
+  "digestKey": "@module:km-review/desktop/pages/kmReviewTemplate/edit",
+  "modulePath": "km-review/desktop/pages/kmReviewTemplate/edit",
+  "release": "645549c841832b4eb994d51b316b9c25",
+  "sha256": "5708735c67eee0378ad73bccc5182ab8b17ffd36ce1166a0dbeb5afdd95d77d6",
+  "configEndpoint": "/data/km-review/moduleConfig/getConfiguration",
+  "source": "Captured native QAS permission form and 35 nonempty successful readbacks; empty readers public branch confirmed by source everyone and repeated native reads.",
+  "emptyReaderContract": "templateEmptyNotUse absent or string false means everyone; string true and other values are not supported for execution"
+}

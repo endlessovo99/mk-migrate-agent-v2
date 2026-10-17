@@ -102,6 +102,8 @@ function protectedGraphRestorationDelta(before,after,graph,targets){
 
 /** Native update initializes only audit metadata on otherwise identical detail models. */
 function normalizeDetailAudit(left,right,before,after){
+ if(sha256Digest(left)===sha256Digest(right))return;
+ requireValue(left.fdType==='detail'&&right?.fdType==='detail','detail_model_type_unproven');
  requireValue(left.fdId&&left.fdTableName&&right?.fdId===left.fdId&&right.fdTableName===left.fdTableName,'detail_model_identity_changed');
  const actor=after.template.fdAlter,from=after.template.fdAlterTime,to=after.template.mechanisms['sys-xform'].fdAlterTime;
  for(const key of ['fdAlter','fdAlterTime','fdDeletedFields']){

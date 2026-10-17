@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-person-text-count-form</string></void>
+<void method="put"><string>fdName</string><string>Source-proven separated text count</string></void>
+<void method="put"><string>fdModelId</string><string>route-person-text-count-model</string></void>
+<void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;function countSeparatedNames(paramsStrArr) {
+            // 人员字符串
+            paramsStrArr = paramsStrArr.replace(/，/g, "、")
+                                            .replace(/,/g, "、")
+                                            .replace(/\//g, "、")
+                                            .replace(/\\/g,"、")
+                                            .replace(/\n/g,"、")
+                                            .replace(/、、/g,"、")
+                                            .replace(/、、/g,"、");
+            var fdNameArr = paramsStrArr.split("、");
+
+            var relCount = 0;
+            for (var index = 0; index &lt; fdNameArr.length; index++) {
+                if (fdNameArr[index].length &gt; 0) {
+                    relCount++;
+                }
+            }
+            
+            return relCount;
+        }
+
+function updatePeopleCount(paramsStrArr,elementId) {
+            var relCount = countSeparatedNames(paramsStrArr);
+            SetXFormFieldValueById(elementId,relCount);
+        }&lt;/script&gt;&lt;xform:editShow&gt;&lt;script&gt;// 来宾名单变化-计算人数，
+        AttachXFormValueChangeEventById("fd_people_text", function(value, domElement){
+            updatePeopleCount(value,"fd_people_count");
+        });&lt;/script&gt;&lt;/xform:editShow&gt;</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="textarea" fd_values='{id:"fd_people_text",label:"People",dataType:"String"}'&gt;&lt;textarea id="fd_people_text"&gt;&lt;/textarea&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_people_count",label:"Count",dataType:"Number"}'&gt;&lt;input id="fd_people_count"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_people_text" label="People" type="String"/&gt;&lt;extendSimpleProperty name="fd_people_count" label="Count" type="Number"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

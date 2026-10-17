@@ -6,6 +6,7 @@ import { compareInvariants } from "./persistence/compare.js";
 import { buildFormSummary, buildWorkflowSummary } from "./persistence/summaries.js";
 import { projectionError } from "./persistence/diagnostics.js";
 import { INVARIANT_VERSION } from "./persistence/invariants.js";
+import {verifiedTemplateReadBinding} from './template-read-scope.js';
 
 export { buildWorkflowDraftPayload, INVARIANT_VERSION };
 
@@ -33,7 +34,9 @@ export function preparePersistedTemplate({ dsl, envelope, baseTemplate }) {
     };
   }
 
-  const projectionDsl = lowerTemplateAuthorizationForNativePersistence(dsl);
+  let projectionDsl;
+  try{projectionDsl=lowerTemplateAuthorizationForNativePersistence(dsl);}
+  catch(error){return {ok:false,diagnostics:[projectionError(error.code||'projection.template.read_scope_invalid',error.message)]};}
   const expectedResult = buildExpectedInvariants(projectionDsl, envelope);
   if (!expectedResult.ok) {
     return {
@@ -97,10 +100,18 @@ function lowerTemplateAuthorizationForNativePersistence(dsl) {
     authorization.allEditors
   );
   const editorIds = new Set(editors.map(authorizationMemberId).filter(Boolean));
-  const readers = unionAuthorizationMembers(
+  if(authorization.readScope){
+    if(!verifiedTemplateReadBinding(dsl)||authorization.readers.length!==0||authorization.allReaders.length!==1||authorization.allReaders[0].id!==dsl.runtime.nativeTemplateReadScope.everyone.id)throw Object.assign(new Error('Public template readers require a verified native capability and exact builtin identity.'),{code:'projection.template.public_readers_unverified'});
+    return {...dsl,template:{...dsl.template,authorization:{...authorization,readers:[],editors,allEditors:editors,allReaders:[authorization.allReaders[0]]}}};
+  }
+  let readers = unionAuthorizationMembers(
     authorization.readers,
     authorization.allReaders.filter((member) => !editorIds.has(authorizationMemberId(member)))
   );
+  // A restricted reader remains a formal reader even after fallback coalesces it
+  // with an editor. Empty formal readers would select native public mode.
+  if(readers.length===0&&authorization.allReaders.length>0)readers=[...authorization.allReaders];
+  if(readers.length===0)throw Object.assign(new Error('Empty native readers require source-bound public access evidence.'),{code:'projection.template.empty_read_scope_unproven'});
   return {
     ...dsl,
     template: {
@@ -111,7 +122,8 @@ function lowerTemplateAuthorizationForNativePersistence(dsl) {
         editors,
         // Native full-reading rights include the materialized formal editors.
         // This projection does not change source or temporary authorization.
-        allReaders: unionAuthorizationMembers(authorization.allReaders, editors)
+        allEditors: editors,
+        allReaders: unionAuthorizationMembers(readers, editors)
       }
     }
   };

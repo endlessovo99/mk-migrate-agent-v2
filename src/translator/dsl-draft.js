@@ -63,6 +63,7 @@ import { mapChoiceOtherCompanions } from "./choice-other-companion.js";
 import { sourceRequiresReadOnly } from "../dsl/source-readonly.js";
 import { staticRectangleGridProfile } from "./standard-table-grid.js";
 import { remoteDialogDiagnostics } from "../dsl/remote-dialog.js";
+import { applyApprovedMigrationPolicies, APPROVED_MIGRATION_POLICY_BASIS } from "./approved-migration-policies.js";
 import {
   sourceInputLength, inputLengthRequirements, inputLengthPolicyWarning, inputLengthSourceError
 } from "../dsl/source-input-length.js";
@@ -143,7 +144,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
         fieldIdMap
       )
     : undefined;
-  return pruneUndefined({
+  const draft = pruneUndefined({
     version: MIGRATION_DSL_VERSION,
     artifact: "dsl-draft",
     derivedFrom: {
@@ -184,6 +185,11 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceDraft: options.sourceDraftDigest || ""
     }
   });
+  const approved = applyApprovedMigrationPolicies(sourceDraft, draft);
+  if (sourceDraft.migrationPolicies) {
+    approved.scripts = attachCalculationDecisions(approved.scripts, approved.form, sourceDraft.scripts);
+  }
+  return pruneUndefined(approved);
 }
 
 function removeDeterministicScriptOwnedFormRules(formRules, scripts) {
@@ -379,6 +385,7 @@ function attachCalculationDecisions(scripts, form, sourceScripts = {}) {
       .flatMap((mapping) => mapping.manualResiduals || []);
     if (action.translationStatus !== "mapped") continue;
     const recordsScriptCalculation = (action.functionMappings || []).some((mapping) =>
+      mapping.basis === APPROVED_MIGRATION_POLICY_BASIS ||
       /calculation|finance-detail-generation/u.test(String(mapping.basis || mapping.source || ""))
     );
     if (!recordsScriptCalculation && !mappingManualResiduals.length) continue;

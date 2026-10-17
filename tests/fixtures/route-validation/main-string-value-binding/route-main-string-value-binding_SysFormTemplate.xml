@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-main-string-binding-source</string></void>
+<void method="put"><string>fdModelId</string><string>route-main-string-binding-model</string></void>
+<void method="put"><string>fdName</string><string>Static hidden String binding</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_state",label:"State",dataType:"String",canShow:"false"}'&gt;&lt;input id="fd_state"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="fd_row" name="fd_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload",label:"Payload",dataType:"String"}'&gt;&lt;input id="fd_payload"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;input type="hidden" name="extendDataFormInfo.value(fd_state)"/&gt;&lt;script&gt;Com_AddEventListener(window,"load",function(){if(GetXFormFieldValueById("fd_state")=="A"){common_dom_row_set_show_required_reset("fd_row",true,false,false);}else{common_dom_row_set_show_required_reset("fd_row",false,false,false);}});&lt;/script&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_state" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

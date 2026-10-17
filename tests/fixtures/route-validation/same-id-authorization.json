@@ -10,6 +10,7 @@
   "target": {
     "fdId": "same-support-person-id",
     "fdName": "系统支持人员",
-    "fdOrgType": 8
+    "fdOrgType": 8,
+    "fdIsBusiness": true
   }
 }

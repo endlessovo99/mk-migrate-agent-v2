@@ -1,0 +1,9 @@
+{
+  "origin": "https://oaqas.shanghai-electric.com",
+  "sourcePath": ".tmp/tasks/ekp-oaqas-fix13-20261017/data-adapters/XFormRuntime.js",
+  "sourceSha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+  "start": 197290,
+  "end": 198350,
+  "sha256": "c67f4e477b2793ca4e5b1e727529d6c75f80183e37636495869229314923899b",
+  "text": "function(e,t,n,i){var a,c,l=(0,r.getKeyByName)(e,i);if(l){var f=null===(c=(0,o.$$detailForms)(i))||void 0===c?void 0:c[l].current,s=function(e){if(Array.isArray(e))return u(e)}(a=null==f?void 0:f.getCurrentValues())||function(e){if(\"undefined\"!=typeof Symbol&&null!=e[Symbol.iterator]||null!=e[\"@@iterator\"])return Array.from(e)}(a)||function(e,t){if(e){if(\"string\"==typeof e)return u(e,void 0);var n=Object.prototype.toString.call(e).slice(8,-1);if(\"Object\"===n&&e.constructor&&(n=e.constructor.name),\"Map\"===n||\"Set\"===n)return Array.from(n);if(\"Arguments\"===n||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n))return u(e,void 0)}}(a)||function(){throw TypeError(\"Invalid attempt to spread non-iterable instance.\\\\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.\")}();if(Array.isArray(n)){for(var d=[],p=Number(t),v=p+n.length,m=0;m<v;m++)if(p<=m)d.push(n[m-p]);else{var y=s[m]||{};d.push(y)}Object.assign(s,d),null==f||f.updateValues(s);return}var h=null==s?void 0:s[t];h&&Object.assign(h,n),null==f||f.updateValues(s)}}"
+}

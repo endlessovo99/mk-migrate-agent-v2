@@ -1,3 +1,5 @@
+import { legacyExcelImportDescriptor } from "./legacy-detail-excel-import.js";
+
 export function legacyExcelAndOrgHydrationCandidates(source = {}, form = {}) {
   return [
     legacyExcelImportCandidate(source, form),
@@ -12,14 +14,8 @@ function legacyExcelImportCandidate(source, form) {
   if (!/\bfunction\s+importExcel\s*\(/.test(text)) return undefined;
   if (!/window\.showModalDialog/.test(text) || !/window\.open/.test(text)) return undefined;
   if (!/\b_DocList_AddRows\s*\(/.test(text) || !/\.deleteRow\s*\(/.test(text)) return undefined;
-  const tableId = text.match(/var\s+detailTableId\s*=\s*["'](fd_[A-Za-z0-9_]+)["']/)?.[1];
-  const controlIds = text.match(/var\s+detailControlIds\s*=\s*["']([^"']+)["']/)?.[1];
-  const table = (form?.fields || []).find((field) => field?.id === tableId && field.type === "detailTable");
-  if (!table || !controlIds) return undefined;
-
-  const requested = controlIds.split(";").map((item) => item.trim().replace(/\.name$/u, "")).filter(Boolean);
-  const present = new Set((table.columns || []).map((column) => column.id));
-  const missing = requested.filter((id) => !present.has(id));
+  const descriptor = legacyExcelImportDescriptor(source, form);
+  if (!descriptor) return undefined;
   const sourceRef = source.sourceRef || source.id;
   return {
     index: text.indexOf("function importExcel"),
@@ -27,29 +23,20 @@ function legacyExcelImportCandidate(source, form) {
     scope: "global",
     javascript: text,
     function: "",
-    translationStatus: "omitted",
-    coverage: { status: "covered", nativeRules: [], residuals: [] },
+    translationStatus: "needs_review",
+    coverage: { status: "uncovered", nativeRules: [], residuals: [{
+      code: "script.residual.legacy_excel_import_contract_unverified",
+      message: "Native detail import does not prove the source file row/cell offsets, repeated positional column slots or confirmed row replacement contract.",
+      sourceRef
+    }] },
     functionMappings: [{
-      source: `IE Excel importExcel/_DocList_AddRows/deleteRow for ${tableId}; dropped script-only columns ${missing.join(", ")}`,
-      target: "native xform-detail-table canImport",
-      basis: "legacy-runtime-noop",
-      reviewRequired: false
+      source: `legacy positional Excel import for ${descriptor.tableId}`,
+      target: "unverified file parsing, positional binding and row replacement",
+      basis: "untranslated-source",
+      reviewRequired: true
     }],
     sourceRefs: [sourceRef],
-    semanticHints: {
-      coveredLegacyFunctions: [
-        "window.showModalDialog",
-        "window.open",
-        "optTB.deleteRow",
-        "_DocList_AddRows"
-      ],
-      coveredCalculationRanges: [{
-        sourceRef,
-        name: "legacyExcelImport",
-        start: 0,
-        end: Math.max(1, text.length)
-      }]
-    }
+    semanticHints: { legacyExcelImport: descriptor }
   };
 }
 

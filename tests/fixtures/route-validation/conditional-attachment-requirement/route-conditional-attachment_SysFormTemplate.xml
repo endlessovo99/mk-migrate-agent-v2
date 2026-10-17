@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><java class="java.beans.XMLDecoder"><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>fixture-conditional-attachment-sysform</string></void><void method="put"><string>fdModelId</string><string>fixture-conditional-attachment-template</string></void><void method="put"><string>fdName</string><string>Conditional attachment requirement</string></void><void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;table fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_quote&quot;,label:&quot;Quote compared&quot;,dataType:&quot;String&quot;,items:&quot;是&amp;#13;&amp;#10;否&quot;,alignment:&quot;H&quot;}&apos;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;input type=&quot;radio&quot; value=&quot;是&quot;/&gt;&lt;input type=&quot;radio&quot; value=&quot;否&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;td&gt;&lt;div id=&quot;fd_compare_file&quot; fd_type=&quot;attachment&quot; fd_values=&apos;{id:&quot;fd_compare_file&quot;,label:&quot;Comparison file&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;div id=&quot;fixture_attachment_jsp&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&amp;lt;xform:editShow&amp;gt;&amp;lt;script&amp;gt;//attObject2.fileList.fileStatus=-1表示已经删除的
+function removeDeletion(arr,obj){
+    for(let i=0;i&amp;lt;obj.length;i++){
+        if(obj[i].fileStatus!=-1){
+            arr.push((obj[i]));
+        }
+    }
+}
+Com_Parameter.event.submit.push(function(){
+     var currentVal=$(&amp;apos;[name=&amp;quot;extendDataFormInfo.value(fd_quote)&amp;quot;]:checked&amp;apos;).val();
+    //var current=$(&amp;apos;[name=&amp;quot;extendDataFormInfo.value(fd_3a3a25115377a0)&amp;quot;]&amp;apos;).val();
+    var attObject = Attachment_ObjectInfo[&amp;quot;fd_compare_file&amp;quot;].fileList; //第一个
+    var att2=[];
+    removeDeletion(att2,attObject);
+    if(currentVal==&amp;apos;是&amp;apos;&amp;amp;&amp;amp;att2.length==0){
+        alert(&amp;quot;请上传比价文件!&amp;quot;);
+        return false;
+    }
+    return true;
+});&amp;lt;/script&amp;gt;&amp;lt;/xform:editShow&amp;gt;&apos;/&gt;&lt;/div&gt;</string></void><void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name=&quot;fd_quote&quot; label=&quot;Quote compared&quot; enumValues=&quot;是|是;否|否&quot; type=&quot;String&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_compare_file&quot; label=&quot;Comparison file&quot; type=&quot;String&quot;/&gt;&lt;/metadata&gt;</string></void></object></java>

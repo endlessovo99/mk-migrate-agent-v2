@@ -317,6 +317,9 @@ async function runReconcileTransferRecord(argv, options = {}) {
 
 async function runRepairLockedDraft(argv, options = {}) {
   const args = parseArgs(argv);
+  if (args['authorization-profile'] !== undefined || args['expected-snapshot-digest'] !== undefined) {
+    throw new Error('The aggregate-only reader profile is retired; use separately authorized source-bound closeout.');
+  }
   const inputPath = args.positionals[0];
   if (!inputPath) throw new Error("repair-locked-draft requires a trusted migration DSL path");
   if (typeof args.source !== "string" || !args.source.trim()) {

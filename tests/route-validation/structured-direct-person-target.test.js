@@ -60,6 +60,7 @@ describe("structured direct-person targets", () => {
           return [{
             fdId: TARGET_PERSON_ID,
             fdName: "陆佳诚",
+            fdIsBusiness: true,
             fdOrgType: 8
           }];
         }
@@ -90,6 +91,7 @@ describe("structured direct-person targets", () => {
           return [{
             fdId: OPTIONAL_PERSON_ID,
             fdName: "备选人员",
+            fdIsBusiness: true,
             fdOrgType: 8
           }];
         }
@@ -152,7 +154,8 @@ describe("structured direct-person targets", () => {
             return [{
               fdId: FALLBACK_PERSON_ID,
               fdName: "迁移兜底人员",
-              fdOrgType: 8
+              fdIsBusiness: true,
+            fdOrgType: 8
             }];
           }
           return [];
@@ -227,7 +230,8 @@ describe("structured direct-person targets", () => {
             return [{
               fdId: FALLBACK_PERSON_ID,
               fdName: "迁移兜底人员",
-              fdOrgType: 8
+              fdIsBusiness: true,
+            fdOrgType: 8
             }];
           }
           return [];

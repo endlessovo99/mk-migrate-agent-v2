@@ -4,6 +4,7 @@ import {
   resolveTemporaryOrgFallbacks
 } from "./temporary-org-fallbacks.js";
 
+import {resolveTemplateReadScope} from './template-read-scope.js';
 const PARTICIPANT_RESOLUTION_STAGE = "resolveWorkflowParticipants";
 const SIT_FALLBACK_REASONS = new Set(["not_found", "missing_source_evidence", "search_failed"]);
 const TEMPLATE_AUTHORIZATION_COLLECTIONS = Object.freeze([
@@ -50,6 +51,9 @@ export async function resolveWorkflowParticipants(dsl, {
   directPersonFallbackIds
 } = {}) {
   const nextDsl = structuredClone(dsl);
+  const readBinding=await resolveTemplateReadScope(nextDsl,{client,targetBaseUrl,templateAuthorizationOverrides});
+  if(readBinding){nextDsl.runtime={...(nextDsl.runtime||{}),nativeTemplateReadScope:readBinding,
+    templateReadScopeSource:structuredClone(nextDsl.template.authorization)};}
   const directTargetAmbiguityIssues = collectDirectTargetAmbiguityIssues(nextDsl);
   if (directTargetAmbiguityIssues.length) {
     throw new ParticipantResolutionError(directTargetAmbiguityIssues);
@@ -119,6 +123,9 @@ export async function resolveWorkflowParticipants(dsl, {
       const explicitDirectPersonFallback = workflowIdentity && identity.kind === "target" &&
         explicitDirectPersonFallbacks.has(normalizeText(identity.member?.id));
       try {
+        if(readBinding&&identity.scope==='template_authorization'&&identity.member?.sourceId===readBinding.sourceId){
+          return {...identity,target:{fdId:readBinding.everyone.id,fdName:readBinding.everyone.name,fdOrgType:8},builtinTemplateReader:true};
+        }
         if (explicitDirectOverride) {
           return await resolveDirectParticipantOverride(
             identity,
@@ -141,7 +148,8 @@ export async function resolveWorkflowParticipants(dsl, {
             identity,
             templateAuthorizationOverride,
             client,
-            elementCache
+            elementCache,
+            { targetBaseUrl, configuredFallbacks, allowTemplateAuthorizationFallback }
           );
         }
         const resolution = await resolveIdentity(identity, client, { searchCache, elementCache });
@@ -175,11 +183,13 @@ export async function resolveWorkflowParticipants(dsl, {
               ? "override_target_validation_failed"
               : explicitDirectOverride
                 ? "direct_override_target_validation_failed"
+              : templateAuthorizationOverride
+                ? "template_authorization_override_target_validation_failed"
               : identity.kind === "target" ? "target_validation_failed" : "search_failed",
             name: identity.member.name,
             sourceId: identity.member.sourceId,
-            ...((explicitOverride || explicitDirectOverride)
-              ? { targetId: (explicitOverride || explicitDirectOverride).targetFdId }
+            ...((explicitOverride || explicitDirectOverride || templateAuthorizationOverride)
+              ? { targetId: (explicitOverride || explicitDirectOverride || templateAuthorizationOverride).targetFdId }
               : {}),
             paths: identity.paths,
             message: error instanceof Error ? error.message : String(error)
@@ -189,6 +199,26 @@ export async function resolveWorkflowParticipants(dsl, {
     }
   );
 
+  for (const resolution of resolutions) {
+    if (resolution.builtinTemplateReader || normalizeOrgType(resolution.target?.fdOrgType) !== '8') continue;
+    // Search results may omit account metadata; exact lookup must then prove
+    // this is an ordinary business account before any person fallback can run.
+    let reason;
+    if (typeof resolution.target.fdIsBusiness !== 'boolean') {
+      try {
+        const {candidates, exactMatches} = await currentElementsByExactId(resolution.target.fdId, client, elementCache);
+        reason = candidates.length !== 1 || exactMatches.length !== 1 || normalizeOrgType(exactMatches[0]?.fdOrgType) !== '8'
+          ? 'target_person_identity_unverified'
+          : ordinaryPersonTargetIssue(exactMatches[0]);
+      } catch {
+        reason = 'target_person_identity_unverified';
+      }
+    } else reason = ordinaryPersonTargetIssue(resolution.target);
+    if (reason) {
+      delete resolution.target;
+      resolution.issue = {reason, paths: resolution.paths};
+    }
+  }
   const unresolvedResolutions = resolutions.filter((resolution) => resolution.issue);
   const fallbackResolutions = allowsTemporaryOrgFallbacks(targetBaseUrl)
     ? unresolvedResolutions.filter((resolution) => isSitFallbackEligible(resolution, {
@@ -311,6 +341,7 @@ export async function resolveWorkflowParticipants(dsl, {
 
   return {
     dsl: nextDsl,
+    ...(readBinding?{nativeTemplateReadScope:readBinding}:{}),
     resolvedCount,
     identityCount: identities.size,
     fallbackCount,
@@ -791,7 +822,8 @@ async function resolveTemplateAuthorizationOverride(
   identity,
   override,
   client,
-  elementCache
+  elementCache,
+  { targetBaseUrl, configuredFallbacks, allowTemplateAuthorizationFallback } = {}
 ) {
   const evidenceIssue = validateSourceEvidence(identity);
   const parentNameIsOnlyMissingEvidence = evidenceIssue?.missing?.length > 0 &&
@@ -807,10 +839,13 @@ async function resolveTemplateAuthorizationOverride(
     };
   }
 
+  const confirmedFallback = allowTemplateAuthorizationFallback === true &&
+    confirmedFallbackOverride(identity, override, targetBaseUrl, configuredFallbacks);
   const { candidates, exactMatches } = await currentElementsByExactId(
     override.targetFdId,
     client,
-    elementCache
+    elementCache,
+    confirmedFallback ? { departmentEvidence: true } : undefined
   );
   if (candidates.length !== 1 || exactMatches.length !== 1) {
     return {
@@ -847,7 +882,21 @@ async function resolveTemplateAuthorizationOverride(
       }
     };
   }
+  if (confirmedFallback && target.fdIsAvailable !== true) {
+    return {
+      ...identity,
+      issue: {
+        reason: "template_authorization_override_target_unavailable",
+        name: identity.member.name,
+        sourceId: override.sourceId,
+        sourceOrgType: identity.member.sourceOrgType,
+        targetId: override.targetFdId,
+        paths: identity.paths
+      }
+    };
+  }
   if (
+    !confirmedFallback &&
     normalizeText(override.sourceId) !== normalizeText(target.fdId) &&
     normalizeText(target.fdName) !== normalizeText(identity.member.name)
   ) {
@@ -869,7 +918,8 @@ async function resolveTemplateAuthorizationOverride(
     ...identity,
     target,
     templateAuthorizationOverride: true,
-    templateAuthorizationOverrideSpec: override
+    templateAuthorizationOverrideSpec: override,
+    ...(confirmedFallback ? { confirmedFallbackOverride: true } : {})
   };
 }
 
@@ -900,7 +950,10 @@ function buildParticipantOverrideAudit(resolution) {
     target: {
       fdId: normalizeText(resolution.target.fdId),
       fdName: normalizeText(resolution.target.fdName),
-      fdOrgType: resolution.target.fdOrgType
+      fdOrgType: resolution.target.fdOrgType,
+      ...(resolution.templateAuthorizationOverride && resolution.confirmedFallbackOverride
+        ? { fdIsAvailable: true }
+        : {})
     },
     ...(resolution.exactSourceIdRevalidation ? { exactSourceIdRevalidation: true } : {}),
     ...(resolution.confirmedFallbackOverride ? { confirmedFallbackOverride: true } : {}),
@@ -1113,7 +1166,7 @@ async function resolveSitFallbackTargets(client, elementCache, resolutions, fall
   try {
     let candidatesPromise = elementCache.get(targetIds.join("\0"));
     if (!candidatesPromise) {
-      candidatesPromise = Promise.resolve(client.getElementInfo(targetIds));
+      candidatesPromise = Promise.resolve(client.getElementInfo(targetIds, {builtinEvidence: true}));
       elementCache.set(targetIds.join("\0"), candidatesPromise);
       for (const targetId of targetIds) {
         if (!elementCache.has(targetId)) {
@@ -1138,6 +1191,10 @@ async function resolveSitFallbackTargets(client, elementCache, resolutions, fall
         });
         continue;
       }
+      if (candidates.filter(row => normalizeText(row.fdId) === fallback.fdId).length !== 1) {
+        issues.push({ reason: "fallback_target_ambiguous", targetId: fallback.fdId, paths });
+        continue;
+      }
       if (normalizeOrgType(candidate.fdOrgType) !== String(fallback.fdOrgType)) {
         issues.push({
           reason: "fallback_target_type_mismatch",
@@ -1148,6 +1205,8 @@ async function resolveSitFallbackTargets(client, elementCache, resolutions, fall
         });
         continue;
       }
+      const personIssue = ordinaryPersonTargetIssue(candidate);
+      if (personIssue) throw new ParticipantResolutionError([{reason:personIssue, targetId:fallback.fdId, paths}]);
       validated.set(fallbackValidationKey(fallback), {
         ...candidate,
         fdName: normalizeText(candidate.fdName) || fallback.fdName,
@@ -1312,10 +1371,13 @@ async function resolveIdentity(identity, client, caches) {
   const name = normalizeText(identity.member.name);
   const sourceOrgType = normalizeOrgType(identity.member.sourceOrgType);
   const sourceLoginName = normalizeText(identity.member.sourceLoginName);
+  if(sourceLoginName==='everyone')return {...identity,issue:{reason:'builtin_everyone_unsupported_scope',sourceId:identity.member.sourceId,paths:identity.paths}};
   if (sourceOrgType === "8" && sourceLoginName) {
-    const loginCandidates = uniqueCurrentCandidates(
-      await searchCurrentCandidates(sourceLoginName, Number(sourceOrgType), client, caches.searchCache)
-    );
+    const loginRows = await searchCurrentCandidates(sourceLoginName, Number(sourceOrgType), client, caches.searchCache);
+    if(Array.isArray(loginRows)&&loginRows.some(hasConflictingPersonLogin)){
+      return {...identity,issue:{reason:'target_login_identity_conflict',sourceId:identity.member.sourceId,paths:identity.paths}};
+    }
+    const loginCandidates = uniqueCurrentCandidates(loginRows);
     const loginMatches = matchPersonLoginCandidates(identity.member, loginCandidates);
     if (loginMatches.length > 0) {
       return resolutionFromMatches(identity, loginMatches);
@@ -1323,9 +1385,11 @@ async function resolveIdentity(identity, client, caches) {
   }
 
   const searchName = participantSearchName(identity.member, sourceOrgType);
-  const candidates = uniqueCurrentCandidates(
-    await searchCurrentCandidates(searchName, Number(sourceOrgType), client, caches.searchCache)
-  );
+  const rows = await searchCurrentCandidates(searchName, Number(sourceOrgType), client, caches.searchCache);
+  if (sourceOrgType === '8' && Array.isArray(rows) && rows.some(hasConflictingPersonLogin)) {
+    return {...identity,issue:{reason:'target_login_identity_conflict',sourceId:identity.member.sourceId,paths:identity.paths}};
+  }
+  const candidates = uniqueCurrentCandidates(rows);
   const matches = matchCurrentCandidates(identity.member, candidates);
   return resolutionFromMatches(identity, matches);
 }
@@ -1483,7 +1547,7 @@ async function currentElementsByExactId(targetId, client, elementCache, { depart
   if (!candidatesPromise) {
     candidatesPromise = Promise.resolve(departmentEvidence
       ? client.getElementInfo([targetId], { departmentEvidence: true })
-      : client.getElementInfo([targetId]));
+      : client.getElementInfo([targetId], {builtinEvidence: true}));
     elementCache.set(key, candidatesPromise);
   }
   const response = await candidatesPromise;
@@ -1495,6 +1559,19 @@ async function currentElementsByExactId(targetId, client, elementCache, { depart
       normalizeText(candidate.fdId) === targetId
     ))
   };
+}
+
+function hasConflictingPersonLogin(candidate) {
+  const flat=normalizeText(candidate?.fdLoginName), nested=normalizeText(candidate?.fdAccount?.fdLoginName);
+  return Boolean(flat && nested && flat !== nested);
+}
+
+function ordinaryPersonTargetIssue(candidate) {
+  if (normalizeOrgType(candidate?.fdOrgType) !== '8') return undefined;
+  if (hasConflictingPersonLogin(candidate)) return 'target_login_identity_conflict';
+  if (normalizeText(candidate?.fdLoginName)==='everyone' || normalizeText(candidate?.fdAccount?.fdLoginName)==='everyone' || candidate.fdIsBusiness === false) return 'builtin_everyone_scope_required';
+  if (candidate.fdIsBusiness !== true) return 'target_person_builtin_evidence_missing';
+  return undefined;
 }
 
 function resolutionFromMatches(identity, matches) {
@@ -1604,7 +1681,7 @@ function matchPersonLoginCandidates(member, candidates) {
   if (!sourceLoginName) return [];
   return candidates.filter((candidate) => (
     normalizeOrgType(candidate.fdOrgType) === "8" &&
-    [candidate.fdLoginName, candidate.fdNo]
+    [candidate.fdLoginName, candidate.fdAccount?.fdLoginName, candidate.fdNo]
       .some((value) => normalizeText(value) === sourceLoginName)
   ));
 }

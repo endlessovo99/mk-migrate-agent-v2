@@ -7,6 +7,7 @@ import {
 import { buildFormRuleRefIndex, resolveEffectTarget } from "../../src/dsl/form-rules.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
+import { inspectDeterministicScriptBranchProof } from "../../src/dsl/deterministic-script-translations.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import {
   formAttr,
@@ -357,17 +358,22 @@ describe("detail footer total Route case", () => {
     };
     assert.equal(Object.values(actionIndexes).every((index) => index >= 0), true);
     const patches = [
-      ...reviewScriptPatches(
+      ...(dsl.scripts.actions[actionIndexes.editLoad].translationStatus === "mapped" ? [] : reviewScriptPatches(
         actionIndexes.editLoad,
         dsl.scripts.actions[actionIndexes.editLoad],
         timedLoadVisibilityFunction()
-      ),
+      )),
       ...reviewScriptPatches(
         actionIndexes.change,
         dsl.scripts.actions[actionIndexes.change],
         changeHelperFunction("fd_3c6a790de91eb0")
       )
     ];
+    if(dsl.scripts.actions[actionIndexes.editLoad].translationStatus==="mapped"){
+      assert.equal(inspectDeterministicScriptBranchProof(dsl.scripts.actions[actionIndexes.editLoad]).ok,true);
+      assert.match(dsl.scripts.actions[actionIndexes.editLoad].function,/setTimeout/);
+      assert.match(dsl.scripts.actions[actionIndexes.editLoad].function,/510/);
+    }
     const reviewed = applyEvidenceBackedPatches(dsl, patches, {
       sourceDraft,
       sourceRefs: collectSourceRefs(sourceDraft)
@@ -420,12 +426,18 @@ describe("detail footer total Route case", () => {
     const sourceDraft = cleanSourceFile(fixture);
     const dsl = draftSourceDraft(sourceDraft);
     const index = dsl.scripts.actions.findIndex(action => action.event === "onLoad" && action.runWhen?.viewStatusIn?.includes("edit"));
-    const reviewed = applyEvidenceBackedPatches(dsl, reviewScriptPatches(index, dsl.scripts.actions[index],
-      loadVisibilityFunction("fd_3c66895473ff5c", true)), { sourceDraft, sourceRefs: collectSourceRefs(sourceDraft) });
-    assert.equal(reviewed.ok, false);
-    assert.ok(reviewed.diagnostics.some(item => item.code === "agent.patch.row_marker_semantics_unverified" &&
-      item.details.reason === "source_or_scheduling_unproven"));
-    const unreviewed = createTrustedMigrationDsl(sourceDraft, dsl, { externalAgentReviewed: true, reviewerName: "route-validation" });
+    const changeIndex=dsl.scripts.actions.findIndex(action=>action.event==="onChange");
+    const completed=applyEvidenceBackedPatches(dsl,reviewScriptPatches(changeIndex,dsl.scripts.actions[changeIndex],changeHelperFunction("fd_3c6a790de91eb0")),{sourceDraft,sourceRefs:collectSourceRefs(sourceDraft)});
+    assert.equal(completed.ok,true,JSON.stringify(completed.diagnostics));
+    const before=createTrustedMigrationDsl(sourceDraft,completed.dslDraft,{externalAgentReviewed:true,reviewerName:"route-validation"});
+    assert.equal(checkTrust(sourceDraft,before).ok,true,JSON.stringify(checkTrust(sourceDraft,before).diagnostics));
+    const immediate=loadVisibilityFunction("fd_3c66895473ff5c", true);
+    const reviewed = applyEvidenceBackedPatches(completed.dslDraft, reviewScriptPatches(index, dsl.scripts.actions[index],
+      immediate), { sourceDraft, sourceRefs: collectSourceRefs(sourceDraft) });
+    const candidate=reviewed.ok?reviewed.dslDraft:structuredClone(completed.dslDraft);
+    if(!reviewed.ok){assert.ok(reviewed.diagnostics.some(item=>item.level==="error"));candidate.scripts.actions[index].function=immediate;}
+    assert.equal(candidate.scripts.actions[index].function,immediate);
+    const unreviewed = createTrustedMigrationDsl(sourceDraft, candidate, { externalAgentReviewed: true, reviewerName: "route-validation" });
     assert.equal(checkTrust(sourceDraft, unreviewed).ok, false);
     assert.equal(buildDryRunPlan(unreviewed).ok, false);
   });

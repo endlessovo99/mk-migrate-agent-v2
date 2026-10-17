@@ -156,9 +156,9 @@ describe("workflow-template authorization and timeout Route case", () => {
         if (Number(orgType) === 4) return [];
         return baseClient.searchOrg(key, orgType);
       },
-      async getElementInfo(targets) {
+      async getElementInfo(targets, options) {
         return [
-          ...await baseClient.getElementInfo(targets),
+          ...await baseClient.getElementInfo(targets, options),
           ...targets.filter((target) => target === fallbackPostId).map(() => ({
             fdId: fallbackPostId,
             fdName: "配置模版权限兜底岗位",
@@ -273,6 +273,7 @@ function permissionResolutionClient(dsl) {
       {
       fdId: member.id || member.sourceId,
       fdName: member.name,
+      fdIsBusiness: true,
       fdOrgType: member.targetOrgType || member.sourceOrgType || 8
     }])
   );
@@ -300,6 +301,7 @@ function person(loginName) {
     fdId: `target-person-${loginName}`,
     fdName: `目标人员-${loginName}`,
     fdOrgType: 8,
+    fdIsBusiness: true,
     fdLoginName: loginName
   };
 }

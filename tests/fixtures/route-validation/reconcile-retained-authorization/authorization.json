@@ -3,18 +3,57 @@
     "readerFlag": true,
     "readers": [],
     "editors": [],
-    "allReaders": [{ "type": "user_or_org", "name": "Legacy reader", "sourceId": "source-reader", "sourceOrgType": 8, "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson", "sourceRef": "source.template.authorization.authAllReaders.0" }],
-    "allEditors": [{ "type": "user_or_org", "name": "Old editor label", "sourceId": "editor-e", "sourceOrgType": 8, "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson", "sourceRef": "source.template.authorization.authAllEditors.0" }],
+    "allReaders": [
+      {
+        "type": "user_or_org",
+        "name": "Legacy reader",
+        "sourceId": "source-reader",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceRef": "source.template.authorization.authAllReaders.0"
+      }
+    ],
+    "allEditors": [
+      {
+        "type": "user_or_org",
+        "name": "Old editor label",
+        "sourceId": "editor-e",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceRef": "source.template.authorization.authAllEditors.0"
+      }
+    ],
     "temporaryReaders": [],
     "temporaryEditors": []
   },
   "targets": [
-    { "fdId": "reader-r", "fdName": "Retained fallback reader", "fdOrgType": 8 },
-    { "fdId": "editor-e", "fdName": "Current editor label", "fdOrgType": 8 }
+    {
+      "fdId": "reader-r",
+      "fdName": "Retained fallback reader",
+      "fdOrgType": 8,
+      "fdIsBusiness": true
+    },
+    {
+      "fdId": "editor-e",
+      "fdName": "Current editor label",
+      "fdOrgType": 8,
+      "fdIsBusiness": true
+    }
   ],
   "expectedV29": {
-    "readers": ["reader-r"], "editors": ["editor-e"],
-    "allReaders": ["reader-r"], "allEditors": ["editor-e"],
-    "temporaryReaders": [], "temporaryEditors": []
+    "readers": [
+      "reader-r"
+    ],
+    "editors": [
+      "editor-e"
+    ],
+    "allReaders": [
+      "reader-r"
+    ],
+    "allEditors": [
+      "editor-e"
+    ],
+    "temporaryReaders": [],
+    "temporaryEditors": []
   }
 }

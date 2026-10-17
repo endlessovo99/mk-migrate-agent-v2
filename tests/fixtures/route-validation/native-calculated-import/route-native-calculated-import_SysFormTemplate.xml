@@ -1,0 +1,53 @@
+<java><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>native-calculated-import-form</string></void><void method="put"><string>fdModelId</string><string>native-calculated-import-model</string></void><void method="put"><string>fdName</string><string>Synthetic native calculated import</string></void><void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;linkLabel&quot; fd_values=&apos;{id:&quot;fd_download&quot;,content:&quot;Download template&quot;,link:&quot;https://files.example.invalid/old.xlsx&quot;}&apos;&gt;Download template&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;total&quot;,label:&quot;Total&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,readOnly:&quot;true&quot;,expression_id:&quot;$XForm_CalculatioFuns_Sum$($detailList.amount$)&quot;,expression_name:&quot;$XForm_CalculatioFuns_Sum$($detailList.amount$)&quot;}&apos;&gt;&lt;/div&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;total_text&quot;,label:&quot;Total text&quot;,dataType:&quot;String&quot;,readOnly:&quot;true&quot;}&apos;&gt;&lt;input id=&quot;total_text&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;detailList&quot;,label:&quot;Imported rows&quot;}&apos;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Quantity&lt;/td&gt;&lt;td&gt;Price&lt;/td&gt;&lt;td&gt;Amount&lt;/td&gt;&lt;td&gt;Rate&lt;/td&gt;&lt;/tr&gt;&lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;qty&quot;,label:&quot;Quantity&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;input id=&quot;qty&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;price&quot;,label:&quot;Price&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;input id=&quot;price&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;calculation&quot; fd_values=&apos;{id:&quot;amount&quot;,label:&quot;Amount&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,readOnly:&quot;true&quot;,expression_id:&quot;$detailList.qty$ * $detailList.price$&quot;,expression_name:&quot;$detailList.qty$ * $detailList.price$&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;rate&quot;,label:&quot;Rate&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;input id=&quot;rate&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;div fd_type=&quot;jsp&quot; id=&quot;jsp_import&quot;&gt;&lt;input type=&quot;hidden&quot; value=&quot;&amp;lt;xform:editShow&amp;gt;&amp;lt;div onclick=&amp;quot;importExcel()&amp;quot;&amp;gt;Excel import&amp;lt;/div&amp;gt;&amp;lt;script&amp;gt;var ImportExcel_Parameter = new Array();
+        //目前只支持IE,其他浏览器需要后续完善
+        function importExcel() {
+            //开始导入Excel的起始行
+            var startRowNo = 4;
+            var startCellNo = 2;
+            //明细表中的需要导入控件的fdId,请按照Excel模板的列逐个匹配，不能允许跨列
+            var detailTableId = &amp;quot;detailList&amp;quot;;
+            var detailControlIds =
+                &amp;quot;qty;price;amount;rate;rate;&amp;quot;;
+
+            //一下代码无效修改，修改需谨慎
+            //获取Excel中指定的内容
+            parsingExcelContent(startRowNo, startCellNo, detailTableId, detailControlIds);
+
+        }
+
+        function parsingExcelContent(startRowNo, startCellNo, detailTableId, detailControlIds) {
+            var parsingContent = new Array(detailTableId, detailControlIds, startRowNo, startCellNo);
+            var params = new Array(detailTableId, detailControlIds, startRowNo, startCellNo);
+            var style = &amp;quot;dialogWidth:650px; dialogHeight:350px; status:0;scroll:0; help:0; resizable:1&amp;quot;;
+            var excelContent ;
+            if (window.showModalDialog) {
+                excelContent = window.showModalDialog(Com_Parameter.ContextPath +
+                    &amp;quot;km/review/km_review_detail_excel/kmReviewDetailImport_excel.jsp&amp;quot;, params, style);
+            } else {
+                ImportExcel_Parameter = params;
+                excelContent = window.open(Com_Parameter.ContextPath +
+                    &amp;quot;km/review/km_review_detail_excel/kmReviewDetailImport_excel.jsp&amp;quot;, params, style);
+            }
+            if (excelContent != null) {
+                _DocList_AddRows(detailTableId, excelContent);
+                //  _DocList_AddRows(&amp;apos;TABLE_DL_fd_sap_accl_sub_tab&amp;apos;, arrValues);
+            }
+        }
+        //根据每行的控件值，添加行并设置值
+        function _DocList_AddRows(detailTableId, rowsCtrlValue) {
+            var optTB = document.getElementById(&amp;quot;TABLE_DL_&amp;quot; + detailTableId);
+            var tbInfo = DocList_TableInfo[optTB.id];
+            for (var i = tbInfo.lastIndex - 1; i &amp;gt; 0; i--) {
+                optTB.deleteRow(i);
+                tbInfo.lastIndex--;
+                for (var j = i; j &amp;lt; tbInfo.lastIndex; j++) {
+                    DocListFunc_RefreshIndex(tbInfo, j);
+                }
+            }
+
+            //添加
+            for (var i = 0; i &amp;lt; rowsCtrlValue.length; i++) {
+                DocList_AddRow(optTB, null, rowsCtrlValue[i]);
+            }
+        }&amp;lt;/script&amp;gt;&amp;lt;/xform:editShow&amp;gt;&quot;/&gt;&lt;/div&gt;&lt;div fd_type=&quot;jsp&quot; id=&quot;jsp_currency&quot;&gt;&lt;input type=&quot;hidden&quot; value=&quot;&amp;lt;xform:editShow&amp;gt;&amp;lt;script&amp;gt;AttachXFormValueChangeEventById(&amp;apos;total&amp;apos;,function(value){GetXFormFieldById(&amp;apos;total_text&amp;apos;)[0].value=convertCurrency(value);});
+function convertCurrency(money){if(money==&amp;apos;&amp;apos;){return &amp;apos;&amp;apos;;}money=parseFloat(money);if(money==0){return &amp;apos;零&amp;apos;;}return &amp;apos;金额&amp;apos;+money.toString();}&amp;lt;/script&amp;gt;&amp;lt;/xform:editShow&amp;gt;&quot;/&gt;&lt;/div&gt;</string></void><void method="put"><string>fdDisplayJsp</string><string></string></void><void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name=&quot;total&quot; label=&quot;Total&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;&lt;extendSimpleProperty name=&quot;total_text&quot; label=&quot;Total text&quot; type=&quot;String&quot;/&gt;&lt;extendSubTableProperty name=&quot;detailList&quot; label=&quot;Imported rows&quot;&gt;&lt;extendSimpleProperty name=&quot;qty&quot; label=&quot;Quantity&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;&lt;extendSimpleProperty name=&quot;price&quot; label=&quot;Price&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;&lt;extendSimpleProperty name=&quot;amount&quot; label=&quot;Amount&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;&lt;extendSimpleProperty name=&quot;rate&quot; label=&quot;Rate&quot; type=&quot;Double&quot; scale=&quot;2&quot;/&gt;&lt;/extendSubTableProperty&gt;&lt;/metadata&gt;</string></void></object></java>

@@ -1,0 +1,5 @@
+{
+  "fdDesignerHtml": "<div fd_type=\"inputText\" fd_values='{id:\"fd_state\",label:\"State\",dataType:\"String\",canShow:\"false\"}'><input id=\"fd_state\"/></div>",
+  "fdDisplayJsp": "<input type=\"hidden\" name=\"extendDataFormInfo.value(fd_state)\"/><script>Com_AddEventListener(window,\"load\",function(){if(GetXFormFieldValueById(\"fd_state\")==\"A\"){common_dom_row_set_show_required_reset(\"fd_row\",true,false,false);}});</script>",
+  "fdMetadataXml": "<metadata><extendSimpleProperty name=\"fd_state\" type=\"String\"/></metadata>"
+}

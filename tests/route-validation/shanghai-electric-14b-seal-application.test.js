@@ -201,7 +201,8 @@ function collectDirectTargets(dsl) {
       ? [[member.id, {
           fdId: member.id,
           fdName: member.name,
-          fdOrgType: Number(member.targetOrgType)
+          fdOrgType: Number(member.targetOrgType),
+          fdIsBusiness: true
         }]]
       : [])
   ));

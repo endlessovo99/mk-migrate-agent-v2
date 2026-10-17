@@ -392,7 +392,7 @@ function authorizationFixture({ historical = false } = {}) {
   };
   sourceDraft.template.authorization = {
     readerFlag: false,
-    readers: [],
+    readers: [structuredClone({...sourceMember,sourceRef:'source.template.authorization.authReaders.0'})],
     editors: [],
     allReaders: [structuredClone(sourceMember)],
     allEditors: [structuredClone(sourceMember)],
@@ -408,7 +408,7 @@ function authorizationFixture({ historical = false } = {}) {
     dslDraftDigest: sha256Digest(dslDraft)
   });
   const resolved = structuredClone(dsl);
-  for (const key of ["allReaders", "allEditors"]) {
+  for (const key of ["readers", "allReaders", "allEditors"]) {
     Object.assign(resolved.template.authorization[key][0], {
       id: MEMBER_ID,
       name: "Current Maintainer",
@@ -472,11 +472,11 @@ function authorizationFixture({ historical = false } = {}) {
       code: "readback.workflow.template_authorization_mismatch",
       details: {
         expected: {
-          readers: [], editors: [], allReaders: [MEMBER_ID], allEditors: [MEMBER_ID],
+          readers: [MEMBER_ID], editors: [], allReaders: [MEMBER_ID], allEditors: [MEMBER_ID],
           temporaryReaders: [], temporaryEditors: []
         },
         actual: {
-          readers: [], editors: [], allReaders: [], allEditors: [],
+          readers: [MEMBER_ID], editors: [], allReaders: [], allEditors: [],
           temporaryReaders: [], temporaryEditors: []
         }
       }
@@ -490,6 +490,7 @@ function authorizationFixture({ historical = false } = {}) {
           target: { fdId: MEMBER_ID, fdName: "Current Maintainer", fdOrgType: 8 },
           paths: [
             "/template/authorization/allReaders/0",
+            "/template/authorization/readers/0",
             "/template/authorization/allEditors/0"
           ]
         }]
@@ -730,7 +731,7 @@ class LockedDraftFakeClient {
   }
   async getElementInfo(targets) {
     this.calls.push({ operation: "get-element-info", targets });
-    return targets.map((fdId) => ({ fdId, fdName: "Current Maintainer", fdOrgType: 8 }));
+    return targets.map((fdId) => ({ fdId, fdName: "Current Maintainer", fdOrgType: 8, fdIsBusiness: true }));
   }
   async updateTemplate(payload) {
     this.calls.push({ operation: "update-template" });

@@ -1,0 +1,55 @@
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-closed-effects-form</string></void>
+<void method="put"><string>fdModelId</string><string>route-closed-effects-template</string></void>
+<void method="put"><string>fdName</string><string>MK_TEST_Closed Main Field Effects</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_amount",label:"Amount",dataType:"Double",decimal:"2"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="0" column="1"&gt;&lt;div fd_type="chinaValue" fd_values='{id:"fd_upper",label:"Upper",dataType:"String",relatedid:"fd_amount"}' relatedid="fd_amount"&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="radio" fd_values='{id:"fd_choice",label:"Choice",dataType:"String",enumValues:"Alpha|A;Beta|B"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="1" column="1"&gt;&lt;div fd_type="checkbox" fd_values='{id:"fd_checks",label:"Checks",dataType:"String",enumValues:"First|X;Second|Y"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" id="fd_A_row" name="fd_A_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_a",label:"A note",dataType:"String"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="2" column="1"&gt;A row&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;input type="hidden" id="fd_B_row" name="fd_B_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_b",label:"B note",dataType:"String"}' &gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="3" column="1"&gt;B row&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="4" column="0"&gt;&lt;div fd_type="inputText" style="display:none" fd_values='{id:"fd_mirror",label:"Joined choices",dataType:"String",canShow:"false",showStatus:"noShow"}'&gt;&lt;input id="fd_mirror" type="hidden"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="5" column="0,1" colspan="2"&gt;&lt;div id="fd_behavior" fd_type="jsp"&gt;&lt;input type="hidden" name="htmlContent" value="&amp;lt;script&amp;gt;
+function convertCurrency(amount) { return &amp;quot;amount:&amp;quot; + amount; }
+AttachXFormValueChangeEventById(&amp;quot;fd_amount&amp;quot;, function(value, domElement) {
+ var old = GetXFormFieldById(&amp;quot;fd_retired_upper&amp;quot;)[0];
+ old.value = convertCurrency(value);
+});
+AttachXFormValueChangeEventById(&amp;quot;fd_choice&amp;quot;, function(value, domElement) {
+ if (value.indexOf(&amp;quot;A&amp;quot;) &amp;gt;= 0) {
+  GetXFormFieldById(&amp;quot;fd_b&amp;quot;)[0].value = &amp;quot;&amp;quot;;
+  common_dom_row_set_show_required_reset(&amp;quot;fd_A_row&amp;quot;, true, true, false);
+  common_dom_row_set_show_required_reset(&amp;quot;fd_B_row&amp;quot;, false, false, false);
+ } else if (value.indexOf(&amp;quot;B&amp;quot;) &amp;gt;= 0) {
+  GetXFormFieldById(&amp;quot;fd_a&amp;quot;)[0].value = &amp;quot;&amp;quot;;
+  common_dom_row_set_show_required_reset(&amp;quot;fd_A_row&amp;quot;, false, false, false);
+  common_dom_row_set_show_required_reset(&amp;quot;fd_B_row&amp;quot;, true, true, false);
+ }
+});
+AttachXFormValueChangeEventById(&amp;quot;fd_checks&amp;quot;, function(value, domElement) {
+ obj = GetXFormFieldById(&amp;quot;fd_checks&amp;quot;);
+ mirror = GetXFormFieldById(&amp;quot;fd_mirror&amp;quot;)[0];
+ checked = [];
+ for (var i=0;i&amp;lt;obj.length;i++) {
+  if (obj[i].checked) checked.push(obj[i].value);
+ }
+ joined = checked.join(&amp;quot;-&amp;quot;);
+ mirror.value = joined;
+});
+&amp;lt;/script&amp;gt;
+&amp;lt;script&amp;gt;
+Com_AddEventListener(window,&amp;quot;load&amp;quot;,function() {
+ var one = GetXFormFieldById(&amp;quot;fd_a&amp;quot;)[0];
+ if (one) { one.setAttribute(&amp;quot;placeholder&amp;quot;, &amp;quot;first hint&amp;quot;); }
+ var absent = GetXFormFieldById(&amp;quot;fd_retired_hint&amp;quot;)[0];
+ if (absent) { absent.setAttribute(&amp;quot;placeholder&amp;quot;, &amp;quot;retired hint&amp;quot;); }
+ var last = GetXFormFieldById(&amp;quot;fd_a&amp;quot;)[0];
+ if (last) { last.setAttribute(&amp;quot;placeholder&amp;quot;, &amp;quot;final hint&amp;quot;); }
+});
+&amp;lt;/script&amp;gt;"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;xform:xtext property="extendDataFormInfo.value(fd_amount)" dataType="Double"/&gt;
+&lt;xform:xtext property="extendDataFormInfo.value(fd_upper)" dataType="String" showStatus="readOnly" htmlElementProperties="relatedid='fd_amount' chinavalue='true' isrow='false'"/&gt;
+&lt;script&gt;Com_IncludeFile('chinaValue_script.js','../sys/xform/designer/chinaValue/');&lt;/script&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;
+&lt;extendSimpleProperty name="fd_amount" label="Amount" type="Double" scale="2"/&gt;
+&lt;extendSimpleProperty name="fd_upper" label="Upper" type="String" relatedid="fd_amount"/&gt;
+&lt;extendSimpleProperty name="fd_choice" label="Choice" type="String" enumValues="Alpha|A;Beta|B"/&gt;
+&lt;extendSimpleProperty name="fd_checks" label="Checks" type="String" enumValues="First|X;Second|Y"/&gt;
+&lt;extendSimpleProperty name="fd_a" label="A note" type="String"/&gt;
+&lt;extendSimpleProperty name="fd_b" label="B note" type="String"/&gt;
+&lt;extendSimpleProperty name="fd_mirror" label="Joined choices" type="String" canDisplay="false"/&gt;
+&lt;/metadata&gt;</string></void>
+</object></java>

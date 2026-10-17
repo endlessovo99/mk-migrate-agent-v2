@@ -32,9 +32,11 @@ function prove(original, target, fieldEvidence = {}) {
   });
 }
 
-function review(draft, changes = functions, sourceDraft = source) {
+function review(draft, changes = functions, sourceDraft = source, { forceActions = [] } = {}) {
   const patches = draft.scripts.actions.flatMap((action, index) => {
-    const values = { function: changes[index === 0 ? "atomic" : "or"], translationStatus: "mapped",
+    const name = index === 0 ? "atomic" : "or";
+    if (action.translationStatus !== "needs_review" && !forceActions.includes(name)) return [];
+    const values = { function: changes[name], translationStatus: "mapped",
       coverage: { status: "translated", nativeRules: [], residuals: [] },
       functionMappings: [{ source: "original static timer and ordered row initialization", target: "same setTimeout with MKXFORM", basis: "semantic-translation", reviewRequired: false }] };
     return Object.entries(values).map(([key, value]) => ({
@@ -43,7 +45,8 @@ function review(draft, changes = functions, sourceDraft = source) {
       rationale: "Fixture-only semantic review", confidence: 0.99
     }));
   });
-  return applyEvidenceBackedPatches(draft, patches, { sourceDraft, sourceRefs: collectSourceRefs(sourceDraft) });
+  return { ...applyEvidenceBackedPatches(draft, patches, { sourceDraft, sourceRefs: collectSourceRefs(sourceDraft) }),
+    requestedPatchCount: patches.length };
 }
 
 const immediate = text => text.replace(/setTimeout\(function\s*\(\)\s*\{/, "").replace(/\},\s*510\);/, "");
@@ -200,8 +203,12 @@ describe("static timed initialization Route-validation", () => {
     changed.scripts.sources[0].javascript = originals[1].replace('current=="A"||current=="B"||current=="C"', 'current=="A"');
     const draft = draftSourceDraft(changed);
     assert.equal(draft.scripts.actions.length, 1);
-    assert.equal(draft.scripts.actions[0].translationStatus, "needs_review");
-    assert.match(legacySourceFromGeneratedFunction(draft.scripts.actions[0].function), /setTimeout/);
+    assert.equal(draft.scripts.actions[0].translationStatus, "mapped");
+    assert.match(draft.scripts.actions[0].function, /setTimeout[\s\S]*510/);
+    for (const [initial, atFire] of [["A", "B"], ["B", "A"]]) {
+      assert.deepEqual(observe(changed.scripts.sources[0].javascript, false, initial, atFire),
+        observe(draft.scripts.actions[0].function, true, initial, atFire));
+    }
   });
 
   it("keeps an unrelated timer outside the load callback from blocking ordinary load translation", () => {
@@ -227,12 +234,14 @@ describe("static timed initialization Route-validation", () => {
     const draft = draftSourceDraft(changed);
     assert.equal(draft.scripts.actions.length, 2);
     assert.equal(draft.scripts.actions[0].translationStatus, "mapped");
-    assert.equal(draft.scripts.actions[1].translationStatus, "needs_review");
-    assert.equal(legacySourceFromGeneratedFunction(draft.scripts.actions[1].function), atomic.trim().replace(/;$/, ""));
-    assert.equal(legacySourceFromGeneratedFunction(draft.scripts.actions[1].function).match(/Com_AddEventListener/g).length, 1);
+    assert.equal(draft.scripts.actions[1].translationStatus, "mapped");
+    assert.doesNotMatch(draft.scripts.actions[0].function, /setTimeout/);
+    assert.equal(draft.scripts.actions[1].function.match(/setTimeout/g).length, 1);
+    assert.match(draft.scripts.actions[1].function, /510/);
+    assert.deepEqual(observe(atomic, false, "B", "A"), observe(draft.scripts.actions[1].function, true, "B", "A"));
   });
 
-  it("crosses the patch, trust, execute-check and dry-run boundaries with both original timers intact", () => {
+  it("crosses the patch, trust, execute-check and dry-run boundaries with both original timers intact", (context) => {
     const draft = draftSourceDraft(source);
     const result = review(draft);
     assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
@@ -242,8 +251,19 @@ describe("static timed initialization Route-validation", () => {
     assert.equal(checkExecute(trusted).ok, true);
     assert.equal(buildDryRunPlan(trusted).ok, true);
     for (const name of ["atomic", "or"]) {
-      const rejected = review(draft, { ...functions, [name]: immediate(functions[name]) });
-      assert.equal(rejected.ok, false);
+      const rejected = review(draft, { ...functions, [name]: immediate(functions[name]) }, source, { forceActions: [name] });
+      assert.ok(rejected.requestedPatchCount > 0, "The altered timer action must be patched even when it is already deterministic.");
+      if (!rejected.ok) {
+        assert.ok(rejected.diagnostics.length > 0);
+        context.diagnostic(`${name}: forced timer edit rejected by the public patch gate`);
+      } else {
+        const rejectedTrust = createTrustedMigrationDsl(source, rejected.dslDraft, { externalAgentReviewed: true, decisions: [] });
+        const trustResult = checkTrust(source, rejectedTrust);
+        assert.equal(trustResult.ok, false);
+        assert.equal(checkExecute(rejectedTrust).ok, false);
+        assert.equal(buildDryRunPlan(rejectedTrust).ok, false);
+        context.diagnostic(`${name}: public patch accepted the forced edit; fixed-source trust, execute validation and dry-run rejected it (${trustResult.diagnostics.map(item => item.code).join(", ")})`);
+      }
     }
   });
 

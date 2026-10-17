@@ -1555,11 +1555,12 @@ describe("executeDsl participant resolution seam", () => {
     const sourceId = "legacy-parentless-template-post";
     const targetFdId = "current-parentless-template-post";
     const dsl = dslWithExplicitMembers([]);
+    const formalReader={type:'user_or_org',id:'current-explicit-reader',name:'Explicit Reader',targetOrgType:8};
     dsl.template.authorization = {
       readerFlag: false,
-      readers: [],
+      readers: [formalReader],
       editors: [],
-      allReaders: [],
+      allReaders: [structuredClone(formalReader)],
       allEditors: [],
       temporaryReaders: [sourceMember({
         name: "财务部_部长",
@@ -1571,6 +1572,7 @@ describe("executeDsl participant resolution seam", () => {
       temporaryEditors: []
     };
     const client = new CompleteSearchClient({}, {
+      [formalReader.id]:[currentOrg({fdId:formalReader.id,fdName:formalReader.name})],
       [targetFdId]: [currentOrg({
         fdId: targetFdId,
         fdName: "财务部_部长",
@@ -2142,6 +2144,7 @@ function currentOrg(overrides = {}) {
     fdId: "current-id",
     fdName: "审批人",
     fdOrgType: 8,
+    fdIsBusiness: true,
     fdParentName: "审批部",
     ...overrides
   };

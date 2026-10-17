@@ -101,6 +101,32 @@ export function parseRootHashMap(xml = "") {
   }) || {};
 }
 
+/** Duplicate Java map assignments are not unique source identity evidence. */
+export function javaDecoderHashMapDuplicateKeys(xml = "") {
+  const text=String(xml),root=findOutermostHashMap(text),duplicates=[];
+  if(!root)return duplicates;
+  const close=findMatchingElementClose(text,root.end,'object');
+  if(!close)return duplicates;
+  visit({...root,closeStart:close.start});
+  return [...new Set(duplicates)];
+  function visit(node){
+    if(node.selfClosing||node.closeStart===undefined)return;
+    const children=findDirectChildElements(text,node.end,node.closeStart);
+    if(node.name.toLowerCase()==='object'&&attrValue(node.tag,'class')==='java.util.HashMap'){
+      const seen=new Set();
+      for(const child of children){
+        if(child.name.toLowerCase()!=='void'||attrValue(child.tag,'method')!=='put')continue;
+        const entries=findDirectChildElements(text,child.end,child.closeStart);
+        if(entries[0]?.name.toLowerCase()!=='string')continue;
+        const key=parseJavaDecoderElement(text,entries[0]);
+        if(typeof key!=='string')continue;
+        if(seen.has(key))duplicates.push(key);seen.add(key);
+      }
+    }
+    for(const child of children)visit(child);
+  }
+}
+
 export function parseRootHashMapValue(xml = "", key) {
   const text = String(xml);
   const root = findOutermostHashMap(text);

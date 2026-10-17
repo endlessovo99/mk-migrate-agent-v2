@@ -1,17 +1,24 @@
 import { createHash } from "node:crypto";
+import {NATIVE_DATE_ONLY_TEXT_CONTRACT} from "../translator/native-date-only-value.js";
 
 export const DETERMINISTIC_SCRIPT_BRANCH_PROOF_VERSION = 2;
 
 const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
+  "deterministic-approved-migration-policy",
   "deterministic-allowance-calculation",
   "deterministic-calculation-assignment",
   "deterministic-china-value-runtime",
+  "deterministic-closed-main-field-effects",
   "deterministic-clamped-detail-aggregate",
   "deterministic-conditional-total-uppercase",
   "deterministic-conditional-field-reset",
+  "deterministic-conditional-attachment-submit",
   "deterministic-detail-row-control-state",
   "deterministic-detail-cascade-actions",
   "deterministic-detail-row-expansion",
+  "deterministic-detail-org-hydration",
+  "deterministic-legacy-detail-aggregate-effects",
+  "deterministic-legacy-person-text-count",
   "deterministic-detail-row-lifecycle",
   "deterministic-detail-lookup-calculation",
   "deterministic-detail-main-row-lifecycle",
@@ -20,6 +27,10 @@ const CLOSED_DETERMINISTIC_SCRIPT_BASES = new Set([
   "deterministic-finance-detail-generation",
   "deterministic-grouped-detail-calculation",
   "deterministic-inline-radio-row-effects",
+  "deterministic-literal-array-row-lifecycle",
+  "deterministic-source-shared-json-state",
+  "deterministic-date-overlap-lifecycle",
+  "deterministic-scalar-source-change",
   "deterministic-local-currency-helper",
   "deterministic-multi-radio-row-helper",
   "deterministic-person-text-calculation",
@@ -165,6 +176,25 @@ function inspectManualResidualClosures(action, calculationDecisions) {
 }
 
 function hasSourceRecipeEvidence(action, basis) {
+  if(basis==="deterministic-scalar-source-change"){
+    const evidence=action?.semanticHints?.scalarSourceChange;
+    return isRecord(evidence)&&evidence.version===1&&/^[a-f0-9]{64}$/.test(evidence.sourceJavascriptSha256||"")&&
+      ["unchanged","native-date-display-text"].includes(evidence.eventValue)&&
+      (evidence.inputEmptyProjection==="nullish-only-to-empty-string"&&evidence.eventValue==="unchanged"||
+       evidence.inputEmptyProjection==="native-date-display-text-nullish-only"&&canonicalJson(evidence.nativeDateOnlyTextContract)===canonicalJson(NATIVE_DATE_ONLY_TEXT_CONTRACT))&&
+      action.event==="onChange"&&action.scope==="control"&&Array.isArray(evidence.readFieldIds)&&evidence.readFieldIds.length>0&&Array.isArray(evidence.alertRanges)&&evidence.alertRanges.length>0&&
+      Array.isArray(action.sourceRefs)&&action.sourceRefs.length===1;
+  }
+  if(basis==="deterministic-date-overlap-lifecycle"){
+    const evidence=action?.semanticHints?.dateOverlapLifecycle;
+    return isRecord(evidence)&&evidence.version===1&&evidence.grammar==="source-date-overlap-lifecycle-closed-v1"&&
+      /^sha256:[a-f0-9]{64}$/.test(evidence.sourceJavascriptSha256||"")&&/^sha256:[a-f0-9]{64}$/.test(evidence.sourceClosureDigest||"")&&
+      action.sourceRefs?.length===1&&action.sourceRefs[0]===evidence.sourceRef&&Array.isArray(evidence.inputFieldIds)&&evidence.inputFieldIds.length===6&&
+      new Set([...evidence.inputFieldIds,evidence.outputFieldId]).size===7&&Array.isArray(evidence.delays)&&evidence.delays.length===6&&
+      evidence.delays.every(delay=>Number.isInteger(delay)&&delay>=0&&delay<=2147483647)&&
+      (evidence.role==="load"&&evidence.ordinal===7&&action.event==="onLoad"&&action.scope==="global"||
+       evidence.role==="change"&&Number.isInteger(evidence.ordinal)&&evidence.ordinal>=1&&evidence.ordinal<=6&&action.event==="onChange"&&action.scope==="control"&&action.controlId===evidence.inputFieldIds[evidence.ordinal-1]);
+  }
   if (basis === "deterministic-person-property-hydration") {
     const evidence = action?.semanticHints?.personPropertyHydration;
     return isRecord(evidence) &&
@@ -197,6 +227,8 @@ function hasSourceRecipeEvidence(action, basis) {
 function proofPayload(action, basis) {
   return {
     basis,
+    ...(basis==="deterministic-date-overlap-lifecycle"?{sourceDateOverlapLifecycle:action?.semanticHints?.dateOverlapLifecycle,sourceReadyInitialization:action?.semanticHints?.jqueryReadyInitialization}:{}),
+    ...(basis==="deterministic-scalar-source-change"?{sourceScalarChange:action?.semanticHints?.scalarSourceChange}:{}),
     event: action?.event,
     scope: action?.scope,
     controlId: action?.controlId,

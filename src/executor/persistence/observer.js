@@ -177,6 +177,9 @@ function observeForm(config, xform, options = {}) {
   }
 
   const models = dataModelResult.value;
+  if (models.some(model => (Array.isArray(model?.fdFields) ? model.fdFields : []).some(field => field?.fdIsSystem && field.fdName === "mechanisms"))) {
+    formDiagnostics.push(diagnostic({ level: "error", code: "readback.form.system_reserved_context_collision", message: "Native system fields shadow the reserved mechanism context.", partition: "form", decodePath: "/mechanisms/sys-xform/fdConfig/dataModel" }));
+  }
   const mainModel = models.find((model) => model?.fdType === "main") || models[0];
   const detailModels = models.filter((model) => model?.fdType === "detail");
   const lang = safeParseObject(config.lang);
@@ -429,6 +432,11 @@ function observeDetailField(model, modelIndex, lang) {
     });
   const controlBinding = observeNativeControlBinding(model.fdAttribute);
   const attribute = safeParseObject(model.fdAttribute);
+  const columnWidths = Object.fromEntries(columns.map(column => {
+    const id = column.persistence?.controlBinding?.controlId;
+    const value = attribute?.config?.controlProps?.columnSetting?.[id]?.width ?? attribute?.config?.controlProps?.columnWidth?.[id];
+    return [column.id, value];
+  }).filter(([, value]) => value !== undefined));
   return {
     id: normalizeScalar(detailFieldNameForModel(model)),
     title: normalizeScalar(model.fdName),
@@ -446,6 +454,7 @@ function observeDetailField(model, modelIndex, lang) {
       tableName: normalizeScalar(model.fdTableName),
       tableNameAlias: normalizeScalar(model.fdTableNameAlias),
       controlBinding,
+      ...(Object.keys(columnWidths).length ? { columnWidths } : {}),
       columns: columns.map((column) => ({
         id: column.id,
         ...column.persistence

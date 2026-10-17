@@ -1,0 +1,22 @@
+{
+  "source": {
+    "name": "Legacy Department",
+    "type": "user_or_org",
+    "sourceId": "fixture-legacy-department",
+    "sourceOrgType": 2,
+    "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgDept",
+    "sourceRef": "source.template.authorization.authReaders.0"
+  },
+  "inactiveSourceTarget": {
+    "fdId": "fixture-legacy-department",
+    "fdName": "Legacy Department",
+    "fdOrgType": 2,
+    "fdIsAvailable": false
+  },
+  "fallback": {
+    "fdId": "fixture-configured-department",
+    "fdName": "Authorized Temporary Department",
+    "fdOrgType": 2,
+    "fdIsAvailable": true
+  }
+}

@@ -1,6 +1,10 @@
+import {inspectNativeRemoteSelectorFunction} from "./native-remote-selector-profile.js";
 import { parse } from "acorn";
 import { CONTROL_EVENTS_BY_COMPONENT, CONTROL_EVENTS_CATALOG, JS_METHOD_CATALOG } from "./catalogs.js";
 import { resolveRowMarkerControlIds } from "./form-rules.js";
+import { layoutRowTargets } from "./layout-row-targets.js";
+import { hasVerifiedDeterministicScriptBranchProof } from "./deterministic-script-translations.js";
+import { inspectNativeDetailImportFunction } from "./native-detail-import-profile.js";
 import {
   isExecutableTargetApi,
   resolveTargetApiCall,
@@ -141,7 +145,7 @@ export function resolveScriptControlTarget(form = {}, action = {}) {
   };
 }
 
-export function resolveControlEventSupport(target, event) {
+export function resolveControlEventSupport(target, event, action) {
   const componentId = target?.field?.componentId;
   if (!componentId) {
     return {
@@ -163,6 +167,16 @@ export function resolveControlEventSupport(target, event) {
   }
 
   if (target?.kind === "detail") {
+    if (componentId === "xform-button" && event === "onClick" && action?.semanticHints?.approvedNativeLookup && inspectNativeRemoteSelectorFunction(action.function) && hasVerifiedDeterministicScriptBranchProof(action)) {
+      return {status:"supported",componentId,event,scope:"detailColumn",supportedEvents:["onClick"],reason:"Fixed native selector uses the captured button dispatcher row arguments and stable-row identity."};
+    }
+    if (componentId === "xform-input" && event === "onChange" &&
+        action?.deterministicBranchProof?.basis === "deterministic-approved-migration-policy" &&
+        action.semanticHints?.approvedRuntimePolicy?.decision?.kind === "detail-card-number-advice-column" &&
+        hasVerifiedDeterministicScriptBranchProof(action)) {
+      return { status: "supported", componentId, event, scope: "detailColumn", supportedEvents: ["onChange"],
+        reason: "The approved fixed advice recipe retains the captured native detail input onChange row context." };
+    }
     if (entry.detailColumn === true) {
       return eventSupported(entry, event, "detailColumn");
     }
@@ -214,7 +228,7 @@ export function summarizeScriptActionSupport(actions = [], form = {}) {
       });
       continue;
     }
-    const support = resolveControlEventSupport(target, action.event || action.name);
+    const support = resolveControlEventSupport(target, action.event || action.name, action);
     counts[support.status] = (counts[support.status] || 0) + 1;
     if (support.componentId) components.add(support.componentId);
     details.push({
@@ -239,6 +253,8 @@ export function summarizeScriptActionSupport(actions = [], form = {}) {
 
 export function analyzeScriptFunction(text = "") {
   const source = String(text || "");
+  const nativeImport = inspectNativeDetailImportFunction(source), nativeRemote = inspectNativeRemoteSelectorFunction(source);
+  const fixedNative = nativeImport || nativeRemote;
   const masked = maskStringsAndComments(source);
   const unsupportedSyntax = extractUnsupportedMkSyntax(masked, source);
   const promiseReturns = extractPromiseReturns(masked, source);
@@ -267,10 +283,12 @@ export function analyzeScriptFunction(text = "") {
     promiseReturns,
     calls,
     targetCalls,
-    domUsages,
-    disallowedTargetCalls,
+    domUsages: fixedNative ? [] : domUsages,
+    disallowedTargetCalls: fixedNative ? [] : disallowedTargetCalls,
     reviewTargetCalls,
-    disallowedCalls
+    disallowedCalls: fixedNative ? [] : disallowedCalls,
+    ...(nativeImport ? { nativeImportProfile: nativeImport } : {}),
+    ...(nativeRemote ? {nativeRemoteProfile:nativeRemote} : {})
   };
 }
 
@@ -376,16 +394,10 @@ export function buildSetFieldAttrTargetIndex(form = {}) {
     mainFields.add(field.id);
   }
 
-  for (const row of Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : []) {
-    const markers = (Array.isArray(row?.sourceMarkers) ? row.sourceMarkers : [])
-      .map((marker) => String(marker || "").trim())
-      .filter(Boolean);
-    const persistedTarget = markers[0] || String(row?.id || "").trim();
-    if (persistedTarget) persistedRowTargets.add(persistedTarget);
-    for (const alias of markers.slice(1)) {
-      if (!secondaryMarkerToPrimary.has(alias)) {
-        secondaryMarkerToPrimary.set(alias, persistedTarget);
-      }
+  for (const { markers, target } of layoutRowTargets(form)) {
+    persistedRowTargets.add(target);
+    for (const alias of markers.filter(marker => marker !== target)) {
+      if (!secondaryMarkerToPrimary.has(alias)) secondaryMarkerToPrimary.set(alias, target);
     }
   }
 

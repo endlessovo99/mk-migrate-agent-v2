@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><java class="java.beans.XMLDecoder"><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>route-detail-org-domain-sysform</string></void>
+<void method="put"><string>fdModelId</string><string>route-detail-org-domain-template</string></void>
+<void method="put"><string>fdName</string><string>Detail organization hydration</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_3242f3c67e44fc&quot;,label:&quot;People&quot;}&apos;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Person&lt;/td&gt;&lt;td&gt;Number&lt;/td&gt;&lt;td&gt;Name&lt;/td&gt;&lt;/tr&gt;&lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;&lt;label fd_type=&quot;address&quot; fd_values=&apos;{id:&quot;fd_xz_name&quot;,label:&quot;Person&quot;,_orgType:&quot;ORG_TYPE_PERSON&quot;,_org_person:&quot;true&quot;}&apos;&gt;&lt;input id=&quot;fd_xz_name&quot;/&gt;&lt;/label&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_job_number&quot;,label:&quot;Number&quot;}&apos;&gt;&lt;input id=&quot;fd_job_number&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_name&quot;,label:&quot;Name&quot;}&apos;&gt;&lt;input id=&quot;fd_name&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;div fd_type=&quot;jsp&quot; id=&quot;jsp_route_org&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&amp;lt;script&amp;gt;XFormOnValueChangeFuns.push(function(value,domElement){
+	var name = domElement[0].name;//格式为:extendDataFormInfo.value(fd_2da78ed4798bca.0.fd_2da78f609534fa.id)
+//alert(name);	
+if(name.indexOf(&amp;quot;fd_xz_name.id&amp;quot;)&amp;gt;0){//表单地址本中ID后缀
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[
+			{name:&amp;quot;fdLoginName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_job_number)&amp;quot;},
+{name:&amp;quot;fdName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_name)&amp;quot;}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf(&amp;quot;(&amp;quot;)+1);
+		s = s.substring(0,s.indexOf(&amp;quot;)&amp;quot;));
+		var index = s.split(&amp;quot;.&amp;quot;)[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgPersonBeanNameByKey(&amp;quot;&amp;apos;&amp;quot;+pId+&amp;quot;&amp;apos;&amp;quot;,&amp;quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&amp;quot;));
+		kmssdata.Parse(function(data){
+			data.Format(&amp;quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&amp;quot;, null, false);
+			data = data.GetHashMapArray();
+			if(data.length==1){
+				for(var i=0;i&amp;lt;toIDs.length;i++){
+					var tId = DocListFunc_ReplaceIndex(toIDs[i][&amp;quot;id&amp;quot;],index)
+					GetXFormFieldById(tId)[0].value=data[0][toIDs[i][&amp;quot;name&amp;quot;]]||&amp;quot;&amp;quot;;
+				}
+			}	
+		});
+	}
+//公司及部门选择
+if(name.indexOf(&amp;quot;fd_sel_dept.id&amp;quot;)&amp;gt;0){//表单地址本中ID后缀
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[{name:&amp;quot;fdName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_input_dept)&amp;quot;}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf(&amp;quot;(&amp;quot;)+1);
+		s = s.substring(0,s.indexOf(&amp;quot;)&amp;quot;));
+		var index = s.split(&amp;quot;.&amp;quot;)[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgElementBeanNameByKey(&amp;quot;&amp;apos;&amp;quot;+pId+&amp;quot;&amp;apos;&amp;quot;,&amp;quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&amp;quot;));
+		kmssdata.Parse(function(data){
+			data.Format(&amp;quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&amp;quot;, null, false);
+			data = data.GetHashMapArray();
+			if(data.length==1){
+				for(var i=0;i&amp;lt;toIDs.length;i++){
+					var tId = DocListFunc_ReplaceIndex(toIDs[i][&amp;quot;id&amp;quot;],index);
+					GetXFormFieldById(tId)[0].value=data[0][toIDs[i][&amp;quot;name&amp;quot;]]||&amp;quot;&amp;quot;;
+				}
+			}	
+		});
+	}
+//公司及部门选择
+if(name.indexOf(&amp;quot;fd_sel_in_dept.id&amp;quot;)&amp;gt;0){//表单地址本中ID后缀
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[{name:&amp;quot;fdName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_in_dept)&amp;quot;}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf(&amp;quot;(&amp;quot;)+1);
+		s = s.substring(0,s.indexOf(&amp;quot;)&amp;quot;));
+		var index = s.split(&amp;quot;.&amp;quot;)[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgElementBeanNameByKey(&amp;quot;&amp;apos;&amp;quot;+pId+&amp;quot;&amp;apos;&amp;quot;,&amp;quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&amp;quot;));
+		kmssdata.Parse(function(data){
+			data.Format(&amp;quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&amp;quot;, null, false);
+			data = data.GetHashMapArray();
+			if(data.length==1){
+				for(var i=0;i&amp;lt;toIDs.length;i++){
+					var tId = DocListFunc_ReplaceIndex(toIDs[i][&amp;quot;id&amp;quot;],index);
+					GetXFormFieldById(tId)[0].value=data[0][toIDs[i][&amp;quot;name&amp;quot;]]||&amp;quot;&amp;quot;;
+				}
+			}	
+		});
+	}
+//岗位选择
+if(name.indexOf(&amp;quot;fd_sel_post.id&amp;quot;)&amp;gt;0){//表单地址本中ID后缀
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[{name:&amp;quot;fdName&amp;quot;,id:&amp;quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_input_post)&amp;quot;}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf(&amp;quot;(&amp;quot;)+1);
+		s = s.substring(0,s.indexOf(&amp;quot;)&amp;quot;));
+		var index = s.split(&amp;quot;.&amp;quot;)[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgElementBeanNameByKey(&amp;quot;&amp;apos;&amp;quot;+pId+&amp;quot;&amp;apos;&amp;quot;,&amp;quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&amp;quot;));
+		kmssdata.Parse(function(data){
+			data.Format(&amp;quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&amp;quot;, null, false);
+			data = data.GetHashMapArray();
+			if(data.length==1){
+				for(var i=0;i&amp;lt;toIDs.length;i++){
+					var tId = DocListFunc_ReplaceIndex(toIDs[i][&amp;quot;id&amp;quot;],index)
+					GetXFormFieldById(tId)[0].value=data[0][toIDs[i][&amp;quot;name&amp;quot;]]||&amp;quot;&amp;quot;;
+				}
+			}	
+		});
+	}
+
+});&amp;lt;/script&amp;gt;&apos;/&gt;&lt;/div&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSubTableProperty name=&quot;fd_3242f3c67e44fc&quot; label=&quot;People&quot;&gt;&lt;extendElementProperty name=&quot;fd_xz_name&quot; type=&quot;com.landray.kmss.sys.organization.model.SysOrgPerson&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_job_number&quot; type=&quot;String&quot;/&gt;&lt;extendSimpleProperty name=&quot;fd_name&quot; type=&quot;String&quot;/&gt;&lt;/extendSubTableProperty&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;Com_IncludeFile(&apos;doclist.js&apos;);&lt;/script&gt;
+&lt;script&gt;DocList_Info.push(&apos;TABLE_DL_fd_3242f3c67e44fc&apos;);&lt;/script&gt;
+&lt;script&gt;Com_AddEventListener(window, &apos;load&apos;, function(){ setTimeout(function() {for (var i = 0; i &lt; 1; i ++) {DocList_AddRow(document.getElementById(&apos;TABLE_DL_fd_3242f3c67e44fc&apos;))};}, 500);});&lt;/script&gt;
+&lt;script&gt;$(function(){var tb=document.getElementById(&apos;TABLE_DL_fd_3242f3c67e44fc&apos;);var totalWidth=0;var tds=$(tb).find(&quot;tr[type=&apos;titleRow&apos;]&quot;).children();var hasPercent=false;tds.each(function(){if(!this.width||this.width+&apos;&apos;.indexOf(&apos;%&apos;)&gt;=0){totalWidth+=$(this).width();hasPercent=true;}else{	totalWidth+=parseInt(this.width);}});	var tdWidth=$(tb).parents(&apos;td&apos;).width();if(!hasPercent&amp;&amp;totalWidth&gt;tdWidth)$(tb).css(&apos;width&apos;,totalWidth+&apos;px&apos;);var tb_div=document.getElementById(&apos;TABLE_DL_fd_3242f3c67e44fc_div&apos;);$(tb_div).css(&apos;width&apos;,&apos;null&apos;);});&lt;/script&gt;
+&lt;script&gt;
+XFormOnValueChangeFuns.push(function(value,domElement){
+	var name = domElement[0].name;//格式为:extendDataFormInfo.value(fd_2da78ed4798bca.0.fd_2da78f609534fa.id)
+//alert(name);	
+if(name.indexOf(&quot;fd_xz_name.id&quot;)&gt;0){//表单地址本中ID后缀
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[
+			{name:&quot;fdLoginName&quot;,id:&quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_job_number)&quot;},
+{name:&quot;fdName&quot;,id:&quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_name)&quot;}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf(&quot;(&quot;)+1);
+		s = s.substring(0,s.indexOf(&quot;)&quot;));
+		var index = s.split(&quot;.&quot;)[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgPersonBeanNameByKey(&quot;&apos;&quot;+pId+&quot;&apos;&quot;,&quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&quot;));
+		kmssdata.Parse(function(data){
+			data.Format(&quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&quot;, null, false);
+			data = data.GetHashMapArray();
+			if(data.length==1){
+				for(var i=0;i&lt;toIDs.length;i++){
+					var tId = DocListFunc_ReplaceIndex(toIDs[i][&quot;id&quot;],index)
+					GetXFormFieldById(tId)[0].value=data[0][toIDs[i][&quot;name&quot;]]||&quot;&quot;;
+				}
+			}	
+		});
+	}
+//公司及部门选择
+if(name.indexOf(&quot;fd_sel_dept.id&quot;)&gt;0){//表单地址本中ID后缀
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[{name:&quot;fdName&quot;,id:&quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_input_dept)&quot;}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf(&quot;(&quot;)+1);
+		s = s.substring(0,s.indexOf(&quot;)&quot;));
+		var index = s.split(&quot;.&quot;)[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgElementBeanNameByKey(&quot;&apos;&quot;+pId+&quot;&apos;&quot;,&quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&quot;));
+		kmssdata.Parse(function(data){
+			data.Format(&quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&quot;, null, false);
+			data = data.GetHashMapArray();
+			if(data.length==1){
+				for(var i=0;i&lt;toIDs.length;i++){
+					var tId = DocListFunc_ReplaceIndex(toIDs[i][&quot;id&quot;],index);
+					GetXFormFieldById(tId)[0].value=data[0][toIDs[i][&quot;name&quot;]]||&quot;&quot;;
+				}
+			}	
+		});
+	}
+//公司及部门选择
+if(name.indexOf(&quot;fd_sel_in_dept.id&quot;)&gt;0){//表单地址本中ID后缀
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[{name:&quot;fdName&quot;,id:&quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_in_dept)&quot;}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf(&quot;(&quot;)+1);
+		s = s.substring(0,s.indexOf(&quot;)&quot;));
+		var index = s.split(&quot;.&quot;)[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgElementBeanNameByKey(&quot;&apos;&quot;+pId+&quot;&apos;&quot;,&quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&quot;));
+		kmssdata.Parse(function(data){
+			data.Format(&quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&quot;, null, false);
+			data = data.GetHashMapArray();
+			if(data.length==1){
+				for(var i=0;i&lt;toIDs.length;i++){
+					var tId = DocListFunc_ReplaceIndex(toIDs[i][&quot;id&quot;],index);
+					GetXFormFieldById(tId)[0].value=data[0][toIDs[i][&quot;name&quot;]]||&quot;&quot;;
+				}
+			}	
+		});
+	}
+//岗位选择
+if(name.indexOf(&quot;fd_sel_post.id&quot;)&gt;0){//表单地址本中ID后缀
+		var pId=value[0];
+		//需要从后台取值的属性与表单中的ID键值对
+		var toIDs=[{name:&quot;fdName&quot;,id:&quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_input_post)&quot;}];
+		//获取当前ID的索引号
+		var s = name.substring(name.indexOf(&quot;(&quot;)+1);
+		s = s.substring(0,s.indexOf(&quot;)&quot;));
+		var index = s.split(&quot;.&quot;)[1];
+		//从后台获取数据并赋值
+		var kmssdata = new KMSSData();
+		kmssdata.UseCache = false;
+		kmssdata.AddBeanData(Data_GetOrgElementBeanNameByKey(&quot;&apos;&quot;+pId+&quot;&apos;&quot;,&quot;fdId:fdName:hbmParent.fdName:fdLoginName:fdMobileNo:fdEmail&quot;));
+		kmssdata.Parse(function(data){
+			data.Format(&quot;fdId:fdName:fdParentName:fdLoginName:fdMobileNo:fdEmail&quot;, null, false);
+			data = data.GetHashMapArray();
+			if(data.length==1){
+				for(var i=0;i&lt;toIDs.length;i++){
+					var tId = DocListFunc_ReplaceIndex(toIDs[i][&quot;id&quot;],index)
+					GetXFormFieldById(tId)[0].value=data[0][toIDs[i][&quot;name&quot;]]||&quot;&quot;;
+				}
+			}	
+		});
+	}
+
+});
+&lt;/script&gt;&lt;xform:address propertyId=&quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_xz_name.id)&quot; propertyName=&quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_xz_name.name)&quot; onValueChange=&quot;__xformDispatch&quot;/&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_job_number)&quot;/&gt;&lt;xform:xtext property=&quot;extendDataFormInfo.value(fd_3242f3c67e44fc.!{index}.fd_name)&quot;/&gt;</string></void></object></java>

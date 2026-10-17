@@ -5,6 +5,7 @@ import { sha256Digest } from "../agent-review/digest.js";
 import { cleanSourceFile } from "../translator/index.js";
 import { normalizeBaseUrl } from "../executor/newoa-client.js";
 import { exactKeys, executionOptions, integer, newId, now, requireValue, text } from "./contracts.js";
+import { attachMigrationPolicies } from "../translator/approved-migration-policies.js";
 
 /** Source bytes are frozen at import; workers never reread mutable intake paths. */
 export function sourceSnapshot(sourcePath) {
@@ -43,16 +44,18 @@ export async function createBatch(store, manifest, { relativeTo = process.cwd() 
   const batchId = newId("batch");
   const targetId = sha256Digest(baseUrl);
   const items = manifest.items.map((entry) => {
-    exactKeys(entry, ["sourcePath", "templateName", "executionOptions"], "batch item");
+    exactKeys(entry, ["sourcePath", "templateName", "executionOptions", "migrationPolicies"], "batch item");
     const sourcePath = resolve(relativeTo, text(entry.sourcePath, "sourcePath"));
     const snapshot = sourceSnapshot(sourcePath);
     const templateName = entry.templateName === undefined ? "" : text(entry.templateName, "templateName");
-    const sourceDraft = cleanSnapshot(snapshot, templateName);
+    const originalSourceDraft = cleanSnapshot(snapshot, templateName);
+    const sourceDraft = entry.migrationPolicies ? attachMigrationPolicies(originalSourceDraft, entry.migrationPolicies, { baseUrl, targetCategoryId }) : originalSourceDraft;
     const sourceId = text(sourceDraft.source?.sysFormTemplate?.fdModelId || sourceDraft.source?.lbpmProcessDefinition?.templateId || sourceDraft.source?.fdModelId || sourceDraft.source?.fdId || sourceDraft.source?.sourceId, "source identity");
     const sourceDigest = sha256Digest({ snapshot, templateName });
     return { id: newId("item"), batchId, baseUrl, sourceId, name: sourceDraft.template.name, sourcePath, snapshot, templateName, sourceDigest,
       identityKey: sha256Digest({ baseUrl, targetCategoryId, sourceId, migrationKey }),
       executionOptions: executionOptionsFor(entry), sourceDraft, sourceDraftDigest: sha256Digest(sourceDraft), dslDraft: null, dsl: null, dslDigest: null,
+      ...(entry.migrationPolicies ? { migrationPolicies: structuredClone(entry.migrationPolicies) } : {}),
       engineDigest: null, checkpoint: null, status: "pending", diagnostics: [], attempts: [], attemptCount: 0, repairHistory: [],
       activeAttemptId: null, workerId: null, leaseUntil: null, writeStarted: false, targetTemplateId: null, createdAt: now() };
   });

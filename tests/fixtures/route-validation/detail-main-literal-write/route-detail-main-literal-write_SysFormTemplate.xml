@@ -1,0 +1,46 @@
+<java><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>route-detail-main-literal-source</string></void>
+<void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+<void method="put"><string>fdName</string><string>Finite detail select main String write</string></void>
+<void method="put"><string>fdModelId</string><string>route-detail-main-literal-model</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;input type="hidden" name="extendDataFormInfo.value(fd_state)"/&gt;&lt;xform:editShow&gt;&lt;script&gt;AttachXFormValueChangeEventById("fd_choice", function(value, domElement) {
+ if(value == 3050100000000000000){
+  SetXFormFieldValueById("fd_state", "3050100000000000000");
+  common_dom_row_set_show_required_reset("invoice_row5",true,true,false);
+  common_dom_row_set_show_required_reset("invoice_row6",false,false,false);
+ }else if(value == 3040502019900000000){
+  SetXFormFieldValueById("fd_state",3040502019900000000);
+  common_dom_row_set_show_required_reset("invoice_row5",false,false,false);
+  common_dom_row_set_show_required_reset("invoice_row6",true,true,false);
+ }else{
+  common_dom_row_set_show_required_reset("invoice_row5",false,false,false);
+  common_dom_row_set_show_required_reset("invoice_row6",false,false,false);
+ }
+});&lt;/script&gt;&lt;/xform:editShow&gt;</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row="0" column="0"&gt;
+     &lt;table fd_type="detailsTable" fd_values='{id:"detailList",label:"Invoice lines"}'&gt;&lt;tbody&gt;
+      &lt;tr&gt;&lt;td&gt;Tax code&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr type="templateRow"&gt;&lt;td&gt;
+       &lt;div fd_type="select" fd_values='{id:"fd_choice",label:"Tax code",tableName:"detailList",required:"true",dataType:"String",items:"Construction|3050100000000000000
+Other|1090201080000000000"}'&gt;&lt;/div&gt;
+      &lt;/td&gt;&lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row="1" column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"label_building",content:"Building information"}'&gt;Building information&lt;/label&gt;&lt;input type="hidden" id="invoice_row5" name="invoice_row5"/&gt;&lt;/td&gt;
+     &lt;td row="1" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_project",label:"Project",required:"true",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="1" column="2"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_tax_number",label:"Tax number",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+     &lt;td row="2" column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"label_lease",content:"Lease information"}'&gt;Lease information&lt;/label&gt;&lt;input type="hidden" id="invoice_row6" name="invoice_row6"/&gt;&lt;/td&gt;
+     &lt;td row="2" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_lease_address",label:"Lease address",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_state",label:"State",dataType:"String",canShow:"false"}'&gt;&lt;input id="fd_state"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;
+    &lt;extendSubTableProperty name="detailList" label="Invoice lines"&gt;
+     &lt;extendSimpleProperty name="fd_choice" label="Tax code" enumValues="Construction|3050100000000000000;Other|1090201080000000000" type="String" notNull="true"/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSimpleProperty name="fd_project" label="Project" type="String" notNull="true"/&gt;
+    &lt;extendSimpleProperty name="fd_tax_number" label="Tax number" type="String"/&gt;
+    &lt;extendSimpleProperty name="fd_lease_address" label="Lease address" type="String"/&gt;
+   &lt;extendSimpleProperty name="fd_state" label="State" type="String" canDisplay="false"/&gt;&lt;/metadata&gt;</string></void></object></java>

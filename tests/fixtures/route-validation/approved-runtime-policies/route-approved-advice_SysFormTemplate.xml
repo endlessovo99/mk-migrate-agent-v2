@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>approved-advice-form</string></void>
+<void method="put"><string>fdModelId</string><string>approved-advice-model</string></void>
+<void method="put"><string>fdName</string><string>Approved per-row advice</string></void>
+<void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tr&gt;&lt;td&gt;&lt;table id="fd_payments" fd_type="detailsTable" fd_values='{id:"fd_payments",label:"Payments",showRow:"1"}'&gt;&lt;tr&gt;&lt;td&gt;Card&lt;/td&gt;&lt;td&gt;Other&lt;/td&gt;&lt;/tr&gt;&lt;tr type="templateRow"&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_number",label:"Card",tableName:"fd_payments",dataType:"String",maxLength:"40"}'&gt;&lt;input id="fd_number"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_other",label:"Other",tableName:"fd_payments",dataType:"String"}'&gt;&lt;input id="fd_other"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;xform:editShow&gt;&lt;script&gt;function lengthAdvice(element,message,visible){var advice;var wrapped=$(element);if(!wrapped.next().next()||wrapped.next().next().length&lt;1){advice=document.createElement("div");advice.setAttribute("class","validation-advice");advice.textContent=message;wrapped.parent().append(advice);}else{advice=wrapped.next().next()[0];}if(visible){$(advice).show();}else{$(advice).hide();}}
+AttachXFormValueChangeEventById("fd_number",function(input,element){if(!input||input.length&lt;1){return;}element.value=input.replace(/\D/g,'');var showAdvice=false;if(element.value.length&lt;16){showAdvice=true;}lengthAdvice(element,"卡号长度为16-19位，请注意检查!",showAdvice);});&lt;/script&gt;&lt;/xform:editShow&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSubTableProperty name="fd_payments"&gt;&lt;extendSimpleProperty name="fd_number" type="String"/&gt;&lt;extendSimpleProperty name="fd_other" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;/metadata&gt;</string></void>
+</object></java>

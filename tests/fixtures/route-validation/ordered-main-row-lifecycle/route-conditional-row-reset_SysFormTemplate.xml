@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+ <void method="put"><string>fdId</string><string>route-ordered-main-row-form</string></void>
+ <void method="put"><string>fdName</string><string>Ordered main row lifecycle</string></void>
+ <void method="put"><string>fdModelId</string><string>route-ordered-main-row-model</string></void>
+ <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+ <void method="put"><string>fdDisplayJsp</string><string>&lt;xform:text property="extendDataFormInfo.value(fd_state)" showStatus="noShow"/&gt;&lt;script&gt;AttachXFormValueChangeEventById("fd_value",function(value,domElement){
+ var mirror=GetXFormFieldById("fd_state")[0];
+ var dependent=$('input[name="extendDataFormInfo.value(fd_value)"]');
+ if(value.indexOf("A")&gt;=0){
+  mirror.value="A";
+  common_dom_row_set_show_required_reset("fd_A_row",true,true,true);
+ }else{
+  mirror.value="";
+  common_dom_row_set_show_required_reset("fd_A_row",false,false,true);
+  dependent.val("");
+ }
+});&lt;/script&gt;</string></void>
+ <void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;input type="hidden" id="fd_A_row" name="fd_A_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value",label:"Value",dataType:"String"}'&gt;&lt;input id="fd_value"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" style="display:none" fd_values='{id:"fd_state",label:"State",dataType:"String",canShow:"false",showStatus:"noShow"}'&gt;&lt;input id="fd_state" type="hidden"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+ <void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_value" label="Value" type="String"/&gt;&lt;extendSimpleProperty name="fd_state" label="State" type="String" canDisplay="false"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

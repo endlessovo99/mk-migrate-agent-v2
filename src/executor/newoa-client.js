@@ -184,7 +184,7 @@ export class NewoaClient {
     return body.data;
   }
 
-  async getElementInfo(targets, { departmentEvidence = false } = {}) {
+  async getElementInfo(targets, { departmentEvidence = false, builtinEvidence = false } = {}) {
     const normalizedTargets = [...new Set(
       (Array.isArray(targets) ? targets : [targets])
         .map((target) => String(target || "").trim())
@@ -195,13 +195,32 @@ export class NewoaClient {
     }
     const body = await this.postJson("sys-org", "sysOrgElementQuery/getElementInfo", {
       targets: normalizedTargets,
-      colums: departmentEvidence === true
+      colums: builtinEvidence === true
+        ? ["fdId", "fdName", "fdOrgType", "fdIsAvailable", "fdIsBusiness", "fdAccount.fdLoginName", "fdLoginName", "fdNo"]
+        : departmentEvidence === true
         ? ["fdId", "fdName", "fdOrgType", "fdIsAvailable", "fdParentName"]
         : ["fdId", "fdName", "fdOrgType"]
     });
     if (!Array.isArray(body?.data)) {
       throw clientStageError("sysOrgElementQuery/getElementInfo", "organization element validation response did not include an array");
     }
+    return body.data;
+  }
+
+  async getKmReviewDesktopDigest() {
+    const response=await this.fetch(`${this.baseUrl}/web/km-review/desktop/digest.json`,{method:'GET',cache:'no-store',headers:{accept:'application/json'}});
+    const result=await readResponse(response);
+    if(!response.ok||!isRecord(result.body))throw clientStageError('getKmReviewDesktopDigest','Native template module digest is unavailable.');
+    return result.body;
+  }
+
+  getKmReviewTemplateEditSha256({releaseHash}) {
+    return this.getXFormDesktopModuleSha256({modulePath:'km-review/desktop/pages/kmReviewTemplate/edit',releaseHash});
+  }
+
+  async getTemplateReaderConfiguration() {
+    const body=await this.postKmReview('moduleConfig/getConfiguration',{});
+    if(!isRecord(body?.data))throw clientStageError('getTemplateReaderConfiguration','Native template reader configuration is unavailable.');
     return body.data;
   }
 
@@ -248,6 +267,31 @@ export class NewoaClient {
       throw clientStageError("getWorkflowOperationSet", "Operation-set readback identity or success flag is invalid.");
     }
     return body.data;
+  }
+
+  async getTicInterface(fdId) {
+    return this.getTicMetadata("getTicInterface", "ticDefInterface/load", fdId);
+  }
+
+  async getTicConnection(fdId) {
+    return this.getTicMetadata("getTicConnection", "ticDefConnection/get", fdId);
+  }
+
+  async getTicMetadata(stage, apiPath, fdId) {
+    if (typeof fdId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(fdId)) {
+      throw clientStageError(stage, "An exact TIC metadata identity is required.");
+    }
+    try {
+      const body = await this.postJson("tic-definition", apiPath, { fdId });
+      if (body?.success !== true || !isRecord(body.data) || body.data.fdId !== fdId) {
+        throw new Error("TIC metadata identity or success flag is invalid.");
+      }
+      return body.data;
+    } catch {
+      // Native metadata can contain source credentials. Never attach its body,
+      // upstream message, or transport exception to executor diagnostics.
+      throw clientStageError(stage, "TIC metadata read failed or returned an invalid identity.");
+    }
   }
 
   async updateTemplate(payload) {

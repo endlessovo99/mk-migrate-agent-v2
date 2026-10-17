@@ -1,5 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
+import {createHash} from 'node:crypto';
+import {bindEveryoneSourceScope,hasEveryoneSourceMember} from '../dsl/template-read-scope.js';
 import { auditSourceScriptRowMarkerOrphans, ORPHAN_ROW_MARKER_WARNING_CODE } from "./row-marker-orphan-audit.js";
 import { translateLbpmProcessDefinitionXml } from "./lbpm-process-definition-adapter.js";
 import { sourceFormRulesFromLegacyScripts } from "./sysform-form-rules.js";
@@ -9,7 +11,8 @@ import { filterContentFlow } from "./designer-content-flow.js";
 import {
   cleanText,
   parseRootHashMap,
-  parseRootHashMapStringPuts
+  parseRootHashMapStringPuts,
+  javaDecoderHashMapDuplicateKeys
 } from "./xml-utils.js";
 import {
   applyWorkflowReferenceTargets,
@@ -255,11 +258,21 @@ function cleanSourceDirectory(path, options = {}) {
     ? kmReviewTemplate.personEntities
     : undefined;
 
+  let templateAuthorization=kmReviewTemplate?.authorization;
+  if(templateAuthorization){
+    try{
+      if(hasEveryoneSourceMember(templateAuthorization)&&kmReviewTemplate.duplicateMapKeys.length)throw Object.assign(new Error('Everyone source map contains duplicate assignments.'),{code:'source.template.everyone_scope_ambiguous'});
+      templateAuthorization=bindEveryoneSourceScope(templateAuthorization,{
+      templateId:kmReviewTemplate.fdId,formTemplateId,processTemplateId,
+      xml:kmReviewTemplate.xml,readersPresence:kmReviewTemplate.readersPresence
+    });}catch(error){kmReviewTemplate.authorizationIssues.push({level:'error',code:error.code,message:error.message,path:'/template/authorization/readScope'});}
+  }
+
   return sourceDraftFromLegacyDsl({
     ...formDsl,
     template: {
       ...(formDsl.template || {}),
-      authorization: kmReviewTemplate?.authorization
+      authorization: templateAuthorization
     },
     source: {
       kind: "source-directory",
@@ -269,7 +282,8 @@ function cleanSourceDirectory(path, options = {}) {
       ...(kmReviewTemplate ? {
         kmReviewTemplate: {
           path: join(path, kmReviewTemplateName),
-          fdId: kmReviewTemplate.fdId
+          fdId: kmReviewTemplate.fdId,
+          ...(templateAuthorization?.readScope?{xmlSha256:kmReviewTemplate.xmlSha256}:{})
         }
       } : {}),
       ...(workflowReference ? { workflowReference: workflowReference.metadata } : {})
@@ -316,7 +330,11 @@ function readKmReviewTemplateEvidence(path) {
     fdId: cleanText(values.fdId || "") || undefined,
     personEntities: collectConsistentPersonEntities(root),
     authorization: authorization.value,
-    authorizationIssues: authorization.issues
+    authorizationIssues: authorization.issues,
+    xml,
+    xmlSha256:'sha256:'+createHash('sha256').update(xml).digest('hex'),
+    duplicateMapKeys:hasEveryoneSourceMember(authorization.value)?javaDecoderHashMapDuplicateKeys(xml):[],
+    readersPresence:Object.hasOwn(root,'authReaders')?(Array.isArray(root.authReaders)&&root.authReaders.length===0?'empty':'populated'):'absent'
   };
 }
 
@@ -731,7 +749,11 @@ function sourcePropsFromField(field) {
     metadataId: field.source?.metadataId,
     metadataKind: field.source?.metadataKind,
     metadataAttributes: field.source?.metadataAttributes,
-    hardHidden: field.source?.hardHidden === true ? true : undefined
+    hardHidden: field.source?.hardHidden === true ? true : undefined,
+    mainStringValueBindingFact: field.source?.mainStringValueBindingFact,
+    remoteSelectorSourceContract: field.source?.remoteSelectorSourceContract,
+    approvedRemoteSelectorSourceFact: field.source?.approvedRemoteSelectorSourceFact,
+    remoteSelectorOmissionSourceFact: field.source?.remoteSelectorOmissionSourceFact
   });
 }
 

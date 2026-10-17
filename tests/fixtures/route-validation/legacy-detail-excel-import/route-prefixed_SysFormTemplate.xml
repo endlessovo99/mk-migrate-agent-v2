@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><java class="java.beans.XMLDecoder"><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>fixture-excel-prefixed-sysform</string></void><void method="put"><string>fdModelId</string><string>fixture-excel-prefixed-template</string></void><void method="put"><string>fdName</string><string>Legacy positional Excel import</string></void><void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_import_rows&quot;,label:&quot;Imported rows&quot;}&apos;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Column 1&lt;/td&gt;&lt;td&gt;Column 2&lt;/td&gt;&lt;td&gt;Column 3&lt;/td&gt;&lt;td&gt;Column 4&lt;/td&gt;&lt;td&gt;Column 5&lt;/td&gt;&lt;td&gt;Column 6&lt;/td&gt;&lt;td&gt;Column 7&lt;/td&gt;&lt;td&gt;Column 8&lt;/td&gt;&lt;td&gt;Column 9&lt;/td&gt;&lt;td&gt;Column 10&lt;/td&gt;&lt;td&gt;Column 11&lt;/td&gt;&lt;td&gt;Column 12&lt;/td&gt;&lt;/tr&gt;&lt;tr type=&quot;templateRow&quot;&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;groupIndex&quot;,label:&quot;Column 1&quot;}&apos;&gt;&lt;input id=&quot;groupIndex&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;spmc&quot;,label:&quot;Column 2&quot;}&apos;&gt;&lt;input id=&quot;spmc&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;spbm&quot;,label:&quot;Column 3&quot;}&apos;&gt;&lt;input id=&quot;spbm&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;ggxh&quot;,label:&quot;Column 4&quot;}&apos;&gt;&lt;input id=&quot;ggxh&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;dw&quot;,label:&quot;Column 5&quot;}&apos;&gt;&lt;input id=&quot;dw&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;spsl&quot;,label:&quot;Column 6&quot;}&apos;&gt;&lt;input id=&quot;spsl&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;dj&quot;,label:&quot;Column 7&quot;}&apos;&gt;&lt;input id=&quot;dj&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;je&quot;,label:&quot;Column 8&quot;}&apos;&gt;&lt;input id=&quot;je&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;slvno&quot;,label:&quot;Column 9&quot;}&apos;&gt;&lt;input id=&quot;slvno&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;sapxsdd&quot;,label:&quot;Column 10&quot;}&apos;&gt;&lt;input id=&quot;sapxsdd&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;sapwbs&quot;,label:&quot;Column 11&quot;}&apos;&gt;&lt;input id=&quot;sapwbs&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;sapcgdd&quot;,label:&quot;Column 12&quot;}&apos;&gt;&lt;input id=&quot;sapcgdd&quot;/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;div fd_type=&quot;jsp&quot; id=&quot;jsp_fixture_excel&quot;&gt;&lt;input type=&quot;hidden&quot; value=&apos;&amp;lt;xform:editShow&amp;gt;&amp;lt;script&amp;gt;var ImportExcel_Parameter = new Array();
+        //目前只支持IE,其他浏览器需要后续完善
+        function importExcel() {
+            //开始导入Excel的起始行
+            var startRowNo = 4;
+            var startCellNo = 0;
+            //明细表中的需要导入控件的fdId,请按照Excel模板的列逐个匹配，不能允许跨列
+            var detailTableId = &amp;quot;fd_import_rows&amp;quot;;
+            var detailControlIds =
+                &amp;quot;groupIndex;spmc;spbm;ggxh;dw;spsl;dj;je;slvno;slvno;slvno;slvno;slvno;sapxsdd;sapwbs;sapcgdd;&amp;quot;;
+
+            //一下代码无效修改，修改需谨慎
+            //获取Excel中指定的内容
+            parsingExcelContent(startRowNo, startCellNo, detailTableId, detailControlIds);
+
+        }
+
+        function parsingExcelContent(startRowNo, startCellNo, detailTableId, detailControlIds) {
+            var parsingContent = new Array(detailTableId, detailControlIds, startRowNo, startCellNo);
+            var params = new Array(detailTableId, detailControlIds, startRowNo, startCellNo);
+            var style = &amp;quot;dialogWidth:650px; dialogHeight:350px; status:0;scroll:0; help:0; resizable:1&amp;quot;;
+            var excelContent ;
+            if (window.showModalDialog) {
+                excelContent = window.showModalDialog(Com_Parameter.ContextPath +
+                    &amp;quot;km/review/km_review_detail_excel/kmReviewDetailImport_excel.jsp&amp;quot;, params, style);
+            } else {
+                ImportExcel_Parameter = params;
+                excelContent = window.open(Com_Parameter.ContextPath +
+                    &amp;quot;km/review/km_review_detail_excel/kmReviewDetailImport_excel.jsp&amp;quot;, params, style);
+            }
+            if (excelContent != null) {
+                _DocList_AddRows(detailTableId, excelContent);
+                //  _DocList_AddRows(&amp;apos;TABLE_DL_fd_sap_accl_sub_tab&amp;apos;, arrValues);
+            }
+        }
+        //根据每行的控件值，添加行并设置值
+        function _DocList_AddRows(detailTableId, rowsCtrlValue) {
+            var optTB = document.getElementById(&amp;quot;TABLE_DL_&amp;quot; + detailTableId);
+            var tbInfo = DocList_TableInfo[optTB.id];
+            for (var i = tbInfo.lastIndex - 1; i &amp;gt; 0; i--) {
+                optTB.deleteRow(i);
+                tbInfo.lastIndex--;
+                for (var j = i; j &amp;lt; tbInfo.lastIndex; j++) {
+                    DocListFunc_RefreshIndex(tbInfo, j);
+                }
+            }
+
+            //添加
+            for (var i = 0; i &amp;lt; rowsCtrlValue.length; i++) {
+                DocList_AddRow(optTB, null, rowsCtrlValue[i]);
+            }
+        }&amp;lt;/script&amp;gt;&amp;lt;/xform:editShow&amp;gt;&apos;/&gt;&lt;/div&gt;</string></void><void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSubTableProperty name=&quot;fd_import_rows&quot; label=&quot;Imported rows&quot;&gt;&lt;extendSimpleProperty name=&quot;groupIndex&quot; type=&quot;String&quot; label=&quot;Column 1&quot;/&gt;&lt;extendSimpleProperty name=&quot;spmc&quot; type=&quot;String&quot; label=&quot;Column 2&quot;/&gt;&lt;extendSimpleProperty name=&quot;spbm&quot; type=&quot;String&quot; label=&quot;Column 3&quot;/&gt;&lt;extendSimpleProperty name=&quot;ggxh&quot; type=&quot;String&quot; label=&quot;Column 4&quot;/&gt;&lt;extendSimpleProperty name=&quot;dw&quot; type=&quot;String&quot; label=&quot;Column 5&quot;/&gt;&lt;extendSimpleProperty name=&quot;spsl&quot; type=&quot;String&quot; label=&quot;Column 6&quot;/&gt;&lt;extendSimpleProperty name=&quot;dj&quot; type=&quot;String&quot; label=&quot;Column 7&quot;/&gt;&lt;extendSimpleProperty name=&quot;je&quot; type=&quot;String&quot; label=&quot;Column 8&quot;/&gt;&lt;extendSimpleProperty name=&quot;slvno&quot; type=&quot;String&quot; label=&quot;Column 9&quot;/&gt;&lt;extendSimpleProperty name=&quot;sapxsdd&quot; type=&quot;String&quot; label=&quot;Column 10&quot;/&gt;&lt;extendSimpleProperty name=&quot;sapwbs&quot; type=&quot;String&quot; label=&quot;Column 11&quot;/&gt;&lt;extendSimpleProperty name=&quot;sapcgdd&quot; type=&quot;String&quot; label=&quot;Column 12&quot;/&gt;&lt;/extendSubTableProperty&gt;&lt;/metadata&gt;</string></void></object></java>

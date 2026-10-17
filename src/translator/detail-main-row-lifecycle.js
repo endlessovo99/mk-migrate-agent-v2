@@ -8,6 +8,7 @@ import {
   legacyControlAliases
 } from "./detail-control-target.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
+import { resolveControlEventSupport } from "../dsl/scripts.js";
 
 export const DETAIL_MAIN_ROW_LIFECYCLE_BASIS =
   "deterministic-detail-main-row-lifecycle";
@@ -80,11 +81,15 @@ function valueChangeCandidate(call, context) {
     return undefined;
   }
 
+  const mainWrites = boundMainWriteDomain(callback, target, controlId, valueName, context);
+  if (mainWrites === false || mainWrites && call.optional) return undefined;
+
   const compiled = compileStatements(callback.body.body, {
     ...context,
     tableId: target.table.id,
     valueName,
     targetValueName: "value",
+    mainWrites,
     indent: "  "
   });
   if (!compiled) return undefined;
@@ -101,6 +106,7 @@ function valueChangeCandidate(call, context) {
     ]),
     rowMarkers: collectRowMarkers(callback.body, context)
   };
+  if (mainWrites) lifecycle.mainStringWriteControlIds = [mainWrites.targetId];
 
   return mappedCandidate({
     context,
@@ -234,6 +240,9 @@ function compileStatement(statement, context) {
   if (rowEffect) return compileRowEffect(rowEffect, context);
   const assignment = parseDetailAssignment(statement, context);
   if (assignment) {
+    if (assignment.kind === "main") return [
+      `${context.indent}MKXFORM.setValue(${JSON.stringify(assignment.controlId)}, ${assignment.value});`
+    ];
     const target = `\${table:${context.tableId}}.${assignment.controlId}`;
     return [
       `${context.indent}MKXFORM.updateControl(${JSON.stringify(target)}, rowNum, ${assignment.value});`
@@ -344,6 +353,15 @@ function parseDetailAssignment(statement, context) {
   }
   if (!unshadowedPlatformCall(call, context)) return undefined;
   const controlId = staticString(call.arguments[0]);
+  if (context.mainWrites) {
+    if (controlId !== context.mainWrites.sourceId) return undefined;
+    const node = call.arguments[1], literal = scalarLiteralExpression(node, context.javascript);
+    if (literal === undefined || !["number", "string"].includes(typeof node.value)) return undefined;
+    // A proven single source String input stores numeric arguments using its
+    // DOM-string value contract, including Number literal rounding.
+    const value = typeof node.value === "string" ? literal : "`" + "${" + literal + "}`";
+    return { kind: "main", controlId: context.mainWrites.targetId, value };
+  }
   const target = uniqueDetailColumn(context.form, controlId);
   if (!target || target.table.id !== context.tableId) return undefined;
   const value = targetExpression(call.arguments[1], context);
@@ -453,7 +471,7 @@ function collectDetailWriteControlIds(node, context) {
   walk(node, (candidate) => {
     if (candidate?.type !== "ExpressionStatement") return;
     const assignment = parseDetailAssignment(candidate, context);
-    if (assignment) controlIds.push(assignment.controlId);
+    if (assignment?.kind !== "main" && assignment) controlIds.push(assignment.controlId);
   });
   return uniqueStrings(controlIds);
 }
@@ -500,13 +518,61 @@ function matchingValueChangeLifecycle(context, table, column) {
     });
     const lifecycle = candidate?.semanticHints?.detailMainRowLifecycle;
     if (
-      lifecycle?.tableId === table.id &&
+      lifecycle?.tableId === table.id && !lifecycle.mainStringWriteControlIds?.length &&
       lifecycle.stateControlIds?.includes(column.id)
     ) {
       matches.push(lifecycle);
     }
   }
   return matches.length === 1 ? matches[0] : undefined;
+}
+
+// Extend the existing detail recipe only for one independently source-bound
+// String store. The ordinary detail-to-detail lifecycle remains unchanged.
+function boundMainWriteDomain(callback, target, controlId, valueName, context) {
+  const calls = [];
+  walk(callback.body, node => { if (identifierCallName(node) === SET_VALUE_API) calls.push(node); });
+  const mainTargets = calls.map(call => sourceBoundMainString(context.form, staticString(call.arguments[0])));
+  if (!mainTargets.some(Boolean)) return undefined;
+  if (!mainTargets.every(Boolean) || new Set(mainTargets.map(field => field.id)).size !== 1 ||
+      callback.type !== "FunctionExpression" || callback.async || callback.generator || callback.id ||
+      ![1, 2].includes(callback.params.length) || callback.params.some(node => node.type !== "Identifier") ||
+      new Set(callback.params.map(node => node.name)).size !== callback.params.length ||
+      target.column.type !== "singleSelect" || target.column.componentId !== "xform-select" ||
+      resolveControlEventSupport({ kind: "detail", field: target.column }, "onChange").status !== "supported" ||
+      !sameSourceControl(target.column, controlId) ||
+      context.form.fields.some(field => field.type !== "detailTable" && legacyControlAliases(field).includes(controlId)) ||
+      !collectRowMarkers(callback.body, context).length) return false;
+  let valid = true, conditions = 0;
+  walk(callback.body, node => {
+    if (node.type !== "IfStatement") return;
+    conditions += 1;
+    const test = node.test;
+    if (test?.type !== "BinaryExpression" || !["==", "==="].includes(test.operator)) { valid = false; return; }
+    const literal = test.left?.type === "Identifier" && test.left.name === valueName ? test.right :
+      test.right?.type === "Identifier" && test.right.name === valueName ? test.left : undefined;
+    if (scalarLiteralExpression(literal, context.javascript) === undefined ||
+        !(typeof literal.value === "number" && literal.value !== 0 ||
+          typeof literal.value === "string" && literal.value !== "" && Number(literal.value) !== 0)) valid = false;
+  });
+  if (!valid || !conditions || calls.some(call => call.optional || !unshadowedPlatformCall(call, context))) return false;
+  return { sourceId: staticString(calls[0].arguments[0]), targetId: mainTargets[0].id };
+}
+
+function sourceBoundMainString(form, controlId) {
+  const matches = (form.fields || []).filter(field => field.type !== "detailTable" && legacyControlAliases(field).includes(controlId));
+  if (matches.length !== 1) return undefined;
+  const field = matches[0], fact = field.sourceProps?.mainStringValueBindingFact;
+  if (!["text", "longText"].includes(field.type) || field.dataOnly !== true || !["xform-hidden", "xform-input"].includes(field.componentId) ||
+      !sameSourceControl(field, controlId) || fact?.version !== 1 || fact.status !== "verified" || fact.fieldId !== controlId ||
+      fact.metadata?.count !== 1 || fact.metadata.type !== "String" ||
+      !["designer", "display"].every(name => fact.surfaces?.[name]?.logicalBindingCount === 1 &&
+        fact.surfaces[name].hiddenBindingCount === 1 && fact.surfaces[name].issues?.length === 0)) return undefined;
+  return field;
+}
+function sameSourceControl(field, controlId) {
+  const ids = [field.sourceProps?.originalId, field.sourceProps?.designerId, field.sourceProps?.metadataId].filter(Boolean);
+  return ids.length > 0 && ids.every(id => id === controlId);
 }
 
 function sameStrings(left = [], right = []) {

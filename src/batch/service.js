@@ -6,6 +6,7 @@ import { buildDryRunPlan } from "../executor/dry-run.js";
 import { executeDsl } from "../executor/execute.js";
 import { setTimeout as delay } from "node:timers/promises";
 import { cleanSnapshot } from "./intake.js";
+import { attachMigrationPolicies } from "../translator/approved-migration-policies.js";
 import { engineDigest, integer, itemBinding, json, newId, now, requireValue, safeFailure, text } from "./contracts.js";
 import { claimItem, executionJournal, recoverBatch, renewClaim, setBatchStatus, updateClaim } from "./scheduler.js";
 
@@ -13,7 +14,7 @@ export async function inspectBatch(store, batchId) {
   const batch = await store.get("batch", batchId);
   requireValue(batch, "Batch not found");
   const items = await store.list("item", { batchId }, { fields: ["sourceId", "name", "sourceDigest", "sourceDraftDigest", "dslDigest", "engineDigest",
-    "executionOptions", "status", "targetTemplateId", "diagnostics", "attemptCount", "repairHistory"] });
+    "executionOptions", "migrationPolicies", "status", "targetTemplateId", "diagnostics", "attemptCount", "repairHistory"] });
   const ready = items.filter((item) => item.status === "ready").map(itemBinding);
   const proposal = { batchId, baseUrl: batch.baseUrl, targetCategoryId: batch.targetCategoryId, migrationKey: batch.migrationKey, items: ready };
   const counts = {};
@@ -39,7 +40,9 @@ export async function approveBatch(store, batchId, { expectedDigest, confirmWrit
 
 export async function prepareBatch(store, batchId, options = {}) {
   return runWorkers(store, batchId, "prepare", options, async (item, context) => {
-    const sourceDraft = cleanSnapshot(item.snapshot, item.templateName);
+    const originalSourceDraft = cleanSnapshot(item.snapshot, item.templateName);
+    const batch = await store.get("batch", batchId);
+    const sourceDraft = item.migrationPolicies ? attachMigrationPolicies(originalSourceDraft, item.migrationPolicies, { baseUrl: batch.baseUrl, targetCategoryId: batch.targetCategoryId }) : originalSourceDraft;
     const dslDraft = draftSourceDraft(sourceDraft);
     await updateClaim(store, item.id, item.activeAttemptId, (current) => json({ ...current, sourceDraft, sourceDraftDigest: sha256Digest(sourceDraft), dslDraft }));
     const result = await (options.review || runAgentReview)(sourceDraft, dslDraft, {

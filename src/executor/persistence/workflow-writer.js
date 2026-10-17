@@ -90,6 +90,7 @@ const TEMPLATE_AUTHORIZATION_NATIVE_FIELDS = Object.freeze([
 function applyTemplateAuthorization(template, authorization) {
   if (!authorization || typeof authorization !== "object") return;
   for (const [dslKey, nativeKey] of TEMPLATE_AUTHORIZATION_NATIVE_FIELDS) {
+    if(authorization.readScope?.mode==='everyone'&&dslKey==='allReaders'){delete template[nativeKey];continue;}
     template[nativeKey] = nativeAuthorizationMembers(authorization[dslKey], dslKey);
   }
 }

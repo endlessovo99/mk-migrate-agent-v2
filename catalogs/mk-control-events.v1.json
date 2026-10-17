@@ -1,6 +1,6 @@
 {
   "id": "mk-control-events",
-  "version": "2026-07-18.v3",
+  "version": "2026-10-17.v4",
   "events": {
     "onLoad": { "label": "加载完毕", "scope": "global" },
     "onBeforeSubmit": { "label": "提交前事件", "scope": "global" },
@@ -38,7 +38,7 @@
     { "componentId": "xform-timepicker", "scope": "field", "status": "supported", "events": ["onChange", "onOk"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"], "onOk": [] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 时间1 after v1-gap recheck." },
     { "componentId": "xform-number", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": true, "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 数值1. Tracked calculation-migration Route fixture verifies a detail-number calculation trigger through persistence and readback." },
     { "componentId": "xform-calculate", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": true, "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "Tracked calculation-script-recipes Route fixture verifies a calculated-field onChange action through native persistence and readback. The calculation-migration fixture also verifies xform-calculate as a detail-table column." },
-    { "componentId": "xform-address", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 地址本1." },
+    { "componentId": "xform-address", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": true, "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 地址本1. Current QAS address component dispatches value, rowIndex and parentRowIndex through actionFunsRunner; captured native dispatcher and detail address route are verified in tests/fixtures/executor/persistence/detail-org-runtime/contract.json and tests/route-validation/detail-org-hydration.test.js." },
     { "componentId": "xform-attach", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 附件1." },
     { "componentId": "xform-rich-text", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 富文本1 after v1-gap recheck." },
     { "componentId": "xform-hyperlinks", "scope": "field", "status": "supported", "events": ["onChange"], "detailColumn": "unknown", "handlerParams": { "onChange": ["value"] }, "actionFamilies": ["MKXFORM"], "evidence": "SIT designer control action dropdown for 链接1 after v1-gap recheck." },

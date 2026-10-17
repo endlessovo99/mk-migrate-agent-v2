@@ -4,6 +4,21 @@ import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 
 describe("xform-button native persistence", () => {
+  it("binds the native form placeholder in both button paths and verifies exact readback", () => {
+    const dsl = buttonDsl();
+    dsl.scripts.actions[0].function = "function onClick() { MKXFORM.setValue('fd_subject', '${xform:id}'); }";
+    const prepared = prepareSample(dsl), config = xformConfig(prepared.update);
+    const main = config.dataModel.find(model => model.fdType === "main"), field = main.fdFields.find(field => field.fdName === "fd_generate_parts");
+    const token = JSON.parse(field.fdAttribute).config.controlProps.typeCfg.operInfo;
+    assert.match(JSON.parse(config.lang)[token].content.Cn, /template-id/);
+    assert.equal(JSON.parse(config.lang)[token].content.Cn.includes("${xform:id}"), false);
+    assert.equal(prepared.verify(structuredClone(prepared.update)).ok, true);
+    const wrong = structuredClone(prepared.update), changed = xformConfig(wrong), language = JSON.parse(changed.lang);
+    language[token].content.Cn = language[token].content.Cn.replaceAll("template-id", "another-form-id");
+    changed.lang = JSON.stringify(language); wrong.mechanisms["sys-xform"].fdConfig = JSON.stringify(changed);
+    assert.equal(prepared.verify(wrong).ok, false);
+  });
+
   it("writes button-native typeCfg JavaScript and verifies it on readback", () => {
     const dsl = buttonDsl();
     const prepared = prepareSample(dsl);

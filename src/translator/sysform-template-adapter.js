@@ -7,6 +7,12 @@ import { parseStaticMarkupAttributes, staticSourceMarkup } from "./source-static
 import { extractSysFormJspScripts } from "./sysform-jsp-scripts.js";
 import { parseMetadataXml } from "./sysform-metadata.js";
 import { extractSysFormNodeDataAuthorities } from "./sysform-rights.js";
+import { mainStringValueBindingFacts } from "./main-string-value-binding.js";
+import { approvedRemoteSelectorSourceFacts,remoteSelectorOmissionSourceFacts } from "./approved-remote-policies.js";
+import { remoteSelectorSourceContracts } from "./remote-selector-source-contract.js";
+import { analyzeOrphanBeforeAnchorWitness } from "./orphan-before-anchor-witness.js";
+import { annotateChinaValueReadOnly, attachClosedMainFieldFacts } from "./closed-main-field-effects.js";
+import { sourceFormRadioOrdinalFact } from "./approved-radio-ordinal-policy.js";
 import {
   attrValue,
   cleanText,
@@ -43,6 +49,27 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
     knownFieldIds: collectDataAuthorityFieldIds(form)
   });
+  annotateChinaValueReadOnly(form, template);
+  attachClosedMainFieldFacts(template, scripts, form);
+  const radioOrdinalDomain = sourceFormRadioOrdinalFact(template, form);
+  if (radioOrdinalDomain) for (const source of scripts?.sources || []) source.semanticFacts.sourceFormRadioOrdinalDomain = radioOrdinalDomain;
+  const mainValueBindings = mainStringValueBindingFacts(template);
+  for (const field of [...(form.fields || []), ...(form.dataFields || [])]) {
+    if (field.type === "detailTable" || !mainValueBindings[field.id]) continue;
+    field.source = { ...field.source, mainStringValueBindingFact: mainValueBindings[field.id] };
+  }
+  const remoteContracts = remoteSelectorSourceContracts(template), remoteRuntimeFacts = approvedRemoteSelectorSourceFacts(template), remoteOmissionFacts = remoteSelectorOmissionSourceFacts(template);
+  for (const field of [...(form.fields || []), ...(form.dataFields || [])]) {
+    if (remoteContracts[field.id]) field.source = { ...field.source, remoteSelectorSourceContract: remoteContracts[field.id], ...(remoteOmissionFacts[field.id]?{remoteSelectorOmissionSourceFact:remoteOmissionFacts[field.id]}:{}), ...(remoteRuntimeFacts[field.id] ? {approvedRemoteSelectorSourceFact:remoteRuntimeFacts[field.id]}:{}) };
+    for (const column of field.columns || []) {
+      const fact = remoteContracts[`${field.id}.${column.id}`];
+      if (fact) column.source = { ...column.source, remoteSelectorSourceContract: fact, ...(remoteOmissionFacts[`${field.id}.${column.id}`]?{remoteSelectorOmissionSourceFact:remoteOmissionFacts[`${field.id}.${column.id}`]}:{}), ...(remoteRuntimeFacts[`${field.id}.${column.id}`] ? {approvedRemoteSelectorSourceFact:remoteRuntimeFacts[`${field.id}.${column.id}`]}:{}) };
+    }
+  }
+  for (const source of scripts?.sources || []) {
+    const witness = analyzeOrphanBeforeAnchorWitness(source, form, { sourceScripts: scripts, rawMarkup: template });
+    if (witness) source.semanticFacts.orphanBeforeAnchorWitness = witness;
+  }
   if (Object.keys(nodeDataAuthorities.nodeDataAuthorities || {}).length) {
     form.nodeDataAuthorities = nodeDataAuthorities.nodeDataAuthorities;
   }
