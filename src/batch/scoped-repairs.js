@@ -6,6 +6,7 @@ import { reconcileTransferRecord } from "../executor/reconcile-transfer-record.j
 import { normalizeBaseUrl } from "../executor/newoa-client.js";
 import { withoutMechanismTokens } from "../executor/published-form-patch.js";
 import { engineDigest, exactKeys, json, newId, now, text } from "./contracts.js";
+import {previewAuthorizationCloseout,applyAuthorizationCloseout} from './authorization-closeout.js';
 
 export async function createScopedRepair(store, definition) {
   validateDefinition(definition);
@@ -19,6 +20,7 @@ export async function previewScopedRepair(store, repairId, options = {}) {
   if (options.itemIds !== undefined) strings(options.itemIds, "itemIds");
   const repair = await document(store, "repair", repairId);
   validateDefinition(repair.definition);
+  if(repair.definition.action.kind==='authorization_closeout')return previewAuthorizationCloseout(store,repair,options);
   const batch = await document(store, "batch", options.batchId);
   const candidates = await store.list("item", { batchId: batch.id });
   const selected = options.itemIds ? new Set(options.itemIds) : null;
@@ -68,9 +70,15 @@ export async function applyScopedRepair(store, previewId, options = {}) {
   const rootStat = await stat(artifactsRoot);
   assert(rootStat.isDirectory() && (rootStat.mode & 0o077) === 0, "artifacts_root_not_private");
   const preview = await document(store, "repair_run", previewId);
+  if(preview.kind==='scoped_authorization_closeout')return applyAuthorizationCloseout(store,preview,options);
+  const initial = await document(store, "batch", preview.batchId);
   const currentEngineDigest = engineDigest();
   const run = await store.transaction(async (tx) => {
+    if (initial.targetId) await tx.mutate("target", initial.targetId, (target) => {
+      assert(!target.authorizationCloseoutActive, "origin_closeout_active");return null;
+    });
     const batch = await document(tx, "batch", preview.batchId);
+    assert(batch.targetId === initial.targetId, "target_changed");
     const current = await document(tx, "repair_run", previewId);
     assert(batch.status === "paused", "batch_not_paused");
     assert(current.kind === "scoped" && current.status === "preview", "already_applied");
@@ -231,7 +239,10 @@ function validateDefinition(definition) {
   exactKeys(definition.selector, ["diagnosticCodes"], "selector");
   strings(definition.selector.diagnosticCodes, "diagnosticCodes");
   const action = definition.action;
-  if (action?.kind === "locked_draft") {
+  if(action?.kind==='authorization_closeout'){
+    exactKeys(action,['kind','mode'],'action');
+    assert(['finalize_record','repair_readers','restore_graph'].includes(action.mode),'unsupported_authorization_closeout');
+  } else if (action?.kind === "locked_draft") {
     exactKeys(action, ["kind", "repairKind"], "action");
     assert(["template_authorization", "calculation"].includes(action.repairKind), "unsupported_action");
   } else {

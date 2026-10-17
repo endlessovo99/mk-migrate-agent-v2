@@ -1,0 +1,67 @@
+{
+  "version": 2,
+  "repairRequest": {
+    "endpoint": "/data/km-review/kmReviewTemplate/update",
+    "formalPaths": [
+      "/fdReaders",
+      "/mechanisms/lbpmTemplate/0/fdReaders"
+    ],
+    "omittedTransportPaths": [
+      "/fdAllReaders"
+    ],
+    "workflowWriteCalls": 0,
+    "transferRecordCalls": 0,
+    "unchangedTransportPaths": [
+      "/mechanisms/lbpmTemplate/0/fdContent"
+    ]
+  },
+  "recordRequest": {
+    "endpoint": "/data/sys-transfer/transferRecord/add",
+    "templateWriteCalls": 0,
+    "workflowWriteCalls": 0,
+    "maximumCalls": 1
+  },
+  "nativeAuditPaths": [
+    "/fdAlterTime",
+    "/mechanisms/sys-xform/fdAlterTime",
+    "/mechanisms/sys-xform/fdConfig/dataModel/main/fdAlterTime"
+  ],
+  "nativeEditorReferencePaths": [
+    "/mechanisms/lbpmTemplate/0/fdEditors",
+    "/workflow/fdEditors"
+  ],
+  "provenance": "Observed native km-review template edit module and retained acknowledged permission update; reader aggregates derive from formal inputs. No backend implementation is claimed.",
+  "nativeModule": {
+    "path": "km-review/desktop/pages/kmReviewTemplate/edit",
+    "release": "645549c841832b4eb994d51b316b9c25",
+    "sha256": "5708735c67eee0378ad73bccc5182ab8b17ffd36ce1166a0dbeb5afdd95d77d6"
+  },
+  "nativeInputEvidence": [
+    "(o=r[0]).fdReaders=e.fdReaders||[],o.fdEditors=e.fdEditors||[]",
+    "j.mechanisms.lbpmTemplate[0].fdContent=void 0",
+    "ve(A,r) sets isDraft=!r; existing basic-info route is not the isDraft:true executor route"
+  ],
+  "draftObservation": "Acknowledged isDraft:true update with omitted fdContent clears both bound and detailed workflow content.",
+  "graphRestoration": {
+    "mode": "restore_graph",
+    "requestDelta": [
+      "/mechanisms/lbpmTemplate/0/fdContent"
+    ],
+    "requires": "explicit exact graph hash and current snapshot authorization plus acknowledged omission receipt",
+    "transferRecordCalls": 0,
+    "retainedApproval": "Recompute full original bindings digest and bind original Source/DSL/report/execution options, both journal intents and request"
+  },
+  "workflowVerification": {
+    "bindingCount": 1,
+    "requiredSurfaces": [
+      "template.mechanisms.lbpmTemplate[0]",
+      "workflow-detail"
+    ],
+    "bothMustMatchDsl": true
+  },
+  "unknownIsolation": {
+    "scope": "all retained item attempts and native write intents, including graph restoration",
+    "canonicalHistoricalLock": "read and verify in executor; never modified",
+    "summaryFalseNeverOverridesAffirmativeUncertainty": true
+  }
+}

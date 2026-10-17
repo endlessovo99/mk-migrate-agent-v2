@@ -8,6 +8,7 @@ export async function setTargetLimit(store, batchId, limit, actor) {
   requireValue(initial, "Batch not found");
   return store.transaction(async (tx) => {
     const target = await tx.get("target", initial.targetId);
+    requireValue(!target?.authorizationCloseoutActive, "An authorization closeout is still applying for this origin", "BATCH_REPAIR_IN_PROGRESS");
     const batches = await tx.list("batch", { baseUrl: initial.baseUrl });
     requireValue(batches.every((batch) => batch.status === "paused"), "Pause every batch for this origin before changing its limit");
     const active = await tx.list("item", { baseUrl: initial.baseUrl, status: "running" }, { fields: [] });
@@ -20,10 +21,16 @@ export async function setTargetLimit(store, batchId, limit, actor) {
 
 export async function setBatchStatus(store, batchId, status) {
   requireValue(["paused", "running"].includes(status), "Invalid batch status");
+  const initial = status === "running" ? await store.get("batch", batchId) : null;
   return store.transaction(async (tx) => {
+    if (initial?.targetId) {
+      const target = await tx.get("target", initial.targetId);
+      requireValue(!target?.authorizationCloseoutActive, "An authorization closeout is still applying for this origin", "BATCH_REPAIR_IN_PROGRESS");
+    }
     const batch = await tx.get("batch", batchId);
     requireValue(batch, "Batch not found");
     if (status === "running") {
+      requireValue(batch.targetId === initial.targetId, "Batch target changed before resume", "BATCH_APPROVAL_STALE");
       const runs = await tx.list("repair_run", { batchId }, { fields: ["status"] });
       requireValue(!runs.some((run) => run.status === "applying"), "A scoped repair is still applying; investigate its retained evidence", "BATCH_REPAIR_IN_PROGRESS");
     }
@@ -35,7 +42,10 @@ export async function claimItem(store, batchId, phase, { workerId, leaseMs, engi
   const initial = await store.get("batch", batchId);
   requireValue(initial, "Batch not found");
   return store.transaction(async (tx) => {
-    if (phase === "execute") await tx.mutate("target", initial.targetId, () => null);
+    if (phase === "execute") await tx.mutate("target", initial.targetId, (target) => {
+      requireValue(!target.authorizationCloseoutActive, "An authorization closeout is still applying for this origin", "BATCH_REPAIR_IN_PROGRESS");
+      return null;
+    });
     const batch = await tx.get("batch", batchId);
     if (batch.status !== "running") return null;
     if (phase === "execute") {

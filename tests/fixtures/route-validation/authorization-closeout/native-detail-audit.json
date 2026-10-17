@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "detail": {
+    "fdId": "synthetic-detail-id",
+    "fdTableName": "synthetic_detail_table",
+    "fdFields": [
+      {
+        "fdId": "line_amount",
+        "fdName": "Line amount",
+        "fdType": "Double"
+      }
+    ]
+  },
+  "observedAdditions": {
+    "fdAlter": {
+      "fdId": "synthetic-operator",
+      "fdName": "Operator"
+    },
+    "fdAlterTime": 1015,
+    "fdDeletedFields": []
+  },
+  "provenance": "Acknowledged draft update initialized audit metadata on each unchanged detail model; before and after retained under the task claim, graph omission tracked separately."
+}
