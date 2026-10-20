@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { draftSourceDraft } from "../../src/translator/index.js";
+// These width assertions cover retained SourceDrafts and their standalone native caption layouts.
+import { cleanSourceWithoutCaptionFact as cleanSourceFile } from "../helpers/retained-caption-source.js";
 import { applyFormPayload } from "../../src/executor/persistence/form-writer.js";
 import { projectNativeLayoutRows } from "../../src/executor/persistence/layout-projection.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";

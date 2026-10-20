@@ -385,6 +385,12 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
     },
     {
+      id: "native-caption-fold-success",
+      source: { kind: "form-only", relativePath: "native-caption-fold/plain_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "checkbox-source-direction-success",
       source: { kind: "form-only", relativePath: "checkbox-source-direction/checkbox-direction_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,

@@ -25,6 +25,7 @@ import { annotateRuntimeNumberDisplayWidth } from "./runtime-number-display-widt
 import { runtimeCaptionWidthEvidence, runtimePlainCaptionEvidenceWithMarkers, runtimeCaptionTrailingBlankCells } from "./runtime-caption-width.js";
 import { annotateRuntimeSelectEmpty } from "./runtime-select-empty.js";
 import { runtimeIndependentCaptionEvidence } from "./runtime-independent-caption.js";
+import { staticCaptionFacts } from "./static-caption-facts.js";
 import { isStaticDescriptionGridShape, isStaticHeaderGridShape, staticRectangleGridProfile, staticRectangleCellContent } from "./standard-table-grid.js";
 import {
   designerVisibilityWarnings,
@@ -235,6 +236,12 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
   layoutRows.splice(0, layoutRows.length, ...adjacentRowTitles.rows);
 
   recoverDesignerAttachments(decoded, fields, fieldIds, layoutRows, warnings);
+
+  const captionFacts = staticCaptionFacts(decoded, options.runtimeDisplayHtml || "");
+  for (const field of fields) {
+    const fact = captionFacts.get(field.id);
+    if (fact) field.source = { ...field.source, staticCaptionFact: fact };
+  }
 
   warnings.push(...designerVisibilityWarnings(fields));
 

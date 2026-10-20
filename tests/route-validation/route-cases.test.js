@@ -70,9 +70,9 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(fields.get("fd_price")?.props?.hiddenLabel, true);
 
     const expectedRows = [
-      ["label_department", "fd_department", "label_manager", "fd_manager"],
-      ["label_requirement", "fd_requirement", "label_procurement", "fd_procurement"],
-      ["label_quote", "fd_quote", "label_price", "fd_price"]
+      ["label_department", "fd_department", "fd_manager"],
+      ["fd_requirement", "label_procurement", "fd_procurement"],
+      ["fd_quote", "label_price", "fd_price"]
     ];
     assert.deepEqual(
       result.dsl.form.layout.mkTree.map((row) => ({

@@ -40,17 +40,18 @@ function assertWidthless({ source, dsl }) {
   assert.equal(sourceItem(source).width, undefined, "A runtime-widthless source LABEL must not inherit its designer decoration width");
   const description = dsl.form.fields.find(field => field.id === "caption_fixed");
   const owner = dsl.form.fields.find(field => field.id === "fd_value");
-  assert.equal(description.componentId, "xform-description");
-  assert.equal(description.props.content, "Caption");
-  assert.equal(description.sourceRef, "source.form.control.caption_fixed");
-  assert.equal(description.generated, false);
+  assert.equal(description, undefined);
+  assert.equal(owner.title, "Caption");
+  assert.notEqual(owner.props.hiddenLabel, true);
+  assert.equal(owner.sourceProps.foldedCaption.sourceRef, "source.form.control.caption_fixed");
   assert.equal(owner.sourceProps.designerValues._label_bind_id, "caption_fixed");
   assert.equal(owner.props.required, true);
   assert.deepEqual(owner.props.defaultValue, { kind: "literal", value: "seed" });
   const prepared = prepareSample(dsl);
   const view = JSON.parse(xformConfig(prepared.update).viewModel[0].fdConfig);
   for (const scene of ["desktop", "mobile"]) {
-    assert.equal(parentOf(view.view.render[scene][0], "caption_fixed").controlProps.style.width, undefined);
+    assert.equal(parentOf(view.view.render[scene][0], "fd_value").controlProps.style.width,
+      scene === "desktop" ? "277px" : "100px");
   }
   assert.equal(prepared.verify(prepared.update).ok, true);
 }
@@ -125,7 +126,9 @@ describe("designer-only fixed width on a static source caption", () => {
     it("preserves the existing width for " + name, () => {
       const result = variant(change);
       assert.deepEqual(sourceItem(result.source).width, { value: 48, unit: "px" });
-      assert.ok(result.dsl.form.fields.some(field => field.id === "caption_fixed"));
+      const owner = result.dsl.form.fields.find(field => field.id === "fd_value");
+      assert.ok(result.dsl.form.fields.some(field => field.id === "caption_fixed") ||
+        owner.sourceProps.foldedCaption?.id === "caption_fixed");
     });
   }
 
@@ -142,7 +145,7 @@ describe("designer-only fixed width on a static source caption", () => {
     change(forged.form.layout);
     assert.equal(checkTrust(source, createTrustedMigrationDsl(source, forged, { externalAgentReviewed: true, reviewerName: "synthetic forged width" })).ok, false);
     const prepared = prepareSample(dsl), corrupt = structuredClone(prepared.update), config = xformConfig(corrupt), view = JSON.parse(config.viewModel[0].fdConfig);
-    parentOf(view.view.render.desktop[0], "caption_fixed").controlProps.style.width = "49px";
+    parentOf(view.view.render.desktop[0], "fd_value").controlProps.style.width = "49px";
     config.viewModel[0].fdConfig = JSON.stringify(view); corrupt.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
     assert.equal(prepared.verify(corrupt).ok, false);
   });

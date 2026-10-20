@@ -25,7 +25,8 @@ describe('source numeric text editor budget', () => {
   it('projects native shell budgets and mobile input minima and verifies persisted state', () => {
     const {dsl}=stages(), prepared=prepareSample(dsl), config=xformConfig(prepared.update), view=viewOf(prepared.update);
     for(const [id,width] of [['fd_amount',120],['fd_count',50]]) {
-      assert.equal(parentOf(view.view.render.desktop[0],id).controlProps.style.width,`${width+32}px`);
+      const titleSpace = dsl.form.fields.find(field => field.id === id).sourceProps.foldedCaption ? 145 : 0;
+      assert.equal(parentOf(view.view.render.desktop[0],id).controlProps.style.width,`${width+32+titleSpace}px`);
       assert.equal(parentOf(view.view.render.mobile[0],id).controlProps.style.width,`${Math.max(80,width)+32}px`);
       const field=nativeField(config,id), props=JSON.parse(field.fdAttribute).config.controlProps, font=JSON.parse(field.fdFontExtendData);
       assert.equal(props.showCount,false);assert.equal(font.showCount,false);
@@ -37,7 +38,8 @@ describe('source numeric text editor budget', () => {
   it('uses the inner width once for required controls and preserves decimal semantics', () => {
     const {dsl}=stages(), prepared=prepareSample(dsl), config=xformConfig(prepared.update), view=viewOf(prepared.update);
     for(const [id,input,outer,precision] of [['fd_required_count',50,56,0],['fd_required_amount',120,126,0],['fd_decimal',50,50,2],['fd_peer',50,50,0]]) {
-      assert.equal(parentOf(view.view.render.desktop[0],id).controlProps.style.width,`${input+32}px`);
+      const titleSpace = dsl.form.fields.find(field => field.id === id).sourceProps.foldedCaption ? 145 : 0;
+      assert.equal(parentOf(view.view.render.desktop[0],id).controlProps.style.width,`${input+32+titleSpace}px`);
       assert.equal(parentOf(view.view.render.mobile[0],id).controlProps.style.width,`${Math.max(80,input)+32}px`);
       assert.equal(JSON.parse(nativeField(config,id).fdAttribute).config.controlProps.valueType.precision,precision);
     }

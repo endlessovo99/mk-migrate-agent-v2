@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { draftSourceDraft } from "../../src/translator/index.js";
+// These width assertions cover retained SourceDrafts and their standalone native caption layouts.
+import { cleanSourceWithoutCaptionFact as cleanSourceFile } from "../helpers/retained-caption-source.js";
 import { sourceMobileCaptionGrids } from "../../src/dsl/source-mobile-caption-grid.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";

@@ -3,6 +3,7 @@ import {verifiedDateOverlapReadyAction} from "../translator/date-overlap-lifecyc
 import { choiceOtherCompanionDiagnostics } from "../dsl/source-choice-other-companion.js";
 import { mobileCaptionSourceDiagnostics } from "../dsl/source-mobile-caption-grid.js";
 import { radioSourceDiagnostics } from "../dsl/source-radio-layout.js";
+import { nativeCaptionFoldIssues } from "../dsl/native-caption-fold.js";
 import { detailRowSourceEffectDiagnostics } from "../dsl/source-detail-row-effects.js";
 import { checkDraft } from "../dsl/checks.js";
 import { layoutRowTargets } from "../dsl/layout-row-targets.js";
@@ -264,6 +265,10 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
   }
   const closureDiagnostics = [
     ...nestedGeometrySourceDiagnostics(sourceDraft),
+    ...nativeCaptionFoldIssues(fixedSourceForm, patchedDraft.form).issues.map(issue =>
+      error(`agent.patch.form.${issue.reason}_mismatch`,
+        "Native field titles must preserve the source-proven caption, field semantics and occupied layout.",
+        "/form", issue)),
     ...(sourceDraft ? choiceOtherCompanionDiagnostics(sourceDraft.form, patchedDraft.form, fixedSourceForm, { prefix: "agent.patch.form" }) : []),
     ...(sourceDraft ? mobileCaptionSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
     ...(sourceDraft ? radioSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),

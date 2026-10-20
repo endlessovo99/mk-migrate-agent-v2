@@ -3,6 +3,7 @@ import {renderMainTableReferences} from "../../dsl/native-main-table-reference.j
 import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
 import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
 import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.js";
+import { nativeCaptionDesktopWidths } from "../../dsl/native-caption-fold.js";
 import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import { approvedDetailColumnWidths } from "../../dsl/approved-detail-presentation.js";
 import {
@@ -1679,6 +1680,7 @@ function buildViewConfig(mainModel, form, detailModelsByField) {
   const budgets = new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]
     .map(([id, profile]) => [id, profile.inputPx + 32]));
   for (const [id, profile] of sourceInlineEditorWidths(form)) budgets.set(id, profile.nativeOuterPx);
+  for (const [id, width] of nativeCaptionDesktopWidths(form)) budgets.set(id, width);
   const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields, budgets);
   const mainContainer = {
     key: "main",

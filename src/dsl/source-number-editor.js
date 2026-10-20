@@ -21,7 +21,7 @@ export function sourceNumberEditors(form = {}) {
     const source = field.sourceProps || {}, values = source.designerValues || {};
     if ((target ? field.type !== 'number' || field.componentId !== 'xform-number' : field.sourceType !== 'number') ||
         source.designerType !== 'inputText' || values.dataType !== 'Double' || source.layoutCell?.hiddenLabel !== true ||
-        (target && field.props?.hiddenLabel !== true) || field.dataOnly === true || field.props?.readOnly === true ||
+        (target && field.props?.hiddenLabel !== true && !field.sourceProps?.foldedCaption) || field.dataOnly === true || field.props?.readOnly === true ||
         field.props?.calculation !== undefined || sourceRequiresReadOnly(field) ||
         decorated(source) || decorated(values) || decorated(field.props)) continue;
     const profile = sourceWidthProfile(field, context);
@@ -40,7 +40,7 @@ export function sourceNumberDisplays(form = {}) {
     if ((target ? field.type !== 'number' || !['xform-number', 'xform-calculate'].includes(field.componentId) : field.sourceType !== 'number') ||
         !['inputText', 'calculation'].includes(source.designerType) || values.dataType !== 'Double' ||
         String(values.readOnly).trim().toLowerCase() !== 'true' || source.layoutCell?.hiddenLabel !== true ||
-        target && (field.props?.hiddenLabel !== true || field.props?.readOnly !== true) || field.dataOnly === true ||
+        target && (field.props?.hiddenLabel !== true && !field.sourceProps?.foldedCaption || field.props?.readOnly !== true) || field.dataOnly === true ||
         displayDecorated(source) || displayDecorated(field.props) ||
         source.metadataId !== field.id || source.metadataKind !== 'simple' ||
         source.metadataAttributes?.name !== field.id || source.metadataAttributes?.type !== 'Double' ||

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-native-caption-fold</string></void>
+<void method="put"><string>fdModelId</string><string>route-native-caption-fold-template</string></void>
+<void method="put"><string>fdName</string><string>Native caption fold</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;TABLE fd_type="standardTable" id="table_caption"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL fd_type="textLabel" fd_values='{id:"caption_department",content:"申请部门"}'&gt;申请部门&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;DIV fd_type="inputText" fd_values='{id:"fd_department",label:"申请部门",dataType:"String",notNull:"true",readOnly:"true",defaultValue:"运营部",_label_bind:"true",_label_bind_id:"caption_department"}'&gt;&lt;INPUT id="fd_department" type="text"/&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_department" label="申请部门" type="String" notNull="true" defaultValue="运营部"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

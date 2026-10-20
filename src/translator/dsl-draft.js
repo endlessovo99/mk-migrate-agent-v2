@@ -14,6 +14,7 @@ import { deterministicManualResidualDecisionId } from "../dsl/deterministic-scri
 import { packLayoutGrid, projectLayoutGrid } from "../dsl/layout-pack.js";
 import { selectContentFlow } from "../dsl/content-flow.js";
 import { projectCompanionPresentation, projectUnitPresentation } from "./form-presentation.js";
+import { foldNativeCaptions } from "./native-caption-fold.js";
 import {
   applyFieldIdMapToForm,
   applyFieldIdMapToScripts,
@@ -79,7 +80,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     throw new Error("draft requires a source-draft artifact");
   }
 
-  const rawForm = foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
+  const rawForm = foldNativeCaptions(foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
     appendStaticJspDescriptionFields(
       applySourceNumericDetailInferences(
         applyNativeCalculationInferences(
@@ -95,7 +96,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceDraft.scripts
     ),
     sourceDraft.scripts
-  )), sourceDraft);
+  )), sourceDraft), sourceDraft);
   const fieldIdMap = buildFieldIdMap(rawForm);
   const mappedForm = applyDetailCascadeRowOptions(
     applyFieldIdMapToForm(rawForm, fieldIdMap),

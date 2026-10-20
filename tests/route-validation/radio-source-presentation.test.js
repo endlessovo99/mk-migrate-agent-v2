@@ -8,6 +8,7 @@ import { mobileNumberGrid } from "../../src/executor/persistence/mobile-number-l
 import { projectNativeLayoutRows } from "../../src/executor/persistence/layout-projection.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 import { runRouteCase } from "./run-route-case.js";
+import { cleanSourceWithoutCaptionFact } from "../helpers/retained-caption-source.js";
 
 const directory = "tests/fixtures/route-validation/radio-source-presentation/";
 const load = (name = "radio-source-presentation") => {
@@ -125,9 +126,10 @@ it("keeps designer width when runtime matching/appearance or explicit source dir
   }
 });
 
-it("retains single/multiple caption intrinsic policies after verified widthless radios cease being fixed px", () => {
+it("retains existing standalone caption width policies for saved Source Drafts", () => {
   for (const name of ["radio-source-presentation", "multiple-widthless-radios"]) {
-    const { draft } = load(name), prepared = prepareSample(draft), view = viewOf(prepared.update), profiles = sourceMobileCaptionGrids(draft.form);
+    const draft = draftSourceDraft(cleanSourceWithoutCaptionFact(`${directory}${name}_SysFormTemplate.xml`));
+    const prepared = prepareSample(draft), view = viewOf(prepared.update), profiles = sourceMobileCaptionGrids(draft.form);
     assert.equal(profiles.size, draft.form.layout.mkTree.length);
     for (const [index, row] of view.view.render.mobile[0].children[0].children.entries()) {
       const pc = gridOf(view.view.render.desktop[0].children[0].children[index]), mobile = gridOf(row);
@@ -159,7 +161,9 @@ it("rejects fixed-source direction, width, identity, field props and options lau
   }
   const { source, draft } = load(), changed = structuredClone(draft);
   for (const collection of [changed.form.layout.mkTree, changed.form.layout.sourceGrid.rows]) {
-    const row = collection[0], cell = (row.children || row.cells)[1]; cell.contentFlow.items[0].width = { value: 999, unit: "px" };
+    const row = collection[0], cell = (row.children || row.cells).find(cell =>
+      cell.contentFlow.items.some(item => item.referenceId === "fd_h2"));
+    cell.contentFlow.items[0].width = { value: 999, unit: "px" };
   }
   assert.equal(trust(source, changed).ok, false);
   assert.equal(applyEvidenceBackedPatches(changed, [], { sourceDraft: source, sourceRefs: collectSourceRefs(source) }).ok, false);

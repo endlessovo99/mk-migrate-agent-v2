@@ -46,36 +46,41 @@ describe("native field width route validation", () => {
     assert.equal(prepared.verify(prepared.update).ok, true);
   });
 
-  it("preserves the actual independent caption without rewriting the dangling binding", () => {
+  it("folds the runtime-proven caption into the native title while retaining its source and input width", () => {
     const { source, dsl } = stages(amountFile);
-    assert.deepEqual(dsl.form.fields.map(field => field.id), ["fd_caption_actual", "fd_amount"]);
+    assert.deepEqual(source.form.controls.map(field => field.id), ["fd_caption_actual", "fd_amount"]);
+    assert.deepEqual(dsl.form.fields.map(field => field.id), ["fd_amount"]);
     const field = dsl.form.fields.find(field => field.id === "fd_amount");
-    assert.equal(field.props.hiddenLabel, true);
+    assert.equal(field.title, "Amount");
+    assert.notEqual(field.props.hiddenLabel, true);
     assert.equal(field.sourceProps.designerValues._label_bind_id, "fd_caption_missing");
     assert.equal(field.sourceProps.boundCaption, undefined);
     assert.equal(source.form.controls.find(control => control.id === "fd_amount").sourceProps.layoutCell.relation,
       "runtime-independent-title-cell");
     const prepared = prepareSample(dsl), view = nativeView(prepared.update);
     assert.equal(field.sourceProps.designerValues.width, "120");
-    assert.equal(parentOf(view.view.render.desktop[0], "fd_amount").controlProps.style.width, "152px");
+    assert.deepEqual(dsl.form.layout.mkTree[0].children[0].contentFlow.items[0].width, { value: 120, unit: "px" });
+    assert.equal(parentOf(view.view.render.desktop[0], "fd_amount").controlProps.style.width, "297px");
     assert.equal(parentOf(view.view.render.mobile[0], "fd_amount").controlProps.style.width, "152px");
     assert.equal(prepared.verify(prepared.update).ok, true);
   });
 
-  it("rejects removal or weakening of the recovered source caption at external trust", () => {
+  it("rejects title changes, hiding and fabricated or lost source facts after the runtime caption fold", () => {
     const { source, dsl } = stages(amountFile), index = dsl.form.fields.findIndex(field => field.id === "fd_amount");
-    assert.equal(dsl.form.fields[index].props.hiddenLabel, true);
+    assert.notEqual(dsl.form.fields[index].props.hiddenLabel, true);
+    assert.equal(dsl.form.fields[index].title, "Amount");
+    assert.equal(checkTrust(source, createTrustedMigrationDsl(source, dsl, { externalAgentReviewed: true })).ok, true);
     for (const mutate of [
-      d => { delete d.form.fields[index].props.hiddenLabel; },
-      d => { d.form.fields[index].props.hiddenLabel = false; d.form.fields[index].sourceProps = {}; },
-      d => { d.form.fields = d.form.fields.filter(field => field.id !== "fd_caption_actual"); },
-      d => { d.form.fields.find(field => field.id === "fd_caption_actual").props.content = "Wrong"; },
-      d => { d.form.fields[index].sourceProps = {}; d.form.fields[0].sourceProps = {}; d.form.fields[0].props.content = "Wrong"; },
-      d => { d.form.fields[index].sourceProps.layoutCell.relation = "other"; d.form.fields[0].props.content = "Wrong"; },
-      d => { d.form.fields[0].sourceRef = d.form.fields[index].sourceRef; },
+      d => { d.form.fields[index].props.hiddenLabel = true; },
+      d => { d.form.fields[index].title = "Wrong"; },
+      d => { delete d.form.fields[index].sourceProps.foldedCaption; },
+      d => { d.form.fields[index].sourceProps.foldedCaption.id = "fd_caption_invented"; },
+      d => { d.form.fields[index].sourceProps = {}; },
+      d => { d.form.fields[index].sourceProps.layoutCell.relation = "other"; },
+      d => { d.form.fields[index].sourceRef = source.form.controls.find(field => field.id === "fd_caption_actual").sourceRef; },
       d => { d.form.fields.push(structuredClone(d.form.fields[0])); },
       d => { d.form.fields[0].id = "fd_replacement";
-        const replace = x => { if (!x || typeof x !== "object") return; for (const key of Object.keys(x)) { if (x[key] === "fd_caption_actual") x[key] = "fd_replacement"; else replace(x[key]); } };
+        const replace = x => { if (!x || typeof x !== "object") return; for (const key of Object.keys(x)) { if (x[key] === "fd_amount") x[key] = "fd_replacement"; else replace(x[key]); } };
         replace(d.form.layout); }
     ]) {
       const next = structuredClone(dsl); mutate(next);
@@ -142,6 +147,9 @@ describe("native field width route validation", () => {
     });
     assert.equal(source.form.controls.find(field => field.id === "fd_amount").sourceProps.layoutCell.relation,
       "runtime-independent-title-cell");
+    assert.equal(source.form.controls.find(field => field.id === "fd_caption_actual").title, "Amount");
+    assert.equal(dsl.form.fields.find(field => field.id === "fd_caption_actual")?.componentId, "xform-description");
+    assert.equal(dsl.form.fields.find(field => field.id === "fd_amount").title, "Amount");
     assert.equal(dsl.form.fields.find(field => field.id === "fd_amount").props.hiddenLabel, true);
   });
 
@@ -208,17 +216,22 @@ describe("native field width route validation", () => {
     assert.equal(amount.verify(fakeFill).ok, false);
   });
 
-  it("rejects model patches that remove the recovered caption or re-enable its intrinsic label", () => {
+  it("rejects model patches that hide, rename or falsify the folded runtime caption", () => {
     const { source, dsl } = stages(amountFile), index = dsl.form.fields.findIndex(field => field.id === "fd_amount");
-    const result = applyEvidenceBackedPatches(dsl, [{ op: "replace", path: `/form/fields/${index}/props`, value: { precision: 0 },
-      sourceRefs: [dsl.form.fields[index].sourceRef], evidence: ["Attempted label removal"], confidence: 1, rationale: "Negative proof" }],
-      { sourceDraft: source, sourceRefs: collectSourceRefs(source) });
-    assert.equal(result.ok, false);
-    const captionIndex = dsl.form.fields.findIndex(field => field.id === "fd_caption_actual");
-    const wrongCaption = applyEvidenceBackedPatches(dsl, [{ op: "replace", path: `/form/fields/${captionIndex}/props/content`, value: "Wrong",
-      sourceRefs: [dsl.form.fields[captionIndex].sourceRef], evidence: ["Caption substitution"], confidence: 1, rationale: "Negative proof" }],
-      { sourceDraft: source, sourceRefs: collectSourceRefs(source) });
-    assert.equal(wrongCaption.ok, false);
+    assert.equal(dsl.form.fields[index].title, "Amount");
+    assert.notEqual(dsl.form.fields[index].props.hiddenLabel, true);
+    for (const [property, value] of [
+      ["props", { ...dsl.form.fields[index].props, hiddenLabel: true }],
+      ["title", "Wrong"],
+      ["sourceProps", {}],
+      ["sourceProps/foldedCaption", { ...dsl.form.fields[index].sourceProps.foldedCaption, id: "fd_caption_invented" }]
+    ]) {
+      const result = applyEvidenceBackedPatches(dsl, [{ op: "replace", path: `/form/fields/${index}/${property}`, value,
+        sourceRefs: [dsl.form.fields[index].sourceRef], evidence: ["Attempted native caption substitution"],
+        confidence: 1, rationale: "Negative proof" }],
+        { sourceDraft: source, sourceRefs: collectSourceRefs(source) });
+      assert.equal(result.ok, false, property);
+    }
   });
 
   for (const id of ["singleton-select-width-success", "runtime-independent-caption-width-success"]) {

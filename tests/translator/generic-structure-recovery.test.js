@@ -405,25 +405,26 @@ describe("generic structural form recovery", () => {
     }
     assert.deepEqual(mkRow?.children.flatMap((cell) => cell.refIds).filter((id) => dateIds.includes(id)), dateIds);
     assert.equal(fields.get("delivery_window_label")?.componentId, "xform-description");
-    assert.equal(fields.get("bid_date_label")?.componentId, "xform-description");
-    assert.equal(fields.get("visit_date_label")?.componentId, "xform-description");
+    assert.equal(fields.has("bid_date_label"), false);
+    assert.equal(fields.has("visit_date_label"), false);
+    assert.notEqual(fields.get("fd_bid_date")?.props.hiddenLabel, true);
+    assert.notEqual(fields.get("fd_visit_date")?.props.hiddenLabel, true);
     assert.equal(fields.get("fd_delivery_start")?.title, "Delivery window - Start");
     assert.equal(fields.get("fd_delivery_end")?.title, "Delivery window - End");
     assert.equal(mkRow?.componentId, "xform-multi-row-table-layout");
     assert.deepEqual(mkRow?.props, { rows: 1, columns: 7 });
-    assert.equal(mkRow?.children.length, 6);
+    assert.equal(mkRow?.children.length, 4);
     assert.deepEqual(
       mkRow?.children.map((cell) => cell.refIds),
       [
         ["delivery_window_label"],
         ["delivery_start_caption", "fd_delivery_start", "delivery_end_caption", "fd_delivery_end"],
-        ["bid_date_label"],
         ["fd_bid_date"],
-        ["visit_date_label"],
         ["fd_visit_date"]
       ]
     );
-    assert.deepEqual(mkRow?.children.map((cell) => cell.column), [0, 1, 2, 3, 4, 5]);
+    assert.deepEqual(mkRow?.children.map((cell) => cell.column), [0, 1, 2, 4]);
+    assert.deepEqual(mkRow?.children.slice(2).map(cell => cell.colspan), [2, 3]);
     assert.equal(mkRow?.children[1]?.keepInline, true);
     assert.deepEqual(mkRow?.children[1]?.contentFlow.lines, [
       ["delivery_start_caption", "fd_delivery_start"],

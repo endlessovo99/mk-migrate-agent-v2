@@ -18,6 +18,7 @@ import { draftSourceDraft, MIGRATION_DSL_VERSION } from "../translator/dsl-draft
 import { SOURCE_DRAFT_VERSION } from "../translator/source-draft.js";
 import { inspectWorkflowFormulaProvenance } from "../translator/workflow-formula-participants.js";
 import { sourcePresentationIssues } from "./source-presentation.js";
+import { nativeCaptionFoldIssues } from "./native-caption-fold.js";
 import { sourceRequiresReadOnly } from "./source-readonly.js";
 import { inputLengthRequirements, inputLengthPolicyWarning } from "./source-input-length.js";
 import { validateSourceSignIntegrity } from "./workflow-sign-contract.js";
@@ -115,7 +116,12 @@ export function checkTrust(sourceDraft, migrationDsl) {
     .filter((field) => dataOnlyFieldIds.has(field.sourceProps?.addressDisplayCompanionId) ||
       field.sourceProps?.consumedAddressDisplayCompanionId)
     .map((field) => [field.sourceProps.addressDisplayCompanionId, field.sourceProps?.originalId || field.id]));
-  for (const issue of sourcePresentationIssues(sourceDraft?.form, migrationDsl?.form, { dataOnlySourceRefs, presentationReferenceMap })) {
+  const captionFolds = nativeCaptionFoldIssues(expectedDraft?.form, migrationDsl?.form);
+  const presentationIssues = sourcePresentationIssues(sourceDraft?.form, migrationDsl?.form, {
+    dataOnlySourceRefs, presentationReferenceMap,
+    foldedSourceRefs: captionFolds.foldedSourceRefs, consumedCaptionIds: captionFolds.consumedCaptionIds
+  });
+  for (const issue of [...captionFolds.issues, ...presentationIssues]) {
     diagnostics.push(error(
       `trust.form.presentation_${issue.reason}_mismatch`,
       "Target presentation must preserve source line boundaries, item dimensions, hidden titles and unit text.",

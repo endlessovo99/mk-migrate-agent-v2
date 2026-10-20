@@ -503,6 +503,17 @@ function observeNativeControlBinding(value) {
 function observeExecutableProps(controlProps = {}, native = {}) {
   const props = {};
   const component = inferComponent(native.field, controlProps);
+  const labelProps = native.attribute?.config?.labelProps || {};
+  props.nativeCaption = Object.fromEntries(["desktop", "mobile"].map(scene => {
+    const label = { ...labelProps, ...labelProps[scene] };
+    const control = { ...controlProps, ...controlProps[scene] };
+    return [scene, {
+      title: normalizeScalar(label.displayLabel || label.title),
+      visible: !label.hiddenLabel && !control.hiddenLabel &&
+        !label.hidden && !control.hidden &&
+        label.visible !== false && control.visible !== false
+    }];
+  }));
   if (component === "xform-checkbox") props.nativeCheckboxLayout = nativeCheckboxLayout(controlProps);
   if (component === "xform-radio") props.nativeRadioLayout = nativeRadioLayout(controlProps);
   if (["xform-input", "xform-datetime"].includes(component)) {

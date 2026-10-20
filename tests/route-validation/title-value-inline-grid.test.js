@@ -10,22 +10,24 @@ const fixture =
   "tests/fixtures/route-validation/title-value-inline-grid/route-title-value-inline-grid_SysFormTemplate.xml";
 
 describe("four-column title/value rows and same-cell inline controls", () => {
-  it("keeps title cells, hides bound labels, and does not nest same-cell controls", () => {
+  it("folds one-to-one titles while retaining shared and multi-control captions", () => {
     const source = cleanSourceFile(fixture);
     const draft = draftSourceDraft(source);
     const fields = new Map(draft.form.fields.map((field) => [field.id, field]));
     const rows = new Map(draft.form.layout.mkTree.map((row) => [row.id, row]));
     const validation = validateMigrationDsl(draft, { mode: "draft" });
 
-    assert.equal(fields.get("label_fax")?.componentId, "xform-description");
+    assert.equal(fields.has("label_fax"), false);
+    assert.equal(fields.get("fd_fax")?.title, "传真");
     assert.equal(fields.get("label_boxes")?.componentId, "xform-description");
-    assert.equal(fields.get("label_notes")?.componentId, "xform-description");
+    assert.equal(fields.has("label_notes"), false);
+    assert.equal(fields.get("fd_notes")?.title, "备注");
     assert.equal(fields.get("label_applicant")?.componentId, "xform-description");
     assert.equal(fields.get("label_dept")?.componentId, "xform-description");
 
-    assert.equal(fields.get("fd_fax")?.props.hiddenLabel, true);
+    assert.notEqual(fields.get("fd_fax")?.props.hiddenLabel, true);
     assert.equal(fields.get("fd_boxes")?.props.hiddenLabel, true);
-    assert.equal(fields.get("fd_notes")?.props.hiddenLabel, true);
+    assert.notEqual(fields.get("fd_notes")?.props.hiddenLabel, true);
     assert.equal(fields.get("fd_applicant.name")?.props.hiddenLabel, true);
     assert.equal(fields.get("fd_dept.name")?.props.hiddenLabel, true);
     assert.equal(fields.get("fd_dept_en")?.props.hiddenLabel, true);
@@ -70,8 +72,7 @@ describe("four-column title/value rows and same-cell inline controls", () => {
     assert.deepEqual(rowShape(rows.get("layout.row-1")), {
       columns: 4,
       children: [
-        { refType: "field", refIds: ["label_fax"], column: 0, colspan: 1 },
-        { refType: "field", refIds: ["fd_fax"], column: 1, colspan: 1 },
+        { refType: "field", refIds: ["fd_fax"], column: 0, colspan: 2 },
         { refType: "field", refIds: ["label_boxes"], column: 2, colspan: 1 },
         {
           refType: "field",
@@ -85,8 +86,7 @@ describe("four-column title/value rows and same-cell inline controls", () => {
     assert.deepEqual(rowShape(rows.get("layout.row-2")), {
       columns: 4,
       children: [
-        { refType: "field", refIds: ["label_notes"], column: 0, colspan: 1 },
-        { refType: "field", refIds: ["fd_notes"], column: 1, colspan: 3 }
+        { refType: "field", refIds: ["fd_notes"], column: 0, colspan: 4 }
       ]
     });
 
@@ -116,8 +116,7 @@ describe("four-column title/value rows and same-cell inline controls", () => {
           id: "layout.row-1",
           columns: 4,
           cells: [
-            { refIds: ["label_fax"], column: 0, colspan: 1 },
-            { refIds: ["fd_fax"], column: 1, colspan: 1 },
+            { refIds: ["fd_fax"], column: 0, colspan: 2 },
             { refIds: ["label_boxes"], column: 2, colspan: 1 },
             { refIds: ["fd_boxes", "label_box_unit"], column: 3, colspan: 1 }
           ]
@@ -126,8 +125,7 @@ describe("four-column title/value rows and same-cell inline controls", () => {
           id: "layout.row-2",
           columns: 4,
           cells: [
-            { refIds: ["label_notes"], column: 0, colspan: 1 },
-            { refIds: ["fd_notes"], column: 1, colspan: 3 }
+            { refIds: ["fd_notes"], column: 0, colspan: 4 }
           ]
         }
       ]
@@ -161,7 +159,7 @@ describe("four-column title/value rows and same-cell inline controls", () => {
         }))
       }))
     );
-    assert.equal(readback.form.fields.find((field) => field.id === "fd_fax")?.hiddenLabel, true);
+    assert.notEqual(readback.form.fields.find((field) => field.id === "fd_fax")?.hiddenLabel, true);
     assert.equal(readback.form.fields.find((field) => field.id === "fd_applicant")?.hiddenLabel, true);
     assert.equal(readback.form.fields.find((field) => field.id === "fd_dept")?.hiddenLabel, true);
     assert.equal(readback.form.fields.find((field) => field.id === "fd_applicant.name")?.dataOnly, false);

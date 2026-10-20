@@ -2,7 +2,8 @@ import { contentFlowIssues, mergeContentFlowReferences, remapContentFlow, select
 
 /** Compare source presentation facts directly, independently of the mapper. */
 export function sourcePresentationIssues(sourceForm = {}, targetForm = {}, {
-  dataOnlySourceRefs = new Set(), presentationReferenceMap = new Map()
+  dataOnlySourceRefs = new Set(), presentationReferenceMap = new Map(),
+  foldedSourceRefs = new Set(), consumedCaptionIds = new Set()
 } = {}) {
   const issues = [];
   const sourceMainFields = [...(sourceForm.controls || []), ...(sourceForm.dataFields || []), ...(sourceForm.detailTables || [])];
@@ -33,12 +34,13 @@ export function sourcePresentationIssues(sourceForm = {}, targetForm = {}, {
       add("visibility", { fieldId: target.id, sourceId: source.id, sourceRef: source.sourceRef });
       continue;
     }
-    if (source.sourceProps?.layoutCell?.hiddenLabel === true && target.type !== "description" &&
+    if (!foldedSourceRefs.has(source.sourceRef) &&
+      source.sourceProps?.layoutCell?.hiddenLabel === true && target.type !== "description" &&
       target.props?.hiddenLabel !== true) {
       add("hidden_label", { fieldId: target.id, sourceId: source.id, sourceRef: source.sourceRef });
     }
     const layoutCell = source.sourceProps?.layoutCell;
-    if (layoutCell?.relation === "runtime-independent-title-cell") {
+    if (!foldedSourceRefs.has(source.sourceRef) && layoutCell?.relation === "runtime-independent-title-cell") {
       for (const captionId of layoutCell.captionIds || []) {
         const caption = sourceById.get(captionId);
         const targetCaption = targetBySourceId.get(captionId);
@@ -82,7 +84,8 @@ export function sourcePresentationIssues(sourceForm = {}, targetForm = {}, {
         continue;
       }
       const sourceFlow = mergeContentFlowReferences(cell.contentFlow, presentationReferenceMap);
-      const retained = sourceFlow.lines.flat().filter((id) => !consumedUnits.has(id) && !mayOmit(sourceById.get(id), targetBySourceId.get(id)));
+      const retained = sourceFlow.lines.flat().filter((id) => !consumedUnits.has(id) &&
+        !consumedCaptionIds.has(id) && !mayOmit(sourceById.get(id), targetBySourceId.get(id)));
       if (!retained.length) continue;
       if (retained.some((id) => !targetBySourceId.get(id))) {
         add("missing_field", { sourceCellId: cell.id, sourceIds: retained.filter((id) => !targetBySourceId.get(id)) });

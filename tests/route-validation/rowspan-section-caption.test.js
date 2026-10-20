@@ -30,9 +30,10 @@ describe("rowspan section caption beside a nested detail table", () => {
     assert.equal(notes?.props.hiddenLabel, true);
     assert.equal(notes?.sourceProps.layoutCell?.relation, "unbound-editor-subject");
     assert.equal(needNotes?.title, "需求情况");
-    assert.equal(needNotes?.props.hiddenLabel, true);
+    assert.notEqual(needNotes?.props.hiddenLabel, true);
     assert.equal(needNotes?.sourceProps.layoutCell?.relation, "independent-bound-title-cell");
-    assert.equal(fields.get("fd_need_caption")?.componentId, "xform-description");
+    assert.equal(fields.has("fd_need_caption"), false);
+    assert.equal(needNotes?.sourceProps.foldedCaption.id, "fd_need_caption");
     assert.equal(validation.ok, true);
     assert.equal(
       validation.diagnostics.some((diagnostic) =>

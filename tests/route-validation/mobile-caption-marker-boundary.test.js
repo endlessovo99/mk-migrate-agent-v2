@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { it } from "node:test";
 import { readFileSync } from "node:fs";
 import { parseSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { draftSourceDraft } from "../../src/translator/index.js";
+// These width assertions cover retained SourceDrafts and their standalone native caption layouts.
+import { cleanSourceWithoutCaptionFact as cleanSourceFile } from "../helpers/retained-caption-source.js";
 import { sourceMobileCaptionGrids } from "../../src/dsl/source-mobile-caption-grid.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 

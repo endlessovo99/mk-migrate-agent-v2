@@ -4,6 +4,7 @@ import { approvedDetailColumnWidths } from "../../dsl/approved-detail-presentati
 import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
 import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
 import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.js";
+import { nativeCaptionDesktopWidths } from "../../dsl/native-caption-fold.js";
 import { mobileNumberBudgets, mobileNumberGrid } from "./mobile-number-layout.js";
 import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
@@ -228,6 +229,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
   const mobileCaptions = sourceMobileCaptionGrids(form);
   const inlineEditors = sourceInlineEditorWidths(form);
   const inlineBudgets = new Map([...inlineEditors].map(([id, profile]) => [id, profile.nativeOuterPx]));
+  for (const [id, width] of nativeCaptionDesktopWidths(form)) inlineBudgets.set(id, width);
   const layoutRows = projectedLayoutRows.map((row, rowIndex) => {
     const requiresTopologyMarkers = row.cells.some((cell) => cell.ownerNodeId !== row.id);
     const mobileGrid = mobileNumberGrid(row, mobileBudgets, mobileCaptions);
@@ -410,6 +412,10 @@ function executableProps(field = {}, form = {}, context = {}) {
     };
   }
   if (field.props?.required === true) props.required = true;
+  if (field.sourceProps?.foldedCaption) {
+    props.nativeCaption = Object.fromEntries(["desktop", "mobile"].map(scene =>
+      [scene, { title: normalizeScalar(field.title), visible: true }]));
+  }
   if (componentSupportsProp(field.componentId, "readOnly") && field.props?.readOnly === true) {
     props.readOnly = true;
   }
