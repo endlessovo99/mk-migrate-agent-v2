@@ -1,0 +1,109 @@
+{
+  "origin": "https://oaqas.shanghai-electric.com",
+  "capturedAt": "2026-10-20T18:00:24.984Z",
+  "profile": "native-desktop-detail-row-props-radio-click-v1",
+  "detailAsset": {
+    "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-detail-table/index.js?8fch0oB37j",
+    "file": "xform-detail-table-current.js",
+    "status": 200,
+    "bytes": 454687,
+    "sha256": "d507ec85a5f10b66f31896a11bca7c49f177a3666a7c692fb56c413215b1a663",
+    "module": "@elem/xform-detail-table",
+    "registry": {
+      "hash": "8fch0oB37j",
+      "deps": [
+        "@elem/xform-base",
+        "@lui/core",
+        "@lui/pro",
+        "@elem/xform-encrypt",
+        "@elem/xform-headless"
+      ],
+      "type": "widget",
+      "styles": [
+        "index.css"
+      ]
+    }
+  },
+  "assets": [
+    {
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-input/index.js?2lSD87uqWb",
+      "file": "xform-input-current.js",
+      "status": 200,
+      "bytes": 7322,
+      "sha256": "26058a04fb2dec5b93cb0787a130f14fb19ff11af5f98955e5051d8c61cf56cd",
+      "module": "@elem/xform-input",
+      "registry": {
+        "hash": "2lSD87uqWb",
+        "deps": [
+          "@elem/xform-base",
+          "@elem/xform-view",
+          "@lui/core",
+          "@elem/xform-headless"
+        ],
+        "type": "widget",
+        "styles": [
+          "index.css"
+        ]
+      }
+    },
+    {
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-textarea/index.js?XuH5gIrTFr",
+      "file": "xform-textarea-current.js",
+      "status": 200,
+      "bytes": 5618,
+      "sha256": "af15eb47ac5a2de0f732479c86705af9e29f681bd84255fea6ac27b5eb6a5d9c",
+      "module": "@elem/xform-textarea",
+      "registry": {
+        "hash": "XuH5gIrTFr",
+        "deps": [
+          "@elem/xform-base",
+          "@elem/xform-view",
+          "@lui/core",
+          "@elem/xform-headless"
+        ],
+        "type": "widget",
+        "styles": [
+          "index.css"
+        ]
+      }
+    },
+    {
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-radio/index.js?IdbUqPxS1U",
+      "file": "xform-radio-current.js",
+      "status": 200,
+      "bytes": 16992,
+      "sha256": "1fbcda3113e9f98b6e54dc9f55e002ce88209adbd36e8a325e145ff5567647a3",
+      "module": "@elem/xform-radio",
+      "registry": {
+        "hash": "IdbUqPxS1U",
+        "deps": [
+          "@elem/xform-base",
+          "@elem/xform-view",
+          "@lui/core",
+          "@elem/xform-headless"
+        ],
+        "type": "widget",
+        "styles": [
+          "index.css"
+        ]
+      }
+    }
+  ],
+  "slices": {
+    "render": {
+      "start": 418876,
+      "end": 422666,
+      "sha256": "47c1eed10bd4727ce4f6df72948c131c733734bf90864ab50fce34f4b07727d9"
+    },
+    "md": {
+      "start": 264893,
+      "end": 266365,
+      "sha256": "d1e03c519eec1a7d488c9cca6ecd7ad37d5a70fd86b643177bfb469f50696a83"
+    },
+    "jn": {
+      "start": 27984,
+      "end": 28887,
+      "sha256": "189d9ab7a62563cfc728f7445fbe88793c5dffa8d51d3e3acc17adba8e71f96f"
+    }
+  }
+}
