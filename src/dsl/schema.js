@@ -51,6 +51,7 @@ import { isSourceBackedMonthField } from "./static-month-picker.js";
 import { subProcessValidationIssues } from "./subprocess.js";
 import { projectLayoutGrid } from "./layout-pack.js";
 import { contentFlowIssues } from "./content-flow.js";
+import { layoutSizingIssues } from "./layout-sizing.js";
 import { findUnredactedCredentialPaths } from "../credential-material.js";
 import { migrationPolicyDslDiagnostics } from "../translator/approved-migration-policies.js";
 
@@ -664,6 +665,9 @@ function collectDataAuthorityFieldIds(fields) {
 
 function validateFormLayout(layout, refs, diagnostics) {
   const layoutNodeIds = new Set();
+  for (const message of layoutSizingIssues({ layout })) {
+    diagnostics.push(error("dsl.form.layout_sizing_invalid", message, "/form/layout/sizing"));
+  }
   if (!isRecord(layout)) {
     diagnostics.push(error("dsl.form.layout_required", "form.layout is required.", "/form/layout"));
     return layoutNodeIds;

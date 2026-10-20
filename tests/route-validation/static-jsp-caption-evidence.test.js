@@ -3,7 +3,9 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { it } from "node:test";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Retained source-width policy: native budget assertions below stay unchanged.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { sourceNumberDisplays, sourceNumberEditors } from "../../src/dsl/source-number-editor.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";

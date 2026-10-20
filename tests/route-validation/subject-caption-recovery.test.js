@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { draftSourceDraft, cleanSourceFile } from "../../src/translator/index.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
+import { nativeMain } from "../helpers/native-view.js";
 
 const fixturePath = "tests/fixtures/source/18aac2e235a65c382f6fe264e1dba521";
 const boundCaptionFixturePath =
@@ -53,16 +54,16 @@ describe("retained source text and editor title visibility", () => {
       const row = readback.form.layoutRows.find((item) => item.id === rowId);
       assert.equal(row?.columns, 4);
       assert.deepEqual(row.cells.map((cell) => [cell.column, cell.colspan]), [[0, 1], [1, 3]]);
-      assert.equal(row.colsStyle[0].value, "20%");
+      assert.deepEqual(row.colsStyle, [{ startIndex: 0, count: 4, value: "auto" }]);
     }
     const mixedUnits = readback.form.layoutRows.find((row) => row.id === "row-3");
-    assert.equal(mixedUnits.colsStyle, undefined);
+    assert.deepEqual(mixedUnits.colsStyle, [{ startIndex: 0, count: 4, value: "auto" }]);
     assert.deepEqual(mixedUnits.cells.map((cell) => cell.colspan), [1, 3]);
 
     const corrupt = structuredClone(prepared.update);
     const config = xformConfig(corrupt);
     const scene = JSON.parse(config.viewModel[0].fdConfig);
-    const firstRow = scene.view.render.desktop[0].children[0].children.find(
+    const firstRow = nativeMain(scene.view.render.desktop[0]).children.find(
       (row) => row.controlProps?.migrationRootNodeId === "layout.row-0"
     );
     delete firstRow.children[0].controlProps.colsStyle;

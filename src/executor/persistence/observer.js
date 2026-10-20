@@ -280,6 +280,7 @@ function observeForm(config, xform, options = {}) {
     fields,
     calculationOrder,
     layoutRows,
+    adaptiveLayout: observeAdaptiveLayout(viewModelResult.value?.[0]),
     tableName: normalizeScalar(mainModel.fdTableName || xform?.fdTableName || ""),
     subjectRule,
     persistence: {
@@ -1209,6 +1210,54 @@ function applyViewControlStyles(fields, viewModel, models) {
   }
 }
 
+function nativeViewNodes(node) {
+  if (!node || typeof node !== "object" || Array.isArray(node)) return [];
+  return [node, ...(Array.isArray(node.children) ? node.children.flatMap(nativeViewNodes) : [])];
+}
+
+function findNativeMain(root) {
+  return nativeViewNodes(root).find(node => node.key === "main" && node.type === "main" && node.kind === "container");
+}
+
+/** Read actual native nodes, never infer a missing stylesheet from audit data. */
+function observeAdaptiveLayout(viewModel) {
+  const view = safeParseObject(viewModel?.fdConfig);
+  const renders = view?.view?.render || {};
+  if (!["desktop", "mobile"].some(scene => renders[scene]?.[0]?.children?.[0]?.type === "div")) return undefined;
+  const shape = node => node && ({
+    key: node.key, type: node.type, kind: node.kind, controlProps: node.controlProps
+  });
+  return Object.fromEntries(["desktop", "mobile"].map(scene => {
+    const roots = renders[scene], root = roots?.[0], scope = root?.children?.[0];
+    return [scene, {
+      rootCount: roots?.length, rootChildCount: root?.children?.length,
+      root: root && { type: root.type, kind: root.kind, controlProps: root.controlProps },
+      styleCarrierCount: (roots || []).flatMap(nativeViewNodes).filter(node => node.type === "@elem/xform-html").length,
+      scope: shape(scope), childCount: scope?.children?.length,
+      carrier: scope?.children?.[0], main: shape(scope?.children?.[1]),
+      layoutShellsValid: adaptiveLayoutShellsValid(scope?.children?.[1])
+    }];
+  }));
+}
+
+function adaptiveLayoutShellsValid(main) {
+  const propsAllowed = (props, keys, audit = false) => props && typeof props === "object" && !Array.isArray(props) &&
+    Object.keys(props).every(key => keys.includes(key) || audit && key.startsWith("migration"));
+  if (!Array.isArray(main?.children) || !main.children.length) return false;
+  return main.children.every(row => {
+    if (row.type !== "layout" || row.kind !== "container" ||
+        !propsAllowed(row.controlProps, ["id"], true) || row.children?.length !== 1) return false;
+    const grid = row.children[0];
+    if (grid.type !== "@elem/layout-grid" || grid.kind !== "container" ||
+        !propsAllowed(grid.controlProps, ["id", "columns", "rows", "colsStyle"]) ||
+        !Array.isArray(grid.children)) return false;
+    return grid.children.every(item => item.type === "@elem/layout-grid.GridItem" &&
+      item.kind === "container" &&
+      propsAllowed(item.controlProps, ["id", "column", "columnSpan", "row", "rowSpan", "style"], true) &&
+      stableStringify(item.controlProps.style) === stableStringify({ backgroundColor: "" }));
+  });
+}
+
 function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
   const detailByTable = new Map(
     detailModels.map((model) => [model.fdTableName, detailFieldNameForModel(model)])
@@ -1250,7 +1299,7 @@ function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
     return [];
   }
 
-  const main = (root.children || []).find((child) => child?.key === "main") || root.children?.[0];
+  const main = findNativeMain(root) || root.children?.[0];
   const rows = Array.isArray(main?.children) ? main.children : [];
   const observedRows = rows.map((row, rowIndex) => observeNativeLayoutRow(
     row,
@@ -1311,8 +1360,8 @@ function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
       mobileRenderedDetailColumns
     );
   }
-  if (observedRows.some((row) => row.cells.some((cell) => cell.contentFlow))) {
-    const mobileMain = (mobileRoots[0].children || []).find((child) => child?.key === "main") || mobileRoots[0].children?.[0];
+  if (root.children?.[0]?.type === "div" || observedRows.some((row) => row.cells.some((cell) => cell.contentFlow))) {
+    const mobileMain = findNativeMain(mobileRoots[0]) || mobileRoots[0].children?.[0];
     const mobileRows = (mobileMain?.children || []).map((row, index) => observeNativeLayoutRow(
       row, index, detailByTable, fieldIds, mobileRenderedDetailColumns, diagnostics
     )).filter(Boolean);
@@ -1462,21 +1511,23 @@ function observeContentFlow(refs, diagnostics, decodePath) {
       const reference = item.children[0];
       if (!reference || typeof reference.key !== "string" || reference.kind === "container") return fail();
       const style = item.controlProps?.style;
+      const adaptive = style?.width === "auto" && ["1 1 0", "0 1 auto"].includes(style.flex);
       const fillAvailable = style?.flex === "1 1 0" && style?.width === "100%";
       if (fillAvailable && (root.children.length !== 1 || line.children.length !== 1)) return fail();
       let width;
-      if (!fillAvailable && style?.width !== undefined) {
+      if (!fillAvailable && !adaptive && style?.width !== undefined) {
         const match = /^(\d+(?:\.\d+)?(?:e[+-]?\d+)?)(px|%)$/.exec(String(style.width));
         if (!match || Number(match[1]) < 0) return fail();
         width = { value: Number(match[1]), unit: match[2] };
       }
       const itemStyle = {
-        flex: fillAvailable ? "1 1 0" : width ? "0 0 auto" : "0 1 auto", minWidth: 0, maxWidth: "100%", overflow: "visible",
-        ...(fillAvailable ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {})
+        flex: adaptive ? style.flex : fillAvailable ? "1 1 0" : width ? "0 0 auto" : "0 1 auto", minWidth: 0, maxWidth: "100%", overflow: "visible",
+        ...(adaptive ? { width: "auto" } : fillAvailable ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {})
       };
       if (stableStringify(style) !== stableStringify(itemStyle)) return fail();
       ids.push(reference.key);
-      items.push({ referenceId: reference.key, ...(width ? { width } : {}), ...(fillAvailable ? { fillAvailable: true } : {}) });
+      items.push({ referenceId: reference.key, ...(width ? { width } : {}), ...(fillAvailable ? { fillAvailable: true } : {}),
+        ...(adaptive ? { sizing: style.flex === "1 1 0" ? "stretch" : "intrinsic" } : {}) });
     }
     lines.push(ids);
   }

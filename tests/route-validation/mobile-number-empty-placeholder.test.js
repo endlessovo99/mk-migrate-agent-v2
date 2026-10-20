@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Preserve the retained source-width contract explicitly.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { checkDraft, checkExecute } from "../../src/dsl/checks.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { applyFormPayload } from "../../src/executor/persistence/form-writer.js";

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-adaptive-layout-source</string></void>
+<void method="put"><string>fdModelId</string><string>route-adaptive-layout-template</string></void>
+<void method="put"><string>fdName</string><string>自适应布局通用回归</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;TABLE fd_type="standardTable" id="adaptive_table"&gt;&lt;TBODY&gt;
+&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0" width="160"&gt;
+&lt;LABEL fd_type="textLabel" fd_values='{id:"department_caption",content:"申请部门"}'&gt;申请部门&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;TD row="0" column="1" width="400"&gt;
+&lt;DIV fd_type="inputText" style="width:120px;display:inline" fd_values='{id:"fd_department",label:"申请部门",dataType:"String",width:"120",notNull:"true",readOnly:"true",defaultValue:"运营部",_label_bind:"true",_label_bind_id:"department_caption"}'&gt;&lt;INPUT id="fd_department" type="text" style="width:120px"/&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;&lt;TD class="td_normal_title" row="1" column="0" width="160"&gt;
+&lt;LABEL fd_type="textLabel" fd_values='{id:"range_caption",content:"查询范围"}'&gt;查询范围&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;TD row="1" column="1" width="400"&gt;
+&lt;DIV fd_type="inputText" style="width:90px;display:inline" fd_values='{id:"fd_start",label:"起点",dataType:"String",width:"90",_label_bind:"true",_label_bind_id:"range_caption"}'&gt;&lt;INPUT id="fd_start"/&gt;&lt;/DIV&gt;
+&lt;LABEL fd_type="textLabel" fd_values='{id:"range_separator",content:"至",b:"true"}'&gt;至&lt;/LABEL&gt;
+&lt;DIV fd_type="inputText" style="width:40%;display:inline" fd_values='{id:"fd_end",label:"终点",dataType:"String",width:"40%",_label_bind:"true",_label_bind_id:"range_caption"}'&gt;&lt;INPUT id="fd_end"/&gt;&lt;/DIV&gt;
+&lt;BR/&gt;
+&lt;DIV fd_type="inputText" style="width:0px;display:inline" fd_values='{id:"fd_zero_companion",label:"零宽伴随值",dataType:"String",width:"0",_label_bind:"false"}'&gt;&lt;INPUT id="fd_zero_companion"/&gt;&lt;/DIV&gt;
+&lt;DIV fd_type="inputText" fd_values='{id:"fd_hidden",label:"内部值",dataType:"String",canShow:"false",defaultValue:"保留"}'&gt;&lt;INPUT id="fd_hidden"/&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;&lt;TD row="2" column="0" width="160"&gt;
+&lt;LABEL fd_type="textLabel" fd_values='{id:"amount_note",content:"金额与说明",b:"true"}'&gt;金额与说明&lt;/LABEL&gt;
+&lt;/TD&gt;&lt;TD row="2" column="1" width="400"&gt;
+&lt;DIV fd_type="inputText" style="width:100px;display:inline" fd_values='{id:"fd_amount",label:"金额",dataType:"Double",width:"100",decimal:"2",required:"true",_label_bind:"false"}'&gt;&lt;INPUT id="fd_amount"/&gt;&lt;/DIV&gt;
+&lt;LABEL fd_type="textLabel" fd_values='{id:"amount_unit",content:"元"}'&gt;元&lt;/LABEL&gt;
+&lt;BR/&gt;
+&lt;DIV fd_type="textarea" style="width:80%;display:inline" fd_values='{id:"fd_reason",label:"一段长度显著超过默认标题宽度的用途说明",dataType:"String",width:"80%",_label_bind:"false"}'&gt;&lt;TEXTAREA id="fd_reason"&gt;&lt;/TEXTAREA&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR&gt;&lt;TD row="3" column="0,1" colspan="2" width="560"&gt;
+&lt;DIV fd_type="inputText" style="width:240px;display:inline" fd_values='{id:"fd_summary",label:"跨列摘要",dataType:"String",width:"240",_label_bind:"false"}'&gt;&lt;INPUT id="fd_summary"/&gt;&lt;/DIV&gt;
+&lt;/TD&gt;&lt;/TR&gt;
+&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;
+&lt;extendSimpleProperty name="fd_department" label="申请部门" type="String" notNull="true" defaultValue="运营部"/&gt;
+&lt;extendSimpleProperty name="fd_start" label="起点" type="String"/&gt;
+&lt;extendSimpleProperty name="fd_end" label="终点" type="String"/&gt;
+&lt;extendSimpleProperty name="fd_zero_companion" label="零宽伴随值" type="String"/&gt;
+&lt;extendSimpleProperty name="fd_hidden" label="内部值" type="String" defaultValue="保留"/&gt;
+&lt;extendSimpleProperty name="fd_amount" label="金额" type="Double" notNull="true"/&gt;
+&lt;extendSimpleProperty name="fd_reason" label="一段长度显著超过默认标题宽度的用途说明" type="String"/&gt;
+&lt;extendSimpleProperty name="fd_summary" label="跨列摘要" type="String"/&gt;
+&lt;/metadata&gt;</string></void>
+</object></java>

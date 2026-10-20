@@ -79,6 +79,9 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   if (sourceDraft?.version !== SOURCE_DRAFT_VERSION || sourceDraft?.artifact !== "source-draft") {
     throw new Error("draft requires a source-draft artifact");
   }
+  if (![undefined, "adaptive", "source"].includes(options.layoutSizing)) {
+    throw new TypeError("layoutSizing must be adaptive or source");
+  }
 
   const rawForm = foldNativeCaptions(foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
     appendStaticJspDescriptionFields(
@@ -123,6 +126,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   const form = appendHardHiddenFieldsToLayout(
     applyStaticScriptProperties(mappedForm, mappedScripts)
   );
+  if (options.layoutSizing !== "source") form.layout = { ...form.layout, sizing: "adaptive" };
   const formRules = removeDeterministicScriptOwnedFormRules(
     provisionalFormRules,
     mappedScripts

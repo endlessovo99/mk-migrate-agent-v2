@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Retain the prior numeric width contract; adaptive coverage lives in adaptive-layout.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 const source = cleanSourceFile("tests/fixtures/route-validation/staff-demand-title/route-staff-demand_SysFormTemplate.xml");
 const draft = draftSourceDraft(source);

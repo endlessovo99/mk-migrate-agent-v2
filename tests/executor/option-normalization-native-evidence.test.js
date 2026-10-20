@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { translateSourceFile } from "../../src/translator/index.js";
 import { sampleTrustedDsl } from "../helpers/sample-dsl.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
+import { nativeMain } from "../helpers/native-view.js";
 
 const fixture =
   "tests/fixtures/route-validation/option-normalization/route-option-normalization_SysFormTemplate.xml";
@@ -25,8 +26,8 @@ describe("option normalization native evidence", () => {
     const hintAttribute = JSON.parse(hint.fdAttribute);
     const confirmAttribute = JSON.parse(confirm.fdAttribute);
     const view = JSON.parse(config.viewModel[0].fdConfig);
-    const desktopRows = view.view.render.desktop[0].children[0].children;
-    const mobileRows = view.view.render.mobile[0].children[0].children;
+    const desktopRows = nativeMain(view.view.render.desktop[0]).children;
+    const mobileRows = nativeMain(view.view.render.mobile[0]).children;
     const confirmationRow = desktopRows.find((row) =>
       row.children[0].children.some((cell) =>
         cell.controlProps.migrationFieldId === "confirm_hint"

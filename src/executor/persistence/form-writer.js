@@ -4,6 +4,8 @@ import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
 import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
 import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.js";
 import { nativeCaptionDesktopWidths } from "../../dsl/native-caption-fold.js";
+import { usesAdaptiveLayout } from "../../dsl/layout-sizing.js";
+import { adaptiveItemStyle, adaptiveView, effectiveCellFlow } from "./adaptive-layout.js";
 import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import { approvedDetailColumnWidths } from "../../dsl/approved-detail-presentation.js";
 import {
@@ -178,7 +180,7 @@ export function summarizeDslForm(form = {}, formRules = {}) {
   const fields = Array.isArray(form.fields) ? form.fields : [];
   const nodes = Array.isArray(form.layout?.mkTree) ? form.layout.mkTree : [];
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
-  const rows = projectNativeLayoutRows(nodes);
+  const rows = projectNativeLayoutRows(nodes, { sizing: form.layout?.sizing });
   const sourceRules = Array.isArray(formRules?.linkage) ? formRules.linkage : [];
   const branchRuleCount = (type) => sourceRules.reduce((count, rule) => {
     const branches = [rule.effects, rule.else].filter(Array.isArray);
@@ -1677,11 +1679,13 @@ function buildViewModel(config, template, mainModel, form, detailModelsByField) 
 }
 
 function buildViewConfig(mainModel, form, detailModelsByField) {
+  const adaptive = usesAdaptiveLayout(form);
   const budgets = new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]
     .map(([id, profile]) => [id, profile.inputPx + 32]));
   for (const [id, profile] of sourceInlineEditorWidths(form)) budgets.set(id, profile.nativeOuterPx);
   for (const [id, width] of nativeCaptionDesktopWidths(form)) budgets.set(id, width);
-  const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields, budgets);
+  const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields,
+    adaptive ? new Map() : budgets, false, new Map(), adaptive);
   const mainContainer = {
     key: "main",
     type: "main",
@@ -1689,11 +1693,16 @@ function buildViewConfig(mainModel, form, detailModelsByField) {
     controlProps: { importBtn: null, onDesktopImport: null, id: "main" },
     children: desktopRows
   };
+  const mobileMain = { ...clone(mainContainer), children: buildRows(form.layout?.mkTree || [],
+    detailModelsByField, form.fields, adaptive ? new Map() : mobileNumberBudgets(form),
+    true, adaptive ? new Map() : sourceMobileCaptionGrids(form), adaptive) };
   return {
     view: {
       render: {
-        desktop: [appearanceNode(mainModel.fdTableName, clone(mainContainer))],
-        mobile: [appearanceNode(mainModel.fdTableName, { ...clone(mainContainer), children: buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields, mobileNumberBudgets(form), true, sourceMobileCaptionGrids(form)) })]
+        desktop: [appearanceNode(mainModel.fdTableName, adaptive
+          ? adaptiveView(clone(mainContainer), mainModel.fdTableName) : clone(mainContainer))],
+        mobile: [appearanceNode(mainModel.fdTableName, adaptive
+          ? adaptiveView(mobileMain, mainModel.fdTableName) : mobileMain)]
       }
     },
     theme: {},
@@ -1750,14 +1759,14 @@ function appearanceNode(tableName, mainContainer) {
   };
 }
 
-function buildRows(rows, detailModelsByField, fields, budgets = new Map(), mobile = false, captionProfiles = new Map()) {
+function buildRows(rows, detailModelsByField, fields, budgets = new Map(), mobile = false, captionProfiles = new Map(), adaptive = false) {
   const rowsById = new Map(rows.map((row) => [row.id, row]));
-  return projectNativeLayoutRows(rows).map((projection) =>
-    buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField, fields, budgets, mobile, captionProfiles)
+  return projectNativeLayoutRows(rows, { sizing: adaptive ? "adaptive" : undefined }).map((projection) =>
+    buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField, fields, budgets, mobile, captionProfiles, adaptive)
   );
 }
 
-function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fields, budgets, mobile, captionProfiles) {
+function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fields, budgets, mobile, captionProfiles, adaptive) {
   const cells = projection.cells;
   const layoutId = `layout~${stableShortId(row.id)}`;
   const gridId = `@elem/layout-grid~${stableShortId(`${row.id}:grid`)}`;
@@ -1765,7 +1774,7 @@ function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fiel
   const displayRows = projection.rows;
   const migrationRowId = migrationRowIdFor(row);
   const isNestedProjection = cells.some((cell) => cell.ownerNodeId !== row.id);
-  const mobileGrid = mobile ? mobileNumberGrid(projection, budgets, captionProfiles) : undefined;
+  const mobileGrid = mobile && !adaptive ? mobileNumberGrid(projection, budgets, captionProfiles) : undefined;
   return {
     key: layoutId,
     type: "layout",
@@ -1801,7 +1810,7 @@ function buildLayoutGridRow(row, projection, rowsById, detailModelsByField, fiel
             index,
             rowsById,
             detailModelsByField,
-            { explicitRowSpan: isNestedProjection, fields, budgets }
+            { explicitRowSpan: isNestedProjection, fields, budgets, adaptive }
           ))
       }
     ]
@@ -1861,6 +1870,7 @@ function buildGridItem(
   const gridRow = Number.isInteger(cell.row) ? cell.row : 0;
   const colspan = Number.isInteger(cell.colspan) ? cell.colspan : 1;
   const inlineLayout = inlineCellLayout(cell, options.fields);
+  const flow = effectiveCellFlow(cell, options.adaptive);
   const inlineId = `@elem/xform-row~${stableShortId(`${itemIdentity}:inline`)}`;
   return {
     key: itemId,
@@ -1876,8 +1886,8 @@ function buildGridItem(
       // Audit-only markers; script persistence compiles them to concrete control ids.
       ...migrationAudit
     },
-    children: cell.contentFlow && !detailModel
-      ? [buildContentFlow(cell.contentFlow, itemId, fieldRef, options.fields, options.budgets)]
+    children: flow && !detailModel
+      ? [buildContentFlow(flow, itemId, fieldRef, options.fields, options.budgets, options.adaptive)]
       : inlineLayout && !detailModel
         ? [{
             key: inlineId,
@@ -1890,7 +1900,7 @@ function buildGridItem(
   };
 }
 
-function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map()) {
+function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map(), adaptive = false) {
   const soleItem = flow.items.length === 1 && flow.lines.length === 1 && flow.lines[0].length === 1
     ? flow.items[0] : undefined;
   const fillSelector = soleItem && soleItem.width === undefined &&
@@ -1911,7 +1921,7 @@ function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map
   }, line.map((referenceId) => {
     const width = budgets.has(referenceId) ? { unit: "px", value: budgets.get(referenceId) } : items.get(referenceId)?.width;
     return container(`${itemId}:flow:${lineIndex}:${referenceId}`, "div", {
-      style: {
+      style: adaptive ? adaptiveItemStyle(items.get(referenceId), fields) : {
         flex: fillSelector ? "1 1 0" : width ? "0 0 auto" : "0 1 auto",
         minWidth: 0, maxWidth: "100%", overflow: "visible",
         ...(fillSelector ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {})
@@ -2060,7 +2070,10 @@ function extractLayoutRows(config, detailModels) {
   const detailFieldByTable = new Map(detailModels.map((model) => [model.fdTableName, detailFieldIdForModel(model)]));
   const desktopRoots = sceneConfig.view?.render?.desktop;
   const root = Array.isArray(desktopRoots) ? desktopRoots[0] : undefined;
-  const main = (root?.children || []).find((child) => child?.key === "main") || root?.children?.[0];
+  const direct = (root?.children || []).find((child) => child?.key === "main");
+  const scoped = (root?.children || []).filter(child => child.type === "div")
+    .flatMap(child => child.children || []).find(child => child.key === "main" && child.type === "main");
+  const main = direct || scoped || root?.children?.[0];
   return (main?.children || [])
     .map((row, rowIndex) => layoutNodeToSummaryRow(row, rowIndex, detailFieldByTable))
     .filter(Boolean);

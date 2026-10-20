@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
 import { readFileSync } from "node:fs";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Preserve the retained source-width contract explicitly.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { parseSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
 import { runtimeCaptionWidthEvidence, runtimePlainCaptionEvidence } from "../../src/translator/runtime-caption-width.js";
 import { sourceMobileCaptionGrids } from "../../src/dsl/source-mobile-caption-grid.js";

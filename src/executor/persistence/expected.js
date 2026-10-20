@@ -5,6 +5,8 @@ import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
 import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
 import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.js";
 import { nativeCaptionDesktopWidths } from "../../dsl/native-caption-fold.js";
+import { usesAdaptiveLayout, layoutSizingIssues } from "../../dsl/layout-sizing.js";
+import { adaptiveFlowItem, adaptiveStyleContract, effectiveCellFlow } from "./adaptive-layout.js";
 import { mobileNumberBudgets, mobileNumberGrid } from "./mobile-number-layout.js";
 import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
@@ -67,6 +69,9 @@ const parseExpectedEvalConditionExpression = createConditionExpressionParser({
 
 export function buildExpectedInvariants(dsl, envelope) {
   const diagnostics = [];
+  for (const message of layoutSizingIssues(dsl?.form)) {
+    diagnostics.push(projectionError("projection.form.layout_sizing_invalid", message));
+  }
   const envelopeExpected = buildExpectedEnvelope(envelope, diagnostics, Boolean(dsl?.workflow));
   const formExpected = buildExpectedForm(dsl?.form || {}, envelope?.tableName, diagnostics);
   const rulesExpected = buildExpectedRules(
@@ -224,7 +229,8 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
       ));
     }
   });
-  const projectedLayoutRows = projectNativeLayoutRows(rows);
+  const adaptive = usesAdaptiveLayout(form);
+  const projectedLayoutRows = projectNativeLayoutRows(rows, { sizing: form.layout?.sizing });
   const mobileBudgets = mobileNumberBudgets(form);
   const mobileCaptions = sourceMobileCaptionGrids(form);
   const inlineEditors = sourceInlineEditorWidths(form);
@@ -232,7 +238,9 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
   for (const [id, width] of nativeCaptionDesktopWidths(form)) inlineBudgets.set(id, width);
   const layoutRows = projectedLayoutRows.map((row, rowIndex) => {
     const requiresTopologyMarkers = row.cells.some((cell) => cell.ownerNodeId !== row.id);
-    const mobileGrid = mobileNumberGrid(row, mobileBudgets, mobileCaptions);
+    const mobileGrid = adaptive
+      ? { colsStyle: row.colsStyle }
+      : mobileNumberGrid(row, mobileBudgets, mobileCaptions);
     return {
       id: row.id,
       rootNodeId: requiresTopologyMarkers ? row.id : undefined,
@@ -255,6 +263,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
         }))
       } } : {}),
       cells: row.cells.map((cell, cellIndex) => {
+        const flow = effectiveCellFlow(cell, adaptive);
         const fieldIdsForCell = cell.refType === "layout"
           ? []
           : (Array.isArray(cell.refIds) ? cell.refIds.filter(Boolean) : []);
@@ -283,8 +292,13 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
             : undefined,
           refType: cell.refType,
           fieldIds: fieldIdsForCell,
-          inlineLayout: inlineCellLayout(cell, form.fields),
-          ...(cell.contentFlow ? { contentFlow: expectedContentFlow(cell.contentFlow, form.fields, new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]), inlineBudgets), mobileContentFlow: expectedContentFlow(cell.contentFlow, form.fields, new Map(), mobileBudgets) } : {}),
+          inlineLayout: adaptive ? undefined : inlineCellLayout(cell, form.fields),
+          ...(flow ? {
+            contentFlow: adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields)) }
+              : expectedContentFlow(flow, form.fields, new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]), inlineBudgets),
+            mobileContentFlow: adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields)) }
+              : expectedContentFlow(flow, form.fields, new Map(), mobileBudgets)
+          } : {}),
           row: cell.row,
           column: cell.column,
           colspan: cell.colspan,
@@ -329,6 +343,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     fields: expectedFields,
     calculationOrder: expectedCalculationOrder(form, diagnostics),
     layoutRows,
+    ...(adaptive ? { adaptiveLayout: adaptiveStyleContract(mainTableName) } : {}),
     subjectRule: {},
     persistence: {
       distinctModelTableNames: true,

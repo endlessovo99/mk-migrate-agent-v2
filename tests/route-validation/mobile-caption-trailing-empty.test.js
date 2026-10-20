@@ -3,7 +3,9 @@ import { it } from "node:test";
 import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Preserve the retained source-width contract explicitly.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { sourceMobileCaptionGrids } from "../../src/dsl/source-mobile-caption-grid.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";

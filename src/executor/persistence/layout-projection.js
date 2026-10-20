@@ -9,7 +9,7 @@ const MIN_NESTED_CAPTION_COLUMN_SHARE = 0.2;
  * persist. Native layout-grid does not safely support grid-in-grid, so a root
  * containing layout references is projected into one proportional grid.
  */
-export function projectNativeLayoutRows(mkTree = []) {
+export function projectNativeLayoutRows(mkTree = [], options = {}) {
   const nodes = Array.isArray(mkTree) ? mkTree.filter(isRecord) : [];
   const nodesById = new Map(nodes.map((node) => [node.id, node]).filter(([id]) => nonEmptyString(id)));
   const referencedLayoutIds = new Set(
@@ -21,7 +21,7 @@ export function projectNativeLayoutRows(mkTree = []) {
   );
   const roots = nodes.filter((node) => !referencedLayoutIds.has(node.id));
 
-  return roots.map((root) => {
+  const projected = roots.map((root) => {
     if (!hasLayoutReference(root)) {
       return projectPlainRoot(root);
     }
@@ -54,6 +54,9 @@ export function projectNativeLayoutRows(mkTree = []) {
       ...(colsStyle ? { colsStyle } : {})
     };
   });
+  return options.sizing === "adaptive" ? projected.map(row => ({
+    ...row, colsStyle: [{ startIndex: 0, count: row.columns, value: "auto" }]
+  })) : projected;
 }
 
 function projectPlainRoot(root) {

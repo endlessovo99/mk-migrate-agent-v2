@@ -3,7 +3,9 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Preserve the retained source-width contract explicitly.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { parseRootHashMapStringPuts } from "../../src/translator/xml-utils.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";

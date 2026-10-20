@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
-import { draftSourceDraft } from "../../src/translator/index.js";
+// Preserve the retained source-width contract explicitly.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 // These width assertions cover retained SourceDrafts and their standalone native caption layouts.
 import { cleanSourceWithoutCaptionFact as cleanSourceFile } from "../helpers/retained-caption-source.js";
 import { applyFormPayload } from "../../src/executor/persistence/form-writer.js";

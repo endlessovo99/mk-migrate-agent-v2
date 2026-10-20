@@ -128,7 +128,7 @@ it("keeps designer width when runtime matching/appearance or explicit source dir
 
 it("retains existing standalone caption width policies for saved Source Drafts", () => {
   for (const name of ["radio-source-presentation", "multiple-widthless-radios"]) {
-    const draft = draftSourceDraft(cleanSourceWithoutCaptionFact(`${directory}${name}_SysFormTemplate.xml`));
+    const draft = draftSourceDraft(cleanSourceWithoutCaptionFact(`${directory}${name}_SysFormTemplate.xml`), { layoutSizing: "source" });
     const prepared = prepareSample(draft), view = viewOf(prepared.update), profiles = sourceMobileCaptionGrids(draft.form);
     assert.equal(profiles.size, draft.form.layout.mkTree.length);
     for (const [index, row] of view.view.render.mobile[0].children[0].children.entries()) {

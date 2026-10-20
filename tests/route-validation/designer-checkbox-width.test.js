@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { checkDraft } from "../../src/dsl/checks.js";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Preserve the retained source-width contract explicitly.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { translateSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 import { renderNativeFieldReferences } from "../helpers/native-form-renderer.js";

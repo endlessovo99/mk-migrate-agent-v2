@@ -1,0 +1,58 @@
+{
+  "origin": "http://oaqas.shanghai-electric.com",
+  "retrievedAt": "2026-10-20T10:00:04.346Z",
+  "sourceEvidence": "newoa-width-readonly-dPwX24 retained read-only resource capture",
+  "sources": [
+    {
+      "file": "XFormRuntime.js",
+      "sha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba"
+    },
+    {
+      "file": "xform-bundle-desktop.js",
+      "sha256": "8ff90e51c78bcbcc5ad973216e8ed1576d9ec4a49b4f36a5d1e58f186a62317b"
+    },
+    {
+      "file": "xform-bundle-mobile.js",
+      "sha256": "29877124dcc2c257f54f03950571aa51d3a2bf15718e0815b1687f6177a3a6a7"
+    },
+    {
+      "file": "xform-fieldset.js",
+      "sha256": "7de0eca7a4007f7b3e2db550926103c38e627a03dacd32830b074e780a5755e4"
+    },
+    {
+      "file": "xform-fieldset.css",
+      "sha256": "04acf4263f8f1b4ff2e55f882f2287f0d173c04fdd19e168c907a5046de98376"
+    }
+  ],
+  "files": {
+    "runtime-seams.json": {
+      "sha256": "e07641198a5007545d87dbed5cd8bd336fd2ccb3540995c847caec7170878e22"
+    },
+    "xform-fieldset.css": {
+      "sha256": "04acf4263f8f1b4ff2e55f882f2287f0d173c04fdd19e168c907a5046de98376"
+    },
+    "xform-fieldset.js": {
+      "sha256": "7de0eca7a4007f7b3e2db550926103c38e627a03dacd32830b074e780a5755e4"
+    },
+    "xform-headless-desktop.js": {
+      "sha256": "acc9f11790c218eb98a253b8d0b6295bea4a5b2d8c2574831625b7246bb47529"
+    },
+    "xform-headless-mobile.js": {
+      "sha256": "acc9f11790c218eb98a253b8d0b6295bea4a5b2d8c2574831625b7246bb47529"
+    },
+    "xform-html-desktop.js": {
+      "sha256": "175d2c5feb870682cbed7a9c0ff0c37ebe260d8b8025408e14fe8ad7f6f88d85"
+    },
+    "xform-html-mobile.js": {
+      "sha256": "175d2c5feb870682cbed7a9c0ff0c37ebe260d8b8025408e14fe8ad7f6f88d85"
+    }
+  },
+  "extraction": {
+    "runtime-seams.json": "Exact function expressions R (tree preprocessing) and eR (global native registry construction) from Runtime webpack module 29722.",
+    "xform-html-*.js": "Exact AMD factory function expression; no business code or scripts added.",
+    "xform-headless-*.js": "Exact AMD factory function expression.",
+    "xform-fieldset.js": "Complete retained native module.",
+    "xform-fieldset.css": "Complete retained native stylesheet."
+  },
+  "boundary": "Offline native registration, tree traversal, component output, and CSS declarations only. React hooks and unrelated platform services are inert. No browser computed layout, persistence acceptance, migration, or NewOA write is claimed."
+}

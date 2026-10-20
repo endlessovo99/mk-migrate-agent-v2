@@ -106,6 +106,14 @@ function compareEnvelope(expected, actual, diagnostics) {
 }
 
 function compareForm(expected, actual, diagnostics) {
+  if (expected.adaptiveLayout !== undefined &&
+      stableStringify(expected.adaptiveLayout) !== stableStringify(actual?.adaptiveLayout)) {
+    diagnostics.push(mismatch("form", "readback.form.adaptive_layout_mismatch",
+      "Adaptive CSS must remain scoped and renderable on both platforms without HTML or JavaScript.", {
+        invariantKey: "form.adaptiveLayout", path: "/readback/form/adaptiveLayout",
+        expected: expected.adaptiveLayout, actual: actual?.adaptiveLayout
+      }));
+  }
   if (stableStringify(expected.subjectRule) !== stableStringify(actual?.subjectRule)) {
     diagnostics.push(mismatch("form", "readback.form.subject_rule_mismatch", "Readback form subjectRule must remain empty.", {
       invariantKey: "form.subjectRule",

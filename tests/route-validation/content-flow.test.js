@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Preserve the retained source-width contract explicitly.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { translateSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";

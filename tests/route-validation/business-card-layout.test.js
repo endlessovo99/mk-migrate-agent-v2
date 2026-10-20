@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Preserve the retained source-width contract explicitly.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { validateMigrationDsl } from "../../src/dsl/schema.js";
 import { mapAddressDisplayCompanions } from "../../src/translator/address-display-companion-mapping.js";

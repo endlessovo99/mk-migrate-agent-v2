@@ -160,12 +160,7 @@ describe("computer equipment form layout and node rights Route-validation", () =
     assert.equal(nativeScheme?.dataOnly, false);
     assert.equal(nativeTypeGrid?.columns, 6);
     assert.deepEqual(nativeTypeGrid?.colsStyle, [
-      { startIndex: 0, count: 1, value: "8.681672025723%" },
-      { startIndex: 1, count: 1, value: "8.681672025723%" },
-      { startIndex: 2, count: 1, value: "33.697749196141%" },
-      { startIndex: 3, count: 1, value: "17.106109324759%" },
-      { startIndex: 4, count: 1, value: "15.112540192926%" },
-      { startIndex: 5, count: 1, value: "16.720257234727%" }
+      { startIndex: 0, count: 6, value: "auto" }
     ]);
     for (const [index, ownerNodeId] of [
       "layout.row-4.nested-0.row-0",

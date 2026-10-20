@@ -74,6 +74,6 @@ describe("rowspan section caption beside a nested detail table", () => {
     assert.equal(attribute.config.controlProps.desktop.hiddenLabel, true);
     assert.equal(attribute.config.labelProps.desktop.hiddenLabel, true);
     assert.equal(persisted?.cells.some((cell) => cell.fieldIds.includes("fd_section_caption")), true);
-    assert.ok(parseFloat(persisted.colsStyle[0].value) >= 20);
+    assert.deepEqual(persisted.colsStyle, [{ startIndex: 0, count: 2, value: "auto" }]);
   });
 });

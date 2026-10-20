@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { cleanSourceFile } from "../../src/translator/index.js";
+// Retain the prior mixed-field width contract; adaptive coverage lives in adaptive-layout.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { validateMigrationDsl } from "../../src/dsl/schema.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";

@@ -3,7 +3,8 @@ import { it } from "node:test";
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { draftSourceDraft } from "../../src/translator/index.js";
+// Preserve the retained source-width contract explicitly.
+import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 // These width assertions cover retained SourceDrafts and their standalone native caption layouts.
 import { cleanSourceWithoutCaptionFact as cleanSourceFile } from "../helpers/retained-caption-source.js";
 import { parseRootHashMapStringPuts } from "../../src/translator/xml-utils.js";
