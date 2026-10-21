@@ -11,10 +11,12 @@ import { applyApprovedAuxiliaryPolicies, validateApprovedAuxiliaryDecisions } fr
 import { applyApprovedRuntimePolicies, validateApprovedRuntimePolicyDecisions } from "./approved-runtime-policies.js";
 import { applyApprovedImportPolicies, validateApprovedImportDecisions } from "./approved-import-policies.js";
 import { inspectNativeDetailImportFunction, nativeDetailImportDslDiagnostics } from "../dsl/native-detail-import-profile.js";
+import {SUPPORTED_DETAIL_STATE_KIND, validateSupportedDetailStateDecisions, applySupportedDetailStatePolicies} from "./approved-detail-state-policy.js";
 
 export const APPROVED_MIGRATION_POLICY_BASIS = "deterministic-approved-migration-policy";
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const groups = [
+  {kinds:[SUPPORTED_DETAIL_STATE_KIND],validate:validateSupportedDetailStateDecisions,apply:applySupportedDetailStatePolicies},
   {kinds:["omit-remote-selector"],validate:validateRemoteOmissionDecisions,apply:applyRemoteOmissionPolicies},
   {kinds:["native-tic-rest-selector"],validate:validateApprovedRemoteDecisions,apply:applyApprovedRemotePolicies},
   {kinds:["main-string-current-value-load"],validate:validateApprovedMainStringLoadDecisions,apply:applyApprovedMainStringLoadPolicies},
@@ -109,13 +111,14 @@ export function applyApprovedMigrationPolicies(sourceDraft, baseDraft) {
     action.deterministicBranchProof = buildDeterministicScriptBranchProof(action);
     if (!action.deterministicBranchProof) throw new Error("Approved policy action could not build its fixed source proof.");
   }
-  const ownedSources = new Set(changedActions.filter(action => action.translationStatus === "mapped").flatMap(action => action.sourceRefs || [])
+  const preservedNativeSources = new Set(audits.filter(audit=>audit.kind === SUPPORTED_DETAIL_STATE_KIND).flatMap(audit=>audit.sourceScripts.map(source=>source.sourceRef)));
+  const ownedSources = new Set(changedActions.filter(action => action.translationStatus === "mapped").flatMap(action => action.sourceRefs || []).filter(ref=>!preservedNativeSources.has(ref))
     .filter(ref => (draft.scripts?.actions || []).filter(action => action.sourceRefs?.includes(ref)).every(action => action.translationStatus === "mapped")));
   const ownedRuleIds = new Set([
     ...(draft.formRules?.linkage || []).filter(rule => ownedSources.has(rule.meta?.sourceJsp)).map(rule => rule.id),
     ...(draft.formRules?.review?.excludedRules || []).filter(rule => ownedSources.has(rule.sourceJsp)).map(rule => rule.ruleId)
   ]);
-  if (draft.formRules) {
+  if (draft.formRules && (ownedSources.size > 0 || preservedNativeSources.size === 0)) {
     draft.formRules.linkage = (draft.formRules.linkage || []).filter(rule => !ownedSources.has(rule.meta?.sourceJsp));
     if (draft.formRules.review) {
       draft.formRules.review.excludedRules = (draft.formRules.review.excludedRules || []).filter(rule => !ownedSources.has(rule.sourceJsp));
@@ -146,6 +149,7 @@ export function migrationPolicyDslDiagnostics(dsl) {
   const diagnostics = [...validateMigrationPolicies(dsl?.migrationPolicies).diagnostics, ...nativeDetailImportDslDiagnostics(dsl), ...nativeRemoteSelectorDslDiagnostics(dsl), ...remoteOmissionDslDiagnostics(dsl)];
   const fail = (message,details) => diagnostics.push({level:"error",code:"dsl.migration_policy_binding_mismatch",message,path:"/migrationPolicyAudit",...(details?{details}:{})});
   const audit = dsl?.migrationPolicyAudit, digest = sha256Digest(dsl?.migrationPolicies ?? null);
+  for (const entry of Array.isArray(audit?.audits) ? audit.audits : []) if (entry?.kind === SUPPORTED_DETAIL_STATE_KIND && entry.workflowBefore !== sha256Digest(dsl.workflow ?? null)) fail("Supported-only detail state must preserve the complete workflow.");
   for(const decision of (dsl?.migrationPolicies?.decisions||[]).filter(value=>[SUBMIT_CURRENT_VALUES_KIND,OMIT_UNBOUND_DIAGNOSTIC_KIND,SOURCE_FORM_RADIO_ORDINAL_LOAD_KIND].includes(value.kind))){
     const bindings=(audit?.audits||[]).filter(value=>value.kind===decision.kind&&value.actionId===decision.actionId&&value.sourceRef===decision.sourceRef);
     if(bindings.length!==1||bindings[0].workflowBefore!==sha256Digest(dsl.workflow??null))fail("Approved source-bound value, diagnostic and radio policies must preserve the complete workflow routes and permissions.");
