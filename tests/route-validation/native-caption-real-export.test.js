@@ -73,6 +73,10 @@ for (const [name, script] of [
   ["dynamic import", 'import("./presentation.js");'],
   ["for-of builtin overwrite", "for(Number of callbacks){Number(value);}"],
   ["for-in local overwrite", "function calc(){return 1;}for(calc in callbacks){calc();}"],
+  ["numeric coercion of an unknown object", "Number(externalValue);"],
+  ["arithmetic coercion of an unknown object", "externalValue + 1;"],
+  ["update coercion of an unknown object", "externalValue++;"],
+  ["compound coercion of an unknown object", "externalValue += 1;"],
   ["dynamically computed title reference", 'var suffix="325c005d07ab62";hideCaption("fd_"+suffix);']
 ]) it(`retains the real title for ${name}`, () => {
   const { draft } = applicantVariant(values => { values.fdDisplayJsp += `<script>${script}</script>`; });

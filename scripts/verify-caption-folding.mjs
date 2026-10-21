@@ -60,7 +60,9 @@ for (const item of manifest.items) {
     const projection = structuredClone(draft);
     delete projection.template.authorization;
     delete projection.workflow;
-    projection.scripts = { actions: [] };
+    const buttonIds = new Set(projection.form.fields.filter(field => field.componentId === "xform-button").map(field => field.id));
+    projection.scripts = { actions: (draft.scripts?.actions || [])
+      .filter(action => action.event === "onClick" && buttonIds.has(action.controlId)) };
     projection.formRules = { linkage: [] };
     try {
       const prepared = prepareSample(projection);

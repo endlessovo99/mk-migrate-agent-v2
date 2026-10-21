@@ -18,7 +18,7 @@ captions, independently permissioned controls/captions, hidden owners, row-spann
 or compound regions and conflicting source references stay separate.
 
 Script analysis allows only completely inspected top-level local functions,
-bounded value APIs, supported numeric builtins and the existing exact native
+bounded value APIs, numeric builtins with proven primitive inputs and the existing exact native
 calculation-library include. Unknown calls, element handles, DOM/member access,
 dynamic field identities, shadowed callees and unknown scope remain opaque.
 These are conservative protections: removing a formatting blocker does not
@@ -52,7 +52,9 @@ earlier reports. It compares against an in-memory retained-caption translation t
 check unrelated field semantics, scripts, workflow, rules and grid projection.
 
 Native checks use a synthetic form projection; template authorization, scripts
-and workflow execution are excluded. Every form with a fold must pass native
+and workflow execution are excluded. Existing mapped button callbacks needed by
+form serialization are retained as inert configuration, never executed or replaced
+with empty actions. Every form with a fold must pass native
 projection, title visibility on desktop/mobile and absence of the consumed
 description. An unchanged form may expose a separate projection limitation such
 as a button needing reviewed script translation; this is reported explicitly.

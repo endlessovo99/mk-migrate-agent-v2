@@ -27,3 +27,19 @@ it("verifies a real source offline and refuses to overwrite an earlier result", 
     assert.equal(readFileSync(fixture, "utf8"), before);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+it("serializes existing mapped button callbacks without executing them during form-only projection", () => {
+  const root = mkdtempSync(join(tmpdir(), "caption-button-offline-"));
+  try {
+    const manifest = join(root, "manifest.json"), output = join(root, "result");
+    writeFileSync(manifest, JSON.stringify({ items: [{ id: "bid", name: "Bid",
+      sourcePath: "tests/fixtures/source/1927955f6e544383f46970f48468a743" }] }));
+    execFileSync(process.execPath, ["scripts/verify-caption-folding.mjs", manifest, output], { stdio: "pipe" });
+    const report = JSON.parse(readFileSync(join(output, "report.json")));
+    assert.equal(report.summary.failed, 0);
+    assert.equal(report.summary.networkAttempts, 0);
+    assert.equal(report.rows[0].nativeFormProjectionVerified, true);
+    assert.equal(report.rows[0].nativeProjectionLimitation, undefined);
+    assert.equal(report.summary.folded, 0);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
