@@ -50,6 +50,7 @@ for (const [name, script] of [
   ["trigger value written elsewhere", dictionary + 'SetXFormFieldValueById("fd_a","constructor",false);'],
   ["trigger value written through a handle", dictionary + 'GetXFormFieldById("fd_a")[0].value="constructor";'],
   ["trigger value written by jQuery", dictionary + '$("#fd_a").val("constructor");'],
+  ["trigger write in an alternative global definition", dictionary + 'function mutate(){SetXFormFieldValueById("fd_a","constructor",false);}function mutate(){SetXFormFieldValueById("fd_b","x",false);}mutate();'],
   ["getter in the lookup record", dictionary.replace('HIGH:"48h"', 'get HIGH(){return changePresentation();}')],
   ["callable lookup value", dictionary.replace('HIGH:"48h"', 'HIGH:changePresentation')],
   ["prototype key in the record", dictionary.replace('HIGH:"48h"', '__proto__:"48h"')],

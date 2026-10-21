@@ -142,3 +142,25 @@ strings or ordinary text inputs have an enum domain.
 Workflow alias/context resolution uses the semantic form before caption
 presentation is folded. A visible title must not retarget a workflow condition
 that previously referred to a context value or differently named source field.
+
+### Global declaration variants and native metadata
+
+Different top-level declarations of one global function no longer automatically
+make a program opaque. Every possible declaration must pass the same closed
+proof for each invocation; effects are unioned and return values joined. This
+over-approximates both immediate and delayed calls without selecting a winning
+body. Unknown implementations, ambiguous returned identities, variable overwrites,
+local redeclarations, uninvoked bodies and reserved API overrides still reject.
+Function-body diagnostics retain the defining script's index.
+
+The proof also reuses the existing exact native radio/checkbox clear-pair
+contract. Both adjacent input operations, their literal empty/unchecked values,
+and one known choice field must match. Underscore-prefixed selectors remain
+unproven outside that pair. Immediately invoked functions use the ordinary body
+proof; `new Array()` is accepted only with zero arguments.
+
+Only runtime program inventory may normalize identical duplicate TABLE metadata
+for `tableName`, `showIndex`, `showRow` and `showStatisticRow`, with fixed static
+value domains. Every attribute and handler is still parsed. Conflicting values,
+duplicate handlers, permissions and unknown attributes reject. Other parser
+callers, caption appearance and ownership continue using the strict default.

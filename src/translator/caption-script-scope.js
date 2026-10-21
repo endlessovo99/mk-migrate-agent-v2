@@ -2,6 +2,7 @@ import { parse } from "acorn";
 import { buildFormRuleRefIndex, resolveEffectTarget, resolveSourceRowEffectTarget } from "../dsl/form-rules.js";
 import { captionDoclistScope, hasStaticDoclistRegistration } from "./caption-doclist-scope.js";
 import { pureCaptionDataHelper } from "./caption-data-helper.js";
+import { jqueryRadioClearPair } from "./inline-radio-row-effects.js";
 
 const DATA = Object.freeze({ kind: "data" });
 const NONE = Object.freeze({ kind: "none" });
@@ -51,16 +52,26 @@ export function captionScriptScope(scripts, form, originals) {
     if (node.type !== "FunctionDeclaration") return;
     if (!node.id || RESERVED.has(node.id.name)) fail("script_callee_shadowed", node);
     const existing = scope.env.get(node.id.name);
-    if (existing && (existing.kind !== "function" || canonical(existing.node) !== canonical(node))) fail("script_binding_ambiguous", node);
-    const fn = existing || { kind: "function", node, env: scope.env,
+    if (existing?.kind !== undefined && existing.kind !== "function") fail("script_binding_ambiguous", node);
+    const variants = existing ? existing.variants || [existing] : [];
+    if (variants.some(fn => canonical(fn.node) === canonical(node))) return;
+    if (existing && (!text || !existing.programDeclaration)) fail("script_binding_ambiguous", node);
+    const fn = { kind: "function", node, env: scope.env, scriptIndex, programDeclaration: Boolean(text),
       pure: Boolean(text && pureCaptionDataHelper(text.slice(node.start, node.end), RESERVED)) };
-    scope.env.set(node.id.name, fn); functions.add(fn);
+    scope.env.set(node.id.name, existing
+      ? { kind: "function", variants: [...variants, fn], programDeclaration: true } : fn);
+    functions.add(fn);
   }
 
   function invoke(fn, args, node) {
+    // A global name can denote any declaration during immediate or delayed
+    // execution. Prove every body and join its result; never select a winner.
+    if (fn?.variants) return fn.variants.map(variant => invoke(variant, args, node)).reduce(merge);
     if (fn?.kind !== "function" || ++depth > 12) fail("unproven_callback", node);
     invoked.add(fn);
     if (fn.pure) { args.forEach(arg => scalar(arg, node)); depth--; return DATA; }
+    const callerScriptIndex = scriptIndex;
+    scriptIndex = fn.scriptIndex ?? scriptIndex;
     const scope = { env: new Map(fn.env), writable: new Set(), constants: new Set(), returns: [], functionScope: true };
     for (const [index, parameter] of fn.node.params.entries()) {
       if (parameter.type !== "Identifier" || RESERVED.has(parameter.name)) fail("script_parameter_unproven", parameter);
@@ -69,6 +80,7 @@ export function captionScriptScope(scripts, form, originals) {
     if (fn.node.body.type === "BlockStatement") block(fn.node.body.body, scope, true);
     else scope.returns.push(expr(fn.node.body, scope));
     depth--;
+    scriptIndex = callerScriptIndex;
     return scope.returns.reduce(merge, scope.returns[0]) || NONE;
   }
 
@@ -121,6 +133,8 @@ export function captionScriptScope(scripts, form, originals) {
         node.expressions.forEach(item => scalar(expr(item, scope), node));
         return node.expressions.length ? DATA : literal(node.quasis[0].value.cooked);
       case "NewExpression":
+        if (node.callee.type === "Identifier" && node.callee.name === "Array" && node.arguments.length === 0)
+          return { kind: "array", elements: [] };
         if (node.callee.type !== "Identifier" || node.callee.name !== "Date" || node.arguments.length > 1) fail("unmodeled_constructor", node);
         node.arguments.forEach(arg => scalar(expr(arg, scope), node));
         return { kind: "date" };
@@ -132,7 +146,7 @@ export function captionScriptScope(scripts, form, originals) {
         return value;
       }
       case "FunctionExpression": case "ArrowFunctionExpression": {
-        const fn = { kind: "function", node, env: new Map(scope.env) }; functions.add(fn); return fn;
+        const fn = { kind: "function", node, env: new Map(scope.env), scriptIndex }; functions.add(fn); return fn;
       }
       case "MemberExpression": return member(node, scope);
       case "BinaryExpression": case "LogicalExpression": {
@@ -220,6 +234,8 @@ export function captionScriptScope(scripts, form, originals) {
     }
     if (PURE.has(name)) { args.forEach(arg => scalar(expr(arg, scope), node)); return DATA; }
     if (callee.type === "Identifier") return invoke(expr(callee, scope), args.map(arg => expr(arg, scope)), node);
+    if (["FunctionExpression", "ArrowFunctionExpression"].includes(callee.type))
+      return invoke(expr(callee, scope), args.map(arg => expr(arg, scope)), node);
     if (callee.type !== "MemberExpression" || callee.computed) fail("unresolved_call", node);
     const method = callee.property.name;
     if (callee.object.name === "Math" && MATH.has(method)) {
@@ -258,8 +274,11 @@ export function captionScriptScope(scripts, form, originals) {
 
   function block(statements, scope, allowConst = false) {
     statements.forEach(node => declare(node, scope));
-    for (const node of statements) {
+    for (let index = 0; index < statements.length; index++) {
+      const node = statements[index];
       tick(node);
+      const cleared = jqueryRadioClearPair(node, statements[index + 1], form);
+      if (cleared) { tick(statements[++index]); write(nodes([cleared.fieldId])); continue; }
       switch (node.type) {
         case "FunctionDeclaration": case "EmptyStatement": break;
         case "BlockStatement": block(node.body, scope); break;

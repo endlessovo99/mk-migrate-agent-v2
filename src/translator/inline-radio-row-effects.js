@@ -299,7 +299,7 @@ function strictCheckedRadioRead(node, form) {
   return !!fieldId && form.fields.some(field => field.id === fieldId && field.type !== "detailTable" && field.componentId === "xform-radio");
 }
 
-function jqueryRadioClearPair(first, second, form) {
+export function jqueryRadioClearPair(first, second, form) {
   const one = expressionCall(first), two = expressionCall(second);
   const selector = (call, method) => call?.type === "CallExpression" && call.callee?.type === "MemberExpression" &&
     !call.callee.computed && call.callee.property?.name === method && call.callee.object?.type === "CallExpression" &&

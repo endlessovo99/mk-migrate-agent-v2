@@ -22,6 +22,10 @@ const STYLE_MIRRORS = new Map([
   ["style_textalign", ["text-align", "left"]], ["style_verticalalign", ["vertical-align", "middle"]]
 ]);
 const EMPTY_BORDERS = new Set(["style_borderbottomwidth", "style_bordertopwidth", "style_borderleftwidth", "style_borderrightwidth"]);
+const RUNTIME_TABLE_DUPLICATES = new Map([
+  ["tablename", /^[A-Za-z_][\w.-]*$/], ["showindex", /^(?:true|false)$/],
+  ["showstatisticrow", /^(?:true|false)$/], ["showrow", /^\d+$/]
+]);
 const RUNTIME_EDITORS = new Map([
   ["inputtext", ["xform:xtext"]], ["textarea", ["xform:textarea"]],
   ["datetime", ["xform:datetime"]], ["inputselect", ["xform:select"]],
@@ -89,7 +93,8 @@ function runtimeProgram(input) {
     const attributes = token.name === "img" ? token.attrs.replace(
       /<c:url\s+value=(["'])(\/resource\/style\/default\/icons\/(?:add|delete|up|down)\.gif)\1\s*\/>/g,
       (_, _quote, path) => path) : token.attrs;
-    const attrs = parseStaticMarkupAttributes(attributes) || parseDesignerControlAttributes(attributes);
+    const attrs = parseStaticMarkupAttributes(attributes, token.name === "table" ? RUNTIME_TABLE_DUPLICATES : undefined) ||
+      parseDesignerControlAttributes(attributes);
     if (!attrs) complete = false;
     for (const [key, value] of attrs || []) {
       if (/^on[a-z]+$/.test(key) && value.trim() &&

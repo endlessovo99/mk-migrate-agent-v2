@@ -1,7 +1,7 @@
 import { scanHtmlTags } from "./designer-html-tokenizer.js";
 import { decodeEntities } from "./xml-utils.js";
 
-export function parseStaticMarkupAttributes(text = "") {
+export function parseStaticMarkupAttributes(text = "", identicalDuplicates = new Map()) {
   const source = String(text).replace(/\/\s*$/, ""), result = new Map();
   const attribute = /\s*([A-Za-z_:][\w:.-]*)(?:\s*=\s*(?:"([^"<>]*)"|'([^'<>]*)'|([^\s"'`=<>]+)))?/y;
   let offset = 0;
@@ -9,8 +9,10 @@ export function parseStaticMarkupAttributes(text = "") {
     if (offset > 0 && !/\s/.test(source[offset])) return undefined;
     attribute.lastIndex = offset;
     const match = attribute.exec(source);
-    if (!match || result.has(match[1].toLowerCase())) return undefined;
-    result.set(match[1].toLowerCase(), decodeEntities(match[2] ?? match[3] ?? match[4] ?? ""));
+    if (!match) return undefined;
+    const key = match[1].toLowerCase(), value = decodeEntities(match[2] ?? match[3] ?? match[4] ?? "");
+    if (result.has(key) && (result.get(key) !== value || !identicalDuplicates.get(key)?.test(value))) return undefined;
+    result.set(key, value);
     offset = attribute.lastIndex;
   }
   return result;
