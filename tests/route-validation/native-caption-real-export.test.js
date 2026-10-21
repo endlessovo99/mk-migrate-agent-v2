@@ -19,8 +19,8 @@ it("verifies the real export through review, trust and fake native persistence",
   assert.equal(result.dsl.review.captionFolding.decisions.filter(item => item.status === "folded").length, 4);
 });
 
-function applicantVariant(change = () => {}) {
-  const values = parseRootHashMapStringPuts(readFileSync(applicantFixture, "utf8"));
+function applicantVariant(change = () => {}, input = applicantFixture) {
+  const values = parseRootHashMapStringPuts(readFileSync(input, "utf8"));
   change(values);
   const escape = value => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   const dir = mkdtempSync(join(tmpdir(), "real-caption-"));
@@ -54,6 +54,143 @@ it("allows unrelated data-only calculations without weakening dynamic script pro
     values.fdDisplayJsp += '<script>function amount(){return Number(GetXFormFieldValueById("fd_amount")) + 1;}</script>';
   });
   assert.equal(draft.form.fields.find(field => field.id === applicantId).sourceProps.foldedCaption?.id, captionId);
+});
+
+it("accepts exporter style mirrors only when they agree with the actual caption cell", () => {
+  const { draft } = applicantVariant(values => {
+    for (const key of ["fdDesignerHtml", "fdDisplayJsp"]) values[key] = values[key]
+      .replace('class=td_normal_title', 'class=td_normal_title style_borderbottomwidth="null" style_bordertopwidth="null" style_borderleftwidth="null" style_borderrightwidth="null" style_textalign="left" style_verticalalign="middle"')
+      .replace('WIDTH: 168px', 'WIDTH: 168px; TEXT-ALIGN: left; VERTICAL-ALIGN: middle');
+  });
+  assert.equal(draft.form.fields.find(field => field.id === applicantId).sourceProps.foldedCaption?.id, captionId);
+});
+
+it("ignores only boundary whitespace in a literal exported caption", () => {
+  const { draft } = applicantVariant(values => {
+    values.fdDesignerHtml = values.fdDesignerHtml.replace('content:"申请人"', 'content:"申请人\r\n "')
+      .replace('>申请人</LABEL>', '>\r\n申请人\r\n </LABEL>');
+    values.fdDisplayJsp = values.fdDisplayJsp.replace('>申请人</LABEL>', '>\r\n申请人\r\n </LABEL>');
+  });
+  assert.equal(draft.form.fields.find(field => field.id === applicantId).sourceProps.foldedCaption?.id, captionId);
+});
+
+it("recognizes a single exporter terminal break backed by the literal title's trailing newline", () => {
+  const { draft } = applicantVariant(values => {
+    values.fdDesignerHtml = values.fdDesignerHtml.replace('content:"申请人"', 'content:"申请人\r\n"')
+      .replace('>申请人</LABEL>', '>申请人<BR></LABEL>');
+    values.fdDisplayJsp = values.fdDisplayJsp.replace('>申请人</LABEL>', '>申请人<BR></LABEL>');
+  });
+  assert.equal(draft.form.fields.find(field => field.id === applicantId).sourceProps.foldedCaption?.id, captionId);
+});
+
+it("matches repeated runtime title text by its unique physical cell", () => {
+  const { draft } = applicantVariant(values => {
+    values.fdDesignerHtml = values.fdDesignerHtml.replace('</TBODY>', '<TR><TD row="3" column="0"><LABEL fd_type="textLabel" fd_values=\'{id:"other_caption",content:"申请人"}\'>申请人</LABEL></TD><TD row="3" column="1"><DIV fd_type="inputText" fd_values=\'{id:"fd_other",label:"申请人",_label_bind:"true",_label_bind_id:"other_caption"}\'><INPUT id="fd_other"/></DIV></TD></TR></TBODY>');
+    values.fdDisplayJsp = values.fdDisplayJsp.replace('</TBODY>', '<TR><TD row="3" column="0"><LABEL>申请人</LABEL></TD><TD row="3" column="1"><xform:xtext property="extendDataFormInfo.value(fd_other)"/></TD></TR></TBODY>');
+  });
+  assert.equal(draft.form.fields.find(field => field.id === applicantId).sourceProps.foldedCaption?.id, captionId);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_other").sourceProps.foldedCaption?.id, "other_caption");
+});
+
+it("proves a real address editor as one owner from its matching id/name bindings", () => {
+  const { source, draft } = applicantVariant(values => {
+    values.fdDesignerHtml = values.fdDesignerHtml.replace(/(<(?:LABEL|DIV)[^>]*fd_3d5df07476e8b4[^>]*>)/,
+      opening => opening.replace('_label_bind:"true"', '_label_bind:"false"'));
+  }, fixture);
+  assert.equal(source.form.controls.find(field => field.id === "fd_3d5df07476e8b4").sourceProps.designerValues._label_bind, "false");
+  assert.equal(draft.form.fields.find(field => field.id === "fd_3d5df07476e8b4").sourceProps.foldedCaption?.id, "fd_3352b877be22ce");
+});
+
+it("scopes a complete field-change callback to its fixed affected field", () => {
+  const { source, draft } = applicantVariant(values => {
+    values.fdDisplayJsp += '<script>AttachXFormValueChangeEventById("fd_325c028ef96556",function(value,domElement){var field=GetXFormFieldById("fd_325c028ef96556")[0];if(value.indexOf("A")>=0){field.value="A";}else{field.value="";}});</script>';
+  });
+  assert.equal(draft.form.fields.find(field => field.id === applicantId).sourceProps.foldedCaption?.id, captionId);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_325c028ef96556").props.hiddenLabel, true);
+  assert.equal(auditCaptionFolding(source, draft).ok, true);
+});
+
+it("does not infer a bounded effect through an unresolved mutable closure", () => {
+  const { draft } = applicantVariant(values => {
+    values.fdDisplayJsp += `<script>var id="fd_325c028ef96556";AttachXFormValueChangeEventById("fd_325c028ef96556",function(){GetXFormFieldById(id)[0].value="x";});id="${applicantId}";</script>`;
+  });
+  assert.equal(draft.form.fields.some(field => field.id === captionId), true);
+});
+
+it("includes non-dispatcher runtime handlers in the complete script domain", () => {
+  const { draft } = applicantVariant(values => {
+    values.fdDisplayJsp = values.fdDisplayJsp.replace('onValueChange="__xformDispatch"', 'onValueChange="changePresentation()"');
+  });
+  assert.equal(draft.form.fields.some(field => field.id === captionId), true);
+});
+
+it("fails closed when malformed unrelated attributes can hide an effective runtime handler", () => {
+  const { draft } = applicantVariant(values => {
+    values.fdDisplayJsp += '<BUTTON onclick="changePresentation()" disabled disabled>X</BUTTON>';
+  });
+  assert.equal(draft.form.fields.some(field => field.id === captionId), true);
+  assert.equal(draft.review.captionFolding.decisions.find(item => item.fieldId === applicantId).evidence.reason,
+    "runtime_attributes_unproven");
+});
+
+it("includes runtime script bodies even when Designer JSP scripts take precedence in migration", () => {
+  const { draft } = applicantVariant(values => {
+    values.fdDesignerHtml += '<DIV fd_type="jsp" id="js1"><INPUT type="hidden" value="&lt;script&gt;Number(1);&lt;/script&gt;"/></DIV>';
+    values.fdDisplayJsp += '<script>changePresentation();</script>';
+  });
+  assert.equal(draft.form.fields.some(field => field.id === captionId), true);
+});
+
+it("includes event handlers on text controls masked from caption markup", () => {
+  const { draft } = applicantVariant(values => {
+    values.fdDisplayJsp += '<TEXTAREA onclick="changePresentation()">inert text</TEXTAREA>';
+  });
+  assert.equal(draft.form.fields.some(field => field.id === captionId), true);
+});
+
+it("bounds an optional boolean field setter flag without accepting a callback flag", () => {
+  const { draft } = applicantVariant(values => {
+    values.fdDisplayJsp += '<script>AttachXFormValueChangeEventById("fd_325c028ef96556",function(value){SetXFormFieldValueById("fd_325c028ef96556",value,false);});</script>';
+  });
+  assert.equal(draft.form.fields.find(field => field.id === applicantId).sourceProps.foldedCaption?.id, captionId);
+  const rejected = applicantVariant(values => {
+    values.fdDisplayJsp += '<script>AttachXFormValueChangeEventById("fd_325c028ef96556",function(value){SetXFormFieldValueById("fd_325c028ef96556",value,changePresentation);});</script>';
+  });
+  assert.equal(rejected.draft.form.fields.some(field => field.id === captionId), true);
+});
+
+it("does not turn escaped editor contents into presentation code during caption proof", () => {
+  const { source } = applicantVariant(values => {
+    values.fdDesignerHtml += '<TEXTAREA>&lt;/TEXTAREA&gt;&lt;STYLE&gt;.sample{display:none}&lt;/STYLE&gt;</TEXTAREA>';
+  });
+  assert.equal(source.form.controls.find(field => field.id === captionId).sourceProps.staticCaptionFact?.plainText, true);
+});
+
+for (const [name, change] of [
+  ["conflicting style mirror", values => {
+    values.fdDesignerHtml = values.fdDesignerHtml.replace('class=td_normal_title', 'class=td_normal_title style_textalign="right"');
+  }],
+  ["substantive border mirror", values => {
+    values.fdDesignerHtml = values.fdDesignerHtml.replace('class=td_normal_title', 'class=td_normal_title style_borderbottomwidth="2px"');
+  }],
+  ["interior caption newline", values => {
+    values.fdDesignerHtml = values.fdDesignerHtml.replace('content:"申请人"', 'content:"申请\r\n人"').replace('>申请人</LABEL>', '>申请\r\n人</LABEL>');
+  }],
+  ["terminal break without literal newline evidence", values => {
+    for (const key of ["fdDesignerHtml", "fdDisplayJsp"]) values[key] = values[key].replace('>申请人</LABEL>', '>申请人<BR></LABEL>');
+  }],
+  ["styled terminal break", values => {
+    values.fdDesignerHtml = values.fdDesignerHtml.replace('content:"申请人"', 'content:"申请人\r\n"')
+      .replace('>申请人</LABEL>', '>申请人<BR style="color:red"></LABEL>');
+    values.fdDisplayJsp = values.fdDisplayJsp.replace('>申请人</LABEL>', '>申请人<BR style="color:red"></LABEL>');
+  }],
+  ["two same-text labels in the owning cell", values => {
+    values.fdDisplayJsp = values.fdDisplayJsp.replace('>申请人</LABEL>', '>申请人</LABEL><LABEL>申请人</LABEL>');
+  }]
+]) it(`keeps the title unproven for ${name}`, () => {
+  const { source, draft } = applicantVariant(change);
+  assert.equal(draft.form.fields.some(field => field.id === captionId), true);
+  assert.ok(source.form.controls.find(field => field.id === captionId).sourceProps.staticCaptionIssue?.reason);
 });
 
 for (const [name, script] of [

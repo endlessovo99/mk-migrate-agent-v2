@@ -1,5 +1,6 @@
 import { componentSupportsProp } from "../dsl/catalogs.js";
 import { captionScriptReferences } from "./caption-script-references.js";
+import { captionScriptScope } from "./caption-script-scope.js";
 
 /**
  * A source caption may become an intrinsic title only when its identity,
@@ -22,7 +23,9 @@ export function foldNativeCaptions(form, source, { decisions = [] } = {}) {
   scripts.push(...originals.flatMap(field => Object.entries(field.sourceProps?.designerValues || {})
     .filter(([key, value]) => /^(?:on|script|function|event)/i.test(key) && typeof value === "string")
     .map(([, value]) => value)));
+  scripts.push(...new Set(originals.flatMap(field => field.sourceProps?.staticCaptionFact?.domContext?.inlineScripts || [])));
   const sourceReferences = captionScriptReferences(scripts);
+  const scriptScope = sourceReferences.opaque ? captionScriptScope(scripts, form, originals) : undefined;
   const folded = new Map();
   const consumed = new Set();
   const tree = structuredClone(form.layout?.mkTree || []);
@@ -31,8 +34,8 @@ export function foldNativeCaptions(form, source, { decisions = [] } = {}) {
     const original = originals.filter(item => item.id === field.id);
     const captionIds = field.sourceProps?.layoutCell?.captionIds || [];
     if (!captionIds.length) continue;
-    const record = (status, reason) => decisions.push({
-      fieldId: field.id, sourceRef: field.sourceRef, title: field.title, captionIds, status, reason
+    const record = (status, reason, evidence) => decisions.push({
+      fieldId: field.id, sourceRef: field.sourceRef, title: field.title, captionIds, status, reason, ...(evidence ? { evidence } : {})
     });
     if (original.length !== 1) { record("unproven", "identity_ambiguous"); continue; }
     if (!eligibleOwner(field)) {
@@ -54,7 +57,7 @@ export function foldNativeCaptions(form, source, { decisions = [] } = {}) {
     }
     const fact = caption.sourceProps?.staticCaptionFact;
     if (fact?.plainText !== true || fact.unique !== true || fact.unguarded !== true || fact.content !== caption.title) {
-      record("unproven", "static_caption_unproven"); continue;
+      record("unproven", "static_caption_unproven", caption.sourceProps?.staticCaptionIssue); continue;
     }
     if (targetCaption.length !== 1 ||
         targetCaption[0].componentId !== "xform-description" ||
@@ -66,10 +69,27 @@ export function foldNativeCaptions(form, source, { decisions = [] } = {}) {
       record("unproven", "caption_content_mismatch"); continue;
     }
     if (!ownsCaption(owner, caption)) { record("unproven", "ownership_unproven"); continue; }
+    if (fact.domContext?.inlineDomainComplete === false) {
+      record("unproven", "dynamic_script_unproven", { reason: "runtime_attributes_unproven" }); continue;
+    }
     if (protectedText.includes(captionId) ||
         sourceReferences.values.some(value => value.includes(captionId)) ||
         referencedByField(originals, captionId)) { record("preserved", "source_reference"); continue; }
-    if (sourceReferences.opaque) { record("unproven", "dynamic_script_unproven"); continue; }
+    if (sourceReferences.opaque && !scriptScope?.ok) {
+      record("unproven", "dynamic_script_unproven", scriptScope?.issue); continue;
+    }
+    if (sourceReferences.opaque && fact.domContext?.version !== 1) {
+      record("unproven", "script_region_unproven"); continue;
+    }
+    if (scriptScope?.targets.some(id => [owner.id, captionId, ...(fact.domContext?.ancestorIds || [])].includes(id))) {
+      record("preserved", "scoped_script_dependency"); continue;
+    }
+    if (scriptScope?.parentReads?.length && !fact.domContext) {
+      record("unproven", "script_region_unproven"); continue;
+    }
+    if (scriptScope?.parentReads?.some(id => fact.domContext.cellDescendantIds.includes(id))) {
+      record("preserved", "scoped_script_dependency"); continue;
+    }
     const left = sourceCell(rows, captionId), right = sourceCell(rows, owner.id);
     if (!adjacentPair(left, right)) { record("unproven", "source_region_unproven"); continue; }
     const leftTarget = targetCell(tree, captionId), rightTarget = targetCell(tree, field.id);

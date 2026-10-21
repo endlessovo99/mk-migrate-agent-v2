@@ -730,6 +730,7 @@ function sourcePropsFromField(field) {
     runtimeNumberDisplayWidth: field.source?.runtimeNumberDisplayWidth,
     runtimePlainCaption: field.source?.runtimePlainCaption,
     staticCaptionFact: field.source?.staticCaptionFact,
+    staticCaptionIssue: field.source?.staticCaptionIssue,
     runtimePlainCaptionMarkerIds: field.source?.runtimePlainCaptionMarkerIds,
     designerTableName: field.source?.designerTableName,
     explicitTitle: field.source?.explicitTitle,

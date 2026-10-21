@@ -60,13 +60,19 @@ describe("business-card source form layout", () => {
     const second = desktopGrid(config, 1);
     assert.equal(first.controlProps.rows, 1);
     assert.equal(first.controlProps.columns, 4);
-    assert.deepEqual(first.controlProps.colsStyle, second.controlProps.colsStyle);
+    // The second row consumes its one-to-one phone caption. Composite name
+    // groups keep the original four cells and their source content widths.
+    assert.ok(draft.form.fields.find(field => field.id === "fd_325692094a72b8").sourceProps.foldedCaption);
+    assert.deepEqual(first.controlProps.colsStyle.slice(0, 2), second.controlProps.colsStyle.slice(0, 2));
+    const width = style => Number.parseFloat(style.value);
+    assert.ok(Math.abs(first.controlProps.colsStyle.slice(2).reduce((sum, item) => sum + width(item), 0) -
+      second.controlProps.colsStyle.slice(2).reduce((sum, item) => sum + width(item), 0)) < 1e-9);
     const firstLine = first.children[1].children[0].children[0];
     const secondLine = second.children[1].children[0].children[0];
     assert.equal(firstLine.controlProps.style.display, "flex");
     assert.deepEqual(firstLine.children.map(item => item.controlProps.style.width), ["199px", "32px", "5px"]);
     assert.deepEqual(secondLine.children.map(item => item.controlProps.style.width), ["124px", undefined, "120px"]);
-    assert.equal(second.children[3].children[0].children[0].children[0].children[0].key, "fd_325692094a72b8");
+    assert.equal(second.children[2].children[0].children[0].children[0].children[0].key, "fd_325692094a72b8");
     const readback = prepared.verify(prepared.update);
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
   });

@@ -22,10 +22,11 @@ describe("date-time current default Route case", () => {
     delete dsl.workflow;
     const dslField = dsl.form.fields.find((field) => field.id === reportTimeFieldId);
     assert.deepEqual(dslField.props, {
-      hiddenLabel: true,
       defaultValue: { kind: "currentTime" },
       displayPattern: reportTimePattern
     });
+    assert.ok(dslField.sourceProps.foldedCaption);
+    assert.equal(dsl.form.fields.some(field => field.id === dslField.sourceProps.foldedCaption.id), false);
     assert.equal(
       checkDraft(dsl).diagnostics.some((diagnostic) => diagnostic.level === "error"),
       false

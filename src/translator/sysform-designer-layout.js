@@ -25,7 +25,7 @@ import { annotateRuntimeNumberDisplayWidth } from "./runtime-number-display-widt
 import { runtimeCaptionWidthEvidence, runtimePlainCaptionEvidenceWithMarkers, runtimeCaptionTrailingBlankCells } from "./runtime-caption-width.js";
 import { annotateRuntimeSelectEmpty } from "./runtime-select-empty.js";
 import { runtimeIndependentCaptionEvidence } from "./runtime-independent-caption.js";
-import { staticCaptionFacts } from "./static-caption-facts.js";
+import { inspectStaticCaptions } from "./static-caption-facts.js";
 import { isStaticDescriptionGridShape, isStaticHeaderGridShape, staticRectangleGridProfile, staticRectangleCellContent } from "./standard-table-grid.js";
 import {
   designerVisibilityWarnings,
@@ -237,10 +237,14 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
 
   recoverDesignerAttachments(decoded, fields, fieldIds, layoutRows, warnings);
 
-  const captionFacts = staticCaptionFacts(decoded, options.runtimeDisplayHtml || "");
+  const captionEvidence = inspectStaticCaptions(html, options.runtimeDisplayHtml || "");
   for (const field of fields) {
-    const fact = captionFacts.get(field.id);
+    const fact = captionEvidence.facts.get(field.id);
     if (fact) field.source = { ...field.source, staticCaptionFact: fact };
+    else if (field.source?.designerType?.toLowerCase() === "textlabel") field.source = {
+      ...field.source, staticCaptionIssue: captionEvidence.issues.get(field.id) ||
+        captionEvidence.globalIssue || { reason: "caption_identity_unproven" }
+    };
   }
 
   warnings.push(...designerVisibilityWarnings(fields));

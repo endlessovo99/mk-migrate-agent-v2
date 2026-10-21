@@ -3,11 +3,50 @@ import { describe, it } from 'node:test';
 import { cleanSourceFile, draftSourceDraft } from '../../src/translator/index.js';
 import { checkTrust, createTrustedMigrationDsl } from '../../src/dsl/trust.js';
 import { prepareSample, xformConfig } from '../helpers/persistence.js';
+import { readFileSync } from 'node:fs';
+import { parseRootHashMapStringPuts } from '../../src/translator/xml-utils.js';
+import { translateSysFormTemplateXml } from '../../src/translator/sysform-template-adapter.js';
+import { sourceDraftFromLegacyDsl } from '../../src/translator/source-draft.js';
 const path = 'tests/fixtures/route-validation/redundant-address-companion/route-it-procurement_SysFormTemplate.xml';
 const nameId = 'fd_use_dept.name';
 const addressId = 'fd_use_dept';
 
 describe('redundant address name column', () => {
+  it('retains the real travel companion referenced only by a runtime button handler', () => {
+    const props = parseRootHashMapStringPuts(readFileSync('tests/fixtures/route-validation/travel-applicant-input/route-travel-applicant_SysFormTemplate.xml', 'utf8'));
+    const id = 'fd_3293e0c29f78ac.name';
+    props.fdDisplayJsp += `<BUTTON onclick="document.getElementById('${id}').value='x'">X</BUTTON>`;
+    const escape = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+    const xml = '<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">' +
+      Object.entries(props).map(([key, value]) => `<void method="put"><string>${key}</string><string>${escape(value)}</string></void>`).join('') + '</object></java>';
+    const source = sourceDraftFromLegacyDsl(translateSysFormTemplateXml(xml));
+    assert.ok(source.form.controls.some(f => f.sourceProps?.staticCaptionFact?.domContext.inlineScripts.some(s => s.includes(id))));
+    assert.ok(!JSON.stringify(source.scripts).includes(id));
+    assert.ok(draftSourceDraft(source).form.fields.some(f => f.id === id));
+  });
+
+  it('does not treat observational caption scope as a value dependency', () => {
+    const source = cleanSourceFile(path);
+    const caption = source.form.controls.find(f => f.sourceProps?.designerType === 'textLabel');
+    assert.ok(caption);
+    caption.sourceProps.staticCaptionFact = { ...caption.sourceProps.staticCaptionFact,
+      domContext: { version: 1, ancestorIds: [nameId], cellDescendantIds: [nameId], inlineScripts: [] } };
+    assert.ok(!draftSourceDraft(source).form.fields.some(f => f.id === nameId));
+    caption.sourceProps.configuredDependency = nameId;
+    assert.ok(draftSourceDraft(source).form.fields.some(f => f.id === nameId));
+  });
+
+  for (const kind of ['runtime-only script', 'incomplete runtime attributes']) it(`retains a companion with ${kind}`, () => {
+    const source = cleanSourceFile(path);
+    const caption = source.form.controls.find(f => f.sourceProps?.designerType === 'textLabel');
+    caption.sourceProps.staticCaptionFact = { ...caption.sourceProps.staticCaptionFact, domContext: {
+      version: 1, ancestorIds: [], cellDescendantIds: [],
+      inlineDomainComplete: kind !== 'incomplete runtime attributes',
+      inlineScripts: kind === 'runtime-only script' ? [`document.getElementById("${nameId}").value="x";`] : []
+    } };
+    assert.ok(draftSourceDraft(source).form.fields.some(f => f.id === nameId));
+  });
+
   it('persists only the native address field while retaining the source display width', () => {
     const source = cleanSourceFile(path);
     const draft = draftSourceDraft(source);

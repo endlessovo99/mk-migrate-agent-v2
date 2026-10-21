@@ -1,0 +1,1 @@
+seal_SysFormTemplate.xml is the exact real export 14b5842fb755fd893408161413cadc47_SysFormTemplate.xml from source template 14b583fed3170897b4e808b45f6a58ab. SHA-256 72d8f8bbebfe8ad41420bd2bb151b6614b0e38bf308bef972a3c149f4848c269. The scoped fixture is a minimal route for affected-row, independent-permission and unbounded-script counterexamples.

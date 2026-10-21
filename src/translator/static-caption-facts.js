@@ -18,6 +18,10 @@ const CONTAINER_ATTRIBUTES = new Set([
 const CONTAINER_TAGS = new Set(["table", "tbody", "thead", "tfoot", "tr", "td", "div", "span"]);
 const PLAIN_CLASSES = new Set(["tb_normal", "tr_normal", "td_normal", "td_normal_title", "td_normal_label"]);
 const TABLE_METADATA = new Set(["label", "layout2col", "fd_values"]);
+const STYLE_MIRRORS = new Map([
+  ["style_textalign", ["text-align", "left"]], ["style_verticalalign", ["vertical-align", "middle"]]
+]);
+const EMPTY_BORDERS = new Set(["style_borderbottomwidth", "style_bordertopwidth", "style_borderleftwidth", "style_borderrightwidth"]);
 const RUNTIME_EDITORS = new Map([
   ["inputtext", ["xform:xtext"]], ["textarea", ["xform:textarea"]],
   ["datetime", ["xform:datetime"]], ["inputselect", ["xform:select"]],
@@ -30,28 +34,109 @@ const RUNTIME_EDITORS = new Map([
  * do not establish field ownership, nor authorize removing script references.
  */
 export function staticCaptionFacts(designerHtml, runtimeHtml = "") {
+  return inspectStaticCaptions(designerHtml, runtimeHtml).facts;
+}
+
+export function inspectStaticCaptions(designerHtml, runtimeHtml = "") {
   const result = new Map();
+  const issues = new Map();
   const designer = markupTree(designerHtml, true);
   const runtime = String(runtimeHtml || "").trim() ? markupTree(runtimeHtml) : undefined;
-  if (!designer || String(runtimeHtml || "").trim() && !runtime) return result;
+  const globalIssue = !designer ? { reason: "designer_markup_unproven" } :
+    String(runtimeHtml || "").trim() && !runtime ? { reason: "runtime_markup_unproven" } : undefined;
+  if (globalIssue) return { facts: result, issues, globalIssue };
   const hiddenOwnerIds = runtime ? hiddenRuntimeOwners(runtime) : [];
+  // Designer HTML also contains editor-only menus/handlers. Runtime programs
+  // come from fdDisplayJsp; Designer JSP/control scripts use the source registry.
+  const program = runtimeProgram(runtimeHtml);
 
   for (const caption of designer.nodes) {
     if (caption.name !== "label" || caption.attrs?.get("fd_type")?.toLowerCase() !== "textlabel") continue;
-    const values = parseStaticDesignerStringValues(caption.attrsText, CAPTION_KEYS);
-    const content = plainText(designer, caption);
-    if (!values || !/^[A-Za-z_][\w.-]*$/.test(values.id || "") ||
-        designer.identities.get(values.id) !== 1 ||
-        !plainValues(values) || content !== values.content.trim() ||
-        !plainCaption(caption, true) || !unguardedAncestors(caption) ||
-        cellPosition(designer, caption) === undefined ||
-        caption.attrs.has("id") && caption.attrs.get("id") !== values.id) continue;
-    if (runtime && !runtimeMatches(designer, caption, values.id, content, runtime)) continue;
+    const values = parseStaticDesignerStringValues(caption.attrsText, CAPTION_KEYS, new Set(["content"]));
+    const terminalBreak = typeof values?.content === "string" && /\r?\n\s*$/.test(values.content);
+    const content = plainText(designer, caption, terminalBreak);
+    const id = values?.id || parseDesignerFdValues(caption.attrsText).id;
+    const reason = !values ? "caption_values_not_literal" :
+      !/^[A-Za-z_][\w.-]*$/.test(values.id || "") || designer.identities.get(values.id) !== 1 ? "caption_identity_ambiguous" :
+      !plainValues(values) ? "caption_formatting_protected" :
+      content !== values.content.trim() ? "caption_content_mismatch" :
+      !plainCaption(caption, true) ? "caption_markup_protected" :
+      !unguardedAncestors(caption) ? ancestorIssue(caption) :
+      cellPosition(designer, caption) === undefined ? "caption_region_unproven" :
+      caption.attrs.has("id") && caption.attrs.get("id") !== values.id ? "caption_identity_mismatch" :
+      runtime && !runtimeMatches(designer, caption, values.id, content, runtime, terminalBreak) ? "runtime_caption_mismatch" : undefined;
+    if (reason) { if (id) issues.set(id, { reason }); continue; }
     result.set(values.id, { plainText: true, unique: true, unguarded: true, content,
       runtimeHiddenOwnerIds: hiddenOwnerIds.length ? hiddenOwnerIds : undefined,
-      runtimeOwnerId: runtime && runtimeOwner(designer, caption, values.id, runtime) });
+      runtimeOwnerId: runtime && runtimeOwner(designer, caption, values.id, runtime),
+      terminalBreakNormalized: terminalBreak || undefined,
+      domContext: { ...captionDomContext(designer, caption, runtime, terminalBreak), version: 1,
+        inlineScripts: program.scripts, inlineDomainComplete: program.complete } });
   }
-  return result;
+  return { facts: result, issues };
+}
+
+// Collect the runtime independently of the designer-first migration registry.
+// Masked text controls can carry handlers too; unknown attributes cannot be
+// treated as an empty program. Script/textarea bodies are HTML raw text.
+function runtimeProgram(input) {
+  const html = String(input || ""), scripts = new Set();
+  let complete = true, skipUntil = 0;
+  for (const token of scanHtmlTags(html)) {
+    if (token.closing || token.start < skipUntil) continue;
+    // The native toolbar exports a static JSP URL inside a quoted src. Resolve
+    // only its exact icon declaration before parsing the complete attribute set.
+    const attributes = token.name === "img" ? token.attrs.replace(
+      /<c:url\s+value=(["'])(\/resource\/style\/default\/icons\/(?:add|delete|up|down)\.gif)\1\s*\/>/g,
+      (_, _quote, path) => path) : token.attrs;
+    const attrs = parseStaticMarkupAttributes(attributes) || parseDesignerControlAttributes(attributes);
+    if (!attrs) complete = false;
+    for (const [key, value] of attrs || []) {
+      if (/^on[a-z]+$/.test(key) && value.trim() &&
+          !(key === "onvaluechange" && value.trim() === "__xformDispatch")) scripts.add(value);
+    }
+    if (!["script", "textarea", "xform:textarea"].includes(token.name) ||
+        token.name === "xform:textarea" && token.selfClosing) continue;
+    const close = new RegExp(`<\\/\\s*${token.name}\\s*>`, "ig");
+    close.lastIndex = token.end;
+    const match = close.exec(html);
+    if (!match) { complete = false; break; }
+    if (token.name === "script") scripts.add(html.slice(token.end, match.index));
+    skipUntil = close.lastIndex;
+  }
+  return { complete, scripts: [...scripts].filter(Boolean) };
+}
+
+function ancestorIssue(node) {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (parent.invalid) return "caption_row_malformed";
+    if (!parent.attrs || !containerAttributes(parent)) return "ancestor_attributes_unproven";
+    if (!ordinaryAppearance(parent.attrs)) return "ancestor_formatting_protected";
+    if (!unguardedAncestors({ parent: { ...parent, parent: undefined } })) return "ancestor_guard_or_geometry";
+  }
+  return "ancestor_guard_or_geometry";
+}
+
+function captionDomContext(designer, caption, runtime, terminalBreak) {
+  const ancestorIds = new Set(), cellDescendantIds = new Set();
+  const ids = node => node.identityIds || [];
+  const collect = (tree, node) => {
+    if (!node) return;
+    const cell = nearest(node, "td"), row = cell?.parent;
+    const cells = tree.nodes.filter(item => item.parent === row && item.name === "td");
+    for (const root of [node, cells[cells.indexOf(cell) + 1]].filter(Boolean)) {
+      for (let parent = root; parent; parent = parent.parent) {
+        ids(parent).forEach(id => ancestorIds.add(id));
+        if (parent.name !== "td") continue;
+        for (const id of tree.cellDomains.get(parent) || []) cellDescendantIds.add(id);
+      }
+    }
+  };
+  collect(designer, caption);
+  if (runtime) collect(runtime, runtime.nodes.find(node => node.name === "label" &&
+    JSON.stringify(cellPosition(runtime, node)) === JSON.stringify(cellPosition(designer, caption)) &&
+    plainText(runtime, node, terminalBreak) === plainText(designer, caption, terminalBreak)));
+  return { ancestorIds: [...ancestorIds], cellDescendantIds: [...cellDescendantIds] };
 }
 
 function hiddenRuntimeOwners(tree) {
@@ -94,12 +179,20 @@ function markupTree(input, designer = false) {
     const node = { ...token, attrsText: token.attrs, attrs, parent: stack.at(-1),
       contentStart: token.end, contentEnd: token.end };
     nodes.push(node);
-    for (const id of new Set([attrs?.get("id"), parseDesignerFdValues(token.attrs).id].filter(Boolean))) {
+    node.identityIds = [...new Set([attrs?.get("id"), parseDesignerFdValues(token.attrs).id].filter(Boolean))];
+    for (const id of node.identityIds) {
       identities.set(id, (identities.get(id) || 0) + 1);
     }
     if (!token.selfClosing && !isVoidLikeTag(token.name)) stack.push(node);
   }
-  return stack.length ? undefined : { nodes, raw, identities };
+  if (stack.length) return undefined;
+  const cellDomains = new Map();
+  for (const node of nodes) for (let parent = node; parent; parent = parent.parent) {
+    if (parent.name !== "td") continue;
+    if (!cellDomains.has(parent)) cellDomains.set(parent, new Set());
+    node.identityIds.forEach(id => cellDomains.get(parent).add(id));
+  }
+  return { nodes, raw, identities, cellDomains };
 }
 
 function hasUnmodeledPresentationCode(html, designer) {
@@ -130,7 +223,7 @@ function hasUnmodeledPresentationCode(html, designer) {
 
 function plainValues(values) {
   return typeof values.content === "string" && Boolean(values.content.trim()) &&
-    !/[<>\r\n]|\$\{|<%/.test(values.content) &&
+    !/[<>\r\n]|\$\{|<%/.test(values.content.trim()) &&
     ["font", "color", "effect"].every(key => !values[key]) &&
     [undefined, "", "14px"].includes(values.size) &&
     ["b", "i", "underline"].every(key => [undefined, "", "false"].includes(values[key])) &&
@@ -138,8 +231,9 @@ function plainValues(values) {
     (values.width === undefined || dimension(values.width));
 }
 
-function plainText(tree, node) {
-  const raw = tree.raw.slice(node.contentStart, node.contentEnd);
+function plainText(tree, node, terminalBreak = false) {
+  const content = tree.raw.slice(node.contentStart, node.contentEnd).trim();
+  const raw = terminalBreak ? content.replace(/<br\s*\/?\s*>$/i, "").trim() : content;
   if (node.selfClosing || /[<>\r\n]|\$\{|#\{/.test(raw)) return undefined;
   const text = decodeEntities(raw).trim();
   return text && !/[<>\r\n]|\$\{|#\{/.test(text) ? text : undefined;
@@ -177,7 +271,16 @@ function unguardedAncestors(node) {
 function containerAttributes(node) {
   const attrs = node.attrs;
   if ([...attrs.keys()].some(key => !CONTAINER_ATTRIBUTES.has(key) &&
-      !(node.name === "table" && TABLE_METADATA.has(key)))) return false;
+      !(node.name === "table" && TABLE_METADATA.has(key)) &&
+      !STYLE_MIRRORS.has(key) && !EMPTY_BORDERS.has(key))) return false;
+  for (const key of EMPTY_BORDERS) if (attrs.has(key) && attrs.get(key) !== "null") return false;
+  for (const [key, [css, fallback]] of STYLE_MIRRORS) {
+    if (!attrs.has(key)) continue;
+    const declarations = String(attrs.get("style") || "").split(";")
+      .map(value => value.trim().match(/^([a-z-]+)\s*:\s*(.*?)$/i)).filter(Boolean);
+    const values = declarations.filter(value => value[1].toLowerCase() === css);
+    if (values.length > 1 || attrs.get(key).toLowerCase() !== (values[0]?.[2] || fallback).toLowerCase()) return false;
+  }
   if (node.name !== "table") return true;
   if (attrs.has("label") && /[<>\r\n]/.test(attrs.get("label"))) return false;
   if (attrs.has("layout2col") && !["", "undefined", "true", "false"].includes(attrs.get("layout2col"))) return false;
@@ -213,15 +316,18 @@ function dimension(value) {
   return /^auto$/i.test(value) || /^\d+(?:\.\d+)?(?:px|%)?$/i.test(value) && Number.parseFloat(value) > 0;
 }
 
-function runtimeMatches(designer, caption, id, content, runtime) {
+function runtimeMatches(designer, caption, id, content, runtime, terminalBreak = false) {
+  const sourcePosition = cellPosition(designer, caption);
+  if (!sourcePosition) return false;
   const labels = runtime.nodes.filter(node => node.name === "label" &&
-    (node.attrs?.get("id") === id || plainText(runtime, node) === content));
+    (node.attrs?.get("id") === id || plainText(runtime, node, terminalBreak) === content) &&
+    JSON.stringify(cellPosition(runtime, node)) === JSON.stringify(sourcePosition));
   if (labels.length !== 1) return false;
   const rendered = labels[0];
-  if (plainText(runtime, rendered) !== content || !plainCaption(rendered, false) ||
+  if (plainText(runtime, rendered, terminalBreak) !== content || !plainCaption(rendered, false) ||
       !unguardedAncestors(rendered) || rendered.attrs.has("id") && rendered.attrs.get("id") !== id ||
       runtime.identities.has(id) && (runtime.identities.get(id) !== 1 || rendered.attrs.get("id") !== id)) return false;
-  const sourcePosition = cellPosition(designer, caption), targetPosition = cellPosition(runtime, rendered);
+  const targetPosition = cellPosition(runtime, rendered);
   return sourcePosition !== undefined && targetPosition !== undefined &&
     JSON.stringify(sourcePosition) === JSON.stringify(targetPosition);
 }
@@ -246,18 +352,32 @@ function runtimeOwner(designer, caption, id, runtime) {
   if (controls.length !== 1) return undefined;
   const values = parseDesignerFdValues(controls[0].attrsText);
   if (!values.id || values._label_bind_id !== id || values.canShow === "false") return undefined;
-  const editors = runtime.nodes.filter(node => within(node, runtimeValueCell) &&
-    node.attrs?.get("property")?.startsWith("extendDataFormInfo.value("));
+  const binding = node => node.attrs?.get("property") ||
+    (node.name === "xform:address" && node.attrs?.get("propertyid") === `extendDataFormInfo.value(${values.id}.id)` &&
+      node.attrs?.get("propertyname") === `extendDataFormInfo.value(${values.id}.name)`
+      ? `extendDataFormInfo.value(${values.id})` : undefined);
+  const editors = runtime.nodes.filter(node => within(node, runtimeValueCell) && binding(node)?.startsWith("extendDataFormInfo.value("));
   if (editors.length !== 1 || !editors[0].selfClosing ||
       !RUNTIME_EDITORS.get(controls[0].attrs.get("fd_type")?.toLowerCase())?.includes(editors[0].name) ||
-      editors[0].attrs.get("property") !== `extendDataFormInfo.value(${values.id})` ||
-      runtime.nodes.filter(node => node.attrs?.get("property") === editors[0].attrs.get("property")).length !== 1 ||
+      binding(editors[0]) !== `extendDataFormInfo.value(${values.id})` ||
+      runtime.nodes.filter(node => binding(node) === binding(editors[0])).length !== 1 ||
       !ordinaryAppearance(editors[0].attrs) ||
-      !unguardedAncestors(editors[0]) ||
+      !runtimeEditorAncestors(runtime, editors[0], runtimeValueCell) ||
       ["true"].includes(editors[0].attrs.get("showlabel")) ||
       ["false"].includes(editors[0].attrs.get("canshow")) ||
       ["noshow"].includes(editors[0].attrs.get("showstatus"))) return undefined;
   return values.id;
+}
+
+function runtimeEditorAncestors(tree, editor, cell) {
+  const wrapper = editor.parent;
+  if (wrapper?.name !== "label") return unguardedAncestors(editor);
+  if (wrapper.parent !== cell || !wrapper.attrs || !ordinaryAppearance(wrapper.attrs) ||
+      [...wrapper.attrs.keys()].some(key => !["id", "style", "canshow", "_required"].includes(key)) ||
+      wrapper.attrs.has("canshow") && wrapper.attrs.get("canshow") !== "true" ||
+      wrapper.attrs.has("_required") && !["true", "false"].includes(wrapper.attrs.get("_required"))) return false;
+  const surrounding = tree.raw.slice(wrapper.contentStart, editor.start) + tree.raw.slice(editor.end, wrapper.contentEnd);
+  return !surrounding.trim() && unguardedAncestors(wrapper);
 }
 
 function cellPosition(tree, node) {

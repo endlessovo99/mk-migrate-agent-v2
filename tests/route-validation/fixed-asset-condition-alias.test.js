@@ -17,8 +17,9 @@ describe("fixed-asset N12 condition alias Route-validation", () => {
 
     assert.deepEqual(
       draft.form.fields.filter((field) => field.title === "资产类别").map((field) => field.type).sort(),
-      ["description", "radio"]
+      ["radio"]
     );
+    assert.ok(draft.form.fields.find(field => field.id === "fd_assetCategory").sourceProps.foldedCaption);
     assert.equal(sourceEdges.get("L13")?.condition, "$fd_assetCategory$ == 0");
     assert.equal(
       sourceEdges.get("L14")?.condition,
@@ -76,6 +77,9 @@ describe("fixed-asset N12 condition alias Route-validation", () => {
   it("does not resolve an old field to a same-title description when no value field matches", () => {
     const source = cleanSourceFile(fixture);
     source.form.controls.find((field) => field.id === "fd_assetCategory").title = "另一类别";
+    // Exercise retained Source without new caption proof: the independent
+    // description must not become a value-field alias.
+    for (const field of source.form.controls) delete field.sourceProps.staticCaptionFact;
 
     const draft = draftSourceDraft(source);
     const condition = draft.workflow.edges.find((edge) => edge.id === "L14").condition;
