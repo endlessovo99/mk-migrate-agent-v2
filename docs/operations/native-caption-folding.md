@@ -112,3 +112,33 @@ final target-domain checks identify the unresolved target. Later blockers may
 become visible after the first issue is resolved.
 Passing one static check never bypasses ownership, shared-title, permission,
 script, or occupied-region checks.
+
+### Bounded data programs
+
+The effect proof distinguishes primitive data, immutable inspected arrays,
+Date instances created from primitive inputs, DOM handles and plain literal
+records. It can inspect primitive array membership and every callback of a
+fixed array's `some`, native Date reads/comparisons, formatting and numeric Math
+calls. Only `const` at a program/function body root is accepted; nested lexical
+bindings, reassignment and conflicting global declarations still reject.
+
+Existing v2 local currency helpers may use the established pure-data proof,
+wrapped in an explicit syntax whitelist and reserved-binding/mutation checks.
+Tagged templates, prototype deletion, unknown syntax/calls and external effects
+cannot acquire this proof. Source code is never executed.
+
+The exact native submit registration is inspected like other known callbacks.
+Attachment reads are limited to an existing attachment control's `fileList.length`.
+An unbounded `window.event.target` read remains unproven.
+
+A literal dictionary lookup can use a finite native single-select event domain
+only when the source's rendered options are proven and exactly match its Source
+options. Inherited/prototype keys, arbitrary objects, accessors, functions and
+unknown keys reject. The proof records this domain assumption and revokes it
+when any inspected script writes that trigger field, including through a row
+helper, field handle, setter or jQuery. This does not assume arbitrary stored
+strings or ordinary text inputs have an enum domain.
+
+Workflow alias/context resolution uses the semantic form before caption
+presentation is folded. A visible title must not retarget a workflow condition
+that previously referred to a context value or differently named source field.

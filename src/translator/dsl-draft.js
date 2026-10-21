@@ -84,7 +84,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   }
 
   const captionDecisions = [];
-  const rawForm = foldNativeCaptions(foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
+  const semanticForm = foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
     appendStaticJspDescriptionFields(
       applySourceNumericDetailInferences(
         applyNativeCalculationInferences(
@@ -100,15 +100,17 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceDraft.scripts
     ),
     sourceDraft.scripts
-  )), sourceDraft), sourceDraft, { decisions: captionDecisions });
+  )), sourceDraft);
+  const rawForm = foldNativeCaptions(semanticForm, sourceDraft, { decisions: captionDecisions });
   const fieldIdMap = buildFieldIdMap(rawForm);
   const mappedForm = applyDetailCascadeRowOptions(
     applyFieldIdMapToForm(rawForm, fieldIdMap),
     sourceDraft.scripts
   );
-  const knownSourceFieldIds = collectFormFieldIds(rawForm);
-  const knownSourceFieldTitles = collectFormFieldTitles(rawForm);
-  const conditionalParallelFieldSpecs = collectConditionalParallelFieldSpecs(rawForm);
+  // Caption presentation must not change workflow alias/context resolution.
+  const knownSourceFieldIds = collectFormFieldIds(semanticForm);
+  const knownSourceFieldTitles = collectFormFieldTitles(semanticForm);
+  const conditionalParallelFieldSpecs = collectConditionalParallelFieldSpecs(semanticForm);
   const multiRadioFormRules = multiRadioRowHelperFormRules(sourceDraft.scripts, mappedForm);
   const provisionalFormRules = draftFormRules(
     applyFieldIdMapToSourceFormRules(
