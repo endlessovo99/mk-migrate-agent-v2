@@ -65,6 +65,7 @@ export function createTrustedMigrationDsl(sourceDraft, dslDraft, options = {}) {
     }
   };
   trusted.review = pruneUndefined({
+    captionFolding: trusted.review?.captionFolding,
     ...(nestedGeometrySourceDiagnostics(sourceDraft).length
       ? { errors: nestedGeometrySourceDiagnostics(sourceDraft) } : {}),
     warnings: [

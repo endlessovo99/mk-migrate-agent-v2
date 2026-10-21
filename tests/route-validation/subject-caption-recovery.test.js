@@ -4,6 +4,7 @@ import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
 import { draftSourceDraft, cleanSourceFile } from "../../src/translator/index.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 import { nativeMain } from "../helpers/native-view.js";
+import { cleanSourceWithoutCaptionFact } from "../helpers/retained-caption-source.js";
 
 const fixturePath = "tests/fixtures/source/18aac2e235a65c382f6fe264e1dba521";
 const boundCaptionFixturePath =
@@ -73,7 +74,7 @@ describe("retained source text and editor title visibility", () => {
   });
 
   it("preserves the payment form's two numbered texts, hidden rich-text headings, and source widths", () => {
-    const source = cleanSourceFile("tests/fixtures/source2/168e0707391cd798757474c4670a79eb");
+    const source = cleanSourceWithoutCaptionFact("tests/fixtures/source2/168e0707391cd798757474c4670a79eb");
     const draft = draftSourceDraft(source);
     const fields = new Map(draft.form.fields.map((field) => [field.id, field]));
     for (const [captionId, fieldId, rowId] of [
@@ -86,6 +87,19 @@ describe("retained source text and editor title visibility", () => {
       assert.deepEqual(row.children.map((cell) => cell.colspan), [1, 3]);
       assert.deepEqual(row.children.map((cell) => cell.widthWeight), [257, 1105]);
     }
+  });
+
+  it("folds the fresh unique payment caption and preserves the other caption's shared binding", () => {
+    const source = cleanSourceFile("tests/fixtures/source2/168e0707391cd798757474c4670a79eb");
+    const draft = draftSourceDraft(source);
+    const first = draft.form.fields.find(field => field.id === "fd_3352cba9e70d9c");
+    assert.equal(first.sourceProps.foldedCaption.id, "fd_327d2d8ebcaf38");
+    assert.equal(first.title, "1、 IT项目投资执行报批流程链接：");
+    assert.equal(draft.form.fields.some(field => field.id === "fd_327d2d8ebcaf38"), false);
+    assert.equal(draft.form.fields.find(field => field.id === "fd_327d2d8f0912c6").componentId, "xform-description");
+    assert.equal(draft.form.fields.find(field => field.id === "fd_3352cabd660662").props.hiddenLabel, true);
+    const row = draft.form.layout.mkTree.find(item => item.id === "layout.row-11");
+    assert.deepEqual(row.children.map(cell => [cell.colspan, cell.widthWeight]), [[4, 1362]]);
   });
 });
 

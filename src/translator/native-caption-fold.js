@@ -1,12 +1,12 @@
-import { parse } from "acorn";
 import { componentSupportsProp } from "../dsl/catalogs.js";
+import { captionScriptReferences } from "./caption-script-references.js";
 
 /**
  * A source caption may become an intrinsic title only when its identity,
  * ownership and complete occupied region are unambiguous. Source facts and the
  * source grid remain intact; only the target fields and render tree are folded.
  */
-export function foldNativeCaptions(form, source) {
+export function foldNativeCaptions(form, source, { decisions = [] } = {}) {
   const originals = [
     ...(source.form?.controls || []), ...(source.form?.dataFields || []),
     ...(source.form?.detailTables || []).flatMap(table => [table, ...(table.columns || [])])
@@ -22,41 +22,62 @@ export function foldNativeCaptions(form, source) {
   scripts.push(...originals.flatMap(field => Object.entries(field.sourceProps?.designerValues || {})
     .filter(([key, value]) => /^(?:on|script|function|event)/i.test(key) && typeof value === "string")
     .map(([, value]) => value)));
-  const sourceReferences = scriptReferences(scripts);
+  const sourceReferences = captionScriptReferences(scripts);
   const folded = new Map();
   const consumed = new Set();
   const tree = structuredClone(form.layout?.mkTree || []);
 
   for (const field of fields) {
     const original = originals.filter(item => item.id === field.id);
-    if (original.length !== 1 || !eligibleOwner(field)) continue;
+    const captionIds = field.sourceProps?.layoutCell?.captionIds || [];
+    if (!captionIds.length) continue;
+    const record = (status, reason) => decisions.push({
+      fieldId: field.id, sourceRef: field.sourceRef, title: field.title, captionIds, status, reason
+    });
+    if (original.length !== 1) { record("unproven", "identity_ambiguous"); continue; }
+    if (!eligibleOwner(field)) {
+      record("preserved", field.sourceProps?.rightContainer ? "independent_permission" : "owner_presentation_protected");
+      continue;
+    }
     const owner = original[0], relation = owner.sourceProps?.layoutCell;
     const captionId = relation?.captionIds?.length === 1 ? relation.captionIds[0] : undefined;
     const candidates = originals.filter(item => item.id === captionId);
-    if (!captionId || candidates.length !== 1 || consumed.has(captionId)) continue;
+    if (!captionId || candidates.length !== 1 || consumed.has(captionId)) {
+      record("unproven", "caption_identity_ambiguous"); continue;
+    }
     const caption = candidates[0], targetCaption = fields.filter(item => item.id === captionId);
-    const fact = caption.sourceProps?.staticCaptionFact;
-    if (fact?.plainText !== true || fact.unique !== true || fact.unguarded !== true ||
-        fact.content !== caption.title || targetCaption.length !== 1 ||
-        targetCaption[0].componentId !== "xform-description" ||
-        targetCaption[0].dataOnly || targetCaption[0].props?.style ||
-        caption.sourceProps?.rightContainer || caption.sourceProps?.metadataId) continue;
-    const title = String(targetCaption[0].props?.content || "").trim();
-    if (!title || /[<>\r\n]/.test(title) || title !== String(caption.title).trim()) continue;
     const users = originals.filter(item => item.sourceProps?.designerValues?._label_bind_id === captionId ||
       item.sourceProps?.layoutCell?.captionIds?.includes(captionId));
-    if (users.length !== 1 || users[0].id !== owner.id || !ownsCaption(owner, caption)) continue;
-    if (protectedText.includes(captionId) || sourceReferences.opaque ||
+    if (users.length !== 1 || users[0].id !== owner.id) { record("preserved", "shared_caption"); continue; }
+    if (caption.sourceProps?.rightContainer || caption.sourceProps?.metadataId) {
+      record("preserved", "independent_permission_or_data"); continue;
+    }
+    const fact = caption.sourceProps?.staticCaptionFact;
+    if (fact?.plainText !== true || fact.unique !== true || fact.unguarded !== true || fact.content !== caption.title) {
+      record("unproven", "static_caption_unproven"); continue;
+    }
+    if (targetCaption.length !== 1 ||
+        targetCaption[0].componentId !== "xform-description" ||
+        targetCaption[0].dataOnly || targetCaption[0].props?.style) {
+      record("preserved", "caption_presentation_protected"); continue;
+    }
+    const title = String(targetCaption[0].props?.content || "").trim();
+    if (!title || /[<>\r\n]/.test(title) || title !== String(caption.title).trim()) {
+      record("unproven", "caption_content_mismatch"); continue;
+    }
+    if (!ownsCaption(owner, caption)) { record("unproven", "ownership_unproven"); continue; }
+    if (protectedText.includes(captionId) ||
         sourceReferences.values.some(value => value.includes(captionId)) ||
-        referencedByField(originals, captionId)) continue;
+        referencedByField(originals, captionId)) { record("preserved", "source_reference"); continue; }
+    if (sourceReferences.opaque) { record("unproven", "dynamic_script_unproven"); continue; }
     const left = sourceCell(rows, captionId), right = sourceCell(rows, owner.id);
-    if (!adjacentPair(left, right)) continue;
+    if (!adjacentPair(left, right)) { record("unproven", "source_region_unproven"); continue; }
     const leftTarget = targetCell(tree, captionId), rightTarget = targetCell(tree, field.id);
-    if (!adjacentPair(leftTarget, rightTarget)) continue;
+    if (!adjacentPair(leftTarget, rightTarget)) { record("unproven", "target_region_unproven"); continue; }
     // Flattened/nested projections may represent a different region. They do
     // not inherit authority from adjacency in the target tree alone.
     if (leftTarget.cell.sourceRef !== left.cell.sourceRef ||
-        rightTarget.cell.sourceRef !== right.cell.sourceRef) continue;
+        rightTarget.cell.sourceRef !== right.cell.sourceRef) { record("unproven", "region_identity_mismatch"); continue; }
     const cell = rightTarget.cell;
     cell.column = leftTarget.cell.column;
     cell.colspan += leftTarget.cell.colspan;
@@ -78,6 +99,7 @@ export function foldNativeCaptions(form, source) {
       }
     });
     consumed.add(captionId);
+    record("folded", "unique_plain_caption");
   }
   if (!folded.size) return form;
   return {
@@ -101,7 +123,9 @@ function eligibleOwner(field) {
 function ownsCaption(owner, caption) {
   const facts = owner.sourceProps, values = facts.designerValues || {};
   if (facts.layoutCell.relation === "independent-bound-title-cell") {
-    return String(values._label_bind).toLowerCase() === "true" &&
+    const fact = caption.sourceProps?.staticCaptionFact;
+    return !fact?.runtimeHiddenOwnerIds?.includes(owner.id) &&
+      (String(values._label_bind).toLowerCase() === "true" || fact?.runtimeOwnerId === owner.id) &&
       values._label_bind_id === caption.id &&
       facts.boundCaption?.relation === "explicit-label-bind-id" &&
       facts.boundCaption.id === caption.id;
@@ -142,41 +166,4 @@ function referencedByField(fields, id) {
   return fields.some(field => Object.entries(field.sourceProps?.designerValues || {})
     .some(([key, value]) => !["id", "label", "content", "_label_bind_id"].includes(key) &&
       typeof value === "string" && value.includes(id)));
-}
-
-function scriptReferences(scripts) {
-  const result = { values: [], opaque: false };
-  const visit = node => {
-    if (!node || typeof node !== "object") return;
-    // Generic DOM selectors/aliases can address the title without spelling its
-    // ID. Keep those layouts until their presentation effects are modeled.
-    if (node.type === "Identifier" &&
-        ["document", "window", "globalThis", "self", "$", "jQuery", "eval", "Function"].includes(node.name)) {
-      result.opaque = true;
-    }
-    if (["CallExpression", "NewExpression"].includes(node.type) &&
-        node.arguments.some(argument => argument.type !== "Literal" && staticString(argument) === undefined)) {
-      result.opaque = true;
-    }
-    const value = staticString(node);
-    if (value !== undefined) result.values.push(value);
-    for (const child of Object.values(node)) {
-      if (Array.isArray(child)) child.forEach(visit);
-      else if (child && typeof child === "object") visit(child);
-    }
-  };
-  for (const script of scripts) {
-    try { visit(parse(script, { ecmaVersion: "latest", allowReturnOutsideFunction: true })); }
-    catch { result.opaque = true; }
-  }
-  return result;
-}
-
-function staticString(node) {
-  if (node.type === "Literal" && typeof node.value === "string") return node.value;
-  if (node.type === "TemplateLiteral" && node.expressions.length === 0) return node.quasis[0].value.cooked;
-  if (node.type === "BinaryExpression" && node.operator === "+") {
-    const left = staticString(node.left), right = staticString(node.right);
-    if (left !== undefined && right !== undefined) return left + right;
-  }
 }

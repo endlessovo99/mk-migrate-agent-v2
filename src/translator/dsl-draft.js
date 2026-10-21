@@ -83,6 +83,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     throw new TypeError("layoutSizing must be adaptive or source");
   }
 
+  const captionDecisions = [];
   const rawForm = foldNativeCaptions(foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
     appendStaticJspDescriptionFields(
       applySourceNumericDetailInferences(
@@ -99,7 +100,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       sourceDraft.scripts
     ),
     sourceDraft.scripts
-  )), sourceDraft), sourceDraft);
+  )), sourceDraft), sourceDraft, { decisions: captionDecisions });
   const fieldIdMap = buildFieldIdMap(rawForm);
   const mappedForm = applyDetailCascadeRowOptions(
     applyFieldIdMapToForm(rawForm, fieldIdMap),
@@ -177,6 +178,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     scripts,
     workflow,
     review: {
+      captionFolding: captionDecisions.length ? { version: 1, decisions: captionDecisions } : undefined,
       warnings: [
         ...sourceIssuesToWarnings(sourceDraft.issues || []),
         ...remoteDialogDiagnostics(form).map(item => ({ ...item, level: "warning" })),

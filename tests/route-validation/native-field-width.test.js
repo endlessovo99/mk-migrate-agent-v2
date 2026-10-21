@@ -172,7 +172,7 @@ describe("native field width route validation", () => {
       "runtime-independent-title-cell");
   });
 
-  it("keeps the existing exact Designer binding path independent of the new visibility proof", () => {
+  it("keeps exact Designer ownership and folds an ordinary default-sized runtime title", () => {
     const { source, dsl } = variant(amountFile, p => {
       p.fdDesignerHtml = p.fdDesignerHtml.replace('fd_caption_missing', 'fd_caption_actual');
       p.fdDisplayJsp = p.fdDisplayJsp.replace('<label>', '<label style="font-size:14px">');
@@ -180,7 +180,8 @@ describe("native field width route validation", () => {
     const field = source.form.controls.find(field => field.id === "fd_amount");
     assert.equal(field.sourceProps.boundCaption.id, "fd_caption_actual");
     assert.notEqual(field.sourceProps.layoutCell.relation, "runtime-independent-title-cell");
-    assert.equal(dsl.form.fields.find(field => field.id === "fd_amount").props.hiddenLabel, true);
+    assert.notEqual(dsl.form.fields.find(field => field.id === "fd_amount").props.hiddenLabel, true);
+    assert.equal(dsl.form.fields.find(field => field.id === "fd_amount").sourceProps.foldedCaption.id, "fd_caption_actual");
   });
 
   it("keeps multi-inline, multiline and explicit widths out of selector fill", () => {

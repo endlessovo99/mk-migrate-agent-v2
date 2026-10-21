@@ -13,10 +13,17 @@ const CAPTION_KEYS = new Set([
 const CAPTION_ATTRIBUTES = new Set(["id", "style", "width", "fd_type", "fd_values", "formdesign"]);
 const CONTAINER_ATTRIBUTES = new Set([
   "id", "style", "class", "width", "height", "row", "column", "colspan", "rowspan",
-  "border", "cellpadding", "cellspacing", "align", "valign", "fd_type", "formdesign"
+  "border", "cellpadding", "cellspacing", "align", "valign", "fd_type", "formdesign", "canshow"
 ]);
 const CONTAINER_TAGS = new Set(["table", "tbody", "thead", "tfoot", "tr", "td", "div", "span"]);
 const PLAIN_CLASSES = new Set(["tb_normal", "tr_normal", "td_normal", "td_normal_title", "td_normal_label"]);
+const TABLE_METADATA = new Set(["label", "layout2col", "fd_values"]);
+const RUNTIME_EDITORS = new Map([
+  ["inputtext", ["xform:xtext"]], ["textarea", ["xform:textarea"]],
+  ["datetime", ["xform:datetime"]], ["inputselect", ["xform:select"]],
+  ["inputradio", ["xform:radio", "xform:xradio"]], ["inputcheckbox", ["xform:checkbox"]],
+  ["address", ["xform:address"]], ["rtf", ["xform:rtf"]]
+]);
 
 /**
  * Source-only facts about an independently rendered plain caption. These facts
@@ -27,6 +34,7 @@ export function staticCaptionFacts(designerHtml, runtimeHtml = "") {
   const designer = markupTree(designerHtml, true);
   const runtime = String(runtimeHtml || "").trim() ? markupTree(runtimeHtml) : undefined;
   if (!designer || String(runtimeHtml || "").trim() && !runtime) return result;
+  const hiddenOwnerIds = runtime ? hiddenRuntimeOwners(runtime) : [];
 
   for (const caption of designer.nodes) {
     if (caption.name !== "label" || caption.attrs?.get("fd_type")?.toLowerCase() !== "textlabel") continue;
@@ -39,9 +47,24 @@ export function staticCaptionFacts(designerHtml, runtimeHtml = "") {
         cellPosition(designer, caption) === undefined ||
         caption.attrs.has("id") && caption.attrs.get("id") !== values.id) continue;
     if (runtime && !runtimeMatches(designer, caption, values.id, content, runtime)) continue;
-    result.set(values.id, { plainText: true, unique: true, unguarded: true, content });
+    result.set(values.id, { plainText: true, unique: true, unguarded: true, content,
+      runtimeHiddenOwnerIds: hiddenOwnerIds.length ? hiddenOwnerIds : undefined,
+      runtimeOwnerId: runtime && runtimeOwner(designer, caption, values.id, runtime) });
   }
   return result;
+}
+
+function hiddenRuntimeOwners(tree) {
+  return tree.nodes.flatMap(node => {
+    const id = node.attrs?.get("property")?.match(/^extendDataFormInfo\.value\(([A-Za-z_][\w.-]*)\)$/)?.[1];
+    if (!id) return [];
+    for (let current = node; current; current = current.parent) {
+      const attrs = current.attrs;
+      if (attrs?.has("hidden") || attrs?.get("canshow") === "false" || attrs?.get("showstatus") === "noshow" ||
+          /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse)|opacity\s*:\s*0(?:\.0*)?)\s*(?:;|$)/i.test(attrs?.get("style") || "")) return [id];
+    }
+    return [];
+  });
 }
 
 function markupTree(input, designer = false) {
@@ -51,8 +74,18 @@ function markupTree(input, designer = false) {
   const nodes = [], stack = [], identities = new Map();
   for (const token of scanHtmlTags(html)) {
     if (token.closing) {
-      const current = stack.pop();
-      if (!current || current.name !== token.name) return undefined;
+      const current = stack.at(-1);
+      if (!current || current.name !== token.name) {
+        // Recover only inside a completely delimited row. The affected row
+        // remains ineligible, and every identity is still counted globally.
+        const rowIndex = stack.findLastIndex(node => node.name === "tr");
+        const matchIndex = stack.findLastIndex(node => node.name === token.name);
+        if (rowIndex < 0 || matchIndex >= 0 && matchIndex < rowIndex) return undefined;
+        stack[rowIndex].invalid = true;
+        if (matchIndex >= rowIndex) stack.splice(matchIndex);
+        continue;
+      }
+      stack.pop();
       current.contentEnd = token.start;
       continue;
     }
@@ -98,7 +131,8 @@ function hasUnmodeledPresentationCode(html, designer) {
 function plainValues(values) {
   return typeof values.content === "string" && Boolean(values.content.trim()) &&
     !/[<>\r\n]|\$\{|<%/.test(values.content) &&
-    ["font", "size", "color", "effect"].every(key => !values[key]) &&
+    ["font", "color", "effect"].every(key => !values[key]) &&
+    [undefined, "", "14px"].includes(values.size) &&
     ["b", "i", "underline"].every(key => [undefined, "", "false"].includes(values[key])) &&
     [undefined, "", "true"].includes(values.canShow) &&
     (values.width === undefined || dimension(values.width));
@@ -121,10 +155,11 @@ function plainCaption(node, designer) {
 function unguardedAncestors(node) {
   for (let parent = node.parent; parent; parent = parent.parent) {
     const attrs = parent.attrs;
-    if (!CONTAINER_TAGS.has(parent.name) || parent.name === "thead" || !attrs ||
-        [...attrs.keys()].some(key => !CONTAINER_ATTRIBUTES.has(key)) ||
+    if (parent.invalid || !CONTAINER_TAGS.has(parent.name) || parent.name === "thead" || !attrs ||
+        !containerAttributes(parent) ||
         !ordinaryAppearance(attrs)) return false;
     const type = attrs.get("fd_type");
+    if (attrs.has("canshow") && attrs.get("canshow") !== "true") return false;
     if (type !== undefined && !(parent.name === "table" && type.toLowerCase() === "standardtable")) return false;
     if (attrs.has("rowspan") && attrs.get("rowspan") !== "1") return false;
     if (attrs.has("colspan") && !/^[1-9]\d*$/.test(attrs.get("colspan"))) return false;
@@ -132,10 +167,21 @@ function unguardedAncestors(node) {
     if (attrs.has("column") && !/^(?:0|[1-9]\d*)(?:,(?:0|[1-9]\d*))*$/.test(attrs.get("column"))) return false;
     if (["width", "height"].some(key => attrs.has(key) && !dimension(attrs.get(key)))) return false;
     if (["border", "cellpadding", "cellspacing"].some(key => attrs.has(key) && !/^\d+$/.test(attrs.get(key)))) return false;
-    if (attrs.has("align") && !/^left$/i.test(attrs.get("align"))) return false;
+    if (attrs.has("align") && !(parent.name === "table"
+      ? /^(?:left|center|right)$/i : /^left$/i).test(attrs.get("align"))) return false;
     if (attrs.has("valign") && !/^(?:top|middle|bottom|baseline)$/i.test(attrs.get("valign"))) return false;
   }
   return true;
+}
+
+function containerAttributes(node) {
+  const attrs = node.attrs;
+  if ([...attrs.keys()].some(key => !CONTAINER_ATTRIBUTES.has(key) &&
+      !(node.name === "table" && TABLE_METADATA.has(key)))) return false;
+  if (node.name !== "table") return true;
+  if (attrs.has("label") && /[<>\r\n]/.test(attrs.get("label"))) return false;
+  if (attrs.has("layout2col") && !["", "undefined", "true", "false"].includes(attrs.get("layout2col"))) return false;
+  return !attrs.has("fd_values") || Boolean(parseStaticDesignerStringValues(node.attrsText, new Set(["id", "label"])));
 }
 
 function ordinaryAppearance(attrs, caption = false) {
@@ -156,6 +202,7 @@ function ordinaryAppearance(attrs, caption = false) {
     if (key === "vertical-align" && /^(?:top|middle|bottom|baseline)$/i.test(value)) continue;
     if (key === "text-align" && /^(?:left|start)$/i.test(value)) continue;
     if (key === "text-decoration" && /^none$/i.test(value)) continue;
+    if (caption && key === "font-size" && /^14px$/i.test(value)) continue;
     if (["font-weight", "font-style"].includes(key) && /^normal$/i.test(value)) continue;
     return false;
   }
@@ -179,8 +226,42 @@ function runtimeMatches(designer, caption, id, content, runtime) {
     JSON.stringify(sourcePosition) === JSON.stringify(targetPosition);
 }
 
+function runtimeOwner(designer, caption, id, runtime) {
+  const sourceCell = nearest(caption, "td");
+  const nextCell = tree => {
+    const row = sourceCell?.parent;
+    if (!row || row.name !== "tr") return undefined;
+    const cells = designer.nodes.filter(node => node.parent === row && node.name === "td");
+    const cell = cells[cells.indexOf(sourceCell) + 1];
+    if (tree === designer) return cell;
+    const position = cell && cellPosition(designer, cell);
+    return position && runtime.nodes.find(node => node.name === "td" &&
+      JSON.stringify(cellPosition(runtime, node)) === JSON.stringify(position));
+  };
+  const sourceValueCell = nextCell(designer), runtimeValueCell = nextCell(runtime);
+  if (!sourceValueCell || !runtimeValueCell || !unguardedAncestors({ parent: sourceValueCell }) ||
+      !unguardedAncestors({ parent: runtimeValueCell })) return undefined;
+  const within = (node, parent) => { for (let n = node.parent; n; n = n.parent) if (n === parent) return true; return false; };
+  const controls = designer.nodes.filter(node => within(node, sourceValueCell) && node.attrs?.has("fd_type"));
+  if (controls.length !== 1) return undefined;
+  const values = parseDesignerFdValues(controls[0].attrsText);
+  if (!values.id || values._label_bind_id !== id || values.canShow === "false") return undefined;
+  const editors = runtime.nodes.filter(node => within(node, runtimeValueCell) &&
+    node.attrs?.get("property")?.startsWith("extendDataFormInfo.value("));
+  if (editors.length !== 1 || !editors[0].selfClosing ||
+      !RUNTIME_EDITORS.get(controls[0].attrs.get("fd_type")?.toLowerCase())?.includes(editors[0].name) ||
+      editors[0].attrs.get("property") !== `extendDataFormInfo.value(${values.id})` ||
+      runtime.nodes.filter(node => node.attrs?.get("property") === editors[0].attrs.get("property")).length !== 1 ||
+      !ordinaryAppearance(editors[0].attrs) ||
+      !unguardedAncestors(editors[0]) ||
+      ["true"].includes(editors[0].attrs.get("showlabel")) ||
+      ["false"].includes(editors[0].attrs.get("canshow")) ||
+      ["noshow"].includes(editors[0].attrs.get("showstatus"))) return undefined;
+  return values.id;
+}
+
 function cellPosition(tree, node) {
-  const cell = nearest(node, "td"), row = cell && nearest(cell, "tr"), table = row && nearest(row, "table");
+  const cell = node.name === "td" ? node : nearest(node, "td"), row = cell && nearest(cell, "tr"), table = row && nearest(row, "table");
   if (!cell || !row || !table) return null;
   const tableId = table.attrs?.get("id");
   if (tableId && tree.identities.get(tableId) !== 1) return undefined;

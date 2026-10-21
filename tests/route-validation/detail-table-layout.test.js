@@ -9,6 +9,8 @@ import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js
 import { parseSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
 import { scanHtmlTags, findMatchingCloseTag, splitDirectChildRows, splitDirectChildCells } from "../../src/translator/designer-html-tokenizer.js";
 import { prepareSample } from "../helpers/persistence.js";
+import { cleanSourceWithoutCaptionFact } from "../helpers/retained-caption-source.js";
+import { auditCaptionFolding } from "../../src/translator/index.js";
 
 const fixture =
   "tests/fixtures/route-validation/structural-recovery/route-structural-recovery-inline-content_SysFormTemplate.xml";
@@ -19,7 +21,7 @@ const nestedEmptyRowsFixture =
 
 describe("detail-table Route-validation", () => {
   it("preserves nested standard-table rows instead of widening them to the eight-column limit", () => {
-    const sourceDraft = cleanSourceFile(fixture);
+    const sourceDraft = cleanSourceWithoutCaptionFact(fixture);
     const dslDraft = draftSourceDraft(sourceDraft);
     assertSourceCaptions(sourceDraft, dslDraft, ["nested_alpha_label", "nested_bravo_label", "nested_charlie_label"]);
     const nestedSourceRows = sourceDraft.form.layout.rows.filter((row) =>
@@ -130,6 +132,20 @@ describe("detail-table Route-validation", () => {
       ["nested_alpha_label", "fd_nested_alpha", "nested_bravo_label", "fd_nested_bravo", "nested_charlie_label", "fd_nested_charlie"]
     );
     assertRawNestedRectangles(fixture, sourceDraft, dslDraft, 16, 0);
+  });
+
+  it("folds fresh one-to-one nested titles while preserving the four source rows and their parent", () => {
+    const source = cleanSourceFile(fixture), draft = draftSourceDraft(source);
+    const rows = draft.form.layout.mkTree.filter(row => row.sourceRef.includes("row-16.nested-0.row-"));
+    assert.deepEqual(rows.map(row => row.children.flatMap(cell => cell.refIds)), [
+      ["nested_layout_heading"], ["fd_nested_detail"],
+      ["fd_nested_alpha", "fd_nested_bravo"], ["fd_nested_charlie"]
+    ]);
+    assert.deepEqual(rows.map(row => row.children.map(cell => cell.colspan)), [[4], [4], [2, 2], [2]]);
+    assert.deepEqual(draft.form.layout.sourceGrid,
+      draftSourceDraft(cleanSourceWithoutCaptionFact(fixture)).form.layout.sourceGrid);
+    assert.equal(draft.form.layout.mkTree.find(row => row.id === "layout.row-16").children[0].refIds.length, 4);
+    assert.equal(auditCaptionFolding(source, draft).ok, true);
   });
 
   it("preserves nested rows inside a spanning content cell instead of packing them into eight columns", () => {
