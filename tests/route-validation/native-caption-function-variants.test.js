@@ -30,11 +30,9 @@ it("still inventories a runtime handler beside repeated native table metadata",(
   assert.equal(draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).length,0);
 });
 for(const [name,attrs,tag] of [
-  ["conflicting table names",'tableName="fd_one" tablename="fd_two"',"TABLE"],
   ["dynamic metadata",'tableName="${table}" tablename="${table}"',"TABLE"],
   ["duplicate runtime handlers",'onclick="changePresentation()" onclick="changePresentation()"',"TABLE"],
-  ["unknown duplicate boolean",'disabled disabled',"TABLE"],
-  ["permission keys",'mode_N2="edit" mode_n2="hidden"',"xform:right"]
+  ["unknown duplicate boolean",'disabled disabled',"TABLE"]
 ])it(`does not normalize ${name} as static table metadata`,()=>{
   const {source,draft}=translate("",fixture,p=>{p.fdDisplayJsp+=`<${tag} ${attrs}></${tag}>`;});
   assert.equal(source.form.controls.find(f=>f.id==="caption_fd_a").sourceProps.staticCaptionFact.domContext.inlineDomainComplete,false);
@@ -45,10 +43,10 @@ const clearPair = `$('input[name="extendDataFormInfo.value(fd_a)"]').val("");$('
 for(const script of ['(function(id){GetXFormFieldById(id)[0].value="x";})("fd_a");','((id)=>{GetXFormFieldById(id)[0].value="x";})("fd_a");'])
 it("checks immediately invoked source functions instead of rejecting their wrapper",()=>{
   const {draft}=translate(script);
-  assert.deepEqual(draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).map(f=>f.id),["fd_b","fd_c"]);
+  assert.deepEqual(draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).map(f=>f.id),["fd_a","fd_b","fd_c"]);
 });
 it("accepts an empty native Array constructor without accepting unknown sizes",()=>{
-  assert.deepEqual(translate('var values=new Array();if(values.length===0){GetXFormFieldById("fd_a")[0].value="";}').draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).map(f=>f.id),["fd_b","fd_c"]);
+  assert.deepEqual(translate('var values=new Array();if(values.length===0){GetXFormFieldById("fd_a")[0].value="";}').draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).map(f=>f.id),["fd_a","fd_b","fd_c"]);
   assert.equal(translate('var values=new Array(externalSize);').draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).length,0);
 });
 it("keeps unknown effects inside an immediately invoked function opaque",()=>{
@@ -56,8 +54,8 @@ it("keeps unknown effects inside an immediately invoked function opaque",()=>{
 });
 it("bounds the exact native checkbox clear pair to its known choice field", () => {
   const {source,draft}=translate(clearPair,clearFixture);
-  assert.deepEqual(draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).map(f=>f.id),["fd_b","fd_c"]);
-  assert.equal(draft.form.fields.find(f=>f.id==="fd_a").props.hiddenLabel,true);
+  assert.deepEqual(draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).map(f=>f.id),["fd_a","fd_b","fd_c"]);
+  assert.notEqual(draft.form.fields.find(f=>f.id==="fd_a").props.hiddenLabel,true);
   assert.equal(auditCaptionFolding(source,draft).ok,true);
 });
 for(const [name,script,input] of [
@@ -76,10 +74,11 @@ for (const [name, script] of [
   ["cross-script immediate and delayed calls", 'function changeValue(){GetXFormFieldById("fd_a")[0].value="A";}changeValue();Com_AddEventListener(window,"load",function(){changeValue();});</script><script>function changeValue(){GetXFormFieldById("fd_c")[0].value="C";}changeValue();'],
   ["event callback references", 'function changed(value){GetXFormFieldById("fd_a")[0].value=value;}AttachXFormValueChangeEventById("fd_a",changed);</script><script>function changed(value){GetXFormFieldById("fd_c")[0].value=value;}AttachXFormValueChangeEventById("fd_c",changed);'],
   ["returned DOM handles", 'function target(){return GetXFormFieldById("fd_a");}function target(){return GetXFormFieldById("fd_c");}target()[0].value="x";']
-]) it(`protects all possible global definition effects for ${name}`, () => {
+]) it(`retains all possible global data effects with native titles for ${name}`, () => {
   const {source,draft}=translate(script);
-  assert.deepEqual(draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).map(f=>f.id), ["fd_b"]);
-  for(const id of ["fd_a","fd_c","fd_d"])assert.equal(draft.form.fields.find(f=>f.id===id).props.hiddenLabel,true);
+  assert.deepEqual(draft.form.fields.filter(f=>f.sourceProps?.foldedCaption).map(f=>f.id), ["fd_a","fd_b","fd_c"]);
+  assert.equal(draft.form.fields.find(f=>f.id==="fd_d").props.hiddenLabel,true);
+  for(const id of ["fd_a","fd_c"])assert.notEqual(draft.form.fields.find(f=>f.id===id).props.hiddenLabel,true);
   assert.equal(auditCaptionFolding(source,draft).ok,true);
   const projection=structuredClone(draft);projection.scripts={actions:[]};projection.formRules={linkage:[]};
   const native=prepareSample(projection);assert.equal(native.verify(native.update).ok,true);

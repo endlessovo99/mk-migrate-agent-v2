@@ -391,6 +391,42 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
     },
     {
+      id: "native-caption-empty-tail-success",
+      source: { kind: "form-only", relativePath: "native-caption-empty-tail/empty-tail_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    ...["terminal-nbsp", "disjoint-rowspan", "table-default"].map(name => ({
+      id: `caption-source-${name}-success`,
+      source: { kind: "form-only", relativePath: `caption-source-normalization/${name}_SysFormTemplate.xml` },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    })),
+    ...["detail-validation", "detail-value"].map(name => ({
+      id: `caption-mapped-${name}-success`,
+      source: { kind: "form-only", relativePath: `caption-mapped-script-scope/${name}_SysFormTemplate.xml` },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings", operations: SUCCESS_OPERATIONS }
+    })),
+    {
+      id: "caption-attachment-entry-success",
+      source: { kind: "form-only", relativePath: "caption-entry-scope/attachment-guard_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "caption-relationship-model-success",
+      source: { kind: "form-only", relativePath: "caption-relationship-model/ordinary_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "caption-calculation-model-with-retained-compound-caption",
+      source: { kind: "form-only", relativePath: "caption-relationship-model/calculation_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "native-caption-real-news-success",
       source: { kind: "form-only", relativePath: "native-caption-real-export/news_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,

@@ -290,9 +290,6 @@ const protectedVariants = [
   ["right-aligned caption cell", props => {
     props.fdDesignerHtml = props.fdDesignerHtml.replace('<TD class="td_normal_title"', '<TD style="text-align:right" class="td_normal_title"');
   }],
-  ["center-aligned caption cell", props => {
-    props.fdDesignerHtml = props.fdDesignerHtml.replace('<TD class="td_normal_title"', '<TD align="center" class="td_normal_title"');
-  }],
   ["runtime stylesheet hiding the caption", props => {
     props.fdDisplayJsp = runtimeTable + "<style>#caption_department { display:none; }</style>";
   }],

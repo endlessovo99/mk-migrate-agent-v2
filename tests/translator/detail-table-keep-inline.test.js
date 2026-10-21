@@ -21,7 +21,9 @@ describe("detail-table keepInline projection", () => {
     assert.equal(fields.get("fd_use_dept")?.componentId, "xform-address");
     assert.equal(fields.get("fd_use_dept")?.props.hiddenLabel, true);
     assert.notEqual(fields.get("fd_use_dept.name")?.dataOnly, true);
-    assert.equal(fields.get("fd_use_group")?.props.hiddenLabel, true);
+    assert.notEqual(fields.get("fd_use_group")?.props.hiddenLabel, true);
+    assert.equal(fields.get("fd_use_group")?.sourceProps.foldedCaption.id, "fd_327d1fd5ce793c");
+    assert.equal(fields.has("fd_327d1fd5ce793c"), false);
 
     assert.deepEqual(
       rows.map((row) => ({
@@ -112,6 +114,7 @@ describe("detail-table keepInline projection", () => {
     const readback = prepared.verify(prepared.update);
     assert.equal(readback.ok, true, JSON.stringify(readback.diagnostics));
     assert.equal(readback.form.fields.find((field) => field.id === "fd_use_dept")?.hiddenLabel, true);
+    assert.notEqual(readback.form.fields.find((field) => field.id === "fd_use_group")?.hiddenLabel, true);
     const persisted = readback.form.layoutRows.find((row) => row.rootNodeId === "layout.row-4");
     assert.deepEqual(
       persisted.cells.map((cell) => ({

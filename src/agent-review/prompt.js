@@ -13,7 +13,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v16";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v17";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -59,6 +59,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Every diagnostic must include level, code, path, and message. Use diagnostics: [] when there are no diagnostics.",
       "The summary must be a non-empty string.",
       "Use sourceRef strings from the provided source draft. Do not use raw XML or invent source evidence.",
+      "Source form captionRelations records title ownership before target mapping. A field-caption relation uses the surviving field's native title by default. Preserve foldedCaption.referenceMap, visible title and business field identity; do not recreate or hide the consumed label. Shared titles, independent permissions and unbounded script effects remain explicit exceptions or unfinished relations, never merge success.",
       "Title patches require confidence >= 0.7. Type, componentId, and props patches require confidence >= 0.85.",
       "Script patches require confidence >= 0.85 and must preserve the deterministic action boundary. Do not create, delete, or retarget script actions.",
       "Every functionMappings patch value must be a JSON array, including omission closures; never return null or a single mapping object.",
@@ -72,6 +73,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Translate JSP scripts semantically using jspTranslationPlaybook, functionCatalog, source evidence, formRules evidence, and targetApi. Pattern matching is evidence extraction only, not the translation authority.",
       "Trusted mapped scripts must not use document/window DOM APIs.",
       "Use dslDraft.scripts.actions[].actionSource as the action-local JSP excerpt. Treat sourceDraft.scripts.sources[].javascriptWindows as background context; do not charge helper definitions or other callbacks to a specific action unless the action-local excerpt invokes them and their behavior is not otherwise covered.",
+      "For singleSelect controls, runtimeSelectEmpty is the retained source empty-choice evidence, including in compact scoped reviews. A proven fact with showPleaseSelect=true must still match the source owner, options and native select contract before proposing the exact null-only event bridge (value === null ? \"\" : value). Preserve the original predicate, diagnostics, literal assignments and native rule ownership; do not expand the bridge to undefined, all falsy values or string coercion. Missing or unproven facts do not authorize this adaptation.",
       "actionSource.localHelperDefinitions contains only directly called or statically named timer-callback source declarations with sourceRef/range/displayGate audit. A declaration is evidence, not proof of runtime availability or target support. Preserve its displayGate context; helperDefinitionAudit omissions leave incomplete evidence. Never expand action sourceRefs or patch scope because a sibling helper is shown.",
       "helperDefinitionAudit.callbackReferences records source timer callback references, not proof of equivalent target timing or date behavior. Do not omit or rewrite scheduling, cancellation, or callback behavior without independent source-to-target evidence; helper visibility alone never closes coverage.",
       "Use reviewOpportunities only as evidence scaffolding. They are not deterministic translation results; accept them only when action-local source, formRules, targetApi, and playbook coverage standards agree.",
@@ -498,6 +500,7 @@ function sourceFormSummary(form = {}, compact = false) {
     controlCount: controls.length,
     dataFieldCount: dataFields.length,
     detailTableCount: detailTables.length,
+    captionRelations: form.captionRelations,
     layout: layoutSummary(form?.layout, compact),
     controls: controls.map((control) => sourceControlSummary(control, compact)),
     dataFields: dataFields.map((field) => sourceControlSummary(field, compact)),
@@ -533,8 +536,18 @@ function sourceControlSummary(control = {}, compact = false) {
     sourceType: control.sourceType,
     required: control.required,
     dataOnly: control.dataOnly,
+    runtimeSelectEmpty: sourceSelectEmptySummary(control),
     sourceProps: compact ? undefined : compactSourceProps(control.sourceProps),
     evidence: compact ? undefined : control.evidence
+  });
+}
+
+function sourceSelectEmptySummary(control) {
+  const fact = control.sourceProps?.runtimeSelectEmpty;
+  if (control.sourceType !== "singleSelect" || !isRecord(fact)) return undefined;
+  return pruneUndefined({
+    ...pick(fact, ["version", "status", "source", "offset", "property", "showPleaseSelect", "reason", "reasons"]),
+    options: Array.isArray(fact.options) ? fact.options.map(option => pick(option, ["label", "value"])) : undefined
   });
 }
 
@@ -567,6 +580,7 @@ function dslFieldSummary(field = {}, compact = false) {
 function compactCalculationSourceProps(sourceProps = {}) {
   if (!isRecord(sourceProps)) return undefined;
   return pruneUndefined({
+    foldedCaption: sourceProps.foldedCaption ? pick(sourceProps.foldedCaption, ["id", "sourceRef", "content", "referenceMap"]) : undefined,
     hardHidden: sourceProps.hardHidden === true ? true : undefined,
     generatedFromJsp: sourceProps.generatedFromJsp === true ? true : undefined,
     inferredCalculation: sourceProps.inferredCalculation
@@ -583,6 +597,7 @@ function compactCalculationSourceProps(sourceProps = {}) {
 function compactSourceProps(sourceProps = {}) {
   if (!isRecord(sourceProps)) return undefined;
   return pruneUndefined({
+    foldedCaption: sourceProps.foldedCaption ? pick(sourceProps.foldedCaption, ["id", "sourceRef", "content", "referenceMap"]) : undefined,
     hardHidden: sourceProps.hardHidden === true ? true : undefined,
     designerType: sourceProps.designerType,
     metadataKind: sourceProps.metadataKind,

@@ -14,7 +14,8 @@ import { deterministicManualResidualDecisionId } from "../dsl/deterministic-scri
 import { packLayoutGrid, projectLayoutGrid } from "../dsl/layout-pack.js";
 import { selectContentFlow } from "../dsl/content-flow.js";
 import { projectCompanionPresentation, projectUnitPresentation } from "./form-presentation.js";
-import { foldNativeCaptions } from "./native-caption-fold.js";
+import { foldNativeCaptions, mapCaptionAuthorities } from "./native-caption-fold.js";
+import { captionBehaviorContract } from "./caption-behavior-contract.js";
 import {
   applyFieldIdMapToForm,
   applyFieldIdMapToScripts,
@@ -101,8 +102,16 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     ),
     sourceDraft.scripts
   )), sourceDraft);
-  const rawForm = foldNativeCaptions(semanticForm, sourceDraft, { decisions: captionDecisions });
-  const fieldIdMap = buildFieldIdMap(rawForm);
+  const semanticScripts = sourceDraft.form?.captionRelations?.length
+    ? draftMkScriptsFromSourceScripts(sourceDraft.scripts, {
+        form: semanticForm, formRules: draftFormRules(sourceDraft.formRules, semanticForm)
+      }) : undefined;
+  const rawForm = foldNativeCaptions(semanticForm, sourceDraft, { decisions: captionDecisions,
+    behavior: sourceDraft.form?.captionRelations?.length
+      ? captionBehaviorContract(sourceDraft, semanticForm, semanticScripts) : undefined });
+  // A removed presentation entity must not change collision allocation for a
+  // business field. Allocate against the complete semantic identity domain.
+  const fieldIdMap = buildFieldIdMap(semanticForm);
   const mappedForm = applyDetailCascadeRowOptions(
     applyFieldIdMapToForm(rawForm, fieldIdMap),
     sourceDraft.scripts
@@ -178,7 +187,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     form,
     formRules,
     scripts,
-    workflow,
+    workflow: mapCaptionAuthorities(workflow, form),
     review: {
       captionFolding: captionDecisions.length ? { version: 1, decisions: captionDecisions } : undefined,
       warnings: [

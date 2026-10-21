@@ -22,10 +22,11 @@ function variant(file, change = () => {}) {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
-it("protects every field in a statically affected row and keeps independent permissions", () => {
+it("maps a complete source row region and keeps independent permissions", () => {
   const { source, draft } = variant("scoped_SysFormTemplate.xml");
-  assert.deepEqual(draft.form.fields.filter(field => field.sourceProps?.foldedCaption).map(field => field.id), ["fd_c"]);
-  for (const id of ["fd_a", "fd_b", "fd_d"]) assert.equal(draft.form.fields.find(field => field.id === id).props.hiddenLabel, true);
+  assert.deepEqual(draft.form.fields.filter(field => field.sourceProps?.foldedCaption).map(field => field.id), ["fd_a", "fd_b", "fd_c"]);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_d").props.hiddenLabel, true);
+  for (const id of ["fd_a", "fd_b"]) assert.notEqual(draft.form.fields.find(field => field.id === id).props.hiddenLabel, true);
   assert.equal(auditCaptionFolding(source, draft).ok, true);
 });
 
@@ -33,7 +34,7 @@ it("resolves a source row marker independently of a same-name hidden metadata fi
   const { draft } = variant("scoped_SysFormTemplate.xml", props => {
     props.fdMetadataXml = props.fdMetadataXml.replace('</metadata>', '<extendSimpleProperty name="affected_row" label="row flag" type="String"/></metadata>');
   });
-  assert.deepEqual(draft.form.fields.filter(field => field.sourceProps?.foldedCaption).map(field => field.id), ["fd_c"]);
+  assert.deepEqual(draft.form.fields.filter(field => field.sourceProps?.foldedCaption).map(field => field.id), ["fd_a", "fd_b", "fd_c"]);
 });
 
 it("folds eleven real seal-form titles while retaining the detail runtime and protected source regions", () => {

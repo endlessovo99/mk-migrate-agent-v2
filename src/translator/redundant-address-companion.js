@@ -4,7 +4,8 @@ import { mergeContentFlowReferences } from '../dsl/content-flow.js';
 export function foldRedundantAddressCompanions(form, source) {
   const fields = form.fields || [];
   const replacements = new Map();
-  const contexts = fields.map(field => field.sourceProps?.staticCaptionFact?.domContext).filter(Boolean);
+  const contexts = fields.flatMap(field => [field.sourceProps?.staticCaptionFact?.domContext,
+    field.sourceProps?.captionStructure?.domContext]).filter(Boolean);
   const external = JSON.stringify([source.scripts, source.workflow, source.formRules,
     contexts.flatMap(context => context.inlineScripts || [])]);
   const incompleteRuntime = contexts.some(context => context.inlineDomainComplete === false);
@@ -58,6 +59,6 @@ export function foldRedundantAddressCompanions(form, source) {
 function semanticReferences(field) {
   // Observational caption evidence inventories DOM identities and scripts; it
   // is not another control's executable/value dependency on this companion.
-  const { staticCaptionFact, staticCaptionIssue, ...sourceProps } = field.sourceProps || {};
+  const { staticCaptionFact, staticCaptionIssue, captionStructure, captionStructureIssue, ...sourceProps } = field.sourceProps || {};
   return JSON.stringify({ ...field, sourceProps });
 }

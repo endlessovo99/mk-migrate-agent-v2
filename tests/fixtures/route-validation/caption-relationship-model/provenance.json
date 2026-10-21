@@ -1,0 +1,17 @@
+{
+  "sourceFile": "/Users/endlessovo/上海电气/ekp-process/18bd737e9c30fcbc3aeff0a48aab8fac/18bd73dba58a27fe12a6c9c422a90a2f_SysFormTemplate.xml",
+  "sourceXmlSha256": "d487206721fc350ae73a88602dfcb8845796cef24a625a4a80e313f086ac7cd9",
+  "ranges": {
+    "fdDesignerHtml": {
+      "start": 223,
+      "end": 3590,
+      "sha256": "93b1b5f0c5f1c74a325d83fe0b43a1b535390a78e6d85f311429a9a2f372ae08"
+    },
+    "fdDisplayJsp": {
+      "start": 325,
+      "end": 2214,
+      "sha256": "f64591b23e6051042d77e088ce311b5c2ff9724867c97eebcefb62ca20e77cb4"
+    }
+  },
+  "changes": "Retain the exact first row from both original surfaces and its three original metadata declarations; replace only document identity and outer table shell. Test variants alter stated evidence in memory."
+}

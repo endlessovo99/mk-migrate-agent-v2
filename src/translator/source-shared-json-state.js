@@ -44,6 +44,30 @@ export function inspectSharedJsonStateModel(form = {}, sourceScripts = {}) {
       event: callback.event, controlId: callback.controlId, supported: callback.supported })) };
 }
 
+// Internal source AST evidence for caption impact analysis. This does not
+// change mapping coverage or make a partial initializer executable.
+export function inspectSharedJsonImpactModel(form = {}, sourceScripts = {}) {
+  const model = inspectModel(form, sourceScripts);
+  if (!model) return undefined;
+  const frame = definition => {
+    const reads = [];
+    const walkPaths = (node, path = []) => {
+      if (!node || typeof node !== "object") return;
+      if (node.type === "MemberExpression" && stateReference(node.object, definition.entry, model)) reads.push(path);
+      for (const [key, value] of Object.entries(node)) if (value && typeof value === "object")
+        Array.isArray(value) ? value.forEach((child, index) => walkPaths(child, [...path, key, index])) : walkPaths(value, [...path, key]);
+    };
+    walkPaths(definition.node);
+    return { node: definition.node, sourceRef: ref(definition.entry.source), reads };
+  };
+  return { stateName: model.name, fieldId: model.field.id, declaration: model.declaration.node,
+    initializer: { ...frame(model.initializer), prefixLength: model.initializer.prefixStatements.length,
+      reader: model.initializer.reader?.node },
+    readers: model.safeReaders.map(frame),
+    callbacks: model.callbacks.filter(callback => callback.supported && ["change", "serialize"].includes(callback.kind))
+      .map(callback => callback.entry.parents.get(callback.call)) };
+}
+
 function inspectModel(form, sourceScripts) {
   const sources = sourceScripts.sources || [];
   const entries = [];
@@ -81,6 +105,7 @@ function buildModel(declaration, entries, form, domain) {
   model.callbacks = entries.flatMap(entry => callbackBoundaries(entry).map((callback, ordinal) => classifyCallback({ ...callback, entry, ordinal: ordinal + 1 }, model, form)));
   if (!model.callbacks.some(callback => callback.kind === "change") || !model.callbacks.some(callback => callback.kind === "serialize")) return undefined;
   const safeReaders = entries.flatMap(entry => entry.ast.body.filter(node => node.type === "FunctionDeclaration").map(node => ({ node, entry })).filter(definition => readonlyReader(definition, model, false)));
+  model.safeReaders = safeReaders;
   const readerReferences = [];
   for (const definition of safeReaders) walk(definition.node, node => { if (stateReference(node, definition.entry, model)) readerReferences.push(node); });
   const allowed = [declaration.declaration.id, ...model.initializer.stateReferences, ...readerReferences,

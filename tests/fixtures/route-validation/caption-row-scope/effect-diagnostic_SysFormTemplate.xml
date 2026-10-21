@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-caption-effect-diagnostic</string></void>
+<void method="put"><string>fdModelId</string><string>route-caption-effect-diagnostic-model</string></void>
+<void method="put"><string>fdName</string><string>Caption effect diagnostic</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;TABLE fd_type="standardTable" id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL fd_type="textLabel" fd_values='{id:"caption_0",content:"Value 0"}'&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;DIV fd_type="inputText" fd_values='{id:"fd_value_0",label:"Value 0",dataType:"String",_label_bind:"true",_label_bind_id:"caption_0"}'&gt;&lt;INPUT id="fd_value_0"/&gt;&lt;/DIV&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;TABLE id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_value_0)"/&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;script&gt;Com_AddEventListener(window,"load",function(){SetXFormFieldValueById("fd_not_exported","x");});&lt;/script&gt;&lt;script&gt;Number(1);&lt;/script&gt;</string></void>
+</object></java>

@@ -3,7 +3,8 @@ import { it } from "node:test";
 import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cleanSourceFile } from "../../src/translator/index.js";
+import { cleanSourceWithoutCaptionFact as cleanSourceFile } from "../helpers/retained-caption-source.js";
+import { cleanSourceFile as cleanCurrentSourceFile } from "../../src/translator/index.js";
 // Preserve the retained source-width contract explicitly.
 import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { sourceMobileCaptionGrids } from "../../src/dsl/source-mobile-caption-grid.js";
@@ -142,7 +143,10 @@ it("keeps the existing reviewed local event through complete fake routes", async
       assert.deepEqual(result.dsl.formRules, raw.formRules);
       assert.equal(result.dsl.scripts.actions[0].sourceRefs[0], raw.scripts.actions[0].sourceRefs[0]);
     }
-    assert.ok(sourceMobileCaptionGrids(result.dsl.form).has(row(result.dsl).id));
+    const owner = result.dsl.form.fields.find(field => field.id === "fd_choice");
+    assert.equal(owner.sourceProps.foldedCaption.id, "caption_choice");
+    assert.notEqual(owner.props.hiddenLabel, true);
+    assert.equal(result.dsl.form.fields.some(field => field.id === "caption_choice"), false);
   }
 });
 
@@ -228,7 +232,7 @@ it("uses natural source identities when long control IDs are remapped", () => {
 
 it("does not turn a layout fact into permission to delete or omit source actions", async () => {
   const { source, dsl: original } = load("local-event"), result = await runRouteCase("mobile-caption-trailing-empty-event-success");
-  assert.equal(checkTrust(source, result.dsl).ok, true);
+  assert.equal(checkTrust(cleanCurrentSourceFile(`${root}local-event_SysFormTemplate.xml`), result.dsl).ok, true);
   const reviewedDraft = structuredClone(original);
   reviewedDraft.scripts = structuredClone(result.dsl.scripts);
   reviewedDraft.formRules = structuredClone(result.dsl.formRules);

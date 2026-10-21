@@ -1,0 +1,1 @@
+Minimal source-backed entry/condition/helper patterns from the retained remaining83 proof classes. These fixtures contain an unrelated plain caption with a value-only reader/write program. Unknown registry keys, escaping node handles, source getter side effects, and variants across SCRIPT programs must remain opaque. No source JavaScript is evaluated during translation.

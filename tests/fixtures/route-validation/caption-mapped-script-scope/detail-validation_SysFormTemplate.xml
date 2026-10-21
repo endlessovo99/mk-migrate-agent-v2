@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-caption-detail-validation</string></void>
+<void method="put"><string>fdName</string><string>Caption scope detail-validation</string></void>
+<void method="put"><string>fdModelId</string><string>route-caption-detail-validation-model</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table id="caption_scope_table" fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_lines",label:"Lines"}'&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Code&lt;/td&gt;&lt;/tr&gt;&lt;tr type="templateRow"&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"code",label:"Code",tableName:"fd_lines",dataType:"String",required:"false"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="1" column="0"&gt;&lt;LABEL fd_type="textLabel" fd_values='{id:"caption_note",content:"Note"}'&gt;Note&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="1" column="1"&gt;&lt;DIV fd_type="inputText" fd_values='{id:"fd_note",label:"Note",dataType:"String",_label_bind:"true",_label_bind_id:"caption_note"}'&gt;&lt;INPUT id="fd_note"/&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;xform:editShow&gt;&lt;script&gt;function list_check(tableId, controlId) {
+   var checkDept=[];
+   var tab_id = 'TABLE_DL_' + tableId;
+   var tbInfo = DocList_TableInfo[tab_id];
+   if (typeof (tbInfo) != "undefined") {
+       for (var i = 0; i &lt; tbInfo.lastIndex; i++) {
+           var child_id = tableId + "." + i + "." + controlId;
+          var temp= $("[name='extendDataFormInfo.value("+child_id+")']").val();
+          console.log('check temp',temp);
+          if(temp!=undefined){
+            if(checkDept.length==0){
+                checkDept.push(temp);
+            }else{
+                if(checkDept[checkDept.length-1]!=temp){
+                    checkDept.push(temp);
+                    return false;
+            }
+            }
+            
+          }
+       }
+   }
+
+   return true;
+}
+Com_Parameter.event.submit.push(function(){
+    var curr=list_check('fd_lines','code')
+    if(!curr){
+        alert("Values must agree");
+        return false;
+    }
+    return true;
+});&lt;/script&gt;&lt;/xform:editShow&gt;&lt;TABLE id="caption_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="1" column="0"&gt;&lt;LABEL&gt;Note&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="1" column="1"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_note)"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSubTableProperty name="fd_lines" label="Lines"&gt;&lt;extendSimpleProperty name="code" label="Code" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;extendSimpleProperty name="fd_note" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

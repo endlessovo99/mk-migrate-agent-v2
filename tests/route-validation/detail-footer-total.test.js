@@ -74,15 +74,23 @@ describe("detail footer total Route case", () => {
     const linkage = sourceDraft.formRules.linkage;
     const refIndex = buildFormRuleRefIndex(dsl.form);
     const nativeFields = xformConfig(projectTemplate(dsl)).dataModel.flatMap(model => model.fdFields || []);
-    for (const id of ["fd_3c671bc8ffa7de", "fd_3c671bcfd0c6b8"]) {
+    const titleOwners = new Map([["fd_3c671bcfd0c6b8", "fd_3c671ba820a120"], ["fd_3c671bc8ffa7de", "fd_3c671bd534a3ee"]]);
+    for (const [id, ownerId] of titleOwners) {
       const sourceLabel = sourceDraft.form.controls.find(field => field.id === id);
-      const label = dsl.form.fields.find(field => field.id === id);
+      const owner = dsl.form.fields.find(field => field.id === ownerId);
       assert.equal(sourceLabel.sourceProps.designerType, "textLabel");
-      assert.equal(label.componentId, "xform-description");
-      assert.equal(label.sourceRef, sourceLabel.sourceRef);
-      assert.equal(label.props.content, sourceLabel.sourceProps.designerValues.content);
-      const nativeLabel = nativeFields.find(field => field.fdName === id);
-      assert.equal(JSON.parse(nativeLabel.fdAttribute).config.controlProps.content, label.props.content);
+      const sourceRow = sourceDraft.form.layout.rows.find(row => row.cells.some(cell => cell.references?.some(ref => ref.referenceId === id)));
+      const captionCell = sourceRow.cells.find(cell => cell.references?.some(ref => ref.referenceId === id));
+      const ownerCell = sourceRow.cells.find(cell => cell.references?.some(ref => ref.referenceId === ownerId));
+      assert.equal(captionCell.column + captionCell.colspan, ownerCell.column,
+        "The real rendered source region owns this title despite its stale inactive export pointer");
+      assert.equal(owner.sourceProps.foldedCaption.id, id);
+      assert.equal(owner.sourceProps.foldedCaption.sourceRef, sourceLabel.sourceRef);
+      assert.equal(owner.title, sourceLabel.title);
+      assert.equal(dsl.form.fields.some(field => field.id === id), false);
+      assert.equal(nativeFields.some(field => field.fdName === id), false);
+      const nativeOwner = nativeFields.find(field => field.fdName === ownerId);
+      assert.equal(JSON.parse(nativeOwner.fdAttribute).config.labelProps.title, sourceLabel.title);
     }
     const expectedVisible = {
       A: [
@@ -118,6 +126,9 @@ describe("detail footer total Route case", () => {
     assert.equal(linkage.length, 4);
     assert.equal(linkage.every((rule) => rule.else?.length === 2), true);
     for (const [value, expected] of Object.entries(expectedVisible)) {
+      for (const [captionId, ownerId] of titleOwners) assert.equal(expected.includes(captionId), expected.includes(ownerId),
+        "Every source branch must affect the title and its value together before a native title is permitted");
+      const nativeExpected = [...new Set(expected.map(id => titleOwners.get(id) || id))].sort();
       const matching = linkage.filter((rule) => ruleMatches(rule, value));
       assert.equal(matching.length, value ? 1 : 0, `${value || "empty"} must match the original branch priority`);
       const effectiveEffects = linkage.flatMap((rule) =>
@@ -125,12 +136,12 @@ describe("detail footer total Route case", () => {
       );
       assert.deepEqual(
         resolvedEffectFieldIds(effectiveEffects, refIndex, "visible"),
-        expected.slice().sort(),
+        nativeExpected,
         `${value || "empty"} visibility`
       );
       assert.deepEqual(
         resolvedEffectFieldIds(effectiveEffects, refIndex, "required"),
-        expected.slice().sort(),
+        nativeExpected,
         `${value || "empty"} required state`
       );
     }

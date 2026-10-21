@@ -1,0 +1,42 @@
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>caption-calculation-form</string></void>
+<void method="put"><string>fdModelId</string><string>caption-calculation-template</string></void>
+<void method="put"><string>fdName</string><string>MK_TEST_Caption Calculation</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;TABLE fd_type="standardTable"&gt;&lt;TBODY&gt;&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 102px" width=137 row="10" column="0"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3667db81829812",content:"年度预算(单位:元)",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;年度预算(单位:元)&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 216px" width=230 row="10" column="1"&gt;
+&lt;DIV style="WIDTH: 152px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_34a8a306143324",width:"152",_label_bind:"true",label:"年度预算(单位:元)",_label_bind_id:"fd_3667db81829812",canShow:"true",readOnly:"false",required:"false",dataType:"Double",validate:"number",decimal:"2",begin:"",end:"",thousandShow:"true",formula:"",defaultValue:"0",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_34a8a306143324 class=inputsgl style="WIDTH: 152px" readOnly value=0 validate="{dataType:'number',decimal:2}" ? label="年度预算(单位:元)" tableName="fd_34a8a013166892" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true" defaultValue="0" dataType="number" endNum="" beginNum="" scale="2" _dataType="Double"&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 152px" width=162 row="10" column="2"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3667db73fc5d26",content:"已使用金额（不含税）",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;已使用金额（不含税）&lt;/LABEL&gt;&lt;LABEL style="FONT-SIZE: 12px; TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; COLOR: #ff0000; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3667db76655cbc",content:"注：不包含本流程金额",font:"",size:"12px",color:"#FF0000",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;注：不包含本流程金额&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 309px" width=317 row="10" column="3"&gt;
+&lt;DIV style="WIDTH: 152px; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3667db7964b7a4",width:"152",_label_bind:"false",label:"已使用金额",_label_bind_id:"fd_34a8a099ceaf2a",canShow:"true",readOnly:"false",required:"false",dataType:"Double",validate:"number",decimal:"2",begin:"",end:"",thousandShow:"true",formula:"",defaultValue:"0",reCalculate:"false"}' fd_type="inputText" canShow="true"&gt;&lt;INPUT id=fd_3667db7964b7a4 class=inputsgl style="WIDTH: 152px" readOnly value=0 validate="{dataType:'number',decimal:2}" ? label="已使用金额" tableName="fd_34a8a013166892" _required="false" required="false" _readOnly="false" thousandShow="true" canShow="true" defaultValue="0" dataType="number" endNum="" beginNum="" scale="2" _dataType="Double"&gt;&lt;/DIV&gt;&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 155px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=330 row="10" column="4" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline" formDesign="landray" fd_values='{id:"fd_3667db68852cc4",content:"剩余金额",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}' fd_type="textLabel"&gt;剩余金额&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD style="WIDTH: 243px" width=556 row="10" column="5"&gt;
+&lt;DIV id=fd_3667dc48907b50 style="WIDTH: 232px; DISPLAY: inline" label="剩余金额" formDesign="landray" fd_values='{id:"fd_3667dc48907b50",_label_bind:"true",label:"剩余金额",_label_bind_id:"fd_3667db68852cc4",width:"232",dataType:"Double",canShow:"true",readOnly:"true",autoCalculate:"true",expression_id:"$fd_34a8a306143324$ - $fd_3667db7964b7a4$",expression_name:"$年度预算(单位:元)$ - $已使用金额$",decimal:"2",thousandShow:"true",formula:"",defaultValue:"",reCalculate:"false"}' fd_type="calculation" _readOnly="true" thousandShow="true" canShow="true" dataType="Double" scale="2" readOnly="true" expression_mode="notRow" autoCalculate="true" expression_id="$fd_34a8a306143324$ - $fd_3667db7964b7a4$"&gt;&lt;INPUT title=计算控件 class=inputsgl style="WIDTH: 202px" value="$年度预算(单位:元)$ - $已使用金额$" thousandShow="true"&gt; &lt;A href="javascript:void(0);"&gt;计算&lt;/A&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;TABLE fd_type="standardTable"&gt;&lt;TBODY&gt;&lt;TR&gt;
+&lt;TD class=td_normal_title style="WIDTH: 102px" width=137 row="10" column="0"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;年度预算(单位:元)&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 216px" width=230 row="10" column="1"&gt;
+
+			&lt;DIV style="WIDTH: 152px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_34a8a306143324)" style="WIDTH: 152px" required="false" htmlElementProperties="thousandShow='true'" dataType="Double" subject="年度预算(单位:元)" title="年度预算(单位:元)" validators=" number number scaleLength(2)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 152px" width=162 row="10" column="2"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;已使用金额（不含税）&lt;/LABEL&gt;
+
+			&lt;LABEL style="FONT-SIZE: 12px; TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; COLOR: #ff0000; FONT-STYLE: normal; DISPLAY: inline"   &gt;注：不包含本流程金额&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 309px" width=317 row="10" column="3"&gt;
+
+			&lt;DIV style="WIDTH: 152px; DISPLAY: inline"    canShow="true"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_3667db7964b7a4)" style="WIDTH: 152px" required="false" htmlElementProperties="thousandShow='true'" dataType="Double" subject="已使用金额" title="已使用金额" validators=" number number scaleLength(2)" onValueChange="__xformDispatch" /&gt;&lt;/DIV&gt;
+&lt;/TD&gt;
+&lt;TD class=td_normal_title style="WIDTH: 155px; VERTICAL-ALIGN: middle; TEXT-ALIGN: left" width=330 row="10" column="4" style_textalign="left" style_verticalalign="middle" style_borderleftwidth="null" style_borderrightwidth="null" style_bordertopwidth="null" style_borderbottomwidth="null"&gt;
+			&lt;LABEL style="TEXT-DECORATION: none; WIDTH: auto; FONT-WEIGHT: normal; FONT-STYLE: normal; DISPLAY: inline"   &gt;剩余金额&lt;/LABEL&gt;
+&lt;/TD&gt;
+&lt;TD style="WIDTH: 243px" width=556 row="10" column="5"&gt;
+
+	&lt;%if ("readOnly".equals(request.getAttribute("SysForm.base.showStatus"))) {%&gt;
+			&lt;script&gt;Com_IncludeFile('calculation_script.js','../sys/xform/designer/calculation/');&lt;/script&gt;
+	&lt;%}%&gt;
+&lt;xform:xtext property="extendDataFormInfo.value(fd_3667dc48907b50)" style="WIDTH: 232px; DISPLAY: inline" showStatus="${requestScope['SysForm.showStatus']}" editReadOnlyStyle="inputsgl" dataType="Double" subject="剩余金额" title="剩余金额" isLoadDataDict="false" htmlElementProperties=" calculation='true' readonly  isRow='false' expression='$fd_34a8a306143324$ - $fd_3667db7964b7a4$' autoCalculate='true' thousandShow='true' scale='2'" /&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;model&gt;&lt;extendSimpleProperty name="fd_34a8a306143324" label="年度预算(单位:元)" type="Double" length="10" scale="2" defaultValue="0" /&gt;
+&lt;extendSimpleProperty name="fd_3667db7964b7a4" label="已使用金额" type="Double" length="10" scale="2" defaultValue="0" /&gt;
+&lt;extendSimpleProperty name="fd_3667dc48907b50" label="剩余金额" type="Double" scale="2" /&gt;&lt;/model&gt;</string></void></object></java>

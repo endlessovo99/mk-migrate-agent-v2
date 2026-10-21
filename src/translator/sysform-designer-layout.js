@@ -239,6 +239,9 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
 
   const captionEvidence = inspectStaticCaptions(html, options.runtimeDisplayHtml || "");
   for (const field of fields) {
+    const structure = captionEvidence.structures.get(field.id);
+    if (structure) field.source = { ...field.source, captionStructure: structure };
+    if (captionEvidence.structureIssues.has(field.id)) field.source = { ...field.source, captionStructureIssue: captionEvidence.structureIssues.get(field.id) };
     const fact = captionEvidence.facts.get(field.id);
     if (fact) field.source = { ...field.source, staticCaptionFact: fact };
     else if (field.source?.designerType?.toLowerCase() === "textlabel") field.source = {
@@ -1913,6 +1916,9 @@ function designerBoundCaptionContext(
 }
 
 function withBoundCaptionEntry(entry, captionContext) {
+  const inheritedRight = captionContext?.rightContainerByControlId?.get(entry.control?.id);
+  if (inheritedRight) entry = { ...entry, control: { ...entry.control,
+    source: { ...entry.control.source, rightContainer: inheritedRight } } };
   const labelId = entry.control?.source?.designerValues?._label_bind_id;
   const boundCaptions = captionContext?.boundCaptions || new Map();
   const caption = boundCaptions.get(labelId);

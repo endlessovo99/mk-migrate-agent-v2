@@ -1,3 +1,4 @@
+import { SOURCE_FORM_VALUE_READER } from "./source-form-value-reader.js";
 import { parse } from "acorn";
 import { DETAIL_TABLE_IDS, FIELD_IDS } from "./travel-reimbursement-lifecycle-contract.js";
 
@@ -20,33 +21,7 @@ const SUBMIT_DETAIL_HELPERS = new Map([
   ["buildDetailTableFieldId", `function buildDetailTableFieldId(tbId, columnId) {
     return 'extendDataFormInfo.value(' + tbId + '.!{index}.' + columnId + ')';
 }`],
-  ["getFormFieldValue", `function getFormFieldValue(elementId, type, containSelectText) {
-    if (type == 'radio') {
-        return $('input[name="extendDataFormInfo.value(' + elementId + ')"]:checked').val();
-    } else if (type == 'select') {
-        return $('select[name="extendDataFormInfo.value(' + elementId + ')"]').val();
-    } else if (type == 'table') {
-        var doms = $('[name="' + elementId + '"]');
-        if (doms && doms.length > 0) {
-            if (doms[0].type == 'radio') {
-                return $('[name="' + elementId + '"]:checked').val();
-            } else if (doms[0].tagName === 'SELECT' && containSelectText) {
-                var field = $('[name="' + elementId + '"]');
-                var text = field.find("option:selected").text();
-                var val = field.val();
-                return ((text ? text : '') + "|" + (val ? val : ''));
-            }
-        }
-        return $('[name="' + elementId + '"]').val();
-    } else {
-        var elementVal = $('[name="' + elementId + '"]').val();
-        if (elementVal) {
-            return elementVal;
-        }
-        var elementVal = GetXFormFieldValueById(elementId);
-        return elementVal && elementVal.length == 1 ? elementVal[0] : elementVal;
-    }
-}`]
+  ["getFormFieldValue", SOURCE_FORM_VALUE_READER]
 ].map(([name, text]) => [name, parseScriptAst(text).body[0]]));
 
 export function inspectTravelReimbursementStaticEvidence({

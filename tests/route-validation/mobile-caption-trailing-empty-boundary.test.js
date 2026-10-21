@@ -3,7 +3,7 @@ import { it } from "node:test";
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cleanSourceFile } from "../../src/translator/index.js";
+import { cleanSourceWithoutCaptionFact as cleanSourceFile } from "../helpers/retained-caption-source.js";
 // Preserve the retained source-width contract explicitly.
 import { draftSourceDraft } from "../helpers/source-sized-draft.js";
 import { parseRootHashMapXmlStringPuts } from "../../src/translator/xml-utils.js";

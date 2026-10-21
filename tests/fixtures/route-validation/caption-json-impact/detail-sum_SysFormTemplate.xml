@@ -1,0 +1,40 @@
+<java class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>fdId</string>
+      <string>route-caption-detail-sum</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>route-caption-detail-sum-model</string>
+    </void>
+    <void method="put">
+      <string>fdName</string>
+      <string>Caption orphan-noop</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&lt;TABLE fd_type="standardTable" id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL fd_type="textLabel" fd_values='{id:"caption_0",content:"Value 0"}'&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;DIV fd_type="inputText" fd_values='{id:"fd_value_0",label:"Value 0",dataType:"String",_label_bind:"true",_label_bind_id:"caption_0"}'&gt;&lt;INPUT id="fd_value_0"/&gt;&lt;/DIV&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;TR&gt;&lt;TD row="1" column="0" colspan="2"&gt;&lt;table&gt;&lt;tr&gt;&lt;td&gt;&lt;input fd_type="inputCheckbox" fd_values='{id:"fd_choice",label:"Choice",dataType:"String",items:"A|A;B|B"}'&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputText" style="display:none" fd_values='{id:"fd_json",label:"Document",dataType:"String",canShow:"false",showStatus:"noShow",defaultValue:"{}"}'&gt;&lt;input type="hidden" id="fd_json"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;TR&gt;&lt;TD row="2" column="0" colspan="2"&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_lines",label:"Lines"}'&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Amount&lt;/td&gt;&lt;/tr&gt;&lt;tr type="templateRow"&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"amount",label:"Amount",tableName:"fd_lines",dataType:"String"}'&gt;&lt;input id="amount"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdDisplayJsp</string>
+      <string>&lt;TABLE id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_value_0)"/&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;script&gt;var readonlyTable="fd_lines";function roundValue(value){var precision=2;var power=Math.pow(10,precision);return Math.round(value*power)/power;}function readValues(tableId, controlId) {
+            var tab_id = 'TABLE_DL_' + tableId;
+            var tbInfo = DocList_TableInfo[tab_id];
+            var sum = 0;
+            if (typeof (tbInfo) != "undefined") {
+                for (var i = 0; i &lt; tbInfo.lastIndex - 1; i++) {
+                    var clild_id = tableId + "." + i + "." + controlId;
+                    var current_inspire = $("[name='extendDataFormInfo.value(" + clild_id + ")']").val();
+                    sum = roundValue(sum + Number(current_inspire));
+                }
+            }
+            return sum;
+        }Com_AddEventListener(window,"load",function(){SetXFormFieldValueById("fd_value_0",readValues(readonlyTable,"amount"));});&lt;/script&gt;&lt;script&gt;DocList_Info.push("TABLE_DL_fd_lines");&lt;/script&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdMetadataXml</string>
+      <string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_choice" type="String" enumValues="A|A;B|B"/&gt;&lt;extendSimpleProperty name="fd_json" type="String" defaultValue="{}" canDisplay="false"/&gt;&lt;extendSimpleProperty name="fd_value_0" type="String"/&gt;&lt;extendSubTableProperty name="fd_lines" label="Lines"&gt;&lt;extendSimpleProperty name="amount" label="Amount" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;/metadata&gt;</string>
+    </void>
+  </object>
+</java>

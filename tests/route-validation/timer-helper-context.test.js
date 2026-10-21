@@ -144,7 +144,7 @@ describe("named timer helper context Route-validation", () => {
     };
     const checkpoint = createReviewCheckpoint({ ...options, promptVersion: "agent-review.scoped-batches.v15" });
     assert.equal(validateReviewCheckpoint(checkpoint, { ...options, promptVersion: "agent-review.scoped-batches.v15" }).ok, true);
-    assert.equal(AGENT_REVIEW_PROMPT_VERSION, "agent-review.scoped-batches.v16");
+    assert.equal(AGENT_REVIEW_PROMPT_VERSION, "agent-review.scoped-batches.v17");
     const checked = validateReviewCheckpoint(checkpoint, { ...options, promptVersion: AGENT_REVIEW_PROMPT_VERSION });
     assert.equal(checked.ok, false);
     assert.deepEqual(checked.diagnostics.map((item) => item.code).sort(), ["agent.checkpoint.cache_key_mismatch", "agent.checkpoint.contract_mismatch"]);

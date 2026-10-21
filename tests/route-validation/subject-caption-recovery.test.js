@@ -89,15 +89,16 @@ describe("retained source text and editor title visibility", () => {
     }
   });
 
-  it("folds the fresh unique payment caption and preserves the other caption's shared binding", () => {
+  it("folds actual one-to-one payment captions despite inactive stale pointers from other source regions", () => {
     const source = cleanSourceFile("tests/fixtures/source2/168e0707391cd798757474c4670a79eb");
     const draft = draftSourceDraft(source);
     const first = draft.form.fields.find(field => field.id === "fd_3352cba9e70d9c");
     assert.equal(first.sourceProps.foldedCaption.id, "fd_327d2d8ebcaf38");
     assert.equal(first.title, "1、 IT项目投资执行报批流程链接：");
     assert.equal(draft.form.fields.some(field => field.id === "fd_327d2d8ebcaf38"), false);
-    assert.equal(draft.form.fields.find(field => field.id === "fd_327d2d8f0912c6").componentId, "xform-description");
-    assert.equal(draft.form.fields.find(field => field.id === "fd_3352cabd660662").props.hiddenLabel, true);
+    assert.equal(draft.form.fields.some(field => field.id === "fd_327d2d8f0912c6"), false);
+    assert.equal(draft.form.fields.find(field => field.id === "fd_3352cabd660662").sourceProps.foldedCaption.id, "fd_327d2d8f0912c6");
+    assert.notEqual(draft.form.fields.find(field => field.id === "fd_3352cabd660662").props.hiddenLabel, true);
     const row = draft.form.layout.mkTree.find(item => item.id === "layout.row-11");
     assert.deepEqual(row.children.map(cell => [cell.colspan, cell.widthWeight]), [[4, 1362]]);
   });

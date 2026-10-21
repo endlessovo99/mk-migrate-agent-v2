@@ -1,0 +1,22 @@
+{
+  "sourceFile": "/Users/endlessovo/上海电气/ekp-process/159b539ab0393997f6a249441a7ad0ae/159b53b839e1415417a534a487fbca92_SysFormTemplate.xml",
+  "sourceXmlSha256": "ee2e2bdb1c9d09799693d7c08d774b6ad5771d943260bc47608a82115ff545c2",
+  "ranges": {
+    "fdDesignerHtml": {
+      "start": 27552,
+      "end": 31774,
+      "sha256": "7ce700998261dafa53418e7d677b74cd227f97d5c6599c15f0ab4121fce3a90b"
+    },
+    "fdDisplayJsp": {
+      "start": 15895,
+      "end": 18460,
+      "sha256": "2c85a2984e55a42315922f0b22ecd1d95037408db920e8826f275b03fa7e53a0"
+    }
+  },
+  "metadataIds": [
+    "fd_34a8a306143324",
+    "fd_3667db7964b7a4",
+    "fd_3667dc48907b50"
+  ],
+  "changes": "Retain the exact budget row on both surfaces and its three metadata declarations. Replace only document identity and outer table shell; tests mutate runtime renderer in memory."
+}

@@ -1,0 +1,224 @@
+import { parse } from "acorn";
+import { inspectDeterministicScriptBranchProof } from "../dsl/deterministic-script-translations.js";
+import { buildFormRuleRefIndex, resolveEffectTarget } from "../dsl/form-rules.js";
+import { captionScriptScope } from "./caption-script-scope.js";
+import { captionScriptReferences } from "./caption-script-references.js";
+import { auditedCaptionOrphans } from "./caption-row-scope.js";
+import { captionToastValueProof } from "./caption-toast-value.js";
+import { captionNeededCoveredHelpers } from "./caption-covered-helpers.js";
+import { captionJsonImpact } from "./caption-json-impact.js";
+import { captionHelperUnits } from "./caption-helper-unit.js";
+
+// Reuse the migration path's existing complete row translations. This is a
+// semantic coverage contract, not another whole-program JavaScript evaluator.
+const VALUE_APIS = new Set(["getValue", "setValue", "getFieldAttr", "setFieldAttr", "getDetailFieldAttr", "setDetailFieldAttr",
+  "toast", "updateControl", "setDetailFieldItemAttr", "setProps", "setDetailValues"]);
+
+export function captionBehaviorContract(source, form, mappedScripts) {
+  const auditedOrphans = auditedCaptionOrphans(source);
+  const originals = [...(source.form?.controls || []), ...(source.form?.dataFields || []),
+    ...(source.form?.detailTables || []).flatMap(table => [table, ...(table.columns || [])])];
+  const ranges = new Map(), regions = [], protectedTargets = new Set();
+  const index = buildFormRuleRefIndex(form);
+  const detailRef = node => {
+    const match = typeof node?.value === "string" && /^\$\{table:([A-Za-z_][\w.-]*)\}(?:\.([A-Za-z_][\w.-]*))?$/.exec(node.value);
+    if (!match || node.type !== "Literal") return undefined;
+    const tables = (form.fields || []).filter(field => field.id === match[1] && field.type === "detailTable");
+    if (tables.length !== 1) return undefined;
+    if (!match[2]) return { tableId: match[1] };
+    const columns = (tables[0].columns || []).filter(field => field.id === match[2]);
+    return columns.length === 1 ? { tableId: match[1], columnId: match[2] } : undefined;
+  };
+  for (const action of mappedScripts?.actions || []) {
+    const proof = inspectDeterministicScriptBranchProof(action);
+    if (!proof.ok ||
+        action.translationStatus !== "mapped" || action.coverage?.status !== "translated" || action.coverage.residuals?.length) continue;
+    // An operation on a whole source row remains an operation on that region
+    // after its caption and editor become one native wrapper. A field-only
+    // visibility operation must keep its separate title.
+    let tree;
+    try { tree = parse(action.function, { ecmaVersion: "latest" }); } catch { continue; }
+    let toastValue;
+    let bounded = true;
+    const actionRegions = [], actionTargets = [];
+    walk(tree, node => {
+      if (node.type === "Identifier" && ["document", "window", "globalThis", "eval", "Function", "$", "jQuery"].includes(node.name)) bounded = false;
+      if (node.type !== "CallExpression" || node.callee?.type !== "MemberExpression" ||
+          node.callee.object?.name !== "MKXFORM") return;
+      const method = node.callee.property?.name;
+      if (node.callee.computed || !VALUE_APIS.has(method)) { bounded = false; return; }
+      if (method === "toast") {
+        if (node.arguments.length !== 1) bounded = false;
+        else if (!(node.arguments[0].type === "Literal" && typeof node.arguments[0].value === "string")) {
+          toastValue ||= captionToastValueProof(action.function, tree);
+          if (!toastValue(node.arguments[0])) bounded = false;
+        }
+        return;
+      }
+      if (method === "setProps") {
+        const id = node.arguments[0]?.type === "Literal" && node.arguments[0].value;
+        const properties = node.arguments[1]?.type === "ObjectExpression" && node.arguments[1].properties;
+        const field = (form.fields || []).filter(field => field.id === id && field.componentId === "xform-select");
+        if (node.arguments.length !== 2 || field.length !== 1 || properties?.length !== 1 ||
+            properties[0].type !== "Property" || properties[0].kind !== "init" || properties[0].computed ||
+            properties[0].method || properties[0].shorthand ||
+            (properties[0].key.name || properties[0].key.value) !== "options") bounded = false;
+        return; // Options change editor data, not the native caption wrapper.
+      }
+      if (method === "setDetailValues") {
+        const table = detailRef(node.arguments[0]);
+        if (node.arguments.length !== 2 || !table || table.columnId) bounded = false;
+        else actionTargets.push(table.tableId, ...(form.fields.find(field => field.id === table.tableId).columns || []).map(field => field.id));
+        return; // Replacement protects the entire existing table presentation.
+      }
+      if (method === "updateControl") {
+        if (node.arguments.length !== 3 || !detailRef(node.arguments[0])?.columnId) bounded = false;
+        return; // Native updateControl writes a proven detail value, not its title.
+      }
+      if (method === "setDetailFieldItemAttr") {
+        const table = detailRef(node.arguments[0]), field = detailRef(node.arguments[3]);
+        if (![3, 4].includes(node.arguments.length) || !table || table.columnId ||
+            node.arguments.length === 4 && (!field?.columnId || field.tableId !== table.tableId)) { bounded = false; return; }
+        actionTargets.push(table.tableId, ...(field ? [field.columnId] : []));
+        return;
+      }
+      if (method !== "setFieldAttr") return;
+      const id = node.arguments[0]?.type === "Literal" && node.arguments[0].value;
+      const resolved = typeof id === "string" && resolveEffectTarget(index, id);
+      if (!resolved || resolved.unresolved?.length) { bounded = false; return; }
+      if (resolved.source === "rowMarker") actionRegions.push(id);
+      else if (!(node.arguments[1]?.type === "Literal" && [1, 2, 3, 6].includes(node.arguments[1].value))) actionTargets.push(id);
+    });
+    if (!bounded) continue;
+    const covered = action.semanticHints?.coveredCalculationRanges || [];
+    if (!covered.length) continue;
+    for (const range of covered) {
+      if (!ranges.has(range.sourceRef)) ranges.set(range.sourceRef, []);
+      ranges.get(range.sourceRef).push(range);
+    }
+    actionTargets.forEach(id => protectedTargets.add(id));
+    regions.push(...actionRegions.map(target => ({ actionId: action.id, target,
+      targets: resolveEffectTarget(index, target).targets.map(item => item.id), basis: action.deterministicBranchProof.basis })));
+  }
+  const programs = new Map();
+  const add = (text, sourceRef) => {
+    if (typeof text !== "string" || !text.trim()) return;
+    const key = text.trim();
+    const entry = programs.get(key) || { text, sourceRefs: new Set() };
+    if (sourceRef) entry.sourceRefs.add(sourceRef);
+    programs.set(key, entry);
+  };
+  for (const item of source.scripts?.sources || []) { add(item.javascript, item.sourceRef); add(item.helperJavascript); }
+  for (const field of originals) {
+    for (const [key, value] of Object.entries(field.sourceProps?.designerValues || {})) {
+      if (/^(?:on|script|function|event)/i.test(key)) add(value);
+    }
+    const context = field.sourceProps?.captionStructure?.domContext || field.sourceProps?.staticCaptionFact?.domContext;
+    for (const script of context?.inlineScripts || []) add(script);
+  }
+  const consumed = [], statements = new Map();
+  const statementKey = node => JSON.stringify(node, (key, value) => ["start", "end", "raw"].includes(key) ? undefined : value);
+  // Runtime exports can combine the same statements into a larger SCRIPT or
+  // add whitespace. Match whole AST statements, never a textual substring.
+  for (const program of programs.values()) {
+    const covered = [...program.sourceRefs].flatMap(ref => ranges.get(ref) || []);
+    if (!covered.length) continue;
+    let ast;
+    try { ast = parse(program.text, { ecmaVersion: "latest", allowReturnOutsideFunction: true }); } catch { continue; }
+    for (const node of ast.body) if (covered.some(range => {
+      const expression = node.type === "ExpressionStatement" ? node.expression : node;
+      return (
+      Number.isInteger(range.start) && Number.isInteger(range.end) && range.start >= 0 &&
+      range.end <= program.text.length && range.start <= expression.start && range.end >= expression.end);
+    })) {
+      statements.set(statementKey(node), [...program.sourceRefs]);
+    }
+  }
+  const neededHelpers = captionNeededCoveredHelpers([...programs.values()], statements, statementKey);
+  const residuals = [...programs.values()].map(program => {
+    if (!statements.size) return program.text;
+    let ast;
+    try { ast = parse(program.text, { ecmaVersion: "latest", allowReturnOutsideFunction: true }); } catch { return program.text; }
+    // Direct Program declarations are instantiated together: an earlier body
+    // cannot be observed before the final same-name declaration in that Program.
+    // Only a fully covered final declaration grants this proof. Never carry it
+    // across SCRIPT boundaries or infer a winner for block/unknown declarations.
+    const lastDeclarations = new Map(ast.body.filter(node => node.type === "FunctionDeclaration")
+      .map(node => [node.id?.name, node]));
+    const shadowed = node => node.type === "FunctionDeclaration" && lastDeclarations.get(node.id?.name) !== node &&
+      statements.has(statementKey(lastDeclarations.get(node.id?.name)));
+    const removed = ast.body.filter(node => statements.has(statementKey(node)) &&
+      !(node.type === "FunctionDeclaration" && neededHelpers.has(node.id?.name)) || shadowed(node));
+    let text = program.text;
+    for (const node of removed.reverse()) {
+      consumed.push({ sourceRefs: statements.get(statementKey(shadowed(node) ? lastDeclarations.get(node.id.name) : node)),
+        start: node.start, end: node.end,
+        ...(shadowed(node) ? { basis: "covered-same-program-hoisted-declaration", shadowedByStart: lastDeclarations.get(node.id.name).start } : {}) });
+      text = text.slice(0, node.start) + text.slice(node.start, node.end).replace(/[^\r\n]/g, " ") + text.slice(node.end);
+    }
+    return text;
+  });
+  const sourcePrograms = [...programs.values()].map(program => program.text);
+  const jsonImpact = captionJsonImpact(source, form, residuals);
+  const helperUnits = captionHelperUnits(source, mappedScripts);
+  let scope = captionScriptReferences(residuals).opaque
+    ? captionScriptScope(residuals, form, originals, { auditedOrphans, sharedScalarPrograms: sourcePrograms, jsonImpact, helperUnits }) : { ok: true, targets: [], parentReads: [] };
+  let proofMode = "mapped-statements-and-residual-impact";
+  if (!scope.ok) {
+    // A partially mapped helper may still be called by an unmapped action.
+    // Keep the existing complete-program proof as a compatibility fallback;
+    // do not turn a removed declaration into evidence of an unknown effect.
+    const texts = [...programs.values()].map(program => program.text);
+    const complete = captionScriptReferences(texts).opaque
+      ? captionScriptScope(texts, form, originals, { auditedOrphans, helperUnits }) : { ok: true, targets: [], parentReads: [] };
+    if (complete.ok) { scope = complete; proofMode = "complete-original-impact"; }
+  }
+  const residualPrograms = [...new Set(residuals.filter(Boolean))];
+  const issue = scope.issue && { ...scope.issue,
+    sourceSnippet: residualPrograms[scope.issue.scriptIndex]?.slice(Math.max(0, (scope.issue.offset || 0) - 60), (scope.issue.offset || 0) + 140) };
+  return {
+    summary: { coveredSourceStatements: consumed, regionMappings: regions, residualScope: { ...scope, issue },
+      ...(neededHelpers.size ? { retainedCoveredHelpers: [...neededHelpers] } : {}) },
+    forPair(fieldId, captionId, context) {
+      if (!scope.ok) return { ok: false, bounded: false, issue: { ...issue, impact: "unbounded-form", residualPrograms: residuals.length } };
+      const ids = [fieldId, captionId, ...(context?.ancestorIds || []), ...(context?.pairDescendantIds || [])];
+      const presentation = scope.presentationTargets || scope.targets;
+      const splitRegion = [...regions, ...(scope.rowRegions || [])].find(region =>
+        region.targets.includes(fieldId) !== region.targets.includes(captionId));
+      if (splitRegion) return { ok: false, bounded: true, issue: { reason: "row_region_separates_title_and_value",
+        impact: "fixed-source-region", region: splitRegion } };
+      if (ids.some(id => protectedTargets.has(id) || presentation.includes(id)) ||
+          scope.parentReads?.some(id => context?.cellDescendantIds?.includes(id))) {
+        return { ok: false, bounded: true, issue: { reason: "independent_presentation_effect", impact: "fixed-source-region",
+          targets: [...new Set([...protectedTargets, ...presentation])], dataTargets: scope.dataTargets || [], parentReads: scope.parentReads } };
+      }
+      if ((residuals.some(text => text.trim()) || regions.length) && context?.version !== 1) {
+        return { ok: false, bounded: false, issue: { reason: "script_region_unproven", impact: "unknown-ancestors" } };
+      }
+      return { ok: true, evidence: { version: 1, proofMode, regionMappings: regions, coveredSourceStatements: consumed,
+        ...(neededHelpers.size ? { retainedCoveredHelpers: [...neededHelpers] } : {}),
+        residualImpact: { presentationTargets: presentation, dataTargets: scope.dataTargets || [],
+          ...(scope.inertSubmitScratch?.length ? { inertSubmitScratch: scope.inertSubmitScratch } : {}),
+          ...(scope.inertRowNoops?.length ? { inertRowNoops: scope.inertRowNoops } : {}),
+          ...(scope.nativeCurrencyBindings?.length ? { nativeCurrencyBindings: scope.nativeCurrencyBindings } : {}),
+          ...(scope.attachmentBindings?.length ? { attachmentBindings: scope.attachmentBindings } : {}),
+          ...(scope.sharedScalars?.length ? { sharedScalars: scope.sharedScalars } : {}),
+          ...(scope.sourceValueReads?.length ? { sourceValueReads: scope.sourceValueReads } : {}),
+          ...(scope.dataLoops?.length ? { dataLoops: scope.dataLoops } : {}),
+          ...(scope.tablePollEffects?.length ? { tablePollEffects: scope.tablePollEffects } : {}),
+          ...(scope.detailDataReads?.length ? { detailDataReads: scope.detailDataReads } : {}),
+          ...(scope.sharedJsonData ? { sharedJsonData: scope.sharedJsonData } : {}),
+          ...(scope.nonEntryHelpers?.length ? { nonEntryHelpers: scope.nonEntryHelpers } : {}),
+          rowRegions: scope.rowRegions || [], parentReads: scope.parentReads || [] } } };
+    }
+  };
+}
+
+function walk(node, visit) {
+  if (!node || typeof node !== "object") return;
+  visit(node);
+  for (const value of Object.values(node)) {
+    if (Array.isArray(value)) value.forEach(item => walk(item, visit));
+    else if (value && typeof value === "object") walk(value, visit);
+  }
+}

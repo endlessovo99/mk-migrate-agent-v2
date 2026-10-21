@@ -1,0 +1,51 @@
+<java class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>fdId</string>
+      <string>route-caption-date-data</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>route-caption-date-data-model</string>
+    </void>
+    <void method="put">
+      <string>fdName</string>
+      <string>Caption orphan-noop</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&lt;TABLE fd_type="standardTable" id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL fd_type="textLabel" fd_values='{id:"caption_0",content:"Value 0"}'&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;DIV fd_type="inputText" fd_values='{id:"fd_value_0",label:"Value 0",dataType:"String",_label_bind:"true",_label_bind_id:"caption_0"}'&gt;&lt;INPUT id="fd_value_0"/&gt;&lt;/DIV&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdDisplayJsp</string>
+      <string>&lt;TABLE id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_value_0)"/&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;script&gt;function readExportValue(elementId, type, containSelectText) {
+            if (type == 'radio') {
+                return $('input[name="extendDataFormInfo.value(' + elementId + ')"]:checked').val();
+            } else if (type == 'select') {
+                return $('select[name="extendDataFormInfo.value(' + elementId + ')"]').val();
+            } else if (type == 'table') {
+                var doms = $('[name="' + elementId + '"]');
+                if (doms &amp;&amp; doms.length &gt; 0) {
+                    if (doms[0].type == 'radio') {
+                        return $('[name="' + elementId + '"]:checked').val();
+                    } else if (doms[0].tagName === 'SELECT' &amp;&amp; containSelectText) {
+                        var field = $('[name="' + elementId + '"]');
+                        var text = field.find("option:selected").text();
+                        var val = field.val();
+                        return ((text ? text : '') + "|" + (val ? val : ''));
+                    }
+                }
+                return $('[name="' + elementId + '"]').val();
+            } else {
+                var elementVal = $('[name="' + elementId + '"]').val();
+                if (elementVal) {
+                    return elementVal;
+                }
+                var elementVal = GetXFormFieldValueById(elementId);
+                return elementVal &amp;&amp; elementVal.length == 1 ? elementVal[0] : elementVal;
+            }
+        }
+Com_AddEventListener(window,"load",function(){var instant=new Date(readExportValue("fd_value_0"));instant.setHours(0);instant.setMinutes(0);instant.setSeconds(0);instant.setMilliseconds(0);SetXFormFieldValueById("fd_value_0",instant.getTime().toFixed(2));});&lt;/script&gt;</string>
+    </void>
+  </object>
+</java>

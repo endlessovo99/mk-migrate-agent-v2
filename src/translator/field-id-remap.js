@@ -148,16 +148,15 @@ function allocateShortFieldId(originalId, used) {
 
 function remapFieldLike(field, idMap) {
   const nextId = mapFieldId(field.id, idMap);
+  const sourceProps = nextId === field.id ? field.sourceProps : { ...(field.sourceProps || {}), originalId: field.id };
+  const folded = field.sourceProps?.foldedCaption;
   return {
     ...field,
     id: nextId,
     props: remapStructuredValue(field.props, idMap),
-    sourceProps: nextId === field.id
-      ? field.sourceProps
-      : {
-          ...(field.sourceProps || {}),
-          originalId: field.id
-        },
+    sourceProps: folded?.referenceMap ? { ...sourceProps, foldedCaption: { ...folded,
+      referenceMap: { ...folded.referenceMap, fieldId: nextId,
+        formerControlId: mapFieldId(folded.referenceMap.formerControlId, idMap) } } } : sourceProps,
     columns: Array.isArray(field.columns)
       ? field.columns.map((column) => remapFieldLike(column, idMap))
       : field.columns

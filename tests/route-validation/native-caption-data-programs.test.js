@@ -1,3 +1,4 @@
+import { withoutCaptionRelations } from "../helpers/retained-caption-source.js";
 import assert from "node:assert/strict";
 import { it } from "node:test";
 import { readFileSync } from "node:fs";
@@ -27,8 +28,9 @@ for (const [name, script] of [
   ["date arrays, checked callbacks and formatting", 'AttachXFormValueChangeEventById("fd_a",function(value){const first=new Date(value);const dates=[first,new Date(GetXFormFieldValueById("fd_b"))];if(dates.some(item=>isNaN(item.getTime()))){return false;}const days=Math.floor((dates[0].getTime()-dates[1].getTime())/86400000);const year=first.getFullYear();const month=String(first.getMonth()+1).padStart(2,"0");const formatted=`${year}-${month}`;SetXFormFieldValueById("fd_a",formatted+days,false);});']
 ]) it(`folds unrelated real-export-shaped titles for ${name}`, () => {
   const { source, draft } = translate(script);
-  assert.deepEqual(draft.form.fields.filter(f => f.sourceProps?.foldedCaption).map(f => f.id), ["fd_c"]);
-  for (const id of ["fd_a", "fd_b", "fd_d"]) assert.equal(draft.form.fields.find(f => f.id === id).props.hiddenLabel, true);
+  assert.deepEqual(draft.form.fields.filter(f => f.sourceProps?.foldedCaption).map(f => f.id), ["fd_a", "fd_b", "fd_c"]);
+  assert.equal(draft.form.fields.find(f => f.id === "fd_d").props.hiddenLabel, true);
+  for (const id of ["fd_a", "fd_b"]) assert.notEqual(draft.form.fields.find(f => f.id === id).props.hiddenLabel, true);
   assert.equal(auditCaptionFolding(source, draft).ok, true);
   const projection = structuredClone(draft);
   projection.scripts = { actions: [] }; projection.formRules = { linkage: [] };
@@ -41,7 +43,7 @@ const dictionary = 'AttachXFormValueChangeEventById("fd_a",function(value){var m
 it("bounds a primitive dictionary lookup by the unchanged native dropdown domain", () => {
   const { source, draft } = translate(dictionary, () => {}, dropdownFixture);
   assert.equal(source.form.controls.find(f => f.id === "fd_a").sourceProps.runtimeSelectEmpty.status, "proven");
-  assert.deepEqual(draft.form.fields.filter(f => f.sourceProps?.foldedCaption).map(f => f.id), ["fd_c"]);
+  assert.deepEqual(draft.form.fields.filter(f => f.sourceProps?.foldedCaption).map(f => f.id), ["fd_a", "fd_b", "fd_c"]);
   assert.equal(auditCaptionFolding(source, draft).ok, true);
 });
 
@@ -65,7 +67,8 @@ it("bounds native attachment-list length reads to the exact attachment field", (
   const { draft } = translate('Com_Parameter.event.submit.push(function(){var item=Attachment_ObjectInfo["fd_a"];if(item.fileList.length==0){alert("请上传附件");return false;}return true;});', props => {
     props.fdDesignerHtml = props.fdDesignerHtml.replace('fd_type="inputText"', 'fd_type="attachment"');
   });
-  assert.deepEqual(draft.form.fields.filter(f => f.sourceProps?.foldedCaption).map(f => f.id), ["fd_c"]);
+  assert.deepEqual(draft.form.fields.filter(f => f.sourceProps?.foldedCaption).map(f => f.id), ["fd_b", "fd_c"]);
+  assert.equal(draft.review.captionFolding.decisions.find(decision => decision.fieldId === "fd_a").reason, "caption_structure_unproven");
 });
 
 it("keeps workflow field-alias recovery independent of folded display titles", () => {
@@ -80,7 +83,7 @@ it("keeps workflow field-alias recovery independent of folded display titles", (
   const retained = structuredClone(source);
   source.form.controls.find(f => f.id === "fd_c").title = "申请人部门";
   retained.form.controls.find(f => f.id === "fd_c").title = "申请人部门";
-  for (const field of retained.form.controls) delete field.sourceProps.staticCaptionFact;
+  withoutCaptionRelations(retained);
   const before = draftSourceDraft(retained), after = draftSourceDraft(source);
   assert.equal(before.form.fields.find(f => f.id === "fd_c").title, "申请人部门");
   assert.equal(after.form.fields.find(f => f.id === "fd_c").title, "部门");

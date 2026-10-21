@@ -8,13 +8,21 @@ import { cleanSourceFile } from "../../src/translator/index.js";
  */
 export function cleanSourceWithoutCaptionFact(path, options) {
   const source = cleanSourceFile(path, options);
+  return withoutCaptionRelations(source);
+}
+
+export function withoutCaptionRelations(source) {
+  delete source.form.captionRelations;
   const fields = [
     ...(source.form?.controls || []),
     ...(source.form?.dataFields || []),
     ...(source.form?.detailTables || []).flatMap(table => table.columns || [])
   ];
   for (const field of fields) {
-    if (field.sourceProps) delete field.sourceProps.staticCaptionFact;
+    if (field.sourceProps) {
+      delete field.sourceProps.staticCaptionFact;
+      delete field.sourceProps.captionStructure;
+    }
   }
   return source;
 }

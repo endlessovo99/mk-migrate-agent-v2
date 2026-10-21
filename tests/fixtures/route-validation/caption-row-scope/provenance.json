@@ -1,0 +1,27 @@
+{
+  "sourceOrigin": "http://uatscop.shanghai-electric.com",
+  "retainedPath": ".tmp/tasks/ekp-oaqas-it-complete-20261021/access-recovery-001/source-xform_com_fun.js",
+  "sourceSha256": "b1f77748e65adab171b6d5ea6e4638f4ac58f031a66bb0a3b548153701e51798",
+  "extraction": "unchanged top-level AST function ranges",
+  "functions": [
+    {
+      "name": "common_dom_row_set_show_required_reset",
+      "start": 7362,
+      "end": 7704,
+      "sha256": "cce2ed25cfccd030df2e0a08c37e50cd2b78015324f286e086cef76c0718cc75"
+    },
+    {
+      "name": "common_set_is_show_dom_row",
+      "start": 13471,
+      "end": 13846,
+      "sha256": "afc2b42fc8924c59961daa52d958193cbb27ac00a5d75aef88e64e6f099847d0"
+    },
+    {
+      "name": "priv_get_rowDom_by_control",
+      "start": 13940,
+      "end": 14926,
+      "sha256": "538a332d09c497e130d5b9b8ac68ac4ac33490820873cec48bfc7ae275313dc8"
+    }
+  ],
+  "boundary": "Captured framework contract with synthetic DOM; not original business taglib rendering or an assertion of all source server versions."
+}

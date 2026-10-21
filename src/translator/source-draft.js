@@ -7,6 +7,7 @@ import { translateLbpmProcessDefinitionXml } from "./lbpm-process-definition-ada
 import { sourceFormRulesFromLegacyScripts } from "./sysform-form-rules.js";
 import { translateSysFormTemplateXml } from "./sysform-template-adapter.js";
 import { isHiddenMetadataAttributes } from "./sysform-metadata.js";
+import { sourceCaptionRelations } from "./source-caption-relations.js";
 import { filterContentFlow } from "./designer-content-flow.js";
 import {
   cleanText,
@@ -122,7 +123,8 @@ export function sourceDraftFromLegacyDsl(legacyDsl, context = {}) {
       controls: normalControls,
       dataFields: sourceDataFields,
       detailTables,
-      layout
+      layout,
+      captionRelations: sourceCaptionRelations({ controls: normalControls, dataFields: sourceDataFields, detailTables, layout, workflow })
     },
     formRules,
     scripts,
@@ -730,6 +732,8 @@ function sourcePropsFromField(field) {
     runtimeNumberDisplayWidth: field.source?.runtimeNumberDisplayWidth,
     runtimePlainCaption: field.source?.runtimePlainCaption,
     staticCaptionFact: field.source?.staticCaptionFact,
+    captionStructure: field.source?.captionStructure,
+    captionStructureIssue: field.source?.captionStructureIssue,
     staticCaptionIssue: field.source?.staticCaptionIssue,
     runtimePlainCaptionMarkerIds: field.source?.runtimePlainCaptionMarkerIds,
     designerTableName: field.source?.designerTableName,

@@ -1,0 +1,46 @@
+<java class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>fdId</string>
+      <string>route-caption-json-impact</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>route-caption-json-impact-model</string>
+    </void>
+    <void method="put">
+      <string>fdName</string>
+      <string>Caption orphan-noop</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&lt;TABLE fd_type="standardTable" id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL fd_type="textLabel" fd_values='{id:"caption_0",content:"Value 0"}'&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;DIV fd_type="inputText" fd_values='{id:"fd_value_0",label:"Value 0",dataType:"String",_label_bind:"true",_label_bind_id:"caption_0"}'&gt;&lt;INPUT id="fd_value_0"/&gt;&lt;/DIV&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;TR&gt;&lt;TD row="1" column="0" colspan="2"&gt;&lt;table&gt;&lt;tr&gt;&lt;td&gt;&lt;input fd_type="inputCheckbox" fd_values='{id:"fd_choice",label:"Choice",dataType:"String",items:"A|A;B|B"}'&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputText" style="display:none" fd_values='{id:"fd_json",label:"Document",dataType:"String",canShow:"false",showStatus:"noShow",defaultValue:"{}"}'&gt;&lt;input type="hidden" id="fd_json"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdDisplayJsp</string>
+      <string>&lt;TABLE id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_value_0)"/&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;script&gt;var sharedDocument = {};
+var maximumItems = 3;var optionalGate=1;
+function loadDocument() {
+  var elements = GetXFormFieldById("fd_json");
+  if (elements &amp;&amp; elements.length &gt; 0) { sharedDocument = JSON.parse(elements[0].value); }
+  for (var item = 0; item &lt; maximumItems; item++) { readFlag(item); }
+  if(typeof optionalGate != 'undefined') {
+    var available=true;
+    if(!sharedDocument.category || sharedDocument.category.length&lt;1){available=false;}
+    else {var parts=sharedDocument.category.split(";");if(parts.length&lt;=1 &amp;&amp; parts[0]=='C'){available=false;}}
+    if(!available){common_dom_row_set_show_required_reset("first_row",false,false,false);}
+  }
+}
+function readFlag(item) {
+  var key = "item" + item + "_flag";
+  if (sharedDocument[key] &amp;&amp; Number(sharedDocument[key]) == 1) {} else {}
+}&lt;/script&gt;&lt;xform:editShow&gt;&lt;script&gt;AttachXFormValueChangeEventById("fd_choice",function(changed,element){sharedDocument.category=changed;});
+Com_AddEventListener(window,"load",function(){loadDocument();});
+Com_Parameter.event["submit"].push(function(){SetXFormFieldValueById("fd_json",JSON.stringify(sharedDocument));return true;});&lt;/script&gt;&lt;/xform:editShow&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdMetadataXml</string>
+      <string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_choice" type="String" enumValues="A|A;B|B"/&gt;&lt;extendSimpleProperty name="fd_json" type="String" defaultValue="{}" canDisplay="false"/&gt;&lt;extendSimpleProperty name="fd_value_0" type="String"/&gt;&lt;/metadata&gt;</string>
+    </void>
+  </object>
+</java>

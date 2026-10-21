@@ -103,6 +103,7 @@ describe("computer equipment form layout and node rights Route-validation", () =
       assert.deepEqual(refs.slice(2), expected.slice(2));
       for (const fieldId of refs.slice(2)) {
         assert.equal(fields.get(fieldId)?.props?.hiddenLabel, true, fieldId);
+        assert.equal(fields.get(fieldId)?.sourceProps?.foldedCaption, undefined, "Data-grid column headers own these inputs; adjacent model descriptions stay separate");
       }
     }
   });

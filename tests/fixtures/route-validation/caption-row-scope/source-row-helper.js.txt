@@ -1,0 +1,60 @@
+function common_dom_row_set_show_required_reset(dom_name, isShow, isRequired,
+		isReset) {
+
+	var rowDoms = priv_get_rowDom_by_control(null, dom_name);
+	common_set_is_show_dom_row(null, dom_name, rowDoms, isShow);
+	for (var i = 0; i < rowDoms.length; i++) {
+		common_set_dom_clilds_required_reset(rowDoms[i], isRequired, isReset);
+	}
+}
+
+function common_set_is_show_dom_row(dom_id, dom_name, rowDoms, isShow) {
+
+		if (typeof (isShow) == "boolean") {
+			isShow = isShow == true ? "" : "none";
+		}
+		if (typeof (rowDoms) == "undefined" || rowDoms == null)
+			rowDoms = priv_get_rowDom_by_control(dom_id, dom_name);
+		for (var i = 0; i < rowDoms.length; i++) {
+			rowDoms[i].style.display = isShow;
+		}
+
+}
+
+function priv_get_rowDom_by_control(dom_id, dom_name) {
+	var rowDoms = [];
+	// 根据ID隐藏
+	if (dom_id != null) {
+		var dom = typeof (dom_id) == "string" ? document.getElementById(dom_id)
+				: dom_id;
+		if (typeof (dom) == "undefined") {
+			dom = typeof (dom_id) == "string" ? GetXFormFieldById(dom_id + ")")
+					: dom_id;
+		}
+		while (typeof (dom) != "undefined") {
+			dom = dom.parentNode;
+			if (typeof (dom) != "undefined" && dom.tagName == "TR") {
+				rowDoms.push(dom);
+				break;
+			}
+		}
+	}
+	// 根据name隐藏
+	if (dom_name != null) {
+		var doms = typeof (dom_name) == "string" ? document
+				.getElementsByName(dom_name) : dom_name;
+		if (typeof (doms) != "undefined") {
+			for (var i = 0; i < doms.length; i++) {
+				var dom = doms[i];
+				while (typeof (dom) != "undefined") {
+					dom = dom.parentNode;
+					if (typeof (dom) != "undefined" && dom.tagName == "TR") {
+						rowDoms.push(dom);
+						break;
+					}
+				}
+			}
+		}
+	}
+	return rowDoms;
+}

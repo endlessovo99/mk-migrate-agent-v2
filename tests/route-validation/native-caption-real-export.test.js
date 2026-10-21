@@ -1,3 +1,4 @@
+import { withoutCaptionRelations } from "../helpers/retained-caption-source.js";
 import assert from "node:assert/strict";
 import { it } from "node:test";
 import { auditCaptionFolding, cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
@@ -106,7 +107,8 @@ it("scopes a complete field-change callback to its fixed affected field", () => 
     values.fdDisplayJsp += '<script>AttachXFormValueChangeEventById("fd_325c028ef96556",function(value,domElement){var field=GetXFormFieldById("fd_325c028ef96556")[0];if(value.indexOf("A")>=0){field.value="A";}else{field.value="";}});</script>';
   });
   assert.equal(draft.form.fields.find(field => field.id === applicantId).sourceProps.foldedCaption?.id, captionId);
-  assert.equal(draft.form.fields.find(field => field.id === "fd_325c028ef96556").props.hiddenLabel, true);
+  assert.notEqual(draft.form.fields.find(field => field.id === "fd_325c028ef96556").props.hiddenLabel, true);
+  assert.ok(draft.form.fields.find(field => field.id === "fd_325c028ef96556").sourceProps.foldedCaption);
   assert.equal(auditCaptionFolding(source, draft).ok, true);
 });
 
@@ -289,7 +291,7 @@ it("rejects a zero-fold claim and a deleted acceptance report for mergeable real
   delete withoutReport.review.captionFolding;
   assert.equal(auditCaptionFolding(source, withoutReport).ok, false);
   const retainedSource = structuredClone(source);
-  for (const field of retainedSource.form.controls) delete field.sourceProps.staticCaptionFact;
+  withoutCaptionRelations(retainedSource);
   const incorrectlyRetained = draftSourceDraft(retainedSource);
   assert.equal(auditCaptionFolding(source, incorrectlyRetained).ok, false);
 });

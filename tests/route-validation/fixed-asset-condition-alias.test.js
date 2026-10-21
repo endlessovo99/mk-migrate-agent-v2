@@ -1,3 +1,4 @@
+import { withoutCaptionRelations } from "../helpers/retained-caption-source.js";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createTrustedMigrationDsl } from "../../src/dsl/trust.js";
@@ -79,7 +80,7 @@ describe("fixed-asset N12 condition alias Route-validation", () => {
     source.form.controls.find((field) => field.id === "fd_assetCategory").title = "另一类别";
     // Exercise retained Source without new caption proof: the independent
     // description must not become a value-field alias.
-    for (const field of source.form.controls) delete field.sourceProps.staticCaptionFact;
+    withoutCaptionRelations(source);
 
     const draft = draftSourceDraft(source);
     const condition = draft.workflow.edges.find((edge) => edge.id === "L14").condition;

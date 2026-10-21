@@ -10,6 +10,7 @@ import { createTrustedMigrationDsl, checkTrust } from "../../src/dsl/trust.js";
 import { checkExecute } from "../../src/dsl/checks.js";
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
 import { runRouteCase } from "./run-route-case.js";
+import { buildAgentReviewPrompt } from "../../src/agent-review/prompt.js";
 
 const directory = "tests/fixtures/route-validation/native-select-empty-event/";
 const fixture = `${directory}select-empty_SysFormTemplate.xml`;
@@ -41,6 +42,52 @@ function fromXml(text) {
 }
 
 describe("native select empty-event Route-validation", () => {
+  for (const compact of [false, true]) for (const scoped of [false, true]) {
+    it(`retains empty-choice evidence in ${compact ? "compact" : "full"} ${scoped ? "scoped" : "initial"} review context`, () => {
+      const draft = draftSourceDraft(source);
+      const prompt = buildAgentReviewPrompt(source, draft, {
+        compact,
+        ...(scoped ? { reviewScope: { actionIndexes: [0], includeFormTargets: false } } : {})
+      });
+      const actual = prompt.context.sourceDraft.form.controls.find(field => field.id === "fd_choice");
+      const expected = source.form.controls.find(field => field.id === "fd_choice").sourceProps.runtimeSelectEmpty;
+      assert.deepEqual(actual.runtimeSelectEmpty, expected);
+      assert.match(prompt.system, /runtimeSelectEmpty/);
+    });
+  }
+  it("keeps unproven empty-choice evidence unproven in the review context", () => {
+    const altered = fromXml(xml.replace('showPleaseSelect="true"', 'showPleaseSelect="${flag}"'));
+    const fact = altered.form.controls.find(field => field.id === "fd_choice").sourceProps.runtimeSelectEmpty;
+    assert.notEqual(fact.status, "proven");
+    const prompt = buildAgentReviewPrompt(altered, draftSourceDraft(altered), {
+      compact: true, reviewScope: { actionIndexes: [0], includeFormTargets: false }
+    });
+    assert.equal(prompt.context.sourceDraft.form.controls.find(field => field.id === "fd_choice").runtimeSelectEmpty.status, fact.status);
+    assert.equal(apply(altered).result.ok, false);
+  });
+  it("preserves a proven absence of the empty option without authorizing the bridge", () => {
+    const altered = fromXml(xml.replace('showPleaseSelect="true"', 'showPleaseSelect="false"'));
+    const prompt = buildAgentReviewPrompt(altered, draftSourceDraft(altered), {
+      compact: true, reviewScope: { actionIndexes: [0], includeFormTargets: false }
+    });
+    const fact = prompt.context.sourceDraft.form.controls.find(field => field.id === "fd_choice").runtimeSelectEmpty;
+    assert.equal(fact.status, "proven");
+    assert.equal(fact.showPleaseSelect, false);
+    assert.equal(apply(altered).result.ok, false);
+  });
+  it("does not expose arbitrary source properties or reuse a select fact on another control kind", () => {
+    const altered = structuredClone(source);
+    const control = altered.form.controls.find(field => field.id === "fd_choice");
+    control.sourceProps.runtimeSelectEmpty.unrelatedPrivateData = "not review evidence";
+    control.sourceProps.runtimeSelectEmpty.options[0].unrelatedPrivateData = "not an option";
+    const prompt = buildAgentReviewPrompt(altered, draftSourceDraft(altered));
+    const fact = prompt.context.sourceDraft.form.controls.find(field => field.id === "fd_choice").runtimeSelectEmpty;
+    assert.equal(fact.unrelatedPrivateData, undefined);
+    assert.equal(fact.options[0].unrelatedPrivateData, undefined);
+    control.sourceType = "text";
+    const nonSelect = buildAgentReviewPrompt(altered, draftSourceDraft(altered));
+    assert.equal(nonSelect.context.sourceDraft.form.controls.find(field => field.id === "fd_choice").runtimeSelectEmpty, undefined);
+  });
   it("retains exact runtime empty-option facts from the source XML", () => {
     const fact = source.form.controls.find(field => field.id === "fd_choice").sourceProps.runtimeSelectEmpty;
     assert.equal(fact.status, "proven");

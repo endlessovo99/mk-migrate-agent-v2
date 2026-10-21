@@ -1,0 +1,5 @@
+# Source title normalization
+
+Sanitized minimal shapes from the frozen 421-relation corpus: a literal trailing newline exported as BR plus NBSP, a one-to-one caption/editor beside a different column's active rowspan, and consistent literal default table metadata. They retain original source grid evidence. Counterexamples cover substantive trailing text, styled/double breaks, missing newline evidence, overlapping/invalid spans, mismatching runtime geometry and conflicting/dynamic metadata.
+
+The submit scratch fixture retains a real-shaped native submit validator. Its unused local button-text variable appears only in its declaration, null/empty fallback test and fallback assignment. It is inert for title dependency analysis; the original/migrated validation script is unchanged. Extra reads, captures, redeclarations, non-submit registries, other DOM properties and extra fallback effects stay opaque. This does not authorize rich typography, shared titles or independent scripts/permissions.

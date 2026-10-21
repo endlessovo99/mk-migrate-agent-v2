@@ -1,7 +1,7 @@
 import { scanHtmlTags } from "./designer-html-tokenizer.js";
 import { decodeEntities } from "./xml-utils.js";
 
-export function parseStaticMarkupAttributes(text = "", identicalDuplicates = new Map()) {
+export function parseStaticMarkupAttributes(text = "", identicalDuplicates = new Map(), uninterpretedDuplicates) {
   const source = String(text).replace(/\/\s*$/, ""), result = new Map();
   const attribute = /\s*([A-Za-z_:][\w:.-]*)(?:\s*=\s*(?:"([^"<>]*)"|'([^'<>]*)'|([^\s"'`=<>]+)))?/y;
   let offset = 0;
@@ -11,7 +11,12 @@ export function parseStaticMarkupAttributes(text = "", identicalDuplicates = new
     const match = attribute.exec(source);
     if (!match) return undefined;
     const key = match[1].toLowerCase(), value = decodeEntities(match[2] ?? match[3] ?? match[4] ?? "");
-    if (result.has(key) && (result.get(key) !== value || !identicalDuplicates.get(key)?.test(value))) return undefined;
+    if (result.has(key) && (result.get(key) !== value || !identicalDuplicates.get(key)?.test(value))) {
+      // Only a separate program inventory may supply uninterpreted literal
+      // metadata. Ownership/rendering callers retain the strict default.
+      const domain = uninterpretedDuplicates?.get(key);
+      if (!domain?.test(result.get(key)) || !domain.test(value)) return undefined;
+    }
     result.set(key, value);
     offset = attribute.lastIndex;
   }

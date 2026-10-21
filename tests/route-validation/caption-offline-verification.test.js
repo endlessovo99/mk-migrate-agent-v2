@@ -4,6 +4,8 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { it } from "node:test";
+import { createHash } from "node:crypto";
+import { parseRootHashMapXmlStringPuts } from "../../src/translator/xml-utils.js";
 
 it("verifies a real source offline and refuses to overwrite an earlier result", () => {
   const root = mkdtempSync(join(tmpdir(), "caption-offline-"));
@@ -42,4 +44,28 @@ it("serializes existing mapped button callbacks without executing them during fo
     assert.equal(report.rows[0].nativeProjectionLimitation, undefined);
     assert.equal(report.summary.folded, 0);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+it("returns incomplete when zero titles merge despite all configuration checks passing", () => {
+  const root = mkdtempSync(join(tmpdir(), "caption-zero-merge-"));
+  try {
+    const props = parseRootHashMapXmlStringPuts(readFileSync("tests/fixtures/route-validation/caption-relationship-model/ordinary_SysFormTemplate.xml", "utf8"));
+    props.fdDisplayJsp += "<script>unknownPresentationPlugin();</script>";
+    const encode = text => text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    const file = join(root, "zero_SysFormTemplate.xml");
+    writeFileSync(file, '<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">' +
+      Object.entries(props).map(([key, value]) => `<void method="put"><string>${key}</string><string>${encode(value)}</string></void>`).join("") + "</object></java>");
+    const manifest = join(root, "manifest.json"), ledger = join(root, "reviewed.json"), output = join(root, "result");
+    writeFileSync(manifest, JSON.stringify({ items: [{ id: "ordinary", name: "Ordinary", sourcePath: file }] }));
+    const pairs = [["fd_3c6687b7d57610", "fd_3c6687b047e8c6", "申请人"],
+      ["fd_3c6687bb93f482", "fd_3c6687b195039e", "工号"], ["fd_3c6687b9a7ba5a", "fd_3c6687b2c4ecac", "申请部门"]];
+    writeFileSync(ledger, JSON.stringify({ forms: [{ id: "ordinary", inputs: [{ path: file,
+      sha256: createHash("sha256").update(readFileSync(file)).digest("hex") }],
+      relations: pairs.map(([fieldId, captionId, title]) => ({ fieldId, captionIds: [captionId], title,
+        sourceRef: `source.form.control.${fieldId}`, expectation: "merge", basis: "reviewed original literal row" })) }] }));
+    assert.throws(() => execFileSync(process.execPath, ["scripts/verify-caption-folding.mjs", manifest, output, ledger], { stdio: "pipe" }), error => error.status === 2);
+    const { summary } = JSON.parse(readFileSync(join(output, "report.json")));
+    assert.equal(summary.configurationSafe, 1);
+    assert.deepEqual(summary.captionGoal, { assessed: true, required: 3, actual: 0, exceptions: 0, needsEvidence: 0, remaining: 3, status: "incomplete" });
+  } finally { rmSync(root, { force: true, recursive: true }); }
 });

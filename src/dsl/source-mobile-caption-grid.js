@@ -245,6 +245,12 @@ export function mobileCaptionSourceDiagnostics(expectedForm, targetForm, { prefi
       (cell.references || []).filter(reference => reference.referenceType === "control").map(reference => reference.referenceId))));
     for (const id of ids) {
       const expected = expectedFields.filter(field => field.id === id), actual = actualFields.filter(field => field.id === id);
+      const foldedOwners = expectedFields.filter(field => field.sourceProps?.foldedCaption?.id === id ||
+        field.sourceProps?.foldedCaption?.referenceMap?.formerControlId === id);
+      if (!expected.length && !actual.length && foldedOwners.length === 1) {
+        const owners = actualFields.filter(field => field.sourceRef === foldedOwners[0].sourceRef);
+        if (owners.length === 1 && canonicalJson(foldedOwners[0]) === canonicalJson(owners[0])) continue;
+      }
       if (expected.length !== 1 || actual.length !== 1 || canonicalJson(expected.map(fieldSemantics)) !== canonicalJson(actual.map(fieldSemantics))) {
         diagnostics.push(error({ trailingBlankRow: sourceRef, fieldId: id }));
       }

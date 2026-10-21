@@ -1,0 +1,24 @@
+<java class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put">
+      <string>fdId</string>
+      <string>route-caption-entry-attachment</string>
+    </void>
+    <void method="put">
+      <string>fdModelId</string>
+      <string>route-caption-entry-attachment-model</string>
+    </void>
+    <void method="put">
+      <string>fdName</string>
+      <string>Caption orphan-noop</string>
+    </void>
+    <void method="put">
+      <string>fdDesignerHtml</string>
+      <string>&lt;TABLE fd_type="standardTable" id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL fd_type="textLabel" fd_values='{id:"caption_0",content:"Value 0"}'&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;DIV fd_type="inputText" fd_values='{id:"fd_value_0",label:"Value 0",dataType:"String",_label_bind:"true",_label_bind_id:"caption_0"}'&gt;&lt;INPUT id="fd_value_0"/&gt;&lt;/DIV&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;TR&gt;&lt;TD row="1" column="0" colspan="2"&gt;&lt;DIV fd_type="attachment" fd_values='{id:"fd_files",label:"Files"}'&gt;&lt;/DIV&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string>
+    </void>
+    <void method="put">
+      <string>fdDisplayJsp</string>
+      <string>&lt;TABLE id="row_scope_table"&gt;&lt;TBODY&gt;&lt;TR&gt;&lt;TD class="td_normal_title" row="0" column="0"&gt;&lt;LABEL&gt;Value 0&lt;/LABEL&gt;&lt;/TD&gt;&lt;TD row="0" column="1"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_value_0)"/&gt;&lt;INPUT type="hidden" id="first_row" name="first_row"/&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;script&gt;Com_Parameter.event["submit"].push(function(){var valid=true;if(attachmentObject_fd_files.fileList.length&lt;=0){valid=false;}if(valid){var count=0;for(var i=0;i&lt;attachmentObject_fd_files.fileList.length;i++){if(attachmentObject_fd_files.fileList[i].fileStatus &gt; -1){count++;}}if(count==0){valid=false;}}if(!valid){alert("Upload files");}return valid;});&lt;/script&gt;</string>
+    </void>
+  </object>
+</java>

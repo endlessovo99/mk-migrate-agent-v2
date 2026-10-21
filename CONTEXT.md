@@ -111,3 +111,7 @@ _Avoid_: production execution, update existing template, publish
 **needs_manual**:
 A non-blocking warning status for migration details requiring human review.
 _Avoid_: fatal validation error
+
+**Source caption relation**:
+A source-only ownership fact combining literal binding, layout region, actual rendered editor and permission scope. A one-to-one relation becomes the field's native title by default; the DSL records the former label as a title reference, separately from the business field and source region. Shared or independent behavior remains explicit and unproven relations remain unfinished.
+_Avoid_: duplicate hidden label, business field rename, merge count as acceptance
