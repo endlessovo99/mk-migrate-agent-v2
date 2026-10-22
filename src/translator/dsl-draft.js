@@ -76,16 +76,8 @@ const TABLE_LAYOUT_COMPONENT_ID = "xform-multi-row-table-layout";
 const TABLE_LAYOUT_MAX_COLUMNS = tableLayoutMaxColumns();
 const LEGACY_DATE_TIME_DISPLAY_PATTERN = "yyyy-MM-dd hh:mm";
 
-export function draftSourceDraft(sourceDraft, options = {}) {
-  if (sourceDraft?.version !== SOURCE_DRAFT_VERSION || sourceDraft?.artifact !== "source-draft") {
-    throw new Error("draft requires a source-draft artifact");
-  }
-  if (![undefined, "adaptive", "source"].includes(options.layoutSizing)) {
-    throw new TypeError("layoutSizing must be adaptive or source");
-  }
-
-  const captionDecisions = [];
-  const semanticForm = foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
+function buildSemanticCaptionForm(sourceDraft) {
+  return foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
     appendStaticJspDescriptionFields(
       applySourceNumericDetailInferences(
         applyNativeCalculationInferences(
@@ -102,13 +94,29 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     ),
     sourceDraft.scripts
   )), sourceDraft);
-  const semanticScripts = sourceDraft.form?.captionRelations?.length
-    ? draftMkScriptsFromSourceScripts(sourceDraft.scripts, {
-        form: semanticForm, formRules: draftFormRules(sourceDraft.formRules, semanticForm)
-      }) : undefined;
-  const rawForm = foldNativeCaptions(semanticForm, sourceDraft, { decisions: captionDecisions,
-    behavior: sourceDraft.form?.captionRelations?.length
-      ? captionBehaviorContract(sourceDraft, semanticForm, semanticScripts) : undefined });
+}
+
+/** Script-impact contract for a source draft. This is not a fold decision. */
+export function sourceCaptionBehavior(sourceDraft, semanticForm = buildSemanticCaptionForm(sourceDraft)) {
+  if (!sourceDraft.form?.captionRelations?.length) return undefined;
+  const semanticScripts = draftMkScriptsFromSourceScripts(sourceDraft.scripts, {
+    form: semanticForm, formRules: draftFormRules(sourceDraft.formRules, semanticForm)
+  });
+  return captionBehaviorContract(sourceDraft, semanticForm, semanticScripts);
+}
+
+export function draftSourceDraft(sourceDraft, options = {}) {
+  if (sourceDraft?.version !== SOURCE_DRAFT_VERSION || sourceDraft?.artifact !== "source-draft") {
+    throw new Error("draft requires a source-draft artifact");
+  }
+  if (![undefined, "adaptive", "source"].includes(options.layoutSizing)) {
+    throw new TypeError("layoutSizing must be adaptive or source");
+  }
+
+  const captionDecisions = [];
+  const semanticForm = buildSemanticCaptionForm(sourceDraft);
+  const behavior = sourceCaptionBehavior(sourceDraft, semanticForm);
+  const rawForm = foldNativeCaptions(semanticForm, sourceDraft, { decisions: captionDecisions, behavior });
   // A removed presentation entity must not change collision allocation for a
   // business field. Allocate against the complete semantic identity domain.
   const fieldIdMap = buildFieldIdMap(semanticForm);

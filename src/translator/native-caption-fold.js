@@ -67,7 +67,8 @@ export function foldNativeCaptions(form, source, { decisions = [], behavior } = 
     }
     if (targetCaption.length !== 1 ||
         targetCaption[0].componentId !== "xform-description" ||
-        targetCaption[0].dataOnly || targetCaption[0].props?.style) {
+        targetCaption[0].dataOnly ||
+        !titleEmphasisStyle(targetCaption[0].props?.style, relationFact?.evidence?.titleEmphasis)) {
       record("preserved", "caption_presentation_protected"); continue;
     }
     const title = String(targetCaption[0].props?.content || "").trim();
@@ -129,26 +130,70 @@ export function foldNativeCaptions(form, source, { decisions = [], behavior } = 
           id: captionId, sourceRef: caption.sourceRef, content: title,
           captionCellSourceRef: left.cell.sourceRef, fieldCellSourceRef: right.cell.sourceRef,
           ...(relationFact ? { referenceMap: { sourceLabelId: captionId, fieldId: field.id, part: "title",
-            formerControlId: captionId, sourceRowRef: left.row.sourceRef }, behavior: impact?.evidence } : {})
+            formerControlId: captionId, sourceRowRef: left.row.sourceRef }, behavior: impact?.evidence,
+            ...(relationFact.evidence?.titleEmphasis ? { titleEmphasis: relationFact.evidence.titleEmphasis } : {}) } : {})
         }
       }
     });
     consumed.add(captionId);
     record("folded", "unique_plain_caption");
   }
-  if (!folded.size) return form;
-  return {
+  const foldedForm = folded.size ? {
     ...form,
     fields: fields.filter(field => !consumed.has(field.id)).map(field => folded.get(field.id) || field),
     layout: { ...form.layout, mkTree: tree }
-  };
+  } : form;
+  return hideRepeatedAdjacentTitles(foldedForm);
+}
+
+function hideRepeatedAdjacentTitles(form) {
+  const fields = form.fields || [];
+  const byId = new Map(fields.map(field => [field.id, field]));
+  const hide = new Set();
+  for (const row of form.layout?.mkTree || []) {
+    const cells = row.children || [];
+    for (const cell of cells) {
+      for (const id of cell.refIds || []) {
+        const field = byId.get(id);
+        const title = normalizeText(field?.title);
+        if (!field || !title || field.sourceProps?.foldedCaption || field.props?.hiddenLabel === true ||
+            field.type === "description" || field.componentId === "xform-description" || field.dataOnly) continue;
+        const repeated = cells.some(other => other !== cell && (other.refIds || []).some(ref => {
+          const caption = byId.get(ref);
+          return caption && (caption.type === "description" || caption.componentId === "xform-description") &&
+            normalizeText(caption.props?.content || caption.title) === title;
+        }));
+        if (repeated && componentSupportsProp(field.componentId, "hiddenLabel")) hide.add(field.id);
+      }
+    }
+  }
+  if (!hide.size) return form;
+  return { ...form, fields: fields.map(field => hide.has(field.id)
+    ? { ...field, props: { ...field.props, hiddenLabel: true } } : field) };
+}
+
+function normalizeText(value) {
+  return String(value || "").replace(/\s+/g, "");
+}
+
+function titleEmphasisStyle(style, emphasis = []) {
+  if (!style) return true;
+  const allowed = new Set();
+  if (emphasis?.includes("b")) allowed.add("fontWeight");
+  if (emphasis?.includes("i")) allowed.add("fontStyle");
+  if (emphasis?.includes("underline")) allowed.add("textDecoration");
+  return Object.entries(style).every(([key, value]) =>
+    key === "fontWeight" && allowed.has(key) && /^(?:bold|[5-9]00)$/i.test(String(value)) ||
+    key === "fontStyle" && allowed.has(key) && /^italic$/i.test(String(value)) ||
+    key === "textDecoration" && allowed.has(key) && /^underline$/i.test(String(value)));
 }
 
 function eligibleOwner(field, relationFact) {
   const facts = field.sourceProps || {};
   return !field.dataOnly && !facts.hardHidden && (!facts.rightContainer || relationFact?.disposition === "field-caption") &&
     !facts.inlineCaption && !facts.explicitTitle && !facts.detailHeaderCaption &&
-    field.type !== "detailTable" && field.type !== "description" &&
+    (field.type !== "detailTable" || relationFact?.disposition === "field-caption") &&
+    field.type !== "description" &&
     componentSupportsProp(field.componentId, "hiddenLabel") &&
     (relationFact?.disposition === "field-caption" || field.props?.hiddenLabel === true &&
       ["independent-bound-title-cell", "runtime-independent-title-cell", "retained-source-caption"]

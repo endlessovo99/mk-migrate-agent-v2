@@ -92,7 +92,8 @@ it("maps proven source bindings without a legacy caption marker or hidden native
   for (const [fieldId] of pairs) delete source.form.controls.find(field => field.id === fieldId).sourceProps.layoutCell;
   source.form.captionRelations = sourceCaptionRelations(source.form);
   const retained = draftSourceDraft(withoutCaptionRelations(structuredClone(source)));
-  assert.ok(retained.form.fields.filter(field => pairs.some(pair => pair[0] === field.id)).every(field => field.props.hiddenLabel !== true));
+  assert.ok(retained.form.fields.filter(field => pairs.some(pair => pair[0] === field.id)).every(field => field.props.hiddenLabel === true));
+  assert.ok(pairs.every(([, caption]) => retained.form.fields.some(field => field.id === caption)));
   const draft = draftSourceDraft(source);
   assert.deepEqual(folded(draft), pairs.map(pair => pair[0]));
   const prepared = prepareSample(draft);

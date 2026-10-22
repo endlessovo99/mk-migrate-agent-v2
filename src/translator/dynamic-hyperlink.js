@@ -360,6 +360,8 @@ function projectModel(form, model) {
       ...(form.layout || {}),
       mkTree: (form.layout?.mkTree || []).map((row) => {
         if (!row?.sourceMarkers?.includes(model.destinationRowMarker || model.rowMarker)) return row;
+        if ((row.children || []).some(child => child.refIds?.length === 1 && sameCaption(form, child.refIds[0], model.label)))
+          generatedField.props = { ...generatedField.props, hiddenLabel: true };
         return {
           ...row,
           componentId: "xform-flex-1-2-layout",
@@ -378,6 +380,13 @@ function projectModel(form, model) {
       })
     }
   };
+}
+
+function sameCaption(form, id, label) {
+  const field = (form.fields || []).find(item => item.id === id);
+  const text = String(field?.props?.content || field?.title || "").replace(/\s+/g, "");
+  return field && (field.type === "description" || field.componentId === "xform-description") &&
+    text && text === String(label || "").replace(/\s+/g, "");
 }
 
 function fieldsWithGeneratedField(form, generatedField) {

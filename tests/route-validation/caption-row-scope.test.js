@@ -73,11 +73,13 @@ it("does not treat a shadowed row helper as the captured native helper", () => {
   assert.deepEqual(folded(draftSourceDraft(source)), []);
 });
 
-it("reports the originating effect rather than the final unrelated script for an unresolved target", () => {
+it("records a concrete unexported value target without blocking an unrelated title", () => {
   const source = cleanSourceFile(fixture("effect-diagnostic")), draft = draftSourceDraft(source);
-  const issue = draft.review.captionFolding.decisions.find(item => item.reason === "dynamic_script_unproven").evidence;
-  assert.equal(issue.reason, "target_outside_export_domain");
-  assert.equal(issue.scriptIndex, 0);
-  assert.equal(issue.offset, source.scripts.sources[0].javascript.indexOf("SetXFormFieldValueById"));
-  assert.match(issue.sourceSnippet, /fd_not_exported/);
+  assert.deepEqual(folded(draft), ["fd_value_0"]);
+  const outside = draft.form.fields.find(field => field.id === "fd_value_0").sourceProps.foldedCaption.behavior.residualImpact.outsideExportIds;
+  assert.equal(outside.length, 1);
+  assert.equal(outside[0].id, "fd_not_exported");
+  assert.equal(outside[0].scriptIndex, 0);
+  assert.equal(outside[0].start, source.scripts.sources[0].javascript.indexOf("SetXFormFieldValueById"));
+  assert.equal(source.scripts.sources.at(-1).javascript.includes("Number(1)"), true);
 });

@@ -8,7 +8,10 @@ is not a second rendered owner; competing active claims and compound bodies
 remain protected. These are target-neutral source facts.
 
 Candidate inventory includes raw visible `_label_bind_id` relations even when
-the old layout caption marker is absent. Existing source column-header roles
+the old layout caption marker is absent. A single adjacent description whose
+text is the control's title is the rendered caption when the exported bind is
+not active. A caption that remains a separate control is not also shown as that
+control's native title. Existing source column-header roles
 remain authoritative: a decorative specification column must not become the
 next quantity editor's title because of a stale designer pointer. Calculation
 editors use the source export's `xform:xtext` renderer; their formula and readonly
@@ -47,9 +50,11 @@ separate. Redundant presentation-only authority entries may disappear only with
 the consumed label; the surviving field's permissions and all workflow business
 conditions remain unchanged. Shared/group titles, rich captions, independent
 label events, data-bearing labels and unproven regions are retained with evidence.
-Non-default typography or an unknown rendering relation remains unfinished when
-there is no proven native presentation mapping; it is not a completed exception
-merely because the mapper cannot yet handle it.
+Bold, italic and underline on the label itself are title emphasis. They become
+the field's native title and are recorded as `titleEmphasis`; color, font
+family, effects and ancestor formatting stay unfinished. An unknown rendering
+relation is not a completed exception merely because the mapper cannot yet
+handle it.
 
 ## Behavior mapping
 
@@ -69,12 +74,20 @@ operation is supported. Value operations keep addressing the business field.
 
 Remaining scripts use the existing bounded impact proof, without extending its
 JavaScript language. A local, fixed effect protects its exact field/caption or
-ancestor region. An unknown external call, dynamic identity, escaping DOM handle,
-prototype mutation or incomplete runtime program inventory still blocks every
-pair whose impact cannot be bounded. Reports retain the first reason, script
-index/offset, source excerpt and `impact` boundary. Unknown code is never treated
-as an empty program. Prior Source Drafts without the relationship inventory keep
-their earlier compatibility path.
+ancestor region. When that proof stops, reach is a separate boundary: DOM
+operations anchored to a closed set of literal ids, rows or non-title selectors
+block only those nodes. Reading or writing a field value, including
+`GetXFormFieldById(id)[0].value` and a jQuery `.val()` / `.prop("checked")`
+on that field, stays a data operation. A guarded `for...in window` whose key
+must start with a non-field prefix such as `attachmentObject_` is that prefix,
+not a form-wide walk. An unknown call that receives only closed nodes protects those nodes; a call
+with no node, a dynamic selector, a prototype write,
+eval, wide DOM collection or unresolved row still has no pair boundary and
+blocks every candidate. Reports retain the first reason, script index/offset,
+source excerpt and `impact` boundary. Unknown code is never treated as an empty
+program. A concrete field id outside the export is recorded and does not discard
+the rest of a completed target set. Prior Source Drafts without the relationship
+inventory keep their earlier compatibility path.
 
 A no-argument native submit callback may contain an unused local button-text
 scratch variable: a single `var` declaration reading `window.event.target.innerText`

@@ -3,7 +3,8 @@ import { inspectDeterministicScriptBranchProof } from "../dsl/deterministic-scri
 import { buildFormRuleRefIndex, resolveEffectTarget } from "../dsl/form-rules.js";
 import { captionScriptScope } from "./caption-script-scope.js";
 import { captionScriptReferences } from "./caption-script-references.js";
-import { auditedCaptionOrphans } from "./caption-row-scope.js";
+import { auditedCaptionOrphans, captionRowRegion } from "./caption-row-scope.js";
+import { captionImpactReach } from "./caption-impact-reach.js";
 import { captionToastValueProof } from "./caption-toast-value.js";
 import { captionNeededCoveredHelpers } from "./caption-covered-helpers.js";
 import { captionJsonImpact } from "./caption-json-impact.js";
@@ -176,11 +177,31 @@ export function captionBehaviorContract(source, form, mappedScripts) {
   const residualPrograms = [...new Set(residuals.filter(Boolean))];
   const issue = scope.issue && { ...scope.issue,
     sourceSnippet: residualPrograms[scope.issue.scriptIndex]?.slice(Math.max(0, (scope.issue.offset || 0) - 60), (scope.issue.offset || 0) + 140) };
+  let boundary;
+  if (!scope.ok) {
+    // The interpreter stops at the first unrecognized statement. Its reach is a
+    // separate question: a closed set of nodes does not block every other pair.
+    boundary = captionImpactReach(residualPrograms);
+    if (boundary.bounded) {
+      const anchors = new Set(boundary.anchors);
+      for (const marker of boundary.rowMarkers || []) {
+        const region = captionRowRegion(form, index, marker);
+        if (!region?.targets?.length) { boundary = { ...boundary, bounded: false, reason: "row_region_unproven", marker }; break; }
+        region.targets.forEach(target => anchors.add(target.id));
+      }
+      if (boundary.bounded) {
+        scope = { ok: true, targets: [...anchors], presentationTargets: [...anchors], dataTargets: [], parentReads: [],
+          rowRegions: [], localBoundary: { ...boundary, anchors: [...anchors] } };
+        proofMode = "local-script-boundary";
+      }
+    }
+  }
   return {
     summary: { coveredSourceStatements: consumed, regionMappings: regions, residualScope: { ...scope, issue },
       ...(neededHelpers.size ? { retainedCoveredHelpers: [...neededHelpers] } : {}) },
     forPair(fieldId, captionId, context) {
-      if (!scope.ok) return { ok: false, bounded: false, issue: { ...issue, impact: "unbounded-form", residualPrograms: residuals.length } };
+      if (!scope.ok) return { ok: false, bounded: false, issue: { ...issue, impact: "unbounded-form",
+        boundary: boundary?.reason, boundaryOffset: boundary?.offset, boundaryDetails: boundary?.details, residualPrograms: residuals.length } };
       const ids = [fieldId, captionId, ...(context?.ancestorIds || []), ...(context?.pairDescendantIds || [])];
       const presentation = scope.presentationTargets || scope.targets;
       const splitRegion = [...regions, ...(scope.rowRegions || [])].find(region =>
@@ -189,7 +210,8 @@ export function captionBehaviorContract(source, form, mappedScripts) {
         impact: "fixed-source-region", region: splitRegion } };
       if (ids.some(id => protectedTargets.has(id) || presentation.includes(id)) ||
           scope.parentReads?.some(id => context?.cellDescendantIds?.includes(id))) {
-        return { ok: false, bounded: true, issue: { reason: "independent_presentation_effect", impact: "fixed-source-region",
+        return { ok: false, bounded: true, issue: { reason: scope.localBoundary ? "local_script_reach" : "independent_presentation_effect",
+          impact: "fixed-source-region", ...(scope.localBoundary ? { boundary: scope.localBoundary } : {}),
           targets: [...new Set([...protectedTargets, ...presentation])], dataTargets: scope.dataTargets || [], parentReads: scope.parentReads } };
       }
       if ((residuals.some(text => text.trim()) || regions.length) && context?.version !== 1) {
@@ -209,6 +231,9 @@ export function captionBehaviorContract(source, form, mappedScripts) {
           ...(scope.detailDataReads?.length ? { detailDataReads: scope.detailDataReads } : {}),
           ...(scope.sharedJsonData ? { sharedJsonData: scope.sharedJsonData } : {}),
           ...(scope.nonEntryHelpers?.length ? { nonEntryHelpers: scope.nonEntryHelpers } : {}),
+          ...(scope.outsideExportIds?.length ? { outsideExportIds: scope.outsideExportIds } : {}),
+          ...(scope.localBoundary ? { localBoundary: { anchors: scope.localBoundary.anchors, selectors: scope.localBoundary.selectors,
+            rowMarkers: scope.localBoundary.rowMarkers } } : {}),
           rowRegions: scope.rowRegions || [], parentReads: scope.parentReads || [] } } };
     }
   };

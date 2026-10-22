@@ -113,5 +113,5 @@ A non-blocking warning status for migration details requiring human review.
 _Avoid_: fatal validation error
 
 **Source caption relation**:
-A source-only ownership fact combining literal binding, layout region, actual rendered editor and permission scope. A one-to-one relation becomes the field's native title by default; the DSL records the former label as a title reference, separately from the business field and source region. Shared or independent behavior remains explicit and unproven relations remain unfinished.
+A source-only ownership fact combining literal binding, layout region, actual rendered editor and permission scope. A one-to-one relation becomes the field's native title by default; bold, italic and underline on that title are emphasis. The DSL records the former label as a title reference, separately from the business field and source region. A script whose impact is a closed set of nodes blocks only those nodes. Shared or independent behavior remains explicit, and a relation whose impact or ownership is unproved stays unfinished.
 _Avoid_: duplicate hidden label, business field rename, merge count as acceptance

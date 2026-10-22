@@ -163,8 +163,9 @@ function fieldCaptionStructure(designer, caption, values, runtime, terminalBreak
       node.attrs.get("type") !== "hidden");
     if (editors.length !== 1) return fail("inactive_binding_without_rendered_designer_editor");
   }
+  const emphasis = ["b", "i", "underline"].filter(key => values[key] === "true");
   return { version: 1, relation: "one-to-one-field-caption", ownerId: binding.id, content,
-    plainText: true, unique: true, unguarded: true,
+    plainText: true, unique: true, unguarded: true, ...(emphasis.length ? { emphasis } : {}),
     bindingFlag: binding._label_bind, runtimeRenderer: rendered?.name,
     designerOffset: caption.start, ownerOffset: owner.start,
     permission: permissionAncestors(caption).map(node => parseDesignerFdValues(node.attrsText).id || node.attrs?.get("id")).filter(Boolean),
@@ -398,7 +399,9 @@ function plainValues(values) {
     !/[<>\r\n]|\$\{|<%/.test(values.content.trim()) &&
     ["font", "color", "effect"].every(key => !values[key]) &&
     [undefined, "", "14px"].includes(values.size) &&
-    ["b", "i", "underline"].every(key => [undefined, "", "false"].includes(values[key])) &&
+    // Bold, italic and underline are title emphasis. They do not make the label
+    // a second control. Color, font family and effects stay protected.
+    ["b", "i", "underline"].every(key => [undefined, "", "false", "true"].includes(values[key])) &&
     [undefined, "", "true"].includes(values.canShow) &&
     (values.width === undefined || dimension(values.width));
 }
@@ -489,6 +492,9 @@ function ordinaryAppearance(attrs, caption = false, standardTitleCell = false) {
     if (key === "text-decoration" && /^none$/i.test(value)) continue;
     if (caption && key === "font-size" && /^14px$/i.test(value)) continue;
     if (["font-weight", "font-style"].includes(key) && /^normal$/i.test(value)) continue;
+    if (caption && key === "font-weight" && /^(?:bold|[5-9]00)$/i.test(value)) continue;
+    if (caption && key === "font-style" && /^italic$/i.test(value)) continue;
+    if (caption && key === "text-decoration" && /^underline$/i.test(value)) continue;
     return false;
   }
   return true;

@@ -548,6 +548,7 @@ export function captionScriptScope(scripts, form, originals, { auditedOrphans = 
       if (origin) scriptIndex = origin.scriptIndex;
       fail(reason, origin, { targetId: id });
     };
+    const outsideExportIds = [];
     const known = new Set(originals.map(field => field.id));
     originals.flatMap(field => [field.sourceProps?.staticCaptionFact, field.sourceProps?.captionStructure]
       .flatMap(fact => [...(fact?.domContext?.ancestorIds || []), ...(fact?.domContext?.pairDescendantIds || [])])).forEach(id => known.add(id));
@@ -560,7 +561,9 @@ export function captionScriptScope(scripts, form, originals, { auditedOrphans = 
         if (dataTargets.has(id)) dataTargets.add(target.id);
         if (rowEffectTargets.has(id)) rowEffectTargets.add(target.id);
       });
-      else if (!known.has(id)) failTarget("target_outside_export_domain", id);
+      // A concrete id that is not a migrated field is not a wildcard. Keep the
+      // completed target set; only pairs that actually intersect it are affected.
+      else if (!known.has(id)) outsideExportIds.push({ id, ...(targetOrigins.get(id) || {}) });
     }
     for (const id of writes) {
       const resolved = rowTargets.has(id) ? rowRegion(id) : resolveEffectTarget(index, id);
@@ -581,7 +584,8 @@ export function captionScriptScope(scripts, form, originals, { auditedOrphans = 
       ...(detailDataReads.length ? { detailDataReads } : {}),
       ...(jsonImpact ? { sharedJsonData: jsonImpact.proof } : {}),
       ...([...functions].some(fn => !invoked.has(fn)) ? { nonEntryHelpers: [...functions].filter(fn => !invoked.has(fn)).map(fn => helperUnits.get(canonical(fn.node))) } : {}),
-      ...(nativeCurrencyBindings.length ? { nativeCurrencyBindings } : {}) };
+      ...(nativeCurrencyBindings.length ? { nativeCurrencyBindings } : {}),
+      ...(outsideExportIds.length ? { outsideExportIds } : {}) };
   } catch (error) {
     return { ok: false, targets: [], issue: { reason: error.reason || "script_scope_parse_error", scriptIndex,
       nodeType: error.nodeType, offset: error.offset, ...error.details } };
