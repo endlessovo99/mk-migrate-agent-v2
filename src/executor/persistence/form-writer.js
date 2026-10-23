@@ -1941,12 +1941,11 @@ function migrationRowIdFor(row = {}) {
 }
 
 function buildFieldAuth(mainModel, detailModels, form) {
-  const required = new Set((form.fields || []).filter((field) => field.props?.required).map((field) => field.id));
   const fieldsById = new Map((form.fields || []).map((field) => [field.id, field]));
   const authEntry = (field, dslField) => ({
     visible: true,
     editable: !field.fdIsSystem && field.fdType !== "desc" && dslField?.props?.readOnly !== true,
-    required: required.has(field.fdName),
+    required: dslField?.props?.required === true,
     hide: false
   });
 

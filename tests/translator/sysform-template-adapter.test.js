@@ -626,9 +626,10 @@ describe("translateSysFormTemplateXml", () => {
     const reportTime = dsl.form.fields.find((item) => item.id === "fd_report_time");
 
     assert.equal(eventTime?.componentId, "xform-datetime");
-    assert.deepEqual(eventTime?.props, { displayPattern: "yyyy-MM-dd hh:mm" });
+    assert.deepEqual(eventTime?.props, { required: false, displayPattern: "yyyy-MM-dd hh:mm" });
     assert.equal(reportTime?.componentId, "xform-datetime");
     assert.deepEqual(reportTime?.props, {
+      required: false,
       defaultValue: { kind: "currentTime" },
       displayPattern: "yyyy-MM-dd hh:mm"
     });

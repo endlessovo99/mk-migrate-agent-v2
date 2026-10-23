@@ -58,7 +58,7 @@ it("starts with genuine source controls, literal original options/defaults and v
     assert.equal(draft.scripts?.actions?.length || 0, 0);
     assert.ok(fields(draft).filter(item => item.componentId === "xform-radio").every(item => item.type === "radio" && item.props.options.length >= 2));
     assert.equal(prepared.verify(prepared.update).ok, true);
-    assert.equal(prepared.verify(prepared.update).invariantVersion, 40);
+    assert.equal(prepared.verify(prepared.update).invariantVersion, 41);
     assert.equal(trust(source, draft).ok, true);
   }
   const { draft } = load();

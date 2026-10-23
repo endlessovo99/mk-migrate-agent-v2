@@ -988,6 +988,8 @@ function simpleLoadModel(listener, form) {
 function renderFieldAlias(alias, form, indent, usedNames, approvedScalarReadFieldIds) {
   const approvedRead = approvedScalarStringReadExpression(alias.fieldId, form, approvedScalarReadFieldIds);
   if (approvedRead) return [`${indent}var ${alias.name} = ${approvedRead};`];
+  const emptySelectRead = sourceEmptySelectReadExpression(alias, form);
+  if (emptySelectRead) return [`${indent}var ${alias.name} = ${emptySelectRead};`];
   const rawAlias = uniqueLocalName(`${alias.name}Raw`, usedNames);
   usedNames.add(rawAlias);
   const lines = [`${indent}var ${rawAlias} = MKXFORM.getValue(${JSON.stringify(alias.fieldId)});`];
@@ -1002,6 +1004,33 @@ function renderFieldAlias(alias, form, indent, usedNames, approvedScalarReadFiel
     lines.push(`${indent}var ${alias.name} = Array.isArray(${rawAlias}) ? ${rawAlias}[0] : ${rawAlias};`);
   }
   return lines;
+}
+
+function sourceEmptySelectReadExpression(alias, form) {
+  // A source DOM select's .value is a String, including its explicit blank
+  // option. Preserve that read at onLoad when the native select is uninitialized.
+  // This is not a general getValue coercion or an approved-policy replacement.
+  const fields = (form.fields || []).filter(field => field.id === alias.fieldId);
+  if (!alias.elementRead || fields.length !== 1) return undefined;
+  const field = fields[0], source = field.sourceProps || {}, empty = source.runtimeSelectEmpty;
+  if (field.type !== "singleSelect" || field.componentId !== "xform-select" || field.dataOnly === true ||
+      field.columns || field.props?.multiple === true || ["multiple", "tags"].includes(field.props?.mode) ||
+      source.designerId !== field.id || source.designerType !== "select" ||
+      source.designerValues?.dataType !== "String" || source.metadataId !== field.id ||
+      source.metadataKind !== "simple" || source.metadataAttributes?.type !== "String" ||
+      empty?.version !== 1 || empty.source !== "fdDisplayJsp" || empty.status !== "proven" ||
+      empty.showPleaseSelect !== true || empty.property !== `extendDataFormInfo.value(${field.id})` ||
+      !Array.isArray(field.props?.options) || !field.props.options.length ||
+      field.props.options.some(option => typeof option.value !== "string") ||
+      JSON.stringify(field.props.options) !== JSON.stringify(empty.options)) return undefined;
+  return '(function(__selectionValue) { ' +
+    'if (Array.isArray(__selectionValue)) { ' +
+    'if (__selectionValue.length === 0) return ""; ' +
+    'if (__selectionValue.length !== 1 || typeof __selectionValue[0] !== "string") throw "Expected one selected String value."; ' +
+    'return __selectionValue[0]; } ' +
+    'if (__selectionValue === undefined || __selectionValue === null) return ""; ' +
+    'if (typeof __selectionValue !== "string") throw "Expected one selected String value."; ' +
+    'return __selectionValue; })(MKXFORM.getValue(' + JSON.stringify(field.id) + '))';
 }
 
 function declaredLocalNames(node) {
@@ -1549,9 +1578,10 @@ function legacyFieldAlias(statement) {
     return undefined;
   }
   const init = statement.declarations[0].init;
-  const fieldId = legacyFieldElementId(init) || legacyFieldValueId(init) || jqueryFieldValueId(init);
+  const elementId = legacyFieldElementId(init);
+  const fieldId = elementId || legacyFieldValueId(init) || jqueryFieldValueId(init);
   return fieldId
-    ? { name: statement.declarations[0].id.name, fieldId }
+    ? { name: statement.declarations[0].id.name, fieldId, ...(elementId ? { elementRead: true } : {}) }
     : undefined;
 }
 

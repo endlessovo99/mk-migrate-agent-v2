@@ -3860,7 +3860,11 @@ describe("executeDsl", () => {
       assert.equal(result.fieldKey[0], null);
       assert.equal(result.label[0], "----");
     }
-    assert.deepEqual([...new Set(requireRules.flatMap((rule) => rule.result.map((item) => item.fieldName)))], ["fd_detail"]);
+    assert.deepEqual([...new Set(requireRules.flatMap((rule) => rule.result.map((item) => item.fieldName)))], ["fd_name"]);
+    for (const rule of requireRules) {
+      assert.equal(rule.result[0].tableType, "detail");
+      assert.equal(rule.result[0].type, detailModel.fdTableName);
+    }
     assert.equal(JSON.stringify(formAttr.formRule).includes("fd_detail_row"), false);
     assert.equal(result.readback.form.formRules.displayRuleCount, 2);
     assert.equal(result.readback.form.formRules.requireRuleCount, 2);

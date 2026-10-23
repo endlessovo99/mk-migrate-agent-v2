@@ -39,6 +39,6 @@ it("continues to reject candidate label rewriting after multiline grouping is pr
 it("completes the genuine static multiline-label route through native readback and record", async () => {
   const result = await runRouteCase("radio-static-multiline-label-success");
   assert.equal(result.execution.ok, true);
-  assert.equal(result.execution.readback.invariantVersion, 40);
+  assert.equal(result.execution.readback.invariantVersion, 41);
   assert.equal(result.execution.transferRecord.status, "recorded");
 });

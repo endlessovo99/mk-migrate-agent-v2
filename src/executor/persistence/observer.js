@@ -205,10 +205,12 @@ function observeForm(config, xform, options = {}) {
   const fields = [...mainFields, ...detailFields];
   for (const field of mainFields) {
     observeStaticReadOnly(field, config.auth, mainModel.fdTableName);
+    observeRequiredPermissions(field, config.auth, mainModel.fdTableName);
   }
   detailFields.forEach((field, index) => {
     for (const column of field.columns) {
       observeStaticReadOnly(column, config.auth, detailModels[index].fdTableName);
+      observeRequiredPermissions(column, config.auth, detailModels[index].fdTableName);
     }
   });
   const renderedDetailColumnsByScene = {
@@ -323,6 +325,21 @@ function observeStaticReadOnly(field, auth, tableName) {
     field.props.readOnly = true;
   }
   delete field.nativeStaticReadOnly;
+}
+
+function observeRequiredPermissions(field, auth, tableName) {
+  if (!componentSupportsProp(field.component, "required")) return;
+  const active = Array.isArray(auth) ? auth.filter(entry => entry?.fdIsAvailable !== false) : [];
+  field.props.nativeRequiredPermissions = Object.fromEntries(["add", "edit"].map(mode => {
+    const values = active.map(entry => entry?.[mode]?.[tableName]?.fields?.[field.id]?.required);
+    // Missing optional flags are native-falsy. Non-booleans or conflicting
+    // applicable entries cannot prove a deterministic required permission.
+    const valid = values.every(value => value === undefined || typeof value === "boolean");
+    const normalized = values.map(value => value === true);
+    const value = valid && normalized.every(value => value === normalized[0])
+      ? normalized[0] === true : null;
+    return [mode, value];
+  }));
 }
 
 function observeDataField(field, lang) {

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+ <void method="put"><string>fdId</string><string>required-permissions-form</string></void>
+ <void method="put"><string>fdModelId</string><string>required-permissions-template</string></void>
+ <void method="put"><string>fdName</string><string>Required detail permissions</string></void>
+ <void method="put"><string>fdTemplateEdition</string><string>1</string></void>
+ <void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_seal",label:"是否用印",dataType:"String",items:"是|YES;否|NO"}'&gt;&lt;input id="fd_seal"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;input type="hidden" id="intro_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_subject",label:"主题",dataType:"String",required:"true"}'&gt;&lt;input id="fd_subject"/&gt;&lt;/div&gt;
+  &lt;div fd_type="inputText" fd_values='{id:"fd_intro_org",label:"前往单位",dataType:"String",required:"false"}'&gt;&lt;input id="fd_intro_org"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;input type="hidden" id="rows_row"/&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_rows",label:"用印文件明细",showRow:"1"}'&gt;
+   &lt;tr&gt;&lt;td&gt;文件名称&lt;/td&gt;&lt;td&gt;备注&lt;/td&gt;&lt;td&gt;只读编号&lt;/td&gt;&lt;/tr&gt;
+   &lt;tr type="templateRow"&gt;
+    &lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_document",label:"文件名称",tableName:"fd_rows",dataType:"String",required:"true"}'&gt;&lt;input id="fd_document"/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_note",label:"备注",tableName:"fd_rows",dataType:"String",required:"false"}'&gt;&lt;input id="fd_note"/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_code",label:"只读编号",tableName:"fd_rows",dataType:"String",required:"true",readOnly:"true"}'&gt;&lt;input id="fd_code"/&gt;&lt;/div&gt;&lt;/td&gt;
+   &lt;/tr&gt;
+  &lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+ &lt;/table&gt;</string></void>
+ <void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;
+  &lt;extendSimpleProperty name="fd_seal" type="String" label="是否用印" enumValues="是|YES;否|NO"/&gt;
+  &lt;extendSimpleProperty name="fd_subject" type="String" label="主题" notNull="true"/&gt;
+  &lt;extendSimpleProperty name="fd_intro_org" type="String" label="前往单位"/&gt;
+  &lt;extendSubTableProperty name="fd_rows" label="用印文件明细"&gt;
+   &lt;extendSimpleProperty name="fd_document" type="String" label="文件名称" notNull="true"/&gt;
+   &lt;extendSimpleProperty name="fd_note" type="String" label="备注"/&gt;
+   &lt;extendSimpleProperty name="fd_code" type="String" label="只读编号" notNull="true"/&gt;
+  &lt;/extendSubTableProperty&gt;
+ &lt;/metadata&gt;</string></void>
+ <void method="put"><string>fdDisplayJsp</string><string>&lt;xform:editShow&gt;&lt;script&gt;
+  AttachXFormValueChangeEventById("fd_seal", function(value) {
+   if (value.indexOf("YES") &gt;= 0) {
+    common_dom_row_set_show_required_reset("rows_row", true, true, false);
+    common_dom_row_set_show_required_reset("intro_row", true, true, false);
+   } else {
+    common_dom_row_set_show_required_reset("rows_row", false, false, false);
+    common_dom_row_set_show_required_reset("intro_row", false, false, false);
+   }
+  });
+ &lt;/script&gt;&lt;/xform:editShow&gt;</string></void>
+</object></java>

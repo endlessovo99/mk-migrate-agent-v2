@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-empty-selector-initialization-sysform</string></void>
+  <void method="put"><string>fdModelId</string><string>route-empty-selector-initialization-template</string></void>
+  <void method="put"><string>fdName</string><string>付款方式空值初始化路由验证</string></void>
+  <void method="put"><string>fdDesignerHtml</string><string>
+   &lt;table fd_type="standardTable"&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="select" fd_values='{id:"fd_fkfs",label:"付款方式",dataType:"String",items:"电汇|A;票据|B;其他|C",defaultValue:""}'&gt;&lt;select id="fd_fkfs"&gt;&lt;/select&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="pjlx_row" name="pjlx_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_pjlx",label:"票据类型",dataType:"String"}'&gt;&lt;input id="fd_pjlx"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" id="zffs_row" name="zffs_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_zffs",label:"票据支付方式",dataType:"String"}'&gt;&lt;input id="fd_zffs"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+  </string></void>
+  <void method="put"><string>fdMetadataXml</string><string>
+   &lt;metadata&gt;
+    &lt;extendSimpleProperty name="fd_fkfs" type="String" enumValues="电汇|A;票据|B;其他|C"/&gt;
+    &lt;extendSimpleProperty name="fd_pjlx" type="String"/&gt;
+    &lt;extendSimpleProperty name="fd_zffs" type="String"/&gt;
+   &lt;/metadata&gt;
+  </string></void>
+  <void method="put"><string>fdDisplayJsp</string><string>
+   &lt;xform:select property="extendDataFormInfo.value(fd_fkfs)" showPleaseSelect="true" onValueChange="__xformDispatch"&gt;
+    &lt;xform:simpleDataSource value="A"&gt;电汇&lt;/xform:simpleDataSource&gt;
+    &lt;xform:simpleDataSource value="B"&gt;票据&lt;/xform:simpleDataSource&gt;
+    &lt;xform:simpleDataSource value="C"&gt;其他&lt;/xform:simpleDataSource&gt;
+   &lt;/xform:select&gt;
+   &lt;script&gt;
+    Com_AddEventListener(window, "load", function() {
+      var is_ywzd = GetXFormFieldById("fd_fkfs")[0];
+      if (is_ywzd.value.indexOf("B") &gt;= 0) {
+        common_dom_row_set_show_required_reset("pjlx_row", true, false, false);
+      } else {
+        common_dom_row_set_show_required_reset("pjlx_row", false, false, false);
+      }
+    });
+    Com_AddEventListener(window, "load", function() {
+      var is_ywzd = GetXFormFieldById("fd_fkfs")[0];
+      if (is_ywzd.value.indexOf("B") &gt;= 0) {
+        common_dom_row_set_show_required_reset("zffs_row", true, false, false);
+      } else {
+        common_dom_row_set_show_required_reset("zffs_row", false, false, false);
+      }
+    });
+   &lt;/script&gt;
+  </string></void>
+ </object>
+</java>

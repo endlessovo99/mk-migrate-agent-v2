@@ -66,7 +66,7 @@ it("lets an anchored unrecognized call block only its node", () => {
   assert.equal(source.scripts.sources.some(script => script.javascript.includes("unknownRefresh")), true);
   const open = draft.form.fields.find(item => item.id === pairs[0][0]);
   assert.equal(open.sourceProps.foldedCaption.behavior.proofMode, "local-script-boundary");
-  assert.equal(open.props.required, undefined);
+  assert.equal(open.props.required, false);
 });
 
 it("treats a field value read as data and a title show as a local boundary", () => {
