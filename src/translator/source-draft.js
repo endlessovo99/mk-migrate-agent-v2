@@ -726,6 +726,7 @@ function sourcePropsFromField(field) {
     designerId: field.source?.designerId,
     designerType: field.source?.designerType,
     designerValues: field.source?.designerValues,
+    textPresentation: field.source?.textPresentation,
     designerRadioLayoutLiteral: field.source?.designerRadioLayoutLiteral,
     runtimeTextReadOnly: field.source?.runtimeTextReadOnly,
     runtimeSelectEmpty: field.source?.runtimeSelectEmpty,

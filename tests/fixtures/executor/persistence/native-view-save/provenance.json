@@ -1,0 +1,37 @@
+{
+  "source": {
+    "at": "2026-10-23T08:52:51.093Z",
+    "digestUrl": "https://oaqas.shanghai-electric.com/web/sys-xform/desktop/digest.json",
+    "url": "https://oaqas.shanghai-electric.com/web/sys-xform/desktop/api/XFormIDE/index.js?4dc12919af1531c82de2356c4ded8777",
+    "releaseHash": "4dc12919af1531c82de2356c4ded8777",
+    "sha256": "3e1e44c44d665b34f6279735f610aa80a7f644515359b860fea1bd32dca347bb",
+    "bytes": 4333786
+  },
+  "scope": "Unmodified native layout serialization and reassembly. Unrelated imports are inert; pick/clone are deterministic utility substitutes. Default tests make no network calls.",
+  "files": {
+    "ide-module-53016.js": {
+      "sha256": "310d67eb172eb75a6315140999e448654b051a35835964cdfaea190f297f0125",
+      "module": 53016
+    },
+    "inject-render-layout.js": {
+      "sha256": "dc99784f7d5fd4d2e27fcdccc5afdaf496908e32ef69d9074f4f63b6f3e6b998",
+      "export": "injectRenderLayoutControl"
+    },
+    "ide-module-35908.js": {
+      "sha256": "ecb6a5c13e67fd2e7fbe8efe6f05e3c10f70ec4fb8cc3cbebfa77a84fe1e50fe",
+      "module": 35908
+    },
+    "ide-module-39929.js": {
+      "sha256": "b25a8373f25b17e603f89aa08598099453a682f067cb9c756c9e4e431ed4fb9c",
+      "module": 39929
+    },
+    "ide-module-90405.js": {
+      "sha256": "758179752193566b688bea343d686de49670aa1ed6eece592ee8a10ce35f1445",
+      "module": 90405
+    },
+    "render-props-filter.js": {
+      "sha256": "521c447669a81f2a1c35d978484a993c1c6ced9fd9333f5083af20f763338ff3",
+      "symbol": "t2 renderFormContainer props filter"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "origin": "https://oaqas.shanghai-electric.com",
+  "retrievedAt": "2026-10-23",
+  "source": {
+    "url": "https://oaqas.shanghai-electric.com/web/sys-xform/desktop/api/XFormIDE/index.js?4dc12919af1531c82de2356c4ded8777",
+    "sha256": "3e1e44c44d665b34f6279735f610aa80a7f644515359b860fea1bd32dca347bb"
+  },
+  "stylesheet": {
+    "url": "https://oaqas.shanghai-electric.com/web/sys-xform/desktop/api/XFormIDE/index.css?4dc12919af1531c82de2356c4ded8777",
+    "sha256": "186e2fa856c9b85910f44b675ce337d554e65f9acf19fe82d2113409abeb6695"
+  },
+  "scope": "Exact native Main, Receiver and detail components; unrelated dependencies and field editors are stubbed in tests. CSS rule is unmodified. No network access.",
+  "files": {
+    "ide-module-49296.js": {
+      "sha256": "85c94de6941913becad5bc6060e6119c95b8466b18a2bb4b72df514f24d0d337",
+      "sourceModule": 49296
+    },
+    "ide-module-51478.js": {
+      "sha256": "d48b40e19d6da061c06b01fa17f68a226e2316952bf0f45e0eb04911b1ae8b07",
+      "sourceModule": 51478
+    },
+    "ide-module-60562.js": {
+      "sha256": "162669f4ae8b3b9e6006f9d52162ba266c3f883bb53747583fe0ad46e7bdc1ab",
+      "sourceModule": 60562
+    },
+    "detail-container.css": {
+      "sha256": "6c778ca389e0a4c5701b293749aabba51c33c5c5288cd8e9039edae5ee983fe7"
+    }
+  }
+}

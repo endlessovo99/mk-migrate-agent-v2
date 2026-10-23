@@ -114,6 +114,8 @@ export function splitDirectChildCells(rowHtml, { includeUnquotedWidth = false } 
       const attrs = parseXmlAttributes(attributesText);
       const className = attrValue(attributesText, "class");
       if (className && attrs.class === undefined) attrs.class = className;
+      const align = attrValue(attributesText, "align");
+      if (align && attrs.align === undefined) attrs.align = align;
       const width = includeUnquotedWidth ? attrValue(attributesText, "width") : "";
       if (width && attrs.width === undefined) attrs.width = width;
       const rowspan = attrValue(attributesText, "rowspan");

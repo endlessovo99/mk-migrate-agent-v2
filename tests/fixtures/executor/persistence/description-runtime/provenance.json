@@ -1,0 +1,20 @@
+{
+  "scope": "Native description/view components; hooks and external UI effects inert. Component output only; no browser layout or target writes.",
+  "files": {
+    "xform-description.js": {
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-description/index.js?7fFaBOKF0v",
+      "sha256": "3b4755943e6f570b2aea69d7c94715e700e9ff1749108c721b4eb653bc208282",
+      "bytes": 1971
+    },
+    "xform-m-description.js": {
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-m-description/index.js?vd1qosbXym",
+      "sha256": "718be59699e489f9805e517718506ceb633458c41bfc943bebfe738e23c6c658",
+      "bytes": 2093
+    },
+    "xform-view.js": {
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-view/index.js?tROn6choCq",
+      "sha256": "1c3009ef7751ca98a35371c610ba8849c3ce63d7d4c510114e6771d0199fdf63",
+      "bytes": 5331
+    }
+  }
+}

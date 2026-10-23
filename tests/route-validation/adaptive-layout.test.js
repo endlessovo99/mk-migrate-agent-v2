@@ -121,7 +121,7 @@ function changedView(prepared, mutate) {
 
 function adaptiveCarrier(view, scene) {
   const appearance = view.view.render[scene][0];
-  const carriers = nodes(appearance).filter(node => node.type === "@elem/xform-html");
+  const carriers = nodes(appearance).filter(node => node.controlProps?.dangerouslySetInnerHTML);
   assert.equal(carriers.length, 1, `${scene} must mount exactly one CSS-only carrier`);
   const carrier = carriers[0];
   const scope = parentOf(appearance, carrier.key);
@@ -329,7 +329,7 @@ it("derives the same adaptive policy after changing all field identities, labels
   }
 });
 
-it("mounts CSS through the native HTML control inside a form-specific scope without adding business fields", () => {
+it("mounts fixed CSS through a persistent native container inside a form-specific scope without business fields", () => {
   const { adaptive, retained } = stages();
   const next = projection(adaptive), old = projection(retained);
   assert.deepEqual(
@@ -338,17 +338,19 @@ it("mounts CSS through the native HTML control inside a form-specific scope with
   );
   const scopeNames = [];
   for (const scene of scenes) {
-    const { scope, carrier } = adaptiveCarrier(next.view, scene);
+    const { appearance, scope, carrier } = adaptiveCarrier(next.view, scene);
     assert.equal(scope.type, "div", "Use NewOA's registered native container");
     const scopeName = scope.controlProps.className;
     assert.match(scopeName, /^mk-adaptive-[a-zA-Z0-9_-]+$/);
     scopeNames.push(scopeName);
-    assert.ok(nodes(scope).some(node => node.key === "main"), "CSS and business controls must share their scope");
-    assert.equal(carrier.kind, "control");
-    assert.equal(carrier.controlProps.$$isDesign, false, "The CSS carrier must mount in the designer too");
-    const { html, css, javascript } = carrier.controlProps.source;
-    assert.equal(html, "");
-    assert.equal(javascript, "");
+    assert.deepEqual(appearance.children.map(node => node.key), [scope.key, "main"],
+      "The marker must precede main without wrapping the native designer receiver");
+    assert.equal(scope.children.length, 1);
+    assert.equal(carrier.kind, "container");
+    assert.equal(carrier.type, "div");
+    const html = carrier.controlProps.dangerouslySetInnerHTML.__html;
+    assert.match(html, /^<style>[\s\S]*<\/style>$/);
+    const css = html.slice(7, -8);
     assert.match(css, /\.ele-xform-fieldset-label/);
     assert.match(css, /width\s*:\s*auto\s*!important/);
     assert.match(css, /max-width\s*:\s*none\s*!important/);
@@ -369,12 +371,12 @@ for (const scene of scenes) {
       scope.children = scope.children.filter(node => node.key !== carrier.key);
     }],
     ["changed title CSS", ({ carrier }) => {
-      carrier.controlProps.source.css = carrier.controlProps.source.css.replace(
+      carrier.controlProps.dangerouslySetInnerHTML.__html = carrier.controlProps.dangerouslySetInnerHTML.__html.replace(
         /width\s*:\s*auto\s*!important/, "width:8em!important"
       );
     }],
     ["unexpected executable JavaScript", ({ carrier }) => {
-      carrier.controlProps.source.javascript = "globalThis.unapprovedMigrationScript = true;";
+      carrier.controlProps.dangerouslySetInnerHTML.__html += "<script>globalThis.unapprovedMigrationScript = true;</script>";
     }],
     ["carrier moved outside the form scope", ({ appearance, scope, carrier }) => {
       scope.children = scope.children.filter(node => node.key !== carrier.key);
@@ -382,6 +384,10 @@ for (const scene of scenes) {
     }],
     ["removed form scope", ({ scope }) => {
       delete scope.controlProps.className;
+    }],
+    ["removed main-field scope", ({ appearance }) => {
+      const field = nodes(appearance).find(node => node.controlProps?.className === "mk-adaptive-main-field");
+      delete field.controlProps.className;
     }]
   ]) {
     it(`rejects ${scene} adaptive readback with ${name}`, () => {

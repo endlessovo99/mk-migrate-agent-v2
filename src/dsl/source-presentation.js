@@ -34,6 +34,12 @@ export function sourcePresentationIssues(sourceForm = {}, targetForm = {}, {
       add("visibility", { fieldId: target.id, sourceId: source.id, sourceRef: source.sourceRef });
       continue;
     }
+    if (!foldedSourceRefs.has(source.sourceRef) && target.componentId === "xform-description") {
+      const presentation = source.sourceProps?.textPresentation;
+      if (presentation && Object.entries(presentation).some(([key, value]) => target.props?.style?.[key] !== value)) {
+        add("description_style", { fieldId: target.id, sourceId: source.id, sourceRef: source.sourceRef });
+      }
+    }
     if (!foldedSourceRefs.has(source.sourceRef) &&
       source.sourceProps?.layoutCell?.hiddenLabel === true && target.type !== "description" &&
       target.props?.hiddenLabel !== true) {
