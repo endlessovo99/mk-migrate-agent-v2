@@ -72,6 +72,7 @@ export function mapChoiceOtherCompanions(fields = [], sourceScripts = {}, behavi
       props: {
         options: [{ label: cleanText(caption.title).replace(/[:：]\s*$/u, ""), value: "selected" }],
         hiddenLabel: true,
+        required: false,
         ...(choice.props?.readOnly === true || text.props?.readOnly === true ? { readOnly: true } : {})
       },
       sourceProps: {
