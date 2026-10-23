@@ -1,3 +1,4 @@
+import { nativeMessageRuntime } from "../helpers/native-message-runtime.js";
 import assert from "node:assert/strict";
 import vm from "node:vm";
 import { describe, it } from "node:test";
@@ -196,7 +197,7 @@ function runSubmit(payeeRows, projectRows, projectFlag, legacy, total = 0) {
     alert: (message) => alerts.push(message),
     MKXFORM: {
       getValue: (id) => id.includes("fd_payee_list") ? payeeRows : id.includes("fd_project_num_list") ? projectRows : id === "fd_is_project" ? (projectFlag ? "1" : "0") : total,
-      setValue: (...args) => sets.push(args), toast: (message) => alerts.push(message)
+      setValue: (...args) => sets.push(args), ...nativeMessageRuntime("desktop", message => alerts.push(message)).MKXFORM
     },
     $: (selector) => {
       if (selector.includes("fd_payee_diff")) return { val: () => sets.find((entry) => entry[0] === "fd_payee_diff")?.[1] ?? 0 };

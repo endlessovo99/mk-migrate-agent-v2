@@ -12,6 +12,7 @@ import { parseRootHashMapXmlStringPuts } from "../../src/translator/xml-utils.js
 import { parse } from "acorn";
 import { translateSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
 import { sourceDraftFromLegacyDsl } from "../../src/translator/source-draft.js";
+import { nativeValidationMessage } from "../../src/translator/native-validation-message.js";
 
 const fixture = name => `tests/fixtures/route-validation/caption-mapped-script-scope/${name}_SysFormTemplate.xml`;
 
@@ -53,6 +54,28 @@ function contractFor(functionText, { changeProof = false, select = false } = {})
 
 it("reuses a fixed native toast while preserving the evidence boundary", () => {
   assert.equal(contractFor('function onBeforeSubmit(){MKXFORM.toast("Mismatch");return false;}').summary.residualScope.ok, true);
+});
+
+it("keeps cross-platform native messages inside the existing bounded caption proof", () => {
+  for (const expression of ['"Mismatch"', '"Rows " + positions.join(",") + " are invalid"']) {
+    const body = 'var positions=[];for(var i=0;i<2;i++){positions.push(i+1);}' + nativeValidationMessage(expression);
+    assert.equal(contractFor(`function onBeforeSubmit(){${body}return false;}`).summary.residualScope.ok, true);
+  }
+});
+
+for (const body of [
+  'MKXFORM.toast({content: externalMessage, icon:"fail"});',
+  'MKXFORM.toast({content:"Mismatch", icon:externalIcon});',
+  'MKXFORM.toast({content:"Mismatch", icon:"fail", onClose:callback});',
+  'MKXFORM.toast({get content(){return externalMessage}, icon:"fail"});',
+  'MKXFORM.toast({content:"Mismatch", ...extra});',
+  'MKXFORM.toast({content:"Mismatch", content:"Other"});',
+  'MKXFORM.message.error(externalMessage);',
+  'MKXFORM.message.error("Mismatch", externalEffect());',
+  'MKXFORM.message[method]("Mismatch");',
+  'MKXFORM["message"].error("Mismatch");'
+]) it(`rejects unbounded notification options: ${body}`, () => {
+  assert.equal(contractFor(`function onBeforeSubmit(){${body}}`).summary.residualScope.ok, false);
 });
 
 it("reuses closed options-only native select updates", () => {

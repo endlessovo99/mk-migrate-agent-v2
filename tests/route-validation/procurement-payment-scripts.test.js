@@ -1,3 +1,4 @@
+import { nativeMessageRuntime } from "../helpers/native-message-runtime.js";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import vm from "node:vm";
@@ -233,7 +234,7 @@ function assertDepartmentConsistencyValues(action, tableId, columnId) {
         assert.equal(id, `\${table:${tableId}}`);
         return values.map((value) => ({ [columnId]: value }));
       },
-      toast() {}
+      ...nativeMessageRuntime().MKXFORM
     } });
     vm.runInContext(action.function, context, { timeout: 1000 });
     assert.equal(context.onBeforeSubmit({ isDraft: false }), expected, `${tableId}:${JSON.stringify(values)}`);

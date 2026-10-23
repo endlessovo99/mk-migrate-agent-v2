@@ -1,4 +1,5 @@
 import { parse } from "acorn";
+import { nativeValidationMessage } from "./native-validation-message.js";
 
 const BASIS = "deterministic-synchronous-submit-validation";
 
@@ -41,7 +42,7 @@ export function synchronousSubmitValidationCandidate(source = {}, form = {}) {
     coverage: { status: "translated", nativeRules: [], residuals: [] },
     functionMappings: [{
       source: "complete synchronous legacy submit validation chain",
-      target: "onBeforeSubmit + MKXFORM.getValue + MKXFORM.toast",
+      target: "onBeforeSubmit + MKXFORM.getValue + platform-specific native validation message",
       basis: BASIS,
       reviewRequired: false
     }],
@@ -109,7 +110,7 @@ export function synchronousOnChangeAlertCandidate(source = {}, form = {}) {
     function: [
       "function onChange(value, rowNum, parentRowNum) {",
       "  if (value < 0) {",
-      `    MKXFORM.toast(${JSON.stringify(branch.message)})`,
+      nativeValidationMessage(JSON.stringify(branch.message), "    "),
       "  }",
       "}"
     ].join("\n"),
@@ -117,7 +118,7 @@ export function synchronousOnChangeAlertCandidate(source = {}, form = {}) {
     coverage: { status: "translated", nativeRules: [], residuals: [] },
     functionMappings: [{
       source: "complete alert-only legacy value-change validation",
-      target: "control onChange + MKXFORM.toast",
+      target: "control onChange + platform-specific native validation message",
       basis: "deterministic-synchronous-onchange-alert",
       reviewRequired: false
     }],
@@ -178,7 +179,7 @@ function compileStatement(statement, context, indent) {
     }
     const alertMessage = literalAlertMessage(statement.expression);
     if (alertMessage !== undefined) {
-      return [`${indent}MKXFORM.toast(${JSON.stringify(alertMessage)})`];
+      return [nativeValidationMessage(JSON.stringify(alertMessage), indent)];
     }
     const assignment = statement.expression;
     if (

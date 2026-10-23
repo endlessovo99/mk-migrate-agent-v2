@@ -124,6 +124,12 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
   version: 1,
   cases: [
     {
+      id: "submission-feedback-native-message-success",
+      source: { kind: "form-only", relativePath: "submission-feedback/submission-feedback_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "checkbox-other-compatible-success",
       source: { kind: "form-only", relativePath: "checkbox-other-compatible/compatible_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,

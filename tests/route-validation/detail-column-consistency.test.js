@@ -1,3 +1,4 @@
+import { nativeMessageRuntime } from "../helpers/native-message-runtime.js";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -254,7 +255,7 @@ function runTarget(text, values, isDraft = false) {
   const messages = [];
   const context = vm.createContext({ MKXFORM: {
     getValue: (id) => { assert.equal(id, "${table:fd_lines}"); return values?.map((code) => ({ code })); },
-    toast: (message) => messages.push(message)
+    ...nativeMessageRuntime("desktop", message => messages.push(message)).MKXFORM
   } });
   vm.runInContext(text, context, { timeout: 1000 });
   return { ok: context.onBeforeSubmit({ isDraft }), messages };

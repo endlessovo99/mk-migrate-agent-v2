@@ -1,0 +1,24 @@
+{
+  "origin": "https://oaqas.shanghai-electric.com",
+  "url": "/web/sys-xform/desktop/api/XFormRuntime/index.js?a3ec998c10af6bbce34dd6caffe4a203",
+  "capturedAt": "2026-10-23T09:42:48.764Z",
+  "bundleSha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+  "modules": [
+    {
+      "name": "message",
+      "id": 22603,
+      "file": "message.js",
+      "start": 238874,
+      "end": 239298,
+      "sha256": "f1d4d6f5efcc59faf2288050c8d3e0811cdf54215c321026de6de53e3f3e6e15"
+    },
+    {
+      "name": "toast",
+      "id": 2345,
+      "file": "toast.js",
+      "start": 240258,
+      "end": 240876,
+      "sha256": "dd9517ac30fdd2f542f9b245facd56b9c1b847addab8be9017f949a5e76d1896"
+    }
+  ]
+}

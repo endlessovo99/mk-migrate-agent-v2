@@ -40,20 +40,29 @@ export function captionBehaviorContract(source, form, mappedScripts) {
     let tree;
     try { tree = parse(action.function, { ecmaVersion: "latest" }); } catch { continue; }
     let toastValue;
+    const closedMessage = node => {
+      if (node?.type === "Literal" && typeof node.value === "string") return true;
+      toastValue ||= captionToastValueProof(action.function, tree);
+      return Boolean(node && toastValue(node));
+    };
     let bounded = true;
     const actionRegions = [], actionTargets = [];
     walk(tree, node => {
       if (node.type === "Identifier" && ["document", "window", "globalThis", "eval", "Function", "$", "jQuery"].includes(node.name)) bounded = false;
+      const callee = node.type === "CallExpression" && node.callee;
+      const namespace = callee?.type === "MemberExpression" && callee.object;
+      if (namespace?.type === "MemberExpression" && namespace.object?.name === "MKXFORM" &&
+          (namespace.property.name || namespace.property.value) === "message") {
+        if (namespace.computed || namespace.optional || callee.computed || callee.optional || node.optional ||
+            callee.property.name !== "error" || node.arguments.length !== 1 || !closedMessage(node.arguments[0])) bounded = false;
+        return;
+      }
       if (node.type !== "CallExpression" || node.callee?.type !== "MemberExpression" ||
           node.callee.object?.name !== "MKXFORM") return;
       const method = node.callee.property?.name;
       if (node.callee.computed || !VALUE_APIS.has(method)) { bounded = false; return; }
       if (method === "toast") {
-        if (node.arguments.length !== 1) bounded = false;
-        else if (!(node.arguments[0].type === "Literal" && typeof node.arguments[0].value === "string")) {
-          toastValue ||= captionToastValueProof(action.function, tree);
-          if (!toastValue(node.arguments[0])) bounded = false;
-        }
+        if (node.arguments.length !== 1 || !closedMessage(toastContent(node.arguments[0]))) bounded = false;
         return;
       }
       if (method === "setProps") {
@@ -237,6 +246,16 @@ export function captionBehaviorContract(source, form, mappedScripts) {
           rowRegions: scope.rowRegions || [], parentReads: scope.parentReads || [] } } };
     }
   };
+}
+
+function toastContent(node) {
+  if (node?.type !== "ObjectExpression") return node;
+  const properties = node.properties;
+  if (properties.length !== 2 || properties.some(property => property.type !== "Property" ||
+      property.kind !== "init" || property.computed || property.method || property.shorthand)) return undefined;
+  const content = properties.find(property => (property.key.name || property.key.value) === "content");
+  const icon = properties.find(property => (property.key.name || property.key.value) === "icon");
+  return content && icon?.value.type === "Literal" && icon.value.value === "fail" ? content.value : undefined;
 }
 
 function walk(node, visit) {

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { nativeMessageRuntime } from "../helpers/native-message-runtime.js";
 import { describe, it } from "node:test";
 import { draftMkScriptsFromSourceScripts } from "../../src/translator/sysform-jsp-scripts.js";
 
@@ -108,12 +109,8 @@ describe("unproven branch draft closure", () => {
     assert.equal(action.deterministicBranchProof?.basis, "deterministic-synchronous-onchange-alert");
     assert.deepEqual(action.coverage, { status: "translated", nativeRules: [], residuals: [] });
     assert.match(action.function, /if \(value < 0\)/);
-    assert.match(action.function, /MKXFORM\.toast\("金额不得小于0"\)/);
-
-    const messages = [];
-    const onChange = Function("MKXFORM", `${action.function}; return onChange;`)({
-      toast(message) { messages.push(message); }
-    });
+    const { MKXFORM, messages } = nativeMessageRuntime();
+    const onChange = Function("MKXFORM", `${action.function}; return onChange;`)(MKXFORM);
     onChange(-1);
     onChange(0);
     assert.deepEqual(messages, ["金额不得小于0"]);

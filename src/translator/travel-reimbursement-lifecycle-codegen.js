@@ -1,4 +1,5 @@
 import { DETAIL_TABLE_IDS, FIELD_IDS } from "./travel-reimbursement-lifecycle-contract.js";
+import { nativeValidationMessage } from "./native-validation-message.js";
 
 export function buildCityModeOnChange() {
   return [
@@ -112,7 +113,7 @@ export function buildSubmit(model) {
     "      if (commonWBSStr.indexOf(wbsValues[wbsIndex]) < 0) invalidWbsRows.push(wbsIndex + 1)",
     "    }",
     "    if (invalidWbsRows.length) {",
-    "      MKXFORM.toast(\"第\" + invalidWbsRows.join(\"、\") + \"行的项目/令号不存在，请重新填写。\")",
+    nativeValidationMessage('"第" + invalidWbsRows.join("、") + "行的项目/令号不存在，请重新填写。"', "      "),
     "      return false",
     "    }",
     "  }",
@@ -129,7 +130,7 @@ export function buildSubmit(model) {
     "    if (cardValues[cardIndex].length < 16) invalidCardRows.push(cardIndex + 1)",
     "  }",
     "  if (invalidCardRows.length) {",
-    "    MKXFORM.toast(\"收款人明细表中：第\" + invalidCardRows.join(\"、\") + \"行的卡号位数不满足16-19位，请重新检查。\")",
+    nativeValidationMessage('"收款人明细表中：第" + invalidCardRows.join("、") + "行的卡号位数不满足16-19位，请重新检查。"', "    "),
     "    return false",
     "  }",
     "  var payeeTotal = 0",
@@ -143,7 +144,7 @@ export function buildSubmit(model) {
     "  var payeeDifference = payeeTotal - Number(totalCost || 0)",
     `  MKXFORM.setValue(${json(FIELD_IDS.payeeDifference)}, payeeDifference)`,
     "  if (payeeDifference != 0) {",
-    "    MKXFORM.toast(\"收款金额与费用总计差额不为0，请核对！\")",
+    nativeValidationMessage(json("收款金额与费用总计差额不为0，请核对！"), "    "),
     "    return false",
     "  }",
     `  MKXFORM.setValue(${json(FIELD_IDS.saveFlag)}, 2222)`,
