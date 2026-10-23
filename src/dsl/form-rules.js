@@ -203,8 +203,8 @@ export function resolveSourceRowEffectTarget(form, sourceMarker) {
   return canonical ? resolveEffectTarget(buildFormRuleRefIndex(form), canonical) : undefined;
 }
 
-/** A row/table requirement enables each field's declared baseline. A direct
- * field/column requirement remains an explicit force-required operation. */
+/** Row/table requirements preserve explicitly optional fields. An unspecified
+ * flag and a direct field/column requirement retain force-required semantics. */
 export function resolveRequiredEffectTarget(index, ref, required) {
   const resolved = resolveEffectTarget(index, ref);
   if (!resolved || resolved.unresolved?.length) return resolved;
@@ -217,7 +217,7 @@ export function resolveRequiredEffectTarget(index, ref, required) {
     : !["description", "detailTable"].includes(target.field?.type)
   ).map(target => ({
     ...target,
-    required: required === true && (!restoreBaseline || target.field?.props?.required === true)
+    required: required === true && (!restoreBaseline || target.field?.props?.required !== false)
   }));
   return { ...resolved, targets };
 }

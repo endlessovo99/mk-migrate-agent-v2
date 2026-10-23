@@ -26,7 +26,9 @@ describe("public expense detail visibility authority", () => {
     const load = JSON.parse(cfg.attribute.formAttr).controlAction.global.onLoad[0];
     for (const helper of ["", "rcyy", "unrelated"]) {
       const calls = [];
-      const api = {viewStatus: "add", getValue: () => helper, setValue() {}, setFieldAttr: (id, attr) => calls.push([id, attr])};
+      const api = {viewStatus: "add", getValue: () => helper, setValue() {},
+        setFieldAttr: (id, attr) => calls.push([id, attr]),
+        setDetailFieldAttr: (id, attr) => calls.push([id, attr])};
       vm.runInNewContext(load.function + `;${load.name}({});`, {MKXFORM: api}, {timeout: 1000});
       assert.equal(calls.some(([id, attr]) => id === detailId && [4, 5].includes(attr)), false);
     }

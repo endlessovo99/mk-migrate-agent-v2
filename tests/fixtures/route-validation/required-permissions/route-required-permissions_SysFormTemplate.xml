@@ -27,4 +27,15 @@
    &lt;extendSimpleProperty name="fd_code" type="String" label="只读编号" notNull="true"/&gt;
   &lt;/extendSubTableProperty&gt;
  &lt;/metadata&gt;</string></void>
+ <void method="put"><string>fdDisplayJsp</string><string>&lt;xform:editShow&gt;&lt;script&gt;
+  AttachXFormValueChangeEventById("fd_seal", function(value) {
+   if (value.indexOf("YES") &gt;= 0) {
+    common_dom_row_set_show_required_reset("rows_row", true, true, false);
+    common_dom_row_set_show_required_reset("intro_row", true, true, false);
+   } else {
+    common_dom_row_set_show_required_reset("rows_row", false, false, false);
+    common_dom_row_set_show_required_reset("intro_row", false, false, false);
+   }
+  });
+ &lt;/script&gt;&lt;/xform:editShow&gt;</string></void>
 </object></java>

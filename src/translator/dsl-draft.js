@@ -1092,6 +1092,8 @@ function propsFromSource(source, options = {}) {
 
   const props = sourceHiddenLabelProps(source, componentId);
   if (source.required) props.required = true;
+  else if (componentSupportsProp(componentId, "required") &&
+      source.sourceProps?.designerValues?.required === "false") props.required = false;
   if (
     componentSupportsProp(componentId, "readOnly") &&
     sourceRequiresReadOnly(source)

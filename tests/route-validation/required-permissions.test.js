@@ -16,6 +16,7 @@ describe('required permissions route', () => {
     const detail = config.dataModel.find(model => model.fdType === 'detail');
     const columns = dsl.form.fields.find(field => field.id === 'fd_rows').columns;
     assert.equal(columns.find(field => field.id === 'fd_document').props.required, true);
+    assert.equal(columns.find(field => field.id === 'fd_note').props.required, false);
     assert.equal(columns.find(field => field.id === 'fd_code').props.readOnly, true);
     for (const scene of ['add', 'edit']) {
       const permissions = config.auth[0][scene];

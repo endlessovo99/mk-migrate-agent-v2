@@ -304,14 +304,12 @@ describe("offline Route-validation", { concurrency: false }, () => {
 
     assert.equal(result.execution.readback.form.formRules.displayRuleCount, 2);
     assert.equal(result.execution.readback.form.formRules.requireRuleCount, 2);
-    const nativeRules = [
-      ...result.execution.readback.form.formRules.displayRules,
-      ...result.execution.readback.form.formRules.requireRules
-    ];
+    const nativeRules = [...result.execution.readback.form.formRules.displayRules,
+      ...result.execution.readback.form.formRules.requireRules];
     assert.equal(
       nativeRules.every((rule) => (
         rule.effects.length === 1 &&
-        rule.effects[0].target === "fd_route_detail" &&
+        rule.effects[0].target === (rule.kind === "require" ? "fd_detail_name" : "fd_route_detail") &&
         rule.conditions.length === 1 &&
         rule.conditions[0].field === "$formula" &&
         rule.conditions[0].value.includes("MKXFORM.viewStatus") &&
