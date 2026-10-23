@@ -61,6 +61,8 @@ export function adaptiveStyles(tableName) {
     "}",
     `${root}[style*="--mk-adaptive-caption-width"] .ele-xform-fieldset-horizontal > .ele-xform-fieldset-label-wrap {`,
     "  flex: 0 0 var(--mk-adaptive-caption-width) !important;",
+    // Existing classic desktop budget: 8 * 14px title + 32px padding + 1px border.
+    "  min-width: min(50%, 145px) !important;",
     "}",
     `${root} .ele-xform-fieldset-control-wrap {`,
     "  flex: 1 1 0% !important;",

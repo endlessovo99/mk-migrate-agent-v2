@@ -77,6 +77,30 @@ it("applies caption-width CSS only to proved folded-caption wrappers in the nati
   assert.equal(matchingDesignerNodes(renderNativeDesignerLayout(data, "mobile"), selector).length, 0);
 });
 
+it("retains the native desktop title budget for narrow proved caption cells through save and readback", () => {
+  const { prepared } = stages(), root = scene(prepared);
+  const carrier = nodes(root).find(node => node.controlProps?.dangerouslySetInnerHTML);
+  const css = carrier.controlProps.dangerouslySetInnerHTML.__html;
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]+)\}/g)];
+  const guarded = rules.filter(rule => rule[1].includes('[style*="--mk-adaptive-caption-width"]'));
+  assert.equal(guarded.length, 1);
+  assert.match(guarded[0][2], /min-width:\s*min\(50%,\s*145px\)\s*!important/);
+  assert.ok(rules.filter(rule => !rule[1].includes('[style*="--mk-adaptive-caption-width"]'))
+    .every(rule => !rule[2].includes("145px")), "Inline, mobile and unproved titles retain their existing behavior");
+  const nativeCss = readFileSync("tests/fixtures/executor/persistence/adaptive-layout-native/xform-fieldset.css", "utf8");
+  assert.match(nativeCss, /\.ele-xform-fieldset-desktop\.ele-xform-fieldset-horizontal[^{}]+\{width:8em;max-width:8em;/);
+  assert.equal(145, 8 * 14 + 32 + 1, "Reuse the existing native desktop title, padding and border budget");
+  const saved = nativeViewSaveRoundTrip(config(prepared)), target = structuredClone(prepared.update);
+  target.mechanisms["sys-xform"].fdConfig = JSON.stringify(saved);
+  assert.equal(prepared.verify(target).ok, true);
+  const view = JSON.parse(saved.viewModel[0].fdConfig);
+  const savedCarrier = nodes(view.view.render.desktop[0]).find(node => node.controlProps?.dangerouslySetInnerHTML);
+  savedCarrier.controlProps.dangerouslySetInnerHTML.__html = savedCarrier.controlProps.dangerouslySetInnerHTML.__html
+    .replace(/\s*min-width:\s*min\(50%,\s*145px\)\s*!important;/, "");
+  saved.viewModel[0].fdConfig = JSON.stringify(view); target.mechanisms["sys-xform"].fdConfig = JSON.stringify(saved);
+  assert.equal(prepared.verify(target).ok, false, "Discarding the readability floor must be detected on actual saved CSS");
+});
+
 function modifiedXml(change, run) {
   const dir = mkdtempSync(join(tmpdir(), "source-tracks-"));
   try { const path = join(dir, "source_SysFormTemplate.xml"); writeFileSync(path, change(readFileSync(fixture, "utf8"))); return run(cleanSourceFile(path)); }
