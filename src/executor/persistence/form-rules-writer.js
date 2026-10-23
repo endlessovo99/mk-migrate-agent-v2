@@ -10,6 +10,7 @@ import {
   inspectNativeFormRuleProjection,
   nativeFormRuleProjectionDiagnostic
 } from "../../dsl/native-form-rule-projection.js";
+import { lowerNativeSingleChoiceConditions } from "../../dsl/native-single-choice-conditions.js";
 
 const GENERATED_BY = "mk-migrate-agent-v2";
 const GENERATED_RULE_PREFIX = "mk-migrate-agent-v2:";
@@ -71,6 +72,20 @@ export function buildNativeFormRuleConfig(formRules, form, dataModels, scripts, 
     const ruleId = rule.id || `linkage-${ruleIndex + 1}`;
     const when = Array.isArray(rule.when) ? rule.when : [];
     const projection = inspectNativeFormRuleProjection(rule);
+    const singleChoice = projection.kind === "view-status-formula" ? undefined
+      : lowerNativeSingleChoiceConditions(rule, formIndex);
+    if (singleChoice) {
+      for (const branchName of ["when", "else"]) {
+        for (const [variantIndex, clauses] of singleChoice[branchName].entries()) {
+          const conditions = buildConditionItems(clauses, formIndex, nativeIndex, `${ruleId}:${branchName}:${variantIndex}`);
+          const branch = buildBranch({ ...rule, logic: "and" }, ruleId, branchName, conditions,
+            branchName === "when" ? rule.effects : rule.else, formIndex, nativeIndex, `variant-${variantIndex + 1}`);
+          display.push(...branch.display);
+          require.push(...branch.require);
+        }
+      }
+      return;
+    }
     const conditionItems = projection.kind === "view-status-formula"
       ? [buildFormulaConditionItem(rule, "when", formIndex, nativeIndex)]
       : buildConditionItems(when, formIndex, nativeIndex, `${ruleId}:when`);

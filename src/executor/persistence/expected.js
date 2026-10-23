@@ -26,6 +26,7 @@ import {
   inspectNativeFormRuleActionBinding,
   inspectNativeFormRuleProjection
 } from "../../dsl/native-form-rule-projection.js";
+import { lowerNativeSingleChoiceConditions } from "../../dsl/native-single-choice-conditions.js";
 import { EXECUTABLE_WORKFLOW_NODE_TYPE_SET, INVARIANT_VERSION } from "./invariants.js";
 import { digestText, normalizeBoolean, normalizeScalar, stableStringify } from "./normalize.js";
 import { projectionError } from "./diagnostics.js";
@@ -712,6 +713,25 @@ function buildExpectedRules(formRules = {}, form = {}, scripts = {}, diagnostics
         "Expected native form-rule semantics are not statically projectable.",
         { ruleId, issues: [...(projection.issues || []), ...(actionBinding.issues || [])] }
       ));
+      continue;
+    }
+    let singleChoice;
+    try {
+      singleChoice = projection.kind === "view-status-formula" ? undefined
+        : lowerNativeSingleChoiceConditions(rule, formIndex);
+    } catch (error) {
+      if (error.code !== "projection.form_rule.single_choice_variants_exceeded") throw error;
+      diagnostics.push(projectionError(error.code, error.message, { ruleId, ...error.details }));
+      continue;
+    }
+    if (singleChoice) {
+      for (const branch of ["when", "else"]) for (const clauses of singleChoice[branch]) {
+        pushRuleSemantics(rules, {
+          ruleId, branch, active: rule.active !== false, logic: "and", when: clauses,
+          effects: branch === "when" ? rule.effects || [] : rule.else,
+          formIndex
+        }, diagnostics);
+      }
       continue;
     }
     const whenFormula = projection.kind === "view-status-formula"

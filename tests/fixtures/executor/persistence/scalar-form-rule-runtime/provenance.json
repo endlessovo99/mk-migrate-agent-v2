@@ -1,0 +1,34 @@
+{
+  "origin": "https://oaqas.shanghai-electric.com",
+  "url": "https://oaqas.shanghai-electric.com/web/sys-xform/desktop/api/XFormRuntime/index.js?a3ec998c10af6bbce34dd6caffe4a203",
+  "capturedAt": "2026-10-23",
+  "bundleSha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+  "functions": {
+    "tP": {
+      "start": 667195,
+      "end": 668863,
+      "sha256": "2ed054703e1ebf9f5f71ae552a476b234471912c558fd8ea52a4a77a437943ee"
+    },
+    "tE": {
+      "start": 668867,
+      "end": 669572,
+      "sha256": "302d13619d2af08351ab258e1b42d3834554a6e9f032c13a361cf66f4b11f49e"
+    },
+    "tS": {
+      "start": 665929,
+      "end": 667191,
+      "sha256": "7efcd208cb98c6c02414624ab6bab19af35a4423f848394eebc3b65923ee9cc6"
+    },
+    "tI": {
+      "start": 662994,
+      "end": 665925,
+      "sha256": "9033dde1cdb371b933b1765c2addc0a9502e9f602a878c983d9b8d31fb87e5cf"
+    },
+    "tb": {
+      "start": 659658,
+      "end": 660125,
+      "sha256": "14064168a80bb1cd7f16660498450cd19680cc58da4dc7bd3f399bcda1a0b930"
+    }
+  },
+  "boundary": "Unmodified native scalar coercion/comparison, initialization and change dispatch. The test host supplies only field lookup, values and native attribute API effects; no handwritten predicate evaluator."
+}
