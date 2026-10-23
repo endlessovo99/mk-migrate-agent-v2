@@ -1,0 +1,1 @@
+function(e,t){var n=e.type||e;return"function"==typeof n&&n.prototype&&!n.prototype.isReactComponent?Object.assign({},t,{ref:t.$$ref||null}):Object.assign({},t)}

@@ -6,7 +6,7 @@ import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
 import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.js";
 import { nativeCaptionDesktopWidths } from "../../dsl/native-caption-fold.js";
 import { usesAdaptiveLayout } from "../../dsl/layout-sizing.js";
-import { adaptiveItemStyle, adaptiveView, effectiveCellFlow } from "./adaptive-layout.js";
+import { ADAPTIVE_MAIN_FIELD_CLASS, adaptiveItemStyle, adaptiveView, effectiveCellFlow } from "./adaptive-layout.js";
 import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import { approvedDetailColumnWidths } from "../../dsl/approved-detail-presentation.js";
 import {
@@ -896,6 +896,7 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang, sourc
       });
     }
     delete controlProps.span;
+    if (field.props?.style?.textAlign) controlProps.alignDesc = field.props.style.textAlign;
   }
   if (spec.attrType === "hyperlinks") {
     const links = Array.isArray(field.props?.links) ? field.props.links : [];
@@ -1722,8 +1723,12 @@ function buildControlStyle(form = {}) {
     styles[field.id] = {
       desktop: {
         layout: "vertical",
+        ...(style?.textAlign ? { alignDesc: style.textAlign } : {}),
         ...(style ? { controlValueStyle: style } : {})
-      }
+      },
+      ...(style && (style.fontSize !== undefined || style.textAlign !== undefined) ? {
+        mobile: { layout: "vertical", ...(style.textAlign ? { alignDesc: style.textAlign } : {}), controlValueStyle: { ...style } }
+      } : {})
     };
   }
   for (const id of new Set([...sourceNumberEditors(form).keys(), ...sourceNumberDisplays(form).keys()])) {
@@ -1739,6 +1744,12 @@ function buildControlStyle(form = {}) {
       desktop: { ...styles[id]?.desktop, paddingControl }
     };
   }
+  for (const field of form.fields || []) if (field.titleStyle) {
+    const current = styles[field.id] || {};
+    styles[field.id] = Object.fromEntries(["desktop", "mobile"].map(platform => [platform, {
+      ...current[platform], labelStyle: { ...current[platform]?.labelStyle, ...field.titleStyle }
+    }]));
+  }
   return styles;
 }
 
@@ -1748,6 +1759,8 @@ function descriptionControlStyle(field) {
   const next = {};
   if (typeof style.color === "string" && style.color.trim()) next.color = style.color.trim();
   if (typeof style.fontWeight === "string" && style.fontWeight.trim()) next.fontWeight = style.fontWeight.trim();
+  if (Number.isFinite(style.fontSize) && style.fontSize >= 0) next.fontSize = style.fontSize;
+  if (["left", "center", "right", "justify"].includes(style.textAlign)) next.textAlign = style.textAlign;
   return Object.keys(next).length ? next : undefined;
 }
 
@@ -1757,7 +1770,7 @@ function appearanceNode(tableName, mainContainer) {
     type: "@elem/xform-appearance",
     kind: "container",
     controlProps: { "$$tableName": tableName },
-    children: [mainContainer]
+    children: Array.isArray(mainContainer) ? mainContainer : [mainContainer]
   };
 }
 
@@ -1923,6 +1936,7 @@ function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map
   }, line.map((referenceId) => {
     const width = budgets.has(referenceId) ? { unit: "px", value: budgets.get(referenceId) } : items.get(referenceId)?.width;
     return container(`${itemId}:flow:${lineIndex}:${referenceId}`, "div", {
+      ...(adaptive ? { className: ADAPTIVE_MAIN_FIELD_CLASS } : {}),
       style: adaptive ? adaptiveItemStyle(items.get(referenceId), fields) : {
         flex: fillSelector ? "1 1 0" : width ? "0 0 auto" : "0 1 auto",
         minWidth: 0, maxWidth: "100%", overflow: "visible",

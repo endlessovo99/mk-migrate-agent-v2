@@ -124,6 +124,10 @@ export function foldNativeCaptions(form, source, { decisions = [], behavior } = 
     const { hiddenLabel: _hidden, ...props } = field.props || {};
     folded.set(field.id, {
       ...field, title, props,
+      ...(targetCaption[0].props?.style?.fontSize !== undefined || targetCaption[0].props?.style?.textAlign !== undefined ? {
+        titleStyle: Object.fromEntries(["fontSize", "textAlign"].filter(key => targetCaption[0].props.style[key] !== undefined)
+          .map(key => [key, targetCaption[0].props.style[key]]))
+      } : {}),
       sourceProps: {
         ...field.sourceProps,
         foldedCaption: {
@@ -183,6 +187,9 @@ function titleEmphasisStyle(style, emphasis = []) {
   if (emphasis?.includes("i")) allowed.add("fontStyle");
   if (emphasis?.includes("underline")) allowed.add("textDecoration");
   return Object.entries(style).every(([key, value]) =>
+    // These presentation properties move to the surviving intrinsic title.
+    key === "fontSize" && Number.isFinite(value) && value >= 0 ||
+    key === "textAlign" && ["left", "center", "right", "justify"].includes(value) ||
     key === "fontWeight" && allowed.has(key) && /^(?:bold|[5-9]00)$/i.test(String(value)) ||
     key === "fontStyle" && allowed.has(key) && /^italic$/i.test(String(value)) ||
     key === "textDecoration" && allowed.has(key) && /^underline$/i.test(String(value)));

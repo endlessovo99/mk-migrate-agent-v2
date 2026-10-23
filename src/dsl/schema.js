@@ -456,6 +456,16 @@ function validateFieldLike(field, diagnostics, path, ids, scope) {
     path
   }, diagnostics);
   validateUniqueOptionValues(field.props?.options, diagnostics, `${path}/props/options`);
+  if (field.titleStyle !== undefined) {
+    const style = field.titleStyle;
+    if (scope !== "field" || field.props?.hiddenLabel === true || !componentSupportsProp(field.componentId, "hiddenLabel") ||
+        !isRecord(style) || !Object.keys(style).length ||
+        Object.keys(style).some(key => !["fontSize", "textAlign"].includes(key)) ||
+        style.fontSize !== undefined && (!Number.isFinite(style.fontSize) || style.fontSize < 0) ||
+        style.textAlign !== undefined && !["left", "center", "right", "justify"].includes(style.textAlign)) {
+      diagnostics.push(error("dsl.field.title_style_invalid", "Intrinsic title style accepts only a non-negative pixel fontSize and supported textAlign on labeled main fields.", `${path}/titleStyle`));
+    }
+  }
   if (
     field.props?.rowOptions !== undefined &&
     (

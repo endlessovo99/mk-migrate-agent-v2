@@ -421,7 +421,9 @@
             "additionalProperties": false,
             "properties": {
               "color": { "type": "string" },
-              "fontWeight": { "type": "string" }
+              "fontWeight": { "type": "string" },
+              "fontSize": { "type": "number", "minimum": 0 },
+              "textAlign": { "type": "string", "enum": ["left", "center", "right", "justify"] }
             }
           }
         }

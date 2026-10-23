@@ -1,4 +1,5 @@
 import { mkForComponent, mkForFieldType } from "../dsl/mk-components.js";
+import { descriptionPresentation, sourceTextAlign } from "./description-presentation.js";
 import { componentSupportsProp } from "../dsl/catalogs.js";
 import { sanitizeCredentialMaterial } from "../credential-material.js";
 import { isDataOnlyMetadataField } from "./sysform-metadata.js";
@@ -609,6 +610,13 @@ function appendDesignerLayoutRow(descriptor, context) {
           ...(captionContext.runtimePlainCaptionMarkerIds.has(control.id)
             ? { runtimePlainCaptionMarkerIds: captionContext.runtimePlainCaptionMarkerIds.get(control.id) } : {}) } }
       : control);
+    const cellTextAlign = sourceTextAlign(cell.attrs.style, cell.attrs.align);
+    if (cellTextAlign) controls = controls.map(control =>
+      String(control.source?.designerType).toLowerCase() === "textlabel" ? {
+        ...control, source: { ...control.source, textPresentation: {
+          textAlign: cellTextAlign, ...control.source.textPresentation
+        } }
+      } : control);
     if (
       (descriptor.standardTableProjection?.mode === "static-header-grid" ||
         (descriptor.standardTableProjection?.mode === "static-rectangular-grid" && descriptor.standardTableProjection.headerRows > 0)) &&
@@ -2081,6 +2089,8 @@ function designerFieldFromControl(fdType, values, attrs, context = {}) {
   };
 
   if (normalized === "textlabel") {
+    const presentation = descriptionPresentation(values, attrValue(attrs, "style"));
+    if (presentation) source.textPresentation = presentation;
     const content = cleanText(values.content || title);
     if (!content) return undefined;
     return {

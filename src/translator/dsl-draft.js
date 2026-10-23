@@ -2000,6 +2000,9 @@ function descriptionStyleFromSource(source) {
   const color = cssColorFromDesigner(values.color);
   if (color) style.color = color;
   if (String(values.b || "").toLowerCase() === "true") style.fontWeight = "bold";
+  const presentation = source.sourceProps?.textPresentation;
+  if (typeof presentation?.fontSize === "number") style.fontSize = presentation.fontSize;
+  if (presentation?.textAlign) style.textAlign = presentation.textAlign;
   return Object.keys(style).length ? style : undefined;
 }
 

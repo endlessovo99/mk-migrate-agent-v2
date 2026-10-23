@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import { nativeStylesheetCss } from "./native-stylesheet.js";
+import { ADAPTIVE_MAIN_FIELD_CLASS } from "./adaptive-layout.js";
 import { nativeCheckboxLayout } from "../../dsl/source-checkbox-layout.js";
 import { nativeRadioLayout } from "../../dsl/source-radio-layout.js";
 import { observeInlineCellLayout } from "./inline-cell-layout.js";
@@ -1198,6 +1200,10 @@ function applyViewControlStyles(fields, viewModel, models) {
     if (Object.hasOwn(overlay, "type")) hint.effectiveType = overlay.type;
   }
   for (const field of fields) {
+    field.props.nativeTitleStyle = Object.fromEntries(["desktop", "mobile"].map(platform => {
+      const label = controlStyle[field.id]?.[platform]?.labelStyle || {};
+      return [platform, { fontSize: label.fontSize ?? 14, textAlign: label.textAlign ?? "left" }];
+    }));
     if (["xform-input", "xform-datetime"].includes(field.component)) {
       field.props.nativeInlineEditorStyle = {
         theme: withoutThemeDefaults(scene.theme, CLASSIC_THEME.theme) || {},
@@ -1224,6 +1230,17 @@ function applyViewControlStyles(fields, viewModel, models) {
     const style = {};
     if (typeof value.color === "string" && value.color.trim()) style.color = value.color.trim();
     if (typeof value.fontWeight === "string" && value.fontWeight.trim()) style.fontWeight = value.fontWeight.trim();
+    if (value.fontSize !== undefined) style.fontSize = value.fontSize;
+    if (value.textAlign !== undefined) style.textAlign = value.textAlign;
+    if (["desktop", "mobile"].some(platform => controlStyle[field.id]?.[platform]?.controlValueStyle?.fontSize !== undefined ||
+        controlStyle[field.id]?.[platform]?.alignDesc !== undefined)) {
+      field.props.nativeDescriptionStyle = Object.fromEntries(["desktop", "mobile"].map(platform => {
+        const overlay = controlStyle[field.id]?.[platform] || {};
+        return [platform, { ...(overlay.controlValueStyle?.fontSize !== undefined ? { fontSize: overlay.controlValueStyle.fontSize } : {}),
+          ...(overlay.controlValueStyle?.textAlign !== undefined ? { textAlign: overlay.controlValueStyle.textAlign } : {}),
+          ...(overlay.alignDesc !== undefined ? { alignDesc: overlay.alignDesc } : {}) }];
+      }));
+    }
     if (Object.keys(style).length) field.props.style = style;
   }
 }
@@ -1247,13 +1264,14 @@ function observeAdaptiveLayout(viewModel) {
   });
   return Object.fromEntries(["desktop", "mobile"].map(scene => {
     const roots = renders[scene], root = roots?.[0], scope = root?.children?.[0];
+    const nodes = (roots || []).flatMap(nativeViewNodes);
     return [scene, {
       rootCount: roots?.length, rootChildCount: root?.children?.length,
       root: root && { type: root.type, kind: root.kind, controlProps: root.controlProps },
-      styleCarrierCount: (roots || []).flatMap(nativeViewNodes).filter(node => node.type === "@elem/xform-html").length,
+      styleCarrierCount: nodes.filter(node => (node.type === "@elem/xform-html" || nativeStylesheetCss(node) !== undefined)).length,
       scope: shape(scope), childCount: scope?.children?.length,
-      carrier: scope?.children?.[0], main: shape(scope?.children?.[1]),
-      layoutShellsValid: adaptiveLayoutShellsValid(scope?.children?.[1])
+      carrier: scope?.children?.[0], main: shape(root?.children?.[1]),
+      layoutShellsValid: adaptiveLayoutShellsValid(root?.children?.[1])
     }];
   }));
 }
@@ -1272,7 +1290,9 @@ function adaptiveLayoutShellsValid(main) {
     return grid.children.every(item => item.type === "@elem/layout-grid.GridItem" &&
       item.kind === "container" &&
       propsAllowed(item.controlProps, ["id", "column", "columnSpan", "row", "rowSpan", "style"], true) &&
-      stableStringify(item.controlProps.style) === stableStringify({ backgroundColor: "" }));
+      stableStringify(item.controlProps.style) === stableStringify({ backgroundColor: "" }) &&
+      (item.children?.[0]?.type !== "div" || item.children[0].children?.every(line =>
+        line.children?.every(field => field.controlProps?.className === ADAPTIVE_MAIN_FIELD_CLASS))));
   });
 }
 
@@ -1554,8 +1574,8 @@ function observeContentFlow(refs, diagnostics, decodePath) {
 
 function hasNativeFlowProps(props, kind) {
   if (!props || typeof props !== "object") return false;
-  // Classes and hidden attributes may override the explicit flow styles.
-  if (props.className || props.hidden) return false;
+  // Only the fixed main-field marker is allowed; arbitrary classes can override flow.
+  if (props.hidden || props.className && !(kind === "item" && props.className === ADAPTIVE_MAIN_FIELD_CLASS)) return false;
   if (kind === "container") return !props.align && !props.justify && !props.isMobilePageBackground;
   return !props.colGutter && !props.rowGutter;
 }

@@ -341,6 +341,21 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
   const flowPadding = contentFlowFieldPadding(form);
   for (const field of expectedFields) {
     if (flowPadding.has(field.id)) field.props.layoutPadding = flowPadding.get(field.id);
+    const title = form.fields.find(source => source.id === field.id)?.titleStyle;
+    if (!title) continue;
+    for (const key of ["nativeInlineEditorStyle", "nativeNumberEditorStyle", "nativeNumberDisplayStyle"]) {
+      const profile = field.props[key];
+      if (!profile) continue;
+      for (const platform of ["desktop", "mobile"]) {
+        // These editor profiles exclude exact classic defaults, except the
+        // inline desktop font that their existing budget contract retains.
+        const style = Object.fromEntries(Object.entries(title).filter(([name, value]) =>
+          name !== "fontSize" || value !== 14 || key === "nativeInlineEditorStyle" && platform === "desktop"));
+        if (!Object.keys(style).length) continue;
+        const current = profile.style[platform] || {};
+        profile.style[platform] = { ...current, labelStyle: { ...current.labelStyle, ...style } };
+      }
+    }
   }
   return {
     fields: expectedFields,
@@ -418,6 +433,11 @@ function expectedCalculationDependencies(entry, knownRefs) {
 
 function executableProps(field = {}, form = {}, context = {}) {
   const props = {};
+  if (field.titleStyle) {
+    props.nativeTitleStyle = Object.fromEntries(["desktop", "mobile"].map(platform => [platform, {
+      fontSize: field.titleStyle.fontSize ?? 14, textAlign: field.titleStyle.textAlign ?? "left"
+    }]));
+  }
   const stored = choiceOtherStorageExpectation(field, form);
   if (stored !== undefined) props.nativeStored = stored;
   const checkbox = sourceCheckboxLayouts(form).get(field.sourceRef);
@@ -533,6 +553,11 @@ function executableProps(field = {}, form = {}, context = {}) {
   if (field.componentId === "xform-description") {
     const style = descriptionStyle(field.props?.style);
     if (style) props.style = style;
+    if (style && (style.fontSize !== undefined || style.textAlign !== undefined)) {
+      const presentation = { ...(style.fontSize !== undefined ? { fontSize: style.fontSize } : {}),
+        ...(style.textAlign !== undefined ? { textAlign: style.textAlign, alignDesc: style.textAlign } : {}) };
+      props.nativeDescriptionStyle = { desktop: presentation, mobile: { ...presentation } };
+    }
   }
   const catalog = COMPONENTS_BY_ID.get(field.componentId);
   if (catalog?.componentId) props.componentId = catalog.componentId;
@@ -660,6 +685,8 @@ function descriptionStyle(value) {
   const style = {};
   if (typeof value.color === "string" && value.color.trim()) style.color = value.color.trim();
   if (typeof value.fontWeight === "string" && value.fontWeight.trim()) style.fontWeight = value.fontWeight.trim();
+  if (Number.isFinite(value.fontSize) && value.fontSize >= 0) style.fontSize = value.fontSize;
+  if (["left", "center", "right", "justify"].includes(value.textAlign)) style.textAlign = value.textAlign;
   return Object.keys(style).length ? style : undefined;
 }
 

@@ -1,4 +1,7 @@
 import { createHash } from "node:crypto";
+import { nativeStylesheet } from "./native-stylesheet.js";
+
+export const ADAPTIVE_MAIN_FIELD_CLASS = "mk-adaptive-main-field";
 
 const INTRINSIC_COMPONENTS = new Set([
   "xform-description", "xform-button", "xform-hyperlinks", "xform-hidden"
@@ -37,7 +40,9 @@ export function effectiveCellFlow(cell, adaptive) {
  */
 export function adaptiveStyles(tableName) {
   const scope = `mk-adaptive-${createHash("sha256").update(String(tableName)).digest("hex").slice(0, 24)}`;
-  const root = `.${scope}`;
+  // A marker preceding main scopes its rendered siblings without separating
+  // appearance from the designer's direct-child .receiver.
+  const root = `.${scope} ~ * .${ADAPTIVE_MAIN_FIELD_CLASS}`;
   const css = [
     `${root} .ele-xform-fieldset-label,`,
     `${root} .ele-xform-fieldset-label > span {`,
@@ -64,30 +69,27 @@ export function adaptiveStyles(tableName) {
   ].join("\n");
   return {
     scope, css,
-    carrier: {
-      key: `${scope}-styles`, type: "@elem/xform-html", kind: "control",
-      controlProps: { $$isDesign: false, source: { html: "", css, javascript: "" } }
-    }
+    carrier: nativeStylesheet(`${scope}-styles`, css)
   };
 }
 
 export function adaptiveView(main, tableName) {
   const { scope, carrier } = adaptiveStyles(tableName);
-  return {
+  return [{
     key: scope, type: "div", kind: "container",
     controlProps: { id: scope, className: scope, style: { width: "100%", minWidth: 0 } },
-    children: [carrier, main]
-  };
+    children: [carrier]
+  }, main];
 }
 
 export function adaptiveStyleContract(tableName) {
   const { scope, carrier } = adaptiveStyles(tableName);
   return Object.fromEntries(["desktop", "mobile"].map(scene => [scene, {
-    rootCount: 1, rootChildCount: 1, styleCarrierCount: 1, layoutShellsValid: true,
+    rootCount: 1, rootChildCount: 2, styleCarrierCount: 1, layoutShellsValid: true,
     root: { type: "@elem/xform-appearance", kind: "container", controlProps: { $$tableName: tableName } },
     scope: { key: scope, type: "div", kind: "container",
       controlProps: { id: scope, className: scope, style: { width: "100%", minWidth: 0 } } },
-    carrier, childCount: 2, main: { key: "main", type: "main", kind: "container",
+    carrier, childCount: 1, main: { key: "main", type: "main", kind: "container",
       controlProps: { importBtn: null, onDesktopImport: null, id: "main" } }
   }]));
 }

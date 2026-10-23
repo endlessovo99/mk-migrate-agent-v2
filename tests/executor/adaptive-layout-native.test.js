@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { createContext, runInContext, runInNewContext } from "node:vm";
-import { adaptiveStyles, adaptiveView } from "../../src/executor/persistence/adaptive-layout.js";
+import { ADAPTIVE_MAIN_FIELD_CLASS, adaptiveStyles, adaptiveView } from "../../src/executor/persistence/adaptive-layout.js";
 
 const root = new URL("../fixtures/executor/persistence/adaptive-layout-native/", import.meta.url);
 const read = file => readFileSync(new URL(file, root), "utf8");
@@ -25,36 +25,27 @@ describe("adaptive layout native runtime contract", () => {
   });
 
   for (const platform of ["desktop", "mobile"]) {
-    it(`${platform}: registers and mounts the CSS carrier through the native view tree without business fields`, () => {
+    it(`${platform}: mounts persistent CSS through the native container without business fields`, () => {
       const tableName = "mk_adaptive_native_test";
       const { scope, css, carrier } = adaptiveStyles(tableName);
       const main = { key: "main", type: "main", kind: "container", controlProps: { id: "main" }, children: [] };
-      const wrapper = adaptiveView(main, tableName);
-      const tree = { key: "appearance", type: "@elem/xform-appearance", kind: "container", children: [wrapper] };
+      const tree = { key: "appearance", type: "@elem/xform-appearance", kind: "container",
+        children: adaptiveView(main, tableName) };
       const result = replayTree(tree, platform);
       const styles = findNodes(result, node => node.props?.dangerouslySetInnerHTML?.__html?.includes("<style>"));
       assert.equal(styles.length, 1);
       assert.ok(styles[0].props.dangerouslySetInnerHTML.__html.includes(css));
       assert.equal(findNodes(result, node => node.type === "main").length, 1);
       assert.equal(findNodes(result, node => node.type === "div" && node.props.className === scope).length, 1);
-      assert.deepEqual(carrier.controlProps.source, { html: "", css, javascript: "" });
-      assert.equal(carrier.kind, "control");
-      assert.equal(carrier.type, "@elem/xform-html");
+      assert.deepEqual(carrier.controlProps.dangerouslySetInnerHTML, { __html: `<style>${css}</style>` });
+      assert.equal(carrier.kind, "container");
+      assert.equal(carrier.type, "div");
 
-      // Without registration, an unknown type produces the real native fallback
-      // instead of silently pretending that an arbitrary component can render.
+      // Built-in containers do not depend on registering an unbound HTML control.
       const withoutRegistration = replayTree(tree, platform, { registerHtml: false });
       assert.equal(findNodes(withoutRegistration, node =>
         node.props?.dangerouslySetInnerHTML?.__html?.includes("<style>")
-      ).length, 0);
-
-      // The native headless wrapper really removes CSS when noRender is set;
-      // this is why persisted carrier visibility is part of readback validation.
-      const hidden = structuredClone(tree);
-      hidden.children[0].children[0].controlProps.noRender = true;
-      assert.equal(findNodes(replayTree(hidden, platform), node =>
-        node.props?.dangerouslySetInnerHTML?.__html?.includes("<style>")
-      ).length, 0);
+      ).length, 1);
     });
 
     it(`${platform}: overrides both native title widths and allows the horizontal wrapper to shrink`, () => {
@@ -69,10 +60,11 @@ describe("adaptive layout native runtime contract", () => {
       assert.match(read("xform-fieldset.css"), /flex-shrink:0/);
 
       const { scope, css } = adaptiveStyles("mk_adaptive_native_test");
+      const fieldScope = `.${scope} ~ * .${ADAPTIVE_MAIN_FIELD_CLASS}`;
       const rules = cssRules(css);
       for (const selector of [
-        `.${scope} .ele-xform-fieldset-label`,
-        `.${scope} .ele-xform-fieldset-label > span`
+        `${fieldScope} .ele-xform-fieldset-label`,
+        `${fieldScope} .ele-xform-fieldset-label > span`
       ]) {
         const declarations = declarationsFor(rules, selector);
         assert.equal(declarations.width, "auto!important");
@@ -89,7 +81,7 @@ describe("adaptive layout native runtime contract", () => {
       assert.equal(horizontal.declarations["max-width"]?.replace("!important", ""), "50%");
       assert.equal(horizontal.declarations.flex?.replace("!important", ""), "0 1 auto");
       assert.deepEqual(horizontal.selectors, [
-        `.${scope} .ele-xform-fieldset-horizontal > .ele-xform-fieldset-label-wrap`
+        `${fieldScope} .ele-xform-fieldset-horizontal > .ele-xform-fieldset-label-wrap`
       ]);
       // The user-measured browser cases contain leaf fields, for which the
       // hardened child selector selects exactly the same native title wrapper.
@@ -97,7 +89,7 @@ describe("adaptive layout native runtime contract", () => {
       const parents = findNodes(native, node => hasClass(node, "ele-xform-fieldset-horizontal"));
       assert.deepEqual(parents.flatMap(parent => parent.children.flat(Infinity))
         .filter(node => node && hasClass(node, "ele-xform-fieldset-label-wrap")), wrappers);
-      const controls = declarationsFor(rules, `.${scope} .ele-xform-fieldset-control-wrap`);
+      const controls = declarationsFor(rules, `${fieldScope} .ele-xform-fieldset-control-wrap`);
       assert.equal(controls["min-width"]?.replace("!important", ""), "0");
       assert.match(controls.flex, /^1 1 0%?(?:!important)?$/);
       for (const rule of rules) {
@@ -165,7 +157,8 @@ function replayTree(tree, platform, { registerHtml = true } = {}) {
   const preprocess = runInContext(`var R=(${seams.treePreprocess});R`, preprocessContext);
   const preprocessed = preprocess({}, {}, {}, structuredClone(tree), platform, platform, [], {}, {});
   const ctx = createContext({
-    i: react, t5: () => false, t2: (_component, props) => props, tt: "fieldset", console,
+    i: react, t5: () => false, t2: runInNewContext(`(${readFileSync(new URL(
+      "../fixtures/executor/persistence/native-view-save/render-props-filter.js", import.meta.url), "utf8")})`), tt: "fieldset", console,
     s: (object, key, value) => { object[key] = value; return object; }
   });
   runInContext(`var tn=${registration.builtins};var tr=${registration.errors};${registration.fallback}`, ctx);

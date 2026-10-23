@@ -70,7 +70,7 @@ export function sourceMobileCaptionGrids(form = {}) {
     const fixedHints = captions.length >= 2 && bodies.length > 0 && bodies.every(entry =>
       entry.fields.some((field, index) => fixedOrdinary(field, entry.cell.contentFlow.items[index].width)) &&
       entry.fields.every((field, index) => fixedOrdinary(field, entry.cell.contentFlow.items[index].width) ||
-        staticDescription(field) && !field.props?.style && !/[\r\n<>]/.test(field.props.content) &&
+        staticDescription(field) && plainCaptionStyle(field) && !/[\r\n<>]/.test(field.props.content) &&
         entry.cell.contentFlow.items[index].width === undefined));
     const lastBody = cells.length === 2 && caption(cells[0]) &&
       cells[0].cell.column === 0 && cells[1].cell.column === 1 &&
@@ -179,7 +179,7 @@ function sourceIdentity(field) {
 function plainCaption(field) {
   const source = field.sourceProps, values = source.designerValues;
   return source.runtimePlainCaption === true && field.type === "description" &&
-    source.designerType?.toLowerCase() === "textlabel" && !field.props?.style &&
+    source.designerType?.toLowerCase() === "textlabel" && plainCaptionStyle(field) &&
     typeof field.props?.content === "string" && field.props.content.trim() &&
     !/[<>]|\$\{|<%/.test(field.props.content) &&
     (!/[\r\n]/.test(field.props.content) || /^[^\r\n]+(?:\r\n|\n)[ \t\u00a0]*$/.test(field.props.content)) &&
@@ -188,6 +188,14 @@ function plainCaption(field) {
       source.runtimePlainCaptionMarkerIds.length > 0 && new Set(source.runtimePlainCaptionMarkerIds).size === source.runtimePlainCaptionMarkerIds.length &&
       source.runtimePlainCaptionMarkerIds.every(id => typeof id === "string" && /^[A-Za-z_][\w-]*$/.test(id))) &&
     !Object.keys(source.metadataAttributes || {}).some(key => key.toLowerCase() === "width");
+}
+function plainCaptionStyle(field) {
+  const style = field.props?.style;
+  // Source-proven alignment does not change the caption's intrinsic width.
+  // Font changes and target-only style claims remain outside this width proof.
+  return !style || Object.keys(style).length === 1 &&
+    ["left", "center", "right", "justify"].includes(style.textAlign) &&
+    field.sourceProps?.textPresentation?.textAlign === style.textAlign;
 }
 function singleFlow(flow, id) {
   return flow?.items?.length === 1 && flow.items[0].referenceId === id &&
