@@ -1,0 +1,66 @@
+<java><object class="java.util.HashMap"><void method="put"><string>fdId</string><string>detail-property-source</string></void><void method="put"><string>fdModelId</string><string>detail-property-model</string></void><void method="put"><string>fdName</string><string>Synthetic detail row property</string></void><void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable" id="layout"&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_main",label:"Category",dataType:"String",items:"Equipment|sb
+Consumables|hc
+Repair|wx
+Maintenance|wb"}'&gt;&lt;input id="fd_main"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="fd_detail_row" name="fd_detail_row"/&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_detail",label:"Asset rows"}'&gt;&lt;tbody&gt;&lt;tr type="titleRow"&gt;&lt;td column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_header_choice",content:"Purchase type"}'&gt;Purchase type&lt;/label&gt;&lt;/td&gt;&lt;td column="1"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_header_notes",content:"Replacement note"}'&gt;Replacement note&lt;/label&gt;&lt;/td&gt;&lt;td column="2"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_header_hidden",content:"Replacement state"}'&gt;Replacement state&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;
+&lt;td&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_choice",label:"Purchase type",items:"New|xg
+Replace|gh"}'&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;td&gt;&lt;div fd_type="textarea" fd_values='{id:"fd_notes",label:"replacement asset number",_label_bind:"false",_label_bind_id:"fd_header_notes",dataType:"String"}'&gt;&lt;textarea id="fd_notes"&gt;replacement asset number&lt;/textarea&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;td&gt;&lt;div fd_type="hidden" fd_values='{id:"fd_hidden",label:"Replacement state",dataType:"String"}'&gt;&lt;input id="fd_hidden" type="hidden"/&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;input type="hidden" id="fd_consumables_row" name="fd_consumables_row"/&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_consumables",label:"fd_consumables"}'&gt;&lt;tbody&gt;&lt;tr type="titleRow"&gt;&lt;td column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_consumables_title",content:"Item"}'&gt;Item&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_consumables_item",label:"Item",dataType:"String"}'&gt;&lt;input/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;input type="hidden" id="fd_repair_row" name="fd_repair_row"/&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_repair",label:"fd_repair"}'&gt;&lt;tbody&gt;&lt;tr type="titleRow"&gt;&lt;td column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_repair_title",content:"Item"}'&gt;Item&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_repair_item",label:"Item",dataType:"String"}'&gt;&lt;input/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="4" column="0"&gt;&lt;input type="hidden" id="fd_maintenance_row" name="fd_maintenance_row"/&gt;&lt;table fd_type="detailsTable" fd_values='{id:"fd_maintenance",label:"fd_maintenance"}'&gt;&lt;tbody&gt;&lt;tr type="titleRow"&gt;&lt;td column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"fd_maintenance_title",content:"Item"}'&gt;Item&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_maintenance_item",label:"Item",dataType:"String"}'&gt;&lt;input/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="5" column="0"&gt;&lt;input type="hidden" id="fd_budget_row" name="fd_budget_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_budget_source",label:"fd_budget_source",dataType:"String"}'&gt;&lt;input/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="6" column="0"&gt;&lt;input type="hidden" id="fd_over_budget_row" name="fd_over_budget_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_over_budget",label:"fd_over_budget",dataType:"String"}'&gt;&lt;input/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="7" column="0"&gt;&lt;input type="hidden" id="fd_service_row" name="fd_service_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_service",label:"fd_service",dataType:"String"}'&gt;&lt;input/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="8" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_budget",label:"Budget",items:"Within|ysn
+Outside|ysw"}'&gt;&lt;input id="fd_budget"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;div id="fd_script" fd_type="jsp"&gt;&lt;input type="hidden" value="&amp;lt;script&amp;gt;function controlDisplay(value,i){
+ var hidden=document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_hidden)&amp;quot;)[0];
+ if(value==&amp;quot;gh&amp;quot;){
+  hidden.value=&amp;quot;true&amp;quot;;
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].style.display=&amp;quot;&amp;quot;;
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;placeholder&amp;quot;,&amp;quot;replacement details&amp;quot;);
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;validate&amp;quot;,&amp;quot;required&amp;quot;);
+ }else{
+  hidden.value=&amp;quot;&amp;quot;;
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].style.display=&amp;quot;none&amp;quot;;
+  document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;validate&amp;quot;,&amp;quot;&amp;quot;);
+ }
+}
+function wireRows(){for(var i=0;i&amp;lt;1;i++){
+ var trigger=document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.&amp;quot;+i+&amp;quot;.fd_choice)&amp;quot;)[0];
+ trigger.setAttribute(&amp;quot;onclick&amp;quot;,&amp;quot;controlDisplay(this.value,&amp;quot;+i+&amp;quot;)&amp;quot;);
+}}
+AttachXFormValueChangeEventById(&amp;quot;fd_main&amp;quot;,function(value){if(value.indexOf(&amp;quot;sb&amp;quot;)&amp;gt;=0){common_dom_row_set_show_required_reset(&amp;quot;fd_detail_row&amp;quot;,true,true,false);document.getElementsByName(&amp;quot;extendDataFormInfo.value(fd_detail.0.fd_notes)&amp;quot;)[0].setAttribute(&amp;quot;placeholder&amp;quot;,&amp;quot;replacement details&amp;quot;);}else{common_dom_row_set_show_required_reset(&amp;quot;fd_detail_row&amp;quot;,false,false,false);}});
+
+AttachXFormValueChangeEventById(&amp;quot;fd_main&amp;quot;,function(value){
+ if(value.indexOf(&amp;quot;hc&amp;quot;)&amp;gt;=0){common_dom_row_set_show_required_reset(&amp;quot;fd_consumables_row&amp;quot;,true,true,false);}else{common_dom_row_set_show_required_reset(&amp;quot;fd_consumables_row&amp;quot;,false,false,false);}
+ if(value.indexOf(&amp;quot;wx&amp;quot;)&amp;gt;=0){common_dom_row_set_show_required_reset(&amp;quot;fd_repair_row&amp;quot;,true,true,false);}else{common_dom_row_set_show_required_reset(&amp;quot;fd_repair_row&amp;quot;,false,false,false);}
+ if(value.indexOf(&amp;quot;wb&amp;quot;)&amp;gt;=0){common_dom_row_set_show_required_reset(&amp;quot;fd_maintenance_row&amp;quot;,true,true,false);common_dom_row_set_show_required_reset(&amp;quot;fd_service_row&amp;quot;,true,true,false);}else{common_dom_row_set_show_required_reset(&amp;quot;fd_maintenance_row&amp;quot;,false,false,false);common_dom_row_set_show_required_reset(&amp;quot;fd_service_row&amp;quot;,false,false,false);}
+});
+AttachXFormValueChangeEventById(&amp;quot;fd_budget&amp;quot;,function(value){
+ if(value.indexOf(&amp;quot;ysn&amp;quot;)&amp;gt;=0){common_dom_row_set_show_required_reset(&amp;quot;fd_budget_row&amp;quot;,true,true,false);}else{common_dom_row_set_show_required_reset(&amp;quot;fd_budget_row&amp;quot;,false,false,false);}
+ if(value.indexOf(&amp;quot;ysw&amp;quot;)&amp;gt;=0){common_dom_row_set_show_required_reset(&amp;quot;fd_over_budget_row&amp;quot;,true,true,false);}else{common_dom_row_set_show_required_reset(&amp;quot;fd_over_budget_row&amp;quot;,false,false,false);}
+});
+Com_AddEventListener(window,&amp;quot;load&amp;quot;,function(){
+ wireRows();
+ common_dom_row_set_show_required_reset(&amp;quot;fd_detail_row&amp;quot;,false,false,false);
+ common_dom_row_set_show_required_reset(&amp;quot;fd_consumables_row&amp;quot;,false,false,false);
+ common_dom_row_set_show_required_reset(&amp;quot;fd_repair_row&amp;quot;,false,false,false);
+ common_dom_row_set_show_required_reset(&amp;quot;fd_maintenance_row&amp;quot;,false,false,false);
+ common_dom_row_set_show_required_reset(&amp;quot;fd_service_row&amp;quot;,false,false,false);
+ common_dom_row_set_show_required_reset(&amp;quot;fd_budget_row&amp;quot;,false,false,false);
+ common_dom_row_set_show_required_reset(&amp;quot;fd_over_budget_row&amp;quot;,false,false,false);
+ cat=GetXFormFieldById(&amp;quot;fd_main&amp;quot;);
+ var selected=null;
+ for(var i=0;i&amp;lt;cat.length;i++){if(cat[i].checked){selected=cat[i].value;break;}}
+ cat=GetXFormFieldById(&amp;quot;fd_budget&amp;quot;);
+ var budget=null;
+ for(var i=0;i&amp;lt;cat.length;i++){if(cat[i].checked){budget=cat[i].value;break;}}
+ if(selected==&amp;quot;sb&amp;quot;){common_dom_row_set_show_required_reset(&amp;quot;fd_detail_row&amp;quot;,true,true,false);}
+ if(selected==&amp;quot;hc&amp;quot;){common_dom_row_set_show_required_reset(&amp;quot;fd_consumables_row&amp;quot;,true,true,false);}
+ if(selected==&amp;quot;wx&amp;quot;){common_dom_row_set_show_required_reset(&amp;quot;fd_repair_row&amp;quot;,true,true,false);}
+ if(selected==&amp;quot;wb&amp;quot;){common_dom_row_set_show_required_reset(&amp;quot;fd_maintenance_row&amp;quot;,true,true,false);common_dom_row_set_show_required_reset(&amp;quot;fd_service_row&amp;quot;,true,true,false);}
+ if(budget==&amp;quot;ysn&amp;quot;){common_dom_row_set_show_required_reset(&amp;quot;fd_budget_row&amp;quot;,true,true,false);}else if(budget==&amp;quot;ysw&amp;quot;){common_dom_row_set_show_required_reset(&amp;quot;fd_over_budget_row&amp;quot;,true,true,false);}
+});&amp;lt;/script&amp;gt;"/&gt;&lt;/div&gt;</string></void><void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_main" label="Category" type="String" enumValues="Equipment|sb
+Consumables|hc
+Repair|wx
+Maintenance|wb"/&gt;
+&lt;extendSubTableProperty name="fd_detail" label="Asset rows"&gt;&lt;extendSimpleProperty name="fd_choice" label="Purchase type" enumValues="New|xg
+Replace|gh"/&gt;&lt;extendSimpleProperty name="fd_notes" label="Replacement note" type="String"/&gt;&lt;extendSimpleProperty name="fd_hidden" label="Replacement state" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;extendSubTableProperty name="fd_consumables" label="fd_consumables"&gt;&lt;extendSimpleProperty name="fd_consumables_item" label="Item" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;extendSubTableProperty name="fd_repair" label="fd_repair"&gt;&lt;extendSimpleProperty name="fd_repair_item" label="Item" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;extendSubTableProperty name="fd_maintenance" label="fd_maintenance"&gt;&lt;extendSimpleProperty name="fd_maintenance_item" label="Item" type="String"/&gt;&lt;/extendSubTableProperty&gt;&lt;extendSimpleProperty name="fd_budget_source" label="fd_budget_source" type="String"/&gt;&lt;extendSimpleProperty name="fd_over_budget" label="fd_over_budget" type="String"/&gt;&lt;extendSimpleProperty name="fd_service" label="fd_service" type="String"/&gt;&lt;extendSimpleProperty name="fd_budget" label="Budget" type="String" enumValues="Within|ysn
+Outside|ysw"/&gt;&lt;/metadata&gt;</string></void></object></java>

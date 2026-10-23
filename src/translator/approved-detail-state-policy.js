@@ -5,6 +5,7 @@ import {compileLegacyDetailProgramIR} from "./legacy-detail-program-ir.js";
 import {detailControlDisplayProof, buildDetailRowControlStateFunction} from "./detail-row-control-state.js";
 import {detailRowSourceEffectResiduals} from "../dsl/source-detail-row-effects.js";
 import {createDetailInlineHandlerProof} from "./detail-inline-handler-proof.js";
+import {buildSupportedDetailViewPlan,supportedDetailViewDecision,renderSupportedDetailView} from "./supported-detail-view.js";
 
 export const SUPPORTED_DETAIL_STATE_KIND = "native-detail-state-supported-only";
 export const DETAIL_STATE_OMISSIONS = Object.freeze([
@@ -27,9 +28,14 @@ export function validateSupportedDetailStateDecisions(decisions) {
   const fail = message => diagnostics.push({level:"error", code:"policy.detail_state.invalid", message});
   if (!Array.isArray(decisions) || decisions.length !== 1) fail("One complete detail-state decision is required.");
   for (const decision of Array.isArray(decisions) ? decisions : []) {
-    if (!exact(decision,["kind","sourceScripts","actions","stateActionId","omissions"]) ||
+    const keys=["kind","sourceScripts","actions","stateActionId","omissions",...(decision?.viewInitialization!==undefined?["viewInitialization"]:[])];
+    if (!exact(decision,keys) ||
         decision.kind !== SUPPORTED_DETAIL_STATE_KIND || !text(decision.stateActionId) ||
         !equal(decision.omissions, DETAIL_STATE_OMISSIONS)) { fail("The exact supported-only profile and every acknowledged difference are required."); continue; }
+    if(decision.viewInitialization!==undefined){
+      const view=decision.viewInitialization;
+      if(!exact(view,["version","mode","actionId","sourceRef","planSha256"])||view.version!==1||view.mode!=="native-main-visibility-view-v1"||!text(view.actionId)||!text(view.sourceRef)||!digest.test(view.planSha256||""))fail("View initialization requires its exact versioned source/action plan digest.");
+    }
     for (const [key, identity] of [["sourceScripts","sourceRef"],["actions","id"]]) {
       const entries = decision[key];
       if (!Array.isArray(entries) || !entries.length || entries.length > 16 || entries.some(entry =>
@@ -46,25 +52,29 @@ export function validateSupportedDetailStateDecisions(decisions) {
 }
 
 /** Construct reviewable decision data; this does not supply caller authorization. */
-export function buildSupportedDetailStateDecision(sourceDraft, baseDraft) {
+export function buildSupportedDetailStateDecision(sourceDraft, baseDraft, options={}) {
   const model = inspectSource(sourceDraft, baseDraft);
+  const view=options.viewInitialization?buildSupportedDetailViewPlan(sourceDraft,baseDraft,model.actions):undefined;
   return {kind:SUPPORTED_DETAIL_STATE_KIND,
     sourceScripts:model.sources.map(source=>({sourceRef:ref(source),sha256:sourceHash(source.javascript)})),
     actions:model.actions.map(action=>({id:action.id,sha256:sha256Digest(action)})),
-    stateActionId:model.state.id, omissions:[...DETAIL_STATE_OMISSIONS]};
+    stateActionId:model.state.id, omissions:[...DETAIL_STATE_OMISSIONS],...(view?{viewInitialization:supportedDetailViewDecision(view)}:{})};
 }
 
 export function applySupportedDetailStatePolicies(sourceDraft, baseDraft, decisions) {
   const validation = validateSupportedDetailStateDecisions(decisions);
   requireProof(validation.ok,"Invalid supported-only detail-state decision.");
-  const expected = buildSupportedDetailStateDecision(sourceDraft, baseDraft), decision = decisions[0];
+  const decision=decisions[0],expected = buildSupportedDetailStateDecision(sourceDraft, baseDraft,{viewInitialization:decision.viewInitialization!==undefined});
   requireProof(equal(decision,expected),"The complete source program or original action scope changed after approval.");
   const model = inspectSource(sourceDraft,baseDraft), draft = structuredClone(baseDraft), audits = [];
+  const view=decision.viewInitialization?buildSupportedDetailViewPlan(sourceDraft,baseDraft,model.actions):undefined;
   for (const original of model.actions) {
     const action = draft.scripts.actions.find(candidate=>candidate.id === original.id);
     const retainedCore = original.id === model.state.id;
-    action.function = retainedCore ? buildDetailRowControlStateFunction(model.core)
+    const restoresView=view?.actionId===original.id;
+    action.function = restoresView?renderSupportedDetailView(view):retainedCore ? buildDetailRowControlStateFunction(model.core)
       : `function ${action.event}(${action.event === "onChange" ? "value, rowNum, parentRowNum" : ""}) {\n  /* Explicit supported-only policy: this legacy runtime is not executed. */\n}`;
+    if(restoresView)action.runWhen={viewStatusIn:["view"]};
     action.translationStatus = "mapped";
     action.coverage = {status:"translated",nativeRules:[],residuals:[]};
     action.unmappedFunctions = [];
@@ -72,14 +82,15 @@ export function applySupportedDetailStatePolicies(sourceDraft, baseDraft, decisi
     action.semanticHints = {coveredCalculationRanges:action.sourceRefs.map(sourceRef=>{
       const source = model.sources.find(candidate=>ref(candidate) === sourceRef);
       return {sourceRef,name:"approvedSupportedDetailState",start:0,end:source.javascript.length};
-    }),approvedDetailState:{profile:SUPPORTED_DETAIL_STATE_KIND,retainedCore}};
+    }),approvedDetailState:{profile:SUPPORTED_DETAIL_STATE_KIND,retainedCore,...(restoresView?{viewInitialization:supportedDetailViewDecision(view)}:{})}};
     audits.push({kind:SUPPORTED_DETAIL_STATE_KIND,actionId:action.id,sourceScripts:decision.sourceScripts,
       originalActionSha256:sha256Digest(original),originalCoverage:structuredClone(original.coverage),
       workflowBefore:sha256Digest(baseDraft.workflow ?? null),formBefore:sha256Digest(baseDraft.form),
       formRulesBefore:sha256Digest(baseDraft.formRules ?? null),retainedCore,
       retainedNativeRules:(baseDraft.formRules?.linkage || []).map(rule=>rule.id),
       omissions:[...DETAIL_STATE_OMISSIONS],
-      approvedDifference:"No complete source equivalence is claimed. Keep static fields, workflow and existing native rules; retain only the source hidden/display/required branch on native change. Native same-option behavior, initial rendering and row lifecycle remain native. Dynamic hints, legacy wrappers, click dispatch, load reconciliation and helper validation restoration are excluded by caller policy."});
+      ...(restoresView?{viewInitialization:{...supportedDetailViewDecision(view),sourceFields:view.bindings.map(binding=>binding.fieldId),targets:view.targets}}:{}),
+      approvedDifference:"No complete source equivalence is claimed. Keep static fields, workflow and existing native rules; retain only the source hidden/display/required branch on native change. Native same-option behavior, initial rendering and row lifecycle remain native. Dynamic hints, legacy wrappers, click dispatch, load reconciliation and helper validation restoration are excluded by caller policy."+(restoresView?" Explicit view initialization additionally restores source main-region visibility from saved native radio values, without detail-row restoration, checked-attribute fallback, required changes or data writes.":"")});
   }
   return {draft,audits,changedActionIds:model.actions.map(action=>action.id)};
 }

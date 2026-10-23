@@ -49,3 +49,19 @@ be retried through this policy.
 Completion still requires a new draft, persisted readback and migration record.
 Reports must list the accepted differences rather than call the result an exact
 legacy migration.
+
+## Optional approval-view main visibility
+
+An explicit `buildSupportedDetailStateDecision(source, draft,
+{viewInitialization: true})` decision additionally binds the existing onLoad
+action to a versioned source-plan digest. Decisions without that option retain
+their existing omission-only output.
+
+The optional slice reads existing main radio values in `view` mode and changes
+only the visibility of source-backed row regions. It proves static source
+checked-value loops, conditional row effects and complete native target bindings.
+It does not restore detail-row lifecycle, checked-attribute fallback, validation,
+required state, data writes or row mutations. Add/edit rules stay unchanged.
+The full source/action policy approval, deterministic trust regeneration and
+persisted-script verification still apply. This does not authorize updating an
+existing published form or expand its separate repair whitelist.
