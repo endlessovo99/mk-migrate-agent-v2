@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "source": {
+    "origin": "https://oaqas.shanghai-electric.com",
+    "asset": "/web/sys-xform/desktop/api/MKXFORMFACTORY/index.js?0ec4c2c0672f853c17bc89f99e2fb50c",
+    "capturedAt": "2026-10-20T13:30:35.667Z",
+    "sha256": "82b02f1f8eef7ca7c9b7c8fbde378810f8c8ea6e54805e69caef16f1ee64157b",
+    "retainedArtifact": ".tmp/tasks/ekp-oaqas-remigrate36-20261020/it-native-capability-001/MKXFORMFACTORY.js",
+    "extraction": "Unchanged public onChange API body, wrapped only as a JavaScript expression. Offsets use UTF-16 character indices in the decoded original asset."
+  },
+  "extracted": {
+    "file": "native-on-change.js",
+    "sha256": "b4fd20a035d005b57e894e081f9b6d59da31c3d1accefb7dd579de43a8619bad",
+    "functionSha256": "dd8d72d7d9d8bbddb06ba35ac79404a922fb3eee323b853fb6cc16d0f53e3379",
+    "startUtf16": 199509,
+    "endUtf16": 199933,
+    "closureDependencies": {
+      "r": [
+        "getConfig"
+      ],
+      "o": [
+        "$$form",
+        "$$detailForms"
+      ]
+    }
+  },
+  "verifiedScope": "Execute the actual subscription adapter with fake form and config dependencies; verify exact value forwarding and native detail handling. This fixture does not instantiate the complete React form or prove browser lifecycle behavior.",
+  "staticEvidence": [
+    {
+      "name": "public-set-value",
+      "startUtf16": 221169,
+      "endUtf16": 221225,
+      "sha256": "186d8028aa3315875255d4b6a3d8883da1584a5e3b71d6f44e19f74333c54c91",
+      "text": "(0,r.setValue)({form:i,value:c({},e,void 0===t?null:t)})",
+      "interpretation": "The public setter passes its value to the native internal setter."
+    },
+    {
+      "name": "internal-set-value",
+      "startUtf16": 609064,
+      "endUtf16": 609107,
+      "sha256": "64f426312bf963def68eb8ee79279671e733a2e1b700ae8878e2e70c0f0d33d7",
+      "text": "r?t.updateFormItemProps(r.key,{value:n[e]})",
+      "interpretation": "Existing field values flow through updateFormItemProps."
+    },
+    {
+      "name": "programmatic-change",
+      "startUtf16": 540420,
+      "endUtf16": 540502,
+      "sha256": "33244d86581e7bb2d27793ae8197301251025d191a24aec914b1f29bd04f87e3",
+      "text": "g!==u.FORM_DEFAULT_VALUE_PLACEHOLDER&&d.props.onChange&&d.props.onChange(g,\"code\")",
+      "interpretation": "The native property writer invokes the form value callback for programmatic values."
+    },
+    {
+      "name": "field-change-subscribers",
+      "startUtf16": 544458,
+      "endUtf16": 544583,
+      "sha256": "041a0e981b6aebb995b6fb06a23586a5ed7cb01b00bedf77c2e47a6bbfdc1e51",
+      "text": "d&&(0,c.customEventRunner)(d,v||m({},e.name,t),f,i||null,!1,u),s&&(0,c.customEventRunner)(s,v||m({},e.name,t),f,i||null,!1,u)",
+      "interpretation": "The form value callback invokes field and form custom change subscribers; this is static chain evidence, not an end-to-end runtime test."
+    },
+    {
+      "name": "runtime-container",
+      "startUtf16": 238448,
+      "endUtf16": 238509,
+      "sha256": "38967a35ff33a8315f304d5ec1d3d48ce05d8462275444f07332ade2b93de03c",
+      "text": "x.MKXFORM_DATA_CONTAINER={$$beforeSubmit:[],$$afterSubmit:[]}",
+      "interpretation": "initRuntime allocates this per-runtime container; a namespaced initialization marker belongs here, with the current native form identity checked by the caller."
+    },
+    {
+      "name": "runtime-form-identity",
+      "startUtf16": 238728,
+      "endUtf16": 238738,
+      "sha256": "527738285ea874e3be73dbc5379b9bb4a4b79801d60b5eb0b8d5ff4780bd1164",
+      "text": "x.$$FORM=n",
+      "interpretation": "The runtime retains the native form reference separately from business values."
+    },
+    {
+      "name": "form-config-clone",
+      "startUtf16": 533841,
+      "endUtf16": 533909,
+      "sha256": "d338c4101c85e22a61cf35aa594c59e35210b50036f2bc114a65b1f694b0f974",
+      "text": "getFormConfigs:function(e,t,n){var r=(0,a.default)(e?O.current:v,!0)",
+      "interpretation": "getFormConfigs returns a clone; callers must not use it as a persistent registration marker."
+    }
+  ],
+  "limits": [
+    "The public onChange adapter discards the native registration return handle; no unsubscribe contract is exposed here.",
+    "Repeated registrations append subscriptions; generated initialization needs a per-form, per-pair guard.",
+    "The adapter requires a resolved field config and is not a public global change subscription.",
+    "Desktop and mobile subscription adapters are independently captured and executed; the complete React form lifecycle and rendered interaction are outside these fixture tests."
+  ],
+  "mobile": {
+    "source": {
+      "origin": "https://oaqas.shanghai-electric.com",
+      "asset": "/web/sys-xform/mobile/api/MKXFORMFACTORY/index.js?ffbe3d9eb3fdca888abe672c2fc3945d",
+      "capturedAt": "2026-10-23T03:46:13.179Z",
+      "status": 200,
+      "sha256": "dbe2e7f6f4cddf924623f4a025080ff703015f7cfb39231b9ee2e18a019d01a6",
+      "retainedArtifact": ".tmp/tasks/checkbox-other-compatible-20261023/mobile-MKXFORMFACTORY.js",
+      "extraction": "Unchanged public onChange API body, wrapped only as a JavaScript expression. Offsets use UTF-16 character indices in the decoded original asset."
+    },
+    "extracted": {
+      "file": "native-mobile-on-change.js",
+      "sha256": "b4fd20a035d005b57e894e081f9b6d59da31c3d1accefb7dd579de43a8619bad",
+      "functionSha256": "dd8d72d7d9d8bbddb06ba35ac79404a922fb3eee323b853fb6cc16d0f53e3379",
+      "startUtf16": 199506,
+      "endUtf16": 199930,
+      "closureDependencies": {
+        "r": [
+          "getConfig"
+        ],
+        "o": [
+          "$$form",
+          "$$detailForms"
+        ]
+      }
+    },
+    "staticEvidence": [
+      {
+        "name": "public-set-value",
+        "startUtf16": 221166,
+        "endUtf16": 221222,
+        "sha256": "186d8028aa3315875255d4b6a3d8883da1584a5e3b71d6f44e19f74333c54c91",
+        "text": "(0,r.setValue)({form:i,value:c({},e,void 0===t?null:t)})",
+        "interpretation": "The public setter passes its value to the native internal setter."
+      },
+      {
+        "name": "internal-set-value",
+        "startUtf16": 609061,
+        "endUtf16": 609104,
+        "sha256": "64f426312bf963def68eb8ee79279671e733a2e1b700ae8878e2e70c0f0d33d7",
+        "text": "r?t.updateFormItemProps(r.key,{value:n[e]})",
+        "interpretation": "Existing field values flow through updateFormItemProps."
+      },
+      {
+        "name": "programmatic-change",
+        "startUtf16": 540417,
+        "endUtf16": 540499,
+        "sha256": "33244d86581e7bb2d27793ae8197301251025d191a24aec914b1f29bd04f87e3",
+        "text": "g!==u.FORM_DEFAULT_VALUE_PLACEHOLDER&&d.props.onChange&&d.props.onChange(g,\"code\")",
+        "interpretation": "The native property writer invokes the form value callback for programmatic values."
+      },
+      {
+        "name": "field-change-subscribers",
+        "startUtf16": 544455,
+        "endUtf16": 544580,
+        "sha256": "041a0e981b6aebb995b6fb06a23586a5ed7cb01b00bedf77c2e47a6bbfdc1e51",
+        "text": "d&&(0,c.customEventRunner)(d,v||m({},e.name,t),f,i||null,!1,u),s&&(0,c.customEventRunner)(s,v||m({},e.name,t),f,i||null,!1,u)",
+        "interpretation": "The form value callback invokes field and form custom change subscribers; this is static chain evidence, not an end-to-end runtime test."
+      },
+      {
+        "name": "runtime-container",
+        "startUtf16": 238445,
+        "endUtf16": 238506,
+        "sha256": "38967a35ff33a8315f304d5ec1d3d48ce05d8462275444f07332ade2b93de03c",
+        "text": "x.MKXFORM_DATA_CONTAINER={$$beforeSubmit:[],$$afterSubmit:[]}",
+        "interpretation": "initRuntime allocates this per-runtime container; a namespaced initialization marker belongs here, with the current native form identity checked by the caller."
+      },
+      {
+        "name": "runtime-form-identity",
+        "startUtf16": 238725,
+        "endUtf16": 238735,
+        "sha256": "527738285ea874e3be73dbc5379b9bb4a4b79801d60b5eb0b8d5ff4780bd1164",
+        "text": "x.$$FORM=n",
+        "interpretation": "The runtime retains the native form reference separately from business values."
+      }
+    ]
+  }
+}

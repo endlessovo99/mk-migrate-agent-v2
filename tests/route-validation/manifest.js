@@ -124,6 +124,12 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
   version: 1,
   cases: [
     {
+      id: "checkbox-other-compatible-success",
+      source: { kind: "form-only", relativePath: "checkbox-other-compatible/compatible_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "choice-other-independent-main-success",
       source: { kind: "form-only", relativePath: "choice-other-companion-fidelity/main-checkbox_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,

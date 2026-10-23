@@ -1,5 +1,6 @@
 import { isSourceDescriptionControl } from "./source-description-control.js";
 import { cleanText } from "./xml-utils.js";
+import { captionScriptReferences } from "./caption-script-references.js";
 
 /**
  * Records same-cell radio/checkbox other-choice + free-text evidence as a
@@ -41,12 +42,63 @@ export function annotateChoiceOtherCompanions(controls = []) {
 }
 
 /**
- * A neighboring textbox remains an independent source field. Adjacency alone
- * proves neither a composite option encoding nor conditional validation/clear
- * behavior, so keep both fields and their caption on the ordinary mapping.
+ * Keep business choices and explanation text independent. A fixed Other caption
+ * may supply a separate native checkbox when no source option represents it.
+ * Its selection is presentation state, never an invented business choice code.
  */
-export function mapChoiceOtherCompanions(fields = []) {
-  return fields;
+export function mapChoiceOtherCompanions(fields = [], sourceScripts = {}, behavior) {
+  const replacements = new Map();
+  const pairs = fields.filter(field => field.componentId === "xform-checkbox" &&
+    field.sourceProps?.otherTextCompanion?.captionId);
+  for (const choice of pairs) {
+    const relation = choice.sourceProps.otherTextCompanion;
+    const text = fields.find(field => field.id === relation.id);
+    const caption = fields.find(field => field.id === relation.captionId);
+    if (pairs.filter(field => field.sourceProps.otherTextCompanion.captionId === relation.captionId).length !== 1 ||
+        !text || text.componentId !== "xform-input" || text.dataOnly ||
+        !caption || caption.componentId !== "xform-description" || caption.dataOnly ||
+        !isOtherCaptionText(caption.props?.content || caption.title) ||
+        referencedCaption(caption, choice, sourceScripts, fields, behavior)) continue;
+    if (relation.optionValue !== undefined) {
+      if (!(choice.props?.options || []).some(option => option.value === relation.optionValue && option.type !== "other")) continue;
+      replacements.set(caption.id, { ...caption, dataOnly: true });
+      continue;
+    }
+    replacements.set(caption.id, {
+      ...caption,
+      title: cleanText(caption.title).replace(/[:：]\s*$/u, ""),
+      type: "checkbox",
+      componentId: "xform-checkbox",
+      props: {
+        options: [{ label: cleanText(caption.title).replace(/[:：]\s*$/u, ""), value: "selected" }],
+        hiddenLabel: true,
+        ...(choice.props?.readOnly === true || text.props?.readOnly === true ? { readOnly: true } : {})
+      },
+      sourceProps: {
+        ...caption.sourceProps,
+        choiceOtherToggle: { version: 1, choiceSourceRef: choice.sourceRef, textSourceRef: text.sourceRef }
+      },
+      generated: true,
+      reason: "The source Other caption becomes a separately stored native checkbox; original choice codes and explanation text remain unchanged."
+    });
+  }
+  return fields.map(field => replacements.get(field.id) || field);
+}
+
+function referencedCaption(caption, choice, scripts, fields, behavior) {
+  const texts = [...(scripts.sources || []).flatMap(source => [source.javascript, source.helperJavascript]),
+    ...(scripts.fragments || []).map(fragment => fragment.content),
+    ...(scripts.actions || []).map(action => action.function || action.sourceText),
+    ...fields.flatMap(field => [
+      ...Object.entries(field.sourceProps?.designerValues || {}).filter(([key]) => /^(?:on|script|function|event)/i.test(key)).map(([, value]) => value),
+      ...(field.sourceProps?.captionStructure?.domContext?.inlineScripts || field.sourceProps?.staticCaptionFact?.domContext?.inlineScripts || [])
+    ])].filter(text => typeof text === "string" && text.trim());
+  const references = captionScriptReferences(texts);
+  if (texts.some(text => text.includes(caption.id)) || references.values.some(text => text.includes(caption.id))) return true;
+  if (references.opaque && !scripts.sources?.length && scripts.fragments?.length) return true;
+  const context = caption.sourceProps?.captionStructure?.domContext || caption.sourceProps?.staticCaptionFact?.domContext;
+  const impact = behavior?.forPair(choice.id, caption.id, context);
+  return impact ? !impact.ok : references.opaque;
 }
 
 function isSourceChoiceControl(control) {

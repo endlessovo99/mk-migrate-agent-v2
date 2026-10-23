@@ -1,4 +1,5 @@
 import { sourceNumberEditors, sourceNumberDisplays } from "../../dsl/source-number-editor.js";
+import { withChoiceOtherRuntime } from "../../dsl/choice-other-runtime.js";
 import {renderMainTableReferences} from "../../dsl/native-main-table-reference.js";
 import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
 import { sourceRadioLayouts } from "../../dsl/source-radio-layout.js";
@@ -73,6 +74,7 @@ export function applyFormPayload(template, dsl) {
   const lang = parseJsonObject(config.lang || "{}");
   const summary = summarizeDslForm(form, dsl.formRules);
   const mainModel = buildMainModel(next, xform, config, form, lang);
+  const nativeScripts = withChoiceOtherRuntime(dsl.scripts, form, mainModel.fdTableName);
   const detailModels = buildDetailModels(next, form, mainModel, lang);
   const dataModels = [mainModel, ...detailModels];
   if (dataModels.some(model => (model.fdFields || []).some(field => field?.fdIsSystem && field.fdName === "mechanisms"))) {
@@ -87,7 +89,7 @@ export function applyFormPayload(template, dsl) {
 
   const fieldAuth = buildFieldAuth(mainModel, detailModels, form);
   const existingFormAttr = parseJsonObject(config.attribute?.formAttr || "{}");
-  const controlAction = buildControlAction(existingFormAttr.controlAction, dsl.scripts, {
+  const controlAction = buildControlAction(existingFormAttr.controlAction, nativeScripts, {
     mainModel,
     detailModelsByField,
     form,
@@ -104,7 +106,7 @@ export function applyFormPayload(template, dsl) {
     currentTableName: mainModel.fdTableName,
     migrationDsl: {
       form: summary,
-      scripts: summarizeDslScripts(dsl.scripts),
+      scripts: summarizeDslScripts(nativeScripts),
       formRules: nativeFormRules.summary
     }
   };
@@ -128,7 +130,7 @@ export function applyFormPayload(template, dsl) {
     migrationDsl: {
       ...(config.migrationDsl || {}),
       form: summary,
-      scripts: summarizeDslScripts(dsl.scripts),
+      scripts: summarizeDslScripts(nativeScripts),
       formRules: nativeFormRules.summary
     }
   };

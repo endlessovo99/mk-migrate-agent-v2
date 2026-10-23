@@ -1264,6 +1264,28 @@
           "sourceExample": "/**\n* 调用组织架构函数接口，接口名称：#获取当前用户#，获取当前登录用户，返回用户对象\n* @param config 请求参数配置\n* @param callback 回调函数\n* 说明：\n* 请求参数配置 config, functionCode 为函数的编码（即:函数标识\n*\n* 回调函数 callback\n* 1. 参数error，当请求出错是会返回错误信息\n* 2. 参数res，请求数据\n* {\"type\":\"object\",\"properties\":{\"fdOrgType\":{\"description\":\"人员类型\",\"id\":\"fdOrgType\",\"type\":\"integer\"},\"fdLoginName\":{\"description\":\"人员登录名\",\"id\":\"fdLoginName\",\"type\":\"string\"},\"fdId\":{\"description\":\"人员id\",\"id\":\"fdId\",\"type\":\"string\"},\"fdName\":{\"description\":\"人员名称\",\"id\":\"fdName\",\"type\":\"string\"}}}\n*/\nMKXFORM.callOrg({\n  id: \"sysorg.getCurUserInfo\",\n  param: undefined\n}, function(error, res){\n  console.log(res)\n})"
         }
       ]
+    },
+    {
+      "id": "event",
+      "name": "事件",
+      "sourceName": "event",
+      "functionCount": 1,
+      "source": {
+        "extraction": "Retained native MKXFORM factory API descriptor; no designer interaction claimed.",
+        "evidence": "tests/fixtures/executor/persistence/choice-other-runtime/contract.json"
+      },
+      "functions": [
+        {
+          "name": "onChange",
+          "title": "监听控件值变化",
+          "purpose": "按控件 ID 订阅原生值变化，原样接收字段值；明细表另提供内部变化信息。",
+          "clicked": false,
+          "treeNodeFound": false,
+          "insertedCode": "MKXFORM.onChange(\"控件ID\", function (value, extValue) {\n})",
+          "sourceExample": "MKXFORM.onChange(\"控件ID\", function (value, extValue) {\n})",
+          "observation": "Native public API body captured in the retained QAS factory asset; subscription dispatch is verified by the choice-other-native-runtime tests."
+        }
+      ]
     }
   ]
 }

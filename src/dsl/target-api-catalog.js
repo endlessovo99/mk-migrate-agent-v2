@@ -29,6 +29,7 @@ const SAFE_TARGET_APIS = new Set([
   "MKXFORM.getSelectedRowIndex",
   "MKXFORM.getValue",
   "MKXFORM.getValueText",
+  "MKXFORM.onChange",
   "MKXFORM.reload",
   "MKXFORM.setDetailFieldAttr",
   "MKXFORM.setDetailFieldItemAttr",

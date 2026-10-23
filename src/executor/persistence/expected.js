@@ -1,4 +1,6 @@
 import { sourceNumberEditors, sourceNumberDisplays } from "../../dsl/source-number-editor.js";
+import { choiceOtherStorageExpectation } from "../../dsl/source-choice-other-companion.js";
+import { withChoiceOtherRuntime } from "../../dsl/choice-other-runtime.js";
 import {renderMainTableReferences,MAIN_TABLE_PLACEHOLDER} from "../../dsl/native-main-table-reference.js";
 import { approvedDetailColumnWidths } from "../../dsl/approved-detail-presentation.js";
 import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
@@ -80,7 +82,7 @@ export function buildExpectedInvariants(dsl, envelope) {
     dsl?.scripts,
     diagnostics
   );
-  const scriptsExpected = buildExpectedScripts(dsl?.scripts, dsl?.form || {}, envelope?.tableName, diagnostics, envelope?.templateId);
+  const scriptsExpected = buildExpectedScripts(withChoiceOtherRuntime(dsl?.scripts, dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName, diagnostics, envelope?.templateId);
   const workflowExpected = dsl?.workflow
     ? buildExpectedWorkflow(dsl.workflow, diagnostics, {
       templateId: envelope?.templateId,
@@ -415,6 +417,8 @@ function expectedCalculationDependencies(entry, knownRefs) {
 
 function executableProps(field = {}, form = {}, context = {}) {
   const props = {};
+  const stored = choiceOtherStorageExpectation(field, form);
+  if (stored !== undefined) props.nativeStored = stored;
   const checkbox = sourceCheckboxLayouts(form).get(field.sourceRef);
   if (checkbox) props.nativeCheckboxLayout = checkbox.expected;
   const radio = sourceRadioLayouts(form).get(field.sourceRef);

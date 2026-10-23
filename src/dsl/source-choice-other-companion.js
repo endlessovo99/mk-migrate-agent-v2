@@ -1,5 +1,15 @@
 import { canonicalJson } from "../agent-review/digest.js";
 
+/** Only the source-bound choice/explanation presentation needs this extra check. */
+export function choiceOtherStorageExpectation(field, form = {}) {
+  const id = field.sourceProps?.originalId || field.id;
+  const related = (form.fields || []).some(choice => choice.componentId === "xform-checkbox" &&
+    choice.sourceProps?.otherTextCompanion &&
+    [choice.sourceProps.originalId || choice.id, choice.sourceProps.otherTextCompanion.id,
+      choice.sourceProps.otherTextCompanion.captionId].includes(id));
+  return related ? !["description", "button"].includes(field.type) : undefined;
+}
+
 /** Source-only associations; no inferred encoding or native lifecycle. */
 function sourcePairs(form = {}) {
   const scopes = [

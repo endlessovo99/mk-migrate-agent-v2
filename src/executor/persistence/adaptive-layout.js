@@ -8,9 +8,11 @@ const INTRINSIC_COMPONENTS = new Set([
 export function adaptiveFlowItem(item, fields) {
   if (item.width?.value === 0) return structuredClone(item);
   const field = fields.find(field => field.id === item.referenceId);
+  const choiceOther = field?.componentId === "xform-checkbox" &&
+    (field.sourceProps?.choiceOtherToggle || field.sourceProps?.otherTextCompanion);
   return {
     referenceId: item.referenceId,
-    sizing: !field || field.dataOnly || INTRINSIC_COMPONENTS.has(field.componentId)
+    sizing: !field || field.dataOnly || choiceOther || INTRINSIC_COMPONENTS.has(field.componentId)
       ? "intrinsic" : "stretch"
   };
 }

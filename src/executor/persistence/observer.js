@@ -503,6 +503,7 @@ function observeNativeControlBinding(value) {
 
 function observeExecutableProps(controlProps = {}, native = {}) {
   const props = {};
+  if (typeof native.field?.fdIsStored === "boolean") props.nativeStored = native.field.fdIsStored;
   const component = inferComponent(native.field, controlProps);
   const labelProps = native.attribute?.config?.labelProps || {};
   props.nativeCaption = Object.fromEntries(["desktop", "mobile"].map(scene => {

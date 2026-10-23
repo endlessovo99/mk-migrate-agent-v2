@@ -1,4 +1,5 @@
 import { selectEmptyEventProof } from "./source-select-empty-event.js";
+import { choiceOtherToggleBindings } from "./choice-other-runtime.js";
 import {mainTableReadReferenceDiagnostics} from "./native-main-table-reference.js";
 import {templateReadScopeIssues} from './template-read-scope.js';
 import { remoteDialogDiagnostics } from "./remote-dialog.js";
@@ -137,6 +138,11 @@ export function validateMigrationDsl(input, options = {}) {
   validateCatalogVersions(root, diagnostics);
   validateTemplate(root.template, diagnostics);
   const formContext = validateForm(root.form, diagnostics);
+  if (isRecord(root.form)) {
+    try { choiceOtherToggleBindings(root.form); }
+    catch { diagnostics.push(error("dsl.form.choice_other_binding_invalid",
+      "Other presentation must retain unique source checkbox/text identities and an independent checkbox binding.", "/form")); }
+  }
   if (mode === "execute") diagnostics.push(...remoteDialogDiagnostics(root.form,{dsl:root}));
   validateFormRules(root.formRules, diagnostics, { mode, form: root.form, scripts: root.scripts });
   validateScripts(root.scripts, diagnostics, {

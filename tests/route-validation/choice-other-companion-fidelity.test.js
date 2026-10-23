@@ -35,25 +35,25 @@ for (const name of ["main-checkbox", "main-checkbox-existing", "main-radio"]) {
     assert.deepEqual(field(draft, "fd_choice").props.options, original.options);
     assert.ok(field(draft, "fd_choice").props.options.every(o => o.type !== "other" && o.value !== "other_"));
   });
-  it(`keeps the source text and caption as visible independent entities: ${name}`, () => {
+  it(`keeps the original text independent and renders one Other label: ${name}`, () => {
     const { source, draft } = stages(name), text = field(draft, "fd_other_text"), caption = field(draft, "fd_other_caption");
     assert.equal(sourceFields(source).find(f => f.id === "fd_other_text").required, false);
     assert.ok(text && caption);
     assert.notEqual(text.dataOnly, true);
-    assert.notEqual(caption.dataOnly, true);
+    assert.equal(caption.dataOnly === true, name === "main-checkbox-existing");
     assert.equal(text.sourceRef, "source.form.control.fd_other_text");
     assert.notEqual(text.props.required, true);
     assert.equal(text.props.readOnly === true, name === "main-radio");
     assert.deepEqual(text.props.defaultValue, { kind: "literal", value: "seed_under_score" });
     assert.equal(draft.scripts?.actions?.length || 0, 0, "No new clearing, mirroring or restore handlers may be invented");
   });
-  it(`projects both source fields and the caption through existing main controls: ${name}`, () => {
+  it(`projects original source fields with compatible Other presentation: ${name}`, () => {
     const { source, draft } = stages(name), prepared = prepareSample(draft), config = xformConfig(prepared.update);
     const choice = nativeField(config, "fd_choice"), text = nativeField(config, "fd_other_text"), caption = nativeField(config, "fd_other_caption");
     assert.equal(choice.fdDisplay, true);
     assert.equal(text.fdDisplay, true);
     assert.equal(text.fdIsStored, true);
-    assert.equal(caption.fdDisplay, true);
+    assert.equal(caption.fdDisplay, name !== "main-checkbox-existing");
     const props = JSON.parse(text.fdAttribute).config.controlProps;
     assert.equal(props.defaultValueType, "formula");
     assert.equal(JSON.parse(props.defaultValueFormulaVO.script), "seed_under_score");
@@ -64,7 +64,7 @@ for (const name of ["main-checkbox", "main-checkbox-existing", "main-radio"]) {
     for (const platform of ["desktop", "mobile"]) {
       assert.ok(referenced(view.view.render[platform], "fd_choice"));
       assert.ok(referenced(view.view.render[platform], "fd_other_text"));
-      assert.ok(referenced(view.view.render[platform], "fd_other_caption"));
+      assert.equal(referenced(view.view.render[platform], "fd_other_caption"), name !== "main-checkbox-existing");
     }
     assert.equal(trust(source, draft).ok, true);
     assert.equal(prepared.verify(prepared.update).ok, true);

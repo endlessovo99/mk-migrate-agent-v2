@@ -76,14 +76,14 @@ const TABLE_LAYOUT_COMPONENT_ID = "xform-multi-row-table-layout";
 const TABLE_LAYOUT_MAX_COLUMNS = tableLayoutMaxColumns();
 const LEGACY_DATE_TIME_DISPLAY_PATTERN = "yyyy-MM-dd hh:mm";
 
-function buildSemanticCaptionForm(sourceDraft) {
+function buildSemanticCaptionForm(sourceDraft, choiceOtherBehavior) {
   return foldRedundantAddressCompanions(projectUnitPresentation(projectDynamicHyperlinkForm(
     appendStaticJspDescriptionFields(
       applySourceNumericDetailInferences(
         applyNativeCalculationInferences(
           foldLegacyDetailAddressComposites(
             applyReferencedAddressPropertyContextDefaults(
-              draftForm(sourceDraft.form || {}, sourceDraft.workflow)
+              draftForm(sourceDraft.form || {}, sourceDraft.workflow, sourceDraft.scripts, choiceOtherBehavior)
             )
           ),
           sourceDraft.scripts
@@ -98,7 +98,8 @@ function buildSemanticCaptionForm(sourceDraft) {
 
 /** Script-impact contract for a source draft. This is not a fold decision. */
 export function sourceCaptionBehavior(sourceDraft, semanticForm = buildSemanticCaptionForm(sourceDraft)) {
-  if (!sourceDraft.form?.captionRelations?.length) return undefined;
+  if (!sourceDraft.form?.captionRelations?.length && !(sourceDraft.form?.controls || []).some(field =>
+    field.sourceType === "checkbox" && field.sourceProps?.otherTextCompanion?.captionId)) return undefined;
   const semanticScripts = draftMkScriptsFromSourceScripts(sourceDraft.scripts, {
     form: semanticForm, formRules: draftFormRules(sourceDraft.formRules, semanticForm)
   });
@@ -116,7 +117,10 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   const captionDecisions = [];
   const semanticForm = buildSemanticCaptionForm(sourceDraft);
   const behavior = sourceCaptionBehavior(sourceDraft, semanticForm);
-  const rawForm = foldNativeCaptions(semanticForm, sourceDraft, { decisions: captionDecisions, behavior });
+  const choiceForm = (sourceDraft.form?.controls || []).some(field =>
+    field.sourceType === "checkbox" && field.sourceProps?.otherTextCompanion?.captionId)
+    ? buildSemanticCaptionForm(sourceDraft, behavior) : semanticForm;
+  const rawForm = foldNativeCaptions(choiceForm, sourceDraft, { decisions: captionDecisions, behavior });
   // A removed presentation entity must not change collision allocation for a
   // business field. Allocate against the complete semantic identity domain.
   const fieldIdMap = buildFieldIdMap(semanticForm);
@@ -793,15 +797,17 @@ function calculationEvidencePreview(source = "") {
   return String(line || source).replace(/\s+/gu, " ").trim().slice(0, 320);
 }
 
-function draftForm(sourceForm, sourceWorkflow) {
+function draftForm(sourceForm, sourceWorkflow, sourceScripts, choiceOtherBehavior) {
   const controls = Array.isArray(sourceForm.controls) ? sourceForm.controls : [];
   const detailTables = Array.isArray(sourceForm.detailTables) ? sourceForm.detailTables : [];
   const dataFields = Array.isArray(sourceForm.dataFields) ? sourceForm.dataFields : [];
-  const fields = mapChoiceOtherCompanions(mapAddressDisplayCompanions([
+  const addressFields = mapAddressDisplayCompanions([
     ...controls.map(draftFieldFromSourceControl),
     ...detailTables.map(draftDetailTableFromSource),
     ...dataFields.map(draftDataFieldFromSource)
-  ], sourceForm.layout));
+  ], sourceForm.layout);
+  const fields = choiceOtherBehavior === undefined ? addressFields
+    : mapChoiceOtherCompanions(addressFields, sourceScripts, choiceOtherBehavior);
   const presentationFields = markSharedCaptionRobotOutputsDataOnly(fields, sourceWorkflow);
   const sharedCaptionRecovery = recoverSharedBoundCaptionGroups(
     presentationFields,
@@ -1289,7 +1295,13 @@ function pleaseSelectPlaceholderFromSource(source, componentId) {
 
 function parseLegacyLiteralDefault(value, source) {
   const expression = normalizeLegacyExpression(value);
-  if (!expression || /^(?:null|undefined|nowTime)$/i.test(expression)) return undefined;
+  const textLiteral = ["text", "longText"].includes(source.sourceType);
+  const original = decodeLegacyExpression(value);
+  if (!expression) {
+    return textLiteral && original.length > 0 && source.sourceProps?.metadataAttributes?.formula !== "true"
+      ? { kind: "literal", value: original } : undefined;
+  }
+  if (/^(?:null|undefined|nowTime)$/i.test(expression)) return undefined;
   if (/[\$()]/u.test(expression) || /Function\s*\./i.test(expression)) return undefined;
   if (isLegacyAddressSource(source)) return undefined;
 
@@ -1298,7 +1310,7 @@ function parseLegacyLiteralDefault(value, source) {
     if (Number.isFinite(number)) return { kind: "literal", value: number };
   }
 
-  return { kind: "literal", value: expression };
+  return { kind: "literal", value: textLiteral ? original : expression };
 }
 
 function legacyCalculationFromSource(source, options = {}) {
@@ -2091,13 +2103,16 @@ function legacyDateDisplayPatternFromSource(source) {
 }
 
 function normalizeLegacyExpression(value) {
+  return decodeLegacyExpression(value).trim();
+}
+
+function decodeLegacyExpression(value) {
   if (value === undefined || value === null) return "";
   return String(value)
     .replace(/&quot;/g, "\"")
     .replace(/&apos;/g, "'")
     .replace(/&#36;/g, "$")
-    .replace(/&amp;/g, "&")
-    .trim();
+    .replace(/&amp;/g, "&");
 }
 
 function draftMkTree(layout, detailTableIds, compoundCells = new Map(), fields = []) {
