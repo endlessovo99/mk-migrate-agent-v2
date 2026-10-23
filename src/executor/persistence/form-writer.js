@@ -424,7 +424,7 @@ function pruneOrphanControlActions(control, context) {
   );
 }
 
-function buildGlobalDispatcher(event, actions) {
+export function buildGlobalDispatcher(event, actions) {
   const contract = singletonDispatcherContract(event, actions);
   const handlers = actions.map((action, index) => {
     const name = contract.childNames[index];
