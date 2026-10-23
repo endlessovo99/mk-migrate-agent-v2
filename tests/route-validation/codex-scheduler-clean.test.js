@@ -83,7 +83,7 @@ describe("large clean output during scheduler intake", () => {
 
   it("retains a timeout and its partial logs without treating it as a successful clean", (t) => {
     const { root, config, source } = setup(t, "timeout");
-    assert.throws(() => cleanInput(config, source, join(root, "timeout-output.json"), { timeoutMs: 750 }), /ETIMEDOUT/);
+    assert.throws(() => cleanInput(config, source, join(root, "timeout-output.json"), { timeoutMs: 8000 }), /ETIMEDOUT/);
     const receipt = readJson(join(root, "clean.command.json"));
     assert.equal(receipt.errorCode, "ETIMEDOUT");
     assert.notEqual(receipt.exitCode, 0);

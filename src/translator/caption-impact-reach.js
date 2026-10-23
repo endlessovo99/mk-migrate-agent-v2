@@ -13,6 +13,10 @@ const DATA_METHODS = new Set(["join", "push", "pop", "shift", "unshift", "slice"
   "test", "exec"]);
 const DATA_PROPS = new Set(["value", "checked", "length", "selectedIndex", "name", "id", "type", "options", "files"]);
 const WIDE_TAGS = new Set(["label", "td", "tr", "input", "textarea", "select", "table", "div", "span", "a", "form", "body", "p"]);
+const DOM_ESCAPE = new Set(["parentNode", "parentElement", "offsetParent", "previousElementSibling", "nextElementSibling",
+  "previousSibling", "nextSibling", "parent"]);
+const BUILTINS = new Set(["Math", "JSON", "console", "Object", "Array", "Date", "RegExp", "Number", "String", "Boolean",
+  "parseInt", "parseFloat", "isNaN", "isFinite"]);
 
 export function captionImpactReach(scripts) {
   const anchors = new Set(), selectors = [], rowMarkers = [];
@@ -98,7 +102,10 @@ function assign(node, env, state) {
   if (node.operator !== "=" && node.operator !== "+=") fail("unscoped_assignment", node);
   if (memberPath(node.left)?.split(".").includes("prototype")) fail("prototype_mutation", node);
   const value = evalExpr(node.right, env, state);
-  if (node.left.type === "Identifier") { env.set(node.left.name, value || { kind: "data" }); return; }
+  if (node.left.type === "Identifier") {
+    if (BUILTINS.has(node.left.name)) fail("builtin_reassigned", node, { name: node.left.name });
+    env.set(node.left.name, value || { kind: "data" }); return;
+  }
   if (node.left.type !== "MemberExpression" || node.left.computed) fail("unscoped_dom_write", node.left);
   const object = evalExpr(node.left.object, env, state);
   const property = node.left.property.name;
@@ -121,7 +128,7 @@ function evalExpr(node, env, state) {
     case "Literal": return node.regex ? { kind: "safe" } : typeof node.value === "string" ? { kind: "text", text: node.value } : { kind: "data" };
     case "Identifier": return identifier(node, env);
     case "TemplateLiteral":
-      node.expressions.forEach(item => evalExpr(item, env, state));
+      node.expressions.forEach(item => rejectUnresolved(evalExpr(item, env, state), item));
       return node.expressions.length ? { kind: "dynamic-text", text: node.quasis.map(item => item.value.cooked).join("") }
         : { kind: "text", text: node.quasis[0]?.value.cooked || "" };
     case "BinaryExpression":
@@ -134,7 +141,7 @@ function evalExpr(node, env, state) {
       if (node.operator === "delete") fail("unscoped_dom_write", node);
       evalExpr(node.argument, env, state); return { kind: "data" };
     case "ArrayExpression": {
-      const items = node.elements.map(item => item ? evalExpr(item, env, state) : { kind: "data" });
+      const items = node.elements.map(item => item ? rejectUnresolved(evalExpr(item, env, state), item) : { kind: "data" });
       return items.every(item => item?.kind === "text") ? { kind: "array", items } : { kind: "data" };
     }
     case "ObjectExpression":
@@ -174,7 +181,7 @@ function concat(left, right) {
 }
 
 function construct(node, env, state) {
-  node.arguments.forEach(argument => evalExpr(argument, env, state));
+  node.arguments.forEach(argument => rejectUnresolved(evalExpr(argument, env, state), argument));
   const name = node.callee.type === "Identifier" ? node.callee.name : undefined;
   if (["Array", "Date", "Object", "RegExp", "Map", "Set"].includes(name)) return { kind: "data" };
   fail("unknown_constructor", node, { name });
@@ -185,17 +192,18 @@ function call(node, env, state) {
   if (callee.type === "Identifier") {
     const name = callee.name;
     if (env.get(name)?.kind === "function" || SAFE_CALLS.has(name)) {
-      node.arguments.forEach(argument => evalExpr(argument, env, state)); return { kind: "data" };
+      node.arguments.forEach(argument => rejectUnresolved(evalExpr(argument, env, state), argument)); return { kind: "data" };
     }
     if (name === "GetXFormFieldById") {
-      const id = node.arguments[0] && evalExpr(node.arguments[0], env, state);
-      node.arguments.slice(1).forEach(argument => evalExpr(argument, env, state));
+      const id = node.arguments[0] && rejectUnresolved(evalExpr(node.arguments[0], env, state), node.arguments[0]);
+      node.arguments.slice(1).forEach(argument => rejectUnresolved(evalExpr(argument, env, state), argument));
       const ids = idsFrom(id);
       return ids.length ? { kind: "node", ids } : { kind: "data" };
     }
     if (FIELD_CALLS.has(name)) {
       const id = node.arguments[0] && evalExpr(node.arguments[0], env, state);
-      node.arguments.slice(1).forEach(argument => evalExpr(argument, env, state));
+      rejectUnresolved(id, node.arguments[0]);
+      node.arguments.slice(1).forEach(argument => rejectUnresolved(evalExpr(argument, env, state), argument));
       anchorText(id, state, false); return { kind: "data" };
     }
     if (name === "AttachXFormValueChangeEventById" || name === "common_required" || name === "common_not_required") {
@@ -220,7 +228,7 @@ function call(node, env, state) {
     if (name === "$" || name === "jQuery") return selectorCall(node, env, state);
     // An unknown call that only receives closed nodes can affect those nodes.
     // A call with no node has no pair boundary.
-    const args = node.arguments.map(argument => evalExpr(argument, env, state));
+    const args = node.arguments.map(argument => rejectUnresolved(evalExpr(argument, env, state), argument));
     if (args.some(arg => ["dom-root", "head", "style"].includes(arg?.kind))) fail("unknown_call", node, { name });
     const ids = [...new Set(args.flatMap(arg => arg?.kind === "node" ? arg.ids : []))];
     if (ids.length) { ids.forEach(id => state.anchors.add(id)); return { kind: "data" }; }
@@ -240,7 +248,7 @@ function call(node, env, state) {
     return { kind: "text", text: object.items.map(item => item.text).join(separator.text) };
   }
   if (object?.kind === "safe" || DATA_METHODS.has(method)) {
-    node.arguments.forEach(argument => evalExpr(argument, env, state)); return { kind: "data" };
+    node.arguments.forEach(argument => rejectUnresolved(evalExpr(argument, env, state), argument)); return { kind: "data" };
   }
   if (object?.kind === "head" && method === "appendChild") {
     const argument = evalExpr(node.arguments[0], env, state);
@@ -315,8 +323,10 @@ function selectorCall(node, env, state) {
 function member(node, env, state) {
   if (memberPath(node)?.split(".").includes("prototype")) fail("prototype_mutation", node);
   const object = evalExpr(node.object, env, state);
+  if (object?.kind === "unresolved") fail("unresolved_value", node, { name: object.name });
   if (node.computed && node.property.type === "Literal" && (node.property.value === 0 || node.property.value === "0") &&
       (object?.kind === "head" || object?.kind === "node" || object?.kind === "style")) return object;
+  if (object?.kind === "node" && !node.computed && DOM_ESCAPE.has(node.property.name)) fail("dom_escape", node, { property: node.property.name });
   if (object?.kind === "node" && !node.computed && !DATA_PROPS.has(node.property.name)) return object;
   if (object?.kind === "dom-root" && node.computed) {
     const key = node.property.type === "Identifier" ? env.get(node.property.name) : evalExpr(node.property, env, state);
@@ -414,6 +424,11 @@ function memberPath(node) {
   if (node?.type === "MemberExpression" && !node.computed && node.property?.type === "Identifier")
     return `${memberPath(node.object)}.${node.property.name}`;
   return undefined;
+}
+
+function rejectUnresolved(value, node) {
+  if (value?.kind === "unresolved") fail("unresolved_value", node, { name: value.name });
+  return value;
 }
 
 function fail(reason, node, details) {

@@ -230,7 +230,7 @@ function validateTemplate(template, options) {
     workflow?.fdStatus === "published" && workflow.isDraft === false, "published.published_state_required");
 }
 
-function protectedTemplate(template, profileId) {
+export function protectedTemplate(template, profileId) {
   const copy = withoutMechanismTokens(template);
   delete copy.fdAlter;
   delete copy.fdAlterTime;
@@ -250,7 +250,7 @@ function protectedTemplate(template, profileId) {
   return copy;
 }
 
-function protectedOfficial(form, regeneratedProfile) {
+export function protectedOfficial(form, regeneratedProfile) {
   const copy = withoutMechanismTokens(form);
   for (const key of ["fdConfig", "fdAlter", "fdAlterTime"]) delete copy[key];
   if (regeneratedProfile) delete copy.fdProfileId;
@@ -265,7 +265,7 @@ function normalizedProfileReference(value, profileId) {
   return prefix + stableStringify(descriptor);
 }
 
-function configWithoutViewAudit(config) {
+export function configWithoutViewAudit(config) {
   const copy = structuredClone(config);
   for (const view of copy.viewModel || []) {
     delete view.fdAlter;

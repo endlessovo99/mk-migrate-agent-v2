@@ -22,6 +22,22 @@ const DEFINITION = {
 };
 
 describe("batch scoped target repair", () => {
+  it("binds and passes the explicit sole-reader profile and approved snapshot only for template authorization", async () => {
+    const action={kind:"locked_draft",repairKind:"template_authorization",authorizationProfile:"formal-editor-readers-only",expectedSnapshotDigest:"d".repeat(64)};
+    const {store,repair}=await setup({action});let request;
+    const preview=await previewScopedRepair(store,repair.id,{batchId:"batch-1",credentials:CREDENTIALS,repairLockedDraft:async (_dsl,options)=>{request=options;return ready();}});
+    assert.equal(preview.summary.applicable,1);
+    assert.equal(request.authorizationProfile,action.authorizationProfile);
+    assert.equal(request.expectedSnapshotDigest,action.expectedSnapshotDigest);
+    assert.deepEqual(preview.definition.action,action);
+    for(const invalid of [
+      {...action,repairKind:"calculation"},
+      {...action,kind:"reconcile_transfer_record"},
+      {...action,authorizationProfile:"unknown"},
+      {...action,expectedSnapshotDigest:"not-a-digest"},
+      {kind:"locked_draft",repairKind:"template_authorization",expectedSnapshotDigest:action.expectedSnapshotDigest}
+    ]) await assert.rejects(createScopedRepair(store,{...DEFINITION,action:invalid}));
+  });
   it("binds full inputs and native evidence, persists intent before one write, and preserves history", async (t) => {
     const { store, repair } = await setup();
     const root = await privateRoot(t);

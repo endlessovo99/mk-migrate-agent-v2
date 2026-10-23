@@ -17,6 +17,7 @@ import { buildTransferRecordPayload, generateTransferRecordId } from "./transfer
 import { createLockedDraftState } from "./locked-draft-state.js";
 import { prepareLockedDraftRepair } from "./locked-draft-repair-plan.js";
 import { validateLockedDraftSourceEvidence } from "./locked-draft-source-evidence.js";
+import { FORMAL_EDITOR_READERS_PROFILE, restoreFormalEditorReaderAuthorization, restoreFormalReaderWorkflowCooperation, validateFormalReaderCurrentTargets } from "./formal-editor-readers-repair.js";
 
 const PARTITIONS = Object.freeze(["envelope", "form", "rules", "scripts", "workflow"]);
 
@@ -38,11 +39,13 @@ export async function repairLockedDraft(input, options = {}) {
   if (!trusted.ok) return invalid(trusted.diagnostics);
   const plan = buildDryRunPlan(trusted.dsl);
   if (!plan.ok) return { ...invalid(plan.diagnostics), plan };
-  if (options.authorizationProfile !== undefined) {
-    return blocked([{ level: 'error', code: 'locked_draft.derived_readers_not_writable',
-      message: 'The aggregate-only reader profile is retired; use separately authorized source-bound closeout.', path: '/authorizationProfile' }], plan, options.baseUrl);
+  if(options.authorizationProfile===FORMAL_EDITOR_READERS_PROFILE){
+    return blocked([{level:'error',code:'locked_draft.derived_readers_not_writable',message:'The aggregate-only reader profile is retired: native effective readers are derived from formal permissions. Retain the target lock and obtain fresh source-bound semantics; never replay the aggregate write.',path:'/authorizationProfile'}],plan,options.baseUrl);
   }
-  const priorResolution = applyPriorResolutionEvidence(trusted.dsl, options.priorExecutionReport);
+  const formalReaders = options.authorizationProfile === FORMAL_EDITOR_READERS_PROFILE;
+  const priorResolution = formalReaders
+    ? restoreFormalEditorReaderAuthorization(trusted.dsl, options.sourceDraft, options.priorExecutionReport)
+    : applyPriorResolutionEvidence(trusted.dsl, options.priorExecutionReport);
   if (!priorResolution.ok) return invalid(priorResolution.diagnostics);
   const target = normalizedTarget(options.baseUrl);
   const safety = [
@@ -57,6 +60,15 @@ export async function repairLockedDraft(input, options = {}) {
     })
   ];
   if (safety.length) return blocked(safety, plan, target.baseUrl);
+  if (formalReaders) {
+    try {
+      const cooperation = await restoreFormalReaderWorkflowCooperation(priorResolution.dsl, options.priorExecutionReport);
+      priorResolution.dsl = cooperation.dsl;
+      priorResolution.audit.push(cooperation.audit);
+    } catch (error) {
+      return invalid([{level:"error",code:error.code || "locked_draft.formal_readers_cooperation_evidence_invalid",message:"The retained workflow cooperation projection does not bind to this source.",path:"/priorExecutionReport"}]);
+    }
+  }
 
   const baseUrl = target.baseUrl;
   const targetTemplateId = options.targetTemplateId.trim();
@@ -80,6 +92,7 @@ export async function repairLockedDraft(input, options = {}) {
     validationPolicy: trusted.dsl.validationPolicy,
     catalogs: trusted.dsl.catalogs,
     apiStages,
+    ...(formalReaders ? { priorResolutionEvidence: priorResolution.audit } : {}),
     plan
   });
   try {
@@ -95,9 +108,14 @@ export async function repairLockedDraft(input, options = {}) {
     await client.assertTransferRecordAuthentication();
     okStage(apiStages);
 
+    if (formalReaders) {
+      apiStages.push(stage("validateRetainedAuthorizationTargets"));
+      priorResolution.context.currentTargets = await validateFormalReaderCurrentTargets(client, priorResolution.context);
+      okStage(apiStages);
+    }
     apiStages.push(stage("resolveWorkflowParticipants"));
     const participantResolution = await resolveWorkflowParticipants(priorResolution.dsl, {
-      client,
+      client: formalReaders ? { getElementInfo: client.getElementInfo.bind(client) } : client,
       targetBaseUrl: baseUrl,
       fallbackFdIds: options.fallbackFdIds
     });
@@ -109,6 +127,9 @@ export async function repairLockedDraft(input, options = {}) {
       targetBaseUrl: baseUrl,
       fallbackFdIds: options.fallbackFdIds
     });
+    if (formalReaders) requireValue(conditionResolution.resolvedCount === 0 &&
+      conditionResolution.nameCount === 0 && conditionResolution.fdNoCount === 0 &&
+      !(conditionResolution.fallbackCount > 0), "locked_draft.formal_readers_condition_resolution_scope");
     okStage(apiStages);
 
     const before = await readBundle(client, {
@@ -125,6 +146,8 @@ export async function repairLockedDraft(input, options = {}) {
       sourceDsl: trusted.dsl,
       priorExecutionReport: options.priorExecutionReport,
       repairKind: options.repairKind,
+      authorizationProfile: options.authorizationProfile,
+      retainedAuthorization: priorResolution.context,
       envelope: executionEnvelope(before.template, before.workflow, targetCategoryId)
     });
     const second = await readBundle(client, {
@@ -135,6 +158,8 @@ export async function repairLockedDraft(input, options = {}) {
       label: "second"
     });
     requireValue(bundleDigest(before) === bundleDigest(second), "locked_draft.snapshot_changed");
+    if (formalReaders) requireValue(bundleDigest(second) === options.expectedSnapshotDigest,
+      "locked_draft.formal_readers_approved_snapshot_mismatch");
     let theme;
     if (options.priorExecutionReport.readback?.theme) {
       const projection = preparePersistedTemplate({
@@ -167,6 +192,7 @@ export async function repairLockedDraft(input, options = {}) {
       targetTemplateId,
       targetCategoryId,
       repairKind: options.repairKind,
+      ...(formalReaders ? { authorizationProfile: options.authorizationProfile, expectedSnapshotDigest: options.expectedSnapshotDigest, retainedAuthorization: priorResolution.context } : {}),
       snapshotDigest: bundleDigest(second),
       repairPlan: preparedRepair.plan
     });
@@ -589,6 +615,16 @@ function validateSafety(options) {
   ]) requiredText(value, code, path, diagnostics);
   if (!["template_authorization", "calculation"].includes(options.repairKind)) {
     diagnostics.push({ level: "error", code: "locked_draft.kind_required", message: "Repair kind is unsupported.", path: "/repairKind" });
+  }
+  if (options.authorizationProfile !== undefined && (options.repairKind !== "template_authorization" ||
+    options.authorizationProfile !== FORMAL_EDITOR_READERS_PROFILE)) {
+    diagnostics.push({ level: "error", code: "locked_draft.authorization_profile_invalid", message: "Authorization profile is unsupported for this repair kind.", path: "/authorizationProfile" });
+  }
+  if (options.authorizationProfile === FORMAL_EDITOR_READERS_PROFILE && !/^[a-f0-9]{64}$/.test(options.expectedSnapshotDigest || "")) {
+    diagnostics.push({ level: "error", code: "locked_draft.formal_readers_approved_snapshot_required", message: "The approved complete native snapshot digest is required.", path: "/expectedSnapshotDigest" });
+  }
+  if (options.expectedSnapshotDigest !== undefined && options.authorizationProfile !== FORMAL_EDITOR_READERS_PROFILE) {
+    diagnostics.push({ level: "error", code: "locked_draft.authorization_profile_invalid", message: "Approved snapshot scope belongs only to the explicit formal-reader profile.", path: "/expectedSnapshotDigest" });
   }
   if (options.repairKind === "calculation") {
     if (!options.priorDsl || typeof options.priorDsl !== "object" || Array.isArray(options.priorDsl)) {

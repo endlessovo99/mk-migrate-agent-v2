@@ -317,9 +317,6 @@ async function runReconcileTransferRecord(argv, options = {}) {
 
 async function runRepairLockedDraft(argv, options = {}) {
   const args = parseArgs(argv);
-  if (args['authorization-profile'] !== undefined || args['expected-snapshot-digest'] !== undefined) {
-    throw new Error('The aggregate-only reader profile is retired; use separately authorized source-bound closeout.');
-  }
   const inputPath = args.positionals[0];
   if (!inputPath) throw new Error("repair-locked-draft requires a trusted migration DSL path");
   if (typeof args.source !== "string" || !args.source.trim()) {
@@ -345,6 +342,8 @@ async function runRepairLockedDraft(argv, options = {}) {
       : undefined,
     priorExecutionReport: readJson(args["prior-execution-report"]),
     repairKind: args["repair-kind"],
+    authorizationProfile: args["authorization-profile"],
+    expectedSnapshotDigest: args["expected-snapshot-digest"],
     confirmWrite: args["confirm-write"] === true,
     expectedDslDigest: args["expected-dsl-digest"],
     expectedPriorDslDigest: args["expected-prior-dsl-digest"],
@@ -546,7 +545,7 @@ function printUsage() {
   console.error("  node src/cli/main.js check execute <migration.dsl.json>");
   console.error("  node src/cli/main.js dry-run <migration.dsl.json> [--out report.json]");
   console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js reconcile-transfer-record <migration.dsl.json> --source <source-dir|sysform.xml> [--prior-source-draft <source-draft.json> --expected-prior-source-draft-digest <sha256>] --prior-execution-report <readback-failed-report.json> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
-  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js repair-locked-draft <migration.dsl.json> --source <source-dir|sysform.xml> [--prior-source-draft <source-draft.json> --expected-prior-source-draft-digest <sha256>] --prior-execution-report <readback-failed-report.json> --repair-kind <template_authorization|calculation> --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--prior-migration-dsl <historical.dsl.json> --expected-prior-dsl-digest <sha256>] [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
+  console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... node src/cli/main.js repair-locked-draft <migration.dsl.json> --source <source-dir|sysform.xml> [--prior-source-draft <source-draft.json> --expected-prior-source-draft-digest <sha256>] --prior-execution-report <readback-failed-report.json> --repair-kind <template_authorization|calculation> [--authorization-profile formal-editor-readers-only --expected-snapshot-digest <sha256>] --expected-dsl-digest <sha256> --expected-prior-report-digest <sha256> --target-category-id <fdId> --target-template-id <MK_TEST_fdId> [--prior-migration-dsl <historical.dsl.json> --expected-prior-dsl-digest <sha256>] [--confirm-write --expected-evidence-digest <sha256> --artifacts-dir <new-directory>] [--base-url <origin>] [--out report.json]");
   console.error("  NEWOA_BASE_URL=... NEWOA_USERNAME=... NEWOA_ENCRYPTED_PASSWORD=... NEWOA_FALLBACK_PERSON_FD_ID=... NEWOA_FALLBACK_ORGANIZATION_FD_ID=... NEWOA_FALLBACK_GROUP_FD_ID=... NEWOA_FALLBACK_POST_FD_ID=... node src/cli/main.js execute <migration.dsl.json> --confirm-write --target-category-id <fdId> [--workflow-cooperation-default <1|2|3>] [--workflow-sign-document-policy form-only-audit] [--workflow-operation-set-overrides <json-file>] [--allow-template-authorization-fallback] [--allow-missing-direct-person-fallback] [--allow-missing-direct-post-fallback] [--direct-person-fallback-id <sourceFdId>]... [--participant-override <sourceId>=<targetFdId>]... [--template-authorization-override <sourceId>=<targetFdId>]... [--direct-participant-override <sourceTargetId>=<targetFdId>]... [--target-template-id <MK_TEST_fdId>] [--base-url <origin>]");
   console.error("    Published form repair additionally requires --published-form-patch --target-template-id <fdId> --expected-snapshot-digest <sha256> --artifacts-dir <new-directory> [--readonly-field <id>]... [--script-action <id>]...");
 }

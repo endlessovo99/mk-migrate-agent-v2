@@ -19,6 +19,7 @@ import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { projectNativeLayoutRows } from "./layout-projection.js";
 import { mobileNumberBudgets, mobileNumberGrid } from "./mobile-number-layout.js";
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
+import { choiceOtherFlowGroups, buildChoiceOtherGroup } from "./choice-other-layout.js";
 import {
   detailTableEditOperations,
   detailTableViewOperations
@@ -1916,6 +1917,7 @@ function buildGridItem(
 }
 
 function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map(), adaptive = false) {
+  const companionGroups = choiceOtherFlowGroups(flow, fields);
   const soleItem = flow.items.length === 1 && flow.lines.length === 1 && flow.lines[0].length === 1
     ? flow.items[0] : undefined;
   const fillSelector = soleItem && soleItem.width === undefined &&
@@ -1933,16 +1935,21 @@ function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map
       display: "flex", flexWrap: "wrap", alignItems: "center", minWidth: 0,
       ...(line.length === 0 ? { minHeight: "1.5em" } : {})
     }
-  }, line.map((referenceId) => {
-    const width = budgets.has(referenceId) ? { unit: "px", value: budgets.get(referenceId) } : items.get(referenceId)?.width;
-    return container(`${itemId}:flow:${lineIndex}:${referenceId}`, "div", {
-      ...(adaptive ? { className: ADAPTIVE_MAIN_FIELD_CLASS } : {}),
-      style: adaptive ? adaptiveItemStyle(items.get(referenceId), fields) : {
-        flex: fillSelector ? "1 1 0" : width ? "0 0 auto" : "0 1 auto",
-        minWidth: 0, maxWidth: "100%", overflow: "visible",
-        ...(fillSelector ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {})
-      }
-    }, [fieldRef(referenceId)]);
+  }, line.flatMap((referenceId) => {
+    const group = companionGroups.find(group => group.lineIndex === lineIndex && group.referenceIds[0] === referenceId);
+    if (companionGroups.some(group => group.lineIndex === lineIndex && group.referenceIds[1] === referenceId)) return [];
+    const item = referenceId => {
+      const width = budgets.has(referenceId) ? { unit: "px", value: budgets.get(referenceId) } : items.get(referenceId)?.width;
+      return container(`${itemId}:flow:${lineIndex}:${referenceId}`, "div", {
+        ...(adaptive ? { className: ADAPTIVE_MAIN_FIELD_CLASS } : {}),
+        style: adaptive ? adaptiveItemStyle(items.get(referenceId), fields) : {
+          flex: fillSelector ? "1 1 0" : width ? "0 0 auto" : "0 1 auto",
+          minWidth: 0, maxWidth: "100%", overflow: "visible",
+          ...(fillSelector ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {})
+        }
+      }, [fieldRef(referenceId)]);
+    };
+    return group ? [buildChoiceOtherGroup(group, group.referenceIds.map(item))] : [item(referenceId)];
   }))));
 }
 

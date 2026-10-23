@@ -229,11 +229,21 @@ function callbacks(ast) {
 function sameBoundary(a, b) { return a.event === b.event && a.controlId === b.controlId; }
 function declaredIds(source, draftForm) {
   const ids = new Set();
-  walk([source.form, draftForm], node => {
+  // Caption-fold evidence records script nodes that mention missing ids. Those
+  // notes are not form declarations and must not block an approved retirement.
+  const visit = node => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) { node.forEach(visit); return; }
     if (node.id && (node.sourceRef || node.type || node.sourceType)) ids.add(node.id);
     for (const key of ["designerId", "metadataId", "originalId"]) if (node[key]) ids.add(node[key]);
     for (const marker of node.sourceMarkers || []) ids.add(marker);
-  });
+    for (const [key, child] of Object.entries(node)) {
+      if (key === "foldedCaption") continue;
+      if (Array.isArray(child)) child.forEach(visit);
+      else if (child && typeof child === "object") visit(child);
+    }
+  };
+  visit(source.form); visit(draftForm);
   return ids;
 }
 function stableApis(sources) {

@@ -107,7 +107,6 @@ async function runWorkers(store, batchId, phase, options, perform) {
       const heartbeat = setInterval(() => {
         renewClaim(store, item.id, item.activeAttemptId, leaseMs).catch((error) => { heartbeatError ||= error; });
       }, Math.max(250, Math.floor(leaseMs / 3)));
-      heartbeat.unref();
       let result;
       try { result = json(await perform(item, context)); }
       catch (error) { result = { status: "blocked", diagnostics: [safeFailure(error)], report: { ok: false, code: safeFailure(error).code } }; }

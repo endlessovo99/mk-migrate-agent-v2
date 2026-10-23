@@ -12,7 +12,9 @@ const css = node => node.controlProps?.source?.css ||
 it("pins native designer serialization and reassembly sources", verifyNativeSaveSources);
 
 for (const [fixture, sizing, count] of [
-  [source, "adaptive", 1]
+  [source, "adaptive", 1],
+  ["tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml", "adaptive", 2],
+  ["tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml", "source", 1]
 ]) it(`retains scoped styles and business fields across native saves: ${fixture}, ${sizing}`, () => {
   const dsl = draftSourceDraft(cleanSourceFile(fixture), { layoutSizing: sizing });
   const prepared = prepareSample(dsl), original = xformConfig(prepared.update);

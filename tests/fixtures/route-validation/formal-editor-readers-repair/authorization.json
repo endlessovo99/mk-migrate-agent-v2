@@ -1,0 +1,122 @@
+{
+  "source": {
+    "readerFlag": true,
+    "readers": [],
+    "editors": [
+      {
+        "type": "user_or_org",
+        "name": "101",
+        "sourceId": "person-a",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceLoginName": "101",
+        "sourceRef": "source.template.authorization.synthetic.0"
+      },
+      {
+        "type": "user_or_org",
+        "name": "102",
+        "sourceId": "person-b",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceLoginName": "102",
+        "sourceRef": "source.template.authorization.synthetic.1"
+      },
+      {
+        "type": "user_or_org",
+        "name": "103",
+        "sourceId": "missing-editor",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceLoginName": "103",
+        "sourceRef": "source.template.authorization.synthetic.2"
+      }
+    ],
+    "allEditors": [
+      {
+        "type": "user_or_org",
+        "name": "101",
+        "sourceId": "person-a",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceLoginName": "101",
+        "sourceRef": "source.template.authorization.synthetic.3"
+      },
+      {
+        "type": "user_or_org",
+        "name": "102",
+        "sourceId": "person-b",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceLoginName": "102",
+        "sourceRef": "source.template.authorization.synthetic.4"
+      },
+      {
+        "type": "user_or_org",
+        "name": "103",
+        "sourceId": "missing-editor",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceLoginName": "103",
+        "sourceRef": "source.template.authorization.synthetic.5"
+      },
+      {
+        "type": "user_or_org",
+        "name": "104",
+        "sourceId": "missing-author",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceLoginName": "104",
+        "sourceRef": "source.template.authorization.synthetic.6"
+      }
+    ],
+    "allReaders": [
+      {
+        "type": "user_or_org",
+        "name": "105",
+        "sourceId": "missing-reader",
+        "sourceOrgType": 8,
+        "sourceOrgClass": "com.landray.kmss.sys.organization.model.SysOrgPerson",
+        "sourceLoginName": "105",
+        "sourceRef": "source.template.authorization.synthetic.7"
+      }
+    ],
+    "temporaryReaders": [],
+    "temporaryEditors": []
+  },
+  "targets": [
+    {
+      "fdId": "person-a",
+      "fdNo": "101",
+      "fdName": "Current person-a",
+      "fdOrgType": 8,
+      "fdIsAvailable": true,
+      "fdIsBusiness": true
+    },
+    {
+      "fdId": "person-b",
+      "fdNo": "102",
+      "fdName": "Current person-b",
+      "fdOrgType": 8,
+      "fdIsAvailable": true,
+      "fdIsBusiness": true
+    },
+    {
+      "fdId": "fallback-person",
+      "fdNo": "temporary-person",
+      "fdName": "Current fallback-person",
+      "fdOrgType": 8,
+      "fdIsAvailable": true,
+      "fdIsBusiness": true
+    },
+    {
+      "fdId": "reviewer-current",
+      "fdNo": "900",
+      "fdName": "Current reviewer-current",
+      "fdOrgType": 8,
+      "fdIsAvailable": true,
+      "fdIsBusiness": true
+    }
+  ],
+  "fallbackId": "fallback-person",
+  "unintendedReaderId": "unintended-native-reader"
+}

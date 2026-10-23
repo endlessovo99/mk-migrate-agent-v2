@@ -12,6 +12,7 @@ import { adaptiveFlowItem, adaptiveStyleContract, effectiveCellFlow } from "./ad
 import { mobileNumberBudgets, mobileNumberGrid } from "./mobile-number-layout.js";
 import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
+import { choiceOtherFlowGroups } from "./choice-other-layout.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import {
@@ -267,6 +268,8 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
       } } : {}),
       cells: row.cells.map((cell, cellIndex) => {
         const flow = effectiveCellFlow(cell, adaptive);
+        const companions = flow && choiceOtherFlowGroups(flow, form.fields);
+        const withCompanions = contentFlow => companions?.length ? { ...contentFlow, companions } : contentFlow;
         const fieldIdsForCell = cell.refType === "layout"
           ? []
           : (Array.isArray(cell.refIds) ? cell.refIds.filter(Boolean) : []);
@@ -297,10 +300,10 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
           fieldIds: fieldIdsForCell,
           inlineLayout: adaptive ? undefined : inlineCellLayout(cell, form.fields),
           ...(flow ? {
-            contentFlow: adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields)) }
-              : expectedContentFlow(flow, form.fields, new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]), inlineBudgets),
-            mobileContentFlow: adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields)) }
-              : expectedContentFlow(flow, form.fields, new Map(), mobileBudgets)
+            contentFlow: withCompanions(adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields)) }
+              : expectedContentFlow(flow, form.fields, new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]), inlineBudgets)),
+            mobileContentFlow: withCompanions(adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields)) }
+              : expectedContentFlow(flow, form.fields, new Map(), mobileBudgets))
           } : {}),
           row: cell.row,
           column: cell.column,

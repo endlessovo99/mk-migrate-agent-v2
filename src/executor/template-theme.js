@@ -11,17 +11,14 @@ export function prepareRequiredTemplateTheme(template) {
   if (!Array.isArray(config.viewModel) || config.viewModel.length === 0) {
     throw new TypeError("Template theme projection requires a form view.");
   }
-  const descriptions = new Set((config.dataModel || []).flatMap((model) => (
-    (model.fdFields || []).filter((field) => (
-      field.fdAttribute && JSON.parse(field.fdAttribute).config?.type === "desc"
-    )).map((field) => field.fdName)
-  )));
+  const descriptions = descriptionLabels(config);
   const detailColumns = new Map((config.dataModel || []).filter((model) => model.fdType === "detail")
     .map((model) => [model.fdTableName, (model.fdFields || [])
       .filter((field) => !field.fdIsSystem && field.fdDisplay !== false).map((field) => field.fdName)]));
   const expected = config.viewModel.map((viewModel) => {
     const view = JSON.parse(viewModel.fdConfig);
     view.theme = structuredClone(preset.theme);
+    applyClassicThemeChrome(view, descriptions);
     view.controlStyle = view.controlStyle || {};
     for (const scene of Object.keys(REQUIRED_TEMPLATE_THEME)) {
       const ids = renderedControlIds(view.view?.render?.[scene]);
@@ -71,6 +68,9 @@ export function prepareRequiredTemplateTheme(template) {
           if (!contains(current.controlStyle, view.controlStyle)) {
             diagnostics.push(mismatch(`${path}/controlStyle`, "control-style"));
           }
+          if (!classicThemeChromeMatches(current, descriptionLabels(formConfig(actualTemplate)))) {
+            diagnostics.push(mismatch(`${path}/view`, "theme-chrome"));
+          }
         });
       } catch {
         diagnostics.push(mismatch("/mechanisms/sys-xform/fdConfig/viewModel", "invalid-view"));
@@ -93,6 +93,156 @@ export function prepareRequiredTemplateTheme(template) {
 
 function formConfig(template) {
   return JSON.parse(template.mechanisms["sys-xform"].fdConfig);
+}
+
+function descriptionLabels(config) {
+  const labels = new Map();
+  for (const model of config.dataModel || []) {
+    for (const field of model.fdFields || []) {
+      if (!field.fdAttribute) continue;
+      const attribute = JSON.parse(field.fdAttribute);
+      if (attribute.config?.type !== "desc") continue;
+      labels.set(field.fdName, typeof attribute.config.label === "string" ? attribute.config.label : "");
+    }
+  }
+  return labels;
+}
+
+const BORDER_KEYS = ["borderTop", "borderLeft", "borderRight", "borderBottom"];
+
+// The theme object alone does not paint the designer canvas. Desktop grid items
+// carry the visible borders and caption backgrounds, and the appearance node
+// carries the title and background.
+function applyClassicThemeChrome(view, labels) {
+  const desktopAttr = preset.theme.desktop.viewAttr;
+  const mobileAttr = preset.theme.mobile.viewAttr;
+  for (const node of view.view?.render?.desktop || []) {
+    if (node?.type !== "@elem/xform-appearance") continue;
+    node.controlProps = {
+      ...(node.controlProps || {}),
+      titleInfo: structuredClone(desktopAttr.formTitle),
+      backgroundSetting: structuredClone(desktopAttr.backgroundSetting)
+    };
+  }
+  for (const node of view.view?.render?.mobile || []) {
+    if (node?.type !== "@elem/xform-appearance") continue;
+    const controlProps = { ...(node.controlProps || {}), titleInfo: structuredClone(mobileAttr.formTitle) };
+    delete controlProps.backgroundSetting;
+    node.controlProps = controlProps;
+  }
+  stampDesktopGridBorders(view.view?.render?.desktop, labels);
+}
+
+function stampDesktopGridBorders(nodes, labels) {
+  for (const node of nodes || []) {
+    if (node?.type === "@elem/layout-grid") {
+      const columns = node.controlProps?.columns;
+      const rows = node.controlProps?.rows;
+      const border = preset.theme.desktop.viewAttr.desktopGridItemStyle;
+      for (const item of node.children || []) {
+        if (item?.type !== "@elem/layout-grid.GridItem") continue;
+        item.controlProps = item.controlProps || {};
+        item.controlProps.style = classicGridItemStyle(item.controlProps, columns, rows, border);
+        const caption = captionLabelBackground(item, labels);
+        if (caption) item.controlProps.style.backgroundColor = caption;
+      }
+    }
+    stampDesktopGridBorders(node?.children, labels);
+  }
+}
+
+const CAPTION_LABEL_LIMIT = 40;
+
+function captionLabelBackground(item, labels) {
+  const ids = fieldRefs(item);
+  if (ids.length === 0 || !ids.every((id) => labels?.has(id))) return undefined;
+  const text = ids.map((id) => labels.get(id) || "").join("");
+  if (!text || text.length > CAPTION_LABEL_LIMIT || text.includes("\n")) return undefined;
+  return preset.theme.desktop.viewAttr.desktopTitleBgColor;
+}
+
+function fieldRefs(node, ids = []) {
+  if (typeof node?.key === "string" && !node.type && !node.kind) ids.push(node.key);
+  for (const child of node?.children || []) fieldRefs(child, ids);
+  return ids;
+}
+
+function classicGridItemStyle(props, columns, rows, border) {
+  const style = { ...(props.style || {}) };
+  if (style.backgroundColor == null || style.backgroundColor === "") style.backgroundColor = "";
+  style.borderTop = border.borderTop;
+  style.borderLeft = border.borderLeft;
+  if (reachesEdge(props.column, props.columnSpan, columns)) style.borderRight = border.borderRight;
+  else delete style.borderRight;
+  if (reachesEdge(props.row, props.rowSpan, rows)) style.borderBottom = border.borderBottom;
+  else delete style.borderBottom;
+  return style;
+}
+
+function reachesEdge(start, span, extent) {
+  const size = Number.isInteger(span) && span >= 1 ? span : 1;
+  if (!Number.isInteger(extent)) return true;
+  if (!Number.isInteger(start)) return true;
+  return start + size - 1 >= extent;
+}
+
+function classicThemeChromeMatches(view, labels) {
+  return appearanceMatches(view, "desktop") && appearanceMatches(view, "mobile") &&
+    desktopGridBordersMatch(view, labels) && mobileGridBordersClear(view);
+}
+
+function appearanceMatches(view, scene) {
+  const node = (view.view?.render?.[scene] || []).find((item) => item?.type === "@elem/xform-appearance");
+  const attr = preset.theme[scene].viewAttr;
+  if (!contains(node?.controlProps?.titleInfo, attr.formTitle)) return false;
+  if (scene === "desktop") return contains(node.controlProps.backgroundSetting, attr.backgroundSetting);
+  return node.controlProps.backgroundSetting == null;
+}
+
+function desktopGridBordersMatch(view, labels) {
+  let matches = true;
+  const labelBackground = preset.theme.desktop.viewAttr.desktopTitleBgColor;
+  visitGrids(view.view?.render?.desktop, (grid) => {
+    const border = preset.theme.desktop.viewAttr.desktopGridItemStyle;
+    for (const item of grid.children || []) {
+      if (item?.type !== "@elem/layout-grid.GridItem") continue;
+      const expected = classicGridItemStyle(item.controlProps || {}, grid.controlProps?.columns, grid.controlProps?.rows, border);
+      const caption = captionLabelBackground(item, labels);
+      if (caption) expected.backgroundColor = caption;
+      if (!borderStyleMatches(item.controlProps?.style, expected)) matches = false;
+      const background = item.controlProps?.style?.backgroundColor ?? "";
+      if (caption && background !== caption) matches = false;
+      if (!caption && background === labelBackground) matches = false;
+    }
+  });
+  return matches;
+}
+
+function mobileGridBordersClear(view) {
+  let clear = true;
+  visitGrids(view.view?.render?.mobile, (grid) => {
+    for (const item of grid.children || []) {
+      if (item?.type !== "@elem/layout-grid.GridItem") continue;
+      if (BORDER_KEYS.some((key) => presentBorder(item.controlProps?.style?.[key]) !== undefined)) clear = false;
+    }
+  });
+  return clear;
+}
+
+function visitGrids(nodes, visit) {
+  for (const node of nodes || []) {
+    if (node?.type === "@elem/layout-grid") visit(node);
+    visitGrids(node?.children, visit);
+  }
+}
+
+function borderStyleMatches(actual = {}, expected) {
+  if ((actual.backgroundColor ?? "") !== (expected.backgroundColor ?? "")) return false;
+  return BORDER_KEYS.every((key) => presentBorder(actual[key]) === expected[key]);
+}
+
+function presentBorder(value) {
+  return value === "" || value === undefined ? undefined : value;
 }
 
 function renderedControlIds(nodes = [], ids = new Set()) {

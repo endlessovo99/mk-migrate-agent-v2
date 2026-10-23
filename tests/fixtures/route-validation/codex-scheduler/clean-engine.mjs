@@ -20,7 +20,7 @@ export async function runCleanFixture(mode, args) {
   } else if (mode === "timeout") {
     console.log("fixture clean started");
     console.error("FIXTURE_CLEAN_WAITING");
-    await delay(5000);
+    await delay(30000);
   } else {
     writeFileSync(output, JSON.stringify({ source: { sourceId: "fixture" } }));
     console.log("fixture partial artifact written");

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { preparePersistedTemplate } from "./persistence.js";
 import { stableStringify } from "./persistence/normalize.js";
 import { withoutMechanismTokens } from "./published-form-patch.js";
+import { FORMAL_EDITOR_READERS_PROFILE, prepareFormalEditorReadersRepair } from "./formal-editor-readers-repair.js";
 
 const AUTHORIZATION_COLLECTIONS = Object.freeze([
   "readers",
@@ -21,7 +22,10 @@ const AUTHORIZATION_NATIVE_FIELDS = Object.freeze({
   temporaryEditors: "fdTmpEditors"
 });
 
-export async function prepareLockedDraftRepair({ client, before, dsl, sourceDsl, priorExecutionReport, repairKind, envelope }) {
+export async function prepareLockedDraftRepair({ client, before, dsl, sourceDsl, priorExecutionReport, repairKind, envelope, authorizationProfile, retainedAuthorization }) {
+  if (repairKind === "template_authorization" && authorizationProfile === FORMAL_EDITOR_READERS_PROFILE) {
+    return prepareFormalEditorReadersRepair({ before, dsl, priorExecutionReport, envelope, retainedAuthorization });
+  }
   if (repairKind === "template_authorization") {
     return prepareAuthorizationRepair({
       client,

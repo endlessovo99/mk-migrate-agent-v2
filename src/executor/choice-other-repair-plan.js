@@ -172,7 +172,7 @@ function retainedLoadActions(action){
 }
 
 /** Compare the entire expected bundle, allowing only demonstrated typed audit normalization. */
-function protectedSnapshot(expected,after,targets){
+export function protectedSnapshot(expected,after,targets){
  try{
   const left=withoutMechanismTokens(clone(expected)),right=withoutMechanismTokens(clone(after));
   validateEnvelope(right,left.template.fdCategory.fdId);

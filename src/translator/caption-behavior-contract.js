@@ -14,6 +14,20 @@ import { captionHelperUnits } from "./caption-helper-unit.js";
 // semantic coverage contract, not another whole-program JavaScript evaluator.
 const VALUE_APIS = new Set(["getValue", "setValue", "getFieldAttr", "setFieldAttr", "getDetailFieldAttr", "setDetailFieldAttr",
   "toast", "updateControl", "setDetailFieldItemAttr", "setProps", "setDetailValues"]);
+// These rejections already explain an unsafe binding, domain, or value. A later
+// node reach must not reopen the other titles. Unrecognized calls stay eligible
+// for a closed local boundary.
+const CLOSED_PROOF_REASONS = new Set([
+  "attachment_domain_unproven", "currency_conversion_arguments_unproven", "detail_output_domain_unproven",
+  "detail_read_arguments_unproven", "detail_read_dependency_unproven", "detail_read_domain_unproven",
+  "dropdown_domain_mutated", "dynamic_target_identity", "event_target_region_unproven", "lexical_binding_unproven",
+  "nested_assignment_unproven", "nonlocal_binding_write", "poll_callback_binding_unproven", "record_key_unproven",
+  "record_value_unproven", "row_region_unproven", "script_binding_ambiguous", "script_binding_unproven",
+  "script_callee_shadowed", "script_delete", "script_parameter_unproven", "shared_scalar_escape",
+  "unbound_source_function", "unbounded_field_call", "unproven_binding_value", "unproven_callback",
+  "unproven_closure_capture", "unproven_condition", "unproven_data_loop", "unproven_data_method",
+  "unproven_data_value", "unproven_mutation", "unproven_operator"
+]);
 
 export function captionBehaviorContract(source, form, mappedScripts) {
   const auditedOrphans = auditedCaptionOrphans(source);
@@ -198,7 +212,11 @@ export function captionBehaviorContract(source, form, mappedScripts) {
         if (!region?.targets?.length) { boundary = { ...boundary, bounded: false, reason: "row_region_unproven", marker }; break; }
         region.targets.forEach(target => anchors.add(target.id));
       }
-      if (boundary.bounded) {
+      if (boundary.bounded && !CLOSED_PROOF_REASONS.has(issue?.reason) &&
+          (anchors.size || boundary.selectors?.length || boundary.rowMarkers?.length)) {
+        // A bounded analysis that names no node, selector or row does not explain
+        // why the stricter contract rejected the program. Leave that rejection
+        // closed for the whole form.
         scope = { ok: true, targets: [...anchors], presentationTargets: [...anchors], dataTargets: [], parentReads: [],
           rowRegions: [], localBoundary: { ...boundary, anchors: [...anchors] } };
         proofMode = "local-script-boundary";

@@ -218,6 +218,7 @@ async function invoke(input, action, options, confirmWrite, confirmation = {}) {
       ...(client ? { client } : {}),
       ...(action.kind === "locked_draft" ? {
         repairKind: action.repairKind, priorDsl: json(input.priorDsl), expectedPriorDslDigest: rawDigest(input.priorDsl),
+        ...(action.authorizationProfile !== undefined ? { authorizationProfile: action.authorizationProfile, expectedSnapshotDigest: action.expectedSnapshotDigest } : {}),
         ...(input.fallbackFdIds ? { fallbackFdIds: input.fallbackFdIds } : {})
       } : {})
     });
@@ -243,8 +244,10 @@ function validateDefinition(definition) {
     exactKeys(action,['kind','mode'],'action');
     assert(['finalize_record','repair_readers','restore_graph'].includes(action.mode),'unsupported_authorization_closeout');
   } else if (action?.kind === "locked_draft") {
-    exactKeys(action, ["kind", "repairKind"], "action");
+    exactKeys(action, ["kind", "repairKind", ...(action.authorizationProfile !== undefined ? ["authorizationProfile", "expectedSnapshotDigest"] : [])], "action");
     assert(["template_authorization", "calculation"].includes(action.repairKind), "unsupported_action");
+    if (action.authorizationProfile !== undefined) assert(action.repairKind === "template_authorization" &&
+      action.authorizationProfile === "formal-editor-readers-only" && /^[a-f0-9]{64}$/.test(action.expectedSnapshotDigest || ""), "unsupported_authorization_profile");
   } else {
     exactKeys(action, ["kind"], "action");
     assert(action.kind === "reconcile_transfer_record", "unsupported_action");

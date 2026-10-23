@@ -4,6 +4,7 @@ import { ADAPTIVE_MAIN_FIELD_CLASS } from "./adaptive-layout.js";
 import { nativeCheckboxLayout } from "../../dsl/source-checkbox-layout.js";
 import { nativeRadioLayout } from "../../dsl/source-radio-layout.js";
 import { observeInlineCellLayout } from "./inline-cell-layout.js";
+import { observeChoiceOtherGroup, isChoiceOtherStyleCarrier } from "./choice-other-layout.js";
 import { PLATFORM_OWNED } from "./invariants.js";
 import {
   decodeRequiredJsonObject,
@@ -1265,10 +1266,14 @@ function observeAdaptiveLayout(viewModel) {
   return Object.fromEntries(["desktop", "mobile"].map(scene => {
     const roots = renders[scene], root = roots?.[0], scope = root?.children?.[0];
     const nodes = (roots || []).flatMap(nativeViewNodes);
+    const companionCarriers = new Set(nodes.filter(node => {
+      const compound = observeChoiceOtherGroup(node);
+      return compound && !compound.invalid;
+    }).map(node => node.children[0]));
     return [scene, {
       rootCount: roots?.length, rootChildCount: root?.children?.length,
-      root: root && { type: root.type, kind: root.kind, controlProps: root.controlProps },
-      styleCarrierCount: nodes.filter(node => (node.type === "@elem/xform-html" || nativeStylesheetCss(node) !== undefined)).length,
+      root: root && { type: root.type, kind: root.kind, controlProps: observedAppearanceProps(root.controlProps) },
+      styleCarrierCount: nodes.filter(node => (node.type === "@elem/xform-html" || nativeStylesheetCss(node) !== undefined) && !companionCarriers.has(node)).length,
       scope: shape(scope), childCount: scope?.children?.length,
       carrier: scope?.children?.[0], main: shape(root?.children?.[1]),
       layoutShellsValid: adaptiveLayoutShellsValid(root?.children?.[1])
@@ -1290,10 +1295,34 @@ function adaptiveLayoutShellsValid(main) {
     return grid.children.every(item => item.type === "@elem/layout-grid.GridItem" &&
       item.kind === "container" &&
       propsAllowed(item.controlProps, ["id", "column", "columnSpan", "row", "rowSpan", "style"], true) &&
-      stableStringify(item.controlProps.style) === stableStringify({ backgroundColor: "" }) &&
+      adaptiveGridItemStyleAllowed(item.controlProps.style) &&
       (item.children?.[0]?.type !== "div" || item.children[0].children?.every(line =>
-        line.children?.every(field => field.controlProps?.className === ADAPTIVE_MAIN_FIELD_CLASS))));
+        line.children?.every(field => {
+          const compound = observeChoiceOtherGroup(field);
+          return compound ? !compound.invalid && compound.items.every(item =>
+            item.controlProps.className.split(" ").includes(ADAPTIVE_MAIN_FIELD_CLASS))
+            : field.controlProps?.className === ADAPTIVE_MAIN_FIELD_CLASS;
+        }))));
   });
+}
+
+function observedAppearanceProps(props) {
+  if (!props || typeof props !== "object" || Array.isArray(props)) return props;
+  const { titleInfo, backgroundSetting, ...layoutProps } = props;
+  return layoutProps;
+}
+
+function adaptiveGridItemStyleAllowed(style) {
+  if (!style || typeof style !== "object" || Array.isArray(style)) return false;
+  const classicBorders = CLASSIC_THEME.theme.desktop.viewAttr.desktopGridItemStyle;
+  const borderKeys = ["borderTop", "borderLeft", "borderRight", "borderBottom"];
+  const keys = Object.keys(style);
+  const labelBackground = CLASSIC_THEME.theme.desktop.viewAttr.desktopTitleBgColor;
+  if (!keys.includes("backgroundColor") || (style.backgroundColor !== "" && style.backgroundColor !== labelBackground)) return false;
+  if (keys.some((key) => key !== "backgroundColor" && !borderKeys.includes(key))) return false;
+  if (borderKeys.some((key) => style[key] !== undefined && style[key] !== classicBorders[key])) return false;
+  const bordered = borderKeys.some((key) => style[key] !== undefined);
+  return !bordered || (style.borderTop === classicBorders.borderTop && style.borderLeft === classicBorders.borderLeft);
 }
 
 function observeLayoutRows(viewModel, detailModels, diagnostics, options = {}) {
@@ -1538,13 +1567,24 @@ function observeContentFlow(refs, diagnostics, decodePath) {
       !Array.isArray(root.children) || root.children.length === 0) return fail();
   const lines = [];
   const items = [];
+  const companions = [];
   for (const line of root.children) {
     if (line.type !== "div" || line.kind !== "container" || !hasNativeFlowProps(line.controlProps, "container") || !Array.isArray(line.children)) return fail();
     const lineStyle = { display: "flex", flexWrap: "wrap", alignItems: "center", minWidth: 0,
       ...(line.children.length === 0 ? { minHeight: "1.5em" } : {}) };
     if (stableStringify(line.controlProps?.style) !== stableStringify(lineStyle)) return fail();
     const ids = [];
-    for (const item of line.children) {
+    const lineItems = [];
+    for (const child of line.children) {
+      const compound = observeChoiceOtherGroup(child);
+      if (compound?.invalid) return fail();
+      if (compound) {
+        companions.push({ lineIndex: lines.length, ...compound.group });
+        lineItems.push(...compound.items.map(item => ({ ...item, controlProps: { ...item.controlProps,
+          className: item.controlProps.className.includes(ADAPTIVE_MAIN_FIELD_CLASS) ? ADAPTIVE_MAIN_FIELD_CLASS : undefined } })));
+      } else lineItems.push(child);
+    }
+    for (const item of lineItems) {
       if (item.type !== "div" || item.kind !== "container" || !hasNativeFlowProps(item.controlProps, "item") || !Array.isArray(item.children) || item.children.length !== 1) return fail();
       const reference = item.children[0];
       if (!reference || typeof reference.key !== "string" || reference.kind === "container") return fail();
@@ -1569,7 +1609,7 @@ function observeContentFlow(refs, diagnostics, decodePath) {
     }
     lines.push(ids);
   }
-  return { lines, items };
+  return { lines, items, ...(companions.length ? { companions } : {}) };
 }
 
 function hasNativeFlowProps(props, kind) {
@@ -1613,6 +1653,7 @@ function nativeFieldIdsFromRef(
   decodePath
 ) {
   if (!fieldRef || typeof fieldRef !== "object") return [];
+  if (isChoiceOtherStyleCarrier(fieldRef)) return [];
   if (fieldRef.migrationRefType === "layout") {
     diagnostics.push(diagnostic({
       level: "error",

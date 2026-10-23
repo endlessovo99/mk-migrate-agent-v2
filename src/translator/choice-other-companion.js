@@ -130,6 +130,9 @@ function hasMatchingOtherTitle(choice, companion) {
   if (isOtherCaptionText(title)) return true;
   const choiceTitle = cleanText(choice.source?.designerValues?.label || choice.title || "")
     .replace(/[:：]\s*$/u, "");
-  return Boolean(choiceTitle && title.startsWith(choiceTitle) &&
-    isOtherCaptionText(title.slice(choiceTitle.length).replace(/^\s*[:：]\s*/u, "")));
+  return Boolean(choiceTitle && (
+    title.startsWith(choiceTitle) &&
+      isOtherCaptionText(title.slice(choiceTitle.length).replace(/^\s*[:：]\s*/u, "")) ||
+    title.endsWith(choiceTitle) && isOtherCaptionText(title.slice(0, -choiceTitle.length))
+  ));
 }

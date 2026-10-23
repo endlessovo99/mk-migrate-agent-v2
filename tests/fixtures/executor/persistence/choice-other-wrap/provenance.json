@@ -1,0 +1,39 @@
+{
+  "capturedOn": "2026-10-23",
+  "method": "GET",
+  "files": {
+    "xform-checkbox.js": {
+      "sha256": "76c35fb1ca58f8d7e36ab69ab72688e75493e2647f6ead8e475d3b7dba6d45db",
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-checkbox/index.js"
+    },
+    "xform-checkbox.css": {
+      "sha256": "8ec8e82d058890afdcd6105478f63f6138866a951ba21d37332c994147640fa6",
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-checkbox/index.css"
+    },
+    "xform-m-checkbox.js": {
+      "sha256": "c1dc260d252f038575ecba9b69db8596f18732ef7108c57d66bf39cefba3615c",
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-m-checkbox/index.js"
+    },
+    "xform-m-checkbox.css": {
+      "sha256": "310ff9100f98d0fa1050ff4df19d3d79feef62c2b7774cc2f0304d5d4fd96bd5",
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-m-checkbox/index.css"
+    },
+    "xform-radio.js": {
+      "sha256": "1fbcda3113e9f98b6e54dc9f55e002ce88209adbd36e8a325e145ff5567647a3",
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-radio/index.js"
+    },
+    "xform-radio.css": {
+      "sha256": "713884c42162aa334deff1948d51e9de159290227f63b2a263e6bda2e40c5632",
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-radio/index.css"
+    },
+    "xform-m-radio.js": {
+      "sha256": "923e37ad4ed894694a6b49d7d607e585e67a3e29a29ec8642ad1144f53dc8f64",
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-m-radio/index.js"
+    },
+    "xform-m-radio.css": {
+      "sha256": "e3d0caf9a1e229ae76f17425d64fb7627d3140cf3dea7b12daa630143d6de156",
+      "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-m-radio/index.css"
+    }
+  },
+  "boundary": "Unmodified native choice modules and CSS. Offline replay uses inert React effects, platform services and core input adapters. Browser checks compute layout from the persisted projection; no NewOA page, template or business script is executed."
+}

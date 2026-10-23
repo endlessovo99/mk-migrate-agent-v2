@@ -32,6 +32,8 @@ describe("repair-locked-draft CLI", () => {
         "--source", sourcePath,
         "--prior-execution-report", reportPath,
         "--repair-kind", "template_authorization",
+        "--authorization-profile", "formal-editor-readers-only",
+        "--expected-snapshot-digest", "d".repeat(64),
         "--target-template-id", "target-template",
         "--target-category-id", "target-category",
         "--expected-dsl-digest", "a".repeat(64),
@@ -57,6 +59,8 @@ describe("repair-locked-draft CLI", () => {
     }
 
     assert.equal(request.options.repairKind, "template_authorization");
+    assert.equal(request.options.authorizationProfile, "formal-editor-readers-only");
+    assert.equal(request.options.expectedSnapshotDigest, "d".repeat(64));
     assert.equal(request.options.confirmWrite, true);
     assert.equal(request.options.expectedDslDigest, "a".repeat(64));
     assert.equal(request.options.expectedPriorReportDigest, "b".repeat(64));

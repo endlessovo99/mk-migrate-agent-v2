@@ -76,7 +76,7 @@ export function captionScriptScope(scripts, form, originals, { auditedOrphans = 
   const protect = (value, kind = "presentation", node) => {
     value.ids.forEach(id => {
       targets.add(id); (kind === "data" ? dataTargets : kind === "row" ? rowEffectTargets : presentationTargets).add(id);
-      if (node && !targetOrigins.has(id)) targetOrigins.set(id, { scriptIndex, type: node.type, start: node.start });
+      if (node && !targetOrigins.has(id)) targetOrigins.set(id, { scriptIndex, nodeType: node.type, start: node.start });
     }); return value;
   };
   const data = (value, node) => protect(value, "data", node);
@@ -168,6 +168,7 @@ export function captionScriptScope(scripts, form, originals, { auditedOrphans = 
       for (const input of readDomain(args[0] || literal(undefined), node)) {
         const id = /^extendDataFormInfo\.value\(([A-Za-z_][\w.-]*)\)$/.exec(input)?.[1] || input;
         const fields = originals.filter(field => field.id === id);
+        if (!fields.length) fail("dynamic_target_identity", node, { targetId: id });
         if (fields.some(field => field.sourceType === "description")) protect(nodes([id]), "presentation", node);
         else data(nodes([id]), node);
         sourceValueReads.push({ lookup: input, fieldId: id, scriptIndex, offset: node.start,
