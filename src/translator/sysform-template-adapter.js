@@ -47,7 +47,7 @@ export function translateSysFormTemplateXml(xml, options = {}) {
     editorLabelEvidence: editorLabelEvidence(template.fdDisplayJsp || "")
   });
   const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
-    knownFieldIds: collectDataAuthorityFieldIds(form)
+    knownFieldIds: collectDataAuthorityFieldIds(form, scripts)
   });
   annotateChinaValueReadOnly(form, template);
   attachClosedMainFieldFacts(template, scripts, form);
@@ -153,7 +153,7 @@ function visibleNodeDataAuthorityFieldIds(nodes = {}) {
   return ids;
 }
 
-function collectDataAuthorityFieldIds(form = {}) {
+function collectDataAuthorityFieldIds(form = {}, scripts = {}) {
   const ids = new Set();
   for (const field of [...(form.fields || []), ...(form.dataFields || [])]) {
     if (field?.id) ids.add(field.id);
@@ -161,6 +161,20 @@ function collectDataAuthorityFieldIds(form = {}) {
     for (const column of field.columns || []) {
       if (column?.id) ids.add(column.id);
     }
+  }
+  // JSP controls enter Source Draft after designer fields. Only an already
+  // translated button with one exact designer fragment may inherit that
+  // fragment's enclosing source right section; unrelated JSP ids stay unknown.
+  const buttons = Array.isArray(scripts?.buttons) ? scripts.buttons : [];
+  const fragments = Array.isArray(scripts?.fragments) ? scripts.fragments : [];
+  for (const button of buttons) {
+    const matches = fragments.filter(fragment => fragment.id === button.id);
+    if (!button.id || buttons.filter(candidate => candidate.id === button.id).length !== 1 ||
+        matches.length !== 1 || matches[0].sourceKey !== "fdDesignerHtml" ||
+        matches[0].sourceType !== "designer-jsp" ||
+        button.sourceRef !== `${matches[0].sourceRef}.button.1` ||
+        typeof button.function !== "string" || !button.function.trim()) continue;
+    ids.add(button.id);
   }
   return ids;
 }
