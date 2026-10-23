@@ -1705,7 +1705,11 @@ function unconditionalRuntimeImport(jsp, source) {
   const index = Number(source.id?.match(/\.script\.(\d+)$/)?.[1]) - 1;
   if (!Number.isInteger(index) || !scripts[index]) return false;
   let depth = 0;
-  for (const match of text.slice(0, scripts[index].index).matchAll(/<%(?!@)([\s\S]*?)%>/g)) {
+  for (const match of text.slice(0, scripts[index].index).matchAll(/<%--[\s\S]*?(?:--%>|$)|<%(?!@)([\s\S]*?)%>/g)) {
+    if (match[1] === undefined) {
+      if (!match[0].endsWith("--%>")) return false;
+      continue;
+    }
     const code = match[1].trim();
     if (/^if\s*\([^{}]*\)\s*\{$/.test(code)) depth++;
     else if (code === "}" && depth > 0) depth--;
@@ -3665,7 +3669,8 @@ function allowanceCalculationLines(model) {
     "  if (packageMode === \"1\") regular = 0",
     `  var radiation = Number(MKXFORM.getValue(${JSON.stringify(model.radiationFieldId)}) || 0)`,
     "  var allowanceTotal = Math.round(((packageMode === \"1\" ? packaged : regular) + radiation) * 100) / 100",
-    `  var receiptRows = MKXFORM.getValue(${JSON.stringify(detailTable)}) || []`,
+    `  var rawReceiptRows = MKXFORM.getValue(${JSON.stringify(detailTable)}) || []`,
+    "  var receiptRows = Array.isArray(rawReceiptRows) ? rawReceiptRows : (rawReceiptRows.values || [])",
     "  var receiptTotal = 0",
     "  for (var index = 0; index < receiptRows.length; index += 1) {",
     `    receiptTotal = Math.round((receiptTotal + Number(receiptRows[index][${JSON.stringify(model.receiptFieldId)}] || 0)) * 100) / 100`,

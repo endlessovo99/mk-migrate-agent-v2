@@ -306,19 +306,36 @@ function nativeFormulaDisplayContent(expression, options = {}) {
 /**
  * Copy FORMULA Eval payloads onto calculate controls' expressionFormulaVO
  * and config.sign.formula["{field}.expressionFormulaVO"] (native UI contract).
+ * Keep SUM targets on controls too: the official-read preview omits formAttr
+ * and therefore cannot hydrate statisticData from formRule.compute.
  */
 export function applyExpressionFormulaVoToModels({ dataModels = [], computeRules = [], config = {} } = {}) {
   const sign = config.sign && typeof config.sign === "object" ? config.sign : {};
   const formulaSign = sign.formula && typeof sign.formula === "object" ? { ...sign.formula } : {};
   const fieldsByName = new Map();
+  const fieldsByControlId = new Map();
   for (const model of dataModels) {
     for (const field of model?.fdFields || []) {
       if (field?.fdName) fieldsByName.set(field.fdName, field);
+      const controlId = parseJsonObject(field?.fdAttribute).config?.controlProps?.id;
+      if (controlId) fieldsByControlId.set(controlId, field);
     }
   }
 
   for (const rule of computeRules) {
     for (const item of Array.isArray(rule?.choices?.items) ? rule.choices.items : []) {
+      if (item?.type === "SUM" && Array.isArray(item.statisticField) && item.statisticField.length) {
+        const field = fieldsByControlId.get(item.fieldKey);
+        if (field) {
+          const attribute = parseJsonObject(field.fdAttribute);
+          Object.assign(attribute.config.controlProps, {
+            statisticMode: "SUM",
+            statisticData: [...item.statisticField]
+          });
+          field.fdAttribute = JSON.stringify(attribute);
+        }
+        continue;
+      }
       if (item?.type !== "FORMULA" || !item.value || typeof item.value !== "object") continue;
       const fieldName = String(item.fieldName || "").trim();
       if (!fieldName) continue;

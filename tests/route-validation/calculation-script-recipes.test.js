@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { conditionalTotalCalculationModel } from "../../src/translator/conditional-total-calculation.js";
-import { prepareSample, xformConfig } from "../helpers/persistence.js";
+import { prepareSample, xformConfig, formAttr } from "../helpers/persistence.js";
 import { runRouteCase } from "./run-route-case.js";
 
 const fixture = "tests/fixtures/route-validation/calculation-script-recipes/route-calculation-script-recipes_SysFormTemplate.xml";
@@ -61,6 +61,58 @@ describe("calculation script recipes Route case", () => {
     const submit = actions.find(action => action.event === "onBeforeSubmit");
     assert.match(submit.function, /context && context\.isDraft/);
     assert.match(submit.function, /return true/);
+  });
+
+  it("sums native receipt values objects on changes, load, draft save, and submit", () => {
+    const dsl = stages();
+    const allowance = actionsByBasis(dsl, "deterministic-allowance-calculation");
+    const prepared = prepareSample({
+      ...dsl,
+      scripts: { ...dsl.scripts, actions: allowance }
+    });
+    const config = xformConfig(prepared.update);
+    const table = config.dataModel.find(model => model.dynamicProps?.detailFieldName === "fd_receipts");
+    const native = formAttr(prepared.update).controlAction;
+    const actions = [native.global, ...Object.values(native.control)].flatMap(bucket =>
+      Object.entries(bucket).flatMap(([event, list]) => list.map(action => ({ ...action, event })))
+    );
+    assert.deepEqual([...new Set(actions.map(action => action.event))].sort(), ["onBeforeSubmit", "onChange", "onLoad"]);
+
+    const cases = [
+      { name: "native values object", rows: [23], native: true, mode: 0, expected: 23 },
+      { name: "array", rows: [23], native: false, mode: 0, expected: 23 },
+      { name: "domestic daily cap", rows: [150, 75], native: true, mode: 1, expected: 100 },
+      { name: "decimal sum", rows: [10.12, 0.23], native: true, mode: 0, expected: 10.35 },
+      { name: "empty native table", rows: [], native: true, mode: 0, expected: 0 }
+    ];
+    for (const testCase of cases) for (const action of actions) {
+      const rows = testCase.rows.map(fd_receipt_value => ({ fd_receipt_value }));
+      const state = {
+        fd_trip_mode: testCase.mode,
+        fd_trip_start: "2026-10-22 08:00:00",
+        fd_trip_end: "2026-10-22 18:00:00",
+        fd_people: 1,
+        fd_package_mode: "0",
+        fd_receipt_result: 1
+      };
+      const MKXFORM = {
+        viewStatus: "add",
+        getValue: id => id === table.fdTableName
+          ? testCase.native ? { values: rows, dataState: {}, deleteState: [] } : rows
+          : state[id],
+        setValue: (id, value) => { state[id] = value; }
+      };
+      const name = action.function.match(/^function\s+(\w+)/)[1];
+      const handler = Function("MKXFORM", `${action.function}; return ${name};`)(MKXFORM);
+      handler(action.event === "onBeforeSubmit" ? { isDraft: true } : 23, 0);
+      assert.equal(state.fd_receipt_result, testCase.expected, `${testCase.name}:${action.id || action.event}`);
+      if (action.event === "onBeforeSubmit") {
+        state.fd_receipt_result = 1;
+        assert.equal(handler({ isDraft: false }), true);
+        assert.equal(state.fd_receipt_result, testCase.expected, `${testCase.name}:${action.id}:submit`);
+      }
+    }
+    assert.equal(prepared.verify(prepared.update).ok, true);
   });
 
   it("maps a date-versioned detail-row lookup without Map or legacy DOM access", () => {

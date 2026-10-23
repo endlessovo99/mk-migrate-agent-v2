@@ -1,0 +1,6 @@
+{
+  "notice": "Source-free native official Preview fallback; no credentials or business data.",
+  "asset": "sys-xform/desktop/api/Preview",
+  "callbackSha256": "9e6293eee6ebeae9000d23bd2eb7957ff4189617a4fcd95e0a941b11028f1301",
+  "callback": "function(e){var t=e.data.data||{},n=t.fdConfig,r=t.mechanisms,o=t.fdEntityName,a=n?JSON.parse(n):null;if(a){var i=a.dataModel,l=a.lang;D({versionId:a.versionId,dataModel:i,lang:l,mechanisms:r,viewModel:a.viewModel,$$canChangeScene:!0,entityName:o})}}"
+}
