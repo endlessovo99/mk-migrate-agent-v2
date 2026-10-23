@@ -1590,6 +1590,9 @@ function observeContentFlow(refs, diagnostics, decodePath) {
       if (!reference || typeof reference.key !== "string" || reference.kind === "container") return fail();
       const style = item.controlProps?.style;
       const adaptive = style?.width === "auto" && ["1 1 0", "0 1 auto"].includes(style.flex);
+      const captionWidth = style?.["--mk-adaptive-caption-width"];
+      if (captionWidth !== undefined && (!adaptive || style.flex !== "1 1 0" ||
+          !/^(?:\d+(?:\.\d+)?)%$/.test(captionWidth) || !(parseFloat(captionWidth) > 0 && parseFloat(captionWidth) <= 50))) return fail();
       const fillAvailable = style?.flex === "1 1 0" && style?.width === "100%";
       if (fillAvailable && (root.children.length !== 1 || line.children.length !== 1)) return fail();
       let width;
@@ -1600,12 +1603,14 @@ function observeContentFlow(refs, diagnostics, decodePath) {
       }
       const itemStyle = {
         flex: adaptive ? style.flex : fillAvailable ? "1 1 0" : width ? "0 0 auto" : "0 1 auto", minWidth: 0, maxWidth: "100%", overflow: "visible",
-        ...(adaptive ? { width: "auto" } : fillAvailable ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {})
+        ...(adaptive ? { width: "auto" } : fillAvailable ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {}),
+        ...(captionWidth !== undefined ? { "--mk-adaptive-caption-width": captionWidth } : {})
       };
       if (stableStringify(style) !== stableStringify(itemStyle)) return fail();
       ids.push(reference.key);
       items.push({ referenceId: reference.key, ...(width ? { width } : {}), ...(fillAvailable ? { fillAvailable: true } : {}),
-        ...(adaptive ? { sizing: style.flex === "1 1 0" ? "stretch" : "intrinsic" } : {}) });
+        ...(adaptive ? { sizing: style.flex === "1 1 0" ? "stretch" : "intrinsic" } : {}),
+        ...(captionWidth !== undefined ? { captionWidth } : {}) });
     }
     lines.push(ids);
   }

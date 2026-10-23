@@ -1,5 +1,6 @@
 import { mkForComponent, mkForFieldType } from "../dsl/mk-components.js";
 import { descriptionPresentation, sourceTextAlign } from "./description-presentation.js";
+import { rootTableEvidence } from "./root-table-evidence.js";
 import { componentSupportsProp } from "../dsl/catalogs.js";
 import { sanitizeCredentialMaterial } from "../credential-material.js";
 import { isDataOnlyMetadataField } from "./sysform-metadata.js";
@@ -163,6 +164,7 @@ function isHardHiddenField(field) {
 function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
   const decoded = decodeEntities(html);
   const rows = splitMainFormRows(decoded);
+  const rootTable = rootTableEvidence(decoded, rows);
   const runtimeVisibleFieldIds = options.runtimeVisibleFieldIds instanceof Set
     ? options.runtimeVisibleFieldIds
     : new Set();
@@ -266,6 +268,7 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
     hiddenFields,
     layout: {
       source: "fdDesignerHtml",
+      ...(rootTable ? { rootTable } : {}),
       rows: layoutRows
     }
   };

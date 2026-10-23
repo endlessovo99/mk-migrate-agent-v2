@@ -33,7 +33,10 @@ for (const path of [
   assert.deepEqual(adaptive.form.layout.sourceGrid, retained.form.layout.sourceGrid);
   const next = projection(adaptive), old = projection(retained);
   for (const scene of scenes) {
-    assertAutomaticColumns(next.view.view.render[scene][0]);
+    const fixedRows = scene === "desktop" && path.startsWith("leader-leave-layout/")
+      ? Object.fromEntries([4, 5].map(row => [`layout.row-${row}`, [139, 524, 524, 524].map(width =>
+        `${Number((width / 1711 * 100).toFixed(12))}%`)])) : {};
+    assertColumns(next.view.view.render[scene][0], fixedRows);
     assert.deepEqual(topology(next.view.view.render[scene][0]), topology(old.view.view.render[scene][0]));
     assert.deepEqual(renderNativeFieldReferences(next.config, scene).actual,
       renderNativeFieldReferences(old.config, scene).actual);
@@ -83,21 +86,22 @@ function topology(root) {
   });
 }
 
-function assertAutomaticColumns(root) {
+function assertColumns(root, fixedRows = {}) {
   const found = grids(root);
   assert.ok(found.length > 0, "The sample must actually contain native grid layouts");
   for (const grid of found) {
     const { columns, colsStyle } = grid.controlProps;
     assert.ok(Array.isArray(colsStyle), "Omitting colsStyle would restore equal fixed percentages");
+    const owner = nodes(root).find(node => node.children?.includes(grid));
+    const expected = fixedRows[owner?.controlProps?.migrationRootNodeId] || Array(columns).fill("auto");
     const expanded = [];
     for (const item of colsStyle) {
-      assert.equal(item.value, "auto");
       for (let column = item.startIndex; column < item.startIndex + item.count; column += 1) {
         assert.equal(expanded[column], undefined, "A column must not receive conflicting sizing rules");
         expanded[column] = item.value;
       }
     }
-    assert.deepEqual(expanded, Array(columns).fill("auto"));
+    assert.deepEqual(expanded, expected);
   }
 }
 
@@ -152,7 +156,7 @@ it("sets every desktop and mobile grid column explicitly to auto while preservin
   const next = projection(adaptive), old = projection(retained);
   for (const scene of scenes) {
     const root = next.view.view.render[scene][0];
-    assertAutomaticColumns(root);
+    assertColumns(root);
     assert.deepEqual(topology(root), topology(old.view.view.render[scene][0]));
     assert.ok(topology(root).some(cell => cell.columnSpan > 1), "Exercise a real merged caption/input region");
   }
@@ -287,7 +291,7 @@ it("applies automatic columns to nested layouts without changing their flattened
   const next = projection(adaptive), old = projection(retained);
   for (const scene of scenes) {
     const root = next.view.view.render[scene][0];
-    assertAutomaticColumns(root);
+    assertColumns(root);
     assert.deepEqual(topology(root), topology(old.view.view.render[scene][0]));
     assert.deepEqual(renderNativeFieldReferences(next.config, scene).actual,
       renderNativeFieldReferences(old.config, scene).actual);
@@ -315,7 +319,7 @@ it("derives the same adaptive policy after changing all field identities, labels
     assert.equal(checkTrust(source, reviewed(source, adaptive)).ok, true);
     for (const scene of scenes) {
       const root = view.view.render[scene][0];
-      assertAutomaticColumns(root);
+      assertColumns(root);
       assert.match(parentOf(root, "renamed_department").controlProps.style.flex, /^1 1 /);
       assert.doesNotMatch(parentOf(root, "renamed_department").controlProps.style.width, /px$/);
       const rendered = renderNativeFieldReferences(config, scene);

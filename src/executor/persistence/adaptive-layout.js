@@ -8,24 +8,26 @@ const INTRINSIC_COMPONENTS = new Set([
 ]);
 
 /** Preserve zero-width companions. Only visible editors consume spare space. */
-export function adaptiveFlowItem(item, fields) {
+export function adaptiveFlowItem(item, fields, geometry = {}) {
   if (item.width?.value === 0) return structuredClone(item);
   const field = fields.find(field => field.id === item.referenceId);
   const choiceOther = field?.componentId === "xform-checkbox" &&
     (field.sourceProps?.choiceOtherToggle || field.sourceProps?.otherTextCompanion);
   return {
     referenceId: item.referenceId,
-    sizing: !field || field.dataOnly || choiceOther || INTRINSIC_COMPONENTS.has(field.componentId)
-      ? "intrinsic" : "stretch"
+    sizing: geometry.stretchDescription && field?.componentId === "xform-description" ? "stretch"
+      : !field || field.dataOnly || choiceOther || INTRINSIC_COMPONENTS.has(field.componentId) ? "intrinsic" : "stretch",
+    ...(geometry.captionWidth ? { captionWidth: geometry.captionWidth } : {})
   };
 }
 
-export function adaptiveItemStyle(item, fields) {
-  const projected = adaptiveFlowItem(item, fields);
+export function adaptiveItemStyle(item, fields, geometry) {
+  const projected = adaptiveFlowItem(item, fields, geometry);
   return {
     flex: projected.width ? "0 0 auto" : projected.sizing === "stretch" ? "1 1 0" : "0 1 auto",
     minWidth: 0, maxWidth: "100%", overflow: "visible",
-    width: projected.width ? `${projected.width.value}${projected.width.unit}` : "auto"
+    width: projected.width ? `${projected.width.value}${projected.width.unit}` : "auto",
+    ...(projected.captionWidth ? { "--mk-adaptive-caption-width": projected.captionWidth } : {})
   };
 }
 
@@ -56,6 +58,9 @@ export function adaptiveStyles(tableName) {
     "  flex: 0 1 auto !important;",
     "  min-width: 0 !important;",
     "  max-width: 50% !important;",
+    "}",
+    `${root}[style*="--mk-adaptive-caption-width"] .ele-xform-fieldset-horizontal > .ele-xform-fieldset-label-wrap {`,
+    "  flex: 0 0 var(--mk-adaptive-caption-width) !important;",
     "}",
     `${root} .ele-xform-fieldset-control-wrap {`,
     "  flex: 1 1 0% !important;",

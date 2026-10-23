@@ -55,7 +55,12 @@ describe("retained source text and editor title visibility", () => {
       const row = readback.form.layoutRows.find((item) => item.id === rowId);
       assert.equal(row?.columns, 4);
       assert.deepEqual(row.cells.map((cell) => [cell.column, cell.colspan]), [[0, 1], [1, 3]]);
-      assert.deepEqual(row.colsStyle, [{ startIndex: 0, count: 4, value: "auto" }]);
+      assert.deepEqual(row.colsStyle, [120, 160, 160, 160].map((width, startIndex) => ({
+        startIndex, count: 1, value: `${Number((width / 600 * 100).toFixed(12))}%`
+      })), "The two complete direct rows retain their equivalent 20%/80% source boundary");
+      const mobile = JSON.parse(xformConfig(prepared.update).viewModel[0].fdConfig).view.render.mobile[0];
+      const mobileGrid = nativeMain(mobile).children.find(node => node.controlProps?.migrationRootNodeId === `layout.${rowId}`).children[0];
+      assert.deepEqual(mobileGrid.controlProps.colsStyle, [{ startIndex: 0, count: 4, value: "auto" }]);
     }
     const mixedUnits = readback.form.layoutRows.find((row) => row.id === "row-3");
     assert.deepEqual(mixedUnits.colsStyle, [{ startIndex: 0, count: 4, value: "auto" }]);

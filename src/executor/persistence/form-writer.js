@@ -1689,7 +1689,7 @@ function buildViewConfig(mainModel, form, detailModelsByField) {
   for (const [id, profile] of sourceInlineEditorWidths(form)) budgets.set(id, profile.nativeOuterPx);
   for (const [id, width] of nativeCaptionDesktopWidths(form)) budgets.set(id, width);
   const desktopRows = buildRows(form.layout?.mkTree || [], detailModelsByField, form.fields,
-    adaptive ? new Map() : budgets, false, new Map(), adaptive);
+    adaptive ? new Map() : budgets, false, new Map(), adaptive, form.layout?.sourceGrid);
   const mainContainer = {
     key: "main",
     type: "main",
@@ -1699,7 +1699,7 @@ function buildViewConfig(mainModel, form, detailModelsByField) {
   };
   const mobileMain = { ...clone(mainContainer), children: buildRows(form.layout?.mkTree || [],
     detailModelsByField, form.fields, adaptive ? new Map() : mobileNumberBudgets(form),
-    true, adaptive ? new Map() : sourceMobileCaptionGrids(form), adaptive) };
+    true, adaptive ? new Map() : sourceMobileCaptionGrids(form), adaptive, form.layout?.sourceGrid) };
   return {
     view: {
       render: {
@@ -1775,9 +1775,9 @@ function appearanceNode(tableName, mainContainer) {
   };
 }
 
-function buildRows(rows, detailModelsByField, fields, budgets = new Map(), mobile = false, captionProfiles = new Map(), adaptive = false) {
+function buildRows(rows, detailModelsByField, fields, budgets = new Map(), mobile = false, captionProfiles = new Map(), adaptive = false, sourceGrid) {
   const rowsById = new Map(rows.map((row) => [row.id, row]));
-  return projectNativeLayoutRows(rows, { sizing: adaptive ? "adaptive" : undefined }).map((projection) =>
+  return projectNativeLayoutRows(rows, { sizing: adaptive ? "adaptive" : undefined, sourceGrid, fields, mobile }).map((projection) =>
     buildLayoutGridRow(rowsById.get(projection.id), projection, rowsById, detailModelsByField, fields, budgets, mobile, captionProfiles, adaptive)
   );
 }
@@ -1903,7 +1903,7 @@ function buildGridItem(
       ...migrationAudit
     },
     children: flow && !detailModel
-      ? [buildContentFlow(flow, itemId, fieldRef, options.fields, options.budgets, options.adaptive)]
+      ? [buildContentFlow(flow, itemId, fieldRef, options.fields, options.budgets, options.adaptive, cell)]
       : inlineLayout && !detailModel
         ? [{
             key: inlineId,
@@ -1916,7 +1916,7 @@ function buildGridItem(
   };
 }
 
-function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map(), adaptive = false) {
+function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map(), adaptive = false, geometry = {}) {
   const companionGroups = choiceOtherFlowGroups(flow, fields);
   const soleItem = flow.items.length === 1 && flow.lines.length === 1 && flow.lines[0].length === 1
     ? flow.items[0] : undefined;
@@ -1942,7 +1942,7 @@ function buildContentFlow(flow, itemId, fieldRef, fields = [], budgets = new Map
       const width = budgets.has(referenceId) ? { unit: "px", value: budgets.get(referenceId) } : items.get(referenceId)?.width;
       return container(`${itemId}:flow:${lineIndex}:${referenceId}`, "div", {
         ...(adaptive ? { className: ADAPTIVE_MAIN_FIELD_CLASS } : {}),
-        style: adaptive ? adaptiveItemStyle(items.get(referenceId), fields) : {
+        style: adaptive ? adaptiveItemStyle(items.get(referenceId), fields, geometry) : {
           flex: fillSelector ? "1 1 0" : width ? "0 0 auto" : "0 1 auto",
           minWidth: 0, maxWidth: "100%", overflow: "visible",
           ...(fillSelector ? { width: "100%" } : width ? { width: `${width.value}${width.unit}` } : {})

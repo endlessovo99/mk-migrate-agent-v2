@@ -776,6 +776,10 @@ function sourceLayoutFromLegacyLayout(layout = {}, detailTableIds = new Set()) {
   const rows = Array.isArray(layout.rows) ? layout.rows : [];
   return {
     source: layout.source || "fdDesignerHtml",
+    ...(layout.rootTable?.version === 1 && layout.rootTable.kind === "standard-table" &&
+      Number.isInteger(layout.rootTable.rowCount) && layout.rootTable.rowCount > 0 &&
+      Object.keys(layout.rootTable).length === 3
+      ? { rootTable: { version: 1, kind: "standard-table", rowCount: layout.rootTable.rowCount } } : {}),
     rows: rows.map((row, rowIndex) => ({
       id: row.id || `row-${rowIndex}`,
       sourceRef: sourceRef("form.layout.row", row.id || `row-${rowIndex}`),

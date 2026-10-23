@@ -42,8 +42,10 @@ for (const fixture of fixtures) for (const scene of ["desktop", "mobile"]) {
       .flatMap(match => match[1].trim().split(",").map(value => value.trim()));
     assert.ok(selectors.every(value => value.startsWith(`.${scope} `)));
     const mainFieldCount = matchingDesignerNodes(tree, `.${ADAPTIVE_MAIN_FIELD_CLASS}`).length;
-    assert.ok(selectors.every(value => mainFieldCount === 0
-      ? matchingDesignerNodes(tree, value).length === 0 : matchingDesignerNodes(tree, value).length > 0),
+    const captionWidthCount = matchingDesignerNodes(tree, `.${ADAPTIVE_MAIN_FIELD_CLASS}[style*="--mk-adaptive-caption-width"]`).length;
+    assert.ok(selectors.every(value => value.includes('[style*="--mk-adaptive-caption-width"]')
+      ? matchingDesignerNodes(tree, value).length === captionWidthCount
+      : mainFieldCount === 0 ? matchingDesignerNodes(tree, value).length === 0 : matchingDesignerNodes(tree, value).length > 0),
     "Main fields retain adaptive declarations while detail-only layouts retain native styles");
     const detailLabels = matchingDesignerNodes(tree, ".sys-xform-ide-detail-table .ele-xform-fieldset-label");
     const adaptiveLabels = matchingDesignerNodes(tree, selectors[0]);

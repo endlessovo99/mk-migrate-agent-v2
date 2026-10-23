@@ -97,6 +97,12 @@ export function checkTrust(sourceDraft, migrationDsl) {
   validateTemplateAuthorizationProvenance(sourceDraft, migrationDsl, diagnostics);
   diagnostics.push(...remoteDialogSourceDiagnostics(sourceDraft?.form, migrationDsl?.form,{dsl:migrationDsl}));
   const expectedDraft = validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics);
+  const expectedGrid = expectedDraft?.form?.layout?.sourceGrid, actualGrid = migrationDsl?.form?.layout?.sourceGrid;
+  if ((expectedGrid?.rootTable !== undefined || actualGrid?.rootTable !== undefined) &&
+      canonicalJson(expectedGrid) !== canonicalJson(actualGrid)) {
+    diagnostics.push(error("trust.layout.source_grid_mismatch",
+      "Root-table layout evidence must preserve the complete source grid.", "/form/layout/sourceGrid"));
+  }
   validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics,expectedDraft);
   diagnostics.push(...migrationPolicyProvenanceDiagnostics(sourceDraft, expectedDraft, migrationDsl));
   diagnostics.push(...choiceOtherCompanionDiagnostics(sourceDraft?.form, migrationDsl?.form, expectedDraft?.form));

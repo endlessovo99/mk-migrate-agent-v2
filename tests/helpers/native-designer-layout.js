@@ -94,7 +94,9 @@ export function matchingDesignerNodes(tree, selector) {
   for (const node of all) for (const child of node.children || []) parents.set(child, node);
   const tokens = selector.replace(/([>~])/g, " $1 ").trim().split(/\s+/);
   const simple = (node, token) => {
-    const [tag, ...classes] = token.split(".");
+    const attribute = token.match(/\[style\*="([^"]+)"\]$/);
+    if (attribute && !Object.keys(node.props?.style || {}).some(key => key.includes(attribute[1]))) return false;
+    const [tag, ...classes] = token.replace(/\[style\*="([^"]+)"\]$/, "").split(".");
     return (!tag || tag === "*" || node.type === tag) && classes.every(name =>
       String(node.props?.className || "").split(/\s+/).includes(name));
   };

@@ -1,0 +1,20 @@
+{
+  "url": "https://oaqas.shanghai-electric.com/web/sys-xform/desktop/api/XFormRuntime/index.js?a3ec998c10af6bbce34dd6caffe4a203",
+  "bundleSha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+  "capturedAt": "2026-10-23",
+  "functions": {
+    "getColsStyle": {
+      "start": 390889,
+      "end": 391431,
+      "sha256": "b04bfa0364f17d9fb41b40e3b7dfea0133c3dd0fe9662604ea3524a95e52e84c",
+      "text": "function m(e,t){var n=(null==e?void 0:e.every(function(e){return e&&(void 0===e?\"undefined\":o(e))===\"object\"}))&&!(null==e?void 0:e.some(function(e){return(null==e?void 0:e.value)===\"NaN%\"}));return function(e){if(!e.every(function(e){return\"string\"==typeof e&&e.includes(\"%\")})||1===e.length)return e;var t=e.slice(0,e.length-1).reduce(function(e,t){return e+parseFloat(t)},0),n=\"\".concat((t?100-t:0).toFixed(2),\"%\");return e.splice(e.length-1,1,n),e.length>5e4?[]:e}((null==e?void 0:e.length)&&n?h(e):Array(+t).fill(\"\".concat(100/+t,\"%\")))}"
+    },
+    "expandColsStyle": {
+      "start": 391661,
+      "end": 391770,
+      "sha256": "cfa6e9b4607075106d6227267ca492c238aa1dafc3ec5a61a553ed64844e6cc2",
+      "text": "function(e){var t=[];return e.forEach(function(e){if(e)for(var n=e.count,r=e.value,o=0;o<n;o++)t.push(r)}),t}"
+    }
+  },
+  "boundary": "Unmodified native track expansion and percentage normalization; actual CSS box geometry is additionally measured in the retained task browser probes."
+}

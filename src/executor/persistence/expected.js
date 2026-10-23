@@ -235,7 +235,10 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
     }
   });
   const adaptive = usesAdaptiveLayout(form);
-  const projectedLayoutRows = projectNativeLayoutRows(rows, { sizing: form.layout?.sizing });
+  const geometryOptions = { sizing: form.layout?.sizing, sourceGrid: form.layout?.sourceGrid, fields: form.fields };
+  const projectedLayoutRows = projectNativeLayoutRows(rows, geometryOptions);
+  const mobileRows = new Map((adaptive ? projectNativeLayoutRows(rows, { ...geometryOptions, mobile: true }) : [])
+    .map(row => [row.id, row]));
   const mobileBudgets = mobileNumberBudgets(form);
   const mobileCaptions = sourceMobileCaptionGrids(form);
   const inlineEditors = sourceInlineEditorWidths(form);
@@ -244,7 +247,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
   const layoutRows = projectedLayoutRows.map((row, rowIndex) => {
     const requiresTopologyMarkers = row.cells.some((cell) => cell.ownerNodeId !== row.id);
     const mobileGrid = adaptive
-      ? { colsStyle: row.colsStyle }
+      ? { colsStyle: mobileRows.get(row.id)?.colsStyle || row.colsStyle }
       : mobileNumberGrid(row, mobileBudgets, mobileCaptions);
     return {
       id: row.id,
@@ -301,9 +304,10 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
           fieldIds: fieldIdsForCell,
           inlineLayout: adaptive ? undefined : inlineCellLayout(cell, form.fields),
           ...(flow ? {
-            contentFlow: withCompanions(adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields)) }
+            contentFlow: withCompanions(adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields, cell)) }
               : expectedContentFlow(flow, form.fields, new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]), inlineBudgets)),
-            mobileContentFlow: withCompanions(adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields)) }
+            mobileContentFlow: withCompanions(adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields,
+              mobileRows.get(row.id)?.cells.find(candidate => candidate.id === cell.id) || cell)) }
               : expectedContentFlow(flow, form.fields, new Map(), mobileBudgets))
           } : {}),
           row: cell.row,

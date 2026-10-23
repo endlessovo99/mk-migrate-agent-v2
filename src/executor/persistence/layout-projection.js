@@ -1,4 +1,5 @@
 import { projectLayoutGrid } from "../../dsl/layout-pack.js";
+import { sourceTrackGeometry } from "./source-track-geometry.js";
 
 const MIN_SOURCE_COLUMN_WIDTH_WEIGHT = 135;
 const MIN_INLINE_SOURCE_COLUMN_WIDTH_WEIGHT = 180;
@@ -54,9 +55,9 @@ export function projectNativeLayoutRows(mkTree = [], options = {}) {
       ...(colsStyle ? { colsStyle } : {})
     };
   });
-  return options.sizing === "adaptive" ? projected.map(row => ({
-    ...row, colsStyle: [{ startIndex: 0, count: row.columns, value: "auto" }]
-  })) : projected;
+  return options.sizing === "adaptive"
+    ? sourceTrackGeometry(projected, nodes, options.sourceGrid, options.fields, options.mobile)
+    : projected;
 }
 
 function projectPlainRoot(root) {
