@@ -1,4 +1,5 @@
 import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitelist.js";
+import { nativeValidationMessage } from "./native-validation-message.js";
 import { componentSupportsProp } from "../dsl/catalogs.js";
 import { buildScriptBranchProvenance } from "../dsl/script-branch-provenance.js";
 import { textValueFieldIds } from "../dsl/script-condition-provenance.js";
@@ -3841,7 +3842,7 @@ function procurementPaymentAttachmentSubmitCandidate(source, form) {
       "    var files = MKXFORM.getValue(\"fd_attachment\")",
       "    var hasFiles = Array.isArray(files) ? files.length > 0 : !!files",
       "    if (!hasFiles) {",
-      `      MKXFORM.toast(${JSON.stringify(message)})`,
+      nativeValidationMessage(JSON.stringify(message), "      "),
       "      return false",
       "    }",
       "  }",
@@ -3852,7 +3853,7 @@ function procurementPaymentAttachmentSubmitCandidate(source, form) {
     coverage: { status: "translated", nativeRules: [], residuals: [] },
     functionMappings: [{
       source: "Com_Parameter.event.submit attachment fileList guard",
-      target: "onBeforeSubmit + MKXFORM.getValue + MKXFORM.toast",
+      target: "onBeforeSubmit + MKXFORM.getValue + platform-specific native validation message",
       basis: "deterministic-procurement-payment-attachment-submit",
       reviewRequired: false
     }],

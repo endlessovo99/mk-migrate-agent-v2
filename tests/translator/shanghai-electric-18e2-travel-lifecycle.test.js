@@ -1,3 +1,4 @@
+import { nativeMessageRuntime } from "../helpers/native-message-runtime.js";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
@@ -439,9 +440,7 @@ function createRuntime(initialValues) {
       setFieldAttr(id, value) {
         attrs.push({ id, value });
       },
-      toast(message) {
-        messages.push(message);
-      }
+      ...nativeMessageRuntime("desktop", message => messages.push(message)).MKXFORM
     }
   };
 }

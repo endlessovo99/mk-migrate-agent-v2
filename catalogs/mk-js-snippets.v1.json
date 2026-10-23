@@ -1,6 +1,6 @@
 {
   "id": "mk-js-snippets",
-  "version": "2026-07-10.v3",
+  "version": "2026-10-23.v1",
   "source": {
     "page": "https://p-sit.onewo.com/web/#/manage/km-review/kmReviewTemplate/edit/1jt2nnqicw57ew6u3lw3kvk33k99v1cd2qw0/designer",
     "pageTitle": "模板编辑(万物云空间科技服务股份有限公司)",
@@ -146,7 +146,15 @@
           "treeNodeFound": true,
           "insertedCode": "/**\n* message全局提示\n*/\nMKXFORM.message.success(全局成功提示)",
           "clickedEditorOutput": "/**\n* message全局提示\n*/\nMKXFORM.message.success(全局成功提示)\n/**\n * 尊敬的用户，你好：页面JS面板是高阶用法，一般不建议普通用户使用；\n * 如需使用，请确定你具备研发背景，能够自我排查问题；\n * 我们可以用JS面板来开发一些定制度高功能；\n * 没有绑定控件ID，保存会被清除\n */\n\n/**\n * onLoad\n * 明细表加载完事件\n */\nfunction onLoad() {\n\n}",
-          "sourceExample": "/**\n* message全局提示\n*/\nMKXFORM.message.success(全局成功提示)"
+          "sourceExample": "/**\n* message全局提示\n*/\nMKXFORM.message.success(全局成功提示)\n// 原生 Message 对象的校验错误提示\nMKXFORM.message.error('校验未通过')",
+          "runtimeEvidence": {
+            "origin": "https://oaqas.shanghai-electric.com",
+            "bundle": "/web/sys-xform/desktop/api/XFormRuntime/index.js?a3ec998c10af6bbce34dd6caffe4a203",
+            "bundleSha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+            "moduleId": 22603,
+            "contract": "body exposes @lui/core Message; the native runtime uses Message.error for desktop errors.",
+            "fixture": "tests/fixtures/executor/persistence/message-runtime/message.js"
+          }
         },
         {
           "name": "toast",

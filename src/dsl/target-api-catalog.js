@@ -62,6 +62,7 @@ const REVIEW_TARGET_APIS = new Set([
   "MKXFORM.getLbpmFormValues",
   "MKXFORM.getOperationParameter",
   "MKXFORM.HTMLModal",
+  "MKXFORM.message.error",
   "MKXFORM.message.success",
   "MKXFORM.mobileModal",
   "MKXFORM.modal",

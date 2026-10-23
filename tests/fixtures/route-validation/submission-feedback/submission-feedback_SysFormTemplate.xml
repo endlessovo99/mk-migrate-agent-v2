@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+ <void method="put"><string>fdId</string><string>submission-feedback-form</string></void>
+ <void method="put"><string>fdModelId</string><string>submission-feedback-template</string></void>
+ <void method="put"><string>fdName</string><string>提交反馈回归</string></void>
+ <void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_mode",label:"是否入职",dataType:"String",items:"是|YES;否|NO"}'&gt;&lt;input id="fd_mode"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_amount",label:"金额",dataType:"Double",required:"true"}'&gt;&lt;input id="fd_amount"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;input type="hidden" id="people_row"/&gt;
+   &lt;label fd_type="textLabel" fd_values='{id:"fd_heading",content:"入职人员信息"}'&gt;入职人员信息&lt;/label&gt;
+   &lt;table fd_type="detailsTable" fd_values='{id:"fd_people",label:"入职明细",showRow:"1"}'&gt;
+    &lt;tr&gt;&lt;td&gt;姓名&lt;/td&gt;&lt;td&gt;备注&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr type="templateRow"&gt;
+     &lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_person_name",label:"姓名",tableName:"fd_people",dataType:"String",required:"true"}'&gt;&lt;input id="fd_person_name"/&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_note",label:"备注",tableName:"fd_people",dataType:"String",required:"false"}'&gt;&lt;input id="fd_note"/&gt;&lt;/div&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+   &lt;/table&gt;
+  &lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;div style="display:none" fd_type="inputText" fd_values='{id:"fd_state",label:"状态",dataType:"String",canShow:"false",showStatus:"noShow"}'&gt;&lt;input id="fd_state"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+ &lt;/table&gt;</string></void>
+ <void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;
+  &lt;extendSimpleProperty name="fd_mode" label="是否入职" type="String" enumValues="是|YES;否|NO"/&gt;
+  &lt;extendSimpleProperty name="fd_amount" label="金额" type="Double" notNull="true"/&gt;
+  &lt;extendSimpleProperty name="fd_state" label="状态" type="String"/&gt;
+  &lt;extendSubTableProperty name="fd_people" label="入职明细"&gt;
+   &lt;extendSimpleProperty name="fd_person_name" label="姓名" type="String" notNull="true"/&gt;
+   &lt;extendSimpleProperty name="fd_note" label="备注" type="String"/&gt;
+  &lt;/extendSubTableProperty&gt;
+ &lt;/metadata&gt;</string></void>
+ <void method="put"><string>fdDisplayJsp</string><string>&lt;input type="hidden" name="extendDataFormInfo.value(fd_state)"/&gt;&lt;xform:editShow&gt;&lt;script&gt;
+ AttachXFormValueChangeEventById("fd_mode", function(value) {
+  if (value.indexOf("YES") &gt;= 0) {
+   SetXFormFieldValueById("fd_state", "YES");
+   common_dom_row_set_show_required_reset("people_row", true, true, false);
+  } else {
+   SetXFormFieldValueById("fd_state", "");
+   common_dom_row_set_show_required_reset("people_row", false, false, false);
+  }
+ });
+ &lt;/script&gt;&lt;script&gt;
+ Com_Parameter.event.submit.push(function() {
+  var amount = $('[name="extendDataFormInfo.value(fd_amount)"]').val();
+  if (Number(amount) &lt; 0) { alert('金额不得小于0'); return false; }
+  return true;
+ });
+ &lt;/script&gt;&lt;/xform:editShow&gt;</string></void>
+</object></java>

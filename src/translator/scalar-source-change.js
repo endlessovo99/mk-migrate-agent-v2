@@ -1,4 +1,5 @@
 import { parse } from "acorn";
+import { nativeValidationMessage } from "./native-validation-message.js";
 import { createHash } from "node:crypto";
 import { buildJavaScriptBindingModel } from "../dsl/javascript-binding-provenance.js";
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
@@ -46,7 +47,7 @@ export function scalarSourceChangeCandidates(source = {}, form = {}, sourceScrip
     event: "onChange", scope: "control", controlId: triggerId,
     javascript: text, function: ["function onChange(value, rowNum, parentRowNum) {", ...(dateEvent ? [`  var __sourceDateEvent = ${nativeDateOnlyValueExpression(triggerId, "value")};`] : []), ...lines, "}"].join("\n"),
     translationStatus: "mapped", coverage: { status: "translated", nativeRules: [], residuals: [] },
-    functionMappings: [{ source: "complete synchronous scalar/date alert, diagnostic and input-clear callback", target: "same Date/Number predicates and console order, MKXFORM.toast and literal input clear", basis: SCALAR_SOURCE_CHANGE_BASIS, reviewRequired: false }],
+    functionMappings: [{ source: "complete synchronous scalar/date alert, diagnostic and input-clear callback", target: "same Date/Number predicates and console order, platform-specific native message and literal input clear", basis: SCALAR_SOURCE_CHANGE_BASIS, reviewRequired: false }],
     semanticHints: { coveredLegacyFunctions: (source.functionAudit?.violations || []).map(v => v.name).filter(Boolean), coveredCalculationRanges: [{ sourceRef, name: "scalarSourceChangeCallback", start: registration.start, end: registration.end }],
       scalarSourceChange: { version: 1, sourceJavascriptSha256: hash(text), eventValue: dateEvent ? "native-date-display-text" : "unchanged", inputEmptyProjection: dateEvent || state.dateReads.size ? "native-date-display-text-nullish-only" : "nullish-only-to-empty-string", readFieldIds: [...state.reads], writeFieldIds: [...state.writes],
         ...(dateEvent || state.dateReads.size ? { nativeDateOnlyTextContract: NATIVE_DATE_ONLY_TEXT_CONTRACT, dateReadFieldIds: [...state.dateReads], ...(dateEvent ? { dateEventFieldId: triggerId } : {}) } : {}),
@@ -99,7 +100,7 @@ function compileStatements(statements, state, indent) {
     const expression = statement.type === "ExpressionStatement" && statement.expression;
     if (call(expression, "alert") && expression.arguments.length === 1 && typeof literal(expression.arguments[0]) === "string" && state.bindings.isUnshadowedGlobal("alert", expression.callee.start)) {
       state.alerts.push({ start: expression.start, end: expression.end, message: literal(expression.arguments[0]) });
-      lines.push(indent + `MKXFORM.toast(${JSON.stringify(literal(expression.arguments[0]))});`); continue;
+      lines.push(nativeValidationMessage(JSON.stringify(literal(expression.arguments[0])), indent)); continue;
     }
     if (expression?.type === "CallExpression" && member(expression.callee, "log") && expression.callee.object?.type === "Identifier" && expression.callee.object.name === "console" && state.bindings.isUnshadowedGlobal("console", expression.callee.object.start)) {
       const args = expression.arguments.map(node => compileExpression(node, state));

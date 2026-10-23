@@ -1,3 +1,4 @@
+import { nativeMessageRuntime } from "../helpers/native-message-runtime.js";
 import assert from 'node:assert/strict';
 import {it} from 'node:test';
 import fs from 'node:fs';
@@ -43,7 +44,7 @@ function altered(change,run){
 }
 function evaluate(fn,values,context={}){
  const reads=[],alerts=[];
- const runtime={MKXFORM:{getValue(id){reads.push(id);return values[id];},toast(message){alerts.push(message);}}};
+ const runtime={MKXFORM:{...nativeMessageRuntime("desktop", message=>alerts.push(message)).MKXFORM,getValue(id){reads.push(id);return values[id];}}};
  const result=vm.runInNewContext('('+fn+')',runtime)(context);
  return {result,reads,alerts};
 }

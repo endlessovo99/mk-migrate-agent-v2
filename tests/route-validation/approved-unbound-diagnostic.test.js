@@ -1,3 +1,4 @@
+import { nativeMessageRuntime } from "../helpers/native-message-runtime.js";
 import assert from 'node:assert/strict';
 import {it} from 'node:test';
 import fs from 'node:fs';
@@ -47,7 +48,7 @@ it('retains the deliberate exception difference, negative alert and all unrelate
  assert.equal(action.function.includes('getValue'),false);assert.equal(action.function.includes('setValue'),false);assert.equal(action.function.includes('debugValue'),false);
  const audit=draft.migrationPolicyAudit.audits[0];assert.match(audit.approvedDifference,/possible exception/);assert.match(audit.approvedDifference,/No source equivalence/);assert.equal(audit.retiredDiagnostic.sha256,decision.diagnostic.sha256);
  for(const value of [-1,0,1]){
-  const alerts=[],runtime={MKXFORM:{toast:message=>alerts.push(message)}};
+  const alerts=[],runtime={MKXFORM:nativeMessageRuntime("desktop", message=>alerts.push(message)).MKXFORM};
   assert.equal(vm.runInNewContext('('+action.function+')',runtime)(value),undefined);assert.deepEqual(alerts,value<0?['Value negative']:[]);
   const callbacks={},originalAlerts=[],context={AttachXFormValueChangeEventById:(id,fn)=>callbacks[id]=fn,GetXFormFieldById:()=>[{value:7}],alert:message=>originalAlerts.push(message),console:{log(){throw Error('Unbound argument must fail before invoking console.log.');}}};
   vm.runInNewContext(raw.scripts.sources.map(source=>source.javascript).join('\n'),context);callbacks.fd_input(1);assert.equal(Object.hasOwn(context,'debugValue'),false);

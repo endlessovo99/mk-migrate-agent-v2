@@ -1,4 +1,5 @@
 import { parse } from "acorn";
+import { nativeValidationMessage } from "./native-validation-message.js";
 import { JS_METHOD_CATALOG } from "../dsl/catalogs.js";
 import { buildJavaScriptBindingModel } from "../dsl/javascript-binding-provenance.js";
 
@@ -71,7 +72,7 @@ export function detailColumnConsistencyCandidate(source, form, sourceScripts) {
       "    if (value === undefined || value === null) continue",
       "    value = String(value)",
       "    if (previous !== null && previous !== value) {",
-      `      MKXFORM.toast(${JSON.stringify(guard.message)})`,
+      nativeValidationMessage(JSON.stringify(guard.message), "      "),
       "      return false",
       "    }",
       "    previous = value",

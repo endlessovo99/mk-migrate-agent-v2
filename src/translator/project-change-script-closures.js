@@ -1,4 +1,5 @@
 import { inlineOnChangeSourceActionKey } from "./source-action-key.js";
+import { nativeValidationMessage } from "./native-validation-message.js";
 
 export const PROJECT_CHANGE_ROW_DETAIL_BASIS = "deterministic-project-change-row-detail";
 export const PROJECT_CHANGE_APPROVAL_ALERT_BASIS = "deterministic-jquery-field-change-alert";
@@ -188,7 +189,7 @@ function approvalBranchAlertCandidates(source, form) {
     coverage: { status: "translated", nativeRules: [], residuals: [] },
     functionMappings: [{
       source: "jQuery change alert on approval-branch vs hidden budget/schedule flags",
-      target: "control onChange + MKXFORM.getValue + MKXFORM.toast",
+      target: "control onChange + MKXFORM.getValue + platform-specific native validation message",
       basis: PROJECT_CHANGE_APPROVAL_ALERT_BASIS,
       reviewRequired: false
     }],
@@ -211,7 +212,7 @@ function approvalBranchAlertCandidates(source, form) {
       "  schedule = Array.isArray(schedule) ? schedule[0] : schedule",
       "  if (String(budget) === \"1\" && String(schedule) === \"two\") {",
       "    if (String(selected) === \"one\" || String(selected) === \"two\") {",
-      `      MKXFORM.toast(${JSON.stringify(message)})`,
+      nativeValidationMessage(JSON.stringify(message), "      "),
       "    }",
       "  }",
       "}"

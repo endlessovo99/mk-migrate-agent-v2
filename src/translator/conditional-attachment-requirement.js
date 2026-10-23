@@ -1,4 +1,5 @@
 import { parse } from "acorn";
+import { nativeValidationMessage } from "./native-validation-message.js";
 import { createHash } from "node:crypto";
 import { buildJavaScriptBindingModel } from "../dsl/javascript-binding-provenance.js";
 import { isUnconditionalAttachmentRequirement } from "./attachment-non-empty.js";
@@ -65,7 +66,7 @@ export function analyzeConditionalAttachmentRequirement(source = {}, form = {}) 
     sourceShape: "conditional-active-file-submit-guard",
     activeFileSemantics: "fileStatus != -1",
     targetValidation: "native-getValue-mechanism-array-excluding-DELETE-bindings",
-    sourceMessagePolicy: "Preserve source alert text through synchronous MKXFORM.toast and false return.",
+    sourceMessagePolicy: "Preserve source alert text through the platform-specific native message and false return.",
     sourceRanges: [{ sourceRef, start: helper.start, end: registration.end }],
     sourceId: source.id,
     sourceSha256: `sha256:${createHash("sha256").update(text).digest("hex")}`,
@@ -96,7 +97,7 @@ export function conditionalAttachmentRequirementCandidates(source = {}, form = {
       "    files = files && files.mechanismKey ? files.mechanismValue : files",
       "    var activeFiles = Array.isArray(files) ? files.filter(function(file) { return file.fdBindType !== \"DELETE\" }) : []",
       "    if (activeFiles.length === 0) {",
-      `      MKXFORM.toast(${JSON.stringify(model.message)})`,
+      nativeValidationMessage(JSON.stringify(model.message), "      "),
       "      return false",
       "    }",
       "  }",

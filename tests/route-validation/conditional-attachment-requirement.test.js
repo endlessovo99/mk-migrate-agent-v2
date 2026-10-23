@@ -1,3 +1,4 @@
+import { nativeMessageRuntime } from "../helpers/native-message-runtime.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -53,7 +54,7 @@ function targetSubmit(action, selected, files, status, storage) {
   const form = nativeForm(selected, files, status, storage);
   const messages = [];
   const result = vm.runInNewContext(`${action.function}\nonBeforeSubmit({isDraft:false});`, {
-    MKXFORM: { getValue: id => nativeFns.api(id, { form }), toast: message => messages.push(message) }
+    MKXFORM: { ...nativeMessageRuntime("desktop", message => messages.push(message)).MKXFORM, getValue: id => nativeFns.api(id, { form }) }
   });
   return { result, messages, form };
 }
