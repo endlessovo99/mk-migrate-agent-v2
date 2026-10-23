@@ -1,0 +1,33 @@
+{
+  "origin": "https://oaqas.shanghai-electric.com",
+  "url": "/web/sys-xform/desktop/api/XFormRuntime/index.js?a3ec998c10af6bbce34dd6caffe4a203",
+  "method": "GET",
+  "capturedAt": "2026-10-23T08:45:40.945Z",
+  "bundleSha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba",
+  "modules": [
+    {
+      "name": "setDetailFieldAttr",
+      "id": "44519",
+      "file": "setDetailFieldAttr.cjs",
+      "start": 181031,
+      "end": 184994,
+      "sha256": "40e4c269744177b8bae76978f5f352e2a2991ca12baaa869dfbfd3a13dbca5b2"
+    },
+    {
+      "name": "setFieldAttr",
+      "id": "33133",
+      "file": "setFieldAttr.cjs",
+      "start": 221303,
+      "end": 226314,
+      "sha256": "0b04cb73060459b95a9059558419d729db1e0f03754566e18627d873bc134415"
+    },
+    {
+      "name": "useAuth",
+      "id": "12679",
+      "file": "useAuth.cjs",
+      "start": 416092,
+      "end": 427247,
+      "sha256": "7e1e9a7d61ddde5bc2c9abe01fe307d923327fe9e1e71a750c9b89285a777e7a"
+    }
+  ]
+}

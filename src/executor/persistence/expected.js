@@ -17,7 +17,8 @@ import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import {
   buildFormRuleRefIndex,
   resolveDirectRef,
-  resolveEffectTarget
+  resolveEffectTarget,
+  resolveRequiredEffectTarget
 } from "../../dsl/form-rules.js";
 import {
   compileNativeFormRuleFormula,
@@ -431,6 +432,12 @@ function executableProps(field = {}, form = {}, context = {}) {
     };
   }
   if (field.props?.required === true) props.required = true;
+  if (componentSupportsProp(field.componentId, "required")) {
+    props.nativeRequiredPermissions = {
+      add: field.props?.required === true,
+      edit: field.props?.required === true
+    };
+  }
   if (field.sourceProps?.foldedCaption) {
     props.nativeCaption = Object.fromEntries(["desktop", "mobile"].map(scene =>
       [scene, { title: normalizeScalar(field.title), visible: true }]));
@@ -739,7 +746,8 @@ function pushRuleSemantics(rules, {
   const displayEffects = [];
   const requireEffects = [];
   for (const effect of effects) {
-    const targets = resolveEffectFieldNames(formIndex, effect.target, diagnostics, ruleId);
+    const targets = resolveEffectFieldNames(formIndex, effect.target, diagnostics, ruleId,
+      effect.type === "required" ? effect.value !== false : undefined);
     for (const target of targets) {
       if (effect?.type === "visible") {
         displayEffects.push({
@@ -750,7 +758,7 @@ function pushRuleSemantics(rules, {
       if (effect?.type === "required") {
         requireEffects.push({
           target: target.target,
-          required: effect.value !== false
+          required: target.required
         });
       }
     }
@@ -809,8 +817,9 @@ function uniqueRuleEffects(effects) {
   });
 }
 
-function resolveEffectFieldNames(formIndex, ref, diagnostics, ruleId) {
-  const resolved = resolveEffectTarget(formIndex, ref);
+function resolveEffectFieldNames(formIndex, ref, diagnostics, ruleId, required) {
+  const resolved = required === undefined ? resolveEffectTarget(formIndex, ref)
+    : resolveRequiredEffectTarget(formIndex, ref, required);
   if (!resolved || resolved.unresolved?.length) {
     diagnostics.push(projectionError(
       "projection.form_rules.target_unresolved",
@@ -821,6 +830,7 @@ function resolveEffectFieldNames(formIndex, ref, diagnostics, ruleId) {
   }
   return resolved.targets.map((target) => ({
     target: normalizeScalar(target.id),
+    ...(required === undefined ? {} : { required: target.required }),
     ...(target.kind === "detailTable"
       ? {
           nativeFieldNames: [

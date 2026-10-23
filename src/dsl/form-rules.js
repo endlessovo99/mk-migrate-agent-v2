@@ -1,4 +1,5 @@
 import { canonicalRowTarget, layoutRowTargets } from "./layout-row-targets.js";
+import { componentSupportsProp } from "./catalogs.js";
 
 export const FORM_RULE_OPERATORS = new Set([
   "eq",
@@ -200,6 +201,25 @@ export function resolveEffectTarget(index, ref) {
 export function resolveSourceRowEffectTarget(form, sourceMarker) {
   const canonical = canonicalRowTarget(form, sourceMarker);
   return canonical ? resolveEffectTarget(buildFormRuleRefIndex(form), canonical) : undefined;
+}
+
+/** A row/table requirement enables each field's declared baseline. A direct
+ * field/column requirement remains an explicit force-required operation. */
+export function resolveRequiredEffectTarget(index, ref, required) {
+  const resolved = resolveEffectTarget(index, ref);
+  if (!resolved || resolved.unresolved?.length) return resolved;
+  const restoreBaseline = resolved.source === "rowMarker" ||
+    resolved.targets.some(target => target.kind === "detailTable");
+  const targets = resolved.targets.flatMap(target =>
+    target.kind === "detailTable" ? target.columns : [target]
+  ).filter(target => target.field?.componentId
+    ? componentSupportsProp(target.field.componentId, "required")
+    : !["description", "detailTable"].includes(target.field?.type)
+  ).map(target => ({
+    ...target,
+    required: required === true && (!restoreBaseline || target.field?.props?.required === true)
+  }));
+  return { ...resolved, targets };
 }
 
 /**

@@ -14,7 +14,7 @@ import { runRouteCase } from "./run-route-case.js";
 it("readonly numeric display completes review, execution, native readback and recording", async () => {
   const result = await runRouteCase("readonly-number-display-width-success");
   assert.equal(result.execution.ok, true);
-  assert.equal(result.execution.readback.invariantVersion, 40);
+  assert.equal(result.execution.readback.invariantVersion, 41);
   assert.equal(result.execution.transferRecord.status, "recorded");
 });
 

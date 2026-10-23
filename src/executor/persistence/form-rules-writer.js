@@ -2,6 +2,7 @@ import {
   buildFormRuleRefIndex,
   resolveDirectRef,
   resolveEffectTarget,
+  resolveRequiredEffectTarget,
   summarizeFormRules
 } from "../../dsl/form-rules.js";
 import {
@@ -358,7 +359,8 @@ function buildBranch(
   const requireKeys = new Set();
 
   for (const [effectIndex, effect] of (Array.isArray(effects) ? effects : []).entries()) {
-    const targets = resolveNativeTargets(effect.target, formIndex, nativeIndex);
+    const targets = resolveNativeTargets(effect.target, formIndex, nativeIndex,
+      effect.type === "required" ? effect.value !== false : undefined);
     for (const target of targets) {
       if (effect.type === "visible") {
         const result = buildDisplayResult(target, effect.value !== false, ruleId, branch, effectIndex);
@@ -368,7 +370,7 @@ function buildBranch(
         displayResults.push(result);
       }
       if (effect.type === "required") {
-        const result = buildRequireResult(target, effect.value !== false, ruleId, branch, effectIndex);
+        const result = buildRequireResult(target, target.required, ruleId, branch, effectIndex);
         const key = `${result.fieldName}:${result.tableType}:${result.required}`;
         if (requireKeys.has(key)) continue;
         requireKeys.add(key);
@@ -467,11 +469,15 @@ function buildConditionItems(clauses, formIndex, nativeIndex, seed) {
   });
 }
 
-function resolveNativeTargets(ref, formIndex, nativeIndex) {
-  const resolved = resolveEffectTarget(formIndex, ref);
+function resolveNativeTargets(ref, formIndex, nativeIndex, required) {
+  const resolved = required === undefined ? resolveEffectTarget(formIndex, ref)
+    : resolveRequiredEffectTarget(formIndex, ref, required);
   if (!resolved || resolved.unresolved?.length) return [];
   return resolved.targets
-    .map((target) => nativeTargetForDslTarget(target, nativeIndex))
+    .map((target) => {
+      const native = nativeTargetForDslTarget(target, nativeIndex);
+      return native && { ...native, ...(required === undefined ? {} : { required: target.required }) };
+    })
     .filter(Boolean);
 }
 

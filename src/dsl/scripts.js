@@ -1,7 +1,7 @@
 import {inspectNativeRemoteSelectorFunction} from "./native-remote-selector-profile.js";
 import { parse } from "acorn";
 import { CONTROL_EVENTS_BY_COMPONENT, CONTROL_EVENTS_CATALOG, JS_METHOD_CATALOG } from "./catalogs.js";
-import { resolveRowMarkerControlIds } from "./form-rules.js";
+import { buildFormRuleRefIndex, resolveEffectTarget, resolveRequiredEffectTarget } from "./form-rules.js";
 import { layoutRowTargets } from "./layout-row-targets.js";
 import { hasVerifiedDeterministicScriptBranchProof } from "./deterministic-script-translations.js";
 import { inspectNativeDetailImportFunction } from "./native-detail-import-profile.js";
@@ -483,6 +483,7 @@ export function compileSetFieldAttrRowMarkerTargets(functionText = "", form = {}
   }
 
   const replacements = [];
+  const formIndex = buildFormRuleRefIndex(form);
   walkJavaScriptAst(ast, (node) => {
     if (isLegacyStringFieldRead(node)) {
       const read = node.callee.object;
@@ -504,9 +505,37 @@ export function compileSetFieldAttrRowMarkerTargets(functionText = "", form = {}
     ) return;
     const target = staticAcornString(node.arguments[0]);
     if (!target) return;
-    const controlIds = resolveRowMarkerControlIds(form, target);
+    const resolved = resolveEffectTarget(formIndex, target);
+    if (resolved?.source !== "rowMarker" || resolved.unresolved?.length) return;
+    const controlIds = [...new Set(resolved.targets.map(target => target.id))];
     if (!controlIds.length) return;
-    const attribute = source.slice(node.arguments[1].start, node.arguments[1].end);
+    const attribute = compileSetFieldAttrRowMarkerTargets(
+      source.slice(node.arguments[1].start, node.arguments[1].end), form
+    );
+    const literal = node.arguments[1].type === "Literal" ? node.arguments[1].value : undefined;
+    if ([3, 6].includes(literal) || literal === undefined) {
+      const requiredTargets = resolveRequiredEffectTarget(formIndex, target, true).targets;
+      const calls = requiredTargets.flatMap(target => requiredAttributeCalls(
+        target, literal === 6 ? "6" : literal === 3
+          ? target.required ? "3" : "6"
+          : target.required ? "(__rowAttribute === 3 ? 3 : 6)" : "6",
+        literal === undefined
+      ));
+      const body = literal === undefined
+        ? `if (__rowAttribute === 3 || __rowAttribute === 6) { ${calls.join("; ")} } else { ${controlIds.map(id =>
+            `MKXFORM.setFieldAttr(${JSON.stringify(id)}, __rowAttribute)`
+          ).join("; ")} }`
+        : calls.join("; ");
+      replacements.push({
+        start: node.start, end: node.end,
+        // A unary function call is safe after a semicolon-free prior statement
+        // and remains one expression in unbraced if/else and argument contexts.
+        value: literal === undefined ? `void function(__rowAttribute) { ${body} }(${attribute})`
+          : calls.length === 1 ? calls[0] : calls.length
+            ? `void function() { ${body} }()` : "void 0"
+      });
+      return "skip";
+    }
     const calls = controlIds.map((controlId) => (
       `MKXFORM.setFieldAttr(${JSON.stringify(controlId)}, ${attribute})`
     ));
@@ -518,6 +547,7 @@ export function compileSetFieldAttrRowMarkerTargets(functionText = "", form = {}
       end: node.end,
       value: calls.length === 1 ? calls[0] : calls.join("; ")
     });
+    return "skip";
   });
 
   return replacements
@@ -525,6 +555,20 @@ export function compileSetFieldAttrRowMarkerTargets(functionText = "", form = {}
     .reduce((compiled, replacement) => (
       `${compiled.slice(0, replacement.start)}${replacement.value}${compiled.slice(replacement.end)}`
     ), source);
+}
+
+function requiredAttributeCalls(target, attribute, dynamic) {
+  const method = target.kind === "detailColumn" ? "setDetailFieldAttr" : "setFieldAttr";
+  const id = target.kind === "detailColumn"
+    ? `\${table:${target.parentId}}.${target.id}` : target.id;
+  const call = value => `MKXFORM.${method}(${JSON.stringify(id)}, ${value})`;
+  const calls = [call(attribute)];
+  if (target.required && target.field?.props?.readOnly === true && attribute !== "6") {
+    // Native required setters also switch the editor to edit mode. Keep the
+    // independent DSL readonly restriction after restoring its validator.
+    calls.push(dynamic ? `if (__rowAttribute === 3) { ${call("1")} }` : call("1"));
+  }
+  return calls;
 }
 
 function isLegacyStringFieldRead(node) {
@@ -555,7 +599,7 @@ function staticAcornString(node) {
 
 function walkJavaScriptAst(node, visit) {
   if (!node || typeof node !== "object") return;
-  if (typeof node.type === "string") visit(node);
+  if (typeof node.type === "string" && visit(node) === "skip") return;
   for (const [key, value] of Object.entries(node)) {
     if (["start", "end", "loc"].includes(key)) continue;
     if (Array.isArray(value)) {
