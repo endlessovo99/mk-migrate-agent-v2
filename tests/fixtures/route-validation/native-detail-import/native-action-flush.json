@@ -1,0 +1,8 @@
+{
+  "scope": "Exact scoped native action-queue flush, executed with local timer/window adapters only. No vendor module is imported or evaluated.",
+  "assetSha256": "b4f4b7e2ca8a11f79542321d001853890a44c4676edbfe661466f6ebc5678d4a",
+  "start": 113637,
+  "end": 114640,
+  "flush": "function(t,e){var r=!(arguments.length>2&&void 0!==arguments[2])||arguments[2],n=window.MXFORM_ACTIONS=window.MXFORM_ACTIONS||{};if(r)clearTimeout(n.timer),n.timer=setTimeout((function(){var t=Object.keys(n);t.length&&(t.forEach((function(t){if(\"timer\"!==t){var e=n[t]||{},r=e.actionFuns,o=e.actionTypes,i=e.actionParams;o.length&&o.forEach((function(t){r[t].forEach((function(e){try{null==e||e.function.apply(e,S(i[t]))}catch(t){console.error(t,\"at actionFunsRunner\")}}))})),delete window.MXFORM_ACTIONS[t]}})),delete window.MXFORM_ACTIONS.timer)}),100);else{var o=Object.keys(n);o.length&&(o.forEach((function(r){if(\"timer\"!==r){var o=n[r]||{},i=o.actionFuns,a=o.actionTypes,u=o.actionParams,l=o.actionTableType,c=o.actionTableName;if(l!==t)return;if(\"*\"!==e&&c!==e)return;a.length&&a.forEach((function(t){i[t].forEach((function(e){try{null==e||e.function.apply(e,S(u[t]))}catch(t){console.error(t,\"at actionFunsRunner\")}}))})),delete window.MXFORM_ACTIONS[r]}})),delete window.MXFORM_ACTIONS.timer)}}",
+  "flushSha256": "613197036c47f493be76b224bd4137cb76a8bca29908d2ddc76447ae1d99e14e"
+}

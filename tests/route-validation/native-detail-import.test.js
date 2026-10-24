@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
+import { createHash } from "node:crypto";
 import { it } from "node:test";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { applyApprovedImportPolicies, approvedImportSourceJavascriptDigest, approvedNativeImportSourceWitness } from "../../src/translator/approved-import-policies.js";
@@ -15,6 +16,8 @@ import { executeDsl } from "../../src/executor/execute.js";
 import { FakeNewoaAdapter } from "./fake-newoa-adapter.js";
 import { withNetworkGuard } from "./network-guard.js";
 const file="tests/fixtures/route-validation/native-detail-import/route-native-detail-import_SysFormTemplate.xml";
+const nativeButton=JSON.parse(fs.readFileSync('tests/fixtures/executor/remote-selector-native/contract.json'));
+const nativeFlush=JSON.parse(fs.readFileSync('tests/fixtures/route-validation/native-detail-import/native-action-flush.json'));
 function input(){const source=cleanSourceFile(file),draft=draftSourceDraft(source),action=draft.scripts.actions.find(a=>a.semanticHints?.legacyExcelImport),script=source.scripts.sources.find(s=>action.sourceRefs.includes(s.sourceRef));
 const decision={id:"native-import-fixture",kind:"native-detail-import-replace",tableId:"detailList",sourceActionId:action.id,sourceRef:script.sourceRef,sourceDeclarationSha256:approvedImportSourceJavascriptDigest(script),newTemplateOnly:true,legacyFiles:"reject",mode:"replace",retiredUnboundSlots:[{fieldId:"fd_missing",sourceSlot:2}],downloadFieldSourceRef:"source.form.control.fd_download"};
 return {source,draft,action,script,decision};}
@@ -59,6 +62,33 @@ const api={getFormValues:()=>({_dynamicProps:{mechanisms:{'sys-xform':{dynamicPr
 assert.deepEqual(nativeImportFormData(api,['fd_id']),{fd_value:0,untouched:'keep',fd_hidden:false,'single.fd_value':'single',rows:[{code:'current'}]});assert.throws(()=>nativeImportFormData(api,['mechanisms']));assert.throws(()=>nativeImportFormData({...api,getFormConfigs:()=>({forms:[{items:[{kind:'control',key:'x',childrenGroup:[],controlProps:{}}]}]})},['fd_id']));
 });
 
+it("opens one native import dialog through the real button dispatcher when the base exists only in the public module cache",()=>{
+ const h=harness(compiled().action,{nativeDispatch:true,baseMode:'amd'});
+ assert.equal(h.opened(),true);assert.equal(h.modalCount(),1);assert.equal(h.callbackCount(),1);
+ assert.deepEqual(h.moduleLookups,['@elem/xform-base']);
+ assert.deepEqual(h.requests,[]);assert.deepEqual(h.writes,[]);
+});
+
+it("keeps a usable global base ahead of the module cache and dispatches the native click once",async()=>{
+ const h=harness(compiled().action,{nativeDispatch:true,baseMode:'global',loaderThrows:true});
+ assert.equal(h.opened(),true);assert.equal(h.modalCount(),1);assert.equal(h.callbackCount(),1);
+ assert.equal(h.loaderReads(),0);assert.deepEqual(h.moduleLookups,[]);assert.deepEqual(h.notices,[]);
+ assert.deepEqual(h.requests,[]);assert.deepEqual(h.writes,[]);
+ h.file();await h.reply(0,{success:true,data:{fdAttachFileId:'global-attach'}});await h.reply(1,{success:true,data:{id:'global-job'}});
+ const row={fd_job:'GLOBAL-J1',fd_name:'Name','fd_org.name':'text only',fd_date:'2026-10-24',fd_flag:'yes'};
+ await h.reply(2,{success:true,data:{percent:1,success:true,data:[row]}});assert.deepEqual(h.writes,[]);h.confirm();h.confirm();
+ assert.deepEqual(h.writes,[{table:'native_table',rows:[row]}]);assert.equal(h.loaderReads(),0);
+});
+
+it("reports unavailable native dependencies before opening, reading rows or sending requests",()=>{
+ for(const baseMode of ['missing-loader','missing-module','throw','wrong-namespace','missing-post']){
+  const h=harness(compiled().action,{nativeDispatch:true,baseMode});
+  assert.equal(h.opened(),false,baseMode);assert.equal(h.modalCount(),0,baseMode);assert.equal(h.callbackCount(),1,baseMode);assert.equal(h.contextReads(),0,baseMode);
+  assert.deepEqual(h.notices,['导入组件暂不可用，请刷新页面后重试；原明细保持不变。'],baseMode);
+  assert.deepEqual(h.requests,[],baseMode);assert.deepEqual(h.writes,[],baseMode);
+ }
+});
+
 it("uses exact native upload/parse DTO, preserves ambient context, previews then replaces once on confirmation, including independent .name strings",async()=>{
 const h=harness(compiled().action);assert.equal(h.requests.length,0);h.file();assert.equal(h.requests.length,1);assert.equal(h.requests[0].url,'https://qas.example.invalid/data/sys-attach/upload');assert.equal(h.requests[0].dto.fields[0][0],'fdFile');
 await h.reply(0,{success:true,data:{fdAttachFileId:'attach-fixture'}});assert.equal(h.requests[1].dto.xformId,'FAKE_NEW_XFORM_ID');assert.equal(h.requests[1].dto.tableName,'native_table');assert.deepEqual(h.requests[1].dto.formData.native_table,[{fd_job:'old'}]);assert.equal(h.requests[1].dto.formData.fd_current,0);assert.equal(h.requests[1].dto.formData.unrendered,'keep');
@@ -97,6 +127,7 @@ it("the approved public route passes review, fake persistence, exact form-ID mat
  const persisted=xformConfig(client.template),formId=client.template.mechanisms['sys-xform'].fdId,formAttr=JSON.parse(persisted.attribute.formAttr);
  const functions=[];function inspect(node){if(!node||typeof node!=='object')return;if(typeof node.function==='string')functions.push(node.function);for(const v of Object.values(node))Array.isArray(v)?v.forEach(inspect):inspect(v);}inspect(formAttr.controlAction);
  const imports=functions.filter(code=>code.includes('asyncImportDetailData'));assert.ok(imports.length>0);for(const code of imports){assert.ok(code.includes('"xformId":'+JSON.stringify(formId)));assert.equal(code.includes('${xform:id}'),false);assert.equal(code.includes('${table:detailList}'),false);}
+ const native=harness({function:imports[0]},{nativeDispatch:true,baseMode:'amd'});assert.equal(native.opened(),true);assert.equal(native.modalCount(),1);assert.equal(native.callbackCount(),1);assert.deepEqual(native.requests,[]);assert.deepEqual(native.writes,[]);native.cancel();
  const altered=structuredClone(reviewed.dsl);altered.scripts.actions[0].function=altered.scripts.actions[0].function.replace('MKXFORM.setDetailValues(spec.tableId, rows);','MKXFORM.setDetailValues(spec.tableId, []);');assert.equal(checkTrust(scoped,altered).ok,false);const rejected=new FakeNewoaAdapter('persist');assert.equal((await executeDsl(altered,{client:rejected,baseUrl:'https://qas.example.invalid',confirmWrite:true,targetCategoryId:'route-category-id',credentials:{username:'fixture',encryptedPassword:'fixture'}})).ok,false);assert.deepEqual(rejected.transcript(),[]);
  const stripped=structuredClone(reviewed.dsl);delete stripped.migrationPolicies;delete stripped.migrationPolicyAudit;assert.equal(checkTrust(scoped,stripped).ok,false);const bare=new FakeNewoaAdapter('persist');assert.equal((await executeDsl(stripped,{client:bare,baseUrl:'https://qas.example.invalid',confirmWrite:true,targetCategoryId:'route-category-id',credentials:{username:'fixture',encryptedPassword:'fixture'}})).ok,false);assert.deepEqual(bare.transcript(),[]);
 }));
@@ -110,14 +141,28 @@ it("refuses a readback system field that shadows mechanisms and never records th
 it("the no-policy public route remains blocked before any fake target call",async()=>withNetworkGuard(async()=>{const {draft}=input(),client=new FakeNewoaAdapter('persist');const r=await executeDsl(draft,{client,confirmWrite:true,targetCategoryId:'route-category-id',credentials:{username:'fixture',encryptedPassword:'fixture'}});assert.equal(r.ok,false);assert.deepEqual(client.transcript(),[]);}));
 
 function harness(action,options={}){
-const requests=[],writes=[],downloads=[],timers=[];let modal,serial=0;const UI={Upload:'NativeUpload',Button:'NativeButton',Table:'NativeTable'},React={createElement(type,props,...children){return{type,props:{...props,children}}}};
+const requests=[],writes=[],downloads=[],timers=[],moduleLookups=[],notices=[];let modal,serial=0,modalCount=0,callbackCount=0,contextReads=0,loaderReads=0;const UI={Upload:'NativeUpload',Button:'NativeButton',Table:'NativeTable'},React={createElement(type,props,...children){return{type,props:{...props,children}}}};
 class FormData{constructor(){this.fields=[];}append(k,v){this.fields.push([k,v]);}}class Blob{constructor(parts){this.parts=parts;}}
 const transport={post(url,dto,config){return new Promise((resolve,reject)=>requests.push({url,dto:dto instanceof FormData?{fields:dto.fields}:JSON.parse(JSON.stringify(dto)),config,resolve,reject}));}};
-const MKXFORM={getFormValues:()=>options.badContext?{}:{_dynamicProps:{mechanisms:{'sys-xform':{dynamicProps:{unrendered:'keep',fd_current:'stale'}}}}},getFormConfigs:()=>({forms:[{items:[{key:'main.fd_current',kind:'control',controlProps:{$$tableType:'main',name:'fd_current',value:0}},{key:'native_table',kind:'control',controlProps:{$$tableType:'detail',$$tableName:'native_table',name:'native_table',value:{values:[{fd_job:'old'}]}}}]}]}),tableModal(e){modal=e.modal;return{update(p){Object.assign(modal,p);}}},setDetailValues(table,rows){writes.push({table,rows:JSON.parse(JSON.stringify(rows))});}};
+const MKXFORM={viewStatus:'add',message:{error(text){notices.push(text);}},getFormValues(){contextReads++;return options.badContext?{}:{_dynamicProps:{mechanisms:{'sys-xform':{dynamicProps:{unrendered:'keep',fd_current:'stale'}}}}};},getFormConfigs(){contextReads++;return{forms:[{items:[{key:'main.fd_current',kind:'control',controlProps:{$$tableType:'main',name:'fd_current',value:0}},{key:'native_table',kind:'control',controlProps:{$$tableType:'detail',$$tableName:'native_table',name:'native_table',value:{values:[{fd_job:'old'}]}}}]}]};},tableModal(e){modalCount++;modal=e.modal;return{update(p){Object.assign(modal,p);}}},setDetailValues(table,rows){writes.push({table,rows:JSON.parse(JSON.stringify(rows))});}};
 const body={appendChild(){},removeChild(){}};const document={body,createElement(){return{style:{},click(){downloads.push(this.download);}}}};
 let javascript=action.function.replaceAll('${table:detailList}','native_table').replaceAll('${xform:id}','FAKE_NEW_XFORM_ID');if(options.maxPolls)javascript=javascript.replace('"maxPolls":300','"maxPolls":'+options.maxPolls);
-vm.runInNewContext(javascript+';onClick();',{window:{react:React,'@lui/core':UI,'@elem/xform-base':{innerHttp:transport},URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL(){}}},MKXFORM,FormData,Blob,document,setTimeout(fn){const id=++serial;timers.push({id,fn});return id;},clearTimeout(id){const i=timers.findIndex(t=>t.id===id);if(i>=0)timers.splice(i,1);}});
+const base={innerHttp:transport},window={react:React,'@lui/core':UI,URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL(){}}};
+const baseMode=options.baseMode||'amd',loader=function(){throw Error('Module lookup must not load resources');};
+loader.getModule=function(name){assert.equal(this,loader);moduleLookups.push(name);if(baseMode==='throw')throw Error('synthetic module-cache error');if(baseMode==='missing-module')return undefined;if(baseMode==='wrong-namespace')return{default:base};if(baseMode==='missing-post')return{innerHttp:{}};return base;};
+if(baseMode==='global')window['@elem/xform-base']=base;
+if(baseMode!=='missing-loader')Object.defineProperty(window,'@ekp-infra/requirejs',{get(){loaderReads++;if(options.loaderThrows)throw Error('Global base must not consult loader');return loader;}});
+const context=vm.createContext({window,MKXFORM,FormData,Blob,document,setTimeout(fn){const id=++serial;timers.push({id,fn});return id;},clearTimeout(id){const i=timers.findIndex(t=>t.id===id);if(i>=0)timers.splice(i,1);}});
+vm.runInContext(javascript,context);
+if(options.nativeDispatch){
+ const hash=value=>createHash('sha256').update(value).digest('hex');
+ assert.equal(hash(nativeButton.buttonCallback),nativeButton.buttonCallbackSha256);assert.equal(hash(nativeButton.dispatcher),nativeButton.dispatcherSha256);assert.equal(hash(nativeFlush.flush),nativeFlush.flushSha256);
+ context.t=base;context.O=(_object,key,value)=>({[key]:value});context.S=values=>Array.from(values);
+ vm.runInContext('var du=('+nativeFlush.flush+');'+nativeButton.dispatcher,context);
+ const callback=context.onClick;context.f={type:'js'};context.r=base;context.m={onClick:[{name:'onClick',function(...args){callbackCount++;return callback(...args);}}]};context.b='fixture_button';context.x='fixture_main';context.w=undefined;context.A=undefined;context._='';
+ vm.runInContext('('+nativeButton.buttonCallback+')({synthetic:true});',context);while(timers.length)timers.shift().fn();
+}else context.onClick();
 function find(type,node=modal?.content){if(!node||typeof node!=='object')return;if(node.type===type)return node;for(const child of node.props?.children||[]){const found=find(type,child);if(found)return found;}}
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
-return{requests,writes,downloads,opened:()=>Boolean(modal),file(){find(UI.Upload).props.customRequest({file:{synthetic:true},onSuccess(){},onError(){}});},confirm(){modal?.onOk();},cancel(){modal?.onCancel();},tick(){timers.shift()?.fn();},async reply(index,data){requests[index].resolve({data});await flush();},async reject(index){requests[index].reject(new Error('synthetic parser error'));await flush();},download(){find(UI.Button).props.onClick();}};
+return{requests,writes,downloads,moduleLookups,notices,opened:()=>Boolean(modal),modalCount:()=>modalCount,callbackCount:()=>callbackCount,contextReads:()=>contextReads,loaderReads:()=>loaderReads,file(){find(UI.Upload).props.customRequest({file:{synthetic:true},onSuccess(){},onError(){}});},confirm(){modal?.onOk();},cancel(){modal?.onCancel();},tick(){timers.shift()?.fn();},async reply(index,data){requests[index].resolve({data});await flush();},async reject(index){requests[index].reject(new Error('synthetic parser error'));await flush();},download(){find(UI.Button).props.onClick();}};
 }

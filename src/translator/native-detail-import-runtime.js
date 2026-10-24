@@ -43,7 +43,16 @@ export function nativeDetailImportFunction(input, entry = "import") {
   return `function onClick() {
   var spec = ${JSON.stringify(spec)};
   var React = window.react, UI = window["@lui/core"], base = window["@elem/xform-base"];
-  if (!React || !UI || !UI.Upload || !UI.Button || !UI.Table || !base || !base.innerHttp || !MKXFORM.tableModal) return;
+  if (!base || !base.innerHttp || typeof base.innerHttp.post !== "function") {
+    try {
+      var loader = window["@ekp-infra/requirejs"];
+      base = loader && typeof loader.getModule === "function" ? loader.getModule("@elem/xform-base") : null;
+    } catch (error) { base = null; }
+  }
+  if (!React || !UI || !UI.Upload || !UI.Button || !UI.Table || !base || !base.innerHttp || typeof base.innerHttp.post !== "function" || !MKXFORM.tableModal) {
+    MKXFORM.message.error("导入组件暂不可用，请刷新页面后重试；原明细保持不变。");
+    return;
+  }
   var http = base.innerHttp, api = spec.targetOrigin + "/data";
   var closed = false, ready = false, sequence = 0, timer = null, rows = [], message = "请使用目标系统生成的新模板；不执行旧位置格式转换。";
   var modal;${calculation ? "\n  var mainValues = {}, currencyValues = {};" : ""}
