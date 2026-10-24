@@ -16,15 +16,28 @@ export function sourceTrackGeometry(projected, nodes, sourceGrid, fields = [], m
     evidence.kind === "standard-table" && Number.isInteger(evidence.rowCount) && evidence.rowCount > 0 &&
     Object.keys(evidence).length === 3;
   if (provedRoot && !mobile) {
+    const exactProfiles = new Map();
     let run = [];
     const flush = () => { if (run.length >= 2) for (const entry of readableAttachmentGroup(aggregateAttachmentTracks(run))) shared.set(entry.projected.id, entry); run = []; };
     for (const source of sourceRows) {
       const node = nodesByRef.get(source.sourceRef), row = projectionById.get(node?.id);
       const profile = directTrackProfile(source, node, row, evidence.rowCount, fieldsById);
+      if (profile && !profile.attachmentHints.size) {
+        const matches = exactProfiles.get(profile.signature) || [];
+        matches.push(profile);
+        exactProfiles.set(profile.signature, matches);
+      }
       if (!profile || run.length && (profile.index !== run.at(-1).index + 1 || !compatibleTracks(run, profile))) flush();
       if (profile) run.push(profile);
     }
     flush();
+    // A merged row does not create a new source table. Restore an interrupted
+    // ordinary row only from its own complete, exactly repeated track profile;
+    // attachment rebalancing remains confined to the existing contiguous runs.
+    for (const matches of exactProfiles.values()) {
+      if (new Set(matches.map(profile => profile.index)).size < 2) continue;
+      for (const profile of matches) if (!shared.has(profile.projected.id)) shared.set(profile.projected.id, profile);
+    }
   }
   return projected.map(row => {
     const node = nodes.find(node => node.id === row.id), source = rowsByRef.get(node?.sourceRef), profile = shared.get(row.id);
