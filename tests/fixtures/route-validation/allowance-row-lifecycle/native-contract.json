@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "scope": "Captured desktop native add/delete callbacks. Tests execute the unchanged callback text with inert hook dependencies and dispatch translated DSL actions; no mounted browser or target acceptance is claimed.",
+  "asset": {
+    "path": ".tmp/tasks/reception-calculation-investigation-20261023/xform-detail-table.js",
+    "sha256": "d507ec85a5f10b66f31896a11bca7c49f177a3666a7c692fb56c413215b1a663"
+  },
+  "functions": {
+    "addHook": {
+      "start": 113967,
+      "end": 115127,
+      "sha256": "42df14a2f53aa5d1f33d7bba1111fff2c88b0c59d78c089cd3f0e7dc76778c40",
+      "text": "function(){return $(r,void 0,void 0,F.mark((function e(){var t,r,a,i,c,s,f;return F.wrap((function(e){for(;;)switch(e.prev=e.next){case 0:a=null==o?void 0:o.length,x&&(null==(i=null==m?void 0:m[\"\".concat(E,\".\").concat(d)])?void 0:i.onNestBeforeInsert)&&n.actionFunsRunner({id:d,tableName:d,tableType:\"detail\"},i,\"onNestBeforeInsert\",Object.assign(Object.assign({},S),y({},d,o)),C,a),m&&(null===(t=m[\"\".concat(d,\".\").concat(d)])||void 0===t?void 0:t.onBeforeAdd)&&n.actionFunsRunner({id:d,tableName:d,tableType:\"detail\"},m[\"\".concat(d,\".\").concat(d)],\"onBeforeAdd\",l,a),c=Math.random(),s=[].concat(T(o),[Object.assign(Object.assign({},ii(l)),{key:c})]),l&&u(s),\"popup\"!==g&&m&&(null===(r=m[\"\".concat(d,\".\").concat(d)])||void 0===r?void 0:r.onAfterAdd)&&n.actionFunsRunner({id:d,tableName:d,tableType:\"detail\"},m[\"\".concat(d,\".\").concat(d)],\"onAfterAdd\",s),\"popup\"===g&&(w.current=o,b(o.length,\"add\")),x&&(null==(f=null==m?void 0:m[\"\".concat(E,\".\").concat(d)])?void 0:f.onNestAfterInsert)&&n.actionFunsRunner({id:d,tableName:d,tableType:\"detail\"},f,\"onNestAfterInsert\",Object.assign(Object.assign({},S),y({},d,s)),C,a);case 9:case\"end\":return e.stop()}}),e)})))}"
+    },
+    "deleteHook": {
+      "start": 116268,
+      "end": 116897,
+      "sha256": "856f9604a96529f3b8224cd91dfd41ae73458d9499aecceacda492bf68845540",
+      "text": "function(){var e,t;if(!N||0!==N.length){m&&(null===(e=m[\"\".concat(d,\".\").concat(d)])||void 0===e?void 0:e.onBeforeDel)&&n.actionFunsRunner({id:d,tableName:d,tableType:\"detail\"},m[\"\".concat(d,\".\").concat(d)],\"onBeforeDel\",N);var r=[],a=[];o.forEach((function(e){N.indexOf(e.key)>=0&&(r.push(e[\"\".concat(d,\".fd_id\")]),a.push(e))})),s(r,a),u(o.filter((function(e){return N.indexOf(e.key)<0}))),m&&(null===(t=m[\"\".concat(d,\".\").concat(d)])||void 0===t?void 0:t.onAfterDel)&&n.actionFunsRunner({id:d,tableName:d,tableType:\"detail\"},m[\"\".concat(d,\".\").concat(d)],\"onAfterDel\",o.filter((function(e){return N.indexOf(e.key)<0}))),D([])}}"
+    },
+    "cloneDefaultRow": {
+      "start": 92608,
+      "end": 92875,
+      "sha256": "8be615daa323ec1504a3296f0720c0274c61a7db187872fa94d666ca9171d139",
+      "text": "function(e){return e=JSON.parse(JSON.stringify(e)),Object.keys(e).reduce((function(t,n){return t[n]=e[n],e[n]&&e[n].mechanismKey&&Object.assign(t[n],Object.assign(Object.assign({},e[n]),{mechanismKey:\"detail$$\".concat(Math.random().toString(36).slice(-6))})),t}),{})}"
+    }
+  },
+  "notes": [
+    "onAfterAdd receives the complete post-add internal row array s, including existing rows.",
+    "onAfterDel receives the complete remaining internal row array after selected keys are removed.",
+    "Internal row values use physicalTable.field keys. cloneDefaultRow JSON cloning omits undefined default values, so a newly added empty row may contain only key.",
+    "Popup-add confirmation, bulk import, and mounted component lifecycle are outside this captured callback proof."
+  ]
+}

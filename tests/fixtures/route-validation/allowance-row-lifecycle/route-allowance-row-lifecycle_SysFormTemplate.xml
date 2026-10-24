@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-allowance-row-lifecycle-form</string></void>
+<void method="put"><string>fdName</string><string>Allowance row lifecycle route</string></void>
+<void method="put"><string>fdModelId</string><string>route-allowance-row-lifecycle-template</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type=&quot;standardTable&quot;&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_trip_mode&quot;,label:&quot;出差范围&quot;,items:&quot;市内|0&amp;#10;国内|1&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputRadio&quot; fd_values=&apos;{id:&quot;fd_package_mode&quot;,label:&quot;包干模式&quot;,items:&quot;否|0&amp;#10;是|1&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;2&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_trip_start&quot;,label:&quot;开始日期&quot;,dataType:&quot;Date&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;3&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_trip_end&quot;,label:&quot;结束日期&quot;,dataType:&quot;Date&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;4&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_people&quot;,label:&quot;人数&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;5&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_daily_rate&quot;,label:&quot;日标准&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;6&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_overnights&quot;,label:&quot;过夜天数&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;7&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_allowance_days&quot;,label:&quot;津贴天数&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;8&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_regular_allowance&quot;,label:&quot;常规津贴&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;9&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_package_allowance&quot;,label:&quot;包干津贴&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;10&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_radiation_allowance&quot;,label:&quot;附加津贴&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;11&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_allowance_total&quot;,label:&quot;津贴合计&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;12&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_receipt_result&quot;,label:&quot;票据核定额&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;,defaultValue:&quot;0&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row=&quot;13&quot; column=&quot;0&quot;&gt;&lt;table fd_type=&quot;detailsTable&quot; fd_values=&apos;{id:&quot;fd_receipts&quot;,label:&quot;票据明细&quot;}&apos;&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td row=&quot;0&quot; column=&quot;0&quot;&gt;&lt;label fd_type=&quot;textLabel&quot; fd_values=&apos;{id:&quot;label_receipt_value&quot;,content:&quot;票据金额&quot;}&apos;&gt;票据金额&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr type=&quot;templateRow&quot;&gt;&lt;td row=&quot;1&quot; column=&quot;0&quot;&gt;&lt;div fd_type=&quot;inputText&quot; fd_values=&apos;{id:&quot;fd_receipt_value&quot;,label:&quot;票据金额&quot;,tableName:&quot;fd_receipts&quot;,dataType:&quot;Double&quot;,decimal:&quot;2&quot;}&apos;&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;div id=&quot;jsp_allowance_row_lifecycle&quot; fd_type=&quot;jsp&quot;&gt;&lt;input type=&quot;hidden&quot; value=&quot;&amp;lt;xform:editShow&amp;gt;&amp;lt;script&amp;gt;
+var theCityFlag = Number(getFormRadioValue(&amp;quot;fd_trip_mode&amp;quot;));
+var receiptLinesId = &amp;quot;fd_receipts&amp;quot;;
+function sumReceiptRows(tableId, controlId) {
+  var tabId = &amp;quot;TABLE_DL_&amp;quot; + tableId;
+  var tableInfo = DocList_TableInfo[tabId];
+  var sum = 0;
+  for (var i = 0; i &amp;lt; tableInfo.lastIndex - 1; i++) {
+    var rowId = tableId + &amp;quot;.&amp;quot; + i + &amp;quot;.&amp;quot; + controlId;
+    var amount = $(&amp;quot;[name=extendDataFormInfo.value(&amp;quot; + rowId + &amp;quot;)]&amp;quot;).val();
+    sum = theFixedNumTwo(sum + Number(amount));
+  }
+  return sum;
+}
+function trafficDays() {
+  var days = timeDifference(&amp;quot;fd_trip_start&amp;quot;, &amp;quot;fd_trip_end&amp;quot;);
+  var overnight = $(&amp;quot;[name=extendDataFormInfo.value(fd_overnights)]&amp;quot;);
+  return days;
+}
+function timeDifference(startId, endId) {
+  var start = new Date(getFormFieldValue(startId));
+  var end = new Date(getFormFieldValue(endId));
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  return Math.floor((end.getTime() - start.getTime()) / 86400000);
+}
+function receiptAllowanceCap() {
+  var days = trafficDays() + 1;
+  var people = $(&amp;quot;[name=extendDataFormInfo.value(fd_people)]&amp;quot;).val();
+  return days * people * 100;
+}
+function sumTripReceipts() {
+  var result = $(&amp;quot;[name=extendDataFormInfo.value(fd_receipt_result)]&amp;quot;);
+  var receiptVal = sumReceiptRows(receiptLinesId, &amp;quot;fd_receipt_value&amp;quot;);
+  var cap = receiptAllowanceCap();
+  if (theCityFlag == 0) {
+    if (receiptVal) result.val(receiptVal);
+  } else if (receiptVal &amp;amp;&amp;amp; cap) {
+    result.val(Math.min(Number(receiptVal), Number(cap)));
+  }
+}
+function recalculateRegularAllowance() {
+  var days = $(&amp;quot;[name=extendDataFormInfo.value(fd_allowance_days)]&amp;quot;);
+  var people = $(&amp;quot;[name=extendDataFormInfo.value(fd_people)]&amp;quot;);
+  var rate = $(&amp;quot;[name=extendDataFormInfo.value(fd_daily_rate)]&amp;quot;);
+  var regular = $(&amp;quot;[name=extendDataFormInfo.value(fd_regular_allowance)]&amp;quot;);
+  var total = days.val() * people.val() * rate.val();
+  regular.val(total ? total.toFixed(2) : 0.00);
+}
+function recalculatePackageAllowance() {
+  var nights = Number(getFormFieldValue(&amp;quot;fd_overnights&amp;quot;));
+  var people = Number(getFormFieldValue(&amp;quot;fd_people&amp;quot;));
+  var rate = Number(getFormFieldValue(&amp;quot;fd_daily_rate&amp;quot;));
+  var bgAmount = theFixedNumTwo(people * rate * nights + 200);
+  var packaged = $(&amp;quot;[name=extendDataFormInfo.value(fd_package_allowance)]&amp;quot;);
+  packaged.val(bgAmount.toFixed(2));
+}
+function recalculateAllowanceTotal() {
+  var total = $(&amp;quot;[name=extendDataFormInfo.value(fd_allowance_total)]&amp;quot;);
+  var regular = $(&amp;quot;[name=extendDataFormInfo.value(fd_regular_allowance)]&amp;quot;);
+  var packaged = $(&amp;quot;[name=extendDataFormInfo.value(fd_package_allowance)]&amp;quot;);
+  var radiation = $(&amp;quot;[name=extendDataFormInfo.value(fd_radiation_allowance)]&amp;quot;);
+  var allowanceSum = 0.00;
+  var packageMode = getFormRadioValue(&amp;quot;fd_package_mode&amp;quot;);
+  allowanceSum = Number(packageMode === &amp;quot;1&amp;quot; ? packaged.val() : regular.val()) + Number(radiation.val());
+  total.val(allowanceSum.toFixed(2));
+}
+function setCityRate() {
+  var rate = $(&amp;quot;[name=extendDataFormInfo.value(fd_daily_rate)]&amp;quot;);
+  if (theCityFlag == 0) { rate.val(20); } else { rate.val(100); }
+}
+AttachXFormValueChangeEventById(&amp;quot;fd_trip_start&amp;quot;, function(value) { trafficDays(); });
+AttachXFormValueChangeEventById(&amp;quot;fd_trip_end&amp;quot;, function(value) { trafficDays(); });
+AttachXFormValueChangeEventById(&amp;quot;fd_people&amp;quot;, function(value) { recalculateRegularAllowance(); });
+AttachXFormValueChangeEventById(&amp;quot;fd_package_mode&amp;quot;, function(value) { recalculatePackageAllowance(); });
+AttachXFormValueChangeEventById(&amp;quot;fd_regular_allowance&amp;quot;, function(value) { recalculateAllowanceTotal(); });
+AttachXFormValueChangeEventById(&amp;quot;fd_package_allowance&amp;quot;, function(value) { recalculateAllowanceTotal(); });
+AttachXFormValueChangeEventById(&amp;quot;fd_radiation_allowance&amp;quot;, function(value) { recalculateAllowanceTotal(); });
+AttachXFormValueChangeEventById(&amp;quot;fd_receipt_value&amp;quot;, function(value) { sumTripReceipts(); });
+$(&amp;quot;#TABLE_DL_&amp;quot; + receiptLinesId + &amp;quot;,img[title=&apos;删除行&apos;]&amp;quot;).unbind(&amp;quot;click&amp;quot;).bind(&amp;quot;click&amp;quot;, function() {
+  sumTripReceipts();
+});
+$(&amp;quot;#TABLE_DL_&amp;quot; + receiptLinesId + &amp;quot;,img[title=&apos;添加行&apos;]&amp;quot;).on(&amp;quot;click&amp;quot;, function() {
+  sumTripReceipts();
+  $(&amp;quot;TABLE_DL_&amp;quot; + receiptLinesId + &amp;quot;,img[title=&apos;删除行&apos;]&amp;quot;).unbind(&amp;quot;click&amp;quot;).bind(&amp;quot;click&amp;quot;, function() {
+    sumTripReceipts();
+  });
+});
+&amp;lt;/script&amp;gt;&amp;lt;/xform:editShow&amp;gt;&quot;/&gt;&lt;/div&gt;</string></void>
+</object></java>

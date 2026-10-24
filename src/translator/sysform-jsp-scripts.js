@@ -89,6 +89,7 @@ import { detailColumnConsistencyCandidate } from "./detail-column-consistency.js
 import { jqueryReadyInitializationCandidates } from "./jquery-ready-initialization.js";
 import {dateOverlapLifecycleCandidates} from "./date-overlap-lifecycle.js";
 import {scalarSourceChangeCandidates} from "./scalar-source-change.js";
+import { inspectAllowanceRowLifecycle } from "./allowance-row-lifecycle.js";
 
 export function extractSysFormJspScripts(template = {}, options = {}) {
   const whitelist = options.functionWhitelist || loadFunctionWhitelist();
@@ -2851,6 +2852,22 @@ function allowanceCalculationCandidates(source, form, sourceScripts = {}) {
     javascript: "recalculate source allowance and receipt calculations before draft/save/submit",
     function: allowanceCalculationFunction("onBeforeSubmit", model)
   }, "deterministic-allowance-calculation"));
+  // Append the source-proved lifecycle subset so existing action identities and
+  // their allowance/load/submit functions remain unchanged.
+  const downstream = (sourceScripts.sources || []).flatMap(other => {
+    const grouped = groupedDetailCalculationModel(String(other.javascript || ""), form, sourceScripts);
+    if (!grouped || grouped.taxiFieldId !== model.receiptTargetFieldId) return [];
+    return inlineValueChangeBindings(String(other.javascript || "")).flatMap(binding => {
+      if (binding.controlId !== model.receiptTargetFieldId) return [];
+      const range = directValueChangeCallbackCallRange(other, binding.index, grouped.calculationFunctionName);
+      return range ? [{ functionName: grouped.calculationFunctionName,
+        sourceRef: other.sourceRef || other.id, start: range.start, end: range.end }] : [];
+    });
+  });
+  const lifecycle = inspectAllowanceRowLifecycle(source, form, model, { sourceScripts, downstream });
+  candidates.push(...lifecycle.candidates.map(candidate =>
+    calculationScriptCandidate(candidate, "deterministic-allowance-calculation")
+  ));
   const coveredCalculationRanges = coveredFunctionRanges(
     text,
     source.sourceRef,
@@ -2858,7 +2875,18 @@ function allowanceCalculationCandidates(source, form, sourceScripts = {}) {
   );
   return dedupeCandidatesByKey(candidates).map((candidate) => ({
     ...candidate,
-    semanticHints: { ...(candidate.semanticHints || {}), coveredCalculationRanges }
+    ...(lifecycle.residual ? {
+      translationStatus: "needs_review",
+      coverage: { status: "uncovered", nativeRules: [], residuals: [lifecycle.residual] },
+      functionMappings: candidate.functionMappings.map(mapping => ({ ...mapping, reviewRequired: true }))
+    } : {}),
+    semanticHints: {
+      ...(candidate.semanticHints || {}),
+      coveredCalculationRanges: [
+        ...coveredCalculationRanges,
+        ...(candidate.semanticHints?.coveredCalculationRanges || [])
+      ]
+    }
   }));
 }
 
@@ -3468,6 +3496,7 @@ function allowanceCalculationModel(text, sourceScripts) {
     ...totalRule,
     ...receipt,
     modeFieldId,
+    modeVariableName: "theCityFlag",
     personFieldId,
     rateFieldId,
     allowanceDaysFieldId,
@@ -3510,6 +3539,9 @@ function detailReceiptModel(text, functions) {
     if (!targetVariable || !cap) continue;
     return {
       receiptTableId: tableVars.get(receipt[3]),
+      receiptTableVariable: receipt[3],
+      receiptFunctionName: fn.name,
+      receiptHelperName: helper.name,
       receiptFieldId: receipt[5],
       receiptTargetFieldId: selected.get(targetVariable),
       receiptCapPerPersonDay: Number(cap),

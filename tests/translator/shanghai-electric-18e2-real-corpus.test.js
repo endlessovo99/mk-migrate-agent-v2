@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { parse } from "acorn";
 import { describe, it } from "node:test";
 import { checkDraft } from "../../src/dsl/checks.js";
 import {
@@ -430,8 +431,9 @@ describe("Shanghai Electric 18e2 route regression", () => {
     }
 
     assert.equal(decisions.filter((decision) => decision.classification === "native").length, 11);
-    assert.equal(decisions.filter((decision) => decision.classification === "script").length, 29);
+    assert.equal(decisions.filter((decision) => decision.classification === "script").length, 31);
     assert.equal(decisions.filter((decision) => decision.classification === "manual").length, 3);
+    assertReceiptLifecycleDecisionDelta(source, dsl);
     assert.ok(decisions.some((decision) =>
       decision.id === "calculation.script.fd_3cc17629476baa.script.2.event.4" &&
       decision.classification === "script"
@@ -487,6 +489,159 @@ describe("Shanghai Electric 18e2 route regression", () => {
     );
   });
 });
+
+function assertReceiptLifecycleDecisionDelta(source, dsl) {
+  const allowanceSource = "source.form.jsp.fd_3bc187ead08638.script.1";
+  const groupedSource = "source.form.jsp.fd_3bb1cfa690b988.script.1";
+  const personSource = "source.form.jsp.fd_3ba9ee7d2d381a.script.1";
+  const allowanceTargets = ["fd_overnight_days", "fd_allowance_days", "fd_everyday_allowance",
+    "fd_allowance_chg", "fd_allowance_bg", "fd_total_allowance", "fd_taxi"];
+  const groupedTargets = ["fd_airplane_amount", "fd_train", "fd_transportation", "fd_train_num",
+    "fd_traffic_total", "fd_717d1bac33942d4b88eca9"];
+  const relationship = (actionId, sourceRefs, triggerRefs, targetRefs) => ({ actionId, sourceRefs, triggerRefs, targetRefs });
+  const previousRelationships = [
+    relationship("fd_3ba6ae8cdb4186.onClick", ["source.form.jsp.fd_3ba6ae8cdb4186.button.1",
+      "source.form.jsp.fd_3bc60971c33862.script.1", "source.form.jsp.fd_3cd39a8bc880b0.script.1",
+      "source.form.jsp.fd_3d19de502071ba.script.1", "source.form.jsp.fd_3cc17629476baa.script.2",
+      groupedSource, "source.form.jsp.fd_3cc25d96ee0df2.script.1"], ["fd_3ba6ae8cdb4186"],
+    ["fd_voucher_no", "fd_voucher_msg", "fd_link_address", "fd_finance_detail"]),
+    relationship("fd_3cc17629476baa.script.2.event.4", ["source.form.jsp.fd_3cc17629476baa.script.2",
+      "source.form.jsp.fd_3e48c1f17e7e42.script.1", "source.form.jsp.fd_3d19de502071ba.script.1",
+      "source.form.jsp.fd_3cc25d96ee0df2.script.1", "source.form.jsp.fd_3cd39a8bc880b0.script.1"], [],
+    ["fd_payee_total", "fd_payee_diff", "fd_flag_save_no"]),
+    ...["fd_person_name", "fd_target_addr", "fd_reason", undefined].map((trigger, index) =>
+      relationship(`fd_3ba9ee7d2d381a.script.1.event.${index + 1}`, [personSource, allowanceSource],
+        trigger ? [trigger] : [], index === 0 ? ["fd_text_description", "fd_person_totalnum", ...allowanceTargets] : ["fd_text_description"])),
+    ...["fd_is_allowance_bg", "fd_allowance_chg", "fd_allowance_bg", "fd_allowance_fzh",
+      "fd_start_date", "fd_end_date", "fd_person_totalnum", "fd_everyday_allowance",
+      "fd_bus_metro_taxi_detail.fd_receipt_amount", "fd_3cc1757848e700", undefined, undefined]
+      .map((trigger, index) => relationship(`fd_3bc187ead08638.script.1.event.${index + 1}`,
+        [allowanceSource], trigger ? [trigger] : [], allowanceTargets)),
+    ...["fd_trafficCity_detail.fd_traffic_tool", "fd_trafficCity_detail.fd_traffic_amount", "fd_taxi",
+      "fd_3cc1757848e700", "fd_trafficCity_detail.fd_trafficCity_detail", undefined, undefined]
+      .map((trigger, index) => relationship(`fd_3bb1cfa690b988.script.1.event.${index + 1}`,
+        [groupedSource], trigger ? [trigger] : [], groupedTargets)),
+    ...["fd_train_address", "fd_train_price"].map((trigger, index) =>
+      relationship(`fd_3bb43549140132.script.1.event.${index + 1}`, ["source.form.jsp.fd_3bb43549140132.script.1"],
+        [`fd_train_detail.${trigger}`], ["fd_train_detail.fd_train_inspire"])),
+    ...["fd_flight_address", "fd_flight_price"].map((trigger, index) =>
+      relationship(`fd_3bb4c06b60439c.script.1.event.${index + 1}`, ["source.form.jsp.fd_3bb4c06b60439c.script.1"],
+        [`fd_flight_detail.${trigger}`], ["fd_flight_detail.fd_base_price", "fd_flight_detail.fd_flight_inspire"]))
+  ];
+  const lifecycle = [
+    { actionId: "fd_3bc187ead08638.script.1.event.13", event: "onAfterDel", title: "删除行" },
+    { actionId: "fd_3bc187ead08638.script.1.event.14", event: "onAfterAdd", title: "添加行" }
+  ];
+  const scripts = dsl.scripts.calculationDecisions.filter(decision => decision.classification === "script");
+  const newActionIds = new Set(lifecycle.map(item => item.actionId));
+  assert.equal(previousRelationships.length, 29);
+  assert.deepEqual(scripts.filter(decision => !newActionIds.has(decision.actionId)).map(decision =>
+    relationship(decision.actionId, decision.sourceRefs, decision.triggerRefs, decision.targetRefs)), previousRelationships,
+  "all 29 previous script relationships must survive in their original order");
+  assert.deepEqual(scripts.map(decision => decision.actionId), [
+    ...previousRelationships.slice(0, 18).map(item => item.actionId),
+    ...lifecycle.map(item => item.actionId),
+    ...previousRelationships.slice(18).map(item => item.actionId)
+  ], "only the two source receipt lifecycle decisions may be inserted after the original allowance actions");
+  for (const decision of scripts) assert.equal(decision.id, `calculation.script.${decision.actionId}`);
+
+  const ownerId = "fd_bus_metro_taxi_detail";
+  const owner = dsl.form.fields.find(field => field.id === ownerId);
+  assert.equal(owner.type, "detailTable");
+  assert.ok(owner.columns.some(column => column.id === "fd_receipt_amount"));
+  const receiptSource = source.scripts.sources.find(candidate => candidate.sourceRef === allowanceSource);
+  const receiptAst = parse(receiptSource.javascript, { ecmaVersion: "latest" });
+  const tableVariables = calculationAstNodes(receiptAst).filter(node => node.type === "VariableDeclarator" && node.id.name === "receiptDetailTableId");
+  assert.equal(tableVariables.length, 1);
+  assert.equal(tableVariables[0].init.value, ownerId);
+  for (const expected of lifecycle) {
+    const matching = dsl.scripts.actions.filter(action => action.id === expected.actionId);
+    assert.equal(matching.length, 1);
+    const [action] = matching;
+    const decision = scripts.find(candidate => candidate.actionId === expected.actionId);
+    assert.deepEqual(decision, {
+      id: `calculation.script.${expected.actionId}`, classification: "script", actionId: expected.actionId,
+      sourceRefs: [allowanceSource, groupedSource], triggerRefs: [`${ownerId}.${ownerId}`], targetRefs: ["fd_taxi"],
+      evidence: "source allowance, receipt-cap, date, rounding, and mode-gating calculations"
+    });
+    assert.equal(action.event, expected.event);
+    assert.equal(action.scope, "control");
+    assert.equal(action.controlId, ownerId);
+    assert.equal(action.tableId, ownerId);
+    assert.equal(action.translationStatus, "mapped");
+    assert.deepEqual(action.runWhen, { viewStatusIn: ["add", "edit"] });
+    assert.deepEqual(action.sourceRefs, decision.sourceRefs);
+    assert.deepEqual(action.coverage.residuals, []);
+    assert.equal(action.functionMappings[0].basis, "deterministic-allowance-calculation");
+    assert.equal(inspectDeterministicScriptBranchProof(action, { calculationDecisions: dsl.scripts.calculationDecisions }).ok, true);
+
+    const ranges = action.semanticHints.coveredCalculationRanges;
+    const bindingRanges = ranges.filter(range => range.sourceRef === allowanceSource && range.name === `receipt-row-lifecycle:${expected.event}`);
+    assert.equal(bindingRanges.length, 1);
+    const [bindingRange] = bindingRanges;
+    assert.equal(action.sourceActionKey, `${expected.event}@${bindingRange.start}`);
+    const binding = parse(receiptSource.javascript.slice(bindingRange.start, bindingRange.end), { ecmaVersion: "latest" }).body[0].expression;
+    assert.equal(binding.callee.property.name, expected.event === "onAfterDel" ? "bind" : "on");
+    assert.equal(binding.arguments[0].value, "click");
+    const callback = binding.arguments[1];
+    assert.equal(callback.type, "FunctionExpression");
+    assert.equal(callback.params.length, 0);
+    assert.equal(callback.body.body[0].expression.callee.name, "receiptTotal");
+    assert.equal(callback.body.body[0].expression.arguments.length, 0);
+    let selector = binding.callee.object;
+    if (expected.event === "onAfterDel") {
+      assert.equal(selector.callee.property.name, "unbind");
+      assert.equal(selector.arguments[0].value, "click");
+      selector = selector.callee.object;
+    }
+    assert.equal(selector.callee.name, "$");
+    assert.deepEqual(receiptSelectorParts(selector.arguments[0]), ["#TABLE_DL_", { identifier: "receiptDetailTableId" }, `,img[title='${expected.title}']`]);
+
+    const delegated = ranges.filter(range => range.sourceRef === groupedSource && range.name === "receipt-target-change:calculationAmount");
+    assert.equal(delegated.length, 1);
+    const grouped = source.scripts.sources.find(candidate => candidate.sourceRef === groupedSource);
+    const sourceCallbacks = calculationAstNodes(parse(grouped.javascript, { ecmaVersion: "latest" })).filter(node =>
+      node.type === "CallExpression" && node.callee.name === "AttachXFormValueChangeEventById" && node.arguments[0]?.value === "fd_taxi");
+    assert.equal(sourceCallbacks.length, 1);
+    const delegatedCalls = calculationAstNodes(sourceCallbacks[0].arguments[1].body).filter(node => node.type === "CallExpression" &&
+      node.callee.name === "calculationAmount" && node.start >= delegated[0].start && node.end <= delegated[0].end);
+    assert.equal(delegatedCalls.length, 1);
+    assert.deepEqual(delegatedCalls[0].arguments.map(argument => ({ type: argument.type, name: argument.name })),
+      [{ type: "Identifier", name: "value" }, { type: "Identifier", name: "domElement" }]);
+    assert.deepEqual(sourceCallbacks[0].arguments[1].params.map(param => param.name), ["value", "domElement"]);
+
+    const fn = parse(action.function, { ecmaVersion: "latest" }).body[0];
+    assert.equal(fn.id.name, expected.event);
+    assert.deepEqual(fn.params.map(param => param.name), ["data"]);
+    const calls = calculationAstNodes(fn).filter(node => node.type === "CallExpression" && node.callee.type === "MemberExpression" && node.callee.object.name === "MKXFORM");
+    assert.deepEqual(calls.filter(call => call.callee.property.name === "setValue").map(call => call.arguments[0].value), ["fd_taxi"]);
+    assert.deepEqual(calls.filter(call => call.callee.property.name === "getValue").map(call => call.arguments[0].value),
+      ["fd_3cc1757848e700", "fd_start_date", "fd_end_date", "fd_person_totalnum"]);
+    assert.ok(calls.every(call => ["getValue", "setValue"].includes(call.callee.property.name)));
+    const values = { fd_3cc1757848e700: 0, fd_start_date: "2026-10-22 08:00:00", fd_end_date: "2026-10-22 18:00:00", fd_person_totalnum: 1 };
+    const writes = [];
+    const handler = Function("MKXFORM", `${action.function}; return ${expected.event};`)({
+      getValue(id) { assert.ok(Object.hasOwn(values, id)); return values[id]; },
+      setValue(id, value) { writes.push([id, value]); }
+    });
+    handler(expected.event === "onAfterDel" ? [{ fd_receipt_amount: 4.56 }] : [{ fd_receipt_amount: 1.23 }, { fd_receipt_amount: 4.56 }]);
+    assert.deepEqual(writes, [["fd_taxi", expected.event === "onAfterDel" ? 4.56 : 5.79]]);
+  }
+}
+
+function receiptSelectorParts(node) {
+  if (node.type === "Literal") return [node.value];
+  if (node.type === "Identifier") return [{ identifier: node.name }];
+  assert.equal(node.type, "BinaryExpression");
+  assert.equal(node.operator, "+");
+  return [...receiptSelectorParts(node.left), ...receiptSelectorParts(node.right)];
+}
+
+function calculationAstNodes(node) {
+  if (!node || typeof node !== "object" || typeof node.type !== "string") return [];
+  return [node, ...Object.values(node).flatMap(value => Array.isArray(value)
+    ? value.flatMap(calculationAstNodes) : calculationAstNodes(value))];
+}
 
 function assertRealFinanceBehavior(action) {
   const baseValues = {
