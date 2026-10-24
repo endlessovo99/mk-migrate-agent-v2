@@ -272,6 +272,8 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
       } } : {}),
       cells: row.cells.map((cell, cellIndex) => {
         const flow = effectiveCellFlow(cell, adaptive);
+        const mobileCell = mobileRows.get(row.id)?.cells.find(candidate => candidate.id === cell.id) || cell;
+        const mobileFlow = effectiveCellFlow(mobileCell, adaptive) || flow;
         const companions = flow && choiceOtherFlowGroups(flow, form.fields);
         const withCompanions = contentFlow => companions?.length ? { ...contentFlow, companions } : contentFlow;
         const fieldIdsForCell = cell.refType === "layout"
@@ -306,8 +308,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
           ...(flow ? {
             contentFlow: withCompanions(adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields, cell)) }
               : expectedContentFlow(flow, form.fields, new Map([...sourceNumberEditors(form), ...sourceNumberDisplays(form)]), inlineBudgets)),
-            mobileContentFlow: withCompanions(adaptive ? { lines: flow.lines, items: flow.items.map(item => adaptiveFlowItem(item, form.fields,
-              mobileRows.get(row.id)?.cells.find(candidate => candidate.id === cell.id) || cell)) }
+            mobileContentFlow: withCompanions(adaptive ? { lines: mobileFlow.lines, items: mobileFlow.items.map(item => adaptiveFlowItem(item, form.fields, mobileCell)) }
               : expectedContentFlow(flow, form.fields, new Map(), mobileBudgets))
           } : {}),
           row: cell.row,
