@@ -4,6 +4,7 @@ import {verifiedDateOverlapReadyAction} from "../translator/date-overlap-lifecyc
 import { choiceOtherCompanionDiagnostics } from "./source-choice-other-companion.js";
 import { mobileCaptionSourceDiagnostics } from "./source-mobile-caption-grid.js";
 import { radioSourceDiagnostics } from "./source-radio-layout.js";
+import { detailCompositeSourceDiagnostics } from "./source-detail-composite.js";
 import { detailRowSourceEffectDiagnostics } from "./source-detail-row-effects.js";
 import { sourceNumberEditors, sourceNumberDisplays } from "./source-number-editor.js";
 import { sourceCheckboxLayouts } from "./source-checkbox-layout.js";
@@ -108,6 +109,7 @@ export function checkTrust(sourceDraft, migrationDsl) {
   diagnostics.push(...choiceOtherCompanionDiagnostics(sourceDraft?.form, migrationDsl?.form, expectedDraft?.form));
   diagnostics.push(...mobileCaptionSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));
   diagnostics.push(...radioSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));
+  diagnostics.push(...detailCompositeSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));
   diagnostics.push(...validateSourceSignIntegrity(sourceDraft, migrationDsl, expectedDraft?.workflow).diagnostics);
   validateInputLengthSourceRestrictions(sourceDraft, migrationDsl, expectedDraft, diagnostics);
   validateSourceNumberEditors(sourceDraft, migrationDsl, expectedDraft, diagnostics);

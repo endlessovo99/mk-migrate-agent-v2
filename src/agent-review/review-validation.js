@@ -3,6 +3,7 @@ import {verifiedDateOverlapReadyAction} from "../translator/date-overlap-lifecyc
 import { choiceOtherCompanionDiagnostics } from "../dsl/source-choice-other-companion.js";
 import { mobileCaptionSourceDiagnostics } from "../dsl/source-mobile-caption-grid.js";
 import { radioSourceDiagnostics } from "../dsl/source-radio-layout.js";
+import { detailCompositeSourceDiagnostics } from "../dsl/source-detail-composite.js";
 import { nativeCaptionFoldIssues } from "../dsl/native-caption-fold.js";
 import { detailRowSourceEffectDiagnostics } from "../dsl/source-detail-row-effects.js";
 import { checkDraft } from "../dsl/checks.js";
@@ -272,6 +273,7 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     ...(sourceDraft ? choiceOtherCompanionDiagnostics(sourceDraft.form, patchedDraft.form, fixedSourceForm, { prefix: "agent.patch.form" }) : []),
     ...(sourceDraft ? mobileCaptionSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
     ...(sourceDraft ? radioSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
+    ...detailCompositeSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }),
     ...sourceEffectDiagnostics,
     ...detailRowSourceEffectDiagnostics(sourceEffectActions, patchedDraft.scripts?.actions || [], { prefix: "agent.patch" }),
     ...remoteDialogSourceDiagnostics(sourceDraft?.form, patchedDraft.form, { prefix: "agent.patch.form", dsl:patchedDraft }),
