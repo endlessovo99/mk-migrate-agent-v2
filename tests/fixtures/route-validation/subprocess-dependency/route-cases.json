@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "id": "subprocess-dependency-absent",
+      "source": { "kind": "paired", "relativePath": "subprocess" },
+      "reviewScenario": "accept",
+      "newoaScenario": "dependency-absent",
+      "confirmWrite": true,
+      "expected": {
+        "reviewStatus": "needs_manual",
+        "dryRunStatus": "needs_manual",
+        "executionStatus": "blocked",
+        "executionStage": "verifyWorkflowSubProcessDependencies",
+        "operations": ["login", "get-workflow-detail"]
+      }
+    },
+    {
+      "id": "subprocess-parameter-contract-unverified",
+      "source": { "kind": "paired", "relativePath": "subprocess" },
+      "reviewScenario": "accept",
+      "newoaScenario": "parameter-contract-unverified",
+      "confirmWrite": true,
+      "expected": {
+        "reviewStatus": "needs_manual",
+        "dryRunStatus": "needs_manual",
+        "executionStatus": "blocked",
+        "executionStage": "verifyWorkflowSubProcessDependencies",
+        "operations": ["login", "get-workflow-detail", "get-subprocess-params"]
+      }
+    }
+  ]
+}

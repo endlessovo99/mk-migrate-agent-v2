@@ -9,6 +9,7 @@ import { resolveConditionOrgs } from "./condition-org-resolver.js";
 import { resolveWorkflowCooperation } from "./workflow-cooperation.js";
 import { resolveWorkflowSignPolicy, verifyWorkflowSignReadback } from "./workflow-sign-policy.js";
 import { verifyRemoteSelectorResources } from "./remote-selector-resources.js";
+import { verifyWorkflowSubProcessDependencies } from "./subprocess-dependencies.js";
 import { hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
 import {
   hasStaticAddressDefaults,
@@ -88,6 +89,14 @@ async function executeDraftDsl(input, options, writes) {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    if (input.workflow?.nodes?.some(node => node.type === "startSubProcess")) {
+      const stage = { name: "verifyWorkflowSubProcessDependencies", status: "started" };
+      apiStages.push(stage);
+      const dependencies = await verifyWorkflowSubProcessDependencies(input, { client });
+      Object.assign(stage, { status: dependencies.ok ? "ok" : "failed", dependencies: dependencies.dependencies });
+      if (!dependencies.ok) return { ...blocked(plan, [...diagnostics, ...dependencies.diagnostics], baseUrl),
+        stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
+    }
     const hasRemoteSelectors = input.migrationPolicies?.decisions?.some(decision => decision.kind === "native-tic-rest-selector");
     if (hasRemoteSelectors) {
       const stage = { name: "verifyRemoteSelectorResources", status: "started" };

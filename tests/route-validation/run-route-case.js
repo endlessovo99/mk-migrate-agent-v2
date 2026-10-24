@@ -19,7 +19,12 @@ const TEST_CREDENTIALS = Object.freeze({
 });
 
 export async function runRouteCase(caseId) {
-  const routeCase = findRouteCase(caseId);
+  return runFixtureRouteCase(findRouteCase(caseId));
+}
+
+// Local fixture definitions may supply a read-only fake adapter; the same
+// review, trust, executeDsl, transcript checks and network guard still run.
+export async function runFixtureRouteCase(routeCase, { adapterFactory } = {}) {
   const sourcePath = resolveRouteFixture(routeCase.source);
 
   return withNetworkGuard(async () => {
@@ -58,13 +63,16 @@ export async function runRouteCase(caseId) {
       throw unexpected("dry-run", routeCase, dryRun.status);
     }
 
-    const adapter = new FakeNewoaAdapter(routeCase.newoaScenario, {
+    const adapterOptions = {
       workflowCooperationDefault: routeCase.executionOptions?.workflowCooperationDefault ?? "2",
       workflowOperationSets: routeCase.workflowOperationSets,
       organizationCandidates: routeCase.organizationCandidates,
       fallbackFdIds: routeCase.fallbackFdIds,
       templateAuthorization: reviewResult.dsl.template?.authorization
-    });
+    };
+    const adapter = adapterFactory
+      ? adapterFactory(routeCase.newoaScenario, adapterOptions)
+      : new FakeNewoaAdapter(routeCase.newoaScenario, adapterOptions);
     const execution = await executeDsl(reviewResult.dsl, {
       ...routeCase.executionOptions,
       client: adapter,

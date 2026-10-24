@@ -325,21 +325,45 @@ export class NewoaClient {
     return body?.data || {};
   }
 
-  async getWorkflowTemplateDetail({ templateId, definitionId = "" }) {
+  async getWorkflowTemplateDetail({ templateId, definitionId }) {
     let body;
     try {
       body = await this.postSysLbpm("lbpmTemplate/details", {
         templateId,
-        definitionId
+        ...(definitionId === undefined ? {} : { definitionId })
       });
     } catch (error) {
       throw assignClientStage(error, "getWorkflowTemplateDetail");
     }
-    if (!body?.data || typeof body.data !== "object") {
+    if (body?.success !== true || !isRecord(body.data)) {
       throw clientStageError(
         "getWorkflowTemplateDetail",
-        "workflow template detail response did not include data"
+        "workflow template detail response did not include successful object data",
+        "newoa.workflow_template_detail_invalid"
       );
+    }
+    return body.data;
+  }
+
+  async getWorkflowSubProcessParams({ templateId }) {
+    const stage = "getWorkflowSubProcessParams";
+    if (typeof templateId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(templateId)) {
+      throw clientStageError(stage, "An exact internal LBPM template identity is required.", "newoa.workflow_subprocess_params_invalid");
+    }
+    let body;
+    try {
+      body = await this.postSysLbpm("params/find", {
+        reqParams: { processTemplateId: templateId },
+        keys: { processTemplateInfo: ["latestDefinitionId"], processTempVars: ["_all"] }
+      });
+    } catch (error) {
+      throw assignClientStage(error, stage);
+    }
+    if (body?.success !== true || !isRecord(body.data) ||
+        !isRecord(body.data.processTemplateInfo) ||
+        typeof body.data.processTemplateInfo.latestDefinitionId !== "string" || !body.data.processTemplateInfo.latestDefinitionId.trim() ||
+        !isRecord(body.data.processTempVars) || !Array.isArray(body.data.processTempVars._all)) {
+      throw clientStageError(stage, "Subprocess parameter metadata did not include the successful definition and variable contract.", "newoa.workflow_subprocess_params_invalid");
     }
     return body.data;
   }
@@ -465,8 +489,9 @@ function assignClientStage(error, stage) {
   return clientStageError(stage, String(error));
 }
 
-function clientStageError(stage, message) {
+function clientStageError(stage, message, code) {
   const error = new Error(message);
   error.stage = stage;
+  if (code) error.code = code;
   return error;
 }

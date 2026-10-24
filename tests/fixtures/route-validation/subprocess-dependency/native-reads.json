@@ -1,0 +1,85 @@
+{
+  "provenance": {
+    "source": "source27-dependency-readonly-fresh-001/native-read-sanitized.json",
+    "observedAt": "2026-10-24T09:51:59.753Z",
+    "identifiers": "Replaced with deterministic fixture identities.",
+    "graph": "No raw native graph was retained in the readonly evidence. Definition graph below is a repository structure sample, not the live positive control graph."
+  },
+  "detailResponse": {
+    "success": true,
+    "data": {
+      "fdId": "route-child-template",
+      "fdStatus": "published",
+      "isDraft": false,
+      "fdEnable": true,
+      "latestDefinitionStatus": 9,
+      "fdDefinitionId": "route-child-definition",
+      "fdContentType": "json"
+    }
+  },
+  "paramsResponse": {
+    "success": true,
+    "data": {
+      "processTemplateInfo": {
+        "latestDefinitionId": "route-child-definition"
+      },
+      "processTempVars": {
+        "_all": []
+      }
+    }
+  },
+  "missingDetailResponse": {
+    "status": 500,
+    "body": {
+      "code": "errors.noRecord",
+      "msg": "记录不存在",
+      "errStacks": [
+        {
+          "app": "bpm-server",
+          "code": "errors.noRecord",
+          "message": "记录不存在"
+        }
+      ]
+    }
+  },
+  "missingParamsResponse": {
+    "status": 500,
+    "body": {
+      "code": "error.params",
+      "msg": "类型[processTemplateInfo]执行出错: 记录不存在",
+      "errStacks": [
+        {
+          "app": "bpm-server",
+          "code": "error.params",
+          "message": "类型[processTemplateInfo]执行出错: 记录不存在"
+        },
+        {
+          "app": "bpm-server",
+          "code": "errors.noRecord",
+          "message": "记录不存在"
+        }
+      ]
+    }
+  },
+  "repositoryDefinitionGraph": {
+    "elements": [
+      {
+        "id": "child-start",
+        "type": "generalStart",
+        "element": "startEvent"
+      },
+      {
+        "id": "child-end",
+        "type": "generalEnd",
+        "element": "endEvent"
+      },
+      {
+        "id": "child-line",
+        "type": "sequenceFlow",
+        "element": "sequenceFlow",
+        "sourceRef": "child-start",
+        "targetRef": "child-end"
+      }
+    ]
+  }
+}

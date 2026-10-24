@@ -10,6 +10,7 @@ import { FakeNewoaAdapter } from "./fake-newoa-adapter.js";
 import { withNetworkGuard } from "./network-guard.js";
 
 const fixture = JSON.parse(readFileSync(new URL("../fixtures/route-validation/workflow-cooperation/cooperation.json", import.meta.url), "utf8"));
+const dependencyFixture = JSON.parse(readFileSync(new URL("../fixtures/route-validation/subprocess-dependency/native-reads.json", import.meta.url), "utf8"));
 const writes = ["add", "update", "save-workflow-draft", "add-transfer-record"];
 const origin = "https://oaqas.shanghai-electric.com";
 const opts = client => ({ client, baseUrl: origin, credentials: { username: "route-user", encryptedPassword: "route-password" }, targetCategoryId: "route-category-id", confirmWrite: true, now: new Date("2026-10-15T00:00:00Z"), transferRecordIdFactory: () => "cooperation-record" });
@@ -17,6 +18,14 @@ const opts = client => ({ client, baseUrl: origin, credentials: { username: "rou
 class Client extends FakeNewoaAdapter {
   constructor(config = { nodeHandlerTurningWay: fixture.default }) { super("persist"); this.config = config; this.configCalls = []; }
   async getWorkflowCooperationConfig() { this.configCalls.push(this.transcript().map(call => call.operation)); if (this.config instanceof Error) throw this.config; return structuredClone(this.config); }
+  async getWorkflowTemplateDetail(payload) {
+    if (payload.templateId !== "child-template") return super.getWorkflowTemplateDetail(payload);
+    return { ...structuredClone(dependencyFixture.detailResponse.data), fdId: "child-template", fdContent: JSON.stringify(dependencyFixture.repositoryDefinitionGraph) };
+  }
+  async getWorkflowSubProcessParams({ templateId }) {
+    assert.equal(templateId, "child-template");
+    return structuredClone(dependencyFixture.paramsResponse.data);
+  }
 }
 
 function dsl() {
