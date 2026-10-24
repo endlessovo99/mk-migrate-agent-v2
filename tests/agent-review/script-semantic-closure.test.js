@@ -9,6 +9,44 @@ const sourceRef = "source.form.jsp.regex-set";
 const targetFieldId = "fd_helper";
 const rowMarker = "fd_regex_row";
 
+describe("Agent Review typed comparison semantic closure", () => {
+  it("preserves equality literal types and coercion for conditional assignments and row effects", () => {
+    for (const [sourcePredicate, targetPredicate, expectedOk] of [
+      ["value == 11", "value == 11", true],
+      ["value == '11'", "value == '11'", true],
+      ["value == 11", "value == '11'", false],
+      ["value == '11'", "value == 11", false],
+      ["value == 11", "value === 11", false]
+    ]) {
+      const assignment = validateAssignmentBranchSemantics({
+        sourceFunction: generatedSourceFunction([
+          "AttachXFormValueChangeEventById('fd_subject', function(value) {",
+          `  var helper = GetXFormFieldById('${targetFieldId}')[0];`,
+          `  if (${sourcePredicate}) { helper.value = 'matched'; } else { helper.value = ''; }`,
+          "})"
+        ]),
+        reviewedFunction: `function onChange(value) { if (${targetPredicate}) { MKXFORM.setValue('${targetFieldId}', 'matched'); } else { MKXFORM.setValue('${targetFieldId}', ''); } }`,
+        residuals: assignmentResiduals()
+      });
+      assert.equal(assignment.ok, expectedOk, JSON.stringify(assignment));
+      if (!expectedOk) assert.equal(assignment.reason, "condition_chain_changed");
+
+      const row = validateRowMarkerBranchSemantics({
+        sourceFunction: generatedSourceFunction([
+          "AttachXFormValueChangeEventById('fd_subject', function(value) {",
+          `  if (${sourcePredicate}) { common_dom_row_set_show_required_reset('${rowMarker}', true, false, false); }`,
+          `  else { common_dom_row_set_show_required_reset('${rowMarker}', false, false, false); }`,
+          "})"
+        ]),
+        reviewedFunction: reviewedRowFunction("[OL]").replace("/[OL]/.test(value)", targetPredicate),
+        resolvedMarkers: [rowMarker], primaryMarkerByAlias: new Map()
+      });
+      assert.equal(row.ok, expectedOk, JSON.stringify(row));
+      if (!expectedOk) assert.equal(row.reason, "row_control_flow_unverified");
+    }
+  });
+});
+
 describe("Agent Review regex-set semantic closure", () => {
   it("accepts an exact regex-set assignment branch", () => {
     const result = validateAssignmentBranchSemantics({

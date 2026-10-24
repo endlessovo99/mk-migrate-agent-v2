@@ -1764,11 +1764,13 @@ function guardedBinaryEqualityDomain(source, expectedConditions, observedKeys, r
 
 function conditionKey(condition) {
   if (condition.kind === "or") return JSON.stringify(compoundConditionShape(condition));
+  // Branch effects must retain the literal type and equality coercion as well.
   return JSON.stringify({
     operand: condition.operand,
     kind: condition.kind,
     value: condition.value,
-    values: condition.values
+    values: condition.values,
+    predicate: condition.predicate
   });
 }
 

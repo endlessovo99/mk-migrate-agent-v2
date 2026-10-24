@@ -75,7 +75,7 @@ describe("action-level branch operand provenance", () => {
     }
   });
 
-  it("accepts a traceable two-value early-return guard with a deduplicated boolean alias", () => {
+  it("rejects a two-value early-return guard that narrows numeric comparisons to strings", () => {
     const testCase = actionCase({
       event: "onChange",
       source: [
@@ -94,14 +94,49 @@ describe("action-level branch operand provenance", () => {
         "}"
       ].join("\n")
     });
-    const accepted = applyEvidenceBackedPatches(
+    const rejected = applyEvidenceBackedPatches(
       testCase.dslDraft,
       mappedActionPatches(testCase.dslDraft.scripts.actions[0], testCase.functionText),
       { sourceRefs: collectSourceRefs(testCase.sourceDraft), sourceDraft: testCase.sourceDraft }
     );
 
+    assert.equal(rejected.ok, false, JSON.stringify(rejected.diagnostics));
+    assert.ok(rejected.diagnostics.some(item => item.code === "agent.patch.condition_operand_provenance_unverified"));
+  });
+
+  it("accepts a two-value numeric early-return guard with the same coercion and a deduplicated alias", () => {
+    const testCase = actionCase({
+      event: "onChange",
+      source: "AttachXFormValueChangeEventById('fd_subject', function(value) { if (value == 11) legacySet('first'); else if (value == 22) legacySet('second'); })",
+      functionText: "function onChange(value) { if (value != 11 && value != 22) return; var first = value == 11; MKXFORM.setValue('fd_amount', first ? 'first' : 'second'); }"
+    });
+    const accepted = applyEvidenceBackedPatches(testCase.dslDraft,
+      mappedActionPatches(testCase.dslDraft.scripts.actions[0], testCase.functionText),
+      { sourceRefs: collectSourceRefs(testCase.sourceDraft), sourceDraft: testCase.sourceDraft });
     assert.equal(accepted.ok, true, JSON.stringify(accepted.diagnostics));
     assert.equal(checkDraft(accepted.dslDraft).ok, true);
+  });
+
+  it("retains distinct numeric and string conditions with the same literal text", () => {
+    const analysis = analyzeScriptBranchConditions(
+      "function onChange(value) { if (value == 11) legacySet('numeric'); if (value == '11') legacySet('string'); }",
+      { event: "onChange" }
+    );
+    assert.equal(analysis.status, "proven");
+    assert.deepEqual(analysis.conditions.map(condition => condition.predicate), [
+      "loose-numeric-equality", "loose-equality"
+    ]);
+  });
+
+  it("rejects numeric literal narrowing through reversed comparisons and boolean aliases", () => {
+    const source = "function onLoad() { var raw = GetXFormFieldById('fd_subject')[0].value; var selected = 11 == raw; if (selected) legacySet('matched'); }";
+    const branchProvenance = buildScriptBranchProvenance({ event: "onLoad", source, sourceRef, textFieldIds: ["fd_subject"] });
+    for (const predicate of ["'11' == current", "11 === current"]) {
+      const inspection = inspectMappedScriptBranchProvenance({ event: "onLoad", translationStatus: "mapped", branchProvenance, sourceRefs: [sourceRef],
+        function: `function onLoad() { var raw = MKXFORM.getValue('fd_subject'); var current = String(raw ?? ''); var selected = ${predicate}; if (selected) MKXFORM.setValue('fd_amount', 'matched'); }` });
+      assert.equal(inspection.ok, false, predicate);
+      assert.equal(inspection.reason, "branch_condition_provenance_changed");
+    }
   });
 
   it("keeps source and target scripts with no branches compatible", () => {

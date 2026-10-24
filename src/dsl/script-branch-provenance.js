@@ -579,11 +579,13 @@ function sameConditionSequence(expected, observed) {
 
 function conditionKey(condition) {
   if (condition.kind === "or") return JSON.stringify(compoundConditionShape(condition));
+  // Literal text alone conflates 11 with "11" and loses == versus === coercion.
   return JSON.stringify({
     kind: condition.kind,
     value: condition.value,
     values: condition.values,
-    origin: condition.origin
+    origin: condition.origin,
+    predicate: condition.predicate
   });
 }
 

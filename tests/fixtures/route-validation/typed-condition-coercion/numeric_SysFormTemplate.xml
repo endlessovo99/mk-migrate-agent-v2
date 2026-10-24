@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>typed-condition-form</string></void>
+<void method="put"><string>fdModelId</string><string>typed-condition-template</string></void>
+<void method="put"><string>fdName</string><string>Typed condition coercion</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="hidden" fd_values='{id:"fd_mode",label:"Mode",dataType:"String"}'&gt;&lt;input type="hidden" id="fd_mode"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_payload",label:"Payload",dataType:"String"}'&gt;&lt;input id="fd_payload"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_mode" type="String"/&gt;&lt;extendSimpleProperty name="fd_payload" type="String"/&gt;&lt;/metadata&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;script&gt;Com_AddEventListener(window,"load",function(){
+ var current=GetXFormFieldById("fd_mode")[0].value;
+ if(current==11) legacySet("matched");
+ else if(current==22) legacySet("second");
+ else legacySet("other");
+});&lt;/script&gt;</string></void>
+</object></java>
