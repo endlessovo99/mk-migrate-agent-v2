@@ -14,6 +14,7 @@ import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.j
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
 import { choiceOtherFlowGroups } from "./choice-other-layout.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
+import { withDetailEventReadBridge } from "./detail-event-read-bridge.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import {
   buildFormRuleRefIndex,
@@ -946,6 +947,7 @@ function normalizeRuleValue(value) {
 }
 
 function buildExpectedScripts(scripts = {}, form = {}, mainTableName, diagnostics, xformId) {
+  scripts = withDetailEventReadBridge(scripts, form);
   const actions = [];
   const detailTableNames = Object.fromEntries(
     (Array.isArray(form?.fields) ? form.fields : [])

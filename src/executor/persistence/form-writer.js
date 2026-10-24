@@ -25,6 +25,7 @@ import {
   detailTableViewOperations
 } from "./detail-auth.js";
 import { detailTableNameFor } from "./detail-table-names.js";
+import { withDetailEventReadBridge } from "./detail-event-read-bridge.js";
 import { persistedFieldLabel } from "./field-labels.js";
 import {
   SCRIPT_SINGLETON_GLOBAL_EVENTS,
@@ -335,7 +336,7 @@ function buildControlAction(existing, scripts = {}, context = {}) {
     control: pruneOrphanControlActions(existing?.control, context),
     global: existing?.global || {}
   };
-  const actions = Array.isArray(scripts.actions) ? scripts.actions : [];
+  const actions = withDetailEventReadBridge(scripts, context.form).actions || [];
 
   if (!actions.length) {
     if (existing?.javascript) next.javascript = existing.javascript;

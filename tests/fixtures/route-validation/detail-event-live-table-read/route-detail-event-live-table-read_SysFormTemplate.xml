@@ -1,0 +1,276 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<java version="1.6.0_26" class="java.beans.XMLDecoder">
+ <object class="java.util.HashMap">
+  <void method="put"><string>fdId</string><string>route-detail-event-live-table-read-sysform</string></void>
+  <void method="put"><string>fdName</string><string>Detail Event Live Table Read Route</string></void>
+  <void method="put"><string>fdModelId</string><string>route-detail-event-live-table-read-template</string></void>
+  <void method="put">
+   <string>fdDesignerHtml</string>
+   <string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;
+    &lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_trip_mode",label:"出差模式",items:"市内|0&amp;#10;国内|1"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="0" column="1"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_package_mode",label:"包干模式",items:"否|0&amp;#10;是|1"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_trip_start",label:"开始日期",dataType:"Date"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="1" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_trip_end",label:"结束日期",dataType:"Date"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_people",label:"人数",dataType:"Double",decimal:"0",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="2" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_daily_rate",label:"日标准",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_overnights",label:"过夜天数",dataType:"Double",decimal:"0",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="3" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_allowance_days",label:"津贴天数",dataType:"Double",decimal:"0",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="4" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_regular_allowance",label:"常规津贴",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="4" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_package_allowance",label:"包干津贴",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="5" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_radiation_allowance",label:"附加津贴",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="5" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_allowance_total",label:"津贴合计",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="6" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_receipt_result",label:"票据核定额",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="6" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_lookup_date",label:"查表日期",dataType:"Date"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="7" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_traveler_text",label:"出差人员文本",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="7" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_destination_text",label:"出差地点文本",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="8" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_reason_text",label:"出差事由文本",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="8" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_description_text",label:"出差描述",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="9" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_local_transport_cost",label:"垫付交通费",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="9" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_allowance_cost",label:"津贴费用",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="10" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_hotel_cost",label:"住宿费用",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="10" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_other_cost",label:"其他费用",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="11" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_incentive_cost",label:"激励费用",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="11" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_grand_total",label:"费用总计",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="12" column="0,1" colSpan="2"&gt;&lt;div fd_type="chinaValue" fd_values='{id:"fd_grand_total_upper",label:"费用总计大写",relatedid:"fd_grand_total",dataType:"String"}' relatedid="fd_grand_total"&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="13" column="0"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_group_beta",label:"乙类合计",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+     &lt;td row="13" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_group_tax",label:"乙类税额",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="14" column="0,1" colSpan="2"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_group_travel_tax",label:"分类总税额",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="15" column="0,1" colSpan="2"&gt;
+     &lt;table fd_type="detailsTable" fd_values='{id:"fd_receipts",label:"票据明细"}'&gt;&lt;tbody&gt;
+      &lt;tr&gt;
+       &lt;td row="0" column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"label_receipt_kind",content:"票据类别"}'&gt;票据类别&lt;/label&gt;&lt;/td&gt;
+       &lt;td row="0" column="1"&gt;&lt;label fd_type="textLabel" fd_values='{id:"label_receipt",content:"票据金额"}'&gt;票据金额&lt;/label&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr type="templateRow"&gt;
+       &lt;td row="1" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_receipt_kind",label:"票据类别",tableName:"fd_receipts",items:"甲类|alpha&amp;#10;乙类|beta&amp;#10;丙类|gamma"}'&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;td row="1" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_receipt_value",label:"票据金额",tableName:"fd_receipts",dataType:"String"}'&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td row="14" column="0,1" colSpan="2"&gt;
+     &lt;table fd_type="detailsTable" fd_values='{id:"fd_lookup_lines",label:"激励明细"}'&gt;&lt;tbody&gt;
+      &lt;tr&gt;
+       &lt;td row="0" column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"label_destination",content:"目的地"}'&gt;目的地&lt;/label&gt;&lt;/td&gt;
+       &lt;td row="0" column="1"&gt;&lt;label fd_type="textLabel" fd_values='{id:"label_paid",content:"实付"}'&gt;实付&lt;/label&gt;&lt;/td&gt;
+       &lt;td row="0" column="2"&gt;&lt;label fd_type="textLabel" fd_values='{id:"label_base",content:"基准"}'&gt;基准&lt;/label&gt;&lt;/td&gt;
+       &lt;td row="0" column="3"&gt;&lt;label fd_type="textLabel" fd_values='{id:"label_reward",content:"激励"}'&gt;激励&lt;/label&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr type="templateRow"&gt;
+       &lt;td row="1" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_destination",label:"目的地",tableName:"fd_lookup_lines",items:"甲地|A&amp;#10;乙地|B"}'&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;td row="1" column="1"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_paid",label:"实付",tableName:"fd_lookup_lines",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;td row="1" column="2"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_base",label:"基准",tableName:"fd_lookup_lines",dataType:"Double",decimal:"2",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+       &lt;td row="1" column="3"&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_reward",label:"激励",tableName:"fd_lookup_lines",dataType:"Double",decimal:"0",defaultValue:"0"}'&gt;&lt;/div&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+     &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+   &lt;/tbody&gt;&lt;/table&gt;
+   &lt;div id="jsp_allowance_recipe" fd_type="jsp"&gt;&lt;input type="hidden" value='&lt;xform:editShow&gt;&lt;script&gt;
+    var theCityFlag = Number(getFormRadioValue("fd_trip_mode"));
+    var receiptTableId = "fd_receipts";
+    function fixedTwo(value) { return Number(Number(value).toFixed(2)); }
+    function unsafeReceiptDetail(tableId, controlId) {
+      var sum = 0;
+      for (var i = 0; i &lt; 1; i++) { sum = theFixedNumTwo(sum + 0); }
+      return sum;
+    }
+    function unsafeReceiptTotal() {
+      var receiptResult = $("[name=extendDataFormInfo.value(fd_receipt_result)]");
+      var receiptVal = unsafeReceiptDetail(receiptTableId, "fd_receipt_value");
+      receiptResult.val(receiptVal);
+    }
+    function reversedReceiptDetail(tableId, controlId) {
+      var tabId = "TABLE_DL_" + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = controlId + "." + i + "." + tableId;
+        var currentValue = $("[name=extendDataFormInfo.value(" + rowId + ")]").val();
+        sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function reversedReceiptTotal() {
+      var receiptResult = $("[name=extendDataFormInfo.value(fd_receipt_result)]");
+      var receiptVal = reversedReceiptDetail(receiptTableId, "fd_receipt_value");
+      receiptResult.val(receiptVal);
+    }
+    function unseparatedReceiptDetail(tableId, controlId) {
+      var tabId = "TABLE_DL_" + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + i + controlId;
+        var currentValue = $("[name=extendDataFormInfo.value(" + rowId + ")]").val();
+        sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function unseparatedReceiptTotal() {
+      var receiptResult = $("[name=extendDataFormInfo.value(fd_receipt_result)]");
+      var receiptVal = unseparatedReceiptDetail(receiptTableId, "fd_receipt_value");
+      receiptResult.val(receiptVal);
+    }
+    function outOfOrderReceiptDetail(tableId, controlId) {
+      var tabId = "TABLE_DL_" + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + "." + i + "." + controlId;
+        sum = theFixedNumTwo(sum + Number(currentValue));
+        var currentValue = $("[name=extendDataFormInfo.value(" + rowId + ")]").val();
+      }
+      return sum;
+    }
+    function outOfOrderReceiptTotal() {
+      var receiptResult = $("[name=extendDataFormInfo.value(fd_receipt_result)]");
+      var receiptVal = outOfOrderReceiptDetail(receiptTableId, "fd_receipt_value");
+      receiptResult.val(receiptVal);
+    }
+    function partialReceiptDetail(tableId, controlId) {
+      var tabId = "TABLE_DL_" + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; 1; i++) {
+        var rowId = tableId + "." + i + "." + controlId;
+        var currentValue = $("[name=extendDataFormInfo.value(" + rowId + ")]").val();
+        sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function partialReceiptTotal() {
+      var receiptResult = $("[name=extendDataFormInfo.value(fd_receipt_result)]");
+      var receiptVal = partialReceiptDetail(receiptTableId, "fd_receipt_value");
+      receiptResult.val(receiptVal);
+    }
+    function filteredReceiptDetail(tableId, controlId) {
+      var tabId = "TABLE_DL_" + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + "." + i + "." + controlId;
+        var currentValue = $("[name=extendDataFormInfo.value(" + rowId + ")]").val();
+        if (Number(currentValue) &gt; 0) sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function filteredReceiptTotal() {
+      var receiptResult = $("[name=extendDataFormInfo.value(fd_receipt_result)]");
+      var receiptVal = filteredReceiptDetail(receiptTableId, "fd_receipt_value");
+      receiptResult.val(receiptVal);
+    }
+    function receiptDetail(tableId, controlId) {
+      var tabId = "TABLE_DL_" + tableId;
+      var tableInfo = DocList_TableInfo[tabId];
+      var sum = 0;
+      for (var i = 0; i &lt; tableInfo.lastIndex - 1; i++) {
+        var rowId = tableId + "." + i + "." + controlId;
+        var currentValue = $("[name=extendDataFormInfo.value(" + rowId + ")]").val();
+        sum = theFixedNumTwo(sum + Number(currentValue));
+      }
+      return sum;
+    }
+    function trafficAmount() {
+      var days = 1;
+      var person = 1;
+      return days * person * 100;
+    }
+    function receiptTotal() {
+      var receiptResult = $("[name=extendDataFormInfo.value(fd_receipt_result)]");
+      var receiptVal = receiptDetail(receiptTableId, "fd_receipt_value");
+      receiptResult.val(receiptVal);
+    }
+    function trafficDays() {
+      var days = timeDifference("fd_trip_start", "fd_trip_end");
+      var overnight = $("[name=extendDataFormInfo.value(fd_overnights)]");
+      return days;
+    }
+    function trafficOvernightDaysCal() {
+      var allowanceDays = $("[name=extendDataFormInfo.value(fd_allowance_days)]");
+      var person = $("[name=extendDataFormInfo.value(fd_people)]");
+      var everyday = $("[name=extendDataFormInfo.value(fd_daily_rate)]");
+      var regular = $("[name=extendDataFormInfo.value(fd_regular_allowance)]");
+      var total = allowanceDays.val() * person.val() * everyday.val();
+      regular.val(total ? total.toFixed(2) : 0.00);
+    }
+    function allowanceCalBG() {
+      var night = Number(getFormFieldValue("fd_overnights"));
+      var person = Number(getFormFieldValue("fd_people"));
+      var everyday = Number(getFormFieldValue("fd_daily_rate"));
+      var bgAmount = theFixedNumTwo(person * everyday * night + 200);
+      var packaged = $("[name=extendDataFormInfo.value(fd_package_allowance)]");
+      packaged.val(bgAmount.toFixed(2));
+    }
+    function allowanceCal() {
+      var total = $("[name=extendDataFormInfo.value(fd_allowance_total)]");
+      var regular = $("[name=extendDataFormInfo.value(fd_regular_allowance)]");
+      var packaged = $("[name=extendDataFormInfo.value(fd_package_allowance)]");
+      var radiation = $("[name=extendDataFormInfo.value(fd_radiation_allowance)]");
+      var allowanceSum = 0.00;
+      var mode = getFormRadioValue("fd_package_mode");
+      total.val(allowanceSum.toFixed(2));
+    }
+    function trafficCityChange() {
+      var everyday = $("[name=extendDataFormInfo.value(fd_daily_rate)]");
+      if (theCityFlag == 0) { everyday.val(20); } else { everyday.val(100); }
+    }
+    AttachXFormValueChangeEventById("fd_trip_start", function(value) { trafficDays(); });
+    AttachXFormValueChangeEventById("fd_trip_end", function(value) { trafficDays(); });
+    AttachXFormValueChangeEventById("fd_people", function(value) { trafficOvernightDaysCal(); });
+    AttachXFormValueChangeEventById("fd_package_mode", function(value) { allowanceCalBG(); });
+    AttachXFormValueChangeEventById("fd_regular_allowance", function(value) { allowanceCal(); });
+    AttachXFormValueChangeEventById("fd_package_allowance", function(value) { allowanceCal(); });
+    AttachXFormValueChangeEventById("fd_radiation_allowance", function(value) { allowanceCal(); });
+    AttachXFormValueChangeEventById("fd_receipt_value", function(value) { receiptTotal(); });
+   &lt;/script&gt;&lt;/xform:editShow&gt;'/&gt;&lt;/div&gt;
+   </string>
+  </void>
+  <void method="put">
+   <string>fdMetadataXml</string>
+   <string>&lt;metadata&gt;
+    &lt;extendSimpleProperty name="fd_trip_mode" label="出差模式" type="String"/&gt;
+    &lt;extendSimpleProperty name="fd_package_mode" label="包干模式" type="String"/&gt;
+    &lt;extendSimpleProperty name="fd_trip_start" label="开始日期" type="Date"/&gt;
+    &lt;extendSimpleProperty name="fd_trip_end" label="结束日期" type="Date"/&gt;
+    &lt;extendSimpleProperty name="fd_people" label="人数" type="Double" scale="0" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_daily_rate" label="日标准" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_overnights" label="过夜天数" type="Double" scale="0" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_allowance_days" label="津贴天数" type="Double" scale="0" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_regular_allowance" label="常规津贴" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_package_allowance" label="包干津贴" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_radiation_allowance" label="附加津贴" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_allowance_total" label="津贴合计" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_receipt_result" label="票据核定额" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_lookup_date" label="查表日期" type="Date"/&gt;
+    &lt;extendSimpleProperty name="fd_traveler_text" label="出差人员文本" type="String" length="500"/&gt;
+    &lt;extendSimpleProperty name="fd_destination_text" label="出差地点文本" type="String" length="500"/&gt;
+    &lt;extendSimpleProperty name="fd_reason_text" label="出差事由文本" type="String" length="500"/&gt;
+    &lt;extendSimpleProperty name="fd_description_text" label="出差描述" type="String" length="1000"/&gt;
+    &lt;extendSimpleProperty name="fd_local_transport_cost" label="垫付交通费" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_allowance_cost" label="津贴费用" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_hotel_cost" label="住宿费用" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_other_cost" label="其他费用" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_incentive_cost" label="激励费用" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_grand_total" label="费用总计" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_grand_total_upper" label="费用总计大写" type="String" relatedid="fd_grand_total"/&gt;
+    &lt;extendSimpleProperty name="fd_group_count" label="乙类张数" type="Double" scale="0" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_group_alpha" label="甲类合计" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_group_beta" label="乙类合计" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_group_gamma" label="丙类合计" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_group_tax" label="乙类税额" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_group_total" label="分类总额" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_group_domestic" label="垫付总额" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSimpleProperty name="fd_group_travel_tax" label="分类总税额" type="Double" scale="2" defaultValue="0"/&gt;
+    &lt;extendSubTableProperty name="fd_receipts" label="票据明细"&gt;
+     &lt;extendSimpleProperty name="fd_receipt_kind" label="票据类别" type="String"/&gt;
+     &lt;extendSimpleProperty name="fd_receipt_value" label="票据金额" type="String" length="200"/&gt;
+    &lt;/extendSubTableProperty&gt;
+    &lt;extendSubTableProperty name="fd_lookup_lines" label="激励明细"&gt;
+     &lt;extendSimpleProperty name="fd_destination" label="目的地" type="String"/&gt;
+     &lt;extendSimpleProperty name="fd_paid" label="实付" type="Double" scale="2" defaultValue="0"/&gt;
+     &lt;extendSimpleProperty name="fd_base" label="基准" type="Double" scale="2" defaultValue="0"/&gt;
+     &lt;extendSimpleProperty name="fd_reward" label="激励" type="Double" scale="0" defaultValue="0"/&gt;
+    &lt;/extendSubTableProperty&gt;
+   &lt;/metadata&gt;</string>
+  </void>
+ </object>
+</java>
