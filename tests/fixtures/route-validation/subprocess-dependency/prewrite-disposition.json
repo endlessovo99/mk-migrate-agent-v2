@@ -1,0 +1,12 @@
+{
+  "batchId": "batch-route-prewrite",
+  "itemId": "item-route-prewrite",
+  "migrationKey": "route-prewrite-disposition",
+  "targetCategoryId": "route-category-id",
+  "calls": [
+    { "id": 1, "event": "request", "origin": "https://p-sit.onewo.com", "path": "/data/sys-auth/login", "method": "POST" },
+    { "id": 1, "event": "response", "status": 200 },
+    { "id": 2, "event": "request", "origin": "https://p-sit.onewo.com", "path": "/data/sys-lbpm/lbpmTemplate/details", "method": "POST", "templateId": "route-child-template" },
+    { "id": 2, "event": "response", "status": 500 }
+  ]
+}
