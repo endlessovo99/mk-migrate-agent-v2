@@ -46,7 +46,9 @@ export function sourceTrackGeometry(projected, nodes, sourceGrid, fields = [], m
       ...row,
       colsStyle: profile?.colsStyle || [{ startIndex: 0, count: row.columns, value: "auto" }],
       cells: row.cells.map(cell => ({ ...cell,
-        ...(provedRoot && fullRowHeading(source, row, cell, fieldsById) ? { stretchDescription: true } : {}),
+        ...(fullRowHeading(source, row, cell, fieldsById) && (provedRoot ||
+          sourceGrid?.source === "fdDesignerHtml" && centeredCellEvidence(source, node, cell, fieldsById))
+          ? { stretchDescription: true } : {}),
         // Native upload titles and buttons need the complete source cell. Keep
         // its static hint beneath the upload instead of competing for that width.
         ...(profile?.attachmentHints.has(cell.id) || independentHints.has(cell.id) ? {
@@ -259,6 +261,30 @@ function fullRowHeading(source, row, cell, fields) {
     field.props?.style?.textAlign === "center" && cell.contentFlow?.items?.length === 1 &&
     cell.contentFlow.lines?.length === 1 && cell.contentFlow.lines[0].length === 1 &&
     cell.contentFlow.items[0].width?.value !== 0;
+}
+
+// Centering one complete source cell does not require a shared table lattice.
+// Retain only that cell's literal geometry and unmodified text-label binding;
+// do not infer tracks or widen an explicitly sized/inline caption.
+function centeredCellEvidence(source, node, cell, fields) {
+  const original = source.cells[0], field = fields.get(cell.refIds[0]), sourceField = field?.sourceProps;
+  const child = node?.children?.[0], ref = original.references[0];
+  return !!field && !field.dataOnly && node?.children?.length === 1 && child.id === cell.id &&
+    node.sourceRef === source.sourceRef && child.sourceRef === original.sourceRef &&
+    Number.isInteger(source.columns) && source.columns > 0 &&
+    (node.props?.sourceColumns ?? node.props?.columns) === source.columns &&
+    /^(?:0|[1-9]\d*)$/.test(String(source.sourceRow)) &&
+    String(original.evidence?.row) === String(source.sourceRow) &&
+    original.evidence?.column === 0 && original.evidence?.colspan === source.columns &&
+    Number.isFinite(original.widthWeight) && original.widthWeight > 0 &&
+    original.evidence?.widthWeight === original.widthWeight && child.widthWeight === original.widthWeight &&
+    ref.referenceType === "control" && ref.sourceRef === field.sourceRef &&
+    sourceField?.designerType === "textLabel" && sourceField.designerId === field.id &&
+    sourceField.textPresentation?.textAlign === "center" &&
+    sourceField.designerValues?.content === field.props?.content && String(field.props.content || "").trim().length > 0 &&
+    original.contentFlow?.items?.[0]?.width === undefined &&
+    sameSingleFlow(child.contentFlow, original.contentFlow, field.id) &&
+    sameSingleFlow(cell.contentFlow, original.contentFlow, field.id);
 }
 
 function uniqueBy(items, key) {
