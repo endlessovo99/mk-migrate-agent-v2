@@ -1,4 +1,6 @@
 const READABLE_CAPTION_SHARE = 0.2;
+// Same source-weight floor as the native nested-column projector.
+const MIN_ATTACHMENT_CAPTION_WEIGHT = 135;
 
 /** Source-backed sizing for repeated complete direct rows. No table identity is
  * inferred from row numbers: rootTable is supplied by the strict XML parser. */
@@ -15,11 +17,11 @@ export function sourceTrackGeometry(projected, nodes, sourceGrid, fields = [], m
     Object.keys(evidence).length === 3;
   if (provedRoot && !mobile) {
     let run = [];
-    const flush = () => { if (run.length >= 2) for (const entry of readableAttachmentGroup(run)) shared.set(entry.projected.id, entry); run = []; };
+    const flush = () => { if (run.length >= 2) for (const entry of readableAttachmentGroup(aggregateAttachmentTracks(run))) shared.set(entry.projected.id, entry); run = []; };
     for (const source of sourceRows) {
       const node = nodesByRef.get(source.sourceRef), row = projectionById.get(node?.id);
       const profile = directTrackProfile(source, node, row, evidence.rowCount, fieldsById);
-      if (!profile || run.length && (profile.index !== run.at(-1).index + 1 || profile.signature !== run[0].signature)) flush();
+      if (!profile || run.length && (profile.index !== run.at(-1).index + 1 || !compatibleTracks(run, profile))) flush();
       if (profile) run.push(profile);
     }
     flush();
@@ -96,9 +98,54 @@ function directTrackProfile(source, node, projected, rowCount, fields) {
   }
   const total = weights.reduce((sum, weight) => sum + weight, 0);
   const values = weights.map(weight => percentage(weight / total));
-  return { projected, index: Number(source.sourceRow), signature: JSON.stringify(values), captions, captionRanges, attachmentHints,
+  return { projected, index: Number(source.sourceRow), signature: JSON.stringify(values), weights, captions, captionRanges, attachmentHints,
+    attachmentPartition: attachmentPartition(cells, node, projected, fields, attachmentHints),
     independentCaption: leadingIndependentCaption(cells, projected, fields),
     colsStyle: values.map((value, startIndex) => ({ startIndex, count: 1, value })) };
+}
+
+function compatibleTracks(run, profile) {
+  return run.every(entry => entry.signature === profile.signature) || profile.attachmentPartition &&
+    run.every(entry => entry.attachmentPartition?.key === profile.attachmentPartition.key);
+}
+
+/** Unequal row widths constrain one proved attachment lattice. Do not infer a
+ * shared lattice for ordinary rows or change the existing equal-width route. */
+function aggregateAttachmentTracks(run) {
+  if (!run.length || run.every(entry => entry.signature === run[0].signature)) return run;
+  const partition = run[0].attachmentPartition;
+  if (!partition || run.some(entry => entry.attachmentPartition?.key !== partition.key)) return [];
+  const weights = run[0].weights.map((_, column) => Math.max(...run.map(entry => entry.weights[column])));
+  weights[partition.captionColumn] = Math.max(weights[partition.captionColumn], MIN_ATTACHMENT_CAPTION_WEIGHT);
+  const total = weights.reduce((sum, value) => sum + value, 0);
+  return withSharedTracks(run, weights.map(value => value / total * 100));
+}
+
+function attachmentPartition(cells, node, row, fields, hints) {
+  if (hints.size !== 1) return undefined;
+  const upload = row.cells.find(cell => hints.has(cell.id)), caption = cells.find(cell => cell.column + cell.colspan === upload.column);
+  const description = fields.get(caption?.references?.[0]?.referenceId);
+  if (upload.colspan !== 1 || upload.column !== row.columns - 1 || caption?.colspan !== 1 || caption.references.length !== 1 ||
+      description?.componentId !== "xform-description" || description.sourceProps?.designerType !== "textLabel" ||
+      description.sourceRef !== caption.references[0].sourceRef || description.sourceProps?.designerValues?.content !== description.props?.content ||
+      !/^[^\r\n]{1,4}$/u.test(String(description.props?.content || "").trim())) return undefined;
+  for (const cell of row.cells.filter(cell => cell.refIds.length === 1)) {
+    const field = fields.get(cell.refIds[0]), original = node.children.find(child => child.id === cell.id);
+    const value = cells.find(piece => piece.references.length === 1 && piece.references[0].referenceId === field?.id);
+    if (!value || field.dataOnly || field.sourceProps?.choiceOtherToggle || field.sourceProps?.otherTextCompanion ||
+        field.sourceRef !== value.references[0].sourceRef || original?.sourceRef !== value.sourceRef ||
+        value.contentFlow?.items?.[0]?.width?.value === 0 || !sameSingleFlow(original.contentFlow, value.contentFlow, field.id) ||
+        !sameSingleFlow(cell.contentFlow, value.contentFlow, field.id)) return undefined;
+  }
+  return { key: JSON.stringify(cells.map(cell => [cell.column, cell.colspan, cell.references.length])), captionColumn: caption.column };
+}
+
+function sameSingleFlow(flow, source, id) {
+  const width = flow?.items?.[0]?.width, sourceWidth = source?.items?.[0]?.width;
+  return flow?.lines?.length === 1 && sameIds(flow.lines[0], [id]) && flow.items?.length === 1 && flow.items[0].referenceId === id &&
+    source?.lines?.length === 1 && sameIds(source.lines[0], [id]) && source.items?.length === 1 && source.items[0].referenceId === id &&
+    (width === undefined && sourceWidth === undefined || width !== undefined && sourceWidth !== undefined &&
+      width.value === sourceWidth.value && width.unit === sourceWidth.unit);
 }
 
 /** Rebalance only the leading caption/editor region of an attachment group.
@@ -113,6 +160,10 @@ function readableAttachmentGroup(run) {
   const remaining = total - values[0];
   for (let column = 1; column < range.end; column++) values[column] *= (total - caption) / remaining;
   values[0] = caption;
+  return withSharedTracks(run, values);
+}
+
+function withSharedTracks(run, values) {
   return run.map(entry => ({ ...entry,
     colsStyle: values.map((value, startIndex) => ({ startIndex, count: 1, value: percentage(value / 100) })),
     captions: new Map([...entry.captionRanges].map(([id, bounds]) => [id, percentage(

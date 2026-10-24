@@ -16,6 +16,7 @@ import { adaptiveStyles } from "../../src/executor/persistence/adaptive-layout.j
 const fixture = "tests/fixtures/route-validation/source-shared-track-layout/source-shared-track_SysFormTemplate.xml";
 const attachmentFixture = "tests/fixtures/route-validation/source-shared-track-layout/source-attachment-hints_SysFormTemplate.xml";
 const independentAttachmentFixture = "tests/fixtures/route-validation/source-shared-track-layout/source-independent-attachment-hint_SysFormTemplate.xml";
+const varyingAttachmentFixture = "tests/fixtures/route-validation/source-shared-track-layout/source-varying-attachment-tracks_SysFormTemplate.xml";
 const native = JSON.parse(readFileSync("tests/fixtures/executor/persistence/shared-source-tracks-native.json", "utf8"));
 for (const part of Object.values(native.functions)) assert.equal(createHash("sha256").update(part.text).digest("hex"), part.sha256);
 const expand = vm.runInNewContext(`(${native.functions.expandColsStyle.text})`);
@@ -92,6 +93,54 @@ it("retains a readable independent long caption without moving the shared attach
       actual[0] / actual.slice(0, 4).reduce((sum, value) => sum + value, 0) * 100) < 1e-8, "Folded titles and independent titles retain one shared editor boundary");
   }
   assert.equal(prepared.verify(prepared.update).ok, true);
+});
+
+it("shares source-owned attachment columns with varying row constraints and keeps both captions readable", () => {
+  const { source, draft, prepared } = stages(varyingAttachmentFixture);
+  assert.deepEqual(source.form.layout.rows.map(row => row.cells.map(cell => cell.widthWeight)), [
+    [136, 980, 93, 490], [136, 963, 93, 506], [136, 947, 93, 522]
+  ]);
+  let first;
+  for (const row of [0, 1, 2]) {
+    const actual = [...tracks(grid(prepared, row).controlProps.colsStyle, 6)];
+    assert.ok(actual.every(track => track.endsWith("%")), "One proved source table cannot give identical attachment columns independent auto tracks");
+    if (first) assert.deepEqual(actual, first); else first = actual;
+    const values = actual.map(parseFloat), captionStart = values.slice(0, 4).reduce((sum, value) => sum + value, 0);
+    // Per-column source maxima: 136,980/3,980/3,980/3,93,522. Reuse the
+    // native projector's 135 weight floor for the separate short caption.
+    assert.ok(Math.abs(captionStart - 1116 / 1773 * 100) < 1e-8);
+    assert.ok(Math.abs(values[4] - 135 / 1773 * 100) < 1e-8);
+    assert.ok(Math.abs(captionStart + values[4] - 1251 / 1773 * 100) < 1e-8);
+    assert.ok(values[0] / 100 * 1001 - 33 >= 163.46875, "The protected long title keeps the retained two-line text budget");
+    assert.ok(values[4] / 100 * 1001 - 33 >= 34.4609375, "The separate short attachment caption fits its retained native single-line text width");
+    if (row < 2) assert.ok(Math.abs(parseFloat(wrapper(prepared, `fd_left_${row}`).controlProps.style["--mk-adaptive-caption-width"]) - values[0] / captionStart * 100) < 1e-8);
+    const cell = grid(prepared, row).children.find(cell => nodes(cell).some(node => node.key === `fd_files_${row}`));
+    assert.deepEqual(cell.children[0].children.map(line => line.children.map(item => item.children[0].key)), [[`fd_files_${row}`], [`attachment_hint_${row}`]]);
+    assert.deepEqual(draft.form.layout.mkTree[row].children.at(-1).contentFlow.lines, [[`fd_files_${row}`, `attachment_hint_${row}`]]);
+    assert.deepEqual([...tracks(grid(prepared, row, "mobile").controlProps.colsStyle, 6)], Array(6).fill("auto"));
+    assert.equal(wrapper(prepared, `attachment_hint_${row}`, "mobile").controlProps.style.flex, "0 1 auto");
+  }
+  assert.equal(prepared.verify(prepared.update).ok, true);
+});
+
+it("retains the aggregated attachment tracks and caption budgets through native save and rejects row drift", () => {
+  const { prepared } = stages(varyingAttachmentFixture), before = config(prepared), saved = nativeViewSaveRoundTrip(before);
+  for (const key of ["dataModel", "auth", "authFilter", "attribute"]) assert.deepEqual(saved[key], before[key], key);
+  const target = structuredClone(prepared.update); target.mechanisms["sys-xform"].fdConfig = JSON.stringify(saved);
+  assert.equal(prepared.verify(target).ok, true);
+  const savedView = JSON.parse(saved.viewModel[0].fdConfig);
+  const row = root => nodes(root).find(node => node.type === "layout" && node.controlProps.migrationRootNodeId === "layout.row-1").children[0];
+  for (const mutate of [
+    root => { row(root).controlProps.colsStyle = [{ startIndex: 0, count: 6, value: "auto" }]; },
+    root => { row(root).controlProps.colsStyle = [136, 321, 321, 321, 93, 506].map((weight, startIndex) => ({ startIndex, count: 1, value: `${weight / 1698 * 100}%` })); },
+    root => { row(root).controlProps.colsStyle[4].value = "5.372616984402%"; },
+    root => { const field = nodes(root).find(node => node.children?.some(child => child.key === "fd_left_1") && node.controlProps?.className === "mk-adaptive-main-field"); delete field.controlProps.style["--mk-adaptive-caption-width"]; },
+    root => { const flow = row(root).children.find(cell => nodes(cell).some(node => node.key === "fd_files_1")).children[0]; flow.children[0].children.push(...flow.children.pop().children); }
+  ]) {
+    const changed = structuredClone(saved), view = structuredClone(savedView); mutate(view.view.render.desktop[0]);
+    changed.viewModel[0].fdConfig = JSON.stringify(view); target.mechanisms["sys-xform"].fdConfig = JSON.stringify(changed);
+    assert.equal(prepared.verify(target).ok, false, "Native readback must retain the shared lattice, both caption budgets and upload/hint separation");
+  }
 });
 
 it("gives a source-bound upload and its long hint separate readable lines while retaining automatic tracks", () => {
@@ -332,6 +381,33 @@ it("does not apply independent attachment flow or caption widening to mismatchin
   const prepared = prepareSample(draft);
   assert.ok(Math.abs(parseFloat(tracks(grid(prepared, 2).controlProps.colsStyle, 6)[0]) - 102 / 1209 * 100) < 1e-8,
     "An unproved leading title does not change any shared track weights");
+});
+
+it("does not aggregate unequal rows across different partitions, unknown mixed references, units or Other controls", () => {
+  const hintText = (html, text) => html.replace(/(id:"attachment_hint_\d",content:")[^"]+("[^>]*>)[^<]+(<\/label>)/g, `$1${text}$2${text}$3`);
+  for (const [name, change] of Object.entries({
+    partition: html => html.replace('row="1" column="1,2,3" colspan="3" width="963"', 'row="1" column="1,2" colspan="2" width="963"')
+      .replace('row="1" column="4" width="93"', 'row="1" column="3" width="93"')
+      .replace('row="1" column="5" width="506"', 'row="1" column="4,5" colspan="2" width="506"'),
+    unknownRefs: html => { let index = 0; return html.replaceAll('</label></td></tr>', () =>
+      `</label><label fd_type="textLabel" fd_values='{id:"unknown_extra_${index++}",content:"另行说明"}'>另行说明</label></td></tr>`); },
+    unit: html => hintText(html.replaceAll('fd_type="attachment"', 'fd_type="inputText"'), "元"),
+    other: html => { let index = 0; return html.replaceAll('</label></td></tr>', () => {
+      const id = index++; return `</label><table fd_type="inputCheckbox" fd_values='{id:"choice_${id}",label:"选择",dataType:"String",alignment:"H",items:"普通|A;其他|B"}'></table><label fd_type="textLabel" fd_values='{id:"other_${id}",content:"其他"}'>其他</label></td></tr>`;
+    }); }
+  })) modifiedHtml(change, source => {
+    assert.deepEqual(source.form.layout.rootTable, { version: 1, kind: "standard-table", rowCount: 3 });
+    const prepared = prepareSample(draftSourceDraft(source)); assertAutoTracks(prepared, name);
+  }, varyingAttachmentFixture);
+  for (const alter of [
+    draft => { draft.form.fields.find(field => field.id === "attachment_caption_1").sourceRef = "source.form.control.unrelated"; },
+    draft => { draft.form.layout.mkTree[1].children.find(cell => cell.refIds.includes("fd_left_1")).contentFlow.items[0].width.value = 500; },
+    draft => { delete draft.form.layout.mkTree[1].children.find(cell => cell.refIds.includes("fd_left_1")).contentFlow.items[0].width; },
+    draft => { draft.form.layout.mkTree[1].children.at(-1).widthWeight = 500; }
+  ]) {
+    const { draft } = stages(varyingAttachmentFixture); alter(draft);
+    assertAutoTracks(prepareSample(draft), "A source/field/flow mismatch breaks the unequal attachment group");
+  }
 });
 
 it("preserves the real native save and reassembly boundary", () => {
