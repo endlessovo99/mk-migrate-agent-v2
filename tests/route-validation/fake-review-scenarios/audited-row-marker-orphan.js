@@ -198,32 +198,34 @@ function uniqueStrings(values) {
 }
 
 function auditedActionFunction(action, audit) {
-  const rowUpdates = auditedRowUpdates(audit.rowMarkers);
+  const shownRowUpdates = auditedRowUpdates(audit.rowMarkers, true);
+  const hiddenRowUpdates = auditedRowUpdates(audit.rowMarkers, false);
   if (action?.event === "onChange") {
     return `function onChange(value, rowNum, parentRowNum) {
-  var selectedValue = Array.isArray(value) ? value[0] : value
-  MKXFORM.setValue(${JSON.stringify(audit.helperFieldId)}, selectedValue)
-  var normalizedValue = String(selectedValue)
-  if (normalizedValue !== "11" && normalizedValue !== "22") return
-  var active = normalizedValue === "11"
-${rowUpdates}
+  MKXFORM.setValue(${JSON.stringify(audit.helperFieldId)}, value)
+  if (value == 11) {
+${shownRowUpdates}
+  } else if (value == 22) {
+${hiddenRowUpdates}
+  }
 }`;
   }
 
   return `function onLoad() {
   var storedValue = MKXFORM.getValue(${JSON.stringify(audit.helperFieldId)})
-  var selectedValue = Array.isArray(storedValue) ? storedValue[0] : storedValue
-  var normalizedValue = String(selectedValue ?? "")
-  if (normalizedValue !== "11" && normalizedValue !== "22") return
-  var active = normalizedValue === "11"
-${rowUpdates}
+  var normalizedValue = String(storedValue ?? "")
+  if (normalizedValue == 11) {
+${shownRowUpdates}
+  } else if (normalizedValue == 22) {
+${hiddenRowUpdates}
+  }
 }`;
 }
 
-function auditedRowUpdates(rowMarkers) {
+function auditedRowUpdates(rowMarkers, active) {
   return rowMarkers.flatMap((rowMarker) => [
-    `  MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, active ? 5 : 4)`,
-    `  MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, active ? 3 : 6)`
+    `    MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, ${active ? 5 : 4})`,
+    `    MKXFORM.setFieldAttr(${JSON.stringify(rowMarker)}, ${active ? 3 : 6})`
   ]).join("\n");
 }
 

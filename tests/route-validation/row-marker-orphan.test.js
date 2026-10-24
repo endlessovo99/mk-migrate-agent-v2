@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildAgentReviewPrompt } from "../../src/agent-review/prompt.js";
+import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { createFakeReviewProvider } from "./fake-review-provider.js";
 import { resolveRouteFixture } from "./fixture.js";
@@ -117,6 +118,39 @@ describe("audited orphan row-marker Route case", { concurrency: false }, () => {
       "get-readback",
       "add-transfer-record"
     ]);
+  });
+
+  it("rejects the former string-equality and array-first review result", async () => {
+    const sourceDraft = cleanSourceFile(resolveRouteFixture({
+      kind: "form-only",
+      relativePath: "row-marker-orphan/route-row-marker-orphan_SysFormTemplate.xml"
+    }));
+    const dslDraft = draftSourceDraft(sourceDraft);
+    const response = JSON.parse((await createFakeReviewProvider("audited-row-marker-orphan-noop")
+      .review({ sourceDraft, dslDraft })).rawText);
+    for (const [index, action] of dslDraft.scripts.actions.entries()) {
+      const patches = structuredClone(response.patches);
+      const patch = patches.find(item => item.path === `/scripts/actions/${index}/function`);
+      const read = action.event === "onLoad" ? "MKXFORM.getValue('wayTemp')" : "value";
+      patch.value = `function ${action.event}(${action.event === "onChange" ? "value" : ""}) {
+  var raw = ${read}
+  var selectedValue = Array.isArray(raw) ? raw[0] : raw
+  ${action.event === "onChange" ? "MKXFORM.setValue('wayTemp', selectedValue)" : ""}
+  var normalizedValue = String(selectedValue ?? '')
+  if (normalizedValue !== '11' && normalizedValue !== '22') return
+  var active = normalizedValue === '11'
+  MKXFORM.setFieldAttr('invoice_row10', active ? 5 : 4)
+  MKXFORM.setFieldAttr('invoice_row10', active ? 3 : 6)
+  MKXFORM.setFieldAttr('invoice_row4', active ? 5 : 4)
+  MKXFORM.setFieldAttr('invoice_row4', active ? 3 : 6)
+}`;
+      const result = applyEvidenceBackedPatches(dslDraft, patches, {
+        sourceDraft, sourceRefs: collectSourceRefs(sourceDraft)
+      });
+      assert.equal(result.ok, false, action.event);
+      assert.ok(result.diagnostics.some(item => item.code === "agent.patch.condition_operand_provenance_unverified"),
+        JSON.stringify(result.diagnostics));
+    }
   });
 
   it("does not close an action when any orphan no-op proof is missing", async () => {
