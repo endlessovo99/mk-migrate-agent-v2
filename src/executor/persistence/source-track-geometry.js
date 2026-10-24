@@ -1,3 +1,5 @@
+const READABLE_CAPTION_SHARE = 0.2;
+
 /** Source-backed sizing for repeated complete direct rows. No table identity is
  * inferred from row numbers: rootTable is supplied by the strict XML parser. */
 export function sourceTrackGeometry(projected, nodes, sourceGrid, fields = [], mobile = false) {
@@ -13,7 +15,7 @@ export function sourceTrackGeometry(projected, nodes, sourceGrid, fields = [], m
     Object.keys(evidence).length === 3;
   if (provedRoot && !mobile) {
     let run = [];
-    const flush = () => { if (run.length >= 2) for (const entry of run) shared.set(entry.projected.id, entry); run = []; };
+    const flush = () => { if (run.length >= 2) for (const entry of readableAttachmentGroup(run)) shared.set(entry.projected.id, entry); run = []; };
     for (const source of sourceRows) {
       const node = nodesByRef.get(source.sourceRef), row = projectionById.get(node?.id);
       const profile = directTrackProfile(source, node, row, evidence.rowCount, fieldsById);
@@ -24,6 +26,7 @@ export function sourceTrackGeometry(projected, nodes, sourceGrid, fields = [], m
   }
   return projected.map(row => {
     const node = nodes.find(node => node.id === row.id), source = rowsByRef.get(node?.sourceRef), profile = shared.get(row.id);
+    const independentHints = provedRoot && !mobile ? independentAttachmentHints(source, node, row, fieldsById) : new Set();
     return {
       ...row,
       colsStyle: profile?.colsStyle || [{ startIndex: 0, count: row.columns, value: "auto" }],
@@ -31,7 +34,7 @@ export function sourceTrackGeometry(projected, nodes, sourceGrid, fields = [], m
         ...(provedRoot && fullRowHeading(source, row, cell, fieldsById) ? { stretchDescription: true } : {}),
         // Native upload titles and buttons need the complete source cell. Keep
         // its static hint beneath the upload instead of competing for that width.
-        ...(profile?.attachmentHints.has(cell.id) ? {
+        ...(profile?.attachmentHints.has(cell.id) || independentHints.has(cell.id) ? {
           contentFlow: { ...cell.contentFlow, lines: cell.refIds.map(id => [id]) }, stretchDescription: true
         } : {}),
         ...(profile?.captions.get(cell.id) ? { captionWidth: profile.captions.get(cell.id) } : {})
@@ -58,7 +61,7 @@ function directTrackProfile(source, node, projected, rowCount, fields) {
     next += cell.colspan;
   }
   if (next !== source.columns) return undefined;
-  const captions = new Map(), attachmentHints = new Set();
+  const captions = new Map(), captionRanges = new Map(), attachmentHints = new Set();
   for (const cell of projected.cells) {
     const pieces = cells.filter(piece => piece.column >= cell.column && piece.column + piece.colspan <= cell.column + cell.colspan);
     const original = node.children.find(child => child.id === cell.id);
@@ -89,19 +92,83 @@ function directTrackProfile(source, node, projected, rowCount, fields) {
     const share = caption.widthWeight / (caption.widthWeight + value.widthWeight);
     if (!(share > 0 && share <= 0.5)) return undefined;
     captions.set(cell.id, percentage(share));
+    captionRanges.set(cell.id, { start: caption.column, split: value.column, end: value.column + value.colspan });
   }
   const total = weights.reduce((sum, weight) => sum + weight, 0);
   const values = weights.map(weight => percentage(weight / total));
-  return { projected, index: Number(source.sourceRow), signature: JSON.stringify(values), captions, attachmentHints,
+  return { projected, index: Number(source.sourceRow), signature: JSON.stringify(values), captions, captionRanges, attachmentHints,
+    independentCaption: leadingIndependentCaption(cells, projected, fields),
     colsStyle: values.map((value, startIndex) => ({ startIndex, count: 1, value })) };
 }
 
-function sourceAttachmentHint(cell, fields) {
+/** Rebalance only the leading caption/editor region of an attachment group.
+ * Reuse the proportional caption budget used for nested caption columns. */
+function readableAttachmentGroup(run) {
+  if (!run.some(entry => entry.attachmentHints.size)) return run;
+  const ranges = run.map(entry => entry.independentCaption).filter(Boolean), range = ranges[0];
+  if (!range || ranges.some(candidate => candidate.end !== range.end)) return run;
+  const values = run[0].colsStyle.map(style => parseFloat(style.value)), total = values.slice(0, range.end).reduce((sum, value) => sum + value, 0);
+  const caption = READABLE_CAPTION_SHARE * 100;
+  if (values[0] >= caption || total <= caption * 2) return run;
+  const remaining = total - values[0];
+  for (let column = 1; column < range.end; column++) values[column] *= (total - caption) / remaining;
+  values[0] = caption;
+  return run.map(entry => ({ ...entry,
+    colsStyle: values.map((value, startIndex) => ({ startIndex, count: 1, value: percentage(value / 100) })),
+    captions: new Map([...entry.captionRanges].map(([id, bounds]) => [id, percentage(
+      values.slice(bounds.start, bounds.split).reduce((sum, value) => sum + value, 0) /
+      values.slice(bounds.start, bounds.end).reduce((sum, value) => sum + value, 0))]))
+  }));
+}
+
+function leadingIndependentCaption(cells, row, fields) {
+  const [captionCell, valueCell] = cells, field = fields.get(valueCell?.references?.[0]?.referenceId);
+  const caption = boundCaptionCell(field, { cells }, fields);
+  if (!caption || caption !== captionCell || caption.column !== 0 || caption.colspan !== 1 ||
+      valueCell.column !== 1 || valueCell.references.length !== 1 ||
+      field.sourceRef !== valueCell.references[0].sourceRef ||
+      String(fields.get(caption.references[0].referenceId)?.props?.content || "").trim().length <= 8 ||
+      !row.cells.some(cell => cell.refIds.length === 1 && cell.refIds[0] === field.id && cell.column === valueCell.column && cell.colspan === valueCell.colspan)) return undefined;
+  return { end: valueCell.column + valueCell.colspan };
+}
+
+function boundCaptionCell(field, source, fields) {
+  const fact = field?.sourceProps?.layoutCell, binding = field?.sourceProps?.boundCaption;
+  if (field?.props?.hiddenLabel !== true || field.dataOnly || fact?.relation !== "independent-bound-title-cell" ||
+      fact.hiddenLabel !== true || binding?.relation !== "explicit-label-bind-id" ||
+      field.sourceProps.designerValues?._label_bind !== "true" || field.sourceProps.designerValues?._label_bind_id !== binding.id ||
+      !sameIds(fact.captionIds, [binding.id])) return undefined;
+  const matches = (source?.cells || []).filter(cell => cell.references?.length === 1 && cell.references[0].referenceId === binding.id);
+  const caption = matches[0], description = fields.get(binding.id);
+  return matches.length === 1 && caption.references[0].referenceType === "control" &&
+    description?.componentId === "xform-description" && description.sourceRef === caption.references[0].sourceRef &&
+    description.sourceProps?.designerType === "textLabel" ? caption : undefined;
+}
+
+function independentAttachmentHints(source, node, row, fields) {
+  const result = new Set();
+  if (!source || source.preserveSourceGeometry !== true || !node || row.rows !== 1 || row.columns !== source.columns) return result;
+  for (const cell of row.cells) {
+    const original = node.children.find(child => child.id === cell.id), matches = (source.cells || []).filter(piece => piece.sourceRef === original?.sourceRef);
+    const piece = matches[0], ids = piece && sourceAttachmentHint(piece, fields, true), upload = ids && fields.get(ids[0]);
+    if (matches.length !== 1 || !ids || !boundCaptionCell(upload, source, fields) ||
+        cell.ownerNodeId !== row.id || cell.refType !== "field" || cell.rowspan !== 1 ||
+        cell.column !== piece.column || cell.colspan !== piece.colspan || piece.rowspan !== undefined && piece.rowspan !== 1 ||
+        !Number.isFinite(piece.widthWeight) || piece.widthWeight <= 0 || original.widthWeight !== piece.widthWeight ||
+        piece.evidence?.column !== piece.column || piece.evidence?.colspan !== piece.colspan || piece.evidence?.widthWeight !== piece.widthWeight ||
+        original.keepInline !== true || cell.keepInline !== true || !sameIds(original.refIds, ids) || !sameIds(cell.refIds, ids) ||
+        !sameAttachmentFlow(original.contentFlow, piece.contentFlow, ids) || !sameAttachmentFlow(cell.contentFlow, piece.contentFlow, ids)) continue;
+    result.add(cell.id);
+  }
+  return result;
+}
+
+function sourceAttachmentHint(cell, fields, allowIndependentTitle = false) {
   const refs = cell.references;
   if (refs?.length !== 2 || refs.some(ref => ref.referenceType !== "control")) return undefined;
   const ids = refs.map(ref => ref.referenceId), [upload, hint] = ids.map(id => fields.get(id));
   const text = String(hint?.props?.content || "").trim();
-  if (upload?.componentId !== "xform-attach" || upload.sourceProps?.designerType !== "attachment" || upload.props?.hiddenLabel === true ||
+  if (upload?.componentId !== "xform-attach" || upload.sourceProps?.designerType !== "attachment" || upload.props?.hiddenLabel === true && !allowIndependentTitle ||
       hint?.componentId !== "xform-description" || hint.sourceProps?.designerType !== "textLabel" ||
       !text || /^[^\r\n]{1,4}$/u.test(text) || hint.sourceProps?.designerValues?.content !== hint.props.content ||
       [upload, hint].some((field, index) => field.dataOnly || field.sourceRef !== refs[index].sourceRef ||

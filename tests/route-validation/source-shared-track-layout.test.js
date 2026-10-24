@@ -15,6 +15,7 @@ import { adaptiveStyles } from "../../src/executor/persistence/adaptive-layout.j
 
 const fixture = "tests/fixtures/route-validation/source-shared-track-layout/source-shared-track_SysFormTemplate.xml";
 const attachmentFixture = "tests/fixtures/route-validation/source-shared-track-layout/source-attachment-hints_SysFormTemplate.xml";
+const independentAttachmentFixture = "tests/fixtures/route-validation/source-shared-track-layout/source-independent-attachment-hint_SysFormTemplate.xml";
 const native = JSON.parse(readFileSync("tests/fixtures/executor/persistence/shared-source-tracks-native.json", "utf8"));
 for (const part of Object.values(native.functions)) assert.equal(createHash("sha256").update(part.text).digest("hex"), part.sha256);
 const expand = vm.runInNewContext(`(${native.functions.expandColsStyle.text})`);
@@ -75,6 +76,37 @@ it("aligns three complete source attachment columns without squeezing their uplo
   assert.equal(prepared.verify(prepared.update).ok, true);
 });
 
+it("retains a readable independent long caption without moving the shared attachment columns", () => {
+  const { draft, prepared } = stages(attachmentFixture);
+  const caption = draft.form.fields.find(field => field.id === "left_caption_2");
+  assert.equal(caption.componentId, "xform-description");
+  assert.equal(draft.form.fields.find(field => field.id === "fd_left_2").props.hiddenLabel, true);
+  for (const row of [0, 1, 2]) {
+    const actual = [...tracks(grid(prepared, row).controlProps.colsStyle, 6)].map(parseFloat);
+    // Real native desktop evidence: 1001px grid, 32px description padding and
+    // one grid border; the former two-line caption had 163.46875px text width.
+    assert.ok(actual[0] / 100 * 1001 - 33 >= 163.46875, "A long independent title must not regress to the observed 51px near-vertical text column");
+    assert.ok(Math.abs(actual.slice(0, 4).reduce((sum, value) => sum + value, 0) - 811 / 1209 * 100) < 1e-8);
+    assert.ok(Math.abs(actual.slice(0, 5).reduce((sum, value) => sum + value, 0) - 966 / 1209 * 100) < 1e-8);
+    if (row < 2) assert.ok(Math.abs(parseFloat(wrapper(prepared, `fd_left_${row}`).controlProps.style["--mk-adaptive-caption-width"]) -
+      actual[0] / actual.slice(0, 4).reduce((sum, value) => sum + value, 0) * 100) < 1e-8, "Folded titles and independent titles retain one shared editor boundary");
+  }
+  assert.equal(prepared.verify(prepared.update).ok, true);
+});
+
+it("gives a source-bound upload and its long hint separate readable lines while retaining automatic tracks", () => {
+  const { draft, prepared } = stages(independentAttachmentFixture);
+  const field = draft.form.fields.find(field => field.id === "fd_independent_files");
+  assert.equal(field.props.hiddenLabel, true);
+  assert.equal(field.sourceProps.layoutCell.relation, "independent-bound-title-cell");
+  assertAutoTracks(prepared, "An independent upload title does not promote this row or its neighbor into shared tracks");
+  const cell = grid(prepared, 0).children.find(cell => nodes(cell).some(node => node.key === field.id));
+  assert.deepEqual(cell.children[0].children.map(line => line.children.map(item => item.children[0].key)), [[field.id], ["independent_hint"]]);
+  for (const id of [field.id, "independent_hint"]) assert.equal(wrapper(prepared, id).controlProps.style.flex, "1 1 0");
+  assert.equal(wrapper(prepared, "independent_hint", "mobile").controlProps.style.flex, "0 1 auto");
+  assert.equal(prepared.verify(prepared.update).ok, true);
+});
+
 it("preserves attachment and hint ownership through native save and rejects losing their separate readable lines", () => {
   const { prepared } = stages(attachmentFixture), before = config(prepared), saved = nativeViewSaveRoundTrip(before);
   for (const key of ["dataModel", "auth", "authFilter", "attribute"]) assert.deepEqual(saved[key], before[key], key);
@@ -86,6 +118,8 @@ it("preserves attachment and hint ownership through native save and rejects losi
     nodes(node).some(child => child.key === "fd_files_0"));
   for (const mutate of [
     root => { const row = nodes(root).find(node => node.type === "layout" && node.controlProps.migrationRootNodeId === "layout.row-0"); row.children[0].controlProps.colsStyle = [{ startIndex: 0, count: 6, value: "auto" }]; },
+    root => { const row = nodes(root).find(node => node.type === "layout" && node.controlProps.migrationRootNodeId === "layout.row-0"); row.children[0].controlProps.colsStyle[0].value = "8.436724565757%"; },
+    root => { const field = nodes(root).find(node => node.children?.some(child => child.key === "fd_left_0") && node.controlProps?.className === "mk-adaptive-main-field"); field.controlProps.style["--mk-adaptive-caption-width"] = "12.577065351418%"; },
     root => { const flow = attachmentCell(root).children[0]; flow.children[0].children.push(...flow.children.pop().children); },
     root => { attachmentCell(root).children[0].children.pop(); },
     root => { attachmentCell(root).children[0].children[1].children[0].controlProps.style.flex = "0 1 auto"; },
@@ -95,6 +129,27 @@ it("preserves attachment and hint ownership through native save and rejects losi
     mutate(view.view.render.desktop[0]); changed.viewModel[0].fdConfig = JSON.stringify(view);
     target.mechanisms["sys-xform"].fdConfig = JSON.stringify(changed);
     assert.equal(prepared.verify(target).ok, false, "Native readback must retain each upload, its source cell and its readable hint");
+  }
+});
+
+it("preserves the independent upload title and readable flow through native save and rejects readback regressions", () => {
+  const { prepared } = stages(independentAttachmentFixture), before = config(prepared), saved = nativeViewSaveRoundTrip(before);
+  assert.deepEqual(saved.dataModel, before.dataModel, "The separately bound source title and native upload configuration remain unchanged");
+  const target = structuredClone(prepared.update);
+  target.mechanisms["sys-xform"].fdConfig = JSON.stringify(saved);
+  assert.equal(prepared.verify(target).ok, true);
+  const savedView = JSON.parse(saved.viewModel[0].fdConfig);
+  const flow = root => nodes(root).find(node => node.type === "@elem/layout-grid.GridItem" &&
+    nodes(node).some(child => child.key === "fd_independent_files")).children[0];
+  for (const mutate of [
+    root => { const cell = flow(root); cell.children[0].children.push(...cell.children.pop().children); },
+    root => { flow(root).children[1].children[0].controlProps.style.flex = "0 1 auto"; },
+    root => { flow(root).children[0].children[0].controlProps.style.flex = "0 1 auto"; },
+    root => { flow(root).children.pop(); }
+  ]) {
+    const changed = structuredClone(saved), view = structuredClone(savedView); mutate(view.view.render.desktop[0]);
+    changed.viewModel[0].fdConfig = JSON.stringify(view); target.mechanisms["sys-xform"].fdConfig = JSON.stringify(changed);
+    assert.equal(prepared.verify(target).ok, false);
   }
 });
 
@@ -249,13 +304,34 @@ it("keeps other inline editors and unproved attachment hints on their existing a
   assert.equal(checkTrust(source, trusted).ok, false, "The upload/hint source flow remains bound by complete sourceGrid trust");
 });
 
-it("keeps source-bound uploads with an independent caption outside the proved native-label attachment group", () => {
+it("keeps independently titled upload rows automatic while stacking their proved long hints", () => {
   modifiedHtml(html => html.replace(/id:"fd_files_(\d)",label:"附件[1-3]",_label_bind:"false",_label_bind_id:"former_caption_\d"/g,
     'id:"fd_files_$1",label:"附件",_label_bind:"true",_label_bind_id:"attachment_caption_$1"'), source => {
     const draft = draftSourceDraft(source);
     assert.ok(draft.form.fields.filter(field => field.componentId === "xform-attach").every(field => field.props.hiddenLabel === true));
-    assertAutoTracks(prepareSample(draft), "An independently bound caption has no native upload-label geometry evidence");
+    const prepared = prepareSample(draft);
+    assertAutoTracks(prepared, "An independently bound caption does not enter the native-label shared track group");
+    for (const row of [0, 1, 2]) assert.equal(wrapper(prepared, `attachment_hint_${row}`).controlProps.style.flex, "1 1 0");
   }, attachmentFixture);
+});
+
+it("does not apply independent attachment flow or caption widening to mismatching source bindings", () => {
+  for (const alter of [
+    draft => { draft.form.fields.find(field => field.id === "fd_independent_files").sourceProps.boundCaption.id = "unknown_caption"; },
+    draft => { draft.form.fields.find(field => field.id === "fd_independent_files").sourceRef = "source.form.control.unrelated"; },
+    draft => { draft.form.layout.mkTree[0].children[1].contentFlow.items[0].width.value = 200; },
+    draft => { draft.form.layout.mkTree[0].children[1].refIds.reverse(); }
+  ]) {
+    const { draft } = stages(independentAttachmentFixture); alter(draft); const prepared = prepareSample(draft);
+    assertAutoTracks(prepared);
+    const cell = grid(prepared, 0).children.find(cell => nodes(cell).some(node => node.key === "fd_independent_files"));
+    assert.equal(cell.children[0].children.length, 1, "An unproved pair retains its existing flow");
+  }
+  const { draft } = stages(attachmentFixture);
+  draft.form.fields.find(field => field.id === "fd_left_2").sourceProps.boundCaption.id = "unknown_caption";
+  const prepared = prepareSample(draft);
+  assert.ok(Math.abs(parseFloat(tracks(grid(prepared, 2).controlProps.colsStyle, 6)[0]) - 102 / 1209 * 100) < 1e-8,
+    "An unproved leading title does not change any shared track weights");
 });
 
 it("preserves the real native save and reassembly boundary", () => {

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>source-independent-attachment-hint-form</string></void>
+<void method="put"><string>fdModelId</string><string>source-independent-attachment-hint-template</string></void>
+<void method="put"><string>fdName</string><string>Source independent attachment title and hint</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table fd_type="standardTable"&gt;&lt;tbody&gt;
+&lt;tr&gt;&lt;td row="0" column="0" width="102"&gt;&lt;label fd_type="textLabel" fd_values='{id:"independent_caption",content:"选择依据"}'&gt;选择依据&lt;/label&gt;&lt;/td&gt;&lt;td row="0" column="1,2,3" colspan="3" width="709"&gt;&lt;div fd_type="attachment" style="width:235px" fd_values='{id:"fd_independent_files",label:"选择依据",_label_bind:"true",_label_bind_id:"independent_caption"}'&gt;&lt;/div&gt;&lt;label fd_type="textLabel" fd_values='{id:"independent_hint",content:"依照右侧签字权限及采购部门分工表，确认审批级别并上传相关选择依据",color:"#FF0000"}'&gt;依照右侧签字权限及采购部门分工表，确认审批级别并上传相关选择依据&lt;/label&gt;&lt;/td&gt;&lt;td row="0" column="4,5" colspan="2" width="887"&gt;&lt;label fd_type="textLabel" fd_values='{id:"download_note",content:"点击此处下载相关附件",color:"#FF0000"}'&gt;点击此处下载相关附件&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="1" column="0" width="102"&gt;&lt;label fd_type="textLabel" fd_values='{id:"approval_caption",content:"审批级别"}'&gt;审批级别&lt;/label&gt;&lt;/td&gt;&lt;td row="1" column="1,2,3" colspan="3" width="709"&gt;&lt;div fd_type="inputText" style="width:416px" fd_values='{id:"fd_approval",label:"审批级别",dataType:"String",_label_bind:"true",_label_bind_id:"approval_caption"}'&gt;&lt;input id="fd_approval"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="1" column="4,5" colspan="2" width="887"&gt;&lt;label fd_type="textLabel" fd_values='{id:"approval_hint",content:"含有管理层会议时，请上传相应的会议纪要。",color:"#FF0000"}'&gt;含有管理层会议时，请上传相应的会议纪要。&lt;/label&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_approval" label="审批级别" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>
