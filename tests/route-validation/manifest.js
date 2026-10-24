@@ -379,6 +379,12 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: NATIVE_FORMULA_SUCCESS_OPERATIONS }
     },
     {
+      id: "inline-editor-hint-layout-success",
+      source: { kind: "form-only", relativePath: "inline-editor-hint-layout/inline-editor-hint_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "inline-editor-width-success",
       source: { kind: "form-only", relativePath: "inline-editor-width/inline-editor-width_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,

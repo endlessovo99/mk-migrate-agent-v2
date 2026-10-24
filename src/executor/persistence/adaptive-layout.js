@@ -13,18 +13,40 @@ export function adaptiveFlowItem(item, fields, geometry = {}) {
   const field = fields.find(field => field.id === item.referenceId);
   const choiceOther = field?.componentId === "xform-checkbox" &&
     (field.sourceProps?.choiceOtherToggle || field.sourceProps?.otherTextCompanion);
+  const basisWidth = sourceEditorHintBasis(item, field, fields, geometry);
   return {
     referenceId: item.referenceId,
     sizing: geometry.stretchDescription && field?.componentId === "xform-description" ? "stretch"
       : !field || field.dataOnly || choiceOther || INTRINSIC_COMPONENTS.has(field.componentId) ? "intrinsic" : "stretch",
+    ...(basisWidth ? { basisWidth } : {}),
     ...(geometry.captionWidth ? { captionWidth: geometry.captionWidth } : {})
   };
+}
+
+// Flex wrapping collects hypothetical item widths before distributing spare
+// space. A zero-basis editor lets a long hint consume the line, squeezing the
+// editor to its remainder. Keep only this source-proved pair's wrapping basis;
+// min-width:0/max-width:100% still let it shrink in a narrower cell.
+function sourceEditorHintBasis(item, field, fields, geometry) {
+  const source = field?.sourceProps, flow = geometry.contentFlow;
+  if (field?.componentId !== "xform-input" || field.dataOnly || source?.designerType !== "inputText" ||
+      source.designerId !== field.id || item.width?.unit !== "px" || !(item.width.value > 0) ||
+      !Number.isFinite(item.width.value)) return undefined;
+  const declared = /^(\d+(?:\.\d+)?)(?:px)?$/.exec(String(source.designerValues?.width || ""));
+  if (!declared || !(Number(declared[1]) > 0) || Number(declared[1]) > item.width.value) return undefined;
+  const line = flow?.lines?.find(line => line.includes(field.id));
+  if (line?.length !== 2 || line[0] !== field.id) return undefined;
+  const hint = fields.find(field => field.id === line[1]);
+  if (hint?.componentId !== "xform-description" || hint.dataOnly || hint.sourceProps?.designerType !== "textLabel" ||
+      hint.props?.content !== hint.sourceProps.designerValues?.content ||
+      !/^[^<>\r\n]{5,}$/u.test(String(hint.props?.content || "").trim())) return undefined;
+  return item.width.value;
 }
 
 export function adaptiveItemStyle(item, fields, geometry) {
   const projected = adaptiveFlowItem(item, fields, geometry);
   return {
-    flex: projected.width ? "0 0 auto" : projected.sizing === "stretch" ? "1 1 0" : "0 1 auto",
+    flex: projected.width ? "0 0 auto" : projected.sizing === "stretch" ? `1 1 ${projected.basisWidth ? `${projected.basisWidth}px` : "0"}` : "0 1 auto",
     minWidth: 0, maxWidth: "100%", overflow: "visible",
     width: projected.width ? `${projected.width.value}${projected.width.unit}` : "auto",
     ...(projected.captionWidth ? { "--mk-adaptive-caption-width": projected.captionWidth } : {})

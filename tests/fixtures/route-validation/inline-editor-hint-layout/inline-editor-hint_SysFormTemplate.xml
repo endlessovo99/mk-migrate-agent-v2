@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>route-inline-editor-hint-source</string></void>
+<void method="put"><string>fdModelId</string><string>route-inline-editor-hint-model</string></void>
+<void method="put"><string>fdName</string><string>Source editor with trailing hint</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;TABLE fd_type="standardTable" id="hint_table"&gt;&lt;TBODY&gt;&lt;TR&gt;
+&lt;TD row="0" column="0" width="120"&gt;&lt;LABEL fd_type="textLabel" fd_values='{id:"reference_caption",content:"Reference number"}'&gt;Reference number&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD row="0" column="1" width="420"&gt;&lt;DIV fd_type="inputText" style="WIDTH:246px;DISPLAY:inline" fd_values='{id:"fd_reference",label:"Reference number",dataType:"String",width:"240",canShow:"true",readOnly:"false",required:"true",_label_bind:"true",_label_bind_id:"reference_caption"}'&gt;&lt;INPUT id="fd_reference" type="text" style="WIDTH:240px"/&gt;&lt;/DIV&gt;
+&lt;LABEL fd_type="textLabel" style="WIDTH:auto;DISPLAY:inline" fd_values='{id:"reference_hint",content:"如已取得相关证明，请填写对方提供的完整申请表编号"}'&gt;如已取得相关证明，请填写对方提供的完整申请表编号&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;TABLE id="hint_table"&gt;&lt;TBODY&gt;&lt;TR&gt;
+&lt;TD row="0" column="0" width="120"&gt;&lt;LABEL&gt;Reference number&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;TD row="0" column="1" width="420"&gt;&lt;DIV style="WIDTH:246px;DISPLAY:inline"&gt;&lt;xform:xtext property="extendDataFormInfo.value(fd_reference)" style="WIDTH:240px" required="true"/&gt;&lt;/DIV&gt;
+&lt;LABEL style="WIDTH:auto;DISPLAY:inline"&gt;如已取得相关证明，请填写对方提供的完整申请表编号&lt;/LABEL&gt;&lt;/TD&gt;
+&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_reference" label="Reference number" type="String" notNull="true"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

@@ -1589,9 +1589,13 @@ function observeContentFlow(refs, diagnostics, decodePath) {
       const reference = item.children[0];
       if (!reference || typeof reference.key !== "string" || reference.kind === "container") return fail();
       const style = item.controlProps?.style;
-      const adaptive = style?.width === "auto" && ["1 1 0", "0 1 auto"].includes(style.flex);
+      const basisMatch = /^1 1 (\d+(?:\.\d+)?)px$/.exec(String(style?.flex));
+      const basisWidth = basisMatch && Number(basisMatch[1]) > 0 && Number.isFinite(Number(basisMatch[1]))
+        ? Number(basisMatch[1]) : undefined;
+      const stretch = style?.flex === "1 1 0" || basisWidth !== undefined;
+      const adaptive = style?.width === "auto" && (stretch || style.flex === "0 1 auto");
       const captionWidth = style?.["--mk-adaptive-caption-width"];
-      if (captionWidth !== undefined && (!adaptive || style.flex !== "1 1 0" ||
+      if (captionWidth !== undefined && (!adaptive || !stretch ||
           !/^(?:\d+(?:\.\d+)?)%$/.test(captionWidth) || !(parseFloat(captionWidth) > 0 && parseFloat(captionWidth) <= 50))) return fail();
       const fillAvailable = style?.flex === "1 1 0" && style?.width === "100%";
       if (fillAvailable && (root.children.length !== 1 || line.children.length !== 1)) return fail();
@@ -1609,7 +1613,8 @@ function observeContentFlow(refs, diagnostics, decodePath) {
       if (stableStringify(style) !== stableStringify(itemStyle)) return fail();
       ids.push(reference.key);
       items.push({ referenceId: reference.key, ...(width ? { width } : {}), ...(fillAvailable ? { fillAvailable: true } : {}),
-        ...(adaptive ? { sizing: style.flex === "1 1 0" ? "stretch" : "intrinsic" } : {}),
+        ...(adaptive ? { sizing: stretch ? "stretch" : "intrinsic" } : {}),
+        ...(adaptive && basisWidth !== undefined ? { basisWidth } : {}),
         ...(captionWidth !== undefined ? { captionWidth } : {}) });
     }
     lines.push(ids);
