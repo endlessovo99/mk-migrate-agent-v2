@@ -1,0 +1,37 @@
+<java class="java.beans.XMLDecoder">
+<object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>renamed-padding-base</string></void>
+<void method="put"><string>fdName</string><string>重命名标题间距</string></void>
+<void method="put"><string>fdModelId</string><string>renamed-padding-template</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>
+&lt;table id="other_grid" fd_type="standardTable"&gt;&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td row="0" column="0" style="WIDTH:93px"&gt;
+  &lt;div fd_type="right" fd_values='{id:"heading_right",rightName:"独立标题"}'&gt;
+    &lt;label style="WIDTH:84px;FONT-SIZE:14px;DISPLAY:inline" fd_type="textLabel" fd_values='{id:"contact_heading",content:"备用联系人电话",size:"14px"}'&gt;备用联系人电话&lt;/label&gt;
+  &lt;/div&gt;
+&lt;/td&gt;
+&lt;td row="0" column="1" style="WIDTH:326px"&gt;&lt;div fd_type="inputText" fd_values='{id:"contact_number",label:"备用联系人电话",_label_bind:"true",_label_bind_id:"contact_heading",width:"156",dataType:"String",required:"false"}'&gt;&lt;input id="contact_number"/&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td row="1" column="0" style="WIDTH:93px"&gt;&lt;label style="WIDTH:140px;DISPLAY:inline" fd_type="textLabel" fd_values='{id:"period_heading",content:"预计时间范围"}'&gt;预计时间范围&lt;/label&gt;&lt;/td&gt;
+&lt;td row="1" column="1" style="WIDTH:326px"&gt;
+  &lt;label fd_type="textLabel" fd_values='{id:"begin_label",content:"起："}'&gt;起：&lt;/label&gt;
+  &lt;div fd_type="datetime" fd_values='{id:"begin_date",label:"开始日期",_label_bind:"false",_label_bind_id:"",width:"120",businessType:"dateDialog",required:"false"}'&gt;&lt;input id="begin_date"/&gt;&lt;/div&gt;
+  &lt;div fd_type="brcontrol" fd_values='{id:"period_break"}'&gt;&lt;/div&gt;
+  &lt;label fd_type="textLabel" fd_values='{id:"finish_label",content:"止："}'&gt;止：&lt;/label&gt;
+  &lt;div fd_type="datetime" fd_values='{id:"finish_date",label:"结束日期",_label_bind:"false",_label_bind_id:"",width:"120",businessType:"dateDialog",required:"false"}'&gt;&lt;input id="finish_date"/&gt;&lt;/div&gt;
+&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>
+&lt;table&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td style="WIDTH:93px"&gt;&lt;xform:right code="heading_right"&gt;&lt;label style="FONT-SIZE:14px;DISPLAY:inline"&gt;备用联系人电话&lt;/label&gt;&lt;/xform:right&gt;&lt;/td&gt;
+&lt;td style="WIDTH:326px"&gt;&lt;xform:xtext property="extendDataFormInfo.value(contact_number)" style="WIDTH:156px" subject="备用联系人电话" required="false"/&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;预计时间范围&lt;/td&gt;&lt;td&gt;起：&lt;xform:datetime property="extendDataFormInfo.value(begin_date)" style="WIDTH:120px" dateTimeType="date"/&gt;&lt;div id="brcontrol-period_break"&gt;&lt;/div&gt;止：&lt;xform:datetime property="extendDataFormInfo.value(finish_date)" style="WIDTH:120px" dateTimeType="date"/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;
+&lt;extendSimpleProperty name="contact_number" label="备用联系人电话" type="String"/&gt;
+&lt;extendSimpleProperty name="begin_date" label="开始日期" type="Date"/&gt;
+&lt;extendSimpleProperty name="finish_date" label="结束日期" type="Date"/&gt;
+&lt;/metadata&gt;</string></void>
+</object></java>

@@ -43,6 +43,8 @@ export function contentFlowFieldPadding(form = {}) {
     for (const cell of row.children || []) {
       const flow = cell.contentFlow;
       if (!flow) continue;
+      const captionPadding = adaptiveCaptionPadding(form, row, cell, fields);
+      if (captionPadding) padding.set(cell.refIds[0], captionPadding);
       for (const item of flow.items || []) {
         const field = fields.get(item.referenceId);
         if (item.width?.unit !== "px" || item.width.value <= 0 ||
@@ -59,4 +61,32 @@ export function contentFlowFieldPadding(form = {}) {
     }
   }
   return padding;
+}
+
+function adaptiveCaptionPadding(form, row, cell, fields) {
+  const flow = cell.contentFlow;
+  if (form.layout?.sizing !== "adaptive" || !(row.props?.columns > 1) ||
+      cell.refType !== "field" || cell.refIds?.length !== 1 || cell.colspan !== 1 ||
+      !Number.isInteger(cell.column) || cell.column < 0 ||
+      flow.lines?.length !== 1 || flow.lines[0]?.length !== 1 || flow.items?.length !== 1) return undefined;
+  const id = cell.refIds[0], item = flow.items[0], field = fields.get(id);
+  if (item.referenceId !== id || flow.lines[0][0] !== id || item.width?.unit !== "px" ||
+      !Number.isFinite(item.width.value) || item.width.value <= 0 ||
+      field?.componentId !== "xform-description" || field.dataOnly ||
+      typeof field.props?.content !== "string" || !field.props.content.trim() ||
+      /[\r\n\t<>]/u.test(field.props.content) || field.props.hasLink === true || field.props.link) return undefined;
+  // A standalone title has one immediately adjacent, separately rendered text
+  // input. Do not infer this role from source audit metadata or field names.
+  const neighbors = row.children.filter(next => next.column === cell.column + 1 &&
+    (next.row || 0) === (cell.row || 0) && next.refType === "field" && next.refIds?.length === 1);
+  if (neighbors.length !== 1) return undefined;
+  const editor = fields.get(neighbors[0].refIds[0]);
+  if (editor?.componentId !== "xform-input" || editor.dataOnly || editor.props?.hiddenLabel !== true ||
+      editor.title !== field.props.content) return undefined;
+  // The classic native wrapper retains its 16px left inset even when a custom
+  // paddingControl is supplied. Reduce only the effective right inset toward a
+  // 20% declared-px budget; below 80px, the left inset is the attainable floor.
+  const right = Math.max(0, Math.min(16, Math.floor(item.width.value * 0.2) - 16));
+  if (right === 16) return undefined;
+  return { top: "8px", right: `${right}px`, bottom: "8px", left: "16px" };
 }
