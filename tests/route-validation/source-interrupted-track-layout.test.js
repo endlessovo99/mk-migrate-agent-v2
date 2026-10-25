@@ -34,9 +34,27 @@ it("retains matching source columns after an intervening merged row through the 
   assert.equal(prepared.verify(prepared.update).ok, true);
 });
 
-it("does not extend a shared signature to an unproved or different separated row", () => {
+it("shares the complete physical axis when a separated row has consistent but conflicting source weights", () => {
+  const { draft } = stages();
+  draft.form.layout.sourceGrid.rows[3].cells[0].widthWeight++;
+  draft.form.layout.sourceGrid.rows[3].cells[0].evidence.widthWeight++;
+  draft.form.layout.mkTree[3].children[0].widthWeight++;
+  const prepared = prepareSample(draft), rendered = view(prepared);
+  for (const row of [0, 1, 2, 3]) {
+    const node = grid(rendered.view.render.desktop[0], row);
+    assert.equal(node.controlProps.columns, 4);
+    assert.deepEqual([...tracks(node.controlProps.colsStyle, 4)], Array(4).fill("minmax(0, 1fr)"));
+    assert.equal(automatic(grid(rendered.view.render.mobile[0], row)), true);
+  }
+  for (const row of [0, 1, 3]) for (const side of ["left", "right"]) {
+    assert.equal(wrapper(rendered.view.render.desktop[0], `fd_${side}_${row}`)
+      .controlProps.style["--mk-adaptive-caption-width"], "50%");
+  }
+  assert.equal(prepared.verify(prepared.update).ok, true);
+});
+
+it("does not extend a shared signature to an unproved separated row", () => {
   for (const alter of [
-    draft => { draft.form.layout.sourceGrid.rows[3].cells[0].widthWeight++; draft.form.layout.sourceGrid.rows[3].cells[0].evidence.widthWeight++; draft.form.layout.mkTree[3].children[0].widthWeight++; },
     draft => { draft.form.layout.mkTree[3].children[0].widthWeight++; },
     draft => { draft.form.layout.mkTree[3].sourceRef = "source.form.layout.row.unknown"; },
     draft => { draft.form.layout.sourceGrid.rows[3].sourceRow = "nested.3"; },

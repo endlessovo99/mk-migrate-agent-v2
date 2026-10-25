@@ -28,14 +28,24 @@ for (const path of [
   "rowspan-section-caption/route-rowspan-section-caption_SysFormTemplate.xml",
   "static-jsp-caption-evidence/static-jsp-caption_SysFormTemplate.xml"
 ]) it(`keeps field semantics and topology across both sizing policies: ${path}`, () => {
-  const { adaptive, retained } = stages(`tests/fixtures/route-validation/${path}`);
+  const { source, adaptive, retained } = stages(`tests/fixtures/route-validation/${path}`);
   assert.deepEqual(adaptive.form.fields, retained.form.fields);
   assert.deepEqual(adaptive.form.layout.sourceGrid, retained.form.layout.sourceGrid);
+  const completeCardRoot = path.startsWith("business-card-layout/");
+  if (completeCardRoot) {
+    assert.deepEqual(source.form.layout.rootTable, { version: 1, kind: "standard-table", rowCount: 6 });
+    assert.ok(source.form.layout.rows.every(row => row.columns === 4));
+    assert.deepEqual(source.form.layout.rows.slice(4).map(row => row.cells.map(cell => cell.widthWeight)),
+      [[100, 1130], [100, 1134]], "the complete physical root has conflicting preferred widths");
+  }
   const next = projection(adaptive), old = projection(retained);
   for (const scene of scenes) {
     const fixedRows = scene === "desktop" && path.startsWith("leader-leave-layout/")
       ? Object.fromEntries([4, 5].map(row => [`layout.row-${row}`, [139, 524, 524, 524].map(width =>
-        `${Number((width / 1711 * 100).toFixed(12))}%`)])) : {};
+        `${Number((width / 1711 * 100).toFixed(12))}%`)]))
+      : scene === "desktop" && completeCardRoot
+        ? Object.fromEntries([0, 1, 2, 3, 4, 5].map(row => [`layout.row-${row}`, Array(4).fill("minmax(0, 1fr)")]))
+        : {};
     assertColumns(next.view.view.render[scene][0], fixedRows);
     assert.deepEqual(topology(next.view.view.render[scene][0]), topology(old.view.view.render[scene][0]));
     assert.deepEqual(renderNativeFieldReferences(next.config, scene).actual,

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "capturedAt": "2026-10-25T11:38:28.267Z",
+  "baselineHead": "d3a441f212ef8b934e856e992306d9c8596e6efd",
+  "boundary": "Synthetic XML fixtures; frozen F22 projection data and protected native partition fingerprints only. No old product modules are loaded by the tests. No browser, network, database, model, target write or submission evidence.",
+  "baseline": {
+    "file": "baseline-f22.json",
+    "sha256": "883fbfaefe9d425f156a9d864c2d0a24534a2f66b88ee3b9d653d6edc7deaca7",
+    "canonicalization": "JSON with recursively sorted object keys; array order retained"
+  },
+  "fixtures": {
+    "base": {
+      "file": "base_SysFormTemplate.xml",
+      "sha256": "86938dd50babc423eb5408a38df5529b20c416a455c1ae911cc5dc00887cf6c4"
+    },
+    "renamed": {
+      "file": "renamed_SysFormTemplate.xml",
+      "sha256": "ee5b38ef218ce93f17198df9a9ae1a5cca56cc14f8cc889fef3677f9b886f4ec"
+    },
+    "wide-caption": {
+      "file": "wide-caption_SysFormTemplate.xml",
+      "sha256": "5a678a62c444064db6dba0292b8746e72e725d4c85fc23f9f1969b77ba78fbc5"
+    },
+    "nested-same-axis": {
+      "file": "nested-same-axis_SysFormTemplate.xml",
+      "sha256": "f2e8f87abc7aa0c3ec3f15125507323d0b4dc0e67887ef135a2b8dc973e535d3"
+    }
+  },
+  "baselineEngine": {
+    "src/translator/source-draft.js": "5eeb58e591bc6dcd8a920f437fc19a17b7672593eedacb4618f5cabe8dd037ac",
+    "src/translator/sysform-designer-layout.js": "5fd8b7cd8bb47be78993f1b556edb396c32b8c269f0ba017b6726537bce7cb2d",
+    "src/translator/root-table-evidence.js": "cef230909d0e5337a3fde8a5b8e48b51d575a60c10e997560cefa893100574be",
+    "src/executor/persistence/source-track-geometry.js": "3f91f9de58d2eb28d63d518486dc23b5de50916b39a2916f720ec4d586cd1fb4",
+    "src/executor/persistence/layout-projection.js": "16ace2500cfcf1705cc13854ec34565168a5f8b81c028ec577b6877d1e711600",
+    "src/executor/persistence/expected.js": "ec547a1e4d800c3920d39c75f8160d855b3af8e0d9fdb7ae8d74b1d6f63ae7ff",
+    "src/executor/persistence/form-writer.js": "9bf87cbc96502c65e67c273e9d70754579b122e59db868f71ba78741d11f3b5d",
+    "tests/helpers/persistence.js": "eb3180292f8ee4547516c23adc1293d7b943cd30c8f22015020e5fb67eae7e85"
+  },
+  "sealedDiffSha256": "501683f41eb134c73bdfefeb72a8f48a8e565b667cee10ef5b3799425ba85406",
+  "nestedFixtureOrigin": "Independent nested-table negative fixture reviewed against the same F22 baseline; root axis mismatch must reject the complete-root projection."
+}

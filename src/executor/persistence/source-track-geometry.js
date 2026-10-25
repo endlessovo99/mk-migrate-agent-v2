@@ -1,3 +1,4 @@
+import { completeRootAxis } from "./complete-root-axis.js";
 const READABLE_CAPTION_SHARE = 0.2;
 // Same source-weight floor as the native nested-column projector.
 const MIN_ATTACHMENT_CAPTION_WEIGHT = 135;
@@ -39,7 +40,7 @@ export function sourceTrackGeometry(projected, nodes, sourceGrid, fields = [], m
       for (const profile of matches) if (!shared.has(profile.projected.id)) shared.set(profile.projected.id, profile);
     }
   }
-  return projected.map(row => {
+  const result = projected.map(row => {
     const node = nodes.find(node => node.id === row.id), source = rowsByRef.get(node?.sourceRef), profile = shared.get(row.id);
     const independentHints = provedRoot && !mobile ? independentAttachmentHints(source, node, row, fieldsById) : new Set();
     return {
@@ -58,6 +59,17 @@ export function sourceTrackGeometry(projected, nodes, sourceGrid, fields = [], m
       }))
     };
   });
+  // A leading independent long caption before other column regions already
+  // has a readable share contract. Equal root tracks must not shrink that
+  // caption below the same budget, including when an unproved adjacent pair
+  // keeps its baseline automatic tracks. Full-row caption/editor pairs do not
+  // belong to this partitioned caption-budget route.
+  if (provedRoot && !mobile && projected.some(row => {
+    const node = nodes.find(node => node.id === row.id), source = rowsByRef.get(node?.sourceRef);
+    const range = source && leadingIndependentCaption(source.cells || [], row, fieldsById);
+    return range && range.end < source.columns && 1 / source.columns < READABLE_CAPTION_SHARE;
+  })) return result;
+  return completeRootAxis(result, nodes, sourceGrid, fields, mobile).projected;
 }
 
 function directTrackProfile(source, node, projected, rowCount, fields) {

@@ -247,6 +247,7 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
   for (const [id, width] of nativeCaptionDesktopWidths(form)) inlineBudgets.set(id, width);
   const layoutRows = projectedLayoutRows.map((row, rowIndex) => {
     const requiresTopologyMarkers = row.cells.some((cell) => cell.ownerNodeId !== row.id);
+    const mobileProjection = adaptive ? mobileRows.get(row.id) || row : row;
     const mobileGrid = adaptive
       ? { colsStyle: mobileRows.get(row.id)?.colsStyle || row.colsStyle }
       : mobileNumberGrid(row, mobileBudgets, mobileCaptions);
@@ -261,9 +262,9 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
         : undefined,
       ...(mobileGrid ? { mobileGrid: {
         ...mobileGrid,
-        rows: row.rows,
-        columns: row.columns,
-        cells: row.cells.filter(cell => cell.refType !== "layout").map(cell => ({
+        rows: mobileProjection.rows,
+        columns: mobileProjection.columns,
+        cells: mobileProjection.cells.filter(cell => cell.refType !== "layout").map(cell => ({
           fieldIds: cell.refIds,
           row: cell.row,
           column: cell.column,
