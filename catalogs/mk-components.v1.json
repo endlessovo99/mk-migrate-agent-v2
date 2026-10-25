@@ -1,6 +1,6 @@
 {
   "id": "mk-components",
-  "version": "2026-10-15.v18",
+  "version": "2026-10-25.v19",
   "components": [
     {
       "componentId": "xform-button",
@@ -197,6 +197,7 @@
         "properties": {
           "required": { "type": "boolean" },
           "readOnly": { "type": "boolean" },
+          "readOnlyPresentation": { "type": "string", "enum": ["all-options"] },
           "hiddenLabel": { "type": "boolean" },
           "options": { "$ref": "#/$defs/options" },
           "defaultValue": { "$ref": "#/$defs/literalDefaultValue" }

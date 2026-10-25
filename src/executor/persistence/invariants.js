@@ -1,6 +1,6 @@
 /** @typedef {"verified" | "mismatch" | "decode_failed" | "not_expected"} PartitionStatus */
 
-export const INVARIANT_VERSION = 41;
+export const INVARIANT_VERSION = 42;
 
 export const EXECUTABLE_WORKFLOW_NODE_TYPES = Object.freeze([
   "generalStart",

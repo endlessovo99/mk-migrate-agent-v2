@@ -728,6 +728,7 @@ function sourcePropsFromField(field) {
     designerValues: field.source?.designerValues,
     textPresentation: field.source?.textPresentation,
     designerRadioLayoutLiteral: field.source?.designerRadioLayoutLiteral,
+    radioReadOnlySourceFact: field.source?.radioReadOnlySourceFact,
     runtimeTextReadOnly: field.source?.runtimeTextReadOnly,
     runtimeSelectEmpty: field.source?.runtimeSelectEmpty,
     runtimeNumberDisplayWidth: field.source?.runtimeNumberDisplayWidth,

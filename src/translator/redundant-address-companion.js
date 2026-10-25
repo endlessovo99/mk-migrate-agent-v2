@@ -57,8 +57,12 @@ export function foldRedundantAddressCompanions(form, source) {
 }
 
 function semanticReferences(field) {
-  // Observational caption evidence inventories DOM identities and scripts; it
+  // Observational evidence inventories DOM identities and scripts; it
   // is not another control's executable/value dependency on this companion.
   const { staticCaptionFact, staticCaptionIssue, captionStructure, captionStructureIssue, ...sourceProps } = field.sourceProps || {};
+  if (sourceProps.radioReadOnlySourceFact?.version === 1 &&
+      sourceProps.radioReadOnlySourceFact.kind === 'static-main-radio-group') {
+    delete sourceProps.radioReadOnlySourceFact;
+  }
   return JSON.stringify({ ...field, sourceProps });
 }

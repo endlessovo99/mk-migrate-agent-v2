@@ -5,8 +5,10 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 
 import { buildDryRunPlan } from "../../src/executor/dry-run.js";
-import { draftSourceDraft } from "../../src/translator/index.js";
-import { checkTrust } from "../../src/dsl/trust.js";
+import { draftSourceDraft, cleanSourceFile } from "../../src/translator/index.js";
+import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { attachMigrationPolicies, migrationPolicySourceDigest } from "../../src/translator/approved-migration-policies.js";
+import { buildRadioReadOnlyPresentationDecision } from "../../src/translator/radio-readonly-presentation.js";
 import { sha256Digest } from "../../src/agent-review/digest.js";
 import { NEWOA_SIT_BASE_URL } from "../../src/executor/newoa-client.js";
 import {
@@ -26,7 +28,32 @@ const CREDENTIALS = Object.freeze({
 });
 
 describe("transfer-record reconciliation Route", () => {
-  it("does not bridge v14 input maxLength even when its v18 source proof is otherwise valid", async () => {
+  it("does not reconcile a valid new readonly-radio policy through the retained v14 metadata bridge", async () => {
+    const raw = cleanSourceFile("tests/fixtures/route-validation/radio-readonly-presentation");
+    const stripFlow = value => { if (value && typeof value === "object") { delete value.contentFlow; Object.values(value).forEach(stripFlow); } };
+    stripFlow(raw.form.layout);
+    const decision = buildRadioReadOnlyPresentationDecision(raw, ["source.form.control.fd_leader"]);
+    const sourceDraft = attachMigrationPolicies(raw, { version: 1, sourceDraftSha256: migrationPolicySourceDigest(raw),
+      scope: { baseUrl: NEWOA_SIT_BASE_URL, targetCategoryId: CATEGORY_ID },
+      authorization: { actor: "hypothetical-fixture-only", evidenceSha256: sha256Digest("No real authorization") }, decisions: [decision] });
+    const draft = draftSourceDraft(sourceDraft), dsl = createTrustedMigrationDsl(sourceDraft, draft, {
+      externalAgentReviewed: true, reviewerName: "fixture", sourceDraftDigest: sha256Digest(sourceDraft)
+    });
+    assert.equal(checkTrust(sourceDraft, dsl).ok, true);
+    const fixture = reconciliationFixture();
+    fixture.dsl = dsl; fixture.sourceDraft = sourceDraft;
+    fixture.dsl.catalogs.components.version = "2026-08-28.v14";
+    fixture.priorExecutionReport.plan.catalogs.components.version = "2026-08-28.v14";
+    fixture.dslDigest = reconciliationEvidenceDigest(fixture.dsl);
+    fixture.priorReportDigest = reconciliationEvidenceDigest(fixture.priorExecutionReport);
+    const client = new ReconciliationFakeClient(fixture.template);
+    const result = await reconcileTransferRecord(fixture.dsl, reconcileOptions(fixture, { client, sourceDraft, priorExecutionReport: fixture.priorExecutionReport }));
+    assert.equal(result.ok, false);
+    assert.ok(result.diagnostics.some(d => d.code === "catalog.components.version_mismatch"), JSON.stringify(result.diagnostics));
+    assert.equal(client.calls.length, 0);
+  });
+
+  it("does not bridge v14 input maxLength even when its v19 source proof is otherwise valid", async () => {
     const fixture = reconciliationFixture();
     const field = fixture.dsl.form.fields.find((field) => field.componentId === "xform-input");
     const source = fixture.sourceDraft.form.controls.find((source) => source.sourceRef === field.sourceRef);
@@ -235,9 +262,9 @@ describe("transfer-record reconciliation Route", () => {
     assert.equal(client.hasTemplateWrite(), false);
   });
 
-  it("bridges evidenced v14 to current v18 only for readback verification", async () => {
+  it("bridges evidenced v14 to current v19 only for readback verification", async () => {
     const fixture = reconciliationFixture();
-    assert.equal(fixture.dsl.catalogs.components.version, "2026-10-15.v18");
+    assert.equal(fixture.dsl.catalogs.components.version, "2026-10-25.v19");
     fixture.dsl.catalogs.components.version = "2026-08-28.v14";
     fixture.priorExecutionReport.plan.catalogs.components.version = "2026-08-28.v14";
     fixture.dslDigest = reconciliationEvidenceDigest(fixture.dsl);

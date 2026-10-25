@@ -384,7 +384,7 @@ function reconciliationDsl(sourceDraft, priorSourceDraft, input, priorExecutionR
   const toVersion = CATALOG_VERSIONS.components;
   if (
     fromVersion !== "2026-08-28.v14" ||
-    !["2026-09-01.v15", "2026-09-12.v16", "2026-10-15.v17", "2026-10-15.v18"].includes(toVersion) ||
+    !["2026-09-01.v15", "2026-09-12.v16", "2026-10-15.v17", "2026-10-15.v18", "2026-10-25.v19"].includes(toVersion) ||
     priorExecutionReport?.plan?.catalogs?.components?.version !== fromVersion ||
     usesV15OnlyMonthPattern(input) || hasPostV14Presentation(input)
   ) {
@@ -430,6 +430,8 @@ function hasPostV14Presentation(dsl) {
       candidate.componentId === "xform-hyperlinks" && Object.hasOwn(candidate.props || {}, "readOnly")
     ) || (
       candidate.componentId === "xform-input" && Object.hasOwn(candidate.props || {}, "maxLength")
+    ) || (
+      candidate.componentId === "xform-radio" && Object.hasOwn(candidate.props || {}, "readOnlyPresentation")
     )));
 }
 

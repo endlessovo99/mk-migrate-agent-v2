@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
+import { foldRedundantAddressCompanions } from "../../src/translator/redundant-address-companion.js";
 const draft = draftSourceDraft(cleanSourceFile("tests/fixtures/route-validation/travel-applicant-input/route-travel-applicant_SysFormTemplate.xml"));
 const inputId = "fd_3293e0c29f78ac.name", addressId = "fd_3293e0c29f78ac";
 describe("travel advance native applicant selector", () => {
@@ -25,5 +26,41 @@ describe("travel advance native applicant selector", () => {
     const source = cleanSourceFile("tests/fixtures/route-validation/travel-applicant-input/route-travel-applicant_SysFormTemplate.xml");
     source.scripts.evidence = inputId;
     assert.ok(draftSourceDraft(source).form.fields.some(f => f.id === inputId));
+  });
+
+  it("folds despite another radio's DOM inventory and retains the complete observational fact", () => {
+    const source = cleanSourceFile("tests/fixtures/route-validation/travel-applicant-input/route-travel-applicant_SysFormTemplate.xml");
+    const carrier = source.form.controls.find(f => f.sourceProps?.radioReadOnlySourceFact?.kind === "static-main-radio-group" &&
+      JSON.stringify(f.sourceProps.radioReadOnlySourceFact).includes(inputId));
+    assert.ok(carrier, "The real radio observation must inventory the companion ID");
+    const before = structuredClone(source), result = draftSourceDraft(source);
+    assert.equal(result.form.fields.some(f => f.id === inputId), false);
+    assert.deepEqual(source, before, "Dependency projection must not delete source evidence");
+    assert.deepEqual(result.form.fields.find(f => f.sourceRef === carrier.sourceRef).sourceProps.radioReadOnlySourceFact,
+      carrier.sourceProps.radioReadOnlySourceFact);
+  });
+
+  it("still blocks the fold for real script, workflow, rule and other-field dependencies", () => {
+    const source = cleanSourceFile("tests/fixtures/route-validation/travel-applicant-input/route-travel-applicant_SysFormTemplate.xml");
+    // Obtain the actual unmapped pair at this module's public seam by retaining
+    // it with a genuine source read, then test each independent dependency.
+    const staged = structuredClone(source);
+    staged.scripts.sources[0].javascript += `\nGetXFormFieldValueById(${JSON.stringify(inputId)});`;
+    const form = draftSourceDraft(staged).form;
+    assert.ok(form.fields.some(f => f.id === inputId));
+    assert.equal(foldRedundantAddressCompanions(form, source).fields.some(f => f.id === inputId), false,
+      "The unreferenced pair must fold despite the DOM observation");
+    for (const [name, edit] of [
+      ["source script read", (_form, s) => { s.scripts.sources[0].javascript += `\nGetXFormFieldValueById(${JSON.stringify(inputId)});`; }],
+      ["workflow field operand", (_form, s) => { s.workflow = { nodes: [{ id: "N1", condition: { fieldId: inputId, operator: "notEmpty" } }] }; }],
+      ["form rule operand", (_form, s) => { s.formRules = { linkage: [{ id: "dependent-rule", when: { fieldId: inputId, operator: "notEmpty" }, effects: [] }] }; }],
+      ["other-field source formula", (f) => { f.fields.find(x => x.componentId === "xform-radio").sourceProps.designerValues.formula = `$${inputId}$`; }],
+      ["unknown same-named property", (f) => { f.fields.find(x => x.componentId === "xform-radio").sourceProps.radioReadOnlySourceFact = { version: 1, kind: "business-dependency", fieldId: inputId }; }]
+    ]) {
+      const f = structuredClone(form), s = structuredClone(source); edit(f, s);
+      const before = structuredClone({ f, s }), result = foldRedundantAddressCompanions(f, s);
+      assert.ok(result.fields.some(x => x.id === inputId), name);
+      assert.deepEqual({ f, s }, before, name + " must not mutate its inputs");
+    }
   });
 });

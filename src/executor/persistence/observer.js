@@ -538,6 +538,9 @@ function observeExecutableProps(controlProps = {}, native = {}) {
   }));
   if (component === "xform-checkbox") props.nativeCheckboxLayout = nativeCheckboxLayout(controlProps);
   if (component === "xform-radio") props.nativeRadioLayout = nativeRadioLayout(controlProps);
+  if (component === "xform-radio") {
+    props.nativeRadioReadOnlyPresentation = observeRadioReadOnlyPresentation(controlProps);
+  }
   if (["xform-input", "xform-datetime"].includes(component)) {
     props.nativeInlineEditorState = observeInlineEditorState(controlProps, native.attribute?.config?.labelProps);
   }
@@ -1184,6 +1187,16 @@ function observeInlineEditorState(controlProps, labelProps = {}) {
   };
 }
 
+function observeRadioReadOnlyPresentation(controlProps = {}, styles = {}) {
+  // Captured native defaults omit this prop; only the exact allItem token is
+  // evidenced. JavaScript's label fallback does not prove other values valid.
+  return Object.fromEntries(["desktop", "mobile"].map(platform => {
+    const effective = { ...controlProps, ...controlProps[platform], ...styles?.[platform] };
+    return [platform, effective.type !== (platform === "desktop" ? "@elem/xform-radio" : "@elem/xform-m-radio")
+      ? "invalid" : effective.showContent === "allItem" ? "all-options" : effective.showContent === undefined ? "selected-label" : "invalid"];
+  }));
+}
+
 function applyViewControlStyles(fields, viewModel, models) {
   const scene = safeParseObject(viewModel?.fdConfig);
   const controlStyle = scene.controlStyle && typeof scene.controlStyle === "object" && !Array.isArray(scene.controlStyle)
@@ -1193,6 +1206,8 @@ function applyViewControlStyles(fields, viewModel, models) {
     if (field.component === "xform-radio") {
       const native = models.flatMap(model => model.fdFields || []).find(native => native.fdName === field.id);
       field.props.nativeRadioLayout = nativeRadioLayout(safeParseObject(native?.fdAttribute).config?.controlProps, controlStyle[field.id]);
+      field.props.nativeRadioReadOnlyPresentation = observeRadioReadOnlyPresentation(
+        safeParseObject(native?.fdAttribute).config?.controlProps, controlStyle[field.id]);
     }
     const hint = field.props?.nativeMobileNumberHint;
     if (!hint) continue;

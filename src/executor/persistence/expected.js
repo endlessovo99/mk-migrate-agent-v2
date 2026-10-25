@@ -454,6 +454,10 @@ function executableProps(field = {}, form = {}, context = {}) {
   if (checkbox) props.nativeCheckboxLayout = checkbox.expected;
   const radio = sourceRadioLayouts(form).get(field.sourceRef);
   if (radio) props.nativeRadioLayout = radio.expected;
+  if (field.componentId === "xform-radio") {
+    props.nativeRadioReadOnlyPresentation = Object.fromEntries(["desktop", "mobile"].map(platform =>
+      [platform, field.props?.readOnlyPresentation === "all-options" ? "all-options" : "selected-label"]));
+  }
   if (field.componentId === "xform-number") props.nativeNumberControls = !sourceNumberEditors(form).has(field.id);
   if (field.componentId === "xform-number" && !Object.hasOwn(field.props || {}, "placeholder")) {
     props.nativeMobileNumberHint = {

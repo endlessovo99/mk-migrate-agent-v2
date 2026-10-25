@@ -16,6 +16,8 @@ import { applyRequiredTemplateNumberRule } from "../../src/executor/template-num
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { sampleBaseTemplate, sampleEnvelope } from "../helpers/persistence.js";
 import { prepareRequiredTemplateTheme } from "../../src/executor/template-theme.js";
+import { attachMigrationPolicies, migrationPolicySourceDigest } from "../../src/translator/approved-migration-policies.js";
+import { buildRadioReadOnlyPresentationDecision } from "../../src/translator/radio-readonly-presentation.js";
 
 const TARGET_TEMPLATE_ID = "locked-target-template-id";
 const WORKFLOW_TEMPLATE_ID = "locked-workflow-template-id";
@@ -27,9 +29,35 @@ const CREDENTIALS = Object.freeze({
 });
 
 describe("scoped locked-draft repair Route", () => {
-  it("bridges v14 authorization evidence to v18 without changing the retained artifacts or repair paths", async () => {
+  it("does not carry a valid new readonly-radio policy through the retained v14 metadata bridge", async () => {
+    const raw = cleanSourceFile("tests/fixtures/route-validation/radio-readonly-presentation");
+    removeContentFlow(raw.form.layout);
+    const decision = buildRadioReadOnlyPresentationDecision(raw, ["source.form.control.fd_leader"]);
+    const sourceDraft = attachMigrationPolicies(raw, { version: 1, sourceDraftSha256: migrationPolicySourceDigest(raw),
+      scope: { baseUrl: "https://p-sit.onewo.com", targetCategoryId: CATEGORY_ID },
+      authorization: { actor: "hypothetical-fixture-only", evidenceSha256: sha256Digest("No real authorization") }, decisions: [decision] });
+    const draft = draftSourceDraft(sourceDraft), dsl = createTrustedMigrationDsl(sourceDraft, draft, {
+      externalAgentReviewed: true, reviewerName: "fixture", sourceDraftDigest: sha256Digest(sourceDraft)
+    });
+    assert.equal(checkTrust(sourceDraft, dsl).ok, true);
     const fixture = authorizationFixture({ historical: true });
-    assert.equal(fixture.dsl.catalogs.components.version, "2026-10-15.v18");
+    fixture.dsl = dsl; fixture.sourceDraft = sourceDraft;
+    fixture.dsl.catalogs.components.version = "2026-08-28.v14";
+    fixture.priorExecutionReport.plan.catalogs.components.version = "2026-08-28.v14";
+    fixture.dslDigest = lockedDraftEvidenceDigest(fixture.dsl);
+    fixture.priorReportDigest = lockedDraftEvidenceDigest(fixture.priorExecutionReport);
+    const client = new LockedDraftFakeClient(fixture.template, fixture.workflow);
+    const result = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
+      client, sourceDraft, priorExecutionReport: fixture.priorExecutionReport, repairKind: "template_authorization"
+    }));
+    assert.equal(result.ok, false);
+    assert.ok(result.diagnostics.some(d => d.code === "catalog.components.version_mismatch"), JSON.stringify(result.diagnostics));
+    assert.equal(client.calls.length, 0);
+  });
+
+  it("bridges v14 authorization evidence to v19 without changing the retained artifacts or repair paths", async () => {
+    const fixture = authorizationFixture({ historical: true });
+    assert.equal(fixture.dsl.catalogs.components.version, "2026-10-25.v19");
     fixture.dsl.catalogs.components.version = "2026-08-28.v14";
     fixture.priorExecutionReport.plan.catalogs.components.version = "2026-08-28.v14";
     fixture.dslDigest = lockedDraftEvidenceDigest(fixture.dsl);
@@ -72,10 +100,10 @@ describe("scoped locked-draft repair Route", () => {
     assert.ok(result.diagnostics.some((item) => item.code === "catalog.components.version_mismatch"));
   });
 
-  it("keeps calculation evolution limited to v18 and the retained immutable evidence", async () => {
+  it("keeps calculation evolution limited to v19 and the retained immutable evidence", async () => {
     for (const mutation of ["other-version", "current-cap", "stale-prior-dsl", "stale-report"]) {
       const fixture = calculationFixture();
-      assert.equal(fixture.dsl.catalogs.components.version, "2026-10-15.v18");
+      assert.equal(fixture.dsl.catalogs.components.version, "2026-10-25.v19");
       if (mutation === "other-version") { fixture.dsl.catalogs.components.version = "unapproved-component-version"; fixture.dslDigest = lockedDraftEvidenceDigest(fixture.dsl); }
       if (mutation === "current-cap") {
         const field = fixture.dsl.form.fields.flatMap((field) => field.type === "detailTable" ? field.columns : [field]).find((field) => field.componentId === "xform-input");
@@ -174,7 +202,7 @@ describe("scoped locked-draft repair Route", () => {
 
   it("repairs only the three calculation-native paths without saving workflow", async (t) => {
     const fixture = calculationFixture();
-    assert.equal(fixture.dsl.catalogs.components.version, "2026-10-15.v18");
+    assert.equal(fixture.dsl.catalogs.components.version, "2026-10-25.v19");
     const client = new LockedDraftFakeClient(fixture.template);
     const preview = await repairLockedDraft(fixture.dsl, repairOptions(fixture, {
       client,

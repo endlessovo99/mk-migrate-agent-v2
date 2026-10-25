@@ -13,6 +13,7 @@ import { remoteSelectorSourceContracts } from "./remote-selector-source-contract
 import { analyzeOrphanBeforeAnchorWitness } from "./orphan-before-anchor-witness.js";
 import { annotateChinaValueReadOnly, attachClosedMainFieldFacts } from "./closed-main-field-effects.js";
 import { sourceFormRadioOrdinalFact } from "./approved-radio-ordinal-policy.js";
+import { radioReadOnlySourceFacts } from "./radio-readonly-presentation.js";
 import {
   attrValue,
   cleanText,
@@ -72,6 +73,10 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   }
   if (Object.keys(nodeDataAuthorities.nodeDataAuthorities || {}).length) {
     form.nodeDataAuthorities = nodeDataAuthorities.nodeDataAuthorities;
+  }
+  const radioReadOnlyFacts = radioReadOnlySourceFacts(template, form, scripts);
+  for (const field of form.fields || []) if (radioReadOnlyFacts[field.id]) {
+    field.source = { ...field.source, radioReadOnlySourceFact: radioReadOnlyFacts[field.id] };
   }
   const title = String(options.templateName || "").trim() ||
     template.fdName ||

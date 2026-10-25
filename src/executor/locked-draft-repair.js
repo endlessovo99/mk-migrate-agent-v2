@@ -544,7 +544,7 @@ function repairDsl(sourceDraft, priorSourceDraft, input, priorExecutionReport) {
   }
   const fromVersion = input?.catalogs?.components?.version;
   if (
-    fromVersion !== "2026-08-28.v14" || !["2026-09-01.v15", "2026-09-12.v16", "2026-10-15.v17", "2026-10-15.v18"].includes(CATALOG_VERSIONS.components) ||
+    fromVersion !== "2026-08-28.v14" || !["2026-09-01.v15", "2026-09-12.v16", "2026-10-15.v17", "2026-10-15.v18", "2026-10-25.v19"].includes(CATALOG_VERSIONS.components) ||
     hasPostV14Presentation(input) ||
     priorExecutionReport?.plan?.catalogs?.components?.version !== fromVersion
   ) return { ok: false, diagnostics: trust.diagnostics };
@@ -680,7 +680,7 @@ function validateCalculationDslEvolution(priorDsl, currentDsl, report) {
     currentAggregate?.kind !== "aggregate" || currentAggregate.operation !== "sum" ||
     currentRow?.kind !== "formula" ||
     priorDsl?.catalogs?.components?.version !== "2026-08-28.v14" ||
-    !["2026-09-01.v15", "2026-09-12.v16", "2026-10-15.v17", "2026-10-15.v18"].includes(currentDsl?.catalogs?.components?.version) ||
+    !["2026-09-01.v15", "2026-09-12.v16", "2026-10-15.v17", "2026-10-15.v18", "2026-10-25.v19"].includes(currentDsl?.catalogs?.components?.version) ||
     hasPostV14Presentation(priorDsl) || hasPostV14Presentation(currentDsl)
   ) {
     return {
@@ -735,6 +735,8 @@ function hasPostV14Presentation(dsl) {
       candidate.componentId === "xform-hyperlinks" && Object.hasOwn(candidate.props || {}, "readOnly")
     ) || (
       candidate.componentId === "xform-input" && Object.hasOwn(candidate.props || {}, "maxLength")
+    ) || (
+      candidate.componentId === "xform-radio" && Object.hasOwn(candidate.props || {}, "readOnlyPresentation")
     )));
 }
 

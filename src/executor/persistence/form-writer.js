@@ -787,6 +787,9 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang, sourc
     Object.assign(controlProps, nativeCheckboxControlProps(field), checkboxLayout?.nativeProps);
   }
   if (spec.attrType === "radio") Object.assign(controlProps, checkboxLayout?.nativeProps);
+  if (field.componentId === "xform-radio" && field.props?.readOnlyPresentation === "all-options") {
+    controlProps.showContent = "allItem";
+  }
   if (spec.attrType === "attachment") {
     Object.assign(controlProps, {
       showText: false,
