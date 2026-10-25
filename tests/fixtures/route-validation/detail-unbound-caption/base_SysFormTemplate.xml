@@ -1,0 +1,69 @@
+<java class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put"><string>fdId</string><string>detail-caption-base</string></void>
+    <void method="put"><string>fdName</string><string>明细未绑定标题</string></void>
+    <void method="put"><string>fdModelId</string><string>detail-caption-template</string></void>
+    <void method="put"><string>fdDesignerHtml</string><string>
+&lt;table id="root_table" fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;
+&lt;table fd_type="detailsTable" fd_values='{id:"line_items",label:"行项目"}'&gt;&lt;tbody&gt;
+&lt;tr type="titleRow"&gt;
+  &lt;td row="0" column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"quantity_header",content:"数量"}'&gt;数量&lt;/label&gt;&lt;/td&gt;
+  &lt;td row="0" column="1"&gt;&lt;label fd_type="textLabel" fd_values='{id:"price_header",content:"单价"}'&gt;单价&lt;/label&gt;&lt;/td&gt;
+  &lt;td row="0" column="2"&gt;&lt;label fd_type="textLabel" fd_values='{id:"amount_header",content:"金额"}'&gt;金额&lt;/label&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr type="templateRow"&gt;
+  &lt;td row="1" column="0"&gt;
+    &lt;div fd_type="inputText" fd_values='{id:"quantity",_label_bind:"true",_label_bind_id:"quantity_header",label:"数量",width:"60",dataType:"BigDecimal",required:"true",canShow:"true"}'&gt;&lt;input id="quantity" tableName="line_items"/&gt;&lt;/div&gt;
+  &lt;/td&gt;
+  &lt;td row="1" column="1"&gt;
+    &lt;div fd_type="calculation" fd_values='{id:"unit_price",_label_bind:"true",_label_bind_id:"price_header",label:"单价",width:"120",dataType:"BigDecimal",decimal:"13",canShow:"true",readOnly:"true",autoCalculate:"true",expression_id:"$line_items.amount$ / $line_items.quantity$",expression_name:"$行项目.金额$ / $行项目.数量$"}'&gt;&lt;input id="unit_price" tableName="line_items"/&gt;&lt;/div&gt;
+  &lt;/td&gt;
+  &lt;td row="1" column="2"&gt;
+    &lt;div fd_type="inputText" fd_values='{id:"amount",_label_bind:"true",_label_bind_id:"amount_header",label:"金额",width:"120",dataType:"BigDecimal",decimal:"2",required:"true",canShow:"true"}'&gt;&lt;input id="amount" tableName="line_items"/&gt;&lt;/div&gt;
+    &lt;div fd_type="calculation" fd_values='{id:"computed_total",_label_bind:"false",_label_bind_id:"price_header",label:"计算总价",width:"1",dataType:"BigDecimal",canShow:"true",readOnly:"true",autoCalculate:"true",expression_id:"$line_items.quantity$ * $line_items.unit_price$",expression_name:"$行项目.数量$ * $行项目.单价$"}' style="WIDTH:1px;DISPLAY:inline"&gt;&lt;input id="computed_total" tableName="line_items"/&gt;&lt;/div&gt;
+    &lt;div fd_type="inputText" fd_values='{id:"hidden_cache",_label_bind:"false",_label_bind_id:"price_header",label:"内部缓存",width:"0",dataType:"String",canShow:"false",readOnly:"true"}'&gt;&lt;input id="hidden_cache" type="hidden" tableName="line_items"/&gt;&lt;/div&gt;
+  &lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;table fd_type="detailsTable" fd_values='{id:"address_rows",label:"地址负对照"}'&gt;&lt;tbody&gt;
+&lt;tr type="titleRow"&gt;
+  &lt;td row="0" column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"old_address_header",content:"历史列"}'&gt;历史列&lt;/label&gt;&lt;/td&gt;
+  &lt;td row="0" column="1"&gt;&lt;label fd_type="textLabel" fd_values='{id:"current_address_header",content:"调入部门"}'&gt;调入部门&lt;/label&gt;&lt;/td&gt;
+  &lt;td row="0" column="2"&gt;&lt;label fd_type="textLabel" fd_values='{id:"notes_header",content:"备注"}'&gt;备注&lt;/label&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;tr type="templateRow"&gt;&lt;td row="1" column="0"&gt;&lt;/td&gt;
+  &lt;td row="1" column="1"&gt;
+    &lt;div fd_type="inputText" fd_values='{id:"selected_org.name",_label_bind:"true",_label_bind_id:"current_address_header",label:"调入部门",width:"95",dataType:"String",canShow:"true",readOnly:"false",required:"false"}'&gt;&lt;input id="selected_org.name" tableName="address_rows"/&gt;&lt;/div&gt;
+    &lt;label fd_type="address" fd_values='{id:"selected_org",_label_bind:"false",_label_bind_id:"old_address_header",label:"部门选择",width:"0",_orgType:"ORG_TYPE_DEPT",_org_dept:"true",canShow:"true",readOnly:"false",required:"false",multiSelect:"false"}'&gt;&lt;input id="selected_org" tableName="address_rows"/&gt;&lt;a&gt;选择&lt;/a&gt;&lt;/label&gt;
+  &lt;/td&gt;
+  &lt;td row="1" column="2"&gt;&lt;div fd_type="inputText" fd_values='{id:"free_note",_label_bind:"false",_label_bind_id:"old_address_header",label:"备注输入",width:"95",dataType:"String",canShow:"true",readOnly:"false",required:"false"}'&gt;&lt;input id="free_note" tableName="address_rows"/&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;
+    </string></void>
+    <void method="put"><string>fdDisplayJsp</string><string>
+&lt;table&gt;&lt;tbody&gt;&lt;tr type="titleRow"&gt;&lt;td column="0"&gt;数量&lt;/td&gt;&lt;td column="1"&gt;单价&lt;/td&gt;&lt;td column="2"&gt;金额&lt;/td&gt;&lt;/tr&gt;
+&lt;tr type="templateRow"&gt;
+&lt;td column="0"&gt;&lt;xform:xtext property="extendDataFormInfo.value(line_items.!{index}.quantity)" dataType="BigDecimal" subject="数量"/&gt;&lt;/td&gt;
+&lt;td column="1"&gt;&lt;xform:xtext property="extendDataFormInfo.value(line_items.!{index}.unit_price)" dataType="BigDecimal" subject="单价" style="WIDTH:120px" htmlElementProperties="calculation='true' readonly isRow='true' expression='$line_items.amount$ / $line_items.quantity$'"/&gt;&lt;/td&gt;
+&lt;td column="2"&gt;&lt;xform:xtext property="extendDataFormInfo.value(line_items.!{index}.amount)" dataType="BigDecimal" subject="金额" style="WIDTH:120px"/&gt;&lt;xform:xtext property="extendDataFormInfo.value(line_items.!{index}.computed_total)" dataType="BigDecimal" subject="计算总价" title="计算总价" style="WIDTH:1px;DISPLAY:inline" htmlElementProperties="calculation='true' readonly isRow='true' expression='$line_items.quantity$ * $line_items.unit_price$'"/&gt;&lt;input type="hidden" name="line_items.hidden_cache"/&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;table&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;历史列&lt;/td&gt;&lt;td&gt;调入部门&lt;/td&gt;&lt;td&gt;备注&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;xform:xtext property="extendDataFormInfo.value(address_rows.!{index}.selected_org.name)" style="WIDTH:95px" required="false"/&gt;&lt;xform:editShow&gt;&lt;xform:address propertyId="extendDataFormInfo.value(address_rows.!{index}.selected_org.id)" propertyName="extendDataFormInfo.value(address_rows.!{index}.selected_org.name)" style="WIDTH:0px" required="false" orgType="ORG_TYPE_DEPT"/&gt;&lt;/xform:editShow&gt;&lt;/td&gt;
+&lt;td&gt;&lt;xform:xtext property="extendDataFormInfo.value(address_rows.!{index}.free_note)" style="WIDTH:95px" required="false"/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+    </string></void>
+    <void method="put"><string>fdMetadataXml</string><string>
+&lt;metadata&gt;&lt;extendSubTableProperty name="line_items" label="行项目"&gt;
+&lt;extendSimpleProperty name="quantity" label="数量" type="BigDecimal" notNull="true"/&gt;
+&lt;extendSimpleProperty name="unit_price" label="单价" type="BigDecimal" scale="13"/&gt;
+&lt;extendSimpleProperty name="amount" label="金额" type="BigDecimal" scale="2" notNull="true"/&gt;
+&lt;extendSimpleProperty name="computed_total" label="计算总价" type="BigDecimal"/&gt;
+&lt;extendSimpleProperty name="hidden_cache" label="内部缓存" type="String" canDisplay="false"/&gt;
+&lt;/extendSubTableProperty&gt;
+&lt;extendSubTableProperty name="address_rows" label="地址负对照"&gt;
+&lt;extendSimpleProperty name="selected_org.name" label="调入部门" type="String"/&gt;
+&lt;extendElementProperty name="selected_org" label="部门选择" type="com.landray.kmss.sys.organization.model.SysOrgElement"/&gt;
+&lt;extendSimpleProperty name="free_note" label="备注输入" type="String"/&gt;
+&lt;/extendSubTableProperty&gt;
+&lt;/metadata&gt;
+    </string></void>
+  </object>
+</java>

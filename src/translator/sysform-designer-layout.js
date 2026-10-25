@@ -2461,6 +2461,10 @@ function isDetailTitleRow(rowHtml) {
 function detailColumnWithTitleLabel(control, titleLabels) {
   const values = control.source?.designerValues || {};
   if (String(values._label_bind).toLowerCase() !== "false") return control;
+  // Unbound calculations can retain another column's old caption id. Preserve
+  // their physical header without changing other families' composite behavior.
+  if (String(control.source?.designerType || "").toLowerCase() === "calculation" &&
+      control.source?.detailHeaderCaption?.relation === "same-detail-column-header") return control;
   const title = titleLabels.get(values._label_bind_id);
   if (!title) return control;
   return withUnboundDetailDisplayText({

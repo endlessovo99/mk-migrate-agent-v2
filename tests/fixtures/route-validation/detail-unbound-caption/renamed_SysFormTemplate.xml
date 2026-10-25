@@ -1,0 +1,69 @@
+<java class="java.beans.XMLDecoder">
+  <object class="java.util.HashMap">
+    <void method="put"><string>fdId</string><string>renamed-detail-caption</string></void>
+    <void method="put"><string>fdName</string><string>重命名明细标题</string></void>
+    <void method="put"><string>fdModelId</string><string>renamed-detail-template</string></void>
+    <void method="put"><string>fdDesignerHtml</string><string>
+&lt;table id="outer_grid" fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;
+&lt;table fd_type="detailsTable" fd_values='{id:"cargo_rows",label:"货项"}'&gt;&lt;tbody&gt;
+&lt;tr type="titleRow"&gt;
+  &lt;td row="0" column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"units_heading",content:"件数"}'&gt;件数&lt;/label&gt;&lt;/td&gt;
+  &lt;td row="0" column="1"&gt;&lt;label fd_type="textLabel" fd_values='{id:"rate_heading",content:"核算单价"}'&gt;核算单价&lt;/label&gt;&lt;/td&gt;
+  &lt;td row="0" column="2"&gt;&lt;label fd_type="textLabel" fd_values='{id:"charge_heading",content:"申报金额"}'&gt;申报金额&lt;/label&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr type="templateRow"&gt;
+  &lt;td row="1" column="0"&gt;
+    &lt;div fd_type="inputText" fd_values='{id:"units",_label_bind:"true",_label_bind_id:"units_heading",label:"件数",width:"60",dataType:"BigDecimal",required:"true",canShow:"true"}'&gt;&lt;input id="units" tableName="cargo_rows"/&gt;&lt;/div&gt;
+  &lt;/td&gt;
+  &lt;td row="1" column="1"&gt;
+    &lt;div fd_type="calculation" fd_values='{id:"rate",_label_bind:"true",_label_bind_id:"rate_heading",label:"核算单价",width:"120",dataType:"BigDecimal",decimal:"13",canShow:"true",readOnly:"true",autoCalculate:"true",expression_id:"$cargo_rows.charge$ / $cargo_rows.units$",expression_name:"$货项.申报金额$ / $货项.件数$"}'&gt;&lt;input id="rate" tableName="cargo_rows"/&gt;&lt;/div&gt;
+  &lt;/td&gt;
+  &lt;td row="1" column="2"&gt;
+    &lt;div fd_type="inputText" fd_values='{id:"charge",_label_bind:"true",_label_bind_id:"charge_heading",label:"申报金额",width:"120",dataType:"BigDecimal",decimal:"2",required:"true",canShow:"true"}'&gt;&lt;input id="charge" tableName="cargo_rows"/&gt;&lt;/div&gt;
+    &lt;div fd_type="calculation" fd_values='{id:"extended_value",_label_bind:"false",_label_bind_id:"rate_heading",label:"校核总额",width:"1",dataType:"BigDecimal",canShow:"true",readOnly:"true",autoCalculate:"true",expression_id:"$cargo_rows.units$ * $cargo_rows.rate$",expression_name:"$货项.件数$ * $货项.核算单价$"}' style="WIDTH:1px;DISPLAY:inline"&gt;&lt;input id="extended_value" tableName="cargo_rows"/&gt;&lt;/div&gt;
+    &lt;div fd_type="inputText" fd_values='{id:"hidden_token",_label_bind:"false",_label_bind_id:"rate_heading",label:"辅助缓存",width:"0",dataType:"String",canShow:"false",readOnly:"true"}'&gt;&lt;input id="hidden_token" type="hidden" tableName="cargo_rows"/&gt;&lt;/div&gt;
+  &lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;table fd_type="detailsTable" fd_values='{id:"assignment_rows",label:"组织负对照"}'&gt;&lt;tbody&gt;
+&lt;tr type="titleRow"&gt;
+  &lt;td row="0" column="0"&gt;&lt;label fd_type="textLabel" fd_values='{id:"prior_heading",content:"原列"}'&gt;原列&lt;/label&gt;&lt;/td&gt;
+  &lt;td row="0" column="1"&gt;&lt;label fd_type="textLabel" fd_values='{id:"destination_heading",content:"目标部门"}'&gt;目标部门&lt;/label&gt;&lt;/td&gt;
+  &lt;td row="0" column="2"&gt;&lt;label fd_type="textLabel" fd_values='{id:"comment_heading",content:"附注"}'&gt;附注&lt;/label&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;tr type="templateRow"&gt;&lt;td row="1" column="0"&gt;&lt;/td&gt;
+  &lt;td row="1" column="1"&gt;
+    &lt;div fd_type="inputText" fd_values='{id:"chosen_department.name",_label_bind:"true",_label_bind_id:"destination_heading",label:"目标部门",width:"95",dataType:"String",canShow:"true",readOnly:"false",required:"false"}'&gt;&lt;input id="chosen_department.name" tableName="assignment_rows"/&gt;&lt;/div&gt;
+    &lt;label fd_type="address" fd_values='{id:"chosen_department",_label_bind:"false",_label_bind_id:"prior_heading",label:"组织选择",width:"0",_orgType:"ORG_TYPE_DEPT",_org_dept:"true",canShow:"true",readOnly:"false",required:"false",multiSelect:"false"}'&gt;&lt;input id="chosen_department" tableName="assignment_rows"/&gt;&lt;a&gt;选择&lt;/a&gt;&lt;/label&gt;
+  &lt;/td&gt;
+  &lt;td row="1" column="2"&gt;&lt;div fd_type="inputText" fd_values='{id:"extra_comment",_label_bind:"false",_label_bind_id:"prior_heading",label:"附注输入",width:"95",dataType:"String",canShow:"true",readOnly:"false",required:"false"}'&gt;&lt;input id="extra_comment" tableName="assignment_rows"/&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;
+    </string></void>
+    <void method="put"><string>fdDisplayJsp</string><string>
+&lt;table&gt;&lt;tbody&gt;&lt;tr type="titleRow"&gt;&lt;td column="0"&gt;件数&lt;/td&gt;&lt;td column="1"&gt;核算单价&lt;/td&gt;&lt;td column="2"&gt;申报金额&lt;/td&gt;&lt;/tr&gt;
+&lt;tr type="templateRow"&gt;
+&lt;td column="0"&gt;&lt;xform:xtext property="extendDataFormInfo.value(cargo_rows.!{index}.units)" dataType="BigDecimal" subject="件数"/&gt;&lt;/td&gt;
+&lt;td column="1"&gt;&lt;xform:xtext property="extendDataFormInfo.value(cargo_rows.!{index}.rate)" dataType="BigDecimal" subject="核算单价" style="WIDTH:120px" htmlElementProperties="calculation='true' readonly isRow='true' expression='$cargo_rows.charge$ / $cargo_rows.units$'"/&gt;&lt;/td&gt;
+&lt;td column="2"&gt;&lt;xform:xtext property="extendDataFormInfo.value(cargo_rows.!{index}.charge)" dataType="BigDecimal" subject="申报金额" style="WIDTH:120px"/&gt;&lt;xform:xtext property="extendDataFormInfo.value(cargo_rows.!{index}.extended_value)" dataType="BigDecimal" subject="校核总额" title="校核总额" style="WIDTH:1px;DISPLAY:inline" htmlElementProperties="calculation='true' readonly isRow='true' expression='$cargo_rows.units$ * $cargo_rows.rate$'"/&gt;&lt;input type="hidden" name="cargo_rows.hidden_token"/&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;table&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;原列&lt;/td&gt;&lt;td&gt;目标部门&lt;/td&gt;&lt;td&gt;附注&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;xform:xtext property="extendDataFormInfo.value(assignment_rows.!{index}.chosen_department.name)" style="WIDTH:95px" required="false"/&gt;&lt;xform:editShow&gt;&lt;xform:address propertyId="extendDataFormInfo.value(assignment_rows.!{index}.chosen_department.id)" propertyName="extendDataFormInfo.value(assignment_rows.!{index}.chosen_department.name)" style="WIDTH:0px" required="false" orgType="ORG_TYPE_DEPT"/&gt;&lt;/xform:editShow&gt;&lt;/td&gt;
+&lt;td&gt;&lt;xform:xtext property="extendDataFormInfo.value(assignment_rows.!{index}.extra_comment)" style="WIDTH:95px" required="false"/&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+    </string></void>
+    <void method="put"><string>fdMetadataXml</string><string>
+&lt;metadata&gt;&lt;extendSubTableProperty name="cargo_rows" label="货项"&gt;
+&lt;extendSimpleProperty name="units" label="件数" type="BigDecimal" notNull="true"/&gt;
+&lt;extendSimpleProperty name="rate" label="核算单价" type="BigDecimal" scale="13"/&gt;
+&lt;extendSimpleProperty name="charge" label="申报金额" type="BigDecimal" scale="2" notNull="true"/&gt;
+&lt;extendSimpleProperty name="extended_value" label="校核总额" type="BigDecimal"/&gt;
+&lt;extendSimpleProperty name="hidden_token" label="辅助缓存" type="String" canDisplay="false"/&gt;
+&lt;/extendSubTableProperty&gt;
+&lt;extendSubTableProperty name="assignment_rows" label="组织负对照"&gt;
+&lt;extendSimpleProperty name="chosen_department.name" label="目标部门" type="String"/&gt;
+&lt;extendElementProperty name="chosen_department" label="组织选择" type="com.landray.kmss.sys.organization.model.SysOrgElement"/&gt;
+&lt;extendSimpleProperty name="extra_comment" label="附注输入" type="String"/&gt;
+&lt;/extendSubTableProperty&gt;
+&lt;/metadata&gt;
+    </string></void>
+  </object>
+</java>
