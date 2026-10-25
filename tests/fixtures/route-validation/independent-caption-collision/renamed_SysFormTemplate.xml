@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>renamed-caption-form</string></void>
+<void method="put"><string>fdModelId</string><string>renamed-caption-model</string></void>
+<void method="put"><string>fdName</string><string>Renamed independent caption</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table id="table_approval" fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;
+&lt;td class="td_normal_title" row="0" column="0" width="180"&gt;&lt;div id="right_heading" fd_type="right" fd_values='{id:"right_heading"}'&gt;&lt;table&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;权限区段1&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;label style="DISPLAY:inline" fd_type="textLabel" fd_values='{id:"fd_heading",content:"主责部门部门领导是否认可",font:"",size:"",color:"",effect:"",b:"false",i:"false",underline:"false"}'&gt;主责部门部门领导是否认可&lt;/label&gt;&lt;span mode_N2="view" mode_N3="hidden"&gt;&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;td row="0" column="1,2,3" width="600"&gt;&lt;div id="right_answer" fd_type="right" fd_values='{id:"right_answer"}'&gt;&lt;div style="DISPLAY:inline" fd_type="inputRadio" fd_values='{id:"fd_answer",_label_bind:"false",_label_bind_id:"",label:"主责部门部门领导是否认可",dataType:"String",items:"认可|A;不认可|B",required:"true",defaultValue:"",alignment:"H"}'&gt;&lt;input id="fd_answer" type="radio" value="A"/&gt;&lt;label attach="fd_answer"&gt;认可&lt;/label&gt;&lt;input type="radio" value="B" attach="fd_answer"/&gt;&lt;label attach="fd_answer"&gt;不认可&lt;/label&gt;&lt;/div&gt;&lt;span mode_N2="edit" mode_N3="view"&gt;&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;table id="table_approval"&gt;&lt;tbody&gt;&lt;tr&gt;
+&lt;td class="td_normal_title" row="0" column="0" width="180"&gt;&lt;xform:right mode_d="view" mode_g="view" mode_N2="view" mode_N3="hidden"&gt;&lt;label style="DISPLAY:inline"&gt;主责部门部门领导是否认可&lt;/label&gt;&lt;/xform:right&gt;&lt;/td&gt;
+&lt;td row="0" column="1,2,3" width="600"&gt;&lt;xform:right mode_d="view" mode_g="view" mode_N2="edit" mode_N3="view"&gt;&lt;xform:radio property="extendDataFormInfo.value(fd_answer)" alignment="H" required="true" subject="主责部门部门领导是否认可" title="主责部门部门领导是否认可"/&gt;&lt;/xform:right&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_answer" label="主责部门部门领导是否认可" notNull="true" enumValues="认可|A;不认可|B" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>

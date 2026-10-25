@@ -5,7 +5,8 @@ import { componentSupportsProp } from "../dsl/catalogs.js";
 import { sanitizeCredentialMaterial } from "../credential-material.js";
 import { isDataOnlyMetadataField } from "./sysform-metadata.js";
 import { restDialogEvidence, sanitizeDesignerValues } from "./rest-dialog.js";
-import { parseDesignerFdValues } from "./designer-control-values.js";
+import { parseDesignerFdValues, parseDesignerControlAttributes, parseStaticDesignerStringValues } from "./designer-control-values.js";
+import { parseStaticMarkupAttributes } from "./source-static-markup.js";
 import { sourceRadioGroupingValues } from "./radio-source-proof.js";
 import {
   designerContentFlow, filterContentFlow, runtimeSelectWidthEvidence, runtimeCheckboxWidthEvidence, runtimeRadioWidthlessEvidence
@@ -183,6 +184,7 @@ function parseDesignerLayout(html, metadataFields, warnings, options = {}) {
     if (id) captionContext.standardTableIdOccurrences.set(id, (captionContext.standardTableIdOccurrences.get(id) || 0) + 1);
   }
   captionContext.editorLabelEvidence = options.editorLabelEvidence || new Map();
+  captionContext.retainedCaptionDesignerIds = retainedCaptionDesignerIds(decoded);
   captionContext.independentCaptions = runtimeIndependentCaptionEvidence(decoded, options.runtimeDisplayHtml || "");
   captionContext.runtimeSelectWidths = runtimeSelectWidthEvidence(options.runtimeDisplayHtml || "");
   captionContext.runtimeCheckboxWidths = runtimeCheckboxWidthEvidence(options.runtimeDisplayHtml || "");
@@ -786,6 +788,36 @@ function recoverAdjacentTitleCells(cells, captionContext, metadataContext, proje
       continue;
     }
     const evidence = captionContext.editorLabelEvidence.get(control.id);
+    const retained = evidence?.retainedCaption;
+    if (!captionCell.controls.length && candidates.length === 1 &&
+        parseRowspan(captionCell.attrs.rowspan ?? captionCell.attrs.rowSpan) === 1 &&
+        [captionCell, valueCell].every((cell, offset) => {
+          const span = cell.attrs.colspan ?? cell.attrs.colSpan;
+          return span === undefined || Number(span) === [captionColumn, valueColumn][offset].colspan;
+        }) &&
+        captionContext.uniqueVisibleCaptionIds.has(caption?.id) &&
+        captionContext.retainedCaptionDesignerIds.has(caption?.id) &&
+        captionContext.controlIdOccurrences.get(control?.id) === 1 &&
+        !captionContext.referencedCaptionIds.has(caption?.id) &&
+        isUnboundCaptionlessEditor(control) &&
+        !isDataOnlyMetadataField(metadataContext.byId.get(control.id)) &&
+        isLiteralRetainedCaption(captionCell.body, caption) && evidence?.verified && !evidence.conditionalRow &&
+        retained?.content === cleanText(caption.title) &&
+        (!retained.captionId || retained.captionId === caption.id) &&
+        retained.row === String(captionCell.attrs.row) && retained.row === String(valueCell.attrs.row) &&
+        retained.captionColumn === String(captionCell.attrs.column) && retained.editorColumn === String(valueCell.attrs.column) &&
+        retained.renderer === ({ inputradio: "xform:radio", inputtext: "xform:xtext" })[String(control.source?.designerType).toLowerCase()]) {
+      result[index] = { ...captionCell, controls: [caption] };
+      result[index + 1] = { ...valueCell, controls: [{
+        ...control,
+        source: { ...control.source, layoutCell: {
+          ...control.source?.layoutCell, hiddenLabel: true,
+          relation: "runtime-independent-title-cell", captionIds: [caption.id],
+          evidence: { ...retained, captionId: caption.id, sourceRef: evidence.sourceRef }
+        } }
+      }] };
+      continue;
+    }
     if (
       !captionCell.controls.length && candidates.length === 1 && isPlainInlineCaption(caption) &&
       cleanText(caption.title) && cleanText(captionCell.body) === cleanText(caption.title) &&
@@ -843,6 +875,84 @@ function recoverAdjacentTitleCells(cells, captionContext, metadataContext, proje
   }
 
   return result;
+}
+
+function isLiteralRetainedCaption(html, caption) {
+  if (!isPlainInlineCaption(caption) || caption.source?.designerHidden) return false;
+  const tokens = [...scanHtmlTags(html)].filter(token => !token.closing &&
+    attrValue(token.attrs, "fd_type").toLowerCase() === "textlabel");
+  if (tokens.length !== 1) return false;
+  const token = tokens[0], attrs = parseDesignerControlAttributes(token.attrs);
+  const values = parseStaticDesignerStringValues(token.attrs,
+    new Set(["id", "content", "font", "size", "color", "effect", "b", "i", "underline", "canShow"]));
+  if (!attrs || !values || values.id !== caption.id || attrs.has("id") && attrs.get("id") !== values.id ||
+      values.content !== caption.title || /\$\{|<%/.test(values.content) ||
+      ![undefined, "", "true"].includes(values.canShow) ||
+      [...attrs.keys()].some(key => !["id", "style", "fd_type", "fd_values", "formdesign"].includes(key)) ||
+      values.font || values.size || values.color || values.effect || ["b", "i", "underline"].some(key => values[key] && values[key] !== "false")) return false;
+  const declarations = (attrs.get("style") || "").split(";").filter(value => value.trim());
+  if (declarations.some(value => !/^\s*(?:display\s*:\s*inline|width\s*:\s*auto|text-decoration\s*:\s*none|font-weight\s*:\s*normal|font-style\s*:\s*normal)\s*$/i.test(value))) return false;
+  const end = findMatchingCloseTag(html, token.end, token.name);
+  const text = end >= token.end ? html.slice(token.end, end) : "";
+  return !/<|\$\{|<%/.test(text) && cleanText(text) === values.content;
+}
+
+// Only the new retention path uses this finite ancestry proof. Row extraction
+// deliberately omits outer Designer wrappers, so a cell-local check is not
+// evidence that its table, row, TD and enclosing source markup are visible.
+function retainedCaptionDesignerIds(html) {
+  const ids = new Set(), ancestors = [];
+  let inspected = 0, skipUntil = 0, unknownJsp = false;
+  for (const token of scanHtmlTags(html)) {
+    if (token.start < skipUntil) continue;
+    if (html.slice(inspected, token.start).includes("<%")) unknownJsp = true;
+    inspected = token.end;
+    if (token.closing) {
+      if (ancestors.at(-1)?.name !== token.name) return new Set();
+      ancestors.pop();
+      continue;
+    }
+    const type = attrValue(token.attrs, "fd_type").toLowerCase();
+    if (["script", "style", "textarea", "pre", "code"].includes(token.name) || type === "jsp") {
+      if (!token.selfClosing) {
+        const end = findMatchingCloseTag(html, token.end, token.name);
+        const close = end >= token.end ? scanHtmlTags(html, end).next().value : undefined;
+        if (!close?.closing || close.name !== token.name) return new Set();
+        skipUntil = inspected = close.end;
+      }
+      continue;
+    }
+    if (type === "textlabel" && !unknownJsp && ancestors.every(knownRetainedDesignerAncestor)) {
+      const id = parseDesignerFdValues(token.attrs).id;
+      if (id) ids.add(id);
+    }
+    if (!token.selfClosing && !isVoidLikeTag(token.name)) ancestors.push(token);
+  }
+  return ancestors.length ? new Set() : ids;
+}
+
+function knownRetainedDesignerAncestor(token) {
+  const type = attrValue(token.attrs, "fd_type").toLowerCase();
+  const attrs = /(?:^|\s)fd_values\s*=/i.test(token.attrs)
+    ? parseDesignerControlAttributes(token.attrs) : parseStaticMarkupAttributes(token.attrs);
+  if (!attrs || [...attrs.values()].some(value => /\$\{|<%/.test(value)) ||
+      ![undefined, "", "true"].includes(attrs.get("canshow"))) return false;
+  if (type === "right") {
+    const values = parseStaticDesignerStringValues(token.attrs, new Set(["id"]));
+    return token.name === "div" && values && /^[A-Za-z_][\w-]*$/.test(values.id || "") &&
+      (!attrs.has("id") || attrs.get("id") === values.id) &&
+      [...attrs.keys()].every(key => ["id", "style", "fd_type", "fd_values", "formdesign"].includes(key)) &&
+      (attrs.get("style") || "").split(";").filter(value => value.trim()).every(value =>
+        /^\s*(?:width\s*:\s*(?:auto|\d+(?:\.\d+)?(?:px|%))|(?:min-height|height|padding-(?:top|right|bottom|left))\s*:\s*\d+(?:\.\d+)?px|border-(?:top|right|bottom|left)\s*:\s*orange\s+1px\s+dotted)\s*$/i.test(value));
+  }
+  if (!["table", "tbody", "tr", "td", "div", "span"].includes(token.name) ||
+      type && !(token.name === "table" && type === "standardtable")) return false;
+  if (attrs.has("fd_values") && !parseStaticDesignerStringValues(token.attrs, new Set(["id", "label"]))) return false;
+  if (![...attrs].every(([key, value]) => ["id", "style", "width", "height", "row", "column", "colspan", "rowspan", "align", "valign", "border", "cellpadding", "cellspacing", "label", "layout2col", "fd_type", "fd_values", "formdesign", "canshow"].includes(key) ||
+      key === "class" && value.split(/\s+/).every(name => ["tb_normal", "tr_normal", "td_normal", "td_normal_title", "td_normal_label"].includes(name)))) return false;
+  if (["width", "height"].some(key => attrs.has(key) && !/^(?:auto|[1-9]\d*(?:\.\d+)?(?:px|%)?)$/i.test(attrs.get(key)))) return false;
+  return (attrs.get("style") || "").split(";").filter(value => value.trim()).every(value =>
+    /^\s*(?:width\s*:\s*(?:auto|[1-9]\d*(?:\.\d+)?(?:px|%))|(?:height|min-height)\s*:\s*[1-9]\d*(?:\.\d+)?px|display\s*:\s*(?:inline|inline-block|block|table|table-cell|table-row|table-row-group)|vertical-align\s*:\s*(?:top|middle|bottom|baseline)|text-align\s*:\s*(?:left|right|center|justify))\s*$/i.test(value));
 }
 
 function isTitleCell(cell) {

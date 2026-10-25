@@ -248,19 +248,29 @@ function editorLabelEvidence(displayJsp) {
   // Its permission modes remain source evidence for the workflow authority path.
   const rows = [];
   const rowStack = [];
+  const ancestors = [];
+  const rowAncestors = new Map();
   const renderings = new Map();
   let conditionalDepth = 0;
   const staticEvidence = staticJspLabelEvidence(displayJsp, editors, conditionalTags);
   for (const token of scanHtmlTags(decoded)) {
+    if (token.closing) {
+      const index = ancestors.findLastIndex(parent => parent.name === token.name);
+      if (index >= 0) ancestors.splice(index);
+    }
     if (conditionalTags.has(token.name)) {
       conditionalDepth = Math.max(0, conditionalDepth + (
         token.closing ? -1 : token.selfClosing ? 0 : 1
       ));
     }
     if (token.name === "tr") {
-      if (!token.closing) rowStack.push(token.start);
+      if (!token.closing) {
+        rowStack.push(token.start);
+        rowAncestors.set(token.start, [...ancestors]);
+      }
       else if (rowStack.length) rows.push({ start: rowStack.pop(), end: token.end });
     }
+    if (!token.closing && !token.selfClosing && !isVoidLikeTag(token.name)) ancestors.push(token);
     if (token.closing || !editors.has(token.name)) continue;
     const addressId = attrValue(token.attrs, "propertyId").match(/^extendDataFormInfo\.value\(([A-Za-z_][\w-]*)\.id\)$/)?.[1];
     const addressName = attrValue(token.attrs, "propertyName").match(/^extendDataFormInfo\.value\(([A-Za-z_][\w-]*)\.name\)$/)?.[1];
@@ -293,9 +303,78 @@ function editorLabelEvidence(displayJsp) {
       conditionalRow: [...scanHtmlTags(rowHtml)].some(token => conditionalTags.has(token.name)),
       rowText: cleanText(rowHtml),
       ...(hasJsp ? { staticCaptions: staticEntry?.captions || [] } : {}),
+      ...(entries.length === 1 && entry.unconditional && row ? {
+        retainedCaption: staticRetainedCaptionEvidence(rowHtml, rowAncestors.get(row.start) || [], id, entry.renderer)
+      } : {}),
       sourceRef: "source.form.fdDisplayJsp"
     }];
   }));
+}
+
+// Retention only: unlike a row-text match, this proves one actual literal LABEL
+// beside an editor whose own subject is not rendered. It grants no fold or
+// permission authority; the source entities keep their separate right sections.
+function staticRetainedCaptionEvidence(rowHtml, ancestors, id, renderer) {
+  if (!["xform:radio", "xform:xtext"].includes(renderer) || /<%|\$\{|<\s*(?:script|style)\b/i.test(rowHtml) ||
+      !ancestors.every(token => retainedCaptionNodeKnown(token))) return undefined;
+  const html = staticSourceMarkup(rowHtml);
+  if (html === undefined) return undefined;
+  const stack = [], nodes = [];
+  for (const token of scanHtmlTags(html)) {
+    if (token.closing) {
+      const node = stack.pop();
+      if (!node || node.name !== token.name) return undefined;
+      node.contentEnd = token.start; node.end = token.end;
+      continue;
+    }
+    if (!retainedCaptionNodeKnown(token)) return undefined;
+    const node = { ...token, attrs: parseStaticMarkupAttributes(token.attrs), parent: stack.at(-1),
+      contentEnd: token.end, end: token.end };
+    nodes.push(node);
+    if (!token.selfClosing && !isVoidLikeTag(token.name)) stack.push(node);
+  }
+  if (stack.length || nodes[0]?.name !== "tr") return undefined;
+  const cells = nodes.filter(node => node.parent === nodes[0] && node.name === "td");
+  if (cells.length !== 2) return undefined;
+  const nearestCell = node => { for (let parent = node.parent; parent; parent = parent.parent) if (parent.name === "td") return parent; };
+  const captions = nodes.filter(node => node.name === "label" && nearestCell(node) === cells[0]);
+  const editors = nodes.filter(node => ["xform:radio", "xform:xtext"].includes(node.name));
+  const bindings = nodes.filter(node => node.attrs.has("property"));
+  if (captions.length !== 1 || editors.length !== 1 || bindings.length !== 1 || editors[0] !== bindings[0] ||
+      editors[0].name !== renderer || editors[0].attrs.get("property") !== `extendDataFormInfo.value(${id})` ||
+      nearestCell(editors[0]) !== cells[1]) return undefined;
+  const caption = captions[0], editor = editors[0];
+  const content = html.slice(caption.start + caption.raw.length, caption.contentEnd);
+  if (caption.selfClosing || /<|\$\{|<%/.test(content) || !cleanText(content) ||
+      nodes.some(node => node.parent === caption) ||
+      cleanText(html.slice(cells[0].start + cells[0].raw.length, caption.start) + html.slice(caption.end, cells[0].contentEnd)) ||
+      cleanText(html.slice(cells[1].start + cells[1].raw.length, editor.start) + html.slice(editor.end, cells[1].contentEnd))) return undefined;
+  const geometry = cells.map(cell => ({ row: cell.attrs.get("row"), column: cell.attrs.get("column"),
+    colspan: cell.attrs.get("colspan"), rowspan: cell.attrs.get("rowspan") }));
+  const columns = geometry.map(cell => /^\d+(?:,\d+)*$/.test(cell.column || "") ? cell.column.split(",").map(Number) : []);
+  if (geometry.some((cell, index) => !/^\d+$/.test(cell.row || "") || cell.row !== geometry[0].row ||
+      ![undefined, "1"].includes(cell.rowspan) || !columns[index].length ||
+      columns[index].some((value, offset) => value !== columns[index][0] + offset) ||
+      cell.colspan !== undefined && Number(cell.colspan) !== columns[index].length) ||
+      columns[0].length !== 1 || columns[0][0] + 1 !== columns[1][0]) return undefined;
+  return { content: cleanText(content), ...(caption.attrs.has("id") ? { captionId: caption.attrs.get("id") } : {}),
+    row: geometry[0].row, captionColumn: geometry[0].column,
+    editorColumn: geometry[1].column, renderer };
+}
+
+function retainedCaptionNodeKnown(token) {
+  const attrs = parseStaticMarkupAttributes(token.attrs);
+  if (!attrs || !staticCaptionAppearance(attrs) || [...attrs.values()].some(value => /\$\{|<%/.test(value))) return false;
+  if (token.name === "xform:right") return ["mode_d", "mode_g"].every(key => ["view", "edit"].includes(attrs.get(key))) &&
+    [...attrs].every(([key, value]) => /^mode_(?:d|g|n[\w-]*)$/.test(key) && ["hidden", "view", "edit"].includes(value) ||
+      /^def_(?:d|g|n[\w-]*)$/.test(key) && ["true", "false"].includes(value));
+  if (["xform:radio", "xform:xtext"].includes(token.name)) return [...attrs].every(([key, value]) =>
+    ["property", "alignment", "required", "subject", "title", "style", "width", "datatype"].includes(key) ||
+    key === "showlabel" && ["", "false"].includes(value.toLowerCase()) || key === "onvaluechange" && value === "__xformDispatch");
+  if (token.name === "xform:simpledatasource") return attrs.size === 1 && attrs.has("value");
+  if (!["table", "tbody", "tr", "td", "div", "span", "label"].includes(token.name)) return false;
+  return [...attrs].every(([key, value]) => ["id", "style", "width", "height", "row", "column", "colspan", "rowspan", "align", "valign", "border", "cellpadding", "cellspacing", "label", "layout2col"].includes(key) ||
+    key === "class" && value.split(/\s+/).every(name => ["tb_normal", "tr_normal", "td_normal", "td_normal_title", "td_normal_label"].includes(name)));
 }
 
 // This proof only extends rows previously rejected for containing JSP. Other rows
