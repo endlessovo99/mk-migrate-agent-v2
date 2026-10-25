@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "capturedAt": "2026-10-25T13:01:07.331Z",
+  "baselineHead": "ee8c9fffc6aaf4ab9d85539f97ff0e557f3220d6",
+  "baseline": {
+    "file": "baseline-f23.json",
+    "sha256": "0fb491bc29e455f9dd06e0ed71f3d24c35c691a1ab14d0e9eada70a51edd79ee",
+    "canonicalization": "JSON with recursively sorted object keys; array order retained"
+  },
+  "inputs": {
+    "base_SysFormTemplate.xml": "f58acd19a457583c8c0d36828730f7f7938bb76306e4116ab8293498d74e28c8",
+    "renamed_SysFormTemplate.xml": "7be354ce8c6873d463925f81a8a5e55edcd853847a40f046738ec3b9d7a43c85",
+    "ids.json": "c16d38d8a9ee42fa247b8e1a80da0cfd9bd9622c0522de02ce42ef7be3dace31",
+    "readability-budget.json": "cbdb283f89ff4a23b14b9cd8af7eb9d4be92be78ed488c0e789ce144241d9df9"
+  },
+  "baselineEngine": {
+    "src/translator/source-draft.js": "5eeb58e591bc6dcd8a920f437fc19a17b7672593eedacb4618f5cabe8dd037ac",
+    "src/translator/sysform-designer-layout.js": "5fd8b7cd8bb47be78993f1b556edb396c32b8c269f0ba017b6726537bce7cb2d",
+    "src/executor/persistence/inline-cell-layout.js": "a7bfcb746c0014d139dd58ec010c0ef927864ea1910a6ad29c1a9872b3b40447",
+    "src/executor/persistence/layout-projection.js": "16ace2500cfcf1705cc13854ec34565168a5f8b81c028ec577b6877d1e711600",
+    "src/executor/persistence/expected.js": "22ea853de9b5c502419da3f00f7cfeca429e4e9fa262415496cddc17d7678b62",
+    "src/executor/persistence/form-writer.js": "9bf87cbc96502c65e67c273e9d70754579b122e59db868f71ba78741d11f3b5d",
+    "tests/helpers/persistence.js": "eb3180292f8ee4547516c23adc1293d7b943cd30c8f22015020e5fb67eae7e85"
+  },
+  "budgetOrigin": {
+    "kind": "Representative retained desktop measurement normalized to a generic arithmetic fixture",
+    "values": [
+      54,
+      73.164,
+      32
+    ],
+    "textWidthPrecision": "rounded to three decimal places",
+    "candidateRendered": false
+  },
+  "boundary": "Generic source fixtures, frozen F23 native/geometry hashes and an arithmetic budget only; no real target or source identity, old product module, browser acceptance, network or target write."
+}

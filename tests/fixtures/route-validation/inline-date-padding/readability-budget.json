@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "platform": "desktop",
+  "viewportPx": 1500,
+  "inputClientWidthPx": 54,
+  "dateTextWidthPx": 73.164,
+  "nativeRightInsetPerMemberPx": 16,
+  "memberCount": 2,
+  "totalReclaimBudgetPx": 32,
+  "resultKind": "fixed-width arithmetic budget",
+  "candidateMeasured": false,
+  "assumptions": [
+    "The containing cell and glyph metrics remain fixed.",
+    "Removing the caption right inset releases room to its inline date member."
+  ],
+  "boundary": "This representative measurement is a budget fixture, not browser acceptance or a guarantee at narrower viewports."
+}

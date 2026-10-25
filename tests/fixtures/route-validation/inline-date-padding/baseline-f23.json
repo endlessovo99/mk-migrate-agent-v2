@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "baselineHead": "ee8c9fffc6aaf4ab9d85539f97ff0e557f3220d6",
+  "cases": {
+    "base": {
+      "protectedNative": {
+        "authFilter": "18604137219f7bfa98f1e490375e6606b1ecd57d5b68e7146a77645eebdecccb",
+        "auth": "912c8feb9656f3fc4adc2c279e54add1b08e1f988ef1b1bc791ad1c5af46fdb4",
+        "attribute": "4c2f8e736687d7ce11a0fe8563a7a9660d62aa6429d116fc3b8e6829bbdfa669",
+        "dataModel": "ce4ebe23fcd7b2acbb7720983a0ff9b956feac45bc9977dbdec4f91478b9ee03",
+        "lang": "c89a148be40e6752261e3038609a4b68de22fa3bfdaf32f884edffb8480b9bbe",
+        "extendMap": "08c020a0003676cffb6311c6d06595b3b3aadbd1a98921f87681755b7d3daacd",
+        "sign": "f1cc698908d3ec7876e73a10981edfe65ee160e53d602d39688c285bac22f0f1",
+        "error": "c89a148be40e6752261e3038609a4b68de22fa3bfdaf32f884edffb8480b9bbe",
+        "migrationDsl": "2e0e6be9517ee8059801f0329052bf850ff23d7d60300ccb1d873f7678ea2d6b"
+      },
+      "viewTree": "64ff0baf08d6b0c5617f09802c89072911794438c1ff9f2622fdd5be0b4391ab",
+      "controlStyle": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "theme": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "desktopGeometry": "80a63d0e87283a65474b0fd0bf63492aa28eb39fcd2d877ede55c1e311c07656",
+      "mobileGeometry": "80a63d0e87283a65474b0fd0bf63492aa28eb39fcd2d877ede55c1e311c07656"
+    },
+    "renamed": {
+      "protectedNative": {
+        "authFilter": "18604137219f7bfa98f1e490375e6606b1ecd57d5b68e7146a77645eebdecccb",
+        "auth": "0653166fa020557292e6b4e7492b7c8682cde48e983d4deef43fa3777827bb40",
+        "attribute": "09734458955c98bbda3b7f506fec5c54ca9c02f9ac81bddab4993dccf0029810",
+        "dataModel": "25aceaf4e5e7c03947d13e7b5c278c4b1bdbceaff67a10a80fd2eff7256571c4",
+        "lang": "c89a148be40e6752261e3038609a4b68de22fa3bfdaf32f884edffb8480b9bbe",
+        "extendMap": "08c020a0003676cffb6311c6d06595b3b3aadbd1a98921f87681755b7d3daacd",
+        "sign": "f1cc698908d3ec7876e73a10981edfe65ee160e53d602d39688c285bac22f0f1",
+        "error": "c89a148be40e6752261e3038609a4b68de22fa3bfdaf32f884edffb8480b9bbe",
+        "migrationDsl": "88c0760a47648e87644f82fb38fef546f65dc10469b3e3e69ab9d8d7aa9841fe"
+      },
+      "viewTree": "d2397dd21ba5c929cb00bc0ba0640945bad4f43d08234c6af1256cf447bfd6b7",
+      "controlStyle": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "theme": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "desktopGeometry": "01d50e07dd0a47a6d4a0c50530aa6b8dd8cc182045adf7c29cf33c32e2dac5b7",
+      "mobileGeometry": "01d50e07dd0a47a6d4a0c50530aa6b8dd8cc182045adf7c29cf33c32e2dac5b7"
+    }
+  }
+}

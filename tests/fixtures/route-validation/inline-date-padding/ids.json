@@ -1,0 +1,18 @@
+{
+  "base": {
+    "title": "schedule_range",
+    "fromLabel": "schedule_from_label",
+    "from": "schedule_from",
+    "toLabel": "schedule_to_label",
+    "to": "schedule_to",
+    "other": "schedule_other"
+  },
+  "renamed": {
+    "title": "window_range",
+    "fromLabel": "window_from_label",
+    "from": "window_from",
+    "toLabel": "window_to_label",
+    "to": "window_to",
+    "other": "window_other"
+  }
+}
