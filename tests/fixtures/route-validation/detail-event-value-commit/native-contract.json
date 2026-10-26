@@ -1,0 +1,28 @@
+{
+  "capturedOn": "2026-10-26",
+  "scope": "Unchanged native stable-key writer, primitive row formatter and rendered-row reader; tests use inert React publication/default-row hosts for source tables without nonempty/context defaults. Not mounted browser acceptance.",
+  "asset": {
+    "url": "https://oaqas.shanghai-electric.com/web/sys/artifact/elements/xform-detail-table/index.js",
+    "sha256": "d507ec85a5f10b66f31896a11bca7c49f177a3666a7c692fb56c413215b1a663"
+  },
+  "functions": {
+    "updateRowValue": {
+      "start": 405377,
+      "end": 407310,
+      "text": "function(e){var t,n;if(e){var r=T(ko.current);if(Array.isArray(e)){var o=e.map((function(e){var t=Zr({tableName:q,holdDefaultValue:!0});Object.assign(t,{key:Math.random()});var n=to(e);return io(n,t,q),jn({value:n,source:t,tableName:q})}));po(r.concat(o));var a=qo(r.concat(o));De&&De(a,{rowInfos:e.map((function(e){return{key:e.key}}))})}else{var i=e.rowKey,l=e.rowNum,u=e.parentRowIndex,c=e.value;if(null==u||void 0===u){var s=e.value,d=i||void 0===l?i:null===(n=r[l])||void 0===n?void 0:n.key;if(s&&!Array.isArray(s)&&(s=[s]),0!==(null==s?void 0:s.length)){var f=r.reduce((function(e,t,n){return t.key===d&&(e=n),e}),-1),p=r.splice(f,s.length),m=s.map((function(e,t){var n=Zr({source:p[t]&&Object.assign({},p[t]),tableName:q,holdDefaultValue:!0}),r=fo.find((function(e){var n;return e.key===(null===(n=p[t])||void 0===n?void 0:n.key)})),o=Object.assign(Object.assign({},n),r);if(no&&r){var a=n[\"\".concat(q,\".\").concat(no)]||[],i=e[\"\".concat(q,\".\").concat(no)]||[];a.forEach((function(e){i.some((function(t){return t.fd_id===e.fd_id}))||Do.current.push(jn({value:e,tableName:\"\".concat(q,\".\").concat(no),toFullName:!0,nestTableName:no}))}))}return void 0===o.key&&(o.key=Math.random()),jn({value:e,source:o,tableName:q,nestTableName:no})}));if(f>-1)r.splice.apply(r,[f,0].concat(T(m)));else{var v=p.length?p:m,h=r.length;r.splice.apply(r,[h>-1?h:0,0].concat(T(v)))}po(r);var g=qo(r);De&&De(g,{rowInfos:[{key:d}]})}}else{var y=(null===(t=r[u])||void 0===t?void 0:t[\"\".concat(q,\".\").concat(no)])||[],b=y.findIndex((function(e){return e.key===i}));b>-1&&Array.isArray(c)&&c.length>0&&(c.forEach((function(e,t){var n,r;e=jn({value:e,source:JSON.parse(JSON.stringify(ao)),tableName:\"\".concat(q,\".\").concat(no),toFullName:!1}),y[b+t]?Object.assign(y[b+t],(null===(n=e[no])||void 0===n?void 0:n[b+t])||(null===(r=e[no])||void 0===r?void 0:r[0])||e):y.push(Object.assign(Object.assign({},e),{key:Math.random()}))})),po(r),De&&De(qo(r)))}}}}",
+      "sha256": "b46e4f0c11e5e7ba409f4f2780e0b860c50cc6b8194a576ca3934b1226191c2a"
+    },
+    "mergeRow": {
+      "start": 27984,
+      "end": 28887,
+      "text": "function(e){var t=e.value,n=e.source,r=void 0===n?{}:n,o=e.tableName,a=e.key,i=e.toFullName,l=void 0===i||i,u=e.nestTableName;return o?Object.keys(t).reduce((function(e,n){var r,i,c=t[n];if(\"key\"===n&&(e[n]=c),u===n&&(null==c?void 0:c.length)){var s=(null===(r=c.find((function(e){return e.key})))||void 0===r?void 0:r.key)||Math.random();c.forEach((function(e){e.key||(e.key=s)}))}var d=l?In(n,o,a):n;if(e[d]&&e[d].mechanismKey){null!=c&&0!==(null==c?void 0:c.length)||(e[d]=Object.assign(Object.assign({},e[d]),{mechanismValue:[]}));var f=!!(null==c?void 0:c.mechanismKey);return Array.isArray(c)&&0!==c.length||f?(e[d]={mechanismKey:f?c.mechanismKey:c[0].fdEntityKey,mechanismValue:f?c.mechanismValue:c},e):e}return(null==c?void 0:c.length)&&\"attachment\"===(null===(i=c[0])||void 0===i?void 0:i.mechanismName)?(e[d]={mechanismKey:c[0].fdEntityKey,mechanismValue:c},e):(void 0!==c&&(e[d]=c),e)}),r):r}",
+      "sha256": "189d9ab7a62563cfc728f7445fbe88793c5dffa8d51d3e3acc17adba8e71f96f"
+    },
+    "currentRows": {
+      "text": "function(){var e=fo.map((function(e){var t=Object.assign({},e),n=Object.keys(e);return Wr.forEach((function(r){var o,a,i,l,u,c=n.includes(\"\".concat(q,\".\").concat(null===(o=r.controlProps)||void 0===o?void 0:o.name)),s=Dr[e.key]||[],d=\"all\"===s||s.includes(\"\".concat(q,\".\").concat(null===(a=r.controlProps)||void 0===a?void 0:a.name)),f=(null===(i=r.labelProps)||void 0===i?void 0:i.hidden)||d,p=null===(l=r.options)||void 0===l?void 0:l.hiddenInvalid;c&&f&&p&&(t[\"\".concat(q,\".\").concat(null===(u=r.controlProps)||void 0===u?void 0:u.name)]=void 0)})),t}));return e}",
+      "start": 429889,
+      "end": 430455,
+      "sha256": "d0206859b23a9b261551be08b22b3d639c960b2567a9223e77e0642e978c1064"
+    }
+  }
+}

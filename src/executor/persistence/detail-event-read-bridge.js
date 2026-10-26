@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { parse } from "acorn";
+import { canCommitDetailEventValue, renderDetailEventValueCommit } from "./detail-event-value-commit.js";
 
 // Native projection only. The source-proven callback and its public DSL remain
 // unchanged. Captured ABI: initRuntime.$$DETAILFORMS -> table imperative
@@ -21,7 +22,7 @@ export function withDetailEventReadBridge(scripts = {}, form = {}) {
     if (!action.functionMappings?.some(mapping => mapping.basis === BASIS && mapping.reviewRequired === false)) continue;
     const group = actions.filter(candidate => candidate.scope === "control" && candidate.tableId === action.tableId && candidate.controlId === action.controlId && (candidate.event || candidate.name) === "onChange" && candidate.translationStatus !== "omitted");
     if (!group.every(candidate => preservesTableReads(candidate.function, mainFields))) continue;
-    const compiled = bridgeFunction(action, table.id);
+    const compiled = bridgeFunction(action, table.id, canCommitDetailEventValue(actions, table));
     if (compiled === action.function) continue;
     plans.set(action, compiled);
   }
@@ -135,7 +136,7 @@ function bindingNames(pattern) {
   return [];
 }
 
-function bridgeFunction(action, tableId) {
+function bridgeFunction(action, tableId, commitValue) {
   const source = action.function;
   try {
     const tree = parse(`(${source})`, { ecmaVersion: "latest" });
@@ -150,14 +151,14 @@ function bridgeFunction(action, tableId) {
     if (!calls.length || collision) return source;
     let next = source;
     for (const node of calls.sort((a, b) => b.start - a.start)) next = next.slice(0, node.start - 1) + `${PREFIX}Table()` + next.slice(node.end - 1);
-    const helper = renderReader(table, action.controlId);
+    const helper = renderReader(table, action.controlId, commitValue);
     return next.slice(0, fn.body.start) + helper + next.slice(fn.body.start);
   } catch { return source; }
 }
 
-function renderReader(table, column) {
+function renderReader(table, column, commitValue) {
   return `
-  var ${PREFIX}Owner = this, ${PREFIX}Args = arguments;
+  var ${PREFIX}Owner = this, ${PREFIX}Args = arguments;${commitValue ? renderDetailEventValueCommit() : ""}
   function ${PREFIX}Table() {
     var table = ${JSON.stringify(table)}, column = ${JSON.stringify(column)};
     var queue = typeof window === "undefined" ? null : window.MXFORM_ACTIONS;
@@ -184,7 +185,10 @@ function renderReader(table, column) {
           Array.isArray(args) && args[0] === ${PREFIX}Args[0] && args[1] === rowNum &&
           args[2] === parentRowNum && key.slice(-suffix.length) === suffix) owners += 1;
     });
-    if (valid && owners === 1) return data;
+${commitValue ? `    if (valid && owners === 1) {
+      __mkDetailReadCommit(handle, rows, current, column, table);
+      return data;
+    }` : "    if (valid && owners === 1) return data;"}
     return MKXFORM.getValue(table);
   }
 `;
