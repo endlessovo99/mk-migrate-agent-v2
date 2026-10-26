@@ -58,6 +58,10 @@ export function choiceOtherGroupCss(scope, mode) {
       `${choice}, ${choice} :has(${rows}) { display: contents !important; }`,
       `${choice} ${rows} { display: block !important; }`,
       `${choice} ${rows}:last-child { display: contents !important; }`,
+      // Native checkbox labels are display:flex. Once their flex-row parent is
+      // flattened, keep every option atomic and inline, not just the last one.
+      // Separate native rows still provide the source's vertical row breaks.
+      `${choice} ${rows} > * { display: inline-flex !important; vertical-align: middle !important; }`,
       // Reserve the textbox *inside* the last option's atomic inline box. Its
       // negative leading margin consumes that reservation, including after wrap.
       `${choice} ${rows}:last-child > :last-child {`,

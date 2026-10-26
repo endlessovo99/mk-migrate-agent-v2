@@ -14,10 +14,14 @@ export function nativeChoiceLayoutHtml(config, scene) {
     useMemo: callback => callback(), useCallback: callback => callback, useRef: current => ({ current }),
     useEffect() {}, useImperativeHandle() {}
   };
-  const coreChoice = type => Object.assign(props => react.createElement("label", {
-    className: `core-choice ${props.className || ""}`, "data-value": props.value
+  // Keep the real desktop core classes: the captured native checkbox CSS makes
+  // these labels display:flex. Omitting them hides block-flow regressions.
+  const coreChoice = (type, platform) => Object.assign(props => react.createElement("label", {
+    className: `core-choice ${platform === "desktop" ? `lui-${type}-wrapper` : ""} ${props.className || ""}`, "data-value": props.value
   }, react.createElement("input", { type }), props.children), {
-    Group: props => react.createElement("div", { className: props.className }, props.children)
+    Group: props => react.createElement("div", {
+      className: `${platform === "desktop" ? `lui-${type}-group` : ""} ${props.className || ""}`
+    }, props.children)
   });
   const base = {
     Http: { build: () => ({}) }, SceneShowRules: { NotShowControlTip: [] },
@@ -29,8 +33,8 @@ export function nativeChoiceLayoutHtml(config, scene) {
   };
   const dependencies = {
     react, "@elem/xform-base": base,
-    "@lui/core": { Checkbox: coreChoice("checkbox"), Radio: coreChoice("radio") },
-    "@mui/core": { Checkbox: coreChoice("checkbox"), Radio: coreChoice("radio") },
+    "@lui/core": { Checkbox: coreChoice("checkbox", "desktop"), Radio: coreChoice("radio", "desktop") },
+    "@mui/core": { Checkbox: coreChoice("checkbox", "mobile"), Radio: coreChoice("radio", "mobile") },
     "@elem/xform-headless": props => props.children,
     "@elem/xform-view": props => props.children,
     "@ekp-infra/common": { Api: { build: () => () => Promise.resolve({}) }, Module: { getComponent: () => "inert-popover" } },

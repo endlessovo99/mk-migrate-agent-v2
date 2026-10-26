@@ -114,6 +114,15 @@ it("retains unchanged native desktop/mobile source and stylesheet provenance", (
     createHash("sha256").update(readFileSync(new URL(name, root))).digest("hex"), evidence.sha256, name);
 });
 
+it("replays the native desktop checkbox label and group selectors in layout fixtures", () => {
+  const config = xformConfig(prepareSample(stages().draft).update);
+  const html = nativeChoiceLayoutHtml(config, "desktop");
+  assert.match(html, /class="ele-xform-checkbox"/);
+  assert.match(html, /class="lui-checkbox-group ele-xform-checkbox-group"/);
+  assert.equal([...html.matchAll(/class="core-choice lui-checkbox-wrapper ele-checkbox"/g)].length, 5);
+  assert.match(html, /\.ele-xform-checkbox \.lui-checkbox-group \.lui-checkbox-wrapper\{[^}]*display:flex/);
+});
+
 it("keeps Other and its original textbox together after real native option wrapping", {
   skip: process.env.MK_LAYOUT_BROWSER_TESTS !== "1"
 }, async () => {
@@ -137,6 +146,11 @@ it("keeps Other and its original textbox together after real native option wrapp
             note: rect(document.querySelector("input[data-note]")), scrollWidth: document.body.scrollWidth };
         });
         const { other, note } = rects, label = `${kind}/${sizing}/${alignment}/${scene}/${width}`;
+        if (width === 900) {
+          const firstLineShared = Math.abs(rects.options[0].y - rects.options[1].y) < 2;
+          assert.equal(firstLineShared, alignment === "H",
+            `${label}: native option rows must preserve source H/V direction: ${JSON.stringify(rects)}`);
+        }
         assert.ok(Math.min(other.y + other.height, note.y + note.height) - Math.max(other.y, note.y) >= Math.min(other.height, note.height) / 2,
           `${label}: Other and textbox must share a rendered line: ${JSON.stringify(rects)}`);
         assert.ok(note.x >= other.x + other.width && note.x - other.x - other.width <= 16,
