@@ -9,8 +9,8 @@ import {
 } from "../dsl/catalogs.js";
 import { translateLegacyConditionContextReferences } from "../dsl/condition-context.js";
 import { buildFormRuleRefIndex, resolveDirectRef, resolveEffectTarget } from "../dsl/form-rules.js";
-import { inspectNativeFormRuleProjection } from "../dsl/native-form-rule-projection.js";
-import { deterministicManualResidualDecisionId } from "../dsl/deterministic-script-translations.js";
+import { inspectNativeFormRuleProjection, nativeFormRuleBelongsToAction } from "../dsl/native-form-rule-projection.js";
+import { deterministicManualResidualDecisionId, hasVerifiedDeterministicScriptBranchProof } from "../dsl/deterministic-script-translations.js";
 import { packLayoutGrid, projectLayoutGrid } from "../dsl/layout-pack.js";
 import { selectContentFlow } from "../dsl/content-flow.js";
 import { projectCompanionPresentation, projectUnitPresentation } from "./form-presentation.js";
@@ -224,6 +224,14 @@ export function draftSourceDraft(sourceDraft, options = {}) {
 
 function removeDeterministicScriptOwnedFormRules(formRules, scripts) {
   if (!formRules || !Array.isArray(formRules.linkage)) return formRules;
+  const ownedActions = (scripts?.actions || []).filter(action =>
+    action.semanticHints?.ownsLegacyRowEffectsForAction === true &&
+    action.translationStatus === "mapped" &&
+    action.event === "onChange" && action.scope === "control" && !action.tableId &&
+    action.coverage?.nativeRules?.length === 0 &&
+    action.functionMappings?.some(mapping => mapping?.basis === INLINE_RADIO_ROW_EFFECTS_BASIS) &&
+    hasVerifiedDeterministicScriptBranchProof(action)
+  );
   const ownedSourceRefs = new Set(
     (scripts?.actions || [])
       .filter((action) => action.functionMappings?.some((mapping) =>
@@ -234,11 +242,12 @@ function removeDeterministicScriptOwnedFormRules(formRules, scripts) {
       .flatMap((action) => action.sourceRefs || [])
       .filter(Boolean)
   );
-  if (!ownedSourceRefs.size) return formRules;
+  if (!ownedSourceRefs.size && !ownedActions.length) return formRules;
   return {
     ...formRules,
     linkage: formRules.linkage.filter((rule) =>
-      !ownedSourceRefs.has(rule?.meta?.sourceJsp)
+      !ownedSourceRefs.has(rule?.meta?.sourceJsp) &&
+      !ownedActions.some(action => nativeFormRuleBelongsToAction(rule, action))
     )
   };
 }

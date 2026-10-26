@@ -636,16 +636,26 @@ function onChangeCandidate(call, source, form, formRules, options = {}) {
   if (rowTargets.length > 0 && !targetsHaveDistinctLayoutOwners(form, rowTargets)) {
     return undefined;
   }
+  const sourceActionKey = inlineOnChangeSourceActionKey(sourceRef, call.start);
+  // Load-bridged callbacks restore only part of a row's required state; their
+  // native required projection remains necessary for the detail columns.
+  const ownsNativeRowEffects = rowTargets.length > 0 && !restoreStaticRequiredBaseline && (formRules?.linkage || []).some(rule =>
+    rule.translationStatus === "executable" && rule.trigger === "change" &&
+    rule.source === controlId && rule.meta?.sourceJsp === sourceRef &&
+    rule.meta?.sourceActionKey === sourceActionKey
+  );
   return {
     index: call.start,
-    sourceActionKey: inlineOnChangeSourceActionKey(sourceRef, call.start),
+    sourceActionKey,
     event: "onChange",
     scope: "control",
     controlId,
     javascript: String(source.javascript || ""),
     function: compiled,
     translationStatus: "mapped",
-    coverage: nativeRuleCoverageForSource(source, formRules),
+    coverage: ownsNativeRowEffects
+      ? { status: "translated", nativeRules: [], residuals: [] }
+      : nativeRuleCoverageForSource(source, formRules),
     functionMappings: [{
       source: "inline radio value-change row effects",
       target: "MKXFORM.getValue/setValue/setFieldAttr",
@@ -654,6 +664,10 @@ function onChangeCandidate(call, source, form, formRules, options = {}) {
     }],
     sourceRefs: [sourceRef],
     semanticHints: {
+      // compileOnChange accepted the complete callback, including every row
+      // effect. Ownership is local to this source action, not its sibling JSP
+      // callbacks, which may still rely entirely on native rules.
+      ...(ownsNativeRowEffects ? { ownsLegacyRowEffectsForAction: true } : {}),
       ...(restoreStaticRequiredBaseline ? { restoreStaticRequiredBaseline: true } : {}),
       coveredCalculationRanges: [{
         sourceRef,

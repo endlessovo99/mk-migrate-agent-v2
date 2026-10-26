@@ -50,7 +50,7 @@ describe("hidden data field route", () => {
     assert.equal(checkDraft(dslDraft).ok, true);
   });
 
-  it("preserves JSP gates while projecting provable gated form rules as native formulas", () => {
+  it("preserves JSP gates while the complete callback owns its row effects", () => {
     const sourceDraft = cleanSourceFile(fixture);
     const dslDraft = draftSourceDraft(sourceDraft);
     const sourceGates = sourceDraft.scripts.sources.map((source) => source.displayGate);
@@ -60,15 +60,17 @@ describe("hidden data field route", () => {
     assert.deepEqual(sourceGates, ["xform:editShow", "xform:viewShow"]);
     assert.equal(sourceDraft.formRules.linkage.length, 1);
     assert.equal(sourceDraft.formRules.linkage[0].meta.displayGate, "xform:editShow");
-    assert.equal(dslDraft.formRules.linkage.length, 1);
+    assert.equal(dslDraft.formRules.linkage.length, 0);
     assert.deepEqual(dslDraft.formRules.review, {});
-    assert.deepEqual(dslDraft.formRules.linkage[0].meta.runWhen, { viewStatusIn: ["add", "edit"] });
-    assert.equal(dslDraft.formRules.linkage[0].meta.conditionSource, "event:value");
+    assert.deepEqual(sourceDraft.formRules.linkage[0].meta.runWhen, { viewStatusIn: ["add", "edit"] });
+    assert.equal(sourceDraft.formRules.linkage[0].meta.conditionSource, "event:value");
     assert.equal(
-      dslDraft.formRules.linkage[0].meta.sourceActionKey,
+      sourceDraft.formRules.linkage[0].meta.sourceActionKey,
       editAction.sourceActionKey
     );
-    assert.deepEqual(editAction.coverage.nativeRules, ["linkage.fd_mode.contains.A"]);
+    assert.deepEqual(editAction.coverage.nativeRules, []);
+    assert.match(editAction.function, /setFieldAttr\("mode_row", 5\)/);
+    assert.match(editAction.function, /setFieldAttr\("mode_row", 4\)/);
     assert.equal(editAction.coverage.status, "translated");
     assert.equal(
       editAction.coverage.residuals.some((item) =>
@@ -91,7 +93,8 @@ describe("hidden data field route", () => {
 
     assert.equal(modeRow?.cells[0]?.references[0]?.referenceId, "fd_mode");
     assert.equal(sourceDraft.formRules.linkage[0].effects[0].target, "mode_row");
-    assert.equal(dslDraft.formRules.linkage.length, 1);
-    assert.equal(dslDraft.formRules.linkage[0].translationStatus, "executable");
+    assert.equal(dslDraft.formRules.linkage.length, 0);
+    assert.match(dslDraft.scripts.actions.find(action=>action.event==="onChange").function,
+      /setFieldAttr\("mode_row", 5\)/);
   });
 });

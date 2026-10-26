@@ -159,10 +159,10 @@ describe("Source4 script semantic closure", () => {
     assert.match(change.function, /MKXFORM\.setValue\("fd_is_sq", "sq"\)/u);
     assert.match(change.function, /MKXFORM\.setFieldAttr\("fd_bg_row", 5\)/u);
     assert.match(change.function, /MKXFORM\.setFieldAttr\("fd_sq_row", 4\)/u);
-    assert.deepEqual(change.coverage.nativeRules.sort(), [
-      "linkage.fd_32836745f26bca.contains.bg",
-      "linkage.fd_32836745f26bca.contains.sq"
-    ]);
+    assert.deepEqual(change.coverage.nativeRules, []);
+    assert.equal(draft.formRules.linkage.some(rule=>
+      ["linkage.fd_32836745f26bca.contains.bg", "linkage.fd_32836745f26bca.contains.sq"].includes(rule.id)), false);
+    assert.equal(inspectDeterministicScriptBranchProof(change).ok, true);
     assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
   });
 

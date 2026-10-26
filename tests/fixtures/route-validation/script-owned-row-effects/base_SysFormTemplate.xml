@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>script-owned-row-source</string></void>
+<void method="put"><string>fdModelId</string><string>script-owned-row-model</string></void>
+<void method="put"><string>fdName</string><string>Script owned row effects</string></void>
+<void method="put"><string>fdDesignerHtml</string><string>&lt;table id="owned_table" fd_type="standardTable"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td row="0" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_selector",label:"Choice",dataType:"String",items:"Alpha|A;Beta|B"}'&gt;&lt;input id="fd_selector"/&gt;&lt;/div&gt;&lt;div fd_type="hidden" fd_values='{id:"fd_shift",label:"Shift",dataType:"String"}'&gt;&lt;input type="hidden" id="fd_shift" name="fd_shift"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="1" column="0"&gt;&lt;input type="hidden" id="fd_value_row" name="fd_value_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_value",label:"Value",dataType:"String",required:"true"}'&gt;&lt;input id="fd_value"/&gt;&lt;/div&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_optional",label:"Optional",dataType:"String",required:"false"}'&gt;&lt;input id="fd_optional"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="2" column="0"&gt;&lt;div fd_type="inputRadio" fd_values='{id:"fd_other",label:"Other",dataType:"String",items:"Yes|Y;No|N"}'&gt;&lt;input id="fd_other"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td row="3" column="0"&gt;&lt;input type="hidden" id="fd_other_row" name="fd_other_row"/&gt;&lt;div fd_type="inputText" fd_values='{id:"fd_other_value",label:"Other value",dataType:"String",required:"true"}'&gt;&lt;input id="fd_other_value"/&gt;&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</string></void>
+<void method="put"><string>fdDisplayJsp</string><string>&lt;xform:editShow&gt;&lt;script&gt;
+AttachXFormValueChangeEventById("fd_selector", function(value, domElement) {
+ var shift = GetXFormFieldById("fd_shift")[0];
+ if(value.indexOf("A")&gt;=0){
+  common_dom_row_set_show_required_reset("fd_value_row",true,true,false);
+  shift.value="A";
+ }else{
+  common_dom_row_set_show_required_reset("fd_value_row",false,false,false);
+  shift.value="";
+ }
+});
+&lt;/script&gt;&lt;script&gt;
+AttachXFormValueChangeEventById("fd_other", function(value, domElement) {
+ if(value.indexOf("Y")&gt;=0){
+  common_dom_row_set_show_required_reset("fd_other_row",true,true,false);
+ }else{
+  common_dom_row_set_show_required_reset("fd_other_row",false,false,false);
+ }
+});
+&lt;/script&gt;&lt;/xform:editShow&gt;</string></void>
+<void method="put"><string>fdMetadataXml</string><string>&lt;metadata&gt;&lt;extendSimpleProperty name="fd_selector" label="fd_selector" type="String"/&gt;&lt;extendSimpleProperty name="fd_shift" label="fd_shift" type="String"/&gt;&lt;extendSimpleProperty name="fd_value" label="fd_value" type="String"/&gt;&lt;extendSimpleProperty name="fd_optional" label="fd_optional" type="String"/&gt;&lt;extendSimpleProperty name="fd_other" label="fd_other" type="String"/&gt;&lt;extendSimpleProperty name="fd_other_value" label="fd_other_value" type="String"/&gt;&lt;/metadata&gt;</string></void>
+</object></java>
