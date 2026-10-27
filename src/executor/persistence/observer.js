@@ -447,6 +447,9 @@ function observeDetailField(model, modelIndex, lang) {
             id: normalizeScalar(field.fdDataModel?.fdId),
             name: normalizeScalar(field.fdDataModel?.fdName)
           },
+          optionalAddressValidationRule: Array.isArray(attribute?.config?.options?.validateRules) &&
+            attribute.config.options.validateRules.length === 1 &&
+            stableStringify(attribute.config.options.validateRules[0]) === stableStringify({ required: false }),
           controlBinding: observeNativeControlBinding(field.fdAttribute)
         }
       };

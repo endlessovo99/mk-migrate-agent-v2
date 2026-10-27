@@ -1,0 +1,1 @@
+Synthetic route fixture: a row helper controls a detail table with an explicitly optional organization selector between other columns. Captured native setDetailFieldAttr changes validation requirements by iterating validateRules. The selector needs a non-required rule so clearing and later setting requiredness both work.

@@ -391,6 +391,9 @@ function buildExpectedForm(form, mainTableName, diagnostics) {
           requireFieldTableBinding: true,
           ...(Object.keys(approvedDetailColumnWidths((form.fields || []).find(source => source.id === field.id))).length
             ? { approvedColumnWidths: approvedDetailColumnWidths((form.fields || []).find(source => source.id === field.id)) } : {}),
+          optionalAddressValidatorColumns: ((form.fields || []).find(source => source.id === field.id)?.columns || [])
+            .filter(column => column.componentId === "xform-address" && column.props?.required === false)
+            .map(column => column.id),
           columnIds: field.columns.map((column) => column.id)
         }))
     }

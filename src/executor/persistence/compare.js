@@ -430,6 +430,13 @@ function compareDetailPersistence(expected = {}, actual = {}, diagnostics) {
       if (!column) continue;
       const fieldPath = `${modelPath}/fdFields/${column.fieldIndex}`;
 
+      if (expectedModel.optionalAddressValidatorColumns?.includes(columnId) && column.optionalAddressValidationRule !== true) {
+        diagnostics.push(mismatch("form", "readback.form.optional_detail_address_rules_mismatch", "Optional detail address columns must retain their non-required native validation rule.", {
+          invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.columns.${columnId}.optionalAddressValidationRule`,
+          path: `${fieldPath}/fdAttribute/config/options/validateRules`, expected: [{ required: false }], actual: column.optionalAddressValidationRule
+        }));
+      }
+
       if (column.mechanismType !== expectedModel.fieldMechanismType) {
         diagnostics.push(mismatch("form", "readback.form.detail_field_mechanism_type_mismatch", "Readback detail business field must use the SYS-XFORM mechanism.", {
           invariantKey: `form.persistence.detailModels.${expectedModel.fieldId}.columns.${columnId}.mechanismType`,

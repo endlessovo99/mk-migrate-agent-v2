@@ -293,7 +293,7 @@ it("runs the public review/trust/dry-run/fake-create/readback/record path and bl
   const options = { ...scope, confirmWrite: true, credentials: { username: "fixture", encryptedPassword: "fixture" } };
   const client = new FakeNewoaAdapter("persist"), result = await executeDsl(reviewed.dsl, { ...options, client });
   assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
-  assert.equal(result.readback.invariantVersion, 42);
+  assert.equal(result.readback.invariantVersion, 43);
   assert.equal(result.transferRecord.status, "recorded");
   for (const mutate of [
     d => { delete d.migrationPolicies; delete d.migrationPolicyAudit; },

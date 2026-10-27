@@ -76,6 +76,6 @@ it("rejects unknown runtime attributes, options, free text and opaque children",
 it("completes the raw exporter fake route with invariant39 readback and record", async () => {
   const result = await runRouteCase("radio-source-presentation-raw-success");
   assert.equal(result.execution.ok, true);
-  assert.equal(result.execution.readback.invariantVersion, 42);
+  assert.equal(result.execution.readback.invariantVersion, 43);
   assert.equal(result.execution.transferRecord.status, "recorded");
 });

@@ -49,7 +49,7 @@ it("retains real parser rtf, widthless select and attachment identities and sour
   assert.deepEqual(field(dsl, "fd_select").props.defaultValue, { kind: "literal", value: "B" });
   const prepared = prepareSample(dsl), checked = prepared.verify(prepared.update);
   assert.equal(checked.ok, true, "Existing native request must already be valid before asking for the new profile");
-  assert.equal(checked.invariantVersion, 42);
+  assert.equal(checked.invariantVersion, 43);
   assert.equal(trust(source, dsl).ok, true);
 });
 
@@ -69,7 +69,7 @@ it("changes only each proven caption track while retaining all body tracks, PC w
   }
   assert.deepEqual(dsl, before);
   assert.equal(prepared.verify(prepared.update).ok, true);
-  assert.equal(prepared.verify(prepared.update).invariantVersion, 42);
+  assert.equal(prepared.verify(prepared.update).invariantVersion, 43);
   for (const mutate of [
     candidate => { field(candidate, "fd_rich").sourceProps.designerValues.width = "90%"; },
     candidate => { field(candidate, "fd_select").props.options[0].value = "changed"; },

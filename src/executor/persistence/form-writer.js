@@ -969,6 +969,11 @@ function fieldAttribute(field, template, tableName, tableType, spec, lang, sourc
       controlProps,
       kind: "control",
       label: nativeLabel,
+      // The native detail attribute API iterates validateRules for both
+      // required and non-required changes. An optional address column needs
+      // a non-required rule so both transitions work without an exception.
+      ...(tableType === "detail" && spec.attrType === "address" && field.props?.required === false
+        ? { options: { validateRules: [{ required: false }] } } : {}),
       labelProps: isDescription
         ? {
             compose: true,

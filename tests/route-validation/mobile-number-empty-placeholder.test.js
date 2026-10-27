@@ -173,6 +173,6 @@ it("accepts an equivalent explicit empty final mobile overlay without changing d
 it("completes the guarded fake number route through readback and record", async () => {
   const result = await runRouteCase("mobile-number-empty-placeholder-success");
   assert.equal(result.execution.ok, true);
-  assert.equal(result.execution.readback.invariantVersion, 42);
+  assert.equal(result.execution.readback.invariantVersion, 43);
   assert.equal(result.execution.transferRecord.status, "recorded");
 });
