@@ -13,6 +13,45 @@ import {
 } from "../../src/translator/workflow-formula-participants.js";
 
 describe("field-id-remap", () => {
+  it("remaps dotted main, table and hidden detail identities without colliding with existing fields", () => {
+    const form = {
+      fields: [
+        { id: "fd_person.name", type: "text" },
+        { id: "fd_person_name", type: "text" },
+        { id: "fd_rows.items", type: "detailTable", columns: [
+          { id: "fd_dept.name", type: "text", dataOnly: true }
+        ] }
+      ],
+      layout: { mkTree: [{ children: [{ refIds: ["fd_person.name", "fd_rows.items"] }] }] }
+    };
+    const before = structuredClone(form), map = buildFieldIdMap(form);
+    assert.equal(map.size, 3);
+    assert.equal(map.get("fd_dept.name"), "fd_dept_name");
+    assert.notEqual(map.get("fd_person.name"), "fd_person_name");
+    assert.deepEqual(buildFieldIdMap(form), map);
+    const mapped = applyFieldIdMapToForm(form, map);
+    assert.deepEqual(form, before);
+    assert.equal(mapped.fields[0].sourceProps.originalId, "fd_person.name");
+    assert.equal(mapped.fields[2].columns[0].dataOnly, true);
+    assert.ok(mapped.fields.flatMap(f => [f, ...f.columns || []]).every(f => !f.id.includes(".")));
+    assert.deepEqual(mapped.layout.mkTree[0].children[0].refIds, [map.get("fd_person.name"), map.get("fd_rows.items")]);
+    const scripts = applyFieldIdMapToScripts({ actions: [{
+      tableId: "fd_rows.items", controlId: "fd_dept.name",
+      function: 'function onLoad(){ MKXFORM.setValue("fd_person.name", 1); MKXFORM.setValue("fd_person_name", 2); MKXFORM.setValue("fd_rows.items.fd_dept.name", 3); }'
+    }] }, map);
+    assert.equal(scripts.actions[0].tableId, map.get("fd_rows.items"));
+    assert.equal(scripts.actions[0].controlId, "fd_dept_name");
+    assert.ok(scripts.actions[0].function.includes(`"${map.get("fd_rows.items")}.fd_dept_name"`));
+    assert.ok(scripts.actions[0].function.includes('"fd_person_name", 2'));
+    const workflow = applyFieldIdMapToWorkflow({ nodes: [{
+      dataAuthority: { fields: { "fd_person.name": { visible: true } } },
+      participants: { fieldId: "fd_person.name", sourceFieldId: "fd_person.name" }
+    }] }, map);
+    assert.deepEqual(Object.keys(workflow.nodes[0].dataAuthority.fields), [map.get("fd_person.name")]);
+    assert.equal(workflow.nodes[0].participants.fieldId, map.get("fd_person.name"));
+    assert.equal(workflow.nodes[0].participants.sourceFieldId, "fd_person.name");
+  });
+
   it("shortens detail table and column ids over the MK limit and remaps references", () => {
     const form = {
       fields: [

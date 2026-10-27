@@ -248,7 +248,7 @@ describe("review helper context Route-validation", () => {
     };
     const checkpoint = createReviewCheckpoint({ ...options, promptVersion: "agent-review.scoped-batches.v14" });
     assert.equal(validateReviewCheckpoint(checkpoint, { ...options, promptVersion: "agent-review.scoped-batches.v14" }).ok, true);
-    assert.equal(AGENT_REVIEW_PROMPT_VERSION, "agent-review.scoped-batches.v17");
+    assert.equal(AGENT_REVIEW_PROMPT_VERSION, "agent-review.scoped-batches.v18");
     const result = validateReviewCheckpoint(checkpoint, { ...options, promptVersion: AGENT_REVIEW_PROMPT_VERSION });
     assert.equal(result.ok, false);
     assert.deepEqual(result.diagnostics.map((item) => item.code).sort(), [

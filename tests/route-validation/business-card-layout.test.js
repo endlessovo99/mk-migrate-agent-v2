@@ -29,27 +29,27 @@ function desktopGrid(config, row = 0) {
 describe("business-card source form layout", () => {
   it("preserves independently visible name inputs, required state, and source defaults", () => {
     assert.equal(validateMigrationDsl(draft, { mode: "draft" }).ok, true);
-    for (const id of ["fd_display_name.name", "fd_person_dept.name"]) {
+    for (const id of ["fd_display_name_name", "fd_person_dept_name"]) {
       assert.notEqual(fields.get(id).dataOnly, true, id);
       assert.equal(fields.get(id).componentId, "xform-input");
       assert.equal(fields.get(id).props.hiddenLabel, true);
     }
-    assert.equal(fields.get("fd_display_name.name").props.required, true);
+    assert.equal(fields.get("fd_display_name_name").props.required, true);
     assert.notEqual(fields.get("fd_display_name").props.required, true);
-    assert.deepEqual(fields.get("fd_display_name.name").props.defaultValue,
+    assert.deepEqual(fields.get("fd_display_name_name").props.defaultValue,
       { kind: "context", source: "creator", property: "fdName" });
-    assert.deepEqual(fields.get("fd_person_dept.name").props.defaultValue,
+    assert.deepEqual(fields.get("fd_person_dept_name").props.defaultValue,
       { kind: "context", source: "creatorDept", property: "fdName" });
     const refs = draft.form.layout.mkTree[0].children.map((cell) => cell.refIds);
-    assert.deepEqual(refs[1], ["fd_display_name.name", "fd_display_name", "fd_325680e6d2262a"]);
-    assert.deepEqual(refs[3], ["fd_person_dept.name", "fd_person_dept", "fd_33965150c0040c", "fd_339651595696c2"]);
+    assert.deepEqual(refs[1], ["fd_display_name_name", "fd_display_name", "fd_325680e6d2262a"]);
+    assert.deepEqual(refs[3], ["fd_person_dept_name", "fd_person_dept", "fd_33965150c0040c", "fd_339651595696c2"]);
   });
 
   it("persists one title per group and horizontal native flow with source widths", () => {
     const prepared = preparedForm();
     const config = xformConfig(prepared.update);
     const nativeFields = new Map(config.dataModel[0].fdFields.map((field) => [field.fdName, field]));
-    for (const id of ["fd_display_name.name", "fd_display_name", "fd_person_dept.name", "fd_person_dept", "fd_project_org", "fd_3396516a0f980c"]) {
+    for (const id of ["fd_display_name_name", "fd_display_name", "fd_person_dept_name", "fd_person_dept", "fd_project_org", "fd_3396516a0f980c"]) {
       const field = nativeFields.get(id);
       assert.equal(field.fdDisplay, true, id);
       const attribute = JSON.parse(field.fdAttribute).config;
@@ -99,9 +99,11 @@ describe("business-card source form layout", () => {
   it("keeps the stored-only mapping for hidden, zero-width, or unbound companions", () => {
     for (const values of [{ width: "0" }, { canShow: "false" }, { _label_bind: "false" }]) {
       const candidates = structuredClone(draft.form.fields);
-      const name = candidates.find((field) => field.id === "fd_display_name.name");
+      const name = candidates.find((field) => field.id === "fd_display_name_name");
+      // This mapper's seam precedes target identity normalization.
+      name.id = name.sourceProps.originalId;
       Object.assign(name.sourceProps.designerValues, values);
-      const mapped = mapAddressDisplayCompanions(candidates, draft.form.layout.sourceGrid);
+      const mapped = mapAddressDisplayCompanions(candidates, source.form.layout);
       assert.equal(mapped.find((field) => field.id === name.id).dataOnly, true);
       assert.equal(mapped.find((field) => field.id === "fd_display_name").props.required, true);
     }
@@ -128,7 +130,7 @@ describe("business-card source form layout", () => {
     for (const device of ["desktop", "mobile"]) {
       const cell = scene.view.render[device][0].children[0].children[0].children[0].children[1];
       const line = cell.children[0].children[0];
-      line.children = line.children.filter((item) => item.children[0].key !== "fd_display_name.name");
+      line.children = line.children.filter((item) => item.children[0].key !== "fd_display_name_name");
     }
     config.viewModel[0].fdConfig = JSON.stringify(scene);
     mutated.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);

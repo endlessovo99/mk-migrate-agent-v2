@@ -58,9 +58,9 @@ describe("offline Route-validation", { concurrency: false }, () => {
     assert.equal(fields.get("fd_department")?.props?.required, true);
     assert.equal(fields.get("fd_department")?.props?.hiddenLabel, true);
     assert.equal(fields.get("fd_department")?.sourceProps?.layoutCell?.hiddenLabel, true);
-    assert.equal(fields.get("fd_department.name")?.dataOnly, true);
-    assert.equal(fields.get("fd_department.name")?.props?.hiddenLabel, true);
-    assert.equal(fields.get("fd_department.name")?.props?.required, undefined);
+    assert.equal(fields.get("fd_department_name")?.dataOnly, true);
+    assert.equal(fields.get("fd_department_name")?.props?.hiddenLabel, true);
+    assert.equal(fields.get("fd_department_name")?.props?.required, undefined);
     assert.equal(fields.get("fd_procurement")?.title, "采购说明");
     assert.equal(fields.get("fd_price")?.title, "定价");
     assert.equal(fields.get("label_procurement")?.componentId, "xform-description");

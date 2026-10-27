@@ -120,7 +120,8 @@ export function checkTrust(sourceDraft, migrationDsl) {
   const dataOnlySourceRefs = new Set(flattenFormFields(expectedDraft?.form?.fields)
     .filter((field) => field.dataOnly === true).map((field) => field.sourceRef));
   const dataOnlyFieldIds = new Set((expectedDraft?.form?.fields || [])
-    .filter((field) => field.dataOnly === true).map((field) => field.id));
+    .filter((field) => field.dataOnly === true)
+    .flatMap((field) => [field.id, field.sourceProps?.originalId].filter(Boolean)));
   const presentationReferenceMap = new Map((expectedDraft?.form?.fields || [])
     .filter((field) => dataOnlyFieldIds.has(field.sourceProps?.addressDisplayCompanionId) ||
       field.sourceProps?.consumedAddressDisplayCompanionId)

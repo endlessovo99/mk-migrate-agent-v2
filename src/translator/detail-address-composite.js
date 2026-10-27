@@ -12,6 +12,7 @@ export function foldLegacyDetailAddressComposites(form) {
 }
 
 function foldCompositeColumns(columns) {
+  columns = recoverDisplayPairHeaderTitles(columns);
   const groups = new Map();
   for (const column of columns) {
     const groupKey = compositeGroupKey(column);
@@ -66,6 +67,27 @@ function foldCompositeColumns(columns) {
   }
 
   return columns.map((column) => replacements.get(column.id) || column);
+}
+
+function recoverDisplayPairHeaderTitles(columns) {
+  const text = value => String(value || "").trim();
+  return columns.map(address => {
+    const values = address.sourceProps?.designerValues || {};
+    const header = address.sourceProps?.detailHeaderCaption;
+    if (address.componentId !== "xform-address" || values._label_bind !== "false" ||
+        !isZeroDesignerWidth(values.width) || header?.relation !== "same-detail-column-header" || !text(header.content)) return address;
+    const members = columns.filter(column => column.sourceProps?.detailHeaderCaption?.id === header.id);
+    const display = members.find(column => column.id === `${address.id}.name`);
+    const input = display?.sourceProps?.designerValues || {};
+    if (members.length !== 2 || display?.componentId !== "xform-input" || display.type !== "text" ||
+        display.dataOnly === true || input._label_bind !== "true" || input._label_bind_id !== header.id ||
+        !hasPositiveDesignerWidth(input.width) || input.readOnly === "true" || input.canShow === "false" ||
+        text(input.defaultValue) || text(input.formula) || text(display.sourceProps?.metadataAttributes?.defaultValue) ||
+        text(display.title) !== text(header.content) || text(values.label) !== `${text(header.content)}选择`) return address;
+    // The exact .name/selector pair and physical header establish ownership even
+    // when an inactive address binding still names a copied column's caption.
+    return { ...address, title: header.content };
+  });
 }
 
 function compositeGroupKey(column) {

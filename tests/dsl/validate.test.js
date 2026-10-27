@@ -32,6 +32,20 @@ describe("validateMigrationDsl", () => {
     assert.equal(result.diagnostics.some((item) => item.code === "dsl.template.name_required"), true);
   });
 
+  it("rejects dots in main, detail-table and stored-only detail-column IDs in every mode", () => {
+    const dsl = sampleTrustedDsl();
+    dsl.form.fields[0].id = "fd_main.name";
+    dsl.form.fields[2].id = "fd_detail.rows";
+    dsl.form.fields[2].columns[0].id = "fd_column.name";
+    dsl.form.fields[2].columns[0].dataOnly = true;
+    for (const mode of ["draft", "execute"]) {
+      const result = validateMigrationDsl(dsl, { mode });
+      assert.equal(result.ok, false);
+      assert.deepEqual(result.diagnostics.filter(d => d.code === "dsl.field.id_contains_dot").map(d => d.details.id),
+        ["fd_main.name", "fd_detail.rows", "fd_column.name"]);
+    }
+  });
+
   it("rejects field and detail-column ids longer than the MK 25-character limit", () => {
     const dsl = sampleTrustedDsl();
     dsl.form.fields[0].id = "fd_attention_row__description";

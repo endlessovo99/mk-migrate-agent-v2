@@ -25,6 +25,7 @@ export function buildFieldIdMap(form = {}) {
   for (const entry of originals) {
     if (
       entry.id.length <= MK_FIELD_ID_MAX_LENGTH &&
+      !entry.id.includes(".") &&
       !(entry.detailColumn && RESERVED_DETAIL_COLUMN_IDS.has(entry.id))
     ) {
       used.add(entry.id);
@@ -35,8 +36,11 @@ export function buildFieldIdMap(form = {}) {
   for (const entry of originals) {
     const { id, detailColumn } = entry;
     const reservedCollision = detailColumn && RESERVED_DETAIL_COLUMN_IDS.has(id);
-    if ((!reservedCollision && id.length <= MK_FIELD_ID_MAX_LENGTH) || idMap.has(id)) continue;
-    const shortId = allocateShortFieldId(id, used);
+    if ((!reservedCollision && !id.includes(".") && id.length <= MK_FIELD_ID_MAX_LENGTH) || idMap.has(id)) continue;
+    const normalized = id.replaceAll(".", "_");
+    const shortId = id.includes(".") && normalized.length <= MK_FIELD_ID_MAX_LENGTH &&
+      !used.has(normalized) && !(detailColumn && RESERVED_DETAIL_COLUMN_IDS.has(normalized))
+      ? normalized : allocateShortFieldId(id, used);
     used.add(shortId);
     idMap.set(id, shortId);
   }
@@ -150,13 +154,20 @@ function remapFieldLike(field, idMap) {
   const nextId = mapFieldId(field.id, idMap);
   const sourceProps = nextId === field.id ? field.sourceProps : { ...(field.sourceProps || {}), originalId: field.id };
   const folded = field.sourceProps?.foldedCaption;
+  const composite = field.sourceProps?.legacyDetailComposite;
+  const mappedSourceProps = composite ? { ...sourceProps, legacyDetailComposite: {
+    ...composite,
+    memberIds: composite.memberIds.map(id => mapFieldId(id, idMap)),
+    ...(composite.interactiveFieldId ? { interactiveFieldId: mapFieldId(composite.interactiveFieldId, idMap) } : {}),
+    ...(composite.storedDisplayFieldId ? { storedDisplayFieldId: mapFieldId(composite.storedDisplayFieldId, idMap) } : {})
+  } } : sourceProps;
   return {
     ...field,
     id: nextId,
     props: remapStructuredValue(field.props, idMap),
-    sourceProps: folded?.referenceMap ? { ...sourceProps, foldedCaption: { ...folded,
+    sourceProps: folded?.referenceMap ? { ...mappedSourceProps, foldedCaption: { ...folded,
       referenceMap: { ...folded.referenceMap, fieldId: nextId,
-        formerControlId: mapFieldId(folded.referenceMap.formerControlId, idMap) } } } : sourceProps,
+        formerControlId: mapFieldId(folded.referenceMap.formerControlId, idMap) } } } : mappedSourceProps,
     columns: Array.isArray(field.columns)
       ? field.columns.map((column) => remapFieldLike(column, idMap))
       : field.columns

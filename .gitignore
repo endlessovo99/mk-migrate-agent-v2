@@ -8,3 +8,4 @@ coverage/
 *.cookie
 /input/
 .gstack/
+tests/fixtures/source5/
