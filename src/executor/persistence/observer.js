@@ -627,11 +627,14 @@ function observeExecutableProps(controlProps = {}, native = {}) {
       url: normalizeScalar(option.value ?? option.url ?? option.label)
     }));
   }
-  if (component === "xform-input") {
-    // The runtime derives its length validator from varchar fdLength. An attribute
-    // alone cannot prove the cap, and contradictory persisted facts fail closed.
+  if (component === "xform-input" || component === "xform-rich-text") {
+    // Input validation and rich-text definition rebuilding also consume model
+    // fdLength. A control attribute alone cannot prove a retained cap.
     const length = native.field?.fdLength;
-    if (native.field?.fdDataType === "varchar" && native.field?.fdType === "text" &&
+    const nativeTypeMatches = component === "xform-input"
+      ? native.field?.fdDataType === "varchar" && native.field?.fdType === "text"
+      : native.field?.fdDataType === "clob" && native.field?.fdType === "richtext";
+    if (nativeTypeMatches &&
         Number.isSafeInteger(length) && length > 0 && controlProps.maxLength === length) {
       props.maxLength = length;
     }

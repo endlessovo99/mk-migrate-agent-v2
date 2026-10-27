@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java class="java.beans.XMLDecoder"><object class="java.util.HashMap">
+<void method="put"><string>fdId</string><string>synthetic-rich-text-length-form</string></void>
+<void method="put"><string>fdModelId</string><string>synthetic-rich-text-length-template</string></void>
+<void method="put"><string>fdName</string><string>Rich text native length retention</string></void>
+<void method="put"><string>fdDesignerHtml</string><string><![CDATA[<table fd_type="standardTable"><tbody>
+<tr><td row="0" column="0"><img fd_type="rtf" fd_values='{id:"fd_rich_limited",label:"Limited rich text",maxlength:"600",width:"80%",height:"220"}' formDesign="landray" businessType="rtfEditor"/></td></tr>
+<tr><td row="1" column="0"><img fd_type="rtf" fd_values='{id:"fd_rich_metadata",label:"Metadata rich text",width:"80%",height:"220"}' formDesign="landray" businessType="rtfEditor"/></td></tr>
+<tr><td row="2" column="0"><div fd_type="textarea" fd_values='{id:"fd_plain_area",label:"Plain textarea",maxlength:"2000"}' formDesign="landray"></div></td></tr>
+<tr><td row="3" column="0"><div fd_type="inputText" fd_values='{id:"fd_code",label:"Code",dataType:"String",maxlength:"18"}' formDesign="landray"></div></td></tr>
+</tbody></table>]]></string></void>
+<void method="put"><string>fdDisplayJsp</string><string><![CDATA[<xform:editShow>
+<xform:rtf property="extendDataFormInfo.value(fd_rich_limited)" validators="maxLength(600)" height="220" width="80%"/>
+<xform:rtf property="extendDataFormInfo.value(fd_rich_metadata)" height="220" width="80%"/>
+<xform:textarea property="extendDataFormInfo.value(fd_plain_area)" validators="maxLength(2000)"/>
+<xform:xtext property="extendDataFormInfo.value(fd_code)" validators="maxLength(18)"/>
+</xform:editShow>]]></string></void>
+<void method="put"><string>fdMetadataXml</string><string><![CDATA[<metadata>
+<extendSimpleProperty name="fd_rich_limited" label="Limited rich text" type="String" length="600"/>
+<extendSimpleProperty name="fd_rich_metadata" label="Metadata rich text" type="String" length="1000000"/>
+<extendSimpleProperty name="fd_plain_area" label="Plain textarea" type="String" length="2000"/>
+<extendSimpleProperty name="fd_code" label="Code" type="String" length="18"/>
+</metadata>]]></string></void>
+</object></java>

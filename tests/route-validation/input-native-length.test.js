@@ -131,7 +131,7 @@ describe("native input length policy", () => {
     assert.equal(dsl.review.warnings.filter((item) => item.code === "source.form.input_length_target_counting").length, 4);
     const prepared = prepareSample(dsl);
     const richNative = xformConfig(prepared.update).dataModel.flatMap((model) => model.fdFields || []).find((field) => field.fdName === "fd_description");
-    assert.equal(richNative.fdLength, 200);
+    assert.equal(richNative.fdLength, 600);
     assert.equal(JSON.parse(richNative.fdAttribute).config.controlProps.maxLength, 600);
     assert.equal(prepared.verify(prepared.update).ok, true);
   });

@@ -702,6 +702,9 @@ function fieldLengthFromDsl(field, spec) {
   if (spec.attrType === "textarea") {
     return textareaMaxLengthFromDsl(field);
   }
+  if (spec.attrType === "richtext") {
+    return textareaMaxLengthFromDsl(field) ?? 200;
+  }
   if (field.componentId === "xform-input") return inputMaxLengthFromDsl(field) ?? 200;
   return 200;
 }
