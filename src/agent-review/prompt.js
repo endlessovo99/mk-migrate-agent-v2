@@ -13,7 +13,7 @@ import {
   rowMarkersFromText
 } from "./row-marker-policy.js";
 
-export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v17";
+export const AGENT_REVIEW_PROMPT_VERSION = "agent-review.scoped-batches.v18";
 
 export const ALLOWED_PATCH_PATHS = [
   "/form/fields/*/title",
@@ -51,6 +51,7 @@ export function buildAgentReviewPrompt(sourceDraft, dslDraft, options = {}) {
       "Return only strict JSON with exactly these top-level keys: summary, patches, diagnostics.",
       "Do not return a complete DSL.",
       "Only propose evidence-backed replace patches for allowed form and script DSL paths.",
+      "Target form field IDs, detail-table IDs and detail-column IDs must not contain '.': this includes hidden and data-only fields. Source IDs may retain dots only as audit evidence. Invalid target identities require deterministic DSL regeneration with all references remapped; do not attempt an identity-only review patch.",
       "A form props patch is a shallow partial update: include only required, options, maxLength, or placeholder keys that evidence requires changing. Existing deterministic props such as defaultValue, orgTypes, and calculation are preserved by the validator.",
       "A source-backed legacyDetailComposite is one semantic detail cell. Preserve its deterministic required projection: the interactive selector carries the OR of both source members' required flags, and its data-only stored-display shadow stays non-required. The raw selector's required=false alone does not justify weakening a required composite; a both-optional composite stays optional.",
       "Patch paths must be copied exactly from allowedConcretePatchPaths. Do not invent array indexes or paths.",

@@ -111,7 +111,7 @@ describe("source content flow and presentation fidelity", () => {
   it("allows a source-rebuilt address display companion while retaining its visible width", () => {
     const source = cleanSourceFile("tests/fixtures/route-validation/compact-procurement-layout/route-compact-procurement-layout_SysFormTemplate.xml");
     const trusted = createTrustedMigrationDsl(source, draftSourceDraft(source), { externalAgentReviewed: true });
-    assert.equal(trusted.form.fields.find((field) => field.id === "fd_department.name").dataOnly, true);
+    assert.equal(trusted.form.fields.find((field) => field.id === "fd_department_name").dataOnly, true);
     const cell = trusted.form.layout.mkTree.flatMap((node) => node.children)
       .find((candidate) => candidate.contentFlow?.items.some((item) => item.referenceId === "fd_department"));
     const addressItem = cell.contentFlow.items.find((item) => item.referenceId === "fd_department");

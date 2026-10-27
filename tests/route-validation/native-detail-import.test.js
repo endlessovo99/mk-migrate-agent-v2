@@ -30,7 +30,10 @@ assert.equal(JSON.stringify(source),before);assert.equal(JSON.stringify(draft),o
 assert.equal(result.changedActionIds.length,1);const action=result.draft.scripts.actions.find(a=>a.id===decision.sourceActionId);
 assert.equal(action.event,"onClick");assert.equal(action.controlId,"fd_download");assert.deepEqual(action.sourceRefs,[decision.sourceRef]);assert.equal(result.draft.scripts.actions.length,draft.scripts.actions.length);
 assert.equal(result.draft.form.fields.find(f=>f.id==='fd_download').sourceRef,"source.form.control.fd_download");assert.equal(result.draft.form.fields.find(f=>f.id==='fd_download').componentId,"xform-button");
-assert.deepEqual(result.audits[0].nativeImport.importFieldIds,['fd_job','fd_name','fd_org.name','fd_date','fd_flag']);assert.equal(result.audits[0].nativeImport.originalSourceFormatConverted,false);assert.equal(result.audits[0].nativeImport.allLegacyFilesRejectionProven,false);
+assert.deepEqual(result.audits[0].nativeImport.importFieldIds,['fd_job','fd_name','fd_org_name','fd_date','fd_flag']);assert.equal(result.audits[0].nativeImport.originalSourceFormatConverted,false);assert.equal(result.audits[0].nativeImport.allLegacyFilesRejectionProven,false);
+assert.ok(source.form.detailTables[0].columns.some(field=>field.id==='fd_org.name'));
+assert.ok(draft.scripts.actions[0].semanticHints.legacyExcelImport.columnSlots.includes('fd_org.name'));
+assert.equal(result.draft.form.fields.find(field=>field.type==='detailTable').columns.find(field=>field.sourceProps.originalId==='fd_org.name').id,'fd_org_name');
 assert.ok(approvedNativeImportSourceWitness(source,decision));assert.match(action.function,/\$\{xform:id\}/);assert.match(action.function,/asyncImportDetailData/);assert.equal(action.function.includes('old.xlsx'),false);
 });
 
@@ -75,7 +78,7 @@ it("keeps a usable global base ahead of the module cache and dispatches the nati
  assert.equal(h.loaderReads(),0);assert.deepEqual(h.moduleLookups,[]);assert.deepEqual(h.notices,[]);
  assert.deepEqual(h.requests,[]);assert.deepEqual(h.writes,[]);
  h.file();await h.reply(0,{success:true,data:{fdAttachFileId:'global-attach'}});await h.reply(1,{success:true,data:{id:'global-job'}});
- const row={fd_job:'GLOBAL-J1',fd_name:'Name','fd_org.name':'text only',fd_date:'2026-10-24',fd_flag:'yes'};
+ const row={fd_job:'GLOBAL-J1',fd_name:'Name','fd_org_name':'text only',fd_date:'2026-10-24',fd_flag:'yes'};
  await h.reply(2,{success:true,data:{percent:1,success:true,data:[row]}});assert.deepEqual(h.writes,[]);h.confirm();h.confirm();
  assert.deepEqual(h.writes,[{table:'native_table',rows:[row]}]);assert.equal(h.loaderReads(),0);
 });
@@ -89,10 +92,10 @@ it("reports unavailable native dependencies before opening, reading rows or send
  }
 });
 
-it("uses exact native upload/parse DTO, preserves ambient context, previews then replaces once on confirmation, including independent .name strings",async()=>{
+it("uses exact native upload/parse DTO, preserves ambient context, previews then replaces once on confirmation, including renamed source display strings",async()=>{
 const h=harness(compiled().action);assert.equal(h.requests.length,0);h.file();assert.equal(h.requests.length,1);assert.equal(h.requests[0].url,'https://qas.example.invalid/data/sys-attach/upload');assert.equal(h.requests[0].dto.fields[0][0],'fdFile');
 await h.reply(0,{success:true,data:{fdAttachFileId:'attach-fixture'}});assert.equal(h.requests[1].dto.xformId,'FAKE_NEW_XFORM_ID');assert.equal(h.requests[1].dto.tableName,'native_table');assert.deepEqual(h.requests[1].dto.formData.native_table,[{fd_job:'old'}]);assert.equal(h.requests[1].dto.formData.fd_current,0);assert.equal(h.requests[1].dto.formData.unrendered,'keep');
-await h.reply(1,{success:true,data:{id:'job-fixture'}});assert.ok(h.requests[2].url.endsWith('/sysXFormDataTransport/process'));const row={fd_job:'J1',fd_name:'Name','fd_org.name':'text only',fd_date:'2026-10-17',fd_flag:'yes'};
+await h.reply(1,{success:true,data:{id:'job-fixture'}});assert.ok(h.requests[2].url.endsWith('/sysXFormDataTransport/process'));const row={fd_job:'J1',fd_name:'Name','fd_org_name':'text only',fd_date:'2026-10-17',fd_flag:'yes'};
 await h.reply(2,{success:true,data:{percent:1,success:true,data:[row]}});assert.deepEqual(h.writes,[]);h.confirm();assert.deepEqual(h.writes,[{table:'native_table',rows:[row]}]);h.confirm();assert.equal(h.writes.length,1);
 });
 
@@ -102,8 +105,8 @@ it("projects confirmed rows to approved source slots and discards all external s
  const result=applyApprovedImportPolicies(authorized(source,decision),draft,[decision]);
  const h=harness(result.draft.scripts.actions.find(action=>action.id===decision.sourceActionId));h.file();
  await h.reply(0,{success:true,data:{fdAttachFileId:'attach'}});await h.reply(1,{success:true,data:{id:'job'}});
- await h.reply(2,{success:true,data:{percent:1,success:true,data:[{fd_job:0,fd_name:false,'fd_org.name':'',fd_date:null,fd_extra:'must not write',key:'old-row-key',fd_id:'old-business-id',fd_main_id:'other-document'}]}});h.confirm();
- assert.deepEqual(h.writes,[{table:'native_table',rows:[{fd_job:0,fd_name:false,'fd_org.name':'',fd_date:null}]}]);
+ await h.reply(2,{success:true,data:{percent:1,success:true,data:[{fd_job:0,fd_name:false,'fd_org_name':'',fd_date:null,fd_extra:'must not write',key:'old-row-key',fd_id:'old-business-id',fd_main_id:'other-document'}]}});h.confirm();
+ assert.deepEqual(h.writes,[{table:'native_table',rows:[{fd_job:0,fd_name:false,'fd_org_name':'',fd_date:null}]}]);
 });
 
 it("cancellation, parse errors, invalid rows, context failure and bounded polling leave old rows untouched; confirmed empty rows clear",async()=>{
@@ -116,7 +119,7 @@ const context=harness(compiled().action,{badContext:true});assert.equal(context.
 });
 
 it("downloads only the approved native new template columns with the exact new form ID, never calls the old file URL or row setter",async()=>{
-const h=harness(compiled().action);h.download();assert.equal(h.requests.length,1);assert.ok(h.requests[0].url.endsWith('/sysXFormDataTransport/exportDetailTemplate'));assert.equal(h.requests[0].dto.xformId,'FAKE_NEW_XFORM_ID');assert.deepEqual(h.requests[0].dto.sortedFieldList,['fd_job','fd_name','fd_org.name','fd_date','fd_flag']);assert.deepEqual(h.requests[0].dto.transportFields,h.requests[0].dto.sortedFieldList);assert.equal(h.requests[0].dto.personMatchType,'');assert.equal(h.requests[0].dto.deptMatchType,'');await h.reply(0,'synthetic workbook bytes');assert.equal(h.downloads.length,1);assert.deepEqual(h.writes,[]);
+const h=harness(compiled().action);h.download();assert.equal(h.requests.length,1);assert.ok(h.requests[0].url.endsWith('/sysXFormDataTransport/exportDetailTemplate'));assert.equal(h.requests[0].dto.xformId,'FAKE_NEW_XFORM_ID');assert.deepEqual(h.requests[0].dto.sortedFieldList,['fd_job','fd_name','fd_org_name','fd_date','fd_flag']);assert.deepEqual(h.requests[0].dto.transportFields,h.requests[0].dto.sortedFieldList);assert.equal(h.requests[0].dto.personMatchType,'');assert.equal(h.requests[0].dto.deptMatchType,'');await h.reply(0,'synthetic workbook bytes');assert.equal(h.downloads.length,1);assert.deepEqual(h.writes,[]);
 });
 
 it("the approved public route passes review, fake persistence, exact form-ID materialization, API readback and transfer record",async()=>withNetworkGuard(async()=>{

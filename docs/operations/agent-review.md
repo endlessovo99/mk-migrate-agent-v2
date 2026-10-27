@@ -8,6 +8,8 @@ clean -> draft -> agent-review -> migration.dsl.json -> check/dry-run/execute
 
 `clean`, `draft`, and `translate` are deterministic and offline. `translate` remains only a shortcut for clean plus draft, and it never calls AI.
 
+Target field IDs must not contain `.`. This applies to main fields, detail-table IDs, detail columns, and hidden/data-only fields. The deterministic draft mapper replaces dots with underscores and allocates a stable collision-safe ID when necessary, remapping layout, script, formula, workflow, and import references. Source IDs remain unchanged in audit evidence. Review rejects a legacy dotted target ID before calling the provider and instructs the operator to regenerate the DSL; identity changes are not allowed review patches. DSL validation also rejects dotted IDs at both draft and execution boundaries.
+
 ## Provider Configuration
 
 `agent-review` uses an OpenAI-compatible Responses API provider and reads its connection configuration from environment variables:

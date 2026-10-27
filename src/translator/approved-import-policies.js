@@ -53,7 +53,8 @@ export function applyApprovedImportPolicies(sourceDraft, draft, decisions) {
     result.audits.push(audit);
     const sources = (sourceDraft?.scripts?.sources || []).filter(source => (source.sourceRef || source.id) === decision.sourceRef);
     const actions = (draft?.scripts?.actions || []).filter(action => action.id === decision.sourceActionId);
-    const tables = (draft?.form?.fields || []).filter(field => field.type === "detailTable" && field.id === decision.tableId);
+    const tables = (draft?.form?.fields || []).filter(field => field.type === "detailTable" &&
+      [field.id, field.sourceProps?.originalId].includes(decision.tableId));
     const source = sources.length === 1 ? sources[0] : undefined;
     const descriptor = source && legacyExcelImportDescriptor(source, draft.form);
     audit.sourceJavascriptSha256 = source && approvedImportSourceJavascriptDigest(source);

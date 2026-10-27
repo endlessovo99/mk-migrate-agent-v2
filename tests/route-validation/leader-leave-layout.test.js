@@ -9,7 +9,7 @@ import { prepareSample, xformConfig } from "../helpers/persistence.js";
 
 const source = cleanSourceFile("tests/fixtures/route-validation/leader-leave-layout/route-leader-leave-layout_SysFormTemplate.xml");
 const draft = draftSourceDraft(source);
-const ids = ["fd_select_person.name", "fd_select_person", "fd_person_dept", "fd_3255d66ae9a53e", "fd_begin_date", "fd_end_date"];
+const ids = ["fd_select_person_name", "fd_select_person", "fd_person_dept", "fd_3255d66ae9a53e", "fd_begin_date", "fd_end_date"];
 const prepare = () => prepareSample(createTrustedMigrationDsl(source, draft, {
   externalAgentReviewed: true, reviewerName: "route-validation", checkedAt: "2026-09-10T00:00:00.000Z"
 }));

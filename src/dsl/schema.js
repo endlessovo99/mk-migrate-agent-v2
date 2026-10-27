@@ -1,4 +1,5 @@
 import { selectEmptyEventProof } from "./source-select-empty-event.js";
+import { dottedFieldIdDiagnostics } from "./field-identifiers.js";
 import { choiceOtherToggleBindings } from "./choice-other-runtime.js";
 import {mainTableReadReferenceDiagnostics} from "./native-main-table-reference.js";
 import {templateReadScopeIssues} from './template-read-scope.js';
@@ -329,6 +330,7 @@ function validateForm(form, diagnostics) {
     };
   }
 
+  diagnostics.push(...dottedFieldIdDiagnostics(form));
   const fieldIds = validateFields(form.fields, diagnostics);
   const dataOnlyFieldIds = new Set(
     (Array.isArray(form.fields) ? form.fields : [])

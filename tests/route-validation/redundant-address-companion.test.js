@@ -22,7 +22,7 @@ describe('redundant address name column', () => {
     const source = sourceDraftFromLegacyDsl(translateSysFormTemplateXml(xml));
     assert.ok(source.form.controls.some(f => f.sourceProps?.staticCaptionFact?.domContext.inlineScripts.some(s => s.includes(id))));
     assert.ok(!JSON.stringify(source.scripts).includes(id));
-    assert.ok(draftSourceDraft(source).form.fields.some(f => f.id === id));
+    assert.ok(draftSourceDraft(source).form.fields.some(f => (f.sourceProps?.originalId || f.id) === id));
   });
 
   it('does not treat observational caption scope as a value dependency', () => {
@@ -31,9 +31,9 @@ describe('redundant address name column', () => {
     assert.ok(caption);
     caption.sourceProps.staticCaptionFact = { ...caption.sourceProps.staticCaptionFact,
       domContext: { version: 1, ancestorIds: [nameId], cellDescendantIds: [nameId], inlineScripts: [] } };
-    assert.ok(!draftSourceDraft(source).form.fields.some(f => f.id === nameId));
+    assert.ok(!draftSourceDraft(source).form.fields.some(f => (f.sourceProps?.originalId || f.id) === nameId));
     caption.sourceProps.configuredDependency = nameId;
-    assert.ok(draftSourceDraft(source).form.fields.some(f => f.id === nameId));
+    assert.ok(draftSourceDraft(source).form.fields.some(f => (f.sourceProps?.originalId || f.id) === nameId));
   });
 
   for (const kind of ['runtime-only script', 'incomplete runtime attributes']) it(`retains a companion with ${kind}`, () => {
@@ -44,13 +44,13 @@ describe('redundant address name column', () => {
       inlineDomainComplete: kind !== 'incomplete runtime attributes',
       inlineScripts: kind === 'runtime-only script' ? [`document.getElementById("${nameId}").value="x";`] : []
     } };
-    assert.ok(draftSourceDraft(source).form.fields.some(f => f.id === nameId));
+    assert.ok(draftSourceDraft(source).form.fields.some(f => (f.sourceProps?.originalId || f.id) === nameId));
   });
 
   it('persists only the native address field while retaining the source display width', () => {
     const source = cleanSourceFile(path);
     const draft = draftSourceDraft(source);
-    assert.ok(!draft.form.fields.some(f => f.id === nameId));
+    assert.ok(!draft.form.fields.some(f => (f.sourceProps?.originalId || f.id) === nameId));
     const address = draft.form.fields.find(f => f.id === addressId);
     assert.equal(address.sourceProps.consumedAddressDisplayCompanionId, nameId);
     const cell = draft.form.layout.mkTree.flatMap(row => row.children).find(c => c.refIds?.includes(addressId));
@@ -78,7 +78,7 @@ describe('redundant address name column', () => {
       if (kind === 'default') input.sourceProps.designerValues.defaultValue = '部门';
       if (kind === 'readonly') input.sourceProps.designerValues.readOnly = 'true';
       if (kind === 'independent-title') input.sourceProps.designerValues.label = '申请人1';
-      assert.ok(draftSourceDraft(source).form.fields.some(f => f.id === nameId));
+      assert.ok(draftSourceDraft(source).form.fields.some(f => (f.sourceProps?.originalId || f.id) === nameId));
     });
   }
 });

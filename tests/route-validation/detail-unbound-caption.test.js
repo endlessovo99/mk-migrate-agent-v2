@@ -15,7 +15,8 @@ const cases = [
   { name: "renamed", table: "cargo_rows", quantity: "units", price: "rate", amount: "charge",
     total: "extended_value", hidden: "hidden_token", header: "charge_heading", title: "申报金额", display: "校核总额" }
 ];
-const column = (draft, ids, id) => draft.form.fields.find(field => field.id === ids.table).columns.find(field => field.id === id);
+const column = (draft, ids, id) => draft.form.fields.find(field => field.id === ids.table).columns
+  .find(field => (field.sourceProps?.originalId || field.id) === id);
 const sourceColumn = (source, ids, id) => source.form.detailTables.find(table => table.id === ids.table).columns.find(field => field.id === id);
 function stages(name = "base") {
   const source = cleanSourceFile(`${directory}/${name}_SysFormTemplate.xml`);
@@ -70,7 +71,7 @@ for (const ids of [
     assert.equal(selector.sourceProps.detailHeaderCaption.content, ids.title);
     assert.equal(selector.title, ids.oldTitle, "Address semantics remain outside the proven calculation route");
     assert.deepEqual(table.columns.map(field => [field.id, field.title, field.componentId]), [
-      [ids.display, ids.title, "xform-input"], [ids.selector, ids.oldTitle, "xform-address"],
+      [ids.display.replaceAll(".", "_"), ids.title, "xform-input"], [ids.selector, ids.oldTitle, "xform-address"],
       [ids.note, ids.oldTitle, "xform-input"]
     ]);
     for (const field of table.columns) {

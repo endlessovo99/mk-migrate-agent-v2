@@ -1,4 +1,5 @@
 import { SOURCE_DRAFT_VERSION } from "../translator/source-draft.js";
+import { dottedFieldIdDiagnostics } from "../dsl/field-identifiers.js";
 import { inspectWorkflowFormulaProvenance } from "../translator/workflow-formula-participants.js";
 import {
   createReviewCheckpoint,
@@ -123,7 +124,11 @@ export function createRunCheckpoint(status, context, state) {
 }
 
 export function validateInputs(sourceDraft, dslDraft) {
-  const diagnostics = [];
+  const diagnostics = dottedFieldIdDiagnostics(dslDraft?.form).map(diagnostic => ({
+    ...diagnostic,
+    code: "agent.input.field_id_requires_remap",
+    path: `/dslDraft${diagnostic.path}`
+  }));
   if (sourceDraft?.version !== SOURCE_DRAFT_VERSION || sourceDraft?.artifact !== "source-draft") {
     diagnostics.push(error("agent.input.source_draft_required", "agent-review requires a source-draft artifact.", "/sourceDraft"));
   }

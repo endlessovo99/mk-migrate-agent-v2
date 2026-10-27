@@ -1,4 +1,5 @@
 import { parse } from "acorn";
+import { legacyControlAliases } from "./detail-control-target.js";
 
 /** Source requirements only; native detail import has no proven positional-file contract. */
 export function legacyExcelImportDescriptor(source = {}, form = {}) {
@@ -33,8 +34,8 @@ export function legacyExcelImportDescriptor(source = {}, form = {}) {
   const positions = new Map();
   columnSlots.forEach((id, offset) => { if (id) positions.set(id, [...(positions.get(id) || []), offset]); });
   const table = [...(form.fields || []), ...(form.detailTables || [])]
-    .find(field => field?.id === tableId && (field.type === "detailTable" || field.sourceType === "detailTable"));
-  const present = new Set((table?.columns || []).map(column => column.id));
+    .find(field => [field?.id, field?.sourceProps?.originalId].includes(tableId) && (field.type === "detailTable" || field.sourceType === "detailTable"));
+  const present = new Set((table?.columns || []).flatMap(legacyControlAliases));
   return {
     tableId, startRowNo, startCellNo, rawControlIds, columnSlots,
     sourceIndexBase: "unverified-source-JSP-contract",
