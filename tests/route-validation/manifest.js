@@ -145,6 +145,18 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       id: "choice-other-independent-radio-success",
       source: { kind: "form-only", relativePath: "choice-other-companion-fidelity/main-radio_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "select-other-reveal-success",
+      source: { kind: "form-only", relativePath: "choice-other-select/choice-other-select_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "styled-other-reveal-success",
+      source: { kind: "form-only", relativePath: "choice-other-styled/choice-other-styled_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
     },
     {
@@ -696,6 +708,22 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       source: {
         kind: "form-only",
         relativePath: "checkbox-other-option/route-checkbox-other-option_SysFormTemplate.xml"
+      },
+      reviewScenario: "accept",
+      newoaScenario: "persist",
+      confirmWrite: true,
+      expected: {
+        terminalStage: "review",
+        reviewStatus: "blocked",
+        reviewStage: "agent-review.input",
+        operations: []
+      }
+    },
+    {
+      id: "select-other-option-detail-blocked-before-transport",
+      source: {
+        kind: "form-only",
+        relativePath: "choice-other-select-detail/choice-other-select-detail_SysFormTemplate.xml"
       },
       reviewScenario: "accept",
       newoaScenario: "persist",

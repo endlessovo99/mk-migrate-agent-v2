@@ -8,6 +8,7 @@ import { prepareChoiceOtherLayoutConfig, preparePublishedChoiceOtherLayout } fro
 const nodes = n => !n || typeof n !== "object" ? [] : [n, ...(n.children || []).flatMap(nodes)];
 function fixture() {
   const dsl = draftSourceDraft(cleanSourceFile("tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml"));
+  for (const field of dsl.form.fields) delete field.otherPresentation;
   const config = xformConfig(prepareSample(dsl).update), priorDsl = structuredClone(dsl);
   delete priorDsl.form.fields.find(f => f.type === "checkbox").sourceProps.otherTextCompanion;
   const view = JSON.parse(config.viewModel[0].fdConfig);
@@ -23,6 +24,12 @@ function fixture() {
   config.viewModel[0].fdConfig = JSON.stringify(view);
   return { dsl, priorDsl, config };
 }
+
+it("does not extend an existing-template layout update to the new conditional presentation", () => {
+  const input = fixture();
+  input.dsl = draftSourceDraft(cleanSourceFile("tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml"));
+  assert.throws(() => prepareChoiceOtherLayoutConfig(input), /outside the existing-template layout update scope/);
+});
 
 it("updates only the proven native view groups, keeping all business configuration exact", () => {
   const input = fixture(), before = structuredClone(input.config), p = prepareChoiceOtherLayoutConfig(input);

@@ -10,6 +10,8 @@ const same = (a, b) => sha256Digest(a ?? null) === sha256Digest(b ?? null);
 
 /** Pure source-bound view patch. No lifecycle transition, models, scripts or auth changes. */
 export function prepareChoiceOtherLayoutConfig({ config, priorDsl, dsl }) {
+  assert.ok(![priorDsl, dsl].some(value => (value?.form?.fields || []).some(field => field.otherPresentation)),
+    "conditional Other presentation is outside the existing-template layout update scope");
   const expected = structuredClone(dsl.form);
   for (const field of expected.fields) {
     const old = priorDsl.form.fields.find(f => f.id === field.id);

@@ -3,7 +3,7 @@ import { canonicalJson } from "../agent-review/digest.js";
 /** Only the source-bound choice/explanation presentation needs this extra check. */
 export function choiceOtherStorageExpectation(field, form = {}) {
   const id = field.sourceProps?.originalId || field.id;
-  const related = (form.fields || []).some(choice => choice.componentId === "xform-checkbox" &&
+  const related = (form.fields || []).some(choice => ["xform-checkbox", "xform-select"].includes(choice.componentId) &&
     choice.sourceProps?.otherTextCompanion &&
     [choice.sourceProps.originalId || choice.id, choice.sourceProps.otherTextCompanion.id,
       choice.sourceProps.otherTextCompanion.captionId].includes(id));
@@ -17,7 +17,7 @@ function sourcePairs(form = {}) {
     ...(form.detailTables || []).map(table => ({ fields: table.columns || [], tableRef: table.sourceRef || table.id }))
   ];
   return scopes.flatMap(scope => scope.fields.filter(field =>
-    ["checkbox", "radio"].includes(field.sourceType) && field.sourceProps?.otherTextCompanion?.id
+    ["checkbox", "radio", "singleSelect"].includes(field.sourceType) && field.sourceProps?.otherTextCompanion?.id
   ).map(choice => {
     const relation = choice.sourceProps.otherTextCompanion;
     const texts = scope.fields.filter(field => field.id === relation.id);
@@ -61,6 +61,18 @@ export function choiceOtherCompanionDiagnostics(sourceForm, targetForm, expected
     ? (field.columns || []).map(column => ({ field: column, tableRef: field.sourceRef || field.id }))
     : [{ field }]);
   const expectedFields = flatten(expectedForm), actualFields = flatten(targetForm);
+  // Older retained DSLs have no reveal policy. An opted-in policy must match
+  // the source-derived translator result exactly; it cannot be added by a
+  // review patch or moved to a different field.
+  for (const entry of actualFields.filter(item => item.field?.otherPresentation !== undefined)) {
+    const expected = expectedFields.filter(item => item.field?.sourceRef === entry.field.sourceRef);
+    if (entry.tableRef || expected.length !== 1 || expected[0].tableRef ||
+        canonicalJson(entry.field.otherPresentation) !== canonicalJson(expected[0].field.otherPresentation)) {
+      diagnostics.push({ level: "error", code: `${prefix}.choice_other_reveal_source_mismatch`,
+        message: "Other reveal presentation must match the source-derived, script-safe relationship.",
+        path: "/form", details: { fieldId: entry.field.id, sourceRef: entry.field.sourceRef } });
+    }
+  }
   for (const pair of sourcePairs(sourceForm)) {
     if (pair.tableRef || !pair.text) continue;
     const sources = [pair.choice, pair.text, ...(pair.caption ? [pair.caption] : [])];

@@ -751,6 +751,7 @@ function sourcePropsFromField(field) {
     inlineHint: field.source?.inlineHint,
     inlineUnit: field.source?.inlineUnit,
     otherTextCompanion: field.source?.otherTextCompanion,
+    otherPairContext: field.source?.otherPairContext,
     restDialog: field.source?.restDialog,
     designerPleaseSelect: field.source?.designerPleaseSelect === true ? true : undefined,
     pleaseSelectLabel: field.source?.pleaseSelectLabel,

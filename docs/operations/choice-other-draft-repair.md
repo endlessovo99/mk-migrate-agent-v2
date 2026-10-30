@@ -19,6 +19,11 @@ choice and explanation fields, values, options, defaults, scripts and permission
 stay protected. The new checkbox uses the intersection of their permissions.
 Only the corresponding intrinsic wrapper widths and checkbox style are updated.
 
+The newer conditional `otherPresentation` policy is outside this existing-target
+repair operation. A DSL containing it is rejected by the legacy repair and
+layout-update planners; it does not authorize changing an already created draft
+or published form.
+
 Apply requires explicit write confirmation and the unchanged preview digest.
 Before its single template update, it saves private before snapshots, the full
 payload and write intent, and acquires the permanent per-origin/target lock.

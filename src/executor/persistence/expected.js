@@ -1,6 +1,7 @@
 import { sourceNumberEditors, sourceNumberDisplays } from "../../dsl/source-number-editor.js";
 import { choiceOtherStorageExpectation } from "../../dsl/source-choice-other-companion.js";
 import { withChoiceOtherRuntime } from "../../dsl/choice-other-runtime.js";
+import { withChoiceOtherSelectReveal } from "./choice-other-select-reveal.js";
 import {renderMainTableReferences,MAIN_TABLE_PLACEHOLDER} from "../../dsl/native-main-table-reference.js";
 import { approvedDetailColumnWidths } from "../../dsl/approved-detail-presentation.js";
 import { sourceCheckboxLayouts } from "../../dsl/source-checkbox-layout.js";
@@ -86,7 +87,7 @@ export function buildExpectedInvariants(dsl, envelope) {
     dsl?.scripts,
     diagnostics
   );
-  const scriptsExpected = buildExpectedScripts(withChoiceOtherRuntime(dsl?.scripts, dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName, diagnostics, envelope?.templateId);
+  const scriptsExpected = buildExpectedScripts(withChoiceOtherSelectReveal(withChoiceOtherRuntime(dsl?.scripts, dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName, diagnostics, envelope?.templateId);
   const workflowExpected = dsl?.workflow
     ? buildExpectedWorkflow(dsl.workflow, diagnostics, {
       templateId: envelope?.templateId,

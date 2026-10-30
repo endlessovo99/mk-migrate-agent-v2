@@ -9,7 +9,8 @@ import {sampleBaseTemplate,xformConfig} from '../helpers/persistence.js';
 import {prepareChoiceOtherRepair,CHOICE_OTHER_NATIVE_ORG_TYPES} from '../../src/executor/choice-other-repair-plan.js';
 
 function setup(inputDsl){
- const dsl=inputDsl||draftSourceDraft(cleanSourceFile('tests/fixtures/route-validation/checkbox-other-compatible/compatible_SysFormTemplate.xml'));
+ const dsl=structuredClone(inputDsl||draftSourceDraft(cleanSourceFile('tests/fixtures/route-validation/checkbox-other-compatible/compatible_SysFormTemplate.xml')));
+ for(const field of dsl.form.fields)delete field.otherPresentation;
  const priorDsl=structuredClone(dsl),caption=priorDsl.form.fields.find(f=>f.sourceProps?.choiceOtherToggle);
  Object.assign(caption,{type:'description',componentId:'xform-description',props:{content:'其他'},generated:false});delete caption.sourceProps.choiceOtherToggle;delete caption.reason;
  const template=applyFormPayload(sampleBaseTemplate(),priorDsl),workflow={...template.mechanisms.lbpmTemplate[0],fdName:template.fdName,fdEntityId:template.fdId,fdCategory:{fdFormCategoryId:'category-id'},fdFormCategory:{fdFormCategoryId:'category-id'},fdTemplateForms:[{fdFormKey:template.fdId,fdFormCode:template.fdId}],fdContent:'<process><node id="start"/></process>',fdEditors:[]};
@@ -18,6 +19,10 @@ function setup(inputDsl){
  const config=xformConfig(template);config.dataModel[0].fdAlterTime=100;template.mechanisms['sys-xform'].fdConfig=JSON.stringify(config);
  return {dsl,priorDsl,before:{template,workflow},categoryId:'category-id',currentTargets:[]};
 }
+it('does not extend the existing draft repair to conditional Other presentation',()=>{
+ const input=setup();input.dsl.form.fields.find(f=>f.id==='fd_choice').otherPresentation={version:1};
+ assert.throws(()=>prepareChoiceOtherRepair(input),{code:'choice_other_repair.conditional_presentation_outside_repair_scope'});
+});
 function configEdit(bundle,fn){const c=xformConfig(bundle.template);fn(c);bundle.template.mechanisms['sys-xform'].fdConfig=JSON.stringify(c);}
 function nodes(value){return !value||typeof value!=='object'?[]:[value,...Object.values(value).flatMap(v=>Array.isArray(v)?v.flatMap(nodes):nodes(v))];}
 

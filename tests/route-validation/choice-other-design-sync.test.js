@@ -7,6 +7,7 @@ import { prepareChoiceOtherDesignSync } from "../../src/executor/choice-other-de
 const nodes = n => !n || typeof n !== "object" ? [] : [n, ...(n.children || []).flatMap(nodes)];
 function fixture() {
   const dsl = draftSourceDraft(cleanSourceFile("tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml"));
+  for (const field of dsl.form.fields) delete field.otherPresentation;
   const template = prepareSample(dsl).update, config = xformConfig(template);
   const view = JSON.parse(config.viewModel[0].fdConfig);
   for (const scene of ["desktop", "mobile"]) for (const n of view.view.render[scene].flatMap(nodes)) {

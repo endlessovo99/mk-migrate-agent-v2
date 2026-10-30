@@ -17,6 +17,7 @@ export const CHOICE_OTHER_NATIVE_ORG_TYPES=Object.freeze(nativeOrgTypes());
 
 /** A pure, snapshot-bound plan. It has no client, write, record or retry capability. */
 export function prepareChoiceOtherRepair({priorDsl,dsl,before,categoryId,currentTargets=[]}){
+ need(![priorDsl,dsl].some(value=>(value?.form?.fields||[]).some(field=>field.otherPresentation)),'conditional_presentation_outside_repair_scope');
  const original=clone(before);validateEnvelope(original,categoryId);
  const bindings=choiceOtherToggleBindings(dsl.form);need(bindings.length>0,'no_choice_other_relationship');
  const ids=bindings.flatMap(b=>Object.values(b));need(new Set(ids).size===ids.length,'overlapping_relationships');

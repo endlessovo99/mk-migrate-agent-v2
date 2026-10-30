@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   parseDesignerControlAttributes,
   parseDesignerFdValues,
@@ -40,6 +41,57 @@ const RUNTIME_EDITORS = new Map([
  */
 export function staticCaptionFacts(designerHtml, runtimeHtml = "") {
   return inspectStaticCaptions(designerHtml, runtimeHtml).facts;
+}
+
+/** Source-only script reach for two uniquely rendered editors in one cell. */
+export function inspectOtherPairContexts(designerHtml, runtimeHtml, pairs = []) {
+  const result = new Map();
+  if (!pairs.length || !String(runtimeHtml || "").trim()) return result;
+  const designer = markupTree(designerHtml, true), runtime = markupTree(runtimeHtml);
+  if (!designer || !runtime) return result;
+  const program = runtimeProgram(runtimeHtml, runtime);
+  if (!program.complete) return result;
+  for (const pair of pairs) {
+    const designerWidget = id => designer.nodes.filter(node => node.attrs?.has("fd_type") &&
+      parseDesignerFdValues(node.attrsText).id === id);
+    const runtimeWidget = id => runtime.nodes.filter(node =>
+      node.attrs?.get("property") === `extendDataFormInfo.value(${id})`);
+    const dChoice = designerWidget(pair.choiceId), dText = designerWidget(pair.textId);
+    const rChoice = runtimeWidget(pair.choiceId), rText = runtimeWidget(pair.textId);
+    if ([dChoice, dText, rChoice, rText].some(nodes => nodes.length !== 1)) continue;
+    const choiceType = dChoice[0].attrs.get("fd_type")?.toLowerCase();
+    const textType = dText[0].attrs.get("fd_type")?.toLowerCase();
+    const renderers = { inputcheckbox: ["xform:checkbox"], checkbox: ["xform:checkbox"],
+      inputradio: ["xform:radio", "xform:xradio"], radio: ["xform:radio", "xform:xradio"],
+      select: ["xform:select"], inputselect: ["xform:select"] };
+    if (!renderers[choiceType]?.includes(rChoice[0].name) || !["inputtext", "text"].includes(textType) || rText[0].name !== "xform:xtext" ||
+        [dChoice[0], dText[0], rChoice[0], rText[0]].some(node =>
+          node.attrs?.get("canshow") === "false" || node.attrs?.get("showstatus") === "noshow" ||
+          /(?:display\s*:\s*none|visibility\s*:\s*hidden)/i.test(node.attrs?.get("style") || ""))) continue;
+    const dCell = nearest(dChoice[0], "td"), rCell = nearest(rChoice[0], "td");
+    const dPosition = dCell && cellPosition(designer, dCell), rPosition = rCell && cellPosition(runtime, rCell);
+    if (!dCell || !rCell || !dPosition || !rPosition || nearest(dText[0], "td") !== dCell ||
+        nearest(rText[0], "td") !== rCell || JSON.stringify(dPosition) !== JSON.stringify(rPosition)) continue;
+    const ancestors = new Set(), descendants = new Set([pair.choiceId, pair.textId]);
+    let valid = true;
+    for (const [tree, cell, nodes] of [[designer, dCell, [dChoice[0], dText[0]]], [runtime, rCell, [rChoice[0], rText[0]]]]) {
+      for (const node of nodes) for (let current = node; current; current = current.parent) {
+        if (current.invalid) valid = false;
+        for (const id of current.identityIds || []) ancestors.add(id);
+      }
+      for (const id of tree.cellDomains.get(cell) || []) descendants.add(id);
+      for (const node of tree.nodes) if (nearest(node, "td") === cell) {
+        const id = node.attrs?.get("property")?.match(/^extendDataFormInfo\.value\(([A-Za-z_][\w.-]*)\)$/)?.[1];
+        if (id) descendants.add(id);
+      }
+    }
+    if (!valid) continue;
+    const inlineScriptDigests = [...new Set(program.scripts.map(script =>
+      createHash("sha256").update(script.trim()).digest("hex")))];
+    result.set(pair.choiceId, { version: 1, ancestorIds: [...ancestors], cellDescendantIds: [...descendants],
+      pairDescendantIds: [...descendants], inlineScriptDigests, inlineDomainComplete: true });
+  }
+  return result;
 }
 
 export function inspectStaticCaptions(designerHtml, runtimeHtml = "") {

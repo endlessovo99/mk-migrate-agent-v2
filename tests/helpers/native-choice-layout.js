@@ -77,12 +77,15 @@ export function nativeChoiceLayoutHtml(config, scene) {
       const field = fields.get(node.key);
       if (!field) return "";
       const p = { ...field.controlProps, ...field.controlProps[scene], editable: true, showStatus: "edit", scene: "Form" };
-      const kind = /checkbox/.test(p.type) ? "checkbox" : /radio/.test(p.type) ? "radio" : null;
+      const kind = /checkbox/.test(p.type) ? "checkbox" : /radio/.test(p.type) ? "radio" : /xform-(?:m-)?select/.test(p.type) ? "select" : null;
       let value = p.defaultValue ?? "";
       if (p.defaultValueFormulaVO?.script) {
         try { value = JSON.parse(p.defaultValueFormulaVO.script); } catch { /* Context/business formulas remain inert. */ }
       }
-      const content = kind ? react.createElement(modules[kind], p)
+      const content = kind === "select" ? react.createElement("select", { "data-choice": node.key },
+        react.createElement("option", { value: "" }, "请选择"),
+        ...(p.options || []).map(option => react.createElement("option", { value: option.value }, option.label)))
+        : kind ? react.createElement(modules[kind], p)
         : /input/.test(p.type) ? react.createElement("input", { "data-note": node.key, value })
           : react.createElement("span", {}, field.controlProps.content || field.label || "");
       return html(fieldsetExports.default({ ...field.labelProps, ...field.labelProps[scene],

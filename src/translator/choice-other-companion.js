@@ -104,8 +104,8 @@ function referencedCaption(caption, choice, scripts, fields, behavior) {
 
 function isSourceChoiceControl(control) {
   const designerType = String(control?.source?.designerType || "").toLowerCase();
-  return ["checkbox", "radio"].includes(control?.type) ||
-    ["inputcheckbox", "checkbox", "inputradio", "radio"].includes(designerType);
+  return ["checkbox", "radio", "singleSelect"].includes(control?.type) ||
+    ["inputcheckbox", "checkbox", "inputradio", "radio", "select", "inputselect"].includes(designerType);
 }
 
 function isOtherCaptionControl(control) {
@@ -129,11 +129,11 @@ function isOtherCaptionText(value) {
 function hasMatchingOtherTitle(choice, companion) {
   const title = cleanText(companion.title || companion.source?.designerValues?.label || "");
   if (isOtherCaptionText(title)) return true;
-  const choiceTitle = cleanText(choice.source?.designerValues?.label || choice.title || "")
-    .replace(/[:：]\s*$/u, "");
-  return Boolean(choiceTitle && (
+  const titles = new Set([choice.source?.boundCaption?.content, choice.title, choice.source?.designerValues?.label]
+    .map(value => cleanText(value || "").replace(/[:：]\s*$/u, "")).filter(Boolean));
+  return [...titles].some(choiceTitle => (
     title.startsWith(choiceTitle) &&
-      isOtherCaptionText(title.slice(choiceTitle.length).replace(/^\s*[:：]\s*/u, "")) ||
+      isOtherCaptionText(title.slice(choiceTitle.length).replace(/^\s*[:：\-—－–]\s*/u, "")) ||
     title.endsWith(choiceTitle) && isOtherCaptionText(title.slice(0, -choiceTitle.length))
   ));
 }

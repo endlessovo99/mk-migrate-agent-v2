@@ -14,6 +14,7 @@ import { analyzeOrphanBeforeAnchorWitness } from "./orphan-before-anchor-witness
 import { annotateChinaValueReadOnly, attachClosedMainFieldFacts } from "./closed-main-field-effects.js";
 import { sourceFormRadioOrdinalFact } from "./approved-radio-ordinal-policy.js";
 import { radioReadOnlySourceFacts } from "./radio-readonly-presentation.js";
+import { inspectOtherPairContexts } from "./static-caption-facts.js";
 import {
   attrValue,
   cleanText,
@@ -47,6 +48,16 @@ export function translateSysFormTemplateXml(xml, options = {}) {
     ),
     editorLabelEvidence: editorLabelEvidence(template.fdDisplayJsp || "")
   });
+  const unresolvedPairs = (form.fields || []).filter(field => field.type !== "detailTable" && field.source?.otherTextCompanion?.id)
+    .filter(field => {
+      const id = field.source.otherTextCompanion.captionId || field.source.layoutCell?.captionIds?.[0];
+      const caption = form.fields.find(value => value.id === id);
+      return !caption?.source?.staticCaptionFact?.domContext && !caption?.source?.captionStructure?.domContext;
+    }).map(field => ({ choiceId: field.id, textId: field.source.otherTextCompanion.id }));
+  const pairContexts = inspectOtherPairContexts(template.fdDesignerHtml || "", template.fdDisplayJsp || "", unresolvedPairs);
+  for (const field of form.fields || []) if (pairContexts.has(field.id)) {
+    field.source = { ...field.source, otherPairContext: pairContexts.get(field.id) };
+  }
   const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
     knownFieldIds: collectDataAuthorityFieldIds(form, scripts)
   });

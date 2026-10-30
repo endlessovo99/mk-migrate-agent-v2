@@ -52,7 +52,7 @@ for (const sizing of ["adaptive", "source"]) for (const kind of ["Checkbox", "Ra
     const p = prepareSample(draft), result = p.verify(p.update);
     assert.equal(checkTrust(source, createTrustedMigrationDsl(source, draft, { externalAgentReviewed: true })).ok, true);
     assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
-    assert.deepEqual(companions(p), [{ lineIndex: 0, referenceIds: ["fd_kind", "fd_note"], mode: "tail", width: { value: 120, unit: "px" } }]);
+    assert.deepEqual(companions(p), [{ lineIndex: 0, referenceIds: ["fd_kind", "fd_note"], mode: "tail", width: { value: 120, unit: "px" }, revealOnSelection: true }]);
     const changed = structuredClone(p.update);
     for (const scene of ["desktop", "mobile"]) editView(changed, scene, root => {
       for (const node of nodes(root)) for (const key of Object.keys(node)) if (key.startsWith("migration")) delete node[key];
@@ -137,6 +137,7 @@ it("keeps Other and its original textbox together after real native option wrapp
         .replaceAll('alignment="H"', `alignment="${alignment}"`), { layoutSizing: sizing });
       const config = xformConfig(prepareSample(draft).update);
       await page.setContent(nativeChoiceLayoutHtml(config, scene));
+      await page.locator('[data-value="OT"] input').check();
       for (const width of [900, 550, 400, 320, 240, 180]) {
         await page.setViewportSize({ width, height: 900 });
         const rects = await page.evaluate(() => {
@@ -165,6 +166,10 @@ it("keeps Other and its original textbox together after real native option wrapp
       const config = xformConfig(prepareSample(draftSourceDraft(cleanSourceFile(path))).update);
       for (const scene of ["desktop", "mobile"]) {
         await page.setContent(nativeChoiceLayoutHtml(config, scene));
+        await page.evaluate(() => document.querySelectorAll('[class^="mk-choice-other-flow-"]').forEach(group => {
+          const inputs = group.querySelectorAll(".mk-choice-other-choice input[type=checkbox], .mk-choice-other-choice input[type=radio]");
+          if (inputs.length) inputs[inputs.length - 1].checked = true;
+        }));
         for (const width of [900, 400, 240, 180]) {
           await page.setViewportSize({ width, height: 900 });
           const pairs = await page.evaluate(() => [...document.querySelectorAll('[class^="mk-choice-other-flow-"]')].map(group => {

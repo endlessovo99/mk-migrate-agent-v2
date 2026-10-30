@@ -62,6 +62,7 @@ import {
   removeDataOnlyFieldRefs
 } from "./address-display-companion-mapping.js";
 import { mapChoiceOtherCompanions } from "./choice-other-companion.js";
+import { applyChoiceOtherReveal, choiceOtherRevealWarnings } from "./choice-other-reveal.js";
 import { sourceRequiresReadOnly } from "../dsl/source-readonly.js";
 import { staticRectangleGridProfile } from "./standard-table-grid.js";
 import { remoteDialogDiagnostics } from "../dsl/remote-dialog.js";
@@ -99,7 +100,7 @@ function buildSemanticCaptionForm(sourceDraft, choiceOtherBehavior) {
 /** Script-impact contract for a source draft. This is not a fold decision. */
 export function sourceCaptionBehavior(sourceDraft, semanticForm = buildSemanticCaptionForm(sourceDraft)) {
   if (!sourceDraft.form?.captionRelations?.length && !(sourceDraft.form?.controls || []).some(field =>
-    field.sourceType === "checkbox" && field.sourceProps?.otherTextCompanion?.captionId)) return undefined;
+    field.sourceProps?.otherTextCompanion)) return undefined;
   const semanticScripts = draftMkScriptsFromSourceScripts(sourceDraft.scripts, {
     form: semanticForm, formRules: draftFormRules(sourceDraft.formRules, semanticForm)
   });
@@ -147,7 +148,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     }),
     fieldIdMap
   );
-  const form = appendHardHiddenFieldsToLayout(
+  let form = appendHardHiddenFieldsToLayout(
     applyStaticScriptProperties(mappedForm, mappedScripts)
   );
   if (options.layoutSizing !== "source") form.layout = { ...form.layout, sizing: "adaptive" };
@@ -156,6 +157,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     mappedScripts
   );
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
+  form = applyChoiceOtherReveal(form, sourceDraft, behavior);
   const inputLengths = inputLengthRequirements(sourceDraft.form, form);
   const reviewErrors = [
     ...choiceOtherSourceErrors(sourceDraft.form),
@@ -204,6 +206,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
       captionFolding: captionDecisions.length ? { version: 1, decisions: captionDecisions } : undefined,
       warnings: [
         ...sourceIssuesToWarnings(sourceDraft.issues || []),
+        ...choiceOtherRevealWarnings(form),
         ...remoteDialogDiagnostics(form).map(item => ({ ...item, level: "warning" })),
         ...inputLengths.filter(({ fact }) => fact.status === "valid").map(inputLengthPolicyWarning)
       ],

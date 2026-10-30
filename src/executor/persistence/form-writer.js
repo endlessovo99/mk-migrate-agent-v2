@@ -20,6 +20,7 @@ import { projectNativeLayoutRows } from "./layout-projection.js";
 import { mobileNumberBudgets, mobileNumberGrid } from "./mobile-number-layout.js";
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
 import { choiceOtherFlowGroups, buildChoiceOtherGroup } from "./choice-other-layout.js";
+import { withChoiceOtherSelectReveal } from "./choice-other-select-reveal.js";
 import {
   detailTableEditOperations,
   detailTableViewOperations
@@ -76,7 +77,7 @@ export function applyFormPayload(template, dsl) {
   const lang = parseJsonObject(config.lang || "{}");
   const summary = summarizeDslForm(form, dsl.formRules);
   const mainModel = buildMainModel(next, xform, config, form, lang);
-  const nativeScripts = withChoiceOtherRuntime(dsl.scripts, form, mainModel.fdTableName);
+  const nativeScripts = withChoiceOtherSelectReveal(withChoiceOtherRuntime(dsl.scripts, form, mainModel.fdTableName), form, mainModel.fdTableName);
   const detailModels = buildDetailModels(next, form, mainModel, lang);
   const dataModels = [mainModel, ...detailModels];
   if (dataModels.some(model => (model.fdFields || []).some(field => field?.fdIsSystem && field.fdName === "mechanisms"))) {
