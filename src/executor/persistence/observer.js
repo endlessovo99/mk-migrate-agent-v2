@@ -529,6 +529,17 @@ function observeExecutableProps(controlProps = {}, native = {}) {
   if (typeof native.field?.fdIsStored === "boolean") props.nativeStored = native.field.fdIsStored;
   const component = inferComponent(native.field, controlProps);
   const labelProps = native.attribute?.config?.labelProps || {};
+  if (component === "xform-hidden") {
+    const font = safeParseObject(native.field?.fdFontExtendData);
+    const noValue = (value) => ["defaultValue", "defaultValueFormulaVO", "value", "$$init"]
+      .every((key) => !Object.hasOwn(value, key));
+    props.nativeInitialVisibilityAnchor = controlProps.hidden === true && controlProps.passValue === true &&
+      controlProps.defaultValueType === "formula" && font.hidden === true && font.passValue === true &&
+      font.defaultValueType === "formula" && noValue(controlProps) && noValue(font) &&
+      labelProps.hidden === true && labelProps.visible === false &&
+      ["desktop", "mobile"].every((scene) => controlProps[scene]?.type === "@elem/xform-hidden" &&
+        controlProps[scene]?.hiddenLabel === true && labelProps[scene]?.hiddenLabel === true);
+  }
   props.nativeCaption = Object.fromEntries(["desktop", "mobile"].map(scene => {
     const label = { ...labelProps, ...labelProps[scene] };
     const control = { ...controlProps, ...controlProps[scene] };

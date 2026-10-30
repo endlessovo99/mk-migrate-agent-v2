@@ -24,6 +24,7 @@ import {
 import { analyzeScriptFunction, validateSetFieldAttrTargets } from "../dsl/scripts.js";
 import { isSourceBackedMonthField } from "../dsl/static-month-picker.js";
 import { AGENT_REVIEW_PROMPT_VERSION } from "./prompt.js";
+import { reconcileBridgedRowOwnership } from "./bridged-row-ownership.js";
 import { jqueryReadyInitializationCandidates } from "../translator/jquery-ready-initialization.js";
 import {
   classifyActionRowMarkers,
@@ -258,9 +259,10 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
   );
   let sourceEffectActions = dslDraft.scripts?.actions || [];
   let fixedSourceForm = dslDraft.form;
+  let fixedSourceDraft;
   const sourceEffectDiagnostics = [];
   if (sourceDraft) {
-    try { const fixed = draftSourceDraft(sourceDraft); sourceEffectActions = fixed.scripts?.actions || []; fixedSourceForm = fixed.form; }
+    try { fixedSourceDraft = draftSourceDraft(sourceDraft); sourceEffectActions = fixedSourceDraft.scripts?.actions || []; fixedSourceForm = fixedSourceDraft.form; }
     catch { sourceEffectDiagnostics.push(error("agent.patch.detail_row_source_rebuild_failed",
       "Fixed source script effects could not be independently rebuilt.", "/scripts/actions")); }
   }
@@ -294,9 +296,21 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
     };
   }
 
+  const ownership = reconcileBridgedRowOwnership(sourceDraft, fixedSourceDraft, patchedDraft);
+  for (const proof of ownership.removed) {
+    decisions.push({
+      id: `script-owned-load-${proof.rule.id}`,
+      status: "accepted",
+      decisionType: "deterministic_script_ownership",
+      sourceRefs: [proof.rule.meta.sourceJsp, proof.rule.meta.bridgeSourceJsp],
+      targetRefs: ["/formRules/linkage"],
+      rationale: "The source-verified change and reviewed load actions own row visibility after source-backed initialization.",
+      result: `Replaced competing native rule ${proof.rule.id} with an inert-anchor initialization rule.`
+    });
+  }
   return {
     ok: true,
-    dslDraft: patchedDraft,
+    dslDraft: ownership.draft,
     acceptedPatches,
     rejectedPatches,
     decisions

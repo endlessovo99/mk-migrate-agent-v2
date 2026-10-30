@@ -28,6 +28,7 @@ import {
 } from "./detail-auth.js";
 import { detailTableNameFor } from "./detail-table-names.js";
 import { withDetailEventReadBridge } from "./detail-event-read-bridge.js";
+import { withBridgedEmptySelectEvents } from "./bridged-empty-select-event.js";
 import { withChoiceOtherStorageRuntime } from "../../dsl/choice-other-storage-runtime.js";
 import { persistedFieldLabel } from "./field-labels.js";
 import {
@@ -80,8 +81,10 @@ export function applyFormPayload(template, dsl) {
   const summary = summarizeDslForm(form, dsl.formRules);
   const mainModel = buildMainModel(next, xform, config, form, lang);
   const nativeScripts = withCrossCellOtherReveal(
-    withChoiceOtherSelectReveal(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl.scripts, form, mainModel.fdTableName), form, mainModel.fdTableName), form, mainModel.fdTableName),
-    form, mainModel.fdTableName
+    withChoiceOtherSelectReveal(
+      withBridgedEmptySelectEvents(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl.scripts, form, mainModel.fdTableName), form, mainModel.fdTableName), form, dsl.formRules),
+      form, mainModel.fdTableName
+    ), form, mainModel.fdTableName
   );
   const detailModels = buildDetailModels(next, form, mainModel, lang);
   const dataModels = [mainModel, ...detailModels];

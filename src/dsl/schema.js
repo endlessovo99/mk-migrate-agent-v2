@@ -1,4 +1,5 @@
 import { selectEmptyEventProof } from "./source-select-empty-event.js";
+import { bridgedInitialVisibilityIssues, bridgedRowVisibilityConflicts } from "./bridged-row-visibility.js";
 import { dottedFieldIdDiagnostics } from "./field-identifiers.js";
 import { choiceOtherToggleBindings } from "./choice-other-runtime.js";
 import { choiceOtherRevealBindings } from "./choice-other-reveal.js";
@@ -150,6 +151,16 @@ export function validateMigrationDsl(input, options = {}) {
   }
   if (mode === "execute") diagnostics.push(...remoteDialogDiagnostics(root.form,{dsl:root}));
   validateFormRules(root.formRules, diagnostics, { mode, form: root.form, scripts: root.scripts });
+  if (mode === "execute") for (const conflict of bridgedRowVisibilityConflicts(root.formRules, root.scripts, root.form)) {
+    diagnostics.push(error("dsl.form_rules.competing_script_visibility",
+      "A bridged native visibility rule competes with its source-backed row change action; complete and verify the load action before execution.",
+      "/formRules/linkage", conflict));
+  }
+  if (mode === "execute") for (const reason of bridgedInitialVisibilityIssues(root.formRules, root.scripts, root.form, root.review)) {
+    diagnostics.push(error("dsl.form_rules.bridged_initial_visibility_invalid",
+      "Source-backed row initialization requires its unchanged, inert anchor and initialization rules.",
+      "/formRules", { reason }));
+  }
   validateScripts(root.scripts, diagnostics, {
     mode,
     form: root.form,

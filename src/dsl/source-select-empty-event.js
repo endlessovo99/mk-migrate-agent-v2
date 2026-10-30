@@ -205,6 +205,12 @@ function targetHasDiagnosticMapRead(text) {
   return hasEventIndexedLiteralMap(ast, bindings);
 }
 
+/** Whether a target field carries a complete, unique source-backed empty select contract. */
+export function hasSourceBackedEmptySelect(form, fieldId) {
+  const matches = (Array.isArray(form?.fields) ? form.fields : []).filter(field => field?.id === fieldId);
+  return matches.length === 1 && qualifies(matches[0], matches[0], form, form);
+}
+
 function qualifies(source, target, sourceForm, targetForm) {
   if (!source || !target || (source.sourceType || source.type) !== "singleSelect" || target.type !== "singleSelect" || target.componentId !== "xform-select" || source.dataOnly || target.dataOnly ||
       source.id !== target.id || !source.sourceRef || source.sourceRef !== target.sourceRef) return false;

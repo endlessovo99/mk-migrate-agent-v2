@@ -12,6 +12,7 @@ import { sourceInlineEditorWidths } from "./source-inline-editor-width.js";
 import { remoteDialogSourceDiagnostics } from "./remote-dialog.js";
 import { selectEmptyEventProof } from "./source-select-empty-event.js";
 import { sourceRowDiagnosticProof } from "./source-row-diagnostic.js";
+import { bridgedInitialVisibilityIssues, bridgedRowOwnershipProofs } from "../agent-review/bridged-row-ownership.js";
 import { validateAssignmentBranchSemantics } from "../agent-review/script-semantic-closure.js";
 import { catalogRefs, validationPolicyRef, validateCatalogVersions } from "./catalogs.js";
 import { validateMigrationDsl } from "./schema.js";
@@ -140,11 +141,28 @@ export function checkTrust(sourceDraft, migrationDsl) {
   }
   validateWorkflowFormulaProvenance(sourceDraft, migrationDsl, diagnostics);
   validateScriptSourceProvenance(sourceDraft, migrationDsl, diagnostics);
+  validateBridgedRowOwnership(sourceDraft, expectedDraft, migrationDsl, diagnostics);
 
   const executionValidation = validateMigrationDsl(migrationDsl, { mode: "execute" });
   diagnostics.push(...executionValidation.diagnostics);
 
   return finalize("trust", diagnostics);
+}
+
+function validateBridgedRowOwnership(sourceDraft, expectedDraft, migrationDsl, diagnostics) {
+  for (const proof of bridgedRowOwnershipProofs(sourceDraft, expectedDraft, migrationDsl)) {
+    const rules = (migrationDsl?.formRules?.linkage || []).filter((rule) => rule.id === proof.rule.id);
+    if (rules.length === 1 && canonicalJson(rules[0]) === canonicalJson(proof.rule)) continue;
+    if (rules.length === 0 && proof.verified && proof.initialHiddenProven) continue;
+    diagnostics.push(error("trust.form_rule.bridged_row_ownership_unproven",
+      "A source-backed bridged visibility rule can be removed only when the original change and reviewed load actions fully preserve its row behavior.",
+      "/formRules/linkage", { ruleId: proof.rule.id, loadActionId: proof.loadActionId }));
+  }
+  for (const reason of bridgedInitialVisibilityIssues(sourceDraft, expectedDraft, migrationDsl)) {
+    diagnostics.push(error("trust.form_rule.bridged_initial_visibility_unproven",
+      "Initial row visibility must retain its independently rebuilt source-backed initialization rule and immutable anchor.",
+      "/formRules", { reason }));
+  }
 }
 
 function validateStaticAddressDefaultProvenance(sourceDraft, migrationDsl, diagnostics) {

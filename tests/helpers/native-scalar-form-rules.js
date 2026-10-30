@@ -57,6 +57,11 @@ export function nativeScalarFormRules(config, scene = "add") {
       effects.length = 0;
       context.tb({ [keys[id]]: value }, values, false);
     },
+    changeWithSnapshot(id, value, snapshot) {
+      assert.ok(keys[id], `Unknown native scalar field ${id}`);
+      effects.length = 0;
+      context.tb({ [keys[id]]: value }, { ...snapshot }, false);
+    },
     visible(id) { return runtime.field(id).labelProps?.hidden !== true; },
     compare(id, value, operator, expected) {
       return context.tE(value, expected, { fieldName: id, operate: operator });
