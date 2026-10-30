@@ -31,6 +31,7 @@ it("only changes display state and fails open for noneditable or ambiguous contr
   const draft = draftSourceDraft(cleanSourceFile(fixture)), config = xformConfig(prepareSample(draft).update);
   const action = JSON.parse(config.attribute.formAttr).controlAction.global.onLoad[0];
   assert.ok(action.migrationActions.some(item => item.id === "mk-choice-other-cross-cell-v1"));
+  const displayAction = withCrossCellOtherReveal({ actions: [] }, draft.form, prepareSample(draft).update.fdTableName).actions[0];
   const nodes = {}, trigger = { disabled: false, readOnly: false }, note = { disabled: false, readOnly: false }, state = {}, subscriptions = [], writes = [];
   const noteRoot = { querySelector: () => note, setAttribute: (key, value) => { state[key] = value; }, removeAttribute: key => { delete state[key]; } };
   const triggerRoot = { querySelector: () => trigger };
@@ -40,8 +41,8 @@ it("only changes display state and fails open for noneditable or ambiguous contr
   let value = [], attr = 2;
   const MKXFORM = { MKXFORM_DATA_CONTAINER: {}, $$FORM: { current: {} }, getValue: ref => ref.endsWith("fd_other_text") ? "" : value,
     getFieldAttr: () => attr, onChange: (ref, callback) => subscriptions.push({ ref, callback }), setValue: (...args) => writes.push(args) };
-  runInNewContext(`(${action.function})`, { MKXFORM, document, requestAnimationFrame: callback => callback() })({});
-  assert.equal(state["data-mk-cross-other"], "closed"); assert.equal(subscriptions.length, 2);
+  runInNewContext(`(${displayAction.function})`, { MKXFORM, document, requestAnimationFrame: callback => callback() })({});
+  assert.equal(state["data-mk-cross-other"], "closed"); assert.equal(subscriptions.length, 1);
   value = ["selected"]; subscriptions.at(-1).callback(value); assert.equal(state["data-mk-cross-other"], "open");
   value = []; subscriptions.at(-1).callback(value); assert.equal(state["data-mk-cross-other"], "closed");
   trigger.disabled = true; subscriptions.at(-1).callback(value); assert.equal(state["data-mk-cross-other"], undefined);

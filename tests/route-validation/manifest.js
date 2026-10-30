@@ -180,7 +180,7 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
     {
       id: "cross-cell-other-reveal-success",
       source: { kind: "form-only", relativePath: "choice-other-cross-cell/choice-other-cross-cell_SysFormTemplate.xml" },
-      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true, baseUrl: "https://oaqas.shanghai-electric.com",
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
     },
     {
