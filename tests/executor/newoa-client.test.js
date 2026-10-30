@@ -159,6 +159,15 @@ describe("NewoaClient", () => {
     );
   });
 
+  it("reads the authenticated mobile XForm digest without a request body", async () => {
+    const calls=[];
+    const client=new NewoaClient({fetchImpl:async(url,options)=>{calls.push({url,options});return jsonResponse({mobile:{hash:"abc"}});}});
+    assert.deepEqual(await client.getXFormMobileDigest(),{mobile:{hash:"abc"}});
+    assert.equal(calls[0].url,`${NEWOA_SIT_BASE_URL}/web/sys-xform/mobile/digest.json`);
+    assert.equal(calls[0].options.method,"GET");
+    assert.equal(calls[0].options.body,undefined);
+  });
+
   it("hashes the exact XForm module bytes loaded by the advertised release key", async () => {
     const calls = [];
     const source = "window.__xformRuntimeEvidence = true;\n";

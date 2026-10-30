@@ -17,6 +17,7 @@ import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.
 import { choiceOtherFlowGroups } from "./choice-other-layout.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { withDetailEventReadBridge } from "./detail-event-read-bridge.js";
+import { withChoiceOtherStorageRuntime } from "../../dsl/choice-other-storage-runtime.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import {
   buildFormRuleRefIndex,
@@ -89,7 +90,7 @@ export function buildExpectedInvariants(dsl, envelope) {
     diagnostics
   );
   const nativeScripts = withCrossCellOtherReveal(
-    withChoiceOtherSelectReveal(withChoiceOtherRuntime(dsl?.scripts, dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName),
+    withChoiceOtherSelectReveal(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl?.scripts, dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName),
     dsl?.form || {}, envelope?.tableName
   );
   const scriptsExpected = buildExpectedScripts(nativeScripts, dsl?.form || {}, envelope?.tableName, diagnostics, envelope?.templateId);

@@ -64,7 +64,8 @@ it('executes the persisted native initializer after existing load handlers and p
  const prepared=prepareSample(dsl),config=xformConfig(prepared.update),attr=JSON.parse(config.attribute.formAttr);
  assert.equal(attr.controlAction.global.onLoad.length,1,'native singleton dispatcher must include both original and presentation handlers');
  const values={'mk_model_test.fd_choice':['A'],'mk_model_test.fd_other_text':'default'},writes=[],subscriptions=[];
- const MKXFORM={MKXFORM_DATA_CONTAINER:{},$$FORM:{current:{}},getValue:id=>values[id],setValue(id,value){writes.push(id);values[id]=structuredClone(value);for(const s of subscriptions)if(s.id===id)s.callback(value);},onChange:(id,callback)=>subscriptions.push({id,callback})};
+ let getter=()=>({...values});const nativeForm={};Object.defineProperty(nativeForm,'getFieldsValue',{configurable:true,get(){return getter;},set(value){getter=value;}});
+ const MKXFORM={MKXFORM_DATA_CONTAINER:{},$$FORM:{current:nativeForm},getValue:id=>values[id],setValue(id,value){writes.push(id);values[id]=structuredClone(value);for(const s of subscriptions)if(s.id===id)s.callback(value);},onChange:(id,callback)=>subscriptions.push({id,callback}),beforeSubmit() {}};
  const initialize=runInNewContext('('+attr.controlAction.global.onLoad[0].function+')',{MKXFORM});
  initialize({});
  assert.equal(values['mk_model_test.fd_other_text'],'  loaded_under_score  ');

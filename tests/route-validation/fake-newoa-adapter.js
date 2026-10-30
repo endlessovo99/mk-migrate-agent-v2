@@ -4,6 +4,7 @@ import { appendTranscriptEntry, sanitizedTranscript } from "./transcript.js";
 import { SIT_PARTICIPANT_FALLBACKS } from "../../src/executor/participant-resolver.js";
 import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-resolver.js";
 import { NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY } from "../../src/executor/native-form-rule-runtime-capability.js";
+import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../../src/dsl/choice-other-storage-capability.js";
 import {readFileSync} from 'node:fs';
 import {materializeNativeTemplateAuthorization} from '../helpers/native-template-authorization.js';
 const NATIVE_TEMPLATE_READER_CAPABILITY=JSON.parse(readFileSync(new URL('../fixtures/route-validation/everyone-template-authorization/native-contract.json',import.meta.url),'utf8'));
@@ -92,8 +93,17 @@ export class FakeNewoaAdapter {
       },
       [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideModule]: {
         hash: NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideHash
+      },
+      [CHOICE_OTHER_STORAGE_CAPABILITY.modules.desktop.digestKey]: {
+        hash: CHOICE_OTHER_STORAGE_CAPABILITY.modules.desktop.release
       }
     };
+  }
+
+  async getXFormMobileDigest() {
+    this.record({ operation: "get-xform-mobile-digest" });
+    const module = CHOICE_OTHER_STORAGE_CAPABILITY.modules.mobile;
+    return { [module.digestKey]: { hash: module.release } };
   }
 
   async getXFormDesktopModuleSha256({ modulePath }) {
@@ -103,6 +113,9 @@ export class FakeNewoaAdapter {
     }
     if (modulePath === NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.idePath) {
       return NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideSha256;
+    }
+    for (const module of Object.values(CHOICE_OTHER_STORAGE_CAPABILITY.modules)) {
+      if (modulePath === module.path) return module.sha256;
     }
     return "unknown";
   }
@@ -291,6 +304,7 @@ export class FakeNewoaAdapter {
   record(entry) {
     if (
       entry?.operation === "get-xform-desktop-digest" ||
+      entry?.operation === "get-xform-mobile-digest" ||
       entry?.operation === "get-xform-desktop-module-sha256"
     ) {
       this.entries.push(clone(entry));

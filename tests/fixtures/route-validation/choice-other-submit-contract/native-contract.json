@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "origin": "https://oaqas.shanghai-electric.com",
+  "scope": "QAS native XFormRuntimeFragment; browser submission extraction and stored scalar checkbox values",
+  "desktop": {
+    "release": "286b80505141dd71d1e7915be64212bd",
+    "sha256": "ad62313019d3892351287842026ed1509194bd45db99d8dab8f49425d7cbdcf3"
+  },
+  "mobile": {
+    "release": "591e20e476f1619112f859f5351e33de",
+    "sha256": "a498d3a41755ece3cc77ef03830fc2e54cf38771948a30b502f2bde4ff31579e"
+  },
+  "submissionBoundary": "getXformValue calls native form getFieldsValue with no arguments; getFlatValue and validation use the same getter and retain arrays",
+  "storageExamples": [
+    { "input": [], "stored": "0", "kind": "generated-toggle" },
+    { "input": ["selected"], "stored": "selected", "kind": "generated-toggle" },
+    { "input": ["A", "D"], "stored": "A,D", "kind": "static-choice" }
+  ],
+  "limitations": [
+    "The captured mobile route was exercised using a Chromium mobile emulation, not native iOS WebKit.",
+    "Comma-bearing option values and native composite Other options have no verified lossless scalar encoding."
+  ]
+}

@@ -45,6 +45,15 @@ const NATIVE_FORMULA_SUCCESS_OPERATIONS = Object.freeze([
   ...SUCCESS_OPERATIONS.slice(1)
 ]);
 
+const CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS = Object.freeze([
+  SUCCESS_OPERATIONS[0],
+  "get-xform-desktop-digest",
+  "get-xform-mobile-digest",
+  "get-xform-desktop-module-sha256",
+  "get-xform-desktop-module-sha256",
+  ...SUCCESS_OPERATIONS.slice(1)
+]);
+
 const WORKFLOW_SUCCESS_OPERATIONS = Object.freeze([
   SUCCESS_OPERATIONS[0],
   "get-element-info",
@@ -132,14 +141,14 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
     {
       id: "checkbox-other-compatible-success",
       source: { kind: "form-only", relativePath: "checkbox-other-compatible/compatible_SysFormTemplate.xml" },
-      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
-      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true, baseUrl: "https://oaqas.shanghai-electric.com",
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS }
     },
     {
       id: "choice-other-independent-main-success",
       source: { kind: "form-only", relativePath: "choice-other-companion-fidelity/main-checkbox_SysFormTemplate.xml" },
-      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
-      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true, baseUrl: "https://oaqas.shanghai-electric.com",
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS }
     },
     {
       id: "choice-other-independent-radio-success",
@@ -181,7 +190,7 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       id: "cross-cell-other-reveal-success",
       source: { kind: "form-only", relativePath: "choice-other-cross-cell/choice-other-cross-cell_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true, baseUrl: "https://oaqas.shanghai-electric.com",
-      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS }
     },
     {
       id: "detail-row-property-blocked-before-transport",

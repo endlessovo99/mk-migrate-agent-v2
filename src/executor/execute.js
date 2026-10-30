@@ -11,6 +11,10 @@ import { resolveWorkflowSignPolicy, verifyWorkflowSignReadback } from "./workflo
 import { verifyRemoteSelectorResources } from "./remote-selector-resources.js";
 import { verifyWorkflowSubProcessDependencies } from "./subprocess-dependencies.js";
 import { hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
+import { choiceOtherToggleBindings } from "../dsl/choice-other-runtime.js";
+import { choiceOtherStorageAction } from "../dsl/choice-other-storage-runtime.js";
+import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../dsl/choice-other-storage-capability.js";
+import { inspectChoiceOtherStorageRuntime } from "./choice-other-storage-capability.js";
 import {
   hasStaticAddressDefaults,
   resolveStaticAddressDefaults
@@ -67,6 +71,22 @@ async function executeDraftDsl(input, options, writes) {
   if (input.migrationPolicies && nonEmptyString(options.targetTemplateId)) {
     safety.push({ level: "error", code: "execute.migration_policy_new_draft_required", message: "Approved migration behavior policies apply only to newly created drafts.", path: "/migrationPolicies" });
   }
+  let requiresChoiceOtherStorage = false;
+  try {
+    const bindings = choiceOtherToggleBindings(input.form);
+    requiresChoiceOtherStorage = bindings.length > 0;
+    if (requiresChoiceOtherStorage) {
+      // Validate the source-bound storage contract before any remote write.
+      choiceOtherStorageAction(input.form, bindings, "mk_contract_preflight");
+      if (target.baseUrl !== CHOICE_OTHER_STORAGE_CAPABILITY.origin) safety.push({
+        level: "error", code: "safety.choice_other_storage_origin_unverified",
+        message: "The checkbox storage runtime is verified only for its recorded target origin.", path: "/form"
+      });
+    }
+  } catch (error) {
+    safety.push({ level: "error", code: error.code || "safety.choice_other_storage_invalid",
+      message: "Checkbox values cannot be safely mapped to the verified storage contract.", path: "/form" });
+  }
   if (safety.length) {
     return blocked(plan, safety, target.baseUrl);
   }
@@ -89,6 +109,17 @@ async function executeDraftDsl(input, options, writes) {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    if (requiresChoiceOtherStorage) {
+      const stage = { name: "verifyChoiceOtherStorageRuntime", status: "started" };
+      apiStages.push(stage);
+      const capability = await inspectChoiceOtherStorageRuntime(client, baseUrl);
+      Object.assign(stage, { status: capability.ok ? "ok" : "failed", issues: capability.issues });
+      if (!capability.ok) return { ...blocked(plan, [...diagnostics, {
+        level: "error", code: "safety.choice_other_storage_runtime_unverified",
+        message: "The target checkbox storage runtime is not verified; no migration write was attempted.",
+        path: "/form", details: { issues: capability.issues }
+      }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
+    }
     if (input.workflow?.nodes?.some(node => node.type === "startSubProcess")) {
       const stage = { name: "verifyWorkflowSubProcessDependencies", status: "started" };
       apiStages.push(stage);

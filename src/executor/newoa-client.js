@@ -124,6 +124,28 @@ export class NewoaClient {
     }
   }
 
+  async getXFormMobileDigest() {
+    try {
+      const response = await this.fetch(`${this.baseUrl}/web/sys-xform/mobile/digest.json`, {
+        method: "GET", cache: "no-store",
+        headers: {
+          accept: "application/json, text/plain, */*",
+          ...(this.cookie ? { cookie: this.cookie } : {}),
+          ...(this.token ? { Authorization: `Bearer ${this.token}` } : {})
+        }
+      });
+      const result = await readResponse(response);
+      if (!response.ok || !isRecord(result.body)) {
+        const error = new Error(`NewOA XForm mobile digest failed: ${response.status}`);
+        error.response = result;
+        throw error;
+      }
+      return result.body;
+    } catch (error) {
+      throw assignClientStage(error, "getXFormMobileDigest");
+    }
+  }
+
   async getXFormDesktopModuleSha256({ modulePath, releaseHash }) {
     if (!/^[A-Za-z0-9/_-]+$/.test(String(modulePath || ""))) {
       throw clientStageError("getXFormDesktopModuleSha256", "invalid XForm module path");
