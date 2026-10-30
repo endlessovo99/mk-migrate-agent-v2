@@ -24,44 +24,48 @@ export function prepareChoiceOtherDesignSync({ before, priorDsl, dsl, categoryId
   // while keeping isDraft:false; do not enter its workflow designer save path.
   delete payload.mechanisms.lbpmTemplate[0].fdContent;
   return { payload, expected, changes: plan.changes, groups: plan.groups, changed: plan.changed,
-    verify(after) {
-      const checks = { officialUnchanged: same(withoutMechanismTokens(officialForm), withoutMechanismTokens(after.officialForm)) };
-      try {
-        const left = withoutMechanismTokens(expected.template), right = withoutMechanismTokens(after.template);
-        const lw = withoutMechanismTokens(workflow), rw = withoutMechanismTokens(after.workflow);
-        assert.equal(rw.fdId, lw.fdId);
-        nativeTime(lw, rw, "fdAlterTime");
-        checks.workflowUnchanged = same(lw, rw);
-        assert.equal(right.mechanisms.lbpmTemplate?.length, 1);
-        assert.equal(right.mechanisms.lbpmTemplate[0].fdId, left.mechanisms.lbpmTemplate[0].fdId);
-        nativeTime(left.mechanisms.lbpmTemplate[0], right.mechanisms.lbpmTemplate[0], "fdAlterTime");
-        const from = left.fdAlterTime, to = right.mechanisms["sys-xform"].fdAlterTime;
-        nativeTime(left, right, "fdAlterTime");
-        const lx = left.mechanisms["sys-xform"], rx = right.mechanisms["sys-xform"];
-        nativeTime(lx, rx, "fdAlterTime");
-        const a = JSON.parse(lx.fdConfig), b = JSON.parse(rx.fdConfig);
-        assert.equal(a.dataModel.length, b.dataModel.length);
-        for (let i = 0; i < a.dataModel.length; i++) {
-          const old = a.dataModel[i], current = b.dataModel[i];
-          assert.equal(current.fdId, old.fdId); assert.equal(current.fdTableName, old.fdTableName); assert.equal(current.fdType, old.fdType);
-          if (!same(old.fdAlterTime, current.fdAlterTime)) {
-            assert.ok(Number.isSafeInteger(current.fdAlterTime) && Number.isSafeInteger(from) && Number.isSafeInteger(to) &&
-              current.fdAlterTime >= from && current.fdAlterTime <= to &&
-              (!Object.hasOwn(old, "fdAlterTime") || Number.isSafeInteger(old.fdAlterTime) && current.fdAlterTime >= old.fdAlterTime));
-            delete old.fdAlterTime; delete current.fdAlterTime;
-          }
-          if (!Object.hasOwn(old, "fdDeletedFields") && same(current.fdDeletedFields, [])) delete current.fdDeletedFields;
-          if (old.fdType === "detail" && !Object.hasOwn(old, "fdAlter") && Object.hasOwn(current, "fdAlter")) {
-            assert.ok(right.fdAlter?.fdId && same(current.fdAlter, right.fdAlter) && same(left.fdAlter, right.fdAlter));
-            delete current.fdAlter;
-          }
-        }
-        lx.fdConfig = a; rx.fdConfig = b;
-        checks.designAndProtectedTemplate = same(left, right);
-      } catch { checks.designAndProtectedTemplate = false; checks.workflowUnchanged ??= false; }
-      return { ok: Object.values(checks).every(Boolean), checks };
-    }
+    verify(after) { return verifyChoiceOtherDesignSync(before, expected, after); }
   };
+}
+
+/** Compare the full protected state after a separately prepared design-only change. */
+export function verifyChoiceOtherDesignSync(before, expected, after) {
+  const { officialForm, workflow } = before;
+  const checks = { officialUnchanged: same(withoutMechanismTokens(officialForm), withoutMechanismTokens(after.officialForm)) };
+  try {
+    const left = withoutMechanismTokens(expected.template), right = withoutMechanismTokens(after.template);
+    const lw = withoutMechanismTokens(workflow), rw = withoutMechanismTokens(after.workflow);
+    assert.equal(rw.fdId, lw.fdId);
+    nativeTime(lw, rw, "fdAlterTime");
+    checks.workflowUnchanged = same(lw, rw);
+    assert.equal(right.mechanisms.lbpmTemplate?.length, 1);
+    assert.equal(right.mechanisms.lbpmTemplate[0].fdId, left.mechanisms.lbpmTemplate[0].fdId);
+    nativeTime(left.mechanisms.lbpmTemplate[0], right.mechanisms.lbpmTemplate[0], "fdAlterTime");
+    const from = left.fdAlterTime, to = right.mechanisms["sys-xform"].fdAlterTime;
+    nativeTime(left, right, "fdAlterTime");
+    const lx = left.mechanisms["sys-xform"], rx = right.mechanisms["sys-xform"];
+    nativeTime(lx, rx, "fdAlterTime");
+    const a = JSON.parse(lx.fdConfig), b = JSON.parse(rx.fdConfig);
+    assert.equal(a.dataModel.length, b.dataModel.length);
+    for (let i = 0; i < a.dataModel.length; i++) {
+      const old = a.dataModel[i], current = b.dataModel[i];
+      assert.equal(current.fdId, old.fdId); assert.equal(current.fdTableName, old.fdTableName); assert.equal(current.fdType, old.fdType);
+      if (!same(old.fdAlterTime, current.fdAlterTime)) {
+        assert.ok(Number.isSafeInteger(current.fdAlterTime) && Number.isSafeInteger(from) && Number.isSafeInteger(to) &&
+          current.fdAlterTime >= from && current.fdAlterTime <= to &&
+          (!Object.hasOwn(old, "fdAlterTime") || Number.isSafeInteger(old.fdAlterTime) && current.fdAlterTime >= old.fdAlterTime));
+        delete old.fdAlterTime; delete current.fdAlterTime;
+      }
+      if (!Object.hasOwn(old, "fdDeletedFields") && same(current.fdDeletedFields, [])) delete current.fdDeletedFields;
+      if (old.fdType === "detail" && !Object.hasOwn(old, "fdAlter") && Object.hasOwn(current, "fdAlter")) {
+        assert.ok(right.fdAlter?.fdId && same(current.fdAlter, right.fdAlter) && same(left.fdAlter, right.fdAlter));
+        delete current.fdAlter;
+      }
+    }
+    lx.fdConfig = a; rx.fdConfig = b;
+    checks.designAndProtectedTemplate = same(left, right);
+  } catch { checks.designAndProtectedTemplate = false; checks.workflowUnchanged ??= false; }
+  return { ok: Object.values(checks).every(Boolean), checks };
 }
 
 function nativeTime(left, right, key) {

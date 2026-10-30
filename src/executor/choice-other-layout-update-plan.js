@@ -93,7 +93,7 @@ export function preparePublishedChoiceOtherLayout({ template, officialForm, prio
 }
 
 /** Native content-addressed view profiles and initialization of the same view's audit fields. */
-function normalizedOfficialViewConfig(expected, actual, beforeForm, afterForm) {
+export function normalizedOfficialViewConfig(expected, actual, beforeForm, afterForm) {
   const next = configWithoutViewAudit(actual), original = JSON.parse(beforeForm.fdConfig);
   const md5 = value => createHash("md5").update(value).digest("hex");
   assert.equal(next.viewModel.length, expected.viewModel.length);
