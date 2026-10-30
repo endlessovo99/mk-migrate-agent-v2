@@ -88,10 +88,90 @@ export function inspectOtherPairContexts(designerHtml, runtimeHtml, pairs = []) 
     if (!valid) continue;
     const inlineScriptDigests = [...new Set(program.scripts.map(script =>
       createHash("sha256").update(script.trim()).digest("hex")))];
+    // Designer markup can contain inert editor-only inputs; the scanned page is
+    // the runtime export, whose paired widget identities were checked above.
+    const radioFree = radioFreeCell(runtime, rCell);
     result.set(pair.choiceId, { version: 1, ancestorIds: [...ancestors], cellDescendantIds: [...descendants],
+      pairDescendantIds: [...descendants], inlineScriptDigests, inlineDomainComplete: true });
+    if (radioFree) result.get(pair.choiceId).radioFree = true;
+  }
+  return result;
+}
+
+/** Source-only context for one checkbox, its bound Other caption and input in three adjacent cells. */
+export function inspectCrossCellOtherContexts(designerHtml, runtimeHtml, pairs = []) {
+  const result = new Map();
+  if (!pairs.length || !String(runtimeHtml || "").trim()) return result;
+  const designer = markupTree(designerHtml, true), runtime = markupTree(runtimeHtml);
+  if (!designer || !runtime) return result;
+  const program = runtimeProgram(runtimeHtml, runtime);
+  if (!program.complete) return result;
+  for (const pair of pairs) {
+    const designerWidget = id => designer.nodes.filter(node => node.attrs?.has("fd_type") && parseDesignerFdValues(node.attrsText).id === id);
+    const runtimeWidget = id => runtime.nodes.filter(node => node.attrs?.get("property") === `extendDataFormInfo.value(${id})`);
+    const dChoice = designerWidget(pair.choiceId), dCaption = designerWidget(pair.captionId), dText = designerWidget(pair.textId);
+    const rChoice = runtimeWidget(pair.choiceId), rText = runtimeWidget(pair.textId);
+    const rCaption = runtime.nodes.filter(node => node.name === "label" && plainText(runtime, node) === pair.caption);
+    if ([dChoice, dCaption, dText, rChoice, rCaption, rText].some(nodes => nodes.length !== 1)) continue;
+    if (!["inputcheckbox", "checkbox"].includes(dChoice[0].attrs?.get("fd_type")?.toLowerCase()) || rChoice[0].name !== "xform:checkbox" ||
+        dCaption[0].attrs?.get("fd_type")?.toLowerCase() !== "textlabel" ||
+        !["inputtext", "text"].includes(dText[0].attrs?.get("fd_type")?.toLowerCase()) || rText[0].name !== "xform:xtext") continue;
+    const sides = [[designer, [dChoice[0], dCaption[0], dText[0]]], [runtime, [rChoice[0], rCaption[0], rText[0]]]];
+    if (sides.some(([, nodes]) => nodes.some(node => {
+      const cell = nearest(node, "td");
+      return !cell || (cell.attrs?.get("rowspan") || "1") !== "1" ||
+        node.attrs?.get("canshow") === "false" || node.attrs?.get("showstatus") === "noshow" ||
+        /(?:display\s*:\s*none|visibility\s*:\s*hidden)/i.test(node.attrs?.get("style") || "");
+    }))) continue;
+    const positions = sides.map(([tree, nodes]) => nodes.map(node => cellPosition(tree, node)));
+    if (positions.some(side => side.some(position => !position || position.colspan !== "1") ||
+        side.some(position => position.table !== side[0].table || position.row !== side[0].row) ||
+        side[1].cell !== side[0].cell + 1 || side[2].cell !== side[1].cell + 1) ||
+        JSON.stringify(positions[0]) !== JSON.stringify(positions[1])) continue;
+    const ancestors = new Set(), descendants = new Set([pair.choiceId, pair.captionId, pair.textId]);
+    let valid = true;
+    for (const [tree, nodes] of sides) for (const node of nodes) {
+      const cell = nearest(node, "td");
+      for (let current = node; current; current = current.parent) {
+        if (current.invalid) valid = false;
+        for (const id of current.identityIds || []) ancestors.add(id);
+      }
+      for (const id of tree.cellDomains.get(cell) || []) descendants.add(id);
+    }
+    if (!valid) continue;
+    const inlineScriptDigests = [...new Set(program.scripts.map(script => createHash("sha256").update(script.trim()).digest("hex")))];
+    result.set(pair.choiceId, { version: 1, crossCell: true, ancestorIds: [...ancestors], cellDescendantIds: [...descendants],
       pairDescendantIds: [...descendants], inlineScriptDigests, inlineDomainComplete: true });
   }
   return result;
+}
+
+// A global radio-only scan cannot observe this pair through a radio's immediate
+// parent if the runtime rendering contains no radio or unknown xform widget
+// anywhere inside the pair's cell. This is a pair fact, not a form-wide claim.
+function radioFreeCell(tree, cell) {
+  const pairRow = nearest(cell, "tr");
+  if (!pairRow || tree.nodes.some(node => node.invalid && (node.name !== "tr" || node.contentEnd <= node.start ||
+      !/^<\/\s*tr\s*>/i.test(tree.raw.slice(node.contentEnd)) ||
+      pairRow.start >= node.start && pairRow.start <= node.contentEnd))) return false;
+  const within = node => {
+    for (let item = node; item; item = item.parent) if (item === cell) return true;
+    return false;
+  };
+  const safeXform = new Set(["xform:right", "xform:checkbox", "xform:simpledatasource", "xform:xtext", "xform:hidden"]);
+  const safeHtml = new Set(["td", "div", "span", "table", "tbody", "thead", "tfoot", "tr", "label", "input", "nobr", "br"]);
+  const safeDesigner = new Set(["right", "inputcheckbox", "checkbox", "inputtext", "text", "textlabel", "hidden"]);
+  return tree.nodes.filter(within).every(node => {
+    if (!node.attrs) return false;
+    if (!safeHtml.has(node.name) && !safeXform.has(node.name)) return false;
+    if (node.name === "input") {
+      const type = (node.attrs.get("type") || "text").toLowerCase();
+      if (!["text", "checkbox", "hidden", "button", "submit", "reset"].includes(type)) return false;
+    }
+    if (node.name.startsWith("xform:") && !safeXform.has(node.name)) return false;
+    const type = node.attrs.get("fd_type")?.toLowerCase();
+    return !type || safeDesigner.has(type);
+  });
 }
 
 export function inspectStaticCaptions(designerHtml, runtimeHtml = "") {

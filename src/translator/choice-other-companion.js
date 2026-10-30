@@ -57,7 +57,9 @@ export function mapChoiceOtherCompanions(fields = [], sourceScripts = {}, behavi
     if (pairs.filter(field => field.sourceProps.otherTextCompanion.captionId === relation.captionId).length !== 1 ||
         !text || text.componentId !== "xform-input" || text.dataOnly ||
         !caption || caption.componentId !== "xform-description" || caption.dataOnly ||
-        !isOtherCaptionText(caption.props?.content || caption.title) ||
+        !(isOtherCaptionText(caption.props?.content || caption.title) || relation.crossCell?.version === 1 &&
+          cleanText(caption.props?.content || caption.title) === relation.caption && /^(?:其他|其它).{2,}$/u.test(relation.caption)) ||
+        relation.crossCell?.version === 1 && referencedText(text, sourceScripts, fields) ||
         referencedCaption(caption, choice, sourceScripts, fields, behavior)) continue;
     if (relation.optionValue !== undefined) {
       if (!(choice.props?.options || []).some(option => option.value === relation.optionValue && option.type !== "other")) continue;
@@ -87,19 +89,28 @@ export function mapChoiceOtherCompanions(fields = [], sourceScripts = {}, behavi
 }
 
 function referencedCaption(caption, choice, scripts, fields, behavior) {
-  const texts = [...(scripts.sources || []).flatMap(source => [source.javascript, source.helperJavascript]),
-    ...(scripts.fragments || []).map(fragment => fragment.content),
-    ...(scripts.actions || []).map(action => action.function || action.sourceText),
-    ...fields.flatMap(field => [
-      ...Object.entries(field.sourceProps?.designerValues || {}).filter(([key]) => /^(?:on|script|function|event)/i.test(key)).map(([, value]) => value),
-      ...(field.sourceProps?.captionStructure?.domContext?.inlineScripts || field.sourceProps?.staticCaptionFact?.domContext?.inlineScripts || [])
-    ])].filter(text => typeof text === "string" && text.trim());
+  const texts = sourceScriptTexts(scripts, fields);
   const references = captionScriptReferences(texts);
   if (texts.some(text => text.includes(caption.id)) || references.values.some(text => text.includes(caption.id))) return true;
   if (references.opaque && !scripts.sources?.length && scripts.fragments?.length) return true;
   const context = caption.sourceProps?.captionStructure?.domContext || caption.sourceProps?.staticCaptionFact?.domContext;
   const impact = behavior?.forPair(choice.id, caption.id, context);
   return impact ? !impact.ok : references.opaque;
+}
+
+function referencedText(text, scripts, fields) {
+  const texts = sourceScriptTexts(scripts, fields), refs = captionScriptReferences(texts);
+  return texts.some(value => value.includes(text.id)) || refs.values.some(value => value.includes(text.id));
+}
+
+function sourceScriptTexts(scripts, fields) {
+  return [...(scripts.sources || []).flatMap(source => [source.javascript, source.helperJavascript]),
+    ...(scripts.fragments || []).map(fragment => fragment.content),
+    ...(scripts.actions || []).map(action => action.function || action.sourceText),
+    ...fields.flatMap(field => [
+      ...Object.entries(field.sourceProps?.designerValues || {}).filter(([key]) => /^(?:on|script|function|event)/i.test(key)).map(([, value]) => value),
+      ...(field.sourceProps?.captionStructure?.domContext?.inlineScripts || field.sourceProps?.staticCaptionFact?.domContext?.inlineScripts || [])
+    ])].filter(text => typeof text === "string" && text.trim());
 }
 
 function isSourceChoiceControl(control) {

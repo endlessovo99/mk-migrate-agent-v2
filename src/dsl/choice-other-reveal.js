@@ -16,7 +16,7 @@ export function choiceOtherRevealBindings(form = {}) {
       text?.componentId === "xform-input" && text.dataOnly !== true && text.props?.required !== true && text.props?.readOnly !== true &&
       trigger?.props?.readOnly !== true &&
       byOriginalId(relation.id).length === 1 && byOriginalId(relation.id)[0] === text &&
-      choice.props?.hiddenLabel === true && text.props?.hiddenLabel === true;
+      (relation.crossCell?.version === 1 || choice.props?.hiddenLabel === true) && text.props?.hiddenLabel === true;
     if (!validHeader) throw invalid(choice.id);
     if (relation.optionValue !== undefined) {
       const options = choice.props?.options;
@@ -33,12 +33,27 @@ export function choiceOtherRevealBindings(form = {}) {
           trigger.props?.options?.length !== 1 || trigger.props.options[0]?.value !== "selected" ||
           presentation.optionValue !== "selected") throw invalid(choice.id);
     }
-    const binding = { choiceId: choice.id, triggerId: trigger.id, textId: text.id, optionValue: presentation.optionValue };
-    if (!hasSingleAdjacentFlow(form.layout, binding.triggerId, binding.textId) ||
+    const binding = { choiceId: choice.id, triggerId: trigger.id, textId: text.id, optionValue: presentation.optionValue,
+      ...(relation.crossCell?.version === 1 ? { crossCell: true } : {}) };
+    if (!(relation.crossCell?.version === 1
+      ? hasAdjacentSourceCells(form.layout, choice.id, binding.triggerId, binding.textId, relation.crossCell)
+      : hasSingleAdjacentFlow(form.layout, binding.triggerId, binding.textId)) ||
         bindings.some(existing => existing.triggerId === binding.triggerId || existing.textId === binding.textId)) throw invalid(choice.id);
     bindings.push(binding);
   }
   return bindings;
+}
+
+function hasAdjacentSourceCells(layout, choice, trigger, text, fact) {
+  if (!fact || Object.keys(fact).sort().join(",") !== "captionCellId,choiceCellId,rowId,textCellId,version" || fact.version !== 1) return false;
+  const rows = (layout?.mkTree || []).filter(row => row.sourceRef === `source.form.layout.row.${fact.rowId}`);
+  if (rows.length !== 1) return false;
+  const children = rows[0].children || [];
+  const find = (id, ref) => children.filter(cell => cell.sourceRef === `source.form.layout.cell.${ref}` &&
+    cell.refType === "field" && cell.refIds?.length === 1 && cell.refIds[0] === id);
+  const first = find(choice, fact.choiceCellId), middle = find(trigger, fact.captionCellId), last = find(text, fact.textCellId);
+  return first.length === 1 && middle.length === 1 && last.length === 1 &&
+    middle[0].column === first[0].column + first[0].colspan && last[0].column === middle[0].column + middle[0].colspan;
 }
 
 function hasSingleAdjacentFlow(layout, first, second) {

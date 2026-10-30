@@ -172,6 +172,18 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
     },
     {
+      id: "qt-radio-scan-needs-script-review",
+      source: { kind: "form-only", relativePath: "choice-other-radio-scan/choice-other-radio-scan_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { terminalStage: "review", reviewStatus: "blocked", reviewStage: "agent-review.incomplete", operations: [] }
+    },
+    {
+      id: "cross-cell-other-reveal-success",
+      source: { kind: "form-only", relativePath: "choice-other-cross-cell/choice-other-cross-cell_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "detail-row-property-blocked-before-transport",
       source: { kind: "form-only", relativePath: "detail-row-property-completeness/row-property_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,

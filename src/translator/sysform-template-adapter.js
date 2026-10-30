@@ -15,6 +15,7 @@ import { annotateChinaValueReadOnly, attachClosedMainFieldFacts } from "./closed
 import { sourceFormRadioOrdinalFact } from "./approved-radio-ordinal-policy.js";
 import { radioReadOnlySourceFacts } from "./radio-readonly-presentation.js";
 import { inspectOtherPairContexts } from "./static-caption-facts.js";
+import { annotateCrossCellOther } from "./source-cross-cell-other.js";
 import {
   attrValue,
   cleanText,
@@ -48,15 +49,22 @@ export function translateSysFormTemplateXml(xml, options = {}) {
     ),
     editorLabelEvidence: editorLabelEvidence(template.fdDisplayJsp || "")
   });
+  annotateCrossCellOther(form, template.fdDesignerHtml || "", template.fdDisplayJsp || "");
+  const hasGlobalInputScan = (scripts?.sources || []).some(source => [source.javascript, source.helperJavascript]
+    .some(text => typeof text === "string" && /\bgetElementsByTagName\s*\(\s*["']input["']\s*\)/.test(text)));
   const unresolvedPairs = (form.fields || []).filter(field => field.type !== "detailTable" && field.source?.otherTextCompanion?.id)
     .filter(field => {
       const id = field.source.otherTextCompanion.captionId || field.source.layoutCell?.captionIds?.[0];
       const caption = form.fields.find(value => value.id === id);
-      return !caption?.source?.staticCaptionFact?.domContext && !caption?.source?.captionStructure?.domContext;
+      return hasGlobalInputScan || !caption?.source?.staticCaptionFact?.domContext && !caption?.source?.captionStructure?.domContext;
     }).map(field => ({ choiceId: field.id, textId: field.source.otherTextCompanion.id }));
   const pairContexts = inspectOtherPairContexts(template.fdDesignerHtml || "", template.fdDisplayJsp || "", unresolvedPairs);
   for (const field of form.fields || []) if (pairContexts.has(field.id)) {
-    field.source = { ...field.source, otherPairContext: pairContexts.get(field.id) };
+    const context = pairContexts.get(field.id);
+    const id = field.source?.otherTextCompanion?.captionId || field.source?.layoutCell?.captionIds?.[0];
+    const caption = form.fields.find(value => value.id === id);
+    if (context.radioFree || !caption?.source?.staticCaptionFact?.domContext && !caption?.source?.captionStructure?.domContext)
+      field.source = { ...field.source, otherPairContext: context };
   }
   const nodeDataAuthorities = extractSysFormNodeDataAuthorities(template, {
     knownFieldIds: collectDataAuthorityFieldIds(form, scripts)

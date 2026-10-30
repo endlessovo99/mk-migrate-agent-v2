@@ -74,7 +74,7 @@ export function prepareChoiceOtherRevealConfig({ config, form, tableName, pairs 
         }
         parents[0].children[parents[0].children.indexOf(node)] = buildChoiceOtherGroup(group, items);
       } else {
-        assert.equal(group.mode, "select", "existing checkbox Other group is missing");
+        assert.ok(["select", "tail"].includes(group.mode), "existing Other group is missing");
         const wrappers = group.referenceIds.map(id => all.filter(node => node.type === "div" && node.kind === "container" &&
           node.children?.length === 1 && node.children[0].key === id));
         assert.ok(wrappers.every(value => value.length === 1), "native Other wrappers are missing or ambiguous");
@@ -85,7 +85,12 @@ export function prepareChoiceOtherRevealConfig({ config, form, tableName, pairs 
         assert.equal(parent.children[index + 1], items[1], "Other wrappers must remain adjacent and ordered");
         assert.deepEqual(parent.controlProps.style, { display: "flex", flexWrap: "wrap", alignItems: "center", minWidth: 0 });
         assert.ok(items.every(item => [undefined, "mk-adaptive-main-field"].includes(item.controlProps.className)));
-        parent.children.splice(index, 2, buildChoiceOtherGroup(group, structuredClone(items)));
+        const preparedItems = structuredClone(items);
+        if (group.mode === "tail" && usesAdaptiveLayout(form)) {
+          assert.ok(["1 1 0", "0 1 auto"].includes(preparedItems[0].controlProps.style?.flex), "checkbox wrapper sizing changed");
+          preparedItems[0].controlProps.style.flex = "0 1 auto";
+        }
+        parent.children.splice(index, 2, buildChoiceOtherGroup(group, preparedItems));
       }
       changes.push({ viewIndex, scene, triggerId: group.referenceIds[0], textId: group.referenceIds[1], mode: group.mode });
     }

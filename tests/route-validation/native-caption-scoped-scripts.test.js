@@ -37,11 +37,13 @@ it("resolves a source row marker independently of a same-name hidden metadata fi
   assert.deepEqual(draft.form.fields.filter(field => field.sourceProps?.foldedCaption).map(field => field.id), ["fd_a", "fd_b", "fd_c"]);
 });
 
-it("folds eleven real seal-form titles while retaining the detail runtime and protected source regions", () => {
+it("folds real seal-form titles and maps the independent Other caption while retaining protected regions", () => {
   const { source, draft } = variant("seal_SysFormTemplate.xml");
   assert.deepEqual(draft.form.fields.filter(field => field.sourceProps?.foldedCaption).map(field => field.title), [
-    "申请单位", "申请部门", "申请人", "联系电话", "审批事项涉及部门", "用印事由", "用印类型", "需提供的相关资质复印件", "其他资质复印件", "用印内容", "附件"
+    "申请单位", "申请部门", "申请人", "联系电话", "审批事项涉及部门", "用印事由", "用印类型", "需提供的相关资质复印件", "用印内容", "附件"
   ]);
+  const other = draft.form.fields.find(field => field.title === "其他资质复印件" && field.sourceProps?.choiceOtherToggle);
+  assert.equal(other?.componentId, "xform-checkbox");
   assert.equal(auditCaptionFolding(source, draft).ok, true);
   const prepared = prepareSample(draft);
   assert.equal(prepared.verify(prepared.update).ok, true);
@@ -58,7 +60,8 @@ it("protects captions inside a cell read by the generated detail-width script", 
       script => script.includes("tds.each") ? "" : script);
     wrap(props);
   });
-  assert.equal(withoutParentRead.draft.form.fields.filter(field => field.sourceProps?.foldedCaption).length, 11);
+  assert.equal(withoutParentRead.draft.form.fields.filter(field => field.sourceProps?.foldedCaption).length, 10);
+  assert.equal(withoutParentRead.draft.form.fields.filter(field => field.sourceProps?.choiceOtherToggle).length, 1);
 });
 
 for (const [name, script] of [

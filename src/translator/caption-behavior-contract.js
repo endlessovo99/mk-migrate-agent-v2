@@ -9,6 +9,7 @@ import { captionToastValueProof } from "./caption-toast-value.js";
 import { captionNeededCoveredHelpers } from "./caption-covered-helpers.js";
 import { captionJsonImpact } from "./caption-json-impact.js";
 import { captionHelperUnits } from "./caption-helper-unit.js";
+import { abstractRadioScans } from "./caption-radio-scan-boundary.js";
 
 // Reuse the migration path's existing complete row translations. This is a
 // semantic coverage contract, not another whole-program JavaScript evaluator.
@@ -227,41 +228,56 @@ export function captionBehaviorContract(source, form, mappedScripts) {
     summary: { coveredSourceStatements: consumed, regionMappings: regions, residualScope: { ...scope, issue },
       ...(neededHelpers.size ? { retainedCoveredHelpers: [...neededHelpers] } : {}) },
     forPair(fieldId, captionId, context) {
-      if (!scope.ok) return { ok: false, bounded: false, issue: { ...issue, impact: "unbounded-form",
+      let pairScope = scope, pairProofMode = proofMode, radioScanEvidence;
+      if (!pairScope.ok && context?.radioFree === true && context.inlineDomainComplete === true) {
+        const abstracted = abstractRadioScans(residualPrograms, form);
+        const fullSource = abstractRadioScans(sourcePrograms, form);
+        if (abstracted && fullSource) {
+          const impact = captionJsonImpact(source, form, abstracted.programs);
+          const candidate = captionScriptReferences(abstracted.programs).opaque
+            ? captionScriptScope(abstracted.programs, form, originals, { auditedOrphans,
+              sharedScalarPrograms: fullSource.programs, jsonImpact: impact, helperUnits })
+            : { ok: true, targets: [], parentReads: [] };
+          if (candidate.ok) { pairScope = candidate; pairProofMode = "pair-radio-scan-boundary";
+            radioScanEvidence = { residual: abstracted.evidence, fullSource: fullSource.evidence }; }
+        }
+      }
+      if (!pairScope.ok) return { ok: false, bounded: false, issue: { ...issue, impact: "unbounded-form",
         boundary: boundary?.reason, boundaryOffset: boundary?.offset, boundaryDetails: boundary?.details, residualPrograms: residuals.length } };
       const ids = [fieldId, captionId, ...(context?.ancestorIds || []), ...(context?.pairDescendantIds || [])];
-      const presentation = scope.presentationTargets || scope.targets;
-      const splitRegion = [...regions, ...(scope.rowRegions || [])].find(region =>
+      const presentation = pairScope.presentationTargets || pairScope.targets;
+      const splitRegion = [...regions, ...(pairScope.rowRegions || [])].find(region =>
         region.targets.includes(fieldId) !== region.targets.includes(captionId));
       if (splitRegion) return { ok: false, bounded: true, issue: { reason: "row_region_separates_title_and_value",
         impact: "fixed-source-region", region: splitRegion } };
       if (ids.some(id => protectedTargets.has(id) || presentation.includes(id)) ||
-          scope.parentReads?.some(id => context?.cellDescendantIds?.includes(id))) {
-        return { ok: false, bounded: true, issue: { reason: scope.localBoundary ? "local_script_reach" : "independent_presentation_effect",
-          impact: "fixed-source-region", ...(scope.localBoundary ? { boundary: scope.localBoundary } : {}),
-          targets: [...new Set([...protectedTargets, ...presentation])], dataTargets: scope.dataTargets || [], parentReads: scope.parentReads } };
+          pairScope.parentReads?.some(id => context?.cellDescendantIds?.includes(id))) {
+        return { ok: false, bounded: true, issue: { reason: pairScope.localBoundary ? "local_script_reach" : "independent_presentation_effect",
+          impact: "fixed-source-region", ...(pairScope.localBoundary ? { boundary: pairScope.localBoundary } : {}),
+          targets: [...new Set([...protectedTargets, ...presentation])], dataTargets: pairScope.dataTargets || [], parentReads: pairScope.parentReads } };
       }
       if ((residuals.some(text => text.trim()) || regions.length) && context?.version !== 1) {
         return { ok: false, bounded: false, issue: { reason: "script_region_unproven", impact: "unknown-ancestors" } };
       }
-      return { ok: true, evidence: { version: 1, proofMode, regionMappings: regions, coveredSourceStatements: consumed,
+      return { ok: true, evidence: { version: 1, proofMode: pairProofMode, regionMappings: regions, coveredSourceStatements: consumed,
+        ...(radioScanEvidence ? { radioScanEvidence } : {}),
         ...(neededHelpers.size ? { retainedCoveredHelpers: [...neededHelpers] } : {}),
-        residualImpact: { presentationTargets: presentation, dataTargets: scope.dataTargets || [],
-          ...(scope.inertSubmitScratch?.length ? { inertSubmitScratch: scope.inertSubmitScratch } : {}),
-          ...(scope.inertRowNoops?.length ? { inertRowNoops: scope.inertRowNoops } : {}),
-          ...(scope.nativeCurrencyBindings?.length ? { nativeCurrencyBindings: scope.nativeCurrencyBindings } : {}),
-          ...(scope.attachmentBindings?.length ? { attachmentBindings: scope.attachmentBindings } : {}),
-          ...(scope.sharedScalars?.length ? { sharedScalars: scope.sharedScalars } : {}),
-          ...(scope.sourceValueReads?.length ? { sourceValueReads: scope.sourceValueReads } : {}),
-          ...(scope.dataLoops?.length ? { dataLoops: scope.dataLoops } : {}),
-          ...(scope.tablePollEffects?.length ? { tablePollEffects: scope.tablePollEffects } : {}),
-          ...(scope.detailDataReads?.length ? { detailDataReads: scope.detailDataReads } : {}),
-          ...(scope.sharedJsonData ? { sharedJsonData: scope.sharedJsonData } : {}),
-          ...(scope.nonEntryHelpers?.length ? { nonEntryHelpers: scope.nonEntryHelpers } : {}),
-          ...(scope.outsideExportIds?.length ? { outsideExportIds: scope.outsideExportIds } : {}),
-          ...(scope.localBoundary ? { localBoundary: { anchors: scope.localBoundary.anchors, selectors: scope.localBoundary.selectors,
-            rowMarkers: scope.localBoundary.rowMarkers } } : {}),
-          rowRegions: scope.rowRegions || [], parentReads: scope.parentReads || [] } } };
+        residualImpact: { presentationTargets: presentation, dataTargets: pairScope.dataTargets || [],
+          ...(pairScope.inertSubmitScratch?.length ? { inertSubmitScratch: pairScope.inertSubmitScratch } : {}),
+          ...(pairScope.inertRowNoops?.length ? { inertRowNoops: pairScope.inertRowNoops } : {}),
+          ...(pairScope.nativeCurrencyBindings?.length ? { nativeCurrencyBindings: pairScope.nativeCurrencyBindings } : {}),
+          ...(pairScope.attachmentBindings?.length ? { attachmentBindings: pairScope.attachmentBindings } : {}),
+          ...(pairScope.sharedScalars?.length ? { sharedScalars: pairScope.sharedScalars } : {}),
+          ...(pairScope.sourceValueReads?.length ? { sourceValueReads: pairScope.sourceValueReads } : {}),
+          ...(pairScope.dataLoops?.length ? { dataLoops: pairScope.dataLoops } : {}),
+          ...(pairScope.tablePollEffects?.length ? { tablePollEffects: pairScope.tablePollEffects } : {}),
+          ...(pairScope.detailDataReads?.length ? { detailDataReads: pairScope.detailDataReads } : {}),
+          ...(pairScope.sharedJsonData ? { sharedJsonData: pairScope.sharedJsonData } : {}),
+          ...(pairScope.nonEntryHelpers?.length ? { nonEntryHelpers: pairScope.nonEntryHelpers } : {}),
+          ...(pairScope.outsideExportIds?.length ? { outsideExportIds: pairScope.outsideExportIds } : {}),
+          ...(pairScope.localBoundary ? { localBoundary: { anchors: pairScope.localBoundary.anchors, selectors: pairScope.localBoundary.selectors,
+            rowMarkers: pairScope.localBoundary.rowMarkers } } : {}),
+          rowRegions: pairScope.rowRegions || [], parentReads: pairScope.parentReads || [] } } };
     }
   };
 }

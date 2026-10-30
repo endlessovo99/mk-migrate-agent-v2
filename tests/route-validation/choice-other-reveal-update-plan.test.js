@@ -32,6 +32,27 @@ for (const path of fixtures) it(`plans a protected, source-bound Other reveal: $
   assert.ok(plan.changes.every(change => ["desktop", "mobile"].includes(change.scene)));
 });
 
+it("wraps an existing ungrouped checkbox Other pair without changing stored fields", () => {
+  const input = setup(fixtures[0]), before = structuredClone(input.config);
+  for (const model of input.config.viewModel) {
+    const view = JSON.parse(model.fdConfig);
+    for (const scene of ["desktop", "mobile"]) for (const node of view.view.render[scene].flatMap(nodes)) {
+      const index = node.children?.findIndex(child => child.controlProps?.className?.startsWith("mk-choice-other-flow-"));
+      if (index >= 0) {
+        const items = node.children[index].children.slice(1);
+        for (const item of items) item.controlProps.className = "mk-adaptive-main-field";
+        items[0].controlProps.style.flex = "1 1 0";
+        node.children.splice(index, 1, ...items);
+      }
+    }
+    model.fdConfig = JSON.stringify(view);
+  }
+  const ungrouped = structuredClone(input.config), plan = prepareChoiceOtherRevealConfig(input);
+  assert.equal(plan.changes.length, 2);
+  assert.deepEqual(plan.config.dataModel, before.dataModel);
+  assert.deepEqual(input.config, ungrouped);
+});
+
 for (const [name, mutate] of [
   ["unapproved pair", i => { i.pairs = []; }],
   ["changed option", i => { const field = i.config.dataModel.flatMap(m => m.fdFields).find(f => f.fdName === i.pairs[0].choiceId); const a = JSON.parse(field.fdAttribute); a.config.controlProps.options[0].value = "foreign"; field.fdAttribute = JSON.stringify(a); }],
