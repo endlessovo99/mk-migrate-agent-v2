@@ -9,6 +9,21 @@ export function withCrossCellOtherReveal(scripts = {}, form = {}, mainTableName)
   if (!valid(mainTableName) || bindings.some(binding => !valid(binding.triggerId) || !valid(binding.textId))) throw invalid();
   const specs = bindings.map(binding => ({ trigger: `${mainTableName}.${binding.triggerId}`,
     text: `${mainTableName}.${binding.textId}`, selected: binding.optionValue }));
+  // Capture the persisted sentinel before checkbox storage normalization changes
+  // "0" into []. An absent value remains ambiguous for pre-existing records.
+  const snapshotAction = { id: "mk-choice-other-cross-cell-snapshot-v1", name: "onLoadCrossCellOtherSnapshot", event: "onLoad", scope: "global", translationStatus: "mapped",
+    function: `function onLoadCrossCellOtherSnapshot(context) {
+  if (typeof MKXFORM === "undefined" || !MKXFORM || !MKXFORM.MKXFORM_DATA_CONTAINER || !MKXFORM.$$FORM ||
+      !MKXFORM.$$FORM.current || typeof MKXFORM.getValue !== "function") return;
+  var container = MKXFORM.MKXFORM_DATA_CONTAINER, nativeForm = MKXFORM.$$FORM.current;
+  var previous = container.__mkCrossCellOtherSnapshotV1;
+  if (previous && previous.nativeForm === nativeForm) return;
+  var storedEmpty = {}, triggers = ${JSON.stringify(specs.map(item => item.trigger))};
+  triggers.forEach(function(ref) {
+    try { if (MKXFORM.getValue(ref) === "0") storedEmpty[ref] = true; } catch (_) {}
+  });
+  container.__mkCrossCellOtherSnapshotV1 = { nativeForm: nativeForm, storedEmpty: storedEmpty };
+}` };
   const css = specs.map(item => `[data-id="${item.text}"][data-mk-cross-other="closed"]:not(:has(.ele-xform-fieldset-required, input[readonly], input:disabled, textarea[readonly], textarea:disabled)) { display: none !important; }`).join("\n");
   const styleId = `mk-cross-other-${createHash("sha256").update(JSON.stringify(specs)).digest("hex").slice(0, 16)}`;
   const action = { id: "mk-choice-other-cross-cell-v1", name: "onLoadCrossCellOther", event: "onLoad", scope: "global", translationStatus: "mapped",
@@ -56,7 +71,9 @@ export function withCrossCellOtherReveal(scripts = {}, form = {}, mainTableName)
     }
     // Existing records may predate the generated checkbox. Until the user
     // changes it, never hide a retained explanation behind an empty default.
-    if (!selected && !item.touched && text !== undefined && text !== null && text !== "") {
+    var snapshot = container.__mkCrossCellOtherSnapshotV1;
+    var storedEmpty = snapshot && snapshot.nativeForm === nativeForm && snapshot.storedEmpty && snapshot.storedEmpty[item.trigger] === true;
+    if (!selected && !item.touched && !storedEmpty && text !== undefined && text !== null && text !== "") {
       notes[0].removeAttribute("data-mk-cross-other"); return;
     }
     notes[0].setAttribute("data-mk-cross-other", selected ? "open" : "closed");
@@ -73,12 +90,14 @@ export function withCrossCellOtherReveal(scripts = {}, form = {}, mainTableName)
   }
 }` };
   const actions = Array.isArray(scripts.actions) ? scripts.actions : [];
-  const existing = actions.filter(item => item.id === action.id);
-  if (existing.length) {
-    if (existing.length === 1 && Object.keys(existing[0]).length === Object.keys(action).length &&
-        Object.keys(action).every(key => existing[0][key] === action[key])) return scripts;
+  const existing = actions.filter(item => item.id === action.id), snapshots = actions.filter(item => item.id === snapshotAction.id);
+  const matches = (actual, expected) => Object.keys(actual).length === Object.keys(expected).length &&
+    Object.keys(expected).every(key => actual[key] === expected[key]);
+  if (existing.length || snapshots.length) {
+    if (existing.length === 1 && snapshots.length === 1 && actions[0] === snapshots[0] &&
+        matches(existing[0], action) && matches(snapshots[0], snapshotAction)) return scripts;
     throw invalid();
   }
-  return { ...scripts, actions: [...actions, action] };
+  return { ...scripts, actions: [snapshotAction, ...actions, action] };
 }
 function invalid() { const error = new Error("Cross-cell Other presentation is not uniquely projected."); error.code = "projection.choice_other_cross_cell_invalid"; return error; }

@@ -31,7 +31,7 @@ it("only changes display state and fails open for noneditable or ambiguous contr
   const draft = draftSourceDraft(cleanSourceFile(fixture)), config = xformConfig(prepareSample(draft).update);
   const action = JSON.parse(config.attribute.formAttr).controlAction.global.onLoad[0];
   assert.ok(action.migrationActions.some(item => item.id === "mk-choice-other-cross-cell-v1"));
-  const displayAction = withCrossCellOtherReveal({ actions: [] }, draft.form, prepareSample(draft).update.fdTableName).actions[0];
+  const displayAction = withCrossCellOtherReveal({ actions: [] }, draft.form, prepareSample(draft).update.fdTableName).actions.find(item => item.id === "mk-choice-other-cross-cell-v1");
   const nodes = {}, trigger = { disabled: false, readOnly: false }, note = { disabled: false, readOnly: false }, state = {}, subscriptions = [], writes = [];
   const noteRoot = { querySelector: () => note, setAttribute: (key, value) => { state[key] = value; }, removeAttribute: key => { delete state[key]; } };
   const triggerRoot = { querySelector: () => trigger };
@@ -54,6 +54,31 @@ it("only changes display state and fails open for noneditable or ambiguous contr
   assert.deepEqual(writes, [], "conditional visibility must never write business values");
 });
 
+it("distinguishes an explicitly saved unchecked toggle from an older missing value", () => {
+  const form = draftSourceDraft(cleanSourceFile(fixture)).form;
+  const nativeStorage = { id: "native-checkbox-storage" };
+  const planned = withCrossCellOtherReveal({ actions: [nativeStorage] }, form, "mk_model_test");
+  assert.deepEqual(planned.actions.map(item => item.id), ["mk-choice-other-cross-cell-snapshot-v1", "native-checkbox-storage", "mk-choice-other-cross-cell-v1"]);
+  assert.equal(withCrossCellOtherReveal(planned, form, "mk_model_test"), planned);
+  const [snapshot, , display] = planned.actions;
+  for (const [stored, expected] of [["0", "closed"], [undefined, undefined], [[], undefined]]) {
+    let selected = stored; const state = {}, writes = [], nodes = {};
+    const checkbox = { disabled: false, readOnly: false }, input = { disabled: false, readOnly: false };
+    const triggerRoot = { querySelector: () => checkbox };
+    const noteRoot = { querySelector: () => input, setAttribute: (key, value) => { state[key] = value; }, removeAttribute: key => { delete state[key]; } };
+    const document = { head: { appendChild: node => { nodes[node.id] = node; } }, documentElement: {}, getElementById: id => nodes[id], createElement: () => ({}),
+      querySelectorAll: selector => selector.includes("fd_other_caption") ? [triggerRoot] : selector.includes("fd_other_text") ? [noteRoot] : [] };
+    const MKXFORM = { MKXFORM_DATA_CONTAINER: {}, $$FORM: { current: {} }, getValue: ref => ref.endsWith("fd_other_text") ? "saved_note" : selected,
+      getFieldAttr: () => 2, onChange: () => {}, setValue: (...args) => writes.push(args) };
+    runInNewContext(`(${snapshot.function})`, { MKXFORM })({});
+    // Native checkbox storage converts the saved scalar into the widget array.
+    selected = [];
+    runInNewContext(`(${display.function})`, { MKXFORM, document, requestAnimationFrame: callback => callback() })({});
+    assert.equal(state["data-mk-cross-other"], expected, `stored value ${String(stored)}`);
+    assert.deepEqual(writes, [], "taking a snapshot or changing display must not write values");
+  }
+});
+
 it("shows the adjacent explanation only when selected without clearing its value", {
   skip: process.env.MK_LAYOUT_BROWSER_TESTS !== "1"
 }, async () => {
@@ -62,7 +87,7 @@ it("shows the adjacent explanation only when selected without clearing its value
   try {
     const page = await browser.newPage(); await page.route("**/*", route => route.abort());
     const form = draftSourceDraft(cleanSourceFile(fixture)).form;
-    const action = withCrossCellOtherReveal({ actions: [] }, form, "mk_model_test").actions[0];
+    const action = withCrossCellOtherReveal({ actions: [] }, form, "mk_model_test").actions.find(item => item.id === "mk-choice-other-cross-cell-v1");
     await page.setContent('<div data-id="mk_model_test.fd_other_caption"><input id="toggle" type="checkbox"></div>' +
       '<div data-id="mk_model_test.fd_other_text"><input id="note" value=""></div>');
     await page.evaluate(code => {
