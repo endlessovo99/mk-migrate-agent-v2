@@ -15,6 +15,91 @@ const existing = "tests/fixtures/route-validation/choice-other-wrap/choice-other
 const generated = "tests/fixtures/route-validation/checkbox-other-compatible/compatible_SysFormTemplate.xml";
 const select = "tests/fixtures/route-validation/choice-other-select/choice-other-select_SysFormTemplate.xml";
 const styled = "tests/fixtures/route-validation/choice-other-styled/choice-other-styled_SysFormTemplate.xml";
+const qt = "tests/fixtures/route-validation/choice-other-qt/choice-other-qt_SysFormTemplate.xml";
+const synonym = "tests/fixtures/route-validation/choice-other-synonym/choice-other-synonym_SysFormTemplate.xml";
+
+it("recognizes the source spelling 其它 while preserving its option value", () => {
+  const source = cleanSourceFile(synonym), choice = source.form.controls.find(field => field.id === "fd_payment");
+  assert.deepEqual(choice.sourceProps.otherTextCompanion, { id: "fd_note", otherRequired: false, optionValue: "C", optionLabel: "其它" });
+  const draft = draftSourceDraft(source), target = draft.form.fields.find(field => field.id === "fd_payment");
+  assert.equal(target.otherPresentation?.optionValue, "C");
+  assert.deepEqual(target.props.options, choice.options);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_note").props.defaultValue.value, "  keep_under_score🙂  ");
+  const prepared = prepareSample(draft); assert.equal(prepared.verify(prepared.update).ok, true);
+});
+
+it("carries the 其它 relation through the guarded fake route", async () => {
+  const result = await runRouteCase("synonym-other-reveal-success");
+  assert.equal(result.execution.ok, true);
+  assert.equal(result.execution.readback.partitions.form, "verified");
+});
+
+it("does not associate a different 其它 meaning or competing Other choices", () => {
+  const dir = mkdtempSync(join(tmpdir(), "other-synonym-negative-"));
+  try {
+    const original = readFileSync(synonym, "utf8");
+    const variants = [original.replaceAll("付款方式-其它", "付款方式-其它部门"),
+      original.replaceAll("票据", "其他"),
+      original.replace('&lt;/select&gt;&lt;/div&gt;&lt;div fd_type="inputText"',
+        '&lt;/select&gt;&lt;/div&gt;&lt;/td&gt;&lt;td row="0" column="2"&gt;&lt;div fd_type="inputText"')
+        .replace('&lt;/xform:select&gt;&lt;xform:xtext', '&lt;/xform:select&gt;&lt;/td&gt;&lt;td&gt;&lt;xform:xtext')];
+    for (const [index, xml] of variants.entries()) {
+      const path = join(dir, `negative-${index}_SysFormTemplate.xml`); writeFileSync(path, xml);
+      const source = cleanSourceFile(path), choice = source.form.controls.find(field => field.id === "fd_payment");
+      assert.equal(choice.sourceProps.otherTextCompanion, undefined);
+      assert.equal(draftSourceDraft(source).form.fields.some(field => field.otherPresentation), false);
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+it("recognizes an Other-method option with the matching source qt explanation", () => {
+  const source = cleanSourceFile(qt), choice = source.form.controls.find(field => field.id === "fd_kind");
+  assert.deepEqual(choice.sourceProps.otherTextCompanion, { id: "fd_note", otherRequired: false, optionValue: "OT", optionLabel: "其他方式" });
+  const draft = draftSourceDraft(source), target = draft.form.fields.find(field => field.id === "fd_kind");
+  assert.equal(target.otherPresentation?.optionValue, "OT");
+  assert.deepEqual(target.props.options, choice.options);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_note").props.defaultValue.value, "  seed_under_score🙂  ");
+  const prepared = prepareSample(draft); assert.equal(prepared.verify(prepared.update).ok, true);
+});
+
+it("carries the qt Other relation through the guarded fake route", async () => {
+  const result = await runRouteCase("qt-other-reveal-success");
+  assert.equal(result.execution.ok, true);
+  assert.equal(result.execution.readback.partitions.form, "verified");
+});
+
+it("does not treat arbitrary qt labels or competing choices as an Other explanation", () => {
+  const dir = mkdtempSync(join(tmpdir(), "other-qt-negative-"));
+  try {
+    const original = readFileSync(qt, "utf8");
+    const variants = [
+      original.replaceAll("财务专用填写栏qt", "财务专用填写栏qtfy"),
+      original.replaceAll("财务专用填写栏qt", "其他字段qt"),
+      original.replaceAll("其他方式", "其他情况"),
+      original.replaceAll("普通用途甲|A", "其他|A")
+    ];
+    for (const [index, xml] of variants.entries()) {
+      const path = join(dir, `negative-${index}_SysFormTemplate.xml`); writeFileSync(path, xml);
+      const source = cleanSourceFile(path), choice = source.form.controls.find(field => field.id === "fd_kind");
+      assert.equal(choice.sourceProps.otherTextCompanion, undefined);
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+it("retains the qt source pair without hiding it when an old script has unbounded form reach", () => {
+  const dir = mkdtempSync(join(tmpdir(), "other-qt-scope-"));
+  try {
+    const original = readFileSync(qt, "utf8");
+    const tail = "&lt;/table&gt;</string></void>\n</object></java>";
+    assert.equal(original.split(tail).length, 2);
+    const xml = original.replace(tail, "&lt;/table&gt;&lt;script&gt;function legacyScan(){var all=document.getElementsByTagName('input');return all.length;}&lt;/script&gt;</string></void>\n</object></java>");
+    const path = join(dir, "scope_SysFormTemplate.xml"); writeFileSync(path, xml);
+    const source = cleanSourceFile(path), draft = draftSourceDraft(source);
+    assert.equal(source.form.controls.find(field => field.id === "fd_kind").sourceProps.otherTextCompanion?.id, "fd_note");
+    assert.equal(draft.form.fields.some(field => field.otherPresentation), false);
+    assert.ok(draft.review.warnings.some(item => item.code === "source.form.choice_other_reveal_needs_manual"));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
 
 it("proves a styled source region without changing its caption or unrelated script", () => {
   const source = cleanSourceFile(styled), draft = draftSourceDraft(source);

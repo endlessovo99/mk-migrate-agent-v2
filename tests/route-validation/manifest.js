@@ -160,6 +160,18 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
       expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
     },
     {
+      id: "qt-other-reveal-success",
+      source: { kind: "form-only", relativePath: "choice-other-qt/choice-other-qt_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
+      id: "synonym-other-reveal-success",
+      source: { kind: "form-only", relativePath: "choice-other-synonym/choice-other-synonym_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+    },
+    {
       id: "detail-row-property-blocked-before-transport",
       source: { kind: "form-only", relativePath: "detail-row-property-completeness/row-property_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,

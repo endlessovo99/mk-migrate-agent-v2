@@ -123,7 +123,7 @@ function isOtherTextCompanion(companion) {
 }
 
 function isOtherCaptionText(value) {
-  return /^(?:(?:\d+\s*[.．、)）]|[（(]\d+[）)]\s*[.．、]?)\s*)?其他(?:附件)?\s*(?:[（(][^）)]*[）)])?\s*[:：]?$/u.test(cleanText(value));
+  return /^(?:(?:\d+\s*[.．、)）]|[（(]\d+[）)]\s*[.．、]?)\s*)?(?:其他|其它)(?:附件|方式)?\s*(?:[（(][^）)]*[）)])?\s*[:：]?$/u.test(cleanText(value));
 }
 
 function hasMatchingOtherTitle(choice, companion) {
@@ -131,9 +131,12 @@ function hasMatchingOtherTitle(choice, companion) {
   if (isOtherCaptionText(title)) return true;
   const titles = new Set([choice.source?.boundCaption?.content, choice.title, choice.source?.designerValues?.label]
     .map(value => cleanText(value || "").replace(/[:：]\s*$/u, "")).filter(Boolean));
+  const hasOtherMethod = (choice.options || []).some(option => /^(?:其他|其它)方式$/u.test(cleanText(option.label)));
   return [...titles].some(choiceTitle => (
-    title.startsWith(choiceTitle) &&
+    title.startsWith(choiceTitle) && (
       isOtherCaptionText(title.slice(choiceTitle.length).replace(/^\s*[:：\-—－–]\s*/u, "")) ||
+      hasOtherMethod && /^qt$/i.test(title.slice(choiceTitle.length).trim())
+    ) ||
     title.endsWith(choiceTitle) && isOtherCaptionText(title.slice(0, -choiceTitle.length))
   ));
 }
