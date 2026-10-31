@@ -15,6 +15,8 @@ import { choiceOtherToggleBindings } from "../dsl/choice-other-runtime.js";
 import { choiceOtherStorageAction } from "../dsl/choice-other-storage-runtime.js";
 import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../dsl/choice-other-storage-capability.js";
 import { inspectChoiceOtherStorageRuntime } from "./choice-other-storage-capability.js";
+import { requiresDetailVisibilitySync } from "./persistence/detail-visibility-sync.js";
+import { DETAIL_VISIBILITY_RUNTIME, inspectDetailVisibilityRuntime } from "./detail-visibility-runtime.js";
 import {
   hasStaticAddressDefaults,
   resolveStaticAddressDefaults
@@ -72,6 +74,17 @@ async function executeDraftDsl(input, options, writes) {
     safety.push({ level: "error", code: "execute.migration_policy_new_draft_required", message: "Approved migration behavior policies apply only to newly created drafts.", path: "/migrationPolicies" });
   }
   let requiresChoiceOtherStorage = false;
+  let requiresDetailVisibility = false;
+  try {
+    requiresDetailVisibility = requiresDetailVisibilitySync(input.scripts, input.form, input.formRules);
+  } catch (error) {
+    safety.push({ level: "error", code: error.code || "safety.detail_visibility_invalid",
+      message: "The source-bound detail visibility bridge could not be safely planned.", path: "/formRules" });
+  }
+  if (requiresDetailVisibility && target.baseUrl !== DETAIL_VISIBILITY_RUNTIME.origin) safety.push({
+    level: "error", code: "safety.detail_visibility_origin_unverified",
+    message: "The detail visibility runtime is verified only for its recorded target origin.", path: "/formRules"
+  });
   try {
     const bindings = choiceOtherToggleBindings(input.form);
     requiresChoiceOtherStorage = bindings.length > 0;
@@ -109,6 +122,17 @@ async function executeDraftDsl(input, options, writes) {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    if (requiresDetailVisibility) {
+      const stage = { name: "verifyDetailVisibilityRuntime", status: "started" };
+      apiStages.push(stage);
+      const capability = await inspectDetailVisibilityRuntime(client, baseUrl);
+      Object.assign(stage, { status: capability.ok ? "ok" : "failed", issues: capability.issues });
+      if (!capability.ok) return { ...blocked(plan, [...diagnostics, {
+        level: "error", code: "safety.detail_visibility_runtime_unverified",
+        message: "The target detail visibility runtime is not verified; no migration write was attempted.",
+        path: "/formRules", details: { issues: capability.issues }
+      }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
+    }
     if (requiresChoiceOtherStorage) {
       const stage = { name: "verifyChoiceOtherStorageRuntime", status: "started" };
       apiStages.push(stage);

@@ -1,0 +1,26 @@
+{
+  "source": "QAS sys-xform/desktop/api/XFormRuntime",
+  "releaseHash": "a3ec998c10af6bbce34dd6caffe4a203",
+  "origin": "https://oaqas.shanghai-electric.com",
+  "bundles": {
+    "desktop": {
+      "release": "a3ec998c10af6bbce34dd6caffe4a203",
+      "sha256": "a3ee70fad7030bd66884aa39a2e28e59d3472671b0d633acd0fb05d4d48c91ba"
+    },
+    "mobile": {
+      "release": "4d998c2e4de3862a836c2339c5d583dd",
+      "sha256": "73e546b0d9ce8a442e27ea4f3a30622bf2c036fcb106ffd45d81a91b728551e2",
+      "displayCallbackSha256": "809d0c6f07eb5ea5ae24e780246419a913dfb8da846fadcc053916b9aaa748dd"
+    }
+  },
+  "functions": {
+    "displayCallbackModule": {
+      "sha256": "809d0c6f07eb5ea5ae24e780246419a913dfb8da846fadcc053916b9aaa748dd",
+      "bytes": 9592
+    },
+    "getFormValues": {
+      "sha256": "426057e6318119c922d58b7d116e63081563bbf2bc5521a57aa56694a2f813c9",
+      "bytes": 475
+    }
+  }
+}
