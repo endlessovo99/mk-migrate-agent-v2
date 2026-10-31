@@ -16,6 +16,7 @@ import { sourceFormRadioOrdinalFact } from "./approved-radio-ordinal-policy.js";
 import { radioReadOnlySourceFacts } from "./radio-readonly-presentation.js";
 import { inspectOtherPairContexts } from "./static-caption-facts.js";
 import { annotateCrossCellOther } from "./source-cross-cell-other.js";
+import { annotateRuntimeDetailCellEvidence } from "./detail-cell-runtime-evidence.js";
 import {
   attrValue,
   cleanText,
@@ -50,6 +51,7 @@ export function translateSysFormTemplateXml(xml, options = {}) {
     editorLabelEvidence: editorLabelEvidence(template.fdDisplayJsp || "")
   });
   annotateCrossCellOther(form, template.fdDesignerHtml || "", template.fdDisplayJsp || "");
+  annotateRuntimeDetailCellEvidence(form, template.fdDisplayJsp || "");
   const hasGlobalInputScan = (scripts?.sources || []).some(source => [source.javascript, source.helperJavascript]
     .some(text => typeof text === "string" && /\bgetElementsByTagName\s*\(\s*["']input["']\s*\)/.test(text)));
   const unresolvedPairs = (form.fields || []).filter(field => field.type !== "detailTable" && field.source?.otherTextCompanion?.id)

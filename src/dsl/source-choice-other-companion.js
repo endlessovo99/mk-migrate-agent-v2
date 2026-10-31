@@ -28,7 +28,7 @@ function sourcePairs(form = {}) {
   }));
 }
 
-export function choiceOtherSourceErrors(sourceForm = {}) {
+export function choiceOtherSourceErrors(sourceForm = {}, expectedForm) {
   return sourcePairs(sourceForm).flatMap(pair => {
     const details = { sourceRef: pair.choice.sourceRef, fieldId: pair.choice.id,
       companionId: pair.text?.id || pair.choice.sourceProps.otherTextCompanion.id };
@@ -36,7 +36,7 @@ export function choiceOtherSourceErrors(sourceForm = {}) {
     const errors = [];
     if (!pair.text || pair.text.sourceType !== "text") errors.push(error("choice_other_identity_unproven",
       "The source choice/text association must retain one independent text field in the same scope."));
-    if (pair.tableRef) errors.push(error("choice_other_detail_layout_unproven",
+    if (pair.tableRef && !supportedDetailPair(pair, expectedForm)) errors.push(error("choice_other_detail_layout_unproven",
       "A source detail cell with choice and independent text has no proven equivalent native compound-column contract."));
     return errors;
   }).concat(visibleSourceChoices(sourceForm).filter(field =>
@@ -55,7 +55,7 @@ function visibleSourceChoices(form) {
 }
 
 export function choiceOtherCompanionDiagnostics(sourceForm, targetForm, expectedForm, { prefix = "trust.form" } = {}) {
-  const diagnostics = choiceOtherSourceErrors(sourceForm).map(item => ({ ...item, level: "error",
+  const diagnostics = choiceOtherSourceErrors(sourceForm, expectedForm).map(item => ({ ...item, level: "error",
     code: item.code.replace(/^source\.form/, prefix) }));
   const flatten = form => (form?.fields || []).flatMap(field => field.type === "detailTable"
     ? (field.columns || []).map(column => ({ field: column, tableRef: field.sourceRef || field.id }))
@@ -74,7 +74,21 @@ export function choiceOtherCompanionDiagnostics(sourceForm, targetForm, expected
     }
   }
   for (const pair of sourcePairs(sourceForm)) {
-    if (pair.tableRef || !pair.text) continue;
+    if (!pair.text) continue;
+    if (pair.tableRef) {
+      if (!supportedDetailPair(pair, expectedForm)) continue;
+      const sources = [pair.choice, pair.text];
+      const complete = sources.every(source => {
+        const fixed = expectedFields.filter(entry => entry.tableRef === pair.tableRef && entry.field.sourceRef === source.sourceRef);
+        const actual = actualFields.filter(entry => entry.tableRef === pair.tableRef && entry.field.sourceRef === source.sourceRef);
+        return fixed.length === 1 && actual.length === 1 &&
+          canonicalJson(fieldSemantics(fixed[0].field)) === canonicalJson(fieldSemantics(actual[0].field));
+      });
+      if (!complete) diagnostics.push({ level: "error", code: `${prefix}.choice_other_companion_source_mismatch`,
+        message: "Independent source choice codes, text, permissions and defaults must remain separate detail fields.",
+        path: "/form", details: { fieldId: pair.choice.id, companionId: pair.text.id, sourceRef: pair.choice.sourceRef } });
+      continue;
+    }
     const sources = [pair.choice, pair.text, ...(pair.caption ? [pair.caption] : [])];
     const ids = [];
     let complete = true;
@@ -94,6 +108,14 @@ export function choiceOtherCompanionDiagnostics(sourceForm, targetForm, expected
       path: "/form", details: { fieldId: pair.choice.id, companionId: pair.text.id, sourceRef: pair.choice.sourceRef } });
   }
   return diagnostics;
+}
+
+function supportedDetailPair(pair, form) {
+  if (!pair.tableRef || !pair.text) return false;
+  const tables = (form?.fields || []).filter(field => field?.type === "detailTable" && field.sourceRef === pair.tableRef);
+  if (tables.length !== 1) return false;
+  return (tables[0].detailCellGroups || []).some(group => group.version === 1 &&
+    canonicalJson(group.sourceRefs) === canonicalJson([pair.choice.sourceRef, pair.text.sourceRef]));
 }
 
 function fieldSemantics(field) {

@@ -159,10 +159,8 @@ describe("procurement payment script Route case", () => {
     );
     assert.equal(wbsChange.sourceActionKey, wbsRule.meta.sourceActionKey);
 
-    assert.equal(
-      checkDraft(dslDraft).diagnostics.some((diagnostic) => diagnostic.level === "error"),
-      false
-    );
+    assert.deepEqual(new Set(checkDraft(dslDraft).diagnostics.filter(item => item.level === "error").map(item => item.code)),
+      new Set(["source.form.detail_cell_layout_unproven"]));
     const trusted = createTrustedMigrationDsl(sourceDraft, dslDraft, {
       externalAgentReviewed: true,
       reviewerName: "route-test",
@@ -170,7 +168,8 @@ describe("procurement payment script Route case", () => {
     });
     const trustErrors = checkTrust(sourceDraft, trusted).diagnostics.filter(item => item.level === "error");
     assert.deepEqual(new Set(trustErrors.map(item => item.code)),
-      new Set(["trust.form.remote_dialog_unbound", "dsl.form.remote_dialog_unbound"]));
+      new Set(["trust.form.remote_dialog_unbound", "dsl.form.remote_dialog_unbound",
+        "trust.form.detail_cell_layout_unproven", "dsl.form.detail_cell_layout_unproven"]));
 
     const prepared = prepareSample(trusted);
     const readback = prepared.verify(prepared.update);

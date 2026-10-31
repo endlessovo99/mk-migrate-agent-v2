@@ -5,6 +5,9 @@ import { test } from "node:test";
 import vm from "node:vm";
 import { applyEvidenceBackedPatches, collectSourceRefs } from "../../src/agent-review/review-validation.js";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
+import { sourceDraftFromLegacyDsl } from "../../src/translator/source-draft.js";
+import { translateSysFormTemplateXml } from "../../src/translator/sysform-template-adapter.js";
+import { parseRootHashMapStringPuts } from "../../src/translator/xml-utils.js";
 import { withDetailVisibilitySync } from "../../src/executor/persistence/detail-visibility-sync.js";
 import { DETAIL_VISIBILITY_RUNTIME, inspectDetailVisibilityRuntime } from "../../src/executor/detail-visibility-runtime.js";
 import { executeDsl } from "../../src/executor/execute.js";
@@ -52,8 +55,7 @@ function reviewedDsl() {
   return result.dslDraft;
 }
 
-function reviewedSelectDsl() {
-  const source = cleanSourceFile("tests/fixtures/route-validation/detail-visibility-submission/select-detail_SysFormTemplate.xml");
+function reviewedSelectDsl(source = cleanSourceFile("tests/fixtures/route-validation/detail-visibility-submission/select-detail_SysFormTemplate.xml")) {
   const draft = draftSourceDraft(source);
   const index = draft.scripts.actions.findIndex(action => action.event === "onChange" && action.controlId === "fd_route_type");
   const action = draft.scripts.actions[index];
@@ -69,6 +71,36 @@ function reviewedSelectDsl() {
   assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
   return result.dslDraft;
 }
+
+test("shared-cell presentation and source-bound detail visibility coexist through native readback", async () => {
+  const path = "tests/fixtures/route-validation/detail-visibility-submission/select-detail_SysFormTemplate.xml";
+  const properties = parseRootHashMapStringPuts(readFileSync(path, "utf8"));
+  const oldTable = `<table fd_type="detailsTable" fd_values='{id:"fd_route_detail",label:"明细"}'></table>`;
+  const newTable = `<table fd_type="detailsTable" fd_values='{id:"fd_route_detail",label:"明细"}'><tbody>
+    <tr type="titleRow"><td row="0" column="0"><label fd_type="textLabel" fd_values='{id:"detail_title",content:"名称"}'>名称</label></td></tr>
+    <tr type="templateRow"><td row="1" column="0"><div style="display:inline" fd_type="inputText" fd_values='{id:"fd_detail_name",label:"名称",_label_bind:"true",_label_bind_id:"detail_title",tableName:"fd_route_detail"}'><input id="fd_detail_name"/></div><div style="display:inline" fd_type="inputText" fd_values='{id:"fd_detail_note",label:"补充",_label_bind:"false",_label_bind_id:"detail_title",tableName:"fd_route_detail"}'><input id="fd_detail_note"/></div></td></tr></tbody></table>`;
+  assert.equal(properties.fdDesignerHtml.split(oldTable).length, 2);
+  properties.fdDesignerHtml = properties.fdDesignerHtml.replace(oldTable, newTable);
+  properties.fdMetadataXml = properties.fdMetadataXml.replace('</extendSubTableProperty>', '<extendSimpleProperty name="fd_detail_note" label="补充" type="String"/></extendSubTableProperty>');
+  properties.fdDisplayJsp += '<table><tr><td><xform:xtext property="extendDataFormInfo.value(fd_route_detail.0.fd_detail_name)"/><xform:xtext property="extendDataFormInfo.value(fd_route_detail.0.fd_detail_note)"/></td></tr></table>';
+  const encode = value => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  const xml = '<java><object class="java.util.HashMap">' + Object.entries(properties).map(([key, value]) =>
+    `<void method="put"><string>${key}</string><string>${encode(value)}</string></void>`).join("") + '</object></java>';
+  const source = sourceDraftFromLegacyDsl(translateSysFormTemplateXml(xml)), draft = reviewedSelectDsl(source);
+  assert.deepEqual(draft.form.fields.find(field => field.id === "fd_route_detail").detailCellGroups[0].fieldIds, ["fd_detail_name", "fd_detail_note"]);
+  const dsl = createTrustedMigrationDsl(source, draft, { externalAgentReviewed: true });
+  const client = new FakeNewoaAdapter("persist", { detailCellRuntime: true, templateAuthorization: dsl.template?.authorization });
+  const result = await executeDsl(dsl, { client, baseUrl: provenance.origin,
+    credentials: { username: "fixture", encryptedPassword: "fixture" }, confirmWrite: true, targetCategoryId: "route-category-id" });
+  assert.equal(result.ok, true, JSON.stringify({ status: result.status, stage: result.stage, diagnostics: result.diagnostics }));
+  assert.equal(result.apiStages.find(stage => stage.name === "verifyDetailVisibilityRuntime")?.status, "ok");
+  assert.equal(result.apiStages.find(stage => stage.name === "verifyDetailCellPresentationRuntime")?.status, "ok");
+  assert.equal(result.readback.partitions.scripts, "verified");
+  const attr = formAttr(client.template);
+  assert.ok(attr.controlAction.global.onLoad.some(action => action.migrationActions?.some(item => item.id === "mk-detail-cell-presentation-v1")));
+  const selectorKey = Object.keys(attr.controlAction.control).find(name => name.endsWith(".fd_route_type"));
+  assert.ok(attr.controlAction.control[selectorKey].onChange.some(action => action.id.endsWith(".detail-visibility-sync")));
+});
 
 test("a source-bound single select retains its visible detail row in the native collector", () => {
   const dsl = reviewedSelectDsl();

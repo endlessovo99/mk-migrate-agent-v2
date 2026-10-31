@@ -1,4 +1,7 @@
 import { choiceOtherSourceErrors } from "../dsl/source-choice-other-companion.js";
+import { detailCellPresentationDiagnostics, sourceDetailCellGroups, sourceDetailCellLayoutErrors } from "../dsl/source-detail-cell-layout.js";
+import { draftSourceDraft } from "../translator/dsl-draft.js";
+import { SOURCE_DRAFT_VERSION } from "../translator/source-draft.js";
 import { isValidCheckpointSigningKey } from "./checkpoint.js";
 import { AGENT_REVIEW_PROMPT_VERSION } from "./prompt.js";
 import { OpenAIResponsesReviewProvider } from "./provider.js";
@@ -38,9 +41,21 @@ export async function runAgentReview(sourceDraft, dslDraft, options = {}) {
   const checkpointEnabled = isValidCheckpointSigningKey(checkpointSigningKey);
   const resumeRequested = options.resumeCheckpoint !== undefined;
   const checkpointRequested = resumeRequested || typeof options.onCheckpoint === "function";
+  const hasDetailPresentation = sourceDetailCellGroups(sourceDraft?.form).length ||
+    (Array.isArray(dslDraft?.form?.fields) && dslDraft.form.fields.some(field => field?.detailCellGroups !== undefined));
+  let expectedDetailForm, detailRebuildError;
+  if (hasDetailPresentation && sourceDraft?.artifact === "source-draft" && sourceDraft?.version === SOURCE_DRAFT_VERSION) {
+    try { expectedDetailForm = draftSourceDraft(sourceDraft).form; }
+    catch { detailRebuildError = error("agent.input.detail_cell_source_rebuild_failed", "Detail-cell source evidence could not be independently rebuilt.", "/sourceDraft/form"); }
+  }
   const inputDiagnostics = [
     ...validateInputs(sourceDraft, dslDraft),
-    ...choiceOtherSourceErrors(sourceDraft?.form)
+    ...(detailRebuildError ? [detailRebuildError] : []),
+    ...(expectedDetailForm
+      ? [...sourceDetailCellLayoutErrors(sourceDraft.form, expectedDetailForm).map(item => ({ ...item, level: "error" })),
+          ...detailCellPresentationDiagnostics(expectedDetailForm, dslDraft?.form, { prefix: "agent.input.form" })]
+      : []),
+    ...choiceOtherSourceErrors(sourceDraft?.form, expectedDetailForm)
       .filter(item => ["source.form.choice_other_detail_layout_unproven", "source.form.choice_other_reserved_value_unproven"].includes(item.code))
       .map(item => ({ ...item, level: "error" }))
   ];

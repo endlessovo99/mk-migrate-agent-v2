@@ -31,7 +31,10 @@ describe("Source4 remaining script-closure Route case", () => {
       const capabilityPending = draft.scripts.actions.filter(action => action.translationStatus === "needs_review" &&
         action.coverage?.residuals?.some(item => ["script.residual.remote_dialog_unbound", "script.residual.legacy_excel_import_contract_unverified"].includes(item.code)));
       assert.deepEqual(reviewActions, capabilityPending.map(action => action.id), sourceId);
-      assert.equal(checkDraft(draft).ok, true, `${sourceId}: ${JSON.stringify(checkDraft(draft).diagnostics)}`);
+      const draftErrors = checkDraft(draft).diagnostics.filter(item => item.level === "error");
+      assert.ok(draftErrors.every(item => item.code === "source.form.detail_cell_layout_unproven"),
+        `${sourceId}: ${JSON.stringify(draftErrors)}`);
+      const hasUnverifiedCell = draftErrors.length > 0;
       const trusted = createTrustedMigrationDsl(source, draft, {
         externalAgentReviewed: true,
         reviewerName: "route-validation",
@@ -40,7 +43,8 @@ describe("Source4 remaining script-closure Route case", () => {
       const trust = checkTrust(source, trusted);
       const hasRemote = draft.review.warnings.some(item => item.code === "dsl.form.remote_dialog_unbound");
       const hasUnverifiedExcel=capabilityPending.some(action=>action.coverage.residuals.some(item=>item.code==="script.residual.legacy_excel_import_contract_unverified"));
-      assert.equal(trust.ok, !hasRemote && !hasUnverifiedExcel, sourceId);
+      assert.equal(trust.ok, !hasRemote && !hasUnverifiedExcel && !hasUnverifiedCell, sourceId);
+      if (hasUnverifiedCell) assert.ok(trust.diagnostics.some(item => item.code === "trust.form.detail_cell_layout_unproven"));
       if (hasRemote) assert.ok(trust.diagnostics.some(item => item.code === "trust.form.remote_dialog_unbound"));
       if (hasUnverifiedExcel) assert.ok(trust.diagnostics.some(item => item.code === "dsl.scripts.needs_review"));
     }

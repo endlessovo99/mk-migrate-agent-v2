@@ -213,7 +213,9 @@ describe("Source4 script semantic closure", () => {
         assert.deepEqual([...action.coverage.nativeCalculations].sort(), nativeTargets);
         assert.deepEqual(action.coverage.residuals, []);
       }
-      assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+      const errors = new Set(checkDraft(draft).diagnostics.filter(item => item.level === "error").map(item => item.code));
+      assert.deepEqual(errors, sourceId === "16a8b7c0fa95aab79b5377e41929cc66"
+        ? new Set(["source.form.detail_cell_layout_unproven"]) : new Set());
     }
   });
 
@@ -487,7 +489,8 @@ describe("Source4 script semantic closure", () => {
     const checked = checkTrust(source, trusted);
     assert.equal(checked.ok, false);
     assert.deepEqual(new Set(checked.diagnostics.filter(item => item.level === "error").map(item => item.code)),
-      new Set(["trust.form.remote_dialog_unbound", "dsl.form.remote_dialog_unbound"]));
+      new Set(["trust.form.remote_dialog_unbound", "dsl.form.remote_dialog_unbound",
+        "trust.form.detail_cell_layout_unproven", "dsl.form.detail_cell_layout_unproven"]));
   });
 
   it("keeps source-backed dependent option recipes review-required", () => {
@@ -513,7 +516,8 @@ describe("Source4 script semantic closure", () => {
     assert.match(action.function, /MKXFORM\.setValue\("fd_project_dept", ""\)/u);
     assert.match(action.function, /MKXFORM\.setFieldAttr\("wbs_row"/u);
     assert.equal(action.deterministicBranchProof?.basis, "deterministic-conditional-field-reset");
-    assert.equal(checkDraft(draft).ok, true, JSON.stringify(checkDraft(draft).diagnostics));
+    assert.deepEqual(new Set(checkDraft(draft).diagnostics.filter(item => item.level === "error").map(item => item.code)),
+      new Set(["source.form.detail_cell_layout_unproven"]));
   });
 
   it("maps nested row-state branches together with the native attachment requirement", () => {

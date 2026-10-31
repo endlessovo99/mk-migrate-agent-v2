@@ -168,7 +168,9 @@ for (const [sourceId, outerRow, height] of [
     const directory = `tests/fixtures/source4/${sourceId}`;
     const path = join(directory, readdirSync(directory).find(file => file.endsWith("_SysFormTemplate.xml")));
     const source = cleanSourceFile(directory), draft = draftSourceDraft(source);
-    assert.equal(checkDraft(draft).ok, true);
+    const errors = new Set(checkDraft(draft).diagnostics.filter(item => item.level === "error").map(item => item.code));
+    assert.deepEqual(errors, sourceId === "16a8b7c0fa95aab79b5377e41929cc66"
+      ? new Set(["source.form.detail_cell_layout_unproven"]) : new Set());
     const native = projectNativeLayoutRows(draft.form.layout.mkTree).find(row => row.id === `layout.row-${outerRow}`);
     assert.equal(native.rows, height);
     assert.equal(native.columns, 4);

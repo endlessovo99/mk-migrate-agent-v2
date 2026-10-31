@@ -1,4 +1,5 @@
 import { selectEmptyEventProof } from "./source-select-empty-event.js";
+import { projectedDetailCellLayoutErrors } from "./source-detail-cell-layout.js";
 import { bridgedInitialVisibilityIssues, bridgedRowVisibilityConflicts } from "./bridged-row-visibility.js";
 import { dottedFieldIdDiagnostics } from "./field-identifiers.js";
 import { choiceOtherToggleBindings } from "./choice-other-runtime.js";
@@ -149,7 +150,10 @@ export function validateMigrationDsl(input, options = {}) {
     catch { diagnostics.push(error("dsl.form.choice_other_reveal_invalid",
       "Other reveal presentation must retain one optional, source-bound choice and explanation on the same line.", "/form")); }
   }
-  if (mode === "execute") diagnostics.push(...remoteDialogDiagnostics(root.form,{dsl:root}));
+  if (mode === "execute") {
+    diagnostics.push(...remoteDialogDiagnostics(root.form,{dsl:root}));
+    diagnostics.push(...projectedDetailCellLayoutErrors(root.form));
+  }
   validateFormRules(root.formRules, diagnostics, { mode, form: root.form, scripts: root.scripts });
   if (mode === "execute") for (const conflict of bridgedRowVisibilityConflicts(root.formRules, root.scripts, root.form)) {
     diagnostics.push(error("dsl.form_rules.competing_script_visibility",

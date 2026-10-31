@@ -1470,7 +1470,8 @@ describe("agent-review", () => {
 
     assert.equal(accepted.ok, true, JSON.stringify(accepted.diagnostics));
     const drafted = checkDraft(accepted.dslDraft);
-    assert.equal(drafted.ok, true, JSON.stringify(drafted.diagnostics));
+    assert.deepEqual(drafted.diagnostics.filter(item => item.level === "error").map(item => item.code),
+      ["source.form.detail_cell_layout_unproven"], JSON.stringify(drafted.diagnostics));
     assert.deepEqual(
       accepted.dslDraft.scripts.actions[actionIndex].coverage.nativeRules,
       ["linkage.fd_way.eq.11", "linkage.fd_way.ne.11.and.eq.22"]

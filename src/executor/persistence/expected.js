@@ -11,6 +11,7 @@ import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.j
 import { nativeCaptionDesktopWidths } from "../../dsl/native-caption-fold.js";
 import { usesAdaptiveLayout, layoutSizingIssues } from "../../dsl/layout-sizing.js";
 import { adaptiveFlowItem, adaptiveStyleContract, effectiveCellFlow } from "./adaptive-layout.js";
+import { withDetailCellPresentation } from "./detail-cell-presentation.js";
 import { mobileNumberBudgets, mobileNumberGrid } from "./mobile-number-layout.js";
 import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import { inlineCellLayout, contentFlowFieldPadding } from "./inline-cell-layout.js";
@@ -91,12 +92,12 @@ export function buildExpectedInvariants(dsl, envelope) {
     dsl?.scripts,
     diagnostics
   );
-  const nativeScripts = withDetailVisibilitySync(withCrossCellOtherReveal(
+  const nativeScripts = withDetailCellPresentation(withDetailVisibilitySync(withCrossCellOtherReveal(
     withChoiceOtherSelectReveal(
       withBridgedEmptySelectEvents(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl?.scripts, dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName), dsl?.form || {}, dsl?.formRules),
       dsl?.form || {}, envelope?.tableName
     ), dsl?.form || {}, envelope?.tableName
-  ), dsl?.form || {}, dsl?.formRules);
+  ), dsl?.form || {}, dsl?.formRules), dsl?.form || {}, envelope?.tableName);
   const scriptsExpected = buildExpectedScripts(nativeScripts, dsl?.form || {}, envelope?.tableName, diagnostics, envelope?.templateId);
   const workflowExpected = dsl?.workflow
     ? buildExpectedWorkflow(dsl.workflow, diagnostics, {

@@ -16,7 +16,8 @@ it("projects the nested JSP click handler while unbound REST keeps the full sour
     action.controlId === button?.id && action.event === "onClick"
   );
 
-  assert.equal(result.ok, true);
+  assert.deepEqual(new Set(result.diagnostics.filter(item => item.level === "error").map(item => item.code)),
+    new Set(["source.form.detail_cell_layout_unproven"]));
   assert.equal(button?.id, "fd_3d7f13d18ccc00");
   assert.equal(click?.translationStatus, "mapped");
   assert.deepEqual(click?.coverage, { status: "translated", nativeRules: [], residuals: [] });
@@ -93,7 +94,8 @@ it("projects the nested JSP click handler while unbound REST keeps the full sour
   const trustResult = checkTrust(trustSourceDraft, trusted);
   assert.equal(trustResult.ok, false);
   assert.deepEqual(new Set(trustResult.diagnostics.filter(item => item.level === "error").map(item => item.code)),
-    new Set(["trust.form.remote_dialog_unbound", "dsl.form.remote_dialog_unbound"]));
+    new Set(["trust.form.remote_dialog_unbound", "dsl.form.remote_dialog_unbound",
+      "trust.form.detail_cell_layout_unproven", "dsl.form.detail_cell_layout_unproven"]));
   const native = projectTemplate(trusted);
   const nativeFormAttr = JSON.parse(xformConfig(native).attribute.formAttr);
   const dispatcher = nativeFormAttr.controlAction.global.onBeforeSubmit[0].function;

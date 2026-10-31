@@ -52,7 +52,10 @@ for (const ids of cases) {
       content: ids.display, relation: "unbound-detail-control-display-text-distinct-from-header"
     });
     assert.equal(column(draft, ids, ids.total).title, ids.title);
-    assert.equal(checkTrust(source, trusted(source, draft)).ok, true);
+    const trust = checkTrust(source, trusted(source, draft));
+    assert.equal(trust.ok, false);
+    assert.ok(trust.diagnostics.some(item => item.code === "trust.form.detail_cell_layout_unproven" &&
+      item.details.tableId === ids.table), "a correct title does not prove the shared-cell layout");
   });
 }
 

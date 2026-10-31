@@ -1,6 +1,7 @@
 import {buildMigrationPolicyReviewProtection,isMigrationPolicyProtectedReviewTarget} from "./policy-review-protection.js";
 import {verifiedDateOverlapReadyAction} from "../translator/date-overlap-lifecycle.js";
 import { choiceOtherCompanionDiagnostics } from "../dsl/source-choice-other-companion.js";
+import { detailCellPresentationDiagnostics } from "../dsl/source-detail-cell-layout.js";
 import { mobileCaptionSourceDiagnostics } from "../dsl/source-mobile-caption-grid.js";
 import { radioSourceDiagnostics } from "../dsl/source-radio-layout.js";
 import { detailCompositeSourceDiagnostics } from "../dsl/source-detail-composite.js";
@@ -273,6 +274,7 @@ export function applyEvidenceBackedPatches(dslDraft, patches, options = {}) {
         "Native field titles must preserve the source-proven caption, field semantics and occupied layout.",
         "/form", issue)),
     ...(sourceDraft ? choiceOtherCompanionDiagnostics(sourceDraft.form, patchedDraft.form, fixedSourceForm, { prefix: "agent.patch.form" }) : []),
+    ...(sourceDraft ? detailCellPresentationDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
     ...(sourceDraft ? mobileCaptionSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
     ...(sourceDraft ? radioSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }) : []),
     ...detailCompositeSourceDiagnostics(fixedSourceForm, patchedDraft.form, { prefix: "agent.patch.form" }),

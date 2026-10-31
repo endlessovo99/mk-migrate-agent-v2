@@ -7,6 +7,7 @@ import { sourceInlineEditorWidths } from "../../dsl/source-inline-editor-width.j
 import { nativeCaptionDesktopWidths } from "../../dsl/native-caption-fold.js";
 import { usesAdaptiveLayout } from "../../dsl/layout-sizing.js";
 import { ADAPTIVE_MAIN_FIELD_CLASS, adaptiveItemStyle, adaptiveView, effectiveCellFlow } from "./adaptive-layout.js";
+import { withDetailCellPresentation } from "./detail-cell-presentation.js";
 import { sourceMobileCaptionGrids } from "../../dsl/source-mobile-caption-grid.js";
 import { approvedDetailColumnWidths } from "../../dsl/approved-detail-presentation.js";
 import {
@@ -81,12 +82,12 @@ export function applyFormPayload(template, dsl) {
   const lang = parseJsonObject(config.lang || "{}");
   const summary = summarizeDslForm(form, dsl.formRules);
   const mainModel = buildMainModel(next, xform, config, form, lang);
-  const nativeScripts = withDetailVisibilitySync(withCrossCellOtherReveal(
+  const nativeScripts = withDetailCellPresentation(withDetailVisibilitySync(withCrossCellOtherReveal(
     withChoiceOtherSelectReveal(
       withBridgedEmptySelectEvents(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl.scripts, form, mainModel.fdTableName), form, mainModel.fdTableName), form, dsl.formRules),
       form, mainModel.fdTableName
     ), form, mainModel.fdTableName
-  ), form, dsl.formRules);
+  ), form, dsl.formRules), form, mainModel.fdTableName);
   const detailModels = buildDetailModels(next, form, mainModel, lang);
   const dataModels = [mainModel, ...detailModels];
   if (dataModels.some(model => (model.fdFields || []).some(field => field?.fdIsSystem && field.fdName === "mechanisms"))) {

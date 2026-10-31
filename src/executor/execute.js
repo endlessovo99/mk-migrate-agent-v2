@@ -17,6 +17,8 @@ import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../dsl/choice-other-storage-cap
 import { inspectChoiceOtherStorageRuntime } from "./choice-other-storage-capability.js";
 import { requiresDetailVisibilitySync } from "./persistence/detail-visibility-sync.js";
 import { DETAIL_VISIBILITY_RUNTIME, inspectDetailVisibilityRuntime } from "./detail-visibility-runtime.js";
+import { DETAIL_CELL_PRESENTATION_CAPABILITY } from "../dsl/detail-cell-presentation-capability.js";
+import { inspectDetailCellPresentationRuntime } from "./detail-cell-presentation-capability.js";
 import {
   hasStaticAddressDefaults,
   resolveStaticAddressDefaults
@@ -75,6 +77,11 @@ async function executeDraftDsl(input, options, writes) {
   }
   let requiresChoiceOtherStorage = false;
   let requiresDetailVisibility = false;
+  const requiresDetailCellPresentation = (input.form?.fields || []).some(field => field?.type === "detailTable" && field.detailCellGroups?.length);
+  if (requiresDetailCellPresentation && target.baseUrl !== DETAIL_CELL_PRESENTATION_CAPABILITY.origin) safety.push({
+    level: "error", code: "safety.detail_cell_presentation_origin_unverified",
+    message: "The shared detail-cell presentation is verified only for its recorded target origin.", path: "/form"
+  });
   try {
     requiresDetailVisibility = requiresDetailVisibilitySync(input.scripts, input.form, input.formRules);
   } catch (error) {
@@ -122,15 +129,28 @@ async function executeDraftDsl(input, options, writes) {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    let verifiedDetailVisibility;
     if (requiresDetailVisibility) {
       const stage = { name: "verifyDetailVisibilityRuntime", status: "started" };
       apiStages.push(stage);
       const capability = await inspectDetailVisibilityRuntime(client, baseUrl);
+      verifiedDetailVisibility = capability;
       Object.assign(stage, { status: capability.ok ? "ok" : "failed", issues: capability.issues });
       if (!capability.ok) return { ...blocked(plan, [...diagnostics, {
         level: "error", code: "safety.detail_visibility_runtime_unverified",
         message: "The target detail visibility runtime is not verified; no migration write was attempted.",
         path: "/formRules", details: { issues: capability.issues }
+      }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
+    }
+    if (requiresDetailCellPresentation) {
+      const stage = { name: "verifyDetailCellPresentationRuntime", status: "started" };
+      apiStages.push(stage);
+      const capability = await inspectDetailCellPresentationRuntime(client, baseUrl, { sdk: verifiedDetailVisibility });
+      Object.assign(stage, { status: capability.ok ? "ok" : "failed", issues: capability.issues });
+      if (!capability.ok) return { ...blocked(plan, [...diagnostics, {
+        level: "error", code: "safety.detail_cell_presentation_runtime_unverified",
+        message: "The target shared detail-cell presentation runtime is not verified; no migration write was attempted.",
+        path: "/form", details: { issues: capability.issues }
       }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
     }
     if (requiresChoiceOtherStorage) {

@@ -2,6 +2,7 @@ import {isOmittedRemoteManualField} from "./omitted-remote-selector.js";
 import {sourceReadScopeBindingIssues} from './template-read-scope.js';
 import {verifiedDateOverlapReadyAction} from "../translator/date-overlap-lifecycle.js";
 import { choiceOtherCompanionDiagnostics } from "./source-choice-other-companion.js";
+import { detailCellPresentationDiagnostics, sourceDetailCellLayoutErrors } from "./source-detail-cell-layout.js";
 import { mobileCaptionSourceDiagnostics } from "./source-mobile-caption-grid.js";
 import { radioSourceDiagnostics } from "./source-radio-layout.js";
 import { detailCompositeSourceDiagnostics } from "./source-detail-composite.js";
@@ -108,6 +109,10 @@ export function checkTrust(sourceDraft, migrationDsl) {
   validateReadOnlySourceRestrictions(sourceDraft, migrationDsl, diagnostics,expectedDraft);
   diagnostics.push(...migrationPolicyProvenanceDiagnostics(sourceDraft, expectedDraft, migrationDsl));
   diagnostics.push(...choiceOtherCompanionDiagnostics(sourceDraft?.form, migrationDsl?.form, expectedDraft?.form));
+  diagnostics.push(...sourceDetailCellLayoutErrors(sourceDraft?.form, expectedDraft?.form).map(item => ({
+    ...item, level: "error", code: item.code.replace(/^source\.form/, "trust.form")
+  })));
+  diagnostics.push(...detailCellPresentationDiagnostics(expectedDraft?.form, migrationDsl?.form));
   diagnostics.push(...mobileCaptionSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));
   diagnostics.push(...radioSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));
   diagnostics.push(...detailCompositeSourceDiagnostics(expectedDraft?.form, migrationDsl?.form));

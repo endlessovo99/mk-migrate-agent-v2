@@ -744,6 +744,7 @@ function sourcePropsFromField(field) {
     boundCaption: field.source?.boundCaption,
     rightContainer: field.source?.rightContainer,
     layoutCell: field.source?.layoutCell,
+    detailCell: field.source?.detailCell,
     detailHeaderCaption: field.source?.detailHeaderCaption,
     displayText: field.source?.displayText,
     subjectLabel: field.source?.subjectLabel,

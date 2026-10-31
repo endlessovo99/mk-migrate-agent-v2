@@ -2338,7 +2338,7 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
   const titleLabels = detailTitleLabelsById(rows);
   const columns = [];
   const seen = new Set();
-  for (const row of rows) {
+  for (const [rowIndex, row] of rows.entries()) {
     // A noFoot marker classifies the whole direct-child row as a detail footer.
     // The marker and its main-model total commonly occupy sibling cells, so
     // filtering only the marked cell would also retain the footer total as a
@@ -2348,19 +2348,29 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
     for (const [cellIndex, cell] of cells.entries()) {
       if (isNonDataDetailCell(cell.attrs)) continue;
       const sourceColumn = parseColumnSpec(cell.attrs.column, cellIndex).column;
-      const cellControls = annotateChoiceOtherCompanions(
-        extractDesignerFieldControls(cell.body, { includeHidden: true, includeTextLabels: true })
-      );
-      for (const control of cellControls) {
-        if (isSourceDescriptionControl(control)) continue;
-        if (!isDetailColumnControl(control, tableId) || seen.has(control.id)) continue;
+      const entries = extractDesignerFieldControlEntries(cell.body, { includeHidden: true, includeTextLabels: true });
+      const cellControls = annotateChoiceOtherCompanions(entries.map(entry => entry.control));
+      const members = cellControls.filter(control => !isSourceDescriptionControl(control) &&
+        isDetailColumnControl(control, tableId) && !seen.has(control.id));
+      const fieldIds = [...new Set(members.map(control => control.id))];
+      const inline = fieldIds.length > 1 && detailCellHasOnlyInlineControls(cell.body, entries, fieldIds);
+      for (const control of members) {
+        if (seen.has(control.id)) continue;
         seen.add(control.id);
         const persistedControl = control.source?.designerHidden === true &&
           control.source?.hardHidden !== true
           ? { ...control, dataOnly: true }
           : control;
+        const withCell = fieldIds.length > 1 ? {
+          ...persistedControl,
+          source: {
+            ...persistedControl.source,
+            detailCell: { row: rowIndex, column: sourceColumn, cell: cellIndex, fieldIds,
+              ...(inline ? { inline: true } : {}) }
+          }
+        } : persistedControl;
         const withHeader = withDetailHeaderSemantics(
-          persistedControl,
+          withCell,
           headerSemantics.get(sourceColumn)
         );
         columns.push(detailColumnWithTitleLabel(withHeader, titleLabels));
@@ -2368,6 +2378,27 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
     }
   }
   return columns;
+}
+
+function detailCellHasOnlyInlineControls(html, entries, fieldIds) {
+  if (entries.length !== fieldIds.length || entries.some(entry => !fieldIds.includes(entry.control?.id))) return false;
+  const flow = designerContentFlow(html, fieldIds);
+  if (flow?.lines?.length !== 1 || JSON.stringify(flow.lines[0]) !== JSON.stringify(fieldIds)) return false;
+  let cursor = 0;
+  for (const entry of entries) {
+    if (entry.start < cursor || !/^(?:\s|&nbsp;|&#160;|&#x0*a0;)*$/iu.test(html.slice(cursor, entry.start))) return false;
+    if (entry.control?.source?.hardHidden !== true && entry.control?.source?.designerHidden !== true) {
+      const token = scanHtmlTags(html.slice(entry.start, entry.end)).next().value;
+      if (!token || token.closing) return false;
+      const style = attrValue(token.attrs, "style");
+      if (/\/\*|\*\/|[\\{}<>]/u.test(style)) return false;
+      const display = [...style.matchAll(/(?:^|;)\s*display\s*:\s*([^;]*)/giu)].map(match => match[1].trim());
+      if (display.length > 1 || display.length === 1 && !/^(?:inline|inline-block|inline-table)(?:\s*!important)?$/iu.test(display[0]) ||
+          display.length === 0 && !["span", "label", "input", "select", "textarea", "a"].includes(token.name)) return false;
+    }
+    cursor = entry.end;
+  }
+  return /^(?:\s|&nbsp;|&#160;|&#x0*a0;)*$/iu.test(html.slice(cursor));
 }
 
 function detailHeaderSemanticsByColumn(rows) {

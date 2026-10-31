@@ -1,4 +1,6 @@
 import { choiceOtherSourceErrors } from "../dsl/source-choice-other-companion.js";
+import { sourceDetailCellLayoutErrors } from "../dsl/source-detail-cell-layout.js";
+import { applyDetailCellPresentation } from "./detail-cell-presentation.js";
 import { inspectSourceSignNode, hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
 import { foldRedundantAddressCompanions } from "./redundant-address-companion.js";
 import {
@@ -159,9 +161,11 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   );
   const scripts = attachCalculationDecisions(mappedScripts, form, sourceDraft.scripts);
   form = applyChoiceOtherReveal(form, sourceDraft, behavior);
+  form = applyDetailCellPresentation(sourceDraft.form, form);
   const inputLengths = inputLengthRequirements(sourceDraft.form, form);
   const reviewErrors = [
-    ...choiceOtherSourceErrors(sourceDraft.form),
+    ...choiceOtherSourceErrors(sourceDraft.form, form),
+    ...sourceDetailCellLayoutErrors(sourceDraft.form, form),
     ...(sourceIssuesToErrors(sourceDraft.issues || []) || []),
     ...inputLengths.filter(({ fact }) => fact.status !== "valid").map(inputLengthSourceError)
   ];

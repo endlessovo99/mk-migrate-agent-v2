@@ -20,10 +20,8 @@ describe("local currency helper Route case", () => {
     assert.match(action.function, /MKXFORM\.setValue\("fd_343454314c4bfc", convertCurrency\(value\)\)/);
     assert.doesNotMatch(action.function, /new\s+Array/);
     assert.doesNotThrow(() => Function("MKXFORM", `${action.function}; return onChange;`));
-    assert.equal(
-      checkDraft(dslDraft).diagnostics.some((diagnostic) => diagnostic.level === "error"),
-      false
-    );
+    assert.deepEqual(new Set(checkDraft(dslDraft).diagnostics.filter(item => item.level === "error").map(item => item.code)),
+      new Set(["source.form.detail_cell_layout_unproven"]));
 
     const changed = structuredClone(dslDraft);
     const changedAction = changed.scripts.actions.find((candidate) => candidate.id === action.id);

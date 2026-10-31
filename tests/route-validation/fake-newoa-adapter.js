@@ -6,6 +6,7 @@ import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-re
 import { NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY } from "../../src/executor/native-form-rule-runtime-capability.js";
 import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../../src/dsl/choice-other-storage-capability.js";
 import { DETAIL_VISIBILITY_RUNTIME } from "../../src/executor/detail-visibility-runtime.js";
+import { DETAIL_CELL_PRESENTATION_CAPABILITY } from "../../src/dsl/detail-cell-presentation-capability.js";
 import { NATIVE_FORM_RULE_FORMULA_CAPABILITY } from "../../src/dsl/native-form-rule-capability.js";
 import {readFileSync} from 'node:fs';
 import {materializeNativeTemplateAuthorization} from '../helpers/native-template-authorization.js';
@@ -57,7 +58,8 @@ export class FakeNewoaAdapter {
     this.workflowCooperationDefault = Object.hasOwn(options, "workflowCooperationDefault") ? options.workflowCooperationDefault : "2";
     this.workflowOperationSets = options.workflowOperationSets || [];
     this.readerOptions=options;
-    this.detailVisibilityRuntime = options.detailVisibilityRuntime === true;
+    this.detailVisibilityRuntime = options.detailVisibilityRuntime === true || options.detailCellRuntime === true;
+    this.detailCellRuntime = options.detailCellRuntime === true;
     this.nativeEveryone=options.nativeEveryone||options.organizationCandidates?.find(c=>c.fdAccount?.fdLoginName==='everyone')||{fdId:'route-native-everyone',fdName:'Route Everyone',fdOrgType:8,fdIsAvailable:true,fdIsBusiness:false,fdAccount:{fdLoginName:'everyone'}};
     this.organizationCandidates = options.organizationCandidates || [];
     this.authorizationCandidates = authorizationCandidates(options.templateAuthorization);
@@ -132,6 +134,17 @@ export class FakeNewoaAdapter {
       if (modulePath === module.path) return module.sha256;
     }
     return "unknown";
+  }
+
+  async getDetailCellElementRegistry() {
+    this.record({ operation: "get-detail-cell-element-registry" });
+    const releases = this.detailCellRuntime ? DETAIL_CELL_PRESENTATION_CAPABILITY.releases : {};
+    return `APP_CONFIG["moduleDigest"]["sys/artifact"] = ${JSON.stringify(Object.fromEntries(Object.entries(releases).map(([key, hash]) => [key, { hash }])))};`;
+  }
+
+  async getDetailCellAssetSha256({ assetPath }) {
+    this.record({ operation: "get-detail-cell-asset-sha256", assetPath });
+    return this.detailCellRuntime ? DETAIL_CELL_PRESENTATION_CAPABILITY.assets[assetPath] || "unknown" : "unknown";
   }
 
   async searchOrg(key) {
@@ -319,7 +332,9 @@ export class FakeNewoaAdapter {
     if (
       entry?.operation === "get-xform-desktop-digest" ||
       entry?.operation === "get-xform-mobile-digest" ||
-      entry?.operation === "get-xform-desktop-module-sha256"
+      entry?.operation === "get-xform-desktop-module-sha256" ||
+      entry?.operation === "get-detail-cell-element-registry" ||
+      entry?.operation === "get-detail-cell-asset-sha256"
     ) {
       this.entries.push(clone(entry));
       return;
