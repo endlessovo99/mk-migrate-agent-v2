@@ -67,6 +67,7 @@ import { sourceRequiresReadOnly } from "../dsl/source-readonly.js";
 import { staticRectangleGridProfile } from "./standard-table-grid.js";
 import { remoteDialogDiagnostics } from "../dsl/remote-dialog.js";
 import { applyApprovedMigrationPolicies, APPROVED_MIGRATION_POLICY_BASIS } from "./approved-migration-policies.js";
+import { ambiguousDetailRequiredWarnings } from "./approved-detail-required-policy.js";
 import {
   sourceInputLength, inputLengthRequirements, inputLengthPolicyWarning, inputLengthSourceError
 } from "../dsl/source-input-length.js";
@@ -219,6 +220,7 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     }
   });
   const approved = applyApprovedMigrationPolicies(sourceDraft, draft);
+  approved.review.warnings.push(...ambiguousDetailRequiredWarnings(approved.form, sourceDraft.formRules));
   if (sourceDraft.migrationPolicies) {
     approved.scripts = attachCalculationDecisions(approved.scripts, approved.form, sourceDraft.scripts);
   }

@@ -176,6 +176,13 @@ function inspectManualResidualClosures(action, calculationDecisions) {
 }
 
 function hasSourceRecipeEvidence(action, basis) {
+  if (basis === "deterministic-approved-migration-policy" && action?.semanticHints?.confirmedDetailRequiredSupplement) {
+    const evidence = action.semanticHints.confirmedDetailRequiredSupplement;
+    return isRecord(evidence) && evidence.version === 1 && nonEmptyString(evidence.ruleId) &&
+      nonEmptyString(evidence.columnSourceRef) && ["onLoad", "onChange"].includes(evidence.event) &&
+      evidence.event === action.event && Array.isArray(action.sourceRefs) && action.sourceRefs.length === 1 &&
+      action.sourceRefs[0] === evidence.sourceRef && nonEmptyString(action.semanticHints.approvedMigrationPolicy?.policyDigest);
+  }
   if(basis==="deterministic-scalar-source-change"){
     const evidence=action?.semanticHints?.scalarSourceChange;
     return isRecord(evidence)&&evidence.version===1&&/^[a-f0-9]{64}$/.test(evidence.sourceJavascriptSha256||"")&&

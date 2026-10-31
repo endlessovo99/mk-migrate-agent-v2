@@ -2465,6 +2465,11 @@ function detailColumnWithTitleLabel(control, titleLabels) {
   // their physical header without changing other families' composite behavior.
   if (String(control.source?.designerType || "").toLowerCase() === "calculation" &&
       control.source?.detailHeaderCaption?.relation === "same-detail-column-header") return control;
+  // A disabled binding may point at the styled hint below the real header.
+  // It cannot replace the independently identified physical column caption.
+  if (control.source?.detailHeaderCaption?.relation === "same-detail-column-header" &&
+      control.source?.inlineHint?.relation === "same-detail-column-header-post-break-styled-text" &&
+      values._label_bind_id === control.source.inlineHint.id) return control;
   const title = titleLabels.get(values._label_bind_id);
   if (!title) return control;
   return withUnboundDetailDisplayText({

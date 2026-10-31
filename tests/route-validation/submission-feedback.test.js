@@ -16,7 +16,9 @@ const input = () => draftSourceDraft(cleanSourceFile(fixture));
 describe("submission feedback Route", () => {
   it("executes source, review, trust, persistence and readback through the public route", async () => {
     const result = await runRouteCase("submission-feedback-native-message-success");
-    assert.deepEqual(result.review.diagnostics.map(d => d.code), ["source.function_not_whitelisted"]);
+    assert.deepEqual(result.review.diagnostics.map(d => d.code), [
+      "source.function_not_whitelisted", "source.form.detail_conditional_required_ambiguous"
+    ]);
     assert.equal(result.execution.ok, true);
     assert.equal(result.execution.readback.ok, true);
     assert.equal(result.transcript.at(-1).operation, "add-transfer-record");
