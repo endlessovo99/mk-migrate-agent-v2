@@ -5,9 +5,13 @@ import { SIT_PARTICIPANT_FALLBACKS } from "../../src/executor/participant-resolv
 import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-resolver.js";
 import { NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY } from "../../src/executor/native-form-rule-runtime-capability.js";
 import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../../src/dsl/choice-other-storage-capability.js";
+import { DETAIL_VISIBILITY_RUNTIME } from "../../src/executor/detail-visibility-runtime.js";
+import { NATIVE_FORM_RULE_FORMULA_CAPABILITY } from "../../src/dsl/native-form-rule-capability.js";
 import {readFileSync} from 'node:fs';
 import {materializeNativeTemplateAuthorization} from '../helpers/native-template-authorization.js';
 const NATIVE_TEMPLATE_READER_CAPABILITY=JSON.parse(readFileSync(new URL('../fixtures/route-validation/everyone-template-authorization/native-contract.json',import.meta.url),'utf8'));
+const DETAIL_VISIBILITY_DEPLOYMENT = NATIVE_FORM_RULE_FORMULA_CAPABILITY.verifiedDeployments
+  .find(deployment => deployment.baseUrl === DETAIL_VISIBILITY_RUNTIME.origin);
 
 const CREATED_TEMPLATE_ID = "route-created-template";
 const CREATED_WORKFLOW_TEMPLATE_ID = "route-created-workflow-template";
@@ -53,6 +57,7 @@ export class FakeNewoaAdapter {
     this.workflowCooperationDefault = Object.hasOwn(options, "workflowCooperationDefault") ? options.workflowCooperationDefault : "2";
     this.workflowOperationSets = options.workflowOperationSets || [];
     this.readerOptions=options;
+    this.detailVisibilityRuntime = options.detailVisibilityRuntime === true;
     this.nativeEveryone=options.nativeEveryone||options.organizationCandidates?.find(c=>c.fdAccount?.fdLoginName==='everyone')||{fdId:'route-native-everyone',fdName:'Route Everyone',fdOrgType:8,fdIsAvailable:true,fdIsBusiness:false,fdAccount:{fdLoginName:'everyone'}};
     this.organizationCandidates = options.organizationCandidates || [];
     this.authorizationCandidates = authorizationCandidates(options.templateAuthorization);
@@ -89,10 +94,12 @@ export class FakeNewoaAdapter {
     this.record({ operation: "get-xform-desktop-digest" });
     return {
       [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeModule]: {
-        hash: NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeHash
+        hash: this.detailVisibilityRuntime ? DETAIL_VISIBILITY_RUNTIME.modules.desktop.release
+          : NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeHash
       },
       [NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideModule]: {
-        hash: NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideHash
+        hash: this.detailVisibilityRuntime ? DETAIL_VISIBILITY_DEPLOYMENT.ide.release
+          : NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideHash
       },
       [CHOICE_OTHER_STORAGE_CAPABILITY.modules.desktop.digestKey]: {
         hash: CHOICE_OTHER_STORAGE_CAPABILITY.modules.desktop.release
@@ -103,18 +110,25 @@ export class FakeNewoaAdapter {
   async getXFormMobileDigest() {
     this.record({ operation: "get-xform-mobile-digest" });
     const module = CHOICE_OTHER_STORAGE_CAPABILITY.modules.mobile;
-    return { [module.digestKey]: { hash: module.release } };
+    return { [module.digestKey]: { hash: module.release },
+      [DETAIL_VISIBILITY_RUNTIME.modules.mobile.digestKey]: { hash: DETAIL_VISIBILITY_RUNTIME.modules.mobile.release } };
   }
 
   async getXFormDesktopModuleSha256({ modulePath }) {
     this.record({ operation: "get-xform-desktop-module-sha256", modulePath });
     if (modulePath === NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimePath) {
-      return NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeSha256;
+      return this.detailVisibilityRuntime && modulePath === DETAIL_VISIBILITY_RUNTIME.modules.desktop.path
+        ? DETAIL_VISIBILITY_RUNTIME.modules.desktop.sha256
+        : NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.runtimeSha256;
     }
     if (modulePath === NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.idePath) {
-      return NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideSha256;
+      return this.detailVisibilityRuntime ? DETAIL_VISIBILITY_DEPLOYMENT.ide.sha256
+        : NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideSha256;
     }
     for (const module of Object.values(CHOICE_OTHER_STORAGE_CAPABILITY.modules)) {
+      if (modulePath === module.path) return module.sha256;
+    }
+    for (const module of Object.values(DETAIL_VISIBILITY_RUNTIME.modules)) {
       if (modulePath === module.path) return module.sha256;
     }
     return "unknown";

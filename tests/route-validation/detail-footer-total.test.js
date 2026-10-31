@@ -424,12 +424,12 @@ describe("detail footer total Route case", () => {
     assert.equal(readback.partitions.form, "verified");
     assert.equal(readback.partitions.rules, "verified");
     assert.equal(readback.partitions.scripts, "verified");
-    assert.equal(readback.form.scripts.actionCount, 3);
-    assert.equal(readback.form.scripts.persistedActionCount, 2);
+    assert.equal(readback.form.scripts.actionCount, 4);
+    assert.equal(readback.form.scripts.persistedActionCount, 3);
     assert.equal(readback.form.scripts.actions.every((action) => action.hasCanonicalGuard), true);
     assert.deepEqual(
       readback.form.scripts.actions.map((action) => action.guardViewStatusIn).sort(),
-      [["add", "edit"], ["add", "edit"], ["view"]].sort()
+      [["add", "edit"], ["add", "edit"], ["add", "edit"], ["view"]].sort()
     );
   });
 

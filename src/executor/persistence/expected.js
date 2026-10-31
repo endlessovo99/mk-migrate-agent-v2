@@ -18,6 +18,7 @@ import { choiceOtherFlowGroups } from "./choice-other-layout.js";
 import { COMPONENTS_BY_ID, componentSupportsProp } from "../../dsl/catalogs.js";
 import { withDetailEventReadBridge } from "./detail-event-read-bridge.js";
 import { withBridgedEmptySelectEvents } from "./bridged-empty-select-event.js";
+import { withDetailVisibilitySync } from "./detail-visibility-sync.js";
 import { withChoiceOtherStorageRuntime } from "../../dsl/choice-other-storage-runtime.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import {
@@ -90,12 +91,12 @@ export function buildExpectedInvariants(dsl, envelope) {
     dsl?.scripts,
     diagnostics
   );
-  const nativeScripts = withCrossCellOtherReveal(
+  const nativeScripts = withDetailVisibilitySync(withCrossCellOtherReveal(
     withChoiceOtherSelectReveal(
       withBridgedEmptySelectEvents(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl?.scripts, dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName), dsl?.form || {}, dsl?.formRules),
       dsl?.form || {}, envelope?.tableName
     ), dsl?.form || {}, envelope?.tableName
-  );
+  ), dsl?.form || {}, dsl?.formRules);
   const scriptsExpected = buildExpectedScripts(nativeScripts, dsl?.form || {}, envelope?.tableName, diagnostics, envelope?.templateId);
   const workflowExpected = dsl?.workflow
     ? buildExpectedWorkflow(dsl.workflow, diagnostics, {
