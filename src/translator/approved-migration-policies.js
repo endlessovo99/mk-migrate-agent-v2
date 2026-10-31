@@ -13,10 +13,12 @@ import { applyApprovedImportPolicies, validateApprovedImportDecisions } from "./
 import { inspectNativeDetailImportFunction, nativeDetailImportDslDiagnostics } from "../dsl/native-detail-import-profile.js";
 import {SUPPORTED_DETAIL_STATE_KIND, validateSupportedDetailStateDecisions, applySupportedDetailStatePolicies} from "./approved-detail-state-policy.js";
 import { RADIO_READONLY_OPTIONS_KIND, validateRadioReadOnlyPresentationDecisions, applyRadioReadOnlyPresentationPolicies, radioReadOnlyPresentationDslDiagnostics } from "./radio-readonly-presentation.js";
+import { CONFIRMED_DETAIL_REQUIRED_KIND, validateConfirmedDetailRequiredDecisions, applyConfirmedDetailRequiredPolicies } from "./approved-detail-required-policy.js";
 
 export const APPROVED_MIGRATION_POLICY_BASIS = "deterministic-approved-migration-policy";
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const groups = [
+  { kinds: [CONFIRMED_DETAIL_REQUIRED_KIND], validate: validateConfirmedDetailRequiredDecisions, apply: applyConfirmedDetailRequiredPolicies },
   { kinds: [RADIO_READONLY_OPTIONS_KIND], validate: validateRadioReadOnlyPresentationDecisions, apply: applyRadioReadOnlyPresentationPolicies },
   {kinds:[SUPPORTED_DETAIL_STATE_KIND],validate:validateSupportedDetailStateDecisions,apply:applySupportedDetailStatePolicies},
   {kinds:["omit-remote-selector"],validate:validateRemoteOmissionDecisions,apply:applyRemoteOmissionPolicies},
@@ -101,11 +103,12 @@ export function applyApprovedMigrationPolicies(sourceDraft, baseDraft) {
     if (!refs.length || refs.some(ref => !sourceByRef.has(ref))) throw new Error("Approved policy action has no original authored source binding.");
     if (action.translationStatus !== "mapped") continue;
     const allSourcesClosed = refs.every(ref => (draft.scripts.actions || []).filter(candidate => candidate.sourceRefs?.includes(ref)).every(candidate => candidate.translationStatus === "mapped"));
-    const ranges = allSourcesClosed ? refs.map(ref => ({ sourceRef: ref, name: "approvedSourceBehavior", start: 0, end: sourceByRef.get(ref).javascript?.length??sourceByRef.get(ref).omittedRuntimeLength })) : action.semanticHints?.coveredCalculationRanges;
-    if (!ranges?.length) throw new Error("Approved policy action lacks source ranges.");
+    const supplement = action.semanticHints?.confirmedDetailRequiredSupplement;
+    const ranges = supplement ? undefined : allSourcesClosed ? refs.map(ref => ({ sourceRef: ref, name: "approvedSourceBehavior", start: 0, end: sourceByRef.get(ref).javascript?.length??sourceByRef.get(ref).omittedRuntimeLength })) : action.semanticHints?.coveredCalculationRanges;
+    if (!supplement && !ranges?.length) throw new Error("Approved policy action lacks source ranges.");
     action.functionMappings = [{ source: "Explicit caller-approved migration behavior", target: "Fixed native implementation of the approved policy", basis: APPROVED_MIGRATION_POLICY_BASIS, policyDigest, reviewRequired: false }];
     action.coverage = { status: "translated", nativeRules: [], residuals: [] };
-    action.semanticHints = { ...action.semanticHints, coveredCalculationRanges: ranges, approvedMigrationPolicy: { policyDigest } };
+    action.semanticHints = { ...action.semanticHints, ...(ranges ? { coveredCalculationRanges: ranges } : {}), approvedMigrationPolicy: { policyDigest } };
     if (action.branchProvenance !== undefined) {
       action.semanticHints.sourceBranchProvenanceBeforePolicy = action.branchProvenance;
       delete action.branchProvenance;
@@ -113,7 +116,10 @@ export function applyApprovedMigrationPolicies(sourceDraft, baseDraft) {
     action.deterministicBranchProof = buildDeterministicScriptBranchProof(action);
     if (!action.deterministicBranchProof) throw new Error("Approved policy action could not build its fixed source proof.");
   }
-  const preservedNativeSources = new Set(audits.filter(audit=>audit.kind === SUPPORTED_DETAIL_STATE_KIND).flatMap(audit=>audit.sourceScripts.map(source=>source.sourceRef)));
+  const preservedNativeSources = new Set([
+    ...audits.filter(audit => audit.kind === SUPPORTED_DETAIL_STATE_KIND).flatMap(audit => audit.sourceScripts.map(source => source.sourceRef)),
+    ...audits.filter(audit => audit.kind === CONFIRMED_DETAIL_REQUIRED_KIND).flatMap(audit => audit.nativeSourceRefs)
+  ]);
   const ownedSources = new Set(changedActions.filter(action => action.translationStatus === "mapped").flatMap(action => action.sourceRefs || []).filter(ref=>!preservedNativeSources.has(ref))
     .filter(ref => (draft.scripts?.actions || []).filter(action => action.sourceRefs?.includes(ref)).every(action => action.translationStatus === "mapped")));
   const ownedRuleIds = new Set([
