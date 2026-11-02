@@ -39,14 +39,14 @@ export function sourceDetailCellCandidates(sourceForm, targetForm) {
   if (targetForm?.layout?.sizing !== "adaptive") return [];
   const fields = Array.isArray(targetForm?.fields) ? targetForm.fields : [];
   return sourceDetailCellGroups(sourceForm).flatMap(({ table, cell, legacy }) => {
-    if (legacy || cell.inline !== true || cell.runtimeInline !== true || ![cell.row, cell.column, cell.cell].every(Number.isSafeInteger) ||
+    if (legacy || cell.inline !== true && !cell.stacked || cell.runtimeInline !== true || ![cell.row, cell.column, cell.cell].every(Number.isSafeInteger) ||
         [cell.row, cell.column, cell.cell].some(value => value < 0) || new Set(cell.fieldIds).size !== cell.fieldIds.length) return [];
     const sourceColumns = cell.fieldIds.map(id => (table.columns || []).filter(column => column?.id === id));
     if (sourceColumns.some(matches => matches.length !== 1)) return [];
     const originals = sourceColumns.map(matches => matches[0]);
     if (originals.some(column => {
       const own = column.sourceProps?.detailCell;
-      return !own || own.inline !== true || own.runtimeInline !== true || own.row !== cell.row || own.column !== cell.column || own.cell !== cell.cell ||
+      return !own || own.inline !== true && !own.stacked || canonicalJson(own.stacked || null) !== canonicalJson(cell.stacked || null) || own.runtimeInline !== true || own.row !== cell.row || own.column !== cell.column || own.cell !== cell.cell ||
         JSON.stringify(own.fieldIds) !== JSON.stringify(cell.fieldIds);
     })) return [];
     const tables = fields.filter(field => field?.sourceRef === table.sourceRef && field.type === "detailTable");
@@ -63,6 +63,8 @@ export function sourceDetailCellCandidates(sourceForm, targetForm) {
       pairs.push({ source, column });
     }
     if (pairs.length !== 2) return [];
+    if (cell.stacked && (pairs[0].column.componentId !== "xform-radio" || pairs[1].column.componentId !== "xform-input" ||
+        pairs[1].column.props?.required === true || cell.stacked.caption !== "其他：" || cell.stacked.secondWidthPx !== 50)) return [];
     // Numeric companions are admitted only for the source-proven narrow,
     // readonly case. Their physical width is part of the projected contract.
     const numeric = pairs.some(pair => ["xform-number", "xform-calculate"].includes(pair.column.componentId));
@@ -81,7 +83,8 @@ export function sourceDetailCellCandidates(sourceForm, targetForm) {
     return [{ tableRef: table.sourceRef, group: {
       version: 1, fieldIds: pairs.map(pair => pair.column.id), sourceRefs: pairs.map(pair => pair.source.sourceRef),
       headerId: headers[0].id, sourceCell: { row: cell.row, column: cell.column, cell: cell.cell },
-      ...(secondWidthPx ? { secondWidthPx } : {})
+      ...(secondWidthPx ? { secondWidthPx } : {}),
+      ...(cell.stacked ? { layout: "stacked", secondCaption: "其他：", secondWidthPx: 50 } : {})
     } }];
   });
 }

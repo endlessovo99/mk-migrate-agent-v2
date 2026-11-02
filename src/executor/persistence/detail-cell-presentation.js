@@ -15,10 +15,13 @@ export function withDetailCellPresentation(scripts = {}, form = {}, mainTableNam
     if (!identifier(table.id) || !Array.isArray(table.columns) || !Array.isArray(table.detailCellGroups)) throw invalid();
     for (const group of table.detailCellGroups) {
       const ids = group?.fieldIds;
-      if (group?.version !== 1 || group.secondWidthPx !== undefined && group.secondWidthPx !== 1 || !Array.isArray(ids) || ids.length !== 2 || ids[0] === ids[1] || !ids.every(identifier) ||
+      const stacked = group?.layout === "stacked" && group.secondCaption === "其他：" && group.secondWidthPx === 50;
+      if (group?.version !== 1 || group.layout !== undefined && !stacked ||
+          group.secondWidthPx !== undefined && group.secondWidthPx !== 1 && !stacked || !Array.isArray(ids) || ids.length !== 2 || ids[0] === ids[1] || !ids.every(identifier) ||
           ids.some(id => table.columns.filter(column => column?.id === id && column.dataOnly !== true).length !== 1)) throw invalid();
       const key = createHash("sha256").update(JSON.stringify([mainTableName, table.id, ids])).digest("hex").slice(0, 16);
-      specs.push({ table: table.id, first: ids[0], second: ids[1], key, ...(group.secondWidthPx ? { secondWidthPx: group.secondWidthPx } : {}) });
+      specs.push({ table: table.id, first: ids[0], second: ids[1], key, ...(group.secondWidthPx ? { secondWidthPx: group.secondWidthPx } : {}),
+        ...(stacked ? { layout: "stacked" } : {}) });
     }
   }
   const members = specs.flatMap(item => [`${item.table}:${item.first}`, `${item.table}:${item.second}`]);
@@ -60,6 +63,19 @@ export function detailCellPresentationCss(scope, specs) {
         `${root} th${end},${root} td[data-mk-detail-cell="${item.key}-body-end"]{width:1px!important;min-width:1px!important;max-width:1px!important;overflow:hidden!important}`,
         `${root} .ele-xform-m-detail-table ${requiredEnd},${root} .ele-xform-m-detail-table ${optionalEnd}{width:1px!important;min-width:1px!important;max-width:1px!important;overflow:hidden!important}`
       ] : []),
+      ...(item.layout === "stacked" ? [
+        `${root} th${end},${root} td[data-mk-detail-cell="${item.key}-body-end"]{width:1px!important;min-width:1px!important;max-width:1px!important}`,
+        `${root} td[data-mk-detail-cell="${item.key}-body-start"]{vertical-align:top!important;padding-bottom:42px!important}`,
+        `${root} td[data-mk-detail-cell="${item.key}-body-end"]{position:relative!important;padding:0!important;overflow:visible!important}`,
+        `${root} td[data-mk-detail-cell="${item.key}-body-end"] [data-name^="${item.table}.${item.second}~"]{position:absolute!important;right:6px!important;bottom:2px!important;width:50px!important;min-width:0!important;max-width:50px!important}`,
+        `${root} td[data-mk-detail-cell="${item.key}-body-end"]::before{content:"其他：";position:absolute;right:56px;bottom:8px;white-space:nowrap}`,
+        `${root} td[data-mk-detail-cell="${item.key}-body-standalone"]::before{content:"其他：";display:inline-block;white-space:nowrap}`,
+        `${root} td[data-mk-detail-cell="${item.key}-body-standalone"] [data-name^="${item.table}.${item.second}~"]{display:inline-block;width:50px!important;max-width:50px!important}`,
+        `${root} .ele-xform-m-detail-table ${requiredEnd}::before,${root} .ele-xform-m-detail-table ${optionalEnd}::before{content:"其他：";display:inline-block}`,
+        `${root} .ele-xform-m-detail-table [data-mk-detail-cell="${item.key}-standalone"]::before{content:"其他：";display:inline-block}`,
+        `${root} .ele-xform-m-detail-table ${optionalEnd},${root} .ele-xform-m-detail-table [data-mk-detail-cell="${item.key}-standalone"]{display:flex!important;align-items:center!important}`,
+        `${root} .ele-xform-m-detail-table ${requiredEnd} .ele-xform-fieldset-control-wrap,${root} .ele-xform-m-detail-table ${optionalEnd} .ele-xform-fieldset-control-wrap,${root} .ele-xform-m-detail-table [data-mk-detail-cell="${item.key}-standalone"] .ele-xform-fieldset-control-wrap{width:50px!important;max-width:50px!important}`
+      ] : []),
       `${root} .ele-xform-m-detail-table ${start}::after{content:none!important}`,
       `${root} .ele-xform-m-detail-table ${requiredEnd} .ele-xform-fieldset-label-title-align,${root} .ele-xform-m-detail-table ${optionalEnd} .ele-xform-fieldset-label-title-align{${clip}}`,
       `${root} .ele-xform-m-detail-table ${optionalEnd} .ele-xform-fieldset-label-wrap{height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}`
@@ -85,7 +101,7 @@ function installDetailCellPresentation(specs, scope, css, styleId) {
   if (!style) { style = document.createElement("style"); style.id = styleId; style.textContent = css; document.head.appendChild(style); }
   var state = { kind: "mk-detail-cell-presentation-v1", nativeForm: nativeForm, styleId: styleId, style: style, marked: [], observer: null, pending: false, disposed: false };
   var owned = Object.create(null), tables = Object.create(null), selectors = [];
-  specs.forEach(function(spec) { ["-start", "-end", "-body-start", "-body-end", "-end-required", "-end-optional"].forEach(function(suffix) { owned[spec.key + suffix] = true; });
+  specs.forEach(function(spec) { ["-start", "-end", "-body-start", "-body-end", "-body-standalone", "-standalone", "-end-required", "-end-optional"].forEach(function(suffix) { owned[spec.key + suffix] = true; });
     if (!tables[spec.table]) { tables[spec.table] = true; selectors.push('.' + scope + ' ~ * [data-id="' + spec.table + '"] [data-mk-detail-cell]'); } });
   var markedSelector = selectors.join(",");
   container.__mkDetailCellPresentationV1 = state;
@@ -140,6 +156,10 @@ function installDetailCellPresentation(specs, scope, css, styleId) {
     Array.prototype.forEach.call(contents, function(content) {
       var children = Array.prototype.slice.call(content.children), a = [], b = [];
       children.forEach(function(node, index) { var id = node.getAttribute("data-id") || ""; if (id.indexOf(spec.table + "." + spec.first + "~") === 0) a.push({ node: node, index: index, key: id.slice((spec.table + "." + spec.first + "~").length) }); if (id.indexOf(spec.table + "." + spec.second + "~") === 0) b.push({ node: node, index: index, key: id.slice((spec.table + "." + spec.second + "~").length) }); });
+      if (spec.layout === "stacked" && b.length === 1 && b[0].key && visible(b[0].node, content) &&
+          (a.length === 0 || a.length === 1 && !visible(a[0].node, content)) && !b[0].node.hasAttribute("data-mk-detail-cell")) {
+        mark(b[0].node, spec.key + "-standalone"); return;
+      }
       if (a.length !== 1 || b.length !== 1 || !a[0].key || a[0].key !== b[0].key || b[0].index <= a[0].index ||
           !visible(a[0].node, content) || !visible(b[0].node, content)) return;
       var between = children.slice(a[0].index + 1, b[0].index);
@@ -149,20 +169,41 @@ function installDetailCellPresentation(specs, scope, css, styleId) {
       mark(a[0].node, spec.key + "-start"); mark(b[0].node, spec.key + (required && visible(required, b[0].node) ? "-end-required" : "-end-optional"));
     });
   }
-  function desktopRows(mapped, spec) {
+  function desktopRows(mapped, spec, allowStackedGroup) {
     Array.prototype.forEach.call(mapped.table.tBodies || [], function(body) {
       Array.prototype.forEach.call(body.rows || [], function(row) {
         var first = row.querySelectorAll('[data-name^="' + spec.table + '.' + spec.first + '~"]');
         var second = row.querySelectorAll('[data-name^="' + spec.table + '.' + spec.second + '~"]');
+        if (spec.layout === "stacked" && second.length === 1 && visible(second[0], row) &&
+            (!allowStackedGroup || first.length === 0 || first.length === 1 && !visible(first[0], row))) {
+          var standalone = second[0].closest("td");
+          if (standalone && standalone.parentElement === row) mark(standalone, spec.key + "-body-standalone");
+          return;
+        }
         if (first.length !== 1 || second.length !== 1 || !visible(first[0], row) || !visible(second[0], row)) return;
         var a = first[0].closest("td"), b = second[0].closest("td");
         var firstKey = first[0].getAttribute("data-name").slice((spec.table + "." + spec.first + "~").length);
         var secondKey = second[0].getAttribute("data-name").slice((spec.table + "." + spec.second + "~").length);
         if (!a || !b || a.parentElement !== row || b.parentElement !== row || a.nextElementSibling !== b || !firstKey || firstKey !== secondKey) return;
         mark(a, spec.key + "-body-start");
-        if (spec.secondWidthPx === 1) mark(b, spec.key + "-body-end");
+        if (spec.secondWidthPx === 1 || spec.layout === "stacked") mark(b, spec.key + "-body-end");
       });
     });
+  }
+  function stackedCanGroup(mapped, spec) {
+    var valid = true;
+    Array.prototype.forEach.call(mapped.table.tBodies || [], function(body) {
+      Array.prototype.forEach.call(body.rows || [], function(row) {
+        var first = row.querySelectorAll('[data-name^="' + spec.table + '.' + spec.first + '~"]');
+        var second = row.querySelectorAll('[data-name^="' + spec.table + '.' + spec.second + '~"]');
+        if (second.length === 1 && visible(second[0], row) && (first.length !== 1 || !visible(first[0], row))) valid = false;
+        if (first.length === 1 && visible(first[0], row)) {
+          var cell = first[0].closest("td");
+          if (!cell || cell.getBoundingClientRect().width < 100) valid = false;
+        }
+      });
+    });
+    return valid;
   }
   function refresh() {
     state.pending = false;
@@ -181,10 +222,13 @@ function installDetailCellPresentation(specs, scope, css, styleId) {
       var root = entry.root, mapped = entry.mapped;
       if (mapped) {
         var index = mapped.possible.findIndex(function(ids) { return ids.length === 1 && ids[0] === spec.first; });
+        var canGroup = spec.layout !== "stacked" || stackedCanGroup(mapped, spec);
         if (index >= 0 && mapped.possible[index + 1] && mapped.possible[index + 1].length === 1 && mapped.possible[index + 1][0] === spec.second &&
-            !mapped.headers[index].hasAttribute("data-mk-detail-cell") && !mapped.headers[index + 1].hasAttribute("data-mk-detail-cell")) {
+            canGroup && !mapped.headers[index].hasAttribute("data-mk-detail-cell") && !mapped.headers[index + 1].hasAttribute("data-mk-detail-cell")) {
           mark(mapped.headers[index], spec.key + "-start"); mark(mapped.headers[index + 1], spec.key + "-end");
-          desktopRows(mapped, spec);
+          desktopRows(mapped, spec, true);
+        } else if (spec.layout === "stacked" && mapped.possible.some(function(ids) { return ids.length === 1 && ids[0] === spec.second; })) {
+          desktopRows(mapped, spec, false);
         }
       }
       mobile(root, spec);

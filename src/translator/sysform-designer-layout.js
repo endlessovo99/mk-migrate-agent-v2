@@ -2354,6 +2354,7 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
         isDetailColumnControl(control, tableId) && !seen.has(control.id));
       const fieldIds = [...new Set(members.map(control => control.id))];
       const inline = fieldIds.length > 1 && detailCellHasOnlyInlineControls(cell.body, entries, fieldIds);
+      const stacked = detailStackedDesignerEvidence(cell.body, entries, members);
       for (const control of members) {
         if (seen.has(control.id)) continue;
         seen.add(control.id);
@@ -2366,7 +2367,7 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
           source: {
             ...persistedControl.source,
             detailCell: { row: rowIndex, column: sourceColumn, cell: cellIndex, fieldIds,
-              ...(inline ? { inline: true } : {}) }
+              ...(inline ? { inline: true } : {}), ...(stacked ? { stacked } : {}) }
           }
         } : persistedControl;
         const withHeader = withDetailHeaderSemantics(
@@ -2378,6 +2379,33 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
     }
   }
   return columns;
+}
+
+function detailStackedDesignerEvidence(html, entries, members) {
+  if (entries.length !== 2 || members.length !== 2 || entries[0].control !== members[0] && entries[0].control.id !== members[0].id ||
+      members[0].type !== "radio" || members[1].type !== "text" || members[1].source?.designerValues?.width !== "50" ||
+      members.some(control => control.source?.hardHidden || control.source?.designerHidden || control.source?.rightContainer)) return undefined;
+  const parts = [];
+  let skipUntil = 0;
+  for (const token of scanHtmlTags(html)) {
+    if (token.start < skipUntil || token.closing || token.name !== "div" || attrValue(token.attrs, "fd_type").toLowerCase() !== "jsp") continue;
+    const close = findMatchingCloseTag(html, token.end, "div"), end = close < 0 ? undefined : scanHtmlTags(html, close).next().value;
+    if (!end || end.name !== "div" || !end.closing) return undefined;
+    const inputs = [...scanHtmlTags(html.slice(token.end, close))].filter(child => child.name === "input" && !child.closing);
+    if (inputs.length !== 1 || attrValue(inputs[0].attrs, "type").toLowerCase() !== "hidden") return undefined;
+    parts.push({ start: token.start, end: end.end, value: attrValue(inputs[0].attrs, "value") });
+    skipUntil = end.end;
+  }
+  if (parts.length !== 3 || !(parts[0].end <= entries[0].start && entries[0].end <= parts[1].start &&
+      parts[1].end <= entries[1].start && entries[1].end <= parts[2].start)) return undefined;
+  const spans = [...parts, ...entries].sort((a, b) => a.start - b.start);
+  let cursor = 0;
+  for (const span of spans) { if (!/^\s*$/u.test(html.slice(cursor, span.start))) return undefined; cursor = span.end; }
+  if (!/^\s*$/u.test(html.slice(cursor))) return undefined;
+  const first = /^\s*<div\s+class\s*=\s*(["'])([A-Za-z_][\w-]*)\1\s*>\s*$/iu.exec(parts[0].value);
+  const middle = /^\s*<\/div\s*>\s*<div\s+class\s*=\s*(["'])([A-Za-z_][\w-]*)\1\s*>\s*<label\s*>\s*(其他：)\s*<\/label\s*>\s*$/iu.exec(parts[1].value);
+  if (!first || !middle || !/^\s*<\/div\s*>\s*$/iu.test(parts[2].value)) return undefined;
+  return { firstClass: first[2], secondClass: middle[2], caption: middle[3], secondWidthPx: 50 };
 }
 
 function detailCellHasOnlyInlineControls(html, entries, fieldIds) {
