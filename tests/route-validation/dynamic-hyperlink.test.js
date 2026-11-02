@@ -42,7 +42,8 @@ describe("dynamic invoice hyperlink Route case", () => {
     assert.doesNotMatch(action.function, /document|innerHTML/u);
     assert.doesNotThrow(() => Function("MKXFORM", `${action.function}; return onLoad;`));
     assert.deepEqual(new Set(checkDraft(dslDraft).diagnostics.filter(item => item.level === "error").map(item => item.code)),
-      new Set(["source.form.detail_cell_layout_unproven"]));
+      new Set());
+    assert.equal(dslDraft.form.fields.find(field => field.id === "detailList").detailCellGroups[0].secondWidthPx, 1);
 
     const changed = structuredClone(dslDraft);
     const changedAction = changed.scripts.actions.find((candidate) => candidate.id === action.id);

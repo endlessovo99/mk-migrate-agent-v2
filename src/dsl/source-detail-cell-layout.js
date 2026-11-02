@@ -32,7 +32,7 @@ export function sourceDetailCellGroups(form = {}) {
   return groups;
 }
 
-const PRESENTABLE_COMPONENTS = new Set(["xform-input", "xform-textarea", "xform-radio", "xform-select"]);
+const PRESENTABLE_COMPONENTS = new Set(["xform-input", "xform-textarea", "xform-radio", "xform-select", "xform-number", "xform-calculate"]);
 
 /** Rebuild the narrow, source-proven inline presentation from both sides. */
 export function sourceDetailCellCandidates(sourceForm, targetForm) {
@@ -63,6 +63,13 @@ export function sourceDetailCellCandidates(sourceForm, targetForm) {
       pairs.push({ source, column });
     }
     if (pairs.length !== 2) return [];
+    // Numeric companions are admitted only for the source-proven narrow,
+    // readonly case. Their physical width is part of the projected contract.
+    const numeric = pairs.some(pair => ["xform-number", "xform-calculate"].includes(pair.column.componentId));
+    const secondWidthPx = numeric && ["xform-number", "xform-calculate"].includes(pairs[1].column.componentId) &&
+      pairs[1].source.sourceProps?.designerValues?.width === "1" &&
+      pairs[1].source.sourceProps?.designerValues?.readOnly === "true" && pairs[1].column.props?.readOnly === true ? 1 : undefined;
+    if (numeric && !secondWidthPx) return [];
     const headers = pairs.map(pair => pair.source.sourceProps?.detailHeaderCaption);
     if (headers.some(header => header?.relation !== "same-detail-column-header" || !header.id || !header.content) ||
         headers[0].id !== headers[1].id || headers[0].content !== headers[1].content || pairs[0].column.title !== headers[0].content) return [];
@@ -73,7 +80,8 @@ export function sourceDetailCellCandidates(sourceForm, targetForm) {
     if (index < 0 || rendered[index + 1]?.sourceRef !== pairs[1].source.sourceRef) return [];
     return [{ tableRef: table.sourceRef, group: {
       version: 1, fieldIds: pairs.map(pair => pair.column.id), sourceRefs: pairs.map(pair => pair.source.sourceRef),
-      headerId: headers[0].id, sourceCell: { row: cell.row, column: cell.column, cell: cell.cell }
+      headerId: headers[0].id, sourceCell: { row: cell.row, column: cell.column, cell: cell.cell },
+      ...(secondWidthPx ? { secondWidthPx } : {})
     } }];
   });
 }

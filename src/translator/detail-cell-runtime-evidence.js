@@ -3,7 +3,7 @@ import { parseStaticMarkupAttributes, staticSourceMarkup } from "./source-static
 import { attrValue, removeRanges } from "./xml-utils.js";
 
 const TYPES = new Map([["singleSelect", "xform:select"], ["text", "xform:xtext"],
-  ["radio", "xform:radio"], ["longText", "xform:textarea"]]);
+  ["radio", "xform:radio"], ["number", "xform:xtext"], ["longText", "xform:textarea"]]);
 const CONDITIONAL = new Set(["c:if", "c:choose", "c:when", "c:otherwise", "xform:editshow", "xform:viewshow", "xform:right"]);
 
 /** Add only a source fact: both editors occur in the same runtime detail cell. */
@@ -55,6 +55,7 @@ function runtimeOccurrences(markup) {
           end = closing?.end ?? -1;
         }
         occurrences.push({ property: rawProperty, attrsValid: Boolean(properties.length === 1 && attrs && attrs.get("property") === rawProperty), ownHidden: hidden(token.attrs),
+          style: attrs?.get("style"),
           type: token.name, start: token.start, end, cell: cell?.start, stack: [...stack], loops, referenceRows });
       }
     }
@@ -100,9 +101,16 @@ function sameRuntimeCell(markup, occurrences, tableId, fields) {
   return markers.every(marker => {
     const first = selected[0].find(item => item.marker === marker), second = selected[1].find(item => item.marker === marker);
     if (!first?.valid || !second?.valid || first.type !== TYPES.get(fields[0].type) || second.type !== TYPES.get(fields[1].type) ||
+        fields[1].type === "number" && !onePixelWidth(second.style) ||
         first.cell !== second.cell || first.end > second.start) return false;
     const gap = markup.slice(first.end, second.start), tags = [...scanHtmlTags(gap)];
     if (tags.some(tag => tag.name === "br" || !tag.closing && (tag.name.startsWith("xform:") || tag.name.startsWith("c:")))) return false;
     return /^(?:\s|&nbsp;|&#160;|&#x0*a0;)*$/iu.test(removeRanges(gap, tags.map(tag => [tag.start, tag.end])));
   });
+}
+
+function onePixelWidth(style) {
+  if (typeof style !== "string" || /\/\*|\*\/|[\\{}<>]/u.test(style)) return false;
+  const widths = [...style.matchAll(/(?:^|;)\s*width\s*:\s*([^;]*)/giu)].map(match => match[1].trim());
+  return widths.length === 1 && /^1px$/iu.test(widths[0]);
 }

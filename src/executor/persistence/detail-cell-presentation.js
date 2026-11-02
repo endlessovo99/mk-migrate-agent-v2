@@ -15,10 +15,10 @@ export function withDetailCellPresentation(scripts = {}, form = {}, mainTableNam
     if (!identifier(table.id) || !Array.isArray(table.columns) || !Array.isArray(table.detailCellGroups)) throw invalid();
     for (const group of table.detailCellGroups) {
       const ids = group?.fieldIds;
-      if (group?.version !== 1 || !Array.isArray(ids) || ids.length !== 2 || ids[0] === ids[1] || !ids.every(identifier) ||
+      if (group?.version !== 1 || group.secondWidthPx !== undefined && group.secondWidthPx !== 1 || !Array.isArray(ids) || ids.length !== 2 || ids[0] === ids[1] || !ids.every(identifier) ||
           ids.some(id => table.columns.filter(column => column?.id === id && column.dataOnly !== true).length !== 1)) throw invalid();
       const key = createHash("sha256").update(JSON.stringify([mainTableName, table.id, ids])).digest("hex").slice(0, 16);
-      specs.push({ table: table.id, first: ids[0], second: ids[1], key });
+      specs.push({ table: table.id, first: ids[0], second: ids[1], key, ...(group.secondWidthPx ? { secondWidthPx: group.secondWidthPx } : {}) });
     }
   }
   const members = specs.flatMap(item => [`${item.table}:${item.first}`, `${item.table}:${item.second}`]);
@@ -56,6 +56,10 @@ export function detailCellPresentationCss(scope, specs) {
       `${root} th${start}::before{background:transparent!important}`,
       `${root} th${end}>span:first-child>span[title]{${clip}}`,
       `${root} td[data-mk-detail-cell="${item.key}-body-start"]{border-right-color:transparent!important}`,
+      ...(item.secondWidthPx === 1 ? [
+        `${root} th${end},${root} td[data-mk-detail-cell="${item.key}-body-end"]{width:1px!important;min-width:1px!important;max-width:1px!important;overflow:hidden!important}`,
+        `${root} .ele-xform-m-detail-table ${requiredEnd},${root} .ele-xform-m-detail-table ${optionalEnd}{width:1px!important;min-width:1px!important;max-width:1px!important;overflow:hidden!important}`
+      ] : []),
       `${root} .ele-xform-m-detail-table ${start}::after{content:none!important}`,
       `${root} .ele-xform-m-detail-table ${requiredEnd} .ele-xform-fieldset-label-title-align,${root} .ele-xform-m-detail-table ${optionalEnd} .ele-xform-fieldset-label-title-align{${clip}}`,
       `${root} .ele-xform-m-detail-table ${optionalEnd} .ele-xform-fieldset-label-wrap{height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}`
@@ -81,7 +85,7 @@ function installDetailCellPresentation(specs, scope, css, styleId) {
   if (!style) { style = document.createElement("style"); style.id = styleId; style.textContent = css; document.head.appendChild(style); }
   var state = { kind: "mk-detail-cell-presentation-v1", nativeForm: nativeForm, styleId: styleId, style: style, marked: [], observer: null, pending: false, disposed: false };
   var owned = Object.create(null), tables = Object.create(null), selectors = [];
-  specs.forEach(function(spec) { ["-start", "-end", "-body-start", "-end-required", "-end-optional"].forEach(function(suffix) { owned[spec.key + suffix] = true; });
+  specs.forEach(function(spec) { ["-start", "-end", "-body-start", "-body-end", "-end-required", "-end-optional"].forEach(function(suffix) { owned[spec.key + suffix] = true; });
     if (!tables[spec.table]) { tables[spec.table] = true; selectors.push('.' + scope + ' ~ * [data-id="' + spec.table + '"] [data-mk-detail-cell]'); } });
   var markedSelector = selectors.join(",");
   container.__mkDetailCellPresentationV1 = state;
@@ -156,6 +160,7 @@ function installDetailCellPresentation(specs, scope, css, styleId) {
         var secondKey = second[0].getAttribute("data-name").slice((spec.table + "." + spec.second + "~").length);
         if (!a || !b || a.parentElement !== row || b.parentElement !== row || a.nextElementSibling !== b || !firstKey || firstKey !== secondKey) return;
         mark(a, spec.key + "-body-start");
+        if (spec.secondWidthPx === 1) mark(b, spec.key + "-body-end");
       });
     });
   }
