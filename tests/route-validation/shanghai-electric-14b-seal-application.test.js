@@ -83,7 +83,7 @@ describe("Shanghai Electric 14b seal-application Route case", () => {
         }]
       }
     ]);
-    assert.equal(checkDraft(dslDraft).ok, true);
+    assert.ok(checkDraft(dslDraft).diagnostics.some(item => item.code === "source.form.native_other_checkbox_unproven"));
 
     delete sourceDraft.template.authorization;
     delete dslDraft.template.authorization;
@@ -92,8 +92,8 @@ describe("Shanghai Electric 14b seal-application Route case", () => {
       reviewerName: "route-validation",
       checkedAt: "2026-07-28T00:00:00.000Z"
     });
-    assert.equal(checkTrust(sourceDraft, trusted).ok, true);
-    assert.equal(buildDryRunPlan(trusted).ok, true);
+    assert.ok(checkTrust(sourceDraft, trusted).diagnostics.some(item => item.code === "trust.form.native_other_checkbox_unproven"));
+    assert.equal(buildDryRunPlan(trusted).ok, false);
 
     const currentRoleTargets = {
       "149cbca19a5f9a6db33d2a74e50af173": {

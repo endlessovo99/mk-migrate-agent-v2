@@ -133,7 +133,7 @@ describe("submitter defaults, compound fields, and department-leader role lines"
         }
       ]
     );
-    assert.equal(checkDraft(dslDraft).ok, true);
+    assert.ok(checkDraft(dslDraft).diagnostics.some(item => item.code === "source.form.native_other_checkbox_unproven"));
   });
 
   it("writes role-line formulas, validates structured people exactly, and falls back unresolved posts", async () => {

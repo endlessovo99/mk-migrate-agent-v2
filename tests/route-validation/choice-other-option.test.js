@@ -14,33 +14,35 @@ describe("source independent choices/text with mixed unsupported detail and rese
     assert.equal(result.execution, undefined);
     assert.deepEqual(result.transcript, []);
   });
-  it("preserves numbered source labels/codes and independent main text identities", () => {
+  it("maps numbered Other choices to MK native options while retaining ordinary codes", () => {
     const source = cleanSourceFile(fixture), draft = draftSourceDraft(source), fields = new Map(draft.form.fields.map(field => [field.id, field]));
     for (const id of paired) {
       const original = source.form.controls.find(field => field.id === `fd_${id}`), choice = fields.get(`fd_${id}`);
       assert.equal(choice.componentId, id.startsWith("single") ? "xform-radio" : "xform-checkbox");
-      assert.deepEqual(choice.props.options, original.options, id);
-      assert.equal(choice.props.options.some(option => option.type === "other"), false);
+      assert.deepEqual(choice.props.options.slice(0, -1), original.options.filter(option => option.value !== original.sourceProps.otherTextCompanion.optionValue), id);
+      assert.equal(choice.props.options.at(-1).type, "other");
+      assert.equal(choice.props.options.at(-1).value, "other_");
       const text = fields.get(`fd_${id}_other`);
-      assert.notEqual(text.dataOnly, true, id);
-      assert.equal(text.props.required, true, "The fixture's original textbox is unconditionally required");
-      assert.equal(JSON.stringify(draft.form.layout.mkTree).includes(`"${text.id}"`), true);
+      assert.equal(text.dataOnly, true, id);
+      assert.equal(choice.props.options.at(-1).isRequired, true);
+      assert.equal(JSON.stringify(draft.form.layout.mkTree).includes(`"${text.id}"`), false);
     }
     for (const id of ["plain_other", "unrelated"]) assert.equal(fields.get(`fd_${id}`).props.options.some(option => option.type === "other"), false);
     assert.notEqual(fields.get("fd_unrelated_other").dataOnly, true);
   });
-  it("preserves explicit companion requirements and main caption locations without inventing conditional validation", () => {
+  it("maps Other text requirements into MK's selected-Other validation", () => {
     const source = cleanSourceFile(fixture), draft = draftSourceDraft(source);
     for (const id of paired) {
       const text = draft.form.fields.find(field => field.id === `fd_${id}_other`);
-      assert.equal(text.props.required, true);
-      assert.notEqual(text.dataOnly, true);
+      assert.equal(text.props.required, false);
+      assert.equal(text.dataOnly, true);
+      assert.equal(draft.form.fields.find(field => field.id === `fd_${id}`).props.options.at(-1).isRequired, true);
     }
     for (const originalId of ["label_single_caption_other", "label_multi_caption_other"]) {
       const caption = draft.form.fields.find(field => field.id === originalId || field.sourceProps?.originalId === originalId);
       assert.ok(caption);
-      assert.notEqual(caption.dataOnly, true);
-      assert.equal(JSON.stringify(draft.form.layout.mkTree).includes(`"${caption.id}"`), true);
+      assert.equal(caption.dataOnly, true);
+      assert.equal(JSON.stringify(draft.form.layout.mkTree).includes(`"${caption.id}"`), false);
     }
     assert.equal(draft.scripts?.actions?.length || 0, 0);
   });

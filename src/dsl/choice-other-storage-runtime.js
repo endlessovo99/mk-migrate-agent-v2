@@ -1,9 +1,10 @@
 import { choiceOtherToggleBindings } from "./choice-other-runtime.js";
+import { nativeOtherCheckboxBindings } from "./native-other-checkbox.js";
 import { CHOICE_OTHER_STORAGE_CAPABILITY } from "./choice-other-storage-capability.js";
 
 export function withChoiceOtherStorageRuntime(scripts = {}, form = {}, mainTableName) {
   const bindings = choiceOtherToggleBindings(form);
-  if (!bindings.length) return scripts;
+  if (!bindings.length && !nativeOtherCheckboxBindings(form).length) return scripts;
   const action = choiceOtherStorageAction(form, bindings, mainTableName);
   const actions = Array.isArray(scripts.actions) ? scripts.actions : [];
   const existing = actions.filter(candidate => candidate.id === action.id);
@@ -30,6 +31,7 @@ export function choiceOtherStorageAction(form = {}, bindings = [], mainTableName
     throw error;
   }
   const toggles = new Set(bindings.map(binding => binding.toggleId));
+  const nativeOthers = new Set(nativeOtherCheckboxBindings(form).map(binding => binding.choiceId));
   const fields = (form.fields || []).filter(field =>
     field?.componentId === "xform-checkbox" && field.dataOnly !== true
   ).map(field => {
@@ -40,13 +42,15 @@ export function choiceOtherStorageAction(form = {}, bindings = [], mainTableName
         Array.isArray(defaultValue.value) && defaultValue.value.length === 0));
     if (!Array.isArray(options) || !options.length || options.some(option =>
       typeof option?.value !== "string" || !option.value || /[,\r\n]/.test(option.value) ||
-      option.type === "other" || option.value.startsWith("other_")
+      ((option.type === "other" || option.value.startsWith("other_")) &&
+        !(nativeOthers.has(field.id) && option.type === "other" && option.value === "other_"))
     ) || new Set(options.map(option => option.value)).size !== options.length || !toggles.has(field.id) && nonEmptyDefault) {
       const error = new Error(`Checkbox ${field.id} has no unambiguous scalar storage contract.`);
       error.code = "projection.choice_other.checkbox_storage_unproven";
       throw error;
     }
-    return { ref: `${mainTableName}.${field.id}`, values: options.map(option => option.value), toggle: toggles.has(field.id) };
+    return { ref: `${mainTableName}.${field.id}`, values: options.filter(option => option.type !== "other").map(option => option.value),
+      toggle: toggles.has(field.id), nativeOther: nativeOthers.has(field.id) };
   });
 
   return {
@@ -86,12 +90,33 @@ export function choiceOtherStorageAction(form = {}, bindings = [], mainTableName
       else return;
     } else {
       decoded = value.split(",");
-      if (!decoded.length || decoded.some(function(item) { return field.values.indexOf(item) < 0; })) return;
+      if (field.nativeOther) {
+        var otherIndex = decoded.findIndex(function(item) { return item.indexOf("other_") === 0; });
+        if (otherIndex >= 0) decoded = decoded.slice(0, otherIndex).concat([decoded.slice(otherIndex).join(",")]);
+      }
+      if (!decoded.length || decoded.some(function(item) { return field.values.indexOf(item) < 0 &&
+        !(field.nativeOther && item.indexOf("other_") === 0); })) return;
     }
     MKXFORM.setValue(field.ref, decoded);
   });
   var state = { form: form, getter: null, setter: null };
   container.__mkMigrationCheckboxStorageV1 = state;
+  function validNative(value, field) {
+    if (value === undefined || value === null || value === "") return true;
+    var values;
+    if (Array.isArray(value)) values = value;
+    else if (typeof value === "string") {
+      values = value.split(",");
+      var index = values.findIndex(function(item) { return item.indexOf("other_") === 0; });
+      if (index >= 0) values = values.slice(0, index).concat([values.slice(index).join(",")]);
+    } else return false;
+    if (values.some(function(item) { return typeof item !== "string" ||
+      (field.values.indexOf(item) < 0 && item.indexOf("other_") !== 0); })) return false;
+    var other = values.filter(function(item) { return item.indexOf("other_") === 0; });
+    var encoded = values.filter(function(item) { return item.indexOf("other_") !== 0; }).concat(other).join(","), weight = 0;
+    for (var i = 0; i < encoded.length; i++) { var code = encoded.charCodeAt(i); weight += code <= 127 ? 1 : code <= 255 ? 2 : 3; }
+    return other.length <= 1 && new Set(values).size === values.length && weight <= 200;
+  }
   function install() {
     var descriptor = Object.getOwnPropertyDescriptor(form, "getFieldsValue");
     if (descriptor && descriptor.get === state.getter && descriptor.set === state.setter) return true;
@@ -116,11 +141,17 @@ export function choiceOtherStorageAction(form = {}, bindings = [], mainTableName
           fields.forEach(function(field) {
             if (!Object.prototype.hasOwnProperty.call(result, field.ref)) return;
             var value = result[field.ref];
-            if (!Array.isArray(value) || value.some(function(item) { return typeof item !== "string" || field.values.indexOf(item) < 0; })) return;
+            if (field.nativeOther && !validNative(value, field)) throw new Error("Native Other value is ambiguous.");
+            if (!Array.isArray(value) || value.some(function(item) { return typeof item !== "string" ||
+              (field.values.indexOf(item) < 0 && !(field.nativeOther && item.indexOf("other_") === 0)); })) return;
             if (field.toggle) {
               if (value.length === 0) copy[field.ref] = "0";
               else if (value.length === 1 && value[0] === "selected") copy[field.ref] = "selected";
               else return;
+            } else if (field.nativeOther) {
+              var others = value.filter(function(item) { return item.indexOf("other_") === 0; });
+              if (others.length > 1) return;
+              copy[field.ref] = value.filter(function(item) { return item.indexOf("other_") !== 0; }).concat(others).join(",");
             } else copy[field.ref] = value.join(",");
             changed = true;
           });
@@ -136,7 +167,10 @@ export function choiceOtherStorageAction(form = {}, bindings = [], mainTableName
   }
   MKXFORM.beforeSubmit(function() {
     if (!verifiedRuntime() || !MKXFORM.$$FORM || MKXFORM.$$FORM.current !== form) return false;
-    try { return install(); } catch (error) { return false; }
+    try {
+      if (fields.some(function(field) { return field.nativeOther && !validNative(MKXFORM.getValue(field.ref), field); })) return false;
+      return install();
+    } catch (error) { return false; }
   }, "多选字段保存保护不可用，请联系管理员。");
 }`
   };

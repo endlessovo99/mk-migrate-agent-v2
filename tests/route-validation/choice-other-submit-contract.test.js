@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
 import { runInNewContext } from "node:vm";
-import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { withChoiceOtherRuntime } from "../../src/dsl/choice-other-runtime.js";
 import { withChoiceOtherStorageRuntime } from "../../src/dsl/choice-other-storage-runtime.js";
 import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../../src/dsl/choice-other-storage-capability.js";
+import { readFileSync } from "node:fs";
 
-const fixture = "tests/fixtures/route-validation/checkbox-other-compatible/compatible_SysFormTemplate.xml";
 const table = "mk_main_test";
+const legacyForm = () => JSON.parse(readFileSync("tests/fixtures/route-validation/checkbox-other-compatible/retained-legacy-draft.json", "utf8")).form;
 
 function runtime(initial) {
-  const form = draftSourceDraft(cleanSourceFile(fixture)).form;
+  const form = legacyForm();
   const projected = withChoiceOtherStorageRuntime(withChoiceOtherRuntime({ actions: [] }, form, table), form, table);
   const values = structuredClone(initial), writes = [], subscriptions = [], beforeSubmit = [];
   let nativeGetter = () => Object.fromEntries(Object.entries(values).map(([k,v]) => [`${table}.${k}`, v]));
@@ -72,13 +72,13 @@ it("preserves the bridge when native code replaces its getter and leaves unrelat
 });
 
 it("does not guess a lossy encoding for ambiguous option values", () => {
-  const form=draftSourceDraft(cleanSourceFile(fixture)).form;
+  const form=legacyForm();
   form.fields.find(field=>field.id==="fd_choice").props.options[0].value="ambiguous,code";
   assert.throws(()=>withChoiceOtherStorageRuntime(withChoiceOtherRuntime({actions:[]},form,table),form,table),{code:"projection.choice_other.checkbox_storage_unproven"});
 });
 
 it("does not discard an explicit empty selection when a source checkbox has a nonempty default", () => {
-  const form=draftSourceDraft(cleanSourceFile(fixture)).form;
+  const form=legacyForm();
   form.fields.find(field=>field.id==="fd_choice").props.defaultValue={kind:"literal",value:["A"]};
   assert.throws(()=>withChoiceOtherStorageRuntime(withChoiceOtherRuntime({actions:[]},form,table),form,table),{code:"projection.choice_other.checkbox_storage_unproven"});
 });

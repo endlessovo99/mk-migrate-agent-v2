@@ -3,10 +3,11 @@ import { it } from "node:test";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 import { prepareChoiceOtherDesignSync } from "../../src/executor/choice-other-design-sync-plan.js";
+import { readFileSync } from "node:fs";
 
 const nodes = n => !n || typeof n !== "object" ? [] : [n, ...(n.children || []).flatMap(nodes)];
 function fixture() {
-  const dsl = draftSourceDraft(cleanSourceFile("tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml"));
+  const dsl = JSON.parse(readFileSync("tests/fixtures/route-validation/choice-other-wrap/retained-legacy-draft.json", "utf8"));
   for (const field of dsl.form.fields) delete field.otherPresentation;
   const template = prepareSample(dsl).update, config = xformConfig(template);
   const view = JSON.parse(config.viewModel[0].fdConfig);

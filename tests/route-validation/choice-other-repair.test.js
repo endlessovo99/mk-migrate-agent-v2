@@ -15,7 +15,8 @@ import {sampleBaseTemplate,xformConfig} from '../helpers/persistence.js';
 const BASE_URL='https://repair.example.test',CATEGORY='category-id',TARGET='template-id';
 function fixture(){
  const sourceDraft=cleanSourceFile('tests/fixtures/route-validation/checkbox-other-compatible/compatible_SysFormTemplate.xml');
- const draft=draftSourceDraft(sourceDraft);for(const field of draft.form.fields)delete field.otherPresentation;
+ // This API operates on retained historical artifacts, not newly translated forms.
+ const draft=JSON.parse(readFileSync('tests/fixtures/route-validation/checkbox-other-compatible/retained-legacy-draft.json','utf8'));for(const field of draft.form.fields)delete field.otherPresentation;
  const dsl=createTrustedMigrationDsl(sourceDraft,draft,{externalAgentReviewed:true,sourceDraftDigest:sha256Digest(sourceDraft)}),priorDsl=structuredClone(dsl),caption=priorDsl.form.fields.find(f=>f.id==='fd_other_caption');
  Object.assign(caption,{type:'description',componentId:'xform-description',props:{content:'其他'},generated:false});delete caption.sourceProps.choiceOtherToggle;
  const template=applyFormPayload(sampleBaseTemplate(),priorDsl),workflow={...template.mechanisms.lbpmTemplate[0],fdName:template.fdName,fdEntityId:template.fdId,fdCategory:{fdFormCategoryId:CATEGORY},fdFormCategory:{fdFormCategoryId:CATEGORY},fdTemplateForms:[{fdFormKey:TARGET,fdFormCode:TARGET}],fdContent:'<process><node id="start"/></process>',fdEditors:[]};

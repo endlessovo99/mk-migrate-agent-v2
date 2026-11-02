@@ -51,6 +51,12 @@ const CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS = Object.freeze([
   "get-xform-mobile-digest",
   "get-xform-desktop-module-sha256",
   "get-xform-desktop-module-sha256",
+  "get-detail-cell-element-registry",
+  "get-native-other-asset-sha256",
+  "get-native-other-asset-sha256",
+  "get-native-other-asset-sha256",
+  "get-native-other-asset-sha256",
+  "get-native-other-asset-sha256",
   ...SUCCESS_OPERATIONS.slice(1)
 ]);
 
@@ -133,6 +139,18 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
   version: 1,
   cases: [
     {
+      id: "native-checkbox-other-success",
+      source: { kind: "form-only", relativePath: "native-checkbox-other/native-checkbox-other_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true, baseUrl: "https://oaqas.shanghai-electric.com",
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS }
+    },
+    {
+      id: "native-standalone-other-success",
+      source: { kind: "form-only", relativePath: "native-standalone-other/native-standalone-other_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true, baseUrl: "https://oaqas.shanghai-electric.com",
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS }
+    },
+    {
       id: "submission-feedback-native-message-success",
       source: { kind: "form-only", relativePath: "submission-feedback/submission-feedback_SysFormTemplate.xml" },
       reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
@@ -152,9 +170,9 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
     },
     {
       id: "choice-other-independent-radio-success",
-      source: { kind: "form-only", relativePath: "choice-other-companion-fidelity/main-radio_SysFormTemplate.xml" },
-      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
-      expected: { reviewStatus: "needs_manual", dryRunStatus: "needs_manual", executionStatus: "written_with_warnings", operations: SUCCESS_OPERATIONS }
+      source: { kind: "form-only", relativePath: "native-radio-other/native-radio-other_SysFormTemplate.xml" },
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true, baseUrl: "https://oaqas.shanghai-electric.com",
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS }
     },
     {
       id: "select-other-reveal-success",
@@ -165,14 +183,14 @@ export const ROUTE_CASE_MANIFEST = deepFreeze({
     {
       id: "styled-other-reveal-success",
       source: { kind: "form-only", relativePath: "choice-other-styled/choice-other-styled_SysFormTemplate.xml" },
-      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
-      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true, baseUrl: "https://oaqas.shanghai-electric.com",
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS }
     },
     {
       id: "qt-other-reveal-success",
       source: { kind: "form-only", relativePath: "choice-other-qt/choice-other-qt_SysFormTemplate.xml" },
-      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true,
-      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: SUCCESS_OPERATIONS }
+      reviewScenario: "accept", newoaScenario: "persist", confirmWrite: true, baseUrl: "https://oaqas.shanghai-electric.com",
+      expected: { reviewStatus: "passed", dryRunStatus: "passed", executionStatus: "written", operations: CHOICE_OTHER_STORAGE_SUCCESS_OPERATIONS }
     },
     {
       id: "synonym-other-reveal-success",

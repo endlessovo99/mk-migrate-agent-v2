@@ -9,7 +9,8 @@ import {sampleBaseTemplate,xformConfig} from '../helpers/persistence.js';
 import {prepareChoiceOtherRepair,CHOICE_OTHER_NATIVE_ORG_TYPES} from '../../src/executor/choice-other-repair-plan.js';
 
 function setup(inputDsl){
- const dsl=structuredClone(inputDsl||draftSourceDraft(cleanSourceFile('tests/fixtures/route-validation/checkbox-other-compatible/compatible_SysFormTemplate.xml')));
+ // Retained historical DSL is intentionally not generated for new migrations.
+ const dsl=structuredClone(inputDsl||JSON.parse(readFileSync('tests/fixtures/route-validation/checkbox-other-compatible/retained-legacy-draft.json','utf8')));
  for(const field of dsl.form.fields)delete field.otherPresentation;
  const priorDsl=structuredClone(dsl),caption=priorDsl.form.fields.find(f=>f.sourceProps?.choiceOtherToggle);
  Object.assign(caption,{type:'description',componentId:'xform-description',props:{content:'其他'},generated:false});delete caption.sourceProps.choiceOtherToggle;delete caption.reason;
@@ -67,7 +68,7 @@ it('applies generically to a different source form and renamed source, caption, 
  try{
   let xml=readFileSync('tests/fixtures/route-validation/choice-other-companion-fidelity/main-checkbox_SysFormTemplate.xml','utf8');
   for(const [from,to]of [['fd_choice','fd_other_group_identifier'],['fd_other_caption','fd_other_group_caption'],['fd_other_text','fd_other_group_explanation'],['fidelity-main','independent-template']])xml=xml.replaceAll(from,to);
-  const path=join(folder,'independent_SysFormTemplate.xml');writeFileSync(path,xml);const input=setup(draftSourceDraft(cleanSourceFile(path))),plan=prepareChoiceOtherRepair(input);
+  const path=join(folder,'independent_SysFormTemplate.xml');writeFileSync(path,xml);const input=setup(JSON.parse(readFileSync('tests/fixtures/route-validation/checkbox-other-compatible/retained-renamed-legacy-draft.json','utf8'))),plan=prepareChoiceOtherRepair(input);
   assert.equal(plan.verify(plan.proposed).ok,true);assert.equal(plan.summary.bindings[0].choiceId,'fd_other_group_identifier');assert.equal(input.dsl.form.fields.find(field=>field.id===plan.summary.bindings[0].textId).sourceProps.originalId,'fd_other_group_explanation');
  }finally{rmSync(folder,{recursive:true,force:true});}
 });

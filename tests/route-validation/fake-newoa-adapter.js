@@ -7,6 +7,7 @@ import { NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY } from "../../src/executor/
 import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../../src/dsl/choice-other-storage-capability.js";
 import { DETAIL_VISIBILITY_RUNTIME } from "../../src/executor/detail-visibility-runtime.js";
 import { DETAIL_CELL_PRESENTATION_CAPABILITY } from "../../src/dsl/detail-cell-presentation-capability.js";
+import { NATIVE_OTHER_DISPLAY_CAPABILITY } from "../../src/dsl/native-other-display-capability.js";
 import { NATIVE_FORM_RULE_FORMULA_CAPABILITY } from "../../src/dsl/native-form-rule-capability.js";
 import {readFileSync} from 'node:fs';
 import {materializeNativeTemplateAuthorization} from '../helpers/native-template-authorization.js';
@@ -138,13 +139,18 @@ export class FakeNewoaAdapter {
 
   async getDetailCellElementRegistry() {
     this.record({ operation: "get-detail-cell-element-registry" });
-    const releases = this.detailCellRuntime ? DETAIL_CELL_PRESENTATION_CAPABILITY.releases : {};
+    const releases = { ...(this.detailCellRuntime ? DETAIL_CELL_PRESENTATION_CAPABILITY.releases : {}), ...NATIVE_OTHER_DISPLAY_CAPABILITY.releases };
     return `APP_CONFIG["moduleDigest"]["sys/artifact"] = ${JSON.stringify(Object.fromEntries(Object.entries(releases).map(([key, hash]) => [key, { hash }])))};`;
   }
 
   async getDetailCellAssetSha256({ assetPath }) {
     this.record({ operation: "get-detail-cell-asset-sha256", assetPath });
     return this.detailCellRuntime ? DETAIL_CELL_PRESENTATION_CAPABILITY.assets[assetPath] || "unknown" : "unknown";
+  }
+
+  async getNativeOtherAssetSha256({ assetPath }) {
+    this.record({ operation: "get-native-other-asset-sha256", assetPath });
+    return NATIVE_OTHER_DISPLAY_CAPABILITY.assets[assetPath] || "unknown";
   }
 
   async searchOrg(key) {
@@ -334,7 +340,8 @@ export class FakeNewoaAdapter {
       entry?.operation === "get-xform-mobile-digest" ||
       entry?.operation === "get-xform-desktop-module-sha256" ||
       entry?.operation === "get-detail-cell-element-registry" ||
-      entry?.operation === "get-detail-cell-asset-sha256"
+      entry?.operation === "get-detail-cell-asset-sha256" ||
+      entry?.operation === "get-native-other-asset-sha256"
     ) {
       this.entries.push(clone(entry));
       return;

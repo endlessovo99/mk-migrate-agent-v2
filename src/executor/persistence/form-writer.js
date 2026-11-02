@@ -32,6 +32,7 @@ import { withDetailEventReadBridge } from "./detail-event-read-bridge.js";
 import { withBridgedEmptySelectEvents } from "./bridged-empty-select-event.js";
 import { withDetailVisibilitySync } from "./detail-visibility-sync.js";
 import { withChoiceOtherStorageRuntime } from "../../dsl/choice-other-storage-runtime.js";
+import { withNativeOtherDisplayRuntime } from "../../dsl/native-other-display-runtime.js";
 import { persistedFieldLabel } from "./field-labels.js";
 import {
   SCRIPT_SINGLETON_GLOBAL_EVENTS,
@@ -84,7 +85,7 @@ export function applyFormPayload(template, dsl) {
   const mainModel = buildMainModel(next, xform, config, form, lang);
   const nativeScripts = withDetailCellPresentation(withDetailVisibilitySync(withCrossCellOtherReveal(
     withChoiceOtherSelectReveal(
-      withBridgedEmptySelectEvents(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl.scripts, form, mainModel.fdTableName), form, mainModel.fdTableName), form, dsl.formRules),
+      withBridgedEmptySelectEvents(withNativeOtherDisplayRuntime(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl.scripts, form, mainModel.fdTableName), form, mainModel.fdTableName), form, mainModel.fdTableName), form, dsl.formRules),
       form, mainModel.fdTableName
     ), form, mainModel.fdTableName
   ), form, dsl.formRules), form, mainModel.fdTableName);

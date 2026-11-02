@@ -92,7 +92,9 @@ describe("Shanghai Electric 14b fixed role-line Route case", () => {
       reviewerName: "route-validation",
       checkedAt: "2026-07-28T00:00:00.000Z"
     });
-    assert.equal(checkTrust(sourceDraft, trusted).ok, true);
+    const trust = checkTrust(sourceDraft, trusted);
+    assert.equal(trust.ok, false);
+    assert.ok(trust.diagnostics.some(item => item.code === "trust.form.native_other_checkbox_unproven"));
 
     const currentRoleTargets = {
       "149cbca19a5f9a6db33d2a74e50af173": {

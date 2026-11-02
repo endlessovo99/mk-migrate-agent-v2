@@ -8,10 +8,12 @@ import { nativeRequiredRuntime } from "../helpers/native-required-runtime.js";
 
 const fixture = "tests/fixtures/route-validation/choice-other-required/choice-other-required_SysFormTemplate.xml";
 
-it("allows only a normal qualification after repeated row-required changes without requiring auxiliary Other", () => {
+it("allows normal choices after repeated row-required changes without requiring Other", () => {
   const draft = draftSourceDraft(cleanSourceFile(fixture));
   assert.equal(checkDraft(draft).ok, true);
-  assert.equal(draft.form.fields.find(field => field.id === "fd_other_caption").componentId, "xform-checkbox");
+  assert.equal(draft.form.fields.find(field => field.id === "fd_other_caption").dataOnly, true);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_other_text").dataOnly, true);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_choice").props.options.at(-1).type, "other");
   const prepared = prepareSample(draft), config = xformConfig(prepared.update);
   const main = config.dataModel.find(model => model.fdType === "main").fdTableName;
   const action = formAttr(prepared.update).controlAction.control[`${main}.fd_mode`].onChange[0];
@@ -36,16 +38,16 @@ it("allows only a normal qualification after repeated row-required changes witho
   assert.equal(prepared.verify(prepared.update).ok, true);
 });
 
-it("preserves a real source Other option code and the original required checkbox", () => {
+it("uses the native Other code and retains the original required checkbox", () => {
   const draft = draftSourceDraft(cleanSourceFile("tests/fixtures/route-validation/choice-other-companion-fidelity/main-checkbox-existing_SysFormTemplate.xml"));
   const choice = draft.form.fields.find(field => field.id === "fd_choice");
-  assert.deepEqual(choice.props.options.map(option => option.value), ["A", "O_CODE"]);
+  assert.deepEqual(choice.props.options.map(option => option.value), ["A", "other_"]);
   assert.equal(choice.props.required, true);
   assert.equal(draft.form.fields.find(field => field.id === "fd_other_caption").dataOnly, true);
   const prepared = prepareSample(draft), config = xformConfig(prepared.update);
   for (const scene of ["add", "edit"]) {
     const runtime = nativeRequiredRuntime(structuredClone(config), scene);
-    for (const selected of [["A"], ["O_CODE"], ["A", "O_CODE"]]) {
+    for (const selected of [["A"], ["other_说明"], ["A", "other_说明"]]) {
       runtime.MKXFORM.setValue("fd_choice", selected);
       assert.equal(runtime.required("fd_choice"), true);
       assert.deepEqual(runtime.MKXFORM.getValue("fd_choice"), selected);

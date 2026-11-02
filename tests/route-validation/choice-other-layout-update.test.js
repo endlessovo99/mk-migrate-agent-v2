@@ -4,10 +4,11 @@ import { createHash } from "node:crypto";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { prepareSample, xformConfig, sampleBaseTemplate } from "../helpers/persistence.js";
 import { prepareChoiceOtherLayoutConfig, preparePublishedChoiceOtherLayout } from "../../src/executor/choice-other-layout-update-plan.js";
+import { readFileSync } from "node:fs";
 
 const nodes = n => !n || typeof n !== "object" ? [] : [n, ...(n.children || []).flatMap(nodes)];
 function fixture() {
-  const dsl = draftSourceDraft(cleanSourceFile("tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml"));
+  const dsl = JSON.parse(readFileSync("tests/fixtures/route-validation/choice-other-wrap/retained-legacy-draft.json", "utf8"));
   for (const field of dsl.form.fields) delete field.otherPresentation;
   const config = xformConfig(prepareSample(dsl).update), priorDsl = structuredClone(dsl);
   delete priorDsl.form.fields.find(f => f.type === "checkbox").sourceProps.otherTextCompanion;
@@ -27,7 +28,7 @@ function fixture() {
 
 it("does not extend an existing-template layout update to the new conditional presentation", () => {
   const input = fixture();
-  input.dsl = draftSourceDraft(cleanSourceFile("tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml"));
+  input.dsl = JSON.parse(readFileSync("tests/fixtures/route-validation/choice-other-wrap/retained-legacy-draft.json", "utf8"));
   assert.throws(() => prepareChoiceOtherLayoutConfig(input), /outside the existing-template layout update scope/);
 });
 

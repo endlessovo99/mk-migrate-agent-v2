@@ -11,14 +11,17 @@ import { withCrossCellOtherReveal } from "../../src/executor/persistence/choice-
 import { withChoiceOtherRuntime } from "../../src/dsl/choice-other-runtime.js";
 
 const fixture = "tests/fixtures/route-validation/choice-other-cross-cell/choice-other-cross-cell_SysFormTemplate.xml";
+const legacyForm = () => JSON.parse(readFileSync("tests/fixtures/route-validation/choice-other-cross-cell/retained-legacy-draft.json", "utf8")).form;
 it("recognizes a bound Other caption and input in adjacent source cells", () => {
   const source = cleanSourceFile(fixture), choice = source.form.controls.find(field => field.id === "fd_choice");
   assert.equal(choice.sourceProps.otherTextCompanion?.id, "fd_other_text");
   assert.equal(choice.sourceProps.otherTextCompanion?.captionId, "fd_other_caption");
   assert.equal(choice.sourceProps.otherTextCompanion?.crossCell?.version, 1);
-  const draft = draftSourceDraft(source), toggle = draft.form.fields.find(field => field.id === "fd_other_caption");
-  assert.equal(toggle.componentId, "xform-checkbox");
-  assert.equal(draft.form.fields.find(field => field.id === "fd_choice").otherPresentation?.optionValue, "selected");
+  const draft = draftSourceDraft(source), field = draft.form.fields.find(field => field.id === "fd_choice");
+  assert.equal(field.props.options.at(-1).type, "other");
+  assert.equal(field.props.options.at(-1).value, "other_");
+  assert.equal(draft.form.fields.find(field => field.id === "fd_other_caption").dataOnly, true);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_other_text").dataOnly, true);
   assert.equal(draft.form.fields.find(field => field.id === "fd_other_text").props.defaultValue.value, "seed_under_score");
   const prepared = prepareSample(draft); assert.equal(prepared.verify(prepared.update).ok, true);
 });
@@ -29,7 +32,7 @@ it("carries the source-bound cross-cell presentation through the fake route", as
 });
 
 it("only changes display state and fails open for noneditable or ambiguous controls", () => {
-  const draft = draftSourceDraft(cleanSourceFile(fixture)), config = xformConfig(prepareSample(draft).update);
+  const draft = JSON.parse(readFileSync("tests/fixtures/route-validation/choice-other-cross-cell/retained-legacy-draft.json", "utf8")), config = xformConfig(prepareSample(draft).update);
   const action = JSON.parse(config.attribute.formAttr).controlAction.global.onLoad[0];
   assert.ok(action.migrationActions.some(item => item.id === "mk-choice-other-cross-cell-v1"));
   const displayAction = withCrossCellOtherReveal({ actions: [] }, draft.form, prepareSample(draft).update.fdTableName).actions.find(item => item.id === "mk-choice-other-cross-cell-v1");
@@ -56,7 +59,7 @@ it("only changes display state and fails open for noneditable or ambiguous contr
 });
 
 it("distinguishes an explicitly saved unchecked toggle from an older missing value", () => {
-  const form = draftSourceDraft(cleanSourceFile(fixture)).form;
+  const form = legacyForm();
   const nativeStorage = { id: "native-checkbox-storage" };
   const planned = withCrossCellOtherReveal({ actions: [nativeStorage] }, form, "mk_model_test");
   assert.deepEqual(planned.actions.map(item => item.id), ["mk-choice-other-cross-cell-snapshot-v1", "native-checkbox-storage", "mk-choice-other-cross-cell-v1"]);
@@ -87,7 +90,7 @@ it("shows the adjacent explanation only when selected without clearing its value
   const browser = await chromium.launch({ headless: true, executablePath: process.env.MK_LAYOUT_BROWSER_PATH });
   try {
     const page = await browser.newPage(); await page.route("**/*", route => route.abort());
-    const form = draftSourceDraft(cleanSourceFile(fixture)).form;
+    const form = legacyForm();
     const action = withCrossCellOtherReveal({ actions: [] }, form, "mk_model_test").actions.find(item => item.id === "mk-choice-other-cross-cell-v1");
     await page.setContent('<div data-id="mk_model_test.fd_other_caption"><input id="toggle" type="checkbox"></div>' +
       '<div data-id="mk_model_test.fd_other_text"><input id="note" value=""></div>');
@@ -132,7 +135,7 @@ it("keeps the selected Other editor visible while its optional explanation is cl
   const browser = await chromium.launch({ headless: true, executablePath: process.env.MK_LAYOUT_BROWSER_PATH });
   try {
     const page = await browser.newPage(); await page.route("**/*", route => route.abort());
-    const form = draftSourceDraft(cleanSourceFile(fixture)).form, table = "mk_model_test";
+    const form = legacyForm(), table = "mk_model_test";
     const initializer = withChoiceOtherRuntime({ actions: [] }, form, table).actions.find(action => action.id === "mk-choice-other-init-v1");
     const reveal = withCrossCellOtherReveal({ actions: [] }, form, table).actions.find(action => action.id === "mk-choice-other-cross-cell-v1");
     await page.setContent('<div data-id="mk_model_test.fd_other_caption"><input id="toggle" type="checkbox"></div>' +

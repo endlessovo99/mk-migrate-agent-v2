@@ -13,7 +13,7 @@ import { runAgentReview } from "../../src/agent-review/index.js";
 
 const dir = "tests/fixtures/route-validation/choice-other-companion-fidelity";
 const path = name => `${dir}/${name}_SysFormTemplate.xml`;
-const stages = name => { const source = cleanSourceFile(path(name)); return { source, draft: draftSourceDraft(source) }; };
+const stages = name => { const source = cleanSourceFile(name === "main-radio" ? "tests/fixtures/route-validation/native-radio-other/native-radio-other_SysFormTemplate.xml" : path(name)); return { source, draft: draftSourceDraft(source) }; };
 const all = draft => draft.form.fields.flatMap(f => f.type === "detailTable" ? f.columns : [f]);
 const field = (draft, id) => all(draft).find(f => f.id === id);
 const sourceFields = source => [...source.form.controls, ...(source.form.detailTables || []).flatMap(t => t.columns)];
@@ -27,23 +27,26 @@ function referenced(node, id) {
 }
 
 for (const name of ["main-checkbox", "main-checkbox-existing", "main-radio"]) {
-  it(`keeps the complete original option labels and codes without inferred native Other: ${name}`, () => {
+  it(`maps the source Other to the MK native option while retaining ordinary codes: ${name}`, () => {
     const { source, draft } = stages(name);
     const original = sourceFields(source).find(f => f.id === "fd_choice");
     assert.equal(original.options.length, 2, "The fixture must contain two distinct source codes");
     assert.deepEqual(original.options.map(o => o.value), name === "main-checkbox" ? ["A", "B"] : ["A", "O_CODE"]);
-    assert.deepEqual(field(draft, "fd_choice").props.options, original.options);
-    assert.ok(field(draft, "fd_choice").props.options.every(o => o.type !== "other" && o.value !== "other_"));
+    const options = field(draft, "fd_choice").props.options;
+    const regular = original.options.filter(option => !/^(其他|其它)[:：]?$/u.test(option.label));
+    assert.deepEqual(options.slice(0, -1), regular);
+    assert.equal(options.at(-1).type, "other");
+    assert.equal(options.at(-1).value, "other_");
   });
-  it(`keeps the original text independent and renders one Other label: ${name}`, () => {
+  it(`uses MK Other and retains source text and caption as data-only evidence: ${name}`, () => {
     const { source, draft } = stages(name), text = field(draft, "fd_other_text"), caption = field(draft, "fd_other_caption");
     assert.equal(sourceFields(source).find(f => f.id === "fd_other_text").required, false);
     assert.ok(text && caption);
-    assert.notEqual(text.dataOnly, true);
-    assert.equal(caption.dataOnly === true, name === "main-checkbox-existing");
+    assert.equal(text.dataOnly, true);
+    assert.equal(caption.dataOnly, true);
     assert.equal(text.sourceRef, "source.form.control.fd_other_text");
     assert.notEqual(text.props.required, true);
-    assert.equal(text.props.readOnly === true, name === "main-radio");
+    assert.equal(text.props.readOnly === true, false);
     assert.deepEqual(text.props.defaultValue, { kind: "literal", value: "seed_under_score" });
     assert.equal(draft.scripts?.actions?.length || 0, 0, "No new clearing, mirroring or restore handlers may be invented");
   });
@@ -51,20 +54,20 @@ for (const name of ["main-checkbox", "main-checkbox-existing", "main-radio"]) {
     const { source, draft } = stages(name), prepared = prepareSample(draft), config = xformConfig(prepared.update);
     const choice = nativeField(config, "fd_choice"), text = nativeField(config, "fd_other_text"), caption = nativeField(config, "fd_other_caption");
     assert.equal(choice.fdDisplay, true);
-    assert.equal(text.fdDisplay, true);
+    assert.equal(text.fdDisplay, false);
     assert.equal(text.fdIsStored, true);
-    assert.equal(caption.fdDisplay, name !== "main-checkbox-existing");
+    assert.equal(caption.fdDisplay, false);
     const props = JSON.parse(text.fdAttribute).config.controlProps;
     assert.equal(props.defaultValueType, "formula");
     assert.equal(JSON.parse(props.defaultValueFormulaVO.script), "seed_under_score");
-    assert.equal(props.showStatus === "readOnly", name === "main-radio");
+    assert.equal(props.showStatus === "readOnly", false);
     assert.ok(props.required !== true);
     assert.equal(props.controlActions, undefined);
     const view = JSON.parse(config.viewModel[0].fdConfig);
     for (const platform of ["desktop", "mobile"]) {
       assert.ok(referenced(view.view.render[platform], "fd_choice"));
-      assert.ok(referenced(view.view.render[platform], "fd_other_text"));
-      assert.equal(referenced(view.view.render[platform], "fd_other_caption"), name !== "main-checkbox-existing");
+      assert.equal(referenced(view.view.render[platform], "fd_other_text"), false);
+      assert.equal(referenced(view.view.render[platform], "fd_other_caption"), false);
     }
     assert.equal(trust(source, draft).ok, true);
     assert.equal(prepared.verify(prepared.update).ok, true);
@@ -81,6 +84,11 @@ for (const name of ["main-checkbox", "main-checkbox-existing", "main-radio"]) {
     assert.ok(result.diagnostics.some(d => d.code === "agent.patch.form.choice_other_companion_source_mismatch"));
   });
 }
+it("blocks an editable choice whose source Other text is readonly", () => {
+  const source = cleanSourceFile(path("main-radio")), draft = draftSourceDraft(source);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_choice").nativeOther, undefined);
+  assert.ok(checkDraft(draft).diagnostics.some(item => item.code === "source.form.native_other_checkbox_unproven"));
+});
 it("retains ordinary non-companion checkbox behavior and source codes", () => {
   const { source, draft } = stages("main-checkbox"), original = sourceFields(source).find(f => f.id === "fd_plain");
   assert.equal(original.sourceProps.otherTextCompanion, undefined);
@@ -114,7 +122,7 @@ for (const caseId of ["choice-other-independent-main-success", "choice-other-ind
     const result = await runRouteCase(caseId);
     assert.equal(result.execution.ok, true);
     assert.equal(result.execution.transferRecord.status, "recorded");
-    assert.notEqual(field(result.dsl, "fd_other_text").dataOnly, true);
+    assert.equal(field(result.dsl, "fd_other_text").dataOnly, true);
   });
 }
 it("blocks the existing compound detail fixture before transport", async () => {
@@ -125,8 +133,8 @@ it("blocks the existing compound detail fixture before transport", async () => {
 });
 
 for (const [name, mutate] of [
-  ["hidden source text", draft => field(draft, "fd_other_text").dataOnly = true],
-  ["hidden source caption", draft => field(draft, "fd_other_caption").dataOnly = true],
+  ["rendered source text", draft => field(draft, "fd_other_text").dataOnly = false],
+  ["rendered source caption", draft => field(draft, "fd_other_caption").dataOnly = false],
   ["removed source text", draft => draft.form.fields = draft.form.fields.filter(f => f.id !== "fd_other_text")],
   ["replaced source option code", draft => field(draft, "fd_choice").props.options[1].value = "other_"],
   ["added composite option", draft => field(draft, "fd_choice").props.options.push({ label: "Other", value: "other_", type: "other" })],
@@ -143,17 +151,14 @@ for (const [name, mutate] of [
   assert.equal(result.ok, false);
   assert.ok(result.diagnostics.some(d => d.code === "trust.form.choice_other_companion_source_mismatch"));
 });
-it("rejects moving the independent caption within the source presentation", () => {
+it("rejects reinserting the consumed caption into the source presentation", () => {
   const { source, draft } = stages("main-checkbox"), changed = structuredClone(draft);
   let moved = false;
   function visit(node) {
     if (!node || typeof node !== "object") return;
-    if (Array.isArray(node.refIds) && node.refIds.length > 1 && node.refIds.includes("fd_other_caption")) {
-      const before = JSON.stringify(node.refIds), first = node.refIds[0] === "fd_other_caption";
-      node.refIds = node.refIds.filter(id => id !== "fd_other_caption");
-      if (first) node.refIds.push("fd_other_caption");
-      else node.refIds.unshift("fd_other_caption");
-      moved ||= JSON.stringify(node.refIds) !== before;
+    if (Array.isArray(node.refIds) && node.refIds.includes("fd_choice")) {
+      node.refIds.push("fd_other_caption");
+      moved = true;
     }
     for (const value of Object.values(node)) {
       if (Array.isArray(value)) value.forEach(visit);

@@ -21,6 +21,7 @@ import { withDetailEventReadBridge } from "./detail-event-read-bridge.js";
 import { withBridgedEmptySelectEvents } from "./bridged-empty-select-event.js";
 import { withDetailVisibilitySync } from "./detail-visibility-sync.js";
 import { withChoiceOtherStorageRuntime } from "../../dsl/choice-other-storage-runtime.js";
+import { withNativeOtherDisplayRuntime } from "../../dsl/native-other-display-runtime.js";
 import { conditionContextSemantic } from "../../dsl/condition-context.js";
 import {
   buildFormRuleRefIndex,
@@ -94,7 +95,7 @@ export function buildExpectedInvariants(dsl, envelope) {
   );
   const nativeScripts = withDetailCellPresentation(withDetailVisibilitySync(withCrossCellOtherReveal(
     withChoiceOtherSelectReveal(
-      withBridgedEmptySelectEvents(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl?.scripts, dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName), dsl?.form || {}, dsl?.formRules),
+      withBridgedEmptySelectEvents(withNativeOtherDisplayRuntime(withChoiceOtherStorageRuntime(withChoiceOtherRuntime(dsl?.scripts, dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName), dsl?.form || {}, envelope?.tableName), dsl?.form || {}, dsl?.formRules),
       dsl?.form || {}, envelope?.tableName
     ), dsl?.form || {}, envelope?.tableName
   ), dsl?.form || {}, dsl?.formRules), dsl?.form || {}, envelope?.tableName);
@@ -467,6 +468,9 @@ function executableProps(field = {}, form = {}, context = {}) {
   }
   const stored = choiceOtherStorageExpectation(field, form);
   if (stored !== undefined) props.nativeStored = stored;
+  if (field.nativeOther) props.nativeOtherStorage = {
+    type: field.componentId === "xform-radio" ? "radio" : "checkbox", dataType: "varchar", dictType: "simpleDict", length: 200
+  };
   const checkbox = sourceCheckboxLayouts(form).get(field.sourceRef);
   if (checkbox) props.nativeCheckboxLayout = checkbox.expected;
   const radio = sourceRadioLayouts(form).get(field.sourceRef);

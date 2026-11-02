@@ -1,0 +1,869 @@
+{
+  "version": "2.0-migration",
+  "artifact": "dsl-draft",
+  "derivedFrom": {
+    "sourceDraftVersion": "2.0-source-draft",
+    "sourceId": "choice-companion-model-main-checkbox"
+  },
+  "catalogs": {
+    "components": {
+      "id": "mk-components",
+      "version": "2026-10-25.v19"
+    },
+    "controlEvents": {
+      "id": "mk-control-events",
+      "version": "2026-10-25.v1"
+    },
+    "functions": {
+      "id": "mk-functions",
+      "version": "2026-07-09.v3"
+    },
+    "jsMethods": {
+      "id": "mk-js-methods",
+      "version": "2026-10-17.v3"
+    },
+    "targetApis": {
+      "id": "mk-js-snippets",
+      "version": "2026-10-23.v1"
+    }
+  },
+  "validationPolicy": {
+    "id": "migration-validation-policy",
+    "version": "2026-07-06.v1"
+  },
+  "trust": {
+    "level": "draft",
+    "executable": false,
+    "model": {
+      "mode": "none",
+      "reason": "The first version reserves target mapping for external Codex Agent trust."
+    }
+  },
+  "template": {
+    "name": "Synthetic independent choice companion main-checkbox",
+    "categoryPath": "",
+    "sourceRef": "choice-companion-model-main-checkbox"
+  },
+  "form": {
+    "fields": [
+      {
+        "id": "fd_39d27b715fc99f4773bb30",
+        "title": "Choice",
+        "type": "description",
+        "componentId": "xform-description",
+        "props": {
+          "content": "Choice"
+        },
+        "sourceProps": {
+          "designerId": "fd_other_group_identifier_title",
+          "designerType": "textLabel",
+          "designerValues": {
+            "id": "fd_other_group_identifier_title",
+            "content": "Choice"
+          },
+          "captionStructureIssue": {
+            "reason": "value_cell_has_multiple_or_missing_editors",
+            "editorCount": 3,
+            "editors": [
+              {
+                "id": "fd_other_group_identifier",
+                "type": "inputCheckbox"
+              },
+              {
+                "id": "fd_other_group_caption",
+                "type": "textLabel"
+              },
+              {
+                "id": "fd_other_group_explanation",
+                "type": "inputText"
+              }
+            ]
+          },
+          "staticCaptionIssue": {
+            "reason": "runtime_caption_mismatch"
+          },
+          "originalId": "fd_other_group_identifier_title"
+        },
+        "sourceRef": "source.form.control.fd_other_group_identifier_title",
+        "generated": false
+      },
+      {
+        "id": "fd_other_group_identifier",
+        "title": "Choice",
+        "type": "checkbox",
+        "componentId": "xform-checkbox",
+        "props": {
+          "hiddenLabel": true,
+          "required": false,
+          "options": [
+            {
+              "label": "Standard",
+              "value": "A"
+            },
+            {
+              "label": "Alternative",
+              "value": "B"
+            }
+          ]
+        },
+        "sourceProps": {
+          "designerId": "fd_other_group_identifier",
+          "designerType": "inputCheckbox",
+          "designerValues": {
+            "id": "fd_other_group_identifier",
+            "label": "Choice",
+            "_label_bind": "true",
+            "_label_bind_id": "fd_other_group_identifier_title",
+            "alignment": "H",
+            "dataType": "String",
+            "items": "Standard|A\r\nAlternative|B",
+            "required": "false",
+            "readOnly": "false"
+          },
+          "layoutCell": {
+            "hiddenLabel": true,
+            "relation": "independent-bound-title-cell",
+            "captionIds": [
+              "fd_other_group_identifier_title"
+            ]
+          },
+          "otherTextCompanion": {
+            "id": "fd_other_group_explanation",
+            "otherRequired": false,
+            "captionId": "fd_other_group_caption",
+            "caption": "其他："
+          },
+          "metadataId": "fd_other_group_identifier",
+          "metadataKind": "simple",
+          "metadataAttributes": {
+            "name": "fd_other_group_identifier",
+            "label": "Choice",
+            "type": "String",
+            "enumValues": "Standard|A;Alternative|B",
+            "notNull": "false",
+            "kind": "simple"
+          },
+          "mainStringValueBindingFact": {
+            "version": 1,
+            "status": "unproven",
+            "fieldId": "fd_other_group_identifier",
+            "sourceHashes": {
+              "fdDesignerHtml": "91868475c323a4d8583755c9e1189526014ac20f6511784f5185e779ef188734",
+              "fdDisplayJsp": "a569f1a5ff7769b4a0131bf37ed539280ec2ffc197683a488bfd5f9ada0c25bc",
+              "fdMetadataXml": "a362480d4046a35c397c96a5b04190f2894046089bd6f1ac735c5ccceac4c157"
+            },
+            "metadata": {
+              "count": 1,
+              "type": "String",
+              "declarations": [
+                {
+                  "kind": "extendsimpleproperty",
+                  "type": "String",
+                  "start": 10,
+                  "end": 149
+                }
+              ]
+            },
+            "surfaces": {
+              "designer": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_other_group_identifier",
+                    "kind": "designer-widget",
+                    "start": 214,
+                    "end": 473,
+                    "hidden": false,
+                    "issues": [
+                      "widget_does_not_have_one_input",
+                      "widget_input_identity_unproven",
+                      "widget_not_static_String_inputText"
+                    ]
+                  }
+                ],
+                "issues": [
+                  "widget_does_not_have_one_input",
+                  "widget_input_identity_unproven",
+                  "widget_not_static_String_inputText"
+                ]
+              },
+              "display": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_other_group_identifier",
+                    "kind": "runtime-renderer",
+                    "start": 89,
+                    "end": 186,
+                    "hidden": false,
+                    "issues": [
+                      "binding_renderer_not_single_String_input"
+                    ]
+                  }
+                ],
+                "issues": [
+                  "binding_renderer_not_single_String_input"
+                ]
+              }
+            },
+            "reasons": [
+              "designer_binding_not_hidden",
+              "designer_binding_domain_unproven",
+              "display_binding_not_hidden",
+              "display_binding_domain_unproven"
+            ]
+          },
+          "sharedBoundCaption": {
+            "id": "fd_other_group_identifier_title"
+          }
+        },
+        "sourceRef": "source.form.control.fd_other_group_identifier",
+        "generated": false,
+        "otherPresentation": {
+          "version": 1,
+          "mode": "reveal-on-selection",
+          "textSourceRef": "source.form.control.fd_other_group_explanation",
+          "triggerSourceRef": "source.form.control.fd_other_group_caption",
+          "optionValue": "selected"
+        }
+      },
+      {
+        "id": "fd_other_group_caption",
+        "title": "其他",
+        "type": "checkbox",
+        "componentId": "xform-checkbox",
+        "props": {
+          "options": [
+            {
+              "label": "其他",
+              "value": "selected"
+            }
+          ],
+          "hiddenLabel": true,
+          "required": false
+        },
+        "sourceProps": {
+          "designerId": "fd_other_group_caption",
+          "designerType": "textLabel",
+          "designerValues": {
+            "id": "fd_other_group_caption",
+            "content": "其他："
+          },
+          "captionStructureIssue": {
+            "reason": "caption_position_unproven"
+          },
+          "staticCaptionIssue": {
+            "reason": "runtime_caption_mismatch"
+          },
+          "choiceOtherToggle": {
+            "version": 1,
+            "choiceSourceRef": "source.form.control.fd_other_group_identifier",
+            "textSourceRef": "source.form.control.fd_other_group_explanation"
+          }
+        },
+        "sourceRef": "source.form.control.fd_other_group_caption",
+        "generated": true,
+        "reason": "The source Other caption becomes a separately stored native checkbox; original choice codes and explanation text remain unchanged."
+      },
+      {
+        "id": "fd_4c8efc91238800184707fc",
+        "title": "Choice other",
+        "type": "text",
+        "componentId": "xform-input",
+        "props": {
+          "hiddenLabel": true,
+          "required": false,
+          "defaultValue": {
+            "kind": "literal",
+            "value": "seed_under_score"
+          }
+        },
+        "sourceProps": {
+          "designerId": "fd_other_group_explanation",
+          "designerType": "inputText",
+          "designerValues": {
+            "id": "fd_other_group_explanation",
+            "label": "Choice other",
+            "_label_bind": "false",
+            "_label_bind_id": "fd_other_group_identifier_title",
+            "width": "120",
+            "dataType": "String",
+            "required": "false",
+            "readOnly": "false",
+            "defaultValue": "seed_under_score"
+          },
+          "layoutCell": {
+            "hiddenLabel": true,
+            "relation": "retained-source-caption",
+            "captionIds": [
+              "fd_other_group_identifier_title"
+            ],
+            "renderer": "xform:xtext",
+            "sourceRef": "source.form.fdDisplayJsp"
+          },
+          "metadataId": "fd_other_group_explanation",
+          "metadataKind": "simple",
+          "metadataAttributes": {
+            "name": "fd_other_group_explanation",
+            "label": "Choice other",
+            "type": "String",
+            "notNull": "false",
+            "readOnly": "false",
+            "defaultValue": "seed_under_score",
+            "kind": "simple"
+          },
+          "mainStringValueBindingFact": {
+            "version": 1,
+            "status": "unproven",
+            "fieldId": "fd_other_group_explanation",
+            "sourceHashes": {
+              "fdDesignerHtml": "91868475c323a4d8583755c9e1189526014ac20f6511784f5185e779ef188734",
+              "fdDisplayJsp": "a569f1a5ff7769b4a0131bf37ed539280ec2ffc197683a488bfd5f9ada0c25bc",
+              "fdMetadataXml": "a362480d4046a35c397c96a5b04190f2894046089bd6f1ac735c5ccceac4c157"
+            },
+            "metadata": {
+              "count": 1,
+              "type": "String",
+              "declarations": [
+                {
+                  "kind": "extendsimpleproperty",
+                  "type": "String",
+                  "start": 149,
+                  "end": 306
+                }
+              ]
+            },
+            "surfaces": {
+              "designer": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_other_group_explanation",
+                    "kind": "designer-widget",
+                    "start": 575,
+                    "end": 884,
+                    "hidden": false,
+                    "issues": []
+                  }
+                ],
+                "issues": []
+              },
+              "display": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_other_group_explanation",
+                    "kind": "runtime-renderer",
+                    "start": 232,
+                    "end": 365,
+                    "hidden": false,
+                    "issues": []
+                  }
+                ],
+                "issues": []
+              }
+            },
+            "reasons": [
+              "designer_binding_not_hidden",
+              "display_binding_not_hidden"
+            ]
+          },
+          "sharedBoundCaption": {
+            "id": "fd_other_group_identifier_title"
+          },
+          "originalId": "fd_other_group_explanation"
+        },
+        "sourceRef": "source.form.control.fd_other_group_explanation",
+        "generated": false
+      },
+      {
+        "id": "fd_plain_title",
+        "title": "Plain choice",
+        "type": "description",
+        "componentId": "xform-description",
+        "props": {
+          "content": "Plain choice"
+        },
+        "sourceProps": {
+          "designerId": "fd_plain_title",
+          "designerType": "textLabel",
+          "designerValues": {
+            "id": "fd_plain_title",
+            "content": "Plain choice"
+          },
+          "captionStructureIssue": {
+            "reason": "runtime_caption_region_or_text_mismatch"
+          },
+          "staticCaptionIssue": {
+            "reason": "runtime_caption_mismatch"
+          }
+        },
+        "sourceRef": "source.form.control.fd_plain_title",
+        "generated": false
+      },
+      {
+        "id": "fd_plain",
+        "title": "Plain choice",
+        "type": "checkbox",
+        "componentId": "xform-checkbox",
+        "props": {
+          "hiddenLabel": true,
+          "options": [
+            {
+              "label": "One",
+              "value": "P"
+            },
+            {
+              "label": "Two",
+              "value": "Q"
+            }
+          ]
+        },
+        "sourceProps": {
+          "designerId": "fd_plain",
+          "designerType": "inputCheckbox",
+          "designerValues": {
+            "id": "fd_plain",
+            "label": "Plain choice",
+            "_label_bind": "true",
+            "_label_bind_id": "fd_plain_title",
+            "alignment": "V",
+            "dataType": "String",
+            "items": "One|P\r\nTwo|Q"
+          },
+          "boundCaption": {
+            "id": "fd_plain_title",
+            "content": "Plain choice",
+            "relation": "explicit-label-bind-id"
+          },
+          "layoutCell": {
+            "hiddenLabel": true,
+            "relation": "independent-bound-title-cell",
+            "captionIds": [
+              "fd_plain_title"
+            ]
+          },
+          "metadataId": "fd_plain",
+          "metadataKind": "simple",
+          "metadataAttributes": {
+            "name": "fd_plain",
+            "label": "Plain choice",
+            "type": "String",
+            "enumValues": "One|P;Two|Q",
+            "kind": "simple"
+          },
+          "mainStringValueBindingFact": {
+            "version": 1,
+            "status": "unproven",
+            "fieldId": "fd_plain",
+            "sourceHashes": {
+              "fdDesignerHtml": "91868475c323a4d8583755c9e1189526014ac20f6511784f5185e779ef188734",
+              "fdDisplayJsp": "a569f1a5ff7769b4a0131bf37ed539280ec2ffc197683a488bfd5f9ada0c25bc",
+              "fdMetadataXml": "a362480d4046a35c397c96a5b04190f2894046089bd6f1ac735c5ccceac4c157"
+            },
+            "metadata": {
+              "count": 1,
+              "type": "String",
+              "declarations": [
+                {
+                  "kind": "extendsimpleproperty",
+                  "type": "String",
+                  "start": 306,
+                  "end": 405
+                }
+              ]
+            },
+            "surfaces": {
+              "designer": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_plain",
+                    "kind": "designer-widget",
+                    "start": 1059,
+                    "end": 1243,
+                    "hidden": false,
+                    "issues": [
+                      "widget_does_not_have_one_input",
+                      "widget_input_identity_unproven",
+                      "widget_not_static_String_inputText"
+                    ]
+                  }
+                ],
+                "issues": [
+                  "widget_does_not_have_one_input",
+                  "widget_input_identity_unproven",
+                  "widget_not_static_String_inputText"
+                ]
+              },
+              "display": {
+                "logicalBindingCount": 0,
+                "hiddenBindingCount": 0,
+                "bindings": [],
+                "issues": []
+              }
+            },
+            "reasons": [
+              "designer_binding_not_hidden",
+              "designer_binding_domain_unproven",
+              "display_binding_not_singleton",
+              "display_binding_not_hidden"
+            ]
+          }
+        },
+        "sourceRef": "source.form.control.fd_plain",
+        "generated": false
+      }
+    ],
+    "layout": {
+      "sourceGrid": {
+        "source": "fdDesignerHtml",
+        "rootTable": {
+          "version": 1,
+          "kind": "standard-table",
+          "rowCount": 2
+        },
+        "rows": [
+          {
+            "id": "row-0",
+            "sourceRef": "source.form.layout.row.row-0",
+            "sourceRow": "0",
+            "preserveSourceGeometry": true,
+            "columns": 2,
+            "cells": [
+              {
+                "id": "row-0-cell-0",
+                "sourceRef": "source.form.layout.cell.row-0-cell-0",
+                "column": 0,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_39d27b715fc99f4773bb30",
+                    "sourceRef": "source.form.control.fd_other_group_identifier_title"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_39d27b715fc99f4773bb30"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_39d27b715fc99f4773bb30"
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "0",
+                  "column": 0,
+                  "colspan": 1
+                }
+              },
+              {
+                "id": "row-0-cell-1",
+                "sourceRef": "source.form.layout.cell.row-0-cell-1",
+                "column": 1,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_other_group_identifier",
+                    "sourceRef": "source.form.control.fd_other_group_identifier"
+                  },
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_other_group_caption",
+                    "sourceRef": "source.form.control.fd_other_group_caption"
+                  },
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_4c8efc91238800184707fc",
+                    "sourceRef": "source.form.control.fd_other_group_explanation"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_other_group_identifier",
+                      "fd_other_group_caption",
+                      "fd_4c8efc91238800184707fc"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_other_group_identifier"
+                    },
+                    {
+                      "referenceId": "fd_other_group_caption"
+                    },
+                    {
+                      "referenceId": "fd_4c8efc91238800184707fc",
+                      "width": {
+                        "value": 120,
+                        "unit": "px"
+                      }
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "0",
+                  "column": 1,
+                  "colspan": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "row-1",
+            "sourceRef": "source.form.layout.row.row-1",
+            "sourceRow": "1",
+            "preserveSourceGeometry": true,
+            "columns": 2,
+            "cells": [
+              {
+                "id": "row-1-cell-0",
+                "sourceRef": "source.form.layout.cell.row-1-cell-0",
+                "column": 0,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_plain_title",
+                    "sourceRef": "source.form.control.fd_plain_title"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_plain_title"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_plain_title"
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "1",
+                  "column": 0,
+                  "colspan": 1
+                }
+              },
+              {
+                "id": "row-1-cell-1",
+                "sourceRef": "source.form.layout.cell.row-1-cell-1",
+                "column": 1,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_plain",
+                    "sourceRef": "source.form.control.fd_plain"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_plain"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_plain"
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "1",
+                  "column": 1,
+                  "colspan": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "mkTree": [
+        {
+          "id": "layout.row-0",
+          "componentId": "xform-flex-1-2-layout",
+          "props": {
+            "columns": 2,
+            "sourceColumns": 2
+          },
+          "sourceRef": "source.form.layout.row.row-0",
+          "children": [
+            {
+              "id": "layout.row-0-cell-0",
+              "refType": "field",
+              "refIds": [
+                "fd_39d27b715fc99f4773bb30"
+              ],
+              "sourceRef": "source.form.layout.cell.row-0-cell-0",
+              "column": 0,
+              "colspan": 1,
+              "contentFlow": {
+                "lines": [
+                  [
+                    "fd_39d27b715fc99f4773bb30"
+                  ]
+                ],
+                "items": [
+                  {
+                    "referenceId": "fd_39d27b715fc99f4773bb30"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "layout.row-0-cell-1",
+              "refType": "field",
+              "refIds": [
+                "fd_other_group_identifier",
+                "fd_other_group_caption",
+                "fd_4c8efc91238800184707fc"
+              ],
+              "sourceRef": "source.form.layout.cell.row-0-cell-1",
+              "column": 1,
+              "colspan": 1,
+              "keepInline": true,
+              "contentFlow": {
+                "lines": [
+                  [
+                    "fd_other_group_identifier",
+                    "fd_other_group_caption",
+                    "fd_4c8efc91238800184707fc"
+                  ]
+                ],
+                "items": [
+                  {
+                    "referenceId": "fd_other_group_identifier"
+                  },
+                  {
+                    "referenceId": "fd_other_group_caption"
+                  },
+                  {
+                    "referenceId": "fd_4c8efc91238800184707fc",
+                    "width": {
+                      "value": 120,
+                      "unit": "px"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "layout.row-1",
+          "componentId": "xform-flex-1-2-layout",
+          "props": {
+            "columns": 2,
+            "sourceColumns": 2
+          },
+          "sourceRef": "source.form.layout.row.row-1",
+          "children": [
+            {
+              "id": "layout.row-1-cell-0",
+              "refType": "field",
+              "refIds": [
+                "fd_plain_title"
+              ],
+              "sourceRef": "source.form.layout.cell.row-1-cell-0",
+              "column": 0,
+              "colspan": 1,
+              "contentFlow": {
+                "lines": [
+                  [
+                    "fd_plain_title"
+                  ]
+                ],
+                "items": [
+                  {
+                    "referenceId": "fd_plain_title"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "layout.row-1-cell-1",
+              "refType": "field",
+              "refIds": [
+                "fd_plain"
+              ],
+              "sourceRef": "source.form.layout.cell.row-1-cell-1",
+              "column": 1,
+              "colspan": 1,
+              "contentFlow": {
+                "lines": [
+                  [
+                    "fd_plain"
+                  ]
+                ],
+                "items": [
+                  {
+                    "referenceId": "fd_plain"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "sizing": "adaptive"
+    }
+  },
+  "review": {
+    "captionFolding": {
+      "version": 1,
+      "decisions": [
+        {
+          "fieldId": "fd_other_group_identifier",
+          "sourceRef": "source.form.control.fd_other_group_identifier",
+          "title": "Choice",
+          "captionIds": [
+            "fd_other_group_identifier_title"
+          ],
+          "status": "preserved",
+          "reason": "shared_caption"
+        },
+        {
+          "fieldId": "fd_other_group_explanation",
+          "sourceRef": "source.form.control.fd_other_group_explanation",
+          "title": "Choice other",
+          "captionIds": [
+            "fd_other_group_identifier_title"
+          ],
+          "status": "preserved",
+          "reason": "shared_caption"
+        },
+        {
+          "fieldId": "fd_plain",
+          "sourceRef": "source.form.control.fd_plain",
+          "title": "Plain choice",
+          "captionIds": [
+            "fd_plain_title"
+          ],
+          "status": "unproven",
+          "reason": "caption_structure_unproven",
+          "evidence": {
+            "reason": "runtime_caption_region_or_text_mismatch"
+          }
+        }
+      ]
+    },
+    "warnings": [],
+    "reviewCandidates": []
+  },
+  "digests": {
+    "sourceDraft": ""
+  }
+}

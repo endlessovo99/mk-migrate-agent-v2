@@ -4,6 +4,7 @@ import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js
 import { choiceOtherRevealBindings } from "../../src/dsl/choice-other-reveal.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 import { prepareChoiceOtherRevealConfig } from "../../src/executor/choice-other-reveal-update-plan.js";
+import { readFileSync } from "node:fs";
 
 const fixtures = [
   "tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml",
@@ -12,8 +13,11 @@ const fixtures = [
 ];
 const nodes = n => !n || typeof n !== "object" ? [] : [n, ...(n.children || []).flatMap(nodes)];
 function setup(path) {
-  const form = draftSourceDraft(cleanSourceFile(path)).form;
-  const prior = draftSourceDraft(cleanSourceFile(path));
+  const retained = path === fixtures[0] ? "tests/fixtures/route-validation/choice-other-wrap/retained-legacy-draft.json" :
+    path === fixtures[1] ? "tests/fixtures/route-validation/checkbox-other-compatible/retained-legacy-draft.json" : null;
+  const current = retained ? JSON.parse(readFileSync(retained, "utf8")) : draftSourceDraft(cleanSourceFile(path));
+  const form = current.form;
+  const prior = structuredClone(current);
   for (const field of prior.form.fields) delete field.otherPresentation;
   const prepared = prepareSample(prior), config = xformConfig(prepared.update);
   return { config, form, tableName: prepared.update.fdTableName, pairs: choiceOtherRevealBindings(form) };

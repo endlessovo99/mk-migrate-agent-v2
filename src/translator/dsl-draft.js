@@ -1,4 +1,5 @@
 import { choiceOtherSourceErrors } from "../dsl/source-choice-other-companion.js";
+import { isNativeOtherLabel } from "../dsl/native-other-checkbox.js";
 import { sourceDetailCellLayoutErrors } from "../dsl/source-detail-cell-layout.js";
 import { applyDetailCellPresentation } from "./detail-cell-presentation.js";
 import { inspectSourceSignNode, hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
@@ -87,7 +88,7 @@ function buildSemanticCaptionForm(sourceDraft, choiceOtherBehavior) {
         applyNativeCalculationInferences(
           foldLegacyDetailAddressComposites(
             applyReferencedAddressPropertyContextDefaults(
-              draftForm(sourceDraft.form || {}, sourceDraft.workflow, sourceDraft.scripts, choiceOtherBehavior)
+              draftForm(sourceDraft.form || {}, sourceDraft.workflow, sourceDraft.scripts, choiceOtherBehavior, sourceDraft.formRules)
             )
           ),
           sourceDraft.scripts
@@ -122,8 +123,9 @@ export function draftSourceDraft(sourceDraft, options = {}) {
   const semanticForm = buildSemanticCaptionForm(sourceDraft);
   const behavior = sourceCaptionBehavior(sourceDraft, semanticForm);
   const choiceForm = (sourceDraft.form?.controls || []).some(field =>
-    field.sourceType === "checkbox" && field.sourceProps?.otherTextCompanion?.captionId)
-    ? buildSemanticCaptionForm(sourceDraft, behavior) : semanticForm;
+    ["checkbox", "radio"].includes(field.sourceType) && (field.sourceProps?.otherTextCompanion?.id ||
+      (field.options || []).some(option => isNativeOtherLabel(option.label))))
+    ? buildSemanticCaptionForm(sourceDraft, behavior || { forPair: () => ({ ok: false }) }) : semanticForm;
   const rawForm = foldNativeCaptions(choiceForm, sourceDraft, { decisions: captionDecisions, behavior });
   // A removed presentation entity must not change collision allocation for a
   // business field. Allocate against the complete semantic identity domain.
@@ -815,7 +817,7 @@ function calculationEvidencePreview(source = "") {
   return String(line || source).replace(/\s+/gu, " ").trim().slice(0, 320);
 }
 
-function draftForm(sourceForm, sourceWorkflow, sourceScripts, choiceOtherBehavior) {
+function draftForm(sourceForm, sourceWorkflow, sourceScripts, choiceOtherBehavior, sourceFormRules) {
   const controls = Array.isArray(sourceForm.controls) ? sourceForm.controls : [];
   const detailTables = Array.isArray(sourceForm.detailTables) ? sourceForm.detailTables : [];
   const dataFields = Array.isArray(sourceForm.dataFields) ? sourceForm.dataFields : [];
@@ -825,7 +827,7 @@ function draftForm(sourceForm, sourceWorkflow, sourceScripts, choiceOtherBehavio
     ...dataFields.map(draftDataFieldFromSource)
   ], sourceForm.layout);
   const fields = choiceOtherBehavior === undefined ? addressFields
-    : mapChoiceOtherCompanions(addressFields, sourceScripts, choiceOtherBehavior);
+    : mapChoiceOtherCompanions(addressFields, sourceScripts, choiceOtherBehavior, { workflow: sourceWorkflow, formRules: sourceFormRules });
   const presentationFields = markSharedCaptionRobotOutputsDataOnly(fields, sourceWorkflow);
   const sharedCaptionRecovery = recoverSharedBoundCaptionGroups(
     presentationFields,

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { TRANSFER_RECORD_ENDPOINT_PATH } from "./transfer-record.js";
 import { DETAIL_CELL_PRESENTATION_CAPABILITY } from "../dsl/detail-cell-presentation-capability.js";
+import { NATIVE_OTHER_DISPLAY_CAPABILITY } from "../dsl/native-other-display-capability.js";
 
 export const NEWOA_SIT_BASE_URL = "https://p-sit.onewo.com";
 export const NEWOA_POC_BASE_URL = "http://mkpaaspoc.shanghai-electric.com";
@@ -208,6 +209,23 @@ export class NewoaClient {
       if (bytes.length > 10_000_000) throw new Error("Native detail asset is too large.");
       return createHash("sha256").update(bytes).digest("hex");
     } catch (error) { throw assignClientStage(error, "getDetailCellAssetSha256"); }
+  }
+
+  async getNativeOtherAssetSha256({ assetPath } = {}) {
+    if (!Object.hasOwn(NATIVE_OTHER_DISPLAY_CAPABILITY.assets, assetPath)) {
+      throw clientStageError("getNativeOtherAssetSha256", "unrecognized native Other asset path");
+    }
+    try {
+      const response = await this.fetch(`${this.baseUrl}/web/${assetPath}`, {
+        method: "GET", cache: "no-store", signal: AbortSignal.timeout(25000),
+        headers: { accept: "application/javascript, text/javascript, */*",
+          ...(this.cookie ? { cookie: this.cookie } : {}), ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}) }
+      });
+      if (!response.ok) throw new Error(`Native Other asset failed: ${response.status}`);
+      const bytes = typeof response.arrayBuffer === "function" ? Buffer.from(await response.arrayBuffer()) : Buffer.from(await response.text(), "utf8");
+      if (bytes.length > 10_000_000) throw new Error("Native Other asset is too large.");
+      return createHash("sha256").update(bytes).digest("hex");
+    } catch (error) { throw assignClientStage(error, "getNativeOtherAssetSha256"); }
   }
 
   async generateTableName() {

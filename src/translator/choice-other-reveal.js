@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { choiceOtherRevealBindings } from "../dsl/choice-other-reveal.js";
 import { captionScriptReferences } from "./caption-script-references.js";
+import { choiceOtherBehaviorInputs } from "./choice-other-programs.js";
 
 /** Add target presentation only where source identity and script scope are proved. */
 export function applyChoiceOtherReveal(form, sourceDraft, behavior) {
@@ -10,13 +11,7 @@ export function applyChoiceOtherReveal(form, sourceDraft, behavior) {
   const sourceControls = sourceDraft.form?.controls || [];
   const sourceFields = [...sourceControls, ...(sourceDraft.form?.dataFields || []),
     ...(sourceDraft.form?.detailTables || []).flatMap(table => [table, ...(table.columns || [])])];
-  const behaviorInputs = [
-    ...(sourceDraft.scripts?.sources || []).flatMap(item => [item.javascript, item.helperJavascript]),
-    ...sourceFields.flatMap(field => [
-      ...Object.entries(field.sourceProps?.designerValues || {}).filter(([key]) => /^(?:on|script|function|event)/i.test(key)).map(([, value]) => value),
-      ...((field.sourceProps?.captionStructure?.domContext || field.sourceProps?.staticCaptionFact?.domContext)?.inlineScripts || [])
-    ])
-  ].filter(value => typeof value === "string" && value.trim());
+  const behaviorInputs = choiceOtherBehaviorInputs(sourceDraft.scripts, sourceFields);
   const scripts = [...new Set([...behaviorInputs, ...(sourceDraft.scripts?.fragments || []).map(item => item.content)]
     .filter(value => typeof value === "string" && value.trim()))];
   const knownDigests = new Set(behaviorInputs.map(value => createHash("sha256").update(value.trim()).digest("hex")));
@@ -56,7 +51,7 @@ export function applyChoiceOtherReveal(form, sourceDraft, behavior) {
 }
 
 export function choiceOtherRevealWarnings(form = {}) {
-  return (form.fields || []).filter(field => field.sourceProps?.otherTextCompanion && !field.otherPresentation &&
+  return (form.fields || []).filter(field => field.sourceProps?.otherTextCompanion && !field.otherPresentation && !field.nativeOther &&
     ["xform-checkbox", "xform-radio", "xform-select"].includes(field.componentId) && field.dataOnly !== true)
     .map(field => ({
       level: "warning", code: "source.form.choice_other_reveal_needs_manual", path: "/form",

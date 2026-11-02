@@ -608,6 +608,11 @@ function observeExecutableProps(controlProps = {}, native = {}) {
     props.rowOptions = observeNativeDetailRowOptions(controlProps);
   }
   if (controlProps.multi === true) props.multi = true;
+  if (["xform-checkbox", "xform-radio"].includes(component) && Array.isArray(controlProps.options) &&
+      controlProps.options.some(option => option?.type === "other" && option?.value === "other_")) {
+    props.nativeOtherStorage = { type: native.field?.fdType, dataType: native.field?.fdDataType,
+      dictType: native.field?.fdDictType, length: native.field?.fdLength };
+  }
   if (native.field?.fdType === "hyperlinks" || controlProps.desktop?.type === "@elem/xform-hyperlinks") {
     if (controlProps.largestSet !== undefined) props.largestSet = controlProps.largestSet;
     if (typeof controlProps.editable === "boolean") props.editable = controlProps.editable;

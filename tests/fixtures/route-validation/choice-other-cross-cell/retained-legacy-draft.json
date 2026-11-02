@@ -1,0 +1,698 @@
+{
+  "version": "2.0-migration",
+  "artifact": "dsl-draft",
+  "derivedFrom": {
+    "sourceDraftVersion": "2.0-source-draft",
+    "sourceId": "cross-cell-other-model"
+  },
+  "catalogs": {
+    "components": {
+      "id": "mk-components",
+      "version": "2026-10-25.v19"
+    },
+    "controlEvents": {
+      "id": "mk-control-events",
+      "version": "2026-10-25.v1"
+    },
+    "functions": {
+      "id": "mk-functions",
+      "version": "2026-07-09.v3"
+    },
+    "jsMethods": {
+      "id": "mk-js-methods",
+      "version": "2026-10-17.v3"
+    },
+    "targetApis": {
+      "id": "mk-js-snippets",
+      "version": "2026-10-23.v1"
+    }
+  },
+  "validationPolicy": {
+    "id": "migration-validation-policy",
+    "version": "2026-07-06.v1"
+  },
+  "trust": {
+    "level": "draft",
+    "executable": false,
+    "model": {
+      "mode": "none",
+      "reason": "The first version reserves target mapping for external Codex Agent trust."
+    }
+  },
+  "template": {
+    "name": "Cross-cell Other",
+    "categoryPath": "",
+    "sourceRef": "cross-cell-other-model"
+  },
+  "form": {
+    "fields": [
+      {
+        "id": "fd_choice",
+        "title": "需提供的相关资质复印件",
+        "type": "checkbox",
+        "componentId": "xform-checkbox",
+        "props": {
+          "required": false,
+          "options": [
+            {
+              "label": "营业执照",
+              "value": "A"
+            },
+            {
+              "label": "法人身份证",
+              "value": "B"
+            }
+          ]
+        },
+        "sourceProps": {
+          "designerId": "fd_choice",
+          "designerType": "inputCheckbox",
+          "designerValues": {
+            "id": "fd_choice",
+            "label": "需提供的相关资质复印件",
+            "_label_bind": "true",
+            "_label_bind_id": "fd_title",
+            "alignment": "H",
+            "dataType": "String",
+            "items": "营业执照|A\r\n法人身份证|B",
+            "required": "false"
+          },
+          "boundCaption": {
+            "id": "fd_title",
+            "content": "需提供的相关资质复印件",
+            "relation": "explicit-label-bind-id"
+          },
+          "layoutCell": {
+            "hiddenLabel": true,
+            "relation": "independent-bound-title-cell",
+            "captionIds": [
+              "fd_title"
+            ]
+          },
+          "otherTextCompanion": {
+            "id": "fd_other_text",
+            "captionId": "fd_other_caption",
+            "caption": "其他资质复印件",
+            "otherRequired": false,
+            "crossCell": {
+              "version": 1,
+              "rowId": "row-0",
+              "choiceCellId": "row-0-cell-1",
+              "captionCellId": "row-0-cell-2",
+              "textCellId": "row-0-cell-3"
+            }
+          },
+          "otherPairContext": {
+            "version": 1,
+            "crossCell": true,
+            "ancestorIds": [
+              "fd_choice",
+              "layout",
+              "fd_other_caption",
+              "fd_other_text"
+            ],
+            "cellDescendantIds": [
+              "fd_choice",
+              "fd_other_caption",
+              "fd_other_text"
+            ],
+            "pairDescendantIds": [
+              "fd_choice",
+              "fd_other_caption",
+              "fd_other_text"
+            ],
+            "inlineScriptDigests": [],
+            "inlineDomainComplete": true
+          },
+          "metadataId": "fd_choice",
+          "metadataKind": "simple",
+          "metadataAttributes": {
+            "name": "fd_choice",
+            "label": "需提供的相关资质复印件",
+            "type": "String",
+            "enumValues": "营业执照|A;法人身份证|B",
+            "kind": "simple"
+          },
+          "mainStringValueBindingFact": {
+            "version": 1,
+            "status": "unproven",
+            "fieldId": "fd_choice",
+            "sourceHashes": {
+              "fdDesignerHtml": "41ef91dc37b994dfb61815ce2e2ed9031d48ef53f87f6160607033a0b04ea7ee",
+              "fdDisplayJsp": "29966a301f36822287f30910d249014924c11d3934e06f58cd9180b84829cba6",
+              "fdMetadataXml": "e8b7bf2590a6d49d07b427eda5e11a84789e66a14a61c90fa25ca567c90c2f1b"
+            },
+            "metadata": {
+              "count": 1,
+              "type": "String",
+              "declarations": [
+                {
+                  "kind": "extendsimpleproperty",
+                  "type": "String",
+                  "start": 10,
+                  "end": 112
+                }
+              ]
+            },
+            "surfaces": {
+              "designer": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_choice",
+                    "kind": "designer-widget",
+                    "start": 201,
+                    "end": 399,
+                    "hidden": false,
+                    "issues": [
+                      "widget_does_not_have_one_input",
+                      "widget_input_identity_unproven",
+                      "widget_not_static_String_inputText"
+                    ]
+                  }
+                ],
+                "issues": [
+                  "widget_does_not_have_one_input",
+                  "widget_input_identity_unproven",
+                  "widget_not_static_String_inputText"
+                ]
+              },
+              "display": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_choice",
+                    "kind": "runtime-renderer",
+                    "start": 114,
+                    "end": 178,
+                    "hidden": false,
+                    "issues": [
+                      "binding_renderer_not_single_String_input"
+                    ]
+                  }
+                ],
+                "issues": [
+                  "binding_renderer_not_single_String_input"
+                ]
+              }
+            },
+            "reasons": [
+              "designer_binding_not_hidden",
+              "designer_binding_domain_unproven",
+              "display_binding_not_hidden",
+              "display_binding_domain_unproven"
+            ]
+          },
+          "foldedCaption": {
+            "id": "fd_title",
+            "sourceRef": "source.form.control.fd_title",
+            "content": "需提供的相关资质复印件",
+            "captionCellSourceRef": "source.form.layout.cell.row-0-cell-0",
+            "fieldCellSourceRef": "source.form.layout.cell.row-0-cell-1",
+            "referenceMap": {
+              "sourceLabelId": "fd_title",
+              "fieldId": "fd_choice",
+              "part": "title",
+              "formerControlId": "fd_title",
+              "sourceRowRef": "source.form.layout.row.row-0"
+            },
+            "behavior": {
+              "version": 1,
+              "proofMode": "mapped-statements-and-residual-impact",
+              "regionMappings": [],
+              "coveredSourceStatements": [],
+              "residualImpact": {
+                "presentationTargets": [],
+                "dataTargets": [],
+                "rowRegions": [],
+                "parentReads": []
+              }
+            }
+          }
+        },
+        "sourceRef": "source.form.control.fd_choice",
+        "generated": false,
+        "otherPresentation": {
+          "version": 1,
+          "mode": "reveal-on-selection",
+          "textSourceRef": "source.form.control.fd_other_text",
+          "triggerSourceRef": "source.form.control.fd_other_caption",
+          "optionValue": "selected"
+        }
+      },
+      {
+        "id": "fd_other_caption",
+        "title": "其他资质复印件",
+        "type": "checkbox",
+        "componentId": "xform-checkbox",
+        "props": {
+          "options": [
+            {
+              "label": "其他资质复印件",
+              "value": "selected"
+            }
+          ],
+          "hiddenLabel": true,
+          "required": false
+        },
+        "sourceProps": {
+          "designerId": "fd_other_caption",
+          "designerType": "textLabel",
+          "designerValues": {
+            "id": "fd_other_caption",
+            "content": "其他资质复印件"
+          },
+          "runtimePlainCaption": true,
+          "staticCaptionFact": {
+            "plainText": true,
+            "unique": true,
+            "unguarded": true,
+            "content": "其他资质复印件",
+            "runtimePresent": true,
+            "runtimeOwnerId": "fd_other_text",
+            "domContext": {
+              "ancestorIds": [
+                "fd_other_caption",
+                "layout"
+              ],
+              "cellDescendantIds": [
+                "fd_other_caption",
+                "fd_other_text"
+              ],
+              "pairDescendantIds": [
+                "fd_other_caption",
+                "fd_other_text"
+              ],
+              "version": 1,
+              "inlineScripts": [],
+              "inlineDomainComplete": true
+            }
+          },
+          "captionStructure": {
+            "version": 1,
+            "relation": "one-to-one-field-caption",
+            "ownerId": "fd_other_text",
+            "content": "其他资质复印件",
+            "plainText": true,
+            "unique": true,
+            "unguarded": true,
+            "bindingFlag": "true",
+            "runtimeRenderer": "xform:xtext",
+            "designerOffset": 435,
+            "ownerOffset": 581,
+            "permission": [],
+            "domContext": {
+              "ancestorIds": [
+                "fd_other_caption",
+                "layout"
+              ],
+              "cellDescendantIds": [
+                "fd_other_caption",
+                "fd_other_text"
+              ],
+              "pairDescendantIds": [
+                "fd_other_caption",
+                "fd_other_text"
+              ],
+              "version": 1,
+              "inlineScripts": [],
+              "inlineDomainComplete": true
+            }
+          },
+          "choiceOtherToggle": {
+            "version": 1,
+            "choiceSourceRef": "source.form.control.fd_choice",
+            "textSourceRef": "source.form.control.fd_other_text"
+          }
+        },
+        "sourceRef": "source.form.control.fd_other_caption",
+        "generated": true,
+        "reason": "The source Other caption becomes a separately stored native checkbox; original choice codes and explanation text remain unchanged."
+      },
+      {
+        "id": "fd_other_text",
+        "title": "其他资质复印件",
+        "type": "text",
+        "componentId": "xform-input",
+        "props": {
+          "hiddenLabel": true,
+          "required": false,
+          "defaultValue": {
+            "kind": "literal",
+            "value": "seed_under_score"
+          }
+        },
+        "sourceProps": {
+          "designerId": "fd_other_text",
+          "designerType": "inputText",
+          "designerValues": {
+            "id": "fd_other_text",
+            "label": "其他资质复印件",
+            "_label_bind": "true",
+            "_label_bind_id": "fd_other_caption",
+            "dataType": "String",
+            "required": "false",
+            "readOnly": "false",
+            "defaultValue": "seed_under_score"
+          },
+          "boundCaption": {
+            "id": "fd_other_caption",
+            "content": "其他资质复印件",
+            "relation": "explicit-label-bind-id"
+          },
+          "layoutCell": {
+            "hiddenLabel": true,
+            "relation": "independent-bound-title-cell",
+            "captionIds": [
+              "fd_other_caption"
+            ]
+          },
+          "metadataId": "fd_other_text",
+          "metadataKind": "simple",
+          "metadataAttributes": {
+            "name": "fd_other_text",
+            "label": "其他资质复印件",
+            "type": "String",
+            "defaultValue": "seed_under_score",
+            "kind": "simple"
+          },
+          "mainStringValueBindingFact": {
+            "version": 1,
+            "status": "unproven",
+            "fieldId": "fd_other_text",
+            "sourceHashes": {
+              "fdDesignerHtml": "41ef91dc37b994dfb61815ce2e2ed9031d48ef53f87f6160607033a0b04ea7ee",
+              "fdDisplayJsp": "29966a301f36822287f30910d249014924c11d3934e06f58cd9180b84829cba6",
+              "fdMetadataXml": "e8b7bf2590a6d49d07b427eda5e11a84789e66a14a61c90fa25ca567c90c2f1b"
+            },
+            "metadata": {
+              "count": 1,
+              "type": "String",
+              "declarations": [
+                {
+                  "kind": "extendsimpleproperty",
+                  "type": "String",
+                  "start": 112,
+                  "end": 218
+                }
+              ]
+            },
+            "surfaces": {
+              "designer": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_other_text",
+                    "kind": "designer-widget",
+                    "start": 581,
+                    "end": 831,
+                    "hidden": false,
+                    "issues": []
+                  }
+                ],
+                "issues": []
+              },
+              "display": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_other_text",
+                    "kind": "runtime-renderer",
+                    "start": 278,
+                    "end": 360,
+                    "hidden": false,
+                    "issues": []
+                  }
+                ],
+                "issues": []
+              }
+            },
+            "reasons": [
+              "designer_binding_not_hidden",
+              "display_binding_not_hidden"
+            ]
+          }
+        },
+        "sourceRef": "source.form.control.fd_other_text",
+        "generated": false
+      }
+    ],
+    "layout": {
+      "sourceGrid": {
+        "source": "fdDesignerHtml",
+        "rootTable": {
+          "version": 1,
+          "kind": "standard-table",
+          "rowCount": 1
+        },
+        "rows": [
+          {
+            "id": "row-0",
+            "sourceRef": "source.form.layout.row.row-0",
+            "sourceRow": "0",
+            "preserveSourceGeometry": true,
+            "columns": 4,
+            "cells": [
+              {
+                "id": "row-0-cell-0",
+                "sourceRef": "source.form.layout.cell.row-0-cell-0",
+                "column": 0,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_title",
+                    "sourceRef": "source.form.control.fd_title"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_title"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_title"
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "0",
+                  "column": 0,
+                  "colspan": 1
+                }
+              },
+              {
+                "id": "row-0-cell-1",
+                "sourceRef": "source.form.layout.cell.row-0-cell-1",
+                "column": 1,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_choice",
+                    "sourceRef": "source.form.control.fd_choice"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_choice"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_choice"
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "0",
+                  "column": 1,
+                  "colspan": 1
+                }
+              },
+              {
+                "id": "row-0-cell-2",
+                "sourceRef": "source.form.layout.cell.row-0-cell-2",
+                "column": 2,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_other_caption",
+                    "sourceRef": "source.form.control.fd_other_caption"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_other_caption"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_other_caption"
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "0",
+                  "column": 2,
+                  "colspan": 1
+                }
+              },
+              {
+                "id": "row-0-cell-3",
+                "sourceRef": "source.form.layout.cell.row-0-cell-3",
+                "column": 3,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_other_text",
+                    "sourceRef": "source.form.control.fd_other_text"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_other_text"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_other_text"
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "0",
+                  "column": 3,
+                  "colspan": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "mkTree": [
+        {
+          "id": "layout.row-0",
+          "componentId": "xform-flex-1-4-layout",
+          "props": {
+            "columns": 4,
+            "sourceColumns": 4
+          },
+          "sourceRef": "source.form.layout.row.row-0",
+          "children": [
+            {
+              "id": "layout.row-0-cell-1",
+              "refType": "field",
+              "refIds": [
+                "fd_choice"
+              ],
+              "sourceRef": "source.form.layout.cell.row-0-cell-1",
+              "column": 0,
+              "colspan": 2,
+              "contentFlow": {
+                "lines": [
+                  [
+                    "fd_choice"
+                  ]
+                ],
+                "items": [
+                  {
+                    "referenceId": "fd_choice"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "layout.row-0-cell-2",
+              "refType": "field",
+              "refIds": [
+                "fd_other_caption"
+              ],
+              "sourceRef": "source.form.layout.cell.row-0-cell-2",
+              "column": 2,
+              "colspan": 1,
+              "contentFlow": {
+                "lines": [
+                  [
+                    "fd_other_caption"
+                  ]
+                ],
+                "items": [
+                  {
+                    "referenceId": "fd_other_caption"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "layout.row-0-cell-3",
+              "refType": "field",
+              "refIds": [
+                "fd_other_text"
+              ],
+              "sourceRef": "source.form.layout.cell.row-0-cell-3",
+              "column": 3,
+              "colspan": 1,
+              "contentFlow": {
+                "lines": [
+                  [
+                    "fd_other_text"
+                  ]
+                ],
+                "items": [
+                  {
+                    "referenceId": "fd_other_text"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "sizing": "adaptive"
+    }
+  },
+  "review": {
+    "captionFolding": {
+      "version": 1,
+      "decisions": [
+        {
+          "fieldId": "fd_choice",
+          "sourceRef": "source.form.control.fd_choice",
+          "title": "需提供的相关资质复印件",
+          "captionIds": [
+            "fd_title"
+          ],
+          "status": "folded",
+          "reason": "unique_plain_caption"
+        },
+        {
+          "fieldId": "fd_other_text",
+          "sourceRef": "source.form.control.fd_other_text",
+          "title": "其他资质复印件",
+          "captionIds": [
+            "fd_other_caption"
+          ],
+          "status": "preserved",
+          "reason": "caption_presentation_protected"
+        }
+      ]
+    },
+    "warnings": [],
+    "reviewCandidates": []
+  },
+  "digests": {
+    "sourceDraft": ""
+  }
+}

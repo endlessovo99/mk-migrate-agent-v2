@@ -24,9 +24,9 @@ export async function inspectDetailCellPresentationRuntime(client, baseUrl, { sd
   }
 }
 
-export function inspectRegistry(source) {
+export function inspectRegistry(source, wanted = contract.releases) {
   if (typeof source !== "string" || source.length > 10_000_000) throw new Error("Invalid native element registry.");
-  const ast = parse(source, { ecmaVersion: "latest" }), found = new Map(), wanted = contract.releases;
+  const ast = parse(source, { ecmaVersion: "latest" }), found = new Map();
   let assignments = 0, references = 0;
   const member = (node, name) => node?.type === "MemberExpression" &&
     (node.computed ? node.property?.type === "Literal" && node.property.value === name : node.property?.type === "Identifier" && node.property.name === name);

@@ -1,4 +1,5 @@
 import { canonicalJson } from "../agent-review/digest.js";
+import { isNativeOtherLabel } from "./native-other-checkbox.js";
 
 /** Only the source-bound choice/explanation presentation needs this extra check. */
 export function choiceOtherStorageExpectation(field, form = {}) {
@@ -38,8 +39,20 @@ export function choiceOtherSourceErrors(sourceForm = {}, expectedForm) {
       "The source choice/text association must retain one independent text field in the same scope."));
     if (pair.tableRef && !supportedDetailPair(pair, expectedForm)) errors.push(error("choice_other_detail_layout_unproven",
       "A source detail cell with choice and independent text has no proven equivalent native compound-column contract."));
+    if (!pair.tableRef && ["checkbox", "radio"].includes(pair.choice.sourceType) && (pair.caption || pair.choice.sourceProps.otherTextCompanion.optionValue !== undefined) &&
+        pair.choice.sourceProps?.hardHidden !== true && expectedForm &&
+        !(expectedForm.fields || []).some(field => field.sourceRef === pair.choice.sourceRef && field.nativeOther)) {
+      errors.push(error("native_other_checkbox_unproven", "This source Other pair cannot safely be mapped to MK's native Other option."));
+    }
     return errors;
-  }).concat(visibleSourceChoices(sourceForm).filter(field =>
+  }).concat(visibleSourceChoices(sourceForm).filter(field => !field.sourceProps?.otherTextCompanion &&
+    (field.options || []).some(option => isNativeOtherLabel(option.label)) && expectedForm &&
+    !(expectedForm.fields || []).some(target => target.sourceRef === field.sourceRef && target.nativeOther)
+  ).map(field => ({
+    code: "source.form.native_other_option_unproven",
+    message: "A standalone source Other option requires a proved native MK projection.",
+    path: "/form", details: { sourceRef: field.sourceRef, fieldId: field.id }
+  }))).concat(visibleSourceChoices(sourceForm).filter(field =>
     (field.options || []).some(option => option.value === "other_")
   ).map(field => ({
     code: "source.form.choice_other_reserved_value_unproven",
@@ -61,6 +74,24 @@ export function choiceOtherCompanionDiagnostics(sourceForm, targetForm, expected
     ? (field.columns || []).map(column => ({ field: column, tableRef: field.sourceRef || field.id }))
     : [{ field }]);
   const expectedFields = flatten(expectedForm), actualFields = flatten(targetForm);
+  for (const entry of expectedFields.filter(item => item.field?.nativeOther !== undefined)) {
+    const actual = actualFields.filter(item => item.field?.sourceRef === entry.field.sourceRef);
+    if (entry.tableRef || actual.length !== 1 || actual[0].tableRef ||
+        canonicalJson(fieldSemantics(actual[0].field)) !== canonicalJson(fieldSemantics(entry.field))) {
+      diagnostics.push({ level: "error", code: `${prefix}.native_other_source_mismatch`,
+        message: "Every source-derived native Other choice must remain present with its complete fixed semantics.", path: "/form",
+        details: { fieldId: entry.field.id, sourceRef: entry.field.sourceRef } });
+    }
+  }
+  for (const entry of actualFields.filter(item => item.field?.nativeOther !== undefined)) {
+    const expected = expectedFields.filter(item => item.field?.sourceRef === entry.field.sourceRef);
+    if (entry.tableRef || expected.length !== 1 || expected[0].tableRef ||
+        canonicalJson(fieldSemantics(entry.field)) !== canonicalJson(fieldSemantics(expected[0].field))) {
+      diagnostics.push({ level: "error", code: `${prefix}.native_other_source_mismatch`,
+        message: "Native Other choice identity, options, permissions and mapping must match the source-derived translator result.", path: "/form",
+        details: { fieldId: entry.field.id, sourceRef: entry.field.sourceRef } });
+    }
+  }
   // Older retained DSLs have no reveal policy. An opted-in policy must match
   // the source-derived translator result exactly; it cannot be added by a
   // review patch or moved to a different field.
@@ -122,7 +153,7 @@ function fieldSemantics(field) {
   const props = { ...(field?.props || {}) };
   for (const key of ["required", "readOnly", "hiddenLabel"]) if (props[key] === false) delete props[key];
   return { id: field?.id, title: field?.title, type: field?.type, componentId: field?.componentId, sourceRef: field?.sourceRef,
-    dataOnly: field?.dataOnly === true, props, sourceProps: field?.sourceProps };
+    dataOnly: field?.dataOnly === true, props, sourceProps: field?.sourceProps, nativeOther: field?.nativeOther };
 }
 
 function presentation(form, ids) {

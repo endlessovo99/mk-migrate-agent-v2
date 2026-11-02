@@ -1,0 +1,546 @@
+{
+  "version": "2.0-migration",
+  "artifact": "dsl-draft",
+  "derivedFrom": {
+    "sourceDraftVersion": "2.0-source-draft",
+    "sourceId": "independent-other-wrap-model"
+  },
+  "catalogs": {
+    "components": {
+      "id": "mk-components",
+      "version": "2026-10-25.v19"
+    },
+    "controlEvents": {
+      "id": "mk-control-events",
+      "version": "2026-10-25.v1"
+    },
+    "functions": {
+      "id": "mk-functions",
+      "version": "2026-07-09.v3"
+    },
+    "jsMethods": {
+      "id": "mk-js-methods",
+      "version": "2026-10-17.v3"
+    },
+    "targetApis": {
+      "id": "mk-js-snippets",
+      "version": "2026-10-23.v1"
+    }
+  },
+  "validationPolicy": {
+    "id": "migration-validation-policy",
+    "version": "2026-07-06.v1"
+  },
+  "trust": {
+    "level": "draft",
+    "executable": false,
+    "model": {
+      "mode": "none",
+      "reason": "The first version reserves target mapping for external Codex Agent trust."
+    }
+  },
+  "template": {
+    "name": "Synthetic independent Other wrapping",
+    "categoryPath": "",
+    "sourceRef": "independent-other-wrap-model"
+  },
+  "form": {
+    "fields": [
+      {
+        "id": "fd_title",
+        "title": "申请类型",
+        "type": "description",
+        "componentId": "xform-description",
+        "props": {
+          "content": "申请类型"
+        },
+        "sourceProps": {
+          "designerId": "fd_title",
+          "designerType": "textLabel",
+          "designerValues": {
+            "id": "fd_title",
+            "content": "申请类型"
+          },
+          "captionStructureIssue": {
+            "reason": "value_cell_has_multiple_or_missing_editors",
+            "editorCount": 2,
+            "editors": [
+              {
+                "id": "fd_kind",
+                "type": "inputCheckbox"
+              },
+              {
+                "id": "fd_note",
+                "type": "inputText"
+              }
+            ]
+          },
+          "staticCaptionIssue": {
+            "reason": "runtime_caption_mismatch"
+          }
+        },
+        "sourceRef": "source.form.control.fd_title",
+        "generated": false
+      },
+      {
+        "id": "fd_kind",
+        "title": "申请类型",
+        "type": "checkbox",
+        "componentId": "xform-checkbox",
+        "props": {
+          "hiddenLabel": true,
+          "required": false,
+          "options": [
+            {
+              "label": "普通用途甲",
+              "value": "A"
+            },
+            {
+              "label": "法定代表人亲笔签字",
+              "value": "B"
+            },
+            {
+              "label": "部门事项",
+              "value": "C"
+            },
+            {
+              "label": "财务事项",
+              "value": "D"
+            },
+            {
+              "label": "其他",
+              "value": "OT"
+            }
+          ]
+        },
+        "sourceProps": {
+          "designerId": "fd_kind",
+          "designerType": "inputCheckbox",
+          "designerValues": {
+            "id": "fd_kind",
+            "label": "申请类型",
+            "_label_bind": "true",
+            "_label_bind_id": "fd_title",
+            "alignment": "H",
+            "dataType": "String",
+            "items": "普通用途甲|A\r\n法定代表人亲笔签字|B\r\n部门事项|C\r\n财务事项|D\r\n其他|OT",
+            "required": "false"
+          },
+          "layoutCell": {
+            "hiddenLabel": true,
+            "relation": "independent-bound-title-cell",
+            "captionIds": [
+              "fd_title"
+            ]
+          },
+          "otherTextCompanion": {
+            "id": "fd_note",
+            "otherRequired": false,
+            "optionValue": "OT",
+            "optionLabel": "其他"
+          },
+          "metadataId": "fd_kind",
+          "metadataKind": "simple",
+          "metadataAttributes": {
+            "name": "fd_kind",
+            "label": "申请类型",
+            "type": "String",
+            "enumValues": "普通用途甲|A;法定代表人亲笔签字|B;部门事项|C;财务事项|D;其他|OT",
+            "kind": "simple"
+          },
+          "mainStringValueBindingFact": {
+            "version": 1,
+            "status": "unproven",
+            "fieldId": "fd_kind",
+            "sourceHashes": {
+              "fdDesignerHtml": "a9f5358568d180a434bdb217f849ef4f05b856893bd7d2cd2be3e810ae880eca",
+              "fdDisplayJsp": "67bd654a9824380e8c2ddd8f440d5e4f7b0738cd1683d9627cdc5ffe222dd45d",
+              "fdMetadataXml": "13e16ea9b81705849cf8924279c9ec72d3d2ffc10fe5bb24f6798ba1fb084b36"
+            },
+            "metadata": {
+              "count": 1,
+              "type": "String",
+              "declarations": [
+                {
+                  "kind": "extendsimpleproperty",
+                  "type": "String",
+                  "start": 10,
+                  "end": 128
+                }
+              ]
+            },
+            "surfaces": {
+              "designer": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_kind",
+                    "kind": "designer-widget",
+                    "start": 187,
+                    "end": 404,
+                    "hidden": false,
+                    "issues": [
+                      "widget_does_not_have_one_input",
+                      "widget_input_identity_unproven",
+                      "widget_not_static_String_inputText"
+                    ]
+                  }
+                ],
+                "issues": [
+                  "widget_does_not_have_one_input",
+                  "widget_input_identity_unproven",
+                  "widget_not_static_String_inputText"
+                ]
+              },
+              "display": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_kind",
+                    "kind": "runtime-renderer",
+                    "start": 28,
+                    "end": 103,
+                    "hidden": false,
+                    "issues": [
+                      "binding_renderer_not_single_String_input"
+                    ]
+                  }
+                ],
+                "issues": [
+                  "unknown_rendering_tag",
+                  "binding_renderer_not_single_String_input"
+                ]
+              }
+            },
+            "reasons": [
+              "designer_binding_not_hidden",
+              "designer_binding_domain_unproven",
+              "display_binding_not_hidden",
+              "display_binding_domain_unproven"
+            ]
+          },
+          "sharedBoundCaption": {
+            "id": "fd_title"
+          }
+        },
+        "sourceRef": "source.form.control.fd_kind",
+        "generated": false,
+        "otherPresentation": {
+          "version": 1,
+          "mode": "reveal-on-selection",
+          "textSourceRef": "source.form.control.fd_note",
+          "triggerSourceRef": "source.form.control.fd_kind",
+          "optionValue": "OT"
+        }
+      },
+      {
+        "id": "fd_note",
+        "title": "其他申请类型",
+        "type": "text",
+        "componentId": "xform-input",
+        "props": {
+          "hiddenLabel": true,
+          "required": false,
+          "defaultValue": {
+            "kind": "literal",
+            "value": "  seed_under_score🙂  "
+          }
+        },
+        "sourceProps": {
+          "designerId": "fd_note",
+          "designerType": "inputText",
+          "designerValues": {
+            "id": "fd_note",
+            "label": "其他申请类型",
+            "_label_bind": "false",
+            "_label_bind_id": "fd_title",
+            "width": "120",
+            "dataType": "String",
+            "required": "false",
+            "defaultValue": "  seed_under_score🙂  "
+          },
+          "layoutCell": {
+            "hiddenLabel": true,
+            "relation": "retained-source-caption",
+            "captionIds": [
+              "fd_title"
+            ],
+            "renderer": "xform:xtext",
+            "sourceRef": "source.form.fdDisplayJsp"
+          },
+          "metadataId": "fd_note",
+          "metadataKind": "simple",
+          "metadataAttributes": {
+            "name": "fd_note",
+            "label": "其他申请类型",
+            "type": "String",
+            "defaultValue": "  seed_under_score🙂  ",
+            "kind": "simple"
+          },
+          "mainStringValueBindingFact": {
+            "version": 1,
+            "status": "unproven",
+            "fieldId": "fd_note",
+            "sourceHashes": {
+              "fdDesignerHtml": "a9f5358568d180a434bdb217f849ef4f05b856893bd7d2cd2be3e810ae880eca",
+              "fdDisplayJsp": "67bd654a9824380e8c2ddd8f440d5e4f7b0738cd1683d9627cdc5ffe222dd45d",
+              "fdMetadataXml": "13e16ea9b81705849cf8924279c9ec72d3d2ffc10fe5bb24f6798ba1fb084b36"
+            },
+            "metadata": {
+              "count": 1,
+              "type": "String",
+              "declarations": [
+                {
+                  "kind": "extendsimpleproperty",
+                  "type": "String",
+                  "start": 128,
+                  "end": 233
+                }
+              ]
+            },
+            "surfaces": {
+              "designer": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_note",
+                    "kind": "designer-widget",
+                    "start": 412,
+                    "end": 678,
+                    "hidden": false,
+                    "issues": []
+                  }
+                ],
+                "issues": []
+              },
+              "display": {
+                "logicalBindingCount": 1,
+                "hiddenBindingCount": 0,
+                "bindings": [
+                  {
+                    "fieldId": "fd_note",
+                    "kind": "runtime-renderer",
+                    "start": 440,
+                    "end": 519,
+                    "hidden": false,
+                    "issues": []
+                  }
+                ],
+                "issues": [
+                  "unknown_rendering_tag"
+                ]
+              }
+            },
+            "reasons": [
+              "designer_binding_not_hidden",
+              "display_binding_not_hidden",
+              "display_binding_domain_unproven"
+            ]
+          },
+          "sharedBoundCaption": {
+            "id": "fd_title"
+          }
+        },
+        "sourceRef": "source.form.control.fd_note",
+        "generated": false
+      }
+    ],
+    "layout": {
+      "sourceGrid": {
+        "source": "fdDesignerHtml",
+        "rootTable": {
+          "version": 1,
+          "kind": "standard-table",
+          "rowCount": 1
+        },
+        "rows": [
+          {
+            "id": "row-0",
+            "sourceRef": "source.form.layout.row.row-0",
+            "sourceRow": "0",
+            "preserveSourceGeometry": true,
+            "columns": 2,
+            "cells": [
+              {
+                "id": "row-0-cell-0",
+                "sourceRef": "source.form.layout.cell.row-0-cell-0",
+                "column": 0,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_title",
+                    "sourceRef": "source.form.control.fd_title"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_title"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_title"
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "0",
+                  "column": 0,
+                  "colspan": 1
+                }
+              },
+              {
+                "id": "row-0-cell-1",
+                "sourceRef": "source.form.layout.cell.row-0-cell-1",
+                "column": 1,
+                "colspan": 1,
+                "references": [
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_kind",
+                    "sourceRef": "source.form.control.fd_kind"
+                  },
+                  {
+                    "referenceType": "control",
+                    "referenceId": "fd_note",
+                    "sourceRef": "source.form.control.fd_note"
+                  }
+                ],
+                "contentFlow": {
+                  "lines": [
+                    [
+                      "fd_kind",
+                      "fd_note"
+                    ]
+                  ],
+                  "items": [
+                    {
+                      "referenceId": "fd_kind"
+                    },
+                    {
+                      "referenceId": "fd_note",
+                      "width": {
+                        "value": 120,
+                        "unit": "px"
+                      }
+                    }
+                  ]
+                },
+                "evidence": {
+                  "row": "0",
+                  "column": 1,
+                  "colspan": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "mkTree": [
+        {
+          "id": "layout.row-0",
+          "componentId": "xform-flex-1-2-layout",
+          "props": {
+            "columns": 2,
+            "sourceColumns": 2
+          },
+          "sourceRef": "source.form.layout.row.row-0",
+          "children": [
+            {
+              "id": "layout.row-0-cell-0",
+              "refType": "field",
+              "refIds": [
+                "fd_title"
+              ],
+              "sourceRef": "source.form.layout.cell.row-0-cell-0",
+              "column": 0,
+              "colspan": 1,
+              "contentFlow": {
+                "lines": [
+                  [
+                    "fd_title"
+                  ]
+                ],
+                "items": [
+                  {
+                    "referenceId": "fd_title"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "layout.row-0-cell-1",
+              "refType": "field",
+              "refIds": [
+                "fd_kind",
+                "fd_note"
+              ],
+              "sourceRef": "source.form.layout.cell.row-0-cell-1",
+              "column": 1,
+              "colspan": 1,
+              "keepInline": true,
+              "contentFlow": {
+                "lines": [
+                  [
+                    "fd_kind",
+                    "fd_note"
+                  ]
+                ],
+                "items": [
+                  {
+                    "referenceId": "fd_kind"
+                  },
+                  {
+                    "referenceId": "fd_note",
+                    "width": {
+                      "value": 120,
+                      "unit": "px"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "sizing": "adaptive"
+    }
+  },
+  "review": {
+    "captionFolding": {
+      "version": 1,
+      "decisions": [
+        {
+          "fieldId": "fd_kind",
+          "sourceRef": "source.form.control.fd_kind",
+          "title": "申请类型",
+          "captionIds": [
+            "fd_title"
+          ],
+          "status": "preserved",
+          "reason": "shared_caption"
+        },
+        {
+          "fieldId": "fd_note",
+          "sourceRef": "source.form.control.fd_note",
+          "title": "其他申请类型",
+          "captionIds": [
+            "fd_title"
+          ],
+          "status": "preserved",
+          "reason": "shared_caption"
+        }
+      ]
+    },
+    "warnings": [],
+    "reviewCandidates": []
+  },
+  "digests": {
+    "sourceDraft": ""
+  }
+}

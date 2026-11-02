@@ -67,23 +67,25 @@ function flowLines(form, id) {
   assert.equal(found.length, 1, "The source control must have one unambiguous content-flow cell");
   return found[0];
 }
-it("preserves ordinary choice codes and independent Other text with the original line topology", () => {
+it("preserves ordinary choice codes and projects Other inside each checkbox", () => {
   const { source, draft } = stages(), p = prepareSample(draft);
   for (const id of ["fd_append", "fd_break", "fd_replace"]) {
     const original = source.form.controls.find(f => f.id === id);
     assert.equal(original.options.length, 3);
-    assert.deepEqual(field(draft, id).props.options, original.options);
-    assert.ok(field(draft, id).props.options.every(option => option.type !== "other"));
-    assert.notEqual(field(draft, id + "_text").dataOnly, true);
+    const options = field(draft, id).props.options;
+    assert.deepEqual(options.slice(0, -1), original.options.filter(option => option.label !== "其他"));
+    assert.equal(options.at(-1).type, "other");
+    assert.equal(options.at(-1).value, "other_");
+    assert.equal(field(draft, id + "_text").dataOnly, true);
     const native = xformConfig(p.update).dataModel.flatMap(model => model.fdFields || []).find(f => f.fdName === id + "_text");
-    assert.equal(native.fdDisplay, true);
+    assert.equal(native.fdDisplay, false);
     assert.equal(native.fdIsStored, true);
     assert.deepEqual(flowLines(draft.form, id), flowLines(source.form, id));
   }
   for (const platform of ["desktop", "mobile"]) {
-    assert.deepEqual(logicalRows(nativeField(p.update, "fd_append"), platform), [["v0", "v1", "v2"]]);
-    assert.deepEqual(logicalRows(nativeField(p.update, "fd_break"), platform), [["v0", "v1", "v2"]]);
-    assert.deepEqual(logicalRows(nativeField(p.update, "fd_replace"), platform), [["v0", "v1", "OT"]]);
+    assert.deepEqual(logicalRows(nativeField(p.update, "fd_append"), platform), [["v0", "v1", "v2", "other_"]]);
+    assert.deepEqual(logicalRows(nativeField(p.update, "fd_break"), platform), [["v0", "v1", "v2", "other_"]]);
+    assert.deepEqual(logicalRows(nativeField(p.update, "fd_replace"), platform), [["v0", "v1", "other_"]]);
   }
   const append = flowLines(draft.form, "fd_append"), broken = flowLines(draft.form, "fd_break");
   assert.equal(append.findIndex(line => line.includes("fd_append")), append.findIndex(line => line.includes("fd_append_text")));
@@ -166,7 +168,7 @@ for (const platform of ["desktop", "mobile"]) {
     ["empty options", "fd_h4", () => []],
     ["changed option value", "fd_h4", options => { options[0].value = "changed"; return options; }],
     ["changed option label", "fd_h4", options => { options[0].label = "Changed"; return options; }],
-    ["ordinary option promoted to other type", "fd_append", options => { options.at(-1).type = "other"; return options; }]
+    ["ordinary option promoted to other type", "fd_append", options => { options[0].type = "other"; return options; }]
   ]) it(`native readback rejects ${platform} effective ${name} override`, () => {
     const p = prepareSample(stages().draft); assert.equal(p.verify(p.update).ok, true);
     const changed = structuredClone(p.update);
@@ -180,7 +182,7 @@ for (const platform of ["desktop", "mobile"]) {
   it(`native readback accepts ${platform} identical option clone`, () => {
     const p = prepareSample(stages().draft), changed = structuredClone(p.update);
     updateNative(changed, "fd_append", props => { props[platform].options = structuredClone(props.options); });
-    assert.deepEqual(logicalRows(nativeField(changed, "fd_append"), platform), [["v0", "v1", "v2"]]);
+    assert.deepEqual(logicalRows(nativeField(changed, "fd_append"), platform), [["v0", "v1", "v2", "other_"]]);
     assert.equal(p.verify(changed).ok, true);
   });
 }

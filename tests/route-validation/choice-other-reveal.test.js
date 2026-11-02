@@ -56,8 +56,9 @@ it("recognizes an Other-method option with the matching source qt explanation", 
   const source = cleanSourceFile(qt), choice = source.form.controls.find(field => field.id === "fd_kind");
   assert.deepEqual(choice.sourceProps.otherTextCompanion, { id: "fd_note", otherRequired: false, optionValue: "OT", optionLabel: "其他方式" });
   const draft = draftSourceDraft(source), target = draft.form.fields.find(field => field.id === "fd_kind");
-  assert.equal(target.otherPresentation?.optionValue, "OT");
-  assert.deepEqual(target.props.options, choice.options);
+  assert.equal(target.props.options.at(-1).type, "other");
+  assert.equal(target.props.options.at(-1).value, "other_");
+  assert.equal(draft.form.fields.find(field => field.id === "fd_note").dataOnly, true);
   assert.equal(draft.form.fields.find(field => field.id === "fd_note").props.defaultValue.value, "  seed_under_score🙂  ");
   const prepared = prepareSample(draft); assert.equal(prepared.verify(prepared.update).ok, true);
 });
@@ -108,7 +109,7 @@ it("proves a styled source region without changing its caption or unrelated scri
   assert.ok(choice.sourceProps.otherPairContext.ancestorIds.includes("layout"));
   assert.ok(choice.sourceProps.otherPairContext.inlineScriptDigests.every(digest => /^[a-f0-9]{64}$/.test(digest)));
   assert.equal(Object.hasOwn(choice.sourceProps.otherPairContext, "inlineScripts"), false, "source context must not duplicate raw scripts");
-  assert.equal(draft.form.fields.find(field => field.id === "fd_kind").otherPresentation?.mode, "reveal-on-selection");
+  assert.equal(draft.form.fields.find(field => field.id === "fd_kind").props.options.at(-1).type, "other");
   assert.equal(draft.form.fields.find(field => field.id === "fd_title").dataOnly === true, false);
   assert.equal(checkTrust(source, createTrustedMigrationDsl(source, draft, { externalAgentReviewed: true })).ok, true);
   const prepared = prepareSample(draft); assert.equal(prepared.verify(prepared.update).ok, true);
@@ -279,53 +280,47 @@ it("updates a select group mounted later and stops observing a replaced form", (
 for (const fixture of [existing, generated]) {
   it(`projects and verifies a source-bound Other reveal for ${fixture}`, () => {
     const source = cleanSourceFile(fixture), draft = draftSourceDraft(source);
-    const choice = draft.form.fields.find(field => field.otherPresentation);
-    assert.ok(choice, "a proven optional choice/text relationship carries its presentation policy in the DSL");
+    const choice = draft.form.fields.find(field => field.nativeOther);
+    assert.ok(choice, "the source Other relationship is mapped to the native option");
     assert.equal(checkDraft(draft).ok, true);
     assert.equal(checkTrust(source, createTrustedMigrationDsl(source, draft, { externalAgentReviewed: true })).ok, true);
     const prepared = prepareSample(draft);
     assert.equal(prepared.verify(prepared.update).ok, true);
     const tampered = structuredClone(prepared.update), config = xformConfig(tampered);
-    const view = JSON.parse(config.viewModel[0].fdConfig);
-    const visit = node => {
-      if (!node || typeof node !== "object") return;
-      if (node.controlProps?.style?.["--mk-choice-other-reveal"]) delete node.controlProps.style["--mk-choice-other-reveal"];
-      for (const child of node.children || []) visit(child);
-    };
-    for (const node of view.view.render.desktop) visit(node);
-    config.viewModel[0].fdConfig = JSON.stringify(view);
+    const native = config.dataModel.flatMap(model => model.fdFields || []).find(field => field.fdName === choice.id);
+    const attribute = JSON.parse(native.fdAttribute);
+    delete attribute.config.controlProps.options.at(-1).type;
+    native.fdAttribute = JSON.stringify(attribute);
     tampered.mechanisms["sys-xform"].fdConfig = JSON.stringify(config);
-    assert.equal(prepared.verify(tampered).ok, false, "readback must reject loss of the reveal contract");
+    assert.equal(prepared.verify(tampered).ok, false, "readback must reject loss of the native Other option");
   });
 }
 
-it("does not invent conditional presentation for a required or script-owned explanation", () => {
+it("uses MK Other validation and blocks incompatible source scripts or rules", () => {
   const required = cleanSourceFile(existing);
   required.form.controls.find(field => field.id === "fd_note").required = true;
   const requiredDraft = draftSourceDraft(required);
   assert.equal(requiredDraft.form.fields.some(field => field.otherPresentation), false);
-  assert.ok(requiredDraft.review.warnings.some(item => item.code === "source.form.choice_other_reveal_needs_manual"));
+  assert.equal(requiredDraft.form.fields.find(field => field.id === "fd_kind").props.options.at(-1).isRequired, true);
   const readOnly = cleanSourceFile(existing);
   readOnly.form.controls.find(field => field.id === "fd_note").sourceProps.designerValues.readOnly = "true";
-  assert.equal(draftSourceDraft(readOnly).form.fields.some(field => field.otherPresentation), false,
-    "a source read-only explanation must not become unreachable");
+  assert.ok(checkDraft(draftSourceDraft(readOnly)).diagnostics.some(item => item.code === "source.form.native_other_checkbox_unproven"));
   const scripted = cleanSourceFile(existing);
   scripted.scripts = { sources: [{ id: "note-owner", sourceRef: "source.note-owner",
     javascript: 'document.getElementById("fd_note").style.display = "none";' }] };
   const scriptedDraft = draftSourceDraft(scripted);
   assert.equal(scriptedDraft.form.fields.some(field => field.otherPresentation), false);
-  assert.ok(scriptedDraft.review.warnings.some(item => item.code === "source.form.choice_other_reveal_needs_manual"));
+  assert.ok(checkDraft(scriptedDraft).diagnostics.some(item => item.code === "source.form.native_other_checkbox_unproven"));
   const ruled = cleanSourceFile(existing);
   ruled.formRules = { linkage: [{ id: "note-required", source: "fd_kind", trigger: "change",
     when: [{ field: "fd_kind", op: "contains", value: "A" }],
     effects: [{ type: "required", target: "fd_note", value: true }],
     else: [{ type: "required", target: "fd_note", value: false }] }] };
-  assert.equal(draftSourceDraft(ruled).form.fields.some(field => field.otherPresentation), true,
-    "dynamic native required state remains reachable through the visual fallback");
+  assert.ok(checkDraft(draftSourceDraft(ruled)).diagnostics.some(item => item.code === "source.form.native_other_checkbox_unproven"));
 });
 
 it("rejects a forged or redirected Other reveal policy while accepting a retained legacy DSL", () => {
-  const source = cleanSourceFile(existing), draft = draftSourceDraft(source);
+  const source = cleanSourceFile(select), draft = draftSourceDraft(source);
   const legacy = structuredClone(draft);
   delete legacy.form.fields.find(field => field.otherPresentation).otherPresentation;
   assert.equal(checkTrust(source, createTrustedMigrationDsl(source, legacy, { externalAgentReviewed: true })).ok, true);
@@ -333,11 +328,11 @@ it("rejects a forged or redirected Other reveal policy while accepting a retaine
   altered.form.fields.find(field => field.otherPresentation).otherPresentation.optionValue = "A";
   assert.equal(checkDraft(altered).ok, false);
   assert.equal(checkTrust(source, createTrustedMigrationDsl(source, altered, { externalAgentReviewed: true })).ok, false);
-  const unsafe = cleanSourceFile(existing);
+  const unsafe = cleanSourceFile(select);
   unsafe.scripts = { sources: [{ id: "note-owner", sourceRef: "source.note-owner",
     javascript: 'document.getElementById("fd_note").style.display = "none";' }] };
   const forged = draftSourceDraft(unsafe);
-  forged.form.fields.find(field => field.id === "fd_kind").otherPresentation = structuredClone(draft.form.fields.find(field => field.id === "fd_kind").otherPresentation);
+  forged.form.fields.find(field => field.id === "fd_payment").otherPresentation = structuredClone(draft.form.fields.find(field => field.id === "fd_payment").otherPresentation);
   assert.equal(checkTrust(unsafe, createTrustedMigrationDsl(unsafe, forged, { externalAgentReviewed: true })).ok, false,
     "review cannot introduce presentation over an unproven source script");
 });

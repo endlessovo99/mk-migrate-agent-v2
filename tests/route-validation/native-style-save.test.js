@@ -3,6 +3,7 @@ import { it } from "node:test";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 import { nativeViewSaveRoundTrip, verifyNativeSaveSources } from "../helpers/native-view-save.js";
+import { readFileSync } from "node:fs";
 
 const source = "tests/fixtures/route-validation/adaptive-layout/adaptive-layout_SysFormTemplate.xml";
 const nodes = node => [node, ...(node.children || []).flatMap(nodes)];
@@ -16,7 +17,8 @@ for (const [fixture, sizing, count] of [
   ["tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml", "adaptive", 2],
   ["tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml", "source", 1]
 ]) it(`retains scoped styles and business fields across native saves: ${fixture}, ${sizing}`, () => {
-  const dsl = draftSourceDraft(cleanSourceFile(fixture), { layoutSizing: sizing });
+  const dsl = fixture === source ? draftSourceDraft(cleanSourceFile(fixture), { layoutSizing: sizing }) :
+    JSON.parse(readFileSync(`tests/fixtures/route-validation/choice-other-wrap/retained-legacy${sizing === "source" ? "-source" : ""}-draft.json`, "utf8"));
   const prepared = prepareSample(dsl), original = xformConfig(prepared.update);
   const after = nativeViewSaveRoundTrip(original);
   const beforeView = JSON.parse(original.viewModel[0].fdConfig), savedView = JSON.parse(after.viewModel[0].fdConfig);

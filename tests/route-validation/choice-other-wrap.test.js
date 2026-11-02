@@ -6,12 +6,16 @@ import { it } from "node:test";
 import { createHash } from "node:crypto";
 import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js";
 import { checkTrust, createTrustedMigrationDsl } from "../../src/dsl/trust.js";
+import { checkDraft } from "../../src/dsl/checks.js";
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 import { nativeChoiceLayoutHtml } from "../helpers/native-choice-layout.js";
 
 const fixture = "tests/fixtures/route-validation/choice-other-wrap/choice-other-wrap_SysFormTemplate.xml";
 const sealFixture = "tests/fixtures/source3/166d859bc79f49f5acf97474d9fa5d85/166d86064d2c8b3955ffad64e8eba196_SysFormTemplate.xml";
 const xml = readFileSync(fixture, "utf8");
+const xmlWithoutDefault = xml.replace(',defaultValue:"  seed_under_score🙂  "', '')
+  .replace(' defaultValue="  seed_under_score🙂  "', '');
+const retainedLegacy = () => JSON.parse(readFileSync("tests/fixtures/route-validation/choice-other-wrap/retained-legacy-draft.json", "utf8"));
 const nodes = node => !node || typeof node !== "object" ? [] : [node, ...Object.values(node).flatMap(value =>
   Array.isArray(value) ? value.flatMap(nodes) : nodes(value))];
 const companions = prepared => prepared.verify(prepared.update).form.layoutRows.flatMap(row => row.cells.flatMap(cell => cell.contentFlow?.companions || []));
@@ -31,54 +35,42 @@ function stages(text = xml, options) {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
-it("recognizes an adjacent prefix Other title and retains independent field semantics", () => {
-  const { source, draft } = stages();
-  const choice = draft.form.fields.find(f => f.id === "fd_kind");
-  const note = draft.form.fields.find(f => f.id === "fd_note");
+it("blocks a source Other default until its empty-selection persistence is verified", () => {
+  const { source, draft } = stages(), choice = draft.form.fields.find(f => f.id === "fd_kind"), note = draft.form.fields.find(f => f.id === "fd_note");
   assert.equal(choice.sourceProps.otherTextCompanion?.id, note.id);
-  assert.equal(choice.sourceProps.otherTextCompanion.optionValue, "OT");
-  assert.deepEqual(choice.props.options, source.form.controls.find(f => f.id === choice.id).options);
-  assert.ok(choice.props.options.every(o => o.type !== "other"));
-  assert.notEqual(note.dataOnly, true);
-  assert.equal(note.props.defaultValue.value, "  seed_under_score🙂  ");
-  assert.equal(checkTrust(source, createTrustedMigrationDsl(source, draft, { externalAgentReviewed: true })).ok, true);
-  const p = prepareSample(draft);
-  assert.equal(p.verify(p.update).ok, true);
+  assert.equal(choice.props.options.at(-1).value, "other_");
+  assert.equal(choice.props.options.at(-1).type, "other");
+  assert.equal(note.dataOnly, true);
+  assert.equal(choice.props.defaultValue.value, "other_  seed_under_score🙂  ");
+  assert.ok(checkDraft(draft).diagnostics.some(item => item.code === "dsl.form.native_other_default_unverified"));
+  assert.equal(checkTrust(source, createTrustedMigrationDsl(source, draft, { externalAgentReviewed: true })).ok, false);
+  assert.throws(() => prepareSample(draft), { code: "projection.choice_other.checkbox_storage_unproven" });
 });
 
 for (const sizing of ["adaptive", "source"]) for (const kind of ["Checkbox", "Radio"]) {
-  it(`preserves a generic independent ${kind} companion through ${sizing} projection and readback`, () => {
-    const { source, draft } = stages(xml.replaceAll("inputCheckbox", `input${kind}`).replaceAll("xform:checkbox", `xform:${kind.toLowerCase()}`), { layoutSizing: sizing });
-    const p = prepareSample(draft), result = p.verify(p.update);
+  it(`projects native ${kind} Other through ${sizing} layout`, () => {
+    const { source, draft } = stages(xmlWithoutDefault.replaceAll("inputCheckbox", `input${kind}`).replaceAll("xform:checkbox", `xform:${kind.toLowerCase()}`), { layoutSizing: sizing });
+    const choice = draft.form.fields.find(f => f.id === "fd_kind"), p = prepareSample(draft);
+    assert.equal(choice.props.options.at(-1).type, "other");
+    assert.equal(draft.form.fields.find(f => f.id === "fd_note").dataOnly, true);
     assert.equal(checkTrust(source, createTrustedMigrationDsl(source, draft, { externalAgentReviewed: true })).ok, true);
-    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
-    assert.deepEqual(companions(p), [{ lineIndex: 0, referenceIds: ["fd_kind", "fd_note"], mode: "tail", width: { value: 120, unit: "px" }, revealOnSelection: true }]);
-    const changed = structuredClone(p.update);
-    for (const scene of ["desktop", "mobile"]) editView(changed, scene, root => {
-      for (const node of nodes(root)) for (const key of Object.keys(node)) if (key.startsWith("migration")) delete node[key];
-    });
-    assert.equal(p.verify(changed).ok, true, "actual hierarchy and CSS establish adjacency without audit markers");
+    assert.equal(p.verify(p.update).ok, true);
   });
 }
 
 it("uses source evidence after arbitrary template, field, label and code renaming", () => {
-  let renamed = xml.replaceAll("fd_kind", "fd_renamed_choice_identifier").replaceAll("fd_note", "fd_renamed_note_identifier")
+  let renamed = xmlWithoutDefault.replaceAll("fd_kind", "fd_renamed_choice_identifier").replaceAll("fd_note", "fd_renamed_note_identifier")
     .replaceAll("申请类型", "材料用途").replaceAll("independent-other-wrap", "another-source-identity").replaceAll("OT", "OTHER_CODE");
   for (const title of ["其他材料用途", "材料用途其他"]) {
     const { draft } = stages(renamed.replaceAll("其他材料用途", title));
-    const pair = companions(prepareSample(draft))[0];
-    assert.deepEqual(pair.referenceIds, draft.form.fields.filter(f => ["checkbox", "text"].includes(f.type)).map(f => f.id));
+    assert.equal(draft.form.fields.find(f => f.nativeOther).props.options.at(-1).type, "other");
+    assert.equal(prepareSample(draft).verify(prepareSample(draft).update).ok, true);
   }
 });
 
-it("projects both companion patterns in the actual source behind the reported seal form", () => {
-  const draft = draftSourceDraft(cleanSourceFile(sealFixture)), p = prepareSample(draft);
-  assert.equal(p.verify(p.update).ok, true);
-  const choice = draft.form.fields.find(f => f.title === "用印类型" && f.componentId === "xform-checkbox");
-  const note = draft.form.fields.find(f => f.id === choice.sourceProps.otherTextCompanion.id);
-  assert.equal(note.title, "其他用印类型");
-  assert.ok(companions(p).some(pair => pair.mode === "tail" && pair.referenceIds.join() === [choice.id, note.id].join()));
-  assert.ok(companions(p).some(pair => pair.mode === "caption"));
+it("blocks the actual seal source when existing scripts read the changed Other choice", () => {
+  const draft = draftSourceDraft(cleanSourceFile(sealFixture));
+  assert.ok(checkDraft(draft).diagnostics.some(item => item.code === "source.form.native_other_checkbox_unproven"));
 });
 
 for (const [name, change] of [
@@ -88,7 +80,7 @@ for (const [name, change] of [
   ["Other is not the last option", text => text.replaceAll("财务事项|D", "TEMP_OPTION")
     .replaceAll("其他|OT", "财务事项|D").replaceAll("TEMP_OPTION", "其他|OT")]
 ]) it(`does not invent a same-line companion: ${name}`, () => {
-  const { draft } = stages(change(xml));
+  const { draft } = stages(change(xmlWithoutDefault));
   assert.deepEqual(companions(prepareSample(draft)), []);
 });
 
@@ -102,7 +94,7 @@ for (const scene of ["desktop", "mobile"]) for (const [name, change] of [
   ["removed grouping", group => { delete group.controlProps.className; }],
   ["reordered fields", group => { [group.children[1], group.children[2]] = [group.children[2], group.children[1]]; }]
 ]) it(`readback rejects ${scene} ${name}`, () => {
-  const p = prepareSample(stages().draft), changed = structuredClone(p.update);
+  const p = prepareSample(retainedLegacy()), changed = structuredClone(p.update);
   editView(changed, scene, root => change(nodes(root).find(n => n.controlProps?.className?.startsWith("mk-choice-other-flow-"))));
   assert.equal(p.verify(changed).ok, false);
 });
@@ -115,7 +107,7 @@ it("retains unchanged native desktop/mobile source and stylesheet provenance", (
 });
 
 it("replays the native desktop checkbox label and group selectors in layout fixtures", () => {
-  const config = xformConfig(prepareSample(stages().draft).update);
+  const config = xformConfig(prepareSample(retainedLegacy()).update);
   const html = nativeChoiceLayoutHtml(config, "desktop");
   assert.match(html, /class="ele-xform-checkbox"/);
   assert.match(html, /class="lui-checkbox-group ele-xform-checkbox-group"/);

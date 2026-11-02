@@ -12,6 +12,10 @@ import { verifyRemoteSelectorResources } from "./remote-selector-resources.js";
 import { verifyWorkflowSubProcessDependencies } from "./subprocess-dependencies.js";
 import { hasSourceSignDeclaration } from "../dsl/workflow-sign-contract.js";
 import { choiceOtherToggleBindings } from "../dsl/choice-other-runtime.js";
+import { nativeOtherCheckboxBindings } from "../dsl/native-other-checkbox.js";
+import { nativeOtherChoiceBindings } from "../dsl/native-other-checkbox.js";
+import { NATIVE_OTHER_DISPLAY_CAPABILITY } from "../dsl/native-other-display-capability.js";
+import { inspectNativeOtherDisplayRuntime } from "./native-other-display-capability.js";
 import { choiceOtherStorageAction } from "../dsl/choice-other-storage-runtime.js";
 import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../dsl/choice-other-storage-capability.js";
 import { inspectChoiceOtherStorageRuntime } from "./choice-other-storage-capability.js";
@@ -76,6 +80,7 @@ async function executeDraftDsl(input, options, writes) {
     safety.push({ level: "error", code: "execute.migration_policy_new_draft_required", message: "Approved migration behavior policies apply only to newly created drafts.", path: "/migrationPolicies" });
   }
   let requiresChoiceOtherStorage = false;
+  let requiresNativeOtherDisplay = false;
   let requiresDetailVisibility = false;
   const requiresDetailCellPresentation = (input.form?.fields || []).some(field => field?.type === "detailTable" && field.detailCellGroups?.length);
   if (requiresDetailCellPresentation && target.baseUrl !== DETAIL_CELL_PRESENTATION_CAPABILITY.origin) safety.push({
@@ -94,7 +99,8 @@ async function executeDraftDsl(input, options, writes) {
   });
   try {
     const bindings = choiceOtherToggleBindings(input.form);
-    requiresChoiceOtherStorage = bindings.length > 0;
+    requiresChoiceOtherStorage = bindings.length > 0 || nativeOtherCheckboxBindings(input.form).length > 0;
+    requiresNativeOtherDisplay = nativeOtherChoiceBindings(input.form).length > 0;
     if (requiresChoiceOtherStorage) {
       // Validate the source-bound storage contract before any remote write.
       choiceOtherStorageAction(input.form, bindings, "mk_contract_preflight");
@@ -107,6 +113,10 @@ async function executeDraftDsl(input, options, writes) {
     safety.push({ level: "error", code: error.code || "safety.choice_other_storage_invalid",
       message: "Checkbox values cannot be safely mapped to the verified storage contract.", path: "/form" });
   }
+  if (requiresNativeOtherDisplay && target.baseUrl !== NATIVE_OTHER_DISPLAY_CAPABILITY.origin) safety.push({
+    level: "error", code: "safety.native_other_display_origin_unverified",
+    message: "Native Other display is verified only for its recorded target origin.", path: "/form"
+  });
   if (safety.length) {
     return blocked(plan, safety, target.baseUrl);
   }
@@ -153,7 +163,7 @@ async function executeDraftDsl(input, options, writes) {
         path: "/form", details: { issues: capability.issues }
       }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
     }
-    if (requiresChoiceOtherStorage) {
+    if (requiresChoiceOtherStorage || requiresNativeOtherDisplay) {
       const stage = { name: "verifyChoiceOtherStorageRuntime", status: "started" };
       apiStages.push(stage);
       const capability = await inspectChoiceOtherStorageRuntime(client, baseUrl);
@@ -161,6 +171,17 @@ async function executeDraftDsl(input, options, writes) {
       if (!capability.ok) return { ...blocked(plan, [...diagnostics, {
         level: "error", code: "safety.choice_other_storage_runtime_unverified",
         message: "The target checkbox storage runtime is not verified; no migration write was attempted.",
+        path: "/form", details: { issues: capability.issues }
+      }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
+    }
+    if (requiresNativeOtherDisplay) {
+      const stage = { name: "verifyNativeOtherDisplayRuntime", status: "started" };
+      apiStages.push(stage);
+      const capability = await inspectNativeOtherDisplayRuntime(client, baseUrl);
+      Object.assign(stage, { status: capability.ok ? "ok" : "failed", issues: capability.issues });
+      if (!capability.ok) return { ...blocked(plan, [...diagnostics, {
+        level: "error", code: "safety.native_other_display_runtime_unverified",
+        message: "The target native Other widget is not verified; no migration write was attempted.",
         path: "/form", details: { issues: capability.issues }
       }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
     }

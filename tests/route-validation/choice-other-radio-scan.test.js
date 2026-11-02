@@ -14,8 +14,9 @@ it("bounds a radio-only source scan outside a checkbox Other pair", () => {
   const source = cleanSourceFile(fixture), draft = draftSourceDraft(source);
   const choice = source.form.controls.find(field => field.id === "fd_kind");
   assert.equal(choice.sourceProps.otherPairContext?.radioFree, true);
-  assert.equal(draft.form.fields.find(field => field.id === "fd_kind").otherPresentation?.optionValue, "OT");
-  assert.deepEqual(draft.form.fields.find(field => field.id === "fd_kind").props.options, choice.options);
+  assert.equal(draft.form.fields.find(field => field.id === "fd_kind").props.options.at(-1).type, "other");
+  assert.equal(draft.form.fields.find(field => field.id === "fd_kind").props.options.at(-1).value, "other_");
+  assert.equal(draft.form.fields.find(field => field.id === "fd_note").dataOnly, true);
   assert.equal(draft.form.fields.find(field => field.id === "fd_note").props.defaultValue.value, "  seed_under_score🙂  ");
   const proof = sourceCaptionBehavior(source).forPair("fd_kind", "fd_note", choice.sourceProps.otherPairContext);
   assert.equal(proof.ok, true);
@@ -30,7 +31,7 @@ it("bounds a radio-only source scan outside a checkbox Other pair", () => {
 it("keeps unrelated legacy scripts on the review gate and sends no native request", async () => {
   const result = await runRouteCase("qt-radio-scan-needs-script-review");
   assert.equal(result.review.stage, "agent-review.incomplete");
-  assert.equal(result.dsl.form.fields.find(field => field.id === "fd_kind").otherPresentation.optionValue, "OT");
+  assert.equal(result.dsl.form.fields.find(field => field.id === "fd_kind").props.options.at(-1).type, "other");
   assert.deepEqual(result.transcript, []);
 });
 
@@ -54,7 +55,7 @@ it("fails closed for radio-scan mutations, alias escape, or radio controls in th
       assert.notEqual(contents, xml, `mutant ${i} must be effective`);
       const file = join(dir, `mutant-${i}_SysFormTemplate.xml`); writeFileSync(file, contents);
       const dsl = draftSourceDraft(cleanSourceFile(file));
-      assert.equal(dsl.form.fields.some(field => field.otherPresentation), false, `mutant ${i}`);
+      assert.equal(dsl.form.fields.some(field => field.nativeOther), false, `mutant ${i}`);
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

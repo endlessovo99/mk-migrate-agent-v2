@@ -4,6 +4,7 @@ import { bridgedInitialVisibilityIssues, bridgedRowVisibilityConflicts } from ".
 import { dottedFieldIdDiagnostics } from "./field-identifiers.js";
 import { choiceOtherToggleBindings } from "./choice-other-runtime.js";
 import { choiceOtherRevealBindings } from "./choice-other-reveal.js";
+import { isNativeOtherLabel, nativeOtherChoiceBindings } from "./native-other-checkbox.js";
 import {mainTableReadReferenceDiagnostics} from "./native-main-table-reference.js";
 import {templateReadScopeIssues} from './template-read-scope.js';
 import { remoteDialogDiagnostics } from "./remote-dialog.js";
@@ -119,7 +120,6 @@ const TEMPLATE_AUTHORIZATION_COLLECTIONS = Object.freeze([
   "temporaryReaders",
   "temporaryEditors"
 ]);
-
 export function validateMigrationDsl(input, options = {}) {
   const diagnostics = [];
   diagnostics.push(...migrationPolicyDslDiagnostics(input));
@@ -143,12 +143,41 @@ export function validateMigrationDsl(input, options = {}) {
   validateTemplate(root.template, diagnostics);
   const formContext = validateForm(root.form, diagnostics);
   if (isRecord(root.form)) {
+    const scopedFields = (Array.isArray(root.form.fields) ? root.form.fields : []).flatMap(field =>
+      field?.type === "detailTable" && Array.isArray(field.columns) ? field.columns.map(column => ({ field: column, detail: true })) : [{ field, detail: false }]);
+    for (const { field, detail } of scopedFields) {
+      if (detail && field?.nativeOther !== undefined) diagnostics.push(error("dsl.form.native_other_detail_unverified",
+        "Native Other in detail tables has no verified row-level storage and display contract.", "/form", { fieldId: field.id }));
+      if (["xform-checkbox", "xform-radio"].includes(field?.componentId) && field.dataOnly !== true &&
+          field.sourceProps?.hardHidden !== true && !field.nativeOther &&
+          (field.sourceProps?.otherTextCompanion?.id || Array.isArray(field.props?.options) &&
+            field.props.options.some(option => isNativeOtherLabel(option?.label)))) {
+        diagnostics.push(error("dsl.form.native_other_required",
+          "A source Other companion requires a proven MK native Other mapping before execution.", "/form", { fieldId: field.id }));
+      }
+      const value = field?.props?.defaultValue;
+      if (field?.nativeOther && field.componentId === "xform-checkbox" && Array.isArray(field.props?.options)) {
+        const labels = field.props.options.filter(option => option.type !== "other").map(option => option.label);
+        if (labels.some(label => typeof label !== "string" || !label) || new Set(labels).size !== labels.length) {
+          diagnostics.push(error("dsl.form.native_other_labels_unverified",
+            "Mobile native Other checkbox requires unique nonempty ordinary option labels to verify the selected values.", "/form", { fieldId: field.id }));
+        }
+      }
+      if (field?.nativeOther && value !== undefined && value !== null &&
+          !(value.kind === "literal" && value.value === "")) {
+        diagnostics.push(error("dsl.form.native_other_default_unverified",
+          "Native Other with a nonempty default cannot execute until empty selection persistence is verified.", "/form", { fieldId: field.id }));
+      }
+    }
     try { choiceOtherToggleBindings(root.form); }
     catch { diagnostics.push(error("dsl.form.choice_other_binding_invalid",
       "Other presentation must retain unique source checkbox/text identities and an independent checkbox binding.", "/form")); }
     try { choiceOtherRevealBindings(root.form); }
     catch { diagnostics.push(error("dsl.form.choice_other_reveal_invalid",
       "Other reveal presentation must retain one optional, source-bound choice and explanation on the same line.", "/form")); }
+    try { nativeOtherChoiceBindings(root.form); }
+    catch { diagnostics.push(error("dsl.form.native_other_checkbox_invalid",
+      "Native Other checkbox mapping must remain bound to its source controls.", "/form")); }
   }
   if (mode === "execute") {
     diagnostics.push(...remoteDialogDiagnostics(root.form,{dsl:root}));

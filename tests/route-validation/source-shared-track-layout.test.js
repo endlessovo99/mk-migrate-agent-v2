@@ -206,12 +206,14 @@ it("fills only the source full-cell centered heading while leaving inline captio
   const { prepared } = stages();
   for (const platform of ["desktop", "mobile"]) {
     assert.equal(wrapper(prepared, "heading", platform).controlProps.style.flex, "1 1 0");
-    for (const id of ["inline_caption", "inline_unit", "other_caption"]) {
+    for (const id of ["inline_caption", "inline_unit"]) {
       const item = wrapper(prepared, id, platform);
       assert.ok(item, id);
       assert.equal(item.controlProps.style.flex, "0 1 auto");
       assert.equal(item.controlProps.style["--mk-adaptive-caption-width"], undefined);
     }
+    assert.equal(wrapper(prepared, "other_caption", platform), undefined);
+    assert.ok(wrapper(prepared, "fd_choice", platform));
   }
 });
 
