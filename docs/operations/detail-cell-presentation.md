@@ -4,9 +4,18 @@ The supported source shape contains exactly two visible inline text, textarea,
 radio or single-select editors in one designer detail cell. Both have the same
 proven physical header, and every recognized runtime rendering places the same
 field pair, in order, in the same detail cell without an intervening break.
-Hidden data fields remain separate and do not count as visible editors. Mixed
-text, unsupported controls, block layout, conditional or ambiguous runtime
-ownership, missing source evidence and older artifacts remain blocked.
+Hidden data fields remain separate and do not count as visible editors. A
+source-proven readonly numeric or calculation companion can retain a verified
+one-pixel width. Two same-cell controls in separate right containers are
+admitted only when their complete runtime permission attributes agree and all
+other cell members are proved hidden. A source-proven stacked radio and text
+pair can retain the literal “其他：” caption and its 50-pixel input. The
+stacked presentation falls back to separate controls when the desktop cell is
+too narrow, and retains the caption if the radio is hidden. All three paths
+keep the original independent fields and fail closed on mismatched source,
+permissions, extra content or unverified runtime structure. Other mixed text,
+unsupported controls, block layout, conditional or ambiguous runtime ownership,
+missing source evidence and older artifacts remain blocked.
 
 The target keeps both native detail columns, field identities, values,
 permissions, validators and event writers. Fixed form and detail-table onLoad
@@ -16,7 +25,9 @@ onLoad is deliberately skipped. On desktop it visually joins the
 adjacent cells and clips the second title while retaining its required marker
 and accessible label. On mobile it removes the separator and clips the second
 title only while both original row controls are visible and adjacent. It never
-reparents, hides or writes a business control. Native row keys remain intact.
+reparents or writes a business control. The proven one-pixel readonly field
+retains its source width through a scoped style; the stacked pair uses an
+absolutely positioned 50-pixel input with a source-proven fixed caption. Native row keys remain intact.
 
 Desktop header identity is resolved against the native column metadata and all
 possible ordered matches; ambiguous mappings are left unchanged, including in
