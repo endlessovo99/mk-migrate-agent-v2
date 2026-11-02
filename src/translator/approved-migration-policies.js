@@ -14,10 +14,13 @@ import { inspectNativeDetailImportFunction, nativeDetailImportDslDiagnostics } f
 import {SUPPORTED_DETAIL_STATE_KIND, validateSupportedDetailStateDecisions, applySupportedDetailStatePolicies} from "./approved-detail-state-policy.js";
 import { RADIO_READONLY_OPTIONS_KIND, validateRadioReadOnlyPresentationDecisions, applyRadioReadOnlyPresentationPolicies, radioReadOnlyPresentationDslDiagnostics } from "./radio-readonly-presentation.js";
 import { CONFIRMED_DETAIL_REQUIRED_KIND, validateConfirmedDetailRequiredDecisions, applyConfirmedDetailRequiredPolicies } from "./approved-detail-required-policy.js";
+import { DYNAMIC_LINK_BUTTON_KIND, inspectNativeDynamicLinkClick, inspectNativeDynamicLinkVisibility, nativeDynamicLinkDslDiagnostics } from "../dsl/native-dynamic-link-button.js";
+import { validateDynamicLinkButtonDecisions, applyDynamicLinkButtonPolicies } from "./approved-dynamic-link-button.js";
 
 export const APPROVED_MIGRATION_POLICY_BASIS = "deterministic-approved-migration-policy";
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const groups = [
+  { kinds: [DYNAMIC_LINK_BUTTON_KIND], validate: validateDynamicLinkButtonDecisions, apply: applyDynamicLinkButtonPolicies },
   { kinds: [CONFIRMED_DETAIL_REQUIRED_KIND], validate: validateConfirmedDetailRequiredDecisions, apply: applyConfirmedDetailRequiredPolicies },
   { kinds: [RADIO_READONLY_OPTIONS_KIND], validate: validateRadioReadOnlyPresentationDecisions, apply: applyRadioReadOnlyPresentationPolicies },
   {kinds:[SUPPORTED_DETAIL_STATE_KIND],validate:validateSupportedDetailStateDecisions,apply:applySupportedDetailStatePolicies},
@@ -148,13 +151,13 @@ export function applyApprovedMigrationPolicies(sourceDraft, baseDraft) {
 export function migrationPolicyDslDiagnostics(dsl) {
   const policyActions = scriptActions(dsl).filter(action =>
     action.functionMappings?.some(mapping => String(mapping.basis || "").startsWith("deterministic-approved-")) ||
-    action.semanticHints?.approvedRemoteOmission || action.semanticHints?.approvedMigrationPolicy || action.semanticHints?.approvedRuntimePolicy || action.semanticHints?.approvedNativeImport || inspectNativeDetailImportFunction(action.function) || action.semanticHints?.approvedNativeLookup || inspectNativeRemoteSelectorFunction(action.function));
+    action.semanticHints?.approvedRemoteOmission || action.semanticHints?.approvedMigrationPolicy || action.semanticHints?.approvedRuntimePolicy || action.semanticHints?.approvedNativeImport || inspectNativeDetailImportFunction(action.function) || action.semanticHints?.approvedNativeLookup || inspectNativeRemoteSelectorFunction(action.function) || action.semanticHints?.approvedNativeDynamicLink || inspectNativeDynamicLinkClick(action.function) || inspectNativeDynamicLinkVisibility(action.function));
   const policyFields = flattenFields(dsl?.form).some(({field}) => field.sourceProps?.approvedRuntimePolicy || field.sourceProps?.approvedRemoteOmissions || field.props?.readOnlyPresentation !== undefined);
   if (dsl?.migrationPolicies === undefined && dsl?.migrationPolicyAudit === undefined) {
     return policyActions.length || policyFields ? [{level:"error",code:"dsl.migration_policy_envelope_required",
       message:"Approved migration recipes and derived fields require their exact authorization envelope and scope.",path:"/migrationPolicies"}] : [];
   }
-  const diagnostics = [...validateMigrationPolicies(dsl?.migrationPolicies).diagnostics, ...nativeDetailImportDslDiagnostics(dsl), ...nativeRemoteSelectorDslDiagnostics(dsl), ...remoteOmissionDslDiagnostics(dsl), ...radioReadOnlyPresentationDslDiagnostics(dsl)];
+  const diagnostics = [...validateMigrationPolicies(dsl?.migrationPolicies).diagnostics, ...nativeDetailImportDslDiagnostics(dsl), ...nativeRemoteSelectorDslDiagnostics(dsl), ...nativeDynamicLinkDslDiagnostics(dsl), ...remoteOmissionDslDiagnostics(dsl), ...radioReadOnlyPresentationDslDiagnostics(dsl)];
   const fail = (message,details) => diagnostics.push({level:"error",code:"dsl.migration_policy_binding_mismatch",message,path:"/migrationPolicyAudit",...(details?{details}:{})});
   const audit = dsl?.migrationPolicyAudit, digest = sha256Digest(dsl?.migrationPolicies ?? null);
   for (const entry of Array.isArray(audit?.audits) ? audit.audits : []) if (entry?.kind === SUPPORTED_DETAIL_STATE_KIND && entry.workflowBefore !== sha256Digest(dsl.workflow ?? null)) fail("Supported-only detail state must preserve the complete workflow.");

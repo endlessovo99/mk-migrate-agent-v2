@@ -1,4 +1,5 @@
 import {inspectNativeRemoteSelectorFunction} from "./native-remote-selector-profile.js";
+import {inspectNativeDynamicLinkClick, inspectNativeDynamicLinkVisibility} from "./native-dynamic-link-button.js";
 import { parse } from "acorn";
 import { CONTROL_EVENTS_BY_COMPONENT, CONTROL_EVENTS_CATALOG, JS_METHOD_CATALOG } from "./catalogs.js";
 import { buildFormRuleRefIndex, resolveEffectTarget, resolveRequiredEffectTarget } from "./form-rules.js";
@@ -254,7 +255,7 @@ export function summarizeScriptActionSupport(actions = [], form = {}) {
 export function analyzeScriptFunction(text = "") {
   const source = String(text || "");
   const nativeImport = inspectNativeDetailImportFunction(source), nativeRemote = inspectNativeRemoteSelectorFunction(source);
-  const fixedNative = nativeImport || nativeRemote;
+  const fixedNative = nativeImport || nativeRemote || inspectNativeDynamicLinkClick(source) || inspectNativeDynamicLinkVisibility(source);
   const masked = maskStringsAndComments(source);
   const unsupportedSyntax = extractUnsupportedMkSyntax(masked, source);
   const promiseReturns = extractPromiseReturns(masked, source);

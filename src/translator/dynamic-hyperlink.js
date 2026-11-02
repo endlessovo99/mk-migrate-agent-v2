@@ -44,6 +44,25 @@ export function dynamicHyperlinkCandidates(source = {}, form = {}) {
   }];
 }
 
+// The button policy preserves the original truthy-URL branch only. The
+// general hyperlink translator also supports literal-true and conditioned
+// variants; those are not equivalent to a hidden-until-present button.
+export function inspectTruthyUrlOnlyDynamicHyperlink(source = {}) {
+  const model = dynamicHyperlinkModel(source);
+  if (!model || model.variant !== "url-only") return undefined;
+  try {
+    const statement = nonEmptyStatements(parse(String(source.javascript || ""), {
+      ecmaVersion: "latest", sourceType: "script"
+    }).body)[0];
+    const binding = loadBinding(statement?.expression);
+    const body = nonEmptyStatements(binding?.callback?.body?.body);
+    if (body.length !== 2 || !isIdentifier(body[1]?.test, model.urlVariable)) return undefined;
+    return projectionEvidence(model);
+  } catch {
+    return undefined;
+  }
+}
+
 function dynamicHyperlinkModel(source = {}) {
   const text = String(source.javascript || "");
   let program;

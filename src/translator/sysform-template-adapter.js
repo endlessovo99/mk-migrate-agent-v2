@@ -11,6 +11,8 @@ import { mainStringValueBindingFacts } from "./main-string-value-binding.js";
 import { approvedRemoteSelectorSourceFacts,remoteSelectorOmissionSourceFacts } from "./approved-remote-policies.js";
 import { remoteSelectorSourceContracts } from "./remote-selector-source-contract.js";
 import { analyzeOrphanBeforeAnchorWitness } from "./orphan-before-anchor-witness.js";
+import { dynamicLinkAnchorWitness } from "./dynamic-link-anchor-witness.js";
+import { inspectTruthyUrlOnlyDynamicHyperlink } from "./dynamic-hyperlink.js";
 import { annotateChinaValueReadOnly, attachClosedMainFieldFacts } from "./closed-main-field-effects.js";
 import { sourceFormRadioOrdinalFact } from "./approved-radio-ordinal-policy.js";
 import { radioReadOnlySourceFacts } from "./radio-readonly-presentation.js";
@@ -91,6 +93,10 @@ export function translateSysFormTemplateXml(xml, options = {}) {
   for (const source of scripts?.sources || []) {
     const witness = analyzeOrphanBeforeAnchorWitness(source, form, { sourceScripts: scripts, rawMarkup: template });
     if (witness) source.semanticFacts.orphanBeforeAnchorWitness = witness;
+    if (inspectTruthyUrlOnlyDynamicHyperlink(source)) {
+      const linkWitness = dynamicLinkAnchorWitness(source, template, form);
+      if (linkWitness) source.semanticFacts.dynamicLinkAnchorWitness = linkWitness;
+    }
   }
   if (Object.keys(nodeDataAuthorities.nodeDataAuthorities || {}).length) {
     form.nodeDataAuthorities = nodeDataAuthorities.nodeDataAuthorities;
