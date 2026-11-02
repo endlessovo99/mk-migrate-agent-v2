@@ -1,4 +1,5 @@
 import { NEWOA_SCENARIOS } from "./manifest.js";
+import { DETAIL_PERSON_EMAIL_CAPABILITY } from "../../src/dsl/detail-person-email-capability.js";
 import { integrityError } from "./integrity.js";
 import { appendTranscriptEntry, sanitizedTranscript } from "./transcript.js";
 import { SIT_PARTICIPANT_FALLBACKS } from "../../src/executor/participant-resolver.js";
@@ -60,6 +61,7 @@ export class FakeNewoaAdapter {
     this.workflowCooperationDefault = Object.hasOwn(options, "workflowCooperationDefault") ? options.workflowCooperationDefault : "2";
     this.workflowOperationSets = options.workflowOperationSets || [];
     this.readerOptions=options;
+    this.personEmailRuntime = options.personEmailRuntime === true;
     this.detailVisibilityRuntime = options.detailVisibilityRuntime === true || options.detailCellRuntime === true;
     this.detailCellRuntime = options.detailCellRuntime === true;
     this.dynamicLinkRuntime = options.dynamicLinkRuntime === true;
@@ -112,6 +114,12 @@ export class FakeNewoaAdapter {
     };
   }
 
+  async getSysOrgDesktopDigest() {
+    this.record({ operation: "get-sys-org-desktop-digest" });
+    const m=DETAIL_PERSON_EMAIL_CAPABILITY.modules.person;
+    return { [m.digestKey]: {hash:this.personEmailRuntime ? m.release : "unverified"} };
+  }
+
   async getXFormMobileDigest() {
     this.record({ operation: "get-xform-mobile-digest" });
     const module = CHOICE_OTHER_STORAGE_CAPABILITY.modules.mobile;
@@ -130,6 +138,7 @@ export class FakeNewoaAdapter {
       return this.detailVisibilityRuntime ? DETAIL_VISIBILITY_DEPLOYMENT.ide.sha256
         : NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY.ideSha256;
     }
+    if (this.personEmailRuntime && modulePath === DETAIL_PERSON_EMAIL_CAPABILITY.modules.person.path) return DETAIL_PERSON_EMAIL_CAPABILITY.modules.person.sha256;
     for (const module of Object.values(CHOICE_OTHER_STORAGE_CAPABILITY.modules)) {
       if (modulePath === module.path) return module.sha256;
     }

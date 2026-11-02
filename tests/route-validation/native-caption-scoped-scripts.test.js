@@ -55,13 +55,16 @@ it("protects captions inside a cell read by the generated detail-width script", 
   };
   const protectedForm = variant("seal_SysFormTemplate.xml", wrap);
   assert.equal(protectedForm.draft.form.fields.filter(field => field.sourceProps?.foldedCaption).length, 0);
+  assert.equal(protectedForm.draft.form.fields.filter(field => field.nativeOther).length, 0);
   const withoutParentRead = variant("seal_SysFormTemplate.xml", props => {
     props.fdDisplayJsp = props.fdDisplayJsp.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi,
       script => script.includes("tds.each") ? "" : script);
     wrap(props);
   });
   assert.equal(withoutParentRead.draft.form.fields.filter(field => field.sourceProps?.foldedCaption).length, 10);
-  assert.equal(withoutParentRead.draft.form.fields.filter(field => field.nativeOther).length, 1);
+  assert.deepEqual(withoutParentRead.draft.form.fields.filter(field => field.nativeOther).map(field => field.id).sort(),
+    ["fd_3d4581305e90ba", "fd_fyj"].sort());
+  assert.equal(withoutParentRead.draft.form.fields.find(field => field.id === "fd_3d4581305e90ba").nativeOther.sourceOptionValue, "qt");
 });
 
 for (const [name, script] of [

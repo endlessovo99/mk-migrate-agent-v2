@@ -45,6 +45,8 @@ export function generateTransferRecordId() {
 }
 
 function originalTemplateId(input) {
+  const businessTemplateId = String(input?.derivedFrom?.originalTemplateId || "").trim();
+  if (businessTemplateId) return businessTemplateId;
   const workflowTemplateId = String(input?.workflow?.process?.templateId || "").trim();
   if (workflowTemplateId) return workflowTemplateId;
   return requiredString(input?.derivedFrom?.sourceId, "source template fdId");

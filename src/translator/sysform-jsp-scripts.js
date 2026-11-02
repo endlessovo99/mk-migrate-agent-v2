@@ -1,3 +1,4 @@
+import { groupedSharedRowCandidates, groupedSharedSourceDomain } from "./grouped-shared-row.js";
 import { auditFunctionWhitelist, loadFunctionWhitelist } from "./function-whitelist.js";
 import { nativeValidationMessage } from "./native-validation-message.js";
 import { componentSupportsProp } from "../dsl/catalogs.js";
@@ -135,6 +136,8 @@ export function extractSysFormJspScripts(template = {}, options = {}) {
   const buttons = designerFragments.flatMap((fragment) => extractJspButtons(fragment, sources));
 
   if (!designerFragments.length && !sources.length && !template.fdDisplayJsp) return undefined;
+  const groupedDomain = groupedSharedSourceDomain(template, {sources});
+  if (groupedDomain) sources[0].semanticFacts.groupedSharedSourceDomain = groupedDomain;
   const detailOrgEventDomain = legacyDetailOrgEventDomain(template, sources);
   if (detailOrgEventDomain) sources[0].semanticFacts.staticDetailOrgEventDomain = detailOrgEventDomain;
   const sharedStateDomain = sharedJsonStateSourceDomain(template, sources);
@@ -1155,6 +1158,10 @@ function eventCandidatesFromSource(source, sourceIndex, options = {}) {
   if (conditionalAttachment.length) {
     return conditionalAttachment.map(candidate => ({ ...candidate, source }));
   }
+  const groupedRows = groupedSharedRowCandidates(source, options.form, options.sourceScripts);
+  if (groupedRows.length) return groupedRows.map((candidate, index) => ({
+    ...candidate, id: `${source.id || `script.${sourceIndex + 1}`}.event.${index + 1}`, source
+  }));
   const detailOrgHydration = legacyDetailOrgHydrationCandidates(source, options.form, options.sourceScripts);
   if (detailOrgHydration.length) {
     return detailOrgHydration.map((candidate, index) => ({

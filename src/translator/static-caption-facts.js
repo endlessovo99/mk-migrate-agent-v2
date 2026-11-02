@@ -72,9 +72,23 @@ export function inspectOtherPairContexts(designerHtml, runtimeHtml, pairs = []) 
     const dPosition = dCell && cellPosition(designer, dCell), rPosition = rCell && cellPosition(runtime, rCell);
     if (!dCell || !rCell || !dPosition || !rPosition || nearest(dText[0], "td") !== dCell ||
         nearest(rText[0], "td") !== rCell || JSON.stringify(dPosition) !== JSON.stringify(rPosition)) continue;
+    let captionEvidence;
+    if (pair.captionId && typeof pair.caption === "string" && pair.caption.trim()) {
+      const dCaption = designerWidget(pair.captionId);
+      const rCaption = runtime.nodes.filter(node => node.name === "label" && nearest(node, "td") === rCell &&
+        plainText(runtime, node) === pair.caption.trim());
+      if (dCaption.length === 1 && rCaption.length === 1 && dCaption[0].name === "label" &&
+          dCaption[0].attrs?.get("fd_type")?.toLowerCase() === "textlabel" &&
+          nearest(dCaption[0], "td") === dCell && plainText(designer, dCaption[0]) === pair.caption.trim() &&
+          plainCaption(dCaption[0], true) && plainCaption(rCaption[0], false) &&
+          dChoice[0].start < dCaption[0].start && dCaption[0].start < dText[0].start &&
+          rChoice[0].start < rCaption[0].start && rCaption[0].start < rText[0].start) {
+        captionEvidence = { id: pair.captionId, designer: dCaption[0], runtime: rCaption[0] };
+      }
+    }
     const ancestors = new Set(), descendants = new Set([pair.choiceId, pair.textId]);
     let valid = true;
-    for (const [tree, cell, nodes] of [[designer, dCell, [dChoice[0], dText[0]]], [runtime, rCell, [rChoice[0], rText[0]]]]) {
+    for (const [tree, cell, nodes] of [[designer, dCell, [dChoice[0], dText[0], ...(captionEvidence ? [captionEvidence.designer] : [])]], [runtime, rCell, [rChoice[0], rText[0], ...(captionEvidence ? [captionEvidence.runtime] : [])]]]) {
       for (const node of nodes) for (let current = node; current; current = current.parent) {
         if (current.invalid) valid = false;
         for (const id of current.identityIds || []) ancestors.add(id);
@@ -92,7 +106,8 @@ export function inspectOtherPairContexts(designerHtml, runtimeHtml, pairs = []) 
     // the runtime export, whose paired widget identities were checked above.
     const radioFree = radioFreeCell(runtime, rCell);
     result.set(pair.choiceId, { version: 1, ancestorIds: [...ancestors], cellDescendantIds: [...descendants],
-      pairDescendantIds: [...descendants], inlineScriptDigests, inlineDomainComplete: true });
+      pairDescendantIds: [...descendants], inlineScriptDigests, inlineDomainComplete: true,
+      ...(captionEvidence ? { captionId: captionEvidence.id } : {}) });
     if (radioFree) result.get(pair.choiceId).radioFree = true;
   }
   return result;

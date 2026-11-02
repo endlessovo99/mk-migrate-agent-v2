@@ -1,5 +1,5 @@
 import { parse } from "acorn";
-import { resolveSourceRowEffectTarget } from "../dsl/form-rules.js";
+import { buildFormRuleRefIndex, resolveEffectTarget, resolveSourceRowEffectTarget } from "../dsl/form-rules.js";
 import { canonicalRowTarget, layoutRowTargets } from "../dsl/layout-row-targets.js";
 import { buildSetFieldAttrTargetIndex } from "../dsl/scripts.js";
 import { buildConditionOperandResolver, textValueFieldIds } from "../dsl/script-condition-provenance.js";
@@ -1485,7 +1485,7 @@ function renderOnLoad(model, form) {
 }
 
 export function compileStaticRowEffect(effect, form, indent = "") {
-  if (!effect || !canonicalRowTarget(form, effect.target)) return undefined;
+  if (!effect || !canonicalRowMarker(effect.target, form)) return undefined;
   const lines = renderRowEffect(effect, indent, form);
   if (!effect.reset) return lines;
   const row = layoutRowTargets(form).find(entry => entry.target === canonicalRowTarget(form, effect.target));
@@ -1559,7 +1559,15 @@ function renderRowEffect(effect, indent, form) {
 }
 
 function canonicalRowMarker(target, form) {
-  return canonicalRowTarget(form, target);
+  const canonical = canonicalRowTarget(form, target);
+  if (canonical) return canonical;
+  // A marker that is itself persisted as a primary row target can also cover
+  // additional rows with other primary markers. Preserve that exact group;
+  // projection expands it to all source-bound control IDs.
+  const index = buildSetFieldAttrTargetIndex(form);
+  const resolved = resolveEffectTarget(buildFormRuleRefIndex(form), target);
+  return !index.mainFields.has(target) && index.persistedRowTargets.has(target) &&
+    resolved?.source === "rowMarker" && !resolved.unresolved?.length && resolved.targets?.length ? target : undefined;
 }
 
 function rowEffect(statement) {

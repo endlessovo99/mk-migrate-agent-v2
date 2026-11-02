@@ -1,3 +1,4 @@
+import { EMPTY_ROW_VIEW_KIND, validateEmptyRowViewDecisions, applyEmptyRowViewPolicies } from "./approved-empty-row-view.js";
 import {applyRemoteOmissionPolicies} from "./omitted-remote-selectors.js";
 import {validateRemoteOmissionDecisions,remoteOmissionDslDiagnostics} from "../dsl/omitted-remote-selector.js";
 import {applyApprovedRemotePolicies,validateApprovedRemoteDecisions} from "./approved-remote-policies.js";
@@ -20,6 +21,7 @@ import { validateDynamicLinkButtonDecisions, applyDynamicLinkButtonPolicies } fr
 export const APPROVED_MIGRATION_POLICY_BASIS = "deterministic-approved-migration-policy";
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const groups = [
+  { kinds: [EMPTY_ROW_VIEW_KIND], validate: validateEmptyRowViewDecisions, apply: applyEmptyRowViewPolicies },
   { kinds: [DYNAMIC_LINK_BUTTON_KIND], validate: validateDynamicLinkButtonDecisions, apply: applyDynamicLinkButtonPolicies },
   { kinds: [CONFIRMED_DETAIL_REQUIRED_KIND], validate: validateConfirmedDetailRequiredDecisions, apply: applyConfirmedDetailRequiredPolicies },
   { kinds: [RADIO_READONLY_OPTIONS_KIND], validate: validateRadioReadOnlyPresentationDecisions, apply: applyRadioReadOnlyPresentationPolicies },

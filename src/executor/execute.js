@@ -1,4 +1,6 @@
 import { buildDryRunPlan } from "./dry-run.js";
+import { DETAIL_PERSON_EMAIL_CAPABILITY, requiresDetailPersonEmail } from "../dsl/detail-person-email-capability.js";
+import { inspectDetailPersonEmailRuntime } from "./detail-person-email-capability.js";
 import {verifyTemplateReadRuntime} from './template-read-scope.js';
 import { prepareRequiredTemplateTheme } from "./template-theme.js";
 import { createExecutionJournal } from "./execution-journal.js";
@@ -81,6 +83,17 @@ async function executeDraftDsl(input, options, writes) {
   if (input.migrationPolicies && nonEmptyString(options.targetTemplateId)) {
     safety.push({ level: "error", code: "execute.migration_policy_new_draft_required", message: "Approved migration behavior policies apply only to newly created drafts.", path: "/migrationPolicies" });
   }
+  const requiresPersonEmail = requiresDetailPersonEmail(input.scripts);
+  if (requiresPersonEmail && target.baseUrl !== DETAIL_PERSON_EMAIL_CAPABILITY.origin) safety.push({
+    level: "error", code: "safety.detail_person_email_origin_unverified",
+    message: "Detail person email hydration is verified only for its recorded target origin.", path: "/scripts"
+  });
+  const requiresGroupedRadio = (input.scripts?.actions || []).some(action =>
+    (action.functionMappings || []).some(mapping => mapping.basis === "deterministic-grouped-shared-row"));
+  if (requiresGroupedRadio && target.baseUrl !== NATIVE_OTHER_DISPLAY_CAPABILITY.origin) safety.push({
+    level: "error", code: "safety.grouped_radio_origin_unverified",
+    message: "Grouped source radio behavior is verified only for its recorded target origin.", path: "/scripts"
+  });
   let requiresChoiceOtherStorage = false;
   let requiresNativeOtherDisplay = false;
   const requiresDynamicLinkRuntime = input.migrationPolicies?.decisions?.some(decision => decision.kind === DYNAMIC_LINK_BUTTON_KIND) === true;
@@ -186,6 +199,28 @@ async function executeDraftDsl(input, options, writes) {
         level: "error", code: "safety.choice_other_storage_runtime_unverified",
         message: "The target checkbox storage runtime is not verified; no migration write was attempted.",
         path: "/form", details: { issues: capability.issues }
+      }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
+    }
+    if (requiresPersonEmail) {
+      const stage = { name: "verifyDetailPersonEmailRuntime", status: "started" };
+      apiStages.push(stage);
+      const capability = await inspectDetailPersonEmailRuntime(client, baseUrl);
+      Object.assign(stage, { status: capability.ok ? "ok" : "failed", issues: capability.issues });
+      if (!capability.ok) return { ...blocked(plan, [...diagnostics, {
+        level: "error", code: "safety.detail_person_email_runtime_unverified",
+        message: "The person info and form AJAX runtime are not verified; no migration write was attempted.",
+        path: "/scripts", details: { issues: capability.issues }
+      }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
+    }
+    if (requiresGroupedRadio && !requiresNativeOtherDisplay) {
+      const stage = { name: "verifyGroupedRadioRuntime", status: "started" };
+      apiStages.push(stage);
+      const capability = await inspectNativeOtherDisplayRuntime(client, baseUrl);
+      Object.assign(stage, { status: capability.ok ? "ok" : "failed", issues: capability.issues });
+      if (!capability.ok) return { ...blocked(plan, [...diagnostics, {
+        level: "error", code: "safety.grouped_radio_runtime_unverified",
+        message: "The grouped radio runtime is not verified; no migration write was attempted.",
+        path: "/scripts", details: { issues: capability.issues }
       }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
     }
     if (requiresNativeOtherDisplay) {

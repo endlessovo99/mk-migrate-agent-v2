@@ -623,6 +623,14 @@ function validateDerivedFrom(sourceDraft, migrationDsl, diagnostics) {
     diagnostics.push(error("trust.derived_from_required", "Trusted DSL must record derivedFrom.sourceId.", "/derivedFrom/sourceId"));
     return;
   }
+  const sourceOriginal = sourceDraft?.source?.sharedWorkflow?.businessTemplateId;
+  if (sourceOriginal !== undefined || migrationDsl.derivedFrom.originalTemplateId !== undefined) {
+    if (!nonEmptyString(sourceOriginal) || migrationDsl.derivedFrom.originalTemplateId !== sourceOriginal ||
+        sourceDraft?.source?.sysFormTemplate?.fdModelId !== sourceOriginal ||
+        sourceDraft?.source?.kmReviewTemplate?.fdId !== sourceOriginal) {
+      diagnostics.push(error("trust.original_template_mismatch", "Shared workflow transfer identity must match the source-bound business template.", "/derivedFrom/originalTemplateId"));
+    }
+  }
   const expected = sourceDraft?.source?.sourceId || sourceDraft?.source?.path;
   if (expected && migrationDsl.derivedFrom.sourceId !== expected) {
     diagnostics.push(error("trust.derived_from_mismatch", "Trusted DSL derivedFrom.sourceId must match the source draft.", "/derivedFrom/sourceId", {

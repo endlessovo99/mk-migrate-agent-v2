@@ -2,7 +2,7 @@ import { parse } from 'acorn';
 import { createHash } from 'node:crypto';
 
 export const LEGACY_DETAIL_ORG_HYDRATION_BASIS = 'deterministic-detail-org-hydration';
-const personProperties = new Set(['fdId', 'fdName', 'fdLoginName']);
+const personProperties = new Set(['fdId', 'fdName', 'fdLoginName', 'fdEmail']);
 const elementProperties = new Set(['fdId', 'fdName']);
 const compact = node => JSON.stringify(node, function(key, value) {
   if (['start', 'end', 'raw'].includes(key)) return undefined;
@@ -73,7 +73,9 @@ export function legacyDetailOrgHydrationCandidates(source = {}, form = {}, sourc
     translationStatus: 'mapped',
     coverage: {status: 'translated', nativeRules: [], residuals: []},
     functionMappings: [{source: 'KMSSData organization lookup and same-row positional output projection',
-      target: 'detail address onChange + MKXFORM.callOrg + MKXFORM.updateControl',
+      target: branch.outputs.some(output => output.property === 'fdEmail')
+        ? 'detail address onChange + MKXFORM.ajax person info + MKXFORM.updateControl'
+        : 'detail address onChange + MKXFORM.callOrg + MKXFORM.updateControl',
       basis: LEGACY_DETAIL_ORG_HYDRATION_BASIS, reviewRequired: false}],
     sourceRefs: [sourceRef, branch.controlSourceRef, ...branch.outputs.map(output => output.sourceRef)].filter(Boolean),
     semanticHints: {
@@ -138,6 +140,22 @@ function parseBranch(branch) {
 }
 
 function renderHydration(branch) {
+  if (branch.kind === 'person' && branch.outputs.some(output => output.property === 'fdEmail')) {
+    const ref = JSON.stringify(`\${table:${branch.tableId}}.${branch.controlId}`);
+    return ['function onChange(value, rowNum, parentRowNum) {',
+      '  var selected = Array.isArray(value) ? value[0] : value',
+      '  if (!selected || !selected.fdId || typeof rowNum !== "number" || rowNum < 0 || rowNum % 1 !== 0) return',
+      '  if (parentRowNum !== undefined && parentRowNum !== null) return',
+      '  MKXFORM.ajax({method: "POST", url: "/data/sys-org/sysOrgPersonInfo/getPersonInfo", data: {fdId: selected.fdId}}, function(error, response) {',
+      '    var payload = response && response.data',
+      '    var result = payload && payload.success === true && payload.data',
+      `    var current; try { current = MKXFORM.getValue(${ref}, {detailRowIndex: rowNum}) } catch (ignored) { return }`,
+      '    current = Array.isArray(current) ? current[0] : current',
+      '    if (error || !result || result.fdId !== selected.fdId || !current || current.fdId !== selected.fdId) return',
+      ...[...new Set(branch.outputs.map(output => output.property))].map(property => `    if (typeof result[${JSON.stringify(property)}] !== "string" || result[${JSON.stringify(property)}] === "secret"${property === 'fdEmail' ? ` || result[${JSON.stringify(property)}].includes("*")` : ''}) return`),
+      ...branch.outputs.map(output => `    MKXFORM.updateControl(${JSON.stringify(`\${table:${branch.tableId}}.${output.fieldId}`)}, rowNum, result[${JSON.stringify(output.property)}] || "")`),
+      '  })', '}'].join('\n');
+  }
   const api = branch.kind === 'person' ? 'sysorg.getPersonByPersonId' : 'sysorg.getElementDatas';
   const param = branch.kind === 'person' ? '{fdPersonId: selected.fdId}' : '{address: [{fdId: selected.fdId}]}';
   return ['function onChange(value, rowNum, parentRowNum) {',

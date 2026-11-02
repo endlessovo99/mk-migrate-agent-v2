@@ -61,7 +61,8 @@ export function translateSysFormTemplateXml(xml, options = {}) {
       const id = field.source.otherTextCompanion.captionId || field.source.layoutCell?.captionIds?.[0];
       const caption = form.fields.find(value => value.id === id);
       return hasGlobalInputScan || !caption?.source?.staticCaptionFact?.domContext && !caption?.source?.captionStructure?.domContext;
-    }).map(field => ({ choiceId: field.id, textId: field.source.otherTextCompanion.id }));
+    }).map(field => ({ choiceId: field.id, textId: field.source.otherTextCompanion.id,
+      captionId: field.source.otherTextCompanion.captionId, caption: field.source.otherTextCompanion.caption }));
   const pairContexts = inspectOtherPairContexts(template.fdDesignerHtml || "", template.fdDisplayJsp || "", unresolvedPairs);
   for (const field of form.fields || []) if (pairContexts.has(field.id)) {
     const context = pairContexts.get(field.id);

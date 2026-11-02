@@ -149,6 +149,15 @@ export class NewoaClient {
     }
   }
 
+  async getSysOrgDesktopDigest() {
+    const response = await this.fetch(`${this.baseUrl}/web/sys-org/desktop/digest.json`, {method: "GET", cache: "no-store", headers: {
+      accept: "application/json", ...(this.cookie ? {cookie: this.cookie} : {}), ...(this.token ? {Authorization: `Bearer ${this.token}`} : {})
+    }});
+    const result = await readResponse(response);
+    if (!response.ok || !isRecord(result.body)) throw clientStageError("getSysOrgDesktopDigest", "Native organization digest is unavailable.");
+    return result.body;
+  }
+
   async getXFormDesktopModuleSha256({ modulePath, releaseHash }) {
     if (!/^[A-Za-z0-9/_-]+$/.test(String(modulePath || ""))) {
       throw clientStageError("getXFormDesktopModuleSha256", "invalid XForm module path");

@@ -70,6 +70,7 @@ import { sourceRequiresReadOnly } from "../dsl/source-readonly.js";
 import { staticRectangleGridProfile } from "./standard-table-grid.js";
 import { remoteDialogDiagnostics } from "../dsl/remote-dialog.js";
 import { applyApprovedMigrationPolicies, APPROVED_MIGRATION_POLICY_BASIS } from "./approved-migration-policies.js";
+import { EMPTY_ROW_VIEW_KIND } from "./approved-empty-row-view.js";
 import { ambiguousDetailRequiredWarnings } from "./approved-detail-required-policy.js";
 import {
   sourceInputLength, inputLengthRequirements, inputLengthPolicyWarning, inputLengthSourceError
@@ -105,9 +106,20 @@ function buildSemanticCaptionForm(sourceDraft, choiceOtherBehavior) {
 export function sourceCaptionBehavior(sourceDraft, semanticForm = buildSemanticCaptionForm(sourceDraft)) {
   if (!sourceDraft.form?.captionRelations?.length && !(sourceDraft.form?.controls || []).some(field =>
     field.sourceProps?.otherTextCompanion)) return undefined;
-  const semanticScripts = draftMkScriptsFromSourceScripts(sourceDraft.scripts, {
-    form: semanticForm, formRules: draftFormRules(sourceDraft.formRules, semanticForm)
+  const semanticRules = draftFormRules(sourceDraft.formRules, semanticForm);
+  let semanticScripts = draftMkScriptsFromSourceScripts(sourceDraft.scripts, {
+    form: semanticForm, formRules: semanticRules
   });
+  // The approved view interpretation is applied before script-impact analysis
+  // as well as to the final draft; otherwise an authorized unbound branch would
+  // continue to obscure unrelated source-bound captions. Other policy families
+  // retain their existing ordering and cannot enter this provisional path.
+  const decisions = sourceDraft.migrationPolicies?.decisions;
+  if (Array.isArray(decisions) && decisions.length && decisions.every(d => d.kind === EMPTY_ROW_VIEW_KIND)) {
+    semanticScripts = applyApprovedMigrationPolicies(sourceDraft, {
+      form: semanticForm, scripts: semanticScripts, formRules: semanticRules
+    }).scripts;
+  }
   return captionBehaviorContract(sourceDraft, semanticForm, semanticScripts);
 }
 
@@ -187,7 +199,8 @@ export function draftSourceDraft(sourceDraft, options = {}) {
     artifact: "dsl-draft",
     derivedFrom: {
       sourceDraftVersion: sourceDraft.version,
-      sourceId: sourceDraft.source?.sourceId || sourceDraft.source?.path || "source"
+      sourceId: sourceDraft.source?.sourceId || sourceDraft.source?.path || "source",
+      ...(sourceDraft.source?.sharedWorkflow ? { originalTemplateId: sourceDraft.source.sharedWorkflow.businessTemplateId } : {})
     },
     catalogs: catalogRefs(),
     validationPolicy: validationPolicyRef(),

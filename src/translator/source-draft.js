@@ -11,6 +11,7 @@ import { sourceCaptionRelations } from "./source-caption-relations.js";
 import { filterContentFlow } from "./designer-content-flow.js";
 import {
   cleanText,
+  decodeEntities,
   parseRootHashMap,
   parseRootHashMapStringPuts,
   javaDecoderHashMapDuplicateKeys
@@ -217,6 +218,7 @@ function cleanSourceDirectory(path, options = {}) {
   const sysFormName = requireSingle(entries, /_SysFormTemplate\.xml$/i, "SysFormTemplate");
   const lbpmProcessName = requireSingle(entries, /_LbpmProcessDefinition\.xml$/i, "LbpmProcessDefinition");
   const kmReviewTemplateName = requireOptional(entries, /_KmReviewTemplate\.xml$/i, "KmReviewTemplate");
+  const sharedBindingName = requireOptional(entries, /_LbpmTemplate\.xml$/i, "LbpmTemplate");
   const sysFormPath = join(path, sysFormName);
   const lbpmProcessPath = join(path, lbpmProcessName);
   const kmReviewTemplate = kmReviewTemplateName
@@ -228,7 +230,8 @@ function cleanSourceDirectory(path, options = {}) {
     functionWhitelist: options.functionWhitelist,
     templateName: String(options.templateName || "").trim() || kmReviewTemplate?.name
   });
-  const workflowDsl = translateLbpmProcessDefinitionXml(readFileSync(lbpmProcessPath, "utf8"), {
+  const processXml = readFileSync(lbpmProcessPath, "utf8");
+  const workflowDsl = translateLbpmProcessDefinitionXml(processXml, {
     sourcePath: lbpmProcessPath
   });
   const workflowReference = resolveWorkflowReference(
@@ -241,13 +244,17 @@ function cleanSourceDirectory(path, options = {}) {
 
   const formTemplateId = formDsl.source.fdModelId;
   const processTemplateId = workflowDsl.source.templateId;
-  if (formTemplateId && processTemplateId && formTemplateId !== processTemplateId) {
+  const sharedWorkflow = sharedBindingName ? readSharedWorkflowBinding({
+    bindingPath: join(path, sharedBindingName), processXml, workflowSource: workflowDsl.source,
+    formTemplateId, kmReviewTemplateId: kmReviewTemplate?.fdId
+  }) : undefined;
+  if (!sharedWorkflow && formTemplateId && processTemplateId && formTemplateId !== processTemplateId) {
     throw new Error(`source directory template mismatch: SysFormTemplate fdModelId ${formTemplateId} does not match LbpmProcessDefinition templateId ${processTemplateId}`);
   }
   if (kmReviewTemplate?.fdId && formTemplateId && kmReviewTemplate.fdId !== formTemplateId) {
     throw new Error(`source directory template mismatch: KmReviewTemplate fdId ${kmReviewTemplate.fdId} does not match SysFormTemplate fdModelId ${formTemplateId}`);
   }
-  if (kmReviewTemplate?.fdId && processTemplateId && kmReviewTemplate.fdId !== processTemplateId) {
+  if (!sharedWorkflow && kmReviewTemplate?.fdId && processTemplateId && kmReviewTemplate.fdId !== processTemplateId) {
     throw new Error(`source directory template mismatch: KmReviewTemplate fdId ${kmReviewTemplate.fdId} does not match LbpmProcessDefinition templateId ${processTemplateId}`);
   }
   const pairedPersonEntities = (
@@ -288,7 +295,8 @@ function cleanSourceDirectory(path, options = {}) {
           ...(templateAuthorization?.readScope?{xmlSha256:kmReviewTemplate.xmlSha256}:{})
         }
       } : {}),
-      ...(workflowReference ? { workflowReference: workflowReference.metadata } : {})
+      ...(workflowReference ? { workflowReference: workflowReference.metadata } : {}),
+      ...(sharedWorkflow ? { sharedWorkflow } : {})
     },
     workflow: supplementWorkflowHandlerEvidence(
       referencedWorkflow,
@@ -304,6 +312,36 @@ function cleanSourceDirectory(path, options = {}) {
     sourcePath: path,
     sourceKind: "source-directory"
   });
+}
+
+/** Accept one direct business-to-common binding only when all retained XML identities agree. */
+function readSharedWorkflowBinding({ bindingPath, processXml, workflowSource, formTemplateId, kmReviewTemplateId }) {
+  const bindingXml = readFileSync(bindingPath, "utf8");
+  const binding = parseRootHashMap(bindingXml);
+  const process = parseRootHashMapStringPuts(processXml);
+  const common = binding.fdCommon;
+  const firstProcess = [...String(processXml).matchAll(/<string>fdContent<\/string>\s*<string>([\s\S]*?)<\/string>/g)]
+    .map(match => decodeEntities(match[1]).trim()).find(content => /^<process\b/i.test(content));
+  const model = "com.landray.kmss.km.review.model.KmReviewTemplate";
+  const bindingClass = "com.landray.kmss.sys.lbpmservice.support.model.LbpmTemplate";
+  const fail = () => { throw new Error("shared workflow source binding is missing, ambiguous, or contradictory"); };
+  if (javaDecoderHashMapDuplicateKeys(bindingXml).length || javaDecoderHashMapDuplicateKeys(processXml).length ||
+      !formTemplateId || !kmReviewTemplateId || formTemplateId !== kmReviewTemplateId ||
+      binding.class !== bindingClass || !binding.fdId || binding.fdModelName !== model ||
+      binding.fdModelId !== formTemplateId || binding.fdKey !== "reviewMainDoc" ||
+      binding.fdIsCommon !== false || binding.fdIsDelete !== false ||
+      !common || common.class !== bindingClass || typeof common.fdId !== "string" || !common.fdId ||
+      process.class !== "com.landray.kmss.sys.lbpm.engine.persistence.model.LbpmProcessDefinition" ||
+      !firstProcess || firstProcess !== String(process.fdContent || "").trim() ||
+      !process.fdId || process.fdId !== workflowSource.fdId || process.fdTemplateId !== common.fdId ||
+      process.fdTemplateModelName !== model || process.fdKey !== binding.fdKey ||
+      (workflowSource.templateId && workflowSource.templateId !== common.fdId) ||
+      (workflowSource.lbpmTemplateId && workflowSource.lbpmTemplateId !== common.fdId) ||
+      (workflowSource.modelName && workflowSource.modelName !== model)) fail();
+  return { version: 1, businessTemplateId: formTemplateId, businessWorkflowTemplateId: binding.fdId,
+    commonTemplateId: common.fdId, processId: process.fdId,
+    bindingSha256: "sha256:" + createHash("sha256").update(bindingXml).digest("hex"),
+    processSha256: "sha256:" + createHash("sha256").update(processXml).digest("hex") };
 }
 
 function mergeSourceReviews(formReview, workflowReview) {
@@ -627,7 +665,8 @@ function normalizeSourceMetadata(source, context) {
       sysFormTemplate: source.sysFormTemplate,
       lbpmProcessDefinition: source.lbpmProcessDefinition,
       kmReviewTemplate: source.kmReviewTemplate,
-      ...(source.workflowReference ? { workflowReference: source.workflowReference } : {})
+      ...(source.workflowReference ? { workflowReference: source.workflowReference } : {}),
+      ...(source.sharedWorkflow ? { sharedWorkflow: source.sharedWorkflow } : {})
     };
   }
 

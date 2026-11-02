@@ -2,6 +2,7 @@ import { integrityError } from "./integrity.js";
 
 const ENTRY_KEYS_BY_OPERATION = new Map([
   ["login", new Set(["operation"])],
+  ["get-sys-org-desktop-digest", new Set(["operation"])],
   ["get-workflow-cooperation-config", new Set(["operation"])],
   ["get-workflow-operation-set", new Set(["operation", "fdId"])],
   ["get-template-reader-digest",new Set(["operation"])],

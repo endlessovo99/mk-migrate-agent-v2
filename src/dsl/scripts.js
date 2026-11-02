@@ -395,10 +395,23 @@ export function buildSetFieldAttrTargetIndex(form = {}) {
     mainFields.add(field.id);
   }
 
-  for (const { markers, target } of layoutRowTargets(form)) {
+  const entries = layoutRowTargets(form);
+  const markerRows = new Map();
+  for (const { row, markers, target } of entries) {
     persistedRowTargets.add(target);
+    const owner = row.sourceRef || row.id;
+    for (const marker of new Set([...markers, target])) {
+      const rows = markerRows.get(marker) || new Set(); rows.add(owner); markerRows.set(marker, rows);
+    }
+  }
+  for (const { markers, target } of entries) {
     for (const alias of markers.filter(marker => marker !== target)) {
-      if (!secondaryMarkerToPrimary.has(alias)) secondaryMarkerToPrimary.set(alias, target);
+      const a = markerRows.get(alias), b = markerRows.get(target);
+      // A co-located marker can name additional rows elsewhere. It is an alias
+      // only when both names cover exactly the same source row group.
+      if (a?.size === b?.size && [...a].every(row => b.has(row))) {
+        if (!secondaryMarkerToPrimary.has(alias)) secondaryMarkerToPrimary.set(alias, target);
+      }
     }
   }
 

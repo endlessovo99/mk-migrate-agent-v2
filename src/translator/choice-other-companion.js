@@ -109,9 +109,16 @@ export function mapChoiceOtherCompanions(fields = [], sourceScripts = {}, behavi
       ...(sourceScripts.fragments || []).map(fragment => fragment.content),
       ...(sourceScripts.actions || []).map(action => action.function || action.sourceText)]
       .filter(value => typeof value === "string" && value.trim());
-    if (programs.length && captionScriptReferences(programs).opaque) continue;
-    const context = choice.sourceProps?.otherPairContext || choice.sourceProps?.staticCaptionFact?.domContext || choice.sourceProps?.captionStructure?.domContext;
-    if (programs.length && (!context || !behavior?.forPair(choice.id, choice.id, context).ok)) continue;
+    const bound = choice.sourceProps?.boundCaption;
+    const matchingCaptions = bound?.relation === "explicit-label-bind-id" ? fields.filter(field => field.id === bound.id) : [];
+    const fact = matchingCaptions.length === 1 && matchingCaptions[0].sourceProps?.staticCaptionFact;
+    const boundContext = fact?.plainText === true && fact.unique === true && fact.unguarded === true && fact.runtimePresent === true &&
+      fact.content === bound.content && fact.domContext?.version === 1 && fact.domContext.inlineDomainComplete === true &&
+      fact.domContext.cellDescendantIds?.includes(choice.id) ? fact.domContext : undefined;
+    const context = choice.sourceProps?.otherPairContext || choice.sourceProps?.staticCaptionFact?.domContext || choice.sourceProps?.captionStructure?.domContext || boundContext;
+    const impact = programs.length && context && behavior?.forPair(choice.id, choice.id, context);
+    if (programs.length && captionScriptReferences(programs).opaque && !(impact?.ok && closedSourceFragments(sourceScripts))) continue;
+    if (programs.length && !impact?.ok) continue;
     const other = others[0], defaults = choice.props.defaultValue;
     if (defaults && (defaults.kind !== "literal" || typeof defaults.value !== "string")) continue;
     const values = defaults?.value ? defaults.value.split(",") : [];
@@ -207,7 +214,18 @@ function referencedCaption(caption, choice, scripts, fields, behavior) {
   const references = captionScriptReferences(texts);
   if (texts.some(text => text.includes(caption.id)) || references.values.some(text => text.includes(caption.id))) return true;
   if (references.opaque && !scripts.sources?.length && scripts.fragments?.length) return true;
-  const context = caption.sourceProps?.captionStructure?.domContext || caption.sourceProps?.staticCaptionFact?.domContext;
+  const pairContext = choice.sourceProps?.otherPairContext;
+  const sameCellContext = pairContext?.version === 1 && pairContext.inlineDomainComplete === true && pairContext.captionId === caption.id &&
+    Array.isArray(pairContext.pairDescendantIds) &&
+    [choice.id, caption.id, choice.sourceProps?.otherTextCompanion?.id].every(id => pairContext.pairDescendantIds.includes(id))
+      ? pairContext : undefined;
+  const captionContext = caption.sourceProps?.captionStructure?.domContext || caption.sourceProps?.staticCaptionFact?.domContext;
+  const context = sameCellContext && captionContext?.version === 1 ? { ...sameCellContext,
+    inlineDomainComplete: sameCellContext.inlineDomainComplete === true && captionContext.inlineDomainComplete === true,
+    ancestorIds: [...new Set([...(sameCellContext.ancestorIds || []), ...(captionContext.ancestorIds || [])])],
+    cellDescendantIds: [...new Set([...(sameCellContext.cellDescendantIds || []), ...(captionContext.cellDescendantIds || [])])],
+    pairDescendantIds: [...new Set([...(sameCellContext.pairDescendantIds || []), ...(captionContext.pairDescendantIds || [])])]
+  } : sameCellContext || captionContext;
   const impact = behavior?.forPair(choice.id, caption.id, context);
   return impact ? !impact.ok : references.opaque;
 }
@@ -264,4 +282,24 @@ function hasMatchingOtherTitle(choice, companion) {
     ) ||
     title.endsWith(choiceTitle) && isOtherCaptionText(title.slice(0, -choiceTitle.length))
   ));
+}
+
+// Fragment markup may be ignored by the script-impact proof only when every
+// executable script is exactly one already inventoried source and all other
+// fragment content consists of inert row-marker inputs and static wrappers.
+function closedSourceFragments(scripts = {}) {
+  if ((scripts.actions || []).length || (scripts.buttons || []).length) return false;
+  const sources = scripts.sources || [], fragments = scripts.fragments || [];
+  const ast = text => { try { return JSON.stringify(parse(text, {ecmaVersion: "latest"}), (k,v) => ["start","end","raw"].includes(k) ? undefined : v); } catch { return undefined; } };
+  for (const fragment of fragments) {
+    let markup = String(fragment.content || "");
+    if (/^\s*<input\s+type="hidden"\s+id="([A-Za-z_][\w]*)"\s+name="\1"\s*\/?>\s*$/i.test(markup)) continue;
+    const matches = [...markup.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)];
+    if (!matches.length || (markup.match(/<script\b/gi)||[]).length !== matches.length || matches.some(m => m[1].trim())) return false;
+    const owned = sources.filter(source => source.fragmentId === fragment.id);
+    if (owned.length !== matches.length || matches.some((m,i) => !ast(m[2]) || ast(m[2]) !== ast(owned[i].javascript))) return false;
+    markup = markup.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, "").replace(/<\/?xform:(?:editShow|viewShow)\s*>/gi, "");
+    if (markup.trim()) return false;
+  }
+  return sources.every(source => !source.fragmentId || fragments.some(fragment => fragment.id === source.fragmentId));
 }
