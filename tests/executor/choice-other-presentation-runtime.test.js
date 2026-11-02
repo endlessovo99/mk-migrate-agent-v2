@@ -36,9 +36,22 @@ it("updates only the independent selection when explanation text actually change
   runtime.edit("fd_note", "  next_说明  ");
   assert.deepEqual(runtime.values.other_caption, ["selected"]);
   runtime.edit("fd_note", "");
-  assert.deepEqual(runtime.values.other_caption, []);
+  assert.deepEqual(runtime.values.other_caption, ["selected"]);
   assert.deepEqual(runtime.values.fd_choice, ["source-code"]);
-  assert.deepEqual(runtime.writes.map(({ id }) => id), ["other_caption", "other_caption"]);
+  assert.deepEqual(runtime.writes.map(({ id }) => id), ["other_caption"]);
+});
+
+it("keeps an explicitly selected optional Other checked when its explanation is cleared", () => {
+  for (const value of ["", null, undefined]) {
+    for (const selected of [[], ["selected"]]) {
+      const runtime = runtimeFor(form, { fd_choice: ["source-code"], fd_note: "original", other_caption: selected });
+      runtime.initialize();
+      runtime.edit("fd_note", value);
+      assert.deepEqual(runtime.values.other_caption, selected);
+      assert.equal(runtime.values.fd_note, value);
+      assert.deepEqual(runtime.writes, []);
+    }
+  }
 });
 
 it("resolves source identities after remapping and rejects incompatible or ambiguous bindings", () => {
@@ -150,7 +163,7 @@ it("passes physically qualified current field references to every public SDK ope
     { api: "onChange", ref: "mk_main_test.fd_note" }
   ]);
   runtime.edit("fd_note", "");
-  assert.deepEqual(runtime.references.at(-1), { api: "setValue", ref: "mk_main_test.other_caption" });
+  assert.deepEqual(runtime.references.at(-1), { api: "onChange", ref: "mk_main_test.fd_note" });
   assert.deepEqual(choiceOtherToggleBindings(form), [{ toggleId: "other_caption", choiceId: "fd_choice", textId: "fd_note" }]);
 });
 
@@ -211,8 +224,8 @@ it("keeps two source pairs independent with one initializer and one subscription
   assert.deepEqual(runtime.writes.map(({ id }) => id), ["other_caption"]);
   runtime.edit("fd_note_2", "");
   assert.deepEqual(runtime.values.other_caption, ["selected"]);
-  assert.deepEqual(runtime.values.other_caption_2, []);
-  assert.deepEqual(runtime.writes.map(({ id }) => id), ["other_caption", "other_caption_2"]);
+  assert.deepEqual(runtime.values.other_caption_2, ["selected"]);
+  assert.deepEqual(runtime.writes.map(({ id }) => id), ["other_caption"]);
   assert.deepEqual(runtime.values.fd_choice, ["FIRST"]);
   assert.deepEqual(runtime.values.fd_choice_2, ["SECOND"]);
 });

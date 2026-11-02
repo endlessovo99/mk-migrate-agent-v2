@@ -44,7 +44,11 @@ export function withChoiceOtherRuntime(scripts = {}, form = {}, mainTableName) {
       if (!MKXFORM.$$FORM || MKXFORM.$$FORM.current !== nativeForm) return;
       if (value === text) return;
       text = value;
-      MKXFORM.setValue(binding.toggleId, value !== undefined && value !== null && value !== "" ? ["selected"] : []);
+      // Clearing the explanation must not undo a user's explicit Other
+      // selection and hide the editor they are still using.
+      if (value !== undefined && value !== null && value !== "") {
+        MKXFORM.setValue(binding.toggleId, ["selected"]);
+      }
     });
     state.pairs[key] = true;
   });

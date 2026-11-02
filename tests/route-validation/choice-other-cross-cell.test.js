@@ -8,6 +8,7 @@ import { cleanSourceFile, draftSourceDraft } from "../../src/translator/index.js
 import { prepareSample, xformConfig } from "../helpers/persistence.js";
 import { runRouteCase } from "./run-route-case.js";
 import { withCrossCellOtherReveal } from "../../src/executor/persistence/choice-other-cross-cell.js";
+import { withChoiceOtherRuntime } from "../../src/dsl/choice-other-runtime.js";
 
 const fixture = "tests/fixtures/route-validation/choice-other-cross-cell/choice-other-cross-cell_SysFormTemplate.xml";
 it("recognizes a bound Other caption and input in adjacent source cells", () => {
@@ -121,6 +122,44 @@ it("shows the adjacent explanation only when selected without clearing its value
     assert.equal(await note.isVisible(), true, "an existing explanation cannot be hidden by an uninitialized toggle");
     await toggle.check(); await toggle.uncheck(); assert.equal(await note.isVisible(), false);
     assert.equal(await note.inputValue(), "historical_value");
+  } finally { await browser.close(); }
+});
+
+it("keeps the selected Other editor visible while its optional explanation is cleared", {
+  skip: process.env.MK_LAYOUT_BROWSER_TESTS !== "1"
+}, async () => {
+  const { chromium } = await import(process.env.MK_LAYOUT_PLAYWRIGHT_MODULE || "playwright");
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.MK_LAYOUT_BROWSER_PATH });
+  try {
+    const page = await browser.newPage(); await page.route("**/*", route => route.abort());
+    const form = draftSourceDraft(cleanSourceFile(fixture)).form, table = "mk_model_test";
+    const initializer = withChoiceOtherRuntime({ actions: [] }, form, table).actions.find(action => action.id === "mk-choice-other-init-v1");
+    const reveal = withCrossCellOtherReveal({ actions: [] }, form, table).actions.find(action => action.id === "mk-choice-other-cross-cell-v1");
+    await page.setContent('<div data-id="mk_model_test.fd_other_caption"><input id="toggle" type="checkbox"></div>' +
+      '<div data-id="mk_model_test.fd_other_text"><input id="note" value=""></div>');
+    await page.evaluate(({ init, display }) => {
+      const values = { "mk_model_test.fd_other_caption": [], "mk_model_test.fd_other_text": "" }, listeners = {};
+      window.MKXFORM = { MKXFORM_DATA_CONTAINER: {}, $$FORM: { current: {} },
+        getValue: ref => values[ref], getFieldAttr: () => 2,
+        onChange(ref, fn) { (listeners[ref] ||= []).push(fn); },
+        setValue(ref, value) {
+          values[ref] = value;
+          if (ref.endsWith("fd_other_caption")) document.querySelector("#toggle").checked = value.includes("selected");
+          for (const fn of listeners[ref] || []) fn(value);
+        } };
+      document.querySelector("#toggle").addEventListener("change", event =>
+        MKXFORM.setValue("mk_model_test.fd_other_caption", event.target.checked ? ["selected"] : []));
+      document.querySelector("#note").addEventListener("input", event =>
+        MKXFORM.setValue("mk_model_test.fd_other_text", event.target.value));
+      (0, eval)(`(${init})`)({}); (0, eval)(`(${display})`)({});
+    }, { init: initializer.function, display: reveal.function });
+    const toggle = page.locator("#toggle"), note = page.locator("#note");
+    await toggle.check(); await note.fill("temporary text"); await note.fill("");
+    assert.equal(await toggle.isChecked(), true);
+    assert.equal(await note.isVisible(), true);
+    await note.fill("replacement"); assert.equal(await note.inputValue(), "replacement");
+    await toggle.uncheck(); assert.equal(await note.isVisible(), false);
+    assert.equal(await note.inputValue(), "replacement");
   } finally { await browser.close(); }
 });
 it("does not infer a cross-cell relation from unrelated, ambiguous or runtime-mismatched fields", () => {
