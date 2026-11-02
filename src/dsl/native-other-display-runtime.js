@@ -46,6 +46,7 @@ export function withNativeOtherDisplayRuntime(scripts = {}, form = {}, mainTable
   var specs = ${JSON.stringify(specs)}, urls = ${JSON.stringify(urls)}, origin = ${JSON.stringify(capability.origin)}, pending = {}, composing = {}, pendingChoice = {}, choiceBefore = {}, settled = {};
   function current() { return MKXFORM && MKXFORM.$$FORM && MKXFORM.$$FORM.current === form; }
   function nativeText(value) { return value.split("_")[0].replace(/(^\\s*)|(\\s*$)/g, ""); }
+  function nativeVariant(value, candidate) { return value === candidate || value.trim() === candidate || nativeText(value) === candidate; }
   function available(url) { return typeof location !== "undefined" && location.origin === origin &&
     Array.prototype.some.call(document.scripts || [], function(script) { return script.src === url; }); }
   function text(value, spec) {
@@ -500,7 +501,8 @@ export function withNativeOtherDisplayRuntime(scripts = {}, form = {}, mainTable
     if (!edit && last) {
       var userDeselected = next.status === "none" && choice && choice.checked && choice.checked[spec.options.length] === false;
       if (!userDeselected && ((next.status === "other" && next.value !== last.value &&
-          (next.value === last.previous || next.value === nativeText(last.value) || last.history.indexOf(next.value) >= 0)) || next.status === "none")) {
+          (next.value === last.previous || nativeVariant(last.value, next.value) ||
+            last.history.some(function(previous) { return nativeVariant(previous, next.value); }))) || next.status === "none")) {
         pending[spec.ref] = { target: last.target, value: last.value, previous: last.previous, conflict: true, conflictReason: "late_native" };
         schedule(); return;
       }
@@ -514,8 +516,8 @@ export function withNativeOtherDisplayRuntime(scripts = {}, form = {}, mainTable
     }
     else if (edit && !edit.composing && !nativeEvent && next.status === "other" && next.value !== edit.value) {
       if (next.value === edit.previous) edit.conflict = true;
-      else if (edit.history && edit.history.indexOf(next.value) >= 0) { schedule(); return; }
-      else if (next.value === nativeText(edit.value)) edit.conflict = true;
+      else if (edit.history && edit.history.some(function(previous) { return nativeVariant(previous, next.value); })) { schedule(); return; }
+      else if (nativeVariant(edit.value, next.value)) edit.conflict = true;
       else delete pending[spec.ref];
     }
     schedule();

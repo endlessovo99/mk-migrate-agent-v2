@@ -6,6 +6,7 @@ import { SIT_CONDITION_ORG_FALLBACKS } from "../../src/executor/condition-org-re
 import { NATIVE_FORM_RULE_FORMULA_RUNTIME_CAPABILITY } from "../../src/executor/native-form-rule-runtime-capability.js";
 import { CHOICE_OTHER_STORAGE_CAPABILITY } from "../../src/dsl/choice-other-storage-capability.js";
 import { DETAIL_VISIBILITY_RUNTIME } from "../../src/executor/detail-visibility-runtime.js";
+import { DYNAMIC_LINK_RUNTIME } from "../../src/executor/dynamic-link-runtime.js";
 import { DETAIL_CELL_PRESENTATION_CAPABILITY } from "../../src/dsl/detail-cell-presentation-capability.js";
 import { NATIVE_OTHER_DISPLAY_CAPABILITY } from "../../src/dsl/native-other-display-capability.js";
 import { NATIVE_FORM_RULE_FORMULA_CAPABILITY } from "../../src/dsl/native-form-rule-capability.js";
@@ -61,6 +62,7 @@ export class FakeNewoaAdapter {
     this.readerOptions=options;
     this.detailVisibilityRuntime = options.detailVisibilityRuntime === true || options.detailCellRuntime === true;
     this.detailCellRuntime = options.detailCellRuntime === true;
+    this.dynamicLinkRuntime = options.dynamicLinkRuntime === true;
     this.nativeEveryone=options.nativeEveryone||options.organizationCandidates?.find(c=>c.fdAccount?.fdLoginName==='everyone')||{fdId:'route-native-everyone',fdName:'Route Everyone',fdOrgType:8,fdIsAvailable:true,fdIsBusiness:false,fdAccount:{fdLoginName:'everyone'}};
     this.organizationCandidates = options.organizationCandidates || [];
     this.authorizationCandidates = authorizationCandidates(options.templateAuthorization);
@@ -139,8 +141,14 @@ export class FakeNewoaAdapter {
 
   async getDetailCellElementRegistry() {
     this.record({ operation: "get-detail-cell-element-registry" });
-    const releases = { ...(this.detailCellRuntime ? DETAIL_CELL_PRESENTATION_CAPABILITY.releases : {}), ...NATIVE_OTHER_DISPLAY_CAPABILITY.releases };
+    const releases = { ...(this.detailCellRuntime ? DETAIL_CELL_PRESENTATION_CAPABILITY.releases : {}),
+      ...(this.dynamicLinkRuntime ? DYNAMIC_LINK_RUNTIME.releases : {}), ...NATIVE_OTHER_DISPLAY_CAPABILITY.releases };
     return `APP_CONFIG["moduleDigest"]["sys/artifact"] = ${JSON.stringify(Object.fromEntries(Object.entries(releases).map(([key, hash]) => [key, { hash }])))};`;
+  }
+
+  async getDynamicLinkAssetSha256({ assetPath }) {
+    this.record({ operation: "get-dynamic-link-asset-sha256", assetPath });
+    return this.dynamicLinkRuntime ? DYNAMIC_LINK_RUNTIME.assets[assetPath] || "unknown" : "unknown";
   }
 
   async getDetailCellAssetSha256({ assetPath }) {
@@ -341,6 +349,7 @@ export class FakeNewoaAdapter {
       entry?.operation === "get-xform-desktop-module-sha256" ||
       entry?.operation === "get-detail-cell-element-registry" ||
       entry?.operation === "get-detail-cell-asset-sha256" ||
+      entry?.operation === "get-dynamic-link-asset-sha256" ||
       entry?.operation === "get-native-other-asset-sha256"
     ) {
       this.entries.push(clone(entry));

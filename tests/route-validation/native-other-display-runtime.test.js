@@ -200,7 +200,7 @@ it("retains prior edit history across multiple settled input cycles", () => {
   assert.equal(h.before[0](), false, "an old callback after later settled edits must be blocked");
 });
 
-for (const [typed, nativeValue] of [["a_b", "a"], ["a ", "a"]]) {
+for (const [typed, nativeValue] of [["a_b", "a"], ["a ", "a"], [" a_b ", "a_b"]]) {
   it(`blocks a delayed native truncation after pasting ${JSON.stringify(typed)}`, () => {
     const h = harness(); h.flush();
     const event = { target: h.input, eventPhase: 1 };
@@ -211,6 +211,25 @@ for (const [typed, nativeValue] of [["a_b", "a"], ["a ", "a"]]) {
     assert.equal(h.before[0](), false, "a stale normalized value cannot overwrite a settled user edit");
   });
 }
+
+it("recognizes normalization of an older pending user value", () => {
+  const h = harness(); h.flush();
+  for (const value of [" a_b ", " a_b x"]) {
+    h.input.value = value; const event = { target: h.input, eventPhase: 1 };
+    h.listeners.input(event); event.eventPhase = 0;
+  }
+  h.sdk.setValue("mk_model_test.fd_choice", ["A", "other_a_b"]); h.flush();
+  assert.deepEqual(h.values["mk_model_test.fd_choice"], ["A", "other_ a_b x"]);
+  assert.equal(h.before[0](), true);
+});
+
+it("blocks whole-text trimming while the original edit is still pending", () => {
+  const h = harness(); h.flush();
+  const event = { target: h.input, eventPhase: 1 };
+  h.input.value = " a_b "; h.listeners.input(event); event.eventPhase = 0;
+  h.sdk.setValue("mk_model_test.fd_choice", ["A", "other_a_b"]); h.flush();
+  assert.equal(h.before[0](), false);
+});
 
 it("does not clear a conflict that appears after cleanup was scheduled", () => {
   const h = harness(); h.flush();

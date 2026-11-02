@@ -23,6 +23,8 @@ import { requiresDetailVisibilitySync } from "./persistence/detail-visibility-sy
 import { DETAIL_VISIBILITY_RUNTIME, inspectDetailVisibilityRuntime } from "./detail-visibility-runtime.js";
 import { DETAIL_CELL_PRESENTATION_CAPABILITY } from "../dsl/detail-cell-presentation-capability.js";
 import { inspectDetailCellPresentationRuntime } from "./detail-cell-presentation-capability.js";
+import { DYNAMIC_LINK_BUTTON_KIND } from "../dsl/native-dynamic-link-button.js";
+import { inspectDynamicLinkRuntime } from "./dynamic-link-runtime.js";
 import {
   hasStaticAddressDefaults,
   resolveStaticAddressDefaults
@@ -81,6 +83,7 @@ async function executeDraftDsl(input, options, writes) {
   }
   let requiresChoiceOtherStorage = false;
   let requiresNativeOtherDisplay = false;
+  const requiresDynamicLinkRuntime = input.migrationPolicies?.decisions?.some(decision => decision.kind === DYNAMIC_LINK_BUTTON_KIND) === true;
   let requiresDetailVisibility = false;
   const requiresDetailCellPresentation = (input.form?.fields || []).some(field => field?.type === "detailTable" && field.detailCellGroups?.length);
   if (requiresDetailCellPresentation && target.baseUrl !== DETAIL_CELL_PRESENTATION_CAPABILITY.origin) safety.push({
@@ -139,6 +142,17 @@ async function executeDraftDsl(input, options, writes) {
     apiStages.push({ name: "login", status: "started" });
     await client.login(credentials);
     apiStages[apiStages.length - 1].status = "ok";
+    if (requiresDynamicLinkRuntime) {
+      const stage = { name: "verifyDynamicLinkRuntime", status: "started" };
+      apiStages.push(stage);
+      const capability = await inspectDynamicLinkRuntime(client, baseUrl);
+      Object.assign(stage, { status: capability.ok ? "ok" : "failed", issues: capability.issues });
+      if (!capability.ok) return { ...blocked(plan, [...diagnostics, {
+        level: "error", code: "safety.dynamic_link_runtime_unverified",
+        message: "The target dynamic-link button runtime is not verified; no migration write was attempted.",
+        path: "/migrationPolicies", details: { issues: capability.issues }
+      }], baseUrl), stage: stage.name, failedAt: stage.name, createdFdIds: [], updatedFdIds: [], apiStages };
+    }
     let verifiedDetailVisibility;
     if (requiresDetailVisibility) {
       const stage = { name: "verifyDetailVisibilityRuntime", status: "started" };
