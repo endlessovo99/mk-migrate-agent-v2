@@ -39,14 +39,16 @@ export function sourceDetailCellCandidates(sourceForm, targetForm) {
   if (targetForm?.layout?.sizing !== "adaptive") return [];
   const fields = Array.isArray(targetForm?.fields) ? targetForm.fields : [];
   return sourceDetailCellGroups(sourceForm).flatMap(({ table, cell, legacy }) => {
-    if (legacy || cell.inline !== true && !cell.stacked || cell.runtimeInline !== true || ![cell.row, cell.column, cell.cell].every(Number.isSafeInteger) ||
+    if (legacy || [cell.inline === true, cell.rightPair === true, Boolean(cell.stacked)].filter(Boolean).length !== 1 ||
+        cell.runtimeInline !== true || ![cell.row, cell.column, cell.cell].every(Number.isSafeInteger) ||
         [cell.row, cell.column, cell.cell].some(value => value < 0) || new Set(cell.fieldIds).size !== cell.fieldIds.length) return [];
     const sourceColumns = cell.fieldIds.map(id => (table.columns || []).filter(column => column?.id === id));
     if (sourceColumns.some(matches => matches.length !== 1)) return [];
     const originals = sourceColumns.map(matches => matches[0]);
     if (originals.some(column => {
       const own = column.sourceProps?.detailCell;
-      return !own || own.inline !== true && !own.stacked || canonicalJson(own.stacked || null) !== canonicalJson(cell.stacked || null) || own.runtimeInline !== true || own.row !== cell.row || own.column !== cell.column || own.cell !== cell.cell ||
+      return !own || own.inline !== true && own.rightPair !== true && !own.stacked || own.rightPair !== cell.rightPair ||
+        canonicalJson(own.stacked || null) !== canonicalJson(cell.stacked || null) || own.runtimeInline !== true || own.row !== cell.row || own.column !== cell.column || own.cell !== cell.cell ||
         JSON.stringify(own.fieldIds) !== JSON.stringify(cell.fieldIds);
     })) return [];
     const tables = fields.filter(field => field?.sourceRef === table.sourceRef && field.type === "detailTable");
@@ -172,11 +174,18 @@ export function detailCellPresentationDiagnostics(expectedForm, targetForm, { pr
     if (expected.length !== 1 || actual.length !== 1 || expected[0].id !== actual[0].id ||
         canonicalJson(expected[0].detailCellGroups || []) !== canonicalJson(actual[0].detailCellGroups || [])) { mismatch({ reason: "group" }); continue; }
     const memberRefs = new Set((expected[0].detailCellGroups || []).flatMap(group => group.sourceRefs || []));
+    // The source cell can also own hidden data fields. Their component and
+    // visibility must remain fixed when the visible pair is grouped.
+    for (const group of expected[0].detailCellGroups || []) for (const column of expected[0].columns || []) {
+      const cell = column.sourceProps?.detailCell;
+      if (cell?.row === group.sourceCell?.row && cell?.cell === group.sourceCell?.cell &&
+          cell?.column === group.sourceCell?.column) memberRefs.add(column.sourceRef);
+    }
     const semantics = field => {
       const props = { ...(field?.props || {}) };
       for (const key of ["required", "readOnly", "hiddenLabel"]) if (props[key] === false) delete props[key];
       return { id: field?.id, title: field?.title, type: field?.type, componentId: field?.componentId, props,
-        dataOnly: field?.dataOnly === true, originalId: field?.sourceProps?.originalId,
+        dataOnly: field?.dataOnly === true, hardHidden: field?.sourceProps?.hardHidden === true, originalId: field?.sourceProps?.originalId,
         cell: field?.sourceProps?.detailCell, header: field?.sourceProps?.detailHeaderCaption };
     };
     for (const memberRef of memberRefs) {

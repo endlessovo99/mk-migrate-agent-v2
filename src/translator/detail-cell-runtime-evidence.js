@@ -9,7 +9,7 @@ const CONDITIONAL = new Set(["c:if", "c:choose", "c:when", "c:otherwise", "xform
 /** Add only a source fact: both editors occur in the same runtime detail cell. */
 export function annotateRuntimeDetailCellEvidence(form, displayJsp) {
   const tables = (form?.fields || []).filter(table => table?.type === "detailTable" &&
-    (table.columns || []).some(column => column?.source?.detailCell?.inline === true || column?.source?.detailCell?.stacked));
+    (table.columns || []).some(column => column?.source?.detailCell?.inline === true || column?.source?.detailCell?.stacked || column?.source?.detailCell?.rightPair === true));
   if (!tables.length) return;
   const markup = staticSourceMarkup(String(displayJsp || ""));
   if (markup === undefined) return;
@@ -18,7 +18,7 @@ export function annotateRuntimeDetailCellEvidence(form, displayJsp) {
     const seen = new Set(), columns = table.columns || [];
     for (const column of columns) {
       const cell = column.source?.detailCell;
-      if ((!cell?.inline && !cell?.stacked) || seen.has(`${cell.row}:${cell.cell}`)) continue;
+      if ((!cell?.inline && !cell?.stacked && !cell?.rightPair) || seen.has(`${cell.row}:${cell.cell}`)) continue;
       seen.add(`${cell.row}:${cell.cell}`);
       const members = cell.fieldIds.map(id => columns.filter(item => item.id === id));
       if (members.some(matches => matches.length !== 1)) continue;
@@ -26,7 +26,8 @@ export function annotateRuntimeDetailCellEvidence(form, displayJsp) {
       const visible = all.filter(item => item.dataOnly !== true && item.source?.hardHidden !== true);
       if (visible.length !== 2 || !visible.every(item => TYPES.has(item.type)) ||
           cell.stacked && !stackedClassesUnscripted(String(displayJsp || ""), markup, cell.stacked) ||
-          !sameRuntimeCell(markup, occurrences, table.id, visible, cell.stacked)) continue;
+          !sameRuntimeCell(markup, occurrences, table.id, visible, { stacked: cell.stacked, rightPair: cell.rightPair === true,
+            hiddenFields: all.filter(item => item.source?.hardHidden === true) })) continue;
       for (const member of all) member.source = { ...member.source, detailCell: { ...member.source.detailCell, runtimeInline: true } };
     }
   }
@@ -86,7 +87,7 @@ function hidden(attrs) {
     /(?:^|\s)inputhidden(?:\s|$)/iu.test(attrValue(attrs, "class"));
 }
 
-function sameRuntimeCell(markup, occurrences, tableId, fields, stacked) {
+function sameRuntimeCell(markup, occurrences, tableId, fields, { stacked, rightPair = false, hiddenFields = [] } = {}) {
   const prefix = `extendDataFormInfo.value(${tableId}.`;
   const selected = fields.map(field => {
     const suffix = `.${field.id})`;
@@ -95,14 +96,16 @@ function sameRuntimeCell(markup, occurrences, tableId, fields, stacked) {
       const loop = /^\$\{([A-Za-z_][\w]*)\.index\}$/.exec(marker);
       const markerOk = /^\d+$/.test(marker) || marker === "!{index}" || Boolean(loop);
       const referenceOk = marker === "!{index}" ? item.referenceRows.length === 1 : item.referenceRows.length === 0;
-      const conditional = item.stack.some(ancestor => CONDITIONAL.has(ancestor.name) ||
+      const rights = item.stack.filter(ancestor => ancestor.name === "xform:right");
+      const conditional = item.stack.some(ancestor => CONDITIONAL.has(ancestor.name) && !(rightPair && ancestor.name === "xform:right") ||
         hidden(ancestor.attrs) && !(referenceOk && marker === "!{index}" && ancestor === item.referenceRows[0]));
       let loopOk = item.loops.length === 0;
       if (loop && item.loops.length === 1) {
         const attrs = parseStaticMarkupAttributes(item.loops[0].attrs);
         loopOk = attrs?.get("varstatus") === loop[1] && attrs?.get("items") === '${_xformForm.extendDataFormInfo.formData.' + tableId + '}';
       } else if (loop) loopOk = false;
-      return { ...item, marker, valid: Boolean(item.attrsValid && item.cell !== undefined && markerOk && referenceOk &&
+      return { ...item, marker, rights, valid: Boolean(item.attrsValid && item.cell !== undefined && markerOk && referenceOk &&
+        (!rightPair || rights.length === 1 && rightOnlyControl(markup, rights[0], item)) &&
         !conditional && loopOk && item.end >= item.start && !item.ownHidden) };
     });
   });
@@ -117,7 +120,12 @@ function sameRuntimeCell(markup, occurrences, tableId, fields, stacked) {
         first.cell !== second.cell || first.end > second.start) return false;
     if (stacked) return stackedRuntimeCell(markup, first, second, stacked);
     const gap = markup.slice(first.end, second.start), tags = [...scanHtmlTags(gap)];
-    if (tags.some(tag => tag.name === "br" || !tag.closing && (tag.name.startsWith("xform:") || tag.name.startsWith("c:")))) return false;
+    if (rightPair) {
+      const firstRights = rightSignature(first.rights[0]), secondRights = rightSignature(second.rights[0]);
+      if (!firstRights || firstRights !== secondRights || tags.length !== 2 ||
+          tags[0].name !== "xform:right" || !tags[0].closing || tags[1].name !== "xform:right" || tags[1].closing ||
+          !rightPairCellOnly(markup, first, second, tableId, marker, hiddenFields)) return false;
+    } else if (tags.some(tag => tag.name === "br" || !tag.closing && (tag.name.startsWith("xform:") || tag.name.startsWith("c:")))) return false;
     return /^(?:\s|&nbsp;|&#160;|&#x0*a0;)*$/iu.test(removeRanges(gap, tags.map(tag => [tag.start, tag.end])));
   });
 }
@@ -145,6 +153,45 @@ function stackedRuntimeCell(markup, first, second, spec) {
   return suffixTags.length === 1 && suffixTags[0].name === "div" && suffixTags[0].closing &&
     !removeRanges(suffix, suffixTags.map(tag => [tag.start, tag.end])).trim() &&
     /^\s*width\s*:\s*50px\s*;?\s*$/iu.test(second.style || "");
+}
+
+function rightPairCellOnly(markup, first, second, tableId, marker, hiddenFields) {
+  const cell = first.cellToken, close = findMatchingCloseTag(markup, cell.end, "td");
+  if (close < second.end) return false;
+  const ranges = [first.rights[0], second.rights[0]].map(right => {
+    const start = right.start, endStart = findMatchingCloseTag(markup, right.end, "xform:right");
+    const end = endStart < 0 ? undefined : scanHtmlTags(markup, endStart).next().value;
+    return end?.closing && end.name === "xform:right" ? [start - cell.end, end.end - cell.end] : undefined;
+  });
+  if (ranges.some(range => !range || range[0] < 0 || range[1] > close - cell.end)) return false;
+  const rest = removeRanges(markup.slice(cell.end, close), ranges), tags = [...scanHtmlTags(rest)];
+  if (tags.length !== hiddenFields.length * 3 ||
+      !/^(?:\s|&nbsp;|&#160;|&#x0*a0;)*$/iu.test(removeRanges(rest, tags.map(tag => [tag.start, tag.end])))) return false;
+  const seen = new Set();
+  for (let i = 0; i < tags.length; i += 3) {
+    const [open, control, end] = tags.slice(i, i + 3), attrs = parseStaticMarkupAttributes(control.attrs);
+    if (open.name !== "div" || open.closing || open.selfClosing || !hidden(open.attrs) ||
+        control.name !== "xform:xtext" || control.closing || !control.selfClosing || !hidden(control.attrs) ||
+        end.name !== "div" || !end.closing || !attrs) return false;
+    const id = hiddenFields.find(field => attrs.get("property") === `extendDataFormInfo.value(${tableId}.${marker}.${field.id})`)?.id;
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+  }
+  return seen.size === hiddenFields.length;
+}
+
+function rightSignature(token) {
+  const attrs = parseStaticMarkupAttributes(token?.attrs);
+  if (!attrs || !attrs.size || [...attrs].some(([key, value]) => !(
+    /^mode_[a-z0-9_]+$/u.test(key) && /^(?:edit|view|hidden)$/u.test(value) ||
+    /^def_[a-z0-9_]+$/u.test(key) && /^(?:true|false)$/u.test(value)
+  ))) return undefined;
+  return JSON.stringify([...attrs].sort(([a], [b]) => a.localeCompare(b)));
+}
+
+function rightOnlyControl(markup, right, item) {
+  const close = findMatchingCloseTag(markup, right.end, "xform:right");
+  return close >= item.end && !markup.slice(right.end, item.start).trim() && !markup.slice(item.end, close).trim();
 }
 
 function onePixelWidth(style) {

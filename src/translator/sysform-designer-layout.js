@@ -2355,6 +2355,12 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
       const fieldIds = [...new Set(members.map(control => control.id))];
       const inline = fieldIds.length > 1 && detailCellHasOnlyInlineControls(cell.body, entries, fieldIds);
       const stacked = detailStackedDesignerEvidence(cell.body, entries, members);
+      const visibleMembers = members.filter(control => control.source?.hardHidden !== true && control.source?.designerHidden !== true);
+      const rightPair = !inline && !stacked && entries.length === members.length && visibleMembers.length === 2 &&
+        visibleMembers.every(control => control.source?.rightContainer?.id) &&
+        visibleMembers[0].source.rightContainer.id !== visibleMembers[1].source.rightContainer.id &&
+        members.every(control => fieldIds.includes(control.id)) &&
+        members.filter(control => !visibleMembers.includes(control)).every(control => control.source?.hardHidden === true);
       for (const control of members) {
         if (seen.has(control.id)) continue;
         seen.add(control.id);
@@ -2367,7 +2373,7 @@ function extractDesignerDetailTableColumns(tableHtml, tableId) {
           source: {
             ...persistedControl.source,
             detailCell: { row: rowIndex, column: sourceColumn, cell: cellIndex, fieldIds,
-              ...(inline ? { inline: true } : {}), ...(stacked ? { stacked } : {}) }
+              ...(inline ? { inline: true } : {}), ...(stacked ? { stacked } : {}), ...(rightPair ? { rightPair: true } : {}) }
           }
         } : persistedControl;
         const withHeader = withDetailHeaderSemantics(
